@@ -49,7 +49,10 @@ namespace platoon_control
 			void run();
 
 			// Compose twist message by calculating speed and steering commands.
-			geometry_msgs::TwistStamped composeTwist(const cav_msgs::TrajectoryPlanPoint& point0, const cav_msgs::TrajectoryPlanPoint& point_end);
+			geometry_msgs::TwistStamped generateControlSignals(const cav_msgs::TrajectoryPlanPoint& point0, const cav_msgs::TrajectoryPlanPoint& point_end);
+
+			geometry_msgs::TwistStamped composeTwistCmd(double linear_vel, double angular_vel);
+			autoware_msgs::ControlCommandStamped composeCtrlCmd(double linear_vel, double steering_angle);
 
 			// find the point correspoding to the lookahead distance
 			cav_msgs::TrajectoryPlanPoint getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan);

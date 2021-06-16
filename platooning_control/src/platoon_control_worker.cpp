@@ -122,10 +122,14 @@ namespace platoon_control
 
     }
 
-    void PlatoonControlWorker::generateSteer(const cav_msgs::TrajectoryPlanPoint& point){
+    void PlatoonControlWorker::generateSteer(const cav_msgs::TrajectoryPlanPoint& point)
+    {
         pp_.current_pose_ = current_pose_;
         pp_.velocity_ = currentSpeed;
-    	steerCmd_ = currentSpeed * pp_.calculateSteer(point);
+
+        pp_.calculateSteer(point);
+    	steerCmd_ = pp_.getSteeringAngle(); 
+        angVelCmd_ = pp_.getAngularVelocity();
     }
 
     // TODO get the actual leader from strategic plugin

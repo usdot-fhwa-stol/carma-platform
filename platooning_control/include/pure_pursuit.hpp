@@ -26,16 +26,23 @@ namespace platoon_control
     public:
     	PurePursuit();
 
-    	double calculateSteer(const cav_msgs::TrajectoryPlanPoint& tp);
+    	void calculateSteer(const cav_msgs::TrajectoryPlanPoint& tp);
+
+		double calculateKappa(const cav_msgs::TrajectoryPlanPoint& tp);
 
 		// geometry pose
 		geometry_msgs::Pose current_pose_;
 		double velocity_ = 0.0;
+		double angular_velocity_ = 0;
+		double steering_angle_ = 0;
 
 		PlatooningControlPluginConfig config_;
 
-		double getAlpha(cav_msgs::TrajectoryPlanPoint tp, geometry_msgs::Pose current_pose);
-		double lowPassfilter(double angle);
+		double getAlphaSin(cav_msgs::TrajectoryPlanPoint tp, geometry_msgs::Pose current_pose);
+		double lowPassfilter(double gain, double prev_value, double value);
+
+		double getSteeringAngle();
+		double getAngularVelocity();
 
     private:
 
@@ -52,6 +59,7 @@ namespace platoon_control
 
 
 		double prev_steering = 0.0;
+		double prev_ang_vel = 0.0;
 		
 
 		

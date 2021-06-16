@@ -108,18 +108,20 @@ namespace platoon_control
 
         trajectory_speed_ = getTrajectorySpeed(tp->trajectory_points);
 
-    	geometry_msgs::TwistStamped twist_msg = composeTwist(first_trajectory_point, lookahead_point);
-
+    	
         
+        generateControlSignals(first_trajectory_point, lookahead_point);
 
-    	publishTwist(twist_msg);
+       
 
-        autoware_msgs::ControlCommandStamped ctrl_msg;
-        ctrl_msg.cmd.linear_velocity = twist_msg.twist.linear.x;
-        ROS_DEBUG_STREAM("command speed " << ctrl_msg.cmd.linear_velocity);
-        ctrl_msg.cmd.steering_angle = twist_msg.twist.angular.z;
-        ROS_DEBUG_STREAM("command steering " << ctrl_msg.cmd.steering_angle);
-        ctrl_pub_.publish(ctrl_msg);
+    	// publishTwist(twist_msg);
+
+        // autoware_msgs::ControlCommandStamped ctrl_msg;
+        // ctrl_msg.cmd.linear_velocity = twist_msg.twist.linear.x;
+        // ROS_DEBUG_STREAM("command speed " << ctrl_msg.cmd.linear_velocity);
+        // ctrl_msg.cmd.steering_angle = twist_msg.twist.angular.z;
+        // ROS_DEBUG_STREAM("command steering " << ctrl_msg.cmd.steering_angle);
+        // ctrl_pub_.publish(ctrl_msg);
 
     }
 
@@ -194,25 +196,56 @@ namespace platoon_control
         current_speed_ = twist->twist.linear.x;
     }
 
-    void PlatoonControlPlugin::publishTwist(const geometry_msgs::TwistStamped& twist) const {
-    	twist_pub_.publish(twist);
-    }
+    // void PlatoonControlPlugin::publishTwist(const geometry_msgs::TwistStamped& twist) const {
+    // 	twist_pub_.publish(twist);
+    // }
 
 // @SONAR_START@
-    geometry_msgs::TwistStamped PlatoonControlPlugin::composeTwist(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point){
+
+    geometry_msgs::TwistStamped PlatoonControlPlugin::composeTwistCmd(double linear_vel, double angular_vel)
+    {
+        geometry_msgs::TwistStamped cmd_twist;
+        cmd_twist.twist.linear.x = linear_vel;
+        cmd_twist.twist.angular.z = angular_vel;
+        return cmd_twist;
+    }
+
+    autoware_msgs::ControlCommandStamped PlatoonControlPlugin::composeCtrlCmd(double linear_vel, double steering_angle)
+    {
+        autoware_msgs::ControlCommandStamped cmd_ctrl;
+        cmd_ctrl.cmd.linear_velocity = linear_vel;
+        ROS_DEBUG_STREAM("ctrl command speed " << cmd_ctrl.cmd.linear_velocity);
+        cmd_ctrl.cmd.steering_angle = steering_angle;
+        ROS_DEBUG_STREAM("ctrl command steering " << cmd_ctrl.cmd.steering_angle);
+
+        return cmd_ctrl;
+    }
+
+    geometry_msgs::TwistStamped PlatoonControlPlugin::generateControlSignals(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point){
     	geometry_msgs::TwistStamped current_twist;
         pcw_.setCurrentSpeed(trajectory_speed_);
         // pcw_.setCurrentSpeed(current_speed_);
         pcw_.setLeader(platoon_leader_);
     	pcw_.generateSpeed(first_trajectory_point);
     	pcw_.generateSteer(lookahead_point);
-    	current_twist.twist.linear.x = pcw_.speedCmd_;
-        ROS_DEBUG_STREAM("desired speed:  " << pcw_.speedCmd_);
-        // TODO: temporary until steering is fixed
-    	current_twist.twist.angular.z = pcw_.steerCmd_;
-        ROS_DEBUG_STREAM("desired steering:  " << pcw_.steerCmd_);
-        current_twist.header.stamp = ros::Time::now();
-    	return current_twist;
+
+
+        geometry_msgs::TwistStamped twist_msg = composeTwistCmd(pcw_.speedCmd_, pcw_.angVelCmd_);
+        twist_pub_.publish(twist_msg);
+
+        autoware_msgs::ControlCommandStamped ctrl_msg = composeCtrlCmd(pcw_.speedCmd_, pcw_.steerCmd_);
+        ctrl_pub_.publish(ctrl_msg);
+
+
+
+
+    	// current_twist.twist.linear.x = pcw_.speedCmd_;
+        // ROS_DEBUG_STREAM("desired speed:  " << pcw_.speedCmd_);
+        // // TODO: temporary until steering is fixed
+    	// current_twist.twist.angular.z = pcw_.steerCmd_;
+        // ROS_DEBUG_STREAM("desired steering:  " << pcw_.steerCmd_);
+        // current_twist.header.stamp = ros::Time::now();
+    	// return current_twist;
     }
 
     // extract maximum speed of trajectory
