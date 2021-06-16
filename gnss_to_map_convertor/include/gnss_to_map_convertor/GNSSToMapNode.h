@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (C) 2018-2020 LEIDOS.
  *
@@ -16,84 +14,59 @@
  * the License.
  */
 
-#include <ros/ros.h>
+#include <gnss_to_map_convertor/GNSSToMapNode.h>
 #include <tf2_ros/transform_listener.h>
-#include <cav_srvs/GetTransform.h>
-#include <wgs84_utils/wgs84_utils.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
-#include <sensor_msgs/NavSatFix.h>
-#include <novatel_gps_msgs/NovatelDualAntennaHeading.h>
-#include <novatel_gps_msgs/NovatelPosition.h>
-#include <novatel_gps_msgs/NovatelXYZ.h>
-#include <gnss_to_map_convertor/GNSSToMapConvertor.h>
-#include <carma_utils/CARMAUtils.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <vector>
+#include <string>
+#include <boost/algorithm/string.hpp>
+#include <algorithm>
 
-namespace gnss_to_map_convertor {
-  /**
-   * \class GNSSToMapNode
-   * \brief ROS Node which maintains a tf2 transform tree which can be accessed by other nodes.
-   *
-   * The get_transform service can be used to obtain coordinate transformations between two frames.
-   * Only transforms published on the /tf or /tf_static topics are recorded by this node.
-   */
-  class GNSSToMapNode {
-
-    private:
-      // Buffer which holds the tree of transforms
-      tf2_ros::Buffer tfBuffer_;
-      // tf2 listeners. Subscribes to the /tf and /tf_static topics
-      tf2_ros::TransformListener tfListener_ {tfBuffer_};
-      
-      // Ros node handle
-      ros::CARMANodeHandle cnh_;
-      ros::CARMANodeHandle p_cnh_ {"~"}; // Private node handle initialized in constructor
-
-      ros::Publisher ecef_pose_pub_;
-      ros::Publisher map_pose_pub_;
-
-      ros::Subscriber fix_sub_;
-
-      tf2::Transform baselink_in_sensor_; 
-      tf2::Transform sensor_in_ned_; 
-      bool baselink_in_sensor_set_ = false;
-      std::string base_link_frame_ = "base_link";
-      std::string map_frame_ = "map";
-      std::string ned_heading_frame_ = "ned_heading";
-      lanelet::projection::LocalFrameProjector projector_;
-
-
-  std::string target_frame = base_map_georef_;
-  if (target_frame.empty()) 
+namespace gnss_to_map_convertor
+{
+class GNSSToMapNode
+{
+public:
+  int run()
   {
-   // Return / log warning etc.
-    ROS_INFO_STREAM("Value 'target_frame' is empty.");
-    throw lanelet::InvalidObjectStateError(std::string("Base georeference map may not be loaded to the WMBroadcaster"));
+    // Buffer which holds the tree of transforms
+    tf2_ros::Buffer tfBuffer;
+    // tf2 listeners. Subscribes to the /tf and /tf_static topics
+    tf2_ros::TransformListener tfListener{ tfBuffer_ };
 
+    // Load parameters
+    std::string base_link_frame = p_cnh_.param("base_link_frame_id", base_link_frame_);
+    std::string map_frame = p_cnh_.param("map_frame_id", map_frame_);
+    // Map pose publisher
+    ros::Publisher map_pose_pub = cnh_.advertise<geometry_msgs::PoseStamped>("gnss_pose", 10, true);
+
+    GNSSToMapConvertor convertor([&map_pose_pub](const auto& msg) { map_pose_pub_.publish(msg); },
+
+                                 [&tf_buffer](const auto& target, const auto& source) {
+                                   tf2::Transform tf;
+                                   try
+                                   {
+                                     tf2::convert(tf_buffer.lookupTransform(target, source, ros::Time(0)).transform,
+                                                  tf);
+                                   }
+                                   catch (tf2::TransformException& ex)
+                                   {
+                                     ROS_ERROR_STREAM("Could not lookup transform with exception " << ex.what());
+                                     return boost::none;
+                                   }
+                                   return tf;
+                                 },
+
+                                 map_frame, base_link_frame);
+
+    // Fix Subscriber
+    ros::Subscriber fix_sub_ = cnh_.subscribe("gnss_fix_fused", 2, &GNSSToMapConvertor::gnssFixCb, &convertor);
+
+    // Spin
+    cnh_.spin();
+    return 0;
   }
-  
-  // Convert the minimum point to latlon
-   local_projector(target_frame.c_str());
-
-      /**
-       * @brief GPSFix callback which publishes the updated ecef and map poses
-       * 
-       * @param fix_msg The gnss fix message which must contain the position and heading information
-       */ 
-      void fixCb(const gps_common::GPSFixConstPtr& fix_msg);
-
-    public:
-      /**
-       * @brief Default Constructor
-       */
-      GNSSToMapNode();
-
-      /**
-       * @brief Starts the Node
-       *
-       * @return 0 on exit with no errors
-       */
-      int run();
-  };
 }
+}  // namespace gnss_to_map_convertor
