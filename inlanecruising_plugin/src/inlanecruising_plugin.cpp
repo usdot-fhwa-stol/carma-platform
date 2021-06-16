@@ -403,6 +403,11 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   ROS_DEBUG_STREAM("Ending state's index before applying buffer (buffer_pt_index): " << buffer_pt_index);
   ROS_DEBUG_STREAM("Corresponding to point: x: " << all_sampling_points[buffer_pt_index].x() << ", y:" << all_sampling_points[buffer_pt_index].y());
   
+  if (nearest_pt_index + 1 >= buffer_pt_index)
+  {
+    ROS_WARN_STREAM("Current state is at or passed the planned end distance. Couldn't generate trajectory");
+    return {};
+  }
   //drop buffer points here
   std::vector<lanelet::BasicPoint2d> future_basic_points(all_sampling_points.begin() + nearest_pt_index + 1,
                                             all_sampling_points.begin()+ buffer_pt_index);  // Points in front of current vehicle position
