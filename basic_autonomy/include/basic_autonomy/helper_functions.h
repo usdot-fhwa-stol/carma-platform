@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,64 +21,26 @@ namespace basic_autonomy
 namespace waypoint_generation
 {
     
- //   /**
- //  * \brief Returns the nearest point to the provided vehicle pose in the provided list
- //  * 
- //  * \param points The points to evaluate
- //  * \param state The current vehicle state
- //  * 
- //  * \return index of nearest point in points
- //  */
- //   int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
- //                                              const cav_msgs::VehicleState& state)
- //   {
- //       lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
- //       double min_distance = std::numeric_limits<double>::max();
- //       int i = 0;
- //       int best_index = 0;
- //       for (const auto& p : points)
- //       {
- //           double distance = lanelet::geometry::distance2d(p, veh_point);
- //           if (distance < min_distance)
- //           {
- //               best_index = i;
- //               min_distance = distance;
- //           }
- //           i++;
- //       }
-//
- //       return best_index;
- //   }
-//
- //   /**
- //  * \brief Returns the nearest point to the provided vehicle pose in the provided list
- //  * 
- //  * \param points The points to evaluate
- //  * \param state The current vehicle state
- //  * 
- //  * \return index of nearest point in points
- //  */
- //   int get_nearest_point_index(const std::vector<PointSpeedPair>& points,
- //                                              const cav_msgs::VehicleState& state)
- //   {
- //       lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
- //       ROS_DEBUG_STREAM("veh_point: " << veh_point.x() << ", " << veh_point.y());
- //       double min_distance = std::numeric_limits<double>::max();
- //       int i = 0;
- //       int best_index = 0;
- //       for (const auto& p : points)
- //       {
- //           double distance = lanelet::geometry::distance2d(p.point, veh_point);
- //           if (distance < min_distance)
- //           {
- //           best_index = i;
- //           min_distance = distance;
- //           }
- //           i++;
- //       }
-//
- //       return best_index;
- //   }
+    /**
+     * \brief Returns the nearest point to the provided vehicle pose in the provided list
+     * 
+     * \param points The points to evaluate
+     * \param state The current vehicle state
+     * 
+     * \return index of nearest point in points
+     */
+    int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
+                                                 const cav_msgs::VehicleState& state);
+    /**
+     * \brief Returns the nearest point to the provided vehicle pose in the provided list
+     * 
+     * \param points The points to evaluate
+     * \param state The current vehicle state
+     * 
+     * \return index of nearest point in points
+     */
+    int get_nearest_point_index(const std::vector<PointSpeedPair>& points,
+                                                 const cav_msgs::VehicleState& state);
     /**
      * \brief Returns the nearest point to the provided vehicle pose in the provided list by utilizing the downtrack measured along the route
      * This function compares the downtrack, provided by routeTrackPos, of each points in the list to get the closest one to the given downtrack.
@@ -88,43 +50,14 @@ namespace waypoint_generation
      * 
      * \return index of nearest point in points
      */
-    int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm, double ending_downtrack)
-   {
-        int best_index = points.size() - 1;
-        for(int i=0;i < points.size();i++){
-            double downtrack = wm->routeTrackPos(points[i]).downtrack;
-            if(downtrack > ending_downtrack){
-                best_index = i - 1;
-                if (best_index < 0)
-                {
-                throw std::invalid_argument("Given points are beyond the ending_downtrack");
-                }
-                ROS_DEBUG_STREAM("get_nearest_index_by_downtrack>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y() << ", downtrack: "<< downtrack);
-                break;
-            }
-        }
-        ROS_DEBUG_STREAM("get_nearest_index_by_downtrack>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y());
-
-        return best_index;
-    }
+    int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm, double ending_downtrack);
 
      /**
    * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
    */ 
     void split_point_speed_pairs(const std::vector<PointSpeedPair>& points,
                                                 std::vector<lanelet::BasicPoint2d>* basic_points,
-                                                std::vector<double>* speeds)
-    {
-        basic_points->reserve(points.size());
-        speeds->reserve(points.size());
-
-        for (const auto& p : points)
-        {
-            basic_points->push_back(p.point);
-            speeds->push_back(p.speed);
-        }
-    }
-
+                                                std::vector<double>* speeds);
     /**
      * \brief Overload: Returns the nearest point to the provided vehicle pose in the provided list by utilizing the downtrack measured along the route
      * NOTE: This function compares the downtrack, provided by routeTrackPos, of each points in the list to get the closest one to the given point's downtrack.
@@ -138,15 +71,7 @@ namespace waypoint_generation
      * \return index of nearest point in points
      */
     int get_nearest_index_by_downtrack(const std::vector<PointSpeedPair>& points, const carma_wm::WorldModelConstPtr& wm,
-                                      const cav_msgs::VehicleState& state)
-    {
-        lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
-        double ending_downtrack = wm->routeTrackPos(state_pos).downtrack;
-        std::vector<lanelet::BasicPoint2d> basic_points;
-        std::vector<double> speeds;
-        split_point_speed_pairs(points, &basic_points, &speeds);
-        return get_nearest_index_by_downtrack(basic_points, wm, ending_downtrack);
-    }
+                                      const cav_msgs::VehicleState& state);
 
     /**
      * \brief Overload: Returns the nearest point to the provided vehicle pose  in the provided list by utilizing the downtrack measured along the route
@@ -161,12 +86,7 @@ namespace waypoint_generation
      * \return index of nearest point in points
      */
     int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm,
-                                      const cav_msgs::VehicleState& state)
-    {
-        lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
-        double ending_downtrack = wm->routeTrackPos(state_pos).downtrack;
-        return get_nearest_index_by_downtrack(points, wm, ending_downtrack);
-    }
+                                      const cav_msgs::VehicleState& state);
 
 }
 }

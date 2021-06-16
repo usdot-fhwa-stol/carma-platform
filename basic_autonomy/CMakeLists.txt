@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -61,7 +61,7 @@ include_directories(
 )
 
 add_library(basic_autonomy 
-  src/basic_autonomy.cpp
+  src/helper_functions.cpp
 )
 
 add_dependencies(basic_autonomy ${catkin_EXPORTED_TARGETS})
