@@ -556,7 +556,6 @@ namespace waypoint_generation
 
             //get route geometry between starting and ending downtracks
             std::vector<lanelet::BasicPoint2d> route_geometry = create_route_geom(starting_downtrack, stoi(lane_change_maneuver.starting_lane_id), ending_downtrack, wm);
-
             lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
             double current_downtrack  = wm->routeTrackPos(state_pos).downtrack;
             int nearest_pt_index = get_nearest_point_index(route_geometry, wm, current_downtrack);
