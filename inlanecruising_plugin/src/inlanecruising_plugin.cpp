@@ -646,13 +646,9 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     }
   }
     // Here we are limiting the trajectory length to the given length by maneuver end dist as opposed to the end of lanelets involved.
-    double starting_route_downtrack = wm_->routeTrackPos(points_and_target_speeds.front().point).downtrack; 
-    size_t i = 0;
-    size_t max_i = 0;
-    double dist_accumulator = starting_route_downtrack;
-    lanelet::BasicPoint2d prev_point;
-
+    double starting_route_downtrack = wm_->routeTrackPos(points_and_target_speeds.front().point).downtrack;
     double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist;
+
     if(ending_downtrack + config_.buffer_ending_downtrack < wm_->getRouteEndTrackPos().downtrack){
       ending_downtrack = ending_downtrack + config_.buffer_ending_downtrack;
     }
@@ -660,6 +656,12 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     {
       ending_downtrack = wm_->getRouteEndTrackPos().downtrack;
     } 
+    
+    size_t max_i = points_and_target_speeds.size() - 1;
+    size_t without_buffer_i = points_and_target_speeds.size() - 1;
+    bool found_without_buffer = false;
+    double dist_accumulator = starting_route_downtrack;
+    lanelet::BasicPoint2d prev_point;
 
     for (int i = 0; i < points_and_target_speeds.size(); i ++) {
       auto current_point = points_and_target_speeds[i].point;
@@ -669,10 +671,15 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
       }
 
       double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
-      ROS_DEBUG_STREAM("delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() << 
+      ROS_DEBUG_STREAM("Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() << 
         "current_point.y():" << current_point.y());
       dist_accumulator += delta_d;
-      
+      if (dist_accumulator > maneuvers.back().lane_following_maneuver.end_dist && !found_without_buffer)
+      {
+        without_buffer_i = i;
+        ROS_DEBUG_STREAM("Found index without_buffer_i at: i: " << i);
+        found_without_buffer = true;
+      }
       if (dist_accumulator > ending_downtrack) {
         max_i = i;
         ROS_DEBUG_STREAM("Max_i breaking at: i: " << i << ", max_i: " << max_i);
@@ -680,12 +687,8 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
       }
       prev_point = current_point;
     }
-    if (max_i == 0) {
-      max_i = points_and_target_speeds.size() - 1;
-      ROS_DEBUG_STREAM("Max_i was zero, so turned to max_i: " << max_i);
-    }
-    ending_state_before_buffer.X_pos_global = points_and_target_speeds[max_i].point.x();
-    ending_state_before_buffer.Y_pos_global = points_and_target_speeds[max_i].point.y();
+    ending_state_before_buffer.X_pos_global = points_and_target_speeds[without_buffer_i].point.x();
+    ending_state_before_buffer.Y_pos_global = points_and_target_speeds[without_buffer_i].point.y();
     ROS_DEBUG_STREAM("Here ending_state_before_buffer.X_pos_global: " << ending_state_before_buffer.X_pos_global << 
       ", and Y_pos_global" << ending_state_before_buffer.Y_pos_global);
 
