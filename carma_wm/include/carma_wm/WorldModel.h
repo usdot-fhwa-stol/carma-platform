@@ -121,8 +121,9 @@ public:
    * \param start The starting downtrack for the query
    * \param end The ending downtrack for the query
    * \param shortest_path_only If true the lanelets returned will be part of the route shortest path
-   * \param bounds_inclusive If true, the bounds are included so areas which end exactly at start or start exactly at end are
-   * included
+   * param bounds_inclusive If true, the bounds are included so areas which end exactly at start or start exactly at end are
+   * included. NOTE: Non-inclusive behavior toggled by !bounds_inclusive is not equivalent to a != check as it merely shrinks bounds
+   * by 0.00001 to get new start and end distances. 
    *
    * \throws std::invalid_argument If the route is not yet loaded or if start >= end
    *

@@ -450,8 +450,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   log::printDoublesPerLineWithPrefix("times[i]: ", times);
   
   // Build trajectory points
-  // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
-  // off the last point in the plan if an earlier plan was provided
   std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
       trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, state_time); 
 

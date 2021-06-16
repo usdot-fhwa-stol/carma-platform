@@ -90,10 +90,3 @@ install(TARGETS ${PROJECT_NAME}
 ## Testing ##
 #############
 
-# if(CATKIN_ENABLE_TESTING)
-# 
-#   catkin_add_gmock(${PROJECT_NAME}-test 
-#     test/test_waypoint_generation.cpp
-#   )
-#   target_link_libraries(${PROJECT_NAME}-test basic_autonomy ${catkin_LIBRARIES})
-# endif()

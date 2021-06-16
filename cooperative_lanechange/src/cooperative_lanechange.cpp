@@ -616,14 +616,12 @@ namespace cooperative_lanechange
         // Remove extra points
         ROS_DEBUG_STREAM("Before removing extra buffer points, future_geom_points.size()" << future_geom_points.size());
         int end_dist_pt_index = basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(future_geom_points, wm_, ending_state_before_buffer_);
-        future_geom_points.resize(end_dist_pt_index);
-        times.resize(end_dist_pt_index);
-        final_yaw_values.resize(end_dist_pt_index);
+        future_geom_points.resize(end_dist_pt_index + 1);
+        times.resize(end_dist_pt_index + 1);
+        final_yaw_values.resize(end_dist_pt_index + 1);
         ROS_DEBUG_STREAM("After removing extra buffer points, future_geom_points.size()" << future_geom_points.size());
 
         // Build trajectory points
-        // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
-        // off the last point in the plan if an earlier plan was provided
         std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
             trajectory_from_points_times_orientations(future_geom_points, times, final_yaw_values, state_time);
         
