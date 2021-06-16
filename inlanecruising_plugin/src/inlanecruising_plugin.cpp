@@ -94,7 +94,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
                                                                             config_.curvature_moving_average_window_size, config_.back_distance,
                                                                             config_.buffer_ending_downtrack);
   
-  auto points_and_target_speeds = basic_autonomy:: waypoint_generation::maneuvers_to_points(maneuver_plan, 
+  auto points_and_target_speeds = basic_autonomy:: waypoint_generation::maneuvers_to_points_lanefollow(maneuver_plan, 
                                                                         std::max((double)0, current_downtrack - config_.back_distance), 
                                                                         wm_, wpg_general_config); // Convert maneuvers to points
 
@@ -107,7 +107,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   original_trajectory.header.stamp = ros::Time::now();
   original_trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-  original_trajectory.trajectory_points = basic_autonomy:: waypoint_generation::compose_trajectory_from_centerline(points_and_target_speeds, 
+  original_trajectory.trajectory_points = basic_autonomy:: waypoint_generation::compose_lanefollow_trajectory_from_centerline(points_and_target_speeds, 
                                                                                 req.vehicle_state, req.header.stamp, wpg_detail_config); // Compute the trajectory
   original_trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
 

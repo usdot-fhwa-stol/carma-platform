@@ -18,9 +18,9 @@
 
 namespace basic_autonomy
 {
-namespace waypoint_generation
-{
-    /**
+    namespace waypoint_generation
+    {
+        /**
    * \brief Returns the nearest point to the provided vehicle pose in the provided list
    * 
    * \param points The points to evaluate
@@ -28,28 +28,28 @@ namespace waypoint_generation
    * 
    * \return index of nearest point in points
    */
-    int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
-                                               const cav_msgs::VehicleState& state)
-    {
-        lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
-        double min_distance = std::numeric_limits<double>::max();
-        int i = 0;
-        int best_index = 0;
-        for (const auto& p : points)
+        int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d> &points,
+                                    const cav_msgs::VehicleState &state)
         {
-            double distance = lanelet::geometry::distance2d(p, veh_point);
-            if (distance < min_distance)
+            lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
+            double min_distance = std::numeric_limits<double>::max();
+            int i = 0;
+            int best_index = 0;
+            for (const auto &p : points)
             {
-                best_index = i;
-                min_distance = distance;
+                double distance = lanelet::geometry::distance2d(p, veh_point);
+                if (distance < min_distance)
+                {
+                    best_index = i;
+                    min_distance = distance;
+                }
+                ++i;
             }
-            i++;
+
+            return best_index;
         }
 
-        return best_index;
-    }
-
-    /**
+        /**
    * \brief Returns the nearest point to the provided vehicle pose in the provided list
    * 
    * \param points The points to evaluate
@@ -57,29 +57,29 @@ namespace waypoint_generation
    * 
    * \return index of nearest point in points
    */
-    int get_nearest_point_index(const std::vector<PointSpeedPair>& points,
-                                               const cav_msgs::VehicleState& state)
-    {
-        lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
-        ROS_DEBUG_STREAM("veh_point: " << veh_point.x() << ", " << veh_point.y());
-        double min_distance = std::numeric_limits<double>::max();
-        int i = 0;
-        int best_index = 0;
-        for (const auto& p : points)
+        int get_nearest_point_index(const std::vector<PointSpeedPair> &points,
+                                    const cav_msgs::VehicleState &state)
         {
-            double distance = lanelet::geometry::distance2d(p.point, veh_point);
-            if (distance < min_distance)
+            lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
+            ROS_DEBUG_STREAM("veh_point: " << veh_point.x() << ", " << veh_point.y());
+            double min_distance = std::numeric_limits<double>::max();
+            int i = 0;
+            int best_index = 0;
+            for (const auto &p : points)
             {
-            best_index = i;
-            min_distance = distance;
+                double distance = lanelet::geometry::distance2d(p.point, veh_point);
+                if (distance < min_distance)
+                {
+                    best_index = i;
+                    min_distance = distance;
+                }
+                ++i;
             }
-            i++;
+
+            return best_index;
         }
 
-        return best_index;
-    }
-
-    /**
+        /**
    * \brief Returns the nearest point to the provided vehicle pose in the provided list
    * 
    * \param points The points to evaluate
@@ -88,34 +88,37 @@ namespace waypoint_generation
    * 
    * \return index of nearest point in points
    */
-    int get_nearest_point_index(std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm, double target_downtrack){
-        int best_index = points.size()-1;
-        for(int i=points.size()-1;i>=0;i--){
-            double downtrack = wm->routeTrackPos(points[i]).downtrack;
-            if(downtrack <= target_downtrack){
-                best_index = i;
-                break;
+        int get_nearest_point_index(std::vector<lanelet::BasicPoint2d> &points, const carma_wm::WorldModelConstPtr &wm, double target_downtrack)
+        {
+            int best_index = points.size() - 1;
+            for (int i = points.size() - 1; i >= 0; i--)
+            {
+                double downtrack = wm->routeTrackPos(points[i]).downtrack;
+                if (downtrack <= target_downtrack)
+                {
+                    best_index = i;
+                    break;
+                }
+            }
+            return best_index;
+        }
+
+        /**
+   * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
+   */
+        void split_point_speed_pairs(const std::vector<PointSpeedPair> &points,
+                                     std::vector<lanelet::BasicPoint2d> *basic_points,
+                                     std::vector<double> *speeds)
+        {
+            basic_points->reserve(points.size());
+            speeds->reserve(points.size());
+
+            for (const auto &p : points)
+            {
+                basic_points->push_back(p.point);
+                speeds->push_back(p.speed);
             }
         }
-        return best_index;
+
     }
-
-    /**
-   * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
-   */ 
-    void split_point_speed_pairs(const std::vector<PointSpeedPair>& points,
-                                                std::vector<lanelet::BasicPoint2d>* basic_points,
-                                                std::vector<double>* speeds)
-    {
-        basic_points->reserve(points.size());
-        speeds->reserve(points.size());
-
-        for (const auto& p : points)
-        {
-            basic_points->push_back(p.point);
-            speeds->push_back(p.speed);
-        }
-    }
-
-}
 }
