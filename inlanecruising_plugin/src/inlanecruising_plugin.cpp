@@ -676,12 +676,12 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
       dist_accumulator += delta_d;
       if (dist_accumulator > maneuvers.back().lane_following_maneuver.end_dist && !found_unbuffered_idx)
       {
-        unbuffered_idx = i;
-        ROS_DEBUG_STREAM("Found index unbuffered_idx at: i: " << i);
+        unbuffered_idx = i - 1;
+        ROS_DEBUG_STREAM("Found index unbuffered_idx at: " << unbuffered_idx);
         found_unbuffered_idx = true;
       }
       if (dist_accumulator > ending_downtrack) {
-        max_i = i;
+        max_i = i - 1;
         ROS_DEBUG_STREAM("Max_i breaking at: i: " << i << ", max_i: " << max_i);
         break;
       }
