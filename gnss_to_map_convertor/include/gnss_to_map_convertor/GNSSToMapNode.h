@@ -59,9 +59,22 @@ namespace gnss_to_map_convertor {
       tf2::Transform sensor_in_ned_; 
       bool baselink_in_sensor_set_ = false;
       std::string base_link_frame_ = "base_link";
-      std::string earth_frame_ = "earth";
       std::string map_frame_ = "map";
       std::string ned_heading_frame_ = "ned_heading";
+      lanelet::projection::LocalFrameProjector projector_;
+
+
+  std::string target_frame = base_map_georef_;
+  if (target_frame.empty()) 
+  {
+   // Return / log warning etc.
+    ROS_INFO_STREAM("Value 'target_frame' is empty.");
+    throw lanelet::InvalidObjectStateError(std::string("Base georeference map may not be loaded to the WMBroadcaster"));
+
+  }
+  
+  // Convert the minimum point to latlon
+   local_projector(target_frame.c_str());
 
       /**
        * @brief GPSFix callback which publishes the updated ecef and map poses

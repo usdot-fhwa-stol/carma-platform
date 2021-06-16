@@ -18,52 +18,77 @@
 
 namespace gnss_to_map_convertor {
 
-  geometry_msgs::Pose ecefTFToMapPose(const tf2::Transform& baselink_in_earth, const tf2::Transform& map_in_earth){
-
-    const tf2::Transform T_m_e = map_in_earth.inverse(); // T_e_m^-1 = T_m_e
-
-    const tf2::Transform T_m_b = T_m_e * baselink_in_earth; // T_m_b = T_m_e * T_e_b
-  
-    geometry_msgs::Pose pose;
-    pose.position.x = T_m_b.getOrigin().getX();
-    pose.position.y = T_m_b.getOrigin().getY();
-    pose.position.z = T_m_b.getOrigin().getZ();
-
-    pose.orientation.x = T_m_b.getRotation().getX();
-    pose.orientation.y = T_m_b.getRotation().getY();
-    pose.orientation.z = T_m_b.getRotation().getZ();
-    pose.orientation.w = T_m_b.getRotation().getW();
-
-    return pose;
-  }
-
   geometry_msgs::PoseWithCovarianceStamped poseFromGnss(
     const tf2::Transform& baselink_in_sensor,
     const tf2::Transform& sensor_in_ned_heading,
     const gps_common::GPSFixConstPtr& fix_msg
   ) {
+
+    //// Convert the position information into the map frame using the proj library
     const double lat = fix_msg->latitude * wgs84_utils::DEG2RAD;
     const double lon = fix_msg->longitude * wgs84_utils::DEG2RAD;
     const double alt = fix_msg->altitude;
 
-    const struct wgs84_utils::wgs84_coordinate geo_point = {lat, lon, 0, alt};
+    lanelet::projection::LocalFrameProjector wgs84_to_map("TODO");
+    lanelet2::BasicPoint3d map_point = wgs84_to_map.forward({ lat, lon, alt});
 
-    const tf2::Transform T_e_n = wgs84_utils::ecef_to_ned_from_loc(geo_point);
+    
+    //// Convert the orientation information into the map frame
+    // TODO: A Key question here is how to handle the heading. The heading is described as degrees east of north by GPSFix
+    // Is it more accurate to use an ned tie point or extract the lat/lon from the projection string? 
+    // Or should you get a tie point and the origin from the projection string then get the transform between the two and rectify the orientation via rotation matrix?
+
+
+
+    // Using this approach we can remove the ned_heading in sensor frame transform which is not very meaningful anyway since the heading is defined via message spec
+    // Sensor position in map frame from proj
+    // Sensor orientation in map frame is R_m_n * R_n_s = R_m_s
+    // This gives
+    // T_m_s (With assumption reguarding heading)
+    // T_m_s * T_s_b = T_m_b
+
+
+    T_n_h;
+    T_h_s;
+    T_n_s = T_n_h * T_h_s;
+    T_m_n(/*axis orientation*/, /*position*/)
+
 
     const tf2::Vector3 identity_trans(0,0,0);
     tf2::Quaternion heading_in_ned_quat;
     
     heading_in_ned_quat.setRPY(0, 0, fix_msg->track * wgs84_utils::DEG2RAD);
 
-    const tf2::Transform T_n_h(heading_in_ned_quat, identity_trans);
 
-    const tf2::Transform T_h_s(sensor_in_ned_heading);
+    tf2::Quaternion ned_in_map_quat = ned_in_map_quat_; // TODO pass in?
 
-    const tf2::Transform T_n_s = T_n_h * T_h_s; // Transform defining sensor orientation in NED frame
+    tf2::Quaternion R_m_n = ned_in_map_quat_;
+    tf2::Quaternion R_n_h = heading_in_ned_quat;
+    tf2::Quaternion R_m_h = R_m_n * R_n_h; // Heading report orientation in map frame
+    tf2::Vector3 sensor_in_map_translation(map_point.x(), map_point.y(), map_point.z());
 
-    const tf2::Transform T_s_b(baselink_in_sensor);
+    tf2::Transform sensor_in_map(, sensor_in_map_translation)
 
-     const tf2::Transform T_n_b = T_n_s * T_s_b; // Transform defining vehicle orientation in NED frame
+
+    tf2::Transform T_m_n(ned_in_map_quat);
+    tf2::Transform T_n_h(heading_in_ned_quat);
+    tf2::Transform T_h_s(sensor_in_ned_heading);
+    tf2::Transform T_s_b(baselink_in_sensor);
+
+    tf2::Transform T_m_b_rot_only = T_m_n * T_n_h * T_h_s * T_s_b
+
+
+
+
+    // const tf2::Transform T_n_h(heading_in_ned_quat);
+
+    // const tf2::Transform T_h_s(sensor_in_ned_heading);
+
+    // const tf2::Transform T_n_s = T_n_h * T_h_s; // Transform defining sensor orientation in NED frame
+
+    // const tf2::Transform T_s_b(baselink_in_sensor);
+
+    // const tf2::Transform T_n_b = T_n_s * T_s_b; // Transform defining vehicle orientation in NED frame
 
     // TODO handle covariance
 
