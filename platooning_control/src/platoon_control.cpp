@@ -47,11 +47,11 @@ namespace platoon_control
         pnh_->param<double>("integratorMin", config.integratorMin, config.integratorMin);
         pnh_->param<double>("Kdd", config.Kdd, config.Kdd);
         pnh_->param<int>("CMD_TIMESTEP", config.CMD_TIMESTEP, config.CMD_TIMESTEP);
-        pnh_->param<double>("wheelbase", config.wheelbase, config.wheelbase);
         pnh_->param<double>("lowpass_gain", config.lowpass_gain, config.lowpass_gain);
         pnh_->param<double>("lookahead_ratio", config.lookahead_ratio, config.lookahead_ratio);
         pnh_->param<double>("min_lookahead_dist", config.min_lookahead_dist, config.min_lookahead_dist);
         pnh_->getParam("/vehicle_id", config.vehicle_id);
+        pnh_->getParam("/vehicle_wheel_base", config.vehicle_id);
 
         pcw_.updateConfigParams(config);
         config_ = config;
@@ -207,12 +207,14 @@ namespace platoon_control
         geometry_msgs::TwistStamped cmd_twist;
         cmd_twist.twist.linear.x = linear_vel;
         cmd_twist.twist.angular.z = angular_vel;
+        cmd_twist.header.stamp = ros::Time::now();
         return cmd_twist;
     }
 
     autoware_msgs::ControlCommandStamped PlatoonControlPlugin::composeCtrlCmd(double linear_vel, double steering_angle)
     {
         autoware_msgs::ControlCommandStamped cmd_ctrl;
+        cmd_ctrl.header.stamp = ros::Time::now();
         cmd_ctrl.cmd.linear_velocity = linear_vel;
         ROS_DEBUG_STREAM("ctrl command speed " << cmd_ctrl.cmd.linear_velocity);
         cmd_ctrl.cmd.steering_angle = steering_angle;
@@ -221,8 +223,8 @@ namespace platoon_control
         return cmd_ctrl;
     }
 
-    geometry_msgs::TwistStamped PlatoonControlPlugin::generateControlSignals(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point){
-    	geometry_msgs::TwistStamped current_twist;
+    void PlatoonControlPlugin::generateControlSignals(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point){
+
         pcw_.setCurrentSpeed(trajectory_speed_);
         // pcw_.setCurrentSpeed(current_speed_);
         pcw_.setLeader(platoon_leader_);

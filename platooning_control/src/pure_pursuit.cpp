@@ -65,7 +65,7 @@ namespace platoon_control
 		double ang_vel = velocity_ * kappa;
 		ROS_DEBUG_STREAM("calculated angular velocity: " << ang_vel);
 		double filtered_ang_vel = lowPassfilter(config_.lowpass_gain, ang_vel, prev_ang_vel);
-		ROS_DEBUG_STREAM("filtered steering: " << filtered_steering);
+		ROS_DEBUG_STREAM("filtered steering: " << filtered_ang_vel);
 		prev_ang_vel = filtered_ang_vel;
 		if (std::isnan(filtered_ang_vel)) filtered_ang_vel = prev_ang_vel;
 		angular_velocity_ = filtered_ang_vel;
