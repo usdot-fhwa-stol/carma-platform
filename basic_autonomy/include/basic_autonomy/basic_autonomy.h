@@ -101,9 +101,7 @@ namespace basic_autonomy
 
         /**
    * \brief Returns the min, and its idx, from the vector of values, excluding given set of values
-   * 
    * \param values vector of values
-   * 
    * \param excluded set of excluded values
    * 
    * \return minimum value and its idx
@@ -138,22 +136,6 @@ namespace basic_autonomy
             const std::vector<double> &yaws, ros::Time startTime);
 
         /**
-   * \brief Converts a set of requested LANE_FOLLOWING maneuvers to point speed limit pairs. 
-   * 
-   * \param maneuvers The list of maneuvers to convert
-   * \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to the vehicle position or earlier.
-   *                               If the first maneuver exceeds this then it's downtrack will be shifted to this value.
-   * 
-   * \param wm Pointer to intialized world model for semantic map access
-   * 
-   * \return List of centerline points paired with speed limits
-   */
-        std::vector<PointSpeedPair> maneuvers_to_points_lanefollow(const std::vector<cav_msgs::Maneuver> &maneuvers,
-                                                                   double max_starting_downtrack,
-                                                                   const carma_wm::WorldModelConstPtr &wm,
-                                                                   const GeneralTrajConfig &general_config);
-
-        /**
    * \brief Attaches back_distance length of points in front of future points
    * 
    * \param points all point speed pairs
@@ -168,7 +150,6 @@ namespace basic_autonomy
 
         /**
    * \brief Computes a spline based on the provided points
-   * 
    * \param basic_points The points to use for fitting the spline
    * 
    * \return A spline which has been fit to the provided points
@@ -177,9 +158,7 @@ namespace basic_autonomy
 
         /**
    * \brief Given the curvature fit, computes the curvature at the given step along the curve
-   * 
    * \param step_along_the_curve Value in double from 0.0 (curvature start) to 1.0 (curvature end) representing where to calculate the curvature
-   * 
    * \param fit_curve curvature fit
    * 
    * \return Curvature (k = 1/r, 1/meter)
@@ -187,18 +166,32 @@ namespace basic_autonomy
         double compute_curvature_at(const basic_autonomy::smoothing::SplineI &fit_curve, double step_along_the_curve);
 
         /**
-   * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning for a Lane following maneuver.
-   * 
-   * \param points The set of points that define the current lane the vehicle is in and are defined based on the request planning maneuvers. 
-   *               These points must be in the same lane as the vehicle and must extend in front of it though it is fine if they also extend behind it. 
-   * \param state The current state of the vehicle
-   * \param state_time The abosolute time which the provided vehicle state corresponds to
-   * 
-   * \return A list of trajectory points to send to the carma planning stack
-   */
+     * \brief Converts a set of requested LANE_FOLLOWING maneuvers to point speed limit pairs. 
+     * \param maneuvers The list of maneuvers to convert
+     * \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to the vehicle position or earlier.
+     *                               If the first maneuver exceeds this then it's downtrack will be shifted to this value.
+     * \param wm Pointer to intialized world model for semantic map access
+     * 
+     * \return List of centerline points paired with speed limits
+     */
+        std::vector<PointSpeedPair> maneuvers_to_points_lanefollow(const std::vector<cav_msgs::Maneuver> &maneuvers,
+                                                                   double max_starting_downtrack,
+                                                                   const carma_wm::WorldModelConstPtr &wm,
+                                                                   const GeneralTrajConfig &general_config);
+
+        /**
+     * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning for a Lane following maneuver.
+     * \param points The set of points that define the current lane the vehicle is in and are defined based on the request planning maneuvers. 
+     *               These points must be in the same lane as the vehicle and must extend in front of it though it is fine if they also extend behind it. 
+     * \param state The current state of the vehicle
+     * \param state_time The abosolute time which the provided vehicle state corresponds to
+     * 
+     * \return A list of trajectory points to send to the carma planning stack
+     */
         std::vector<cav_msgs::TrajectoryPlanPoint>
         compose_lanefollow_trajectory_from_centerline(const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state,
                                                       const ros::Time &state_time, const DetailedTrajConfig &detailed_config);
+
         //Functions specific to lane change
         /**
    * \brief Converts a set of requested LANE_CHANGE maneuvers to point speed limit pairs. 
@@ -214,12 +207,11 @@ namespace basic_autonomy
    * 
    * \return List of centerline points paired with speed limits
    */
-
-        std::vector<PointSpeedPair> maneuvers_to_points_lanechange(const std::vector<cav_msgs::Maneuver> &maneuvers,
-                                                                   double max_starting_downtrack,
-                                                                   const carma_wm::WorldModelConstPtr &wm,
-                                                                   cav_msgs::VehicleState state, double &maneuver_fraction_completed,
-                                                                   cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config);
+    std::vector<PointSpeedPair> maneuvers_to_points_lanechange(const std::vector<cav_msgs::Maneuver> &maneuvers,
+                                                                double max_starting_downtrack,
+                                                                const carma_wm::WorldModelConstPtr &wm,
+                                                                cav_msgs::VehicleState state, double &maneuver_fraction_completed,
+                                                                cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config);
 
         /**
    * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning for a Lane following maneuver.
@@ -232,6 +224,7 @@ namespace basic_autonomy
    * \param max_speed The max allowable speed for lane changing under this plan.
    * \param wm The carma world model object which the vehicle is operating in.
    * \param ending_state_before_buffer The vehicle state before a buffer was added to the points. Used to revert the trajectory to required distance before returning.
+   * 
    * \return A list of trajectory points to send to the carma planning stack
    */
 
@@ -245,6 +238,7 @@ namespace basic_autonomy
      * \param starting_downtrack downtrack along route where maneuver starts
      * \param ending_downtrack downtrack along route where maneuver starts
      * \param wm Pointer to intialized world model for semantic map access
+     * 
      * \return Points in a path from starting downtrack to ending downtrack
      */
         std::vector<lanelet::BasicPoint2d> create_route_geom(double starting_downtrack, int starting_lane_id,
@@ -254,24 +248,26 @@ namespace basic_autonomy
      * \brief Given a start and end point, create a vector of points fit through a spline between the points (using a Spline library)
      * \param start_lanelet The lanelet from which lane change starts
      * \param end_lanelet The lanelet in which lane change ends
+     * 
      * \return A linestring path from start to end fit through Spline Library
      */
         lanelet::BasicLineString2d create_lanechange_path(lanelet::BasicPoint2d start, lanelet::ConstLanelet &start_lanelet,
                                                           lanelet::BasicPoint2d end, lanelet::ConstLanelet &end_lanelet);
 
-        DetailedTrajConfig compose_detailed_trajectory_config(double trajectory_time_length,
-                                                              double curve_resample_step_size,
-                                                              double minimum_speed,
-                                                              double max_accel,
-                                                              double lateral_accel_limit,
-                                                              int speed_moving_average_window_size,
-                                                              int curvature_moving_average_window_size,
-                                                              double back_distance,
-                                                              double buffer_ending_downtrack);
 
-        GeneralTrajConfig compose_general_trajectory_config(std::string trajectory_type,
-                                                            int default_downsample_ratio,
-                                                            int turn_downsample_ratio);
+    DetailedTrajConfig compose_detailed_trajectory_config(double trajectory_time_length,
+                                                            double curve_resample_step_size,
+                                                            double minimum_speed,
+                                                            double max_accel,
+                                                            double lateral_accel_limit,
+                                                            int speed_moving_average_window_size,
+                                                            int curvature_moving_average_window_size,
+                                                            double back_distance,
+                                                            double buffer_ending_downtrack);
+
+    GeneralTrajConfig compose_general_trajectory_config(std::string trajectory_type,
+                                                        int default_downsample_ratio,
+                                                        int turn_downsample_ratio);
 
     }
 }

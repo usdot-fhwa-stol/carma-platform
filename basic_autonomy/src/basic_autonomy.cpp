@@ -187,7 +187,7 @@ namespace basic_autonomy
                 tpp.yaw = yaws[i];
 
                 tpp.controller_plugin_name = "default";
-                tpp.planner_plugin_name; // = plugin_discovery_msg_.name;
+                tpp.planner_plugin_name; // = plugin_discovery_msg_.name; //Planner plugin name is filled in the tactical plugin
 
                 traj.push_back(tpp);
             }
@@ -407,8 +407,7 @@ namespace basic_autonomy
 
             log::printDoublesPerLineWithPrefix("raw_curvatures[i]: ", better_curvature);
 
-            //std::vector<double> curvatures = basic_autonomy::smoothing::moving_average_filter(better_curvature, detailed_config.curvature_moving_average_window_size, false);
-            std::vector<double> curvatures;
+            std::vector<double> curvatures = smoothing::moving_average_filter(better_curvature, detailed_config.curvature_moving_average_window_size, false);
             std::vector<double> ideal_speeds =
                 trajectory_utils::constrained_speeds_for_curvatures(curvatures, detailed_config.lateral_accel_limit);
 
@@ -460,7 +459,7 @@ namespace basic_autonomy
 
             log::printDoublesPerLineWithPrefix("postAccel[i]: ", final_actual_speeds);
 
-            //final_actual_speeds = basic_autonomy::smoothing::moving_average_filter(final_actual_speeds, detailed_config.speed_moving_average_window_size);
+            final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, detailed_config.speed_moving_average_window_size);
 
             log::printDoublesPerLineWithPrefix("post_average[i]: ", final_actual_speeds);
 
@@ -531,7 +530,7 @@ namespace basic_autonomy
         {
             std::vector<PointSpeedPair> points_and_target_speeds;
             std::unordered_set<lanelet::Id> visited_lanelets;
-
+            ROS_DEBUG_STREAM("Maneuvers to points maneuver size:"<<maneuvers.size());
             bool first = true;
             for (const auto &maneuver : maneuvers)
             {
@@ -550,8 +549,10 @@ namespace basic_autonomy
                     }
                     first = false;
                 }
+                ROS_DEBUG_STREAM("Maneuvers to points starting downtrack:"<<starting_downtrack);
+                //get lane change route
                 double ending_downtrack = lane_change_maneuver.end_dist;
-
+                ROS_DEBUG_STREAM("Maneuvers to points ending downtrack:"<<ending_downtrack);
                 //Get geometry for maneuver
                 if (starting_downtrack >= ending_downtrack)
                 {
@@ -560,10 +561,13 @@ namespace basic_autonomy
 
                 //get route geometry between starting and ending downtracks
                 std::vector<lanelet::BasicPoint2d> route_geometry = create_route_geom(starting_downtrack, stoi(lane_change_maneuver.starting_lane_id), ending_downtrack, wm);
+                ROS_DEBUG_STREAM("Route geometry size : "<<route_geometry.size());
                 lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
                 double current_downtrack = wm->routeTrackPos(state_pos).downtrack;
                 int nearest_pt_index = get_nearest_point_index(route_geometry, wm, current_downtrack);
                 int ending_pt_index = get_nearest_point_index(route_geometry, wm, ending_downtrack);
+                ROS_DEBUG_STREAM("Nearest pt index in maneuvers to points: "<< nearest_pt_index);
+                ROS_DEBUG_STREAM("Ending pt index in maneuvers to points: "<< ending_pt_index);
 
                 //find percentage of maneuver left - for yield plugin use
                 int maneuver_points_size = route_geometry.size() - ending_pt_index;
@@ -572,7 +576,11 @@ namespace basic_autonomy
                 ending_state_before_buffer.X_pos_global = route_geometry[ending_pt_index].x();
                 ending_state_before_buffer.Y_pos_global = route_geometry[ending_pt_index].y();
 
+                ROS_DEBUG_STREAM("ending_state_before_buffer_:"<<ending_state_before_buffer.X_pos_global << 
+                    ", ending_state_before_buffer_.Y_pos_global" << ending_state_before_buffer.Y_pos_global);
+
                 double route_length = wm->getRouteEndTrackPos().downtrack;
+
                 if (ending_downtrack + detailed_config.buffer_ending_downtrack < route_length)
                 {
                     ending_pt_index = get_nearest_point_index(route_geometry, wm, ending_downtrack + detailed_config.buffer_ending_downtrack);
@@ -584,6 +592,7 @@ namespace basic_autonomy
 
                 lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin() + ending_pt_index);
                 first = true;
+                ROS_DEBUG_STREAM("Future geom size:"<< future_route_geometry.size());
 
                 for (auto p : future_route_geometry)
                 {
@@ -607,9 +616,12 @@ namespace basic_autonomy
             const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time, int starting_lanelet_id, double max_speed,
             const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState ending_state_before_buffer, const DetailedTrajConfig &detailed_config)
         {
+            ROS_DEBUG_STREAM("Input points size in compose traj from centerline: "<< points.size());
             int nearest_pt_index = get_nearest_point_index(points, state);
+            ROS_DEBUG_STREAM("nearest_pt_index: "<< nearest_pt_index);
 
             std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end());
+            ROS_DEBUG_STREAM("future_points size: "<< future_points.size());
 
             //Compute yaw values from original trajectory.
             std::vector<lanelet::BasicPoint2d> future_geom_points;
@@ -617,24 +629,24 @@ namespace basic_autonomy
             split_point_speed_pairs(future_points, &future_geom_points, &final_actual_speeds);
             std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(future_geom_points);
 
+            //Compute points to local downtracks
             std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(future_geom_points);
-            //final_actual_speeds = basic_autonomy::smoothing::moving_average_filter(final_actual_speeds, detailed_config.speed_moving_average_window_size);
+            final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, detailed_config.speed_moving_average_window_size);
 
+            //Convert speeds to time
             std::vector<double> times;
             trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
             //Remove extra points
+            ROS_DEBUG_STREAM("Before removing extra buffer points, future_geom_points.size()"<< future_geom_points.size());
             int end_dist_pt_index = get_nearest_point_index(future_geom_points, ending_state_before_buffer);
-            future_geom_points.resize(end_dist_pt_index);
-
-            times.resize(end_dist_pt_index);
-            final_yaw_values.resize(end_dist_pt_index);
+            future_geom_points.resize(end_dist_pt_index + 1);
+            times.resize(end_dist_pt_index + 1);
+            final_yaw_values.resize(end_dist_pt_index + 1);
+            ROS_DEBUG_STREAM("After removing extra buffer points, future_geom_points.size():"<< future_geom_points.size());
 
             std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
                 trajectory_from_points_times_orientations(future_geom_points, times, final_yaw_values, state_time);
-
-            //TODO : fix the planner plugin name in trajectory_from_points_times_orientation -
-            //The planner plugin name should be defined in the tactical plugin
 
             return traj_points;
         }
