@@ -18,12 +18,10 @@
 #include <vector>
 #include <boost/geometry.hpp>
 #include <carma_wm/Geometry.h>
-#include <functional>
-#include <unordered_set>
 #include <ros/ros.h>
 #include <cav_msgs/VehicleState.h>
 #include <lanelet2_core/geometry/Point.h>
-#include <carma_wm/WMListener.h>
+#include <carma_wm/WorldModel.h>
 
 
 namespace basic_autonomy

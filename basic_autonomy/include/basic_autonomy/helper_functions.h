@@ -52,9 +52,12 @@ namespace waypoint_generation
      */
     int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm, double ending_downtrack);
 
-     /**
-   * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
-   */ 
+    /**
+     * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
+     * \param points Point Speed pair to split
+     * \param basic_points points vector to be filled
+     * \param speeds speeds vector to be filled
+     */ 
     void split_point_speed_pairs(const std::vector<PointSpeedPair>& points,
                                                 std::vector<lanelet::BasicPoint2d>* basic_points,
                                                 std::vector<double>* speeds);
