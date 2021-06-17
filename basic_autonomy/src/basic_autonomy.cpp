@@ -663,9 +663,7 @@ namespace basic_autonomy
             int total_points = std::min(centerline_start_lane.size(), centerline_end_lane.size());
             double delta_step = 1.0 / total_points;
 
-            centerline_points.push_back(start_lane_pt);
-
-            for (int i = 1; i < total_points; i++)
+            for (int i = 0; i < total_points; i++)
             {
                 lanelet::BasicPoint2d current_position;
                 start_lane_pt = centerline_start_lane[i];
@@ -684,7 +682,7 @@ namespace basic_autonomy
             }
 
             lanelet::BasicLineString2d lc_route;
-            //lc_route.push_back(start);
+
             double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
             for (int i = 0; i < centerline_points.size(); i++)
             {
@@ -692,7 +690,7 @@ namespace basic_autonomy
                 lc_route.push_back(p);
                 scaled_steps_along_curve += 1.0 / total_points;
             }
-            lc_route.push_back(end);
+            lc_route.push_back(centerline_end_lane.back()); // at 1.0 scaled steps
 
             return lc_route;
         }
