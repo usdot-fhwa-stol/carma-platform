@@ -813,7 +813,7 @@ namespace platoon_strategic
             status_msg.size = pm_.getTotalPlatooningSize();
             status_msg.size_limit = config_.maxPlatoonSize;
 
-            PlatoonMember platoon_leader = pm_.leaderID;//pm_.getLeader();
+            PlatoonMember platoon_leader = pm_.getLeader();
             ROS_DEBUG_STREAM("platoon_leader " << platoon_leader.staticId);
             if (platoon_leader.staticId != "")
             {
