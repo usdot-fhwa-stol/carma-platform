@@ -52,11 +52,6 @@ FROM base-image AS install
 RUN mkdir ~/carma_ws
 COPY --from=source-code --chown=carma /home/carma/src /home/carma/carma_ws/src
 
-# add astuff messages
-WORKDIR /home/carma/carma_ws/src
-RUN git clone https://github.com/astuff/astuff_sensor_msgs -b melodic
-WORKDIR ~
-
 RUN ~/carma_ws/src/carma-platform/docker/install.sh
 
 # /////////////////////////////////////////////////////////////////////////////
