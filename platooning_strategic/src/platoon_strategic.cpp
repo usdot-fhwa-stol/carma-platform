@@ -235,6 +235,7 @@ namespace platoon_strategic
         if (pm_.current_platoon_state == PlatoonState::STANDBY)
         {
             pm_.current_platoon_state = PlatoonState::LEADER;
+            pm_.currentPlatoonID = boost::uuids::to_string(boost::uuids::random_generator()());
             ROS_DEBUG_STREAM("change the state from standby to leader at start-up");
         }
 
