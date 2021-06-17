@@ -493,7 +493,7 @@ namespace platoon_strategic
     MobilityRequestResponse PlatoonStrategicPlugin::handle_mob_req(const cav_msgs::MobilityRequest& msg)
     {
         MobilityRequestResponse mobility_response;
-        mobility_response.plan_id = pm_.currentPlatoonID;
+        
 
         if (pm_.current_platoon_state == PlatoonState::LEADER)
         {
@@ -525,6 +525,7 @@ namespace platoon_strategic
         cav_msgs::MobilityResponse response;
         response.header.sender_id = config_.vehicle_id;
         response.header.recipient_id = msg.header.sender_id;
+        response.header.plan_id = pm_.currentPlatoonID;
         response.header.sender_bsm_id = host_bsm_id_;
         response.header.timestamp = ros::Time::now().toNSec()/1000000;
         MobilityRequestResponse req_response = handle_mob_req(msg);
