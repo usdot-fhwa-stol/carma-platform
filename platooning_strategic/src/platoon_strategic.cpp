@@ -759,6 +759,8 @@ namespace platoon_strategic
                         // TODO: update these accordingly
                         pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
                         candidatestateStartTime = ros::Time::now().toNSec()/1000000;
+                        targetPlatoonId = potentialNewPlatoonId;
+                        pm_.targetLeaderId = pm_.current_plan.peerId;
                         // plugin.setState(new CandidateFollowerState(plugin, log, pluginServiceLocator, currentPlan.peerId, potentialNewPlatoonId, this.trajectoryEndLocation));
                         // pluginServiceLocator.getArbitratorService().requestNewPlan(this.trajectoryEndLocation);
                 }
@@ -811,7 +813,7 @@ namespace platoon_strategic
             status_msg.size = pm_.getTotalPlatooningSize();
             status_msg.size_limit = config_.maxPlatoonSize;
 
-            PlatoonMember platoon_leader = pm_.getLeader();
+            PlatoonMember platoon_leader = pm_.leaderID;//pm_.getLeader();
             ROS_DEBUG_STREAM("platoon_leader " << platoon_leader.staticId);
             if (platoon_leader.staticId != "")
             {
