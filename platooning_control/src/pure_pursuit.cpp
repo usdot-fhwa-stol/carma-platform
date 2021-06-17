@@ -56,7 +56,7 @@ namespace platoon_control
 		
 		double steering = atan(config_.wheelbase * kappa);
 		ROS_DEBUG_STREAM("calculated steering angle: " << steering);
-		double filtered_steering = lowPassfilter(config_.lowpass_gain, steering, prev_steering);
+		double filtered_steering = lowPassfilter(config_.lowpass_gain, prev_steering, steering);
 		ROS_DEBUG_STREAM("filtered steering: " << filtered_steering);
 		if (std::isnan(filtered_steering)) filtered_steering = prev_steering;
 		prev_steering = filtered_steering;
@@ -64,7 +64,7 @@ namespace platoon_control
 		
 		double ang_vel = velocity_ * kappa;
 		ROS_DEBUG_STREAM("calculated angular velocity: " << ang_vel);
-		double filtered_ang_vel = lowPassfilter(config_.lowpass_gain, ang_vel, prev_ang_vel);
+		double filtered_ang_vel = lowPassfilter(config_.lowpass_gain, prev_ang_vel, ang_vel);
 		ROS_DEBUG_STREAM("filtered steering: " << filtered_ang_vel);
 		prev_ang_vel = filtered_ang_vel;
 		if (std::isnan(filtered_ang_vel)) filtered_ang_vel = prev_ang_vel;
@@ -85,7 +85,9 @@ namespace platoon_control
 		tf::Point tf_p = transform * p;
 		geometry_msgs::Point tf_point_msg;
 		pointTFToMsg(tf_p, tf_point_msg);
-		double sin_alpha = tf_point_msg.y;
+		double vec_mag = std::sqrt(tf_point_msg.y*tf_point_msg.y + tf_point_msg.x*tf_point_msg.x);
+		ROS_DEBUG_STREAM("relative vector mag: " << vec_mag);
+		double sin_alpha = tf_point_msg.y/vec_mag;
 		return sin_alpha;
 	}
 
