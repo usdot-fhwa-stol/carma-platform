@@ -493,6 +493,7 @@ namespace platoon_strategic
     MobilityRequestResponse PlatoonStrategicPlugin::handle_mob_req(const cav_msgs::MobilityRequest& msg)
     {
         MobilityRequestResponse mobility_response;
+        mobility_response.plan_id = pm_.currentPlatoonID;
 
         if (pm_.current_platoon_state == PlatoonState::LEADER)
         {
