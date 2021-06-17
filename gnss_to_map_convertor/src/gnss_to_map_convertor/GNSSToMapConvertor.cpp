@@ -15,12 +15,20 @@
  */
 
 #include <gnss_to_map_convertor/GNSSToMapConvertor.h>
+#include <wgs84_utils/proj_tools.h>
+#include <lanelet2_core/geometry/Point.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace gnss_to_map_convertor
 {
 GNSSToMapConvertor::GNSSToMapConvertor(PosePubCallback pose_pub, TransformLookupCallback tf_lookup,
-                                       std::string map_frame_id, std::string base_link_frame_id)
-  : pose_pub_(pose_pub), tf_lookup_(tf_lookup), map_frame_id_(map_frame_id), base_link_frame_id_(base_link_frame_id)
+                                       std::string map_frame_id, std::string base_link_frame_id,
+                                       std::string heading_frame_id)
+  : pose_pub_(pose_pub)
+  , tf_lookup_(tf_lookup)
+  , map_frame_id_(map_frame_id)
+  , base_link_frame_id_(base_link_frame_id)
+  , heading_frame_id_(heading_frame_id)
 {
 }
 
@@ -29,14 +37,41 @@ void GNSSToMapConvertor::gnssFixCb(const gps_common::GPSFixConstPtr& fix_msg)
   if (!baselink_in_sensor_)  // Extract the assumed static transform between baselink and the sensor if it was not
                              // already optained
   {
-    baselink_in_sensor_ = tf_lookup_(fix_msg->header.frame_id, base_link_frame_);
-
-    if (!baselink_in_sensor_)  // Failed to get transform
+    auto tf_msg = tf_lookup_(fix_msg->header.frame_id, base_link_frame_id_);
+    if (!tf_msg)  // Failed to get transform
     {
       ROS_WARN_STREAM("Ignoring fix message: Could not locate static transform between "
-                      << fix_msg->header.frame_id << " and " << base_link_frame_);
+                      << fix_msg->header.frame_id << " and " << base_link_frame_id_);
       return;
     }
+
+    tf2::Transform tf;
+    tf2::convert(tf_msg.get().transform, tf);
+
+    baselink_in_sensor_ = tf;
+  }
+
+  if (!sensor_in_ned_heading_rotation_)  // Extract the assumed static transform between heading frame and the position
+                                         // sensor frame if it was not already optained
+  {
+    auto tf_msg = tf_lookup_(fix_msg->header.frame_id, heading_frame_id_);
+    if (!tf_msg)  // Failed to get transform
+    {
+      ROS_WARN_STREAM("Ignoring fix message: Could not locate static transform between " << heading_frame_id_ << " and "
+                                                                                         << fix_msg->header.frame_id);
+      return;
+    }
+
+    tf2::Transform tf;
+    tf2::convert(tf_msg.get().transform, tf);
+
+    if (tf.getOrigin().x() != 0.0 || tf.getOrigin().y() != 0.0 || tf.getOrigin().z() != 0.0)
+    {
+      ROS_WARN_STREAM("Heading frame does not have rotation only transform with sensor frame. The translation will not "
+                      "be handled by the GNSS convertor");
+    }
+
+    sensor_in_ned_heading_rotation_ = tf.getRotation();
   }
 
   if (!map_projector_ || !ned_in_map_rotation_)  // Check if map projection is available
@@ -45,10 +80,11 @@ void GNSSToMapConvertor::gnssFixCb(const gps_common::GPSFixConstPtr& fix_msg)
     return;
   }
 
-  geometry_msgs::PoseWithCovarianceStamped pose_msg = poseFromGnss(
-      baselink_in_sensor_.get(), map_projection_.get(), ned_in_map_rotation_.get(), fix_msg);  // Convert to pose
+  geometry_msgs::PoseWithCovarianceStamped pose_msg =
+      poseFromGnss(baselink_in_sensor_.get(), sensor_in_ned_heading_rotation_.get(), *map_projector_,
+                   ned_in_map_rotation_.get(), fix_msg);  // Convert to pose
 
-  geometry_msgs::PoseStamped msg; // TODO until covariance is added drop it from the output
+  geometry_msgs::PoseStamped msg;  // TODO until covariance is added drop it from the output
   msg.header = pose_msg.header;
   msg.header.frame_id = map_frame_id_;
   msg.pose = pose_msg.pose.pose;
@@ -58,21 +94,21 @@ void GNSSToMapConvertor::gnssFixCb(const gps_common::GPSFixConstPtr& fix_msg)
 
 void GNSSToMapConvertor::geoReferenceCallback(const std_msgs::String& geo_ref)
 {
-  map_projector_(geo_ref.data);  // Build projector from proj string
+  // lanelet::projection::LocalFrameProjector temp_projector(geo_ref.data.c_str());
+  map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(
+      geo_ref.data.c_str());  // Build projector from proj string
 
-  ROS_INFO_STREAM("Recieved map georeference: " << geo_ref.data.get());
+  ROS_INFO_STREAM("Recieved map georeference: " << geo_ref.data);
 
-  std::string axis =
-      wgs84_utils::proj_tools::getAxisFromProjString(geo_ref.data.get());  // Extract axis for orientation calc
+  std::string axis = wgs84_utils::proj_tools::getAxisFromProjString(geo_ref.data);  // Extract axis for orientation calc
 
   ROS_INFO_STREAM("Extracted Axis: " << axis);
 
-  ned_in_map_rotation_ =
-      wgs84_utils::proj_tools::getRotationFromNEDFromProjAxis(axis);  // Extract map rotation from axis
+  ned_in_map_rotation_ = wgs84_utils::proj_tools::getRotationOfNEDFromProjAxis(axis);  // Extract map rotation from axis
 
   ROS_DEBUG_STREAM("Extracted NED in Map Rotation (x,y,z,w) : ( "
-                   << ned_in_map_rotation_.x() << ", " << ned_in_map_rotation_.y() << ", " << ned_in_map_rotation_.z()
-                   << ", " << ned_in_map_rotation_.w());
+                   << ned_in_map_rotation_.get().x() << ", " << ned_in_map_rotation_.get().y() << ", "
+                   << ned_in_map_rotation_.get().z() << ", " << ned_in_map_rotation_.get().w());
 }
 
 boost::optional<tf2::Quaternion> GNSSToMapConvertor::getNedInMapRotation()
@@ -80,23 +116,28 @@ boost::optional<tf2::Quaternion> GNSSToMapConvertor::getNedInMapRotation()
   return ned_in_map_rotation_;
 }
 
-geometry_msgs::PoseWithCovarianceStamped poseFromGnss(const tf2::Transform& baselink_in_sensor,
-                                                      const lanelet::projection::LocalFrameProjector& projector,
-                                                      const tf2::Quaternion& ned_in_map_rotation,
-                                                      const gps_common::GPSFixConstPtr& fix_msg)
+std::shared_ptr<lanelet::projection::LocalFrameProjector> GNSSToMapConvertor::getMapProjector()
+{
+  return map_projector_;
+}
+
+geometry_msgs::PoseWithCovarianceStamped GNSSToMapConvertor::poseFromGnss(
+    const tf2::Transform& baselink_in_sensor, const tf2::Quaternion& sensor_in_ned_heading_rotation,
+    const lanelet::projection::LocalFrameProjector& projector, const tf2::Quaternion& ned_in_map_rotation,
+    const gps_common::GPSFixConstPtr& fix_msg)
 {
   //// Convert the position information into the map frame using the proj library
   const double lat = fix_msg->latitude * wgs84_utils::DEG2RAD;
   const double lon = fix_msg->longitude * wgs84_utils::DEG2RAD;
   const double alt = fix_msg->altitude;
 
-  lanelet2::BasicPoint3d map_point = projector.forward({ lat, lon, alt });
+  lanelet::BasicPoint3d map_point = projector.forward({ lat, lon, alt });
 
-  if (fabs(map_point).x() > 10000.0 || fabs(map_point).y() > 10000.0)
+  if (fabs(map_point.x()) > 10000.0 || fabs(map_point.y()) > 10000.0)
   {  // Above 10km from map origin earth curvature will start to have a negative impact on system performance
 
     ROS_WARN_STREAM("Distance from map origin is larger than supported by system assumptions. Strongly advise "
-                    "alternative map origin be used. ")
+                    "alternative map origin be used. ");
   }
 
   //// Convert the orientation information into the map frame
@@ -106,12 +147,14 @@ geometry_msgs::PoseWithCovarianceStamped poseFromGnss(const tf2::Transform& base
   // same result (as far as we are concered).
 
   tf2::Quaternion R_m_n(ned_in_map_rotation);  // Rotation of NED frame in map frame
-  tf2::Quaternion R_n_s;                       // Rotation of sensor in NED frame
-  R_n_s.setRPY(0, 0, fix_msg->track * wgs84_utils::DEG2RAD);
+  tf2::Quaternion R_n_h;                       // Rotation of sensor heading report in NED frame
+  R_n_h.setRPY(0, 0, fix_msg->track * wgs84_utils::DEG2RAD);
+
+  tf2::Quaternion R_h_s = sensor_in_ned_heading_rotation;  // Rotation of heading report in sensor frame
 
   tf2::Quaternion R_m_s =
-      R_m_n * R_n_s;  // Rotation of sensor in map frame under assumption that distance from map origin is sufficiently
-                      // small so as to ignore local changes in NED orientation
+      R_m_n * R_n_h * R_h_s;  // Rotation of sensor in map frame under assumption that distance from map origin is
+                              // sufficiently small so as to ignore local changes in NED orientation
 
   tf2::Transform T_m_s(R_m_s,
                        tf2::Vector3(map_point.x(), map_point.y(), map_point.z()));  // Reported position and orientation

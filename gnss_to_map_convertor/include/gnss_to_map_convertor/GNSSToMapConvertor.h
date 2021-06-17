@@ -23,8 +23,13 @@
 #include <novatel_gps_msgs/NovatelDualAntennaHeading.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <std_msgs/String.h>
 #include <gps_common/GPSFix.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
 #include <boost/optional.hpp>
+#include <memory>
 
 /**
  * \class GNSSToMapConvertor
@@ -53,11 +58,12 @@ public:
    * \param tf_lookup A function which will lookup the most recent transform between the two provided frames
    * \param map_frame_id The frame id of the frame which the output pose should be considered in
    * \param base_link_frame_id The frame id of the frame which the output pose defines the position and orientation of
+   * \param heading_frame_id The frame id of the frame which the heading report aligns with an NED frame
    * in the map frame.
    *
    */
   GNSSToMapConvertor(PosePubCallback pose_pub, TransformLookupCallback tf_lookup, std::string map_frame_id,
-                     std::string base_link_frame_id);
+                     std::string base_link_frame_id, std::string heading_frame_id);
 
   /**
    * \brief GNSS Fix callback which will publish a pose representing that fix in the map frame if the required
@@ -84,6 +90,11 @@ public:
   boost::optional<tf2::Quaternion> getNedInMapRotation();
 
   /**
+   * \brief Get the projector built from the provided georeference via the callback
+   */
+  std::shared_ptr<lanelet::projection::LocalFrameProjector> getMapProjector();
+
+  /**
    * \brief Converts a provided GNSS fix message into a pose message for the map frame describibed by the provided
    * projector
    *
@@ -96,6 +107,7 @@ public:
    *
    * \param baselink_in_sensor A transform describing the location of the desried output frame (baselink) with respect
    * to the GNSS sensor frame.
+   * \param sensor_in_ned_heading_rotation A rotation describing the orientation of the heading frame with respect to the position sensor frame
    * \param projector A projector using the proj library which can convert lat/lon points into the map frame projection
    * \param ned_in_map_rotation A rotation describibing the orientation of an NED frame located at the map origin with
    * respect to the map frame. \param fix_msg The GNSS message to be converted into the pose in the map frame
@@ -104,6 +116,7 @@ public:
    * covariance which is not currently included
    */
   geometry_msgs::PoseWithCovarianceStamped poseFromGnss(const tf2::Transform& baselink_in_sensor,
+                                                        const tf2::Quaternion& sensor_in_ned_heading_rotation,
                                                         const lanelet::projection::LocalFrameProjector& projector,
                                                         const tf2::Quaternion& ned_in_map_rotation,
                                                         const gps_common::GPSFixConstPtr& fix_msg);
@@ -113,14 +126,21 @@ private:
   TransformLookupCallback tf_lookup_;  // Function which accesses a buffer of transforms for query lookups
   std::string map_frame_id_;           // The frame id of the map which the output pose will be in.
   std::string base_link_frame_id_;     // The frame id of the final reported pose
+  std::string heading_frame_id_;       // The frame id of the heading frame
 
   // Rotation describing the orientation of an NED frame relative to the map frame located at the map origin.
   // This is derived from the received georeference
   boost::optional<tf2::Quaternion> ned_in_map_rotation_;
-  boost::optional<lanelet::projection::LocalFrameProjector> map_projector_;
 
-  boost::optiona<tf2::Transform> baselink_in_sensor_;  // A transform describing the relation of the baselink frame with
-                                                       // the frame provided by the gnss message
-}
+  // Rotation describing orientation of sensor in heading frame
+  boost::optional<tf2::Quaternion> sensor_in_ned_heading_rotation_
+  ;
+  std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;  // Must be shared pointer instead of
+                                                                             // optional since for some reason optional
+                                                                             // does not work with this class
+
+  boost::optional<tf2::Transform> baselink_in_sensor_;  // A transform describing the relation of the baselink frame
+                                                        // with the frame provided by the gnss message
+};
 
 };  // namespace gnss_to_map_convertor
