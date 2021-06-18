@@ -81,6 +81,9 @@ public:
     // Fix Subscriber
     ros::Subscriber fix_sub_ = cnh.subscribe("gnss_fix_fused", 2, &GNSSToMapConvertor::gnssFixCb, &convertor);
 
+    // Georeference subsciber
+    ros::Subscriber geo_sub = cnh.subscribe("georeference", 1, &GNSSToMapConvertor::geoReferenceCallback, &convertor);
+
     // Spin
     cnh.spin();
     return 0;
