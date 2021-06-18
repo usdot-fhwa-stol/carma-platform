@@ -131,7 +131,8 @@ namespace route {
         // only allow activate a new route in route selection state
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::SELECTION)
         {
-        	ROS_DEBUG_STREAM("Valid state proceeding with selection");
+            ROS_DEBUG_STREAM("Valid state proceeding with selection");
+        	
             // entering to routing state once destinations are picked
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_SELECTED);
             publish_route_event(cav_msgs::RouteEvent::ROUTE_SELECTED);
@@ -164,6 +165,15 @@ namespace route {
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
             }
+
+            if (!world_model_ || !world_model_->getMap()) {
+                ROS_ERROR_STREAM("World model has not been initialized.");
+                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
+                return true;
+            }
+            
             // convert points in 2d to map frame
             destination_points_in_map_ = lanelet::utils::transform(destination_points, [](auto a) { return lanelet::traits::to2D(a); });
 
