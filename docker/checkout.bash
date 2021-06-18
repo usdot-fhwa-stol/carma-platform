@@ -40,10 +40,17 @@ cd ${dir}/src
 
 # clone carma repos
 
-git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch noetic/develop
-git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch noetic/develop
-git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch noetic/develop
-git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch noetic/develop
+if [[ "$BRANCH" = "develop" ]]; then
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch noetic/develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch noetic/develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch noetic/develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch noetic/develop
+else
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch noetic/release
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch noetic/release
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch noetic/release
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch noetic/release
+fi
 
 # add astuff messages
 git clone https://github.com/astuff/astuff_sensor_msgs -b melodic
