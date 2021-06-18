@@ -99,6 +99,11 @@ namespace bsm_generator
         void steerWheelAngleCallback(const std_msgs::Float64ConstPtr& msg);
         void brakeCallback(const std_msgs::Float64ConstPtr& msg);
         void headingCallback(const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& msg);
+
+        /**
+         * \brief Callback for map projection string to define lat/lon -> map conversion
+         * \brief msg The proj string defining the projection.
+         */ 
         void georeferenceCallback(const std_msgs::StringConstPtr& msg);
 
         // callback for the timer
