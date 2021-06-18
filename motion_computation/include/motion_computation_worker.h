@@ -69,7 +69,6 @@ class MotionComputationWorker
   void setProcessNoiseMax(double noise_max);
   void setConfidenceDropRate(double drop_rate);
   void setExternalObjectPredictionMode(int external_object_prediction_mode);
-  void setECEFToMapTransform(const tf2::Transform& map_in_earth);
 
   //callbacks
   void mobilityPathCallback(const cav_msgs::MobilityPath& msg);
@@ -151,8 +150,7 @@ class MotionComputationWorker
   cav_msgs::ExternalObjectList mobility_path_list_;
 
   std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
-  // ECEF to map transform
-  tf2::Transform map_in_earth_;
+
 };
 
 }//object

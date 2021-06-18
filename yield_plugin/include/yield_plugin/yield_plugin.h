@@ -27,7 +27,6 @@
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <boost/geometry.hpp>
-#include <tf2_ros/transform_listener.h>
 #include <carma_wm/Geometry.h>
 #include <cav_srvs/PlanTrajectory.h>
 #include <carma_wm/WMListener.h>
@@ -152,10 +151,9 @@ public:
    * \brief convert a carma trajectory from ecef frame to map frame
    * ecef trajectory consists of the point and a set of offsets with reference to the point
    * \param ecef_trajectory carma trajectory (ecef frame)
-   * \param tf translate frame 
    * \return vector of 2d points in map frame
    */
-  std::vector<lanelet::BasicPoint2d> convert_eceftrajectory_to_mappoints(const cav_msgs::Trajectory& ecef_trajectory, const geometry_msgs::TransformStamped& tf) const;
+  std::vector<lanelet::BasicPoint2d> convert_eceftrajectory_to_mappoints(const cav_msgs::Trajectory& ecef_trajectory) const;
   
   /**
    * \brief convert a point in ecef frame (in cm) into map frame (in meters)
@@ -163,7 +161,7 @@ public:
    * \param map_in_earth translate frame 
    * \return 2d point in map frame
    */
-  lanelet::BasicPoint2d ecef_to_map_point(const cav_msgs::LocationECEF& ecef_point, const tf2::Transform& map_in_earth) const;
+  lanelet::BasicPoint2d ecef_to_map_point(const cav_msgs::LocationECEF& ecef_point) const;
 
   /**
    * \brief compose a mobility response message
@@ -238,8 +236,7 @@ private:
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
   MobilityResponseCB mobility_response_publisher_;
   LaneChangeStatusCB lc_status_publisher_;
-  // ros::Publisher lanechange_status_pub_;
-  geometry_msgs::TransformStamped tf_;
+
 
   // flag to show if it is possible for the vehicle to accept the cooperative request
   bool cooperative_request_acceptable_ = false;
@@ -263,10 +260,6 @@ private:
   std::string host_bsm_id_;
 
   std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
-
-  // TF listenser
-  tf2_ros::Buffer tf2_buffer_;
-  std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
 
   std::string bsmIDtoString(cav_msgs::BSMCoreData bsm_core)
   {

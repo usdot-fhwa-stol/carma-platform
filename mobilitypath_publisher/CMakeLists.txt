@@ -28,8 +28,6 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   cav_msgs
   carma_utils
-  tf2_ros
-  tf2
   lanelet2_extension
 )
 
@@ -41,7 +39,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_msgs carma_utils tf2_ros tf2 lanelet2_extension
+  CATKIN_DEPENDS roscpp std_msgs cav_msgs carma_utils lanelet2_extension
 )
 
 ###########

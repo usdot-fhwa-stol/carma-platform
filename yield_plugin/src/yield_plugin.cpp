@@ -52,20 +52,6 @@ namespace yield_plugin
     plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";   
   }
 
-  void YieldPlugin::lookupECEFtoMapTransform()
-  {
-    tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
-    tf2_buffer_.setUsingDedicatedThread(true);
-    try
-    {
-      tf_ = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
-    }
-    catch (const tf2::TransformException &ex)
-    {
-      ROS_WARN("%s", ex.what());
-    }
-  }
-
   bool YieldPlugin::onSpin() 
   {
     plugin_discovery_publisher_(plugin_discovery_msg_);
@@ -93,15 +79,12 @@ namespace yield_plugin
     return intersection_points;
   }
 
-  std::vector<lanelet::BasicPoint2d> YieldPlugin::convert_eceftrajectory_to_mappoints(const cav_msgs::Trajectory& ecef_trajectory, const geometry_msgs::TransformStamped& tf) const
+  std::vector<lanelet::BasicPoint2d> YieldPlugin::convert_eceftrajectory_to_mappoints(const cav_msgs::Trajectory& ecef_trajectory) const
   {
     cav_msgs::TrajectoryPlan trajectory_plan;
     std::vector<lanelet::BasicPoint2d> map_points;
 
-    tf2::Stamped<tf2::Transform> transform;
-    tf2::fromMsg(tf, transform);
-
-    lanelet::BasicPoint2d first_point = ecef_to_map_point(ecef_trajectory.location, transform);
+    lanelet::BasicPoint2d first_point = ecef_to_map_point(ecef_trajectory.location);
 
     map_points.push_back(first_point);
     auto curr_point = ecef_trajectory.location;
@@ -113,7 +96,7 @@ namespace yield_plugin
       curr_point.ecef_y += ecef_trajectory.offsets[i].offset_y;
       curr_point.ecef_z += ecef_trajectory.offsets[i].offset_z;
 
-      offset_point = ecef_to_map_point(curr_point, transform);
+      offset_point = ecef_to_map_point(curr_point);
       
       map_points.push_back(offset_point);
     }
@@ -121,21 +104,16 @@ namespace yield_plugin
     return map_points;
   }
 
-  lanelet::BasicPoint2d YieldPlugin::ecef_to_map_point(const cav_msgs::LocationECEF& ecef_point, const tf2::Transform& map_in_earth) const
+  lanelet::BasicPoint2d YieldPlugin::ecef_to_map_point(const cav_msgs::LocationECEF& ecef_point) const
   {
-    // convert input point to transform
-    tf2::Transform point_in_earth;
-    tf2::Quaternion no_rotation(0, 0, 0, 1);
-    tf2::Vector3 input_point {(double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0}; //m to cm
-    point_in_earth.setOrigin(input_point);
-    point_in_earth.setRotation(no_rotation);
-    // convert to map frame by (T_e_m)^(-1) * T_e_p
-    auto point_in_map = map_in_earth.inverse() * point_in_earth;
-    lanelet::BasicPoint2d output {
-      point_in_map.getOrigin().getX(),
-      point_in_map.getOrigin().getY()};
 
-    return output;
+    if (!map_projector_) {
+        throw std::invalid_argument("No map projector available for ecef conversion");
+    }
+      
+    lanelet::BasicPoint3d map_point = map_projector_->projectECEF( { (double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0 } , 1);
+    
+    return lanelet::traits::to2D(map_point);
   } 
     
   
@@ -166,6 +144,10 @@ namespace yield_plugin
     cav_msgs::LaneChangeStatus lc_status_msg;
     if (incoming_request.strategy == "carma/cooperative-lane-change")
     {
+      if (!map_projector_) {
+        ROS_ERROR_STREAM("Cannot process mobility request as map projection is not yet set!");
+        return;
+      }
       if (incoming_request.plan_type.type == cav_msgs::PlanType::CHANGE_LANE_LEFT || incoming_request.plan_type.type == cav_msgs::PlanType::CHANGE_LANE_RIGHT)
       {
         ROS_DEBUG_STREAM("Cooperative Lane Change Request Received");
@@ -201,7 +183,7 @@ namespace yield_plugin
 
         std::vector<lanelet::BasicPoint2d> req_traj_plan = {};
 
-        req_traj_plan = convert_eceftrajectory_to_mappoints(incoming_trajectory, tf_);
+        req_traj_plan = convert_eceftrajectory_to_mappoints(incoming_trajectory);
 
         double req_expiration_sec = (double)incoming_request.expiration;
         double current_time_sec = ros::Time::now().toSec();

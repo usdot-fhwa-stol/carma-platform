@@ -151,13 +151,11 @@ void MotionComputationWorker::setExternalObjectPredictionMode(int external_objec
   external_object_prediction_mode_ = static_cast<MotionComputationMode>(external_object_prediction_mode);
 }
 
-void MotionComputationWorker::setECEFToMapTransform(const tf2::Transform& map_in_earth)
-{
-  map_in_earth_ = map_in_earth;
-}
-
 void MotionComputationWorker::mobilityPathCallback(const cav_msgs::MobilityPath& msg)
 {
+  if (!map_projector_) {
+    ROS_DEBUG_STREAM("Map projection not available yet so ignoring mobility path messages");
+  }
   mobility_path_list_.objects.push_back(mobilityPathToExternalObject(msg));
 }
 
@@ -403,14 +401,13 @@ cav_msgs::ExternalObject MotionComputationWorker::matchAndInterpolateTimeStamp(c
 
 tf2::Vector3 MotionComputationWorker::transform_to_map_frame(const tf2::Vector3& ecef_point) const
 {
-  tf2::Transform point_in_earth;
-  tf2::Quaternion no_rotation(0, 0, 0, 1);
-
-  point_in_earth.setOrigin(ecef_point);
-  point_in_earth.setRotation(no_rotation);
-  // convert to map frame by (T_e_m)^(-1) * T_e_p
-  auto point_in_map = map_in_earth_.inverse() * point_in_earth;
-  return point_in_map.getOrigin(); //return point in map frame
+  if (!map_projector_) {
+      throw std::invalid_argument("No map projector available for ecef conversion");
+  }
+    
+  lanelet::BasicPoint3d map_point = map_projector_->projectECEF( { ecef_point.x(),  ecef_point.y(), ecef_point.z() } , 1);
+  
+  return tf2::Vector3(map_point.x(), map_point.y(), map_point.z());
 }
 
 }  // namespace object

@@ -65,7 +65,6 @@ namespace mobilitypath_visualizer {
         cav_mob_path_sub_ = nh_->subscribe("incoming_mobility_path", 1, &MobilityPathVisualizer::callbackMobilityPath, this);
         georeference_sub_ = nh_->subscribe("georeference", 1, &MobilityPathVisualizer::georeferenceCallback, this);
 
-        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
     }
 
     void MobilityPathVisualizer::georeferenceCallback(const std_msgs::StringConstPtr& msg) 
@@ -91,31 +90,29 @@ namespace mobilitypath_visualizer {
             return;
         }
         latest_cav_mob_path_msg_[msg.header.sender_id] = msg;
-        try
-        {
-            tf2::convert(tf2_buffer_.lookupTransform("earth", "map", ros::Time(0)).transform, map_in_earth_); 
-            MarkerColor cav_color;
-            if (msg.header.sender_id.compare(host_id_) ==0)
-            {
-                cav_color.green = 1.0;
-                host_marker_ = composeVisualizationMarker(msg,cav_color, map_in_earth_);
-                host_marker_received_ = true;
-                ROS_DEBUG_STREAM("Composed host marker successfuly!");
-            }
-            else
-            {
-                cav_color.blue = 1.0;
-                cav_markers_.push_back(composeVisualizationMarker(msg,cav_color, map_in_earth_));
-                ROS_DEBUG_STREAM("Composed cav marker successfuly! with sender_id: " << msg.header.sender_id);
-            }
+
+        if (!map_projector_) {
+            ROS_DEBUG_STREAM("Cannot visualize mobility path as map projection not yet available");
         }
-        catch (const tf2::TransformException &ex)
+
+        MarkerColor cav_color;
+        if (msg.header.sender_id.compare(host_id_) ==0)
         {
-            ROS_WARN("%s", ex.what());
+            cav_color.green = 1.0;
+            host_marker_ = composeVisualizationMarker(msg,cav_color);
+            host_marker_received_ = true;
+            ROS_DEBUG_STREAM("Composed host marker successfuly!");
         }
+        else
+        {
+            cav_color.blue = 1.0;
+            cav_markers_.push_back(composeVisualizationMarker(msg,cav_color));
+            ROS_DEBUG_STREAM("Composed cav marker successfuly! with sender_id: " << msg.header.sender_id);
+        }
+
     }
 
-    visualization_msgs::MarkerArray MobilityPathVisualizer::composeVisualizationMarker(const cav_msgs::MobilityPath& msg, const MarkerColor& color, const tf2::Transform& map_in_earth)
+    visualization_msgs::MarkerArray MobilityPathVisualizer::composeVisualizationMarker(const cav_msgs::MobilityPath& msg, const MarkerColor& color)
     {
         visualization_msgs::MarkerArray output;
         
@@ -188,20 +185,18 @@ namespace mobilitypath_visualizer {
         return output;
     }
 
-    geometry_msgs::Point MobilityPathVisualizer::ECEFToMapPoint(const cav_msgs::LocationECEF& ecef_point, const tf2::Transform& map_in_earth) const
+    geometry_msgs::Point MobilityPathVisualizer::ECEFToMapPoint(const cav_msgs::LocationECEF& ecef_point) const
     {
-        geometry_msgs::Point output;
-        // convert input point to transform
-        tf2::Transform point_in_earth;
-        tf2::Quaternion no_rotation(0, 0, 0, 1);
-        tf2::Vector3 input_point {(double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0}; //m to cm
-        point_in_earth.setOrigin(input_point);
-        point_in_earth.setRotation(no_rotation);
-        // convert to map frame by (T_e_m)^(-1) * T_e_p
-        auto point_in_map = map_in_earth.inverse() * point_in_earth;
-        output.x = point_in_map.getOrigin().getX();
-        output.y = point_in_map.getOrigin().getY();
-        output.z = point_in_map.getOrigin().getZ();
+
+        if (!map_projector_) {
+            throw std::invalid_argument("No map projector available for ecef conversion");
+        }
+        geometry_msgs::Point output   
+        
+        lanelet::BasicPoint3d map_point = map_projector_->projectECEF( { (double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0 } , 1);
+        output.x = map_point.x();
+        output.y = map_point.y();
+        output.z = map_point.z();
 
         return output;
     } 

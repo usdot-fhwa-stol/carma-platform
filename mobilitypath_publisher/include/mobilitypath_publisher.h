@@ -19,7 +19,6 @@
 #include <vector>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <tf2_ros/transform_listener.h>
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <cav_msgs/TrajectoryPlan.h>
@@ -47,7 +46,7 @@ namespace mobilitypath_publisher
         // local copy of pose
         boost::shared_ptr<geometry_msgs::PoseStamped const> current_pose_;
 
-        cav_msgs::MobilityPath mobilityPathMessageGenerator(const cav_msgs::TrajectoryPlan& trajectory_plan, const geometry_msgs::TransformStamped& tf);
+        cav_msgs::MobilityPath mobilityPathMessageGenerator(const cav_msgs::TrajectoryPlan& trajectory_plan);
         
 
     private:
@@ -79,10 +78,6 @@ namespace mobilitypath_publisher
 
         std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
-        // TF listenser
-        tf2_ros::Buffer tf2_buffer_;
-        std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
-
         // BSM Message
         cav_msgs::BSMCoreData bsm_core_;
 
@@ -104,11 +99,11 @@ namespace mobilitypath_publisher
         cav_msgs::MobilityHeader composeMobilityHeader(uint64_t time);
 
         // Convert Trajectory Plan to (Mobility) Trajectory
-        cav_msgs::Trajectory TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const;
+        cav_msgs::Trajectory TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points) const;
 
     
         // Convert Trajectory Point to ECEF Transform (accepts meters and outputs in cm)
-        cav_msgs::LocationECEF TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const tf2::Transform& transform) const;
+        cav_msgs::LocationECEF TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point) const;
 
         // sender's static ID which is its license plate
         std::string sender_id = "USDOT-49096";
