@@ -127,8 +127,8 @@ geometry_msgs::PoseWithCovarianceStamped GNSSToMapConvertor::poseFromGnss(
     const gps_common::GPSFixConstPtr& fix_msg)
 {
   //// Convert the position information into the map frame using the proj library
-  const double lat = fix_msg->latitude * wgs84_utils::DEG2RAD;
-  const double lon = fix_msg->longitude * wgs84_utils::DEG2RAD;
+  const double lat = fix_msg->latitude;
+  const double lon = fix_msg->longitude;
   const double alt = fix_msg->altitude;
 
   lanelet::BasicPoint3d map_point = projector.forward({ lat, lon, alt });
