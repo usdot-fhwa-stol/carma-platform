@@ -28,6 +28,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <std_msgs/String.h>
 
 namespace mobilitypath_publisher
 {
@@ -65,6 +67,7 @@ namespace mobilitypath_publisher
         ros::Subscriber pose_sub_;
         ros::Subscriber accel_sub_;
         ros::Subscriber bsm_sub_;
+        ros::Subscriber georeference_sub_;
 
         ros::Timer path_pub_timer_;
 
@@ -73,6 +76,8 @@ namespace mobilitypath_publisher
 
         cav_msgs::TrajectoryPlan latest_trajectory_;
         cav_msgs::MobilityPath latest_mobility_path_;
+
+        std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
         // TF listenser
         tf2_ros::Buffer tf2_buffer_;
@@ -89,6 +94,11 @@ namespace mobilitypath_publisher
         void currentpose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
         void trajectory_cb(const cav_msgs::TrajectoryPlanConstPtr& msg);
         void bsm_cb(const cav_msgs::BSMConstPtr& msg);
+        /**
+         * \brief Callback for map projection string to define lat/lon -> map conversion
+         * \brief msg The proj string defining the projection.
+         */ 
+        void georeference_cb(const std_msgs::StringConstPtr& msg);
 
         // Compose Mobility Header
         cav_msgs::MobilityHeader composeMobilityHeader(uint64_t time);

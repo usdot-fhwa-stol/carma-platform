@@ -19,6 +19,7 @@
   <depend>trajectory_utils</depend>
   <depend>unobstructed_lanechange</depend>  
   <depend>roslib</depend>
+  <depend>lanelet2_extension</depend>
 </package>
 
   

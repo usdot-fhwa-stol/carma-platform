@@ -38,6 +38,8 @@
 #include <cav_msgs/BSM.h>
 #include <tf2_ros/transform_listener.h>
 #include <cav_msgs/LaneChangeStatus.h>
+#include <std_msgs/String.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
 
 
 
@@ -269,6 +271,12 @@ namespace cooperative_lanechange
             // initialize this node
             void initialize();
 
+            /**
+             * \brief Callback for map projection string to define lat/lon -> map conversion
+             * \brief msg The proj string defining the projection.
+             */ 
+            void georeference_callback(const std_msgs::StringConstPtr& msg);
+
             //Internal Variables used in unit testsis_lanechange_accepted_
             // Current vehicle forward speed
             double current_speed_;
@@ -303,7 +311,10 @@ namespace cooperative_lanechange
             
             ros::Subscriber incoming_mobility_response_;
             ros::Subscriber bsm_sub_;
+            ros::Subscriber georeference_sub_;
             ros::Timer discovery_pub_timer_;
+
+            std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
             // TF listenser
             tf2_ros::Buffer tf2_buffer_;

@@ -34,6 +34,7 @@ set( CATKIN_DEPS
   tf
   tf2
   tf2_geometry_msgs
+  lanelet2_extension
 )
 
 ## Find catkin macros and libraries

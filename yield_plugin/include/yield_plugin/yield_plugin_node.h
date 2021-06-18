@@ -82,6 +82,7 @@ public:
                                             &YieldPlugin::plan_trajectory_cb, &worker);
     ros::Subscriber mob_request_sub = nh.subscribe("incoming_mobility_request", 5, &YieldPlugin::mobilityrequest_cb,  &worker);
     ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &YieldPlugin::bsm_cb,  &worker);
+    ros::Subscriber georeference_sub = nh.subscribe("georeference", 1, &YieldPlugin::georeferenceCallback, &worker);
     
     ros::Timer discovery_pub_timer_ = nh.createTimer(
             ros::Duration(ros::Rate(10.0)),

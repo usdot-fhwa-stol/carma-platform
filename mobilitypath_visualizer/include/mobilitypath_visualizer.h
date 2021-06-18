@@ -25,6 +25,8 @@
 #include <unordered_map>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <std_msgs/String.h>
 
 
 namespace mobilitypath_visualizer {
@@ -108,9 +110,12 @@ namespace mobilitypath_visualizer {
         // subscriber
         ros::Subscriber host_mob_path_sub_;
         ros::Subscriber cav_mob_path_sub_;
+        ros::Subscriber georeference_sub_;
         
         // initialize this node before running
         void initialize();
+
+        std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
         // TF listener
         tf2_ros::Buffer tf2_buffer_;
@@ -123,6 +128,12 @@ namespace mobilitypath_visualizer {
         // callbacks
         void callbackMobilityPath(const cav_msgs::MobilityPath& msg);
         bool spinCallback();
+
+        /**
+         * \brief Callback for map projection string to define lat/lon -> map conversion
+         * \brief msg The proj string defining the projection.
+         */ 
+        void georeferenceCallback(const std_msgs::StringConstPtr& msg);
 
         // latest msgs
         std::unordered_map<std::string, cav_msgs::MobilityPath> latest_cav_mob_path_msg_;

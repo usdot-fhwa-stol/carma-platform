@@ -29,6 +29,7 @@ find_package(catkin REQUIRED COMPONENTS
   cav_msgs
   std_msgs
   tf2_ros
+  lanelet2_extension
 )
 
 ## System dependencies are found with CMake's conventions

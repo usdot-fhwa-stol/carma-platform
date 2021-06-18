@@ -28,6 +28,7 @@
 #include <carma_utils/CARMAUtils.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
 
 namespace object{
 
@@ -72,7 +73,12 @@ class MotionComputationWorker
 
   //callbacks
   void mobilityPathCallback(const cav_msgs::MobilityPath& msg);
-  void geoReferenceCallback(const std_msgs::String& georef);
+
+  /**
+   * \brief Callback for map projection string to define lat/lon -> map conversion
+   * \brief msg The proj string defining the projection.
+   */ 
+  void georeferenceCallback(const std_msgs::StringConstPtr& msg);
   
   /*!
   \brief Compose cav_msgs::PredictedState msg current point and previous point. It calculates the speed from these points using mobility_path_time_step
@@ -144,6 +150,7 @@ class MotionComputationWorker
   // Queue for mobility path msgs to synchronize them with sensor msgs 
   cav_msgs::ExternalObjectList mobility_path_list_;
 
+  std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
   // ECEF to map transform
   tf2::Transform map_in_earth_;
 };

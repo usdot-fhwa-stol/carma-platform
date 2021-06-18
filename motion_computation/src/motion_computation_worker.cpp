@@ -106,6 +106,11 @@ void MotionComputationWorker::predictionLogic(cav_msgs::ExternalObjectListPtr ob
   mobility_path_list_.objects = {};
 }
 
+void MotionComputationWorker::georeferenceCallback(const std_msgs::StringConstPtr& msg) 
+{
+  map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());  // Build projector from proj string
+}
+
 void MotionComputationWorker::setPredictionTimeStep(double time_step)
 {
   prediction_time_step_ = time_step;

@@ -61,6 +61,8 @@ namespace cooperative_lanechange
         twist_sub_ = nh_->subscribe("current_velocity", 1, &CooperativeLaneChangePlugin::twist_cd, this);
         incoming_mobility_response_ = nh_->subscribe("incoming_mobility_response", 1 , &CooperativeLaneChangePlugin::mobilityresponse_cb, this);
         
+        georeference_sub_ = nh_->subscribe("georeference", 1, &CooperativeLaneChangePlugin::georeference_callback, this);
+        
         bsm_sub_ = nh_->subscribe("bsm_outbound", 1, &CooperativeLaneChangePlugin::bsm_cb, this);
         outgoing_mobility_request_ = nh_->advertise<cav_msgs::MobilityRequest>("outgoing_mobility_request", 5); // rate from yield plugin
         lanechange_status_pub_ = nh_->advertise<cav_msgs::LaneChangeStatus>("cooperative_lane_change_status",10);
@@ -925,6 +927,11 @@ namespace cooperative_lanechange
     
         return centerline_points;
         
+    }
+    
+    void CooperativeLaneChangePlugin::georeference_callback(const std_msgs::StringConstPtr& msg) 
+    {
+        map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());  // Build projector from proj string
     }
 }
 

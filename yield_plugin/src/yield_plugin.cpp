@@ -639,4 +639,9 @@ namespace yield_plugin
     return desired_gap;
   }
 
+  void YieldPlugin::georeferenceCallback(const std_msgs::StringConstPtr& msg) 
+  {
+      map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());  // Build projector from proj string
+  }
+
 }  // namespace yield_plugin

@@ -40,6 +40,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <boost/property_tree/json_parser.hpp>
 #include <carma_wm/TrafficControl.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <std_msgs/String.h>
 
 
 namespace yield_plugin
@@ -222,6 +224,12 @@ public:
    */
   double check_traj_for_digital_min_gap(const cav_msgs::TrajectoryPlan& original_tp) const;
 
+  /**
+   * \brief Callback for map projection string to define lat/lon -> map conversion
+   * \brief msg The proj string defining the projection.
+   */ 
+  void georeferenceCallback(const std_msgs::StringConstPtr& msg);
+
 
 private:
 
@@ -253,6 +261,8 @@ private:
   double current_speed_;
   // BSM Message
   std::string host_bsm_id_;
+
+  std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
   // TF listenser
   tf2_ros::Buffer tf2_buffer_;

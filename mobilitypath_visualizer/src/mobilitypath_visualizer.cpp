@@ -63,8 +63,14 @@ namespace mobilitypath_visualizer {
         // init subscribers
         host_mob_path_sub_ = nh_->subscribe("mobility_path_msg", 1, &MobilityPathVisualizer::callbackMobilityPath, this);
         cav_mob_path_sub_ = nh_->subscribe("incoming_mobility_path", 1, &MobilityPathVisualizer::callbackMobilityPath, this);
+        georeference_sub_ = nh_->subscribe("georeference", 1, &MobilityPathVisualizer::georeferenceCallback, this);
 
         tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+    }
+
+    void MobilityPathVisualizer::georeferenceCallback(const std_msgs::StringConstPtr& msg) 
+    {
+        map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());  // Build projector from proj string
     }
     
     void MobilityPathVisualizer::callbackMobilityPath(const cav_msgs::MobilityPath& msg)

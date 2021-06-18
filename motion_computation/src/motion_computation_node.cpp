@@ -55,6 +55,7 @@ namespace object{
     motion_comp_sub_=nh_.subscribe("external_objects",1,&MotionComputationWorker::predictionLogic,&motion_worker_);
     carma_obj_pub_=nh_.advertise<cav_msgs::ExternalObjectList>("external_object_predictions", 2);
     mobility_path_sub_=nh_.subscribe("incoming_mobility_path",20,&MotionComputationWorker::mobilityPathCallback,&motion_worker_); // 20 is most number of vehicles in our immeadiate vicinity which might ever need to be tracked.
+    georeference_sub_ = nh_.subscribe("georeference", 1, &MotionComputationWorker::georeferenceCallback, &motion_worker_);
   }
 
   void MotionComputationNode::publishObject(const cav_msgs::ExternalObjectList& obj_pred_msg) const

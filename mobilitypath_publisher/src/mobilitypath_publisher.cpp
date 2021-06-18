@@ -33,6 +33,7 @@ namespace mobilitypath_publisher
         traj_sub_ = nh_->subscribe("plan_trajectory", 5, &MobilityPathPublication::trajectory_cb, this);
         pose_sub_ = nh_->subscribe("current_pose", 5, &MobilityPathPublication::currentpose_cb, this);
         bsm_sub_ = nh_->subscribe("bsm_outbound", 1, &MobilityPathPublication::bsm_cb, this);
+        georeference_sub_ = nh_->subscribe("georeference", 1, &MobilityPathPublication::georeference_cb, this);
         tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
 
         path_pub_timer_ = pnh_->createTimer(
@@ -53,6 +54,11 @@ namespace mobilitypath_publisher
 
         mob_path_pub_.publish(latest_mobility_path_); 
         return true;
+    }
+
+    void MobilityPathPublication::georeference_cb(const std_msgs::StringConstPtr& msg) 
+    {
+        map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());  // Build projector from proj string
     }
 
     void MobilityPathPublication::trajectory_cb(const cav_msgs::TrajectoryPlanConstPtr& msg)

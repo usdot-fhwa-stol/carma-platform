@@ -35,6 +35,7 @@ set( CATKIN_DEPS
   tf2_geometry_msgs
   unobstructed_lanechange
   roslib
+  lanelet2_extension
 )
 
 ## Find catkin macros and libraries
