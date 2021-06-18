@@ -27,6 +27,8 @@
 #include <std_msgs/Float64.h>
 #include <wgs84_utils/wgs84_utils.h>
 #include <novatel_gps_msgs/NovatelDualAntennaHeading.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <std_msgs/String.h>
 #include "bsm_generator_worker.h"
 
 namespace bsm_generator
@@ -62,6 +64,9 @@ namespace bsm_generator
         ros::Subscriber steer_wheel_angle_sub_;
         ros::Subscriber brake_sub_;
         ros::Subscriber heading_sub_;
+        ros::Subscriber georeference_sub_;
+
+        std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
         // TF listenser
         tf2_ros::Buffer tf2_buffer_;
@@ -94,6 +99,7 @@ namespace bsm_generator
         void steerWheelAngleCallback(const std_msgs::Float64ConstPtr& msg);
         void brakeCallback(const std_msgs::Float64ConstPtr& msg);
         void headingCallback(const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& msg);
+        void georeferenceCallback(const std_msgs::StringConstPtr& msg);
 
         // callback for the timer
         void generateBSM(const ros::TimerEvent& event);
