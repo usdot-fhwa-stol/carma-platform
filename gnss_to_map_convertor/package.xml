@@ -17,7 +17,7 @@
 <package format = "3">
   <name>gnss_to_map_convertor</name>
   <version>3.3.0</version>
-  <description>The gnss_to_map_convertor converts incomping GNSS messages (NavSatFix) to poses in the ECEF and Map frames </description>
+  <description>The gnss_to_map_convertor converts incomping GNSS messages (NavSatFix) to poses in the Map frames </description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
 

@@ -125,7 +125,7 @@ namespace route {
         publish_route_event(cav_msgs::RouteEvent::ROUTE_LOADED);
     }
 
-    bool RouteGeneratorWorker::set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp) // TODO most transform logic is here
+    bool RouteGeneratorWorker::set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp)
     {
         ROS_INFO_STREAM("set_active_route_cb: Selected ID:" << req.routeID);
         // only allow activate a new route in route selection state
@@ -154,7 +154,7 @@ namespace route {
                 return true;
             }
 
-            // load destination points in ECEF frame
+            // load destination points in map frame
             auto destination_points = load_route_destinations_in_map_frame(req.routeID);
             // Check if route file are valid with at least one starting points and one destination points
             if(destination_points.size() < 1)
@@ -173,7 +173,7 @@ namespace route {
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
             }
-            
+
             // convert points in 2d to map frame
             destination_points_in_map_ = lanelet::utils::transform(destination_points, [](auto a) { return lanelet::traits::to2D(a); });
 
@@ -285,8 +285,7 @@ namespace route {
         return false;
     }
 
-    // TODO correct header
-    std::vector<lanelet::BasicPoint3d> RouteGeneratorWorker::load_route_destinations_in_map_frame(const std::string& route_id) const // TODO no need for ecef anymore
+    std::vector<lanelet::BasicPoint3d> RouteGeneratorWorker::load_route_destinations_in_map_frame(const std::string& route_id) const 
     {
         // compose full path of the route file
         std::string route_file_name = route_file_path_ + route_id + ".csv";
