@@ -140,14 +140,14 @@ namespace mobilitypath_visualizer {
         marker.id = 0;
         geometry_msgs::Point arrow_start;
         ROS_DEBUG_STREAM("ECEF point x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
-        arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location,map_in_earth); //also convert from cm to m
+        arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
         ROS_DEBUG_STREAM("Map point x: " << arrow_start.x << ", y:" << arrow_start.y);
 
         geometry_msgs::Point arrow_end;
         curr_location_msg.trajectory.location.ecef_x += + msg.trajectory.offsets[0].offset_x;
         curr_location_msg.trajectory.location.ecef_y += + msg.trajectory.offsets[0].offset_y;
         curr_location_msg.trajectory.location.ecef_z += + msg.trajectory.offsets[0].offset_z;
-        arrow_end = ECEFToMapPoint(curr_location_msg.trajectory.location,map_in_earth); //also convert from cm to m
+        arrow_end = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
 
         marker.points.push_back(arrow_start);
         marker.points.push_back(arrow_end);
@@ -165,13 +165,13 @@ namespace mobilitypath_visualizer {
 
             marker.points = {};
             ROS_DEBUG_STREAM("ECEF Point- DEBUG x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
-            arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location,map_in_earth); //convert from cm to m
+            arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location); //convert from cm to m
             ROS_DEBUG_STREAM("Map Point- DEBUG x: " << arrow_start.x << ", y:" << arrow_start.y);
 
             curr_location_msg.trajectory.location.ecef_x += msg.trajectory.offsets[i].offset_x;
             curr_location_msg.trajectory.location.ecef_y += msg.trajectory.offsets[i].offset_y;
             curr_location_msg.trajectory.location.ecef_z += msg.trajectory.offsets[i].offset_z;
-            arrow_end = ECEFToMapPoint(curr_location_msg.trajectory.location,map_in_earth);
+            arrow_end = ECEFToMapPoint(curr_location_msg.trajectory.location);
 
             marker.points.push_back(arrow_start);
             marker.points.push_back(arrow_end);
@@ -191,9 +191,9 @@ namespace mobilitypath_visualizer {
         if (!map_projector_) {
             throw std::invalid_argument("No map projector available for ecef conversion");
         }
-        geometry_msgs::Point output   
+        geometry_msgs::Point output;
         
-        lanelet::BasicPoint3d map_point = map_projector_->projectECEF( { (double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0 } , 1);
+        lanelet::BasicPoint3d map_point = map_projector_->projectECEF( { (double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0 } , -1);
         output.x = map_point.x();
         output.y = map_point.y();
         output.z = map_point.z();

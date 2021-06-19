@@ -93,6 +93,13 @@ namespace mobilitypath_visualizer {
         std::vector<visualization_msgs::MarkerArray> matchTrajectoryTimestamps(const visualization_msgs::MarkerArray& host_marker, 
                                                                     const std::vector<visualization_msgs::MarkerArray>& cav_markers) const;
 
+
+        /**
+         * \brief Callback for map projection string to define lat/lon -> map conversion
+         * \brief msg The proj string defining the projection.
+         */ 
+        void georeferenceCallback(const std_msgs::StringConstPtr& msg);
+
     private:
 
         // public and private node handles
@@ -119,12 +126,6 @@ namespace mobilitypath_visualizer {
         // callbacks
         void callbackMobilityPath(const cav_msgs::MobilityPath& msg);
         bool spinCallback();
-
-        /**
-         * \brief Callback for map projection string to define lat/lon -> map conversion
-         * \brief msg The proj string defining the projection.
-         */ 
-        void georeferenceCallback(const std_msgs::StringConstPtr& msg);
 
         // latest msgs
         std::unordered_map<std::string, cav_msgs::MobilityPath> latest_cav_mob_path_msg_;

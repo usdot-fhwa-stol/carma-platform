@@ -43,10 +43,13 @@ namespace mobilitypath_publisher
         // general starting point of this node
         void run();
 
-        // local copy of pose
-        boost::shared_ptr<geometry_msgs::PoseStamped const> current_pose_;
-
         cav_msgs::MobilityPath mobilityPathMessageGenerator(const cav_msgs::TrajectoryPlan& trajectory_plan);
+
+        /**
+         * \brief Callback for map projection string to define lat/lon -> map conversion
+         * \brief msg The proj string defining the projection.
+         */ 
+        void georeference_cb(const std_msgs::StringConstPtr& msg);
         
 
     private:
@@ -63,7 +66,6 @@ namespace mobilitypath_publisher
 
         // ROS subscribers
         ros::Subscriber traj_sub_;
-        ros::Subscriber pose_sub_;
         ros::Subscriber accel_sub_;
         ros::Subscriber bsm_sub_;
         ros::Subscriber georeference_sub_;
@@ -89,11 +91,7 @@ namespace mobilitypath_publisher
         void currentpose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
         void trajectory_cb(const cav_msgs::TrajectoryPlanConstPtr& msg);
         void bsm_cb(const cav_msgs::BSMConstPtr& msg);
-        /**
-         * \brief Callback for map projection string to define lat/lon -> map conversion
-         * \brief msg The proj string defining the projection.
-         */ 
-        void georeference_cb(const std_msgs::StringConstPtr& msg);
+        
 
         // Compose Mobility Header
         cav_msgs::MobilityHeader composeMobilityHeader(uint64_t time);

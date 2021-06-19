@@ -31,7 +31,6 @@ namespace mobilitypath_publisher
         pnh_->getParam("vehicle_id", sender_id);
         mob_path_pub_ = nh_->advertise<cav_msgs::MobilityPath>("mobility_path_msg", 5);
         traj_sub_ = nh_->subscribe("plan_trajectory", 5, &MobilityPathPublication::trajectory_cb, this);
-        pose_sub_ = nh_->subscribe("current_pose", 5, &MobilityPathPublication::currentpose_cb, this);
         bsm_sub_ = nh_->subscribe("bsm_outbound", 1, &MobilityPathPublication::bsm_cb, this);
         georeference_sub_ = nh_->subscribe("georeference", 1, &MobilityPathPublication::georeference_cb, this);
 
@@ -65,11 +64,6 @@ namespace mobilitypath_publisher
         latest_trajectory_ = *msg;
 
         latest_mobility_path_ = mobilityPathMessageGenerator(latest_trajectory_);
-    }
-
-    void MobilityPathPublication::currentpose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
-    {
-        current_pose_ = msg;
     }
 
     void MobilityPathPublication::bsm_cb(const cav_msgs::BSMConstPtr& msg)
@@ -144,10 +138,10 @@ namespace mobilitypath_publisher
         }
         cav_msgs::LocationECEF location;    
         
-        lanelet::BasicPoint3d ecef_point = map_projector_->projectECEF({traj_point.x, traj_point.y, 0.0}, -1);
-        location.ecef_x = ecef_point.x();
-        location.ecef_y = ecef_point.y();
-        location.ecef_z = ecef_point.z();
+        lanelet::BasicPoint3d ecef_point = map_projector_->projectECEF({traj_point.x, traj_point.y, 0.0}, 1);
+        location.ecef_x = ecef_point.x() * 100.0;
+        location.ecef_y = ecef_point.y() * 100.0;
+        location.ecef_z = ecef_point.z() * 100.0;
 
         return location;
     } 
