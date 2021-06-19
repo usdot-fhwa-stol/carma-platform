@@ -192,7 +192,7 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
     output.bsm_id.push_back((uint8_t)num);
   }
   // first point's timestamp
-  output.header.stamp = ros::Time((double)msg.header.timestamp/ 1000.0);
+  output.header.stamp = ros::Time((double)msg.header.timestamp/ 1000.0); // ms to s
 
   // If it is a static object, we finished processing
   if (msg.trajectory.offsets.size() < 2)
@@ -203,13 +203,13 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
   output.dynamic_obj = true;
 
   // get planned trajectory points
-  auto prev_pt_msg = msg.trajectory.offsets[0]; // setup first point to be processed later
   cav_msgs::PredictedState prev_state;
   tf2::Vector3 prev_pt_ecef {ecef_x, ecef_y, ecef_z};
 
   auto prev_pt_map = transform_to_map_frame(prev_pt_ecef);
+  double prev_yaw = 0.0;
 
-  double message_offset_x = 0.0;
+  double message_offset_x = 0.0; // units cm
   double message_offset_y = 0.0;
   double message_offset_z = 0.0;
 
@@ -221,26 +221,30 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
     message_offset_y = (double)curr_pt_msg.offset_y + message_offset_y;
     message_offset_z = (double)curr_pt_msg.offset_z + message_offset_z;
 
-    tf2::Vector3 curr_pt_ecef {ecef_x + message_offset_x /100.0, ecef_y + message_offset_y /100.0, ecef_z + message_offset_z /100.0};
+    tf2::Vector3 curr_pt_ecef {ecef_x + message_offset_x /100.0, ecef_y + message_offset_y /100.0, ecef_z + message_offset_z /100.0}; // ecef_x is in m while message_offset_x is in cm. Want m as final result
     auto curr_pt_map = transform_to_map_frame(curr_pt_ecef);
 
     cav_msgs::PredictedState curr_state;
-
-    if (i == 1) // First point's state should be stored outside "predictions"
+    
+    if (i == 0) // First point's state should be stored outside "predictions"
     {
-      curr_state = composePredictedState(curr_pt_map, prev_pt_map, output.header.stamp); 
-      output.pose.pose = curr_state.predicted_position;
-      output.velocity.twist = curr_state.predicted_velocity;
+      auto res = composePredictedState(curr_pt_map, prev_pt_map, output.header.stamp, prev_yaw); // Position returned is that of prev_pt_map NOT curr_pt_map 
+      curr_state = std::get<0>(res);
+      prev_yaw = std::get<1>(res);
+      // Compute output pose
+      output.pose.pose = curr_state.predicted_position; // Orientation computed from first point in offsets with location
+      output.velocity.twist = curr_state.predicted_velocity; // Velocity derived from first point
     }
     else    
     {
-      curr_state = composePredictedState(curr_pt_map, prev_pt_map, prev_state.header.stamp + ros::Duration(mobility_path_prediction_time_step_));
+      auto res = composePredictedState(curr_pt_map, prev_pt_map, prev_state.header.stamp + ros::Duration(mobility_path_prediction_time_step_), prev_yaw);
+      curr_state = std::get<0>(res);
+      prev_yaw = std::get<1>(res);
       output.predictions.push_back(curr_state);
     }
 
     if (i == msg.trajectory.offsets.size() - 1) // if last point, copy the prev_state velocity & orientation to the last point too
     {
-      curr_state = composePredictedState(curr_pt_map, prev_pt_map, curr_state.header.stamp + ros::Duration(mobility_path_prediction_time_step_));
       curr_state.predicted_position.position.x = curr_pt_map.x();
       curr_state.predicted_position.position.y = curr_pt_map.y();
       curr_state.predicted_position.position.z = curr_pt_map.z();
@@ -289,7 +293,7 @@ void MotionComputationWorker::calculateAngVelocityOfPredictedStates(cav_msgs::Ex
   }
 }
 
-cav_msgs::PredictedState MotionComputationWorker::composePredictedState(const tf2::Vector3& curr_pt, const tf2::Vector3& prev_pt, const ros::Time& prev_time_stamp) const
+std::pair<cav_msgs::PredictedState, double> MotionComputationWorker::composePredictedState(const tf2::Vector3& curr_pt, const tf2::Vector3& prev_pt, const ros::Time& prev_time_stamp, double prev_yaw) const
 {
   cav_msgs::PredictedState output_state;
   // Set Position
@@ -300,7 +304,14 @@ cav_msgs::PredictedState MotionComputationWorker::composePredictedState(const tf
   // Set Orientation
   Eigen::Vector2d vehicle_vector = {curr_pt.x() - prev_pt.x() ,curr_pt.y() - prev_pt.y()};
   Eigen::Vector2d x_axis = {1, 0};
-  double yaw = std::acos(vehicle_vector.dot(x_axis)/(vehicle_vector.norm() * x_axis.norm()));// TODO this needs to handle identical point case
+  double yaw = 0.0;
+  if (vehicle_vector.norm() < 0.000001) { // If there is zero magnitude use previous yaw to avoid devide by 0
+    yaw = prev_yaw;
+    ROS_DEBUG("Two identical points sent for predicting heading. Forced to use previous yaw or 0 if first point");
+  } else {
+    yaw = std::acos(vehicle_vector.dot(x_axis)/(vehicle_vector.norm() * x_axis.norm()));
+  }
+   
 
   tf2::Quaternion vehicle_orientation;
   vehicle_orientation.setRPY(0, 0, yaw);
@@ -315,7 +326,7 @@ cav_msgs::PredictedState MotionComputationWorker::composePredictedState(const tf
   // Set timestamp
   output_state.header.stamp = prev_time_stamp;
 
-  return output_state;
+  return std::make_pair(output_state, yaw);
 }
 
 cav_msgs::ExternalObjectList MotionComputationWorker::synchronizeAndAppend(const cav_msgs::ExternalObjectList& sensor_list, cav_msgs::ExternalObjectList mobility_path_list) const

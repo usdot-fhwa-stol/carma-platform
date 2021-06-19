@@ -29,6 +29,7 @@
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
+#include <tuple>
 
 namespace object{
 
@@ -84,9 +85,10 @@ class MotionComputationWorker
   \param curr_pt current point
   \param prev_pt prev_pt. this point is recorded in the state
   \param prev_time_stamp prev_pt's time stamp. This time is recorded in the state
-  \return cav_msgs::PredictedState, including linear velocity, last_time, orientation filled in
+  \param prev_yaw A previous yaw value in radians to use if the two provided points are equivalent
+  \return std::pair<cav_msgs::PredictedState,double> where the first element is the prediction including linear velocity, last_time, orientation filled in and the second element is the yaw in radians used to compute the orientation
   */
-  cav_msgs::PredictedState composePredictedState(const tf2::Vector3& curr_pt, const tf2::Vector3& prev_pt, const ros::Time& prev_time_stamp) const;
+  std::pair<cav_msgs::PredictedState, double> composePredictedState(const tf2::Vector3& curr_pt, const tf2::Vector3& prev_pt, const ros::Time& prev_time_stamp, double prev_yaw) const;
 
   /*!
   \brief Convert from mobilitypath's predicted points in ECEF to local map and other fields in external object
