@@ -64,6 +64,7 @@ public:
                      config.curvature_moving_average_window_size);
     pnh.param<double>("/vehicle_acceleration_limit", config.max_accel, config.max_accel);
     pnh.param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
+    pnh.param<bool>("enable_object_avoidance", config.enable_object_avoidance, config.enable_object_avoidance);
 
     ROS_INFO_STREAM("InLaneCruisingPlugin Params" << config);
     
