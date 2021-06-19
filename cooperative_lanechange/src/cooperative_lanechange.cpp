@@ -445,10 +445,10 @@ namespace cooperative_lanechange
         }
         cav_msgs::LocationECEF location;    
         
-        lanelet::BasicPoint3d ecef_point = map_projector_->projectECEF({traj_point.x, traj_point.y, 0.0}, -1);
-        location.ecef_x = ecef_point.x();
-        location.ecef_y = ecef_point.y();
-        location.ecef_z = ecef_point.z();
+        lanelet::BasicPoint3d ecef_point = map_projector_->projectECEF({traj_point.x, traj_point.y, 0.0}, 1);
+        location.ecef_x = ecef_point.x() * 100.0; // Convert cm to m
+        location.ecef_y = ecef_point.y() * 100.0;
+        location.ecef_z = ecef_point.z() * 100.0;
 
         return location;
     } 
