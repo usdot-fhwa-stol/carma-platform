@@ -163,7 +163,7 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
 {
   cav_msgs::ExternalObject output;
 
-  output.size.x = 2.5;
+  output.size.x = 2.5; // TODO identify better approach for object side in mobility path
   output.size.y = 2.25;
   output.size.z = 2.0;
 
@@ -205,7 +205,7 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
   // get planned trajectory points
   auto prev_pt_msg = msg.trajectory.offsets[0]; // setup first point to be processed later
   cav_msgs::PredictedState prev_state;
-  tf2::Vector3 prev_pt_ecef {ecef_x /100.0, ecef_y /100.0, ecef_z /100.0};
+  tf2::Vector3 prev_pt_ecef {ecef_x, ecef_y, ecef_z};
 
   auto prev_pt_map = transform_to_map_frame(prev_pt_ecef);
 
@@ -300,7 +300,7 @@ cav_msgs::PredictedState MotionComputationWorker::composePredictedState(const tf
   // Set Orientation
   Eigen::Vector2d vehicle_vector = {curr_pt.x() - prev_pt.x() ,curr_pt.y() - prev_pt.y()};
   Eigen::Vector2d x_axis = {1, 0};
-  double yaw = std::acos(vehicle_vector.dot(x_axis)/(vehicle_vector.norm() * x_axis.norm()));
+  double yaw = std::acos(vehicle_vector.dot(x_axis)/(vehicle_vector.norm() * x_axis.norm()));// TODO this needs to handle identical point case
 
   tf2::Quaternion vehicle_orientation;
   vehicle_orientation.setRPY(0, 0, yaw);
@@ -405,7 +405,7 @@ tf2::Vector3 MotionComputationWorker::transform_to_map_frame(const tf2::Vector3&
       throw std::invalid_argument("No map projector available for ecef conversion");
   }
     
-  lanelet::BasicPoint3d map_point = map_projector_->projectECEF( { ecef_point.x(),  ecef_point.y(), ecef_point.z() } , 1);
+  lanelet::BasicPoint3d map_point = map_projector_->projectECEF( { ecef_point.x(),  ecef_point.y(), ecef_point.z() } , -1); // Input should already be converted to m
   
   return tf2::Vector3(map_point.x(), map_point.y(), map_point.z());
 }

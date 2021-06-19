@@ -74,13 +74,15 @@ namespace object
         mcw_sensor_only.setExternalObjectPredictionMode(object::SENSORS_ONLY);
         mcw_mobility_only.setExternalObjectPredictionMode(object::MOBILITY_PATH_ONLY);
         mcw_mixed_operation.setExternalObjectPredictionMode(object::PATH_AND_SENSORS);
-        // 1 to 1 transform
-        tf2::Transform identity_transform;
-        identity_transform.setIdentity();
 
-        mcw_sensor_only.setECEFToMapTransform(identity_transform);
-        mcw_mobility_only.setECEFToMapTransform(identity_transform);
-        mcw_mixed_operation.setECEFToMapTransform(identity_transform);
+        // 1 to 1 transform
+        std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
+        std_msgs::String proj_msg;
+        proj_msg.data = base_proj;
+        std_msgs::StringConstPtr msg_ptr(new std_msgs::String(proj_msg));
+        mcw_sensor_only.georeferenceCallback(msg_ptr);  // Set projection
+        mcw_mobility_only.georeferenceCallback(msg_ptr);  // Set projection
+        mcw_mixed_operation.georeferenceCallback(msg_ptr);  // Set projection
 
         cav_msgs::ExternalObject msg;
 
@@ -155,10 +157,14 @@ namespace object
     TEST(MotionComputationWorker, composePredictedState)
     {    
         object::MotionComputationWorker mcw([&](const cav_msgs::ExternalObjectList& obj_pub){});
-        tf2::Transform identity_transform;
-        identity_transform.setIdentity();
 
-        mcw.setECEFToMapTransform(identity_transform);
+        // 1 to 1 transform
+        std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
+        std_msgs::String proj_msg;
+        proj_msg.data = base_proj;
+        std_msgs::StringConstPtr msg_ptr(new std_msgs::String(proj_msg));
+        mcw.georeferenceCallback(msg_ptr);  // Set projection
+
         ros::Time time_stamp = ros::Time(5.0);
         tf2::Vector3 curr = {5, 0, 0};
         tf2::Vector3 prev = {4, 0, 0};
@@ -189,10 +195,14 @@ namespace object
     TEST(MotionComputationWorker, mobilityPathToExternalObject)
     {    
         object::MotionComputationWorker mcw([&](const cav_msgs::ExternalObjectList& obj_pub){});
-        tf2::Transform identity_transform;
-        identity_transform.setIdentity();
 
-        mcw.setECEFToMapTransform(identity_transform);
+        // 1 to 1 transform
+        std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
+        std_msgs::String proj_msg;
+        proj_msg.data = base_proj;
+        std_msgs::StringConstPtr msg_ptr(new std_msgs::String(proj_msg));
+        mcw.georeferenceCallback(msg_ptr);  // Set projection
+
         // Test no georef
         cav_msgs::MobilityPath input;
         cav_msgs::ExternalObject output, expected;
@@ -274,10 +284,13 @@ namespace object
         object::MotionComputationWorker mcw_mixed_operation([&](const cav_msgs::ExternalObjectList& obj_pub){});
         mcw_mixed_operation.setExternalObjectPredictionMode(object::PATH_AND_SENSORS);
         mcw_mixed_operation.setMobilityPathPredictionTimeStep(0.2);
-        tf2::Transform identity_transform;
-        identity_transform.setIdentity();
 
-        mcw_mixed_operation.setECEFToMapTransform(identity_transform);
+        // 1 to 1 transform
+        std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
+        std_msgs::String proj_msg;
+        proj_msg.data = base_proj;
+        std_msgs::StringConstPtr msg_ptr(new std_msgs::String(proj_msg));
+        mcw_mixed_operation.georeferenceCallback(msg_ptr);  // Set projection
 
         // Test no georef
         cav_msgs::ExternalObject sensor_obj, mobility_path_obj;
