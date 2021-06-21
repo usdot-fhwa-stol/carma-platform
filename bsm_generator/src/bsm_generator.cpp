@@ -39,7 +39,6 @@ namespace bsm_generator
         pose_sub_ = nh_->subscribe("pose", 1, &BSMGenerator::poseCallback, this);
         heading_sub_ = nh_->subscribe("dual_antenna_heading", 1, &BSMGenerator::headingCallback, this);
         georeference_sub_ = nh_->subscribe("georeference", 1, &BSMGenerator::georeferenceCallback, this);
-        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
     }
 
     void BSMGenerator::initializeBSM()
@@ -102,6 +101,7 @@ namespace bsm_generator
         // Use pose message as an indicator of new location updates
         if (!map_projector_) {
             ROS_DEBUG_STREAM("Ignoring pose message as projection string has not been defined");
+            return;
         }
         
         lanelet::GPSPoint coord = map_projector_->reverse( { msg->pose.position.x, msg->pose.position.y, msg->pose.position.z } );
