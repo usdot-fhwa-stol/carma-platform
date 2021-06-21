@@ -20,7 +20,8 @@ namespace basic_autonomy
 {
 namespace waypoint_generation
 {
-    
+    //Small value corresponding to 0.1 mm in meters for comparing distance to a near zero.
+    const double epsilon_ = 0.0000001;
     /**
      * \brief Returns the nearest point (in terms of cartesian 2d distance) to the provided vehicle pose in the provided l
      * 
