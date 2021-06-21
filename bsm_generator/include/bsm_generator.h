@@ -16,7 +16,6 @@
  * the License.
  */
 
-#include <tf2_ros/transform_listener.h>
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -67,10 +66,6 @@ namespace bsm_generator
         ros::Subscriber georeference_sub_;
 
         std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
-
-        // TF listenser
-        tf2_ros::Buffer tf2_buffer_;
-        std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
 
         // frequency for bsm generation
         double bsm_generation_frequency_;
