@@ -196,9 +196,6 @@ namespace platoon_control
         current_speed_ = twist->twist.linear.x;
     }
 
-    // void PlatoonControlPlugin::publishTwist(const geometry_msgs::TwistStamped& twist) const {
-    // 	twist_pub_.publish(twist);
-    // }
 
 // @SONAR_START@
 
@@ -237,17 +234,6 @@ namespace platoon_control
 
         autoware_msgs::ControlCommandStamped ctrl_msg = composeCtrlCmd(pcw_.speedCmd_, pcw_.steerCmd_);
         ctrl_pub_.publish(ctrl_msg);
-
-
-
-
-    	// current_twist.twist.linear.x = pcw_.speedCmd_;
-        // ROS_DEBUG_STREAM("desired speed:  " << pcw_.speedCmd_);
-        // // TODO: temporary until steering is fixed
-    	// current_twist.twist.angular.z = pcw_.steerCmd_;
-        // ROS_DEBUG_STREAM("desired steering:  " << pcw_.steerCmd_);
-        // current_twist.header.stamp = ros::Time::now();
-    	// return current_twist;
     }
 
     // extract maximum speed of trajectory

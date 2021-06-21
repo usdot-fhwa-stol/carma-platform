@@ -94,8 +94,6 @@ namespace platoon_control
 			// callback function for current twist
 			void currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist);
 
-        	void publishTwist(const geometry_msgs::TwistStamped& twist) const;
-
 			double getTrajectorySpeed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points);
 
 			

@@ -50,13 +50,12 @@ namespace platoon_control
 	        ROS_DEBUG_STREAM("The host vehicle speed is " << hostVehicleSpeed << " and its position is " << hostVehiclePosition);
 	        // If the host vehicle is the fifth vehicle and it is following the third vehicle, the leader index here is 2
 	        // vehiclesInFront should be 2, because number of vehicles in front is 4, then numOfVehiclesGaps = VehicleInFront - leaderIndex   
-	        int leaderIndex = leader.leaderIndex;////TODO: Communicate leader index in the platoon (plugin_.platoonManager.getIndexOf(leader);)
-	        int numOfVehiclesGaps = leader.NumberOfVehicleInFront - leaderIndex;////TODO: Communicate vehicles ahead in the platoon (plugin_.platoonManager.getNumberOfVehicleInFront() - leaderIndex;)
+	        int leaderIndex = leader.leaderIndex;
+	        int numOfVehiclesGaps = leader.NumberOfVehicleInFront - leaderIndex;
 	        ROS_DEBUG_STREAM("The host vehicle have " << numOfVehiclesGaps << " vehicles between itself and its leader (includes the leader)");
 	        double desiredGap = std::max(hostVehicleSpeed * ctrl_config.timeHeadway * numOfVehiclesGaps, ctrl_config.standStillHeadway * numOfVehiclesGaps);
             desired_gap_ = desiredGap;
 	        ROS_DEBUG_STREAM("The desired gap with the leader is " << desiredGap);
-	        // ROS_DEBUG("Based on raw radar, the current gap with the front vehicle is " , getDistanceToFrontVehicle());
 	        double desiredHostPosition = leaderCurrentPosition - desiredGap;
 	        ROS_DEBUG_STREAM("The desired host position and the setpoint for pid controller is " << desiredHostPosition);
 	        // PD controller is used to adjust the speed to maintain the distance gap between the subject vehicle and leader vehicle
@@ -87,7 +86,7 @@ namespace platoon_control
 
         else 
         {
-            // TODO if there is no leader available, we should change back to Leader State and re-join other platoon later
+            // If there is no leader available, the vehicle will stop. This means there is a mis-communication between platooning strategic and control plugins.
             ROS_DEBUG_STREAM("There is no leader available");
             speed_cmd = 0.0;
             pid_ctrl_.reset();
