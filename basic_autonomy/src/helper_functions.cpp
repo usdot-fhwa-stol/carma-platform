@@ -67,12 +67,10 @@ namespace waypoint_generation
         int best_index = points.size() - 1;
         for(int i = 0;i < points.size(); i++){
             double downtrack = wm->routeTrackPos(points[i]).downtrack;
-            if(downtrack > target_downtrack + epsilon_){
-                best_index = i - 1;
-                if (best_index < 0)
-                {
-                throw std::invalid_argument("Given points are beyond the ending_downtrack");
-                }
+            if(downtrack > target_downtrack){
+                //If value is negative, best index should be index 0
+                best_index = std::max(0, i - 1);
+
                 ROS_DEBUG_STREAM("get_nearest_index_by_downtrack>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y() << ", downtrack: "<< downtrack);
                 break;
             }
