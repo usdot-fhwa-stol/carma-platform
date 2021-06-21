@@ -95,7 +95,7 @@ TEST(PlatoonManagerTest, test1)
 
     pm.memberUpdates("1", "1", "1", params);
 
-    EXPECT_EQ(0, pm.platoon.size());
+    EXPECT_EQ(1, pm.platoon.size());
 
     
 }
@@ -112,6 +112,7 @@ TEST(PlatoonStrategicPlugin, test_req_cb1)
     request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_AT_REAR;
     request.strategy_params = "SIZE:2,SPEED:22,DTD:22";
     plugin.mob_req_cb(request);
+   
 }
 
 TEST(PlatoonStrategicPlugin, test_req_cb2)
@@ -140,7 +141,31 @@ TEST(PlatoonStrategicPlugin, test_run_candidate)
 
     PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
     plugin.pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
+    plugin.pm_.isFollower = true;
     plugin.onSpin();
+
+}
+
+TEST(PlatoonStrategicPlugin, test_mob_op_cb_candidate)
+{
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
+    EXPECT_EQ(0, plugin.pm_.platoon.size());
+
+    plugin.pm_.isFollower = true;
+    cav_msgs::MobilityOperation op_msg;
+    op_msg.header.sender_id = "test-id";
+    op_msg.header.plan_id = "test_plan";
+    op_msg.strategy_params = "STATUS|CMDSPEED:1.0,DTD:22.0,SPEED:2.0";
+    plugin.mob_op_cb(op_msg);
+    EXPECT_EQ(1, plugin.pm_.platoon.size());
+    PlatoonMember platoon_leader = plugin.pm_.getLeader();
+    EXPECT_EQ(op_msg.header.sender_id, platoon_leader.staticId);
+    EXPECT_EQ(22, platoon_leader.vehiclePosition);
+    EXPECT_EQ(1, platoon_leader.commandSpeed);
 
 }
 

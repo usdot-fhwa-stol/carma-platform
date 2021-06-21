@@ -65,7 +65,6 @@ namespace platoon_strategic
                 ROS_DEBUG_STREAM("So the platoon ID is changed from " << currentPlatoonID << " to " << platoonId);
                 currentPlatoonID = platoonId;
                 updatesOrAddMemberInfo(senderId, senderBsmId, cmdSpeed, dtDistance, curSpeed);
-
             } 
             else if((currentPlatoonID == platoonId) && isVehicleInFrontOf) 
             {
@@ -73,7 +72,6 @@ namespace platoon_strategic
                 updatesOrAddMemberInfo(senderId, senderBsmId, cmdSpeed, dtDistance, curSpeed);
                 leaderID = (platoon.size()==0) ? HostMobilityId : platoon[0].staticId;
                 ROS_DEBUG_STREAM("The first vehicle in our list is now " << leaderID);
-
             } 
             else
             {
@@ -117,15 +115,14 @@ namespace platoon_strategic
 
         if(!isExisted) {
             long cur_t = ros::Time::now().toNSec()/1000000; // time in millisecond
+
             PlatoonMember newMember = PlatoonMember(senderId, senderBsmId, cmdSpeed, curSpeed, dtDistance, cur_t);
-            
             platoon.push_back(newMember);
 
             std::sort(std::begin(platoon), std::end(platoon), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition < b.vehiclePosition;});
 
             ROS_DEBUG_STREAM("Add a new vehicle into our platoon list " << newMember.staticId);
         }
-
     }
 
 
@@ -148,17 +145,15 @@ namespace platoon_strategic
     }
 
     PlatoonMember PlatoonManager::getLeader(){
-        PlatoonMember leader ;
+        PlatoonMember leader;
         ROS_DEBUG_STREAM("platoon size: " << platoon.size());
         if(isFollower && platoon.size() != 0) 
         {
-
             ROS_DEBUG_STREAM("Leader initially set as first vehicle in platoon");
             // return the first vehicle in the platoon as default if no valid algorithm applied
             leader = platoon[0];
             if (algorithmType_ == "APF_ALGORITHM"){
                     int newLeaderIndex = allPredecessorFollowing();
-                    
                     if(newLeaderIndex < platoon.size() && newLeaderIndex >= 0) {
                         leader = platoon[newLeaderIndex];
                         ROS_DEBUG_STREAM("APF output: " << leader.staticId);
@@ -174,7 +169,6 @@ namespace platoon_strategic
                     }
             }
         }
-
         return leader;
 
     }

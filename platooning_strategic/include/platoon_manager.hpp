@@ -24,8 +24,8 @@ namespace platoon_strategic
         long planStartTime;
         std::string planId;
         std::string peerId;
-        PlatoonPlan(){} ;
-        // PlatoonPlan():valid(false), planStartTime(0), planId(""), peerId("") {} ;
+        // PlatoonPlan(){} ;
+        PlatoonPlan():valid(false), planStartTime(0), planId(""), peerId("") {} ;
         PlatoonPlan(bool valid, long planStartTime, std::string planId, std::string peerId): 
             valid(valid), planStartTime(planStartTime), planId(planId), peerId(peerId) {}  
     };
@@ -65,10 +65,10 @@ namespace platoon_strategic
             double vehiclePosition;
             // The local time stamp when the host vehicle update any informations of this member
             long   timestamp;
-            PlatoonMember(){};
-            // PlatoonMember(): staticId(""), bsmId(""), commandSpeed(0.0), vehicleSpeed(0.0), timestamp(0) {} 
+            // PlatoonMember(){};
+            PlatoonMember(): staticId(""), bsmId(""), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), timestamp(0) {} 
             PlatoonMember(std::string staticId, std::string bsmId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
-            bsmId(bsmId), commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), timestamp(timestamp) {}
+            bsmId(bsmId), commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), vehiclePosition(vehiclePosition), timestamp(timestamp) {}
         };
         
 

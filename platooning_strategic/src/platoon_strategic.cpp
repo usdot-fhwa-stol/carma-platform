@@ -107,7 +107,6 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::cmd_cb(const geometry_msgs::TwistStampedConstPtr& msg)
     {
         cmd_speed_ = msg->twist.linear.x;
-        ROS_DEBUG_STREAM("speed_cmd_cb:" << current_speed_);
     }
 
     void PlatoonStrategicPlugin::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg)
@@ -117,7 +116,6 @@ namespace platoon_strategic
         {
             current_speed_ = 0.0;
         }
-        ROS_DEBUG_STREAM("current_speed_cb:" << current_speed_);
     }
 
     void PlatoonStrategicPlugin::updateCurrentStatus(cav_msgs::Maneuver maneuver, double& speed, double& current_progress, int& lane_id){
@@ -893,7 +891,6 @@ namespace platoon_strategic
             std::string vehicleID = msg.header.sender_id;
             std::string platoonId = msg.header.plan_id;
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
-            // TODO: update this
             pm_.memberUpdates(vehicleID, platoonId, msg.header.sender_bsm_id, statusParams);
             ROS_DEBUG_STREAM("Received platoon status message from " << msg.header.sender_id);
         }
