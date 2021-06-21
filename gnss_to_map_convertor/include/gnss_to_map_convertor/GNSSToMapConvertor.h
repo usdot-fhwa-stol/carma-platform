@@ -133,8 +133,8 @@ private:
   boost::optional<tf2::Quaternion> ned_in_map_rotation_;
 
   // Rotation describing orientation of sensor in heading frame
-  boost::optional<tf2::Quaternion> sensor_in_ned_heading_rotation_
-  ;
+  boost::optional<tf2::Quaternion> sensor_in_ned_heading_rotation_;
+  
   std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;  // Must be shared pointer instead of
                                                                              // optional since for some reason optional
                                                                              // does not work with this class

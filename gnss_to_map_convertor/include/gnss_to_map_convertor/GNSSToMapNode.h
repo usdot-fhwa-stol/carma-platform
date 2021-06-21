@@ -66,7 +66,7 @@ public:
           geometry_msgs::TransformStamped tf;
           try
           {
-            tfBuffer.lookupTransform(target, source, ros::Time(0));
+            tf = tfBuffer.lookupTransform(target, source, ros::Time(0));
           }
           catch (tf2::TransformException& ex)
           {
