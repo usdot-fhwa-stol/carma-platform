@@ -66,9 +66,9 @@ namespace platoon_control
         platoon_info_sub_ = nh_->subscribe<cav_msgs::PlatooningInfo>("platoon_info", 1, &PlatoonControlPlugin::platoonInfo_cb, this);
 
 		// Control Publisher
-		twist_pub_ = nh_->advertise<geometry_msgs::TwistStamped>("twist_raw", 10, true);
-        ctrl_pub_ = nh_->advertise<autoware_msgs::ControlCommandStamped>("ctrl_raw", 10, true);
-        platoon_info_pub_ = nh_->advertise<cav_msgs::PlatooningInfo>("platooning_info", 10, true);
+		twist_pub_ = nh_->advertise<geometry_msgs::TwistStamped>("twist_raw", 5, true);
+        ctrl_pub_ = nh_->advertise<autoware_msgs::ControlCommandStamped>("ctrl_raw", 5, true);
+        platoon_info_pub_ = nh_->advertise<cav_msgs::PlatooningInfo>("platooning_info", 1, true);
 
 
         pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlPlugin::pose_cb, this);
@@ -188,6 +188,7 @@ namespace platoon_control
 
         cav_msgs::PlatooningInfo platooing_info_msg = *msg;
         platooing_info_msg.desired_gap = pcw_.desired_gap_;
+        platooing_info_msg.host_cmd_speed = pcw_.speedCmd_;
         platoon_info_pub_.publish(platooing_info_msg);
     }
 

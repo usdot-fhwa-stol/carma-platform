@@ -834,7 +834,7 @@ namespace platoon_strategic
             }
             
             // This info is updated at platoon control plugin
-            status_msg.host_cmd_speed = 2.0;
+            status_msg.host_cmd_speed = cmd_speed_;
             status_msg.desired_gap = 6.0;
 
         }
