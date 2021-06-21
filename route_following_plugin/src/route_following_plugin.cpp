@@ -257,13 +257,13 @@ namespace route_following_plugin
                                                  
 
         ROS_DEBUG_STREAM("pose_cb : current_progress" << current_progress);
-        ROS_DEBUG_STREAM("upcoming_lane_change_status_msg_.lane_change : " << upcoming_lane_change_status_msg_.lane_change << 
-            ", upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack" << upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack);
+        ROS_DEBUG_STREAM("upcoming_lane_change_status_msg_.lane_change : " << static_cast<int>(upcoming_lane_change_status_msg_.lane_change) << 
+            ", upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack: " << static_cast<double>(upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack));
 
         if (upcoming_lane_change_status_msg_.lane_change != cav_msgs::UpcomingLaneChangeStatus::NONE && current_progress < upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack)
         {
             upcoming_lane_change_status_msg_.downtrack_until_lanechange=upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack-current_progress;
-            ROS_DEBUG_STREAM("upcoming_lane_change_status_msg_.downtrack_until_lanechange" <<static_cast<int>(upcoming_lane_change_status_msg_.downtrack_until_lanechange));
+            ROS_DEBUG_STREAM("upcoming_lane_change_status_msg_.downtrack_until_lanechange: " <<static_cast<double>(upcoming_lane_change_status_msg_.downtrack_until_lanechange));
             upcoming_lane_change_status_pub_.publish(upcoming_lane_change_status_msg_); 
         }
     }
