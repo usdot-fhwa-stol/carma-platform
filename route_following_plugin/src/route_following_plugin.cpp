@@ -249,6 +249,13 @@ namespace route_following_plugin
         return;
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
+        
+        auto llts = wm_->getLaneletsFromPoint(current_loc, 10);
+
+        //Determine the Lane Change Status
+        upcoming_lane_change_status_msg_ = ComposeLaneChangeStatus(0,llts.front(),llts.back(),current_progress);
+                                                 
+
         ROS_DEBUG_STREAM("pose_cb : current_progress" << current_progress);
         ROS_DEBUG_STREAM("upcoming_lane_change_status_msg_.lane_change : " << upcoming_lane_change_status_msg_.lane_change << 
             ", upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack" << upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack);
