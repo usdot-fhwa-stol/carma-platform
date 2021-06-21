@@ -49,11 +49,11 @@ namespace waypoint_generation
      * correctly returns the end point's index if the given state, despite being valid, is farther than the given points and can technically be near any of them.
      * 
      * \param points BasicLineString2d points
-     * \param ending_downtrack ending downtrack along the route to get index of
+     * \param target_downtrack target downtrack along the route to get index of
      * 
      * \return index of nearest point in points
      */
-    int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm, double ending_downtrack);
+    int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm, double target_downtrack);
 
     /**
      * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 

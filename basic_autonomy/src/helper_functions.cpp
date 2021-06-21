@@ -62,12 +62,12 @@ namespace waypoint_generation
         return best_index;
     }
 
-    int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm, double ending_downtrack)
+    int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm, double target_downtrack)
     {
         int best_index = points.size() - 1;
         for(int i = 0;i < points.size(); i++){
             double downtrack = wm->routeTrackPos(points[i]).downtrack;
-            if(downtrack > ending_downtrack + epsilon_){
+            if(downtrack > target_downtrack + epsilon_){
                 best_index = i - 1;
                 if (best_index < 0)
                 {
