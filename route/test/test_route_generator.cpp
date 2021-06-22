@@ -503,6 +503,7 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
         if(i.route_id  == "tfhrc_test_route")
         {
             req2.routeID = i.route_id;
+            req2.choice = cav_srvs::SetActiveRouteRequest::ROUTE_ID;
 
             ASSERT_EQ(worker.set_active_route_cb(req2, resp2), true);
         }

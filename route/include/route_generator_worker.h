@@ -101,8 +101,9 @@ namespace route {
 
         /**
          * \brief Set_active_route service callback. User can select a route to start following by calling this service
-         * \param req A cav_srvs::SetActiveRouteRequest msg which contains the route name user wants to select
-         * \param resp A cav_srvs::SetActiveRouteResponse msg contains error status showing if the routing successed
+         * \param req A cav_srvs::SetActiveRouteRequest msg which contains either a route name a user wants to select or 
+         *            an array of cav_msgs/Position3D destination points to generate a route from.
+         * \param resp A cav_srvs::SetActiveRouteResponse msg contains error status showing if the routing succeeded
          */
         bool set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp);
 
@@ -155,7 +156,13 @@ namespace route {
         bool check_for_duplicate_lanelets_in_shortest_path(const lanelet::routing::Route& route) const;
 
         /**
-         * \brief Helper function to load route points from route file and convert them from lat/lon values to cooridinates in ECEF
+         * \brief Overload of load_route_destinations_in_ecef function to convert route points from lat/lon values to cooridinates in ECEF
+         * \param destinations A vector of cav_msgs::Position3D points containing destination points provided as lat/long values
+         */
+        std::vector<tf2::Vector3> load_route_destinations_in_ecef(const std::vector<cav_msgs::Position3D>& destinations) const;
+
+        /**
+         * \brief Overload of load_route_destinations_in_ecef function to load route points from route file and convert them from lat/lon values to cooridinates in ECEF
          * \param route_id This function will read the route file with provided route_id
          */
         std::vector<tf2::Vector3> load_route_destinations_in_ecef(const std::string& route_id) const;

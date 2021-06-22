@@ -128,9 +128,17 @@ namespace route {
     }
 
     bool RouteGeneratorWorker::set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp)
-    {
-        ROS_INFO_STREAM("set_active_route_cb: Selected ID:" << req.routeID);
-        // only allow activate a new route in route selection state
+    {   
+        if(req.choice == cav_srvs::SetActiveRouteRequest::ROUTE_ID)
+        {
+            ROS_INFO_STREAM("set_active_route_cb: Selected Route ID: " << req.routeID);
+        }
+        else if(req.choice == cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY)
+        {
+            ROS_INFO_STREAM("set_active_route_cb: Destination Points array of size " << req.destination_points.size());
+        }
+
+        // only allow a new route to be activated in route selection state
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::SELECTION)
         {
         	ROS_DEBUG_STREAM("Valid state proceeding with selection");
@@ -162,11 +170,20 @@ namespace route {
             }
 
             // load destination points in ECEF frame
-            auto destination_points = load_route_destinations_in_ecef(req.routeID);
+            std::vector<tf2::Vector3> destination_points;
+            if(req.choice == cav_srvs::SetActiveRouteRequest::ROUTE_ID)
+            {
+                destination_points = load_route_destinations_in_ecef(req.routeID);
+            }
+            else if(req.choice == cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY)
+            {
+                destination_points = load_route_destinations_in_ecef(req.destination_points);
+            }
+
             // Check if route file are valid with at least one starting points and one destination points
             if(destination_points.size() < 1)
             {
-                ROS_ERROR_STREAM("Selected route file contains no points. Routing cannot be completed.");
+                ROS_ERROR_STREAM("Provided route contains no destination points. Routing cannot be completed.");
                 resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTE_FILE_ERROR;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
@@ -238,10 +255,17 @@ namespace route {
             }
 
 
+            if(req.choice == cav_srvs::SetActiveRouteRequest::ROUTE_ID)
+            {
+                route_msg_.route_name = req.routeID;
+            }
+            else if(req.choice == cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY)
+            {
+                route_msg_.route_name = "Unnamed-Route";
+            }
             route_marker_msg_ = compose_route_marker_msg(route);
             route_msg_.header.stamp = ros::Time::now();
             route_msg_.header.frame_id = "map";
-            route_msg_.route_name = req.routeID;
             route_msg_.map_version = world_model_->getMapVersion();
             // since routing is done correctly, transit to route following state
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_STARTED);
@@ -251,6 +275,7 @@ namespace route {
             return true;
         }
 
+        ROS_ERROR_STREAM("System is already following a route.");
         resp.errorStatus = cav_srvs::SetActiveRouteResponse::ALREADY_FOLLOWING_ROUTE;
 
         return true;
@@ -279,6 +304,38 @@ namespace route {
 
         // Route's shortest path does not duplicate lanelet IDs
         return false;
+    }
+
+    std::vector<tf2::Vector3> RouteGeneratorWorker::load_route_destinations_in_ecef(const std::vector<cav_msgs::Position3D>& destinations) const
+    {
+        std::vector<tf2::Vector3> destination_points;
+
+        for (const auto& destination : destinations)
+        {
+            wgs84_utils::wgs84_coordinate coordinate;
+
+            // convert lon value in the range of [0, 360.0] degree and then into rad
+            coordinate.lon = 
+                (destination.longitude < 0 ? destination.longitude + 360.0 : destination.longitude) * DEG_TO_RAD;
+            // convert lat value in the range of [0, 360.0] degree and then into rad
+            coordinate.lat = 
+                (destination.latitude < 0 ? destination.latitude + 360.0 : destination.latitude) * DEG_TO_RAD;
+            
+            // Assign elevation if the point includes elevation
+            if(destination.elevation_exists)
+            {
+                coordinate.elevation = destination.elevation;
+            }
+            else
+            {
+                coordinate.elevation = 0.0;
+            }
+
+            tf2::Quaternion no_rotation(0, 0, 0, 1);
+            destination_points.emplace_back(wgs84_utils::geodesic_to_ecef(coordinate, tf2::Transform(no_rotation)));
+        }
+
+        return destination_points;
     }
 
     std::vector<tf2::Vector3> RouteGeneratorWorker::load_route_destinations_in_ecef(const std::string& route_id) const
