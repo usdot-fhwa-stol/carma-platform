@@ -74,6 +74,7 @@ namespace platoon_control
         double steerCmd_ = 0;
         double angVelCmd_ = 0;
         double desired_gap_ = ctrl_config.standStillHeadway;
+        double actual_gap_ = 0.0;
 
         PlatoonLeaderInfo platoon_leader;
 

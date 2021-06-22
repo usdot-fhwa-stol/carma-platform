@@ -56,7 +56,7 @@ namespace platoon_strategic
                     
             bool isFromLeader = (leaderID == senderId);
             
-            bool needPlatoonIdChange = isFromLeader && (currentPlatoonID == platoonId);
+            bool needPlatoonIdChange = isFromLeader && (currentPlatoonID != platoonId);
             
             bool isVehicleInFrontOf = (dtDistance >= getCurrentDowntrackDistance());
 
@@ -96,7 +96,7 @@ namespace platoon_strategic
 
         bool isExisted = false;
         // update/add this info into the list
-        for (PlatoonMember pm : platoon){
+        for (PlatoonMember& pm : platoon){
             if(pm.staticId == senderId) {
                 pm.bsmId = senderBsmId;
                 pm.commandSpeed = cmdSpeed;

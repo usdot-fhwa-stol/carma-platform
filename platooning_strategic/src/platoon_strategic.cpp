@@ -816,7 +816,7 @@ namespace platoon_strategic
         if (pm_.current_platoon_state != PlatoonState::STANDBY)
         {
             status_msg.platoon_id = pm_.currentPlatoonID;
-            status_msg.size = pm_.getTotalPlatooningSize();
+            status_msg.size = std::max(1, pm_.getTotalPlatooningSize());
             status_msg.size_limit = config_.maxPlatoonSize;
 
             
@@ -832,6 +832,7 @@ namespace platoon_strategic
                 ROS_DEBUG_STREAM("platoon_leader " << platoon_leader.staticId);
                 status_msg.leader_id = platoon_leader.staticId;
                 status_msg.leader_downtrack_distance = platoon_leader.vehiclePosition;
+                ROS_DEBUG_STREAM("platoon_leader position: " << platoon_leader.vehiclePosition);
                 status_msg.leader_cmd_speed = platoon_leader.commandSpeed;
                 status_msg.host_platoon_position = pm_.getNumberOfVehicleInFront();
 
@@ -848,6 +849,7 @@ namespace platoon_strategic
             // This info is updated at platoon control plugin
             status_msg.host_cmd_speed = cmd_speed_;
             status_msg.desired_gap = 6.0;
+            status_msg.actual_gap = 0.0;
 
         }
         return status_msg;

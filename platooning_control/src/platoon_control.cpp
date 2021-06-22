@@ -99,7 +99,7 @@ namespace platoon_control
         if (!initial_pose_set_)
         {
             pcw_.setInitialPose(pose_msg_);
-            ROS_DEBUG_STREAM("initial pose set");
+            // ROS_DEBUG_STREAM("initial pose set");
             initial_pose_set_ = true;
         }
 
@@ -112,16 +112,6 @@ namespace platoon_control
         
         generateControlSignals(first_trajectory_point, lookahead_point);
 
-       
-
-    	// publishTwist(twist_msg);
-
-        // autoware_msgs::ControlCommandStamped ctrl_msg;
-        // ctrl_msg.cmd.linear_velocity = twist_msg.twist.linear.x;
-        // ROS_DEBUG_STREAM("command speed " << ctrl_msg.cmd.linear_velocity);
-        // ctrl_msg.cmd.steering_angle = twist_msg.twist.angular.z;
-        // ROS_DEBUG_STREAM("command steering " << ctrl_msg.cmd.steering_angle);
-        // ctrl_pub_.publish(ctrl_msg);
 
     }
 
@@ -188,6 +178,7 @@ namespace platoon_control
 
         cav_msgs::PlatooningInfo platooing_info_msg = *msg;
         platooing_info_msg.desired_gap = pcw_.desired_gap_;
+        platooing_info_msg.actual_gap = pcw_.actual_gap_;
         platooing_info_msg.host_cmd_speed = pcw_.speedCmd_;
         platoon_info_pub_.publish(platooing_info_msg);
     }
@@ -254,6 +245,8 @@ namespace platoon_control
                 trajectory_speed = v;
             }
         }
+
+        ROS_DEBUG_STREAM("trajectory speed: " << trajectory_speed);
         return trajectory_speed;
 
     }

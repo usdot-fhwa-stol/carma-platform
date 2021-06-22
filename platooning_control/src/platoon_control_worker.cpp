@@ -24,7 +24,9 @@ namespace platoon_control
 
     void PlatoonControlWorker::setInitialPose(const geometry_msgs::PoseStamped msg)
 	{
-		initial_pose_ = msg.pose;
+		// initial_pose_ = msg.pose;
+        initial_pose_.position.x =  -0.790936994017;
+        initial_pose_.position.y =  558.514141773;
 	}
 
     void PlatoonControlWorker::setCurrentPose(const geometry_msgs::PoseStamped msg)
@@ -46,6 +48,9 @@ namespace platoon_control
 	        ROS_DEBUG_STREAM("The current leader position is " << leaderCurrentPosition);
 	        double hostVehiclePosition = getCurrentDowntrackDistance(point);
 	        double hostVehicleSpeed = currentSpeed;
+
+            actual_gap_ = leaderCurrentPosition - hostVehiclePosition;
+            ROS_DEBUG_STREAM("actual gap " << actual_gap_);
 
 	        ROS_DEBUG_STREAM("The host vehicle speed is " << hostVehicleSpeed << " and its position is " << hostVehiclePosition);
 	        // If the host vehicle is the fifth vehicle and it is following the third vehicle, the leader index here is 2
