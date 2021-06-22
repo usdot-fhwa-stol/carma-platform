@@ -90,6 +90,8 @@ namespace platoon_strategic
             cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time& current_time);
             void updateCurrentStatus(cav_msgs::Maneuver maneuver, double& speed, double& current_progress, int& lane_id);
             void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+
+            cav_msgs::PlatooningInfo compose_platoon_info_msg();
             /**
             * \brief Callback for the twist subscriber, which will store latest twist locally
             * \param msg Latest twist message
@@ -173,7 +175,7 @@ namespace platoon_strategic
             void mob_resp_cb_candidatefollower(const cav_msgs::MobilityResponse& msg);
             void mob_resp_cb_standby(const cav_msgs::MobilityResponse& msg);
 
-            cav_msgs::PlatooningInfo compose_platoon_info_msg();
+            
 
             
             

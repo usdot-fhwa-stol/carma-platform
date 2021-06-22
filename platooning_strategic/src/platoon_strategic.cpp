@@ -56,6 +56,7 @@ namespace platoon_strategic
         else if (pm_.current_platoon_state == PlatoonState::FOLLOWER)
         {
             run_follower();
+            ROS_WARN("running follower");
         }
         else if (pm_.current_platoon_state == PlatoonState::CANDIDATEFOLLOWER)
         {
@@ -319,8 +320,7 @@ namespace platoon_strategic
         ROS_DEBUG_STREAM("Run LeaderWaiting State ");
         long tsStart = ros::Time::now().toNSec()/1000000;
             // Task 1
-            // TODO: temporarily no timeout, later revert this
-                if(false)//(tsStart - waitingStartTime > waitingStateTimeout * 1000) 
+                if(tsStart - waitingStartTime > waitingStateTimeout * 1000) 
                 {
                     //TODO if the current state timeouts, we need to have a kind of ABORT message to inform the applicant
                     ROS_DEBUG_STREAM("LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
@@ -389,35 +389,38 @@ namespace platoon_strategic
         // 4. Publish operation status every 100 milliseconds if we still have followers
         long tsStart = ros::Time::now().toNSec()/1000000; 
             // Job 1
+            ROS_WARN("1");
             cav_msgs::MobilityOperation status;
             status = composeMobilityOperationFollower();
-            // mob_op_pub_.publish(status);
             mobility_operation_publisher_(status);
             // Job 2
             // Get the number of vehicles in this platoon who is in front of us
             int vehicleInFront = pm_.getNumberOfVehicleInFront();
                 if(vehicleInFront == 0) {
+                    ROS_WARN("2");
                     noLeaderUpdatesCounter++;
                     if(noLeaderUpdatesCounter >= LEADER_TIMEOUT_COUNTER_LIMIT) {
                         ROS_DEBUG_STREAM("noLeaderUpdatesCounter = " << noLeaderUpdatesCounter << " and change to leader state");
                         pm_.changeFromFollowerToLeader();
                         pm_.current_platoon_state = PlatoonState::LEADER;
-                        
+                        ROS_WARN("5");
                     }
                 } else {
                     // reset counter to zero when we get updates again
                     noLeaderUpdatesCounter = 0;
+                    ROS_WARN("3");
                 }
-                long tsEnd = ros::Time::now().toNSec() *1000000;
+                long tsEnd = ros::Time::now().toNSec()/1000000;
                 long sleepDuration = std::max((int32_t)(statusMessageInterval_ - (tsEnd - tsStart)), 0);
                 ros::Duration(sleepDuration/1000).sleep();
+                ROS_WARN("4");
         
     }
 
     void PlatoonStrategicPlugin::run_candidate_follower(){
         long tsStart = ros::Time::now().toNSec()/1000000;
         // Task 1
-        bool isCurrentStateTimeout = false;// (tsStart - candidatestateStartTime) > waitingStateTimeout * 1000;
+        bool isCurrentStateTimeout = (tsStart - candidatestateStartTime) > waitingStateTimeout * 1000;
         ROS_DEBUG_STREAM("timeout1: " << tsStart - candidatestateStartTime);
         ROS_DEBUG_STREAM("waitingStateTimeout: " << waitingStateTimeout*1000);
         if(isCurrentStateTimeout) {
@@ -428,12 +431,11 @@ namespace platoon_strategic
 
         if(pm_.current_plan.valid) {
             {
-                // std::lock_guard<std::mutex> lock(plan_mutex_);
                 if(pm_.current_plan.valid) {
                     ROS_DEBUG_STREAM("pm_.current_plan.planStartTime: " << pm_.current_plan.planStartTime);
                     ROS_DEBUG_STREAM("timeout2: " << tsStart - pm_.current_plan.planStartTime);
                     ROS_DEBUG_STREAM("NEGOTIATION_TIMEOUT: " << NEGOTIATION_TIMEOUT);
-                    bool isPlanTimeout = false;//(tsStart - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT;
+                    bool isPlanTimeout = (tsStart - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT;
                     if(isPlanTimeout) {
                         pm_.current_plan.valid = false;
                         ROS_DEBUG_STREAM("The current plan did not receive any response. Abort and change to leader state.");
@@ -716,6 +718,7 @@ namespace platoon_strategic
                     pm_.current_platoon_state = PlatoonState::FOLLOWER;
                     targetPlatoonId = msg.header.plan_id;
                     pm_.changeFromLeaderToFollower(targetPlatoonId);
+                    ROS_WARN("changed to follower");
                     // plugin.setState(new FollowerState(plugin, log, pluginServiceLocator));
                     // pluginServiceLocator.getArbitratorService().requestNewPlan(this.trajectoryEndLocation);
                 } 
@@ -761,7 +764,9 @@ namespace platoon_strategic
                         pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
                         candidatestateStartTime = ros::Time::now().toNSec()/1000000;
                         targetPlatoonId = potentialNewPlatoonId;
+                        ROS_DEBUG_STREAM("targetPlatoonId = " << targetPlatoonId);
                         pm_.targetLeaderId = pm_.current_plan.peerId;
+                        ROS_DEBUG_STREAM("pm_.targetLeaderId = " << pm_.targetLeaderId );
                         // plugin.setState(new CandidateFollowerState(plugin, log, pluginServiceLocator, currentPlan.peerId, potentialNewPlatoonId, this.trajectoryEndLocation));
                         // pluginServiceLocator.getArbitratorService().requestNewPlan(this.trajectoryEndLocation);
                 }
@@ -814,10 +819,17 @@ namespace platoon_strategic
             status_msg.size = pm_.getTotalPlatooningSize();
             status_msg.size_limit = config_.maxPlatoonSize;
 
-            PlatoonMember platoon_leader = pm_.getLeader();
-            ROS_DEBUG_STREAM("platoon_leader " << platoon_leader.staticId);
-            if (platoon_leader.staticId != "")
-            {
+            
+            
+            if (pm_.current_platoon_state == PlatoonState::FOLLOWER)
+            {  
+                ROS_DEBUG_STREAM("isFollower: " << pm_.isFollower);
+                ROS_DEBUG_STREAM("pm platoonsize: " << pm_.platoon.size());
+
+                pm_.isFollower = true;
+                
+                PlatoonMember platoon_leader = pm_.getLeader();
+                ROS_DEBUG_STREAM("platoon_leader " << platoon_leader.staticId);
                 status_msg.leader_id = platoon_leader.staticId;
                 status_msg.leader_downtrack_distance = platoon_leader.vehiclePosition;
                 status_msg.leader_cmd_speed = platoon_leader.commandSpeed;
