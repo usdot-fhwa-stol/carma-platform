@@ -49,7 +49,7 @@ for dir in */; do
 								
 				# rename the directory
 				cd ..
-				match_log=${rosbag%.bag}.log
+				match_log=${rosbag%.bag}_log
 				mv $match_dir $match_log
 				cd $match_log
 			fi 			
