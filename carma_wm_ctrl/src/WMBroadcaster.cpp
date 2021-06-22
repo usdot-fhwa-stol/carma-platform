@@ -390,8 +390,8 @@ ros::V_string WMBroadcaster::participantsChecker(const cav_msgs::TrafficControlM
       participants.push_back(lanelet::Participants::VehicleTruck);
     }
   }
-
-  return  participants;
+  // combine to single vehicle type if possible, otherwise pass through
+  return  combineParticipantsToVehicle(participants);
 }
 
 ros::V_string WMBroadcaster::invertParticipants(const ros::V_string& input_participants) const
@@ -408,6 +408,27 @@ ros::V_string WMBroadcaster::invertParticipants(const ros::V_string& input_parti
     if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleTruck)== input_participants.end()) participants.emplace_back(lanelet::Participants::VehicleTruck);
   }
   return  participants;
+}
+
+ros::V_string WMBroadcaster::combineParticipantsToVehicle(const ros::V_string& input_participants) const
+{
+  ros::V_string participants;
+
+  if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleMotorcycle)!= input_participants.end() &&
+      std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleBus) != input_participants.end() &&
+      std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleCar) != input_participants.end() &&
+      std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleTruck) != input_participants.end())
+  {
+    ROS_DEBUG_STREAM("Detected participants to cover all possible vehicle types");
+    participants.emplace_back(lanelet::Participants::Vehicle);
+  }
+  else
+  {
+    ROS_DEBUG_STREAM("Not making any changes to the participants list");
+    participants = input_participants;
+  }
+
+  return participants;
 }
 
 // currently only supports geofence message version 1: TrafficControlMessageV01 
