@@ -242,7 +242,6 @@ namespace route_following_plugin
     void RouteFollowingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
 
-        ROS_WARN_STREAM("Entering pose_cb");
         ROS_DEBUG_STREAM("Entering pose_cb");
         pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
 
