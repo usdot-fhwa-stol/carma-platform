@@ -80,12 +80,33 @@ namespace platoon_control
             speed_cmd = adjSpeedCmd;
             ROS_DEBUG_STREAM("A speed command is generated from command generator: " << speed_cmd << " m/s");
 
+            if(enableMaxAdjustmentFilter)
+            {
+                if(speed_cmd > leader.commandSpeed + ctrl_config.adjustmentCap) {
+                    speed_cmd = leader.commandSpeed + ctrl_config.adjustmentCap;
+                } else if(speed_cmd < leader.commandSpeed - ctrl_config.adjustmentCap) {
+                    speed_cmd = leader.commandSpeed - ctrl_config.adjustmentCap;
+                }
+                ROS_DEBUG_STREAM("The adjusted cmd speed after max adjustment cap is " << speed_cmd << " m/s");
+            }
+
         }
 
         else if (leader.staticId == ctrl_config.vehicle_id)
         {
             ROS_DEBUG_STREAM("Host vehicle is the leader");
             speed_cmd = currentSpeed;
+
+            if(enableMaxAdjustmentFilter) 
+            {
+                if(speed_cmd > ctrl_config.adjustmentCap)
+                {
+                    speed_cmd = ctrl_config.adjustmentCap;
+                } 
+
+                ROS_DEBUG_STREAM("The adjusted leader cmd speed after max adjustment cap is " << speed_cmd << " m/s");
+            }   
+
             pid_ctrl_.reset();
         }
 
@@ -97,14 +118,7 @@ namespace platoon_control
             pid_ctrl_.reset();
         }
 
-        if(enableMaxAdjustmentFilter) {
-                if(speed_cmd > leader.commandSpeed + ctrl_config.adjustmentCap) {
-                    speed_cmd = leader.commandSpeed + ctrl_config.adjustmentCap;
-                } else if(speed_cmd < leader.commandSpeed - ctrl_config.adjustmentCap) {
-                    speed_cmd = leader.commandSpeed - ctrl_config.adjustmentCap;
-                }
-                ROS_DEBUG_STREAM("The adjusted cmd speed after max adjustment cap is " << speed_cmd << " m/s");
-        }
+        
         
         // Third: we allow do not a large gap between two consecutive speed commands
         if(enableMaxAccelFilter) {
