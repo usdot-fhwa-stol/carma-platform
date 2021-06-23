@@ -42,6 +42,7 @@ namespace route_following_plugin
         plugin_discovery_msg_.activated = true;
         plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
         plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
+        upcoming_lane_change_status_msg_.lane_change = cav_msgs::UpcomingLaneChangeStatus::NONE;
 
         pose_sub_ = nh_->subscribe("current_pose", 1, &RouteFollowingPlugin::pose_cb, this);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteFollowingPlugin::twist_cb, this);
