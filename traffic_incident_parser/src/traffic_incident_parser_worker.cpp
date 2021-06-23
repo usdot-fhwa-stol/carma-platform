@@ -21,6 +21,7 @@
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/primitives/Traits.h>
+#include <proj.h>
 
 namespace traffic
 {
@@ -343,12 +344,48 @@ namespace traffic
     j2735_msgs::TrafficControlVehClass veh_type;
     veh_type.vehicle_class = j2735_msgs::TrafficControlVehClass::ANY; // TODO decide what vehicle is affected
     traffic_mobility_msg.params.vclasses.push_back(veh_type);
-    traffic_mobility_msg.geometry.proj=projection_msg_;
     traffic_mobility_msg.params.schedule.start=ros::Time::now();
     traffic_mobility_msg.params.schedule.end_exists=false;
     traffic_mobility_msg.params.schedule.dow_exists=false;
     traffic_mobility_msg.params.schedule.between_exists=false;
     traffic_mobility_msg.params.schedule.repeat_exists = false;
+    
+    std::string common_frame = "+init=EPSG:4326 +datum=WGS84"; // Common frame to use as go between for proj frames. This is just WGS84 and the same frame used by carma-cloud
+
+    PJ* common_to_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, common_frame.c_str(), projection_msg_.c_str() , NULL); // Create transformation between map frame and common frame. Reverse here takes map->latlon. Froward is latlon->map
+
+    if (common_to_map_proj == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
+    
+      ROS_ERROR_STREAM("Failed to generate projection between map  georeference and common frame with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
+        << " projection_msg_: " << projection_msg_ << " common_frame: " << common_frame);
+
+      return {}; // Ignore geofence if it could not be projected into the map frame
+    }
+
+    PJ_COORD map_origin_map_frame{{0.0, 0.0, 0.0, 0.0}}; // Map origin to use as ref lat/lon
+    PJ_COORD map_origin_in_common_frame;
+
+    map_origin_in_common_frame = proj_trans(common_to_map_proj, PJ_INV, map_origin_map_frame);
+
+    traffic_mobility_msg.geometry.proj = "EPSG:4326";
+    traffic_mobility_msg.geometry.datum = "WGS84";
+    traffic_mobility_msg.geometry.reflat = map_origin_in_common_frame.lpz.phi;
+    traffic_mobility_msg.geometry.reflon = map_origin_in_common_frame.lpz.lam;
+
+    // Create a local transverse mercator frame at the reference point to allow us to get east,north oriented data reguardless of map projection orientation 
+    // This is needed to match the TrafficControlMessage specification
+    std::string local_tmerc_enu_proj = "+proj=tmerc +datum=WGS84 +h_0=0 +lat_0=" + std::to_string(traffic_mobility_msg.geometry.reflat) + " +lon_0=" + std::to_string(traffic_mobility_msg.geometry.reflon);
+
+    PJ* map_to_tmerc_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, projection_msg_.c_str(), local_tmerc_enu_proj.c_str() , NULL); // Create transformation between the common frame and the local ENU oriented frame
+    
+    if (map_to_tmerc_proj == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
+    
+      ROS_ERROR_STREAM("Failed to generate projection between map  georeference and tmerc frame with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
+        << " projection_msg_: " << projection_msg_ << " local_tmerc_enu_proj: " << local_tmerc_enu_proj);
+
+      return {}; // Ignore geofence if it could not be projected into the map frame
+    }
+    
 
     for (size_t i = 0; i < reverse_lanes.size(); i++) {
 
@@ -357,21 +394,33 @@ namespace traffic
         ROS_DEBUG_STREAM("Skipping empty lane");
         continue;
       }
+
+
+      PJ_COORD map_pt{{reverse_lanes[i].front().x(), reverse_lanes[i].front().y(), 0.0, 0.0}}; // Map point to convert to tmerc frame
+
+      PJ_COORD tmerc_pt = proj_trans(map_to_tmerc_proj, PJ_FWD, map_pt);
+
       cav_msgs::PathNode prev_point;
-      prev_point.x = reverse_lanes[i].front().x();
-      prev_point.y = reverse_lanes[i].front().y();
+      prev_point.x = tmerc_pt.xyz.x;
+      prev_point.y = tmerc_pt.xyz.y;
       bool first = true;
       for(const auto& p : carma_utils::containers::downsample_vector(reverse_lanes[i], 8))
       {
         cav_msgs::PathNode delta;
-        ROS_DEBUG_STREAM("prev_point x" << prev_point.x << ", prev_point y" << prev_point.y);
-        ROS_DEBUG_STREAM("p.x()" << p.x() << ", p.y()" << p.y());
-        delta.x=p.x() - prev_point.x;
-        delta.y=p.y() - prev_point.y;
+
+        map_pt = PJ_COORD({p.x(), p.y(), 0.0, 0.0}); // Map point to convert to common frame
+        tmerc_pt = proj_trans(map_to_tmerc_proj, PJ_FWD, map_pt); // Convert point to tmerc frame
+
+        delta.x=tmerc_pt.xyz.x - prev_point.x;
+        delta.y=tmerc_pt.xyz.y - prev_point.y;
+
+        ROS_DEBUG_STREAM("prev_point x" << prev_point.x << ", prev_point y " << prev_point.y);
+        ROS_DEBUG_STREAM("tmerc_pt.xyz.x" << tmerc_pt.xyz.x << ", tmerc_pt.xyz.y " << tmerc_pt.xyz.y);
+
         ROS_DEBUG_STREAM("calculated diff x" << delta.x << ", diff y" << delta.y);
         if (first)
         {
-          traffic_mobility_msg.geometry.nodes.push_back(prev_point); //traffic incident parser actually sends coordinates in carma-platform's proj frame
+          traffic_mobility_msg.geometry.nodes.push_back(prev_point); 
           first = false;
         }
         else

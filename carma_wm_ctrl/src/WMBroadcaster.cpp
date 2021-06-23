@@ -509,50 +509,43 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   // The first approach is to store the entire projection in the proj string. 
   // The second approach is to populate the other fields in the TCM message.
   // Here we check which fields were already provided in the projection string and if they were not provided we set them with the value provided in the TCM message
-  std::string projection = tcmV01.geometry.proj;
-  std::string universal_frame = "EPSG:4326"; //lat/long included in TCM is in this frame as it is universal
+  std::string projection = "+init=" + tcmV01.geometry.proj;
   
   ROS_DEBUG_STREAM("Projection field before remaning message processing: " << projection);
 
-  if (projection.find("epsg") == std::string::npos && projection.find("EPSG") == std::string::npos)
-  {
-    if (projection.find("+datum=") == std::string::npos && !tcmV01.geometry.datum.empty()) { // Datum is not a universal projection so only add it if it was provided
+  if (projection.find("+datum=") == std::string::npos && !tcmV01.geometry.datum.empty()) { // Datum is not a universal projection so only add it if it was provided
     projection.append(" +datum=" + tcmV01.geometry.datum);
-    }
-
-    if (projection.find("+lat_0=") == std::string::npos && tcmV01.geometry.reflat!= 0.0) { // Lat and Lon are universal proj string attributes and can always be used
-      projection.append(" +lat_0=" + std::to_string(tcmV01.geometry.reflat));
-    }
-
-    if (projection.find("+lon_0=") == std::string::npos && tcmV01.geometry.reflon!= 0.0) {
-      projection.append(" +lon_0=" + std::to_string(tcmV01.geometry.reflon));
-    }
-
-    if (projection.find("+h_0=") == std::string::npos && tcmV01.geometry.refelv != 0.0) { // Height only applies to some projections and should only be set if elevation is non-zero
-      projection.append(" +h_0=" + std::to_string(tcmV01.geometry.refelv));
-    }
   }
-  
+
   ROS_DEBUG_STREAM("Projection field after remaning message processing: " << projection);
-
   ROS_DEBUG_STREAM("Traffic Control heading provided: " << tcmV01.geometry.heading << " System understanding is that this value will not affect the projection and is only provided for supporting derivative calculations.");
-  
-  // Create the resulting projection transformation
-  PJ* universal_to_target = proj_create_crs_to_crs(PJ_DEFAULT_CTX, universal_frame.c_str(), projection.c_str(), nullptr);
-  if (universal_to_target == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
-    
-    ROS_ERROR_STREAM("Failed to generate projection between geofence and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
-      << " universal_frame: " << universal_frame << " projection: " << projection);
 
-    return {}; // Ignore geofence if it could not be projected from universal to TCM frame
+  std::string common_frame = "+init=EPSG:4326 +datum=WGS84"; // Define a common frame (WGS84) to convert all reported lat/lon references into before defining tmerc frame used for node conversion
+
+  // Create transform between message frame and the common lat/lon frame
+  PJ* msg_to_common = proj_create_crs_to_crs(PJ_DEFAULT_CTX, projection.c_str(), common_frame.c_str() , NULL);
+
+  if (msg_to_common == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
+    
+    ROS_ERROR_STREAM("Failed to generate projection between geofence and common frame with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
+      << " projection: " << projection << " common_frame: " << common_frame);
+
+    return {}; // Ignore geofence if it could not be projected into the map frame
+  
   }
-  
-  PJ* target_to_map = proj_create_crs_to_crs(PJ_DEFAULT_CTX, projection.c_str(), base_map_georef_.c_str(), nullptr);
 
-  if (target_to_map == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
+  PJ_COORD ref_latlon_msg{{tcmV01.geometry.reflat, tcmV01.geometry.reflon, tcmV01.geometry.refelv}}; // TODO time currently ignored because it is unclear what the units needed by proj are
+  PJ_COORD ref_latlon_common = proj_trans(msg_to_common, PJ_FWD, ref_latlon_msg);
+  
+  // The TCM nodes a required to be in an ENU frame so create a transverse mercator frame at the provided ref lat/lon and use this to convert the data
+  std::string local_tmerc_enu_proj = "+proj=tmerc +datum=WGS84 +lat_0=" + std::to_string(ref_latlon_common.lpz.phi) + " +lon_0=" + std::to_string(ref_latlon_common.lpz.lam) + " +h_0=" + std::to_string(ref_latlon_common.lpz.z);
+
+  PJ* tmerc_to_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, local_tmerc_enu_proj.c_str(), base_map_georef_.c_str() , NULL); // Create transformation between the message tmerc frame and the local ENU oriented frame
+
+  if (tmerc_to_map_proj == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
     
     ROS_ERROR_STREAM("Failed to generate projection between geofence and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
-      << " target_to_map: " << target_to_map << " base_map_georef_: " << base_map_georef_);
+      << " tmerc_to_map_proj: " << tmerc_to_map_proj << " base_map_georef_: " << base_map_georef_);
 
     return {}; // Ignore geofence if it could not be projected into the map frame
   
@@ -560,21 +553,16 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   
   // convert all geofence points into our map's frame
   std::vector<lanelet::Point3d> gf_pts;
-  cav_msgs::PathNode prev_pt;
-  PJ_COORD c_init_latlong{{tcmV01.geometry.reflat, tcmV01.geometry.reflon, tcmV01.geometry.refelv}};
-  PJ_COORD c_init = proj_trans(universal_to_target, PJ_FWD, c_init_latlong);
+  cav_msgs::PathNode prev_pt; // Initializes as (0,0)
 
-  prev_pt.x = c_init.xyz.x;
-  prev_pt.y =  c_init.xyz.y;
-
-  ROS_DEBUG_STREAM("In TCM's frame, initial Point X "<< prev_pt.x<<" Before conversion: Point Y "<< prev_pt.y );
   for (auto pt : tcmV01.geometry.nodes)
   { 
+
     ROS_DEBUG_STREAM("Before conversion in TCM frame: Point X "<< pt.x <<" Before conversion: Point Y "<< pt.y);
 
     PJ_COORD c {{prev_pt.x + pt.x, prev_pt.y + pt.y, 0, 0}}; // z is not currently used
     PJ_COORD c_out;
-    c_out = proj_trans(target_to_map, PJ_FWD, c);
+    c_out = proj_trans(tmerc_to_map_proj, PJ_FWD, c);
 
     gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), c_out.xyz.x, c_out.xyz.y});
     prev_pt.x += pt.x;
