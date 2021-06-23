@@ -266,6 +266,7 @@ namespace route_following_plugin
             ROS_DEBUG_STREAM("upcoming_lane_change_status_msg_.downtrack_until_lanechange: " <<static_cast<double>(upcoming_lane_change_status_msg_.downtrack_until_lanechange));
             upcoming_lane_change_status_pub_.publish(upcoming_lane_change_status_msg_); 
         }
+        upcoming_lane_change_status_pub_.publish(upcoming_lane_change_status_msg_);
     }
 
     ros::Duration RouteFollowingPlugin::getManeuverDuration(cav_msgs::Maneuver &maneuver, double epsilon) const
