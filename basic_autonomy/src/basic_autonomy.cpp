@@ -560,12 +560,13 @@ namespace basic_autonomy
                 }
 
                 //get route geometry between starting and ending downtracks
-                std::vector<lanelet::BasicPoint2d> route_geometry = create_route_geom(starting_downtrack, stoi(lane_change_maneuver.starting_lane_id), ending_downtrack, wm);
+                std::vector<lanelet::BasicPoint2d> route_geometry = create_route_geom(starting_downtrack, stoi(lane_change_maneuver.starting_lane_id), ending_downtrack + detailed_config.buffer_ending_downtrack, wm);
                 ROS_DEBUG_STREAM("Route geometry size : "<<route_geometry.size());
+
                 lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
                 double current_downtrack = wm->routeTrackPos(state_pos).downtrack;
-                int nearest_pt_index = get_nearest_point_index(route_geometry, wm, current_downtrack);
-                int ending_pt_index = get_nearest_point_index(route_geometry, wm, ending_downtrack);
+                int nearest_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, current_downtrack);
+                int ending_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, ending_downtrack);
                 ROS_DEBUG_STREAM("Nearest pt index in maneuvers to points: "<< nearest_pt_index);
                 ROS_DEBUG_STREAM("Ending pt index in maneuvers to points: "<< ending_pt_index);
 
@@ -583,7 +584,7 @@ namespace basic_autonomy
 
                 if (ending_downtrack + detailed_config.buffer_ending_downtrack < route_length)
                 {
-                    ending_pt_index = get_nearest_point_index(route_geometry, wm, ending_downtrack + detailed_config.buffer_ending_downtrack);
+                    ending_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, ending_downtrack + detailed_config.buffer_ending_downtrack);
                 }
                 else
                 {
@@ -617,7 +618,7 @@ namespace basic_autonomy
             const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState ending_state_before_buffer, const DetailedTrajConfig &detailed_config)
         {
             ROS_DEBUG_STREAM("Input points size in compose traj from centerline: "<< points.size());
-            int nearest_pt_index = get_nearest_point_index(points, state);
+            int nearest_pt_index = get_nearest_index_by_downtrack(points, wm, state);
             ROS_DEBUG_STREAM("nearest_pt_index: "<< nearest_pt_index);
 
             std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end());
@@ -639,7 +640,7 @@ namespace basic_autonomy
 
             //Remove extra points
             ROS_DEBUG_STREAM("Before removing extra buffer points, future_geom_points.size()"<< future_geom_points.size());
-            int end_dist_pt_index = get_nearest_point_index(future_geom_points, ending_state_before_buffer);
+            int end_dist_pt_index = get_nearest_index_by_downtrack(future_geom_points, wm, ending_state_before_buffer);
             future_geom_points.resize(end_dist_pt_index + 1);
             times.resize(end_dist_pt_index + 1);
             final_yaw_values.resize(end_dist_pt_index + 1);
