@@ -19,6 +19,7 @@
 #include <carma_wm_ctrl/WMBroadcaster.h>
 #include <carma_wm/Geometry.h>
 #include <carma_wm/MapConformer.h>
+#include <boost/algorithm/string.hpp>
 #include <lanelet2_extension/utility/message_conversion.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -98,6 +99,11 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
 
   // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
   gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(msg_v01);
+
+  if (gf_ptr->affected_parts_.size() == 0) {
+    ROS_DEBUG_STREAM("Geofence no processed as could not identify impact map regions.");
+    return nullptr; // Return null geofence
+  }
 
   std::vector<lanelet::Lanelet> affected_llts;
   std::vector<lanelet::Area> affected_areas;
@@ -464,7 +470,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
     
   checked_geofence_ids_.insert(boost::uuids::to_string(id));
   auto gf_ptr = geofenceFromMsg(geofence_msg.tcmV01);
-  if (gf_ptr->affected_parts_.size() == 0)
+  if (gf_ptr == nullptr || gf_ptr->affected_parts_.size() == 0)
   {
     ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
     tcm_marker_array_.markers.resize(tcm_marker_array_.markers.size() - 1); //truncate this geofence
@@ -514,7 +520,12 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   ROS_DEBUG_STREAM("Projection field before remaning message processing: " << projection);
 
   if (projection.find("+datum=") == std::string::npos && !tcmV01.geometry.datum.empty()) { // Datum is not a universal projection so only add it if it was provided
-    projection.append(" +datum=" + tcmV01.geometry.datum);
+    if (boost::to_upper_copy<std::string>(projection).find("EPSG") == std::string::npos) {
+      ROS_DEBUG_STREAM("NON-EPSG CRS identifed attempting to set datum");
+      projection.append(" +datum=" + tcmV01.geometry.datum);
+    } else {
+      ROS_DEBUG_STREAM("CRS is an EPSG id. There is no need to set the datum as it is already fully defined");
+    }
   }
 
   ROS_DEBUG_STREAM("Projection field after remaning message processing: " << projection);

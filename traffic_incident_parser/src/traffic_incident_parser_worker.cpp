@@ -350,7 +350,7 @@ namespace traffic
     traffic_mobility_msg.params.schedule.between_exists=false;
     traffic_mobility_msg.params.schedule.repeat_exists = false;
     
-    std::string common_frame = "+init=EPSG:4326 +datum=WGS84"; // Common frame to use as go between for proj frames. This is just WGS84 and the same frame used by carma-cloud
+    std::string common_frame = "EPSG:4326"; // Common frame to use as go between for proj frames. This is just WGS84 and the same frame used by carma-cloud
 
     PJ* common_to_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, common_frame.c_str(), projection_msg_.c_str() , NULL); // Create transformation between map frame and common frame. Reverse here takes map->latlon. Froward is latlon->map
 
