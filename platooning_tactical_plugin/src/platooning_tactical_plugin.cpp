@@ -101,7 +101,9 @@ bool PlatooningTacticalPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryReques
 
   original_trajectory.trajectory_points = compose_trajectory_from_centerline(points_and_target_speeds, req.vehicle_state, req.header.stamp); // Compute the trajectory
   original_trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
-
+  
+  resp.trajectory_plan = original_trajectory;
+  
   resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
   ros::WallTime end_time = ros::WallTime::now();  // Planning complete

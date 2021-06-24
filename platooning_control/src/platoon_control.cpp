@@ -128,14 +128,19 @@ namespace platoon_control
         double traveled_dist = 0.0;
         bool found_point = false;
 
-        for (size_t i=1; i<trajectory_plan.trajectory_points.size(); i++)
+        for (size_t i = 1; i<trajectory_plan.trajectory_points.size() - 1; i++)
         {
-            double dx = trajectory_plan.trajectory_points[i].x - trajectory_plan.trajectory_points[i-1].x;
-            double dy = trajectory_plan.trajectory_points[i].y - trajectory_plan.trajectory_points[i-1].y;
+            double dx =  pose_msg_.pose.position.x - trajectory_plan.trajectory_points[i].x;
+            double dy =  pose_msg_.pose.position.y - trajectory_plan.trajectory_points[i].y;
+
+            double dx1 = trajectory_plan.trajectory_points[i].x - trajectory_plan.trajectory_points[i-1].x;
+            double dy1 = trajectory_plan.trajectory_points[i].y - trajectory_plan.trajectory_points[i-1].y;
+            double dist1 = std::sqrt(dx1*dx1 + dy1*dy1);  
+            ROS_DEBUG_STREAM("trajectory spacing: " << dist1);          
 
             double dist = std::sqrt(dx*dx + dy*dy);            
 
-            traveled_dist += dist;
+            traveled_dist = dist;
 
             if ((lookahead_dist - traveled_dist) < 1.0)
             {
@@ -233,9 +238,15 @@ namespace platoon_control
     {   
         double trajectory_speed = 0;
 
+        double dx1 = trajectory_points[trajectory_points.size()-1].x - trajectory_points[0].x;
+        double dy1 = trajectory_points[trajectory_points.size()-1].y - trajectory_points[0].y;
+        double d1 = sqrt(dx1*dx1 + dy1*dy1); 
+        double t1 = (trajectory_points[trajectory_points.size()-1].target_time.toSec() - trajectory_points[0].target_time.toSec());
+
+        double avg_speed = d1/t1;
+
         for(size_t i = 0; i < trajectory_points.size() - 2; i++ )
-        {
-            double dx = trajectory_points[i + 1].x - trajectory_points[i].x;
+        {            double dx = trajectory_points[i + 1].x - trajectory_points[i].x;
             double dy = trajectory_points[i + 1].y - trajectory_points[i].y;
             double d = sqrt(dx*dx + dy*dy); 
             double t = (trajectory_points[i + 1].target_time.toSec() - trajectory_points[i].target_time.toSec());
@@ -247,7 +258,9 @@ namespace platoon_control
         }
 
         ROS_DEBUG_STREAM("trajectory speed: " << trajectory_speed);
-        return trajectory_speed;
+        ROS_DEBUG_STREAM("avg trajectory speed: " << avg_speed);
+
+        return avg_speed;
 
     }
 

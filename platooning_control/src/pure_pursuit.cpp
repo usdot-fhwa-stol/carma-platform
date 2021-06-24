@@ -41,7 +41,7 @@ namespace platoon_control
 	double PurePursuit::calculateKappa(const cav_msgs::TrajectoryPlanPoint& tp)
 	{
 		double lookahead = getLookaheadDist(tp);
-		ROS_DEBUG_STREAM("calculated lookahead: " << lookahead);
+		ROS_DEBUG_STREAM("used lookahead: " << lookahead);
 		double alpha = getAlphaSin(tp, current_pose_);
 		ROS_DEBUG_STREAM("calculated alpha: " << alpha);
 		double kappa = 2 * (alpha)/(lookahead);
@@ -65,7 +65,7 @@ namespace platoon_control
 		double ang_vel = velocity_ * kappa;
 		ROS_DEBUG_STREAM("calculated angular velocity: " << ang_vel);
 		double filtered_ang_vel = lowPassfilter(config_.lowpass_gain, prev_ang_vel, ang_vel);
-		ROS_DEBUG_STREAM("filtered steering: " << filtered_ang_vel);
+		ROS_DEBUG_STREAM("filtered angular velocity: " << filtered_ang_vel);
 		prev_ang_vel = filtered_ang_vel;
 		if (std::isnan(filtered_ang_vel)) filtered_ang_vel = prev_ang_vel;
 		angular_velocity_ = filtered_ang_vel;
