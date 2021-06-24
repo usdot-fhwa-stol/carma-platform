@@ -59,7 +59,7 @@ using carma_utils::timers::testing::TestTimerFactory;
 namespace carma_wm_ctrl
 
 {
-TEST(WMBroadcaster, geofenceCallback)
+TEST(WMBroadcaster, DISABLED_geofenceCallback)
 {  //
   WMBroadcaster wmb([](const autoware_lanelet2_msgs::MapBin& map_bin) {},
                     [](const autoware_lanelet2_msgs::MapBin& map_bin) {},

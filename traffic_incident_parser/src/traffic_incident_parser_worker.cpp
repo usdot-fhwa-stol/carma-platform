@@ -350,7 +350,7 @@ namespace traffic
     traffic_mobility_msg.params.schedule.between_exists=false;
     traffic_mobility_msg.params.schedule.repeat_exists = false;
     
-    std::string common_frame = "EPSG:4326"; // Common frame to use as go between for proj frames. This is just WGS84 and the same frame used by carma-cloud
+    std::string common_frame = "WGS84"; // Common frame to use as go between for proj frames. 
 
     PJ* common_to_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, common_frame.c_str(), projection_msg_.c_str() , NULL); // Create transformation between map frame and common frame. Reverse here takes map->latlon. Froward is latlon->map
 
@@ -367,7 +367,6 @@ namespace traffic
 
     map_origin_in_common_frame = proj_trans(common_to_map_proj, PJ_INV, map_origin_map_frame);
 
-    traffic_mobility_msg.geometry.proj = "EPSG:4326";
     traffic_mobility_msg.geometry.datum = "WGS84";
     traffic_mobility_msg.geometry.reflat = map_origin_in_common_frame.lpz.phi;
     traffic_mobility_msg.geometry.reflon = map_origin_in_common_frame.lpz.lam;
@@ -385,6 +384,8 @@ namespace traffic
 
       return {}; // Ignore geofence if it could not be projected into the map frame
     }
+
+    traffic_mobility_msg.geometry.proj = local_tmerc_enu_proj;
     
 
     for (size_t i = 0; i < reverse_lanes.size(); i++) {
