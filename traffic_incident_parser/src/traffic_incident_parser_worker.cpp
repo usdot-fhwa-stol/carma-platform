@@ -368,12 +368,12 @@ namespace traffic
     map_origin_in_common_frame = proj_trans(common_to_map_proj, PJ_INV, map_origin_map_frame);
 
     traffic_mobility_msg.geometry.datum = "WGS84";
-    traffic_mobility_msg.geometry.reflat = map_origin_in_common_frame.lpz.phi;
-    traffic_mobility_msg.geometry.reflon = map_origin_in_common_frame.lpz.lam;
+    traffic_mobility_msg.geometry.reflat = map_origin_in_common_frame.lpz.lam;
+    traffic_mobility_msg.geometry.reflon = map_origin_in_common_frame.lpz.phi;
 
     // Create a local transverse mercator frame at the reference point to allow us to get east,north oriented data reguardless of map projection orientation 
     // This is needed to match the TrafficControlMessage specification
-    std::string local_tmerc_enu_proj = "+proj=tmerc +datum=WGS84 +h_0=0 +lat_0=" + std::to_string(traffic_mobility_msg.geometry.reflat) + " +lon_0=" + std::to_string(traffic_mobility_msg.geometry.reflon);
+    std::string local_tmerc_enu_proj = "+proj=tmerc +datum=WGS84 +h_0=0 +lat_0=" + std::to_string(traffic_mobility_msg.geometry.reflat) + " +lon_0=" + std::to_string(traffic_mobility_msg.geometry.reflon) + " +k=1 +x_0=0 +y_0=0 +units=m +vunits=m +no_defs";
 
     PJ* map_to_tmerc_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, projection_msg_.c_str(), local_tmerc_enu_proj.c_str() , NULL); // Create transformation between the common frame and the local ENU oriented frame
     
@@ -386,6 +386,8 @@ namespace traffic
     }
 
     traffic_mobility_msg.geometry.proj = local_tmerc_enu_proj;
+
+    ROS_DEBUG_STREAM("Projection in message: " << traffic_mobility_msg.geometry.proj);
     
 
     for (size_t i = 0; i < reverse_lanes.size(); i++) {
