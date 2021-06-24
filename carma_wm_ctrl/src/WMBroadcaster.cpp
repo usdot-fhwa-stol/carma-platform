@@ -101,7 +101,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
   gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(msg_v01);
 
   if (gf_ptr->affected_parts_.size() == 0) {
-    ROS_DEBUG_STREAM("Geofence no processed as could not identify impact map regions.");
+    ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
     return nullptr; // Return null geofence
   }
 
@@ -472,7 +472,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   auto gf_ptr = geofenceFromMsg(geofence_msg.tcmV01);
   if (gf_ptr == nullptr || gf_ptr->affected_parts_.size() == 0)
   {
-    ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
+    ROS_WARN_STREAM("Geofence message could not be converted");
     tcm_marker_array_.markers.resize(tcm_marker_array_.markers.size() - 1); //truncate this geofence
     return;
   }
@@ -511,10 +511,7 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
                                           std::string("get transformation between the geofence and the map"));
 
 
-  // There are two ways to store the projection used in the traffic control message
-  // The first approach is to store the entire projection in the proj string. 
-  // The second approach is to populate the other fields in the TCM message.
-  // Here we check which fields were already provided in the projection string and if they were not provided we set them with the value provided in the TCM message
+  // TODO comments
   std::string projection = tcmV01.geometry.proj;
   
   ROS_DEBUG_STREAM("Projection field before remaning message processing: " << projection);
@@ -538,24 +535,30 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
 
   if (msg_to_common == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
     
-    ROS_ERROR_STREAM("Failed to generate projection between geofence and common frame with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
+    ROS_ERROR_STREAM("Failed to generate projection between geofence and common frame with error number: " <<  proj_errno_string(proj_context_errno(PJ_DEFAULT_CTX) )
       << " projection: " << projection << " common_frame: " << common_frame);
 
     return {}; // Ignore geofence if it could not be projected into the map frame
   
   }
 
-  PJ_COORD ref_latlon_msg{{tcmV01.geometry.reflat, tcmV01.geometry.reflon, tcmV01.geometry.refelv}}; // TODO time currently ignored because it is unclear what the units needed by proj are
+  ROS_DEBUG_STREAM("reflon: " << std::setprecision (15) << tcmV01.geometry.reflon << " reflat: " << tcmV01.geometry.reflat << " refelv: " << tcmV01.geometry.refelv);
+
+  static constexpr double DEG2RAD =  M_PI/180.0;
+  PJ_COORD ref_latlon_msg{{tcmV01.geometry.reflon * DEG2RAD, tcmV01.geometry.reflat * DEG2RAD, tcmV01.geometry.refelv}}; // TODO time currently ignored because it is unclear what the units needed by proj are
   PJ_COORD ref_latlon_common = proj_trans(msg_to_common, PJ_FWD, ref_latlon_msg);
+
   
   // The TCM nodes a required to be in an ENU frame so create a transverse mercator frame at the provided ref lat/lon and use this to convert the data
   std::string local_tmerc_enu_proj = "+proj=tmerc +datum=WGS84 +lat_0=" + std::to_string(ref_latlon_common.lpz.phi) + " +lon_0=" + std::to_string(ref_latlon_common.lpz.lam) + " +h_0=" + std::to_string(ref_latlon_common.lpz.z);
+
+  ROS_DEBUG_STREAM("Local frame projection: " << local_tmerc_enu_proj);
 
   PJ* tmerc_to_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, local_tmerc_enu_proj.c_str(), base_map_georef_.c_str() , NULL); // Create transformation between the message tmerc frame and the local ENU oriented frame
 
   if (tmerc_to_map_proj == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
     
-    ROS_ERROR_STREAM("Failed to generate projection between geofence and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
+    ROS_ERROR_STREAM("Failed to generate projection between geofence and map with error number: " <<  proj_errno_string(proj_context_errno(PJ_DEFAULT_CTX) )
       << " tmerc_to_map_proj: " << tmerc_to_map_proj << " base_map_georef_: " << base_map_georef_);
 
     return {}; // Ignore geofence if it could not be projected into the map frame
