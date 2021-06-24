@@ -110,5 +110,7 @@ private:
   DebugPublisher debug_publisher_;
   carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg_;
 
+  cav_msgs::VehicleState ending_state_before_buffer_;
+
 };
 };  // namespace inlanecruising_plugin

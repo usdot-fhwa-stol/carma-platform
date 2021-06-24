@@ -198,7 +198,8 @@ namespace basic_autonomy
         std::vector<PointSpeedPair> maneuvers_to_points_lanefollow(const std::vector<cav_msgs::Maneuver> &maneuvers,
                                                                    double max_starting_downtrack,
                                                                    const carma_wm::WorldModelConstPtr &wm,
-                                                                   const GeneralTrajConfig &general_config)
+                                                                   cav_msgs::VehicleState &ending_state_before_buffer,
+                                                                   const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config)
         {
             std::vector<PointSpeedPair> points_and_target_speeds;
             std::unordered_set<lanelet::Id> visited_lanelets;
@@ -226,16 +227,48 @@ namespace basic_autonomy
 
                 ROS_DEBUG_STREAM("Used downtrack: " << starting_downtrack);
 
-                auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist, true);
+                auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist, true, true);
+
+                if (lanelets.empty())
+                {
+                    ROS_ERROR_STREAM("Detected no lanelets between starting downtrack: "<< starting_downtrack << ", and lane_following_maneuver.end_dist: "<< lane_following_maneuver.end_dist);
+                    throw std::invalid_argument("Detected no lanelets between starting_downtrack and end_dist");
+                }
 
                 ROS_DEBUG_STREAM("Maneuver");
 
                 lanelet::BasicLineString2d downsampled_centerline;
                 downsampled_centerline.reserve(200);
 
+                //getLaneletsBetween is inclusive of lanelets between its two boundaries
+                //which may return lanechange lanelets, so
+                //exclude lanechanges and plan for only the straight part
+                int curr_idx = 0;
+                auto following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
+                lanelet::ConstLanelets straight_lanelets;
+
+                if(lanelets.size() <= 1) //no lane change anyways if only size 1
+                {
+                    ROS_DEBUG_STREAM("Detected one straight lanelet Id:" << lanelets[curr_idx].id());
+                    straight_lanelets = lanelets;
+                }
+                else
+                {
+                    // skip all lanechanges until lane follow starts
+                    while (curr_idx + 1 < lanelets.size() && 
+                            std::find(following_lanelets.begin(),following_lanelets.end(), lanelets[curr_idx + 1]) != following_lanelets.end())
+                    {
+                        curr_idx++;
+                        ROS_DEBUG_STREAM("Added lanelet Id forlane follow: " << lanelets[curr_idx].id());
+                        straight_lanelets.push_back(lanelets[curr_idx]);
+                        following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
+                    }
+
+                }
+
                 for (auto l : lanelets)
                 {
-                    ROS_DEBUG_STREAM("Lanelet ID: " << l.id());
+                    ROS_DEBUG_STREAM("Processing Lanelet ID: " << l.id());
                     if (visited_lanelets.find(l.id()) == visited_lanelets.end())
                     {
                         bool is_turn = false;
@@ -275,7 +308,59 @@ namespace basic_autonomy
                 }
             }
 
-            return points_and_target_speeds;
+            //Here we are limiting the trajectory length to the given length by maneuver end dist as opposed to the end of lanelets involved.
+            double starting_route_downtrack = wm->routeTrackPos(points_and_target_speeds.front().point).downtrack;
+            double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist;
+
+            if(ending_downtrack + detailed_config.buffer_ending_downtrack < wm->getRouteEndTrackPos().downtrack){
+                ending_downtrack = ending_downtrack + detailed_config.buffer_ending_downtrack;
+            }
+            else{
+                ending_downtrack = wm->getRouteEndTrackPos().downtrack;
+            }
+
+            size_t max_i = points_and_target_speeds.size() - 1;
+            size_t unbuffered_idx = points_and_target_speeds.size() - 1;
+            bool found_unbuffered_idx = false;
+            double dist_accumulator = starting_route_downtrack;
+            lanelet::BasicPoint2d prev_point;
+
+            for (int i = 0; i < points_and_target_speeds.size(); i ++) {
+                auto current_point = points_and_target_speeds[i].point;
+                if (i == 0) {
+                    prev_point = current_point;
+                    continue;
+                }
+
+                double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
+                ROS_DEBUG_STREAM("Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() << 
+                "current_point.y():" << current_point.y());
+
+                dist_accumulator += delta_d;
+                if (dist_accumulator > maneuvers.back().lane_following_maneuver.end_dist && !found_unbuffered_idx)
+                {
+                    unbuffered_idx = i - 1;
+                    ROS_DEBUG_STREAM("Found index unbuffered_idx at: " << unbuffered_idx);
+                    found_unbuffered_idx = true;
+                }
+                
+                if (dist_accumulator > ending_downtrack) {
+                    max_i = i - 1;
+                    ROS_DEBUG_STREAM("Max_i breaking at: i: " << i << ", max_i: " << max_i);
+                    break;
+                }
+                prev_point = current_point;
+            }
+
+            ending_state_before_buffer.X_pos_global = points_and_target_speeds[unbuffered_idx].point.x();
+            ending_state_before_buffer.Y_pos_global = points_and_target_speeds[unbuffered_idx].point.y();
+            ROS_DEBUG_STREAM("Here ending_state_before_buffer.X_pos_global: " << ending_state_before_buffer.X_pos_global << 
+            ", and Y_pos_global" << ending_state_before_buffer.Y_pos_global);
+
+            std::vector<PointSpeedPair> constrained_points(points_and_target_speeds.begin(), points_and_target_speeds.begin() + max_i);
+
+            return constrained_points;
+            
         }
 
         std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair> &points,
@@ -327,7 +412,8 @@ namespace basic_autonomy
         }
 
         std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanefollow_trajectory_from_centerline(
-            const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time, const DetailedTrajConfig &detailed_config)
+            const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time, const carma_wm::WorldModelConstPtr &wm,
+            cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config)
         {
             ROS_DEBUG_STREAM("VehicleState: "
                              << " x: " << state.X_pos_global << " y: " << state.Y_pos_global << " yaw: " << state.orientation
@@ -415,8 +501,7 @@ namespace basic_autonomy
             log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
             log::printDoublesPerLineWithPrefix("final_yaw_values[i]: ", final_yaw_values);
 
-            std::vector<double> final_actual_speeds = apply_speed_limits(ideal_speeds, distributed_speed_limits);
-            log::printDoublesPerLineWithPrefix("final_actual_speeds: ", final_actual_speeds);
+            std::vector<double> constrained_speed_limits = apply_speed_limits(ideal_speeds, distributed_speed_limits);
 
             ROS_DEBUG("Processed all points in computed fit");
 
@@ -428,19 +513,33 @@ namespace basic_autonomy
 
             // Add current vehicle point to front of the trajectory
 
-            nearest_pt_index = get_nearest_point_index(all_sampling_points, state);
-            ROS_DEBUG_STREAM("Curvature right now: " << better_curvature[nearest_pt_index] << ", at x: " << state.X_pos_global << ", y: " << state.Y_pos_global);
+            nearest_pt_index = get_nearest_index_by_downtrack(all_sampling_points, wm, state);
+            ROS_DEBUG_STREAM("Current state's nearest_pt_index: " << nearest_pt_index);
+            ROS_DEBUG_STREAM("Curvature right now: " << better_curvature[nearest_pt_index] << ", at state x: " << state.X_pos_global << ", state y: " << state.Y_pos_global);
+            ROS_DEBUG_STREAM("Corresponding to point: x: " << all_sampling_points[nearest_pt_index].x() << ", y:" << all_sampling_points[nearest_pt_index].y());
 
-            std::vector<lanelet::BasicPoint2d> future_basic_points(all_sampling_points.begin() + nearest_pt_index + 1,
-                                                                   all_sampling_points.end()); // Points in front of current vehicle position
+            int buffer_pt_index = get_nearest_index_by_downtrack(all_sampling_points, wm, ending_state_before_buffer);
+            ROS_DEBUG_STREAM("Ending state's index before applying buffer (buffer_pt_index): " << buffer_pt_index);
+            ROS_DEBUG_STREAM("Corresponding to point: x: " << all_sampling_points[buffer_pt_index].x() << ", y:" << all_sampling_points[buffer_pt_index].y());
 
-            std::vector<double> future_speeds(final_actual_speeds.begin() + nearest_pt_index + 1,
-                                              final_actual_speeds.end()); // Points in front of current vehicle position
+            if(nearest_pt_index + 1 >= buffer_pt_index){
+                ROS_WARN_STREAM("Current state is at or past the planned end distance. Couldn't generate trajectory");
+                return {};
+            }
+
+            //drop buffer points here
+
+             std::vector<lanelet::BasicPoint2d> future_basic_points(all_sampling_points.begin() + nearest_pt_index + 1,
+                                            all_sampling_points.begin()+ buffer_pt_index);  // Points in front of current vehicle position
+
+            std::vector<double> future_speeds(constrained_speed_limits.begin() + nearest_pt_index + 1,
+                                                        constrained_speed_limits.begin() + buffer_pt_index);  // Points in front of current vehicle position
             std::vector<double> future_yaw(final_yaw_values.begin() + nearest_pt_index + 1,
-                                           final_yaw_values.end()); // Points in front of current vehicle position
-            final_actual_speeds = future_speeds;
+                                                        final_yaw_values.begin() + buffer_pt_index);  // Points in front of current vehicle position
+            std::vector<double>  final_actual_speeds = future_speeds;
             all_sampling_points = future_basic_points;
             final_yaw_values = future_yaw;
+            ROS_DEBUG_STREAM("Trimmed future points to size: "<< future_basic_points.size());
 
             lanelet::BasicPoint2d cur_veh_point(state.X_pos_global, state.Y_pos_global);
 
@@ -477,10 +576,26 @@ namespace basic_autonomy
             log::printDoublesPerLineWithPrefix("times[i]: ", times);
 
             // Build trajectory points
-            // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
-            // off the last point in the plan if an earlier plan was provided
             std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
                 trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, state_time);
+
+            // if (detailed_config.publish_debug){
+            //     carma_debug_msgs::TrajectoryCurvatureSpeeds msg;
+            //     msg.velocity_profile = final_actual_speeds;
+            //     msg.relative_downtrack = downtracks;
+            //     msg.tangent_headings = final_yaw_values;
+            //     std::vector<double> aligned_speed_limits(constrained_speed_limits.begin() + nearest_pt_index,
+            //                                             constrained_speed_limit.end());
+
+            //     msg.speed_limits = aligned_speed_limits;
+            //     std::vector<double> aligned_curvatures(curvatures.begin() + nearest_pt_index,
+            //                                             curvatures.end());
+            //     msg.curvatures = aligned_curvatures;
+            //     msg.lat_accel_limit = config_.lateral_accel_limit;
+            //     msg.lon_accel_limit = config_.max_accel;
+            //     msg.starting_state = state;
+            //     debug_msg_ = msg;                                        
+            // }
 
             return traj_points;
         }
