@@ -42,15 +42,9 @@
 
 namespace cooperative_lanechange
 {
-    /**
-     * \brief Convenience class for pairing 2d points with speeds
-    */ 
-    struct PointSpeedPair
-    {
-    lanelet::BasicPoint2d point;
-    double speed = 0;
-    };
-
+  // Helpful using declarations
+  using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
+  
     class CooperativeLaneChangePlugin
     {
         public:
@@ -196,7 +190,7 @@ namespace cooperative_lanechange
             double maximum_lookahead_speed_ =13.9;
             double lateral_accel_limit_ = 1.5;
             double speed_moving_average_window_size_ = 5;
-            double curvature_moving_average_window_size_ = 9;
+            double curvature_moving_average_window_size_ = 5;
             double curvature_calc_lookahead_count_ = 1;
             int downsample_ratio_ =8;
             double destination_range_ = 5;
@@ -218,8 +212,6 @@ namespace cooperative_lanechange
             // generated trajectory plan
             cav_msgs::TrajectoryPlan trajectory_msg;
             
-
-
             /**
              * \brief Callback for the pose subscriber, which will store latest pose locally
              * \param msg Latest pose message

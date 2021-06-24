@@ -33,20 +33,13 @@
 #include <unordered_set>
 #include <autoware_msgs/Lane.h>
 #include <ros/ros.h>
+#include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
 
 namespace inlanecruising_plugin
 {
 using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
 using DebugPublisher = std::function<void(const carma_debug_msgs::TrajectoryCurvatureSpeeds&)>;
-
-/**
- * \brief Convenience class for pairing 2d points with speeds
- */ 
-struct PointSpeedPair
-{
-  lanelet::BasicPoint2d point;
-  double speed = 0;
-};
+using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
 
 /**
  * \brief Class containing primary business logic for the In-Lane Cruising Plugin
@@ -109,8 +102,12 @@ private:
   cav_msgs::Plugin plugin_discovery_msg_;
   DebugPublisher debug_publisher_;
   carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg_;
+  cav_msgs::VehicleState ending_state_before_buffer; //state before applying extra points for curvature calculation that are removed later
 
   cav_msgs::VehicleState ending_state_before_buffer_;
 
 };
+
+
+
 };  // namespace inlanecruising_plugin

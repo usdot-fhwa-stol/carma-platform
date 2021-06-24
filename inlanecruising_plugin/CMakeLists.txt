@@ -36,6 +36,7 @@ set( CATKIN_DEPS
   tf2
   tf2_geometry_msgs
   carma_debug_msgs
+  basic_autonomy
 )
 
 ## Find catkin macros and libraries

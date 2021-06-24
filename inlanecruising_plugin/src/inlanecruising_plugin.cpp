@@ -114,6 +114,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
 
   if (config_.enable_object_avoidance)
   {
+    ROS_DEBUG_STREAM("Activate Object Avoidance");
     if (yield_client_ && yield_client_.exists() && yield_client_.isValid())
     {
       ROS_DEBUG_STREAM("Yield Client is valid");
@@ -193,7 +194,6 @@ bool InLaneCruisingPlugin::validate_yield_plan(const cav_msgs::TrajectoryPlan& y
   }
   return false;
 }
-
 
 
 }  // namespace inlanecruising_plugin
