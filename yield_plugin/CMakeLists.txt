@@ -30,10 +30,8 @@ set( CATKIN_DEPS
   carma_utils
   trajectory_utils
   autoware_msgs
-  carma_wm
-  tf
-  tf2
-  tf2_geometry_msgs
+  carma_wm 
+  lanelet2_extension
 )
 
 ## Find catkin macros and libraries

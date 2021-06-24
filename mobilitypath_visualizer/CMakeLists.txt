@@ -28,7 +28,7 @@ find_package(catkin REQUIRED COMPONENTS
   carma_utils
   cav_msgs
   std_msgs
-  tf2_ros
+  lanelet2_extension
 )
 
 ## System dependencies are found with CMake's conventions
@@ -39,7 +39,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp carma_utils cav_msgs std_msgs tf2_ros
+  CATKIN_DEPENDS roscpp carma_utils cav_msgs std_msgs
 )
 
 ###########

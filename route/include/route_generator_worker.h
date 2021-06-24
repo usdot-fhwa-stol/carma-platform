@@ -31,12 +31,8 @@
 #include <carma_wm/WorldModel.h>
 #include <carma_wm/Geometry.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <tf2_ros/transform_listener.h>
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/primitives/Lanelet.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <geometry_msgs/TransformStamped.h>
-#include <geometry_msgs/Transform.h>
 #include <wgs84_utils/wgs84_utils.h>
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
@@ -47,6 +43,7 @@
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <functional>
+#include <std_msgs/String.h>
 
 
 #include "route_state_worker.h"
@@ -68,9 +65,8 @@ namespace route {
         
         /**
          * \brief Constructor for RouteGeneratorWorker class taking in dependencies via dependency injection
-         * \param tf_buffer ROS tf tree buffer for getting latest tf between any two available frames
          */
-        RouteGeneratorWorker(tf2_ros::Buffer& tf_buffer);
+        RouteGeneratorWorker() = default;
         
         /**
          * \brief Dependency injection for world model pointer.
@@ -101,8 +97,9 @@ namespace route {
 
         /**
          * \brief Set_active_route service callback. User can select a route to start following by calling this service
-         * \param req A cav_srvs::SetActiveRouteRequest msg which contains the route name user wants to select
-         * \param resp A cav_srvs::SetActiveRouteResponse msg contains error status showing if the routing successed
+         * \param req A cav_srvs::SetActiveRouteRequest msg which contains either a route name a user wants to select or 
+         *            an array of cav_msgs/Position3D destination points to generate a route from.
+         * \param resp A cav_srvs::SetActiveRouteResponse msg contains error status showing if the routing succeeded
          */
         bool set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp);
 
@@ -123,7 +120,13 @@ namespace route {
          * \brief Callback for the twist subscriber, which will store latest twist locally
          * \param msg Latest twist message
          */
-        void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
+        void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+
+        /**
+         * \brief Callback for the georeference subscriber used to set the map projection
+         * \param msg The latest georeference
+         */ 
+        void georeference_cb(const std_msgs::StringConstPtr& msg);
 
         /**
          * \brief Set method for configurable parameter
@@ -155,17 +158,16 @@ namespace route {
         bool check_for_duplicate_lanelets_in_shortest_path(const lanelet::routing::Route& route) const;
 
         /**
-         * \brief Helper function to load route points from route file and convert them from lat/lon values to cooridinates in ECEF
-         * \param route_id This function will read the route file with provided route_id
+         * \brief Overloaded function to take route points from an array of 3D points and convert them from lat/lon values to to coordinates in map frame based on the projection string
+         * \param destinations A vector of cav_msgs::Position3D points containing destination points provided as lat/long values
          */
-        std::vector<tf2::Vector3> load_route_destinations_in_ecef(const std::string& route_id) const;
+        std::vector<lanelet::BasicPoint3d> load_route_destinations_in_map_frame(const std::vector<cav_msgs::Position3D>& destinations) const;
 
         /**
-         * \brief Helper function to transform points from ECEF frame to local map frame based on given transformation
-         * \param ecef_points Points in ECEF frame stored as Vector3
-         * \param map_in_earth Transformation from ECEF to map
+         * \brief Overloaded function to load route points from route file and convert them from lat/lon values to coordinates in map frame based on the projection string
+         * \param route_id This function will read the route file with provided route_id
          */
-        std::vector<lanelet::BasicPoint2d> transform_to_map_frame(const std::vector<tf2::Vector3>& ecef_points, const tf2::Transform& map_in_earth) const;
+        std::vector<lanelet::BasicPoint3d> load_route_destinations_in_map_frame(const std::string& route_id) const;
 
         /**
          * \brief Helper function to generate a CARMA route message based on planned lanelet route
@@ -235,9 +237,6 @@ namespace route {
         // directory of route files
         std::string route_file_path_;
 
-        // a copy of TF transform tree
-        tf2_ros::Buffer& tf_tree_;
-
         // const pointer to world model object
         carma_wm::WorldModelConstPtr world_model_;
 
@@ -295,7 +294,11 @@ namespace route {
         // destination points in map
         std::vector<lanelet::BasicPoint2d> destination_points_in_map_;
 
+        // Current vehicle pose if it has been recieved
         boost::optional<geometry_msgs::PoseStamped> vehicle_pose_;
+
+        // The current map projection for lat/lon to map frame conversion
+        boost::optional<std::string> map_proj_; // TODO add callback to set this variable
 
     };
 

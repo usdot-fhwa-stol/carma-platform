@@ -17,13 +17,18 @@
 #include "mobilitypath_visualizer.h"
 #include <gtest/gtest.h>
 #include <ros/ros.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
 
 TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
 {
     mobilitypath_visualizer::MobilityPathVisualizer viz_node;
+    
     // 1 to 1 transform
-    tf2::Transform identity;
-    identity.setIdentity();
+    std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
+    std_msgs::String msg;
+    msg.data = base_proj;
+    std_msgs::StringConstPtr msg_ptr(new std_msgs::String(msg));
+    viz_node.georeferenceCallback(msg_ptr);  // Set projection
     
     // INPUT MSG
     cav_msgs::MobilityPath input_msg;
@@ -81,7 +86,7 @@ TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
 
     expected_msg.markers.push_back(marker);
 
-    auto result = viz_node.composeVisualizationMarker(input_msg, expected_color_blue, identity);
+    auto result = viz_node.composeVisualizationMarker(input_msg, expected_color_blue);
 
     EXPECT_EQ(expected_msg.markers[0].header.frame_id, result.markers[0].header.frame_id);
     EXPECT_EQ(expected_msg.markers[0].header.stamp, result.markers[0].header.stamp);
@@ -110,9 +115,13 @@ TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
 TEST(MobilityPathVisualizerTest, TestECEFToMapPoint)
 {
     mobilitypath_visualizer::MobilityPathVisualizer viz_node;
+
     // 1 to 1 transform
-    tf2::Transform identity;
-    identity.setIdentity();
+    std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
+    std_msgs::String msg;
+    msg.data = base_proj;
+    std_msgs::StringConstPtr msg_ptr(new std_msgs::String(msg));
+    viz_node.georeferenceCallback(msg_ptr);  // Set projection
 
     cav_msgs::LocationECEF ecef_point;
     ecef_point.ecef_x = 100;
@@ -123,7 +132,7 @@ TEST(MobilityPathVisualizerTest, TestECEFToMapPoint)
     expected_point.y = 2;
     expected_point.z = 3;
 
-    auto result = viz_node.ECEFToMapPoint(ecef_point, identity);
+    auto result = viz_node.ECEFToMapPoint(ecef_point);
 
     EXPECT_NEAR(expected_point.x, result.x, 0.0001);
     EXPECT_NEAR(expected_point.y, result.y, 0.0001);
@@ -133,9 +142,13 @@ TEST(MobilityPathVisualizerTest, TestECEFToMapPoint)
 TEST(MobilityPathVisualizerTest, TestMatchTrajectoryTimestamps)
 {
     mobilitypath_visualizer::MobilityPathVisualizer viz_node;
+
     // 1 to 1 transform
-    tf2::Transform identity;
-    identity.setIdentity();
+    std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
+    std_msgs::String msg;
+    msg.data = base_proj;
+    std_msgs::StringConstPtr msg_ptr(new std_msgs::String(msg));
+    viz_node.georeferenceCallback(msg_ptr);  // Set projection
     
     // INPUT RESULT STATIC INFO
     visualization_msgs::MarkerArray host_msg;

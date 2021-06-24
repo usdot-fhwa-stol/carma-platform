@@ -75,13 +75,12 @@ public:
 
     YieldPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); }, [&mob_resp_pub](auto msg) { mob_resp_pub.publish(msg); },
                                     [&lc_status_pub](auto msg) { lc_status_pub.publish(msg); });
-  
-    worker.lookupECEFtoMapTransform();
-    
+      
     ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/YieldPlugin/plan_trajectory",
                                             &YieldPlugin::plan_trajectory_cb, &worker);
     ros::Subscriber mob_request_sub = nh.subscribe("incoming_mobility_request", 5, &YieldPlugin::mobilityrequest_cb,  &worker);
     ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &YieldPlugin::bsm_cb,  &worker);
+    ros::Subscriber georeference_sub = nh.subscribe("georeference", 1, &YieldPlugin::georeferenceCallback, &worker);
     
     ros::Timer discovery_pub_timer_ = nh.createTimer(
             ros::Duration(ros::Rate(10.0)),
