@@ -59,6 +59,9 @@ using carma_utils::timers::testing::TestTimerFactory;
 namespace carma_wm_ctrl
 
 {
+/**
+ * This test is for manually debugging the geofence callback when an actual map is available. It can be left disabled in most cases
+ */ 
 TEST(WMBroadcaster, DISABLED_geofenceCallback)
 {  //
   WMBroadcaster wmb([](const autoware_lanelet2_msgs::MapBin& map_bin) {},

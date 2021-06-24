@@ -332,7 +332,7 @@ namespace traffic
     }
 
     
-   // auto route_lanelets = wm_->getLaneletsBetween(route_trackpos_min, route_trackpos_max, false);
+   
     ROS_DEBUG_STREAM("Constructing message for lanes: " << reverse_lanes.size());
     std::vector<cav_msgs::TrafficControlMessageV01> output_msg;
 
@@ -350,7 +350,12 @@ namespace traffic
     traffic_mobility_msg.params.schedule.between_exists=false;
     traffic_mobility_msg.params.schedule.repeat_exists = false;
     
-    std::string common_frame = "WGS84"; // Common frame to use as go between for proj frames. 
+    ////
+    // Begin handling of projection definition
+    // This logic works by enforcing the ROS message specifications for TrafficControlMessage on the output data
+    // First the latlon point in the provided data is identified, then a projection with a north east oriented tmerc frame is created to compute node locations
+    ////
+    std::string common_frame = "WGS84"; // Common frame to use for lat/lon definition. This will populate the datum field of the message. A more complex CRS should not be used here
 
     PJ* common_to_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, common_frame.c_str(), projection_msg_.c_str() , NULL); // Create transformation between map frame and common frame. Reverse here takes map->latlon. Froward is latlon->map
 
@@ -397,7 +402,10 @@ namespace traffic
     traffic_mobility_msg.geometry.proj = local_tmerc_enu_proj;
 
     ROS_DEBUG_STREAM("Projection in message: " << traffic_mobility_msg.geometry.proj);
-    
+
+    ////
+    // Projections setup. Next projections will be used for node computation
+    ////    
 
     for (size_t i = 0; i < reverse_lanes.size(); i++) {
 
@@ -420,7 +428,7 @@ namespace traffic
       {
         cav_msgs::PathNode delta;
 
-        map_pt = PJ_COORD({p.x(), p.y(), 0.0, 0.0}); // Map point to convert to common frame
+        map_pt = PJ_COORD({p.x(), p.y(), 0.0, 0.0}); // Map point to convert to tmerc frame
         tmerc_pt = proj_trans(map_to_tmerc_proj, PJ_FWD, map_pt); // Convert point to tmerc frame
 
         delta.x=tmerc_pt.xyz.x - prev_point.x;
