@@ -510,7 +510,10 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
                                           std::string("get transformation between the geofence and the map"));
 
 
-  // TODO comments
+  // This next section handles the geofence projection conversion
+  // The datum field is used to identify the frame for the provided referance lat/lon. 
+  // This reference is then converted to the provided projection as a reference origin point
+  // From the reference the message projection to map projection transformation is used to convert the nodes in the TrafficControlMessage
   std::string projection = tcmV01.geometry.proj;
   std::string datum = tcmV01.geometry.datum;
   if (datum.empty()) {
@@ -522,7 +525,7 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   ROS_DEBUG_STREAM("Projection field: " << projection);
   ROS_DEBUG_STREAM("Datum field: " << datum);
   
-  std::string universal_frame = datum; //lat/long included in TCM is in this frame as it is universal
+  std::string universal_frame = datum; //lat/long included in TCM is in this datum
 
 
   ROS_DEBUG_STREAM("Traffic Control heading provided: " << tcmV01.geometry.heading << " System understanding is that this value will not affect the projection and is only provided for supporting derivative calculations.");
