@@ -41,7 +41,12 @@ struct PlatooningTacticalPluginConfig
   int moving_average_window_size = 5;      // Size of the window used in the moving average filter to smooth both the
                                            // computed curvature and output speeds
   int curvature_calc_lookahead_count = 1;  // Number of points to look ahead when calculating the curvature
-                                           // of the lanelet centerline
+                                           // of the lanelet centerlin
+  double back_distance = 20;               // Number of meters behind the first maneuver that need to be included in points for curvature calculation
+  bool publish_debug = false; // True if debug publishing will be enabled
+  double buffer_ending_downtrack = 20.0;
+  int speed_moving_average_window_size = 5;      // Size of the window used in the moving average filter to smooth both the speed profile
+  int curvature_moving_average_window_size = 9;  // Size of the window used in the moving average filter to smooth the curvature profile
 
   friend std::ostream& operator<<(std::ostream& output, const PlatooningTacticalPluginConfig& c)
   {

@@ -307,6 +307,10 @@ TEST(PlatooningTacticalPluginTest, compute_fit)
   points.push_back(p);
   p = lanelet::BasicPoint2d(22, 30);
   points.push_back(p);
+  p = lanelet::BasicPoint2d(23, 30);
+  points.push_back(p);
+  p = lanelet::BasicPoint2d(24, 30);
+  points.push_back(p);
   std::unique_ptr<smoothing::SplineI> fit_curve = plugin.compute_fit(points);
   std::vector<lanelet::BasicPoint2d> spline_points;
   // Following logic is written for BSpline library. Switch with appropriate call of the new library if different.
