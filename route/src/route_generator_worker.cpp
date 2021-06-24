@@ -173,7 +173,7 @@ namespace route {
                 destination_points = load_route_destinations_in_map_frame(req.destination_points);
             }
 
-            // Check if route file are valid with at least one starting points and one destination points
+            // Check that the requested route is valid with at least one destination point
             if(destination_points.size() < 1)
             {
                 ROS_ERROR_STREAM("Provided route contains no destination points. Routing cannot be completed.");
@@ -224,7 +224,7 @@ namespace route {
                                 std::vector<lanelet::BasicPoint2d>(destination_points_in_map_with_vehicle.begin() + 1, destination_points_in_map_with_vehicle.end() - 1),
                                 destination_points_in_map_with_vehicle.back(),
                                 world_model_->getMap(), world_model_->getMapRoutingGraph());
-            // check if route successed
+            // check if route succeeded
             if(!route)
             {
                 ROS_ERROR_STREAM("Cannot find a route passing all destinations.");
@@ -265,7 +265,7 @@ namespace route {
             }
             else if(req.choice == cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY)
             {
-                route_msg_.route_name = "Unnamed-Route";
+                route_msg_.route_name = "Route";
             }
             route_marker_msg_ = compose_route_marker_msg(route);
             route_msg_.header.stamp = ros::Time::now();
