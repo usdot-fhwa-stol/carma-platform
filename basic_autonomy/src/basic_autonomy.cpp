@@ -413,7 +413,7 @@ namespace basic_autonomy
 
         std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanefollow_trajectory_from_centerline(
             const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time, const carma_wm::WorldModelConstPtr &wm,
-            cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config)
+            cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg, const DetailedTrajConfig &detailed_config)
         {
             ROS_DEBUG_STREAM("VehicleState: "
                              << " x: " << state.X_pos_global << " y: " << state.Y_pos_global << " yaw: " << state.orientation
@@ -579,23 +579,23 @@ namespace basic_autonomy
             std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
                 trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, state_time);
 
-            // if (detailed_config.publish_debug){
-            //     carma_debug_msgs::TrajectoryCurvatureSpeeds msg;
-            //     msg.velocity_profile = final_actual_speeds;
-            //     msg.relative_downtrack = downtracks;
-            //     msg.tangent_headings = final_yaw_values;
-            //     std::vector<double> aligned_speed_limits(constrained_speed_limits.begin() + nearest_pt_index,
-            //                                             constrained_speed_limit.end());
+            //debug msg
+            carma_debug_msgs::TrajectoryCurvatureSpeeds msg;
+            msg.velocity_profile = final_actual_speeds;
+            msg.relative_downtrack = downtracks;
+            msg.tangent_headings = final_yaw_values;
+            std::vector<double> aligned_speed_limits(constrained_speed_limits.begin() + nearest_pt_index,
+                                                    constrained_speed_limits.end());
 
-            //     msg.speed_limits = aligned_speed_limits;
-            //     std::vector<double> aligned_curvatures(curvatures.begin() + nearest_pt_index,
-            //                                             curvatures.end());
-            //     msg.curvatures = aligned_curvatures;
-            //     msg.lat_accel_limit = config_.lateral_accel_limit;
-            //     msg.lon_accel_limit = config_.max_accel;
-            //     msg.starting_state = state;
-            //     debug_msg_ = msg;                                        
-            // }
+            msg.speed_limits = aligned_speed_limits;
+            std::vector<double> aligned_curvatures(curvatures.begin() + nearest_pt_index,
+                                                    curvatures.end());
+            msg.curvatures = aligned_curvatures;
+            msg.lat_accel_limit = detailed_config.lateral_accel_limit;
+            msg.lon_accel_limit = detailed_config.max_accel;
+            msg.starting_state = state;
+            debug_msg = msg;                                        
+            
 
             return traj_points;
         }

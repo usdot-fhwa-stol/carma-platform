@@ -111,7 +111,7 @@ namespace cooperative_lanechange
 
             void add_maneuver_to_response(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp, std::vector<cav_msgs::TrajectoryPlanPoint>& planned_trajectory_points);
             
-                          /**
+              /**
              * \brief Given the curvature fit, computes the curvature at the given step along the curve
              * 
              * \param step_along_the_curve Value in double from 0.0 (curvature start) to 1.0 (curvature end) representing where to calculate the curvature

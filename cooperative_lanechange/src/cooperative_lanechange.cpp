@@ -154,10 +154,10 @@ namespace cooperative_lanechange
         ROS_DEBUG_STREAM("traffic rules created]");
         
         lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*(wm_->getMap()), *traffic_rules);
-        ROS_DEBUG_STREAM("Graph created]");
+        ROS_DEBUG_STREAM("Graph created");
 
         auto temp_route = map_graph->getRoute(start_lanelet, end_lanelet);
-        ROS_DEBUG_STREAM("Route created]");
+        ROS_DEBUG_STREAM("Route created");
         
         auto shortest_path2 = temp_route.get().shortestPath();
         ROS_DEBUG_STREAM("Shorted path created size: " << shortest_path2.size());

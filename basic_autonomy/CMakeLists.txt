@@ -35,6 +35,7 @@ set( CATKIN_DEPS
   tf2
   tf2_geometry_msgs
   roslib
+  carma_debug_msgs
 )
 
 ## Find catkin macros and libraries
