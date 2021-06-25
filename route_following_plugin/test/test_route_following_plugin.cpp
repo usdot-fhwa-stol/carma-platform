@@ -303,17 +303,15 @@ namespace route_following_plugin
         cmw->carma_wm::CARMAWorldModel::setMap(map);
         worker.wm_=cmw;
 
-        auto lane_change_status_msg=worker.ComposeLaneChangeStatus(10,start_lanelet,end_lanelet_1,10);
+        auto lane_change_status_msg=worker.ComposeLaneChangeStatus(start_lanelet,end_lanelet_1);
 
         ASSERT_EQ(lane_change_status_msg.lane_change,cav_msgs::UpcomingLaneChangeStatus::RIGHT);
         ASSERT_EQ(lane_change_status_msg.downtrack_until_lanechange,0);
-        ASSERT_EQ(lane_change_status_msg.last_recorded_lanechange_downtrack,10);
 
-        lane_change_status_msg=worker.ComposeLaneChangeStatus(10,end_lanelet_1,start_lanelet,10);
+        lane_change_status_msg=worker.ComposeLaneChangeStatus(end_lanelet_1,start_lanelet);
 
         ASSERT_EQ(lane_change_status_msg.lane_change,cav_msgs::UpcomingLaneChangeStatus::LEFT);
         ASSERT_EQ(lane_change_status_msg.downtrack_until_lanechange,0);
-        ASSERT_EQ(lane_change_status_msg.last_recorded_lanechange_downtrack,10);
 
     }
 

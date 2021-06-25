@@ -70,12 +70,13 @@ namespace route_following_plugin
         carma_wm::WorldModelConstPtr wm_;
 
         /**
-         * \brief ComposeLaneChangeStatus() Given lane change status
-         * \param lane_change_start_dist,starting_lanelet,ending_lanelet,current_downtrack
+         * \brief Compose UpcomingLaneChangeStatus msg from given starting and ending lanelets
+         * \param start_lanelet lanelet the lanechange is starting from
+         * \param ending_lanelet lanelet the lanechange is starting from
+         * \return UpcomingLaneChangeStatus
          */
-        cav_msgs::UpcomingLaneChangeStatus ComposeLaneChangeStatus(double lane_change_start_dist,lanelet::ConstLanelet starting_lanelet,lanelet::ConstLanelet ending_lanelet,double current_downtrack);
+        cav_msgs::UpcomingLaneChangeStatus ComposeLaneChangeStatus(lanelet::ConstLanelet starting_lanelet,lanelet::ConstLanelet ending_lanelet);
         
-
         private:
 
         /**
@@ -180,8 +181,8 @@ namespace route_following_plugin
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
 
-                //Upcoming Lane Change message
-        cav_msgs::UpcomingLaneChangeStatus upcoming_lane_change_status_msg_;
+        //Upcoming Lane Change downtrack and its lanechange status message map
+        std::queue<std::pair<double, cav_msgs::UpcomingLaneChangeStatus>> upcoming_lane_change_status_msg_map_;
         
         // Current vehicle forward speed
         double current_speed_;
