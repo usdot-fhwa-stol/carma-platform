@@ -390,8 +390,8 @@ ros::V_string WMBroadcaster::participantsChecker(const cav_msgs::TrafficControlM
       participants.push_back(lanelet::Participants::VehicleTruck);
     }
   }
-
-  return  participants;
+  // combine to single vehicle type if possible, otherwise pass through
+  return  combineParticipantsToVehicle(participants);
 }
 
 ros::V_string WMBroadcaster::invertParticipants(const ros::V_string& input_participants) const
@@ -410,19 +410,44 @@ ros::V_string WMBroadcaster::invertParticipants(const ros::V_string& input_parti
   return  participants;
 }
 
+ros::V_string WMBroadcaster::combineParticipantsToVehicle(const ros::V_string& input_participants) const
+{
+  ros::V_string participants;
+
+  if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleMotorcycle)!= input_participants.end() &&
+      std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleBus) != input_participants.end() &&
+      std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleCar) != input_participants.end() &&
+      std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleTruck) != input_participants.end())
+  {
+    ROS_DEBUG_STREAM("Detected participants to cover all possible vehicle types");
+    participants.emplace_back(lanelet::Participants::Vehicle);
+  }
+  else
+  {
+    ROS_DEBUG_STREAM("Not making any changes to the participants list");
+    participants = input_participants;
+  }
+
+  return participants;
+}
+
 // currently only supports geofence message version 1: TrafficControlMessageV01 
 void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geofence_msg)
 {
   
   std::lock_guard<std::mutex> guard(map_mutex_);
   // quickly check if the id has been added
-  if (geofence_msg.choice != cav_msgs::TrafficControlMessage::TCMV01)
+  if (geofence_msg.choice != cav_msgs::TrafficControlMessage::TCMV01) {
+    ROS_WARN_STREAM("Dropping recieved geofence for unsupported TrafficControl version: " << geofence_msg.choice);
     return;
+  }
 
   boost::uuids::uuid id;
   std::copy(geofence_msg.tcmV01.id.id.begin(), geofence_msg.tcmV01.id.id.end(), id.begin());
-  if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end())
+  if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end()) { 
+    ROS_DEBUG_STREAM("Dropping recieved TrafficControl message with already handled id: " <<  boost::uuids::to_string(id));
     return;
+  }
 
   // convert reqid to string check if it has been seen before
   boost::array<uint8_t, 16UL> req_id;
@@ -479,23 +504,83 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
     throw lanelet::InvalidObjectStateError(std::string("Base lanelet map has empty proj string loaded as georeference. Therefore, WMBroadcaster failed to\n ") +
                                           std::string("get transformation between the geofence and the map"));
 
-  PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, tcmV01.geometry.proj.c_str(), base_map_georef_.c_str(), nullptr);
+
+  // There are two ways to store the projection used in the traffic control message
+  // The first approach is to store the entire projection in the proj string. 
+  // The second approach is to populate the other fields in the TCM message.
+  // Here we check which fields were already provided in the projection string and if they were not provided we set them with the value provided in the TCM message
+  std::string projection = tcmV01.geometry.proj;
+  std::string universal_frame = "EPSG:4326"; //lat/long included in TCM is in this frame as it is universal
+  
+  ROS_DEBUG_STREAM("Projection field before remaning message processing: " << projection);
+
+  if (projection.find("epsg") == std::string::npos && projection.find("EPSG") == std::string::npos)
+  {
+    if (projection.find("+datum=") == std::string::npos && !tcmV01.geometry.datum.empty()) { // Datum is not a universal projection so only add it if it was provided
+    projection.append(" +datum=" + tcmV01.geometry.datum);
+    }
+
+    if (projection.find("+lat_0=") == std::string::npos && tcmV01.geometry.reflat!= 0.0) { // Lat and Lon are universal proj string attributes and can always be used
+      projection.append(" +lat_0=" + std::to_string(tcmV01.geometry.reflat));
+    }
+
+    if (projection.find("+lon_0=") == std::string::npos && tcmV01.geometry.reflon!= 0.0) {
+      projection.append(" +lon_0=" + std::to_string(tcmV01.geometry.reflon));
+    }
+
+    if (projection.find("+h_0=") == std::string::npos && tcmV01.geometry.refelv != 0.0) { // Height only applies to some projections and should only be set if elevation is non-zero
+      projection.append(" +h_0=" + std::to_string(tcmV01.geometry.refelv));
+    }
+  }
+  
+  ROS_DEBUG_STREAM("Projection field after remaning message processing: " << projection);
+
+  ROS_DEBUG_STREAM("Traffic Control heading provided: " << tcmV01.geometry.heading << " System understanding is that this value will not affect the projection and is only provided for supporting derivative calculations.");
+  
+  // Create the resulting projection transformation
+  PJ* universal_to_target = proj_create_crs_to_crs(PJ_DEFAULT_CTX, universal_frame.c_str(), projection.c_str(), nullptr);
+  if (universal_to_target == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
+    
+    ROS_ERROR_STREAM("Failed to generate projection between geofence and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
+      << " universal_frame: " << universal_frame << " projection: " << projection);
+
+    return {}; // Ignore geofence if it could not be projected from universal to TCM frame
+  }
+  
+  PJ* target_to_map = proj_create_crs_to_crs(PJ_DEFAULT_CTX, projection.c_str(), base_map_georef_.c_str(), nullptr);
+
+  if (target_to_map == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
+    
+    ROS_ERROR_STREAM("Failed to generate projection between geofence and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
+      << " target_to_map: " << target_to_map << " base_map_georef_: " << base_map_georef_);
+
+    return {}; // Ignore geofence if it could not be projected into the map frame
+  
+  }
   
   // convert all geofence points into our map's frame
   std::vector<lanelet::Point3d> gf_pts;
   cav_msgs::PathNode prev_pt;
+  PJ_COORD c_init_latlong{{tcmV01.geometry.reflat, tcmV01.geometry.reflon, tcmV01.geometry.refelv}};
+  PJ_COORD c_init = proj_trans(universal_to_target, PJ_FWD, c_init_latlong);
+
+  prev_pt.x = c_init.xyz.x;
+  prev_pt.y =  c_init.xyz.y;
+
+  ROS_DEBUG_STREAM("In TCM's frame, initial Point X "<< prev_pt.x<<" Before conversion: Point Y "<< prev_pt.y );
   for (auto pt : tcmV01.geometry.nodes)
   { 
-    ROS_DEBUG_STREAM("Before conversion: Point X "<< pt.x <<" Before conversion: Point Y "<< pt.y);
+    ROS_DEBUG_STREAM("Before conversion in TCM frame: Point X "<< pt.x <<" Before conversion: Point Y "<< pt.y);
 
     PJ_COORD c {{prev_pt.x + pt.x, prev_pt.y + pt.y, 0, 0}}; // z is not currently used
     PJ_COORD c_out;
-    c_out = proj_trans(geofence_in_map_proj, PJ_FWD, c);
+    c_out = proj_trans(target_to_map, PJ_FWD, c);
+
     gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), c_out.xyz.x, c_out.xyz.y});
     prev_pt.x += pt.x;
     prev_pt.y += pt.y;
 
-    ROS_DEBUG_STREAM("After conversion: Point X "<< gf_pts.back().x() <<" After conversion: Point Y "<< gf_pts.back().y());
+    ROS_DEBUG_STREAM("After conversion in Map frame: Point X "<< gf_pts.back().x() <<" After conversion: Point Y "<< gf_pts.back().y());
   }
 
   tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(gf_pts));
@@ -870,7 +955,8 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
     throw lanelet::InvalidObjectStateError(std::string("Base georeference map may not be loaded to the WMBroadcaster"));
 
   }
-
+  
+  // Convert the minimum point to latlon
   lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
   lanelet::BasicPoint3d localPoint;
 
@@ -879,23 +965,52 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
 
   lanelet::GPSPoint gpsRoute = local_projector.reverse(localPoint); //If the appropriate library is included, the reverse() function can be used to convert from local xyz to lat/lon
 
+  // Create a local transverse mercator frame at the minimum point to allow us to get east,north oriented bounds 
+  std::string local_tmerc_enu_proj = "+proj=tmerc +datum=WGS84 +h_0=0 +lat_0=" + std::to_string(gpsRoute.lat) + " +lon_0=" + std::to_string(gpsRoute.lon);
+
+  // Create transform from map frame to local transform mercator frame at bounds min point
+  PJ* tmerc_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, target_frame.c_str(), local_tmerc_enu_proj.c_str(), nullptr);
+  
+  if (tmerc_proj == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
+    
+    ROS_ERROR_STREAM("Failed to generate projection between request bounds frame and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
+      << " MapProjection: " << target_frame << " Message Projection: " << local_tmerc_enu_proj);
+
+    return {}; // Ignore geofence if it could not be projected into the map frame
+  
+  }
+
+  ROS_DEBUG_STREAM("Before conversion: Top Left: ("<< minX <<", "<<maxY<<")");
+  ROS_DEBUG_STREAM("Before conversion: Top Right: ("<< maxX <<", "<<maxY<<")");
+  ROS_DEBUG_STREAM("Before conversion: Bottom Left: ("<< minX <<", "<<minY<<")");
+  ROS_DEBUG_STREAM("Before conversion: Bottom Right: ("<< maxX <<", "<<minY<<")");
+
+  PJ_COORD pj_min {{minX, minY, 0, 0}}; // z is not currently used
+  PJ_COORD pj_min_tmerc;
+  PJ_COORD pj_max {{maxX, maxY, 0, 0}}; // z is not currently used
+  PJ_COORD pj_max_tmerc;
+  pj_min_tmerc = proj_trans(tmerc_proj, PJ_FWD, pj_min);
+  pj_max_tmerc = proj_trans(tmerc_proj, PJ_FWD, pj_max);
+
+  ROS_DEBUG_STREAM("After conversion: MinPoint ( "<< pj_min_tmerc.xyz.x <<", " << pj_min_tmerc.xyz.y <<" )");
+  ROS_DEBUG_STREAM("After conversion: MaxPoint ( "<< pj_max_tmerc.xyz.x <<", " << pj_max_tmerc.xyz.y <<" )");
+
   cav_msgs::TrafficControlRequest cR; /*Fill the latitude value in message cB with the value of lat */
   cav_msgs::TrafficControlBounds cB; /*Fill the longitude value in message cB with the value of lon*/
   
   cB.reflat = gpsRoute.lat;
   cB.reflon = gpsRoute.lon;
 
-  cav_msgs::OffsetPoint offsetX;
-  offsetX.deltax = maxX - minX;
-  cav_msgs::OffsetPoint offsetY;
-  offsetY.deltay = maxY - minY;
-  cB.offsets[0].deltax = minX;
-  cB.offsets[0].deltay = maxY;
-  cB.offsets[1].deltax = maxX;
-  cB.offsets[1].deltay = minY;
-  cB.offsets[2].deltax = maxX;
-  cB.offsets[2].deltay = maxY;
-  cB.oldest =ros::Time::now();
+  cB.offsets[0].deltax = pj_max_tmerc.xyz.x - pj_min_tmerc.xyz.x; // Points in clockwise order min,min (lat,lon point) -> max,min -> max,max -> min,max
+  cB.offsets[0].deltay = 0.0;                                     // calculating the offsets
+  cB.offsets[1].deltax = pj_max_tmerc.xyz.x - pj_min_tmerc.xyz.x;
+  cB.offsets[1].deltay = pj_max_tmerc.xyz.y - pj_min_tmerc.xyz.y;
+  cB.offsets[2].deltax = 0.0;
+  cB.offsets[2].deltay = pj_max_tmerc.xyz.y - pj_min_tmerc.xyz.y;
+
+  tcr_polygon_ = composeTCRStatus(localPoint, cB, local_projector); // TCR polygon can be visualized in UI
+
+  cB.oldest =ros::Time::now(); // TODO this needs to be set to 0 or an older value as otherwise this will filter out all controls
   
   cR.choice = cav_msgs::TrafficControlRequest::TCRV01;
   
@@ -921,6 +1036,40 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   
   return cR;
 
+}
+
+cav_msgs::TrafficControlRequestPolygon WMBroadcaster::composeTCRStatus(const lanelet::BasicPoint3d& localPoint, const cav_msgs::TrafficControlBounds& cB, const lanelet::projection::LocalFrameProjector& local_projector)
+{
+  cav_msgs::TrafficControlRequestPolygon output;
+  lanelet::BasicPoint3d local_point_tmp;
+
+  int i = -1;
+  while (i < 3) // three offsets; offsets.size() doesn't return accurate size
+  {
+    if (i == -1)
+    {
+      local_point_tmp.x() = localPoint.x();
+      local_point_tmp.y() = localPoint.y();
+    }
+    else
+    {
+      local_point_tmp.x() = localPoint.x() + cB.offsets[i].deltax;;
+      local_point_tmp.y() = localPoint.y() + cB.offsets[i].deltay;;
+    }
+    lanelet::GPSPoint gps_vertex = local_projector.reverse(local_point_tmp);
+    
+    cav_msgs::Position3D gps_msg;
+    gps_msg.elevation = gps_vertex.ele;
+    gps_msg.latitude = gps_vertex.lat;
+    gps_msg.longitude = gps_vertex.lon;
+    output.polygon_list.push_back(gps_msg);
+
+    ROS_DEBUG_STREAM("TCR Vertex Lat: "<< std::to_string(gps_vertex.lat));
+    ROS_DEBUG_STREAM("TCR Vertex Lon: "<<std::to_string(gps_vertex.lon));
+
+    i++;
+  }
+  return output;
 }
 
 visualization_msgs::Marker WMBroadcaster::composeTCMMarkerVisualizer(const std::vector<lanelet::Point3d>& input)

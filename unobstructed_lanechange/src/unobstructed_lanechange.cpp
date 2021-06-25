@@ -252,8 +252,6 @@ namespace unobstructed_lanechange
         trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
         // Build trajectory points
-        // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
-        // off the last point in the plan if an earlier plan was provided
         std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
             trajectory_from_points_times_orientations(future_geom_points, times, final_yaw_values, state_time);
         
@@ -554,7 +552,7 @@ namespace unobstructed_lanechange
     {
         //Create route geometry for lane change maneuver
         //Starting downtrack maybe in the previous lanelet, if it is, have a lane follow till new lanelet starts
-        std::vector<lanelet::ConstLanelet> lanelets_in_path = wm->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
+        std::vector<lanelet::ConstLanelet> lanelets_in_path = wm->getLaneletsBetween(starting_downtrack, ending_downtrack, true, false);
         lanelet::BasicLineString2d centerline_points = {};
         int lane_change_iteration = 0;
         if(lanelets_in_path[0].id() != starting_lane_id){

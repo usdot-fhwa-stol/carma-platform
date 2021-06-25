@@ -299,7 +299,7 @@ std::vector<PointSpeedPair> PlatooningTacticalPlugin::maneuvers_to_points(const 
 
     ROS_DEBUG_STREAM("Used downtrack: " << starting_downtrack);
 
-    auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist, true);
+    auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist, true, true);
 
     ROS_DEBUG_STREAM("Maneuver");
     std::vector<lanelet::ConstLanelet> lanelets_to_add;
@@ -551,8 +551,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::compose_tra
   log::printDoublesPerLineWithPrefix("times[i]: ", times);
   
   // Build trajectory points
-  // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
-  // off the last point in the plan if an earlier plan was provided
   std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
       trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, ros::Time::now());
 

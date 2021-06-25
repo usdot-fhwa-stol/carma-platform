@@ -52,6 +52,7 @@
 #include <std_msgs/String.h>
 #include <unordered_set>
 #include <visualization_msgs/MarkerArray.h>
+#include <cav_msgs/TrafficControlRequestPolygon.h>
 
 namespace carma_wm_ctrl
 {
@@ -123,6 +124,12 @@ public:
   * \param input The message containing tcm information
   */
   visualization_msgs::Marker composeTCMMarkerVisualizer(const std::vector<lanelet::Point3d>& input);
+
+   /*!
+  * \brief composeTCRStatus() compose TCM Request visualization on UI
+  * \param input The message containing tcr information
+  */
+  cav_msgs::TrafficControlRequestPolygon composeTCRStatus(const lanelet::BasicPoint3d& localPoint, const cav_msgs::TrafficControlBounds& cB, const lanelet::projection::LocalFrameProjector& local_projector);
 
  /*!
   * \brief Pulls vehicle information from CARMA Cloud at startup by providing its selected route in a TrafficControlRequest message that is published after a route is selected.
@@ -207,6 +214,13 @@ public:
   ros::V_string invertParticipants(const ros::V_string& input_participants) const;
 
   /*!
+   * \brief Combines a list of the given participants into a single "vehicle" type if participants cover all possible vehicle types.
+            Returns the input with no change if it doesn't cover all.
+   * \param ros::V_string participants vector of strings 
+   */
+  ros::V_string combineParticipantsToVehicle(const ros::V_string& input_participants) const;
+
+  /*!
    *  \brief Callback triggered whenever a new subscriber connects to the map_update topic of this node.
    *         This callback will publish the all updates for the current map to that node so that any missed updates are already included.
    *          
@@ -215,6 +229,7 @@ public:
   void newUpdateSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const;
 
   visualization_msgs::MarkerArray tcm_marker_array_;
+  cav_msgs::TrafficControlRequestPolygon tcr_polygon_;
   
   /*!
    * \brief Returns the most recently recieved route message.

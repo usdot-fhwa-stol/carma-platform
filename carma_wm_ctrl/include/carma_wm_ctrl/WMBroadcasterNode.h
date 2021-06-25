@@ -87,6 +87,7 @@ private:
   ros::Publisher map_update_pub_;
   ros::Publisher control_msg_pub_;
   ros::Publisher tcm_visualizer_pub_;
+  ros::Publisher tcr_visualizer_pub_;
 
   ros::Publisher active_pub_;
 
