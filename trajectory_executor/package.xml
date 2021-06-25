@@ -48,6 +48,8 @@
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>carma_utils</depend>
+  <depend>lanelet2_core</depend>
+  <depend>basic_autonomy</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

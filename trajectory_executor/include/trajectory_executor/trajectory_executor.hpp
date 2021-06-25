@@ -28,6 +28,7 @@
 #include <ros/publisher.h>
 #include <carma_utils/CARMAUtils.h>
 #include <ros/callback_queue.h>
+#include <geometry_msgs/PoseStamped.h>
 
 namespace trajectory_executor {
 
@@ -90,6 +91,12 @@ namespace trajectory_executor {
              */
             void guidanceStateCb(const cav_msgs::GuidanceStateConstPtr& msg);
 
+            /*!
+             * \brief Callback to recieve the current vehicle pose
+             * 
+             * \param The most recent pose message
+             */
+            void poseCb(const geometry_msgs::PoseStampedConstPtr& msg);
 
             /*!
              * \brief Timer callback to be invoked at our output tickrate.
@@ -102,6 +109,17 @@ namespace trajectory_executor {
              */
             void onTrajEmitTick(const ros::TimerEvent& te);
 
+            /*!
+             * \brief Returns the control plugin marked for the point nearest the provided position
+             *        NOTE: This method must be provided with a non-empty trajectory. A segfault will occur if this is not checked
+             * 
+             * \param traj The trajectory plan to evaluate
+             * \param position The vehicle's current position to compare with the trajectory for finding the nearest point
+             * 
+             * \return The name of the control plugin assigned to the nearest point
+             */ 
+            std::string identifyActiveControlPlugin(const cav_msgs::TrajectoryPlan& traj, const geometry_msgs::Point& position)
+
         private:
             // Node handles to separate callback queues
             std::unique_ptr<ros::CARMANodeHandle> _private_nh;
@@ -113,6 +131,7 @@ namespace trajectory_executor {
 
             ros::Subscriber _plan_sub; // Inbound plan subscriber
             ros::Subscriber _state_sub; // Guidance State subscriber
+            ros::Subscriber _pose_sub; // Current pose subscriber
             std::map<std::string, ros::Publisher> _traj_publisher_map; // Outbound plan publishers
 
             // Trajectory plan tracking data. Synchronized on _cur_traj_mutex
@@ -121,6 +140,7 @@ namespace trajectory_executor {
             std::mutex _cur_traj_mutex;
             std::string default_control_plugin_;
             std::string default_control_plugin_topic_;
+            geometry_msgs::PoseStampedConstPtr current_pose_;
 
             // Timers and associated spin rates
             int _min_traj_publish_tickrate_hz {10};

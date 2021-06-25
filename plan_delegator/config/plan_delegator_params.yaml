@@ -10,7 +10,7 @@ planning_topic_suffix: /plan_trajectory
 
 # Double: The trajectory planning frequency
 # Units: Hz
-trajectory_planning_rate: 10.0
+trajectory_planning_rate: 3.0
 
 # Double: Plan delegator will stop generating new trajectories
 # if the current plan is already over this threshold

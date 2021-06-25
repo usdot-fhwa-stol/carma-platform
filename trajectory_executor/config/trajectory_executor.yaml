@@ -14,6 +14,7 @@
 
 # Integer: Publish rate for the outbound trajectories to the control plugins.
 # Should be matched to timestep size in TrajectoryPlan inputs
+# NOTE: This value must be large enough for control plugins to be switched safely though it does not nessasarily need to be at the control plugin command frequency
 # Units: Hz
 trajectory_publish_rate: 10
 

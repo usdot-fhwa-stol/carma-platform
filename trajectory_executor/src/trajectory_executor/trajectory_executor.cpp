@@ -19,6 +19,7 @@
 #include <utility>
 #include <cav_msgs/SystemAlert.h>
 #include <exception>
+#include <basic_autonomy/helper_functions.h>
 
 namespace trajectory_executor 
 {
@@ -79,19 +80,30 @@ namespace trajectory_executor
         ROS_DEBUG("TrajectoryExecutor tick start!");
 
         if (_cur_traj != nullptr) {
+
+            if (!current_pose_) {
+                ROS_WARN_STREAM("Cannot execute trajectory as no pose is available");
+                return;
+            }
+
             if (!_cur_traj->trajectory_points.empty()) {
+                
                 // Determine the relevant control plugin for the current timestep
-                std::string control_plugin = _cur_traj->trajectory_points[0].controller_plugin_name;
+
+                std::string control_plugin = identifyActiveControlPlugin(*_cur_traj, current_pose_->pose.position);
+
                 // if it instructed to use default control_plugin
                 if (control_plugin == "default" || control_plugin =="")
                     control_plugin = default_control_plugin_;
 
                 std::map<std::string, ros::Publisher>::iterator it = _traj_publisher_map.find(control_plugin);
+
                 if (it != _traj_publisher_map.end()) {
                     ROS_DEBUG("Found match for control plugin %s at point %d in current trajectory!",
                         control_plugin.c_str(),
                         _timesteps_since_last_traj);
                     it->second.publish(*_cur_traj);
+
                 } else {
                     std::ostringstream description_builder;
                     description_builder << "No match found for control plugin " 
@@ -108,6 +120,10 @@ namespace trajectory_executor
             ROS_DEBUG("Awaiting initial trajectory publication...");
         }
         ROS_DEBUG("TrajectoryExecutor tick completed succesfully!");
+    }
+
+    void TrajectoryExecutor::poseCb(const geometry_msgs::PoseStampedConstPtr& msg) {
+        current_pose_ = msg;
     }
 
     void TrajectoryExecutor::run()
@@ -137,6 +153,7 @@ namespace trajectory_executor
 
         this->_plan_sub = this->_public_nh->subscribe<const cav_msgs::TrajectoryPlan&>("trajectory", 5, &TrajectoryExecutor::onNewTrajectoryPlan, this);
         this->_state_sub = this->_public_nh->subscribe<cav_msgs::GuidanceState>("state", 5, &TrajectoryExecutor::guidanceStateMonitor, this);
+        this->_pose_sub = this->_public_nh->subscribe<geometry_msgs::PoseStamped>("current_pose", 5, &TrajectoryExecutor::poseCb, this);
 
         this->_cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>();
         ROS_DEBUG("Subscribed to inbound trajectory plans.");
@@ -149,7 +166,7 @@ namespace trajectory_executor
         for (auto it = discovered_control_plugins.begin(); it != discovered_control_plugins.end(); it++)
         {
             ROS_DEBUG("Trajectory executor discovered control plugin %s listening on topic %s.", it->first.c_str(), it->second.c_str());
-            ros::Publisher control_plugin_pub = _public_nh->advertise<cav_msgs::TrajectoryPlan>(it->second, 1000);
+            ros::Publisher control_plugin_pub = _public_nh->advertise<cav_msgs::TrajectoryPlan>(it->second, 1);
             control_plugin_topics.insert(std::make_pair(it->first, control_plugin_pub));
         }
 
@@ -157,5 +174,17 @@ namespace trajectory_executor
         ROS_DEBUG("TrajectoryExecutor component initialized succesfully!");
 
         return true;
+    }
+
+    std::string TrajectoryExecutor::identifyActiveControlPlugin(const cav_msgs::TrajectoryPlan& traj, const geometry_msgs::Point& position) {
+        // Transform inputs to needed format
+        std::vector<lanelet::BasicPoint2d> points = lanelet::utils::transform(traj->trajectory_points, [](auto p) { return lanelet::BasicPoint2d(p.x, p.y); });
+        cav_msgs::VehicleState veh_state;
+        veh_state.X_pos_global = position.x;
+        veh_state.Y_pos_global = position.y;
+
+        int nearest_index = basic_autonomy::waypoint_generation::get_nearest_point_index(points, veh_state); // Find nearest point
+
+        return traj.trajectory_points[nearest_index].controller_plugin_name; // Return control plugin for nearest trajectory point
     }
 }
