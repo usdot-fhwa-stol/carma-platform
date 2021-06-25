@@ -74,6 +74,8 @@ int WMBroadcasterNode::run()
   curr_location_sub_ = cnh_.subscribe("current_pose", 1,&WMBroadcaster::currentLocationCallback, &wmb_);
   //TCM Visualizer pub
   tcm_visualizer_pub_= cnh_.advertise<visualization_msgs::MarkerArray>("tcm_visualizer",1,true);
+  //TCR Visualizer pub (visualized on UI)
+  tcr_visualizer_pub_ = cnh_.advertise<cav_msgs::TrafficControlRequestPolygon>("tcr_bounding_points",1,true);
   
   double config_limit;
   double lane_max_width;
@@ -86,8 +88,9 @@ int WMBroadcasterNode::run()
   
     timer = cnh_.createTimer(ros::Duration(10.0), [this](auto){
       tcm_visualizer_pub_.publish(wmb_.tcm_marker_array_);
+      tcr_visualizer_pub_.publish(wmb_.tcr_polygon_);
       if(wmb_.getRoute().route_path_lanelet_ids.size() > 0)
-      wmb_.routeCallbackMessage(wmb_.getRoute());
+        wmb_.routeCallbackMessage(wmb_.getRoute());
       }, false);
 
   // Spin

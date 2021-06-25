@@ -186,6 +186,14 @@ namespace plan_delegator
                     ROS_WARN_STREAM("Found invalid trajectory with less than 2 trajectory points for " << latest_maneuver_plan_.maneuver_plan_id);
                     break;
                 }
+                //Remove duplicate point from start of trajectory
+                if(latest_trajectory_plan.trajectory_points.size() !=0){
+                    
+                    if(latest_trajectory_plan.trajectory_points.back().target_time == plan_req.response.trajectory_plan.trajectory_points.front().target_time){
+                        ROS_DEBUG_STREAM("Removing duplicate point");
+                        plan_req.response.trajectory_plan.trajectory_points.erase(plan_req.response.trajectory_plan.trajectory_points.begin());
+                    }
+                }
                 latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
                                                                 plan_req.response.trajectory_plan.trajectory_points.begin(),
                                                                 plan_req.response.trajectory_plan.trajectory_points.end());

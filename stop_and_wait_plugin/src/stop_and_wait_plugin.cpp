@@ -234,7 +234,7 @@ namespace stop_and_wait_plugin
                     }
                 }
                 //get all the lanelets in between starting and ending downtrack on shortest path
-                auto lanelets = wm_->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
+                auto lanelets = wm_->getLaneletsBetween(starting_downtrack, ending_downtrack, true, true);
                 //record all the lanelets to be added to path
                 std::vector<lanelet::ConstLanelet> lanelets_to_add;
                 for (auto& l : lanelets)

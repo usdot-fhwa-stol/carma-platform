@@ -33,7 +33,11 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 
+<<<<<<< HEAD
 FROM usdotfhwastol/autoware.ai:carma-system-3.6.0 AS base-image
+=======
+FROM usdotfhwastol/autoware.ai:zephyr AS base-image
+>>>>>>> b04ddc252b60489b4a2973741c342c5a129b0833
 
 FROM base-image AS source-code
 
