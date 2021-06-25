@@ -187,7 +187,7 @@ namespace basic_autonomy
                 tpp.yaw = yaws[i];
 
                 tpp.controller_plugin_name = "default";
-                tpp.planner_plugin_name; // = plugin_discovery_msg_.name; //Planner plugin name is filled in the tactical plugin
+                //tpp.planner_plugin_name        //Planner plugin name is filled in the tactical plugin
 
                 traj.push_back(tpp);
             }
@@ -266,7 +266,7 @@ namespace basic_autonomy
 
                 }
 
-                for (auto l : lanelets)
+                for (const auto& l : lanelets)
                 {
                     ROS_DEBUG_STREAM("Processing Lanelet ID: " << l.id());
                     if (visited_lanelets.find(l.id()) == visited_lanelets.end())
@@ -296,7 +296,7 @@ namespace basic_autonomy
                 first = true;
                 for (auto p : downsampled_centerline)
                 {
-                    if (first && points_and_target_speeds.size() != 0)
+                    if (first && !points_and_target_speeds.empty())
                     {
                         first = false;
                         continue; // Skip the first point if we have already added points from a previous maneuver to avoid duplicates
@@ -413,7 +413,7 @@ namespace basic_autonomy
 
         std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanefollow_trajectory_from_centerline(
             const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time, const carma_wm::WorldModelConstPtr &wm,
-            cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg, const DetailedTrajConfig &detailed_config)
+            const cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg, const DetailedTrajConfig &detailed_config)
         {
             ROS_DEBUG_STREAM("VehicleState: "
                              << " x: " << state.X_pos_global << " y: " << state.Y_pos_global << " yaw: " << state.orientation
@@ -460,7 +460,7 @@ namespace basic_autonomy
             // we expect using curve_resample_step_size
             std::vector<double> downtracks_raw = carma_wm::geometry::compute_arc_lengths(curve_points);
 
-            int total_step_along_curve = static_cast<int>(downtracks_raw.back() / detailed_config.curve_resample_step_size);
+            auto total_step_along_curve = static_cast<int>(downtracks_raw.back() / detailed_config.curve_resample_step_size);
 
             int current_speed_index = 0;
             size_t total_point_size = curve_points.size();
@@ -505,7 +505,7 @@ namespace basic_autonomy
 
             ROS_DEBUG("Processed all points in computed fit");
 
-            if (all_sampling_points.size() == 0)
+            if (all_sampling_points.empty())
             {
                 ROS_WARN_STREAM("No trajectory points could be generated");
                 return {};
@@ -625,7 +625,7 @@ namespace basic_autonomy
             return detailed_config;
         }
 
-        GeneralTrajConfig compose_general_trajectory_config(std::string trajectory_type,
+        GeneralTrajConfig compose_general_trajectory_config(const std::string& trajectory_type,
                                                             int default_downsample_ratio,
                                                             int turn_downsample_ratio)
         {
@@ -641,7 +641,7 @@ namespace basic_autonomy
         std::vector<PointSpeedPair> maneuvers_to_points_lanechange(const std::vector<cav_msgs::Maneuver> &maneuvers,
                                                                    double max_starting_downtrack,
                                                                    const carma_wm::WorldModelConstPtr &wm,
-                                                                   cav_msgs::VehicleState state, double &maneuver_fraction_completed, cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config)
+                                                                   const cav_msgs::VehicleState& state, double &maneuver_fraction_completed, cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config)
         {
             std::vector<PointSpeedPair> points_and_target_speeds;
             std::unordered_set<lanelet::Id> visited_lanelets;
@@ -712,7 +712,7 @@ namespace basic_autonomy
 
                 for (auto p : future_route_geometry)
                 {
-                    if (first && points_and_target_speeds.size() != 0)
+                    if (first && !points_and_target_speeds.empty())
                     {
                         first = false;
                         continue; // Skip the first point if we have already added points from a previous maneuver to avoid duplicates
@@ -729,8 +729,8 @@ namespace basic_autonomy
         }
 
         std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanechange_trajectory_from_centerline(
-            const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time, int starting_lanelet_id, double max_speed,
-            const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState ending_state_before_buffer, const DetailedTrajConfig &detailed_config)
+            const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time,
+            const carma_wm::WorldModelConstPtr &wm, const cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config)
         {
             ROS_DEBUG_STREAM("Input points size in compose traj from centerline: "<< points.size());
             int nearest_pt_index = get_nearest_index_by_downtrack(points, wm, state);
@@ -767,23 +767,20 @@ namespace basic_autonomy
             return traj_points;
         }
 
-        lanelet::BasicLineString2d create_lanechange_path(lanelet::BasicPoint2d start, lanelet::ConstLanelet &start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet &end_lanelet)
+        lanelet::BasicLineString2d create_lanechange_path(const lanelet::ConstLanelet &start_lanelet, const lanelet::ConstLanelet &end_lanelet)
         {
             std::vector<lanelet::BasicPoint2d> centerline_points = {};
             lanelet::BasicLineString2d centerline_start_lane = start_lanelet.centerline2d().basicLineString();
             lanelet::BasicLineString2d centerline_end_lane = end_lanelet.centerline2d().basicLineString();
 
-            lanelet::BasicPoint2d start_lane_pt = centerline_start_lane[0];
-            lanelet::BasicPoint2d end_lane_pt = centerline_end_lane[0];
-            double dist = sqrt(pow((end_lane_pt.x() - start_lane_pt.x()), 2) + pow((end_lane_pt.y() - start_lane_pt.y()), 2));
-            int total_points = std::min(centerline_start_lane.size(), centerline_end_lane.size());
+            auto total_points = std::min(centerline_start_lane.size(), centerline_end_lane.size());
             double delta_step = 1.0 / total_points;
 
             for (int i = 0; i < total_points; i++)
             {
                 lanelet::BasicPoint2d current_position;
-                start_lane_pt = centerline_start_lane[i];
-                end_lane_pt = centerline_end_lane[i];
+                lanelet::BasicPoint2d start_lane_pt = centerline_start_lane[i];
+                lanelet::BasicPoint2d end_lane_pt = centerline_end_lane[i];
                 double delta = delta_step * i;
                 current_position.x() = end_lane_pt.x() * delta + (1 - delta) * start_lane_pt.x();
                 current_position.y() = end_lane_pt.y() * delta + (1 - delta) * start_lane_pt.y();
@@ -841,11 +838,7 @@ namespace basic_autonomy
                 centerline_points.insert(centerline_points.end(), new_points_spliced.begin(), new_points_spliced.end());
             }
 
-            lanelet::BasicLineString2d first = lanelets_in_path[lane_change_iteration].centerline2d().basicLineString();
-            lanelet::BasicPoint2d start = first.front();
-            lanelet::BasicLineString2d last = lanelets_in_path.back().centerline2d().basicLineString();
-            lanelet::BasicPoint2d end = last.back();
-            lanelet::BasicLineString2d new_points = create_lanechange_path(start, lanelets_in_path[lane_change_iteration], end, lanelets_in_path[lane_change_iteration + 1]);
+            lanelet::BasicLineString2d new_points = create_lanechange_path(lanelets_in_path[lane_change_iteration],lanelets_in_path[lane_change_iteration + 1]);
             centerline_points.insert(centerline_points.end(), new_points.begin(), new_points.end());
 
             std::vector<lanelet::BasicPoint2d> centerline_as_vector(centerline_points.begin(), centerline_points.end());

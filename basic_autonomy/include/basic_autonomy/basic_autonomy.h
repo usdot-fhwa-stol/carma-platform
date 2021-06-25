@@ -194,7 +194,7 @@ namespace basic_autonomy
         std::vector<cav_msgs::TrajectoryPlanPoint>
         compose_lanefollow_trajectory_from_centerline(const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state,
                                                       const ros::Time &state_time, const carma_wm::WorldModelConstPtr &wm, 
-                                                      cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg,
+                                                      const cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg,
                                                       const DetailedTrajConfig &detailed_config);
 
         //Functions specific to lane change
@@ -215,7 +215,7 @@ namespace basic_autonomy
     std::vector<PointSpeedPair> maneuvers_to_points_lanechange(const std::vector<cav_msgs::Maneuver> &maneuvers,
                                                                 double max_starting_downtrack,
                                                                 const carma_wm::WorldModelConstPtr &wm,
-                                                                cav_msgs::VehicleState state, double &maneuver_fraction_completed,
+                                                                const cav_msgs::VehicleState& state, double &maneuver_fraction_completed,
                                                                 cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config);
 
         /**
@@ -225,8 +225,6 @@ namespace basic_autonomy
    *               These points must be in the same lane as the vehicle and must extend in front of it though it is fine if they also extend behind it. 
    * \param state The current state of the vehicle
    * \param state_time The abosolute time which the provided vehicle state corresponds to
-   * \param starting_lanelet_id The lanelet id of the lanelet from which lane change starts 
-   * \param max_speed The max allowable speed for lane changing under this plan.
    * \param wm The carma world model object which the vehicle is operating in.
    * \param ending_state_before_buffer The vehicle state before a buffer was added to the points. Used to revert the trajectory to required distance before returning.
    * 
@@ -234,9 +232,9 @@ namespace basic_autonomy
    */
 
         std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanechange_trajectory_from_centerline(
-            const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time, int starting_lanelet_id,
-            double max_speed, const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState ending_state_before_buffer,
-            const DetailedTrajConfig &detailed_config);
+               const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time,
+               const carma_wm::WorldModelConstPtr &wm, const cav_msgs::VehicleState &ending_state_before_buffer,
+               const DetailedTrajConfig &detailed_config);
 
         /**
      * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 
@@ -256,9 +254,7 @@ namespace basic_autonomy
      * 
      * \return A linestring path from start to end fit through Spline Library
      */
-        lanelet::BasicLineString2d create_lanechange_path(lanelet::BasicPoint2d start, lanelet::ConstLanelet &start_lanelet,
-                                                          lanelet::BasicPoint2d end, lanelet::ConstLanelet &end_lanelet);
-
+        lanelet::BasicLineString2d create_lanechange_path(const lanelet::ConstLanelet &start_lanelet, const lanelet::ConstLanelet &end_lanelet);
 
     DetailedTrajConfig compose_detailed_trajectory_config(double trajectory_time_length,
                                                             double curve_resample_step_size,
@@ -270,7 +266,7 @@ namespace basic_autonomy
                                                             double back_distance,
                                                             double buffer_ending_downtrack);
 
-    GeneralTrajConfig compose_general_trajectory_config(std::string trajectory_type,
+    GeneralTrajConfig compose_general_trajectory_config(const std::string& trajectory_type,
                                                         int default_downsample_ratio,
                                                         int turn_downsample_ratio);
 

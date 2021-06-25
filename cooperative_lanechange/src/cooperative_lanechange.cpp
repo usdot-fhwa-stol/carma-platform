@@ -501,13 +501,8 @@ namespace cooperative_lanechange
         ROS_DEBUG_STREAM("Maneuvers to points size:"<<points_and_target_speeds.size());
         auto downsampled_points = carma_utils::containers::downsample_vector(points_and_target_speeds, downsample_ratio_);
 
-        int starting_lanelet_id = stoi(maneuver_plan.front().lane_change_maneuver.starting_lane_id);
-
-        double final_max_speed = maneuver_plan.front().lane_change_maneuver.end_speed;
-        //std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points;
-        //trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state, req.header.stamp, starting_lanelet_id, final_max_speed);
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_centerline(downsampled_points, req.vehicle_state, req.header.stamp,
-                                                                                        starting_lanelet_id, final_max_speed, wm_, ending_state_before_buffer_, wpg_detail_config);
+                                                                                         wm_, ending_state_before_buffer_, wpg_detail_config);
         ROS_DEBUG_STREAM("Compose Trajectory size:"<<trajectory_points.size());
         return trajectory_points;
 

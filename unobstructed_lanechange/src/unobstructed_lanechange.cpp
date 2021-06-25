@@ -55,8 +55,8 @@ namespace unobstructed_lanechange
         pnh_->param<double>("minimum_lookahead_speed", minimum_lookahead_speed_, 2.8);
         pnh_->param<double>("maximum_lookahead_speed", maximum_lookahead_speed_, 13.9);
         pnh_->param<double>("lateral_accel_limit", lateral_accel_limit_, 1.5);
-        pnh_->param<double>("speed_moving_average_window_size", speed_moving_average_window_size_, 5);
-        pnh_->param<double>("curvature_moving_average_window_size", curvature_moving_average_window_size_, 9);
+        pnh_->param<int>("speed_moving_average_window_size", speed_moving_average_window_size_, 5);
+        pnh_->param<int>("curvature_moving_average_window_size", curvature_moving_average_window_size_, 9);
         pnh_->param<double>("curvature_calc_lookahead_count", curvature_calc_lookahead_count_, 1);
         pnh_->param<int>("downsample_ratio", downsample_ratio_, 8);
         pnh_->param<bool>("enable_object_avoidance_lc", enable_object_avoidance_lc_, false);
@@ -137,7 +137,7 @@ namespace unobstructed_lanechange
         original_trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
         original_trajectory.trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_centerline(downsampled_points, req.vehicle_state, req.header.stamp,
-                                                                                        starting_lanelet_id, final_max_speed, wm_, ending_state_before_buffer_, wpg_detail_config);
+                                                                                     wm_, ending_state_before_buffer_, wpg_detail_config);
         ROS_DEBUG_STREAM("Compose Trajectory size:"<<original_trajectory.trajectory_points.size());
 
 

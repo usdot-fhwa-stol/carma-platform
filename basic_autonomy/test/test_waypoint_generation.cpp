@@ -656,7 +656,7 @@ namespace basic_autonomy
         double target_speed = 11.176;
         EXPECT_EQ(points.back().speed, state.longitudinal_vel);
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_centerline(points,
-                                                                                                                                                          state, state_time, start_id, target_speed, cmw, ending_state, config);
+                                                                                                                                                          state, state_time, cmw, ending_state, config);
         EXPECT_TRUE(trajectory_points.size() > 2);
 
         basic_autonomy::waypoint_generation::create_route_geom(starting_downtrack, int(start_id), ending_downtrack, cmw);
@@ -667,8 +667,8 @@ namespace basic_autonomy
         lanelet::BasicPoint2d lc_end_point = end_lanelet.centerline2d().back();
         //create lanechange path creates the actual lanechange path. From starting of first lanelet's centerline, to the end of the adjacent
         //lanelet's centerline
-        lanelet::BasicLineString2d lc_geom = basic_autonomy::waypoint_generation::create_lanechange_path(lc_start_point, start_lanelet,
-                                                                                                         lc_end_point, end_lanelet);
+        lanelet::BasicLineString2d lc_geom = basic_autonomy::waypoint_generation::create_lanechange_path(start_lanelet, end_lanelet);
+                                                                                                         
         ASSERT_NEAR(lc_start_point.y(), lc_geom.front().y(), 0.000001);
         ASSERT_NEAR(lc_start_point.x(), lc_geom.front().x(), 0.000001);
 
