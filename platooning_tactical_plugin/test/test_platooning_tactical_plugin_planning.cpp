@@ -46,7 +46,7 @@ namespace platooning_tactical_plugin
 TEST(PlatooningTacticalPluginTest, testPlanningCallback)
 {
   PlatooningTacticalPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   PlatooningTacticalPlugin plugin(wm, config, [&](auto msg) {});
 
@@ -115,7 +115,7 @@ TEST(PlatooningTacticalPluginTest, testPlanningCallback)
 TEST(PlatooningTacticalPluginTest, testPlanningCallbackexception)
 {
   PlatooningTacticalPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   PlatooningTacticalPlugin plugin(wm, config, [&](auto msg) {});
 

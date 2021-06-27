@@ -251,65 +251,6 @@ std::vector<PointSpeedPair> PlatooningTacticalPlugin::constrain_to_time_boundary
   return time_bound_points;
 }
 
-double PlatooningTacticalPlugin::get_adaptive_lookahead(double velocity){
-  
-  // lookahead:
-  // v<10kph:  5m
-  // 10kph<v<50kph:  0.5*v
-  // v>50kph:  25m
-
-  double lookahead = config_.minimum_lookahead_distance;
-
-  if (velocity < config_.minimum_lookahead_speed)
-  {
-    lookahead = config_.minimum_lookahead_distance;
-  } 
-  else if (velocity >= config_.minimum_lookahead_speed && velocity < config_.maximum_lookahead_speed)
-  {
-    lookahead = config_.lookahead_ratio * velocity;
-  } 
-  else lookahead = config_.maximum_lookahead_distance;
-
-  return lookahead;
-
-}
-
-std::vector<double> PlatooningTacticalPlugin::get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const double& lookahead){
-  
-  if (lookahead < config_.minimum_lookahead_distance)
-  {
-    throw std::invalid_argument("Invalid lookahead value");
-  }
-
-  if (speeds.size() < 1)
-  {
-    throw std::invalid_argument("Invalid speeds vector");
-  }
-
-  if (speeds.size() != points.size())
-  {
-    throw std::invalid_argument("Speeds and Points lists not same size");
-  }
-
-  std::vector<double> out;
-  out.reserve(speeds.size());
-
-  for (int i = 0; i < points.size(); i++)
-  {
-    int idx = i;
-    double min_dist = std::numeric_limits<double>::max();
-    for (int j=i+1; j < points.size(); j++){
-      double dist = lanelet::geometry::distance2d(points[i],points[j]);
-      if (abs(lookahead - dist) <= min_dist){
-        idx = j;
-        min_dist = abs(lookahead - dist);
-      }
-    }
-    out.push_back(speeds[idx]);
-  }
-  
-  return out;
-}
 
 std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::trajectory_from_points_times_orientations(
     const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times, const std::vector<double>& yaws,
@@ -389,22 +330,82 @@ std::vector<PointSpeedPair> PlatooningTacticalPlugin::maneuvers_to_points(const 
 
     auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist, true);
 
-    ROS_DEBUG_STREAM("Maneuver");
-    std::vector<lanelet::ConstLanelet> lanelets_to_add;
-    for (auto l : lanelets)
+    if (lanelets.empty())
     {
-      ROS_DEBUG_STREAM("Lanelet ID: " << l.id());
+      ROS_ERROR_STREAM("Detected no lanelets between starting_downtrack: " << starting_downtrack  << ", and lane_following_maneuver.end_dist: " << lane_following_maneuver.end_dist);
+      throw std::invalid_argument("Detected no lanelets between starting_downtrack and end_dist");
+    }
+
+
+    ROS_DEBUG_STREAM("Maneuver");
+    lanelet::BasicLineString2d downsampled_centerline;
+    downsampled_centerline.reserve(200);
+
+
+    // getLaneletsBetween is inclusive lanelets between its two boundaries
+    // which may return lanechange lanelets, so 
+    // exclude lanechanges and plan for only the straight part
+    int curr_idx = 0;
+    auto following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
+    lanelet::ConstLanelets straight_lanelets;
+
+    if (lanelets.size() <= 1) // no lane change anyways if only size 1
+    {
+      ROS_DEBUG_STREAM("Detected one straight lanelet Id: " << lanelets[curr_idx].id());
+      straight_lanelets = lanelets;
+    }
+    else
+    {
+      // skip all lanechanges until lane follow starts
+      while (curr_idx + 1 < lanelets.size() && 
+              std::find(following_lanelets.begin(),following_lanelets.end(), lanelets[curr_idx + 1]) == following_lanelets.end())
+      {
+        ROS_DEBUG_STREAM("As there were no directly following lanelets after this, skipping lanelet id: " << lanelets[curr_idx].id());
+        curr_idx ++;
+        following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
+      }
+
+      ROS_DEBUG_STREAM("Added lanelet Id for lane follow: " << lanelets[curr_idx].id());
+      // guaranteed to have at least one "straight" lanelet (e.g the last one in the list)
+      straight_lanelets.push_back(lanelets[curr_idx]);
+
+      // add all lanelets on the straight road until next lanechange
+      while (curr_idx + 1 < lanelets.size() && 
+              std::find(following_lanelets.begin(),following_lanelets.end(), lanelets[curr_idx + 1]) != following_lanelets.end())
+      {
+        curr_idx++;
+        ROS_DEBUG_STREAM("Added lanelet Id forlane follow: " << lanelets[curr_idx].id());
+        straight_lanelets.push_back(lanelets[curr_idx]);
+        following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
+      }
+    }
+
+    for (auto l : straight_lanelets)
+    {
+      ROS_DEBUG_STREAM("Processing lanelet ID: " << l.id());
       if (visited_lanelets.find(l.id()) == visited_lanelets.end())
       {
-        lanelets_to_add.push_back(l);
+
+        bool is_turn = false;
+        if(l.hasAttribute("turn_direction")) {
+          std::string turn_direction = l.attribute("turn_direction").value();
+          is_turn = turn_direction.compare("left") == 0 || turn_direction.compare("right") == 0;
+        }
+        
+        lanelet::BasicLineString2d centerline = l.centerline2d().basicLineString();
+        lanelet::BasicLineString2d downsampled_points;
+        if (is_turn) {
+          downsampled_points = carma_utils::containers::downsample_vector(centerline, config_.turn_downsample_ratio);
+        } else {
+          downsampled_points = carma_utils::containers::downsample_vector(centerline, config_.default_downsample_ratio);
+        }
+        downsampled_centerline = carma_wm::geometry::concatenate_line_strings(downsampled_centerline, downsampled_points);
         visited_lanelets.insert(l.id());
       }
     }
 
-    lanelet::BasicLineString2d route_geometry = carma_wm::geometry::concatenate_lanelets(lanelets_to_add);
-
     first = true;
-    for (auto p : route_geometry)
+    for (auto p : downsampled_centerline)
     {
       if (first && points_and_target_speeds.size() != 0)
       {
@@ -418,7 +419,88 @@ std::vector<PointSpeedPair> PlatooningTacticalPlugin::maneuvers_to_points(const 
     }
   }
 
-  return points_and_target_speeds;
+  // Here we are limiting the trajectory length to the given length by maneuver end dist as opposed to the end of lanelets involved.
+    double starting_route_downtrack = wm_->routeTrackPos(points_and_target_speeds.front().point).downtrack;
+    double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist;
+
+    if(ending_downtrack + config_.buffer_ending_downtrack < wm_->getRouteEndTrackPos().downtrack){
+      ending_downtrack = ending_downtrack + config_.buffer_ending_downtrack;
+    }
+    else
+    {
+      ending_downtrack = wm_->getRouteEndTrackPos().downtrack;
+    } 
+    
+    size_t max_i = points_and_target_speeds.size() - 1;
+    size_t unbuffered_idx = points_and_target_speeds.size() - 1;
+    bool found_unbuffered_idx = false;
+    double dist_accumulator = starting_route_downtrack;
+    lanelet::BasicPoint2d prev_point;
+
+  for (int i = 0; i < points_and_target_speeds.size(); i ++) {
+      auto current_point = points_and_target_speeds[i].point;
+      if (i == 0) {
+        prev_point = current_point;
+        continue;
+      }
+
+      double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
+      ROS_DEBUG_STREAM("Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() << 
+        "current_point.y():" << current_point.y());
+      dist_accumulator += delta_d;
+      if (dist_accumulator > maneuvers.back().lane_following_maneuver.end_dist && !found_unbuffered_idx)
+      {
+        unbuffered_idx = i - 1;
+        ROS_DEBUG_STREAM("Found index unbuffered_idx at: " << unbuffered_idx);
+        found_unbuffered_idx = true;
+      }
+      if (dist_accumulator > ending_downtrack) {
+        max_i = i - 1;
+        ROS_DEBUG_STREAM("Max_i breaking at: i: " << i << ", max_i: " << max_i);
+        break;
+      }
+      prev_point = current_point;
+    }
+    ending_state_before_buffer.X_pos_global = points_and_target_speeds[unbuffered_idx].point.x();
+    ending_state_before_buffer.Y_pos_global = points_and_target_speeds[unbuffered_idx].point.y();
+    ROS_DEBUG_STREAM("Here ending_state_before_buffer.X_pos_global: " << ending_state_before_buffer.X_pos_global << 
+      ", and Y_pos_global" << ending_state_before_buffer.Y_pos_global);
+
+    std::vector<PointSpeedPair> constrained_points(points_and_target_speeds.begin(), points_and_target_speeds.begin() + max_i);
+    return constrained_points;
+
+
+
+////
+  //   std::vector<lanelet::ConstLanelet> lanelets_to_add;
+  //   for (auto l : lanelets)
+  //   {
+  //     ROS_DEBUG_STREAM("Lanelet ID: " << l.id());
+  //     if (visited_lanelets.find(l.id()) == visited_lanelets.end())
+  //     {
+  //       lanelets_to_add.push_back(l);
+  //       visited_lanelets.insert(l.id());
+  //     }
+  //   }
+
+  //   lanelet::BasicLineString2d route_geometry = carma_wm::geometry::concatenate_lanelets(lanelets_to_add);
+
+  //   first = true;
+  //   for (auto p : route_geometry)
+  //   {
+  //     if (first && points_and_target_speeds.size() != 0)
+  //     {
+  //       first = false;
+  //       continue;  // Skip the first point if we have already added points from a previous maneuver to avoid duplicates
+  //     }
+  //     PointSpeedPair pair;
+  //     pair.point = p;
+  //     pair.speed = lane_following_maneuver.end_speed;
+  //     points_and_target_speeds.push_back(pair);
+  //   }
+  // }
+
+  // return points_and_target_speeds;
 }
 
 int PlatooningTacticalPlugin::getNearestPointIndex(const std::vector<PointSpeedPair>& points,
