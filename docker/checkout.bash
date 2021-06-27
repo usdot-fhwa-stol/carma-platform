@@ -43,15 +43,9 @@ if [[ "$BRANCH" = "develop" ]]; then
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch carma-system-3.6.0
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch carma-system-3.6.0
 else
-<<<<<<< HEAD
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch carma-system-3.6.0
       git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch carma-system-3.6.0
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch carma-system-3.6.0
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch carma-system-3.6.0
-=======
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch carma-system-3.6.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch carma-system-3.6.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch carma-system-3.6.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch carma-system-3.6.0
->>>>>>> b04ddc252b60489b4a2973741c342c5a129b0833
+
 fi
