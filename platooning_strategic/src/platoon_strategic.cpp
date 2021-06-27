@@ -795,7 +795,6 @@ namespace platoon_strategic
         if (pm_.current_platoon_state == PlatoonState::STANDBY)
         {
             status_msg.state = cav_msgs::PlatooningInfo::DISABLED;
-            status_msg.host_platoon_position = -1;
         }
         else if (pm_.current_platoon_state == PlatoonState::LEADER)
         {
