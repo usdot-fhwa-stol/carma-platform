@@ -99,6 +99,11 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
   // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
   gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(msg_v01);
 
+  if (gf_ptr->affected_parts_.size() == 0) {
+    ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
+    return nullptr; // Return null geofence
+  }
+
   std::vector<lanelet::Lanelet> affected_llts;
   std::vector<lanelet::Area> affected_areas;
 
@@ -464,9 +469,9 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
     
   checked_geofence_ids_.insert(boost::uuids::to_string(id));
   auto gf_ptr = geofenceFromMsg(geofence_msg.tcmV01);
-  if (gf_ptr->affected_parts_.size() == 0)
+  if (gf_ptr == nullptr || gf_ptr->affected_parts_.size() == 0)
   {
-    ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
+    ROS_WARN_STREAM("Geofence message could not be converted");
     tcm_marker_array_.markers.resize(tcm_marker_array_.markers.size() - 1); //truncate this geofence
     return;
   }
@@ -505,35 +510,23 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
                                           std::string("get transformation between the geofence and the map"));
 
 
-  // There are two ways to store the projection used in the traffic control message
-  // The first approach is to store the entire projection in the proj string. 
-  // The second approach is to populate the other fields in the TCM message.
-  // Here we check which fields were already provided in the projection string and if they were not provided we set them with the value provided in the TCM message
+  // This next section handles the geofence projection conversion
+  // The datum field is used to identify the frame for the provided referance lat/lon. 
+  // This reference is then converted to the provided projection as a reference origin point
+  // From the reference the message projection to map projection transformation is used to convert the nodes in the TrafficControlMessage
   std::string projection = tcmV01.geometry.proj;
-  std::string universal_frame = "EPSG:4326"; //lat/long included in TCM is in this frame as it is universal
-  
-  ROS_DEBUG_STREAM("Projection field before remaning message processing: " << projection);
-
-  if (projection.find("epsg") == std::string::npos && projection.find("EPSG") == std::string::npos)
-  {
-    if (projection.find("+datum=") == std::string::npos && !tcmV01.geometry.datum.empty()) { // Datum is not a universal projection so only add it if it was provided
-    projection.append(" +datum=" + tcmV01.geometry.datum);
-    }
-
-    if (projection.find("+lat_0=") == std::string::npos && tcmV01.geometry.reflat!= 0.0) { // Lat and Lon are universal proj string attributes and can always be used
-      projection.append(" +lat_0=" + std::to_string(tcmV01.geometry.reflat));
-    }
-
-    if (projection.find("+lon_0=") == std::string::npos && tcmV01.geometry.reflon!= 0.0) {
-      projection.append(" +lon_0=" + std::to_string(tcmV01.geometry.reflon));
-    }
-
-    if (projection.find("+h_0=") == std::string::npos && tcmV01.geometry.refelv != 0.0) { // Height only applies to some projections and should only be set if elevation is non-zero
-      projection.append(" +h_0=" + std::to_string(tcmV01.geometry.refelv));
-    }
+  std::string datum = tcmV01.geometry.datum;
+  if (datum.empty()) {
+    ROS_WARN_STREAM("Datum field not populated. Attempting to use WGS84");
+    datum = "WGS84";
   }
+
   
-  ROS_DEBUG_STREAM("Projection field after remaning message processing: " << projection);
+  ROS_DEBUG_STREAM("Projection field: " << projection);
+  ROS_DEBUG_STREAM("Datum field: " << datum);
+  
+  std::string universal_frame = datum; //lat/long included in TCM is in this datum
+
 
   ROS_DEBUG_STREAM("Traffic Control heading provided: " << tcmV01.geometry.heading << " System understanding is that this value will not affect the projection and is only provided for supporting derivative calculations.");
   
@@ -1356,6 +1349,5 @@ void WMBroadcaster::newUpdateSubscriber(const ros::SingleSubscriberPublisher& si
 
 
 }  // namespace carma_wm_ctrl
-
 
 
