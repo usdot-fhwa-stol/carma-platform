@@ -63,8 +63,13 @@ namespace mobilitypath_visualizer {
         // init subscribers
         host_mob_path_sub_ = nh_->subscribe("mobility_path_msg", 1, &MobilityPathVisualizer::callbackMobilityPath, this);
         cav_mob_path_sub_ = nh_->subscribe("incoming_mobility_path", 1, &MobilityPathVisualizer::callbackMobilityPath, this);
+        georeference_sub_ = nh_->subscribe("georeference", 1, &MobilityPathVisualizer::georeferenceCallback, this);
 
-        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+    }
+
+    void MobilityPathVisualizer::georeferenceCallback(const std_msgs::StringConstPtr& msg) 
+    {
+        map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());  // Build projector from proj string
     }
     
     void MobilityPathVisualizer::callbackMobilityPath(const cav_msgs::MobilityPath& msg)
@@ -85,31 +90,29 @@ namespace mobilitypath_visualizer {
             return;
         }
         latest_cav_mob_path_msg_[msg.header.sender_id] = msg;
-        try
-        {
-            tf2::convert(tf2_buffer_.lookupTransform("earth", "map", ros::Time(0)).transform, map_in_earth_); 
-            MarkerColor cav_color;
-            if (msg.header.sender_id.compare(host_id_) ==0)
-            {
-                cav_color.green = 1.0;
-                host_marker_ = composeVisualizationMarker(msg,cav_color, map_in_earth_);
-                host_marker_received_ = true;
-                ROS_DEBUG_STREAM("Composed host marker successfuly!");
-            }
-            else
-            {
-                cav_color.blue = 1.0;
-                cav_markers_.push_back(composeVisualizationMarker(msg,cav_color, map_in_earth_));
-                ROS_DEBUG_STREAM("Composed cav marker successfuly! with sender_id: " << msg.header.sender_id);
-            }
+
+        if (!map_projector_) {
+            ROS_DEBUG_STREAM("Cannot visualize mobility path as map projection not yet available");
         }
-        catch (const tf2::TransformException &ex)
+
+        MarkerColor cav_color;
+        if (msg.header.sender_id.compare(host_id_) ==0)
         {
-            ROS_WARN("%s", ex.what());
+            cav_color.green = 1.0;
+            host_marker_ = composeVisualizationMarker(msg,cav_color);
+            host_marker_received_ = true;
+            ROS_DEBUG_STREAM("Composed host marker successfuly!");
         }
+        else
+        {
+            cav_color.blue = 1.0;
+            cav_markers_.push_back(composeVisualizationMarker(msg,cav_color));
+            ROS_DEBUG_STREAM("Composed cav marker successfuly! with sender_id: " << msg.header.sender_id);
+        }
+
     }
 
-    visualization_msgs::MarkerArray MobilityPathVisualizer::composeVisualizationMarker(const cav_msgs::MobilityPath& msg, const MarkerColor& color, const tf2::Transform& map_in_earth)
+    visualization_msgs::MarkerArray MobilityPathVisualizer::composeVisualizationMarker(const cav_msgs::MobilityPath& msg, const MarkerColor& color)
     {
         visualization_msgs::MarkerArray output;
         
@@ -137,14 +140,14 @@ namespace mobilitypath_visualizer {
         marker.id = 0;
         geometry_msgs::Point arrow_start;
         ROS_DEBUG_STREAM("ECEF point x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
-        arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location,map_in_earth); //also convert from cm to m
+        arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
         ROS_DEBUG_STREAM("Map point x: " << arrow_start.x << ", y:" << arrow_start.y);
 
         geometry_msgs::Point arrow_end;
         curr_location_msg.trajectory.location.ecef_x += + msg.trajectory.offsets[0].offset_x;
         curr_location_msg.trajectory.location.ecef_y += + msg.trajectory.offsets[0].offset_y;
         curr_location_msg.trajectory.location.ecef_z += + msg.trajectory.offsets[0].offset_z;
-        arrow_end = ECEFToMapPoint(curr_location_msg.trajectory.location,map_in_earth); //also convert from cm to m
+        arrow_end = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
 
         marker.points.push_back(arrow_start);
         marker.points.push_back(arrow_end);
@@ -162,13 +165,13 @@ namespace mobilitypath_visualizer {
 
             marker.points = {};
             ROS_DEBUG_STREAM("ECEF Point- DEBUG x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
-            arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location,map_in_earth); //convert from cm to m
+            arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location); //convert from cm to m
             ROS_DEBUG_STREAM("Map Point- DEBUG x: " << arrow_start.x << ", y:" << arrow_start.y);
 
             curr_location_msg.trajectory.location.ecef_x += msg.trajectory.offsets[i].offset_x;
             curr_location_msg.trajectory.location.ecef_y += msg.trajectory.offsets[i].offset_y;
             curr_location_msg.trajectory.location.ecef_z += msg.trajectory.offsets[i].offset_z;
-            arrow_end = ECEFToMapPoint(curr_location_msg.trajectory.location,map_in_earth);
+            arrow_end = ECEFToMapPoint(curr_location_msg.trajectory.location);
 
             marker.points.push_back(arrow_start);
             marker.points.push_back(arrow_end);
@@ -182,20 +185,18 @@ namespace mobilitypath_visualizer {
         return output;
     }
 
-    geometry_msgs::Point MobilityPathVisualizer::ECEFToMapPoint(const cav_msgs::LocationECEF& ecef_point, const tf2::Transform& map_in_earth) const
+    geometry_msgs::Point MobilityPathVisualizer::ECEFToMapPoint(const cav_msgs::LocationECEF& ecef_point) const
     {
+
+        if (!map_projector_) {
+            throw std::invalid_argument("No map projector available for ecef conversion");
+        }
         geometry_msgs::Point output;
-        // convert input point to transform
-        tf2::Transform point_in_earth;
-        tf2::Quaternion no_rotation(0, 0, 0, 1);
-        tf2::Vector3 input_point {(double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0}; //m to cm
-        point_in_earth.setOrigin(input_point);
-        point_in_earth.setRotation(no_rotation);
-        // convert to map frame by (T_e_m)^(-1) * T_e_p
-        auto point_in_map = map_in_earth.inverse() * point_in_earth;
-        output.x = point_in_map.getOrigin().getX();
-        output.y = point_in_map.getOrigin().getY();
-        output.z = point_in_map.getOrigin().getZ();
+        
+        lanelet::BasicPoint3d map_point = map_projector_->projectECEF( { (double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0 } , -1);
+        output.x = map_point.x();
+        output.y = map_point.y();
+        output.z = map_point.z();
 
         return output;
     } 
