@@ -156,7 +156,7 @@ namespace cooperative_lanechange
         auto temp_route = map_graph->getRoute(start_lanelet, end_lanelet);
         ROS_DEBUG_STREAM("Route created");
 
-        //Throw exception if shortest path there is no shortest path from veh2 to subject vehicle
+        //Throw exception if there is no shortest path from veh2 to subject vehicle
         lanelet::routing::LaneletPath shortest_path2;
         if(temp_route)
         {

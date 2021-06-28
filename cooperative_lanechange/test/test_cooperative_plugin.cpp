@@ -430,15 +430,6 @@
         cav_msgs::VehicleState vehicle_state;
         vehicle_state.X_pos_global = veh_pos.x();
         vehicle_state.Y_pos_global = veh_pos.y();
-
-        geometry_msgs::PoseStamped pose;
-        pose.pose.position.x = veh_pos.x();
-        pose.pose.position.y = veh_pos.y();
-        pose.pose.position.z = 0.0;
-        pose.pose.orientation.x = 0.0;
-        pose.pose.orientation.y = 0.0;
-        pose.pose.orientation.z = 0.0;
-        pose.pose.orientation.w = 0.0;
         
         cav_srvs::PlanTrajectoryRequest req;
         cav_srvs::PlanTrajectoryResponse resp;
@@ -455,7 +446,7 @@
 
         maneuvers_msg.push_back(maneuver);
         req.maneuver_plan.maneuvers = maneuvers_msg;
-          // //Add roadway object - lag vehicle
+        //Add roadway object - lag vehicle
         cav_msgs::ExternalObject object;
 
         // //Test plan trajectory cb
