@@ -65,6 +65,18 @@ namespace route_following_plugin
          */
         void initialize();
 
+        // wm listener pointer and pointer to the actual wm object
+        std::shared_ptr<carma_wm::WMListener> wml_;
+        carma_wm::WorldModelConstPtr wm_;
+
+        /**
+         * \brief Compose UpcomingLaneChangeStatus msg from given starting and ending lanelets
+         * \param start_lanelet lanelet the lanechange is starting from
+         * \param ending_lanelet lanelet the lanechange is starting from
+         * \return UpcomingLaneChangeStatus
+         */
+        cav_msgs::UpcomingLaneChangeStatus ComposeLaneChangeStatus(lanelet::ConstLanelet starting_lanelet,lanelet::ConstLanelet ending_lanelet);
+        
         private:
 
         /**
@@ -140,30 +152,11 @@ namespace route_following_plugin
          */
         double findSpeedLimit(const lanelet::ConstLanelet& llt);
 
-        //Internal Variables used in unit tests
-        // Current vehicle forward speed
-        double current_speed_;
-
-        // Current vehicle pose in map
-        geometry_msgs::PoseStamped pose_msg_;
-
-        // wm listener pointer and pointer to the actual wm object
-        std::shared_ptr<carma_wm::WMListener> wml_;
-        carma_wm::WorldModelConstPtr wm_;
-
-        // config limit for vehicle speed limit set as ros parameter
-        double config_limit=0.0;
-
-         /**
-         * \brief ComposeLaneChangeStatus() Given lane change status
-         * \param lane_change_start_dist,starting_lanelet,ending_lanelet,current_downtrack
+        /**
+         * \brief Calculate maneuver plan for remaining route. This callback is triggered when a new route has been received and processed by the world model
+         * \param route_shortest_path A list of lanelets along the shortest path of the route using which the maneuver plan is calculated.
          */
-        cav_msgs::UpcomingLaneChangeStatus ComposeLaneChangeStatus(double lane_change_start_dist,lanelet::ConstLanelet starting_lanelet,lanelet::ConstLanelet ending_lanelet,double current_downtrack);
-
-        //Tactical plugin being used for planning lane change
-        std::string lane_change_plugin_ = "CooperativeLaneChangePlugin";
-
-    private:
+        std::vector<cav_msgs::Maneuver> routeCb(const lanelet::routing::LaneletPath& route_shortest_path);
 
         // CARMA ROS node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
@@ -188,13 +181,24 @@ namespace route_following_plugin
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
 
-        //Upcoming Lane Change message
-        cav_msgs::UpcomingLaneChangeStatus upcoming_lane_change_status_msg_;
+        //Upcoming Lane Change downtrack and its lanechange status message map
+        std::queue<std::pair<double, cav_msgs::UpcomingLaneChangeStatus>> upcoming_lane_change_status_msg_map_;
+        
+        // Current vehicle forward speed
+        double current_speed_;
 
-        /**
-         * \brief Initialize ROS publishers, subscribers, service servers and service clients
-         */
-        void initialize();
+        // Current vehicle pose in map
+        geometry_msgs::PoseStamped pose_msg_;
+        lanelet::BasicPoint2d current_loc_;
+
+        //Queue of maneuver plans
+        std::vector<cav_msgs::Maneuver> latest_maneuver_plan_;
+
+        //Tactical plugin being used for planning lane change
+        std::string lane_change_plugin_ = "CooperativeLaneChangePlugin";
+
+        std::string planning_strategic_plugin_ = "RouteFollowingPlugin";
+        std::string lanefollow_planning_tactical_plugin_ = "InLaneCruisingPlugin"; 
 
         /**
          * \brief Callback for the pose subscriber, which will store latest pose locally

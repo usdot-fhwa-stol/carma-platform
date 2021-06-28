@@ -93,6 +93,17 @@ namespace cooperative_lanechange
             std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
                                                 double max_starting_downtrack,
                                                 const carma_wm::WorldModelConstPtr& wm,const cav_msgs::VehicleState& state);
+              /**
+             * \brief Finds the index for the point closest to the specified vehicle state
+             * 
+             * \param points A BasicLineString type variable, which is a vector of BasicPoint2d elements
+             * \param state The vehicle state to which the nearest index needs to be found
+             * 
+             * \return the index of the element in points which is closest to state.
+             */ 
+            int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state) const;
+
+            int getNearestPointIndex(const std::vector<lanelet::BasicPoint2d>& points, const cav_msgs::VehicleState& state) const;
             /**
              * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 
              * \param starting_downtrack downtrack along route where maneuver starts
@@ -316,7 +327,8 @@ namespace cooperative_lanechange
             double min_desired_gap_ =5.0;
             double ending_buffer_downtrack_ = 5.0;
        
-            cav_msgs::VehicleState  ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
+
+            cav_msgs::VehicleState  ending_state_before_buffer_;
 
             // generated trajectory plan
             cav_msgs::TrajectoryPlan trajectory_msg;

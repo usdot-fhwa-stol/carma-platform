@@ -214,13 +214,6 @@ public:
   ros::V_string invertParticipants(const ros::V_string& input_participants) const;
 
   /*!
-   * \brief Combines a list of the given participants into a single "vehicle" type if participants cover all possible vehicle types.
-            Returns the input with no change if it doesn't cover all.
-   * \param ros::V_string participants vector of strings 
-   */
-  ros::V_string combineParticipantsToVehicle(const ros::V_string& input_participants) const;
-
-  /*!
    *  \brief Callback triggered whenever a new subscriber connects to the map_update topic of this node.
    *         This callback will publish the all updates for the current map to that node so that any missed updates are already included.
    *          

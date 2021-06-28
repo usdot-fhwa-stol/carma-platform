@@ -161,8 +161,8 @@ TEST(InLaneCruisingPluginTest, constrain_to_time_boundary)
   ASSERT_NEAR(1.0, time_bound_points[4].speed, 0.0000001);
   ASSERT_NEAR(1.0, time_bound_points[5].speed, 0.0000001);
 }
-
-TEST(InLaneCruisingPluginTest, get_nearest_index_by_downtrack_test)
+/*
+TEST(InLaneCruisingPluginTest, get_nearest_point_index)
 {
   InLaneCruisingPluginConfig config;
   config.default_downsample_ratio = 1;
@@ -204,7 +204,7 @@ TEST(InLaneCruisingPluginTest, get_nearest_index_by_downtrack_test)
   ASSERT_EQ(3, basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(points, wm, state));
   ASSERT_EQ(3, basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(basic_points, wm, state));
 }
-
+*/
 TEST(InLaneCruisingPluginTest, get_nearest_basic_point_index)
 {
   InLaneCruisingPluginConfig config;

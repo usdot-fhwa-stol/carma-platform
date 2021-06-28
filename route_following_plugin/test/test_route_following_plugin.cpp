@@ -34,7 +34,7 @@
 
 namespace route_following_plugin
 {
-
+    
     TEST(RouteFollowingPluginTest, testFindLaneletIndexFromPath)
     {
         RouteFollowingPlugin rfp;
@@ -303,21 +303,39 @@ namespace route_following_plugin
         cmw->carma_wm::CARMAWorldModel::setMap(map);
         worker.wm_=cmw;
 
-        auto lane_change_status_msg=worker.ComposeLaneChangeStatus(10,start_lanelet,end_lanelet_1,10);
+        auto lane_change_status_msg=worker.ComposeLaneChangeStatus(start_lanelet,end_lanelet_1);
 
         ASSERT_EQ(lane_change_status_msg.lane_change,cav_msgs::UpcomingLaneChangeStatus::RIGHT);
         ASSERT_EQ(lane_change_status_msg.downtrack_until_lanechange,0);
-        ASSERT_EQ(lane_change_status_msg.last_recorded_lanechange_downtrack,10);
 
-        lane_change_status_msg=worker.ComposeLaneChangeStatus(10,end_lanelet_1,start_lanelet,10);
+        lane_change_status_msg=worker.ComposeLaneChangeStatus(end_lanelet_1,start_lanelet);
 
         ASSERT_EQ(lane_change_status_msg.lane_change,cav_msgs::UpcomingLaneChangeStatus::LEFT);
         ASSERT_EQ(lane_change_status_msg.downtrack_until_lanechange,0);
-        ASSERT_EQ(lane_change_status_msg.last_recorded_lanechange_downtrack,10);
 
     }
 
     
+    TEST(RouteFollowingPlugin, TestHelperfunctions)
+    {
+        RouteFollowingPlugin worker;
+        /*composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, int lane_id, ros::Time start_time);*/
+        ros::Time::init();
+        ros::Time start_time = ros::Time::now();
+        cav_msgs::Maneuver maneuver = worker.composeLaneFollowingManeuverMessage(10.0, 100.0, 0.0, 100.0, 101);
+
+        worker.setManeuverStartDist(maneuver, 50.0);
+        ASSERT_EQ(maneuver.lane_following_maneuver.start_dist, 50.0);
+
+        ros::Time new_start_time = start_time + ros::Duration(10.0);
+        std::vector<cav_msgs::Maneuver> maneuvers;
+        maneuvers.push_back(maneuver);
+
+        worker.updateTimeProgress(maneuvers, new_start_time);
+
+        double start_time_change = GET_MANEUVER_PROPERTY(maneuvers.front(), start_time).toSec() - start_time.toSec();
+        ASSERT_EQ(start_time_change, 10.0);
+    }
 
 }
 
