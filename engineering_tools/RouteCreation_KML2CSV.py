@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 import json
@@ -16,7 +16,7 @@ def convertKMLToWaypoints(filename):
 
     for coord in root.findall(".//{http://www.opengis.net/kml/2.2}coordinates"):
         (lon, lat, _) = coord.text.split(",")
-	out.append((lat.strip(), lon.strip()))
+        out.append((lat.strip(), lon.strip()))
 
     return out
 
@@ -35,7 +35,7 @@ def main():
     count = 0
     for waypoint in waypoints:
         output.write("{},{},{}\n".format(waypoint[0], waypoint[1], args.default_speed))
-	count += 1
+        count += 1
     print("Wrote {} entries to {}.".format(count, args.csv_output))
 
 

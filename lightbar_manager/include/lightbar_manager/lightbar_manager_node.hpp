@@ -94,7 +94,7 @@ class LightBarManager
         // Node Data
         std::string node_name_;
         double spin_rate_;
-        std::map<lightbar_manager::LightBarIndicator, std::__cxx11::string> prev_owners_before_turn_;
+        std::map<lightbar_manager::LightBarIndicator, std::string> prev_owners_before_turn_;
 
         // spin callback function
         bool spinCallBack();

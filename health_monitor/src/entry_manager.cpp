@@ -111,8 +111,9 @@ namespace health_monitor
                 return i;
             }
         }
-
-
+        
+        // default like above?
+        return -1;
     }
 
 }

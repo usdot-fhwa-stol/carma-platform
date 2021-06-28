@@ -25,8 +25,11 @@
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>carma_utils</depend>
+  <depend>autoware_msgs</depend>
   <depend>cav_msgs</depend>
   <depend>cav_srvs</depend>
+  <depend>radar_msgs</depend>
+  <depend>derived_object_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

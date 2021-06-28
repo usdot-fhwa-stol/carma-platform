@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # This script can be used to reverse all waypoints order from a CARMA route file
 # To Run:
 # Create a text file and only copy and paste lines after 'waypoints:'

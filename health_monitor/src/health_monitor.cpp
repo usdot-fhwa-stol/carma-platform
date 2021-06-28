@@ -26,7 +26,6 @@ namespace health_monitor
     {
         car_ = false;
         truck_ = false;
-
     }
     void HealthMonitor::initialize()
     {
@@ -34,7 +33,6 @@ namespace health_monitor
         ROS_INFO_STREAM("Initalizing health_monitor node...");
         pnh_.reset(new ros::CARMANodeHandle("~"));
         nh_.reset(new ros::CARMANodeHandle());
-
         // init ros service servers, publishers and subscribers
         registered_plugin_service_server_ = nh_->advertiseService("plugins/get_registered_plugins", &HealthMonitor::registered_plugin_cb, this);
         active_plugin_service_server_ = nh_->advertiseService("plugins/get_active_plugins", &HealthMonitor::active_plugin_cb, this);

@@ -52,7 +52,6 @@ FROM base-image AS install
 RUN mkdir ~/carma_ws
 COPY --from=source-code --chown=carma /home/carma/src /home/carma/carma_ws/src
 
-
 RUN ~/carma_ws/src/carma-platform/docker/install.sh
 
 # /////////////////////////////////////////////////////////////////////////////
