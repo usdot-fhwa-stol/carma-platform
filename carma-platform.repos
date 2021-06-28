@@ -5,7 +5,7 @@ repositories:
     version: melodic
   autoware.ai:
     type: git
-    url: https://github.com/mjeronimo/autoware.ai.git
+    url: git@github.com:usdot-fhwa-stol/autoware.ai.git
     version: feature/ros-noetic-port
   carma/src/avt_vimba_camera:
     type: git
@@ -13,7 +13,7 @@ repositories:
     version: noetic/develop
   carma/src/carma-base:
     type: git
-    url: https://github.com/mjeronimo/carma-base.git
+    url: git@github.com:usdot-fhwa-stol/carma-base.git
     version: feature/ros-noetic-port
   carma/src/carma-cohda-dsrc-driver:
     type: git
@@ -45,7 +45,7 @@ repositories:
     version: noetic/develop
   carma/src/carma-platform:
     type: git
-    url: https://github.com/mjeronimo/carma-platform.git
+    url: git@github.com:usdot-fhwa-stol/carma-platform.git
     version: feature/ros-noetic-port
   carma/src/carma-ssc-interface-wrapper:
     type: git
