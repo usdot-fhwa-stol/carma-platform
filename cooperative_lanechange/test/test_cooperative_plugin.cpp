@@ -173,11 +173,11 @@
         /*Test compose trajectort and helper function*/
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;
 
-        int nearest_pt = worker.getNearestPointIndex(points_and_target_speeds,vehicle_state);
+        int nearest_pt = basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(points_and_target_speeds,cmw,vehicle_state);
 
         std::vector<lanelet::BasicPoint2d> points_split;
         std::vector<double> speeds_split;
-        worker.splitPointSpeedPairs(points_and_target_speeds, &points_split, &speeds_split);
+        basic_autonomy::waypoint_generation::split_point_speed_pairs(points_and_target_speeds, &points_split, &speeds_split);
         EXPECT_TRUE(points_split.size() == speeds_split.size());
 
         //Test trajectory from points
@@ -200,15 +200,17 @@
         //Valid Trajectory has at least 2 points
         EXPECT_TRUE(trajectory.size() > 2);
 
-        lanelet::BasicLineString2d route_geometry = worker.create_route_geom(starting_downtrack,start_id, ending_downtrack,cmw);
-        int nearest_pt_geom = worker.getNearestRouteIndex(route_geometry, vehicle_state);
+        auto route_geometry = worker.create_route_geom(starting_downtrack,start_id, ending_downtrack,cmw);
+        lanelet::BasicPoint2d state_pos(vehicle_state.X_pos_global, vehicle_state.Y_pos_global);
+        double current_downtrack = cmw->routeTrackPos(state_pos).downtrack;
+        int nearest_pt_geom = basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(route_geometry, cmw ,current_downtrack);
 
         //Test create lanechange route
         lanelet::Lanelet start_lanelet = map->laneletLayer.get(start_id);
         lanelet::Lanelet end_lanelet = map->laneletLayer.get(end_id);
         lanelet::BasicPoint2d start_position(vehicle_state.X_pos_global, vehicle_state.Y_pos_global);
         lanelet::BasicPoint2d end_position = end_lanelet.centerline2d().basicLineString().back() ;
-        lanelet::BasicLineString2d lc_route = worker.create_lanechange_path( start_position, start_lanelet, end_position, end_lanelet);
+        lanelet::BasicLineString2d lc_route = worker.create_lanechange_path(start_lanelet, end_lanelet);
 
         //Test Compute heading frame between two points
         Eigen::Isometry2d frame = worker.compute_heading_frame(start_position, end_position);

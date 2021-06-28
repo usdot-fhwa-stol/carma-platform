@@ -328,7 +328,7 @@ std::vector<PointSpeedPair> PlatooningTacticalPlugin::maneuvers_to_points(const 
 
     ROS_DEBUG_STREAM("Used downtrack: " << starting_downtrack);
 
-    auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist, true);
+    auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist, true, true);
 
     if (lanelets.empty())
     {

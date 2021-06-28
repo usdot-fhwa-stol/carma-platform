@@ -38,20 +38,14 @@
 #include <cav_msgs/BSM.h>
 #include <tf2_ros/transform_listener.h>
 #include <cav_msgs/LaneChangeStatus.h>
-
+#include <basic_autonomy/helper_functions.h>
 
 
 namespace cooperative_lanechange
 {
-    /**
-     * \brief Convenience class for pairing 2d points with speeds
-    */ 
-    struct PointSpeedPair
-    {
-    lanelet::BasicPoint2d point;
-    double speed = 0;
-    };
-
+  // Helpful using declarations
+  using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
+  
     class CooperativeLaneChangePlugin
     {
         public:
@@ -99,34 +93,23 @@ namespace cooperative_lanechange
             std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
                                                 double max_starting_downtrack,
                                                 const carma_wm::WorldModelConstPtr& wm,const cav_msgs::VehicleState& state);
-              /**
-             * \brief Finds the index for the point closest to the specified vehicle state
-             * 
-             * \param points A BasicLineString type variable, which is a vector of BasicPoint2d elements
-             * \param state The vehicle state to which the nearest index needs to be found
-             * 
-             * \return the index of the element in points which is closest to state.
-             */ 
-            int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state) const;
             /**
              * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 
              * \param starting_downtrack downtrack along route where maneuver starts
              * \param ending_downtrack downtrack along route where maneuver starts
              * \param wm Pointer to intialized world model for semantic map access
-             * \return A Linestring of the path from starting downtrack to ending downtrack
+             * \return Points in a path from starting downtrack to ending downtrack
              */
             
-            lanelet::BasicLineString2d create_route_geom(double starting_downtrack, int starting_lane_id, double ending_downtrack, const carma_wm::WorldModelConstPtr& wm);
+            std::vector<lanelet::BasicPoint2d> create_route_geom(double starting_downtrack, int starting_lane_id, double ending_downtrack, const carma_wm::WorldModelConstPtr& wm);
 
             /**
              * \brief Given a start and end point, create a vector of points fit through a spline between the points (using a Spline library)
-             * \param start The start position
              * \param start_lanelet The lanelet from which lane change starts
-             * \param end The end position
              * \param end_lanelet The lanelet in which lane change ends
              * \return A linestring path from start to end fit through Spline Library
              */
-             lanelet::BasicLineString2d create_lanechange_path(lanelet::BasicPoint2d start, lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet);
+             lanelet::BasicLineString2d create_lanechange_path(lanelet::ConstLanelet& start_lanelet, lanelet::ConstLanelet& end_lanelet);
             
             /**
              * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning
@@ -139,16 +122,7 @@ namespace cooperative_lanechange
              */
              std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_centerline(
             const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id, double max_speed);
-            /**
-             * \brief Returns the nearest point to the provided vehicle pose in the provided list
-             * 
-             * \param points The points to evaluate
-             * \param state The current vehicle state
-             * 
-             * \return index of nearest point in points
-             */
-            int getNearestPointIndex(const std::vector<PointSpeedPair>& points,
-                                               const cav_msgs::VehicleState& state) const;
+
             /**
              * \brief Reduces the input points to only those points that fit within the provided time boundary
              * 
@@ -158,13 +132,6 @@ namespace cooperative_lanechange
              * \return The subset of points that fit within time_span
              */ 
             std::vector<PointSpeedPair> constrain_to_time_boundary(const std::vector<PointSpeedPair>& points,double time_span);
-            
-            /**
-             * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
-             */ 
-            void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points,
-                                            std::vector<lanelet::BasicPoint2d>* basic_points,
-                                            std::vector<double>* speeds) const;
 
             /**
              * \brief Returns a 2D coordinate frame which is located at p1 and oriented so p2 lies on the +X axis
@@ -265,7 +232,7 @@ namespace cooperative_lanechange
              * \return Curvature (k = 1/r, 1/meter)
              */ 
             double compute_curvature_at(const cooperative_lanechange::smoothing::SplineI& fit_curve, double step_along_the_curve) const;
-            int get_ending_point_index(lanelet::BasicLineString2d& points, double ending_downtrack);
+
             // initialize this node
             void initialize();
 
@@ -336,7 +303,7 @@ namespace cooperative_lanechange
             double maximum_lookahead_speed_ =13.9;
             double lateral_accel_limit_ = 1.5;
             double speed_moving_average_window_size_ = 5;
-            double curvature_moving_average_window_size_ = 9;
+            double curvature_moving_average_window_size_ = 5;
             double curvature_calc_lookahead_count_ = 1;
             int downsample_ratio_ =8;
             double destination_range_ = 5;
@@ -347,15 +314,13 @@ namespace cooperative_lanechange
             double starting_fraction_ = 0.2;
             double mid_fraction_ = 0.5;
             double min_desired_gap_ =5.0;
+            double ending_buffer_downtrack_ = 5.0;
        
-
-
+            cav_msgs::VehicleState  ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
 
             // generated trajectory plan
             cav_msgs::TrajectoryPlan trajectory_msg;
             
-
-
             /**
              * \brief Callback for the pose subscriber, which will store latest pose locally
              * \param msg Latest pose message

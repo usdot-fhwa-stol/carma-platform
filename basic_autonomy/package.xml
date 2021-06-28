@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--  
- Copyright (C) 2018-2020 LEIDOS.
+ Copyright (C) 2021 LEIDOS.
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  use this file except in compliance with the License. You may obtain a copy of
@@ -17,21 +17,15 @@
 -->
 
 <package format="3">
-  <name>route</name>
-  <version>3.3.0</version>
-  <description>The route package provides capabilities for loading different route files and route state mangement</description>
-  <maintainer email="carma@todo.todo">carma</maintainer>
+  <name>basic_autonomy</name>
+  <version>3.2.0</version>
+  <description>The Basic Autonomy Library includes logic for waypoint generation in CARMA Platform.</description>
+  <maintainer email="CARMA@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
-  <author email="carma@todo.todo">carma</author>
+  <author email="CARMA@dot.gov">carma</author>
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
-  <depend>cav_srvs</depend>
-  <depend>carma_utils</depend>
-  <depend>autoware_msgs</depend>
-  <depend>wgs84_utils</depend>
+  <depend>cav_msgs</depend>
   <depend>carma_wm</depend>
-  <depend>tf2_geometry_msgs</depend>
-  <depend>tf2_ros</depend>
-  <depend>tf2</depend>
 </package>

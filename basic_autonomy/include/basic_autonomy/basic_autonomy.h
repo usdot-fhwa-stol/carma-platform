@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,16 +15,23 @@
  * the License.
  */
 
+#include <vector>
+#include <boost/geometry.hpp>
+#include <carma_wm/Geometry.h>
 #include <ros/ros.h>
+#include <cav_msgs/VehicleState.h>
+#include <lanelet2_core/geometry/Point.h>
+#include <carma_wm/WorldModel.h>
 
-#include "route.h"
 
-int main(int argc, char** argv)
+namespace basic_autonomy
 {
-  
-    ros::init(argc, argv, "route");
-    route::Route route_node;
-    route_node.run();
-    return 0;
-
-};
+namespace waypoint_generation
+{
+    struct PointSpeedPair
+    {
+        lanelet::BasicPoint2d point;
+        double speed = 0;
+    };
+}
+}

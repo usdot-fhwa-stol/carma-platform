@@ -133,7 +133,7 @@ namespace route {
         // only allow activate a new route in route selection state
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::SELECTION)
         {
-            ROS_DEBUG_STREAM("Valid state proceeding with selection");
+        	ROS_DEBUG_STREAM("Valid state proceeding with selection");
             // entering to routing state once destinations are picked
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_SELECTED);
             publish_route_event(cav_msgs::RouteEvent::ROUTE_SELECTED);
@@ -331,7 +331,7 @@ namespace route {
         return map_points;
     }
 
-    visualization_msgs::MarkerArray RouteGeneratorWorker::compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route)
+    visualization_msgs::Marker RouteGeneratorWorker::compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route)
     {
         std::vector<lanelet::ConstPoint3d> points;
         auto end_point_3d = route.get().getEndPoint();
@@ -349,7 +349,6 @@ namespace route {
                 {
                     points.push_back(ll.centerline()[i]);
                 }
-                ROS_DEBUG_STREAM("Processed last lanelet for visualization");
                 continue;
             }
             for(const auto& pt : ll.centerline())
@@ -358,48 +357,44 @@ namespace route {
             }
         }
 
-        route_marker_msg_.markers={};
+        route_marker_msg_.points={};
+
+        // create the marker msgs
+        visualization_msgs::Marker marker;
+        marker.header.frame_id = "map";
+        marker.header.stamp = ros::Time();
+        marker.type = visualization_msgs::Marker::SPHERE_LIST;//
+        marker.action = visualization_msgs::Marker::ADD;
+        marker.ns = "route_visualizer";
+
+        marker.scale.x = 0.65;
+        marker.scale.y = 0.65;
+        marker.scale.z = 0.65;
+        marker.frame_locked = true;
+
+        marker.id = 0;
+        marker.color.r = 1.0F;
+        marker.color.g = 1.0F;
+        marker.color.b = 1.0F;
+        marker.color.a = 1.0F;
 
         if (points.empty())
         {
             ROS_WARN_STREAM("No central line points! Returning");
             return route_marker_msg_;
         }
-
-        // create the marker msgs
-        visualization_msgs::MarkerArray route_marker_msg;
-        visualization_msgs::Marker marker;
-        marker.header.frame_id = "map";
-        marker.header.stamp = ros::Time();
-        marker.type = visualization_msgs::Marker::SPHERE;//
-        marker.action = visualization_msgs::Marker::ADD;
-        marker.ns = "route_visualizer";
-
-        marker.scale.x = 0.5;
-        marker.scale.y = 0.5;
-        marker.scale.z = 0.5;
-        marker.frame_locked = true;
  
         for (int i = 0; i < points.size(); i=i+5)
         {
-            marker.id = i;
-
-            marker.color.r = 1.0F;
-            marker.color.g = 1.0F;
-            marker.color.b = 1.0F;
-            marker.color.a = 1.0F;
-
-            marker.pose.position.x = points[i].x();
-            marker.pose.position.y = points[i].y();
-            marker.pose.orientation.x = 0.0;
-            marker.pose.orientation.y = 0.0;
-            marker.pose.orientation.z = 0.0;
-            marker.pose.orientation.w = 1.0;
+            geometry_msgs::Point temp_point;
+            temp_point.x = points[i].x();
+            temp_point.y = points[i].y();
+            temp_point.z = 1; //to show up on top of the lanelet lines
             
-            route_marker_msg.markers.push_back(marker);
+            marker.points.push_back(temp_point);
         }
         new_route_marker_generated_ = true;
-        return route_marker_msg;
+        return marker;
     }
 
     cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route)
