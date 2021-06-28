@@ -54,7 +54,7 @@ class TrafficIncidentParserWorker
   TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm,const PublishTrafficControlCallback &traffic_control_pub);
     
   /*! \fn projectionCallback(const std_msgs::String &projection_msg)
-    \brief projectionCallback stores the projection string needed to convert ECEF to MAP frame
+    \brief projectionCallback stores the projection string needed to convert lat/lon to MAP frame
     \param  std_msgs::String
   */
   void projectionCallback(const std_msgs::String &projection_msg);
@@ -88,7 +88,7 @@ class TrafficIncidentParserWorker
   std::vector<cav_msgs::TrafficControlMessageV01> composeTrafficControlMesssages();
 
     /*! \fngetIncidentOriginPoint()
-    \brief getIncidentOriginPoint converts internally saved incident origin point from ECEF to local map frame
+    \brief getIncidentOriginPoint converts internally saved incident origin point from lat/lon to local map frame
   */
   lanelet::BasicPoint2d getIncidentOriginPoint() const;
 
