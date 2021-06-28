@@ -118,7 +118,7 @@ namespace trajectory_executor {
              * 
              * \return The name of the control plugin assigned to the nearest point
              */ 
-            std::string identifyActiveControlPlugin(const cav_msgs::TrajectoryPlan& traj, const geometry_msgs::Point& position)
+            std::string identifyActiveControlPlugin(const cav_msgs::TrajectoryPlan& traj, const geometry_msgs::Point& position) const;
 
         private:
             // Node handles to separate callback queues

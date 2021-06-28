@@ -176,9 +176,9 @@ namespace trajectory_executor
         return true;
     }
 
-    std::string TrajectoryExecutor::identifyActiveControlPlugin(const cav_msgs::TrajectoryPlan& traj, const geometry_msgs::Point& position) {
+    std::string TrajectoryExecutor::identifyActiveControlPlugin(const cav_msgs::TrajectoryPlan& traj, const geometry_msgs::Point& position) const {
         // Transform inputs to needed format
-        std::vector<lanelet::BasicPoint2d> points = lanelet::utils::transform(traj->trajectory_points, [](auto p) { return lanelet::BasicPoint2d(p.x, p.y); });
+        std::vector<lanelet::BasicPoint2d> points = lanelet::utils::transform(traj.trajectory_points, [](auto p) { return lanelet::BasicPoint2d(p.x, p.y); });
         cav_msgs::VehicleState veh_state;
         veh_state.X_pos_global = position.x;
         veh_state.Y_pos_global = position.y;
