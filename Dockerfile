@@ -34,7 +34,6 @@
 # /////////////////////////////////////////////////////////////////////////////
 
 FROM usdotfhwastol/autoware.ai:carma-system-3.6.0 AS base-image
-# FROM usdotfhwastol/autoware.ai:zephyr AS base-image
 
 FROM base-image AS source-code
 
