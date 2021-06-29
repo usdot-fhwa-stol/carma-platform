@@ -4,8 +4,8 @@ CARMA Platform Release Notes
 Version 3.6.0, released June 29th, 2021
 -------------------------------------
 
-**Summary**
-Carma-platform release version 3.6.0 is comprised of five major enhancements. First, Added ADS Lane Change, unobstructed lane change. Second CTM Move-over law –When receiving a request from an emergency vehicle, CARMA Platform plans to safely pull over on a shoulder lane. Third, Added Geofence speed, Gap control and lane closure. And fourth, added Cloud world model, lane closure. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
+**Summary:**
+Carma-platform release version 3.6.0 is comprised of five major enhancements. First, Added ADS unobstructed lane change. Second CTM Move-over law –When receiving a request from an emergency vehicle, CARMA Platform plans move over to the adjacent open lane. Third, Added Geofence speed, Gap control and lane closure. And fourth, added Carma-cloud integration. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
 
 Enhancements in this release:
 -	Issue 1195: Added new functions to World Model interface, like route conversion to map and sample Route Points.
@@ -33,7 +33,7 @@ Fixes in this release:
 Version 3.5.3, released April 9th, 2021
 ----------------------------------------------
 
-**Summary**
+**Summary:**
 carma-platform release version 3.5.3 is comprised of five major enhancements. First, Added Automated Driving System (ADS) Lane Follow. Second Added ADS Motion Control. Third, ADS Perception. Fourth, ADS Planning. And fifth Operator UI. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
 
 Enhancements in this release:
