@@ -1,4 +1,7 @@
 #include "platoon_manager.hpp"
+#include "platoon_strategic.hpp"
+#include "platoon_config.h"
+// #include "platoon_strategic.hpp"
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 #include <carma_wm/WMListener.h>
@@ -7,7 +10,72 @@
 #include <carma_utils/CARMAUtils.h>
 // #include "TestHelpers.h"
 
+using namespace platoon_strategic;
 
+TEST(PlatoonManagerTest, test_construct)
+{
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::LEADER;
+
+}
+
+TEST(PlatoonManagerTest, test_split)
+{
+    cav_msgs::MobilityOperation msg;
+    std::string strategyParams("INFO|REAR:1,LENGTH:2,SPEED:3,SIZE:4");
+    std::vector<std::string> inputsParams;
+    boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+    std::vector<std::string> rearVehicleBsmId_parsed;
+    boost::algorithm::split(rearVehicleBsmId_parsed, inputsParams[0], boost::is_any_of(":"));
+    std::string rearVehicleBsmId = rearVehicleBsmId_parsed[1];
+    std::cout << "rearVehicleBsmId: " << rearVehicleBsmId << std::endl;
+
+    std::vector<std::string> rearVehicleDtd_parsed;
+    boost::algorithm::split(rearVehicleDtd_parsed, inputsParams[1], boost::is_any_of(":"));
+    double rearVehicleDtd = std::stod(rearVehicleDtd_parsed[1]);
+    std::cout << "rearVehicleDtd: " << rearVehicleDtd << std::endl;
+}
+
+
+TEST(PlatoonManagerTest, test_states)
+{
+    ros::Time::init();
+
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::LEADER;
+    plugin.pm_.current_downtrack_didtance_ = 20;
+
+    cav_msgs::MobilityRequest request;
+    request.plan_type.type = 3;
+    request.strategy_params = "SIZE:1,SPEED:0,DTD:11.5599";
+
+    plugin.mob_req_cb(request);
+
+    EXPECT_EQ(plugin.pm_.current_platoon_state, PlatoonState::LEADERWAITING);
+
+
+}
+
+TEST(PlatoonManagerTest, test_compose)
+{
+    std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,DTD:%2%,SPEED:%3%";
+    double cmdSpeed = 1;
+    double current_speed = 2;
+    double current_downtrack = 4;
+    boost::format fmter(OPERATION_STATUS_PARAMS);
+    fmter %cmdSpeed;
+    fmter %current_downtrack;
+    fmter %current_speed;
+    std::string statusParams = fmter.str();
+
+    std::cout << "statusParams: " << statusParams << std::endl;
+}
 
 TEST(PlatoonManagerTest, test1)
 {
@@ -27,9 +95,159 @@ TEST(PlatoonManagerTest, test1)
 
     pm.memberUpdates("1", "1", "1", params);
 
-    EXPECT_EQ(0, pm.platoon.size());
+    EXPECT_EQ(1, pm.platoon.size());
 
     
+}
+
+TEST(PlatoonStrategicPlugin, test_req_cb1)
+{
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::LEADER;
+
+    cav_msgs::MobilityRequest request;
+    request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_AT_REAR;
+    request.strategy_params = "SIZE:2,SPEED:22,DTD:22";
+    plugin.mob_req_cb(request);
+   
+}
+
+TEST(PlatoonStrategicPlugin, mob_resp_cb)
+{
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::FOLLOWER;
+
+    plugin.onSpin();
+   
+}
+
+TEST(PlatoonStrategicPlugin, platoon_info_pub)
+{
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::LEADER;
+
+    cav_msgs::PlatooningInfo info_msg1 = plugin.compose_platoon_info_msg();
+    EXPECT_EQ(info_msg1.leader_id, "default_id");
+
+    plugin.pm_.current_platoon_state = PlatoonState::FOLLOWER;
+    plugin.pm_.isFollower = true;
+    PlatoonMember member = PlatoonMember("1", "1", 1.0, 1.1, 0.1, 100);
+    std::vector<PlatoonMember> cur_pl;
+    cur_pl.push_back(member);
+    plugin.pm_.platoon = cur_pl;
+
+    
+    cav_msgs::PlatooningInfo info_msg2 = plugin.compose_platoon_info_msg();
+    EXPECT_EQ(info_msg2.leader_id, "1");
+   
+}
+
+TEST(PlatoonStrategicPlugin, test_follower)
+{
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
+    EXPECT_EQ(plugin.pm_.isFollower, false);
+
+    cav_msgs::MobilityResponse resp;
+    resp.header.plan_id = "resp";
+    resp.is_accepted = true;
+    plugin.mob_resp_cb(resp);
+    EXPECT_EQ(plugin.pm_.current_platoon_state, PlatoonState::FOLLOWER);
+    EXPECT_EQ(plugin.pm_.isFollower, true);
+}
+
+TEST(PlatoonStrategicPlugin, test_get_leader)
+{
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::FOLLOWER;
+
+    PlatoonMember member = PlatoonMember("1", "1", 1.0, 1.1, 0.1, 100);
+    std::vector<PlatoonMember> cur_pl;
+    cur_pl.push_back(member);
+
+    plugin.pm_.platoon = cur_pl;
+
+    EXPECT_EQ(plugin.pm_.platoon.size(), 1);
+
+    PlatoonMember member1 = plugin.pm_.platoon[0];
+
+    plugin.pm_.isFollower = true;
+    PlatoonMember platoon_leader = plugin.pm_.getLeader();
+
+    EXPECT_EQ(member1.staticId, "1");
+
+    EXPECT_EQ(platoon_leader.staticId, "1");
+   
+}
+
+TEST(PlatoonStrategicPlugin, test_req_cb2)
+{
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::LEADERWAITING;
+
+    cav_msgs::MobilityRequest request;
+    request.header.sender_id = "";
+    request.plan_type.type = cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
+    request.strategy_params = "SIZE:2,SPEED:22,DTD:22";
+
+    // MobilityRequestResponse res = plugin.handle_mob_req(request);
+    // EXPECT_EQ(res, MobilityRequestResponse::ACK);
+    plugin.mob_req_cb(request);
+    EXPECT_EQ(plugin.pm_.current_platoon_state, PlatoonState::LEADER);
+}
+
+TEST(PlatoonStrategicPlugin, test_run_candidate)
+{
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
+    plugin.pm_.isFollower = true;
+    plugin.onSpin();
+
+}
+
+TEST(PlatoonStrategicPlugin, test_mob_op_cb_candidate)
+{
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
+    EXPECT_EQ(0, plugin.pm_.platoon.size());
+
+    plugin.pm_.isFollower = true;
+    cav_msgs::MobilityOperation op_msg;
+    op_msg.header.sender_id = "test-id";
+    op_msg.header.plan_id = "test_plan";
+    op_msg.strategy_params = "STATUS|CMDSPEED:1.0,DTD:22.0,SPEED:2.0";
+    plugin.mob_op_cb(op_msg);
+    EXPECT_EQ(1, plugin.pm_.platoon.size());
+    PlatoonMember platoon_leader = plugin.pm_.getLeader();
+    EXPECT_EQ("test-id", platoon_leader.staticId);
+    EXPECT_EQ(op_msg.header.sender_id, platoon_leader.staticId);
+    EXPECT_EQ(22, platoon_leader.vehiclePosition);
+    EXPECT_EQ(1, platoon_leader.commandSpeed);
+
 }
 
 TEST(PlatoonManagerTest, test2)
