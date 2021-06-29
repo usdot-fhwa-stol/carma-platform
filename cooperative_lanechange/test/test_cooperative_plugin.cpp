@@ -46,37 +46,41 @@
         cooperative_lanechange::CooperativeLaneChangePlugin worker;
 
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_plan;
-                
-        geometry_msgs::TransformStamped tf_msg;
-        tf_msg.transform.translation.x = 0.0;
-        tf_msg.transform.translation.y = 0;
-        tf_msg.transform.translation.z = 0;
-        geometry_msgs::Quaternion Quaternion;
-        tf_msg.transform.rotation.x =0.0;
-        tf_msg.transform.rotation.y =0.0;
-        tf_msg.transform.rotation.z =0.0;
-        tf_msg.transform.rotation.w =1.0;
+
+        std::string base_proj = "+proj=tmerc +lat_0=0.0 +lon_0=0.0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m "
+                          "+no_defs";
+        std_msgs::String msg;
+        msg.data = base_proj;
+        std_msgs::StringConstPtr msg_ptr(new std_msgs::String(msg));
+        worker.georeference_callback(msg_ptr);  // Set projection
 
         cav_msgs::TrajectoryPlanPoint point_1;
-        point_1.x = 1.0;
+        point_1.x = 20.0;
         point_1.y = 0.0;
         trajectory_plan.push_back(point_1);
+        cav_msgs::LocationECEF ecef_point_1 = worker.trajectory_point_to_ecef(point_1);
 
-        tf2::Transform identity;
-        identity.setIdentity();
-
-        cav_msgs::LocationECEF ecef_point_1 = worker.trajectory_point_to_ecef(point_1, identity);
-        EXPECT_TRUE(ecef_point_1.ecef_x == 100);
+        ASSERT_NEAR(ecef_point_1.ecef_x, 637813699.0, 0.001);
+        ASSERT_NEAR(ecef_point_1.ecef_y, 1999.0, 0.001);
+        ASSERT_NEAR(ecef_point_1.ecef_z, 0.0, 0.001);
+        
 
         cav_msgs::TrajectoryPlanPoint point_2;
-        point_2.x = 1.0;
-        point_2.y = 1.0;
-        trajectory_plan.push_back(point_1);
-        
-        cav_msgs::Trajectory traj = worker.trajectory_plan_to_trajectory(trajectory_plan, tf_msg);
-        //EXPECT_TRUE(traj.location)
-        
-        EXPECT_TRUE(true);
+        point_2.x = 19.0;
+        point_2.y = 0.0;
+        trajectory_plan.push_back(point_2);
+        ecef_point_1 = worker.trajectory_point_to_ecef(point_2);
+
+        cav_msgs::Trajectory traj = worker.trajectory_plan_to_trajectory(trajectory_plan);
+        ASSERT_NEAR(traj.location.ecef_x, 637813699.0, 0.001);
+        ASSERT_NEAR(traj.location.ecef_y, 1999.0, 0.001);
+        ASSERT_NEAR(traj.location.ecef_z, 0.0, 0.001);
+
+        ASSERT_EQ(traj.offsets.size(), 1);
+        ASSERT_NEAR(traj.offsets[0].offset_x, 0.0, 0.001);
+        ASSERT_NEAR(traj.offsets[0].offset_y, -100.0, 0.001);
+        ASSERT_NEAR(traj.offsets[0].offset_z, 0.0, 0.001);
+
 
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 LEIDOS.
+ * Copyright (C) 2018-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,7 @@ namespace port_drayage_plugin
         std::string cargo_id;
         _pnh->param<std::string>("cargo_id", cargo_id, "");
 
-        ros::Publisher outbound_mob_op = _nh->advertise<cav_msgs::MobilityOperation>("outbound_mobility_operation", 5);
+        ros::Publisher outbound_mob_op = _nh->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
         _outbound_mobility_operations_publisher = std::make_shared<ros::Publisher>(outbound_mob_op);
         PortDrayageWorker pdw{
             cmv_id,
@@ -46,13 +46,13 @@ namespace port_drayage_plugin
             speed_epsilon
         };
         
-        ros::Subscriber maneuver_sub = _nh->subscribe<cav_msgs::ManeuverPlan>("final_Maneuver_plan", 5, 
+        ros::Subscriber maneuver_sub = _nh->subscribe<cav_msgs::ManeuverPlan>("final_maneuver_plan", 5, 
             [&](const cav_msgs::ManeuverPlanConstPtr& plan) {
                 pdw.set_maneuver_plan(plan);
         });
         _maneuver_plan_subscriber = std::make_shared<ros::Subscriber>(maneuver_sub);
 
-        ros::Subscriber twist_sub = _nh->subscribe<geometry_msgs::TwistStamped>("localization/ekf_twist", 5, 
+        ros::Subscriber twist_sub = _nh->subscribe<geometry_msgs::TwistStamped>("/localization/ekf_twist", 5, 
             [&](const geometry_msgs::TwistStampedConstPtr& speed) {
                 pdw.set_current_speed(speed);
                 _cur_speed = speed->twist;
@@ -67,6 +67,13 @@ namespace port_drayage_plugin
         });
 
         _pose_subscriber = std::make_shared<ros::Subscriber>(pose_sub);
+
+        ros::Subscriber inbound_mobility_operation_sub = _nh->subscribe<cav_msgs::MobilityOperation>("incoming_mobility_operation", 5,
+            [&](const cav_msgs::MobilityOperationConstPtr& mobility_msg){
+            pdw.on_inbound_mobility_operation(mobility_msg);
+        });
+
+        _inbound_mobility_operation_subscriber = std::make_shared<ros::Subscriber>(inbound_mobility_operation_sub);
         
         ros::Timer discovery_pub_timer_ = _nh->createTimer(
             ros::Duration(ros::Rate(10.0)),
