@@ -14,7 +14,6 @@
  * the License.
  */
 
-#include <inlanecruising_plugin/inlanecruising_plugin.h>
 #include <inlanecruising_plugin/inlanecruising_plugin_node.h>
 #include <carma_utils/CARMAUtils.h>
 #include <gtest/gtest.h>

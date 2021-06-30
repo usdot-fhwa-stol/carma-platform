@@ -17,6 +17,7 @@
   <depend>unobstructed_lanechange</depend>  
   <depend>roslib</depend>
   <depend>lanelet2_extension</depend>
+  <depend>basic_autonomy</depend>
 </package>
 
   

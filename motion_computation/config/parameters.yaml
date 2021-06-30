@@ -23,4 +23,4 @@ prediction_confidence_drop_rate: 0.95
 # 0 - MOBILITY_PATH_ONLY  MobilityPath used as only source of external object data
 # 1 - SENSORS_ONLY:       Sensors used as only source of external object data (mobility paths dropped)
 # 2 - PATH_AND_SENSORS:   Both MobilityPath and sensors used without fusion but synchronized so the output message contains both
-external_object_prediction_mode: 2
+external_object_prediction_mode: 0
