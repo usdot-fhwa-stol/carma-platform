@@ -1,4 +1,6 @@
 #include "pure_pursuit.hpp"
+#include <tf/transform_datatypes.h>
+#include <tf/LinearMath/Matrix3x3.h>
 
 
 
@@ -80,23 +82,32 @@ namespace platoon_control
 		geometry_msgs::Point point_msg;
 		point_msg.x = tp.x;
 		point_msg.y = tp.y;
+		point_msg.z = current_pose.position.z;
 		tf::Point p;
 		pointMsgToTF(point_msg, p);
 		tf::Point tf_p = transform * p;
 		geometry_msgs::Point tf_point_msg;
 		pointTFToMsg(tf_p, tf_point_msg);
-		double vec_mag = std::sqrt(tf_point_msg.y*tf_point_msg.y + tf_point_msg.x*tf_point_msg.x);
+		ROS_DEBUG_STREAM("relative latitude: " << tf_point_msg.y);
+		ROS_DEBUG_STREAM("relative longitude: " << tf_point_msg.x);
+		ROS_DEBUG_STREAM("relative z: " << tf_point_msg.z);
+		double vec_mag = std::sqrt(tf_point_msg.y*tf_point_msg.y + tf_point_msg.x*tf_point_msg.x + tf_point_msg.z*tf_point_msg.z);
 		ROS_DEBUG_STREAM("relative vector mag: " << vec_mag);
 		double sin_alpha = tf_point_msg.y/vec_mag;
+		ROS_DEBUG_STREAM("alpha sin from transform: " << sin_alpha);
+
+		double angle_tp_map = atan2(tp.y, tp.x); // angle of vector to tp point in map frame
+		tf::Quaternion quat;
+		tf::quaternionMsgToTF(current_pose.orientation, quat);
+		double roll, pitch, yaw;
+		tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
+		double alpha = angle_tp_map - yaw;
+		double sin_alpha2 = sin(alpha);
+		ROS_DEBUG_STREAM("alpha from orientation: " << alpha);
+		ROS_DEBUG_STREAM("alpha sin from orientation: " << sin_alpha2);
+
 		return sin_alpha;
 	}
-
-	// double PurePursuit::lowPassfilter(double angle)
-	// {	
-	// 	// angle = config_.lowpass_gain * angle + (1 - config_.lowpass_gain) * prev_steering;
-	// 	angle = prev_steering + config_.lowpass_gain*(angle - prev_steering);
-    // 	return angle;
-	// }
 
 	double PurePursuit::lowPassfilter(double gain, double prev_value, double value)
 	{	

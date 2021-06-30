@@ -25,8 +25,12 @@ namespace platoon_control
     void PlatoonControlWorker::setInitialPose(const geometry_msgs::PoseStamped msg)
 	{
 		// initial_pose_ = msg.pose;
-        initial_pose_.position.x =  -0.790936994017;
-        initial_pose_.position.y =  558.514141773;
+        // Summit Point
+        // initial_pose_.position.x =  -0.790936994017;
+        // initial_pose_.position.y =  558.514141773;
+        // ACM
+        initial_pose_.position.x =  493.068871238;
+        initial_pose_.position.y =  210.486698405;
 	}
 
     void PlatoonControlWorker::setCurrentPose(const geometry_msgs::PoseStamped msg)
