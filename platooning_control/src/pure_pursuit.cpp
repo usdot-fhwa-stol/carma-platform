@@ -97,10 +97,12 @@ namespace platoon_control
 		ROS_DEBUG_STREAM("alpha sin from transform: " << sin_alpha);
 
 		double angle_tp_map = atan2(tp.y, tp.x); // angle of vector to tp point in map frame
+		ROS_DEBUG_STREAM("angle_tp_map: " << angle_tp_map);
 		tf::Quaternion quat;
 		tf::quaternionMsgToTF(current_pose.orientation, quat);
 		double roll, pitch, yaw;
 		tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
+		ROS_DEBUG_STREAM("yaw: " << yaw);
 		double alpha = angle_tp_map - yaw;
 		double sin_alpha2 = sin(alpha);
 		ROS_DEBUG_STREAM("alpha from orientation: " << alpha);
