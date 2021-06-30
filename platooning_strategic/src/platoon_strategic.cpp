@@ -134,9 +134,12 @@ namespace platoon_strategic
         bool pose_initialize = false;
         if (!pose_initialize)
         {
+            // ACM
+            initial_pose_.pose.position.x =  493.068871238;
+            initial_pose_.pose.position.y =  210.486698405;
             // summit                   
-            initial_pose_.pose.position.x =  -0.790936994017;
-            initial_pose_.pose.position.y =  558.514141773;
+            // initial_pose_.pose.position.x =  -0.790936994017;
+            // initial_pose_.pose.position.y =  558.514141773;
             // tfhrc
             // initial_pose_.pose.position.x =  -228.121873152;
             // initial_pose_.pose.position.y =  458.520020515;
