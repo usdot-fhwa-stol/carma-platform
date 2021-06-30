@@ -91,8 +91,8 @@ private:
   ros::Publisher pose_pub_;
   ros::Publisher state_pub_;
   ros::Publisher managed_initial_pose_pub_;
-
-  double spin_rate_{ 10 };
+  ros::Timer pose_timer_;
+  double pose_pub_rate_ = 10.0;
 
   std::unique_ptr<LocalizationManager> manager_; // Worker object
 

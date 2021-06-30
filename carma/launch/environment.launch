@@ -25,6 +25,8 @@
 
   <arg name="simulation_mode" default="true" doc="True if CARMA Platform is launched with CARLA Simulator"/>
 
+  <arg name="cuda" default="true" doc="cuda flag for vision_darknet_detect (true if cuda is available)"/>
+
   <remap from="route" to="$(optenv CARMA_GUIDE_NS)/route"/>
   
 	<!-- vector map loader -->
@@ -63,6 +65,12 @@
   <include file="$(find roadway_objects)/launch/roadway_objects.launch"/>
 </group>
 
+  <!-- CARMA Motion Computation Visualizer Node -->
+ <group>
+  <remap from= "external_objects" to= "external_object_predictions"/>
+  <include file="$(find motion_prediction_visualizer)/launch/motion_prediction_visualizer.launch"/>
+</group>
+
   <!-- calibration_publisher -->
   
   <group>
@@ -95,6 +103,8 @@
 
   <arg name="camera_id" value="/"/>
   <arg name="image_src" value="$(optenv CARMA_INTR_NS)/camera/image_raw"/>
+  <arg name="cuda" value="$(arg cuda)"/>
+  
   </include>
   </group>
 
@@ -136,7 +146,7 @@
   <arg name="use_vector_map" value="false" />
   <arg name="wayarea_gridmap_layer" value="wayarea" />
   <arg name="remove_points_upto" value="0.0" />
-  <arg name="use_gpu" value="false" />
+  <arg name="use_gpu" value="$(arg cuda)" />
   <arg name="use_multiple_thres" value="false"/>
   <arg name="clustering_ranges" value="[15,30,45,60]"/><!-- Distances to segment pointcloud -->
   <arg name="clustering_distances"
@@ -218,6 +228,14 @@
       <arg name="no_ground_point_topic" value="points_no_ground" />
       <arg name="ground_point_topic" value="points_ground" />
     </include>
+  </group>
+
+  <!-- Traffic Incident Parser -->
+  <group>
+    <remap from="georeference" to="$(optenv CARMA_LOCZ_NS)/map_param_loader/georeference"/>
+    <remap from="geofence" to="$(optenv CARMA_MSG_NS)/incoming_geofence_control"/>
+    <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
+    <include file="$(find traffic_incident_parser)/launch/traffic_incident_parser.launch"/>
   </group>
 
 </launch>

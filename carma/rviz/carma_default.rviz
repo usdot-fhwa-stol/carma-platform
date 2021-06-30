@@ -607,12 +607,44 @@ Visualization Manager:
         {}
       Queue Size: 10
       Value: true
-    - Class: rviz/MarkerArray
+    - Class: rviz/Marker
       Enabled: true
       Marker Topic: /guidance/route_marker
       Name: RouteMarker
       Namespaces:
         {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /guidance/cav_marker
+      Name: Incoming MobilityPath Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /guidance/host_marker
+      Name: Host MobilityPath Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /guidance/label_marker
+      Name: MobilityPath Collision Warning
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /environment/tcm_visualizer
+      Name: TCM Visualizer
+      Namespaces:
+        route_visualizer: true
       Queue Size: 100
       Value: true
   Enabled: true

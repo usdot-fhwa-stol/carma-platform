@@ -48,11 +48,10 @@ namespace platoon_control
         plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
         plugin_discovery_msg_.capability = "control/trajectory_control";
 
-        ros::CARMANodeHandle::setSpinCallback([this]()
-        {
-            plugin_discovery_pub_.publish(plugin_discovery_msg_);
-            return true;
-        });
+
+        discovery_pub_timer_ = pnh_->createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [this](const auto&) { plugin_discovery_pub_.publish(plugin_discovery_msg_); });
     }
 
                                     

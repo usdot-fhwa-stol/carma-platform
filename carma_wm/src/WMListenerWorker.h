@@ -20,7 +20,7 @@
 #include <cav_msgs/Route.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_wm/TrafficControl.h>
-
+#include <queue>
 
 
 namespace carma_wm
@@ -54,7 +54,7 @@ public:
    *
    * \param geofence_msg The new map update messages to generate the map edits from
    */
-  void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg) const;
+  void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg);
 
   /*!
    * \brief Callback for route message. It is a TODO: To update function when route message spec is defined
@@ -93,6 +93,16 @@ public:
  * 
 */
   double getConfigSpeedLimit() const;
+/**
+ *  \brief Check if re-routing is needed and returns re-routing flag
+ * 
+*/
+  bool checkIfReRoutingNeeded() const;
+/**
+ *  \brief Enable updates without route and set route_node_flag_ as true
+ * 
+*/
+  void enableUpdatesWithoutRoute();
 
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
@@ -101,5 +111,12 @@ private:
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
   double config_speed_limit_;
 
+  size_t current_map_version_ = 0; // Current map version based on recived map messages
+  std::queue<autoware_lanelet2_msgs::MapBinPtr> map_update_queue_; // Update queue used to cache map updates when they cannot be immeadiatly applied due to waiting for rerouting
+  boost::optional<cav_msgs::RouteConstPtr> delayed_route_msg_;
+
+  bool rerouting_flag_=false;
+  bool route_node_flag_=false;
+  long most_recent_update_msg_seq_ = -1; // Tracks the current sequence number for map update messages. Dropping even a single message would invalidate the map
 };
 }  // namespace carma_wm

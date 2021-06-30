@@ -40,7 +40,6 @@ int main(int argc, char** argv)
   ros::Subscriber pose_with_cov_sub = nh.subscribe("pose_with_cov_to_tf", 10, &pose_to_tf::PoseToTF2::poseWithCovarianceCallback, &worker);
   ros::Subscriber pose_with_cov_stamped_sub = nh.subscribe("pose_with_cov_stamped_to_tf", 10, &pose_to_tf::PoseToTF2::poseWithCovarianceStampedCallback, &worker);
 
-  ros::CARMANodeHandle::setSpinRate(50);
   ros::CARMANodeHandle::spin();
   return 0;
 };

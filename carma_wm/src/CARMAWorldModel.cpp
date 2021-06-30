@@ -31,10 +31,10 @@
 #include <boost/geometry/geometries/polygon.hpp>
 #include <carma_wm/Geometry.h>
 #include <queue>
+#include <boost/math/special_functions/sign.hpp>
 
 namespace carma_wm
 {
-
 std::pair<TrackPos, TrackPos> CARMAWorldModel::routeTrackPos(const lanelet::ConstArea& area) const
 {
   // Check if the route was loaded yet
@@ -215,22 +215,25 @@ TrackPos CARMAWorldModel::routeTrackPos(const lanelet::BasicPoint2d& point) cons
 
 class LaneletDowntrackPair
 {
-  public:
-    lanelet::ConstLanelet lanelet_;
-    double downtrack_ = 0;
+public:
+  lanelet::ConstLanelet lanelet_;
+  double downtrack_ = 0;
 
-    LaneletDowntrackPair(lanelet::ConstLanelet lanelet, double downtrack) : lanelet_(lanelet), downtrack_(downtrack) {}
-    bool operator<(const LaneletDowntrackPair& pair) const
-    {
-      return this->downtrack_ < pair.downtrack_;
-    }
-    bool operator>(const LaneletDowntrackPair& pair) const
-    {
-      return this->downtrack_ > pair.downtrack_;
-    }
+  LaneletDowntrackPair(lanelet::ConstLanelet lanelet, double downtrack) : lanelet_(lanelet), downtrack_(downtrack)
+  {
+  }
+  bool operator<(const LaneletDowntrackPair& pair) const
+  {
+    return this->downtrack_ < pair.downtrack_;
+  }
+  bool operator>(const LaneletDowntrackPair& pair) const
+  {
+    return this->downtrack_ > pair.downtrack_;
+  }
 };
 
-std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double start, double end, bool shortest_path_only) const
+std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double start, double end, bool shortest_path_only,
+                                                                       bool bounds_inclusive) const
 {
   // Check if the route was loaded yet
   if (!route_)
@@ -243,13 +246,15 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
   }
 
   std::vector<lanelet::ConstLanelet> output;
-  std::priority_queue<LaneletDowntrackPair,  std::vector<LaneletDowntrackPair>, std::greater<LaneletDowntrackPair>> prioritized_lanelets;
+  std::priority_queue<LaneletDowntrackPair, std::vector<LaneletDowntrackPair>, std::greater<LaneletDowntrackPair>>
+      prioritized_lanelets;
 
   auto lanelet_map = route_->laneletMap();
   for (lanelet::ConstLanelet lanelet : lanelet_map->laneletLayer)
   {
-    if (shortest_path_only && !shortest_path_view_->laneletLayer.exists(lanelet.id())) {
-      continue; // Continue if we are only evaluating the shortest path and this lanelet is not part of it
+    if (shortest_path_only && !shortest_path_view_->laneletLayer.exists(lanelet.id()))
+    {
+      continue;  // Continue if we are only evaluating the shortest path and this lanelet is not part of it
     }
     lanelet::ConstLineString2d centerline = lanelet::utils::to2D(lanelet.centerline());
 
@@ -258,10 +263,21 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
     TrackPos min = routeTrackPos(front);
     TrackPos max = routeTrackPos(back);
 
-    if (std::max(min.downtrack, start) > std::min(max.downtrack, end))
-    {  // Check for 1d intersection
-      // No intersection so continue
-      continue;
+    if (!bounds_inclusive) // reduce bounds slightly to avoid including exact bounds
+    {
+      if (std::max(min.downtrack, start + 0.00001) > std::min(max.downtrack, end - 0.00001))
+      {  // Check for 1d intersection
+        // No intersection so continue
+        continue;
+      }
+    }
+    else
+    {
+      if (std::max(min.downtrack, start) > std::min(max.downtrack, end))
+      {  // Check for 1d intersection
+        // No intersection so continue
+        continue;
+      }
     }
     // Intersection has occurred so add lanelet to list
     LaneletDowntrackPair pair(lanelet, min.downtrack);
@@ -269,13 +285,172 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
   }
 
   output.reserve(prioritized_lanelets.size());
-  while(!prioritized_lanelets.empty()) {
+  while (!prioritized_lanelets.empty())
+  {
     auto pair = prioritized_lanelets.top();
     prioritized_lanelets.pop();
     output.push_back(pair.lanelet_);
   }
 
+  if(!shortest_path_only){
+    return output;
+  }
+  
+  //Sort lanelets according to shortest path if using shortest path
+  std::vector<lanelet::ConstLanelet> sorted_output;
+  for(auto llt : route_->shortestPath()){
+    for(int i=0; i < output.size();i++){
+      if(llt.id() == output[i].id()){
+        sorted_output.push_back(llt);
+        break;
+      }
+    }
+  }
+
+  return sorted_output;
+}
+
+std::vector<lanelet::BasicPoint2d> CARMAWorldModel::sampleRoutePoints(double start_downtrack, double end_downtrack,
+                                                                      double step_size) const
+{
+  std::vector<lanelet::BasicPoint2d> output;
+  if (!route_)
+  {
+    ROS_WARN_STREAM("Route has not yet been loaded");
+    return output;
+  }
+
+  double route_end = getRouteEndTrackPos().downtrack;
+
+  if (start_downtrack < 0 || start_downtrack > route_end || end_downtrack < 0 || end_downtrack > route_end ||
+      start_downtrack > end_downtrack)
+  {
+    ROS_WARN_STREAM("Invalid input downtracks");
+    return output;
+  }
+
+  TrackPos route_pos(start_downtrack, 0);
+
+  if (end_downtrack == start_downtrack)
+  {
+    output.emplace_back(*(pointFromRouteTrackPos(route_pos)));  // If a single point was provided return that point
+    return output;
+  }
+
+  output.reserve(2 + (end_downtrack - start_downtrack) / step_size);
+  double downtrack = start_downtrack;
+  while (downtrack < end_downtrack)
+  {
+    route_pos.downtrack = downtrack;
+    output.emplace_back(*(pointFromRouteTrackPos(route_pos)));
+    downtrack += step_size;
+  }
+
+  route_pos.downtrack = end_downtrack;
+  output.emplace_back(*(pointFromRouteTrackPos(route_pos)));
   return output;
+}
+
+boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(const TrackPos& route_pos) const
+{
+  double downtrack = route_pos.downtrack;
+  double crosstrack = route_pos.crosstrack;
+
+  if (!route_)
+  {
+    ROS_DEBUG_STREAM("Route has not yet been loaded");
+    return boost::none;
+  }
+
+  if (downtrack < 0 || downtrack > getRouteEndTrackPos().downtrack)
+  {
+    ROS_DEBUG_STREAM("Tried to convert a downtrack of: " << downtrack
+                                                         << " to map point, but it did not fit in route bounds of "
+                                                         << getRouteEndTrackPos().downtrack);
+    return boost::none;
+  }
+
+  // Use fast lookup to identify the points before and after the provided downtrack on the route
+  size_t ls_i = shortest_path_distance_map_.getElementIndexByDistance(downtrack); // Get the linestring matching the provided downtrack
+  double ls_length = shortest_path_distance_map_.elementLength(ls_i);
+  double ls_downtrack = shortest_path_distance_map_.distanceToElement(ls_i);
+  auto linestring = shortest_path_centerlines_[ls_i];
+
+  // Use the percentage traveled along this linestring to index into the cenertline
+  double relative_downtrack = downtrack - ls_downtrack;
+  double lanelet_percentage = relative_downtrack / ls_length;
+  int centerline_size = linestring.size();
+  int index = lanelet_percentage * centerline_size;
+  int prior_idx = std::min(index, centerline_size - 1);
+  int next_idx = std::min(index + 1, centerline_size - 1);
+
+  // This if block handles the edge case where the downtrack distance has landed exactly on an existing point
+  if (prior_idx == next_idx)
+  {  // If both indexes are the same we are on the point
+    if (crosstrack == 0)
+    {  // Crosstrack not provided so we can return the point directly
+      auto prior_point = linestring[prior_idx];
+      return lanelet::BasicPoint2d(prior_point.x(), prior_point.y());
+    }
+
+    lanelet::BasicPoint2d prior_point, next_point;
+    double x, y;
+    if (prior_idx < centerline_size - 1)
+    {  // If this is not the end point compute the crosstrack based on the next point
+      prior_point = linestring[prior_idx].basicPoint2d();
+      next_point = linestring[prior_idx + 1].basicPoint2d(); // No need to check bounds as this class will reject routes with fewer than 2 points in a centerline
+      x = prior_point.x();
+      y = prior_point.y();
+    }
+    else
+    {  // If this is the end point compute the crosstrack based on previous point
+      prior_point = linestring[prior_idx - 1].basicPoint2d();
+      next_point = linestring[prior_idx].basicPoint2d();
+      x = next_point.x();
+      y = next_point.y();
+    }
+
+    // Compute the crosstrack
+    double sigma = geometry::point_to_point_yaw(prior_point, next_point);  // Angle between route segment and x-axis
+    double theta = sigma + M_PI_2;  // M_PI_2 is 90 deg. Theta is the angle to the vector from the route projected point
+                                    // to the target point
+    double delta_x = cos(theta) * crosstrack;
+    double delta_y = sin(theta) * crosstrack;
+    return lanelet::BasicPoint2d(x + delta_x, y + delta_y);
+  }
+
+  double prior_downtrack = shortest_path_distance_map_.distanceToPointAlongElement(ls_i, prior_idx);
+  double next_downtrack = shortest_path_distance_map_.distanceToPointAlongElement(ls_i, next_idx);
+
+  double prior_to_next_dist = next_downtrack - prior_downtrack;
+  double prior_to_target_dist = relative_downtrack - prior_downtrack;
+  double interpolation_percentage = 0;
+  if (prior_to_next_dist < 0.000001)
+  {
+    interpolation_percentage = 0;
+  }
+  else
+  {
+    interpolation_percentage = prior_to_target_dist / prior_to_next_dist; // Use the percentage progress between both points to compute the downtrack point
+  }
+  auto prior_point = linestring[prior_idx].basicPoint2d();
+  auto next_point = linestring[next_idx].basicPoint2d();
+  auto delta_vec = next_point - prior_point;
+  double x = prior_point.x() + interpolation_percentage * delta_vec.x();
+  double y = prior_point.y() + interpolation_percentage * delta_vec.y();
+
+  if (crosstrack != 0) // If the crosstrack is not set no need to do the costly computation.
+  {  
+    double sigma = geometry::point_to_point_yaw(prior_point, next_point);  // Angle between route segment and x-axis
+    double theta = sigma + M_PI_2;  // M_PI_2 is 90 deg. Theta is the angle to the vector from the route projected point
+                                    // to the target point
+    double delta_x = cos(theta) * crosstrack;
+    double delta_y = sin(theta) * crosstrack;
+    x += delta_x;  // Adjust x and y of target point to account for crosstrack
+    y += delta_y;
+  }
+
+  return lanelet::BasicPoint2d(x, y);
 }
 
 lanelet::LaneletMapConstPtr CARMAWorldModel::getMap() const
@@ -290,17 +465,24 @@ LaneletRouteConstPtr CARMAWorldModel::getRoute() const
 
 TrackPos CARMAWorldModel::getRouteEndTrackPos() const
 {
-  return routeTrackPos(route_->getEndPoint().basicPoint2d());
+  TrackPos p(route_length_, 0);
+  return p;
 }
 
-void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map)
+void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map, size_t map_version)
 {
   semantic_map_ = map;
+  map_version_ = map_version;
   // Build routing graph from map
   TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
 
   lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
   map_routing_graph_ = std::move(map_graph);
+}
+
+size_t CARMAWorldModel::getMapVersion() const 
+{
+  return map_version_;
 }
 
 lanelet::LaneletMapPtr CARMAWorldModel::getMutableMap() const
@@ -314,11 +496,13 @@ void CARMAWorldModel::setRoute(LaneletRoutePtr route)
   lanelet::ConstLanelets path_lanelets(route_->shortestPath().begin(), route_->shortestPath().end());
   shortest_path_view_ = lanelet::utils::createConstSubmap(path_lanelets, {});
   computeDowntrackReferenceLine();
+  route_length_ = routeTrackPos(route_->getEndPoint().basicPoint2d()).downtrack;  // Cache the route length with
+                                                                                  // consideration for endpoint
 }
 
 void CARMAWorldModel::setRouteEndPoint(const lanelet::BasicPoint3d& end_point)
 {
-  lanelet::ConstPoint3d const_end_point {lanelet::utils::getId(), end_point.x(),end_point.y(),end_point.z()};
+  lanelet::ConstPoint3d const_end_point{ lanelet::utils::getId(), end_point.x(), end_point.y(), end_point.z() };
   route_->setEndPoint(const_end_point);
 }
 
@@ -347,7 +531,7 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
       lanelet::routing::RoutingGraph::build(*shortest_path_view_, *traffic_rules);
 
   std::vector<lanelet::LineString3d> lineStrings;  // List of continuos line strings representing segments of the route
-                                                   // reference line                                       
+                                                   // reference line
 
   bool first = true;
   size_t next_index = 0;
@@ -365,19 +549,28 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
       auto nextLanelet = shortest_path[next_index];
       lanelet::LineString3d nextCenterline = copyConstructLineString(nextLanelet.centerline());
       size_t connectionCount = shortest_path_graph->possiblePaths(ll, (uint32_t)2, false).size();
-      
+
       if (connectionCount == 1)
       {  // Get list of connected lanelets without lanechanges. On the shortest path this should only return 1 or 0
         // No lane change
         // Append distance to current centerline
-        lineStrings.back().insert(lineStrings.back().end(), nextCenterline.begin(), nextCenterline.end());
+        size_t offset =
+            lineStrings.size() == 0 || lineStrings.back().size() == 0 ?
+                0 :
+                1;  // Prevent duplicate points when concatenating. Not clear if causes an issue at lane changes
+        if ((nextCenterline.size() <= 1) || (nextCenterline.size() <= 2 && offset == 1))
+        {
+          throw std::invalid_argument("Cannot process route with lanelet containing very short centerline");
+        }
+        lineStrings.back().insert(lineStrings.back().end(), nextCenterline.begin() + offset, nextCenterline.end());
       }
       else if (connectionCount == 0)
       {
         // Lane change required
         // Break the point chain when a lanechange occurs
-        if (lineStrings.back().size() == 0) continue; //we don't have to create empty_linestring if we already have one
-                                                      //occurs when route is changing lanes multiple times in sequence  
+        if (lineStrings.back().size() == 0)
+          continue;  // we don't have to create empty_linestring if we already have one
+                     // occurs when route is changing lanes multiple times in sequence
         lanelet::LineString3d empty_linestring;
         empty_linestring.setId(lanelet::utils::getId());
         distance_map.pushBack(lanelet::utils::to2D(lineStrings.back()));
@@ -390,7 +583,8 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
     }
   }
   // Copy values to member variables
-  while (lineStrings.back().size() == 0) lineStrings.pop_back(); //clear empty linestrings that was never used in the end
+  while (lineStrings.back().size() == 0)
+    lineStrings.pop_back();  // clear empty linestrings that was never used in the end
   shortest_path_centerlines_ = lineStrings;
   shortest_path_distance_map_ = distance_map;
 
@@ -401,8 +595,9 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
                                                                                      // segment
   }
 
-  // Since our copy constructed linestrings do not contain references to lanelets they can be added to a full map instead of a submap
-  shortest_path_filtered_centerline_view_ = lanelet::utils::createMap(shortest_path_centerlines_); 
+  // Since our copy constructed linestrings do not contain references to lanelets they can be added to a full map
+  // instead of a submap
+  shortest_path_filtered_centerline_view_ = lanelet::utils::createMap(shortest_path_centerlines_);
 }
 
 LaneletRoutingGraphConstPtr CARMAWorldModel::getMapRoutingGraph() const
@@ -420,18 +615,13 @@ lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules(const s
     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(
         lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant);
 
-
     auto carma_traffic_rules = std::make_shared<lanelet::traffic_rules::CarmaUSTrafficRules>();
-      
+
     carma_traffic_rules = std::static_pointer_cast<lanelet::traffic_rules::CarmaUSTrafficRules>(
-    lanelet::traffic_rules::TrafficRulesPtr(std::move(traffic_rules)));
+        lanelet::traffic_rules::TrafficRulesPtr(std::move(traffic_rules)));
     carma_traffic_rules->setConfigSpeedLimit(config_speed_limit_);
 
-
-    optional_ptr = std::static_pointer_cast<const lanelet::traffic_rules::CarmaUSTrafficRules>(
-    carma_traffic_rules);
-
-    
+    optional_ptr = std::static_pointer_cast<const lanelet::traffic_rules::CarmaUSTrafficRules>(carma_traffic_rules);
   }
   catch (const lanelet::InvalidInputError& e)
   {
@@ -455,7 +645,7 @@ CARMAWorldModel::toRoadwayObstacle(const cav_msgs::ExternalObject& object) const
 
   if (!nearestLaneletBoost)
     return boost::none;
-  
+
   lanelet::Lanelet nearestLanelet = nearestLaneletBoost.get();
 
   cav_msgs::RoadwayObstacle obs;
@@ -471,7 +661,8 @@ CARMAWorldModel::toRoadwayObstacle(const cav_msgs::ExternalObject& object) const
   for (auto prediction : object.predictions)
   {
     // Compute prediction polygon
-    lanelet::BasicPolygon2d prediction_polygon = geometry::objectToMapPolygon(prediction.predicted_position, object.size);
+    lanelet::BasicPolygon2d prediction_polygon =
+        geometry::objectToMapPolygon(prediction.predicted_position, object.size);
     lanelet::BasicPoint2d prediction_center(prediction.predicted_position.position.x,
                                             prediction.predicted_position.position.y);
 
@@ -503,11 +694,12 @@ std::vector<cav_msgs::RoadwayObstacle> CARMAWorldModel::getRoadwayObjects() cons
   return roadway_objects_;
 }
 
-std::vector<cav_msgs::RoadwayObstacle> CARMAWorldModel::getInLaneObjects(const lanelet::ConstLanelet& lanelet, const LaneSection& section) const
+std::vector<cav_msgs::RoadwayObstacle> CARMAWorldModel::getInLaneObjects(const lanelet::ConstLanelet& lanelet,
+                                                                         const LaneSection& section) const
 {
   // Get all lanelets on current lane section
   std::vector<lanelet::ConstLanelet> lane = getLane(lanelet, section);
-  
+
   // Check if any roadway object is registered
   if (roadway_objects_.size() == 0)
   {
@@ -515,17 +707,17 @@ std::vector<cav_msgs::RoadwayObstacle> CARMAWorldModel::getInLaneObjects(const l
   }
 
   // Initialize useful variables
-  std::vector<cav_msgs::RoadwayObstacle> lane_objects, roadway_objects_copy = roadway_objects_; 
-  
-  /*
-  * Get all in lane objects
-  * For each lane, we check if each object is on it by matching lanelet_id 
-  * Complexity N*K, where N: num of lanelets, K: num of objects
-  */
-  int curr_idx;
-  std::queue <int> obj_idxs_queue;
+  std::vector<cav_msgs::RoadwayObstacle> lane_objects, roadway_objects_copy = roadway_objects_;
 
-  // Create an index queue for roadway objects to quickly pop the idx if associated 
+  /*
+   * Get all in lane objects
+   * For each lane, we check if each object is on it by matching lanelet_id
+   * Complexity N*K, where N: num of lanelets, K: num of objects
+   */
+  int curr_idx;
+  std::queue<int> obj_idxs_queue;
+
+  // Create an index queue for roadway objects to quickly pop the idx if associated
   // lanelet is found. This is to reduce number of objects to check as we check new lanelets
   for (size_t i = 0; i < roadway_objects_copy.size(); i++)
   {
@@ -533,7 +725,7 @@ std::vector<cav_msgs::RoadwayObstacle> CARMAWorldModel::getInLaneObjects(const l
   }
 
   // check each lanelets
-  for (auto llt: lane)
+  for (auto llt : lane)
   {
     int checked_queue_items = 0, to_check = obj_idxs_queue.size();
     // check each objects
@@ -550,11 +742,13 @@ std::vector<cav_msgs::RoadwayObstacle> CARMAWorldModel::getInLaneObjects(const l
         // found intersecting lanelet for this object
         lane_objects.push_back(curr_obj);
       }
-      // handle a case where an object might be lane-changing, so check adjacent ids 
+      // handle a case where an object might be lane-changing, so check adjacent ids
       // a bit faster than checking intersection solely as && is left-to-right evaluation
-      else if (((map_routing_graph_->left(llt) && curr_obj.lanelet_id == map_routing_graph_->left(llt).get().id()) || 
-      (map_routing_graph_->right(llt) && curr_obj.lanelet_id == map_routing_graph_->right(llt).get().id())) && 
-        boost::geometry::intersects(llt.polygon2d().basicPolygon(), geometry::objectToMapPolygon(curr_obj.object.pose.pose, curr_obj.object.size)))
+      else if (((map_routing_graph_->left(llt) && curr_obj.lanelet_id == map_routing_graph_->left(llt).get().id()) ||
+                (map_routing_graph_->right(llt) && curr_obj.lanelet_id == map_routing_graph_->right(llt).get().id())) &&
+               boost::geometry::intersects(
+                   llt.polygon2d().basicPolygon(),
+                   geometry::objectToMapPolygon(curr_obj.object.pose.pose, curr_obj.object.size)))
       {
         // found intersecting lanelet for this object
         lane_objects.push_back(curr_obj);
@@ -566,11 +760,12 @@ std::vector<cav_msgs::RoadwayObstacle> CARMAWorldModel::getInLaneObjects(const l
       }
     }
   }
-  
+
   return lane_objects;
 }
 
-lanelet::Optional<lanelet::Lanelet> CARMAWorldModel::getIntersectingLanelet (const cav_msgs::ExternalObject& object) const
+lanelet::Optional<lanelet::Lanelet>
+CARMAWorldModel::getIntersectingLanelet(const cav_msgs::ExternalObject& object) const
 {
   // Check if the map is loaded yet
   if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
@@ -604,7 +799,7 @@ lanelet::Optional<double> CARMAWorldModel::distToNearestObjInLane(const lanelet:
   // return empty if there is no object nearby
   if (roadway_objects_.size() == 0)
     return boost::none;
-  
+
   // Get the lanelet of this point
   auto curr_lanelet = semantic_map_->laneletLayer.nearest(object_center, 1)[0];
 
@@ -620,11 +815,10 @@ lanelet::Optional<double> CARMAWorldModel::distToNearestObjInLane(const lanelet:
 
   // Record the closest distance out of all polygons, 4 points each
   double min_dist = INFINITY;
-  for (auto obj: roadway_objects_)
+  for (auto obj : roadway_objects_)
   {
-    lanelet::BasicPolygon2d object_polygon = 
-      geometry::objectToMapPolygon(obj.object.pose.pose, obj.object.size);
-                                    
+    lanelet::BasicPolygon2d object_polygon = geometry::objectToMapPolygon(obj.object.pose.pose, obj.object.size);
+
     // Point to closest edge on polygon distance by boost library
     double curr_dist = lanelet::geometry::distance(object_center, object_polygon);
     if (min_dist > curr_dist)
@@ -633,10 +827,10 @@ lanelet::Optional<double> CARMAWorldModel::distToNearestObjInLane(const lanelet:
 
   // Return the closest distance out of all polygons
   return min_dist;
-
 }
 
-lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> CARMAWorldModel::getNearestObjInLane(const lanelet::BasicPoint2d& object_center, const LaneSection& section) const
+lanelet::Optional<std::tuple<TrackPos, cav_msgs::RoadwayObstacle>>
+CARMAWorldModel::getNearestObjInLane(const lanelet::BasicPoint2d& object_center, const LaneSection& section) const
 {
   // Check if the map is loaded yet
   if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
@@ -647,7 +841,7 @@ lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> CARMAWorldMode
   // return empty if there is no object nearby
   if (roadway_objects_.size() == 0)
     return boost::none;
-  
+
   // Get the lanelet of this point
   auto curr_lanelet = semantic_map_->laneletLayer.nearest(object_center, 1)[0];
 
@@ -655,7 +849,7 @@ lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> CARMAWorldMode
   if (!boost::geometry::within(object_center, curr_lanelet.polygon2d().basicPolygon()))
     throw std::invalid_argument("Given point is not within any lanelet");
 
-  // Get objects that are in the lane 
+  // Get objects that are in the lane
   std::vector<cav_msgs::RoadwayObstacle> lane_objects = getInLaneObjects(curr_lanelet, section);
 
   // return empty if there is no object in the lane
@@ -664,7 +858,7 @@ lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> CARMAWorldMode
 
   // Get the lane that is including this lanelet
   std::vector<lanelet::ConstLanelet> lane_section = getLane(curr_lanelet, section);
-  
+
   std::vector<double> object_downtracks, object_crosstracks;
   std::vector<int> object_idxs;
   std::queue<int> obj_idxs_queue;
@@ -672,7 +866,7 @@ lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> CARMAWorldMode
   double input_obj_downtrack = 0;
   int curr_idx = 0;
 
-  // Create an index queue for in lane objects to quickly pop the idx if associated 
+  // Create an index queue for in lane objects to quickly pop the idx if associated
   // lanelet is found. This is to reduce number of objects to check as we check new lanelets
   for (size_t i = 0; i < lane_objects.size(); i++)
   {
@@ -680,10 +874,10 @@ lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> CARMAWorldMode
   }
 
   // For each lanelet, check if each object is inside it. if so, calculate downtrack
-  for (auto llt: lane_section)
+  for (auto llt : lane_section)
   {
     int checked_queue_items = 0, to_check = obj_idxs_queue.size();
-    
+
     // check each remaining objects
     while (checked_queue_items < to_check)
     {
@@ -699,11 +893,14 @@ lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> CARMAWorldMode
         object_idxs.push_back(curr_idx);
       }
       // if it's not on it, try adjacent lanelets because the object could be lane changing
-      else if ((map_routing_graph_->left(llt) && lane_objects[curr_idx].lanelet_id == map_routing_graph_->left(llt).get().id()) || 
-      (map_routing_graph_->right(llt) && lane_objects[curr_idx].lanelet_id == map_routing_graph_->right(llt).get().id()))
+      else if ((map_routing_graph_->left(llt) &&
+                lane_objects[curr_idx].lanelet_id == map_routing_graph_->left(llt).get().id()) ||
+               (map_routing_graph_->right(llt) &&
+                lane_objects[curr_idx].lanelet_id == map_routing_graph_->right(llt).get().id()))
       {
         // no need to check intersection as the objects are guaranteed to be intersecting this lane
-        lanelet::BasicPoint2d obj_center(lane_objects[curr_idx].object.pose.pose.position.x, lane_objects[curr_idx].object.pose.pose.position.y);
+        lanelet::BasicPoint2d obj_center(lane_objects[curr_idx].object.pose.pose.position.x,
+                                         lane_objects[curr_idx].object.pose.pose.position.y);
         TrackPos new_tp = geometry::trackPos(llt, obj_center);
         object_downtracks.push_back(base_downtrack + new_tp.downtrack);
         object_crosstracks.push_back(lane_objects[curr_idx].cross_track);
@@ -720,40 +917,45 @@ lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> CARMAWorldMode
       input_obj_downtrack = base_downtrack + geometry::trackPos(llt, object_center).downtrack;
 
     // this lanelet's entire centerline as downtrack
-    base_downtrack += geometry::trackPos(llt.centerline().back().basicPoint2d(), 
-                      llt.centerline().front().basicPoint2d(), llt.centerline().back().basicPoint2d()).downtrack;
-    
+    base_downtrack +=
+        geometry::trackPos(llt.centerline().back().basicPoint2d(), llt.centerline().front().basicPoint2d(),
+                           llt.centerline().back().basicPoint2d())
+            .downtrack;
   }
 
   // compare with input's downtrack and return the min_dist
   size_t min_idx = 0;
-  double min_dist = INFINITY; 
-  for (size_t idx = 0 ; idx < object_downtracks.size(); idx ++)
+  double min_dist = INFINITY;
+  for (size_t idx = 0; idx < object_downtracks.size(); idx++)
   {
     if (min_dist > std::fabs(object_downtracks[idx] - input_obj_downtrack))
     {
-      min_dist = std::fabs(object_downtracks[idx] - input_obj_downtrack);    
+      min_dist = std::fabs(object_downtracks[idx] - input_obj_downtrack);
       min_idx = idx;
     }
   }
 
-  // if before the parallel line with the start of the llt that crosses given object_center, neg downtrack. 
+  // if before the parallel line with the start of the llt that crosses given object_center, neg downtrack.
   // if left to the parallel line with the centerline of the llt that crosses given object_center, pos crosstrack
-  return std::tuple<TrackPos, cav_msgs::RoadwayObstacle>
-        (TrackPos(object_downtracks[min_idx] - input_obj_downtrack, object_crosstracks[min_idx] - geometry::trackPos(curr_lanelet, object_center).crosstrack),
-        lane_objects[object_idxs[min_idx]]);
+  return std::tuple<TrackPos, cav_msgs::RoadwayObstacle>(
+      TrackPos(object_downtracks[min_idx] - input_obj_downtrack,
+               object_crosstracks[min_idx] - geometry::trackPos(curr_lanelet, object_center).crosstrack),
+      lane_objects[object_idxs[min_idx]]);
 }
 
-lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> CARMAWorldModel::nearestObjectAheadInLane(const lanelet::BasicPoint2d& object_center) const
+lanelet::Optional<std::tuple<TrackPos, cav_msgs::RoadwayObstacle>>
+CARMAWorldModel::nearestObjectAheadInLane(const lanelet::BasicPoint2d& object_center) const
 {
   return getNearestObjInLane(object_center, LANE_AHEAD);
 }
 
-lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> CARMAWorldModel::nearestObjectBehindInLane(const lanelet::BasicPoint2d& object_center) const
+lanelet::Optional<std::tuple<TrackPos, cav_msgs::RoadwayObstacle>>
+CARMAWorldModel::nearestObjectBehindInLane(const lanelet::BasicPoint2d& object_center) const
 {
   return getNearestObjInLane(object_center, LANE_BEHIND);
 }
-std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLane(const lanelet::ConstLanelet& lanelet, const LaneSection& section) const
+std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLane(const lanelet::ConstLanelet& lanelet,
+                                                            const LaneSection& section) const
 {
   // Check if the map is loaded yet
   if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
@@ -766,14 +968,14 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLane(const lanelet::Const
   {
     throw std::invalid_argument("Lanelet is not on the map");
   }
-  
+
   // Check if the lane section input is correct
   if (section != LANE_FULL && section != LANE_BEHIND && section != LANE_AHEAD)
   {
     throw std::invalid_argument("Undefined lane section is requested");
   }
-  
-  std::vector<lanelet::ConstLanelet> following_lane = {lanelet};
+
+  std::vector<lanelet::ConstLanelet> following_lane = { lanelet };
   std::stack<lanelet::ConstLanelet> prev_lane_helper;
   std::vector<lanelet::ConstLanelet> prev_lane;
   std::vector<lanelet::ConstLanelet> connecting_lanelet = map_routing_graph_->following(lanelet, false);
@@ -786,7 +988,7 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLane(const lanelet::Const
   }
   if (section == LANE_AHEAD)
     return following_lane;
-  
+
   // if interested in lanelets behind
   connecting_lanelet = map_routing_graph_->previous(lanelet, false);
   while (connecting_lanelet.size() != 0)
@@ -814,7 +1016,8 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLane(const lanelet::Const
   return prev_lane;
 }
 
-std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n) const
+std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point,
+                                                                    const unsigned int n) const
 {
   // Check if the map is loaded yet
   if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
@@ -822,15 +1025,17 @@ std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanele
     throw std::invalid_argument("Map is not set or does not contain lanelets");
   }
   std::vector<lanelet::Lanelet> possible_lanelets;
-  auto nearestLanelets = lanelet::geometry::findNearest(semantic_map_->laneletLayer,point,n);
-  if (nearestLanelets.size() == 0) return {};
-  int id = 0; // closest ones are in the back
+  auto nearestLanelets = lanelet::geometry::findNearest(semantic_map_->laneletLayer, point, n);
+  if (nearestLanelets.size() == 0)
+    return {};
+  int id = 0;  // closest ones are in the back
   // loop through until the point is no longer geometrically in the lanelet
   while (boost::geometry::within(point, nearestLanelets[id].second.polygon2d()))
   {
     possible_lanelets.push_back(nearestLanelets[id].second);
     id++;
-    if (id >= nearestLanelets.size()) break;
+    if (id >= nearestLanelets.size())
+      break;
   }
   return possible_lanelets;
 }
@@ -839,6 +1044,5 @@ void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
 {
   config_speed_limit_ = config_lim;
 }
-
 
 }  // namespace carma_wm

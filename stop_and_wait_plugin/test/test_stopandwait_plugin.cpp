@@ -248,12 +248,20 @@ namespace stop_and_wait_plugin
         maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(end_id);
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         maneuver_msg.stop_and_wait_maneuver.end_time =ros::Time(end_time + maneuver.stop_and_wait_maneuver.start_time.toSec());
+        
+        // Create a second maneuver of a different type to test the final element in resp.related_maneuvers
+        cav_msgs::Maneuver maneuver_msg2;
+        maneuver_msg2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+        
         maneuvers_msg.push_back(maneuver_msg);
+        maneuvers_msg.push_back(maneuver_msg2);
         req.maneuver_plan.maneuvers = maneuvers_msg;
+
         bool isTrajectory = sw.plan_trajectory_cb(req,resp);
         
         EXPECT_TRUE(isTrajectory);
         EXPECT_TRUE(resp.trajectory_plan.trajectory_points.size() > 2);
+        EXPECT_EQ(0, resp.related_maneuvers.back());
 
     }
 }

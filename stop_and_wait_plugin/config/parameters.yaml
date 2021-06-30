@@ -9,10 +9,6 @@ downsample_ratio: 8
 # Units: meters per second cube
 max_jerk_limit: 3.0
 
-# Double: The rate at which the Guidance Node will process message
-# Units: Hz
-spin_rate_hz: 10
-
 # Double: The minimum timestep used for planning trajectory
 #Units: seconds
 min_timestep : 0.1
