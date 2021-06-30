@@ -17,11 +17,9 @@
 #include <math.h>
 #include "route_generator_worker.h"
 #include <functional>
+#include <lanelet2_core/utility/Utilities.h>
 
 namespace route {
-
-    RouteGeneratorWorker::RouteGeneratorWorker(tf2_ros::Buffer& tf_buffer) :
-                                               tf_tree_(tf_buffer) { }
     
     void RouteGeneratorWorker::setWorldModelPtr(carma_wm::WorldModelConstPtr wm)
     {
@@ -129,9 +127,12 @@ namespace route {
 
     bool RouteGeneratorWorker::set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp)
     {
+        ROS_INFO_STREAM("set_active_route_cb: Selected ID:" << req.routeID);
         // only allow activate a new route in route selection state
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::SELECTION)
         {
+            ROS_DEBUG_STREAM("Valid state proceeding with selection");
+        	
             // entering to routing state once destinations are picked
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_SELECTED);
             publish_route_event(cav_msgs::RouteEvent::ROUTE_SELECTED);
@@ -144,23 +145,17 @@ namespace route {
                 return true;
             }
 
-            // get transform from ECEF(earth) to local map frame
-            tf2::Transform map_in_earth;
-            try
-            {
-                tf2::convert(tf_tree_.lookupTransform("earth", "map", ros::Time(0)).transform, map_in_earth);
-            }
-            catch (const tf2::TransformException &ex)
-            {
-                ROS_ERROR_STREAM("Could not lookup transform with exception " << ex.what());
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::TRANSFORM_ERROR;
+            // Check if the map projection is available
+            if (!map_proj_) {
+                ROS_ERROR_STREAM("Could not generate route as there was no map projection available");
+                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
             }
 
-            // load destination points in ECEF frame
-            auto destination_points = load_route_destinations_in_ecef(req.routeID);
+            // load destination points in map frame
+            auto destination_points = load_route_destinations_in_map_frame(req.routeID);
             // Check if route file are valid with at least one starting points and one destination points
             if(destination_points.size() < 1)
             {
@@ -170,8 +165,19 @@ namespace route {
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
             }
-            // convert points in ECEF to map frame
-            destination_points_in_map_ = transform_to_map_frame(destination_points, map_in_earth);
+
+            if (!world_model_ || !world_model_->getMap()) {
+                ROS_ERROR_STREAM("World model has not been initialized.");
+                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
+                return true;
+            }
+
+            // convert points in 2d to map frame
+            destination_points_in_map_ = lanelet::utils::transform(destination_points, [](auto a) { return lanelet::traits::to2D(a); });
+
+            // Add vehicle as first destination point
             auto destination_points_in_map_with_vehicle = destination_points_in_map_;
             
             lanelet::BasicPoint2d vehicle_position(vehicle_pose_->pose.position.x, vehicle_pose_->pose.position.y);
@@ -240,6 +246,7 @@ namespace route {
             route_msg_.header.stamp = ros::Time::now();
             route_msg_.header.frame_id = "map";
             route_msg_.route_name = req.routeID;
+            route_msg_.map_version = world_model_->getMapVersion();
             // since routing is done correctly, transit to route following state
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_STARTED);
             publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);
@@ -278,57 +285,43 @@ namespace route {
         return false;
     }
 
-    std::vector<tf2::Vector3> RouteGeneratorWorker::load_route_destinations_in_ecef(const std::string& route_id) const
+    std::vector<lanelet::BasicPoint3d> RouteGeneratorWorker::load_route_destinations_in_map_frame(const std::string& route_id) const 
     {
         // compose full path of the route file
         std::string route_file_name = route_file_path_ + route_id + ".csv";
         std::ifstream fs(route_file_name);
         std::string line;
-        std::vector<tf2::Vector3> destination_points;
+        std::vector<lanelet::BasicPoint3d> destination_points;
+        
+        if (!map_proj_) {
+            throw std::invalid_argument("load_route_destinations_in_map_frame before map projection was set");
+        }
+        
+        lanelet::projection::LocalFrameProjector projector(map_proj_.get().c_str()); // Build map projector
+
         // read each line if any
         while(std::getline(fs, line))
         {
-            wgs84_utils::wgs84_coordinate coordinate;
+            lanelet::GPSPoint coordinate;
             // lat lon and elev is seperated by comma
             auto comma = line.find(",");
-            // convert lon value in the range of [0, 360.0] degree and then into rad
-            coordinate.lon =
-                (std::stod(line.substr(0, comma)) < 0 ? std::stod(line.substr(0, comma)) + 360.0 : std::stod(line.substr(0, comma))) * DEG_TO_RAD;
+            // convert lon value in degrees from string
+            coordinate.lon = std::stod(line.substr(0, comma));
             line.erase(0, comma + 1);
             comma = line.find(",");
-            // convert lat value in the range of [0, 360.0] degree and then into rad
-            coordinate.lat =
-                (std::stod(line.substr(0, comma)) < 0 ? std::stod(line.substr(0, comma)) + 360.0 : std::stod(line.substr(0, comma))) * DEG_TO_RAD;
+            // convert lat value in degrees from string
+            coordinate.lat = std::stod(line.substr(0, comma));
             // elevation is in meters
             line.erase(0, comma + 1);
             comma = line.find(",");
-            coordinate.elevation = std::stod(line.substr(0, comma));
-            // no rotation needed since it only represents a point
-            tf2::Quaternion no_rotation(0, 0, 0, 1);
-            destination_points.emplace_back(wgs84_utils::geodesic_to_ecef(coordinate, tf2::Transform(no_rotation)));
+            coordinate.ele = std::stod(line.substr(0, comma));
+
+            destination_points.emplace_back(projector.forward(coordinate));
         }
         return destination_points;
     }
 
-    std::vector<lanelet::BasicPoint2d> RouteGeneratorWorker::transform_to_map_frame(const std::vector<tf2::Vector3>& ecef_points, const tf2::Transform& map_in_earth) const
-    {
-        std::vector<lanelet::BasicPoint2d> map_points;
-        for(tf2::Vector3 point : ecef_points)
-        {
-            tf2::Transform point_in_earth;
-            tf2::Quaternion no_rotation(0, 0, 0, 1);
-
-            point_in_earth.setOrigin(point);
-            point_in_earth.setRotation(no_rotation);
-            // convert to map frame by (T_e_m)^(-1) * T_e_p
-            auto point_in_map = map_in_earth.inverse() * point_in_earth;
-            // return as 2D points as the API requiremnet of lanelet2 lib
-            map_points.push_back(lanelet::BasicPoint2d(point_in_map.getOrigin().getX(), point_in_map.getOrigin().getY()));
-        }
-        return map_points;
-    }
-
-    visualization_msgs::MarkerArray RouteGeneratorWorker::compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route)
+    visualization_msgs::Marker RouteGeneratorWorker::compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route)
     {
         std::vector<lanelet::ConstPoint3d> points;
         auto end_point_3d = route.get().getEndPoint();
@@ -354,47 +347,44 @@ namespace route {
             }
         }
 
-        route_marker_msg_.markers={};
-
-        if (!points.empty())
-        {
-            ROS_WARN_STREAM("No central line points! Returning");
-        }
+        route_marker_msg_.points={};
 
         // create the marker msgs
-        visualization_msgs::MarkerArray route_marker_msg;
         visualization_msgs::Marker marker;
         marker.header.frame_id = "map";
         marker.header.stamp = ros::Time();
-        marker.type = visualization_msgs::Marker::SPHERE;//
+        marker.type = visualization_msgs::Marker::SPHERE_LIST;//
         marker.action = visualization_msgs::Marker::ADD;
         marker.ns = "route_visualizer";
 
-        marker.scale.x = 0.5;
-        marker.scale.y = 0.5;
-        marker.scale.z = 0.5;
+        marker.scale.x = 0.65;
+        marker.scale.y = 0.65;
+        marker.scale.z = 0.65;
         marker.frame_locked = true;
+
+        marker.id = 0;
+        marker.color.r = 1.0F;
+        marker.color.g = 1.0F;
+        marker.color.b = 1.0F;
+        marker.color.a = 1.0F;
+
+        if (points.empty())
+        {
+            ROS_WARN_STREAM("No central line points! Returning");
+            return route_marker_msg_;
+        }
  
         for (int i = 0; i < points.size(); i=i+5)
         {
-            marker.id = i;
-
-            marker.color.r = 1.0F;
-            marker.color.g = 1.0F;
-            marker.color.b = 1.0F;
-            marker.color.a = 1.0F;
-
-            marker.pose.position.x = points[i].x();
-            marker.pose.position.y = points[i].y();
-            marker.pose.orientation.x = 0.0;
-            marker.pose.orientation.y = 0.0;
-            marker.pose.orientation.z = 0.0;
-            marker.pose.orientation.w = 1.0;
+            geometry_msgs::Point temp_point;
+            temp_point.x = points[i].x();
+            temp_point.y = points[i].y();
+            temp_point.z = 1; //to show up on top of the lanelet lines
             
-            route_marker_msg.markers.push_back(marker);
+            marker.points.push_back(temp_point);
         }
         new_route_marker_generated_ = true;
-        return route_marker_msg;
+        return marker;
     }
 
     cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route)
@@ -498,9 +488,14 @@ namespace route {
         }
     }
 
-    void RouteGeneratorWorker::twist_cd(const geometry_msgs::TwistStampedConstPtr& msg)
+    void RouteGeneratorWorker::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg)
     {
         current_speed_ = msg->twist.linear.x;
+    }
+
+    void RouteGeneratorWorker::georeference_cb(const std_msgs::StringConstPtr& msg)
+    {
+        map_proj_ = msg->data;
     }
 
     void RouteGeneratorWorker::set_publishers(ros::Publisher route_event_pub, ros::Publisher route_state_pub, ros::Publisher route_pub,ros::Publisher route_marker_pub)
@@ -578,13 +573,16 @@ namespace route {
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_STARTED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);  
             }    
+            std::string original_route_name = route_msg_.route_name;
             route_msg_=compose_route_msg(route);
+            route_msg_.route_name = original_route_name;
             route_msg_.is_rerouted = true;
+            route_msg_.map_version = world_model_->getMapVersion();
             route_marker_msg_=compose_route_marker_msg(route);
             new_route_msg_generated_=true;
             new_route_marker_generated_=true;
         }
-    
+        
         // publish new route and set new route flag back to false
         if(new_route_msg_generated_ && new_route_marker_generated_)
         {

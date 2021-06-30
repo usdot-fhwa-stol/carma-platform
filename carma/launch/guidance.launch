@@ -70,6 +70,7 @@
   <remap from="/green_waypoints_array" to="green_waypoints_array"/>
   <remap from="trajectory" to="plan_trajectory"/>
 
+  <remap from="georeference" to="$(optenv CARMA_LOCZ_NS)/map_param_loader/georeference"/>
   <remap from="current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>
   <remap from="current_velocity" to="$(optenv CARMA_INTR_NS)/vehicle/twist"/>
   <remap from="controller/enable_robotic" to="$(optenv CARMA_INTR_NS)/controller/enable_robotic"/>
@@ -192,6 +193,13 @@
   <group>
     <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
     <include file = "$(find yield_plugin)/launch/yield_plugin.launch"/>
+  </group>
+
+  <!-- Port Drayage Plugin -->
+  <group>
+    <remap from="outgoing_mobility_operation" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_operation"/>
+    <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
+    <include file="$(find port_drayage_plugin)/launch/port_drayage_plugin.launch" />
   </group>
 
 

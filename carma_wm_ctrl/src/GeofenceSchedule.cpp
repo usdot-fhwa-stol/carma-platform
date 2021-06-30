@@ -17,7 +17,7 @@
 #include <ros/time.h>
 #include <carma_wm_ctrl/GeofenceSchedule.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
-
+#include <ros/ros.h>
 namespace carma_wm_ctrl
 {
 GeofenceSchedule::GeofenceSchedule()
@@ -48,6 +48,7 @@ std::pair<bool, ros::Time> GeofenceSchedule::getNextInterval(const ros::Time& ti
 {
   if (scheduleExpired(time))
   {
+    ROS_DEBUG_STREAM("Geofence schedule expired");
     return std::make_pair(false, ros::Time(0));  // If the schedule has expired or was never started
   }
 
@@ -56,6 +57,7 @@ std::pair<bool, ros::Time> GeofenceSchedule::getNextInterval(const ros::Time& ti
 
   if (week_day_set_.find(date.day_of_week()) == week_day_set_.end())
   {
+    ROS_DEBUG_STREAM("Geofence wrong day of the week");
     return std::make_pair(false, ros::Time(0));  // This geofence is not active on this day
   }
 
@@ -71,6 +73,7 @@ std::pair<bool, ros::Time> GeofenceSchedule::getNextInterval(const ros::Time& ti
   // Check if current time is after end of control
   if (ros_time_of_day > ros::Time((control_start_ + control_duration_).toSec()))
   {
+    ROS_DEBUG_STREAM("Geofence schedule too late in the day");
     // The requested time is after control end so there will not be another interval
     return std::make_pair(false, ros::Time(0));
   }
@@ -86,6 +89,7 @@ std::pair<bool, ros::Time> GeofenceSchedule::getNextInterval(const ros::Time& ti
     if (ros::Time(cur_start.toSec()) < ros_time_of_day &&
         ros_time_of_day < ros::Time((cur_start + control_span_).toSec()))
     {
+      ROS_DEBUG_STREAM("Geofence schedule active!");
       time_in_active_period = true;
     }
     cur_start += control_period_;
@@ -94,6 +98,7 @@ std::pair<bool, ros::Time> GeofenceSchedule::getNextInterval(const ros::Time& ti
   // check if the only next interval is after the schedule end or past the end of the day
   if (abs_day_start + cur_start > schedule_end_ || cur_start > full_day || cur_start > (control_start_ + control_duration_))
   {
+    ROS_DEBUG_STREAM("Geofence schedule beyond end time");
     return std::make_pair(time_in_active_period, ros::Time(0));
   }
 
