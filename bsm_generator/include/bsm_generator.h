@@ -16,7 +16,6 @@
  * the License.
  */
 
-#include <tf2_ros/transform_listener.h>
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -27,6 +26,8 @@
 #include <std_msgs/Float64.h>
 #include <wgs84_utils/wgs84_utils.h>
 #include <novatel_gps_msgs/NovatelDualAntennaHeading.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <std_msgs/String.h>
 #include "bsm_generator_worker.h"
 
 namespace bsm_generator
@@ -62,10 +63,9 @@ namespace bsm_generator
         ros::Subscriber steer_wheel_angle_sub_;
         ros::Subscriber brake_sub_;
         ros::Subscriber heading_sub_;
+        ros::Subscriber georeference_sub_;
 
-        // TF listenser
-        tf2_ros::Buffer tf2_buffer_;
-        std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
+        std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
         // frequency for bsm generation
         double bsm_generation_frequency_;
@@ -94,6 +94,12 @@ namespace bsm_generator
         void steerWheelAngleCallback(const std_msgs::Float64ConstPtr& msg);
         void brakeCallback(const std_msgs::Float64ConstPtr& msg);
         void headingCallback(const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& msg);
+
+        /**
+         * \brief Callback for map projection string to define lat/lon -> map conversion
+         * \brief msg The proj string defining the projection.
+         */ 
+        void georeferenceCallback(const std_msgs::StringConstPtr& msg);
 
         // callback for the timer
         void generateBSM(const ros::TimerEvent& event);

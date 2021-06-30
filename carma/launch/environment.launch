@@ -49,6 +49,7 @@
   <!-- CARMA Motion Computation Node -->
   <group>
     <remap to="$(optenv CARMA_MSG_NS)/incoming_mobility_path" from="incoming_mobility_path"/>
+    <remap from="georeference" to="$(optenv CARMA_LOCZ_NS)/map_param_loader/georeference"/>
     <include file="$(find motion_computation)/launch/motion_computation.launch"/>
   </group>
 
