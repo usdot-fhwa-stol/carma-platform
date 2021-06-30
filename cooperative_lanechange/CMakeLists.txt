@@ -32,8 +32,8 @@ set( CATKIN_DEPS
   carma_wm
   unobstructed_lanechange
   roslib
-  basic_autonomy
   lanelet2_extension
+  basic_autonomy
 )
 
 ## Find catkin macros and libraries
