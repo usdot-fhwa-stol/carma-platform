@@ -34,7 +34,6 @@
 # /////////////////////////////////////////////////////////////////////////////
 
 FROM usdotfhwastoldev/autoware.ai:develop AS base-image
-# FROM usdotfhwastol/autoware.ai:zephyr AS base-image
 
 FROM base-image AS source-code
 

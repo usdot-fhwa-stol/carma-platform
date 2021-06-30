@@ -37,9 +37,9 @@
 #include <cav_msgs/MobilityRequest.h>
 #include <cav_msgs/BSM.h>
 #include <cav_msgs/LaneChangeStatus.h>
-#include <basic_autonomy/helper_functions.h>
 #include <std_msgs/String.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
+#include <basic_autonomy/helper_functions.h>
 
 
 namespace cooperative_lanechange
