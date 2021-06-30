@@ -44,12 +44,17 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
 
   std::vector<double> times;
   std::vector<double> downtracks;
-  trajectory_utils::conversions::trajectory_to_downtrack_time(tp->trajectory_points, &downtracks, &times);
+
+  //Remove trajectory points with duplicated timestamps
+  std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = remove_repeated_timestamps(tp->trajectory_points);
+  ROS_DEBUG_STREAM("Original Trajectory size:"<<tp->trajectory_points.size() <<" Size after removing duplicate timestamps:"<<trajectory_points.size());
+
+  trajectory_utils::conversions::trajectory_to_downtrack_time(trajectory_points, &downtracks, &times);
 
   std::vector<double> speeds;
   trajectory_utils::conversions::time_to_speed(downtracks, times, tp->initial_longitudinal_velocity, &speeds);
 
-  if (speeds.size() != tp->trajectory_points.size())
+  if (speeds.size() != trajectory_points.size())
   {
     throw std::invalid_argument("Speeds and trajectory points sizes do not match");
   }
@@ -59,17 +64,17 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
   autoware_msgs::Lane lane;
   lane.header = tp->header;
   std::vector<autoware_msgs::Waypoint> waypoints;
-  waypoints.reserve(tp->trajectory_points.size());
+  waypoints.reserve(trajectory_points.size());
 
-  for (int i = 0; i < tp->trajectory_points.size(); i++)
+  for (int i = 0; i < trajectory_points.size(); i++)
   {
     autoware_msgs::Waypoint wp;
 
-    wp.pose.pose.position.x = tp->trajectory_points[i].x;
-    wp.pose.pose.position.y = tp->trajectory_points[i].y;
+    wp.pose.pose.position.x = trajectory_points[i].x;
+    wp.pose.pose.position.y = trajectory_points[i].y;
     wp.twist.twist.linear.x = lag_speeds[i];
-    ROS_DEBUG_STREAM("Setting waypoint idx: " << i <<", x: " << tp->trajectory_points[i].x << 
-                            ", y: " << tp->trajectory_points[i].y <<
+    ROS_DEBUG_STREAM("Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x << 
+                            ", y: " << trajectory_points[i].y <<
                             ", speed: " << lag_speeds[i]* 2.23694 << "mph");
     waypoints.push_back(wp);
   }
@@ -95,4 +100,34 @@ std::vector<double> PurePursuitWrapper::apply_response_lag(const std::vector<dou
   output = trajectory_utils::shift_by_lookahead(speeds, (unsigned int) lookahead_count);
   return output;
 }
+
+std::vector<cav_msgs::TrajectoryPlanPoint> PurePursuitWrapper::remove_repeated_timestamps(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points){
+  
+  std::vector<cav_msgs::TrajectoryPlanPoint> new_traj_points;
+
+  cav_msgs::TrajectoryPlanPoint prev_point;
+  bool first = true;
+
+  for(auto point : traj_points){
+
+    if(first){
+      first = false;
+      prev_point = point;
+      new_traj_points.push_back(point);
+      continue;
+    }
+
+    if(point.target_time != prev_point.target_time){
+      new_traj_points.push_back(point);
+      prev_point = point;
+    }
+    else{
+      ROS_DEBUG_STREAM("Duplicate point found");
+    }
+  }
+
+  return new_traj_points;
+
+}
+
 }  // namespace pure_pursuit_wrapper
