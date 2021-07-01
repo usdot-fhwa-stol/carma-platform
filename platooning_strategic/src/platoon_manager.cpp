@@ -43,6 +43,7 @@ namespace platoon_strategic
         ROS_DEBUG_STREAM("Downtrack Distance: " << dtDistance);
         // get DtD directly instead of parsing message
         dtDistance = DtD;
+        ROS_DEBUG_STREAM("Downtrack Distance ecef: " << dtDistance);
 
         std::vector<std::string> cur_parsed;
         boost::algorithm::split(cur_parsed, inputsParams[2], boost::is_any_of(":"));

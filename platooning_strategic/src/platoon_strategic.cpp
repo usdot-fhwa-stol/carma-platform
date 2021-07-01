@@ -939,8 +939,12 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("Receive operation message from vehicle: " << vehicleID);
             
             cav_msgs::LocationECEF ecef_loc = msg.location;
+            
+            ROS_DEBUG_STREAM("recieved ecef_loc.ecef_x: " << ecef_loc.ecef_x);
+            ROS_DEBUG_STREAM("recieved ecef_loc.ecef_y: " << ecef_loc.ecef_y);
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
             double dtd = wm_->routeTrackPos(incoming_pose).downtrack;
+            ROS_DEBUG_STREAM("DTD calculated in mob_op_cb_follower: " << dtd);
 
             pm_.memberUpdates(vehicleID, platoonID, senderBSM, statusParams, dtd);
         }
@@ -999,6 +1003,7 @@ namespace platoon_strategic
 
             
             ROS_DEBUG_STREAM("rearVehicleDtd from message: " << rearVehicleDtd);
+
             cav_msgs::LocationECEF ecef_loc = msg.location;
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
             rearVehicleDtd = wm_->routeTrackPos(incoming_pose).downtrack;
@@ -1049,8 +1054,9 @@ namespace platoon_strategic
             
             cav_msgs::LocationECEF ecef_loc = msg.location;
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
+            
             double dtd = wm_->routeTrackPos(incoming_pose).downtrack;
-
+            ROS_DEBUG_STREAM("dtd from ecef: " << dtd);
             pm_.memberUpdates(senderId, platoonId, msg.header.sender_bsm_id, statusParams, dtd);
 
         }
@@ -1086,6 +1092,10 @@ namespace platoon_strategic
         ecef_point.ecef_y = (int32_t)(ecef_point_vec.y() * 100.0);
         ecef_point.ecef_z = (int32_t)(ecef_point_vec.z() * 100.0); 
 
+        ROS_DEBUG_STREAM("ecef_point.ecef_x: " << ecef_point.ecef_x);
+        ROS_DEBUG_STREAM("ecef_point.ecef_y: " << ecef_point.ecef_y);
+        ROS_DEBUG_STREAM("ecef_point.ecef_z: " << ecef_point.ecef_z);
+
         return ecef_point;
     }
 
@@ -1104,7 +1114,9 @@ namespace platoon_strategic
         lanelet::BasicPoint2d output {
         point_in_map.getOrigin().getX(),
         point_in_map.getOrigin().getY()};
-
+        
+        ROS_DEBUG_STREAM("point_in_map.getOrigin().getX(): " << point_in_map.getOrigin().getX());
+        ROS_DEBUG_STREAM("point_in_map.getOrigin().getY(): " << point_in_map.getOrigin().getY());
         return output;
     } 
 
@@ -1118,8 +1130,6 @@ namespace platoon_strategic
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toNSec()/1000000;;
         msg.strategy = MOBILITY_STRATEGY;
-
-        
         msg.location = pose_to_ecef(pose_msg_, tf_);;
 
         if (type == OPERATION_INFO_TYPE){
@@ -1219,7 +1229,8 @@ namespace platoon_strategic
         tf2_buffer_.setUsingDedicatedThread(true);
         try
         {
-        tf_ = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+            tf_ = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+            ROS_DEBUG_STREAM("got the transform");
         }
         catch (const tf2::TransformException &ex)
         {
