@@ -114,6 +114,8 @@ namespace platoon_strategic
             
             void lookupECEFtoMapTransform();
 
+            cav_msgs::LocationECEF pose_ecef_point_;
+
         
         private:
 
@@ -135,7 +137,7 @@ namespace platoon_strategic
             geometry_msgs::PoseStamped pose_msg_;
             geometry_msgs::PoseStamped initial_pose_;
             
-            cav_msgs::LocationECEF ecef_point_;
+            
             //Internal Variables used in unit tests
             // Current vehicle forward speed
             double cmd_speed_ = 0;
@@ -240,9 +242,9 @@ namespace platoon_strategic
             const std::string MOBILITY_STRATEGY = "Carma/Platooning";
             const std::string OPERATION_INFO_TYPE = "INFO";
             const std::string OPERATION_STATUS_TYPE = "STATUS";
-            const std::string OPERATION_INFO_PARAMS   = "INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d,DTD:%.2f";
-            const std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,DTD:%2%,SPEED:%3%";
-            const std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
+            const std::string OPERATION_INFO_PARAMS   = "INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d,DTD:%.2f,ECEFX:%.2f,ECEFY:%.2f,ECEFZ:%.2f";
+            const std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,DTD:%2%,SPEED:%3%,ECEFX:%4%,ECEFY:%5%,ECEFZ:%6%";
+            const std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%,ECEFX:%4%,ECEFY:%5%,ECEFZ:%6%";
             int NEGOTIATION_TIMEOUT = 5000;  // ms
             
 

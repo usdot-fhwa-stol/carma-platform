@@ -22,6 +22,45 @@ using namespace platoon_strategic;
 
 // }
 
+TEST(PlatoonManagerTest, test_ecef_encode)
+{
+    ros::Time::init();
+
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    cav_msgs::LocationECEF ecef_point_test;
+    ecef_point_test.ecef_x = 1.0;
+    ecef_point_test.ecef_y = 2.0;
+    ecef_point_test.ecef_z = 3.0;
+    plugin.pose_ecef_point_ = ecef_point_test;
+    plugin.run_leader_waiting();
+    // plugin.pm_.current_platoon_state = PlatoonState::LEADER;
+
+}
+
+// TEST(PlatoonManagerTest, test_ecef_decode)
+// {
+//     ros::Time::init();
+
+//     PlatoonPluginConfig config;
+//     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+//     PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    
+//     cav_msgs::MobilityOperation msg;
+//     std::string strategyParams("INFO|REAR:1,LENGTH:2,SPEED:3,SIZE:4,DTD:5,ECEFX:6,ECEFY:7,ECEFZ:8");
+
+//     msg.strategy_params = strategyParams;
+
+//     plugin.pm_.current_platoon_state = PlatoonState::LEADER;
+//     plugin.pm_.current_plan.valid == false;
+
+//     plugin.mob_op_cb(msg);
+
+// }
+
 // TEST(PlatoonManagerTest, test_split)
 // {
 //     cav_msgs::MobilityOperation msg;

@@ -102,7 +102,7 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
         pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
-        ecef_point_ = pose_to_ecef(pose_msg_, tf_);
+        pose_ecef_point_ = pose_to_ecef(pose_msg_, tf_);
     }
 
     void PlatoonStrategicPlugin::cmd_cb(const geometry_msgs::TwistStampedConstPtr& msg)
@@ -333,6 +333,7 @@ namespace platoon_strategic
                 // Task 2
                 cav_msgs::MobilityOperation status;
                 status = composeMobilityOperationLeaderWaiting();
+                std::cerr << status << std::endl;
                 mobility_operation_publisher_(status);
                 ROS_DEBUG_STREAM("publish status message");
                 long tsEnd = ros::Time::now().toNSec()/1000000; 
@@ -910,8 +911,30 @@ namespace platoon_strategic
             std::string vehicleID = msg.header.sender_id;
             std::string platoonId = msg.header.plan_id;
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
+
+            std::vector<std::string> inputsParams;
+            boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+
+            std::vector<std::string> ecef_x_parsed;
+            boost::algorithm::split(ecef_x_parsed, inputsParams[3], boost::is_any_of(":"));
+            double ecef_x = std::stod(ecef_x_parsed[1]);
+            ROS_DEBUG_STREAM("ecef_x_parsed: " << ecef_x);
+
+            std::vector<std::string> ecef_y_parsed;
+            boost::algorithm::split(ecef_y_parsed, inputsParams[4], boost::is_any_of(":"));
+            double ecef_y = std::stod(ecef_y_parsed[1]);
+            ROS_DEBUG_STREAM("ecef_y_parsed: " << ecef_y);
+
+            std::vector<std::string> ecef_z_parsed;
+            boost::algorithm::split(ecef_z_parsed, inputsParams[5], boost::is_any_of(":"));
+            double ecef_z = std::stod(ecef_z_parsed[1]);
+            ROS_DEBUG_STREAM("ecef_z_parsed: " << ecef_z);
             
-            cav_msgs::LocationECEF ecef_loc = msg.location;
+            cav_msgs::LocationECEF ecef_loc;
+            ecef_loc.ecef_x = ecef_x;
+            ecef_loc.ecef_y = ecef_y;
+            ecef_loc.ecef_z = ecef_z;
+            
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
             double dtd = wm_->routeTrackPos(incoming_pose).downtrack;
 
@@ -937,11 +960,30 @@ namespace platoon_strategic
             std::string senderBSM = msg.header.sender_bsm_id;
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
             ROS_DEBUG_STREAM("Receive operation message from vehicle: " << vehicleID);
+
+            std::vector<std::string> inputsParams;
+            boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+
+            std::vector<std::string> ecef_x_parsed;
+            boost::algorithm::split(ecef_x_parsed, inputsParams[3], boost::is_any_of(":"));
+            double ecef_x = std::stod(ecef_x_parsed[1]);
+            ROS_DEBUG_STREAM("ecef_x_parsed: " << ecef_x);
+
+            std::vector<std::string> ecef_y_parsed;
+            boost::algorithm::split(ecef_y_parsed, inputsParams[4], boost::is_any_of(":"));
+            double ecef_y = std::stod(ecef_y_parsed[1]);
+            ROS_DEBUG_STREAM("ecef_y_parsed: " << ecef_y);
+
+            std::vector<std::string> ecef_z_parsed;
+            boost::algorithm::split(ecef_z_parsed, inputsParams[5], boost::is_any_of(":"));
+            double ecef_z = std::stod(ecef_z_parsed[1]);
+            ROS_DEBUG_STREAM("ecef_z_parsed: " << ecef_z);
             
-            cav_msgs::LocationECEF ecef_loc = msg.location;
+            cav_msgs::LocationECEF ecef_loc;
+            ecef_loc.ecef_x = ecef_x;
+            ecef_loc.ecef_y = ecef_y;
+            ecef_loc.ecef_z = ecef_z;
             
-            ROS_DEBUG_STREAM("recieved ecef_loc.ecef_x: " << ecef_loc.ecef_x);
-            ROS_DEBUG_STREAM("recieved ecef_loc.ecef_y: " << ecef_loc.ecef_y);
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
             double dtd = wm_->routeTrackPos(incoming_pose).downtrack;
             ROS_DEBUG_STREAM("DTD calculated in mob_op_cb_follower: " << dtd);
@@ -958,8 +1000,31 @@ namespace platoon_strategic
             std::string vehicleID = msg.header.sender_id;
             std::string platoonId = msg.header.plan_id;
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
+
+
+            std::vector<std::string> inputsParams;
+            boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+
+            std::vector<std::string> ecef_x_parsed;
+            boost::algorithm::split(ecef_x_parsed, inputsParams[3], boost::is_any_of(":"));
+            double ecef_x = std::stod(ecef_x_parsed[1]);
+            ROS_DEBUG_STREAM("ecef_x_parsed: " << ecef_x);
+
+            std::vector<std::string> ecef_y_parsed;
+            boost::algorithm::split(ecef_y_parsed, inputsParams[4], boost::is_any_of(":"));
+            double ecef_y = std::stod(ecef_y_parsed[1]);
+            ROS_DEBUG_STREAM("ecef_y_parsed: " << ecef_y);
+
+            std::vector<std::string> ecef_z_parsed;
+            boost::algorithm::split(ecef_z_parsed, inputsParams[5], boost::is_any_of(":"));
+            double ecef_z = std::stod(ecef_z_parsed[1]);
+            ROS_DEBUG_STREAM("ecef_z_parsed: " << ecef_z);
             
-            cav_msgs::LocationECEF ecef_loc = msg.location;
+            cav_msgs::LocationECEF ecef_loc;
+            ecef_loc.ecef_x = ecef_x;
+            ecef_loc.ecef_y = ecef_y;
+            ecef_loc.ecef_z = ecef_z;
+
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
             double dtd = wm_->routeTrackPos(incoming_pose).downtrack;
 
@@ -972,7 +1037,8 @@ namespace platoon_strategic
     }
 
     void PlatoonStrategicPlugin::mob_op_cb_leader(const cav_msgs::MobilityOperation& msg)
-    {
+    {   
+        ROS_WARN("1");
 
         std::string strategyParams = msg.strategy_params;
         std::string senderId = msg.header.sender_id;
@@ -1004,7 +1070,31 @@ namespace platoon_strategic
             
             ROS_DEBUG_STREAM("rearVehicleDtd from message: " << rearVehicleDtd);
 
-            cav_msgs::LocationECEF ecef_loc = msg.location;
+            std::vector<std::string> ecef_x_parsed;
+            boost::algorithm::split(ecef_x_parsed, inputsParams[5], boost::is_any_of(":"));
+            double ecef_x = std::stod(ecef_x_parsed[1]);
+            ROS_DEBUG_STREAM("ecef_x_parsed: " << ecef_x);
+            std::cerr << "ecef_x_parsed: " << ecef_x << std::endl;
+
+            std::vector<std::string> ecef_y_parsed;
+            boost::algorithm::split(ecef_y_parsed, inputsParams[6], boost::is_any_of(":"));
+            double ecef_y = std::stod(ecef_y_parsed[1]);
+            ROS_DEBUG_STREAM("ecef_y_parsed: " << ecef_y);
+            std::cerr << "ecef_y_parsed: " << ecef_y << std::endl;
+
+            std::vector<std::string> ecef_z_parsed;
+            boost::algorithm::split(ecef_z_parsed, inputsParams[7], boost::is_any_of(":"));
+            double ecef_z = std::stod(ecef_z_parsed[1]);
+            ROS_DEBUG_STREAM("ecef_z_parsed: " << ecef_z);
+            std::cerr << "ecef_z_parsed: " << ecef_z << std::endl;
+            
+            cav_msgs::LocationECEF ecef_loc;
+            ecef_loc.ecef_x = ecef_x;
+            ecef_loc.ecef_y = ecef_y;
+            ecef_loc.ecef_z = ecef_z;
+
+            ROS_WARN("2");
+
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
             rearVehicleDtd = wm_->routeTrackPos(incoming_pose).downtrack;
 
@@ -1031,6 +1121,9 @@ namespace platoon_strategic
                 fmter %platoon_size;
                 fmter %current_speed_;
                 fmter %current_downtrack_;
+                fmter %pose_ecef_point_.ecef_x;
+                fmter %pose_ecef_point_.ecef_y;
+                fmter %pose_ecef_point_.ecef_z;
                 
                 request.strategy_params = fmter.str();
                 request.urgency = 50;
@@ -1051,8 +1144,30 @@ namespace platoon_strategic
             // If it is platoon status message, the params string is in format: STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.length() + 1);
             ROS_DEBUG_STREAM("Receive operation status message from vehicle: " << senderId << " with params: " << statusParams);
+
+            std::vector<std::string> inputsParams;
+            boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+
+            std::vector<std::string> ecef_x_parsed;
+            boost::algorithm::split(ecef_x_parsed, inputsParams[3], boost::is_any_of(":"));
+            double ecef_x = std::stod(ecef_x_parsed[1]);
+            ROS_DEBUG_STREAM("ecef_x_parsed: " << ecef_x);
+
+            std::vector<std::string> ecef_y_parsed;
+            boost::algorithm::split(ecef_y_parsed, inputsParams[4], boost::is_any_of(":"));
+            double ecef_y = std::stod(ecef_y_parsed[1]);
+            ROS_DEBUG_STREAM("ecef_y_parsed: " << ecef_y);
+
+            std::vector<std::string> ecef_z_parsed;
+            boost::algorithm::split(ecef_z_parsed, inputsParams[5], boost::is_any_of(":"));
+            double ecef_z = std::stod(ecef_z_parsed[1]);
+            ROS_DEBUG_STREAM("ecef_z_parsed: " << ecef_z);
             
-            cav_msgs::LocationECEF ecef_loc = msg.location;
+            cav_msgs::LocationECEF ecef_loc;
+            ecef_loc.ecef_x = ecef_x;
+            ecef_loc.ecef_y = ecef_y;
+            ecef_loc.ecef_z = ecef_z;
+            
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
             
             double dtd = wm_->routeTrackPos(incoming_pose).downtrack;
@@ -1147,6 +1262,9 @@ namespace platoon_strategic
             fmter %current_speed;
             fmter %PlatoonSize;
             fmter %PlatoonRearDowntrackDistance;
+            fmter %pose_ecef_point_.ecef_x;
+            fmter %pose_ecef_point_.ecef_y;
+            fmter %pose_ecef_point_.ecef_z;
 
             std::string infoParams = fmter.str();
             msg.strategy_params = infoParams;
@@ -1158,6 +1276,9 @@ namespace platoon_strategic
             fmter %cmdSpeed;
             fmter %current_downtrack_;
             fmter %current_speed_;
+            fmter %pose_ecef_point_.ecef_x;
+            fmter %pose_ecef_point_.ecef_y;
+            fmter %pose_ecef_point_.ecef_z;
                     
             std::string statusParams = fmter.str();
             msg.strategy_params = statusParams;
@@ -1188,6 +1309,9 @@ namespace platoon_strategic
         fmter %cmdSpeed;
         fmter %current_downtrack_;
         fmter %current_speed_;
+        fmter %pose_ecef_point_.ecef_x;
+        fmter %pose_ecef_point_.ecef_y;
+        fmter %pose_ecef_point_.ecef_z;
                     
         std::string statusParams = fmter.str();
         msg.strategy_params = statusParams;
@@ -1217,6 +1341,9 @@ namespace platoon_strategic
         fmter %cmdSpeed;
         fmter %current_downtrack_;
         fmter %current_speed_;
+        fmter %pose_ecef_point_.ecef_x;
+        fmter %pose_ecef_point_.ecef_y;
+        fmter %pose_ecef_point_.ecef_z;
                     
         std::string statusParams = fmter.str();
         msg.strategy_params = statusParams;
@@ -1259,6 +1386,9 @@ namespace platoon_strategic
         fmter %cmdSpeed;
         fmter %current_downtrack_;
         fmter %current_speed_;
+        fmter %pose_ecef_point_.ecef_x;
+        fmter %pose_ecef_point_.ecef_y;
+        fmter %pose_ecef_point_.ecef_z;
                     
         std::string statusParams = fmter.str();
         msg.strategy_params = statusParams;
