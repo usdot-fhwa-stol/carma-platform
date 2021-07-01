@@ -102,7 +102,13 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
         pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
+
+        lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
+        carma_wm::TrackPos tc = wm_->routeTrackPos(current_loc);
+        current_downtrack_ = tc.downtrack;
+        
         pose_ecef_point_ = pose_to_ecef(pose_msg_, tf_);
+
     }
 
     void PlatoonStrategicPlugin::cmd_cb(const geometry_msgs::TwistStampedConstPtr& msg)
@@ -241,8 +247,7 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("change the state from standby to leader at start-up");
         }
 
-        carma_wm::TrackPos tc = wm_->routeTrackPos(current_loc);
-        current_downtrack_ = tc.downtrack;
+        
         // double dx = pose_msg_.pose.position.x - initial_pose_.pose.position.x;
         // double dy = pose_msg_.pose.position.y - initial_pose_.pose.position.y;
         // current_downtrack_ = std::sqrt(dx*dx + dy*dy);
