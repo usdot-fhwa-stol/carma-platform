@@ -241,11 +241,11 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("change the state from standby to leader at start-up");
         }
 
-        // carma_wm::TrackPos tc = wm_->routeTrackPos(current_loc);
-        // current_downtrack_ = tc.downtrack;
-        double dx = pose_msg_.pose.position.x - initial_pose_.pose.position.x;
-        double dy = pose_msg_.pose.position.y - initial_pose_.pose.position.y;
-        current_downtrack_ = std::sqrt(dx*dx + dy*dy);
+        carma_wm::TrackPos tc = wm_->routeTrackPos(current_loc);
+        current_downtrack_ = tc.downtrack;
+        // double dx = pose_msg_.pose.position.x - initial_pose_.pose.position.x;
+        // double dy = pose_msg_.pose.position.y - initial_pose_.pose.position.y;
+        // current_downtrack_ = std::sqrt(dx*dx + dy*dy);
         pm_.current_downtrack_didtance_ = current_downtrack_;
         pm_.HostMobilityId = config_.vehicle_id;
         ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
@@ -631,8 +631,8 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("applicantCurrentDtd from message: " << applicantCurrentDtd);
 
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location, tf_);
-            // applicantCurrentDtd = wm_->routeTrackPos(incoming_pose).downtrack;
-            ROS_DEBUG_STREAM("applicantCurrentDtd from ecef pose: " << applicantCurrentDtd);
+            applicantCurrentDtd = wm_->routeTrackPos(incoming_pose).downtrack;
+            ROS_DEBUG_STREAM("applicantCurrentmemberUpdates from ecef pose: " << applicantCurrentDtd);
             // Check if we have enough room for that applicant
             int currentPlatoonSize = pm_.getTotalPlatooningSize();
             bool hasEnoughRoomInPlatoon = applicantSize + currentPlatoonSize <= maxPlatoonSize_;
@@ -839,6 +839,9 @@ namespace platoon_strategic
                 status_msg.leader_cmd_speed = platoon_leader.commandSpeed;
                 status_msg.host_platoon_position = pm_.getNumberOfVehicleInFront();
 
+                status_msg.desired_gap = config_.timeHeadway *  current_speed_;
+                status_msg.actual_gap = platoon_leader.vehiclePosition - current_downtrack_;
+
             }
             else
             {
@@ -851,8 +854,7 @@ namespace platoon_strategic
             
             // This info is updated at platoon control plugin
             status_msg.host_cmd_speed = cmd_speed_;
-            status_msg.desired_gap = 6.0;
-            status_msg.actual_gap = 0.0;
+            
 
         }
         return status_msg;
@@ -908,7 +910,12 @@ namespace platoon_strategic
             std::string vehicleID = msg.header.sender_id;
             std::string platoonId = msg.header.plan_id;
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
-            pm_.memberUpdates(vehicleID, platoonId, msg.header.sender_bsm_id, statusParams);
+            
+            cav_msgs::LocationECEF ecef_loc = msg.location;
+            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
+            double dtd = wm_->routeTrackPos(incoming_pose).downtrack;
+
+            pm_.memberUpdates(vehicleID, platoonId, msg.header.sender_bsm_id, statusParams, dtd);
             ROS_DEBUG_STREAM("Received platoon status message from " << msg.header.sender_id);
         }
         else {
@@ -930,9 +937,12 @@ namespace platoon_strategic
             std::string senderBSM = msg.header.sender_bsm_id;
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
             ROS_DEBUG_STREAM("Receive operation message from vehicle: " << vehicleID);
-            // TODO: update this
-            pm_.memberUpdates(vehicleID, platoonID, senderBSM, statusParams);
-            // plugin.platoonManager.memberUpdates(vehicleID, platoonID, msg.getHeader().getSenderBsmId(), statusParams);
+            
+            cav_msgs::LocationECEF ecef_loc = msg.location;
+            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
+            double dtd = wm_->routeTrackPos(incoming_pose).downtrack;
+
+            pm_.memberUpdates(vehicleID, platoonID, senderBSM, statusParams, dtd);
         }
     }
 
@@ -944,9 +954,12 @@ namespace platoon_strategic
             std::string vehicleID = msg.header.sender_id;
             std::string platoonId = msg.header.plan_id;
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
-            // / TODO: update these accordingly
-            // plugin.platoonManager.memberUpdates(vehicleID, platoonId, msg.getHeader().getSenderBsmId(), statusParams);
-            pm_.memberUpdates(vehicleID, platoonId, msg.header.sender_bsm_id, statusParams);
+            
+            cav_msgs::LocationECEF ecef_loc = msg.location;
+            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
+            double dtd = wm_->routeTrackPos(incoming_pose).downtrack;
+
+            pm_.memberUpdates(vehicleID, platoonId, msg.header.sender_bsm_id, statusParams, dtd);
             ROS_DEBUG_STREAM("Received platoon status message from " << msg.header.sender_id);
             ROS_DEBUG_STREAM("member updated");
         } else {
@@ -988,7 +1001,7 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("rearVehicleDtd from message: " << rearVehicleDtd);
             cav_msgs::LocationECEF ecef_loc = msg.location;
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
-            // rearVehicleDtd = wm_->routeTrackPos(incoming_pose).downtrack;
+            rearVehicleDtd = wm_->routeTrackPos(incoming_pose).downtrack;
 
             ROS_DEBUG_STREAM("rearVehicleDtd from ecef: " << rearVehicleDtd);
             
@@ -1033,7 +1046,12 @@ namespace platoon_strategic
             // If it is platoon status message, the params string is in format: STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.length() + 1);
             ROS_DEBUG_STREAM("Receive operation status message from vehicle: " << senderId << " with params: " << statusParams);
-            pm_.memberUpdates(senderId, platoonId, msg.header.sender_bsm_id, statusParams);
+            
+            cav_msgs::LocationECEF ecef_loc = msg.location;
+            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
+            double dtd = wm_->routeTrackPos(incoming_pose).downtrack;
+
+            pm_.memberUpdates(senderId, platoonId, msg.header.sender_bsm_id, statusParams, dtd);
 
         }
         else

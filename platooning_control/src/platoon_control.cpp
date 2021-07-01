@@ -182,8 +182,11 @@ namespace platoon_control
         ROS_DEBUG_STREAM("Platoon leader leader cmd speed:  " << platoon_leader_.commandSpeed);
 
         cav_msgs::PlatooningInfo platooing_info_msg = *msg;
-        platooing_info_msg.desired_gap = pcw_.desired_gap_;
-        platooing_info_msg.actual_gap = pcw_.actual_gap_;
+        // platooing_info_msg.desired_gap = pcw_.desired_gap_;
+        // platooing_info_msg.actual_gap = pcw_.actual_gap_;
+        pcw_.actual_gap_ = platooing_info_msg.actual_gap;
+        pcw_.desired_gap_ = platooing_info_msg.desired_gap;
+
         platooing_info_msg.host_cmd_speed = pcw_.speedCmd_;
         platoon_info_pub_.publish(platooing_info_msg);
     }

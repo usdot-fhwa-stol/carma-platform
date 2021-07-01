@@ -95,7 +95,7 @@ namespace platoon_strategic
 
 
 
-        void memberUpdates(const std::string& senderId,const std::string& platoonId,const std::string& senderBsmId,const std::string& params);
+        void memberUpdates(const std::string& senderId,const std::string& platoonId,const std::string& senderBsmId,const std::string& params, const double& DtD);
 
         /**
          * Given any valid platooning mobility STATUS operation parameters and sender staticId,

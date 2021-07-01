@@ -26,7 +26,7 @@ namespace platoon_strategic
     {}
 
 
-    void PlatoonManager::memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& senderBsmId,const std::string& params){
+    void PlatoonManager::memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& senderBsmId,const std::string& params, const double& DtD){
 
         std::vector<std::string> inputsParams;
         boost::algorithm::split(inputsParams, params, boost::is_any_of(","));
@@ -41,6 +41,8 @@ namespace platoon_strategic
         boost::algorithm::split(dtd_parsed, inputsParams[1], boost::is_any_of(":"));
         double dtDistance = std::stod(dtd_parsed[1]);
         ROS_DEBUG_STREAM("Downtrack Distance: " << dtDistance);
+        // get DtD directly instead of parsing message
+        dtDistance = DtD;
 
         std::vector<std::string> cur_parsed;
         boost::algorithm::split(cur_parsed, inputsParams[2], boost::is_any_of(":"));

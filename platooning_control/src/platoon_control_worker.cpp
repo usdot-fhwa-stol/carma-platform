@@ -50,30 +50,38 @@ namespace platoon_control
 
 	        double leaderCurrentPosition = leader.vehiclePosition;
 	        ROS_DEBUG_STREAM("The current leader position is " << leaderCurrentPosition);
-	        double hostVehiclePosition = getCurrentDowntrackDistance(point);
-	        double hostVehicleSpeed = currentSpeed;
 
-            actual_gap_ = leaderCurrentPosition - hostVehiclePosition;
-            ROS_DEBUG_STREAM("actual gap " << actual_gap_);
+	        // double hostVehiclePosition = getCurrentDowntrackDistance(point);
+	        // double hostVehicleSpeed = currentSpeed;
 
-	        ROS_DEBUG_STREAM("The host vehicle speed is " << hostVehicleSpeed << " and its position is " << hostVehiclePosition);
-	        // If the host vehicle is the fifth vehicle and it is following the third vehicle, the leader index here is 2
-	        // vehiclesInFront should be 2, because number of vehicles in front is 4, then numOfVehiclesGaps = VehicleInFront - leaderIndex   
-	        int leaderIndex = leader.leaderIndex;
-	        int numOfVehiclesGaps = leader.NumberOfVehicleInFront - leaderIndex;
-	        ROS_DEBUG_STREAM("The host vehicle have " << numOfVehiclesGaps << " vehicles between itself and its leader (includes the leader)");
-	        double desiredGap = std::max(hostVehicleSpeed * ctrl_config.timeHeadway * numOfVehiclesGaps, ctrl_config.standStillHeadway * numOfVehiclesGaps);
-            desired_gap_ = desiredGap;
-	        ROS_DEBUG_STREAM("The desired gap with the leader is " << desiredGap);
-	        double desiredHostPosition = leaderCurrentPosition - desiredGap;
-	        ROS_DEBUG_STREAM("The desired host position and the setpoint for pid controller is " << desiredHostPosition);
-	        // PD controller is used to adjust the speed to maintain the distance gap between the subject vehicle and leader vehicle
-	        // Error input for PD controller is defined as the difference between leaderCurrentPosition and desiredLeaderPosition
-	        // A positive error implies that that the two vehicles are too far and a negative error implies that the two vehicles are too close
-	        // The summation of the leader vehicle command speed and the output of PD controller will be used as speed commands
-	        // The command speed of leader vehicle will act as the baseline for our speed control
+            // actual_gap_ = leaderCurrentPosition - hostVehiclePosition;
+            // ROS_DEBUG_STREAM("actual gap " << actual_gap_);
+
+	        // ROS_DEBUG_STREAM("The host vehicle speed is " << hostVehicleSpeed << " and its position is " << hostVehiclePosition);
+	        // // If the host vehicle is the fifth vehicle and it is following the third vehicle, the leader index here is 2
+	        // // vehiclesInFront should be 2, because number of vehicles in front is 4, then numOfVehiclesGaps = VehicleInFront - leaderIndex   
+	        // int leaderIndex = leader.leaderIndex;
+	        // int numOfVehiclesGaps = leader.NumberOfVehicleInFront - leaderIndex;
+	        // ROS_DEBUG_STREAM("The host vehicle have " << numOfVehiclesGaps << " vehicles between itself and its leader (includes the leader)");
+	        // double desiredGap = std::max(hostVehicleSpeed * ctrl_config.timeHeadway * numOfVehiclesGaps, ctrl_config.standStillHeadway * numOfVehiclesGaps);
+            // desired_gap_ = desiredGap;
+	        // ROS_DEBUG_STREAM("The desired gap with the leader is " << desiredGap);
+	        // double desiredHostPosition = leaderCurrentPosition - desiredGap;
+	        // ROS_DEBUG_STREAM("The desired host position and the setpoint for pid controller is " << desiredHostPosition);
+	        // // PD controller is used to adjust the speed to maintain the distance gap between the subject vehicle and leader vehicle
+	        // // Error input for PD controller is defined as the difference between leaderCurrentPosition and desiredLeaderPosition
+	        // // A positive error implies that that the two vehicles are too far and a negative error implies that the two vehicles are too close
+	        // // The summation of the leader vehicle command speed and the output of PD controller will be used as speed commands
+	        // // The command speed of leader vehicle will act as the baseline for our speed control
+
+            // TODO: temporary used this way to get the correct downtrack
+            double desiredHostPosition = leaderCurrentPosition - desired_gap_;
+            ROS_DEBUG_STREAM("desiredHostPosition = " << desiredHostPosition);
+
+            double hostVehiclePosition = leaderCurrentPosition - actual_gap_;
+            ROS_DEBUG_STREAM("hostVehiclePosition = " << hostVehiclePosition);
 	        
-	        controllerOutput = pid_ctrl_.calculate(desiredHostPosition, hostVehiclePosition);//; = speedController_.apply(signal).get().getData();
+	        controllerOutput = pid_ctrl_.calculate(desiredHostPosition, hostVehiclePosition);
 
 		    double adjSpeedCmd = controllerOutput + leader.commandSpeed;
 	        ROS_DEBUG_STREAM("Adjusted Speed Cmd = " << adjSpeedCmd << "; Controller Output = " << controllerOutput
