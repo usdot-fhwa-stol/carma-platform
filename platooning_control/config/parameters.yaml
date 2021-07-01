@@ -2,8 +2,8 @@ timeHeadway: 3.5
 standStillHeadway: 22.0
 maxAccel: 1.5
 Kp: 0.3
-Kd: 0.1
-Ki: 0.035
+Kd: 0.0 #0.1
+Ki: 0.0 #0.035
 max_value: 5.0
 min_value: -1.0
 CMD_TIMESTEP: 100
