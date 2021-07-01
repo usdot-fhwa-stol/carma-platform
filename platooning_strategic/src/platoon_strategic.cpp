@@ -103,9 +103,12 @@ namespace platoon_strategic
     {
         pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
 
-        lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
-        carma_wm::TrackPos tc = wm_->routeTrackPos(current_loc);
-        current_downtrack_ = tc.downtrack;
+        if (pm_.current_platoon_state != PlatoonState::STANDBY)
+        {
+            lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
+            carma_wm::TrackPos tc = wm_->routeTrackPos(current_loc);
+            current_downtrack_ = tc.downtrack;
+        }
         
         pose_ecef_point_ = pose_to_ecef(pose_msg_, tf_);
 

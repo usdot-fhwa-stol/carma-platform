@@ -3,7 +3,7 @@ algorithmType: 0
 statusMessageInterval: 100
 infoMessageInterval: 200
 mvr_duration: 15
-timeHeadway: 2.0
+timeHeadway: 2.5
 standStillHeadway: 12.0
 maxAllowedJoinTimeGap: 15.0
 maxAllowedJoinGap: 90.0
