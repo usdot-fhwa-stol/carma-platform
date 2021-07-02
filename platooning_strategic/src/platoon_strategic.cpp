@@ -848,7 +848,7 @@ namespace platoon_strategic
                 status_msg.leader_cmd_speed = platoon_leader.commandSpeed;
                 status_msg.host_platoon_position = pm_.getNumberOfVehicleInFront();
 
-                status_msg.desired_gap = config_.timeHeadway *  current_speed_;
+                status_msg.desired_gap = std::max(config_.standStillHeadway, config_.timeHeadway *  current_speed_);
                 status_msg.actual_gap = platoon_leader.vehiclePosition - current_downtrack_;
 
             }
@@ -894,14 +894,7 @@ namespace platoon_strategic
     
 
         // TODO: If needed, add a queue for status messages
-        // if (msg.strategy_params.rfind(OPERATION_INFO_TYPE, 0) == 0)
-        // {
-        //     //  this.state.onMobilityOperationMessage(msg);
-        // }
-        // else
-        // {
-        //     // TODO: add a queue for status messages
-        // }
+        // INFO messages always processed, STATUS messages if saved in que
         
     }
 
