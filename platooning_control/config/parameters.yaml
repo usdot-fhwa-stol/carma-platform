@@ -1,8 +1,8 @@
 timeHeadway: 3.5
 standStillHeadway: 22.0
 maxAccel: 1.5
-Kp: 0.3
-Kd: 0.0 #0.1
+Kp: 0.4
+Kd: 0.05 #0.1
 Ki: 0.0 #0.035
 max_value: 5.0
 min_value: -1.0
@@ -13,5 +13,5 @@ integratorMax: 100
 integratorMin: -100
 wheelbase: 2.7
 lowpass_gain: 1.0
-lookahead_ratio: 2.0
+lookahead_ratio: 2.25
 min_lookahead_dist: 15.0
