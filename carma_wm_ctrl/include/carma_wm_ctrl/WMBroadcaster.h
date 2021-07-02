@@ -261,6 +261,9 @@ private:
    * It should not be incremented for updates that do not require a full map publication.
    */
   size_t current_map_version_ = 0; 
+  ros::V_string combineParticipantsToVehicle(const ros::V_string& input_participants) const;
+
+
 
   cav_msgs::Route current_route; // Most recently received route message
   /**
