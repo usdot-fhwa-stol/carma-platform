@@ -36,9 +36,8 @@
 #include <cav_msgs/MobilityResponse.h>
 #include <cav_msgs/MobilityRequest.h>
 #include <cav_msgs/BSM.h>
+#include <tf2_ros/transform_listener.h>
 #include <cav_msgs/LaneChangeStatus.h>
-#include <std_msgs/String.h>
-#include <lanelet2_extension/projection/local_frame_projector.h>
 #include <basic_autonomy/helper_functions.h>
 
 
@@ -94,17 +93,6 @@ namespace cooperative_lanechange
             std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
                                                 double max_starting_downtrack,
                                                 const carma_wm::WorldModelConstPtr& wm,const cav_msgs::VehicleState& state);
-              /**
-             * \brief Finds the index for the point closest to the specified vehicle state
-             * 
-             * \param points A BasicLineString type variable, which is a vector of BasicPoint2d elements
-             * \param state The vehicle state to which the nearest index needs to be found
-             * 
-             * \return the index of the element in points which is closest to state.
-             */ 
-            int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state) const;
-
-            int getNearestPointIndex(const std::vector<lanelet::BasicPoint2d>& points, const cav_msgs::VehicleState& state) const;
             /**
              * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 
              * \param starting_downtrack downtrack along route where maneuver starts
@@ -219,17 +207,18 @@ namespace cooperative_lanechange
             /**
              * \brief Converts Trajectory Plan to (Mobility) Trajectory
              * \param traj_points vector of Trajectory Plan points to be converted to Trajectory type message
+             * \param tf The transform between the world frame and map frame in which the trajectory plan points are calculated
              * \return The Trajectory type message in world frame
              */
             
-            cav_msgs::Trajectory trajectory_plan_to_trajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points) const;
+            cav_msgs::Trajectory trajectory_plan_to_trajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const;
             /**
-             * \brief Converts Trajectory Point to ECEF frame using map projection
+             * \brief Converts Trajectory Point to ECEF Transform
              * \param traj_points A Trajectory Plan point to be converted to Trajectory type message
-             * \throw std::invalid_argument If the map_projector_ member variable has not been set
-             * \return The trajectory point message transformed to ecef frame
+             * \param tf The transform between the world frame and map frame in which the trajectory plan points are calculated
+             * \return The trajectory point message transformed to world frame
              */
-            cav_msgs::LocationECEF trajectory_point_to_ecef(const cav_msgs::TrajectoryPlanPoint& traj_point) const;
+            cav_msgs::LocationECEF trajectory_point_to_ecef(const cav_msgs::TrajectoryPlanPoint& traj_point, const tf2::Transform& transform) const;
 
             void add_maneuver_to_response(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp, std::vector<cav_msgs::TrajectoryPlanPoint>& planned_trajectory_points);
             
@@ -246,12 +235,6 @@ namespace cooperative_lanechange
 
             // initialize this node
             void initialize();
-
-            /**
-             * \brief Callback for map projection string to define lat/lon -> map conversion
-             * \brief msg The proj string defining the projection.
-             */ 
-            void georeference_callback(const std_msgs::StringConstPtr& msg);
 
             //Internal Variables used in unit testsis_lanechange_accepted_
             // Current vehicle forward speed
@@ -287,10 +270,11 @@ namespace cooperative_lanechange
             
             ros::Subscriber incoming_mobility_response_;
             ros::Subscriber bsm_sub_;
-            ros::Subscriber georeference_sub_;
             ros::Timer discovery_pub_timer_;
 
-            std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
+            // TF listenser
+            tf2_ros::Buffer tf2_buffer_;
+            std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
 
             // trajectory frequency
             double traj_freq = 10;
@@ -332,8 +316,7 @@ namespace cooperative_lanechange
             double min_desired_gap_ =5.0;
             double ending_buffer_downtrack_ = 5.0;
        
-
-            cav_msgs::VehicleState  ending_state_before_buffer_;
+            cav_msgs::VehicleState  ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
 
             // generated trajectory plan
             cav_msgs::TrajectoryPlan trajectory_msg;
