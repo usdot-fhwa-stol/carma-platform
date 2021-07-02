@@ -36,6 +36,8 @@ set( CATKIN_DEPS
   tf2_geometry_msgs
   roslib
   carma_debug_msgs
+  unobstructed_lanechange
+  lanelet2_extension
 )
 
 ## Find catkin macros and libraries
@@ -54,7 +56,7 @@ find_package(Eigen3 REQUIRED)
 catkin_package(
    INCLUDE_DIRS include
    CATKIN_DEPENDS ${CATKIN_DEPS}
-   DEPENDS Boost Eigen3
+   DEPENDS Boost EIGEN3
 )
 
 ###########
