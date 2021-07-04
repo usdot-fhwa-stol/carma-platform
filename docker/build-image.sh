@@ -41,7 +41,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         -d|--develop)
             USERNAME=usdotfhwastoldev
-            COMPONENT_VERSION_STRING=develop
+            COMPONENT_VERSION_STRING=noetic-develop
             shift
             ;;
     esac
@@ -55,7 +55,7 @@ echo "Building docker image for $IMAGE version: $COMPONENT_VERSION_STRING"
 echo "Final image name: $USERNAME/$IMAGE:$COMPONENT_VERSION_STRING"
 
 cd ..
-if [[ $COMPONENT_VERSION_STRING = "develop" ]]; then
+if [[ $COMPONENT_VERSION_STRING = "noetic-develop" ]]; then
     sed "s|usdotfhwastoldev/|$USERNAME/|g; s|usdotfhwastolcandidate/|$USERNAME/|g; s|usdotfhwastol/|$USERNAME/|g; s|:[0-9]*\.[0-9]*\.[0-9]*|:$COMPONENT_VERSION_STRING|g; s|checkout.bash|checkout.bash -d|g" \
         Dockerfile | docker build -f - --no-cache -t $USERNAME/$IMAGE:$COMPONENT_VERSION_STRING \
         --build-arg VERSION="$COMPONENT_VERSION_STRING" \
