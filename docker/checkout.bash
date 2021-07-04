@@ -24,7 +24,7 @@ while [[ $# -gt 0 ]]; do
       arg="$1"
       case $arg in
             -d|--develop)
-                  BRANCH=noetic-develop
+                  BRANCH=noetic/develop
                   shift
             ;;
             -r|--root)
@@ -40,7 +40,7 @@ cd ${dir}/src
 
 # clone carma repos
 
-if [[ "$BRANCH" = "noetic-develop" ]]; then
+if [[ "$BRANCH" = "noetic/develop" ]]; then
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch $BRANCH
