@@ -19,12 +19,17 @@
 
 set -ex
 
+# Source the autoware installation
 source /opt/autoware.ai/ros/install/setup.bash --extend
 
 cd ~/carma_ws
-./src/carma-platform/carma_build.bash -c ~/carma_ws -a /opt/autoware.ai/ -x -m "-DCMAKE_BUILD_TYPE=Release"
 
-# Copy the installed files
-cd ~/carma_ws 
-cp -r install/. /opt/carma/install
-chmod -R +x /opt/carma/install 
+sudo mkdir /opt/carma # Create install directory
+sudo chown carma /opt/carma # Set owner to expose permissions for build
+sudo chgrp carma /opt/carma # Set group to expose permissions for build
+
+echo "Building CARMA"
+
+colcon build --cmake-args --install --install-space /opt/carma/install -DCMAKE_BUILD_TYPE=Release
+
+echo "Build Complete"
