@@ -80,8 +80,6 @@ namespace unobstructed_lanechange
                                                 double max_starting_downtrack,
                                                 const carma_wm::WorldModelConstPtr& wm,const cav_msgs::VehicleState& state);
             int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state);
-
-            int getNearestPointIndex(const std::vector<lanelet::BasicPoint2d>& points, const cav_msgs::VehicleState& state) const;
             /**
              * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 
              * \param starting_downtrack downtrack along route where maneuver starts
@@ -272,7 +270,6 @@ namespace unobstructed_lanechange
             int downsample_ratio_ =8;
             bool enable_object_avoidance_lc_ = false;
             double min_timestep_ = 0.1;
-            double ending_buffer_downtrack_ = 5.0;
             
             // Time duration to ensure plan is recent
             double acceptable_time_difference_ = 1.0;
@@ -281,7 +278,6 @@ namespace unobstructed_lanechange
             int num_points = traj_freq * trajectory_time_length_;
 
 
-            cav_msgs::VehicleState  ending_state_before_buffer_;
             // generated trajectory plan
             cav_msgs::TrajectoryPlan trajectory_msg;
             

@@ -73,7 +73,8 @@ namespace route_following_plugin
          * \brief Compose UpcomingLaneChangeStatus msg from given starting and ending lanelets
          * \param start_lanelet lanelet the lanechange is starting from
          * \param ending_lanelet lanelet the lanechange is starting from
-         * \return UpcomingLaneChangeStatus
+         * \return UpcomingLaneChangeStatus Note: this method will only work correctly if the 
+         * two provided lanelets are forming a lane change
          */
         cav_msgs::UpcomingLaneChangeStatus ComposeLaneChangeStatus(lanelet::ConstLanelet starting_lanelet,lanelet::ConstLanelet ending_lanelet);
         
@@ -173,10 +174,8 @@ namespace route_following_plugin
         // ROS service servers
         ros::ServiceServer plan_maneuver_srv_;  
 
-
         // Minimal duration of maneuver, loaded from config file
         double min_plan_duration_;
-
 
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
@@ -186,6 +185,9 @@ namespace route_following_plugin
         
         // Current vehicle forward speed
         double current_speed_;
+
+        //Small constant to compare doubles against
+        double epsilon_ = 0.0001;
 
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;

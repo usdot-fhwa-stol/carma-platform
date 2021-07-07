@@ -143,7 +143,6 @@ namespace route_following_plugin
             else
             {
                 ROS_DEBUG_STREAM("Lanechange NOT Needed ");
-                ROS_ERROR_STREAM("Lanechange NOT Needed :");
                 maneuvers.push_back(composeLaneFollowingManeuverMessage(start_dist, end_dist, start_speed, target_speed_in_lanelet, route_shortest_path[shortest_path_index].id()));
             }
         }
@@ -192,7 +191,7 @@ namespace route_following_plugin
                 //update start distance of first maneuver
                 setManeuverStartDist(latest_maneuver_plan_[i], current_downtrack);
             }
-            planned_time += getManeuverDuration(latest_maneuver_plan_[i], 0.0001).toSec();
+            planned_time += getManeuverDuration(latest_maneuver_plan_[i], epsilon_).toSec();
 
             resp.new_plan.maneuvers.push_back(latest_maneuver_plan_[i]);
             ++i;
@@ -241,7 +240,8 @@ namespace route_following_plugin
         pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
 
         if (!wm_->getRoute())
-        return;
+            return;
+
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         
@@ -263,11 +263,7 @@ namespace route_following_plugin
             ROS_DEBUG_STREAM("upcoming_lane_change_status_msg_map_.front().second.downtrack_until_lanechange: " <<static_cast<double>(upcoming_lane_change_status_msg_map_.front().second.downtrack_until_lanechange));
             upcoming_lane_change_status_pub_.publish(upcoming_lane_change_status_msg_map_.front().second); 
         }
-        //DEBUG PURPOSE ONLY, DELETE AFTER TESTING
-        if (upcoming_lane_change_status_msg_map_.empty())
-        {
-            ROS_DEBUG_STREAM("lanechange status map is empty");
-        }
+      
     }
 
     ros::Duration RouteFollowingPlugin::getManeuverDuration(cav_msgs::Maneuver &maneuver, double epsilon) const
