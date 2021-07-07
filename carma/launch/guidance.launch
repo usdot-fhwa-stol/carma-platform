@@ -110,8 +110,8 @@
 
     <!-- Route Following Plugin -->
   <group>
-    <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
     <remap from="upcoming_lane_change_status" to="$(optenv CARMA_GUIDE_NS)/upcoming_lane_change_status"/>
+    <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
   </group>
   <!-- Twist Filter -->
   <group>

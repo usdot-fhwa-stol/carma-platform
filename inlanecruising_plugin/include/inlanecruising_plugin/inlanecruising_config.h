@@ -39,7 +39,7 @@ struct InLaneCruisingPluginConfig
   double back_distance = 20;               // Number of meters behind the first maneuver that need to be included in points for curvature calculation
   bool enable_object_avoidance = true;    // Activate object avoidance logic
   bool publish_debug = false; // True if debug publishing will be enabled
-  double buffer_ending_downtrack = 10.0;
+  double buffer_ending_downtrack = 20.0;
   
   friend std::ostream& operator<<(std::ostream& output, const InLaneCruisingPluginConfig& c)
   {
