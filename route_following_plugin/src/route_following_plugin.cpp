@@ -48,7 +48,7 @@ namespace route_following_plugin
 
         // read ros parameters
         pnh_->param<double>("minimal_plan_duration", min_plan_duration_, 16.0);
-        pnh_->param<std::string>("lane_change_plugin", lane_change_plugin_);
+        pnh_->param<std::string>("lane_change_plugin", lane_change_plugin_, "CooperativeLaneChangePlugin");
 
         wml_.reset(new carma_wm::WMListener());
         // set world model point form wm listener
