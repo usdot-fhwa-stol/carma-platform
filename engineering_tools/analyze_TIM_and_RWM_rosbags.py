@@ -327,7 +327,7 @@ def get_TIM_mobility_operation_data(bag):
 ###########################################################################################################
 # TODO: Implement a more robust approach to determine when vehicle has reached steady state. Current implementation
 #       determines start-of-steady-state as when vehicle speed is within a certain offset of the speed limit.
-def check_steady_state_before_TIM_message(bag, time_start_engagement, time_received_first_message, speed_limit):
+def check_steady_state_before_first_received_message(bag, time_start_engagement, time_received_first_message, speed_limit):
     # (m/s) Threshold offset of vehicle speed to speed limit to be considered at steady state
     threshold_speed_limit_offset = 0.44704 # 0.44704 m/s is 1 mph
     min_steady_state_speed = speed_limit - threshold_speed_limit_offset
@@ -1288,7 +1288,7 @@ def main():
 
         # Metrics B-28
         if bag_file in TIM_bag_files:
-            minimum_gap, advisory_speed_limit, event_type, time_received_first_TIM_msg, b_28_result = get_TIM_mobility_operation_data(bag)
+            minimum_gap, advisory_speed_limit, event_type, time_received_first_msg, b_28_result = get_TIM_mobility_operation_data(bag)
         elif bag_file in RWM_bag_files:
             minimum_gap, advisory_speed_limit, time_received_first_msg, b_28_result = get_TCM_data(bag)
         
@@ -1302,7 +1302,7 @@ def main():
         b_10_result = check_in_geofence_speed_limits(bag, time_test_start_engagement, time_exit_geofence, advisory_speed_limit)
 
         # Metrics B-2
-        b_2_result = check_steady_state_before_TIM_message(bag, time_test_start_engagement, time_received_first_msg, original_speed_limit)
+        b_2_result = check_steady_state_before_first_received_message(bag, time_test_start_engagement, time_received_first_msg, original_speed_limit)
 
         # Metrics B-4
         # TODO: B-4 cannot be properly measured without knowing whether a trajectory plan deceleration is due to a curve.
