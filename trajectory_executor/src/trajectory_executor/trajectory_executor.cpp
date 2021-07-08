@@ -41,12 +41,17 @@ namespace trajectory_executor
         _private_nh->param<std::string>("default_control_plugin", default_control_plugin_, "NULL");
         _private_nh->param<std::string>("default_control_plugin_topic", default_control_plugin_topic_, "NULL");
 
-        out[default_control_plugin_] = default_control_plugin_topic_;
+        // out[default_control_plugin_] = default_control_plugin_topic_;
 
         //Hardcoding jerk control wrapper
-        std::string default_jerk_control_plugin = "Pure Pursuit Jerk";
-        std::string default_jerk_control_plugin_topic_ = "/guidance/pure_pursuit/plan_jerk_trajectory";
-        out[default_jerk_control_plugin]=default_jerk_control_plugin_topic_;
+        std::string control_plugin1 = "Pure Pursuit Jerk";
+        std::string control_plugin_topic1 = "/guidance/pure_pursuit/plan_jerk_trajectory";
+        out[control_plugin1] = control_plugin_topic1;
+
+        std::string control_plugin2 = "PlatooningControlPlugin";
+        std::string control_plugin_topic2 = "/guidance/PlatooningControlPlugin/plan_trajectory";
+        out[control_plugin2]=control_plugin_topic2;
+
         return out;
     }
     
@@ -70,7 +75,6 @@ namespace trajectory_executor
         {
         	_cur_traj= nullptr;
         }
-
     }
 
     void TrajectoryExecutor::onTrajEmitTick(const ros::TimerEvent& te)
@@ -83,8 +87,8 @@ namespace trajectory_executor
                 // Determine the relevant control plugin for the current timestep
                 std::string control_plugin = _cur_traj->trajectory_points[0].controller_plugin_name;
                 // if it instructed to use default control_plugin
-                if (control_plugin == "default" || control_plugin =="")
-                    control_plugin = default_control_plugin_;
+                // if (control_plugin == "default" || control_plugin =="")
+                //     control_plugin = default_control_plugin_;
 
                 std::map<std::string, ros::Publisher>::iterator it = _traj_publisher_map.find(control_plugin);
                 if (it != _traj_publisher_map.end()) {
