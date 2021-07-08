@@ -113,12 +113,19 @@ namespace route_following_plugin
             start_speed = (maneuvers.empty()) ? 0.0 : GET_MANEUVER_PROPERTY(maneuvers.back(), end_speed);
             ROS_DEBUG_STREAM("start_dist:" << start_dist << ", start_speed:" << start_speed);
 
-                
             end_dist = wm_->routeTrackPos(route_shortest_path[shortest_path_index].centerline2d().back()).downtrack;
             ROS_DEBUG_STREAM("end_dist:" << end_dist);
-
             end_dist = std::min(end_dist, route_length);
             ROS_DEBUG_STREAM("min end_dist:" << end_dist);
+
+            if (std::fabs(start_dist - end_dist) < 0.1) //TODO: edge case that was not recreatable. Sometimes start and end dist was same which crashes inlanecruising
+            {
+                ROS_WARN_STREAM("start and end dist are equal! shortest path id" << shortest_path_index << ", lanelet id:" << route_shortest_path[shortest_path_index].id() <<
+                    ", start and end dist:" << start_dist);
+                continue;
+            }
+
+
 
             if (isLaneChangeNeeded(following_lanelets, route_shortest_path[shortest_path_index + 1].id()))
             {
@@ -156,6 +163,7 @@ namespace route_following_plugin
     {
         if (latest_maneuver_plan_.empty())
         {
+            ROS_ERROR_STREAM("A maneuver plan has not been generated");
             return false;
         }
 
@@ -189,7 +197,7 @@ namespace route_following_plugin
         if (resp.new_plan.maneuvers.size() == 0)
         {
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
-            return true;
+            return false;
         }
         //update plan
 
@@ -280,7 +288,7 @@ namespace route_following_plugin
 
         for (auto &maneuver : maneuvers)
         {
-            time_progress += getManeuverDuration(maneuver, 0.001);
+            time_progress += getManeuverDuration(maneuver, epsilon_);
             switch (maneuver.type)
             {
             case cav_msgs::Maneuver::LANE_FOLLOWING:
