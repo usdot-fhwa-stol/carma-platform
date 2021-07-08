@@ -17,4 +17,5 @@ maxSpacing: 4.0
 minSpacing: 3.9
 minGap: 22.0
 maxGap: 32.0
+maxCrosstrackError: 2.0
 vehicle_length: 5.0

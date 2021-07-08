@@ -84,7 +84,7 @@ namespace platoon_strategic
         else
         {
             // If we are currently in any leader state, we only updates platoon member based on platoon ID
-            if(true)//TOTO update later(currentPlatoonID == platoonId)
+            if (currentPlatoonID == platoonId)
             {
                 ROS_DEBUG_STREAM("This STATUS messages is from our platoon. Updating the info...");
                 updatesOrAddMemberInfo(senderId, senderBsmId, cmdSpeed, dtDistance, curSpeed);
@@ -224,7 +224,6 @@ namespace platoon_strategic
             // implementation of the main part of APF algorithm
             // calculate the time headway between every consecutive pair of vehicles
             std::vector<double> timeHeadways = calculateTimeHeadway(downtrackDistance, speed);
-            // TODO convert this print loop to logs in basic autonomy
             ROS_DEBUG("APF calculate time headways: " );
             for (const auto& value : timeHeadways)
             {
@@ -243,7 +242,6 @@ namespace platoon_strategic
                 // if the previous leader is not the first vehicle
                 // get the time headway between every consecutive pair of vehicles from indexOfPreviousLeader
                 std::vector<double> partialTimeHeadways = getTimeHeadwayFromIndex(timeHeadways, previousFunctionalLeaderIndex_);
-                // TODO convert this print loop to logs in basic autonomy
                 ROS_DEBUG("APF partial time headways array:: " );
                 for (const auto& value : partialTimeHeadways)
                 {

@@ -224,6 +224,7 @@ namespace platoon_strategic
                 break;
             }
 
+            // platoon size of one should not be considered as platooning and receive priority in planning
             if (pm_.getTotalPlatooningSize() > 1)
             {
                 resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist,  
@@ -339,7 +340,6 @@ namespace platoon_strategic
                 {
                     //TODO if the current state timeouts, we need to have a kind of ABORT message to inform the applicant
                     ROS_DEBUG_STREAM("LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
-                    // plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                     pm_.current_platoon_state = PlatoonState::LEADER;
                 }
                 // Task 2
@@ -413,24 +413,19 @@ namespace platoon_strategic
             // Get the number of vehicles in this platoon who is in front of us
             int vehicleInFront = pm_.getNumberOfVehicleInFront();
                 if(vehicleInFront == 0) {
-                    ROS_WARN("2");
                     noLeaderUpdatesCounter++;
                     if(noLeaderUpdatesCounter >= LEADER_TIMEOUT_COUNTER_LIMIT) {
                         ROS_DEBUG_STREAM("noLeaderUpdatesCounter = " << noLeaderUpdatesCounter << " and change to leader state");
                         pm_.changeFromFollowerToLeader();
                         pm_.current_platoon_state = PlatoonState::LEADER;
-                        ROS_WARN("5");
                     }
                 } else {
                     // reset counter to zero when we get updates again
                     noLeaderUpdatesCounter = 0;
-                    ROS_WARN("3");
                 }
                 long tsEnd = ros::Time::now().toNSec()/1000000;
                 long sleepDuration = std::max((int32_t)(statusMessageInterval_ - (tsEnd - tsStart)), 0);
-                ros::Duration(sleepDuration/1000).sleep();
-                ROS_WARN("4");
-        
+                ros::Duration(sleepDuration/1000).sleep();        
     }
 
     void PlatoonStrategicPlugin::run_candidate_follower(){
@@ -586,12 +581,17 @@ namespace platoon_strategic
 
         bool isTargetVehicle = (msg.header.sender_id == lw_applicantId_);
         bool isCandidateJoin = msg.plan_type.type == cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
-        if(isTargetVehicle && isCandidateJoin)
+
+        lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location, tf_);
+        double current_cross_track = wm_->routeTrackPos(incoming_pose).crosstrack;
+        bool inTheSameLane = (current_cross_track < config_.maxCrosstrackError);
+        ROS_DEBUG_STREAM("current_cross_track = " << current_cross_track);
+        ROS_DEBUG_STREAM("inTheSameLane = " << inTheSameLane);
+        if(isTargetVehicle && isCandidateJoin && inTheSameLane)
         {
             ROS_DEBUG_STREAM("Target vehicle " << lw_applicantId_ << " is actually joining.");
             ROS_DEBUG_STREAM("Changing to PlatoonLeaderState and send ACK to target vehicle");
             pm_.current_platoon_state = PlatoonState::LEADER;
-            // plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
             return MobilityRequestResponse::ACK;
         }
         else 
@@ -646,10 +646,15 @@ namespace platoon_strategic
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location, tf_);
             applicantCurrentDtd = wm_->routeTrackPos(incoming_pose).downtrack;
             ROS_DEBUG_STREAM("applicantCurrentmemberUpdates from ecef pose: " << applicantCurrentDtd);
+
+            double applicant_crosstrack = wm_->routeTrackPos(incoming_pose).crosstrack;
+            ROS_DEBUG_STREAM("applicant_crosstrack from ecef pose: " << applicant_crosstrack);
+            bool isInLane = (applicant_crosstrack < config_.maxCrosstrackError);
+            ROS_DEBUG_STREAM("isInLane = " << isInLane);
             // Check if we have enough room for that applicant
             int currentPlatoonSize = pm_.getTotalPlatooningSize();
             bool hasEnoughRoomInPlatoon = applicantSize + currentPlatoonSize <= maxPlatoonSize_;
-            if(hasEnoughRoomInPlatoon) {
+            if(hasEnoughRoomInPlatoon && isInLane) {
                 ROS_DEBUG_STREAM("The current platoon has enough room for the applicant with size " << applicantSize);
                 double currentRearDtd = pm_.getPlatoonRearDowntrackDistance();
                 ROS_DEBUG_STREAM("The current platoon rear dtd is " << currentRearDtd);
@@ -720,29 +725,27 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::mob_resp_cb_candidatefollower(const cav_msgs::MobilityResponse& msg)
     {
         ROS_DEBUG_STREAM("Callback for candidate follower ");
-        if (true)//(pm_.current_plan.valid)
+        if (pm_.current_plan.valid) // TODO: temp, revert later
         {
             bool isForCurrentPlan = msg.header.plan_id == pm_.current_plan.planId;
             bool isFromTargetVehicle = msg.header.sender_id == pm_.targetLeaderId;
-            if(true)//(isForCurrentPlan && isFromTargetVehicle)  TODO: temp, revert later
+            if (isForCurrentPlan && isFromTargetVehicle)  //TODO: temp, revert later
             {
-                if(msg.is_accepted) {
+                if(msg.is_accepted) 
+                {
                     // We change to follower state and start to actually follow that leader
                     // The platoon manager also need to change the platoon Id to the one that the target leader is using 
                     ROS_DEBUG_STREAM("The leader " << msg.header.sender_id << " agreed on our join. Change to follower state.");
-                    // TODO: update these accordingly
                     pm_.current_platoon_state = PlatoonState::FOLLOWER;
                     targetPlatoonId = msg.header.plan_id;
                     pm_.changeFromLeaderToFollower(targetPlatoonId);
                     ROS_WARN("changed to follower");
-                    // plugin.setState(new FollowerState(plugin, log, pluginServiceLocator));
-                    // pluginServiceLocator.getArbitratorService().requestNewPlan(this.trajectoryEndLocation);
+                    
                 } 
-                else{
+                else
+                {
                     // We change back to normal leader state and try to join other platoons
                     ROS_DEBUG_STREAM("The leader " << msg.header.sender_id << " does not agree on our join. Change back to leader state.");
-                    // TODO: update these accordingly
-                    // plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                     pm_.current_platoon_state = PlatoonState::LEADER;
                 }
             }
@@ -769,28 +772,24 @@ namespace platoon_strategic
     {
         if (pm_.current_plan.valid)
         {
-            if(true)//TODO: update this(pm_.current_plan.planId == msg.header.plan_id && pm_.current_plan.peerId == msg.header.sender_id)
+            if (pm_.current_plan.planId == msg.header.plan_id && pm_.current_plan.peerId == msg.header.sender_id)
             {
                 if (msg.is_accepted)
                 {
                     ROS_DEBUG_STREAM("Received positive response for plan id = " << pm_.current_plan.planId);
                     ROS_DEBUG_STREAM("Change to CandidateFollower state and notify trajectory failure in order to replan");
                         // Change to candidate follower state and request a new plan to catch up with the front platoon
-                        // TODO: update these accordingly
                         pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
                         candidatestateStartTime = ros::Time::now().toNSec()/1000000;
                         targetPlatoonId = potentialNewPlatoonId;
                         ROS_DEBUG_STREAM("targetPlatoonId = " << targetPlatoonId);
                         pm_.targetLeaderId = pm_.current_plan.peerId;
                         ROS_DEBUG_STREAM("pm_.targetLeaderId = " << pm_.targetLeaderId );
-                        // plugin.setState(new CandidateFollowerState(plugin, log, pluginServiceLocator, currentPlan.peerId, potentialNewPlatoonId, this.trajectoryEndLocation));
-                        // pluginServiceLocator.getArbitratorService().requestNewPlan(this.trajectoryEndLocation);
                 }
                 else 
                 {
                     ROS_DEBUG_STREAM("Received negative response for plan id = " << pm_.current_plan.planId);
                     // Forget about the previous plan totally
-                    // this.currentPlan = null;
                     pm_.current_plan.valid = false;
                 }
             }
@@ -1058,7 +1057,6 @@ namespace platoon_strategic
         if(isPlatoonInfoMsg && isNotInNegotiation)
         {
             // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d,DTD:%.2f
-            // TODO In future, we should remove downtrack distance from this string and send XYZ location in ECEF
 
             std::vector<std::string> inputsParams;
             boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));

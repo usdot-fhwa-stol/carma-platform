@@ -76,6 +76,7 @@ public:
     pnh.param<double>("minSpacing", config.minSpacing, config.minSpacing);
     pnh.param<double>("minGap", config.minGap, config.minGap);
     pnh.param<double>("maxGap", config.maxGap, config.maxGap);
+    pnh.param<double>("maxCrosstrackError", config.maxCrosstrackError, config.maxCrosstrackError);
     pnh.getParam("/vehicle_length", config.vehicleLength);
     pnh.getParam("/vehicle_id", config.vehicle_id);
     
