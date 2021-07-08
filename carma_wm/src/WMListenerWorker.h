@@ -57,7 +57,7 @@ public:
   void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg);
 
   /*!
-   * \brief Callback for route message. It is a TODO: To update function when route message spec is defined
+   * \brief Callback for route message.
    */
   void routeCallback(const cav_msgs::RouteConstPtr& route_msg);
 

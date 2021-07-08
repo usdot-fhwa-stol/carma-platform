@@ -118,20 +118,20 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 catkin_add_gmock(${PROJECT_NAME}-test
   test/TestMain.cpp
-  test/MapConformerTest.cpp
-  test/CARMAWorldModelTest.cpp
-  test/WMTestLibForGuidanceTest.cpp
-  test/IndexedDistanceMapTest.cpp
-  test/WMListenerWorkerTest.cpp
-  test/GeometryTest.cpp
+  #test/MapConformerTest.cpp
+  #test/CARMAWorldModelTest.cpp
+  #test/WMTestLibForGuidanceTest.cpp
+  #test/IndexedDistanceMapTest.cpp
+  #test/WMListenerWorkerTest.cpp
+  #test/GeometryTest.cpp
   test/CollisionDetectionTest.cpp
-  test/TrafficControlTest.cpp
+  #test/TrafficControlTest.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 
 catkin_add_gmock(segfault
  test/TestMain.cpp
- test/SegFaultTest.cpp
+ #test/SegFaultTest.cpp
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 if(TARGET segfault)
