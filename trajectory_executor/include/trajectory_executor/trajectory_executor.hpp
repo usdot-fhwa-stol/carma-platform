@@ -30,14 +30,6 @@
 #include <ros/callback_queue.h>
 
 namespace trajectory_executor {
-    /*!
-     * \brief This method trims the first point off of a TrajectoryPlan's point
-     * and returns a new message with the update.
-     * 
-     * \param plan The plan to modify
-     * \return A new message with the copied contents minus the first point
-     */
-    cav_msgs::TrajectoryPlan trimPastPoints(const cav_msgs::TrajectoryPlan &plan);
 
     /**
      * Trajectory Executor package primary worker class
@@ -62,7 +54,7 @@ namespace trajectory_executor {
             /*!
              * \brief Monitor the guidance state and set the current trajector as null_ptr 
              */
-            void guidanceStateMonitor(cav_msgs::GuidanceState msg);
+            void guidanceStateMonitor(const cav_msgs::GuidanceStateConstPtr& msg);
 
             /*!
              * \brief Initialize the TrajectoryExecutor instance by setting up 
@@ -133,7 +125,6 @@ namespace trajectory_executor {
             // Timers and associated spin rates
             int _min_traj_publish_tickrate_hz {10};
             ros::Timer _timer;
-            int _default_spin_rate;
     };
 }
 

@@ -89,6 +89,8 @@ namespace platoon_strategic
             ros::Subscriber mob_resp_sub_;
             ros::Subscriber mob_op_sub_;
 
+            ros::Timer discovery_pub_timer_;
+
 
             // service callbacks for carma trajectory planning
             bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);

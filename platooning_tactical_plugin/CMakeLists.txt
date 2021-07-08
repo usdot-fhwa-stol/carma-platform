@@ -51,7 +51,7 @@ find_package(Eigen3 REQUIRED)
 
 catkin_package(
   CATKIN_DEPENDS ${CATKIN_DEPS}
-  DEPENDS Boost Eigen3
+  DEPENDS Boost EIGEN3
 )
 
 ###########
@@ -67,6 +67,7 @@ include_directories(
 
 add_executable( ${PROJECT_NAME}
   src/platooning_tactical_plugin_node.cpp)
+  
 add_library(platooning_tactical_plugin_library 
   src/platooning_tactical_plugin.cpp
   src/smoothing/BSpline.cpp

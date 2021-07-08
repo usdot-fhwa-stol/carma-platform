@@ -20,6 +20,7 @@
 #include <autoware_lanelet2_msgs/MapBin.h>
 #include <cav_msgs/TrafficControlRequest.h>
 #include <carma_utils/CARMAUtils.h>
+#include <visualization_msgs/MarkerArray.h>
 #include <carma_wm_ctrl/WMBroadcaster.h>
 #include <ros/ros.h>
 
@@ -75,8 +76,7 @@ public:
    * @param active_geof_msg The geofence information to publish
    */
   void publishActiveGeofence(const cav_msgs::CheckActiveGeofence& active_geof_msg);
-
-
+  
 private:
   ros::CARMANodeHandle cnh_;
   ros::CARMANodeHandle pnh_{"~"};
@@ -86,6 +86,8 @@ private:
   ros::Publisher map_pub_;
   ros::Publisher map_update_pub_;
   ros::Publisher control_msg_pub_;
+  ros::Publisher tcm_visualizer_pub_;
+  ros::Publisher tcr_visualizer_pub_;
 
   ros::Publisher active_pub_;
 
@@ -97,6 +99,8 @@ private:
   ros::Subscriber georef_sub_;
   ros::Subscriber geofence_sub_;
   ros::Subscriber curr_location_sub_;
+  ros::Subscriber route_cache_sub_;
+  ros::Timer timer;
 
   WMBroadcaster wmb_;
 };

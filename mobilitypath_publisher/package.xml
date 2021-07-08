@@ -27,5 +27,5 @@
   <depend>std_msgs</depend>
   <depend>cav_msgs</depend>
   <depend>carma_utils</depend>
-  <depend>tf2_ros</depend>
+  <depend>lanelet2_extension</depend>
 </package>

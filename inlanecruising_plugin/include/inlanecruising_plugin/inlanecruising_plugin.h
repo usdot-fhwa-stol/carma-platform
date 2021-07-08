@@ -30,19 +30,16 @@
 #include <inlanecruising_plugin/smoothing/SplineI.h>
 #include "inlanecruising_config.h"
 #include <unordered_set>
+#include <autoware_msgs/Lane.h>
+#include <ros/ros.h>
+#include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
+#include <basic_autonomy/helper_functions.h>
 
 namespace inlanecruising_plugin
 {
 using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
-
-/**
- * \brief Convenience class for pairing 2d points with speeds
- */ 
-struct PointSpeedPair
-{
-  lanelet::BasicPoint2d point;
-  double speed = 0;
-};
+using DebugPublisher = std::function<void(const carma_debug_msgs::TrajectoryCurvatureSpeeds&)>;
+using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
 
 /**
  * \brief Class containing primary business logic for the In-Lane Cruising Plugin
@@ -57,9 +54,10 @@ public:
    * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
    * \param config The configuration to be used for this object
    * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
+   * \param debug_publisher Callback which will publish a debug message. The callback defaults to no-op.
    */ 
   InLaneCruisingPlugin(carma_wm::WorldModelConstPtr wm, InLaneCruisingPluginConfig config,
-                       PublishPluginDiscoveryCB plugin_discovery_publisher);
+                       PublishPluginDiscoveryCB plugin_discovery_publisher, DebugPublisher debug_publisher=[](const auto& msg){});
 
   /**
    * \brief Service callback for trajectory planning
@@ -114,11 +112,12 @@ public:
    * \param points The set of points that define the current lane the vehicle is in and are defined based on the request planning maneuvers. 
    *               These points must be in the same lane as the vehicle and must extend in front of it though it is fine if they also extend behind it. 
    * \param state The current state of the vehicle
+   * \param state_time The abosolute time which the provided vehicle state corresponds to
    * 
    * \return A list of trajectory points to send to the carma planning stack
    */ 
   std::vector<cav_msgs::TrajectoryPlanPoint>
-  compose_trajectory_from_centerline(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
+  compose_trajectory_from_centerline(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time);
 
   /**
    * \brief Method combines input points, times, orientations, and an absolute start time to form a valid carma platform trajectory
@@ -150,32 +149,6 @@ public:
   std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
                                                   double max_starting_downtrack,
                                                   const carma_wm::WorldModelConstPtr& wm);
-
-  /**
-   * \brief Returns the nearest point to the provided vehicle pose in the provided list
-   * 
-   * \param points The points to evaluate
-   * \param state The current vehicle state
-   * 
-   * \return index of nearest point in points
-   */ 
-  int get_nearest_point_index(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state) const;
-
-  /**
-   * \brief Returns the nearest point to the provided vehicle pose in the provided list
-   * 
-   * \param points The points to evaluate
-   * \param state The current vehicle state
-   * 
-   * \return index of nearest point in points
-   */ 
-  int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points, const cav_msgs::VehicleState& state) const;
-
-  /**
-   * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
-   */ 
-  void split_point_speed_pairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
-                            std::vector<double>* speeds) const;
 
   /**
    * \brief Computes a spline based on the provided points
@@ -267,6 +240,12 @@ private:
   ros::ServiceClient yield_client_;
 
   cav_msgs::Plugin plugin_discovery_msg_;
+  DebugPublisher debug_publisher_;
+  carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg_;
+  cav_msgs::VehicleState ending_state_before_buffer; //state before applying extra points for curvature calculation that are removed later
 
 };
+
+
+
 };  // namespace inlanecruising_plugin

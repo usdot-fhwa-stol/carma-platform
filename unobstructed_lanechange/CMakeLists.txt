@@ -20,7 +20,7 @@ add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
-set( CATKIN_DEPS
+set(CATKIN_DEPS
   roscpp
   std_msgs
   cav_msgs
@@ -48,9 +48,9 @@ find_package(Eigen3 REQUIRED)
 
 
 catkin_package(
-   INCLUDE_DIRS include
-   CATKIN_DEPENDS ${CATKIN_DEPS}
-   DEPENDS Boost Eigen3
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS ${CATKIN_DEPS}
+  DEPENDS Boost EIGEN3
 )
 
 ###########
@@ -68,7 +68,7 @@ include_directories(
 
 file(GLOB_RECURSE headers */*.hpp */*.h)
 
-add_executable( ${PROJECT_NAME}
+add_executable(${PROJECT_NAME}
   ${headers}
   src/unobstructed_lanechange.cpp
   src/main.cpp)
@@ -80,16 +80,24 @@ add_dependencies(unobstructed_lanechange_plugin_lib ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(${PROJECT_NAME} unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
+add_library(lc_helper test/helper.cpp)
+target_link_libraries(lc_helper
+  ${catkin_LIBRARIES}
+)
+
+add_executable(lc_helper_node test/helper.cpp)
+target_link_libraries(lc_helper_node
+  lc_helper
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
 #############
 
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
@@ -114,3 +122,9 @@ catkin_add_gmock(${PROJECT_NAME}-test
  test/test_unobstructed_lanechange_plugin.cpp
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
 target_link_libraries(${PROJECT_NAME}-test unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES})
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(rostest_ulc test/ulc_plugin.test test/rostest_ulc.cpp)
+  target_link_libraries(rostest_ulc ${catkin_LIBRARIES})
+endif()

@@ -18,25 +18,29 @@
 
 #include <vector>
 #include <carma_wm/Geometry.h>
-#include <platooning_tactical_plugin/third_party_library/spline.h>
-#include <platooning_tactical_plugin/smoothing/SplineI.h>
+#include "smoothing/SplineI.h"
+#include <unsupported/Eigen/Splines>
 
-namespace platooning_tactical_plugin
+namespace cooperative_lanechange
 {
 namespace smoothing
 {
+
+    typedef Eigen::Spline<double, 2> Spline2d;
 /**
- * \brief Realization of SplineI that uses the tk::spline library for interpolation 
+ * \brief Realization of SplineI that uses the Eigen::Splines library for interpolation 
  */ 
-class CubicSpline : public SplineI
+class BSpline : public SplineI
 {
 public:
-  ~CubicSpline(){};
+ ~BSpline(){};
   void setPoints(std::vector<lanelet::BasicPoint2d> points) override;
-  double operator()(double x) const override;
+  lanelet::BasicPoint2d operator()(double t) const override;
+  lanelet::BasicPoint2d first_deriv(double t) const override;
+  lanelet::BasicPoint2d second_deriv(double t) const override;
 
 private:
-  tk::spline spline_;
+  Spline2d spline_;
 };
 };  // namespace smoothing
-};  // namespace platooning_tactical_plugin
+};  // namespace cooperative_lanechange

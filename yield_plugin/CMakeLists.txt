@@ -30,10 +30,8 @@ set( CATKIN_DEPS
   carma_utils
   trajectory_utils
   autoware_msgs
-  carma_wm
-  tf
-  tf2
-  tf2_geometry_msgs
+  carma_wm 
+  lanelet2_extension
 )
 
 ## Find catkin macros and libraries
@@ -101,7 +99,7 @@ install(DIRECTORY launch config
 ## Testing ##
 #############
 
-catkin_add_gmock(${PROJECT_NAME}-test test/test_yield.cpp)
+catkin_add_gmock(${PROJECT_NAME}-test test/test_yield.cpp test/test_cooperative_yield.cpp)
 target_link_libraries(${PROJECT_NAME}-test yield_plugin_library ${catkin_LIBRARIES})
 
 if(CATKIN_ENABLE_TESTING)

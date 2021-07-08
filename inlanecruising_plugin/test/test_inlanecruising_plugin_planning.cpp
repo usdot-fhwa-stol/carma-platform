@@ -71,7 +71,7 @@ namespace inlanecruising_plugin
 TEST(InLaneCruisingPluginTest, testPlanningCallback)
 {
   InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
 
@@ -125,12 +125,21 @@ TEST(InLaneCruisingPluginTest, testPlanningCallback)
   maneuver2.lane_following_maneuver.end_speed = 6.7056;
   maneuver2.lane_following_maneuver.end_time = ros::Time(4.4704 + 7.45645430685);
 
+  // Create a third maneuver of a different type to test the final element in resp.related_maneuvers
+  cav_msgs::Maneuver maneuver3;
+  maneuver3.type = cav_msgs::Maneuver::LANE_CHANGE;
+
   req.maneuver_plan.maneuvers.push_back(maneuver);
   req.maneuver_plan.maneuvers.push_back(maneuver2);
+  req.maneuver_plan.maneuvers.push_back(maneuver3);
+
+  req.maneuver_index_to_plan = 0;
 
   cav_srvs::PlanTrajectoryResponse resp;
 
   plugin.plan_trajectory_cb(req, resp);
+
+  EXPECT_EQ(1, resp.related_maneuvers.back());
 
 }
 
@@ -259,9 +268,9 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
   
   // Downsample
   std::vector<lanelet::BasicPoint2d> downsampled_points;
-  downsampled_points.reserve((route_geometry.size() / config.downsample_ratio) + 1);
+  downsampled_points.reserve((route_geometry.size() / config.default_downsample_ratio) + 1);
 
-  for (int i = 0; i < route_geometry.size(); i += config.downsample_ratio)
+  for (int i = 0; i < route_geometry.size(); i += config.default_downsample_ratio)
   {
     downsampled_points.push_back(route_geometry[i]);
     // Uncomment to print and check if this original map matches with the generated one below 

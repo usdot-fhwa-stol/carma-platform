@@ -17,8 +17,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mobilitypath_publisher)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+## Compile as C++14
+add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
@@ -28,7 +28,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   cav_msgs
   carma_utils
-  tf2_ros
+  lanelet2_extension
 )
 
 ## System dependencies are found with CMake's conventions
@@ -39,7 +39,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_msgs carma_utils tf2_ros
+  CATKIN_DEPENDS roscpp std_msgs cav_msgs carma_utils lanelet2_extension
 )
 
 ###########

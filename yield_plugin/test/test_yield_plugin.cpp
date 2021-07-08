@@ -23,9 +23,20 @@
 #include <chrono>
 
 
+void callback(const cav_msgs::MobilityResponseConstPtr& msg)
+{
+    ROS_INFO_STREAM("Test mob_resp callback..");
+}
+
+void status_callback(const cav_msgs::LaneChangeStatusConstPtr& msg)
+{
+    ROS_INFO_STREAM("Test lc callback..");
+}
+
+
 TEST(YieldPlugin, UnitTestYield)
 {
-    
+    // Note: Comment out the transform lookup before ros test. Since there is no map, it will break the tests   
     cav_msgs::TrajectoryPlan original_tp;
 
     cav_msgs::TrajectoryPlanPoint trajectory_point_1;
@@ -65,7 +76,8 @@ TEST(YieldPlugin, UnitTestYield)
     trajectory_point_7.target_time = ros::Time(6);
     
     original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
-    
+    original_tp.trajectory_id = "test";
+
     cav_msgs::ManeuverPlan plan;
     cav_msgs::Maneuver maneuver;
     maneuver.type = maneuver.LANE_FOLLOWING;
@@ -82,24 +94,46 @@ TEST(YieldPlugin, UnitTestYield)
     
 
     double res = 0;
+    std::string id = "";
 
     ros::CARMANodeHandle nh;
-    ros::ServiceClient plugin1= nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/Yieldlugin/plan_trajectory");
+
+    ros::ServiceClient plugin1= nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
+
+    ros::Subscriber mob_resp_sub = nh.subscribe("outgoing_mobility_response", 5, callback);
+    ros::Subscriber lc_status_sub = nh.subscribe("cooperative_lane_change_status", 5, status_callback);    
+    
+
+    ros::Publisher mob_req_pub = nh.advertise<cav_msgs::MobilityRequest>("incoming_mobility_request", 5);
+    ros::Publisher bsm_pub = nh.advertise<cav_msgs::BSM>("bsm_outbound", 5);
+    cav_msgs::MobilityRequest req1;
+    mob_req_pub.publish(req1);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    ros::spinOnce(); 
+    
+    EXPECT_EQ(1, mob_req_pub.getNumSubscribers());
+    
+    EXPECT_EQ(1, bsm_pub.getNumSubscribers());
 
+    EXPECT_EQ(1, mob_resp_sub.getNumPublishers()); 
+
+    EXPECT_EQ(1, lc_status_sub.getNumPublishers()); 
+
+    
     if (plugin1.call(traj_srv))
     {   
-        ROS_INFO("Service called");
+        ROS_ERROR("Service called");
         res = traj_srv.response.trajectory_plan.trajectory_points.size();
+        id = traj_srv.response.trajectory_plan.trajectory_id;
     }
     else
     {
-        ROS_INFO("Failed to call service");
+        ROS_ERROR("Failed to call service");
         res=0;
     }
 
-    EXPECT_EQ(original_tp.trajectory_points.size(), res);
+    EXPECT_EQ(original_tp.trajectory_id, id);
 }
 
 

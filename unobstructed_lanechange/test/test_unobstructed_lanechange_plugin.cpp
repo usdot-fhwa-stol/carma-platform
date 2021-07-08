@@ -44,7 +44,7 @@
 namespace unobstructed_lanechange
 {
     TEST(UnobstructedLaneChangePlugin,Testusingosm){
-        // File to process. Path is relative to route package
+        // File to process. 
         std::string file = "../resource/map/town01_vector_map_lane_change.osm";
         lanelet::Id start_id = 111;
         lanelet::Id lane_change_start_id = 111;
@@ -145,14 +145,19 @@ namespace unobstructed_lanechange
         req.vehicle_state.longitudinal_vel = maneuver.lane_change_maneuver.start_speed;
 
         std::vector<cav_msgs::Maneuver> maneuvers_msg;  
-        //Define lane change maneuver
+        
+        // Create a second maneuver of a different type to test the final element in resp.related_maneuvers
+        cav_msgs::Maneuver maneuver2;
+        maneuver2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
 
         maneuvers_msg.push_back(maneuver);
+        maneuvers_msg.push_back(maneuver2);
         req.maneuver_plan.maneuvers = maneuvers_msg;
         bool isTrajectory = worker.plan_trajectory_cb(req,resp);
         
         EXPECT_TRUE(isTrajectory);
         EXPECT_TRUE(resp.trajectory_plan.trajectory_points.size() > 2);
+        EXPECT_EQ(0, resp.related_maneuvers.back());
 
         /*Test compose trajectort and helper function*/
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;
@@ -180,7 +185,7 @@ namespace unobstructed_lanechange
         double lookahead = worker.get_adaptive_lookahead(5);   
         std::vector<double> lookahead_speeds = worker.get_lookahead_speed(points_split,constrained_speeds, lookahead);
 
-        trajectory = worker.compose_trajectory_from_centerline(points_and_target_speeds, vehicle_state);
+        trajectory = worker.compose_trajectory_from_centerline(points_and_target_speeds, vehicle_state, ros::Time::now(), lane_change_start_id, 15.0);
         //Valid Trajectory has at least 2 points
         EXPECT_TRUE(trajectory.size() > 2);
 
@@ -197,10 +202,74 @@ namespace unobstructed_lanechange
         //Test Compute heading frame between two points
          Eigen::Isometry2d frame = worker.compute_heading_frame(start_position, end_position);
 
-
-
-
     }
+
+    TEST(InLaneCruisingPluginTest, test_verify_yield)
+{
+
+  UnobstructedLaneChangePlugin plugin;
+
+  std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points;
+
+    ros::Time startTime(ros::Time::now());
+
+    cav_msgs::TrajectoryPlanPoint point_2;
+    point_2.x = 5.0;
+    point_2.y = 0.0;
+    point_2.target_time = startTime + ros::Duration(1);
+    point_2.lane_id = "1";
+    trajectory_points.push_back(point_2);
+
+    cav_msgs::TrajectoryPlanPoint point_3;
+    point_3.x = 10.0;
+    point_3.y = 0.0;
+    point_3.target_time = startTime + ros::Duration(2);
+    point_3.lane_id = "1";
+    trajectory_points.push_back(point_3);
+
+
+    cav_msgs::TrajectoryPlan tp;
+    tp.trajectory_id = "yield";
+    tp.trajectory_points = trajectory_points;
+
+    std::string traj_id = "yield";
+    bool res = plugin.validate_yield_plan(tp, traj_id);
+    ASSERT_TRUE(plugin.validate_yield_plan(tp, traj_id));
+    std::string traj_id2 = "yieldd";
+    ASSERT_FALSE(plugin.validate_yield_plan(tp, traj_id2));
+
+    cav_msgs::TrajectoryPlan tp2;
+
+    cav_msgs::TrajectoryPlanPoint point_4;
+    point_4.x = 5.0;
+    point_4.y = 0.0;
+    point_4.target_time = startTime + ros::Duration(1);
+    point_4.lane_id = "1";
+    tp2.trajectory_points.push_back(point_4);
+    
+    ASSERT_FALSE(plugin.validate_yield_plan(tp2, traj_id));
+
+    cav_msgs::TrajectoryPlan tp3;
+
+    cav_msgs::TrajectoryPlanPoint point_5;
+    point_5.x = 5.0;
+    point_5.y = 0.0;
+    point_5.target_time = startTime;
+    point_5.lane_id = "1";
+    tp3.trajectory_points.push_back(point_5);
+
+    cav_msgs::TrajectoryPlanPoint point_6;
+    point_6.x = 10.0;
+    point_6.y = 0.0;
+    point_6.target_time = startTime + ros::Duration(1);
+    point_6.lane_id = "1";
+    tp3.trajectory_points.push_back(point_6);
+
+    ASSERT_FALSE(plugin.validate_yield_plan(tp2, traj_id));
+
+    
+}
+
 
 }
 

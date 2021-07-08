@@ -49,12 +49,12 @@ namespace object{
     motion_worker_.setProcessNoiseMax(process_noise_max);
     motion_worker_.setConfidenceDropRate(drop_rate);
     motion_worker_.setExternalObjectPredictionMode(external_object_prediction_mode);
-    motion_worker_.setECEFToMapTransform(lookupECEFtoMapTransform());
     
     // Setup pub/sub
     motion_comp_sub_=nh_.subscribe("external_objects",1,&MotionComputationWorker::predictionLogic,&motion_worker_);
     carma_obj_pub_=nh_.advertise<cav_msgs::ExternalObjectList>("external_object_predictions", 2);
     mobility_path_sub_=nh_.subscribe("incoming_mobility_path",20,&MotionComputationWorker::mobilityPathCallback,&motion_worker_); // 20 is most number of vehicles in our immeadiate vicinity which might ever need to be tracked.
+    georeference_sub_ = nh_.subscribe("georeference", 1, &MotionComputationWorker::georeferenceCallback, &motion_worker_);
   }
 
   void MotionComputationNode::publishObject(const cav_msgs::ExternalObjectList& obj_pred_msg) const
@@ -65,24 +65,7 @@ namespace object{
   void MotionComputationNode::run()
   {
     initialize();
-    ros::CARMANodeHandle::setSpinRate(20);
     ros::CARMANodeHandle::spin();
-  }
-
-  tf2::Transform MotionComputationNode::lookupECEFtoMapTransform()
-  {
-    tf2::Transform map_in_earth;
-    tf2_listener_.reset(new tf2_ros::TransformListener(tf_buffer_));
-    tf_buffer_.setUsingDedicatedThread(true);
-    try
-    {
-      tf2::convert(tf_buffer_.lookupTransform("earth", "map", ros::Time(0), ros::Duration(20.0)).transform, map_in_earth); //save to local copy of transform 20 sec timeout
-    }
-    catch (const tf2::TransformException &ex)
-    {
-      ros::CARMANodeHandle::handleException(ex);
-    }
-    return map_in_earth;
   }
 
 }//object namespace

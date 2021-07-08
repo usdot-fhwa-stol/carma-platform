@@ -20,6 +20,7 @@
 #include <ros/ros.h>
 #include <cav_msgs/MobilityOperation.h>
 #include <cav_msgs/TrafficControlMessageV01.h>
+#include <cav_msgs/TrafficControlMessage.h>
 #include <functional>
 #include <iostream>
 #include <string>
@@ -45,7 +46,7 @@ class TrafficIncidentParserWorker
 
  public:
 
-  using PublishTrafficControlCallback = std::function<void(const cav_msgs::TrafficControlMessageV01&)>;
+  using PublishTrafficControlCallback = std::function<void(const cav_msgs::TrafficControlMessage&)>;
 
   /*!
    * \brief Constructor
@@ -53,7 +54,7 @@ class TrafficIncidentParserWorker
   TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm,const PublishTrafficControlCallback &traffic_control_pub);
     
   /*! \fn projectionCallback(const std_msgs::String &projection_msg)
-    \brief projectionCallback stores the projection string needed to convert ECEF to MAP frame
+    \brief projectionCallback stores the projection string needed to convert lat/lon to MAP frame
     \param  std_msgs::String
   */
   void projectionCallback(const std_msgs::String &projection_msg);
@@ -68,8 +69,10 @@ class TrafficIncidentParserWorker
     /*! \fn mobilityMessageParser(std::string mobility_strategy_params)
     \brief mobilityMessageParser helps to parse incoming mobility operation message to required format
     \param  std::string mobility_strategy_params
+
+    \return True if the new message is valid and can be used. False if not new or not valid.
   */
-  void mobilityMessageParser(std::string mobility_strategy_params);
+  bool mobilityMessageParser(std::string mobility_strategy_params);
 
     /*! \fn stringParserHelper(std::string str,int str_index)
     \brief stringParserHelper helps to convert string to double data type.
@@ -82,19 +85,48 @@ class TrafficIncidentParserWorker
     \brief composeTrafficControlMesssage algorithm for extracting the closed lanelet from internally saved mobility message (or geofence) params and assign it to trafic contol message. 
     Closed lanelets are represent by vector of points, where each point represents the geometric middle point of a closed lanelet
   */
-  cav_msgs::TrafficControlMessageV01 composeTrafficControlMesssage();
+  std::vector<cav_msgs::TrafficControlMessageV01> composeTrafficControlMesssages();
 
     /*! \fngetIncidentOriginPoint()
-    \brief getIncidentOriginPoint converts internally saved incident origin point from ECEF to local map frame
+    \brief getIncidentOriginPoint converts internally saved incident origin point from lat/lon to local map frame
   */
   lanelet::BasicPoint2d getIncidentOriginPoint() const;
 
-  double latitude;
-  double longitude;
-  double down_track;
-  double up_track;
-  double min_gap;
-  double speed_advisory;
+  /*! \fn getAdjacentForwardCenterlines(const lanelet::ConstLanelets& adjacentSet,
+    const lanelet::BasicPoint2d& start_point, double downtrack, std::vector<std::vector<lanelet::BasicPoint2d>>* forward_lanes)
+    \brief Helper method to compute the concatenated centerlines of the lanes in front of the emergency vehicle point
+    \param adjacentSet The set of adjacent lanes to start from 
+    \param start_point Point to start the downtrack calculation from. Should be the emergency vehicle points
+    \param The downtrack distance to grab centerline points from  
+    \param forward_lanes Ouput parameter which will be populated with the centerlines for each lane up to the downtrack distance
+  */
+  void getAdjacentForwardCenterlines(const lanelet::ConstLanelets& adjacentSet,
+    const lanelet::BasicPoint2d& start_point, double downtrack, std::vector<std::vector<lanelet::BasicPoint2d>>* forward_lanes);
+
+  /*! \fn getAdjacentReverseCenterlines(const lanelet::ConstLanelets& adjacentSet,
+    const lanelet::BasicPoint2d& start_point, double uptrack, std::vector<std::vector<lanelet::BasicPoint2d>>* reverse_lanes)
+
+    \brief Helper method that is identical to getAdjacentForwardCenterlines except it works in reverse using uptrack distance
+  */
+  void getAdjacentReverseCenterlines(const lanelet::ConstLanelets& adjacentSet,
+    const lanelet::BasicPoint2d& start_point, double uptrack, std::vector<std::vector<lanelet::BasicPoint2d>>* reverse_lanes);
+
+  /**
+   * \brief Callback for new connections for geofence publication
+   *        Forwards the full set of traffic controls describing the current received geofence.
+   * 
+   * \param single_sub_pub A publisher which connects directly to the new subscriber. 
+   */ 
+  void newGeofenceSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const;
+
+  double latitude = 0.0;
+  double longitude = 0.0;
+  double down_track = 0.0;
+  double up_track = 0.0;
+  double min_gap = 0.0;
+  double speed_advisory = 0.0;
+  std::string event_reason;
+  std::string event_type;
 
   std::string previous_strategy_params="";
 
@@ -104,7 +136,13 @@ class TrafficIncidentParserWorker
   std::string projection_msg_;
   PublishTrafficControlCallback traffic_control_pub_;// local copy of external object publihsers
   carma_wm::WorldModelConstPtr wm_;
-
+  
+  /**
+   * Queue which stores the current set of geofence messages to forward to any new connections
+   * This queue is implemented as a vector because it gets reused by each new subscriber connection
+   * NOTE: This queue should be cleared each time the geofence mesages change
+   */
+  std::vector<cav_msgs::TrafficControlMessage> geofence_message_queue_; 
 };
 
 }//traffic
