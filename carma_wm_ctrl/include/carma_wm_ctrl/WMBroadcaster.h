@@ -232,14 +232,19 @@ public:
   cav_msgs::TrafficControlRequestPolygon tcr_polygon_;
   
   /*!
-   * \brief Returns the most recently recieved route message.
+   * \brief Returns the most recently recieved route message
    * 
-   * \return The most recent route message.
+   * \return The most recent route message
    */ 
   cav_msgs::Route getRoute();
-
+  /*!
+   * \brief Returns the most recently recieved route message
+   * 
+   * \return The most recent route message
+   */
 
 private:
+  lanelet::TrafficLight traffic_light_;
   lanelet::ConstLanelets route_path_;
   std::unordered_set<lanelet::Id> active_geofence_llt_ids_; 
   void addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;

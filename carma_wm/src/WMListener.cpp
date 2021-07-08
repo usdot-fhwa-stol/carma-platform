@@ -34,6 +34,7 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
   map_update_sub_= nh_.subscribe("map_update", 200, &WMListener::mapUpdateCallback, this);
   map_sub_ = nh_.subscribe("semantic_map", 2, &WMListenerWorker::mapCallback, worker_.get());
   route_sub_ = nh_.subscribe("route", 1, &WMListenerWorker::routeCallback, worker_.get());
+  traffic_sub_ = cnh_.subscribe("incoming_spat", 1,&WMBroadcaster::trafficLightUpdateCallback, &wmb_);
   roadway_objects_sub_ = nh_.subscribe("roadway_objects", 1, &WMListenerWorker::roadwayObjectListCallback, worker_.get());
 
   double cL;

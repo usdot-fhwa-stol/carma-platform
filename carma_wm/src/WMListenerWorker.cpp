@@ -93,6 +93,12 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
   }
 }
 
+void WMListenerWorker::trafficLightUpdateCallback()
+{
+ 
+ traffic_light_=;
+}
+
 bool WMListenerWorker::checkIfReRoutingNeeded() const
 {
   return rerouting_flag_;

@@ -103,8 +103,14 @@ public:
  * 
 */
   void enableUpdatesWithoutRoute();
+/**
+ *  \brief updates traffic light from the spat message received from DSRC
+ * 
+*/
+  void trafficLightUpdateCallback();
 
 private:
+  std::unordered_map<int,lanelet:Id> spat_to_lanelet_traffic_light_id_;
   std::shared_ptr<CARMAWorldModel> world_model_;
   std::function<void()> map_callback_;
   std::function<void()> route_callback_;

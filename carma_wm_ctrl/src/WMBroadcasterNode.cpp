@@ -76,7 +76,7 @@ int WMBroadcasterNode::run()
   tcm_visualizer_pub_= cnh_.advertise<visualization_msgs::MarkerArray>("tcm_visualizer",1,true);
   //TCR Visualizer pub (visualized on UI)
   tcr_visualizer_pub_ = cnh_.advertise<cav_msgs::TrafficControlRequestPolygon>("tcr_bounding_points",1,true);
-  
+
   double config_limit;
   double lane_max_width;
   pnh_.getParam("max_lane_width", lane_max_width);
