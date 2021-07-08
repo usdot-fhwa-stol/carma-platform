@@ -67,7 +67,7 @@ TEST(TrafficControl, TrafficControlBinMsgTest)
   // from broadcaster
   autoware_lanelet2_msgs::MapBin gf_obj_msg;
   
-  auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
+  auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, {}));
   ROS_INFO("Below null pointer error message is expected");
   auto null = nullptr;
   carma_wm::toBinMsg(send_data, null);

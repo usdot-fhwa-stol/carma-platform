@@ -831,7 +831,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 
   // Publish
   autoware_lanelet2_msgs::MapBin gf_msg;
-  auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
+  auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, {}));
   carma_wm::toBinMsg(send_data, &gf_msg);
   update_count_++; // Update the sequence count for the geofence messages
   gf_msg.header.seq = update_count_;
@@ -853,7 +853,7 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
 
   // publish
   autoware_lanelet2_msgs::MapBin gf_msg_revert;
-  auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
+  auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, {}));
   
   carma_wm::toBinMsg(send_data, &gf_msg_revert);
   update_count_++; // Update the sequence count for geofence messages

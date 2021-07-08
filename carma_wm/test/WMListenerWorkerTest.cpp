@@ -175,7 +175,7 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
 
   // from broadcaster
   autoware_lanelet2_msgs::MapBin gf_obj_msg;
-  auto received_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
+  auto received_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, {}));
   carma_wm::toBinMsg(received_data, &gf_obj_msg);
 
   // create a listener
@@ -226,7 +226,7 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
 
   // reverse ros msg from broadcaster
   autoware_lanelet2_msgs::MapBin gf_reverse_msg;
-  auto reverse_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
+  auto reverse_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, {}));
   carma_wm::toBinMsg(reverse_data, &gf_reverse_msg);
   gf_reverse_msg.header.seq +=2;
 
