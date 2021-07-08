@@ -38,6 +38,7 @@ def get_geofence_entrance_and_exit_times(bag):
         # If first occurrence of being in the active geofence, set the start time
         if (msg.is_on_active_geofence and not is_on_active_geofence):
             time_enter_active_geofence = t
+            #print("Entered geofence at " + str(t.to_sec()))
             found_geofence_entrance_time = True
             is_on_active_geofence = True
         
@@ -46,7 +47,7 @@ def get_geofence_entrance_and_exit_times(bag):
             time_exit_active_geofence = t
             found_geofence_exit_time = True
             break
-    
+
     # Check if both geofence start and end time were found
     found_geofence_times = False
     if (found_geofence_entrance_time and found_geofence_exit_time):
@@ -67,6 +68,19 @@ def get_route_original_speed_limit(bag, time_test_start_engagement):
 
     return original_speed_limit
 
+# Helper function: Begin with the time that the vehicle exits the active geofence according to  
+#                  /guidance/active_geofence topic. This adjusts the time to be based on /guidance/route_state
+#                  in order to be more accurate
+def adjust_geofence_exit_time(bag, time_exit_geofence, original_speed_limit):
+    # Get the true time of the end of the geofence, based on when /guidance/route_state displays the
+    #         original speed limit for the current vehicle location
+    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_exit_geofence):
+        if msg.speed_limit == original_speed_limit:
+            true_time_exit_geofence = t
+            break
+
+    return true_time_exit_geofence
+
 # Helper Function: Get start and end times of the period of engagement that includes the in-geofence section
 def get_TIM_test_case_engagement_times(bag, time_enter_active_geofence, time_exit_active_geofence):
     # Initialize system engagement start and end times
@@ -83,6 +97,11 @@ def get_TIM_test_case_engagement_times(bag, time_enter_active_geofence, time_exi
         if (msg.state == 4 and not is_engaged):
             time_start_engagement = t
             is_engaged = True
+
+        # Store the last recorded engagement timestamp in case CARMA ends engagement before a new guidance
+        #       state can be published.
+        if (msg.state == 4):
+            time_last_engaged = t
         
         # If exiting engagement, check whether this period of engagement included the geofence entrance and exit times
         elif (msg.state != 4 and is_engaged):
@@ -100,6 +119,13 @@ def get_TIM_test_case_engagement_times(bag, time_enter_active_geofence, time_exi
                 found_test_case_engagement_times = True
                 break
     
+    # If CARMA ended engagement before guidance state could be updated, check if the last recorded
+    #    time of engagement came after exiting the geofence
+    if not found_test_case_engagement_times:
+        if time_last_engaged >= time_exit_active_geofence:
+            time_stop_engagement = time_last_engaged
+            found_test_case_engagement_times = True
+    
     return time_start_engagement, time_stop_engagement, found_test_case_engagement_times
 
 ###########################################################################################################
@@ -113,7 +139,7 @@ def check_geofence_route_metrics(bag, closed_lanelets):
     shortest_path_lanelets = []
     for topic, msg, t in bag.read_messages(topics=['/guidance/route']):
         # Print as Debug Statement
-        print("Shortest Path Route Update: " + str(msg.shortest_path_lanelet_ids))
+        print("Shortest Path Route Update at " + str(t.to_sec()) + ": " + str(msg.shortest_path_lanelet_ids))
         
         shortest_path_lanelets.append([])
         for lanelet_id in msg.shortest_path_lanelet_ids:
@@ -197,6 +223,42 @@ def check_in_geofence_speed_limits(bag, time_enter_geofence, time_exit_geofence,
 
     return is_successful
 
+
+def get_TCM_data(bag):
+    # Check that TCM Messages are received for closed lane, max speed, and minimum headway (minimum gap)
+    has_closed_lane = False
+    has_advisory_speed = False
+    has_minimum_gap = False
+    time_first_msg_received = rospy.Time()
+    for topic, msg, t in bag.read_messages(topics=['/message/incoming_geofence_control']):
+        time_first_msg_received = t
+        if msg.tcmV01.params.detail.choice == 5 and msg.tcmV01.params.detail.closed == 1:
+            has_closed_lane = True
+        elif msg.tcmV01.params.detail.choice == 13:
+            has_minimum_gap = True
+            minimum_gap = msg.tcmV01.params.detail.minhdwy
+        elif msg.tcmV01.params.detail.choice == 12:
+            has_advisory_speed = True
+            advisory_speed = msg.tcmV01.params.detail.maxspeed
+
+        if has_closed_lane and has_advisory_speed and has_minimum_gap:
+            print("TCM Messages Received: Closed Lane; Advisory Speed: " + str(advisory_speed) +  \
+                " mph; Minimum Gap: " + str(minimum_gap) + " meters")
+            is_successful = True
+            break
+    
+    # Print out route state for each new lanelet:
+    id = 0
+    print("/guidance/route_state lanelet change times:")
+    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state']):
+        if msg.lanelet_id != id:
+
+            print("Time: " + str(t.to_sec()) + "; Lanelet: " + str(msg.lanelet_id) + "; Speed Limit: " + str(msg.speed_limit))
+            id = msg.lanelet_id
+
+    
+    return minimum_gap, advisory_speed, time_first_msg_received, is_successful
+
 ###########################################################################################################
 # TIM B-28: The information communicated by the CM vehicle is closed area, and what the new 
 #           speed limit and gap limits are in the closed area.
@@ -208,13 +270,15 @@ def get_TIM_mobility_operation_data(bag):
     minimum_gap = 0.0
     advisory_speed = 0.0
     event_type = ""
-    time_first_msg_received = 0
+    time_first_msg_received = rospy.Time()
     has_correct_data = False
 
     # Parse the first received TIM use case Mobility Operation message
     for topic, msg, t in bag.read_messages(topics=['/message/incoming_mobility_operation']):
+        print(msg.strategy)
         if (msg.strategy == "carma3/Incident_Use_Case"):
             time_first_msg_received = t
+            print("Received carma3/Incident_Use_Case strategy_params: " + str(msg.strategy_params))
 
             # Parse the strategy_params string:
             params = (msg.strategy_params).split(',')
@@ -248,7 +312,6 @@ def get_TIM_mobility_operation_data(bag):
             break
     
     if (has_correct_data):
-        print("Received TIM strategy_params: " + str(msg.strategy_params))
         print("B-28 succeeded; TIM MobilityOperation message received with advisory speed limit " + str(advisory_speed) + " mph, " \
             + "minimum gap " + str(minimum_gap) + " meters, and \"CLOSED\" event type.")
         is_successful = True
@@ -288,10 +351,13 @@ def check_steady_state_before_TIM_message(bag, time_start_engagement, time_recei
         time_between_steady_state_and_msg = (time_received_first_message - time_start_steady_state).to_sec()
         if (time_between_steady_state_and_msg >= min_time_between_steady_state_and_msg):
             is_successful = True
-            print("B-2 succeeded; reached steady state " + str(time_between_steady_state_and_msg) + " seconds before receiving first TIM message.")
+            print("B-2 succeeded; reached steady state " + str(time_between_steady_state_and_msg) + " seconds before receiving first TIM or TCM message.")
         else:
             is_successful = False
-            print("B-2 failed; reached steady state " + str(time_between_steady_state_and_msg) + " seconds before receiving first TIM message.")
+            if (time_between_steady_state_and_msg > 0):
+                print("B-2 failed; reached steady state " + str(time_between_steady_state_and_msg) + " seconds before receiving first TIM or TCM message.")
+            else:
+                print("B-2 failed; reached steady state " + str(-time_between_steady_state_and_msg) + " seconds after receiving first TIM or TCM message.")
     else:
         print("B-2 failed; vehicle never reached steady state during rosbag recording.")
         is_successful = False
@@ -415,10 +481,14 @@ def check_lane_merge_before_geofence(bag, time_start_engagement, time_enter_geof
         for maneuver in msg.maneuvers:
             if (maneuver.type == 0):
                 print("Lane Keeping: " + str(maneuver.lane_following_maneuver.start_time) + " to " + str(maneuver.lane_following_maneuver.end_time))
+                print("Speed: " + str(maneuver.lane_following_maneuver.start_speed) + " to " + str(maneuver.lane_following_maneuver.end_speed))
+                print("Distance: " + str(maneuver.lane_following_maneuver.start_dist) + " to " + str(maneuver.lane_following_maneuver.end_dist))
+                print("Lanelet: " + str(maneuver.lane_following_maneuver.lane_id))
             elif (maneuver.type == 1):
                 print("Lane Change: " + str(maneuver.lane_change_maneuver.start_time) + " to " + str(maneuver.lane_change_maneuver.end_time))
                 print("Distance: " + str(maneuver.lane_change_maneuver.start_dist) + " to " + str(maneuver.lane_change_maneuver.end_dist))
                 print("Speed: " + str(maneuver.lane_change_maneuver.start_speed) + " to " + str(maneuver.lane_change_maneuver.end_speed))
+                print("Lanelet: " + str(maneuver.lane_change_maneuver.starting_lane_id) + " to " + str(maneuver.lane_change_maneuver.ending_lane_id))
             elif (maneuver.type == 5):
                 print("StopAndWait: " + str(maneuver.stop_and_wait_maneuver.start_time) + " to " + str(maneuver.stop_and_wait_maneuver.end_time))
     """
@@ -437,20 +507,20 @@ def check_lane_merge_before_geofence(bag, time_start_engagement, time_enter_geof
     count_fail_lane_merge_point = 0
     for topic, msg, t in bag.read_messages(topics=['/guidance/plan_trajectory'], start_time = time_start_engagement, end_time = time_enter_geofence):
         #print("*************************************************")
-        #total_distance = 0.0
+        total_distance = 0.0
         has_found_lane_merge_end_point = False
         prev_point = msg.trajectory_points[0]
         for i in range(1, len(msg.trajectory_points)): 
             current_point = msg.trajectory_points[i]
 
             # Calculations for Debug Statement
-            #distance_between_lane_change_points = ((msg.trajectory_points[i].x - prev_point.x)**2 + (msg.trajectory_points[i].y - prev_point.y)**2) ** 0.5
-            #dt = msg.trajectory_points[i].target_time - prev_point.target_time
-            #if (dt.to_sec() <= 0.001):
-            #    prev_point = current_point
-            #    continue
-            #current_pt_speed = distance_between_lane_change_points / dt.to_sec() # Speed in m/s
-            #total_distance += distance_between_lane_change_points
+            distance_between_lane_change_points = ((msg.trajectory_points[i].x - prev_point.x)**2 + (msg.trajectory_points[i].y - prev_point.y)**2) ** 0.5
+            dt = msg.trajectory_points[i].target_time - prev_point.target_time
+            if (dt.to_sec() <= 0.001):
+                prev_point = current_point
+                continue
+            current_pt_speed = distance_between_lane_change_points / dt.to_sec() # Speed in m/s
+            total_distance += distance_between_lane_change_points
             #print(str(current_point.planner_plugin_name) + ": " + str(current_point.target_time) + ", speed: " + str(current_pt_speed) + " m/s, distance: " +str(total_distance))
 
 
@@ -711,10 +781,11 @@ def check_lane_change_after_geofence(bag, time_exit_geofence, time_end_engagemen
 # TIM B-21: The planned trajectory will start calling for acceleration back to the original speed limit 
 #           no more than 30 feet away from the end of the geo-fenced area.
 ###########################################################################################################
-def check_acceleration_distance_after_geofence(bag, time_exit_geofence, time_end_engagement):
+def check_acceleration_distance_after_geofence(bag, time_exit_geofence, time_end_engagement, time_enter_geofence, advisory_speed_limit):
     max_distance_from_geofence_end = 30.0 # (feet) Max distance from end of geofence for first lane change point
     min_distance_from_geofence_end = 0.0 # (feet) Minimum distance from end of geofence for first lane change point
     min_acceleration = 1.0 # (m/s^2) Minimum acceleration in m/s^2 for a point to be considered the start of a plan's acceleration
+    #min_consecutive_accel_points = 3
 
     # Get the location (in Map Frame) of the end of the geofence
     for topic, msg, t in bag.read_messages(topics=['/localization/current_pose'], start_time = time_exit_geofence):
@@ -726,7 +797,9 @@ def check_acceleration_distance_after_geofence(bag, time_exit_geofence, time_end
     # Note: An acceleration point is a point with acceleration above the minimum threshold (defined by the metric criteria) along consecutive points
     # TODO: Create a more robust approach for determining when an acceleration has begun
     has_found_acceleration_point = False
-    for topic, msg, t in bag.read_messages(topics=['/guidance/plan_trajectory'], start_time = time_exit_geofence, end_time = time_end_engagement):
+    for topic, msg, t in bag.read_messages(topics=['/guidance/plan_trajectory'], start_time = time_enter_geofence, end_time = time_end_engagement):
+        #print("********************************")
+        total_distance = 0
         is_first_trajectory_point = True
         for tpp in msg.trajectory_points:
             if is_first_trajectory_point:
@@ -737,22 +810,30 @@ def check_acceleration_distance_after_geofence(bag, time_exit_geofence, time_end
             
             # Obtain current point's speed
             distance = ((tpp.x - prev_point.x)**2 + (tpp.y - prev_point.y)**2) ** 0.5
+            total_distance += distance
             dt = (tpp.target_time - prev_point.target_time).to_sec()
             current_pt_speed = distance / dt # Speed in m/s
 
             # Obtain current point's acceleration
             current_pt_accel = (current_pt_speed - prev_point_speed) / dt
+            #print(str(tpp.planner_plugin_name) + ": " + str(tpp.target_time) + ", speed: " + str(current_pt_speed) + " m/s, " +str(current_pt_accel) + " m/s^2")
 
             # Check if current point's acceleration meets the minimum acceleration criteria
-            if (current_pt_accel >= min_acceleration):
+            if (current_pt_accel >= min_acceleration and current_pt_speed > advisory_speed_limit):
+                time_start_accel_after_geofence = t
+                time_between_accel_and_exit = time_exit_geofence - time_start_accel_after_geofence
                 has_found_acceleration_point = True
 
-                # Get the distance between the previous point and the end of the geofence (since acceleration began with previous point)
-                distance_from_geofence_end_meters = ((prev_point.x - exit_geofence_x)**2 + (prev_point.y - exit_geofence_y)**2) ** 0.5
+                # Get the distance between the point and the end of the geofence
+                distance_from_geofence_end_meters = ((tpp.x - exit_geofence_x)**2 + (tpp.y - exit_geofence_y)**2) ** 0.5
                 distance_from_geofence_end_feet = distance_from_geofence_end_meters * 3.28 # Conversion from meters to feet
                 
                 # Check if previous point is within min/max distance from the end of geofence (since acceleration began with previous point)
-                if (max_distance_from_geofence_end >= distance_from_geofence_end_feet >= min_distance_from_geofence_end):
+                if (time_start_accel_after_geofence.to_sec() < time_exit_geofence.to_sec()):
+                    print("B-21 failed: vehicle began accelerating " + str(distance_from_geofence_end_feet) + " feet (" + \
+                         str(time_between_accel_and_exit.to_sec()) + " sec) before exiting geofence.")
+                    is_successful = False
+                elif (max_distance_from_geofence_end >= distance_from_geofence_end_feet >= min_distance_from_geofence_end):
                     print("B-21 succeeded: vehicle began accelerating " + str(distance_from_geofence_end_feet) + " feet after exiting geofence.")
                     is_successful = True
                 else:
@@ -784,7 +865,7 @@ def check_acceleration_distance_after_geofence(bag, time_exit_geofence, time_end
 ###########################################################################################################
 def check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_end_engagement, original_speed_limit):
     # (m/s^2) Minimum threshold of instantaneous acceleration for a point to be considered the start of the acceleration phase
-    min_instantaneous_acceleration = 0.1
+    min_instantaneous_acceleration = 0.4
     # (m/s^2) Minimum threshold for average acceleration during acceleration phase in trajectory plan
     min_average_acceleration = 1.0
     # (m/s) Threshold offset from speed limit; once the start speed is within this offset of the speed limit, no more plans will be evaluated
@@ -800,8 +881,10 @@ def check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_end_eng
 
     count_success_traj_accel = 0
     count_fail_traj_accel = 0
+    found_first_accel_traj = False
     for topic, msg, t in bag.read_messages(topics=['/guidance/plan_trajectory'], start_time = time_exit_geofence, end_time = time_end_engagement):
         # If the trajectory start speed is above the configured max start speed, assume the vehicle has reached steady state and stop evaluating trajectory plans
+        #print("*******************")
         if (msg.initial_longitudinal_velocity >= max_start_speed):
             break
         
@@ -835,7 +918,7 @@ def check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_end_eng
             elif (has_acceleration_phase):   
                 # If the current point's acceleration is below 0 m/s^2, the end of the acceleration phase has been found
                 # TODO: Tune this value?
-                if (current_pt_accel <= 0.0):
+                if (current_pt_accel <= 0.0 or current_pt_speed >= 0.95 * original_speed_limit):
                     end_accel_point_idx = i - 1 # Acceleration ends with the previous point
                     end_accel_point_speed = prev_point_speed
 
@@ -859,12 +942,20 @@ def check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_end_eng
 
             if (average_accel >= min_average_acceleration):
                 count_success_traj_accel += 1
+                #print("Success; avg accel: " + str(average_accel))
             else:
                 count_fail_traj_accel += 1
+                #print("Fail; avg accel: " + str(average_accel))
+
         
         # Trajectory Plan did not have a single occurrence of acceleration above the configured minimum instantaneous value
         else:
-            continue
+
+            # If the previous trajectories did have an acceleration phase, this one should have had one as well
+            if found_first_accel_traj:
+                print("Fail; no acceleration in trajectory plan.")
+                count_fail_traj_accel = True
+                continue
 
     # Print success/failure statement and return success flag
     count_traj_plans_with_accel = count_success_traj_accel + count_fail_traj_accel
@@ -895,6 +986,7 @@ def check_steady_state_after_geofence(bag, time_exit_geofence, time_end_engageme
     max_steady_state_speed = original_speed_limit + threshold_speed_limit_offset
     # (seconds) Minimum required threshold at steady state after completing all geofence-triggered maneuvers
     min_steady_state_time = 10.0
+
 
     # Get the start time of the vehicle completing all maneuvers:
     # Note: This means the first instance of lane-keeping after exiting the geofence and completing the final lane change
@@ -948,10 +1040,13 @@ def check_steady_state_after_geofence(bag, time_exit_geofence, time_end_engageme
             print("B-23 succeeded; system reached continuous steady state for more than " + str(min_steady_state_time) + " seconds after geofence-triggered maneuvers.")
             is_successful = True
         else:
-            print("B-23 failed; system reached continuous steady state for " + str(steady_state_duration) + " seconds after geofence-triggered maneuvers. " \
-                + " At least " + str(min_steady_state_time) + " seconds required.")
-            is_successful = False
-
+            if has_steady_state:
+                print("B-23 failed; system reached continuous steady state for " + str(steady_state_duration) + " seconds after geofence-triggered maneuvers. " \
+                    + " At least " + str(min_steady_state_time) + " seconds required.")
+                is_successful = False
+            if not has_steady_state:
+                print("B-23 failed; system did not reach steady state after geofence-triggered maneuvers.")
+                is_successful = False
     else:
         print("B-23 failed; system never completed final lane change after exiting geofence.")
         is_successful = False
@@ -968,14 +1063,31 @@ def check_speed_limit_when_not_in_geofence(bag, time_start_engagement, time_ente
     max_speed_limit = original_speed_limit + threshold_speed_limit_offset # (m/s)
     min_speed_limit = original_speed_limit - threshold_speed_limit_offset # (m/s)
 
+    # Tolerance for the time between the geofence start and end and finding a speed limit that belongs in the geofence:
+    # Note: This tolerance is due to timing not being fully-synchronized between /environment/active_geofence and all other topics
+    time_tolerance_geofence = 0.80 # seconds
+
     # Check speed limit before entering geofence
     # TODO: Current bug causes route_state topic to not be published after first TIM MobilityOperation message is received
     #       As a result, a portion of the before-geofence portion cannot be evaluated
     is_correct_speed_limit_before_geofence = False
+    time_incorrect_speed_limit_before_geofence = 0
     for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_start_engagement, end_time = time_enter_geofence):
+        # The first correct speed limit has been found
         if ((max_speed_limit >= msg.speed_limit >= min_speed_limit) and not is_correct_speed_limit_before_geofence):
             is_correct_speed_limit_before_geofence = True
+        # An incorrect speed limit has been found; will trigger a failure if not within tolerance of the geofence entrance
         elif((msg.speed_limit >= max_speed_limit or msg.speed_limit <= min_speed_limit) and is_correct_speed_limit_before_geofence):
+            time_incorrect_speed_limit_before_geofence = abs(time_enter_geofence - t).to_sec()
+            
+            # Not a failure if within tolerance time of the geofence entrance
+            if (time_incorrect_speed_limit_before_geofence <= time_tolerance_geofence):
+                is_correct_speed_limit_before_geofence = True
+                continue
+
+            # Failure if not within tolerance time of the geofence entrance
+            print("Speed limit " + str(msg.speed_limit) + " m/s found at " + str(t.to_sec()) + \
+                ", which is " + str(time_incorrect_speed_limit_before_geofence) + " seconds before entering the geofence.")
             is_correct_speed_limit_before_geofence = False
             break
 
@@ -983,9 +1095,24 @@ def check_speed_limit_when_not_in_geofence(bag, time_start_engagement, time_ente
     # TODO: Current bug causes route_state topic to not be published after first TIM MobilityOperation message is received
     #       As a result, the after-geofence portion cannot be evaluated
     is_correct_speed_limit_after_geofence = False
+    time_incorrect_speed_limit_after_geofence = 0
     for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_exit_geofence, end_time = time_end_engagement):
+        # Speed limit is correct for the first time after exiting the geofence
         if ((max_speed_limit >= msg.speed_limit >= min_speed_limit) and not is_correct_speed_limit_after_geofence):
-            is_correct_speed_limit_after_geofence = True
+            time_incorrect_speed_limit_after_geofence = abs(t - time_exit_geofence).to_sec()
+            if (time_incorrect_speed_limit_after_geofence <= time_tolerance_geofence):
+                is_correct_speed_limit_after_geofence = True
+                continue
+        
+        # Failure; speed limit is incorrect and not within tolerance time of exiting geofence:
+        elif((msg.speed_limit >= max_speed_limit or msg.speed_limit <= min_speed_limit) and not is_correct_speed_limit_after_geofence):
+            time_incorrect_speed_limit_after_geofence = abs(t - time_exit_geofence).to_sec()
+            print("Speed limit " + str(msg.speed_limit) + " m/s found at " + str(t.to_sec()) + \
+                    ", which is " + str(time_incorrect_speed_limit_after_geofence) + " seconds after exiting the geofence.")
+            is_correct_speed_limit_after_geofence = False
+            break
+
+        # Failure; speed limit is incorrect after having been correct before
         elif((msg.speed_limit >= max_speed_limit or msg.speed_limit <= min_speed_limit) and is_correct_speed_limit_after_geofence):
             is_correct_speed_limit_after_geofence = False
             break
@@ -1053,77 +1180,65 @@ def main():
     # Create .csv file to make it easier to view overview of results (the .txt log file is still used for more in-depth information):
     csv_results_filename = "Results_" + str(current_time) + ".csv"
     csv_results_writer = csv.writer(open(csv_results_filename, 'w'))
-    csv_results_writer.writerow(["Bag Name", "Vehicle Name",
+    csv_results_writer.writerow(["Bag Name", "Vehicle Name", "Test Type",
                                  "B-1 Result", "B-2 Result", "B-3 Result", "B-4 Result", "B-5 Result", "B-6 Result", 
                                  "B-7 Result", "B-8 Result", "B-9 Result", "B-10 Result","B-11 Result", "B-12 Result", 
                                  "B-13 Result", "B-14 Result", "B-15 Result", "B-16 Result", "B-17 Result", "B-18 Result", 
                                  "B-19 Result", "B-20 Result", "B-21 Result", "B-22 Result", "B-23 Result", "B-24 Result", 
                                  "B-25 Result", "B-26 Result", "B-27 Result", "B-28 Result"])
     
-    # Create list of Blue Lexus bag files to be processed
-    # Note: This example list includes rosbags from TIM testing conducted 5/25/2021 - 5/27/2021
-    black_pacifica_bag_files = ["_2021-05-25-14-38-52.bag", 
-                                "_2021-05-25-14-55-43.bag",
-                                "_2021-05-25-15-26-14.bag",
-                                "_2021-05-25-15-52-36.bag",
-                                "_2021-05-25-16-00-48.bag",
-                                "_2021-05-25-16-11-13.bag",
-                                "_2021-05-25-16-16-07.bag",
-                                "_2021-05-25-19-15-25.bag",
-                                "_2021-05-25-19-24-57.bag",
-                                "_2021-05-25-19-43-39.bag",
-                                "_2021-05-25-20-07-37.bag",
-                                "_2021-05-25-20-18-51.bag",
-                                "_2021-05-25-20-32-22.bag", # Used to be .bag.active
-                                "_2021-05-25-20-41-47.bag",
-                                "_2021-05-25-20-49-05.bag", # Used to be .bag.active
-                                "_2021-05-26-13-09-39.bag", # Used to be .bag.active
-                                "_2021-05-26-14-38-26.bag"] 
+    # Create list of TIM Black Pacifica bag files to be processed
+    TIM_black_pacifica_bag_files = [] 
     
-    # Create list of Ford Fusion bag files to be processed
-    # Note: This example list includes rosbags from TIM testing conducted 5/25/2021 - 5/27/2021
-    ford_fusion_bag_files =["_2021-05-25-17-47-01.bag", # Used to be .bag.active
-                            "_2021-05-25-17-53-47.bag", # Used to be .bag.active
-                            "_2021-05-25-18-14-12.bag", # Used to be .bag.active
-                            "_2021-05-25-18-19-06.bag", # Used to be .bag.active
-                            "_2021-05-25-18-24-50.bag", # Used to be .bag.active
-                            "_2021-05-25-18-54-32.bag", # Used to be .bag.active
-                            "_2021-05-25-19-06-02.bag", # Used to be .bag.active
-                            "_2021-05-25-19-19-45.bag", # Used to be .bag.active
-                            "_2021-05-26-13-24-04.bag",
-                            "_2021-05-26-13-33-10.bag", # Used to be .bag.active
-                            "_2021-05-26-13-44-18.bag",
-                            "_2021-05-26-13-49-27.bag",
-                            "_2021-05-26-13-56-30.bag",
-                            "_2021-05-26-13-59-04.bag",
-                            "_2021-05-26-14-06-04.bag",
-                            "_2021-05-26-14-10-40.bag",
-                            "_2021-05-26-14-16-19.bag",
-                            "_2021-05-26-14-20-50.bag"]
+    # Create list of TIM Ford Fusion bag files to be processed
+    TIM_ford_fusion_bag_files =["_2021-06-24-18-03-35_down-selected.bag",
+                                "_2021-06-24-18-14-20_down-selected.bag",
+                                "_2021-06-24-18-20-00_down-selected.bag",
+                                "_2021-06-24-18-26-11_down-selected.bag",
+                                "_2021-06-24-18-31-59_down-selected.bag"]
     
-    # Create list of Blue Lexus bag files to be processed
-    # Note: This example list includes rosbags from TIM testing conducted 5/25/2021 - 5/27/2021
-    blue_lexus_bag_files = ["_2021-05-26-16-39-37.bag",
-                            "_2021-05-26-17-00-42.bag",
-                            "_2021-05-26-17-08-22.bag",
-                            "_2021-05-26-17-26-06.bag", # Used to be .bag.active
-                            "_2021-05-26-17-39-12.bag",
-                            "_2021-05-26-17-54-11.bag",
-                            "_2021-05-26-18-54-39.bag",
-                            "_2021-05-26-19-45-45.bag", # Used to be .bag.active
-                            "_2021-05-27-20-34-31.bag"] # Used to be .bag.active
+    # Create list of TIM Blue Lexus bag files to be processed
+    TIM_blue_lexus_bag_files = [] 
 
-    # Concatenate all bag files into one list
-    bag_files = black_pacifica_bag_files + ford_fusion_bag_files + blue_lexus_bag_files
+    # Concatenate all TIM bag files into one list
+    TIM_bag_files = TIM_black_pacifica_bag_files + TIM_ford_fusion_bag_files + TIM_blue_lexus_bag_files
+
+    # Create list of RWM Black Pacifica bag files to be processed
+    RWM_black_pacifica_bag_files = ["_2021-06-23-13-10-28_down-selected.bag",
+                                    "_2021-06-23-13-20-05_down-selected.bag",
+                                    "_2021-06-23-13-42-56_down-selected.bag",
+                                    "_2021-06-23-13-52-29_down-selected.bag",
+                                    "_2021-06-23-14-02-22_down-selected.bag",
+                                    "_2021-06-23-14-17-32_down-selected.bag"] 
+    
+    # Create list of RWM Ford Fusion bag files to be processed
+    RWM_ford_fusion_bag_files = ["_2021-06-22-19-22-48_down-selected.bag",
+                                 "_2021-06-22-19-29-24_down-selected.bag",
+                                 "_2021-06-22-19-38-00_down-selected.bag",
+                                 "_2021-06-22-19-45-31_down-selected.bag",
+                                 "_2021-06-22-19-53-39_down-selected.bag",
+                                 "_2021-06-24-17-04-56_down-selected.bag"]
+    
+    # Create list of RWM Blue Lexus bag files to be processed
+    RWM_blue_lexus_bag_files = [] 
+
+    # Concatenate all RWM bag files into one list
+    RWM_bag_files = RWM_black_pacifica_bag_files + RWM_ford_fusion_bag_files + RWM_blue_lexus_bag_files
+
+    TIM_and_RWM_bag_files = TIM_bag_files + RWM_bag_files
 
     # Loop to conduct data anlaysis on each bag file:
-    for bag_file in bag_files:
+    for bag_file in TIM_and_RWM_bag_files:
         print("*****************************************************************")
         print("Processing new bag: " + str(bag_file))
-
+        if bag_file in TIM_bag_files:
+            print("TIM Test Case")
+        elif bag_file in RWM_bag_files:
+            print("RWM Test Case")
+        
         # Print processing progress to terminal (all other print statements are re-directed to outputted .txt file):
         sys.stdout = orig_stdout
-        print("Processing bag file " + str(bag_file) + " (" + str(bag_files.index(bag_file) + 1) + " of " + str(len(bag_files)) + ")")
+        print("Processing bag file " + str(bag_file) + " (" + str(TIM_and_RWM_bag_files.index(bag_file) + 1) + " of " + str(len(TIM_and_RWM_bag_files)) + ")")
         sys.stdout = text_log_file_writer
 
         # Process bag file if it exists and can be processed, otherwise skip and proceed to next bag file
@@ -1161,14 +1276,23 @@ def main():
         print("Time spent engaged: " + str((time_test_end_engagement - time_test_start_engagement).to_sec()) + " seconds")
 
         # Pre-processed data for data analysis:
-        closed_lanelets = [2381399, 24078]
+        closed_lanelets = [24078]
         print("Assuming Closed Lanelets: " + str(closed_lanelets))
 
         original_speed_limit = get_route_original_speed_limit(bag, time_test_start_engagement) # Units: m/s
         print("Original Speed Limit is " + str(original_speed_limit) + " m/s")
 
+        # Update the exit geofence time to be based off of /guidance/route_state for improved accuracy
+        time_exit_geofence = adjust_geofence_exit_time(bag, time_exit_geofence, original_speed_limit)
+        print("Adjusted geofence exit time (based on /guidance/route_state): " + str(time_exit_geofence))
+
         # Metrics B-28
-        minimum_gap, advisory_speed_limit, event_type, time_received_first_TIM_msg, b_28_result = get_TIM_mobility_operation_data(bag)
+        if bag_file in TIM_bag_files:
+            minimum_gap, advisory_speed_limit, event_type, time_received_first_TIM_msg, b_28_result = get_TIM_mobility_operation_data(bag)
+        elif bag_file in RWM_bag_files:
+            minimum_gap, advisory_speed_limit, time_received_first_msg, b_28_result = get_TCM_data(bag)
+        
+        # Convert advisory speed limit from B-28 to m/s for future metric evaluations
         advisory_speed_limit = advisory_speed_limit * 0.44704 # Conversion from mph to m/s
         
         # Metrics B-1 and B-11
@@ -1178,7 +1302,7 @@ def main():
         b_10_result = check_in_geofence_speed_limits(bag, time_test_start_engagement, time_exit_geofence, advisory_speed_limit)
 
         # Metrics B-2
-        b_2_result = check_steady_state_before_TIM_message(bag, time_test_start_engagement, time_received_first_TIM_msg, original_speed_limit)
+        b_2_result = check_steady_state_before_TIM_message(bag, time_test_start_engagement, time_received_first_msg, original_speed_limit)
 
         # Metrics B-4
         # TODO: B-4 cannot be properly measured without knowing whether a trajectory plan deceleration is due to a curve.
@@ -1194,7 +1318,7 @@ def main():
         b_20_result = check_lane_change_after_geofence(bag, time_exit_geofence, time_test_end_engagement)
 
         # Metrics B-21
-        b_21_result = check_acceleration_distance_after_geofence(bag, time_exit_geofence, time_test_end_engagement)
+        b_21_result = check_acceleration_distance_after_geofence(bag, time_exit_geofence, time_test_end_engagement, time_enter_geofence, advisory_speed_limit)
 
         # Metrics B-22
         b_22_result = check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_test_end_engagement, original_speed_limit)
@@ -1208,22 +1332,31 @@ def main():
         # Metrics B-25
         b_25_result = check_advisory_speed_limit(bag, time_test_end_engagement, advisory_speed_limit, original_speed_limit)
 
+        
         # Get vehicle type that this bag file is from
-        if bag_file in black_pacifica_bag_files:
+        vehicle_name = "Unknown"
+        if bag_file in TIM_black_pacifica_bag_files or RWM_black_pacifica_bag_files:
             vehicle_name = "Black Pacifica"
-        elif bag_file in ford_fusion_bag_files:
+        elif bag_file in TIM_ford_fusion_bag_files or RWM_ford_fusion_bag_files:
             vehicle_name = "Ford Fusion"
-        elif bag_file in blue_lexus_bag_files:
+        elif bag_file in TIM_blue_lexus_bag_files or RWM_blue_lexus_bag_files:
             vehicle_name = "Blue Lexus"
         else:
             vehicle_name = "N/A"
 
+        # Get test type that this bag file is for
+        test_type = "Unknown"
+        if bag_file in TIM_bag_files:
+            test_type = "TIM"
+        elif bag_file in RWM_bag_files:
+            test_type = "RWM"
+
         # Write simple pass/fail results to .csv file for appropriate row:
-        csv_results_writer.writerow([bag_file, vehicle_name,
+        csv_results_writer.writerow([bag_file, vehicle_name, test_type,
                                      b_1_result, b_2_result, "B-3", b_4_result, "B-5", "B-6", "B-7", "B-8", "B-9", b_10_result, 
                                      b_11_result, "B-12", b_13_result, "B-14", b_15_result, "B-16", "B-17", "B-18", "B-19", b_20_result, 
                                      b_21_result, b_22_result, b_23_result, b_24_result, b_25_result, "B-26", "B-27", b_28_result])
-
+        
     sys.stdout = orig_stdout
     text_log_file_writer.close()
     return
