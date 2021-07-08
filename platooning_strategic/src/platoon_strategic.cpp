@@ -224,8 +224,12 @@ namespace platoon_strategic
                 break;
             }
 
-            resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist,  
+            if (pm_.getTotalPlatooningSize() > 1)
+            {
+                resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist,  
                                     speed_progress, target_speed,shortest_path[last_lanelet_index].id(), time_progress));
+            }
+            
             
             current_progress += dist_diff;
             time_progress = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
