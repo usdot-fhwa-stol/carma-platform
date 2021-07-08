@@ -122,7 +122,7 @@ catkin_add_gmock(${PROJECT_NAME}-test
   #test/CARMAWorldModelTest.cpp
   #test/WMTestLibForGuidanceTest.cpp
   #test/IndexedDistanceMapTest.cpp
-  #test/WMListenerWorkerTest.cpp
+  test/WMListenerWorkerTest.cpp
   #test/GeometryTest.cpp
   #test/CollisionDetectionTest.cpp
   test/TrafficControlTest.cpp

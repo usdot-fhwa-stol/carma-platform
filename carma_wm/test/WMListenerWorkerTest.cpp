@@ -45,14 +45,14 @@ using ::testing::ReturnArg;
 
 namespace carma_wm
 {
-TEST(WMListenerWorkerTest, DISABLED_constructor)
+TEST(WMListenerWorkerTest, constructor)
 {
   WMListenerWorker wmlw;
 
   ASSERT_TRUE((bool)wmlw.getWorldModel());
 }
 
-TEST(WMListenerWorkerTest, DISABLED_mapCallback)
+TEST(WMListenerWorkerTest, mapCallback)
 {
   CARMAWorldModel cwm;
 
@@ -89,7 +89,7 @@ TEST(WMListenerWorkerTest, DISABLED_mapCallback)
   ASSERT_TRUE(flag);
 }
 
-TEST(WMListenerWorkerTest, DISABLED_routeCallback)
+TEST(WMListenerWorkerTest, routeCallback)
 {
   WMListenerWorker wmlw;
 
@@ -160,6 +160,8 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
 
   auto ll_1 = getLanelet(left_ls_1, right_ls_1, lanelet::AttributeValueString::SolidSolid,
                          lanelet::AttributeValueString::Dashed);
+  auto ll_2 = getLanelet(left_ls_1, right_ls_1, lanelet::AttributeValueString::SolidSolid,
+                         lanelet::AttributeValueString::Dashed);
   // add regems
 
   lanelet::DigitalSpeedLimitPtr speed_limit_old = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(9000, 5_mph, {ll_1}, {},
@@ -175,7 +177,7 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
 
   // from broadcaster
   autoware_lanelet2_msgs::MapBin gf_obj_msg;
-  auto received_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, {}));
+  auto received_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, {ll_2}));
   carma_wm::toBinMsg(received_data, &gf_obj_msg);
 
   // create a listener
@@ -211,13 +213,17 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   auto new_regem_correct_data = wmlw.getWorldModel()->getMap()->regulatoryElementLayer.get(speed_limit_new->id());
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(new_regem_correct_data).size(), 1); // now queryable here because of same element with correct data address
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(new_regem_correct_data)[0].id(), ll_1.id());
+  // check if the map has the new lanelet now
+  ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.size(), 2);
+  ASSERT_TRUE(wmlw.getWorldModel()->getMap()->laneletLayer.exists(ll_2.id()));
+  
   // but old regem should still be there as the updater doesn't completely delete old regems, but only sever the connections
   auto regem_old_correct_data = wmlw.getWorldModel()->getMap()->regulatoryElementLayer.get(speed_limit_old->id());
   ASSERT_NE(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.find(speed_limit_old->id()), 
             wmlw.getWorldModel()->getMap()->regulatoryElementLayer.end());
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(regem_old_correct_data).size(), 0);
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(speed_limit_old).size(), 0);
-
+  
   // now the change should be reversable
   gf_ptr->update_list_ = {};
   gf_ptr->remove_list_ = {};
@@ -252,7 +258,7 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(regem_old_correct_data)[0].id(), ll_1.id());
 }
 
-TEST(WMListenerWorkerTest, DISABLED_setConfigSpeedLimitTest)
+TEST(WMListenerWorkerTest, setConfigSpeedLimitTest)
 {
   WMListenerWorker wmlw;
 
@@ -270,7 +276,7 @@ TEST(WMListenerWorkerTest, DISABLED_setConfigSpeedLimitTest)
 
 }
 
-TEST(WMListenerWorkerTest, DISABLED_checkIfReRoutingNeeded1)
+TEST(WMListenerWorkerTest, checkIfReRoutingNeeded1)
 {
   WMListenerWorker wmlw;
   ASSERT_EQ(false, wmlw.checkIfReRoutingNeeded());
