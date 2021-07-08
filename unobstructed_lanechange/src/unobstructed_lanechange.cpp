@@ -63,7 +63,6 @@ namespace unobstructed_lanechange
         pnh_->param<bool>("enable_object_avoidance_lc", enable_object_avoidance_lc_, false);
         pnh_->param<double>("acceptable_time_difference_", acceptable_time_difference_, 1.0);
         pnh_->param<double>("min_timestep",min_timestep_);
-        pnh_->param<double>("ending_buffer_downtrack", ending_buffer_downtrack_, 5.0);
         // update ros_dur_ value
         time_dur_ = ros::Duration(acceptable_time_difference_);
 
@@ -200,19 +199,7 @@ namespace unobstructed_lanechange
             int nearest_pt_index = getNearestRouteIndex(route_geometry,state);
             int ending_pt_index = get_ending_point_index(route_geometry, ending_downtrack);
 
-            ending_state_before_buffer_.X_pos_global = route_geometry[ending_pt_index].x();
-            ending_state_before_buffer_.Y_pos_global = route_geometry[ending_pt_index].y();
-            
-            double route_length = wm_->getRouteEndTrackPos().downtrack;
-            int ending_pt_index_with_buffer;
-            if(ending_downtrack + ending_buffer_downtrack_ < route_length){
-                ending_pt_index_with_buffer = get_ending_point_index(route_geometry, ending_downtrack + ending_buffer_downtrack_);
-            }
-            else{
-                ending_pt_index_with_buffer = ending_pt_index;
-            }
-            
-            lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin() + ending_pt_index_with_buffer);
+            lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin() + ending_pt_index);
             first = true;
 
             for(auto p :future_route_geometry)
@@ -263,13 +250,6 @@ namespace unobstructed_lanechange
         // Convert speeds to times
         std::vector<double> times;
         trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
-
-        //Remove extra points
-        int end_dist_pt_index = getNearestPointIndex(future_geom_points, ending_state_before_buffer_);
-        future_geom_points.resize(end_dist_pt_index + 1);
-        times.resize(end_dist_pt_index + 1);
-        final_yaw_values.resize(end_dist_pt_index + 1);
-
 
         // Build trajectory points
         std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
@@ -521,25 +501,6 @@ namespace unobstructed_lanechange
         }
 
         return best_index;
-    }
-    
-    int UnobstructedLaneChangePlugin::getNearestPointIndex(const std::vector<lanelet::BasicPoint2d>& points,
-                                               const cav_msgs::VehicleState& state) const
-    {
-        lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
-        double min_distance = std::numeric_limits<double>::max();
-        int i = 0;
-        int best_index = 0;
-        for (const auto& p : points)
-        {
-            double distance = lanelet::geometry::distance2d(p, veh_point);
-            if (distance < min_distance)
-            {
-            best_index = i;
-            min_distance = distance;
-            }
-            i++;
-        }
     }
 
     lanelet::BasicLineString2d  UnobstructedLaneChangePlugin::create_lanechange_path(lanelet::BasicPoint2d start, lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet)
