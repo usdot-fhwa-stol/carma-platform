@@ -107,9 +107,9 @@ namespace platoon_strategic
             lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
             carma_wm::TrackPos tc = wm_->routeTrackPos(current_loc);
             current_downtrack_ = tc.downtrack;
-            ROS_WARN_STREAM("current_downtrack_" << current_downtrack_);
+            ROS_DEBUG_STREAM("current_downtrack_ = " << current_downtrack_);
             current_crosstrack_ = tc.crosstrack;
-            ROS_WARN_STREAM("current_crosstrack_" << current_crosstrack_);
+            ROS_DEBUG_STREAM("current_crosstrack_ = " << current_crosstrack_);
         }
         
         pose_ecef_point_ = pose_to_ecef(pose_msg_, tf_);
@@ -226,13 +226,9 @@ namespace platoon_strategic
                 break;
             }
 
-            // platoon size of one should not be considered as platooning and receive priority in planning
-            if (pm_.getTotalPlatooningSize() > 1)
-            {
-                resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist,  
+            resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist,  
                                     speed_progress, target_speed,shortest_path[last_lanelet_index].id(), time_progress));
-            }
-            
+
             
             current_progress += dist_diff;
             time_progress = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
@@ -249,6 +245,11 @@ namespace platoon_strategic
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
         }  
 
+        if (pm_.getTotalPlatooningSize() < 2)
+        {
+            resp.new_plan.maneuvers = {};
+            ROS_WARN_STREAM("Platoon size 1 so Empty maneuver sent");
+        }
 
         if (pm_.current_platoon_state == PlatoonState::STANDBY)
         {
@@ -407,7 +408,6 @@ namespace platoon_strategic
         // 4. Publish operation status every 100 milliseconds if we still have followers
         long tsStart = ros::Time::now().toNSec()/1000000; 
             // Job 1
-            ROS_WARN("1");
             cav_msgs::MobilityOperation status;
             status = composeMobilityOperationFollower();
             mobility_operation_publisher_(status);
@@ -1044,8 +1044,6 @@ namespace platoon_strategic
 
     void PlatoonStrategicPlugin::mob_op_cb_leader(const cav_msgs::MobilityOperation& msg)
     {   
-        ROS_WARN("1");
-
         std::string strategyParams = msg.strategy_params;
         std::string senderId = msg.header.sender_id;
         std::string platoonId = msg.header.plan_id;
@@ -1097,8 +1095,6 @@ namespace platoon_strategic
             ecef_loc.ecef_x = ecef_x;
             ecef_loc.ecef_y = ecef_y;
             ecef_loc.ecef_z = ecef_z;
-
-            ROS_WARN("2");
 
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
             rearVehicleDtd = wm_->routeTrackPos(incoming_pose).downtrack;
