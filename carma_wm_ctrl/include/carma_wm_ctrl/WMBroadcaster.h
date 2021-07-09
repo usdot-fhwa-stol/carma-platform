@@ -164,9 +164,10 @@ public:
    * \brief Returns geofence object from TrafficControlMessageV01 ROS Msg
    * \param geofence_msg The ROS msg that contains geofence information
    * \throw InvalidObjectStateError if base_map is not set or the base_map's georeference is empty
-   * NOTE:Currently this function populates digitalSpeedLimit and passingControlLine instructions
+   * \return list of geofences extracted from this geofence and previously cached msgs that are relevant
+   * NOTE: Currently only work_zone related msgs return multiple geofences upon receiving all necessary msgs in work_zone_geofence_cache_
    */
-  std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& geofence_msg);
+  std::vector<std::shared_ptr<Geofence>> geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& geofence_msg);
 
   /*!
    * \brief Returns the route distance (downtrack or crosstrack in meters) to the nearest active geofence lanelet
@@ -238,10 +239,14 @@ public:
    */ 
   cav_msgs::Route getRoute();
 
+  // TODO: fill in inputs and description
+  std::vector<std::shared_ptr<Geofence>> processWorkZone();
+
 
 private:
   lanelet::ConstLanelets route_path_;
   std::unordered_set<lanelet::Id> active_geofence_llt_ids_; 
+  std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache_;
   void addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
   void addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
   void removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const;

@@ -927,7 +927,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
 
   lanelet::Velocity limit = 80_mph;
 
-  auto gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  auto gf_ptr = wmb.geofenceFromMsg(msg_v01).front();
   ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   lanelet::DigitalSpeedLimitPtr max_speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
   ROS_ERROR_STREAM("Speed Limit: "<<max_speed->speed_limit_.value());
@@ -937,7 +937,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
 
   msg_v01.params.detail.maxspeed = -4;
 
-  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  gf_ptr = wmb.geofenceFromMsg(msg_v01).front();
   ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   max_speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
   ASSERT_GE(max_speed->speed_limit_, 0_mph);//Check that the maximum speed limit is not smaller than 0_mph
@@ -949,7 +949,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   msg_v01.params.detail.minspeed = -4.0;
 
 
-  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  gf_ptr = wmb.geofenceFromMsg(msg_v01).front();
   ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   lanelet::DigitalSpeedLimitPtr min_speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
   ASSERT_GE(min_speed->speed_limit_, 0_mph);
@@ -959,7 +959,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
    msg_v01.params.detail.minspeed = 99.0;
 
 
-  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  gf_ptr = wmb.geofenceFromMsg(msg_v01).front();
   ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   min_speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
   ASSERT_NEAR(min_speed->speed_limit_.value(), limit.value(), 0.0001) ;//Check that the minimum speed limit is not larger than 80_mph
@@ -972,7 +972,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   wmb.setConfigSpeedLimit(55.0);//Set the config speed limit
   msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
   msg_v01.params.detail.maxspeed = 0;
-  auto gf_ptr2 = wmb.geofenceFromMsg(msg_v01);
+  auto gf_ptr2 = wmb.geofenceFromMsg(msg_v01).front();
   ASSERT_TRUE(gf_ptr2->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   lanelet::DigitalSpeedLimitPtr max_speed_cL = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr2->regulatory_element_);
   //ASSERT_NEAR(max_speed->speed_limit_.value(), 22.352, 0.00001);
@@ -984,7 +984,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   wmb.setConfigSpeedLimit(55.0);//Set the config speed limit
   msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MINSPEED_CHOICE;
   msg_v01.params.detail.minspeed = 0;
-  gf_ptr2 = wmb.geofenceFromMsg(msg_v01);
+  gf_ptr2 = wmb.geofenceFromMsg(msg_v01).front();
   ASSERT_TRUE(gf_ptr2->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   lanelet::DigitalSpeedLimitPtr min_speed_cL = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr2->regulatory_element_);
  // ASSERT_NEAR(min_speed->speed_limit_.value(), 22.352,  0.00001);
@@ -1000,12 +1000,12 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   // Test lataffinity
   msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::LATAFFINITY_CHOICE;
   msg_v01.params.detail.lataffinity = cav_msgs::TrafficControlDetail::LEFT; // applies to the left boundaries of the 
-  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  gf_ptr = wmb.geofenceFromMsg(msg_v01).front();
   ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::PassingControlLine::RuleName) == 0);
   ASSERT_TRUE(gf_ptr->pcl_affects_left_);
 
   msg_v01.params.detail.lataffinity = cav_msgs::TrafficControlDetail::RIGHT; // applies to the right boundaries of the 
-  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  gf_ptr = wmb.geofenceFromMsg(msg_v01).front();
   ASSERT_TRUE(gf_ptr->pcl_affects_right_);
 
   msg_v01.params.detail.latperm[0] = cav_msgs::TrafficControlDetail::NONE; // not accessible from left
@@ -1015,63 +1015,63 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   j2735_msgs::TrafficControlVehClass veh_class;
   veh_class.vehicle_class = j2735_msgs::TrafficControlVehClass::ANY;
   msg_v01.params.vclasses.push_back(veh_class);
-  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  gf_ptr = wmb.geofenceFromMsg(msg_v01).front();
   lanelet::PassingControlLinePtr pcl = std::dynamic_pointer_cast<lanelet::PassingControlLine>(gf_ptr->regulatory_element_);
   ASSERT_EQ(pcl->right_participants_.size(), 3);
 
   msg_v01.params.vclasses = {};
   veh_class.vehicle_class = j2735_msgs::TrafficControlVehClass::PEDESTRIAN;
   msg_v01.params.vclasses.push_back(veh_class);
-  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  gf_ptr = wmb.geofenceFromMsg(msg_v01).front();
   pcl = std::dynamic_pointer_cast<lanelet::PassingControlLine>(gf_ptr->regulatory_element_);
   ASSERT_TRUE(strcmp(pcl->right_participants_.begin()->data(), lanelet::Participants::Pedestrian) == 0);
   
   msg_v01.params.vclasses = {};
   veh_class.vehicle_class = j2735_msgs::TrafficControlVehClass::BICYCLE;
   msg_v01.params.vclasses.push_back(veh_class);
-  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  gf_ptr = wmb.geofenceFromMsg(msg_v01).front();
   pcl = std::dynamic_pointer_cast<lanelet::PassingControlLine>(gf_ptr->regulatory_element_);
   ASSERT_TRUE(strcmp(pcl->right_participants_.begin()->data(), lanelet::Participants::Bicycle) == 0);
   
   msg_v01.params.vclasses = {};
   veh_class.vehicle_class = j2735_msgs::TrafficControlVehClass::MOTORCYCLE;
   msg_v01.params.vclasses.push_back(veh_class);
-  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  gf_ptr = wmb.geofenceFromMsg(msg_v01).front();
   pcl = std::dynamic_pointer_cast<lanelet::PassingControlLine>(gf_ptr->regulatory_element_);
   ASSERT_TRUE(strcmp(pcl->right_participants_.begin()->data(), lanelet::Participants::VehicleMotorcycle) == 0);
   
   msg_v01.params.vclasses = {};
   veh_class.vehicle_class = j2735_msgs::TrafficControlVehClass::BUS;
   msg_v01.params.vclasses.push_back(veh_class);
-  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  gf_ptr = wmb.geofenceFromMsg(msg_v01).front();
   pcl = std::dynamic_pointer_cast<lanelet::PassingControlLine>(gf_ptr->regulatory_element_);
   ASSERT_TRUE(strcmp(pcl->right_participants_.begin()->data(), lanelet::Participants::VehicleBus) == 0);
 
   msg_v01.params.vclasses = {};
   veh_class.vehicle_class = j2735_msgs::TrafficControlVehClass::LIGHT_TRUCK_VAN;
   msg_v01.params.vclasses.push_back(veh_class);
-  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  gf_ptr = wmb.geofenceFromMsg(msg_v01).front();
   pcl = std::dynamic_pointer_cast<lanelet::PassingControlLine>(gf_ptr->regulatory_element_);
   ASSERT_TRUE(strcmp(pcl->right_participants_.begin()->data(), lanelet::Participants::VehicleCar) == 0);
 
   msg_v01.params.vclasses = {};
   veh_class.vehicle_class = j2735_msgs::TrafficControlVehClass::THREE_AXLE_SINGLE_UNIT_TRUCK;
   msg_v01.params.vclasses.push_back(veh_class);
-  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  gf_ptr = wmb.geofenceFromMsg(msg_v01).front();
   pcl = std::dynamic_pointer_cast<lanelet::PassingControlLine>(gf_ptr->regulatory_element_);
   ASSERT_TRUE(strcmp(pcl->right_participants_.begin()->data(), lanelet::Participants::VehicleTruck) == 0);
   ASSERT_EQ(pcl->left_participants_.size(), 0);
   
   msg_v01.params.detail.latperm[0] = cav_msgs::TrafficControlDetail::PERMITTED; // accessible from left
   msg_v01.params.detail.latperm[1] = cav_msgs::TrafficControlDetail::NONE; // not accessible from right
-  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  gf_ptr = wmb.geofenceFromMsg(msg_v01).front();
   pcl = std::dynamic_pointer_cast<lanelet::PassingControlLine>(gf_ptr->regulatory_element_);
   ASSERT_TRUE(strcmp(pcl->left_participants_.begin()->data(), lanelet::Participants::VehicleTruck) == 0);
   ASSERT_EQ(pcl->right_participants_.size(), 0);
 
   msg_v01.params.detail.latperm[0] = cav_msgs::TrafficControlDetail::EMERGENCYONLY; 
   msg_v01.params.detail.latperm[1] = cav_msgs::TrafficControlDetail::EMERGENCYONLY; 
-  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  gf_ptr = wmb.geofenceFromMsg(msg_v01).front();
   pcl = std::dynamic_pointer_cast<lanelet::PassingControlLine>(gf_ptr->regulatory_element_);
   ASSERT_TRUE(strcmp(pcl->right_participants_.begin()->data(), lanelet::Participants::VehicleEmergency) == 0);
   ASSERT_TRUE(strcmp(pcl->left_participants_.begin()->data(), lanelet::Participants::VehicleEmergency) == 0);

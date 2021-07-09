@@ -90,8 +90,9 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   map_pub_(compliant_map_msg);
 };
 
-std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& msg_v01)
+std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& msg_v01)
 {
+  std::vector<std::shared_ptr<Geofence>> return_list;
   auto gf_ptr = std::make_shared<Geofence>(Geofence());
   // Get ID
   std::copy(msg_v01.id.id.begin(), msg_v01.id.id.end(), gf_ptr->id_.begin());
@@ -101,7 +102,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
 
   if (gf_ptr->affected_parts_.size() == 0) {
     ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
-    return nullptr; // Return null geofence
+    return {}; // Return empty geofence list
   }
 
   std::vector<lanelet::Lanelet> affected_llts;
@@ -114,82 +115,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     if (llt_or_area.isArea()) affected_areas.push_back(current_map_->areaLayer.get(llt_or_area.area()->id()));
   }
 
-  // TODO: logic to determine what type of geofence goes here
-  // currently only converting portion of control message that is relevant to:
-  // - digital speed limit, passing control line, digital minimum gap, region access rule
-  lanelet::Velocity sL;
-  cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
- 
-  
-  if (msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) 
-  {  
-    //Acquire speed limit information from TafficControlDetail msg
-    sL = lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPH()); 
-    
-    if(config_limit > 0_mph && config_limit < 80_mph && config_limit < sL)//Accounting for the configured speed limit, input zero when not in use
-        sL = config_limit;
-    //Ensure Geofences do not provide invalid speed limit data (exceed predetermined maximum value)
-    // @SONAR_STOP@
-    if(sL > 80_mph )
-    {
-     ROS_WARN_STREAM("Digital maximum speed limit is invalid. Value capped at max speed limit."); //Output warning message
-     sL = 80_mph; //Cap the speed limit to the predetermined maximum value
-
-    }
-    if(sL < 0_mph)
-    {
-           ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
-      sL = 0_mph;
-    }// @SONAR_START@
-    gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
-  }
-  
-  if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINSPEED_CHOICE) 
-  {
-    //Acquire speed limit information from TafficControlDetail msg
-     sL = lanelet::Velocity(msg_detail.minspeed * lanelet::units::MPH());
-     if(config_limit > 0_mph && config_limit < 80_mph)//Accounting for the configured speed limit, input zero when not in use
-        sL = config_limit;
-    //Ensure Geofences do not provide invalid speed limit data 
-    // @SONAR_STOP@
-    if(sL > 80_mph )
-    {
-     ROS_WARN_STREAM("Digital speed limit is invalid. Value capped at max speed limit.");
-     sL = 80_mph;
-    }
-    if(sL < 0_mph)
-    {
-           ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
-      sL = 0_mph;
-    }// @SONAR_START@
-    gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
-  }
-  if (msg_detail.choice == cav_msgs::TrafficControlDetail::LATPERM_CHOICE || msg_detail.choice == cav_msgs::TrafficControlDetail::LATAFFINITY_CHOICE)
-  {
-    addPassingControlLineFromMsg(gf_ptr, msg_v01, affected_llts);
-  }
-
- if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && msg_detail.closed==cav_msgs::TrafficControlDetail::CLOSED)
-  {
-    addRegionAccessRule(gf_ptr,msg_v01,affected_llts);
-  }
-
-  if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINHDWY_CHOICE) 
-  {
-
-    double min_gap = (double)msg_detail.minhdwy;
-
-    if(min_gap < 0)
-    {
-      ROS_WARN_STREAM("Digital min gap is invalid. Value set to 0 meter.");
-      min_gap = 0;
-    }
-    addRegionMinimumGap(gf_ptr,msg_v01, min_gap, affected_llts, affected_areas);
-  }
-
-  // Handle schedule provessing
+   // Handle schedule provessing
   cav_msgs::TrafficControlSchedule msg_schedule = msg_v01.params.schedule;
   
   ros::Time end_time = msg_schedule.end;
@@ -197,7 +123,6 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     ROS_DEBUG_STREAM("No end time for geofence, using ros::TIME_MAX");
     end_time = ros::TIME_MAX; // If there is no end time use the max time
   }
-
 
   // If the days of the week are specified then convert them to the boost format. 
   GeofenceSchedule::DayOfTheWeekSet week_day_set = { 0, 1, 2, 3, 4, 5, 6 }; // Default to all days  0==Sun to 6==Sat
@@ -283,10 +208,106 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     }
    
   }
+  
+  // TODO: logic to determine what type of geofence goes here
+  // currently only converting portion of control message that is relevant to:
+  // - digital speed limit, passing control line, digital minimum gap, region access rule
+  lanelet::Velocity sL;
+  cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
+ 
+  
+  if (msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) 
+  {  
+    //Acquire speed limit information from TafficControlDetail msg
+    sL = lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPH()); 
     
-  return gf_ptr;
-}
+    if(config_limit > 0_mph && config_limit < 80_mph && config_limit < sL)//Accounting for the configured speed limit, input zero when not in use
+        sL = config_limit;
+    //Ensure Geofences do not provide invalid speed limit data (exceed predetermined maximum value)
+    // @SONAR_STOP@
+    if(sL > 80_mph )
+    {
+     ROS_WARN_STREAM("Digital maximum speed limit is invalid. Value capped at max speed limit."); //Output warning message
+     sL = 80_mph; //Cap the speed limit to the predetermined maximum value
 
+    }
+    if(sL < 0_mph)
+    {
+           ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
+      sL = 0_mph;
+    }// @SONAR_START@
+    gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
+                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
+  }
+  
+  if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINSPEED_CHOICE) 
+  {
+    //Acquire speed limit information from TafficControlDetail msg
+     sL = lanelet::Velocity(msg_detail.minspeed * lanelet::units::MPH());
+     if(config_limit > 0_mph && config_limit < 80_mph)//Accounting for the configured speed limit, input zero when not in use
+        sL = config_limit;
+    //Ensure Geofences do not provide invalid speed limit data 
+    // @SONAR_STOP@
+    if(sL > 80_mph )
+    {
+     ROS_WARN_STREAM("Digital speed limit is invalid. Value capped at max speed limit.");
+     sL = 80_mph;
+    }
+    if(sL < 0_mph)
+    {
+           ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
+      sL = 0_mph;
+    }// @SONAR_START@
+    gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
+                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
+  }
+  if (msg_detail.choice == cav_msgs::TrafficControlDetail::LATPERM_CHOICE || msg_detail.choice == cav_msgs::TrafficControlDetail::LATAFFINITY_CHOICE)
+  {
+    addPassingControlLineFromMsg(gf_ptr, msg_v01, affected_llts);
+  }
+
+  if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINHDWY_CHOICE) 
+  {
+
+    double min_gap = (double)msg_detail.minhdwy;
+
+    if(min_gap < 0)
+    {
+      ROS_WARN_STREAM("Digital min gap is invalid. Value set to 0 meter.");
+      min_gap = 0;
+    }
+    addRegionMinimumGap(gf_ptr,msg_v01, min_gap, affected_llts, affected_areas);
+  }
+
+  bool detected_workzone_signal = msg_v01.package.label_exists && msg_v01.package.label.find("SIG_WZ") != std::string::npos;
+
+  if (detected_workzone_signal) // save to queue to process later
+  {
+    if (work_zone_geofence_cache_.size() < 4)
+    {
+      work_zone_geofence_cache_[msg_detail.choice] = gf_ptr;
+      ROS_INFO_STREAM("Received 'SIG_WZ' signal. Waiting for the rest of the messages, returning for now...");
+      return {};
+    }
+    else
+    {
+      return_list = processWorkZone();
+      return return_list;
+    }
+  }
+  else if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && msg_detail.closed==cav_msgs::TrafficControlDetail::CLOSED) // if stand-alone closed signal apart from Workzone
+  {
+    addRegionAccessRule(gf_ptr,msg_v01,affected_llts);
+  }
+ 
+  return_list.push_back(gf_ptr);
+  return return_list;
+}
+std::vector<std::shared_ptr<Geofence>> WMBroadcaster::processWorkZone()
+{
+  //TODO: FIll in
+  return {};
+}
 void WMBroadcaster::addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const
 {
   cav_msgs::TrafficControlDetail msg_detail;
@@ -468,16 +489,20 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   }
     
   checked_geofence_ids_.insert(boost::uuids::to_string(id));
-  auto gf_ptr = geofenceFromMsg(geofence_msg.tcmV01);
-  if (gf_ptr == nullptr || gf_ptr->affected_parts_.size() == 0)
+  auto gf_ptr_list = geofenceFromMsg(geofence_msg.tcmV01);
+  if (gf_ptr_list.empty() ||
+      (!gf_ptr_list.empty() && gf_ptr_list.front()->affected_parts_.size() == 0))
   {
     ROS_WARN_STREAM("Geofence message could not be converted");
     tcm_marker_array_.markers.resize(tcm_marker_array_.markers.size() - 1); //truncate this geofence
     return;
   }
-  scheduler_.addGeofence(gf_ptr);  // Add the geofence to the scheduler
-  ROS_INFO_STREAM("New geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
-
+  for (auto gf_ptr : gf_ptr_list)
+  {
+    scheduler_.addGeofence(gf_ptr);  // Add the geofence to the scheduler
+    ROS_INFO_STREAM("New geofence message received by WMBroadcaster with id: " << gf_ptr->id_  << ", as part of total processed msgs size: " << gf_ptr_list.size());
+  }
+  
 };
 
 void WMBroadcaster::geoReferenceCallback(const std_msgs::String& geo_ref)
@@ -1158,15 +1183,14 @@ void WMBroadcaster::addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const
   gf_ptr->remove_list_ = {};
   gf_ptr->update_list_ = {};
 
-  // TODO: Logic to determine what type of geofence goes here in the future
-  // currently only speedchange is available, so it is assumed that
+  // Logic to determine what type of geofence
   addRegulatoryComponent(gf_ptr);
 }
 
 // helper function that detects the type of geofence and delegates
 void WMBroadcaster::removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const
 {
-  // again, TODO: Logic to determine what type of geofence goes here in the future
+  // Logic to determine what type of geofence
   // reset the info inside geofence
   gf_ptr->remove_list_ = {};
   gf_ptr->update_list_ = {};
