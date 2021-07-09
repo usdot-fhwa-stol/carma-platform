@@ -574,7 +574,7 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
     prev_pt.y += pt.y;
 
     ROS_DEBUG_STREAM("After conversion in Map frame: Point X "<< gf_pts.back().x() <<" After conversion: Point Y "<< gf_pts.back().y());
-  }
+   }
 
   tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(gf_pts));
 

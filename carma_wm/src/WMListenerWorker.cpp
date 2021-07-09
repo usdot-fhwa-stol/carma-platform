@@ -175,7 +175,6 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
       ROS_DEBUG_STREAM("Reapplying previously existing element");
       // again we should use the element with correct data address to be consistent
       world_model_->getMutableMap()->update(parent_llt, *regemptr_it);
-
     }
     else // Updates are treated as new regulations after the old value was removed. In both cases we enter this block. 
     {
@@ -222,7 +221,7 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
 
       lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_pcl);
       world_model_->getMutableMap()->update(parent_llt, speed);
-
+      ROS_DEBUG_STREAM("updateed llt id:" << parent_llt.id() << ", with digital speed limit of: " << speed->speed_limit_.value()<<"in ms");
       break;
     }
     case GeofenceType::REGION_ACCESS_RULE:
