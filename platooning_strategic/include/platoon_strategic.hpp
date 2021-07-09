@@ -143,6 +143,7 @@ namespace platoon_strategic
             double cmd_speed_ = 0;
             double current_speed_ = 0;
             double current_downtrack_ = 0;
+            double current_crosstrack_ = 0;
 
             long waitingStartTime = 0;
             long candidatestateStartTime = 0;

@@ -56,7 +56,6 @@ namespace platoon_strategic
         else if (pm_.current_platoon_state == PlatoonState::FOLLOWER)
         {
             run_follower();
-            ROS_WARN("running follower");
         }
         else if (pm_.current_platoon_state == PlatoonState::CANDIDATEFOLLOWER)
         {
@@ -108,6 +107,9 @@ namespace platoon_strategic
             lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
             carma_wm::TrackPos tc = wm_->routeTrackPos(current_loc);
             current_downtrack_ = tc.downtrack;
+            ROS_WARN_STREAM("current_downtrack_" << current_downtrack_);
+            current_crosstrack_ = tc.crosstrack;
+            ROS_WARN_STREAM("current_crosstrack_" << current_crosstrack_);
         }
         
         pose_ecef_point_ = pose_to_ecef(pose_msg_, tf_);
