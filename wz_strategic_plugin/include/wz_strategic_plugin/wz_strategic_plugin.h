@@ -59,7 +59,6 @@ namespace wz_strategic_plugin
 
             ros::Timer discovery_pub_timer_;
 
-
             // Current vehicle forward speed
             double current_speed_;
 
@@ -78,6 +77,12 @@ namespace wz_strategic_plugin
              * \param msg Latest twist message
              */
             void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+
+            cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id)
+
+            cav_msgs::Maneuver composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int end_lane_id, ros::Time current_time, double end_time)
+
+            cav_msgs::Maneuver composeWorkZoneManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id)
 
         private:
             // CARMA ROS node handles

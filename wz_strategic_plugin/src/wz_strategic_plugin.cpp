@@ -116,8 +116,6 @@ namespace wz_strategic_plugin
 
             if(traffic_light_current_state == "red") {
 
-
-
                 // stop_and_wait
                 composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time)
                 // workzone_tactical
@@ -157,7 +155,7 @@ namespace wz_strategic_plugin
         return maneuver_msg;
     }
 
-    cav_msgs::Maneuver RouteFollowingPlugin::composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int end_lane_id, ros::Time current_time, double end_time)
+    cav_msgs::Maneuver WzStrategicPlugin::composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int end_lane_id, ros::Time current_time, double end_time)
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
@@ -177,7 +175,7 @@ namespace wz_strategic_plugin
 
         maneuver_msg.stop_and_wait_maneuver.end_time = current_time + ros::Duration(end_time);
 
-        ROS_INFO_STREAM("Creating lane follow start dist: " << current_dist << " end dist: " << end_dist);
+        ROS_INFO_STREAM("Creating StopandWait start dist: " << current_dist << " end dist: " << end_dist);
 
         return maneuver_msg;
     }
