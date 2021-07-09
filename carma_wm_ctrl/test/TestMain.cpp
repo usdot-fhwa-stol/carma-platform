@@ -22,9 +22,9 @@ int main(int argc, char** argv)
 {
   testing::InitGoogleTest(&argc, argv);
   ros::Time::init();
-  ROSCONSOLE_AUTOINIT;
-  if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
-    ros::console::notifyLoggerLevelsChanged();
-  }
+  //ROSCONSOLE_AUTOINIT;
+  //if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+  //  ros::console::notifyLoggerLevelsChanged();
+  //}
   return RUN_ALL_TESTS();
 }

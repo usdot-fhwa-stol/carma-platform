@@ -146,7 +146,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
   gf_msg.geometry.nodes.push_back(pt);
   pt.x = 0.0; pt.y = 1.0; pt.z = 0; //-8.5 -8.5
   gf_msg.geometry.nodes.push_back(pt);
-  
+  gf_msg.geometry.datum  = "+proj=tmerc +lat_0=39.46645851394806215 +lon_0=-76.16907903057393980 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 2);
   ASSERT_EQ(affected_parts[0].id(), 10002);
@@ -201,6 +201,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   // Setting georeference otherwise, geofenceCallback will throw exception
   std_msgs::String sample_proj_string;
   std::string proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  gf_msg.geometry.datum = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   sample_proj_string.data = proj_string;
   wmb.geoReferenceCallback(sample_proj_string);
 
@@ -251,7 +252,8 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   ASSERT_TRUE(std::find(affected_parts_ids.begin(), affected_parts_ids.end(), 10006) != affected_parts_ids.end());
 
   // check points that are outside, on the edge, and on the point that makes up the lanelets
-  pt.x = -1.0; pt.y = -2.1; pt.z = 0; //0.5 0
+  gf_msg.geometry.nodes = {};
+  pt.x = 0.5; pt.y = 0; pt.z = 0; //0.5 0
   gf_msg.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 0; pt.z = 0; // 1 0
   gf_msg.geometry.nodes.push_back(pt);
@@ -342,6 +344,7 @@ TEST(WMBroadcaster, geofenceCallback)
   wmb.geoReferenceCallback(base_map_proj);
 
   cav_msgs::TrafficControlMessage gf_msg;
+  gf_msg.tcmV01.geometry.datum = "+proj=tmerc +lat_0=39.46645851394806215 +lon_0=-76.16907903057393980 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   gf_msg.choice = cav_msgs::TrafficControlMessage::RESERVED;
 
   ASSERT_EQ(0, active_call_count.load());
@@ -364,6 +367,7 @@ TEST(WMBroadcaster, geofenceCallback)
   gf_msg.choice = cav_msgs::TrafficControlMessage::TCMV01;
   // create the geofence request
   msg_v01.geometry.proj = geofence_proj_string;
+  msg_v01.geometry.datum = geofence_proj_string;
   gf_msg.tcmV01 = msg_v01;
 
   // every control message needs associated control request id
@@ -532,6 +536,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   // Setting georeference otherwise, geofenceCallback will throw exception
   std_msgs::String sample_proj_string;
   std::string proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  
   sample_proj_string.data = proj_string;
   wmb.geoReferenceCallback(sample_proj_string);
 
@@ -540,6 +545,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   gf_ptr->id_ = boost::uuids::random_generator()();
   
   cav_msgs::TrafficControlMessageV01 gf_msg;
+  gf_msg.geometry.datum = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   lanelet::DigitalSpeedLimitPtr new_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(map->regulatoryElementLayer.uniqueId(), 10_mph, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
   gf_ptr->regulatory_element_ = new_speed_limit;
@@ -548,6 +554,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   // set the points
   cav_msgs::PathNode pt;
   // check points that are inside lanelets
+  gf_msg.geometry.nodes = {};
   pt.x = 0.5; pt.y = 0.5; pt.z = 0;
   gf_msg.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 1.5; pt.z = 0;
@@ -631,6 +638,7 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   gf_ptr->id_ = boost::uuids::random_generator()();
   
   cav_msgs::TrafficControlMessageV01 gf_msg;
+  gf_msg.geometry.datum = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   lanelet::DigitalSpeedLimitPtr new_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(map->regulatoryElementLayer.uniqueId(), 10_mph, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
   gf_ptr->regulatory_element_ = new_speed_limit;
@@ -639,6 +647,7 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   // set the points
   cav_msgs::PathNode pt;
   // check points that are inside lanelets
+  gf_msg.geometry.nodes = {};
   pt.x = 0.5; pt.y = 0.5; pt.z = 0;
   gf_msg.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 1.5; pt.z = 0;
@@ -801,11 +810,13 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   // Setting georeference otherwise, geofenceCallback will throw exception
   std_msgs::String sample_proj_string;
   std::string proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  
   sample_proj_string.data = proj_string;
   wmb.geoReferenceCallback(sample_proj_string);
 
   // set the accessibility
   msg_v01.params_exists = true;
+  msg_v01.geometry.datum = proj_string;
   j2735_msgs::TrafficControlVehClass veh_class;
   veh_class.vehicle_class = j2735_msgs::TrafficControlVehClass::PASSENGER_CAR;
   msg_v01.params.vclasses.push_back(veh_class);
@@ -826,6 +837,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
 
   // register the geofence
   cav_msgs::TrafficControlMessage gf_msg;
+  gf_msg.tcmV01.geometry.datum = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   gf_msg.choice = cav_msgs::TrafficControlMessage::TCMV01;
 
   // every control message needs associated control request id
@@ -907,11 +919,13 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   // Setting georeference otherwise, geofenceCallback will throw exception
   std_msgs::String sample_proj_string;
   std::string proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  
   sample_proj_string.data = proj_string;
   wmb.geoReferenceCallback(sample_proj_string);
 
   // create rest of control message's relevant parts to fill the object
   msg_v01.geometry.proj = proj_string;
+  msg_v01.geometry.datum = proj_string;
   // set the points
   cav_msgs::PathNode pt;
   // check points that are inside lanelets, these correspond to id 10000, 10007
@@ -1157,6 +1171,8 @@ TEST(WMBroadcaster, distToNearestActiveGeofence)
   gf_msg.choice = cav_msgs::TrafficControlMessage::TCMV01;
   // create the geofence request
   msg_v01.geometry.proj = geofence_proj_string;
+  msg_v01.geometry.datum = geofence_proj_string;
+
 
   // every control message needs associated control request id
   cav_msgs::Route route_msg;
@@ -1402,6 +1418,7 @@ TEST(WMBroadcaster, currentLocationCallback)
   gf_msg.choice = cav_msgs::TrafficControlMessage::TCMV01;
   // create the geofence request
   msg_v01.geometry.proj = geofence_proj_string;
+  msg_v01.geometry.datum = geofence_proj_string;
 
   // every control message needs associated control request id
   cav_msgs::Route route_msg;
@@ -1521,7 +1538,7 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   cav_msgs::TrafficControlMessage gf_msg;
   gf_msg.choice = cav_msgs::TrafficControlMessage::TCMV01;
   msg_v01.geometry.proj = geofence_proj_string;
-
+  msg_v01.geometry.datum = geofence_proj_string;
   // Obtain a control request ID for the TrafficControlMessage
   cav_msgs::Route route_msg;
   route_msg.route_path_lanelet_ids.push_back(1200);
@@ -1801,6 +1818,8 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
 
   // create the control message's relevant parts to fill the object
   msg_v01.geometry.proj = proj_string;
+  msg_v01.geometry.datum = proj_string;
+
   // set the points
   cav_msgs::PathNode pt;
   // check points that are inside lanelets, thauto gf_ptr = std::make_shared<Geofence>(Geofence());ese correspond to id 10000, 10007
