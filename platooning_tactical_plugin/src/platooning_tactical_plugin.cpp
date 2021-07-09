@@ -274,7 +274,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::trajectory_
     tpp.yaw = yaws[i];
 
     // TODO: update the name
-    tpp.controller_plugin_name = "default";
+    tpp.controller_plugin_name = "PlatooningControlPlugin";
     tpp.planner_plugin_name = plugin_discovery_msg_.name;
 
     traj.push_back(tpp);
