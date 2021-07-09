@@ -85,7 +85,8 @@ target_link_libraries(basic_autonomy ${catkin_LIBRARIES})
 ## Install ##
 #############
 
-install(DIRECTORY include
+## Install Other Resources
+install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
@@ -96,10 +97,7 @@ install(TARGETS ${PROJECT_NAME}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-## Install Other Resources
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+
 
 #############
 ## Testing ##
