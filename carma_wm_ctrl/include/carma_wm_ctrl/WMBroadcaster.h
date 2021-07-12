@@ -248,6 +248,13 @@ public:
   // TODO: fill in inputs and description
   std::vector<std::shared_ptr<Geofence>> processWorkZone();
 
+  // TODO: fill in inputs and description
+  void processTapers(std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts, const lanelet::BasicPoint2d& input_pt, const lanelet::ConstLanelet& input_llt);
+
+  // TODO: fill in inputs and description
+  //  Fill in like using both sides of linestrings and create additional two lanelets from one and return
+
+  std::vector<lanelet::Lanelet> splitLaneletWithRatio(double ratio, const lanelet::ConstLanelet& input_lanelet) const;
 
 private:
   lanelet::ConstLanelets route_path_;

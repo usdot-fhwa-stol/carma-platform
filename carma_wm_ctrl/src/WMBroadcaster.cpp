@@ -312,11 +312,67 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
   return_list.push_back(gf_ptr);
   return return_list;
 }
+
 std::vector<std::shared_ptr<Geofence>> WMBroadcaster::processWorkZone()
 {
   //TODO: FIll in
+  //////////////////
+  /// TAPERRIGHT
+  /////////////////
+
+  // utilize the cache_
+  auto taper_right_first_pt = work_zone_geofence_cache_[cav_msgs::TrafficControlDetail::TAPERRIGHT]->gf_pts.front().basicPoint2d();
+  auto taper_right_last_llt = work_zone_geofence_cache_[cav_msgs::TrafficControlDetail::TAPERRIGHT]->affected_parts_.front().lanelet().get();
+  // TODO: fix below...
+  std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+  std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+
+  processTapers(parallel_llts, opposite_llts, taper_right_first_pt, taper_right_last_llt);
+
+  //////////////////////////
+  /// OPENRIGHT
+  ///////////////////////////
+
+  // utilize the cache_
+  auto open_right_last_pt = work_zone_geofence_cache_[cav_msgs::TrafficControlDetail::OPENRIGHT]->gf_pts.back().basicPoint2d();
+  auto open_right_last_llt = work_zone_geofence_cache_[cav_msgs::TrafficControlDetail::OPENRIGHT]->affected_parts_.back().lanelet().get();
+
+  processTapers(parallel_llts, opposite_llts, open_right_last_pt, open_right_last_llt);
+
+  // split both sides as needed and "block" any old ones?
+  // Create 3 additional lanelets and "block" any old ones.
   return {};
 }
+
+void WMBroadcaster::processTapers(std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts, const lanelet::BasicPoint2d& input_pt, const lanelet::ConstLanelet& input_llt)
+{
+  //TODO: it could potentiall filter????
+  
+  // get ratio of this point and split
+  auto point_downtrack = carma_wm::geometry::trackPos(input_llt, input_pt).downtrack;
+  auto point_downtrack_ratio = point_downtrack / carma_wm::geometry::trackPos(input_llt, input_llt.centerline().back().basicPoint2d()).downtrack;
+  auto new_parallel_llts = splitLaneletWithRatio(point_downtrack_ratio, input_llt);
+  
+  // get opposing lanelets and split
+  auto opposing_llts = carma_wm::getOppositeLaneletsFromPoint(current_map_, input_pt);
+
+  if (opposing_llts.empty())
+  {
+    ROS_ERROR_STREAM("WMBroadcaster was not able to find opposing lane for given point in geofence related to Work Zone! Returning");
+    return;
+  }
+  auto new_llts_opposite = splitLaneletWithRatio(1 - point_downtrack_ratio, opposing_llts[0]);
+
+  parallel_llts->insert(parallel_llts->begin(),new_parallel_llts.begin(), new_parallel_llts.end());
+  opposite_llts->insert(parallel_llts->begin(),new_parallel_llts.begin(), new_parallel_llts.end());
+}
+
+std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithRatio(double ratio, const lanelet::ConstLanelet& input_lanelet) const
+{
+  //TODO: Fill in like using both sides of linestrings and create additional two lanelets from one and return
+  return {};
+}
+
 void WMBroadcaster::addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const
 {
   cav_msgs::TrafficControlDetail msg_detail;

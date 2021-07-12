@@ -185,6 +185,15 @@ inline lanelet::LaneletMapPtr buildGuidanceTestMap(double width, double length)
   auto pt03 = carma_wm::test::getPoint(0.0,3 * length, 0);
   auto pt04 = carma_wm::test::getPoint(0.0,4 * length, 0);
   auto pt10 = carma_wm::test::getPoint(1 * width,0, 0);
+  
+  auto pt101 = carma_wm::test::getPoint(1 * width,0.125 * length, 0);
+  auto pt102 = carma_wm::test::getPoint(1 * width,0.125 * length * 2, 0);
+  auto pt103 = carma_wm::test::getPoint(1 * width,0.125 * length * 3, 0);
+  auto pt104 = carma_wm::test::getPoint(1 * width,0.125 * length * 4, 0);
+  auto pt105 = carma_wm::test::getPoint(1 * width,0.125 * length * 5, 0);
+  auto pt106 = carma_wm::test::getPoint(1 * width,0.125 * length * 6, 0);
+  auto pt107 = carma_wm::test::getPoint(1 * width,0.125 * length * 7, 0);
+
   auto pt11 = carma_wm::test::getPoint(1 * width,1 * length, 0);
   auto pt12 = carma_wm::test::getPoint(1 * width,2 * length, 0);
   auto pt13 = carma_wm::test::getPoint(1 * width,3 * length, 0);
@@ -205,12 +214,16 @@ inline lanelet::LaneletMapPtr buildGuidanceTestMap(double width, double length)
   lanelet::LineString3d ls02(lanelet::utils::getId(), {pt02,pt03} );
   lanelet::LineString3d ls03(lanelet::utils::getId(), {pt03,pt04} );
 
-  lanelet::LineString3d ls10(lanelet::utils::getId(), {pt10,pt11} );
+  lanelet::LineString3d ls10(lanelet::utils::getId(), {pt10,pt101,pt102,pt103,pt104,pt105,pt106,pt107,pt11} );
+  lanelet::LineString3d ls101(lanelet::utils::getId(), {pt11,pt10} );
+
   lanelet::LineString3d ls11(lanelet::utils::getId(), {pt11,pt12} );
   lanelet::LineString3d ls12(lanelet::utils::getId(), {pt12,pt13} );
   lanelet::LineString3d ls13(lanelet::utils::getId(), {pt13,pt14} );
 
   lanelet::LineString3d ls20(lanelet::utils::getId(), {pt20,pt21} );
+  lanelet::LineString3d ls201(lanelet::utils::getId(), {pt21,pt20} );
+
   lanelet::LineString3d ls21(lanelet::utils::getId(), {pt21,pt22} );
   lanelet::LineString3d ls22(lanelet::utils::getId(), {pt22,pt23} );
   lanelet::LineString3d ls23(lanelet::utils::getId(), {pt23,pt24} );
@@ -225,7 +238,9 @@ inline lanelet::LaneletMapPtr buildGuidanceTestMap(double width, double length)
   all_lanelets.push_back(getLanelet(1202, ls02,ls12,lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed));
   all_lanelets.push_back(getLanelet(1203, ls03,ls13,lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed));
 
-  all_lanelets.push_back(getLanelet(1210, ls10,ls20,lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Dashed));
+  //all_lanelets.push_back(getLanelet(1210, ls10,ls20,lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Dashed));
+  all_lanelets.push_back(getLanelet(12101, ls20.invert(),ls10.invert(), lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Dashed));
+
   all_lanelets.push_back(getLanelet(1211, ls11,ls21,lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Dashed));
   all_lanelets.push_back(getLanelet(1212, ls12,ls22,lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Dashed));
   all_lanelets.push_back(getLanelet(1213, ls13,ls23,lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Dashed));

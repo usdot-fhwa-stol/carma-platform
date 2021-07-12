@@ -988,18 +988,18 @@ TEST(CARMAWorldModelTest, getLaneletsFromPoint)
 
   createTestingWorld(cmw, llts, map, obstacles);
   // Test no map set
-  ASSERT_THROW(cmw.getLaneletsFromPoint({1,1}), std::invalid_argument);
+  ASSERT_THROW(carma_wm::getLaneletsFromPoint(cmw.getMutableMap(), {1,1}), std::invalid_argument);
   // Create a complete map
   test::MapOptions mp(1,1);
   auto cmw_ptr = test::getGuidanceTestMap(mp);
-  auto underlyings = cmw_ptr->getLaneletsFromPoint({0.5,0.5});
+  auto underlyings = carma_wm::getLaneletsFromPoint(cmw_ptr->getMutableMap(), {0.5,0.5});
   ASSERT_EQ(underlyings.size(), 1);
   ASSERT_EQ(underlyings.front().id(), 1200);
 
   auto ll_1500 = test::getLanelet(1500, {getPoint(0.0,0.1, 0),getPoint(0.0,1.1, 0)}, 
                          {getPoint(1.0,0.1, 0),getPoint(1.0,1.1, 0)}); // another lanelet the point is in
   cmw_ptr->getMutableMap()->add(ll_1500);
-  underlyings = cmw_ptr->getLaneletsFromPoint({0.5,0.5});
+  underlyings = carma_wm::getLaneletsFromPoint(cmw_ptr->getMutableMap(), {0.5,0.5});
   ASSERT_EQ(underlyings.size(), 2);
   ASSERT_EQ(underlyings.front().id(), 1500);
   ASSERT_EQ(underlyings.back().id(), 1200);

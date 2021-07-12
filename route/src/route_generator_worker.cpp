@@ -187,7 +187,7 @@ namespace route {
             // validate if the points are geometrically in the map
             for (auto pt : destination_points_in_map_with_vehicle)
             {
-                auto llts = world_model_->getLaneletsFromPoint(pt, 1);
+                auto llts = carma_wm::getLaneletsFromPoint(world_model_->getMap(), pt, 1);
                 if (llts.empty())
                 {
                     ROS_ERROR_STREAM("Route Generator: " << idx 

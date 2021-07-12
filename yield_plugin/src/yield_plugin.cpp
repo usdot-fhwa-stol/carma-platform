@@ -604,7 +604,7 @@ namespace yield_plugin
     for (size_t i = 0; i < original_tp.trajectory_points.size(); i++)
     {
       lanelet::BasicPoint2d veh_pos(original_tp.trajectory_points[i].x, original_tp.trajectory_points[i].y);
-      auto llts = wm_->getLaneletsFromPoint(veh_pos, 1);
+      auto llts = carma_wm::getLaneletsFromPoint(wm_->getMap(), veh_pos, 1);
       if (llts.empty())
       {
         ROS_WARN_STREAM("Trajectory point: " << original_tp.trajectory_points[i]);
