@@ -147,7 +147,8 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
   pt.x = 0.0; pt.y = 1.0; pt.z = 0; //-8.5 -8.5
   gf_msg.geometry.nodes.push_back(pt);
   gf_msg.geometry.datum  = "+proj=tmerc +lat_0=39.46645851394806215 +lon_0=-76.16907903057393980 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
-  lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
+  auto gf_pts = wmb.getPointsInLocalFrame(gf_msg);
+  lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_pts);
   ASSERT_EQ(affected_parts.size(), 2);
   ASSERT_EQ(affected_parts[0].id(), 10002);
   ASSERT_EQ(affected_parts[1].id(), 10001);
@@ -159,7 +160,8 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
   pt.x = 9; pt.y = 8.5; pt.z = 0; // 0 0
   gf_msg.geometry.nodes.push_back(pt);
   
-  affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
+  gf_pts = wmb.getPointsInLocalFrame(gf_msg);
+  affected_parts = wmb.getAffectedLaneletOrAreas(gf_pts);
   ASSERT_EQ(affected_parts.size(), 2); // newly added ones should not be considered to be on the lanelet
 }
 
@@ -191,12 +193,12 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
 
   cav_msgs::TrafficControlMessageV01 gf_msg;
   // Check if error are correctly being thrown
-  EXPECT_THROW(wmb.getAffectedLaneletOrAreas(gf_msg), lanelet::InvalidObjectStateError);
+  EXPECT_THROW(wmb.getPointsInLocalFrame(gf_msg), lanelet::InvalidObjectStateError);
   // Set the map
   wmb.baseMapCallback(map_msg_ptr);
   ASSERT_EQ(1, base_map_call_count);
   
-  EXPECT_THROW(wmb.getAffectedLaneletOrAreas(gf_msg), lanelet::InvalidObjectStateError);
+  EXPECT_THROW(wmb.getPointsInLocalFrame(gf_msg), lanelet::InvalidObjectStateError);
   
   // Setting georeference otherwise, geofenceCallback will throw exception
   std_msgs::String sample_proj_string;
@@ -212,20 +214,23 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   // check points that are inside lanelets
   pt.x = 1.75; pt.y = 0.5; pt.z = 0;
   gf_msg.geometry.nodes.push_back(pt);
-  lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
+  auto gf_pts = wmb.getPointsInLocalFrame(gf_msg);
+  lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_pts);
   ASSERT_EQ(affected_parts.size(), 0); // this is 0 because there will never be geofence with only 1 pt
                                        // if there is, it won't apply to the map as it doesn't have any direction information, 
                                        // which makes it confusing for overlapping lanelets
   pt.x = 0.0; pt.y = -0.05; pt.z = 0; //1.75 0.45
   gf_msg.geometry.nodes.push_back(pt);
-  affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
+  gf_pts = wmb.getPointsInLocalFrame(gf_msg);
+  affected_parts = wmb.getAffectedLaneletOrAreas(gf_pts);
   ASSERT_EQ(affected_parts.size(), 0); // although there are two points in the same lanelet,
                                        // lanelet and the two points are not in the same direction
 
   gf_msg.geometry.nodes.pop_back();
   pt.x = 0.0; pt.y = 0.05; pt.z = 0; //1.75 0.55
   gf_msg.geometry.nodes.push_back(pt);
-  affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
+  gf_pts = wmb.getPointsInLocalFrame(gf_msg);
+  affected_parts = wmb.getAffectedLaneletOrAreas(gf_pts);
   ASSERT_EQ(affected_parts.size(), 1); // because two points are in one geofence, it will be recorded now
   gf_msg.geometry.nodes.pop_back();
   gf_msg.geometry.nodes.pop_back();
@@ -234,13 +239,15 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   gf_msg.geometry.nodes.push_back(pt);
   pt.x = 0.0; pt.y = 0.6; pt.z = 0;    // adding point in the next lanelet 0.5 1.1
   gf_msg.geometry.nodes.push_back(pt);
-  affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg); 
+  gf_pts = wmb.getPointsInLocalFrame(gf_msg);
+  affected_parts = wmb.getAffectedLaneletOrAreas(gf_pts);
   ASSERT_EQ(affected_parts.size(), 3);    // although (0.5,1.1) is in another overlapping lanelet (llt_unreg)
                                           // that lanelet is disjoint/doesnt have same direction/not successor of the any lanelet
   
   pt.x = 1.0; pt.y = 1.0; pt.z = 0;    // adding further points in different lanelet narrowing down our direction 1.5 2.1
   gf_msg.geometry.nodes.push_back(pt);
-  affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
+  gf_pts = wmb.getPointsInLocalFrame(gf_msg);
+  affected_parts = wmb.getAffectedLaneletOrAreas(gf_pts);
   ASSERT_EQ(affected_parts.size(), 3);    // now they are actually 3 different lanelets because we changed direction
   std::vector<lanelet::Id> affected_parts_ids;
   for (auto i = 0; i < affected_parts.size(); i ++)
@@ -260,7 +267,8 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   pt.x = 9; pt.y = 10; pt.z = 0; // 10 10
   gf_msg.geometry.nodes.push_back(pt);
   
-  affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
+  gf_pts = wmb.getPointsInLocalFrame(gf_msg);
+  affected_parts = wmb.getAffectedLaneletOrAreas(gf_pts);
   ASSERT_EQ(affected_parts.size(), 2); // they should not be considered to be on the lanelet
 }
 
@@ -559,7 +567,8 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   gf_msg.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 1.5; pt.z = 0;
   gf_msg.geometry.nodes.push_back(pt);
-  gf_ptr->affected_parts_ = wmb.getAffectedLaneletOrAreas(gf_msg);
+  gf_ptr->gf_pts = wmb.getPointsInLocalFrame(gf_msg);
+  gf_ptr->affected_parts_ = wmb.getAffectedLaneletOrAreas(gf_ptr->gf_pts);
 
   ASSERT_EQ(gf_ptr->affected_parts_.size(), 2);
   ASSERT_EQ(gf_ptr->affected_parts_[1].id(), 10000);
@@ -652,7 +661,8 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   gf_msg.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 1.5; pt.z = 0;
   gf_msg.geometry.nodes.push_back(pt);
-  gf_ptr->affected_parts_ = wmb.getAffectedLaneletOrAreas(gf_msg);
+  gf_ptr->gf_pts = wmb.getPointsInLocalFrame(gf_msg);
+  gf_ptr->affected_parts_ = wmb.getAffectedLaneletOrAreas(gf_ptr->gf_pts);
 
   ASSERT_EQ(gf_ptr->affected_parts_.size(), 2);
   ASSERT_EQ(gf_ptr->affected_parts_[1].id(), 10000);

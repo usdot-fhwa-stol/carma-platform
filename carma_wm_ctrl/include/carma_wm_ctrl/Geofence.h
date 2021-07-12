@@ -49,7 +49,8 @@ public:
 
   std::string type_;
   
-
+  lanelet::Points3d gf_pts;
+  
   // TODO Add rest of the attributes provided by geofences in the future
 /* following regulatory element pointer is a placeholder created with rule name 'basic_regulatory_element' to later point to 
 specific type of regulatory element (such as digital speed limit, passing control line)*/

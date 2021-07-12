@@ -200,7 +200,8 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
   std::copy(msg_v01.id.id.begin(), msg_v01.id.id.end(), gf_ptr->id_.begin());
 
   // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
-  gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(msg_v01);
+  gf_ptr->gf_pts = getPointsInLocalFrame(msg_v01);
+  gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(gf_ptr->gf_pts);
 
   if (gf_ptr->affected_parts_.size() == 0) {
     ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
@@ -249,7 +250,6 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
                                         sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
   }
-  
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINSPEED_CHOICE) 
   {
     //Acquire speed limit information from TafficControlDetail msg
@@ -275,7 +275,6 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
   {
     addPassingControlLineFromMsg(gf_ptr, msg_v01, affected_llts);
   }
-
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINHDWY_CHOICE) 
   {
 
@@ -291,7 +290,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
 
   bool detected_workzone_signal = msg_v01.package.label_exists && msg_v01.package.label.find("SIG_WZ") != std::string::npos;
 
-  if (detected_workzone_signal) // save to queue to process later
+  if (detected_workzone_signal) // if workzone message detected, save to queue to process later
   {
     if (work_zone_geofence_cache_.size() < 4)
     {
@@ -504,11 +503,11 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
       (!gf_ptr_list.empty() && gf_ptr_list.front()->affected_parts_.size() == 0))
   {
     ROS_WARN_STREAM("Geofence message could not be converted");
-    tcm_marker_array_.markers.resize(tcm_marker_array_.markers.size() - 1); //truncate this geofence
     return;
   }
   for (auto gf_ptr : gf_ptr_list)
   {
+    tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(gf_ptr->gf_pts)); // create visualizer in rviz
     scheduler_.addGeofence(gf_ptr);  // Add the geofence to the scheduler
     ROS_INFO_STREAM("New geofence message received by WMBroadcaster with id: " << gf_ptr->id_  << ", as part of total processed msgs size: " << gf_ptr_list.size());
   }
@@ -533,7 +532,7 @@ void WMBroadcaster::setConfigSpeedLimit(double cL)
 }
 
 // currently only supports geofence message version 1: TrafficControlMessageV01 
-lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_msgs::TrafficControlMessageV01& tcmV01)
+lanelet::Points3d WMBroadcaster::getPointsInLocalFrame(const cav_msgs::TrafficControlMessageV01& tcmV01)
 {
   ROS_DEBUG_STREAM("Getting affected lanelets");
   if (!current_map_)
@@ -543,7 +542,6 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   if (base_map_georef_ == "")
     throw lanelet::InvalidObjectStateError(std::string("Base lanelet map has empty proj string loaded as georeference. Therefore, WMBroadcaster failed to\n ") +
                                           std::string("get transformation between the geofence and the map"));
-
 
   // This next section handles the geofence projection conversion
   // The datum field is used to identify the frame for the provided referance lat/lon. 
@@ -556,7 +554,6 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
     datum = "WGS84";
   }
 
-  
   ROS_DEBUG_STREAM("Projection field: " << projection);
   ROS_DEBUG_STREAM("Datum field: " << datum);
   
@@ -609,10 +606,13 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
     prev_pt.y += pt.y;
 
     ROS_DEBUG_STREAM("After conversion in Map frame: Point X "<< gf_pts.back().x() <<" After conversion: Point Y "<< gf_pts.back().y());
-   }
+  }
+  // save the points converted to local map frame
+  return gf_pts;
+}
 
-  tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(gf_pts));
-
+lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const lanelet::Points3d& gf_pts)
+{
   // Logic to detect which part is affected
   ROS_DEBUG_STREAM("Get affected lanelets loop");
   std::unordered_set<lanelet::Lanelet> affected_lanelets;

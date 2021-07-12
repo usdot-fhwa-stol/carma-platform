@@ -139,15 +139,21 @@ public:
   */
   cav_msgs::TrafficControlRequest controlRequestFromRoute(const cav_msgs::Route& route_msg, std::shared_ptr<j2735_msgs::Id64b> req_id_for_testing = NULL);
 
-
   /*!
-   * \brief Gets the affected lanelet or areas based on the geofence_msg
+   * \brief Extract geofence points from geofence message using its given proj and datum fields
    * \param geofence_msg The ROS msg that contains proj and any point that lie on the target lanelet or area
    * \throw InvalidObjectStateError if base_map is not set or the base_map's georeference is empty
+   * \return lanelet::Points3d in local frame
+   */
+  lanelet::Points3d getPointsInLocalFrame(const cav_msgs::TrafficControlMessageV01& geofence_msg);
+  
+  /*!
+   * \brief Gets the affected lanelet or areas based on the points in local frame
+   * \param geofence_msg lanelet::Points3d in local frame
    * NOTE:Currently this function only checks lanelets and will be expanded 
    * to areas in the future.
    */
-  lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const cav_msgs::TrafficControlMessageV01& geofence_msg);
+  lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& gf_pts);
 
   /*!
    * \brief Sets the max lane width in meters. Geofence points are associated to a lanelet if they are 
