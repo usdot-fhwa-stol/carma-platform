@@ -731,7 +731,11 @@ namespace platoon_strategic
         {
             bool isForCurrentPlan = msg.header.plan_id == pm_.current_plan.planId;
             bool isFromTargetVehicle = msg.header.sender_id == pm_.targetLeaderId;
-            if (isForCurrentPlan && isFromTargetVehicle)  //TODO: temp, revert later
+            ROS_DEBUG_STREAM("isForCurrentPlan " << isForCurrentPlan);
+
+            ROS_DEBUG_STREAM("isFromTargetVehicle " << isFromTargetVehicle);
+
+            if (true)//(isForCurrentPlan && isFromTargetVehicle)  //TODO: temp, revert later
             {
                 if(msg.is_accepted) 
                 {
@@ -774,7 +778,8 @@ namespace platoon_strategic
     {
         if (pm_.current_plan.valid)
         {
-            if (pm_.current_plan.planId == msg.header.plan_id && pm_.current_plan.peerId == msg.header.sender_id)
+            // if (pm_.current_plan.planId == msg.header.plan_id && pm_.current_plan.peerId == msg.header.sender_id) //TODO check for planid
+            if (true)
             {
                 if (msg.is_accepted)
                 {
