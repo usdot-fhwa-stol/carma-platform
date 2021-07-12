@@ -90,32 +90,14 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   map_pub_(compliant_map_msg);
 };
 
-std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& msg_v01)
+/*!
+  * \brief Populates the schedules member of the geofence object from given TrafficControlMessageV01 message
+  * \param gf_ptr geofence pointer
+  * \param msg_v01 TrafficControlMessageV01 (geofence msg)
+  */
+void WMBroadcaster::addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01)
 {
-  std::vector<std::shared_ptr<Geofence>> return_list;
-  auto gf_ptr = std::make_shared<Geofence>(Geofence());
-  // Get ID
-  std::copy(msg_v01.id.id.begin(), msg_v01.id.id.end(), gf_ptr->id_.begin());
-
-  // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
-  gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(msg_v01);
-
-  if (gf_ptr->affected_parts_.size() == 0) {
-    ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
-    return {}; // Return empty geofence list
-  }
-
-  std::vector<lanelet::Lanelet> affected_llts;
-  std::vector<lanelet::Area> affected_areas;
-
-  // used for assigning them to the regem as parameters
-  for (auto llt_or_area : gf_ptr->affected_parts_)
-  {
-    if (llt_or_area.isLanelet()) affected_llts.push_back(current_map_->laneletLayer.get(llt_or_area.lanelet()->id()));
-    if (llt_or_area.isArea()) affected_areas.push_back(current_map_->areaLayer.get(llt_or_area.area()->id()));
-  }
-
-   // Handle schedule provessing
+  // Handle schedule processing
   cav_msgs::TrafficControlSchedule msg_schedule = msg_v01.params.schedule;
   
   ros::Time end_time = msg_schedule.end;
@@ -208,13 +190,41 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
     }
    
   }
-  
+}
+
+std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& msg_v01)
+{
+  std::vector<std::shared_ptr<Geofence>> return_list;
+  auto gf_ptr = std::make_shared<Geofence>(Geofence());
+  // Get ID
+  std::copy(msg_v01.id.id.begin(), msg_v01.id.id.end(), gf_ptr->id_.begin());
+
+  // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
+  gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(msg_v01);
+
+  if (gf_ptr->affected_parts_.size() == 0) {
+    ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
+    return {}; // Return empty geofence list
+  }
+
+  std::vector<lanelet::Lanelet> affected_llts;
+  std::vector<lanelet::Area> affected_areas;
+
+  // used for assigning them to the regem as parameters
+  for (auto llt_or_area : gf_ptr->affected_parts_)
+  {
+    if (llt_or_area.isLanelet()) affected_llts.push_back(current_map_->laneletLayer.get(llt_or_area.lanelet()->id()));
+    if (llt_or_area.isArea()) affected_areas.push_back(current_map_->areaLayer.get(llt_or_area.area()->id()));
+  }
+
+  // process schedule from message
+  addScheduleFromMsg(gf_ptr, msg_v01);
+
   // TODO: logic to determine what type of geofence goes here
   // currently only converting portion of control message that is relevant to:
-  // - digital speed limit, passing control line, digital minimum gap, region access rule
+  // - digital speed limit, passing control line, digital minimum gap, region access rule, and series of workzone related messages
   lanelet::Velocity sL;
   cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
- 
   
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) 
   {  
