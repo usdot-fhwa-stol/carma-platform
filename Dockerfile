@@ -33,11 +33,7 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 
-<<<<<<< HEAD
 FROM usdotfhwastoldev/autoware.ai:develop AS base-image
-=======
-FROM usdotfhwastolcandidate/autoware.ai:zephyr AS base-image
->>>>>>> test/platoon5
 
 FROM base-image AS source-code
 
