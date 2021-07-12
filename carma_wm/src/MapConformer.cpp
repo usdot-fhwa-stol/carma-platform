@@ -558,7 +558,7 @@ void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit
     addInferredAccessRule(lanelet, map, default_traffic_rules);
     addInferredPassingControlLine(lanelet, map);
     addInferredDirectionOfTravel(lanelet, map, default_traffic_rules);
-      addValidSpeedLimit(lanelet, map, config_limit, default_traffic_rules);// 0_mph can be changed with the config_limit
+    addValidSpeedLimit(lanelet, map, config_limit, default_traffic_rules);// 0_mph can be changed with the config_limit
 
 
   }

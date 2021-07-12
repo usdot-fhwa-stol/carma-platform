@@ -57,8 +57,9 @@ public:
   /*! \brief Set the current map
    *
    *  \param map A shared pointer to the map which will share ownership to this object
+   *  \param map_version Optional field to set the map version. While this is technically optional its uses is highly advised to manage synchronization.
    */
-  void setMap(lanelet::LaneletMapPtr map);
+  void setMap(lanelet::LaneletMapPtr map, size_t map_version = 0);
 
   /*! \brief Set the current route. This route must match the current map for this class to function properly
    *
@@ -114,7 +115,7 @@ public:
 
   TrackPos routeTrackPos(const lanelet::BasicPoint2d& point) const override;
 
-  std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false) const override;
+  std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false,  bool bounds_inclusive = true) const override;
 
   std::vector<lanelet::BasicPoint2d> sampleRoutePoints(double start_downtrack, double end_downtrack, double step_size) const override;
 
@@ -149,7 +150,7 @@ public:
 
   std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n = 10) const override;
 
-  
+  size_t getMapVersion() const override;
 
 
 private:
@@ -187,6 +188,8 @@ private:
   lanelet::LaneletMapUPtr shortest_path_filtered_centerline_view_;  // Lanelet map view of shortest path center lines
                                                                     // only
   std::vector<cav_msgs::RoadwayObstacle> roadway_objects_; // 
+
+  size_t map_version_ = 0; // The current map version. This is cached from calls to setMap();
 
   
 };

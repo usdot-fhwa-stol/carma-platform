@@ -37,6 +37,7 @@
 #include <limits>
 #include <carma_wm/Geometry.h>
 #include <math.h>
+#include <boost/date_time/date_defs.hpp>
 
 namespace carma_wm_ctrl
 {
@@ -81,8 +82,11 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   lanelet::MapConformer::ensureCompliance(current_map_, config_limit);
 
   // Publish map
+  current_map_version_ += 1; // Increment the map version. It should always start from 1 for the first map
+  map_update_message_queue_.clear(); // Clear the update queue as the map version has changed
   autoware_lanelet2_msgs::MapBin compliant_map_msg;
   lanelet::utils::conversion::toBinMsg(base_map_, &compliant_map_msg);
+  compliant_map_msg.map_version = current_map_version_;
   map_pub_(compliant_map_msg);
 };
 
@@ -94,6 +98,11 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
 
   // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
   gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(msg_v01);
+
+  if (gf_ptr->affected_parts_.size() == 0) {
+    ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
+    return nullptr; // Return null geofence
+  }
 
   std::vector<lanelet::Lanelet> affected_llts;
   std::vector<lanelet::Area> affected_areas;
@@ -107,7 +116,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
 
   // TODO: logic to determine what type of geofence goes here
   // currently only converting portion of control message that is relevant to:
-  // - digital speed limit, passing control line
+  // - digital speed limit, passing control line, digital minimum gap, region access rule
   lanelet::Velocity sL;
   cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
  
@@ -117,7 +126,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     //Acquire speed limit information from TafficControlDetail msg
     sL = lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPH()); 
     
-    if(config_limit > 0_mph && config_limit < 80_mph)//Accounting for the configured speed limit, input zero when not in use
+    if(config_limit > 0_mph && config_limit < 80_mph && config_limit < sL)//Accounting for the configured speed limit, input zero when not in use
         sL = config_limit;
     //Ensure Geofences do not provide invalid speed limit data (exceed predetermined maximum value)
     // @SONAR_STOP@
@@ -133,7 +142,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
       sL = 0_mph;
     }// @SONAR_START@
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        sL, affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
+                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
   }
   
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINSPEED_CHOICE) 
@@ -155,7 +164,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
       sL = 0_mph;
     }// @SONAR_START@
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        sL, affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
+                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
   }
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::LATPERM_CHOICE || msg_detail.choice == cav_msgs::TrafficControlDetail::LATAFFINITY_CHOICE)
   {
@@ -180,20 +189,101 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     addRegionMinimumGap(gf_ptr,msg_v01, min_gap, affected_llts, affected_areas);
   }
 
+  // Handle schedule provessing
   cav_msgs::TrafficControlSchedule msg_schedule = msg_v01.params.schedule;
   
-  // Get schedule
-  for (auto daily_schedule : msg_schedule.between)
-  {
-    gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
-                                 msg_schedule.end,
-                                 daily_schedule.begin,     
-                                 daily_schedule.duration,
-                                 msg_schedule.repeat.offset,
-                                 msg_schedule.repeat.span,   
-                                 msg_schedule.repeat.period));
+  ros::Time end_time = msg_schedule.end;
+  if (!msg_schedule.end_exists) {
+    ROS_DEBUG_STREAM("No end time for geofence, using ros::TIME_MAX");
+    end_time = ros::TIME_MAX; // If there is no end time use the max time
   }
-  
+
+
+  // If the days of the week are specified then convert them to the boost format. 
+  GeofenceSchedule::DayOfTheWeekSet week_day_set = { 0, 1, 2, 3, 4, 5, 6 }; // Default to all days  0==Sun to 6==Sat
+  if (msg_schedule.dow_exists) {
+   // sun (6), mon (5), tue (4), wed (3), thu (2), fri (1), sat (0)
+   week_day_set.clear();
+   for (size_t i = 0; i < msg_schedule.dow.dow.size(); i++) {
+     if (msg_schedule.dow.dow[i] == 1) {
+      switch(i) {
+          case 6: // sun
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Sunday);
+            break;
+          case 5: // mon
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Monday);
+            break;
+          case 4: // tue
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Tuesday);
+            break;
+          case 3: // wed
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Wednesday);
+            break;
+          case 2: // thur
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Thursday);
+            break;
+          case 1: // fri
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Friday);
+            break;
+          case 0: // sat
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Saturday);
+            break;
+          default:
+            throw std::invalid_argument("Unrecognized weekday value: " + std::to_string(i));
+      }
+     }
+   }
+  }
+
+  if (msg_schedule.between_exists) {
+
+    for (auto daily_schedule : msg_schedule.between)
+    {
+      if (msg_schedule.repeat_exists) {
+        gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+                                    end_time,
+                                    daily_schedule.begin,     
+                                    daily_schedule.duration,
+                                    msg_schedule.repeat.offset,
+                                    msg_schedule.repeat.span,   
+                                    msg_schedule.repeat.period,
+                                    week_day_set));
+      } else {
+        gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+                                  end_time,
+                                  daily_schedule.begin,     
+                                  daily_schedule.duration,
+                                  ros::Duration(0.0), // No offset
+                                  daily_schedule.duration - daily_schedule.begin,   // Compute schedule portion end time
+                                  daily_schedule.duration - daily_schedule.begin,   // No repetition so same as portion end time
+                                  week_day_set));         
+      }
+
+    }
+  }
+  else {
+    if (msg_schedule.repeat_exists) {
+      gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+                                  end_time,
+                                  ros::Duration(0.0),     
+                                  ros::Duration(86400.0), // 24 hr daily application
+                                  msg_schedule.repeat.offset,
+                                  msg_schedule.repeat.span,   
+                                  msg_schedule.repeat.period,
+                                  week_day_set)); 
+    } else {
+      gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+                                  end_time,
+                                  ros::Duration(0.0),     
+                                  ros::Duration(86400.0), // 24 hr daily application
+                                  ros::Duration(0.0),     // No offset
+                                  ros::Duration(86400.0), // Applied for full lenth of 24 hrs
+                                  ros::Duration(86400.0), // No repetition
+                                  week_day_set)); 
+    }
+   
+  }
+    
   return gf_ptr;
 }
 
@@ -305,8 +395,8 @@ ros::V_string WMBroadcaster::participantsChecker(const cav_msgs::TrafficControlM
       participants.push_back(lanelet::Participants::VehicleTruck);
     }
   }
-
-  return  participants;
+  // combine to single vehicle type if possible, otherwise pass through
+  return  combineParticipantsToVehicle(participants);
 }
 
 ros::V_string WMBroadcaster::invertParticipants(const ros::V_string& input_participants) const
@@ -325,19 +415,44 @@ ros::V_string WMBroadcaster::invertParticipants(const ros::V_string& input_parti
   return  participants;
 }
 
+ros::V_string WMBroadcaster::combineParticipantsToVehicle(const ros::V_string& input_participants) const
+{
+  ros::V_string participants;
+
+  if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleMotorcycle)!= input_participants.end() &&
+      std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleBus) != input_participants.end() &&
+      std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleCar) != input_participants.end() &&
+      std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleTruck) != input_participants.end())
+  {
+    ROS_DEBUG_STREAM("Detected participants to cover all possible vehicle types");
+    participants.emplace_back(lanelet::Participants::Vehicle);
+  }
+  else
+  {
+    ROS_DEBUG_STREAM("Not making any changes to the participants list");
+    participants = input_participants;
+  }
+
+  return participants;
+}
+
 // currently only supports geofence message version 1: TrafficControlMessageV01 
 void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geofence_msg)
 {
   
   std::lock_guard<std::mutex> guard(map_mutex_);
   // quickly check if the id has been added
-  if (geofence_msg.choice != cav_msgs::TrafficControlMessage::TCMV01)
+  if (geofence_msg.choice != cav_msgs::TrafficControlMessage::TCMV01) {
+    ROS_WARN_STREAM("Dropping recieved geofence for unsupported TrafficControl version: " << geofence_msg.choice);
     return;
+  }
 
   boost::uuids::uuid id;
   std::copy(geofence_msg.tcmV01.id.id.begin(), geofence_msg.tcmV01.id.id.end(), id.begin());
-  if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end())
+  if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end()) { 
+    ROS_DEBUG_STREAM("Dropping recieved TrafficControl message with already handled id: " <<  boost::uuids::to_string(id));
     return;
+  }
 
   // convert reqid to string check if it has been seen before
   boost::array<uint8_t, 16UL> req_id;
@@ -346,7 +461,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   std::copy(req_id.begin(),req_id.end(), uuid_id.begin());
   std::string reqid = boost::uuids::to_string(uuid_id).substr(0, 8);
   // drop if the req has never been sent
-  if (generated_geofence_reqids_.find(reqid) == generated_geofence_reqids_.end())
+  if (generated_geofence_reqids_.find(reqid) == generated_geofence_reqids_.end() && reqid.compare("00000000") != 0)
   {
     ROS_WARN_STREAM("CARMA_WM_CTRL received a TrafficControlMessage with unknown TrafficControlRequest ID (reqid): " << reqid);
     return;
@@ -354,9 +469,10 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
     
   checked_geofence_ids_.insert(boost::uuids::to_string(id));
   auto gf_ptr = geofenceFromMsg(geofence_msg.tcmV01);
-  if (gf_ptr->affected_parts_.size() == 0)
+  if (gf_ptr == nullptr || gf_ptr->affected_parts_.size() == 0)
   {
-    ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
+    ROS_WARN_STREAM("Geofence message could not be converted");
+    tcm_marker_array_.markers.resize(tcm_marker_array_.markers.size() - 1); //truncate this geofence
     return;
   }
   scheduler_.addGeofence(gf_ptr);  // Add the geofence to the scheduler
@@ -384,6 +500,7 @@ void WMBroadcaster::setConfigSpeedLimit(double cL)
 // currently only supports geofence message version 1: TrafficControlMessageV01 
 lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_msgs::TrafficControlMessageV01& tcmV01)
 {
+  ROS_DEBUG_STREAM("Getting affected lanelets");
   if (!current_map_)
   {
     throw lanelet::InvalidObjectStateError(std::string("Base lanelet map is not loaded to the WMBroadcaster"));
@@ -392,62 +509,149 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
     throw lanelet::InvalidObjectStateError(std::string("Base lanelet map has empty proj string loaded as georeference. Therefore, WMBroadcaster failed to\n ") +
                                           std::string("get transformation between the geofence and the map"));
 
-  PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, tcmV01.geometry.proj.c_str(), base_map_georef_.c_str(), nullptr);
+
+  // This next section handles the geofence projection conversion
+  // The datum field is used to identify the frame for the provided referance lat/lon. 
+  // This reference is then converted to the provided projection as a reference origin point
+  // From the reference the message projection to map projection transformation is used to convert the nodes in the TrafficControlMessage
+  std::string projection = tcmV01.geometry.proj;
+  std::string datum = tcmV01.geometry.datum;
+  if (datum.empty()) {
+    ROS_WARN_STREAM("Datum field not populated. Attempting to use WGS84");
+    datum = "WGS84";
+  }
+
+  
+  ROS_DEBUG_STREAM("Projection field: " << projection);
+  ROS_DEBUG_STREAM("Datum field: " << datum);
+  
+  std::string universal_frame = datum; //lat/long included in TCM is in this datum
+
+
+  ROS_DEBUG_STREAM("Traffic Control heading provided: " << tcmV01.geometry.heading << " System understanding is that this value will not affect the projection and is only provided for supporting derivative calculations.");
+  
+  // Create the resulting projection transformation
+  PJ* universal_to_target = proj_create_crs_to_crs(PJ_DEFAULT_CTX, universal_frame.c_str(), projection.c_str(), nullptr);
+  if (universal_to_target == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
+    
+    ROS_ERROR_STREAM("Failed to generate projection between geofence and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
+      << " universal_frame: " << universal_frame << " projection: " << projection);
+
+    return {}; // Ignore geofence if it could not be projected from universal to TCM frame
+  }
+  
+  PJ* target_to_map = proj_create_crs_to_crs(PJ_DEFAULT_CTX, projection.c_str(), base_map_georef_.c_str(), nullptr);
+
+  if (target_to_map == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
+    
+    ROS_ERROR_STREAM("Failed to generate projection between geofence and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
+      << " target_to_map: " << target_to_map << " base_map_georef_: " << base_map_georef_);
+
+    return {}; // Ignore geofence if it could not be projected into the map frame
+  
+  }
   
   // convert all geofence points into our map's frame
   std::vector<lanelet::Point3d> gf_pts;
+  cav_msgs::PathNode prev_pt;
+  PJ_COORD c_init_latlong{{tcmV01.geometry.reflat, tcmV01.geometry.reflon, tcmV01.geometry.refelv}};
+  PJ_COORD c_init = proj_trans(universal_to_target, PJ_FWD, c_init_latlong);
+
+  prev_pt.x = c_init.xyz.x;
+  prev_pt.y =  c_init.xyz.y;
+
+  ROS_DEBUG_STREAM("In TCM's frame, initial Point X "<< prev_pt.x<<" Before conversion: Point Y "<< prev_pt.y );
   for (auto pt : tcmV01.geometry.nodes)
-  {
-    PJ_COORD c {{pt.x, pt.y, 0, 0}}; // z is not currently used
+  { 
+    ROS_DEBUG_STREAM("Before conversion in TCM frame: Point X "<< pt.x <<" Before conversion: Point Y "<< pt.y);
+
+    PJ_COORD c {{prev_pt.x + pt.x, prev_pt.y + pt.y, 0, 0}}; // z is not currently used
     PJ_COORD c_out;
-    c_out = proj_trans(geofence_in_map_proj, PJ_FWD, c);
+    c_out = proj_trans(target_to_map, PJ_FWD, c);
+
     gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), c_out.xyz.x, c_out.xyz.y});
-  }
+    prev_pt.x += pt.x;
+    prev_pt.y += pt.y;
+
+    ROS_DEBUG_STREAM("After conversion in Map frame: Point X "<< gf_pts.back().x() <<" After conversion: Point Y "<< gf_pts.back().y());
+   }
+
+  tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(gf_pts));
 
   // Logic to detect which part is affected
-
+  ROS_DEBUG_STREAM("Get affected lanelets loop");
   std::unordered_set<lanelet::Lanelet> affected_lanelets;
-  for (int idx = 0; idx < gf_pts.size(); idx ++)
+  for (size_t idx = 0; idx < gf_pts.size(); idx ++)
   {
+    ROS_DEBUG_STREAM("Index: " << idx << " Point: " << gf_pts[idx].x() << ", " << gf_pts[idx].y());
     std::unordered_set<lanelet::Lanelet> possible_lanelets;
-    // get nearest few nearest llts within max_lane_width_
-    // which actually house this geofence_point
-    auto searchFunc = [&](const lanelet::BoundingBox2d& lltBox, const lanelet::Lanelet& llt) 
-    {
-      bool should_stop_searching = boost::geometry::distance(gf_pts[idx].basicPoint2d(), llt.polygon2d()) > max_lane_width_;
-      if (!should_stop_searching && boost::geometry::within(gf_pts[idx].basicPoint2d(), llt.polygon2d()))
-      {
-        possible_lanelets.insert(llt);
-      }
-      return should_stop_searching;
-    };
 
-    // this call updates possible_lanelets
-    current_map_->laneletLayer.nearestUntil(gf_pts[idx], searchFunc);
+    // This loop identifes the lanelets which this point lies within that could be impacted by the geofence
+    // This loop somewhat inefficiently calls the findNearest method iteratively until all the possible lanelets are identified. 
+    // The reason findNearest is used instead of nearestUntil is because that method orders results by bounding box which
+    // can give invalid sequences when dealing with large curved lanelets.  
+    bool continue_search = true; 
+    size_t nearest_count = 0;
+    while (continue_search) {
+      
+      nearest_count += 10; // Increase the index search radius by 10 each loop until all nearby lanelets are found
+
+      for (const auto& ll_pair : lanelet::geometry::findNearest(current_map_->laneletLayer, gf_pts[idx].basicPoint2d(), nearest_count)) { // Get the nearest lanelets and iterate over them
+        auto ll = std::get<1>(ll_pair);
+
+        if (possible_lanelets.find(ll) != possible_lanelets.end()) { // Skip if already found
+          continue;
+        }
+
+        double dist = std::get<0>(ll_pair);
+        ROS_DEBUG_STREAM("Distance to lanelet " << ll.id() << ": " << dist << " max_lane_width: " << max_lane_width_);
+        
+        if (dist > max_lane_width_) { // Only save values closer than max_lane_width. Since we are iterating in distance order when we reach this distance the search can stop
+          continue_search = false;
+          break;
+        }
+
+        // Check if the point is inside this lanelet
+        if(dist == 0.0) { // boost geometry uses a distance of 0 to indicate a point is within a polygon
+          possible_lanelets.insert(ll);
+        }
+
+      }
+
+      if (nearest_count >= current_map_->laneletLayer.size()) { // if we are out of lanelets to evaluate then end the search
+        continue_search = false;
+      }
+    }
 
     // among these llts, filter the ones that are on same direction as the geofence using routing
     if (idx + 1 == gf_pts.size()) // we only check this for the last gf_pt after saving everything
     {
+      ROS_DEBUG_STREAM("Last point");
       std::unordered_set<lanelet::Lanelet> filtered = filterSuccessorLanelets(possible_lanelets, affected_lanelets);
+      ROS_DEBUG_STREAM("Got successor lanelets of size: " << filtered.size());
       affected_lanelets.insert(filtered.begin(), filtered.end());
       break;
     } 
 
+    ROS_DEBUG_STREAM("Checking possible lanelets");
     // check if each lines connecting end points of the llt is crossing with the line connecting current and next gf_pts
     for (auto llt: possible_lanelets)
     {
+      ROS_DEBUG_STREAM("Evaluating lanelet: " << llt.id());
       lanelet::BasicLineString2d gf_dir_line({gf_pts[idx].basicPoint2d(), gf_pts[idx+1].basicPoint2d()});
       lanelet::BasicLineString2d llt_boundary({(llt.leftBound2d().end() -1)->basicPoint2d(), (llt.rightBound2d().end() - 1)->basicPoint2d()});
       
       // record the llts that are on the same dir
       if (boost::geometry::intersects(llt_boundary, gf_dir_line))
       {
+        ROS_DEBUG_STREAM("Overlaps end line");
         affected_lanelets.insert(llt);
       }
       // check condition if two geofence points are in one lanelet then check matching direction and record it also
       else if (boost::geometry::within(gf_pts[idx+1].basicPoint2d(), llt.polygon2d()) && 
               affected_lanelets.find(llt) == affected_lanelets.end())
       { 
+        ROS_DEBUG_STREAM("Within new lanelet");
         lanelet::BasicPoint2d median({((llt.leftBound2d().end() - 1)->basicPoint2d().x() + (llt.rightBound2d().end() - 1)->basicPoint2d().x())/2 , 
                                       ((llt.leftBound2d().end() - 1)->basicPoint2d().y() + (llt.rightBound2d().end() - 1)->basicPoint2d().y())/2});
         // turn into vectors
@@ -463,12 +667,20 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
 
         // Get angle between both vectors
         double interior_angle = carma_wm::geometry::getAngleBetweenVectors(start_to_median, start_to_end);
+
+        ROS_DEBUG_STREAM("vec_to_median: " << vec_to_median.x() << ", " << vec_to_median.y());
+        ROS_DEBUG_STREAM("vec_to_gf_start: " << vec_to_gf_start.x() << ", " << vec_to_gf_start.y());
+        ROS_DEBUG_STREAM("vec_to_gf_end: " << vec_to_gf_end.x() << ", " << vec_to_gf_end.y());
+        ROS_DEBUG_STREAM("start_to_median: " << start_to_median.x() << ", " << start_to_median.y());
+        ROS_DEBUG_STREAM("start_to_end: " << start_to_end.x() << ", " << start_to_end.y());
+        ROS_DEBUG_STREAM("interior_angle: " << interior_angle);
         // Save the lanelet if the direction of two points inside aligns with that of the lanelet
-        if (interior_angle < M_PI_2 && interior_angle >= 0) affected_lanelets.insert(llt);
+        if (interior_angle < M_PI_2 && interior_angle >= 0) affected_lanelets.insert(llt); 
       }
     }
   }
   
+  ROS_DEBUG_STREAM("affected_lanelets size: " << affected_lanelets.size());
   // Currently only returning lanelet, but this could be expanded to LanelerOrArea compound object 
   // by implementing non-const version of that LaneletOrArea
   lanelet::ConstLaneletOrAreas affected_parts;
@@ -523,8 +735,8 @@ bool WMBroadcaster::shouldChangeControlLine(const lanelet::ConstLaneletOrArea& e
   bool should_change_pcl = false;
   for (auto control_line : pcl->controlLine())
   {
-    if (control_line.id() == el.lanelet()->leftBound2d().id() && gf_ptr->pcl_affects_left_ ||
-    control_line.id() == el.lanelet()->rightBound2d().id() && gf_ptr->pcl_affects_right_)
+    if ((control_line.id() == el.lanelet()->leftBound2d().id() && gf_ptr->pcl_affects_left_) ||
+        (control_line.id() == el.lanelet()->rightBound2d().id() && gf_ptr->pcl_affects_right_))
     {
       should_change_pcl = true;
       break;
@@ -565,6 +777,8 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) con
     {
       current_map_->update(current_map_->laneletLayer.get(el.id()), gf_ptr->regulatory_element_);
       gf_ptr->update_list_.push_back(std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>(el.id(), gf_ptr->regulatory_element_));
+    } else {
+      ROS_WARN_STREAM("Regulatory element with invalid id in geofence cannot be added to the map");
     }
   }
   
@@ -619,7 +833,11 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   autoware_lanelet2_msgs::MapBin gf_msg;
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   carma_wm::toBinMsg(send_data, &gf_msg);
+  update_count_++; // Update the sequence count for the geofence messages
+  gf_msg.header.seq = update_count_;
   gf_msg.invalidates_route=gf_ptr->invalidate_route_; 
+  gf_msg.map_version = current_map_version_;
+  map_update_message_queue_.push_back(gf_msg); // Add diff to current map update queue
   map_update_pub_(gf_msg);
 };
 
@@ -638,14 +856,24 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   
   carma_wm::toBinMsg(send_data, &gf_msg_revert);
+  update_count_++; // Update the sequence count for geofence messages
+  gf_msg_revert.header.seq = update_count_;
+  gf_msg_revert.map_version = current_map_version_;
+  map_update_message_queue_.push_back(gf_msg_revert); // Add diff to current map update queue
   map_update_pub_(gf_msg_revert);
 
 
 };
   
+cav_msgs::Route WMBroadcaster::getRoute()
+{
+  return current_route;
+}
+
 void  WMBroadcaster::routeCallbackMessage(const cav_msgs::Route& route_msg)
 {
 
+ current_route = route_msg;
  cav_msgs::TrafficControlRequest cR; 
  cR =  controlRequestFromRoute(route_msg);
  control_msg_pub_(cR);
@@ -720,7 +948,8 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
     throw lanelet::InvalidObjectStateError(std::string("Base georeference map may not be loaded to the WMBroadcaster"));
 
   }
-
+  
+  // Convert the minimum point to latlon
   lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
   lanelet::BasicPoint3d localPoint;
 
@@ -729,23 +958,52 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
 
   lanelet::GPSPoint gpsRoute = local_projector.reverse(localPoint); //If the appropriate library is included, the reverse() function can be used to convert from local xyz to lat/lon
 
+  // Create a local transverse mercator frame at the minimum point to allow us to get east,north oriented bounds 
+  std::string local_tmerc_enu_proj = "+proj=tmerc +datum=WGS84 +h_0=0 +lat_0=" + std::to_string(gpsRoute.lat) + " +lon_0=" + std::to_string(gpsRoute.lon);
+
+  // Create transform from map frame to local transform mercator frame at bounds min point
+  PJ* tmerc_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, target_frame.c_str(), local_tmerc_enu_proj.c_str(), nullptr);
+  
+  if (tmerc_proj == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
+    
+    ROS_ERROR_STREAM("Failed to generate projection between request bounds frame and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
+      << " MapProjection: " << target_frame << " Message Projection: " << local_tmerc_enu_proj);
+
+    return {}; // Ignore geofence if it could not be projected into the map frame
+  
+  }
+
+  ROS_DEBUG_STREAM("Before conversion: Top Left: ("<< minX <<", "<<maxY<<")");
+  ROS_DEBUG_STREAM("Before conversion: Top Right: ("<< maxX <<", "<<maxY<<")");
+  ROS_DEBUG_STREAM("Before conversion: Bottom Left: ("<< minX <<", "<<minY<<")");
+  ROS_DEBUG_STREAM("Before conversion: Bottom Right: ("<< maxX <<", "<<minY<<")");
+
+  PJ_COORD pj_min {{minX, minY, 0, 0}}; // z is not currently used
+  PJ_COORD pj_min_tmerc;
+  PJ_COORD pj_max {{maxX, maxY, 0, 0}}; // z is not currently used
+  PJ_COORD pj_max_tmerc;
+  pj_min_tmerc = proj_trans(tmerc_proj, PJ_FWD, pj_min);
+  pj_max_tmerc = proj_trans(tmerc_proj, PJ_FWD, pj_max);
+
+  ROS_DEBUG_STREAM("After conversion: MinPoint ( "<< pj_min_tmerc.xyz.x <<", " << pj_min_tmerc.xyz.y <<" )");
+  ROS_DEBUG_STREAM("After conversion: MaxPoint ( "<< pj_max_tmerc.xyz.x <<", " << pj_max_tmerc.xyz.y <<" )");
+
   cav_msgs::TrafficControlRequest cR; /*Fill the latitude value in message cB with the value of lat */
   cav_msgs::TrafficControlBounds cB; /*Fill the longitude value in message cB with the value of lon*/
   
   cB.reflat = gpsRoute.lat;
   cB.reflon = gpsRoute.lon;
 
-  cav_msgs::OffsetPoint offsetX;
-  offsetX.deltax = maxX - minX;
-  cav_msgs::OffsetPoint offsetY;
-  offsetY.deltay = maxY - minY;
-  cB.offsets[0].deltax = minX;
-  cB.offsets[0].deltay = maxY;
-  cB.offsets[1].deltax = maxX;
-  cB.offsets[1].deltay = minY;
-  cB.offsets[2].deltax = maxX;
-  cB.offsets[2].deltay = maxY;
-  cB.oldest =ros::Time::now();
+  cB.offsets[0].deltax = pj_max_tmerc.xyz.x - pj_min_tmerc.xyz.x; // Points in clockwise order min,min (lat,lon point) -> max,min -> max,max -> min,max
+  cB.offsets[0].deltay = 0.0;                                     // calculating the offsets
+  cB.offsets[1].deltax = pj_max_tmerc.xyz.x - pj_min_tmerc.xyz.x;
+  cB.offsets[1].deltay = pj_max_tmerc.xyz.y - pj_min_tmerc.xyz.y;
+  cB.offsets[2].deltax = 0.0;
+  cB.offsets[2].deltay = pj_max_tmerc.xyz.y - pj_min_tmerc.xyz.y;
+
+  tcr_polygon_ = composeTCRStatus(localPoint, cB, local_projector); // TCR polygon can be visualized in UI
+
+  cB.oldest =ros::Time::now(); // TODO this needs to be set to 0 or an older value as otherwise this will filter out all controls
   
   cR.choice = cav_msgs::TrafficControlRequest::TCRV01;
   
@@ -753,7 +1011,7 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   boost::uuids::uuid uuid_id = boost::uuids::random_generator()(); 
   // take half as string
   std::string reqid = boost::uuids::to_string(uuid_id).substr(0, 8);
-  std::string req_id_test = "12345678";
+  std::string req_id_test = "12345678"; // TODO this is an extremely risky way of performing a unit test. This method needs to be refactored so that unit tests cannot side affect actual implementations
   generated_geofence_reqids_.insert(req_id_test);
   generated_geofence_reqids_.insert(reqid);
 
@@ -773,6 +1031,82 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
 
 }
 
+cav_msgs::TrafficControlRequestPolygon WMBroadcaster::composeTCRStatus(const lanelet::BasicPoint3d& localPoint, const cav_msgs::TrafficControlBounds& cB, const lanelet::projection::LocalFrameProjector& local_projector)
+{
+  cav_msgs::TrafficControlRequestPolygon output;
+  lanelet::BasicPoint3d local_point_tmp;
+
+  int i = -1;
+  while (i < 3) // three offsets; offsets.size() doesn't return accurate size
+  {
+    if (i == -1)
+    {
+      local_point_tmp.x() = localPoint.x();
+      local_point_tmp.y() = localPoint.y();
+    }
+    else
+    {
+      local_point_tmp.x() = localPoint.x() + cB.offsets[i].deltax;;
+      local_point_tmp.y() = localPoint.y() + cB.offsets[i].deltay;;
+    }
+    lanelet::GPSPoint gps_vertex = local_projector.reverse(local_point_tmp);
+    
+    cav_msgs::Position3D gps_msg;
+    gps_msg.elevation = gps_vertex.ele;
+    gps_msg.latitude = gps_vertex.lat;
+    gps_msg.longitude = gps_vertex.lon;
+    output.polygon_list.push_back(gps_msg);
+
+    ROS_DEBUG_STREAM("TCR Vertex Lat: "<< std::to_string(gps_vertex.lat));
+    ROS_DEBUG_STREAM("TCR Vertex Lon: "<<std::to_string(gps_vertex.lon));
+
+    i++;
+  }
+  return output;
+}
+
+visualization_msgs::Marker WMBroadcaster::composeTCMMarkerVisualizer(const std::vector<lanelet::Point3d>& input)
+ {
+
+         // create the marker msgs
+        visualization_msgs::Marker marker;
+        marker.header.frame_id = "map";
+        marker.header.stamp = ros::Time();
+        marker.type = visualization_msgs::Marker::SPHERE_LIST;
+        marker.action = visualization_msgs::Marker::ADD;
+        marker.ns = "route_visualizer";
+
+        marker.scale.x = 0.65;
+        marker.scale.y = 0.65;
+        marker.scale.z = 0.65;
+        marker.frame_locked = true;
+
+        if (!tcm_marker_array_.markers.empty()) 
+        {
+        marker.id = tcm_marker_array_.markers.back().id + 1;
+        }
+        else
+        {
+        marker.id = 0;
+        }
+        marker.color.r = 0.0F;
+        marker.color.g = 1.0F;
+        marker.color.b = 0.0F;
+        marker.color.a = 1.0F;
+
+        for (int i = 0; i < input.size(); i++)
+        {
+            geometry_msgs::Point temp_point;
+            temp_point.x = input[i].x();
+            temp_point.y = input[i].y();
+            temp_point.z = 2; //to show up on top of the lanelet lines
+
+            marker.points.push_back(temp_point);
+        }
+
+        return marker;
+ }
+
 double WMBroadcaster::distToNearestActiveGeofence(const lanelet::BasicPoint2d& curr_pos)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
@@ -791,7 +1125,7 @@ double WMBroadcaster::distToNearestActiveGeofence(const lanelet::BasicPoint2d& c
   }
   
   // Get the lanelet of this point
-  auto curr_lanelet = current_map_->laneletLayer.nearest(curr_pos, 1)[0]; //guaranteed to at least return 1 lanelet
+  auto curr_lanelet = lanelet::geometry::findNearest(current_map_->laneletLayer, curr_pos, 1)[0].second;
 
   // Check if this point at least is actually within this lanelets
   if (!boost::geometry::within(curr_pos, curr_lanelet.polygon2d().basicPolygon()))
@@ -860,23 +1194,17 @@ cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geom
     throw lanelet::InvalidObjectStateError(std::string("Lanelet map 'current_map_' is not loaded to the WMBroadcaster"));
   }
 
-//Store current position values to be compared to geofence boundary values
+  // Store current position values to be compared to geofence boundary values
   double current_pos_x = current_pos.pose.position.x;
   double current_pos_y = current_pos.pose.position.y;
 
 
-lanelet::BasicPoint2d curr_pos;
+  lanelet::BasicPoint2d curr_pos;
   curr_pos.x() = current_pos_x;
   curr_pos.y() = current_pos_y;
-  
-  
 
-  auto current_llt = current_map_->laneletLayer.nearest(curr_pos, 1)[0];
   cav_msgs::CheckActiveGeofence outgoing_geof; //message to publish
   double next_distance = 0 ; //Distance to next geofence
-
-  
-  std::vector<double> route_distances;
 
   if (active_geofence_llt_ids_.size() <= 0 ) 
   {
@@ -884,64 +1212,142 @@ lanelet::BasicPoint2d curr_pos;
     return outgoing_geof;
   }
 
+  // Obtain the closest lanelet to the vehicle's current position
+  auto current_llt = lanelet::geometry::findNearest(current_map_->laneletLayer, curr_pos, 1)[0].second;
+  
+  /* determine whether or not the vehicle's current position is within an active geofence */
+  if (boost::geometry::within(curr_pos, current_llt.polygon2d().basicPolygon()))
+  {         
+    next_distance = distToNearestActiveGeofence(curr_pos);
+    outgoing_geof.distance_to_next_geofence = next_distance;
 
-  
-  
-    /* determine whether or not the vehicle's current position is within an active geofence */
-     if (boost::geometry::within(curr_pos, current_llt.polygon2d().basicPolygon()))
-      {         
-        next_distance = distToNearestActiveGeofence(curr_pos);
-        for(auto id : active_geofence_llt_ids_) 
+    for(auto id : active_geofence_llt_ids_) 
+    {
+      if (id == current_llt.id())
+      {           
+        ROS_DEBUG_STREAM("Vehicle is on Lanelet " << current_llt.id() << ", which has an active geofence");
+        outgoing_geof.is_on_active_geofence = true;
+        for (auto regem: current_llt.regulatoryElements())
         {
-          if (id == current_llt.id())
-          {           
-            outgoing_geof.is_on_active_geofence = true;
-            for (auto regem: current_llt.regulatoryElements())
+          // Assign active geofence fields based on the speed limit associated with this lanelet
+          if (regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0)
+          {
+            lanelet::DigitalSpeedLimitPtr speed =  std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>
+            (current_map_->regulatoryElementLayer.get(regem->id()));
+            outgoing_geof.value = speed->speed_limit_.value();
+            outgoing_geof.advisory_speed = speed->speed_limit_.value(); 
+            ROS_DEBUG_STREAM("Active geofence has a speed limit of " << speed->speed_limit_.value());
+                    
+            // Cannot overrule outgoing_geof.type if it is already set to LANE_CLOSED
+            if(outgoing_geof.type != cav_msgs::CheckActiveGeofence::LANE_CLOSED)
+            {
+              outgoing_geof.type = cav_msgs::CheckActiveGeofence::SPEED_LIMIT;
+            }
+          }
+
+          // Assign active geofence fields based on the minimum gap associated with this lanelet (if it exists)
+          if(regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalMinimumGap::RuleName) == 0)
+          {
+            lanelet::DigitalMinimumGapPtr min_gap =  std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>
+            (current_map_->regulatoryElementLayer.get(regem->id()));
+            outgoing_geof.minimum_gap = min_gap->getMinimumGap();
+            ROS_DEBUG_STREAM("Active geofence has a minimum gap of " << min_gap->getMinimumGap());
+          }
+                 
+          // Assign active geofence fields based on whether the current lane is closed or is immediately adjacent to a closed lane
+          if(regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::RegionAccessRule::RuleName) == 0)
+          {
+            lanelet::RegionAccessRulePtr accessRuleReg =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
+            (current_map_->regulatoryElementLayer.get(regem->id()));
+
+            // Update the 'type' and 'reason' for this active geofence if the vehicle is in a closed lane
+            if(!accessRuleReg->accessable(lanelet::Participants::VehicleCar) || !accessRuleReg->accessable(lanelet::Participants::VehicleTruck)) 
+            {
+              ROS_DEBUG_STREAM("Active geofence is a closed lane.");
+              ROS_DEBUG_STREAM("Closed lane reason: " << accessRuleReg->getReason());
+              outgoing_geof.reason = accessRuleReg->getReason();
+              outgoing_geof.type = cav_msgs::CheckActiveGeofence::LANE_CLOSED;
+            }
+            // Otherwise, update the 'type' and 'reason' for this active geofence if the vehicle is in a lane immediately adjacent to a closed lane with the same travel direction
+            else 
+            {
+              // Obtain all same-direction lanes sharing the right lane boundary (will include the current lanelet)
+              auto right_boundary_lanelets = current_map_->laneletLayer.findUsages(current_llt.rightBound());
+
+              // Check if the adjacent right lane is closed
+              if(right_boundary_lanelets.size() > 1)
               {
-                  if (regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0)
+                for(auto lanelet : right_boundary_lanelets)
+                {
+                  // Only check the adjacent right lanelet; ignore the current lanelet
+                  if(lanelet.id() != current_llt.id())
                   {
-                    lanelet::DigitalSpeedLimitPtr speed =  std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>
-                    (current_map_->regulatoryElementLayer.get(regem->id()));
-                    outgoing_geof.value = speed->speed_limit_.value();
-                    outgoing_geof.advisory_speed = speed->speed_limit_.value(); 
-                    outgoing_geof.type = cav_msgs::CheckActiveGeofence::SPEED_LIMIT;
-                 }
+                    for (auto rightRegem: lanelet.regulatoryElements())
+                    {
+                      if(rightRegem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::RegionAccessRule::RuleName) == 0)
+                      {
+                        lanelet::RegionAccessRulePtr rightAccessRuleReg =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
+                        (current_map_->regulatoryElementLayer.get(rightRegem->id()));
+                        if(!rightAccessRuleReg->accessable(lanelet::Participants::VehicleCar) || !rightAccessRuleReg->accessable(lanelet::Participants::VehicleTruck))
+                        {
+                          ROS_DEBUG_STREAM("Right adjacent Lanelet " << lanelet.id() << " is CLOSED");
+                          ROS_DEBUG_STREAM("Assigning LANE_CLOSED type to active geofence");
+                          ROS_DEBUG_STREAM("Assigning reason " << rightAccessRuleReg->getReason());
+                          outgoing_geof.reason = rightAccessRuleReg->getReason();
+                          outgoing_geof.type = cav_msgs::CheckActiveGeofence::LANE_CLOSED;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
 
-                 if(regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalMinimumGap::RuleName) == 0)
-                 {
-                    lanelet::DigitalMinimumGapPtr min_gap =  std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>
-                    (current_map_->regulatoryElementLayer.get(regem->id()));
-                    outgoing_geof.minimum_gap = min_gap->getMinimumGap();
-                 }
-
-                 if(regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::RegionAccessRule::RuleName) == 0)
-                 {
-                    lanelet::RegionAccessRulePtr accessRuleReg =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
-                    (current_map_->regulatoryElementLayer.get(regem->id()));
-                    outgoing_geof.reason = accessRuleReg->getReason();
-                    outgoing_geof.type = cav_msgs::CheckActiveGeofence::LANE_CLOSED;
-                 }
-
-              }//End for loop
-
-
+              // Check if the adjacent left lane is closed
+              auto left_boundary_lanelets = current_map_->laneletLayer.findUsages(current_llt.leftBound());
+              if(left_boundary_lanelets.size() > 1)
+              {
+                for(auto lanelet : left_boundary_lanelets)
+                {
+                  // Only check the adjacent left lanelet; ignore the current lanelet
+                  if(lanelet.id() != current_llt.id())
+                  {
+                    for (auto leftRegem: lanelet.regulatoryElements())
+                    {
+                      if(leftRegem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::RegionAccessRule::RuleName) == 0)
+                      {
+                        lanelet::RegionAccessRulePtr leftAccessRuleReg =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
+                        (current_map_->regulatoryElementLayer.get(leftRegem->id()));
+                        if(!leftAccessRuleReg->accessable(lanelet::Participants::VehicleCar) || !leftAccessRuleReg->accessable(lanelet::Participants::VehicleTruck))
+                        {
+                          ROS_DEBUG_STREAM("Left adjacent Lanelet " << lanelet.id() << " is CLOSED");
+                          ROS_DEBUG_STREAM("Assigning LANE_CLOSED type to active geofence");
+                          ROS_DEBUG_STREAM("Assigning reason " << leftAccessRuleReg->getReason());
+                          outgoing_geof.reason = leftAccessRuleReg->getReason();
+                          outgoing_geof.type = cav_msgs::CheckActiveGeofence::LANE_CLOSED;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
+    }
+  }
+  return outgoing_geof;
+}
 
-      outgoing_geof.distance_to_next_geofence = next_distance;
+void WMBroadcaster::newUpdateSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const {
 
-  //end for loop
-    return outgoing_geof;
-  
-
+  for (const auto& msg : map_update_message_queue_) {
+    single_sub_pub.publish(msg); // For each applied update for the current map version publish the update to the new subscriber
+  }
 }
 
 
 
-
-
 }  // namespace carma_wm_ctrl
-
 
 

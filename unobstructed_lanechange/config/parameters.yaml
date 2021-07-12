@@ -49,7 +49,10 @@ maximum_lookahead_speed : 13.9
 lateral_accel_limit : 1.5
 
 # Int : Size of the window used in the moving average filter to smooth both the computed curvature and output speeds
-moving_average_window_size : 5
+speed_moving_average_window_size : 5
+
+#Int: // Size of the window used in the moving average filter to smooth the curvature profile
+curvature_moving_average_window_size : 9
 
 # Int : Number of points to look ahead when calculating the curvature of the lanelet centerline
 curvature_calc_lookahead_count : 1
@@ -59,3 +62,11 @@ downsample_ratio : 8
 
 # bool: Flag to activate and deactivate object avoidance communication with Yield
 enable_object_avoidance_lc : false
+
+# Double: The minimum timestep used for planning trajectory
+#Units: seconds
+min_timestep : 0.1
+
+# Double : The additional downtrack beyond requested end dist used to fit points along spline. Extra points removed before returning trajectory. Feature not used if end dist is route end
+#Units: meters
+ending_buffer_downtrack : 5.0

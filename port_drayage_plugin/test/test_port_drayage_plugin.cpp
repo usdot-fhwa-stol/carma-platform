@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,6 +50,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
     ptree pt;
     std::stringstream body_stream;
     boost::property_tree::json_parser::read_json(strstream, pt);
+
     std::string cmv_id = pt.get<std::string>("cmv_id");
     std::string cargo_id = pt.get<std::string>("cargo_id");
     std::string operation = pt.get<std::string>("operation");
@@ -325,6 +326,62 @@ TEST(PortDrayageTest, testPlanManeuverCb)
 
 
 }
+
+TEST(PortDrayageTest, testInboundMobilityOperation)
+{
+    // Create PortDrayageWorker object with _cmv_id of "123"
+    port_drayage_plugin::PortDrayageWorker pdw{
+        "123", 
+        "TEST_CARGO_ID", 
+        "TEST_CARMA_HOST_ID", 
+        std::function<void(cav_msgs::MobilityOperation)>(), 
+        1.0};
+
+    // Create a MobilityOperationConstPtr with a cmv_id that is intended for this specific vehicle
+    // Note: The strategy_params using the schema for messages of this type that have strategy "carma/port_drayage"
+    cav_msgs::MobilityOperation mobility_operation_msg;
+    mobility_operation_msg.strategy = "carma/port_drayage";
+    mobility_operation_msg.strategy_params = "{ \"cmv_id\": \"123\", \"cargo_id\": \"321\", \"cargo\": \"false\", \"location\"\
+        : { \"latitude\": \"389554377\", \"longitude\": \"-771503421\" }, \"destination\": { \"latitude\"\
+        : \"389550038\", \"longitude\": \"-771481983\" }, \"operation\": \"MOVING_TO_LOADING_AREA\", \"action_id\"\
+        : \"32\", \"next_action\": \"33\" }";
+    cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr(new cav_msgs::MobilityOperation(mobility_operation_msg));
+    pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr);
+
+    ASSERT_EQ("321", pdw._latest_mobility_operation_msg.cargo_id);
+    ASSERT_EQ("MOVING_TO_LOADING_AREA", pdw._latest_mobility_operation_msg.operation);
+    ASSERT_EQ(port_drayage_plugin::PortDrayageEvent::RECEIVED_NEW_DESTINATION, pdw._latest_mobility_operation_msg.port_drayage_event_type);
+    ASSERT_EQ(false, pdw._latest_mobility_operation_msg.has_cargo);
+    ASSERT_EQ(-77.1503421, *pdw._latest_mobility_operation_msg.start_longitude);
+    ASSERT_EQ(38.9554377, *pdw._latest_mobility_operation_msg.start_latitude);
+    ASSERT_EQ(-77.1481983, *pdw._latest_mobility_operation_msg.dest_longitude);
+    ASSERT_EQ(38.9550038, *pdw._latest_mobility_operation_msg.dest_latitude);
+    ASSERT_EQ("32", pdw._latest_mobility_operation_msg.current_action_id);
+    ASSERT_EQ("33", pdw._latest_mobility_operation_msg.next_action_id);
+
+    // Create a MobilityOperationConstPtr with a cmv_id that is not intended for this specific vehicle
+    // Note: The strategy_params using the schema for messages of this type that have strategy "carma/port_drayage"
+    cav_msgs::MobilityOperation mobility_operation_msg2;
+    mobility_operation_msg2.strategy = "carma/port_drayage";
+    mobility_operation_msg2.strategy_params = "{ \"cmv_id\": \"444\", \"cargo_id\": \"567\", \"cargo\": \"true\", \"location\"\
+        : { \"latitude\": \"489554377\", \"longitude\": \"-671503421\" }, \"destination\": { \"latitude\"\
+        : \"489550038\", \"longitude\": \"-571481983\" }, \"operation\": \"MOVING_FROM_LOADING_AREA\", \"action_id\"\
+        : \"44\", \"next_action\": \"45\" }";
+    cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr2(new cav_msgs::MobilityOperation(mobility_operation_msg2));
+    pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr2);
+
+    ASSERT_EQ("321", pdw._latest_mobility_operation_msg.cargo_id);
+    ASSERT_EQ("MOVING_TO_LOADING_AREA", pdw._latest_mobility_operation_msg.operation);
+    ASSERT_EQ(port_drayage_plugin::PortDrayageEvent::RECEIVED_NEW_DESTINATION, pdw._latest_mobility_operation_msg.port_drayage_event_type);
+    ASSERT_EQ(false, pdw._latest_mobility_operation_msg.has_cargo);
+    ASSERT_EQ(-77.1503421, *pdw._latest_mobility_operation_msg.start_longitude);
+    ASSERT_EQ(38.9554377, *pdw._latest_mobility_operation_msg.start_latitude);
+    ASSERT_EQ(-77.1481983, *pdw._latest_mobility_operation_msg.dest_longitude);
+    ASSERT_EQ(38.9550038, *pdw._latest_mobility_operation_msg.dest_latitude);
+    ASSERT_EQ("32", pdw._latest_mobility_operation_msg.current_action_id);
+    ASSERT_EQ("33", pdw._latest_mobility_operation_msg.next_action_id);
+}
+
 // Run all the tests
 int main(int argc, char **argv)
 {

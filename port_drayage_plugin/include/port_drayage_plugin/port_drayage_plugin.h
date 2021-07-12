@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2018-2020 LEIDOS.
+ * Copyright (C) 2018-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@
 #include <memory>
 #include <cav_srvs/PlanManeuvers.h>
 #include <cav_msgs/ManeuverPlan.h>
+#include <cav_msgs/MobilityOperation.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <carma_wm/WorldModel.h>
 #include <carma_wm/WMListener.h>
@@ -44,6 +45,7 @@ namespace port_drayage_plugin
             std::shared_ptr<ros::Subscriber> _maneuver_plan_subscriber = nullptr;
             std::shared_ptr<ros::Subscriber> _pose_subscriber = nullptr;
             std::shared_ptr<ros::Subscriber> _cur_speed_subscriber = nullptr;
+            std::shared_ptr<ros::Subscriber> _inbound_mobility_operation_subscriber = nullptr;
             std::shared_ptr<ros::Publisher> _outbound_mobility_operations_publisher = nullptr;
             
             // ROS service servers

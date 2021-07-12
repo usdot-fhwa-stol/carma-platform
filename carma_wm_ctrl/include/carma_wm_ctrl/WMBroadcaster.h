@@ -51,6 +51,8 @@
 #include <carma_wm/TrafficControl.h>
 #include <std_msgs/String.h>
 #include <unordered_set>
+#include <visualization_msgs/MarkerArray.h>
+#include <cav_msgs/TrafficControlRequestPolygon.h>
 
 namespace carma_wm_ctrl
 {
@@ -116,6 +118,18 @@ public:
   * \param route_msg The message containing route information
   */
   void routeCallbackMessage(const cav_msgs::Route& route_msg);
+
+   /*!
+  * \brief composeTCMMarkerVisualizer() compose TCM Marker visualization
+  * \param input The message containing tcm information
+  */
+  visualization_msgs::Marker composeTCMMarkerVisualizer(const std::vector<lanelet::Point3d>& input);
+
+   /*!
+  * \brief composeTCRStatus() compose TCM Request visualization on UI
+  * \param input The message containing tcr information
+  */
+  cav_msgs::TrafficControlRequestPolygon composeTCRStatus(const lanelet::BasicPoint3d& localPoint, const cav_msgs::TrafficControlBounds& cB, const lanelet::projection::LocalFrameProjector& local_projector);
 
  /*!
   * \brief Pulls vehicle information from CARMA Cloud at startup by providing its selected route in a TrafficControlRequest message that is published after a route is selected.
@@ -199,6 +213,32 @@ public:
    */
   ros::V_string invertParticipants(const ros::V_string& input_participants) const;
 
+   /*!
+   * \brief Combines a list of the given participants into a single "vehicle" type if participants cover all possible vehicle types.
+            Returns the input with no change if it doesn't cover all.
+   * \param ros::V_string participants vector of strings 
+   */ 
+  ros::V_string combineParticipantsToVehicle(const ros::V_string& input_participants) const;
+
+  /*!
+   *  \brief Callback triggered whenever a new subscriber connects to the map_update topic of this node.
+   *         This callback will publish the all updates for the current map to that node so that any missed updates are already included.
+   *          
+   *  \param single_sub_pub A publisher which will publish exclusively to the new subscriber 
+   */ 
+  void newUpdateSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const;
+
+  visualization_msgs::MarkerArray tcm_marker_array_;
+  cav_msgs::TrafficControlRequestPolygon tcr_polygon_;
+  
+  /*!
+   * \brief Returns the most recently recieved route message.
+   * 
+   * \return The most recent route message.
+   */ 
+  cav_msgs::Route getRoute();
+
+
 private:
   lanelet::ConstLanelets route_path_;
   std::unordered_set<lanelet::Id> active_geofence_llt_ids_; 
@@ -223,6 +263,22 @@ private:
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
+  /* Version ID of the current_map_ variable. Monotonically increasing value
+   * NOTE: This parameter needs to be incremented any time a new map is ready to be published. 
+   * It should not be incremented for updates that do not require a full map publication.
+   */
+  size_t current_map_version_ = 0;
+
+  cav_msgs::Route current_route; // Most recently received route message
+  /**
+   * Queue which stores the map updates applied to the current map version as a sequence of diffs
+   * This queue is implemented as a vector because it gets reused by each new subscriber connection
+   * NOTE: This queue should be cleared each time the current_map_version changes
+   */
+  std::vector<autoware_lanelet2_msgs::MapBin> map_update_message_queue_; 
+
+  size_t update_count_ = 0; // Records the total number of sent map updates. Used as the set value for update.header.seq
+
 };
 }  // namespace carma_wm_ctrl
 

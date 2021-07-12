@@ -2,7 +2,7 @@
 
 if [[ "$SOURCE_BRANCH" = "develop" ]]; then
     # add -d flag to checkout.bash and update image dependencies
-    sed -i "s|checkout.bash|checkout.bash -d|g; s|usdotfhwastol/|usdotfhwastoldev/|g; s|:[0-9]*\.[0-9]*\.[0-9]*|:develop|g s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:develop|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:develop|g" \
+    sed -i "s|checkout.bash|checkout.bash -d|g; s|usdotfhwastol/|usdotfhwastoldev/|g; s|:[0-9]*\.[0-9]*\.[0-9]*|:develop|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:develop|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:develop|g" \
         Dockerfile
 elif [[ "$SOURCE_BRANCH" =~ ^release/.*$ ]]; then
     # Update Dockerfile to point to release images
