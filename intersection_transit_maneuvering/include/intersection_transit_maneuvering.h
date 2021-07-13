@@ -129,8 +129,6 @@ namespace intersection_transit_maneuvering
             double jerk_ =0.0;
             //Total time required to complete the maneuver
             double maneuver_time_;
-            //Acceptable range for stopping from end point of route
-            double destination_downtrack_range_ = 10.0;
 
             //Parameters loaded from config file initialized for unit tests
             //The crawl speed for the maneuver before reaching within acceptable distance from the end
@@ -145,7 +143,6 @@ namespace intersection_transit_maneuvering
             double min_timestep_ =0.1;
             //Amount to downsample input lanelet centerline data
             int downsample_ratio_ =8;
-        
         
             //A small static value for comparing doubles
             static constexpr double epsilon_ = 0.001;
@@ -168,7 +165,19 @@ namespace intersection_transit_maneuvering
             */
             void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
 
-            double destination_downtrack_range = 0.0;
+
+            /**
+             * \brief Returns the min, and its idx, from the vector of values, excluding given set of values
+            * 
+            * \param values vector of values
+            * 
+            * \param excluded set of excluded values
+            * 
+            * \return minimum value and its idx
+            */ 
+            std::pair<double, size_t> min_with_exclusions(const std::vector<double>& values, const std::unordered_set<size_t>& excluded) const;
+  
+            carma_wm::WorldModelConstPtr wm_;
         
 
 

@@ -67,7 +67,6 @@ namespace intersection_transit_maneuvering
         pnh_->param<double>("max_jerk_limit", max_jerk_limit_);
         pnh_->param<double>("min_timestep",min_timestep_);
         pnh_->param<double>("min_jerk", min_jerk_limit_);
-        pnh_->param<double>("/guidance/destination_downtrack_range",destination_downtrack_range_);
 
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
@@ -113,7 +112,7 @@ namespace intersection_transit_maneuvering
 
     while (optimize)
     {
-        auto min_pair = min_with_exclusions(curv_speeds, visited_idx);
+        auto min_pair = min_with_exclusions(curve_speeds, visited_idx);
         size_t min_idx = std::get<1>(min_pair);
         if (min_idx == -1) {
           break;
