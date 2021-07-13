@@ -53,7 +53,7 @@ StopandWait::StopandWait(carma_wm::WorldModelConstPtr wm, StopandWaitConfig conf
                          PublishPluginDiscoveryCB plugin_discovery_publisher)
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
 {
-  plugin_discovery_msg_.name = "StopandWaitPlugin";
+  plugin_discovery_msg_.name = "StopAndWaitPlugin";
   plugin_discovery_msg_.versionId = "v1.1";
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = false;

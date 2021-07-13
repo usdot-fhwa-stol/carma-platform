@@ -43,27 +43,16 @@
                         ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
                             throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))))
 
-namespace {
-double getManeuverEndSpeed(const cav_msgs::Maneuver& mvr) {
-    switch(mvr.type) {
-        case cav_msgs::Maneuver::LANE_FOLLOWING:
-            return mvr.lane_following_maneuver.end_speed;
-        case cav_msgs::Maneuver::LANE_CHANGE:
-            return mvr.lane_change_maneuver.end_speed;
-        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
-            return mvr.intersection_transit_straight_maneuver.end_speed;
-        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
-            return mvr.intersection_transit_left_turn_maneuver.end_speed;
-        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
-            return mvr.intersection_transit_right_turn_maneuver.end_speed;
-        case cav_msgs::Maneuver::STOP_AND_WAIT:
-            return 0;
-        default:
-            ROS_ERROR_STREAM("Requested end speed from unsupported maneuver type");
-            return 0;
-    }
-}
-}
+
+#define SET_MANEUVER_PROPERTY(mvr, property, value)\
+        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property = (value) :\
+            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property = (value) :\
+                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property = (value) :\
+                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property = (value) :\
+                        ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property = (value) :\
+                        ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property = (value) :\
+                            throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))))
+
 
 namespace route_following_plugin
 {
@@ -90,13 +79,15 @@ namespace route_following_plugin
 
         // read ros parameters
         pnh_->param<double>("minimal_plan_duration", min_plan_duration_, 16.0);
-        pnh_->param<std::string>("lane_change_plugin", lane_change_plugin_, "CooperativeLaneChangePlugin");
-
-stop_and_wait_plugin_
+        pnh_->param<std::string>("lane_change_plugin", lane_change_plugin_, lane_change_plugin_);
+        pnh_->param<std::string>("stop_and_wait_plugin", stop_and_wait_plugin_, stop_and_wait_plugin_);
+        pnh_->param<std::string>("lane_following_plugin", lanefollow_planning_tactical_plugin_, lanefollow_planning_tactical_plugin_);
 
         pnh_->param<double>("/guidance/route/destination_downtrack_range", route_end_point_buffer_, route_end_point_buffer_);
         pnh_->param<double>("/vehicle_acceleration_limit", accel_limit_, accel_limit_);
+        pnh_->param<double>("/vehicle_lateral_accel_limit", lateral_accel_limit_, lateral_accel_limit_);
         pnh_->param<double>("stopping_accel_limit_multiplier", stopping_accel_limit_multiplier_, stopping_accel_limit_multiplier_);
+        pnh_->param<double>("min_maneuver_length", min_maneuver_length_, min_maneuver_length_);
 
         wml_.reset(new carma_wm::WMListener());
 
@@ -191,11 +182,11 @@ stop_and_wait_plugin_
             else
             {
                 ROS_DEBUG_STREAM("Lanechange NOT Needed ");
-                maneuvers.push_back(composeLaneFollowingManeuverMessage(start_dist, end_dist, start_speed, target_speed_in_lanelet, route_shortest_path[shortest_path_index].id()));
+                maneuvers.push_back(composeLaneFollowingManeuverMessage(start_dist, end_dist, start_speed, target_speed_in_lanelet, { route_shortest_path[shortest_path_index].id() } ));
             }
         }
-        //TO DO  - Update this block so that Stop and wait is the last maneuver ----
-        //add lane follow as last maneuver if there is a lanelet unplanned for in path
+
+        // Add lane follow as last maneuver if there is a lanelet unplanned for in path
         if (shortest_path_index < route_shortest_path.size())
         {
 
@@ -209,22 +200,22 @@ stop_and_wait_plugin_
              * 5. Add maneuvers to list 
              */ 
 
-            double stopping_entry_speed = GET_MANEUVER_PROPERTY(maneuvers.back(), end_speed);
+            double stopping_entry_speed = maneuvers.empty() ? findSpeedLimit(route_shortest_path.back()) : GET_MANEUVER_PROPERTY(maneuvers.back(), end_speed);
+
             double stopping_accel_limit = accel_limit_ * stopping_accel_limit_multiplier_;
 
-            // v_f^2 = v_i^2 + 2ad;
             // (v_f^2 - v_i^2) / (2*a) = d // where v_f = 0
             double stopping_distance = 0.5 * (stopping_entry_speed * stopping_entry_speed) / stopping_accel_limit;
 
             double required_start_downtrack = route_length - stopping_distance;
 
-            // Loop to drop any maneuvers which fully overlap our stopping maneuver
-            while (GET_MANEUVER_PROPERTY(maneuvers.back(), start_dist) + 5.0 > required_start_downtrack) { // TODO make 5.0 a parameter or remove?
+            // Loop to drop any maneuvers which fully overlap our stopping maneuver while accounting for minimum length maneuver buffers
+            while ( !maneuvers.empty() && maneuverWithBufferStartsAfterDowntrack(maneuvers.back(), required_start_downtrack) ) { 
                 
-                if (maneuvers.back().type == cav_msgs::Maneuver::LANE_CHANGE) {
 
-                    // TODO it might be possible to recompute the acceleration limit here to allow for stopping to still occur without invalidating the lane change
-                    // However that might be excessive work for this edge case.
+                ROS_WARN_STREAM("Dropping maneuver with id: " <<  GET_MANEUVER_PROPERTY(maneuvers.back(), parameters.maneuver_id) );
+
+                if (maneuvers.back().type == cav_msgs::Maneuver::LANE_CHANGE) {
 
                     // TODO create issue and link it here
                     throw std::invalid_argument("Stopping at the end of the route requires replanning a lane change. RouteFollowing cannot yet handle this case");
@@ -234,39 +225,84 @@ stop_and_wait_plugin_
 
             }
 
-            
-            double last_maneuver_end_downtrack = GET_MANEUVER_PROPERTY(maneuvers.back(), end_dist);
-            
-            if ( required_start_downtrack >  last_maneuver_end_downtrack ) {
+            double last_maneuver_end_downtrack =  required_start_downtrack; // Set default starting location for stop and wait maneuver 
 
-                // If the delta is under 5m we can just extend the stopping maneuver
-                // Otherwise add a new lane follow maneuver
-                if (required_start_downtrack - last_maneuver_end_downtrack > 5.0) { // TODO make parameter
+            if ( !maneuvers.empty() ) { // If there are existing maneuvers we need to make sure stop and wait does not overwrite them
+                
+                double last_maneuver_end_downtrack = GET_MANEUVER_PROPERTY(maneuvers.back(), end_dist);
+                
+                if ( required_start_downtrack >=  last_maneuver_end_downtrack ) {
 
-                    // TODO correctly access lane id for this maneuver (it might cover multiple lanelets so the maneuver definition is actually invalid)
-                    maneuvers.push_back(composeLaneFollowingManeuverMessage(last_maneuver_end_downtrack, required_start_downtrack, stopping_entry_speed, stopping_entry_speed, route_shortest_path.back().id()));
+                    // If the delta is under 5m we can just extend the stopping maneuver
+                    // Otherwise add a new lane follow maneuver
+                    if (required_start_downtrack - last_maneuver_end_downtrack > min_maneuver_length_) { 
+
+                        // Identify the lanelets which will be crossed by this lane follow maneuver
+                        std::vector<lanelet::ConstLanelet> crossed_lanelets = getLaneletsBetween(last_maneuver_end_downtrack, required_start_downtrack, true, false); 
+
+                        if (crossed_lanelets.size() == 0) {
+                            throw std::invalid_argument("The new lane follow maneuver does not cross any lanelets going from: " << last_maneuver_end_downtrack << " to: " << required_start_downtrack);
+                        }
+
+                        // Create the lane follow maneuver
+                        maneuvers.push_back(composeLaneFollowingManeuverMessage(last_maneuver_end_downtrack, required_start_downtrack, stopping_entry_speed, stopping_entry_speed, lanelet::utils::transform(crossed_lanelets, [](auto ll) { return ll.id(); })));
+                        
+                        // Update last maneuver end downtrack so the stop and wait maneuver can be properly formulated
+                        last_maneuver_end_downtrack = required_start_downtrack; 
+                    }
+
+                } else {
+
                     
-                    last_maneuver_end_downtrack = required_start_downtrack; // Update last maneuver end downtrack
-                }
+                    auto& existing_back_end_downtrack_ref = GET_MANEUVER_PROPERTY(maneuvers.back(), end_dist);
+                    
+                    existing_back_end_downtrack_ref = required_start_downtrack;
+
+
+                    // Identify the lanelets which will be crossed by this updated maneuver
+                    std::vector<lanelet::ConstLanelet> crossed_lanelets = getLaneletsBetween(GET_MANEUVER_PROPERTY(maneuvers.back(), start_dist), existing_back_end_downtrack_ref, true, false);
+
+                    if (crossed_lanelets.size() == 0) {
+                        throw std::invalid_argument("Updated maneuver does not cross any lanelets going from: " << GET_MANEUVER_PROPERTY(maneuvers.back(), start_dist) << " to: " << existing_back_end_downtrack_ref);
+                    }
+
+                    if (maneuvers.back().type() == cav_msgs::Maneuver::LANE_FOLLOWING) {
+
+                        maneuvers.back().lane_following_maneuver.lane_ids = lanelet::utils::transform(crossed_lanelets, [](auto ll) { return std::to_string(ll.id()); });
+
+                    } else {
+
+                        SET_MANEUVER_PROPERTY(maneuvers.back(), starting_lane_id, crossed_lanelets.front().id());
+                        SET_MANEUVER_PROPERTY(maneuvers.back(), ending_lane_id, crossed_lanelets.back().id());
+
+                    }
+
+                    last_maneuver_end_downtrack = existing_back_end_downtrack_ref;
+
+                }   
+            }
+            
+            // Identify the lanelets which will be crossed by this lane follow maneuver
+            std::vector<lanelet::ConstLanelet> crossed_lanelets = getLaneletsBetween(last_maneuver_end_downtrack, route_length, true, false);
+
+            lanelet::Id start_lane = route_shortest_path.back().id();
+            lanelet::Id end_lane = route_shortest_path.back().id();
+
+            if (crossed_lanelets.size() == 0) {
+
+                throw std::invalid_argument("Stopping maneuver does not cross any lanelets going from: " << last_maneuver_end_downtrack << " to: " << route_length);
 
             } else {
 
-                
-
-                // TODO logic to extend maneuver or build new maneuver
-
-                auto& existing_back_end_downtrack_ref = GET_MANEUVER_PROPERTY(maneuvers.back(), end_dist);
-                
-                existing_back_end_downtrack_ref = required_start_downtrack; // TODO we need to update the lanelet ids here
-
-                last_maneuver_end_downtrack = existing_back_end_downtrack_ref;
-
-                // TODO we should handle the case where this creates a micro or zero length maneuver (probably want the 5m buffer like above)
-
-            }   
+                start_lane = crossed_lanelets.front().id();
+                end_lane = crossed_lanelets.back().id();
+            }
 
             // Build stop and wait maneuver
-            maneuvers.push_back(composeStopAndWaitManeuverMessage(last_maneuver_end_downtrack, route_length, stopping_entry_speed, route_shortest_path.back().id(), route_shortest_path.back().id())); // TODO set lanelet ids correctly
+            // ASSUMPTION: At the moment the stopping entry speed is not updated because the assumption is
+            // that any previous maneuvers which were slower need not be accounted for as planning for a higher speed will always be capable of handling that case 
+            // and any which were faster would already have their speed reduced by the maneuver which this speed was derived from. 
+            maneuvers.push_back(composeStopAndWaitManeuverMessage(last_maneuver_end_downtrack, route_length, stopping_entry_speed, start_lane, end_lane));
 
 
 
@@ -276,6 +312,28 @@ stop_and_wait_plugin_
         ////------------------
         ROS_DEBUG_STREAM("Maneuver plan along route successfully generated");
         return maneuvers;
+    }
+
+    bool RouteFollowingPlugin::maneuverWithBufferStartsAfterDowntrack(const cav_msgs::Maneuver& maneuver, double downtrack) {
+       
+        if (maneuver.type == cav_msgs::Maneuver::LANE_CHANGE) {
+                
+            // Compute the time it takes to move laterally to the next lane
+            double lane_change_time = sqrt(0.5 * MAX_LANE_WIDTH / lateral_accel_limit_);
+            
+            // Compute logitudinal distance covered in lane change time
+            double min_lane_change_distance = std::max(
+                min_maneuver_length_, 
+                MAX_LANE_WIDTH * (GET_MANEUVER_PROPERTY(maneuver, start_speed) + GET_MANEUVER_PROPERTY(maneuver, end_speed)) / 2.0 // dist = v_avg * t
+            );
+
+            return GET_MANEUVER_PROPERTY(maneuver, start_dist) + min_lane_change_distance > downtrack;
+
+        } else { 
+            
+            return GET_MANEUVER_PROPERTY(maneuver, start_dist) + min_maneuver_length_ > downtrack; 
+        
+        }
     }
 
     bool RouteFollowingPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp)
@@ -509,7 +567,7 @@ stop_and_wait_plugin_
         return -1;
     }
 
-    cav_msgs::Maneuver RouteFollowingPlugin::composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id) const
+    cav_msgs::Maneuver RouteFollowingPlugin::composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, std:vector<lanelet::Id> lane_ids) const
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
@@ -521,10 +579,15 @@ stop_and_wait_plugin_
         maneuver_msg.lane_following_maneuver.start_speed = start_speed;
         maneuver_msg.lane_following_maneuver.end_dist = end_dist;
         maneuver_msg.lane_following_maneuver.end_speed = target_speed;
-        maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
+        maneuver_msg.lane_following_maneuver.lane_ids = lanelet::utils::transform(lane_ids, [](auto id) { return std::to_string(id); });
         //Start time and end time for maneuver are assigned in updateTimeProgress
 
-        ROS_DEBUG_STREAM("Creating lane follow start dist: " << start_dist << " end dist: " << end_dist << "lane_id" << maneuver_msg.lane_following_maneuver.lane_id);
+        // NOTE: The maneuver id is set here because maneuvers are regenerated once per route, so it is acceptable to regenerate them on route updates.
+        //       If maneuvers were not generated only on route updates we would want to preserve the ids across plans
+        maneuver_msg.lane_following_maneuver.parameters.maneuver_id = getNewManeuverId();
+
+        ROS_DEBUG_STREAM("Creating lane follow id: " << maneuver_msg.lane_following_maneuver.parameters.maneuver_id 
+                        << " start dist: " << start_dist << " end dist: " << end_dist << "lane_id" << maneuver_msg.lane_following_maneuver.lane_id);
         
         return maneuver_msg;
     }
@@ -545,9 +608,19 @@ stop_and_wait_plugin_
         maneuver_msg.lane_change_maneuver.ending_lane_id = std::to_string(ending_lane_id);
         //Start time and end time for maneuver are assigned in updateTimeProgress
 
-        ROS_DEBUG_STREAM("Creating lane change start dist: " << start_dist << " end dist: " << end_dist << " Starting llt: " << starting_lane_id << " Ending llt: " << ending_lane_id);
+        // NOTE: The maneuver id is set here because maneuvers are regenerated once per route, so it is acceptable to regenerate them on route updates.
+        //       If maneuvers were not generated only on route updates we would want to preserve the ids across plans
+        maneuver_msg.lane_change_maneuver.parameters.maneuver_id = getNewManeuverId();
+
+        ROS_DEBUG_STREAM("Creating lane change id: "  << maneuver_msg.lane_change_maneuver.parameters.maneuver_id << "start dist: " << start_dist << " end dist: " << end_dist << " Starting llt: " << starting_lane_id << " Ending llt: " << ending_lane_id);
 
         return maneuver_msg;
+    }
+
+    std::string RouteFollowingPlugin::getNewManeuverId() {
+        static auto gen = boost::uuids::random_generator()(); // Initialize uuid generator
+        
+        return boost::lexical_cast<std::string>(gen()); // generate uuid and convert to string
     }
 
     cav_msgs::Maneuver RouteFollowingPlugin::composeStopAndWaitManeuverMessage(double start_dist, double end_dist, double start_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id) const
@@ -565,7 +638,11 @@ stop_and_wait_plugin_
         maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(ending_lane_id);
         //Start time and end time for maneuver are assigned in updateTimeProgress
 
-        ROS_DEBUG_STREAM("Creating stop and wait maneuver start dist: " << start_dist << " end dist: " << end_dist << " start_speed: " << start_speed << " Starting llt: " << starting_lane_id << " Ending llt: " << ending_lane_id);
+        // NOTE: The maneuver id is set here because maneuvers are regenerated once per route, so it is acceptable to regenerate them on route updates.
+        //       If maneuvers were not generated only on route updates we would want to preserve the ids across plans
+        maneuver_msg.stop_and_wait_maneuver.parameters.maneuver_id = getNewManeuverId();
+
+        ROS_DEBUG_STREAM("Creating stop and wait maneuver id:" << maneuver_msg.stop_and_wait_maneuver.parameters.maneuver_id << "start dist: " << start_dist << " end dist: " << end_dist << " start_speed: " << start_speed << " Starting llt: " << starting_lane_id << " Ending llt: " << ending_lane_id);
 
         return maneuver_msg;
     }

@@ -94,10 +94,10 @@ namespace route_following_plugin
          * \param end_dist End downtrack distance of the current maneuver
          * \param start_speed Start speed of the current maneuver
          * \param target_speed Target speed pf the current maneuver, usually it is the lanelet speed limit
-         * \param lane_id Lanelet ID of the current maneuver
+         * \param lane_ids List of lanelet IDs that the current maneuver traverses. Message expects these to be contiguous and end to end 
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id) const;
+        cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, std:vector<lanelet::Id> lane_ids) const;
 
         /**
          * \brief Compose a lane change maneuver message based on input params
@@ -181,6 +181,12 @@ namespace route_following_plugin
 
         double accel_limit_ = 2.0;
 
+        double lateral_accel_limit_ = 2.0;
+
+        double min_maneuver_length_ = 10.0; // Minimum length to allow for a maneuver when updating it for stop and wait
+        
+        static constexpr double MAX_LANE_WIDTH=3.70; // Maximum lane width of a US highway
+
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
 
@@ -202,6 +208,7 @@ namespace route_following_plugin
 
         //Tactical plugin being used for planning lane change
         std::string lane_change_plugin_ = "CooperativeLaneChangePlugin";
+        std::string stop_and_wait_plugin_ = "StopAndWaitPlugin";
 
         std::string planning_strategic_plugin_ = "RouteFollowingPlugin";
         std::string lanefollow_planning_tactical_plugin_ = "InLaneCruisingPlugin"; 
