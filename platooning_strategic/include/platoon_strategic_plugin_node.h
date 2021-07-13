@@ -86,7 +86,7 @@ public:
                                     [&mob_request_pub](auto msg) { mob_request_pub.publish(msg); }, [&mob_operation_pub](auto msg) { mob_operation_pub.publish(msg); },
                                     [&platoon_info_pub](auto msg) { platoon_info_pub.publish(msg); } );
   
-    worker.lookupECEFtoMapTransform();
+    // worker.lookupECEFtoMapTransform();
 
     ros::ServiceServer maneuver_srv_ = nh.advertiseService("plugins/PlatooningStrategicPlugin/plan_maneuvers",
                                             &PlatoonStrategicPlugin::plan_maneuver_cb, &worker);
@@ -97,6 +97,8 @@ public:
     ros::Subscriber current_twist_sub = nh.subscribe("current_velocity", 1, &PlatoonStrategicPlugin::twist_cb,  &worker);
     ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &PlatoonStrategicPlugin::bsm_cb,  &worker);
     ros::Subscriber cmd_sub = nh.subscribe("twist_raw", 1, &PlatoonStrategicPlugin::cmd_cb,  &worker);
+    ros::Subscriber georeference_sub = nh.subscribe("georeference", 1, &PlatoonStrategicPlugin::georeference_cb, &worker);
+
     
     ros::Timer discovery_pub_timer_ = nh.createTimer(
             ros::Duration(ros::Rate(10.0)),

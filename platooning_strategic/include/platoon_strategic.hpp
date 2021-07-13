@@ -48,6 +48,8 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <std_msgs/String.h>
 
 namespace platoon_strategic
 {
@@ -100,6 +102,9 @@ namespace platoon_strategic
             void cmd_cb(const geometry_msgs::TwistStampedConstPtr& msg);
 
             void bsm_cb(const cav_msgs::BSMConstPtr& msg);
+
+            void georeference_cb(const std_msgs::StringConstPtr& msg);
+
             
             bool onSpin();
 
@@ -193,7 +198,10 @@ namespace platoon_strategic
             std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
             geometry_msgs::TransformStamped tf_;
 
+            std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
+
             
+            bool map_loaded_ = false;
 
             std::string host_bsm_id_ = "";
 
@@ -214,8 +222,8 @@ namespace platoon_strategic
             cav_msgs::MobilityOperation composeMobilityOperationLeaderWaiting();
             cav_msgs::MobilityOperation composeMobilityOperationCandidateFollower();
 
-            cav_msgs::LocationECEF pose_to_ecef(geometry_msgs::PoseStamped pose_msg, geometry_msgs::TransformStamped tf);
-            lanelet::BasicPoint2d ecef_to_map_point(cav_msgs::LocationECEF ecef_point, geometry_msgs::TransformStamped tf);
+            cav_msgs::LocationECEF pose_to_ecef(geometry_msgs::PoseStamped pose_msg);
+            lanelet::BasicPoint2d ecef_to_map_point(cav_msgs::LocationECEF ecef_point);
 
             
 

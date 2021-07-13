@@ -110,9 +110,11 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("current_downtrack_ = " << current_downtrack_);
             current_crosstrack_ = tc.crosstrack;
             ROS_DEBUG_STREAM("current_crosstrack_ = " << current_crosstrack_);
+
+            pose_ecef_point_ = pose_to_ecef(pose_msg_);
         }
         
-        pose_ecef_point_ = pose_to_ecef(pose_msg_, tf_);
+        
 
     }
 
@@ -262,6 +264,7 @@ namespace platoon_strategic
         // double dx = pose_msg_.pose.position.x - initial_pose_.pose.position.x;
         // double dy = pose_msg_.pose.position.y - initial_pose_.pose.position.y;
         // current_downtrack_ = std::sqrt(dx*dx + dy*dy);
+        
         pm_.current_downtrack_didtance_ = current_downtrack_;
         pm_.HostMobilityId = config_.vehicle_id;
         ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
@@ -481,7 +484,7 @@ namespace platoon_strategic
                     request.strategy = MOBILITY_STRATEGY;
                     request.strategy_params = "";
                     request.urgency = 50;
-                    request.location = pose_to_ecef(pose_msg_, tf_);
+                    request.location = pose_to_ecef(pose_msg_);
                     mobility_request_publisher_(request);
                     ROS_DEBUG_STREAM("Published Mobility Candidate-Join request to the leader");
                     ROS_WARN("Published Mobility Candidate-Join request to the leader");
@@ -584,7 +587,7 @@ namespace platoon_strategic
         bool isTargetVehicle = (msg.header.sender_id == lw_applicantId_);
         bool isCandidateJoin = msg.plan_type.type == cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
 
-        lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location, tf_);
+        lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location);
         double current_cross_track = wm_->routeTrackPos(incoming_pose).crosstrack;
         bool inTheSameLane = (current_cross_track < config_.maxCrosstrackError);
         ROS_DEBUG_STREAM("current_cross_track = " << current_cross_track);
@@ -645,7 +648,7 @@ namespace platoon_strategic
             double applicantCurrentDtd = std::stod(applicantCurrentDtd_parsed[1]);
             ROS_DEBUG_STREAM("applicantCurrentDtd from message: " << applicantCurrentDtd);
 
-            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location, tf_);
+            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location);
             applicantCurrentDtd = wm_->routeTrackPos(incoming_pose).downtrack;
             ROS_DEBUG_STREAM("applicantCurrentmemberUpdates from ecef pose: " << applicantCurrentDtd);
 
@@ -946,7 +949,7 @@ namespace platoon_strategic
             ecef_loc.ecef_y = ecef_y;
             ecef_loc.ecef_z = ecef_z;
             
-            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
+            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc);
             double dtd = wm_->routeTrackPos(incoming_pose).downtrack;
 
             pm_.memberUpdates(vehicleID, platoonId, msg.header.sender_bsm_id, statusParams, dtd);
@@ -995,7 +998,7 @@ namespace platoon_strategic
             ecef_loc.ecef_y = ecef_y;
             ecef_loc.ecef_z = ecef_z;
             
-            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
+            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc);
             double dtd = wm_->routeTrackPos(incoming_pose).downtrack;
             ROS_DEBUG_STREAM("DTD calculated in mob_op_cb_follower: " << dtd);
 
@@ -1036,7 +1039,7 @@ namespace platoon_strategic
             ecef_loc.ecef_y = ecef_y;
             ecef_loc.ecef_z = ecef_z;
 
-            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
+            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc);
             double dtd = wm_->routeTrackPos(incoming_pose).downtrack;
 
             pm_.memberUpdates(vehicleID, platoonId, msg.header.sender_bsm_id, statusParams, dtd);
@@ -1101,7 +1104,7 @@ namespace platoon_strategic
             ecef_loc.ecef_y = ecef_y;
             ecef_loc.ecef_z = ecef_z;
 
-            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
+            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc);
             rearVehicleDtd = wm_->routeTrackPos(incoming_pose).downtrack;
 
             ROS_DEBUG_STREAM("rearVehicleDtd from ecef: " << rearVehicleDtd);
@@ -1116,7 +1119,7 @@ namespace platoon_strategic
                 request.header.sender_bsm_id = host_bsm_id_;
                 request.header.sender_id = config_.vehicle_id;
                 request.header.timestamp = ros::Time::now().toNSec()/1000000;
-                request.location = pose_to_ecef(pose_msg_, tf_);
+                request.location = pose_to_ecef(pose_msg_);
                 request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_AT_REAR;
                 request.strategy = MOBILITY_STRATEGY;
 
@@ -1174,7 +1177,7 @@ namespace platoon_strategic
             ecef_loc.ecef_y = ecef_y;
             ecef_loc.ecef_z = ecef_z;
             
-            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
+            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc);
             
             double dtd = wm_->routeTrackPos(incoming_pose).downtrack;
             ROS_DEBUG_STREAM("dtd from ecef: " << dtd);
@@ -1200,46 +1203,72 @@ namespace platoon_strategic
         }
     }
 
-    cav_msgs::LocationECEF PlatoonStrategicPlugin::pose_to_ecef(geometry_msgs::PoseStamped pose_msg, geometry_msgs::TransformStamped tf)
+    cav_msgs::LocationECEF PlatoonStrategicPlugin::pose_to_ecef(geometry_msgs::PoseStamped pose_msg)
     {
-        tf2::Stamped<tf2::Transform> transform;
-        tf2::fromMsg(tf, transform);
-        
-        cav_msgs::LocationECEF ecef_point;    
-        
-        auto pose_vec = tf2::Vector3(pose_msg.pose.position.x, pose_msg.pose.position.y, 0.0);
-        tf2::Vector3 ecef_point_vec = transform * pose_vec;
-        ecef_point.ecef_x = (int32_t)(ecef_point_vec.x() * 100.0); // m to cm
-        ecef_point.ecef_y = (int32_t)(ecef_point_vec.y() * 100.0);
-        ecef_point.ecef_z = (int32_t)(ecef_point_vec.z() * 100.0); 
+        // tf2::Stamped<tf2::Transform> transform;
+        // tf2::fromMsg(tf, transform);
 
-        ROS_DEBUG_STREAM("ecef_point.ecef_x: " << ecef_point.ecef_x);
-        ROS_DEBUG_STREAM("ecef_point.ecef_y: " << ecef_point.ecef_y);
-        ROS_DEBUG_STREAM("ecef_point.ecef_z: " << ecef_point.ecef_z);
+        if (!map_projector_) {
+            throw std::invalid_argument("No map projector available for ecef conversion");
+        }
+        
+        cav_msgs::LocationECEF location;
 
-        return ecef_point;
+        lanelet::BasicPoint3d ecef_point = map_projector_->projectECEF({pose_msg.pose.position.x, pose_msg.pose.position.y, 0.0}, 1);
+        location.ecef_x = ecef_point.x() * 100.0;
+        location.ecef_y = ecef_point.y() * 100.0;
+        location.ecef_z = ecef_point.z() * 100.0;    
+        
+        // auto pose_vec = tf2::Vector3(pose_msg.pose.position.x, pose_msg.pose.position.y, 0.0);
+        // tf2::Vector3 ecef_point_vec = transform * pose_vec;
+        // ecef_point.ecef_x = (int32_t)(ecef_point_vec.x() * 100.0); // m to cm
+        // ecef_point.ecef_y = (int32_t)(ecef_point_vec.y() * 100.0);
+        // ecef_point.ecef_z = (int32_t)(ecef_point_vec.z() * 100.0); 
+
+        ROS_DEBUG_STREAM("location.ecef_x: " << location.ecef_x);
+        ROS_DEBUG_STREAM("location.ecef_y: " << location.ecef_y);
+        ROS_DEBUG_STREAM("location.ecef_z: " << location.ecef_z);
+
+        return location;
     }
 
-    lanelet::BasicPoint2d PlatoonStrategicPlugin::ecef_to_map_point(cav_msgs::LocationECEF ecef_point, geometry_msgs::TransformStamped tf)
+    lanelet::BasicPoint2d PlatoonStrategicPlugin::ecef_to_map_point(cav_msgs::LocationECEF ecef_point)
     {
-        tf2::Stamped<tf2::Transform> map_in_earth;
-        tf2::fromMsg(tf, map_in_earth);
-        // convert input point to transform
-        tf2::Transform point_in_earth;
-        tf2::Quaternion no_rotation(0, 0, 0, 1);
-        tf2::Vector3 input_point {(double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0}; //m to cm
-        point_in_earth.setOrigin(input_point);
-        point_in_earth.setRotation(no_rotation);
-        // convert to map frame by (T_e_m)^(-1) * T_e_p
-        auto point_in_map = map_in_earth.inverse() * point_in_earth;
-        lanelet::BasicPoint2d output {
-        point_in_map.getOrigin().getX(),
-        point_in_map.getOrigin().getY()};
+        if (!map_projector_) {
+            throw std::invalid_argument("No map projector available for ecef conversion");
+        }
+        // lanelet::BasicPoint2d output
+
+        lanelet::BasicPoint3d map_point = map_projector_->projectECEF( { (double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0 } , -1);
+        // output.x = map_point.x();
+        // output.y = map_point.y();
+        // output.z = map_point.z();
+
+        lanelet::BasicPoint2d output {map_point.x(), map_point.y()};
+
+        // tf2::Stamped<tf2::Transform> map_in_earth;
+        // tf2::fromMsg(tf, map_in_earth);
+        // // convert input point to transform
+        // tf2::Transform point_in_earth;
+        // tf2::Quaternion no_rotation(0, 0, 0, 1);
+        // tf2::Vector3 input_point {(double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0}; //m to cm
+        // point_in_earth.setOrigin(input_point);
+        // point_in_earth.setRotation(no_rotation);
+        // // convert to map frame by (T_e_m)^(-1) * T_e_p
+        // auto point_in_map = map_in_earth.inverse() * point_in_earth;
+        // lanelet::BasicPoint2d output {
+        // point_in_map.getOrigin().getX(),
+        // point_in_map.getOrigin().getY()};
         
-        ROS_DEBUG_STREAM("point_in_map.getOrigin().getX(): " << point_in_map.getOrigin().getX());
-        ROS_DEBUG_STREAM("point_in_map.getOrigin().getY(): " << point_in_map.getOrigin().getY());
+        ROS_DEBUG_STREAM("map_point.x(): " << map_point.x());
+        ROS_DEBUG_STREAM("map_point.y(): " << map_point.y());
         return output;
     } 
+
+    void PlatoonStrategicPlugin::georeference_cb(const std_msgs::StringConstPtr& msg) 
+    {
+        map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());  // Build projector from proj string
+    }
 
 
     cav_msgs::MobilityOperation PlatoonStrategicPlugin::composeMobilityOperationLeader(const std::string& type){
@@ -1251,7 +1280,7 @@ namespace platoon_strategic
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toNSec()/1000000;;
         msg.strategy = MOBILITY_STRATEGY;
-        msg.location = pose_to_ecef(pose_msg_, tf_);;
+        msg.location = pose_to_ecef(pose_msg_);;
 
         if (type == OPERATION_INFO_TYPE){
             // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d,DTD:%.2f
@@ -1308,7 +1337,7 @@ namespace platoon_strategic
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toNSec()/1000000;
         msg.strategy = MOBILITY_STRATEGY;
-        msg.location = pose_to_ecef(pose_msg_, tf_);
+        msg.location = pose_to_ecef(pose_msg_);
         
         double cmdSpeed = cmd_speed_;
         boost::format fmter(OPERATION_STATUS_PARAMS);
@@ -1337,7 +1366,7 @@ namespace platoon_strategic
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toNSec()/1000000;
 
-        msg.location = pose_to_ecef(pose_msg_, tf_);
+        msg.location = pose_to_ecef(pose_msg_);
 
         msg.strategy = MOBILITY_STRATEGY;
         // For STATUS params, the string format is "STATUS|CMDSPEED:5.0,DOWNTRACK:100.0,SPEED:5.0"
@@ -1362,7 +1391,7 @@ namespace platoon_strategic
         tf2_buffer_.setUsingDedicatedThread(true);
         try
         {
-            tf_ = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+            tf_ = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0), ros::Duration(60.0)); //save to local copy of transform 20 sec timeout
             ROS_DEBUG_STREAM("got the transform");
         }
         catch (const tf2::TransformException &ex)
@@ -1384,7 +1413,7 @@ namespace platoon_strategic
         msg.header.timestamp = ros::Time::now().toNSec()/1000000;
         msg.strategy = MOBILITY_STRATEGY;
 
-        msg.location = pose_to_ecef(pose_msg_, tf_);
+        msg.location = pose_to_ecef(pose_msg_);
         
         // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
         double cmdSpeed = cmd_speed_;
