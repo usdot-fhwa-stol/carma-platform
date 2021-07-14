@@ -18,6 +18,8 @@
 
 #include <cav_msgs/ManeuverPlan.h>
 #include <cav_msgs/MobilityOperation.h>
+#include <cav_msgs/GuidanceState.h>
+#include <cav_msgs/RouteEvent.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <novatel_gps_msgs/Inspva.h>
@@ -28,6 +30,22 @@
 namespace port_drayage_plugin
 {
     /**
+     * \brief Enum containing the different destination types that the Port Drayage
+     * vehicle can arrive at.
+     */
+    enum PortDrayageDestination
+    {
+        STAGING_AREA_ENTRY,
+        STAGING_AREA_EXIT,
+        PORT_ENTRY,
+        PORT_EXIT,
+        LOADING_AREA,
+        UNLOADING_AREA,
+        INSPECTION_POINT,
+        HOLDING_AREA
+    };
+    
+    /**
      * Convenience struct for storing all data contained in a received MobilityOperation message's
      * strategy_params field with strategy "carma/port_drayage"
      */
@@ -36,6 +54,7 @@ namespace port_drayage_plugin
         boost::optional<std::string> cargo_id;
         std::string operation;
         PortDrayageEvent port_drayage_event_type; // PortDrayageEvent associated with this message
+        PortDrayageDestination destination_type; // PortDrayageDestination associated with this message's destination
         bool has_cargo; // Flag to indicate whether vehicle has cargo during this action
         boost::optional<std::string> current_action_id; // Identifier for the action this message is related to
         boost::optional<double> dest_longitude;  // Destination longitude for the carma vehicle
@@ -73,7 +92,9 @@ namespace port_drayage_plugin
             unsigned long _cmv_id;
             std::string _cargo_id;
             std::function<void(cav_msgs::MobilityOperation)> _publish_mobility_operation;
-            bool _has_cargo;
+            bool _has_cargo; // Flag for whether CMV is currently carrying cargo
+            bool _has_received_first_mobility_operation_msg = false; // Flag for whether CMV has received its first Port Drayage mobility operation message
+            bool _enable_port_drayage; // Flag to enable to port drayage operations. If false, state machine will remain in 'INACTIVE' state
 
             // Data member for storing the strategy_params field of the last processed port drayage MobilityOperation message intended for this vehicle's cmv_id
             std::string _previous_strategy_params;
@@ -104,18 +125,24 @@ namespace port_drayage_plugin
              * 
              * \param stop_speed_epsilon An epsilon factor to be used when
              * comparing the current vehicle's speed to 0.0
+             * 
+             * \param enable_port_drayage A boolean flag indicating whether port drayage
+             * operations are enabled or not. If false, the port drayage state machine
+             * will remain in an INACTIVE state.
              */
             PortDrayageWorker(
                 unsigned long cmv_id,
                 std::string cargo_id,
                 std::string host_id,
                 std::function<void(cav_msgs::MobilityOperation)> mobility_operations_publisher, 
-                double stop_speed_epsilon) :
+                double stop_speed_epsilon,
+                bool enable_port_drayage) :
                 _cmv_id(cmv_id),
                 _cargo_id(cargo_id),
                 _host_id(host_id),
                 _publish_mobility_operation(mobility_operations_publisher),
-                _stop_speed_epsilon(stop_speed_epsilon) {
+                _stop_speed_epsilon(stop_speed_epsilon),
+                _enable_port_drayage(enable_port_drayage) {
                     _has_cargo = (_cargo_id == "") ? false : true;
                 };
 
@@ -165,6 +192,22 @@ namespace port_drayage_plugin
              * \brief Callback to store the host vehicle's current latitude/longitude coordinates 
              */
             void set_current_gps_position(const novatel_gps_msgs::InspvaConstPtr& gps_position);
+
+            /**
+             * \brief Callback to process the current status of the guidance state machine 
+             */
+            void on_guidance_state(const cav_msgs::GuidanceStateConstPtr& msg); 
+
+            /**
+             * \brief Callback to process each Route Event 
+             */
+            void on_route_event(const cav_msgs::RouteEventConstPtr& msg);
+
+            /**
+             * \brief Get the current state of the port drayage state machine
+             * \return The current state value
+             */
+            const PortDrayageState get_state();
 
             /**
              * \brief Spin and process data

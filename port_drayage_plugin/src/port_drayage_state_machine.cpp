@@ -26,9 +26,6 @@ namespace port_drayage_plugin
             case PortDrayageState::INACTIVE:
                 if (event == PortDrayageEvent::DRAYAGE_START) {
                     _state = PortDrayageState::EN_ROUTE;
-                    if (_on_arrived_at_destination) {
-                        _on_arrived_at_destination();
-                    }
                 }
                 break;
             case PortDrayageState::EN_ROUTE:
@@ -42,9 +39,6 @@ namespace port_drayage_plugin
             case PortDrayageState::AWAITING_DIRECTION:
                 if (event == PortDrayageEvent::RECEIVED_NEW_DESTINATION) {
                     _state = PortDrayageState::EN_ROUTE;
-                    if (_on_received_new_destination) {
-                        _on_received_new_destination();
-                    }
                 }
                 break;
             default:

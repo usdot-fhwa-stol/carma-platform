@@ -46,6 +46,7 @@ namespace port_drayage_plugin
             _pdsm.process_event(PortDrayageEvent::ARRIVED_AT_DESTINATION);
         }
 
+
         return true;
     }
 
@@ -90,18 +91,40 @@ namespace port_drayage_plugin
         location.put("longitude", _current_gps_position.longitude * 10000000); // Convert degrees to 1/10 microdegrees
         pt.put_child("location", location);
 
-        // Add cargo-related fields based on whether the vehicle is currently carrying cargo
-        if (_has_cargo) {
-            pt.put("cargo", true);
-            pt.put("cargo_id", _cargo_id);
+        // If CMV has not received any port drayage messages yet, add necessary fields for its arrival at the port or staging area entrance
+        if (!_has_received_first_mobility_operation_msg) {
+            if (_has_cargo) {
+                pt.put("cargo", _has_cargo);
+                pt.put("cargo_id", _cargo_id);
+            }
+            else {
+                pt.put("cargo", _has_cargo);
+            }
         }
-        else {
-            pt.put("cargo", false);
-        }
+        // If CMV has arrived at the Loading Area, add all necessary fields to message.
+        else if (_latest_mobility_operation_msg.destination_type == PortDrayageDestination::LOADING_AREA) {
+            // Throw exception if CMV has arrived at the Loading Area and is already carrying cargo.
+            if (!_has_cargo) {
+                pt.put("cargo", _has_cargo);
+            }
+            else {
+                std::invalid_argument("CMV has arrived at loading area, but it is already carrying cargo.");
+            }
 
-        // Only include 'action_id' field if an action_id was received in the latest Mobility Operation message for this vehicle
-        if (_latest_mobility_operation_msg.current_action_id) {
-            pt.put("action_id", *_latest_mobility_operation_msg.current_action_id);
+            // Assign other required fields based on the latest received mobility operation message
+            if (_latest_mobility_operation_msg.cargo_id) {
+                pt.put("cargo_id", *_latest_mobility_operation_msg.cargo_id);
+            }
+            else {
+                std::invalid_argument("CMV has arrived at loading area, but does not have a cargo_id to broadcast.");
+            }
+
+            if (_latest_mobility_operation_msg.current_action_id) {
+                pt.put("action_id", *_latest_mobility_operation_msg.current_action_id);
+            }
+            else {
+                std::invalid_argument("CMV has arrived at loading area, but does not have an action_id to broadcast.");
+            } 
         }
 
         std::stringstream body_stream;
@@ -123,12 +146,13 @@ namespace port_drayage_plugin
 
             // Check if the received MobilityOperation message is intended for this vehicle's cmv_id   
             if(mobility_operation_cmv_id == _cmv_id) {
+                _has_received_first_mobility_operation_msg = true;
+
                 ROS_DEBUG_STREAM("Processing new port drayage MobilityOperation message for cmv_id " << mobility_operation_cmv_id);
                 mobility_operation_message_parser(msg->strategy_params);  
                 _previous_strategy_params = msg->strategy_params;
                 
                 // Process event based on the PortDrayageEvent associated with the received MobilityOperation message
-                // TODO: Update this object's '_has_cargo' flag and '_cargo_id' based on the received status message from a loading/unloading device
                 switch(_latest_mobility_operation_msg.port_drayage_event_type) {
                     case PortDrayageEvent::RECEIVED_NEW_DESTINATION:
                         ROS_DEBUG_STREAM("Processing RECEIVED_NEW_DESTINATION event for operation type " << _latest_mobility_operation_msg.operation);
@@ -152,19 +176,35 @@ namespace port_drayage_plugin
         std::istringstream mobility_operation_strategy_params_ss(mobility_operation_strategy_params);
         boost::property_tree::json_parser::read_json(mobility_operation_strategy_params_ss, pt);
 
+        // If previously received message was for 'Loading' or 'Unloading', update the _has_cargo flag
+        // Note: Assumes that 'Loading' or 'Unloading' activity was successful
         _latest_mobility_operation_msg.has_cargo = pt.get<bool>("cargo");
-        _latest_mobility_operation_msg.operation = pt.get<std::string>("operation");
-        ROS_DEBUG_STREAM("operation: " << _latest_mobility_operation_msg.operation);
-        ROS_DEBUG_STREAM("cargo flag: " << _latest_mobility_operation_msg.has_cargo);
-
-        if(_latest_mobility_operation_msg.operation == "MOVING_TO_LOADING_AREA") {
-            _latest_mobility_operation_msg.port_drayage_event_type = PortDrayageEvent::RECEIVED_NEW_DESTINATION;
+        if (_latest_mobility_operation_msg.destination_type == PortDrayageDestination::LOADING_AREA || \
+            _latest_mobility_operation_msg.destination_type == PortDrayageDestination::UNLOADING_AREA) {
+            _has_cargo = (_latest_mobility_operation_msg.has_cargo) ? true : false;
         }
+        if (_latest_mobility_operation_msg.has_cargo != _has_cargo) {
+            if (_has_cargo) {
+                throw std::invalid_argument("CMV received a message indicating it is not carrying cargo, but it is carrying cargo.");
+            }
+            else if (!_has_cargo) {
+                throw std::invalid_argument("CMV received a message indicating it is carrying cargo, but it is not carrying cargo.");
+            }
+        }
+
+        // Parse 'cargo' field, and update this object's _has_cargo flag accordingly
+        _has_cargo = (_latest_mobility_operation_msg.has_cargo) ? true : false;
+        ROS_DEBUG_STREAM("cargo flag: " << _latest_mobility_operation_msg.has_cargo);
 
         // Parse 'cargo_id' field if it exists in strategy_params
         if (pt.count("cargo_id") != 0){
             _latest_mobility_operation_msg.cargo_id = pt.get<std::string>("cargo_id");
             ROS_DEBUG_STREAM("cargo id: " << *_latest_mobility_operation_msg.cargo_id);
+
+            // Update this object's _cargo_id if the CMV is carrying this cargo
+            if (_has_cargo) {
+                _cargo_id = *_latest_mobility_operation_msg.cargo_id;
+            }
         }
         else{
             _latest_mobility_operation_msg.cargo_id = boost::optional<std::string>();
@@ -202,11 +242,58 @@ namespace port_drayage_plugin
             _latest_mobility_operation_msg.dest_longitude = boost::optional<double>();
             _latest_mobility_operation_msg.dest_latitude = boost::optional<double>();
         }
+
+        // Parse 'operation' field and conduct strategy_params data validation based on it
+        _latest_mobility_operation_msg.operation = pt.get<std::string>("operation");
+        ROS_DEBUG_STREAM("operation: " << _latest_mobility_operation_msg.operation);
+        if(_latest_mobility_operation_msg.operation == "MOVING_TO_LOADING_AREA") {
+            _latest_mobility_operation_msg.port_drayage_event_type = PortDrayageEvent::RECEIVED_NEW_DESTINATION;
+            _latest_mobility_operation_msg.destination_type = PortDrayageDestination::LOADING_AREA;
+
+            // Conduct data validation 
+            if (!_latest_mobility_operation_msg.cargo_id) {
+                throw std::invalid_argument("Received loading area operation, but no cargo_id was included.");
+            }
+            if (_has_cargo) {
+                throw std::invalid_argument("Received loading area operation, but CMV is already carrying cargo.");
+            }
+        }
+        else if(_latest_mobility_operation_msg.operation == "EXIT_STAGING_AREA") {
+            _latest_mobility_operation_msg.port_drayage_event_type = PortDrayageEvent::RECEIVED_NEW_DESTINATION;
+            _latest_mobility_operation_msg.destination_type = PortDrayageDestination::STAGING_AREA_EXIT;
+        } 
     }
 
     void PortDrayageWorker::set_current_gps_position(const novatel_gps_msgs::InspvaConstPtr& gps_position) {
         _current_gps_position.latitude = gps_position->latitude;
         _current_gps_position.longitude = gps_position->longitude;
+    }
+
+    void PortDrayageWorker::on_guidance_state(const cav_msgs::GuidanceStateConstPtr& msg) {
+        if ((msg->state == cav_msgs::GuidanceState::ENGAGED) && (_pdsm.get_state() == PortDrayageState::INACTIVE) && _enable_port_drayage) {
+            ROS_DEBUG_STREAM("CMV has been engaged for the first time. Processing DRAYAGE_START event.");
+            _pdsm.process_event(PortDrayageEvent::DRAYAGE_START);
+        }
+    }
+
+    void PortDrayageWorker::on_route_event(const cav_msgs::RouteEventConstPtr& msg) {
+        double longitudinal_speed = _cur_speed->twist.linear.x;
+        if (msg->event == cav_msgs::RouteEvent::ROUTE_COMPLETED) {
+            // Vehicle has come to a stop at the end of its route. Process an 'ARRIVED_AT_DESTINATION' event.
+            if (fabs(longitudinal_speed) < _stop_speed_epsilon) {
+                ROS_DEBUG_STREAM("CMV has come to a stop at the end of the route. Processing ARRIVED_AT_DESTINATION event.");
+                _pdsm.process_event(PortDrayageEvent::ARRIVED_AT_DESTINATION);
+            }
+
+            // Vehicle has not come to a stop and the end of its route. Throw an exception.
+            else {
+                throw std::invalid_argument("CMV did not come to a stop at the end of the route.");
+            }
+        }
+    }
+
+    const PortDrayageState PortDrayageWorker::get_state() {
+        return _pdsm.get_state();
     }
 
 } // namespace port_drayage_plugin

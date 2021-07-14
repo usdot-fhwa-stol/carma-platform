@@ -31,6 +31,8 @@ namespace port_drayage_plugin
         declaration = _pnh->param("declaration", 1.0);
         std::string cargo_id;
         _pnh->param<std::string>("cargo_id", cargo_id, ""); 
+        bool enable_port_drayage;
+        _pnh->param<bool>("enable_port_drayage", enable_port_drayage, false);
 
         // Read in 'cmv_id' parameter as a string, then convert to an unsigned long before initializing the PortDrayageWorker object
         std::string cmv_id_string;
@@ -46,7 +48,8 @@ namespace port_drayage_plugin
             [this](cav_msgs::MobilityOperation msg) {
                _outbound_mobility_operations_publisher->publish<cav_msgs::MobilityOperation>(msg);
             },
-            speed_epsilon
+            speed_epsilon,
+            enable_port_drayage
         };
         
         ros::Subscriber maneuver_sub = _nh->subscribe<cav_msgs::ManeuverPlan>("final_maneuver_plan", 5, 
@@ -84,6 +87,20 @@ namespace port_drayage_plugin
         });
         
         _gps_position_subscriber = std::make_shared<ros::Subscriber>(gps_sub);
+
+        ros::Subscriber guidance_state_sub = _nh->subscribe<cav_msgs::GuidanceState>("guidance_state", 5,
+            [&](const cav_msgs::GuidanceStateConstPtr& guidance_state) {
+            pdw.on_guidance_state(guidance_state);
+        });
+
+        _guidance_state_subscriber = std::make_shared<ros::Subscriber>(guidance_state_sub);
+
+        ros::Subscriber route_event_sub = _nh->subscribe<cav_msgs::RouteEvent>("route_event", 5,
+            [&](const cav_msgs::RouteEventConstPtr& route_event) {
+            pdw.on_route_event(route_event);
+        });
+
+        _route_event_subscriber = std::make_shared<ros::Subscriber>(route_event_sub);
         
         ros::Timer discovery_pub_timer_ = _nh->createTimer(
             ros::Duration(ros::Rate(10.0)),
