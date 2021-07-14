@@ -39,7 +39,9 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
-        1.0};
+        1.0,
+        true // Flag to enable port drayage operations
+    };
 
     // Set host vehicle's current gps lat/lon position
     novatel_gps_msgs::Inspva gps_reading;
@@ -69,6 +71,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
     ASSERT_EQ(123, cmv_id);
     ASSERT_EQ("321", cargo_id);
     ASSERT_EQ("ARRIVED_AT_DESTINATION", operation);
+    ASSERT_EQ(pt.count("action_id"), 0);
     ASSERT_TRUE(has_cargo);
     ASSERT_NEAR(389562270.8, vehicle_latitude, 0.001);
     ASSERT_NEAR(-771506614.2, vehicle_longitude, 0.001);
@@ -79,7 +82,9 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
         "", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
-        1.0};
+        1.0,
+        true // Flag to enable port drayage operations
+    };
 
     pdw2.set_current_gps_position(gps_reading_pointer);
 
@@ -115,7 +120,9 @@ TEST(PortDrayageTest, testCheckStop1)
         "321", // Cargo ID
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
-        1.0};
+        1.0,
+        true // Flag to enable port drayage operations
+    };
 
     geometry_msgs::TwistStamped twist;
     twist.twist.linear.x = 0;
@@ -143,7 +150,9 @@ TEST(PortDrayageTest, testCheckStop2)
         "321", // Cargo ID
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
-        1.0};
+        1.0,
+        true // Flag to enable port drayage operations
+    };
 
     geometry_msgs::TwistStamped twist;
     twist.twist.linear.x = 2.0;
@@ -171,7 +180,9 @@ TEST(PortDrayageTest, testCheckStop3)
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
-        1.0};
+        1.0,
+        true // Flag to enable port drayage operations
+    };
 
     geometry_msgs::TwistStamped twist;
     twist.twist.linear.x = 0.0;
@@ -200,7 +211,9 @@ TEST(PortDrayageTest, testCheckStop4)
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
-        1.0};
+        1.0,
+        true // Flag to enable port drayage operations
+    };
 
     geometry_msgs::TwistStamped twist;
     twist.twist.linear.x = 2.0;
@@ -220,7 +233,8 @@ TEST(PortDrayageTest, testCheckStop4)
     ASSERT_FALSE(stopped);
 }
 
-TEST(PortDrayageTest, testStateMachine)
+// Test State Machine flow strictly from PortDrayageEvents
+TEST(PortDrayageTest, testStateMachine1)
 {
     port_drayage_plugin::PortDrayageStateMachine pdsm;
 
@@ -242,6 +256,46 @@ TEST(PortDrayageTest, testStateMachine)
     ASSERT_EQ(port_drayage_plugin::PortDrayageState::EN_ROUTE, pdsm.get_state());
 
     // Rest of the state machine to be implemented and validated in future stories
+}
+
+// Test communication between PortDrayageWorker and PortDrayageStateMachine for State Machine flow
+TEST(PortDrayageTest, testPortDrayageStateMachine2)
+{
+    // Create PortDrayageWorker object with _cmv_id of 123 and no cargo
+    port_drayage_plugin::PortDrayageWorker pdw{
+        123, // CMV ID 
+        "", // Cargo ID; empty string indicates CMV begins without no cargo
+        "TEST_CARMA_HOST_ID", 
+        std::function<void(cav_msgs::MobilityOperation)>(), 
+        1.0,
+        true // Flag to enable port drayage operations
+    };
+
+    // State Machine should begin in INACTIVE state
+    ASSERT_EQ(port_drayage_plugin::PortDrayageState::INACTIVE, pdw.get_state());
+
+    // State Machine should transition to EN_ROUTE after guidance state is first engaged
+    cav_msgs::GuidanceState guidance_state;
+    guidance_state.state = cav_msgs::GuidanceState::ENGAGED;
+    cav_msgs::GuidanceStateConstPtr guidance_state_pointer(new cav_msgs::GuidanceState(guidance_state));
+    pdw.on_guidance_state(guidance_state_pointer);
+
+    ASSERT_EQ(port_drayage_plugin::PortDrayageState::EN_ROUTE, pdw.get_state());
+
+    // State Machine should transition to AWAITING_DIRECTION if a ROUTE_COMPLETED event occurs while the vehicle is stopped
+    geometry_msgs::TwistStamped speed;
+    speed.twist.linear.x = 0.0; // Speed is 0 mph
+    geometry_msgs::TwistStampedConstPtr speed_pointer(new geometry_msgs::TwistStamped(speed));
+    pdw.set_current_speed(speed_pointer); // PortDrayageWorker receives message indicating vehicle speed is 0 mph
+
+    cav_msgs::RouteEvent route_event;
+    route_event.event = cav_msgs::RouteEvent::ROUTE_COMPLETED; 
+    cav_msgs::RouteEventConstPtr route_event_pointer(new cav_msgs::RouteEvent(route_event));
+    pdw.on_route_event(route_event_pointer); // PortDrayageWorker receives message indicating route has been completed
+
+    ASSERT_EQ(port_drayage_plugin::PortDrayageState::AWAITING_DIRECTION, pdw.get_state());
+
+    // Rest of the PortDrayageWorker/PortDrayageStateMachine communication and flow to be implemented and validated in future stories
 }
 
 TEST(PortDrayageTest, testEstimateDistanceToStop)
@@ -376,24 +430,38 @@ TEST(PortDrayageTest, testPlanManeuverCb)
 
 TEST(PortDrayageTest, testInboundMobilityOperation)
 {
-    // Create PortDrayageWorker object with _cmv_id of 123
+    // Create PortDrayageWorker object with _cmv_id of 123 and no cargo
     port_drayage_plugin::PortDrayageWorker pdw{
         123, // CMV ID 
-        "321", // Cargo ID 
+        "", // Cargo ID; empty string indicates CMV begins without no cargo
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
-        1.0};
+        1.0,
+        true // Flag to enable port drayage operations
+    };
 
-    // Create a MobilityOperationConstPtr with a cmv_id that is intended for this specific vehicle
+    // Create a "MOVING_TO_LOADING_AREA" MobilityOperationConstPtr with a cmv_id that is intended for this specific vehicle, but with an incorrect 'cargo' flag
     // Note: The strategy_params using the schema for messages of this type that have strategy "carma/port_drayage"
     cav_msgs::MobilityOperation mobility_operation_msg;
     mobility_operation_msg.strategy = "carma/port_drayage";
-    mobility_operation_msg.strategy_params = "{ \"cmv_id\": \"123\", \"cargo_id\": \"321\", \"cargo\": \"false\", \"location\"\
+    mobility_operation_msg.strategy_params = "{ \"cmv_id\": \"123\", \"cargo_id\": \"321\", \"cargo\": \"true\", \"location\"\
         : { \"latitude\": \"389554377\", \"longitude\": \"-771503421\" }, \"destination\": { \"latitude\"\
         : \"389550038\", \"longitude\": \"-771481983\" }, \"operation\": \"MOVING_TO_LOADING_AREA\", \"action_id\"\
         : \"32\" }";
     cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr(new cav_msgs::MobilityOperation(mobility_operation_msg));
-    pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr);
+    
+    // Exception should be thrown since vehicle was initialized without cargo, but its first received message indicates it does have cargo
+    ASSERT_THROW(pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr), std::invalid_argument);
+
+    // Create another "MOVING_TO_LOADING_AREA" MobilityOperationConstPtr that uses the correct 'cargo' flag
+    cav_msgs::MobilityOperation mobility_operation_msg2;
+    mobility_operation_msg2.strategy = "carma/port_drayage";
+    mobility_operation_msg2.strategy_params = "{ \"cmv_id\": \"123\", \"cargo_id\": \"321\", \"cargo\": \"false\", \"location\"\
+        : { \"latitude\": \"389554377\", \"longitude\": \"-771503421\" }, \"destination\": { \"latitude\"\
+        : \"389550038\", \"longitude\": \"-771481983\" }, \"operation\": \"MOVING_TO_LOADING_AREA\", \"action_id\"\
+        : \"32\" }";
+    cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr2(new cav_msgs::MobilityOperation(mobility_operation_msg2));
+    pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr2);
     
     ASSERT_EQ("321", *pdw._latest_mobility_operation_msg.cargo_id);
     ASSERT_EQ("MOVING_TO_LOADING_AREA", pdw._latest_mobility_operation_msg.operation);
@@ -407,14 +475,14 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
 
     // Create a MobilityOperationConstPtr with a cmv_id that is not intended for this specific vehicle
     // Note: The strategy_params using the schema for messages of this type that have strategy "carma/port_drayage"
-    cav_msgs::MobilityOperation mobility_operation_msg2;
-    mobility_operation_msg2.strategy = "carma/port_drayage";
-    mobility_operation_msg2.strategy_params = "{ \"cmv_id\": \"444\", \"cargo_id\": \"567\", \"cargo\": \"true\", \"location\"\
+    cav_msgs::MobilityOperation mobility_operation_msg3;
+    mobility_operation_msg3.strategy = "carma/port_drayage";
+    mobility_operation_msg3.strategy_params = "{ \"cmv_id\": \"444\", \"cargo_id\": \"567\", \"cargo\": \"true\", \"location\"\
         : { \"latitude\": \"489554377\", \"longitude\": \"-671503421\" }, \"destination\": { \"latitude\"\
         : \"489550038\", \"longitude\": \"-571481983\" }, \"operation\": \"MOVING_FROM_LOADING_AREA\", \"action_id\"\
         : \"44\" }";
-    cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr2(new cav_msgs::MobilityOperation(mobility_operation_msg2));
-    pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr2);
+    cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr3(new cav_msgs::MobilityOperation(mobility_operation_msg3));
+    pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr3);
 
     ASSERT_EQ("321", *pdw._latest_mobility_operation_msg.cargo_id);
     ASSERT_EQ("MOVING_TO_LOADING_AREA", pdw._latest_mobility_operation_msg.operation);
@@ -425,6 +493,51 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
     ASSERT_EQ(-77.1481983, *pdw._latest_mobility_operation_msg.dest_longitude);
     ASSERT_EQ(38.9550038, *pdw._latest_mobility_operation_msg.dest_latitude);
     ASSERT_EQ("32", *pdw._latest_mobility_operation_msg.current_action_id);
+
+    // Test composeArrivalMessage for when CMV has arrived at the "Loading Area"
+    
+    // Set host vehicle's current gps lat/lon position
+    novatel_gps_msgs::Inspva gps_reading;
+    gps_reading.latitude = 38.95622708;
+    gps_reading.longitude = -77.15066142;
+    novatel_gps_msgs::InspvaConstPtr gps_reading_pointer(new novatel_gps_msgs::Inspva(gps_reading));
+    pdw.set_current_gps_position(gps_reading_pointer);
+
+    cav_msgs::MobilityOperation msg = pdw.compose_arrival_message();
+    std::istringstream strstream(msg.strategy_params);
+    using boost::property_tree::ptree;
+    ptree pt;
+    boost::property_tree::json_parser::read_json(strstream, pt);
+
+    unsigned long cmv_id = pt.get<unsigned long>("cmv_id");
+    std::string cargo_id = pt.get<std::string>("cargo_id");
+    std::string action_id = pt.get<std::string>("action_id");
+    std::string operation = pt.get<std::string>("operation");
+    bool has_cargo = pt.get<bool>("cargo");
+    double vehicle_longitude = pt.get<double>("location.longitude");
+    double vehicle_latitude = pt.get<double>("location.latitude");
+
+    ASSERT_EQ("carma/port_drayage", msg.strategy);
+    ASSERT_EQ("TEST_CARMA_HOST_ID", msg.header.sender_id);
+    ASSERT_FALSE(msg.strategy_params.empty());
+    ASSERT_EQ(123, cmv_id);
+    ASSERT_EQ("321", cargo_id); 
+    ASSERT_EQ("ARRIVED_AT_DESTINATION", operation);
+    ASSERT_EQ("32", action_id);
+    ASSERT_FALSE(has_cargo);
+    ASSERT_NEAR(389562270.8, vehicle_latitude, 0.001);
+    ASSERT_NEAR(-771506614.2, vehicle_longitude, 0.001);
+    
+    // Create a "EXIT_STAGING_AREA" MobilityOperationConstPtr with a cmv_id that is intended for this specific vehicle
+    // Note: The strategy_params using the schema for messages of this type that have strategy "carma/port_drayage"
+    cav_msgs::MobilityOperation mobility_operation_msg4;
+    mobility_operation_msg4.strategy = "carma/port_drayage";
+    mobility_operation_msg4.strategy_params = "{ \"cmv_id\": \"123\", \"cargo_id\": \"321\", \"cargo\": \"true\", \"location\"\
+        : { \"latitude\": \"389554377\", \"longitude\": \"-771503421\" }, \"destination\": { \"latitude\"\
+        : \"389570038\", \"longitude\": \"-771491983\" }, \"operation\": \"EXIT_STAGING_AREA\", \"action_id\"\
+        : \"35\" }";
+    cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr4(new cav_msgs::MobilityOperation(mobility_operation_msg4));
+    pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr4);
 }
 
 // Run all the tests
