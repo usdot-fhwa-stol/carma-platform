@@ -232,8 +232,8 @@ public:
   }
 };
 
-std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double start, double end,
-                                                                       bool shortest_path_only) const
+std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double start, double end, bool shortest_path_only,
+                                                                       bool bounds_inclusive) const
 {
   // Check if the route was loaded yet
   if (!route_)
@@ -263,10 +263,21 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
     TrackPos min = routeTrackPos(front);
     TrackPos max = routeTrackPos(back);
 
-    if (std::max(min.downtrack, start) > std::min(max.downtrack, end))
-    {  // Check for 1d intersection
-      // No intersection so continue
-      continue;
+    if (!bounds_inclusive) // reduce bounds slightly to avoid including exact bounds
+    {
+      if (std::max(min.downtrack, start + 0.00001) > std::min(max.downtrack, end - 0.00001))
+      {  // Check for 1d intersection
+        // No intersection so continue
+        continue;
+      }
+    }
+    else
+    {
+      if (std::max(min.downtrack, start) > std::min(max.downtrack, end))
+      {  // Check for 1d intersection
+        // No intersection so continue
+        continue;
+      }
     }
     // Intersection has occurred so add lanelet to list
     LaneletDowntrackPair pair(lanelet, min.downtrack);

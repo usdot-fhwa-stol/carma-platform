@@ -52,6 +52,14 @@ class PurePursuitWrapper {
          */ 
         std::vector<double> apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) const;
 
+        /**
+         * \brief Drops any points that sequentially have same target_time and return new trajectory_points in order to avoid divide by zero situation
+         * \param traj_points Velocity profile to shift. The first point should be the current vehicle speed
+         * 
+         * NOTE: This function assumes the target_time will not go backwards. In other words, it only removes "sequential" points that have same target_time
+         * \return A new trajectory without any repeated time_stamps
+         */ 
+        std::vector<cav_msgs::TrajectoryPlanPoint> remove_repeated_timestamps(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points);
     private:
     PurePursuitWrapperConfig config_;
     WaypointPub waypoint_pub_;

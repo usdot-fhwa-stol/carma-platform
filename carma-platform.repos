@@ -59,6 +59,10 @@ repositories:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-garmin-lidar-lite-v3-driver-wrapper.git
     version: develop
+  carma/src/carma-lightbar-driver:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-lightbar-driver.git
+    version: develop
   carma/src/carma-messenger:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-messenger.git

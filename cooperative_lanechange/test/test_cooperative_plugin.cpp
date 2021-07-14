@@ -46,37 +46,41 @@
         cooperative_lanechange::CooperativeLaneChangePlugin worker;
 
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_plan;
-                
-        geometry_msgs::TransformStamped tf_msg;
-        tf_msg.transform.translation.x = 0.0;
-        tf_msg.transform.translation.y = 0;
-        tf_msg.transform.translation.z = 0;
-        geometry_msgs::Quaternion Quaternion;
-        tf_msg.transform.rotation.x =0.0;
-        tf_msg.transform.rotation.y =0.0;
-        tf_msg.transform.rotation.z =0.0;
-        tf_msg.transform.rotation.w =1.0;
+
+        std::string base_proj = "+proj=tmerc +lat_0=0.0 +lon_0=0.0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m "
+                          "+no_defs";
+        std_msgs::String msg;
+        msg.data = base_proj;
+        std_msgs::StringConstPtr msg_ptr(new std_msgs::String(msg));
+        worker.georeference_callback(msg_ptr);  // Set projection
 
         cav_msgs::TrajectoryPlanPoint point_1;
-        point_1.x = 1.0;
+        point_1.x = 20.0;
         point_1.y = 0.0;
         trajectory_plan.push_back(point_1);
+        cav_msgs::LocationECEF ecef_point_1 = worker.trajectory_point_to_ecef(point_1);
 
-        tf2::Transform identity;
-        identity.setIdentity();
-
-        cav_msgs::LocationECEF ecef_point_1 = worker.trajectory_point_to_ecef(point_1, identity);
-        EXPECT_TRUE(ecef_point_1.ecef_x == 100);
+        ASSERT_NEAR(ecef_point_1.ecef_x, 637813699.0, 0.001);
+        ASSERT_NEAR(ecef_point_1.ecef_y, 1999.0, 0.001);
+        ASSERT_NEAR(ecef_point_1.ecef_z, 0.0, 0.001);
+        
 
         cav_msgs::TrajectoryPlanPoint point_2;
-        point_2.x = 1.0;
-        point_2.y = 1.0;
-        trajectory_plan.push_back(point_1);
-        
-        cav_msgs::Trajectory traj = worker.trajectory_plan_to_trajectory(trajectory_plan, tf_msg);
-        //EXPECT_TRUE(traj.location)
-        
-        EXPECT_TRUE(true);
+        point_2.x = 19.0;
+        point_2.y = 0.0;
+        trajectory_plan.push_back(point_2);
+        ecef_point_1 = worker.trajectory_point_to_ecef(point_2);
+
+        cav_msgs::Trajectory traj = worker.trajectory_plan_to_trajectory(trajectory_plan);
+        ASSERT_NEAR(traj.location.ecef_x, 637813699.0, 0.001);
+        ASSERT_NEAR(traj.location.ecef_y, 1999.0, 0.001);
+        ASSERT_NEAR(traj.location.ecef_z, 0.0, 0.001);
+
+        ASSERT_EQ(traj.offsets.size(), 1);
+        ASSERT_NEAR(traj.offsets[0].offset_x, 0.0, 0.001);
+        ASSERT_NEAR(traj.offsets[0].offset_y, -100.0, 0.001);
+        ASSERT_NEAR(traj.offsets[0].offset_z, 0.0, 0.001);
+
 
     }
 
@@ -173,11 +177,11 @@
         /*Test compose trajectort and helper function*/
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;
 
-        int nearest_pt = worker.getNearestPointIndex(points_and_target_speeds,vehicle_state);
+        int nearest_pt = basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(points_and_target_speeds,cmw,vehicle_state);
 
         std::vector<lanelet::BasicPoint2d> points_split;
         std::vector<double> speeds_split;
-        worker.splitPointSpeedPairs(points_and_target_speeds, &points_split, &speeds_split);
+        basic_autonomy::waypoint_generation::split_point_speed_pairs(points_and_target_speeds, &points_split, &speeds_split);
         EXPECT_TRUE(points_split.size() == speeds_split.size());
 
         //Test trajectory from points
@@ -200,15 +204,17 @@
         //Valid Trajectory has at least 2 points
         EXPECT_TRUE(trajectory.size() > 2);
 
-        lanelet::BasicLineString2d route_geometry = worker.create_route_geom(starting_downtrack,start_id, ending_downtrack,cmw);
-        int nearest_pt_geom = worker.getNearestRouteIndex(route_geometry, vehicle_state);
+        auto route_geometry = worker.create_route_geom(starting_downtrack,start_id, ending_downtrack,cmw);
+        lanelet::BasicPoint2d state_pos(vehicle_state.X_pos_global, vehicle_state.Y_pos_global);
+        double current_downtrack = cmw->routeTrackPos(state_pos).downtrack;
+        int nearest_pt_geom = basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(route_geometry, cmw ,current_downtrack);
 
         //Test create lanechange route
         lanelet::Lanelet start_lanelet = map->laneletLayer.get(start_id);
         lanelet::Lanelet end_lanelet = map->laneletLayer.get(end_id);
         lanelet::BasicPoint2d start_position(vehicle_state.X_pos_global, vehicle_state.Y_pos_global);
         lanelet::BasicPoint2d end_position = end_lanelet.centerline2d().basicLineString().back() ;
-        lanelet::BasicLineString2d lc_route = worker.create_lanechange_path( start_position, start_lanelet, end_position, end_lanelet);
+        lanelet::BasicLineString2d lc_route = worker.create_lanechange_path(start_lanelet, end_lanelet);
 
         //Test Compute heading frame between two points
         Eigen::Isometry2d frame = worker.compute_heading_frame(start_position, end_position);
