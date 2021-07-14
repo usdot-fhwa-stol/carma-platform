@@ -588,9 +588,9 @@ namespace platoon_strategic
         bool isCandidateJoin = msg.plan_type.type == cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
 
         lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location);
-        double current_cross_track = wm_->routeTrackPos(incoming_pose).crosstrack;
-        bool inTheSameLane = (current_cross_track < config_.maxCrosstrackError);
-        ROS_DEBUG_STREAM("current_cross_track = " << current_cross_track);
+        double obj_cross_track = wm_->routeTrackPos(incoming_pose).crosstrack;
+        bool inTheSameLane = (abs(obj_cross_track - current_crosstrack_) < config_.maxCrosstrackError);
+        ROS_DEBUG_STREAM("current_cross_track error = " << abs(obj_cross_track - current_crosstrack_));
         ROS_DEBUG_STREAM("inTheSameLane = " << inTheSameLane);
         if(isTargetVehicle && isCandidateJoin && inTheSameLane)
         {
@@ -654,7 +654,7 @@ namespace platoon_strategic
 
             double applicant_crosstrack = wm_->routeTrackPos(incoming_pose).crosstrack;
             ROS_DEBUG_STREAM("applicant_crosstrack from ecef pose: " << applicant_crosstrack);
-            bool isInLane = (applicant_crosstrack < config_.maxCrosstrackError);
+            bool isInLane = (abs(applicant_crosstrack - current_crosstrack_) < config_.maxCrosstrackError);
             ROS_DEBUG_STREAM("isInLane = " << isInLane);
             // Check if we have enough room for that applicant
             int currentPlatoonSize = pm_.getTotalPlatooningSize();
