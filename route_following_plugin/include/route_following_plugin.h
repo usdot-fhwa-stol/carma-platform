@@ -27,19 +27,22 @@
 #include <cav_msgs/UpcomingLaneChangeStatus.h>
 #include <gtest/gtest_prod.h>
 
-/**
- * \brief Macro definition to enable easier access to fields shared across the maneuver types
- * \param mvr The maneuver object to invoke the accessors on
- * \param property The name of the field to access on the specific maneuver types. Must be shared by all extant maneuver types
- * \return Expands to an expression (in the form of chained ternary operators) that evalutes to the desired field
- */
 #define GET_MANEUVER_PROPERTY(mvr, property)\
         (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
             ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
                 ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
                     ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property :\
-                        (mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
-                        throw new std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))
+                        ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
+                        ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
+                            throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))))
+
+#define SET_MANEUVER_PROPERTY(mvr, property, value)\
+        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property = (value) :\
+            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property = (value) :\
+                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property = (value) :\
+                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property = (value) :\
+                        ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property = (value) :\
+                            throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id")))))))
 
                         
 namespace route_following_plugin
@@ -52,7 +55,7 @@ namespace route_following_plugin
         /**
          * \brief Default constructor for RouteFollowingPlugin class
          */
-        RouteFollowingPlugin();
+        RouteFollowingPlugin() = default;
 
 
         /**
@@ -89,7 +92,8 @@ namespace route_following_plugin
         int findLaneletIndexFromPath(int target_id,const lanelet::routing::LaneletPath& path) const;
 
         /**
-         * \brief Compose a lane keeping maneuver message based on input params
+         * \brief Compose a lane keeping maneuver message based on input params 
+         *        NOTE: The start and stop time are not set. This is because this is recomputed based on requests from the arbitrator
          * \param start_dist Start downtrack distance of the current maneuver
          * \param end_dist End downtrack distance of the current maneuver
          * \param start_speed Start speed of the current maneuver
@@ -97,10 +101,11 @@ namespace route_following_plugin
          * \param lane_ids List of lanelet IDs that the current maneuver traverses. Message expects these to be contiguous and end to end 
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, std:vector<lanelet::Id> lane_ids) const;
+        cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, const std::vector<lanelet::Id>& lane_ids) const;
 
         /**
-         * \brief Compose a lane change maneuver message based on input params
+         * \brief Compose a lane change maneuver message based on input params 
+         *        NOTE: The start and stop time are not set. This is because this is recomputed based on requests from the arbitrator
          * \param start_dist Start downtrack distance of the current maneuver
          * \param end_dist End downtrack distance of the current maneuver
          * \param start_speed Start speed of the current maneuver
@@ -111,6 +116,18 @@ namespace route_following_plugin
          */
         cav_msgs::Maneuver composeLaneChangeManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id,lanelet::Id ending_lane_id) const;
         
+        /**
+         * \brief Compose a stop and wait maneuver message based on input params. 
+         *        NOTE: The start and stop time are not set. This is because this is recomputed based on requests from the arbitrator
+         * \param start_dist Start downtrack distance of the current maneuver
+         * \param end_dist End downtrack distance of the current maneuver
+         * \param start_speed Start speed of the current maneuver
+         * \param start_lane_id Starting Lanelet ID of the current maneuver
+         * \param ending_lane_id Ending Lanelet ID of the current maneuver
+         * \return A lane keeping maneuver message which is ready to be published
+         */
+        cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double start_dist, double end_dist, double start_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id) const;
+
         /**
          * \brief Given a LaneletRelations and ID of the next lanelet in the shortest path
          * \param relations LaneletRelations relative to the previous lanelet
@@ -158,6 +175,23 @@ namespace route_following_plugin
          * \param route_shortest_path A list of lanelets along the shortest path of the route using which the maneuver plan is calculated.
          */
         std::vector<cav_msgs::Maneuver> routeCb(const lanelet::routing::LaneletPath& route_shortest_path);
+
+        /**
+         * \brief Identifies if a maneuver starts after the provided downtrack with compensation for a dynamic buffer size based on the maneuver type
+         * 
+         * \param maneuver The maneuver to compare
+         * \param downtrack
+         * 
+         * \return true if the provided maneuver plus the computed dynamic buffer starts after the provided downtrack value
+         */ 
+        bool maneuverWithBufferStartsAfterDowntrack(const cav_msgs::Maneuver& maneuver, double downtrack) const;
+
+        /**
+         * \brief This method returns a new UUID as a string for assignment to a Maneuver message
+         * 
+         * \return A new UUID as a string
+         */ 
+        std::string getNewManeuverId() const;
 
         // CARMA ROS node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;

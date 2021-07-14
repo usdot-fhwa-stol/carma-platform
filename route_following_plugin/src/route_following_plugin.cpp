@@ -22,41 +22,34 @@
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 
-/**
- * TODO remove code duplication with arbitrator where this method is copied from
- * \brief Macro definition to enable easier access to fields shared across the maneuver typees
- * 
- * TODO: Implement a better system for handling Maneuver objects such that this
- *       macro isn't needed.
- * 
- * \param mvr The maneuver object to invoke the accessors on
- * \param property The name of the field to access on the specific maneuver types. Must be shared by all extant maneuver types
- * \return Expands to an expression (in the form of chained ternary operators) that evalutes to the desired field
- */
-
-#define GET_MANEUVER_PROPERTY(mvr, property)\
-        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
-            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
-                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
-                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property :\
-                        ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
-                        ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
-                            throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))))
-
-
-#define SET_MANEUVER_PROPERTY(mvr, property, value)\
-        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property = (value) :\
-            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property = (value) :\
-                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property = (value) :\
-                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property = (value) :\
-                        ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property = (value) :\
-                        ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property = (value) :\
-                            throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))))
-
-
 namespace route_following_plugin
 {
-    RouteFollowingPlugin::RouteFollowingPlugin() : current_speed_(0.0), min_plan_duration_(16.0) {}
+
+namespace {
+/**
+ * \brief Anonymous function to extract maneuver end speed which can not be optained with GET_MANEUVER_PROPERY calls due to it missing in stop and wait plugin
+ */ 
+double getManeuverEndSpeed(const cav_msgs::Maneuver& mvr) {
+    switch(mvr.type) {
+        case cav_msgs::Maneuver::LANE_FOLLOWING:
+            return mvr.lane_following_maneuver.end_speed;
+        case cav_msgs::Maneuver::LANE_CHANGE:
+            return mvr.lane_change_maneuver.end_speed;
+        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+            return mvr.intersection_transit_straight_maneuver.end_speed;
+        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+            return mvr.intersection_transit_left_turn_maneuver.end_speed;
+        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+            return mvr.intersection_transit_right_turn_maneuver.end_speed;
+        case cav_msgs::Maneuver::STOP_AND_WAIT:
+            return 0;
+        default:
+            ROS_ERROR_STREAM("Requested end speed from unsupported maneuver type");
+            return 0;
+    }
+}
+
+}
 
     void RouteFollowingPlugin::initialize()
     {
@@ -150,7 +143,7 @@ namespace route_following_plugin
 
             //update start distance and start speed from previous maneuver if it exists
             start_dist = (maneuvers.empty()) ? wm_->routeTrackPos(route_shortest_path[shortest_path_index].centerline2d().front()).downtrack : GET_MANEUVER_PROPERTY(maneuvers.back(), end_dist); // TODO_REFAC if there is no initial maneuver start distance and start speed should be derived from current state. Current state ought to be provided in planning request
-            start_speed = (maneuvers.empty()) ? 0.0 : GET_MANEUVER_PROPERTY(maneuvers.back(), end_speed);
+            start_speed = (maneuvers.empty()) ? 0.0 : getManeuverEndSpeed(maneuvers.back());
             ROS_DEBUG_STREAM("start_dist:" << start_dist << ", start_speed:" << start_speed);
 
             end_dist = wm_->routeTrackPos(route_shortest_path[shortest_path_index].centerline2d().back()).downtrack;
@@ -200,7 +193,7 @@ namespace route_following_plugin
              * 5. Add maneuvers to list 
              */ 
 
-            double stopping_entry_speed = maneuvers.empty() ? findSpeedLimit(route_shortest_path.back()) : GET_MANEUVER_PROPERTY(maneuvers.back(), end_speed);
+            double stopping_entry_speed = maneuvers.empty() ? findSpeedLimit(route_shortest_path.back()) : getManeuverEndSpeed(maneuvers.back());
 
             double stopping_accel_limit = accel_limit_ * stopping_accel_limit_multiplier_;
 
@@ -238,10 +231,10 @@ namespace route_following_plugin
                     if (required_start_downtrack - last_maneuver_end_downtrack > min_maneuver_length_) { 
 
                         // Identify the lanelets which will be crossed by this lane follow maneuver
-                        std::vector<lanelet::ConstLanelet> crossed_lanelets = getLaneletsBetween(last_maneuver_end_downtrack, required_start_downtrack, true, false); 
+                        std::vector<lanelet::ConstLanelet> crossed_lanelets = wm_->getLaneletsBetween(last_maneuver_end_downtrack, required_start_downtrack, true, false); 
 
                         if (crossed_lanelets.size() == 0) {
-                            throw std::invalid_argument("The new lane follow maneuver does not cross any lanelets going from: " << last_maneuver_end_downtrack << " to: " << required_start_downtrack);
+                            throw std::invalid_argument("The new lane follow maneuver does not cross any lanelets going from: " + std::to_string(last_maneuver_end_downtrack) + " to: " + std::to_string(required_start_downtrack));
                         }
 
                         // Create the lane follow maneuver
@@ -253,20 +246,17 @@ namespace route_following_plugin
 
                 } else {
 
-                    
-                    auto& existing_back_end_downtrack_ref = GET_MANEUVER_PROPERTY(maneuvers.back(), end_dist);
-                    
-                    existing_back_end_downtrack_ref = required_start_downtrack;
-
+                                        
+                    SET_MANEUVER_PROPERTY(maneuvers.back(), end_dist, required_start_downtrack);
 
                     // Identify the lanelets which will be crossed by this updated maneuver
-                    std::vector<lanelet::ConstLanelet> crossed_lanelets = getLaneletsBetween(GET_MANEUVER_PROPERTY(maneuvers.back(), start_dist), existing_back_end_downtrack_ref, true, false);
+                    std::vector<lanelet::ConstLanelet> crossed_lanelets = wm_->getLaneletsBetween(GET_MANEUVER_PROPERTY(maneuvers.back(), start_dist), required_start_downtrack, true, false);
 
                     if (crossed_lanelets.size() == 0) {
-                        throw std::invalid_argument("Updated maneuver does not cross any lanelets going from: " << GET_MANEUVER_PROPERTY(maneuvers.back(), start_dist) << " to: " << existing_back_end_downtrack_ref);
+                        throw std::invalid_argument("Updated maneuver does not cross any lanelets going from: " + std::to_string(GET_MANEUVER_PROPERTY(maneuvers.back(), start_dist)) + " to: " + std::to_string(required_start_downtrack));
                     }
 
-                    if (maneuvers.back().type() == cav_msgs::Maneuver::LANE_FOLLOWING) {
+                    if (maneuvers.back().type == cav_msgs::Maneuver::LANE_FOLLOWING) {
 
                         maneuvers.back().lane_following_maneuver.lane_ids = lanelet::utils::transform(crossed_lanelets, [](auto ll) { return std::to_string(ll.id()); });
 
@@ -277,20 +267,20 @@ namespace route_following_plugin
 
                     }
 
-                    last_maneuver_end_downtrack = existing_back_end_downtrack_ref;
+                    last_maneuver_end_downtrack = required_start_downtrack;
 
                 }   
             }
             
             // Identify the lanelets which will be crossed by this lane follow maneuver
-            std::vector<lanelet::ConstLanelet> crossed_lanelets = getLaneletsBetween(last_maneuver_end_downtrack, route_length, true, false);
+            std::vector<lanelet::ConstLanelet> crossed_lanelets = wm_->getLaneletsBetween(last_maneuver_end_downtrack, route_length, true, false);
 
             lanelet::Id start_lane = route_shortest_path.back().id();
             lanelet::Id end_lane = route_shortest_path.back().id();
 
             if (crossed_lanelets.size() == 0) {
 
-                throw std::invalid_argument("Stopping maneuver does not cross any lanelets going from: " << last_maneuver_end_downtrack << " to: " << route_length);
+                throw std::invalid_argument("Stopping maneuver does not cross any lanelets going from: " + std::to_string(last_maneuver_end_downtrack) + " to: " + std::to_string(route_length));
 
             } else {
 
@@ -314,7 +304,7 @@ namespace route_following_plugin
         return maneuvers;
     }
 
-    bool RouteFollowingPlugin::maneuverWithBufferStartsAfterDowntrack(const cav_msgs::Maneuver& maneuver, double downtrack) {
+    bool RouteFollowingPlugin::maneuverWithBufferStartsAfterDowntrack(const cav_msgs::Maneuver& maneuver, double downtrack) const {
        
         if (maneuver.type == cav_msgs::Maneuver::LANE_CHANGE) {
                 
@@ -324,7 +314,7 @@ namespace route_following_plugin
             // Compute logitudinal distance covered in lane change time
             double min_lane_change_distance = std::max(
                 min_maneuver_length_, 
-                MAX_LANE_WIDTH * (GET_MANEUVER_PROPERTY(maneuver, start_speed) + GET_MANEUVER_PROPERTY(maneuver, end_speed)) / 2.0 // dist = v_avg * t
+                lane_change_time * (GET_MANEUVER_PROPERTY(maneuver, start_speed) + getManeuverEndSpeed(maneuver)) / 2.0 // dist = v_avg * t
             );
 
             return GET_MANEUVER_PROPERTY(maneuver, start_dist) + min_lane_change_distance > downtrack;
@@ -347,7 +337,7 @@ namespace route_following_plugin
         double current_downtrack = wm_->routeTrackPos(current_loc_).downtrack;
 
         //Return the set of maneuvers which intersect with min_plan_duration
-        int i = 0;
+        size_t i = 0;
         double planned_time = 0.0;
 
         while (planned_time < min_plan_duration_ && i < latest_maneuver_plan_.size())
@@ -442,7 +432,7 @@ namespace route_following_plugin
     ros::Duration RouteFollowingPlugin::getManeuverDuration(cav_msgs::Maneuver &maneuver, double epsilon) const
     {
         double maneuver_start_speed = GET_MANEUVER_PROPERTY(maneuver, start_speed);
-        double manever_end_speed = GET_MANEUVER_PROPERTY(maneuver, end_speed);
+        double manever_end_speed = getManeuverEndSpeed(maneuver);
         double cur_plus_target = maneuver_start_speed + manever_end_speed;
         if(cur_plus_target < epsilon){
             throw std::invalid_argument("Maneuver start and ending speed is zero");
@@ -567,7 +557,7 @@ namespace route_following_plugin
         return -1;
     }
 
-    cav_msgs::Maneuver RouteFollowingPlugin::composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, std:vector<lanelet::Id> lane_ids) const
+    cav_msgs::Maneuver RouteFollowingPlugin::composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, const std::vector<lanelet::Id>& lane_ids) const
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
@@ -586,8 +576,12 @@ namespace route_following_plugin
         //       If maneuvers were not generated only on route updates we would want to preserve the ids across plans
         maneuver_msg.lane_following_maneuver.parameters.maneuver_id = getNewManeuverId();
 
+        std::stringstream ss;
+        for (const auto& id : maneuver_msg.lane_following_maneuver.lane_ids)
+            ss << " " << id;
+
         ROS_DEBUG_STREAM("Creating lane follow id: " << maneuver_msg.lane_following_maneuver.parameters.maneuver_id 
-                        << " start dist: " << start_dist << " end dist: " << end_dist << "lane_id" << maneuver_msg.lane_following_maneuver.lane_id);
+                        << " start dist: " << start_dist << " end dist: " << end_dist << "lane_ids: " << ss.str());
         
         return maneuver_msg;
     }
@@ -617,8 +611,8 @@ namespace route_following_plugin
         return maneuver_msg;
     }
 
-    std::string RouteFollowingPlugin::getNewManeuverId() {
-        static auto gen = boost::uuids::random_generator()(); // Initialize uuid generator
+    std::string RouteFollowingPlugin::getNewManeuverId() const {
+        static auto gen = boost::uuids::random_generator(); // Initialize uuid generator
         
         return boost::lexical_cast<std::string>(gen()); // generate uuid and convert to string
     }
