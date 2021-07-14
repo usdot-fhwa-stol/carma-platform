@@ -79,6 +79,26 @@ std::pair<TrackPos, TrackPos> CARMAWorldModel::routeTrackPos(const lanelet::Cons
   return std::make_pair(minPos, maxPos);
 }
 
+lanelet::Id CARMAWorldModel::getTrafficLightId(uint16_t intersection_id, uint8_t signal_group_id)
+{
+  
+  uint32_t temp;
+  temp |= intersection_id;
+  temp = temp << 8;
+  temp |= signal_group_id;
+
+  if (traffic_light_ids_.find(temp) != traffic_light_ids_.end())
+  {
+    return traffic_light_ids_[temp];
+  }
+  else
+  {
+    ROS_ERROR_STREAM("Did not find any traffic light with intersection_id: " << intersection_id << ", and signal_group_id: " << signal_group_id);
+    return lanelet::InvalId;
+  }
+
+}
+
 TrackPos CARMAWorldModel::routeTrackPos(const lanelet::ConstLanelet& lanelet) const
 {
   // Check if the route was loaded yet

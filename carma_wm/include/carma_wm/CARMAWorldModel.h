@@ -105,6 +105,10 @@ public:
   /*! \brief Set endpoint of the route
    */
   void setRouteEndPoint(const lanelet::BasicPoint3d& end_point);
+ 
+  /*! \brief helper for traffic light Id
+   */
+  lanelet::Id getTrafficLightId(uint16_t intersection_id,uint8_t signal_id);
 
   ////
   // Overrides
@@ -190,6 +194,7 @@ private:
   std::vector<cav_msgs::RoadwayObstacle> roadway_objects_; // 
 
   size_t map_version_ = 0; // The current map version. This is cached from calls to setMap();
+  std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 
   
 };

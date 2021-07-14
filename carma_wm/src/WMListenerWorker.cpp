@@ -93,6 +93,16 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
   }
 }
 
+void WMListenerWorker::incomingSpatCallback(const cav_msgs::SPAT& spat_msg)
+{
+  
+  for (auto current_movement_state : spat_msg.intersection_state_list[0].movement_list)
+  {
+    lanelet::Id curr_light_id = world_model_->getTrafficLightId(spat_msg.intersection_state_list[0].id.id, current_movement_state.signal_group);
+  }
+
+}
+
 bool WMListenerWorker::checkIfReRoutingNeeded() const
 {
   return rerouting_flag_;

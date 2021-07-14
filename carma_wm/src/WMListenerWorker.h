@@ -21,7 +21,7 @@
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_wm/TrafficControl.h>
 #include <queue>
-
+#include <cav_msgs/SPAT.h>
 
 namespace carma_wm
 {
@@ -103,6 +103,11 @@ public:
  * 
 */
   void enableUpdatesWithoutRoute();
+/**
+ *  \brief incoming spat message
+ * 
+*/
+  void incomingSpatCallback(const cav_msgs::SPAT& spat_msg);
 
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
