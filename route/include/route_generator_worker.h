@@ -158,16 +158,16 @@ namespace route {
         bool check_for_duplicate_lanelets_in_shortest_path(const lanelet::routing::Route& route) const;
 
         /**
-         * \brief Overloaded function to take route points from an array of 3D points and convert them from lat/lon values to to coordinates in map frame based on the projection string
+         * \brief Function to take route destination points from a vector of 3D points and convert them from lat/lon values to to coordinates in map frame based on the projection string
          * \param destinations A vector of cav_msgs::Position3D points containing destination points provided as lat/long values
          */
         std::vector<lanelet::BasicPoint3d> load_route_destinations_in_map_frame(const std::vector<cav_msgs::Position3D>& destinations) const;
 
         /**
-         * \brief Overloaded function to load route points from route file and convert them from lat/lon values to coordinates in map frame based on the projection string
+         * \brief Function to load route destination points from a route file and store them in a vector of 3D points
          * \param route_id This function will read the route file with provided route_id
          */
-        std::vector<lanelet::BasicPoint3d> load_route_destinations_in_map_frame(const std::string& route_id) const;
+        std::vector<cav_msgs::Position3D> load_route_destination_gps_points_from_route_id(const std::string& route_id) const;
 
         /**
          * \brief Helper function to generate a CARMA route message based on planned lanelet route

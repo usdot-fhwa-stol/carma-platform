@@ -165,8 +165,9 @@ namespace route {
             // load destination points in map frame
             std::vector<lanelet::BasicPoint3d> destination_points;
             if(req.choice == cav_srvs::SetActiveRouteRequest::ROUTE_ID)
-            {
-                destination_points = load_route_destinations_in_map_frame(req.routeID);
+            {   
+                std::vector<cav_msgs::Position3D> gps_destination_points = load_route_destination_gps_points_from_route_id(req.routeID);
+                destination_points = load_route_destinations_in_map_frame(gps_destination_points);
             }
             else if(req.choice == cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY)
             {
@@ -341,39 +342,36 @@ namespace route {
         return destination_points;
     }
 
-    std::vector<lanelet::BasicPoint3d> RouteGeneratorWorker::load_route_destinations_in_map_frame(const std::string& route_id) const 
+    std::vector<cav_msgs::Position3D> RouteGeneratorWorker::load_route_destination_gps_points_from_route_id(const std::string& route_id) const
     {
         // compose full path of the route file
         std::string route_file_name = route_file_path_ + route_id + ".csv";
         std::ifstream fs(route_file_name);
         std::string line;
-        std::vector<lanelet::BasicPoint3d> destination_points;
         
-        if (!map_proj_) {
-            throw std::invalid_argument("load_route_destinations_in_map_frame (using route_id) before map projection was set");
-        }
-        
-        lanelet::projection::LocalFrameProjector projector(map_proj_.get().c_str()); // Build map projector
-
-        // read each line if any
+        // read each line in route file (if any)
+        std::vector<cav_msgs::Position3D> destination_points;
         while(std::getline(fs, line))
         {
-            lanelet::GPSPoint coordinate;
+            cav_msgs::Position3D gps_point;
+
             // lat lon and elev is seperated by comma
             auto comma = line.find(",");
             // convert lon value in degrees from string
-            coordinate.lon = std::stod(line.substr(0, comma));
+            gps_point.longitude = std::stod(line.substr(0, comma));
             line.erase(0, comma + 1);
             comma = line.find(",");
             // convert lat value in degrees from string
-            coordinate.lat = std::stod(line.substr(0, comma));
+            gps_point.latitude = std::stod(line.substr(0, comma));
             // elevation is in meters
             line.erase(0, comma + 1);
             comma = line.find(",");
-            coordinate.ele = std::stod(line.substr(0, comma));
+            gps_point.elevation = std::stod(line.substr(0, comma));
+            gps_point.elevation_exists = true;
 
-            destination_points.emplace_back(projector.forward(coordinate));
+            destination_points.push_back(gps_point);
         }
+
         return destination_points;
     }
 
