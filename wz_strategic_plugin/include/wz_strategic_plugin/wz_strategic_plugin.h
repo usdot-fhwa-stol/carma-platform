@@ -20,6 +20,9 @@
 #include <cav_msgs/Plugin.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <carma_wm/WMListener.h>
+#include <carma_wm/WorldModel.h>
+#include <carma_utils/CARMAUtils.h>
 
 namespace wz_strategic_plugin
 {
@@ -78,16 +81,18 @@ namespace wz_strategic_plugin
              */
             void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
 
-            cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id)
+            cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id);
 
-            cav_msgs::Maneuver composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int end_lane_id, ros::Time current_time, double end_time)
+            cav_msgs::Maneuver composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int end_lane_id, ros::Time current_time, double end_time);
 
-            cav_msgs::Maneuver composeWorkZoneManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id)
+            cav_msgs::Maneuver composeWorkZoneManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id);
+
+            std::string traffic_light_interpreter(int state);
 
         private:
             // CARMA ROS node handles
             std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
-            
+
             // wm listener pointer and pointer to the actual wm object
             std::shared_ptr<carma_wm::WMListener> wml_;
             carma_wm::WorldModelConstPtr wm_;

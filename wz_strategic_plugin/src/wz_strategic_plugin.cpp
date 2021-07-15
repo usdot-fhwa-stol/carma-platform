@@ -58,91 +58,157 @@ namespace wz_strategic_plugin
     {
         current_speed_ = msg->twist.linear.x;
     }
+    // enum class CarmaTrafficLightState {UNAVAILABLE=0,DARK=1,STOP_THEN_PROCEED=2,STOP_AND_REMAIN=3,PRE_MOVEMENT=4,PERMISSIVE_MOVEMENT_ALLOWED=5,PROTECTED_MOVEMENT_ALLOWED=6,PERMISSIVE_CLEARANCE=7,PROTECTED_CLEARANCE=8,CAUTION_CONFLICTING_TRAFFIC=9};
 
+    std::string traffic_light_interpreter(CarmaTrafficLightState state)
+    {
+        switch(state) {
+            case UNAVAILABLE:
+                // code block
+                break;
+            case DARK:
+                // code block
+                break;
+            case STOP_THEN_PROCEED:
+                // code block
+                break;
+            case STOP_AND_REMAIN:
+                // code block
+                break;
+            case PRE_MOVEMENT:
+                // code block
+                break;
+            case PERMISSIVE_MOVEMENT_ALLOWED:
+                // code block
+                break;
+            case PROTECTED_MOVEMENT_ALLOWED:
+                // code block
+                break;
+            case PERMISSIVE_CLEARANCE:
+                // code block
+                break;
+            case PROTECTED_CLEARANCE:
+                // code block
+                break;
+            case CAUTION_CONFLICTING_TRAFFIC:
+                // code block
+                break;
+            case 10:
+                // code block
+                break;
+            case 11:
+                // code block
+                break;
+            case 12:
+                // code block
+                break;
+            default:
+                // code block
+        }
+
+    }
 
     bool WzStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp)
     {
 
-        // find car_down_track
-        //
+        ROS_DEBUG("Finding car infomrmation");
 
+        // find car_down_track
         double current_car_down_track = wm_->routeTrackPos(current_loc_).downtrack;
+        ROS_DEBUG("current_car_down_track %d", current_car_down_track);
 
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc_, 1);
 
-        // find traffic_light_down_track
-        //
-
-        // auto regems = wml.getWorldModel()->getMap()->laneletLayer.get(current_lanelets[0].id()).regulatoryElements();
+        ROS_DEBUG("\n\nFinding traffic_light information");
         auto traffic_list = current_lanelets[0].regulatoryElementsAs<lanelet::CarmaTrafficLight>();
-
         double traffic_light_down_track = 0;
-
         if(!traffic_list.empty()) {
+
             traffic_light_down_track = traffic_list[0].stopLine().down_track;
-        }
 
-        double distance_remaining_to_traffic_light  = traffic_light_down_track - current_car_down_track;
-        double time_remaining_to_traffic_light = distance_remaining_to_traffic_light / current_speed_;
+            ROS_DEBUG("traffic_light_down_track %d", traffic_light_down_track);
 
-        // get traffic light timeming 
+            double distance_remaining_to_traffic_light  = traffic_light_down_track - current_car_down_track;
+            ROS_DEBUG("distance_remaining_to_traffic_light %d", distance_remaining_to_traffic_light);
+            ROS_DEBUG("current_speed_ %d", current_speed_);
 
-        auto traffic_light_current_state = traffic_list[0].getState();
-        auto traffic_light_next_state = "";
+            ROS_DEBUG("time_remaining_to_traffic_light %d", distance_remaining_to_traffic_light / current_speed_);
+            ros::Duration time_remaining_to_traffic_light(distance_remaining_to_traffic_light / current_speed_);
 
-        double current_traffic_light_state_remaining_time = 0;
-        double time_remaining_to_traffic_light = 0;      
+            auto traffic_light_current_state = traffic_list[0].getState();
+            ROS_DEBUG("traffic_light_current_state %d", traffic_light_current_state);
 
+            auto traffic_light_next_predicted_state = traffic_list[0].getState(ros::Time::now() + time_remaining_to_traffic_light);
+            ROS_DEBUG("traffic_light_next_predicted_state %d", traffic_light_next_predicted_state);
 
-        // enum class CarmaTrafficLightState {UNAVAILABLE=0,DARK=1,STOP_THEN_PROCEED=2,STOP_AND_REMAIN=3,PRE_MOVEMENT=4,PERMISSIVE_MOVEMENT_ALLOWED=5,PROTECTED_MOVEMENT_ALLOWED=6,PERMISSIVE_CLEARANCE=7,PROTECTED_CLEARANCE=8,CAUTION_CONFLICTING_TRAFFIC=9};
+            // enum class CarmaTrafficLightState {UNAVAILABLE=0,DARK=1,STOP_THEN_PROCEED=2,STOP_AND_REMAIN=3,PRE_MOVEMENT=4,PERMISSIVE_MOVEMENT_ALLOWED=5,PROTECTED_MOVEMENT_ALLOWED=6,PERMISSIVE_CLEARANCE=7,PROTECTED_CLEARANCE=8,CAUTION_CONFLICTING_TRAFFIC=9};
 
-        if(distance_remaining_to_traffic_light > min_distance_to_traffic_light ) {        
+            ROS_DEBUG("min_distance_to_traffic_light %d", min_distance_to_traffic_light);
 
-            if(time_remaining_to_traffic_light > current_traffic_light_state_remaining_time) {
+            if(distance_remaining_to_traffic_light >= min_distance_to_traffic_light ) {        
 
-                if(traffic_light_next_state == "red") {
+                ROS_DEBUG("distance_remaining_to_traffic_light is larger than min_distance_to_traffic_light %d", distance_remaining_to_traffic_light);
 
-                    // stop_and_wait
-                    composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time)
+                if(traffic_light_current_state != traffic_light_next_predicted_state) {
 
-                    // workzone_tactical
+                    ROS_DEBUG("traffic_light_current_state is different than traffic_light_next_predicted_state %d", current_traffic_light_state_remaining_time);
+
+                    if(traffic_light_interpreter(traffic_light_next_predicted_state) == "R") {
+
+                        // stop_and_wait
+                        cav_msgs::Maneuver stop_and_wait = composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time)
+                        resp.new_plan.maneuvers.push_back(stop_and_wait);
+
+                        // workzone_tactical
+                        cav_msgs::Maneuver workzone_tactical = composeWorkZoneManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time)
+                        resp.new_plan.maneuvers.push_back(workzone_tactical);
+
+                    }
+
+                    if(traffic_light_interpreter(traffic_light_next_predicted_state) == "G") {
+
+                        // LaneFollowing
+                        cav_msgs::Maneuver Lane_Following = composeLaneFollowingManeuverMessage(current_car_down_track, traffic_light_down_track, current_speed_, current_speed_, lane_id);
+                        resp.new_plan.maneuvers.push_back(Lane_Following);
+
+                        // workzone_tactical
+                        cav_msgs::Maneuver workzone_tactical = composeWorkZoneManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time);
+                        resp.new_plan.maneuvers.push_back(workzone_tactical);
+
+                    }
 
                 }
+                else {
 
-                if(traffic_light_next_state == "green") {
+                    if(traffic_light_interpreter(traffic_light_current_state) == "R") {
 
-                    // LaneFollowing
-                    composeLaneFollowingManeuverMessage(current_car_down_track, traffic_light_down_track, current_speed_, current_speed_, lane_id)
+                        // stop_and_wait
+                        cav_msgs::Maneuver stop_and_wait = composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time);
+                        resp.new_plan.maneuvers.push_back(stop_and_wait);
 
-                    // workzone_tactical
+                        // workzone_tactical
+                        cav_msgs::Maneuver workzone_tactical = composeWorkZoneManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time);
+                        resp.new_plan.maneuvers.push_back(workzone_tactical);
+
+                    }
+
+                    if(traffic_light_interpreter(traffic_light_current_state) == "G") {
+
+                        // LaneFollowing
+                        cav_msgs::Maneuver Lane_Following = composeLaneFollowingManeuverMessage(current_car_down_track, traffic_light_down_track, current_speed_, current_speed_, lane_id)
+                        resp.new_plan.maneuvers.push_back(Lane_Following);
+
+                        // workzone_tactical
+                        cav_msgs::Maneuver workzone_tactical = composeWorkZoneManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time)
+                        resp.new_plan.maneuvers.push_back(workzone_tactical);
+
+                    }
 
                 }
 
             }
-
-            if(time_remaining_to_traffic_light < current_traffic_light_state_remaining_time) {
-
-                if(traffic_light_current_state == "red") {
-
-                    // stop_and_wait
-                    composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time)
-                    // workzone_tactical
-
-                }
-
-                if(traffic_light_current_state == "green") {
-
-                    // LaneFollowing
-                    composeLaneFollowingManeuverMessage(current_car_down_track, traffic_light_down_track, current_speed_, current_speed_, lane_id)
-                    // workzone_tactical
-
-                }
-
-            }
-
         }
 
-        
         return true;
     }
 
