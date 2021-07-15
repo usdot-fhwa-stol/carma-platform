@@ -41,12 +41,9 @@ namespace trajectory_executor
         _private_nh->param<std::string>("default_control_plugin", default_control_plugin_, "NULL");
         _private_nh->param<std::string>("default_control_plugin_topic", default_control_plugin_topic_, "NULL");
 
-        // out[default_control_plugin_] = default_control_plugin_topic_;
+        out[default_control_plugin_] = default_control_plugin_topic_;
 
-        //Hardcoding jerk control wrapper
-        std::string control_plugin1 = "default";
-        std::string control_plugin_topic1 = "/guidance/pure_pursuit/plan_trajectory";
-        out[control_plugin1] = control_plugin_topic1;
+        //Hardcoding platoon control plugins
 
         std::string control_plugin2 = "PlatooningControlPlugin";
         std::string control_plugin_topic2 = "/guidance/PlatooningControlPlugin/plan_trajectory";
@@ -87,8 +84,8 @@ namespace trajectory_executor
                 // Determine the relevant control plugin for the current timestep
                 std::string control_plugin = _cur_traj->trajectory_points[0].controller_plugin_name;
                 // if it instructed to use default control_plugin
-                // if (control_plugin == "default" || control_plugin =="")
-                //     control_plugin = default_control_plugin_;
+                if (control_plugin == "default" || control_plugin =="")
+                    control_plugin = default_control_plugin_;
 
                 std::map<std::string, ros::Publisher>::iterator it = _traj_publisher_map.find(control_plugin);
                 if (it != _traj_publisher_map.end()) {
