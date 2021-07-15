@@ -144,21 +144,6 @@ namespace platoon_strategic
 
     bool PlatoonStrategicPlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp)
     {
-        bool pose_initialize = false;
-        if (!pose_initialize)
-        {
-            // ACM
-            initial_pose_.pose.position.x =  493.068871238;
-            initial_pose_.pose.position.y =  210.486698405;
-            // summit                   
-            // initial_pose_.pose.position.x =  -0.790936994017;
-            // initial_pose_.pose.position.y =  558.514141773;
-            // tfhrc
-            // initial_pose_.pose.position.x =  -228.121873152;
-            // initial_pose_.pose.position.y =  458.520020515;
-            ROS_DEBUG_STREAM("first pose initialized!");
-            pose_initialize = true;
-        }
 
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 10);       
@@ -260,10 +245,6 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("change the state from standby to leader at start-up");
         }
 
-        
-        // double dx = pose_msg_.pose.position.x - initial_pose_.pose.position.x;
-        // double dy = pose_msg_.pose.position.y - initial_pose_.pose.position.y;
-        // current_downtrack_ = std::sqrt(dx*dx + dy*dy);
         
         pm_.current_downtrack_didtance_ = current_downtrack_;
         pm_.HostMobilityId = config_.vehicle_id;
@@ -730,7 +711,7 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::mob_resp_cb_candidatefollower(const cav_msgs::MobilityResponse& msg)
     {
         ROS_DEBUG_STREAM("Callback for candidate follower ");
-        if (pm_.current_plan.valid) // TODO: temp, revert later
+        if (pm_.current_plan.valid)
         {
             bool isForCurrentPlan = msg.header.plan_id == pm_.current_plan.planId;
             bool isFromTargetVehicle = msg.header.sender_id == pm_.targetLeaderId;
@@ -738,7 +719,8 @@ namespace platoon_strategic
 
             ROS_DEBUG_STREAM("isFromTargetVehicle " << isFromTargetVehicle);
 
-            if (true)//(isForCurrentPlan && isFromTargetVehicle)  //TODO: temp, revert later
+            //if (isForCurrentPlan && isFromTargetVehicle)  //TODO: This check not needed for now
+            if (true)
             {
                 if(msg.is_accepted) 
                 {
@@ -781,7 +763,7 @@ namespace platoon_strategic
     {
         if (pm_.current_plan.valid)
         {
-            // if (pm_.current_plan.planId == msg.header.plan_id && pm_.current_plan.peerId == msg.header.sender_id) //TODO check for planid
+            // if (pm_.current_plan.planId == msg.header.plan_id && pm_.current_plan.peerId == msg.header.sender_id) //TODO this check not needed here, 
             if (true)
             {
                 if (msg.is_accepted)
@@ -906,7 +888,7 @@ namespace platoon_strategic
         }
     
 
-        // TODO: If needed, add a queue for status messages
+        // TODO: If needed (with large size platoons), add a queue for status messages
         // INFO messages always processed, STATUS messages if saved in que
         
     }
@@ -1060,7 +1042,6 @@ namespace platoon_strategic
 
         bool isPlatoonInfoMsg = (strategyParams.rfind(OPERATION_INFO_TYPE, 0) == 0);
         bool isPlatoonStatusMsg = (strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0);
-        // original: boolean isNotInNegotiation = (this.currentPlan == null);
         bool isNotInNegotiation = (pm_.current_plan.valid == false);
         if(isPlatoonInfoMsg && isNotInNegotiation)
         {
@@ -1137,7 +1118,6 @@ namespace platoon_strategic
                 request.strategy_params = fmter.str();
                 request.urgency = 50;
 
-                // this.currentPlan = new PlatoonPlan(System.currentTimeMillis(), request.getHeader().getPlanId(), senderId);
                 pm_.current_plan = PlatoonPlan(true, request.header.timestamp, request.header.plan_id, request.header.sender_id);
                 mobility_request_publisher_(request);
                 ROS_DEBUG_STREAM("Publishing request to leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.header.plan_id);
@@ -1205,8 +1185,6 @@ namespace platoon_strategic
 
     cav_msgs::LocationECEF PlatoonStrategicPlugin::pose_to_ecef(geometry_msgs::PoseStamped pose_msg)
     {
-        // tf2::Stamped<tf2::Transform> transform;
-        // tf2::fromMsg(tf, transform);
 
         if (!map_projector_) {
             throw std::invalid_argument("No map projector available for ecef conversion");
@@ -1219,11 +1197,6 @@ namespace platoon_strategic
         location.ecef_y = ecef_point.y() * 100.0;
         location.ecef_z = ecef_point.z() * 100.0;    
         
-        // auto pose_vec = tf2::Vector3(pose_msg.pose.position.x, pose_msg.pose.position.y, 0.0);
-        // tf2::Vector3 ecef_point_vec = transform * pose_vec;
-        // ecef_point.ecef_x = (int32_t)(ecef_point_vec.x() * 100.0); // m to cm
-        // ecef_point.ecef_y = (int32_t)(ecef_point_vec.y() * 100.0);
-        // ecef_point.ecef_z = (int32_t)(ecef_point_vec.z() * 100.0); 
 
         ROS_DEBUG_STREAM("location.ecef_x: " << location.ecef_x);
         ROS_DEBUG_STREAM("location.ecef_y: " << location.ecef_y);
@@ -1237,28 +1210,10 @@ namespace platoon_strategic
         if (!map_projector_) {
             throw std::invalid_argument("No map projector available for ecef conversion");
         }
-        // lanelet::BasicPoint2d output
 
         lanelet::BasicPoint3d map_point = map_projector_->projectECEF( { (double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0 } , -1);
-        // output.x = map_point.x();
-        // output.y = map_point.y();
-        // output.z = map_point.z();
 
         lanelet::BasicPoint2d output {map_point.x(), map_point.y()};
-
-        // tf2::Stamped<tf2::Transform> map_in_earth;
-        // tf2::fromMsg(tf, map_in_earth);
-        // // convert input point to transform
-        // tf2::Transform point_in_earth;
-        // tf2::Quaternion no_rotation(0, 0, 0, 1);
-        // tf2::Vector3 input_point {(double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0}; //m to cm
-        // point_in_earth.setOrigin(input_point);
-        // point_in_earth.setRotation(no_rotation);
-        // // convert to map frame by (T_e_m)^(-1) * T_e_p
-        // auto point_in_map = map_in_earth.inverse() * point_in_earth;
-        // lanelet::BasicPoint2d output {
-        // point_in_map.getOrigin().getX(),
-        // point_in_map.getOrigin().getY()};
         
         ROS_DEBUG_STREAM("map_point.x(): " << map_point.x());
         ROS_DEBUG_STREAM("map_point.y(): " << map_point.y());
@@ -1280,7 +1235,6 @@ namespace platoon_strategic
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toNSec()/1000000;;
         msg.strategy = MOBILITY_STRATEGY;
-        msg.location = pose_to_ecef(pose_msg_);;
 
         if (type == OPERATION_INFO_TYPE){
             // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d,DTD:%.2f
@@ -1337,7 +1291,6 @@ namespace platoon_strategic
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toNSec()/1000000;
         msg.strategy = MOBILITY_STRATEGY;
-        msg.location = pose_to_ecef(pose_msg_);
         
         double cmdSpeed = cmd_speed_;
         boost::format fmter(OPERATION_STATUS_PARAMS);
@@ -1365,8 +1318,6 @@ namespace platoon_strategic
         std::string hostStaticId = config_.vehicle_id;
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toNSec()/1000000;
-
-        msg.location = pose_to_ecef(pose_msg_);
 
         msg.strategy = MOBILITY_STRATEGY;
         // For STATUS params, the string format is "STATUS|CMDSPEED:5.0,DOWNTRACK:100.0,SPEED:5.0"
@@ -1412,8 +1363,6 @@ namespace platoon_strategic
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toNSec()/1000000;
         msg.strategy = MOBILITY_STRATEGY;
-
-        msg.location = pose_to_ecef(pose_msg_);
         
         // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
         double cmdSpeed = cmd_speed_;
