@@ -147,6 +147,13 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     world_model_->getMutableMap()->add(llt);
   }
 
+  ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " sends record of traffic_lights_id size: " << gf_ptr->traffic_light_id_lookup_.size());
+  for (auto pair : gf_ptr->traffic_light_id_lookup_)
+  {
+    ROS_DEBUG_STREAM("Adding new pair for traffic light ids: " << pair.first << ", and lanelet::Id: " << pair.second);
+    world_model_->setTrafficLightIds(pair.first, pair.second);
+  }
+
   ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " requests removal of size: " << gf_ptr->remove_list_.size());
   for (auto pair : gf_ptr->remove_list_)
   {

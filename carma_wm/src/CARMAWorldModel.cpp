@@ -1084,7 +1084,10 @@ std::vector<lanelet::Lanelet> getOppositeLaneletsFromPoint(const lanelet::Lanele
   return opposite_lanelets;
 }
 
-
+void CARMAWorldModel::setTrafficLightIds(uint32_t id, lanelet::Id lanelet_id)
+{
+  traffic_light_ids_[id] = lanelet_id;
+}
 
 void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
 {

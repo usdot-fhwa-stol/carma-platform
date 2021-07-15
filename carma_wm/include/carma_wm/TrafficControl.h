@@ -54,6 +54,9 @@ public:
   // elements needed for broadcasting to the rest of map users
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;
+
+  // traffic light id lookup
+  std::vector<std::pair<uint32_t, lanelet::Id>> traffic_light_id_lookup_;
 };
 
 /**
@@ -105,6 +108,11 @@ inline void save(Archive& ar, const carma_wm::TrafficControl& gf, unsigned int /
   size_t update_list_size = gf.update_list_.size();
   ar << update_list_size;
   for (auto pair : gf.update_list_) ar << pair;
+
+  // convert traffic light id lookup
+  size_t traffic_light_id_lookup_size = gf.traffic_light_id_lookup_.size();
+  ar << traffic_light_id_lookup_size;
+  for (auto pair : gf.traffic_light_id_lookup_) ar << pair;
 }
 
 template <class Archive>
@@ -145,10 +153,27 @@ inline void load(Archive& ar, carma_wm::TrafficControl& gf, unsigned int /*versi
     ar >> update_item;
     gf.update_list_.push_back(update_item);
   }
+
+  // save ids 
+  size_t traffic_light_id_lookup_size;
+  ar >> traffic_light_id_lookup_size;
+  for (auto i = 0u; i < traffic_light_id_lookup_size; ++i) 
+  {
+    std::pair<uint32_t, lanelet::Id> traffic_light_id_pair;
+    ar >> traffic_light_id_pair;
+    gf.traffic_light_id_lookup_.push_back(traffic_light_id_pair);
+  }
 }
 
 template <typename Archive>
 void serialize(Archive& ar, std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>& p, unsigned int /*version*/) 
+{
+  ar& p.first;
+  ar& p.second;
+}
+
+template <typename Archive>
+void serialize(Archive& ar, std::pair<uint32_t, lanelet::Id>& p, unsigned int /*version*/) 
 {
   ar& p.first;
   ar& p.second;

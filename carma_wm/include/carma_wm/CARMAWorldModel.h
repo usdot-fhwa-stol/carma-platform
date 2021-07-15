@@ -67,6 +67,12 @@ public:
    */
   void setRoute(LaneletRoutePtr route);
 
+  /*! \brief Sets the id mapping between intersection/signal group and lanelet::Id for traffic lights in the map.
+   *  \param id intersection_id (16bit) and signal_group_id (8bit) concatenated in that order and saved in 32bit
+   *  \param lanelet_id lanelet_id
+   */
+  void setTrafficLightIds(uint32_t id, lanelet::Id lanelet_id);
+
   /*! \brief Get a mutable version of the current map
    * 
    *  NOTE: the user must make sure to setMap() after any edit to the map and to set a valid route
@@ -150,9 +156,10 @@ public:
 
   size_t getMapVersion() const override;
 
-
 private:
-  
+
+  std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
+
   double config_speed_limit_;
   
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
