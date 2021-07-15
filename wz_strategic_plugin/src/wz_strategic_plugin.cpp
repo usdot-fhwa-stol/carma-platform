@@ -37,14 +37,9 @@ namespace wz_strategic_plugin
         pose_sub_ = nh_->subscribe("current_pose", 1, &WzStrategicPlugin::pose_cb, this);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &WzStrategicPlugin::twist_cb, this);
 
-        // wml_.reset(new carma_wm::WMListener());
-        // // set world model point form wm listener
-        // wm_ = wml_->getWorldModel();
-
-        // //set a route callback to update route and calculate maneuver
-        // wml_->setRouteCallback([this]() {
-        //     this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
-        // });
+        wml_.reset(new carma_wm::WMListener());
+        // set world model point form wm listener
+        wm_ = wml_->getWorldModel();
 
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
@@ -55,8 +50,8 @@ namespace wz_strategic_plugin
     void WzStrategicPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr &msg)
     {
         pose_msg_ = msg;
-        // lanelet::BasicPoint2d curr_loc(pose_msg_->pose.position.x, pose_msg_->pose.position.y);
-        // current_loc_ = curr_loc;
+        lanelet::BasicPoint2d curr_loc(pose_msg_->pose.position.x, pose_msg_->pose.position.y);
+        current_loc_ = curr_loc;
     }
 
     void WzStrategicPlugin::twist_cb(const geometry_msgs::TwistStampedConstPtr &msg)
@@ -70,67 +65,83 @@ namespace wz_strategic_plugin
 
         // find car_down_track
         //
-        //
 
-        double current_car_down_track = 0;
+        double current_car_down_track = wm_->routeTrackPos(current_loc_).downtrack;
+
+        auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc_, 1);
 
         // find traffic_light_down_track
         //
-        //
+
+        // auto regems = wml.getWorldModel()->getMap()->laneletLayer.get(current_lanelets[0].id()).regulatoryElements();
+        auto traffic_list = current_lanelets[0].regulatoryElementsAs<lanelet::CarmaTrafficLight>();
 
         double traffic_light_down_track = 0;
+
+        if(!traffic_list.empty()) {
+            traffic_light_down_track = traffic_list[0].stopLine().down_track;
+        }
 
         double distance_remaining_to_traffic_light  = traffic_light_down_track - current_car_down_track;
         double time_remaining_to_traffic_light = distance_remaining_to_traffic_light / current_speed_;
 
         // get traffic light timeming 
 
-        double traffic_light_next_state = 0 // 0 is red 
-                                            // 1 is green
-        
+        auto traffic_light_current_state = traffic_list[0].getState();
+        auto traffic_light_next_state = "";
+
+        double current_traffic_light_state_remaining_time = 0;
+        double time_remaining_to_traffic_light = 0;      
 
 
-        if(time_remaining_to_traffic_light > current_traffic_light_state_remaining_time) {
+        // enum class CarmaTrafficLightState {UNAVAILABLE=0,DARK=1,STOP_THEN_PROCEED=2,STOP_AND_REMAIN=3,PRE_MOVEMENT=4,PERMISSIVE_MOVEMENT_ALLOWED=5,PROTECTED_MOVEMENT_ALLOWED=6,PERMISSIVE_CLEARANCE=7,PROTECTED_CLEARANCE=8,CAUTION_CONFLICTING_TRAFFIC=9};
 
-            if(traffic_light_next_state == "red") {
+        if(distance_remaining_to_traffic_light > min_distance_to_traffic_light ) {        
 
-                // stop_and_wait
-                composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time)
+            if(time_remaining_to_traffic_light > current_traffic_light_state_remaining_time) {
 
-                // workzone_tactical
+                if(traffic_light_next_state == "red") {
+
+                    // stop_and_wait
+                    composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time)
+
+                    // workzone_tactical
+
+                }
+
+                if(traffic_light_next_state == "green") {
+
+                    // LaneFollowing
+                    composeLaneFollowingManeuverMessage(current_car_down_track, traffic_light_down_track, current_speed_, current_speed_, lane_id)
+
+                    // workzone_tactical
+
+                }
 
             }
 
-            if(traffic_light_next_state == "green") {
+            if(time_remaining_to_traffic_light < current_traffic_light_state_remaining_time) {
 
-                // LaneFollowing
-                composeLaneFollowingManeuverMessage(current_car_down_track, traffic_light_down_track, current_speed_, current_speed_, lane_id)
+                if(traffic_light_current_state == "red") {
 
-                // workzone_tactical
+                    // stop_and_wait
+                    composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time)
+                    // workzone_tactical
+
+                }
+
+                if(traffic_light_current_state == "green") {
+
+                    // LaneFollowing
+                    composeLaneFollowingManeuverMessage(current_car_down_track, traffic_light_down_track, current_speed_, current_speed_, lane_id)
+                    // workzone_tactical
+
+                }
 
             }
 
         }
 
-        if(time_remaining_to_traffic_light < current_traffic_light_state_remaining_time) {
-
-            if(traffic_light_current_state == "red") {
-
-                // stop_and_wait
-                composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time)
-                // workzone_tactical
-
-            }
-
-            if(traffic_light_current_state == "green") {
-
-                // LaneFollowing
-                composeLaneFollowingManeuverMessage(current_car_down_track, traffic_light_down_track, current_speed_, current_speed_, lane_id)
-                // workzone_tactical
-
-            }
-
-        }
         
         return true;
     }

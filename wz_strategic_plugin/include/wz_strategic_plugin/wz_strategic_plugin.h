@@ -87,5 +87,11 @@ namespace wz_strategic_plugin
         private:
             // CARMA ROS node handles
             std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
+            
+            // wm listener pointer and pointer to the actual wm object
+            std::shared_ptr<carma_wm::WMListener> wml_;
+            carma_wm::WorldModelConstPtr wm_;
+
+            int min_distance_to_traffic_light = 30;
     };
 }
