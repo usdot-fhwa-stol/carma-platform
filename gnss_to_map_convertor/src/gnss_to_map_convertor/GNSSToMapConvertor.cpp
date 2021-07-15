@@ -94,7 +94,7 @@ void GNSSToMapConvertor::gnssFixCb(const gps_common::GPSFixConstPtr& fix_msg)
 
 void GNSSToMapConvertor::geoReferenceCallback(const std_msgs::String& geo_ref)
 {
-  // lanelet::projection::LocalFrameProjector temp_projector(geo_ref.data.c_str());
+
   map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(
       geo_ref.data.c_str());  // Build projector from proj string
 

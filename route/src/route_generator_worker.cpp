@@ -629,7 +629,9 @@ namespace route {
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_STARTED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);  
             }    
+            std::string original_route_name = route_msg_.route_name;
             route_msg_=compose_route_msg(route);
+            route_msg_.route_name = original_route_name;
             route_msg_.is_rerouted = true;
             route_msg_.map_version = world_model_->getMapVersion();
             route_marker_msg_=compose_route_marker_msg(route);

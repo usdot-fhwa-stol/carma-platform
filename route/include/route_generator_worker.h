@@ -298,7 +298,7 @@ namespace route {
         boost::optional<geometry_msgs::PoseStamped> vehicle_pose_;
 
         // The current map projection for lat/lon to map frame conversion
-        boost::optional<std::string> map_proj_; // TODO add callback to set this variable
+        boost::optional<std::string> map_proj_;
 
     };
 
