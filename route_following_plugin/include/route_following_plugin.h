@@ -177,14 +177,37 @@ namespace route_following_plugin
         std::vector<cav_msgs::Maneuver> routeCb(const lanelet::routing::LaneletPath& route_shortest_path);
 
         /**
+         * \brief Adds a StopAndWait maneuver to the end of a maneuver set stopping at the provided downtrack value
+         *        NOTE: The priority of this method is to plan the stopping maneuver therefore earlier maneuvers will be modified or removed if possible to allow the stopping behavior to be executed
+         * 
+         * \param input_maneuvers The set of maneuvers to modify to support the StopAndWait maneuver.
+         * \param route_end_downtrack The target stopping point (normally the end of the route) which the vehicle should stop before. Units meters
+         * \param stopping_entry_speed The expected entry speed for stopping. This is used to compute the stopping distance. Units m/s
+         * \param stopping_logitudinal_accel The target deceleration (unsigned) for the stopping operation. Units m/s/s
+         * \param lateral_accel_limit The lateral acceleration limit allowed for lane changes. Units m/s/s
+         * \param min_maneuver_length The absolute minimum allowable maneuver length for any existing maneuvers in meters
+         * 
+         * ASSUMPTION: At the moment the stopping entry speed is not updated because the assumption is
+         * that any previous maneuvers which were slower need not be accounted for as planning for a higher speed will always be capable of handling that case 
+         * and any which were faster would already have their speed reduced by the maneuver which this speed was derived from. 
+         */ 
+        std::vector<cav_msgs::Maneuver> addStopAndWaitAtRouteEnd (
+                const std::vector<cav_msgs::Maneuver>& input_maneuvers, 
+                double route_end_downtrack, double stopping_entry_speed, double stopping_logitudinal_accel,
+                double lateral_accel_limit, double min_maneuver_length
+            ) const;
+
+        /**
          * \brief Identifies if a maneuver starts after the provided downtrack with compensation for a dynamic buffer size based on the maneuver type
          * 
          * \param maneuver The maneuver to compare
-         * \param downtrack
+         * \param downtrack The downtrack value to evaluate in meters
+         * \param lateral_accel The max lateral acceleration allowed for lane changes in m/s/s
+         * \param min_maneuver_length The absolute minimum allowable for any maneuver in meters
          * 
          * \return true if the provided maneuver plus the computed dynamic buffer starts after the provided downtrack value
          */ 
-        bool maneuverWithBufferStartsAfterDowntrack(const cav_msgs::Maneuver& maneuver, double downtrack) const;
+        bool maneuverWithBufferStartsAfterDowntrack(const cav_msgs::Maneuver& maneuver, double downtrack, double lateral_accel, double min_maneuver_length) const;
 
         /**
          * \brief This method returns a new UUID as a string for assignment to a Maneuver message
