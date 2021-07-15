@@ -12,6 +12,6 @@ dt: 0.1
 integratorMax: 100
 integratorMin: -100
 wheelbase: 3.09
-lowpass_gain: 0.8
-lookahead_ratio: 1.3
+lowpass_gain: 1.0
+lookahead_ratio: 1.7
 min_lookahead_dist: 15.0
