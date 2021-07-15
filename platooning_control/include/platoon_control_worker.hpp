@@ -78,18 +78,10 @@ namespace platoon_control
 
         PlatoonLeaderInfo platoon_leader;
 
-        void setInitialPose(const geometry_msgs::PoseStamped msg);
-		// {
-		// 	initial_pose_ = msg.pose;
-		// }
 
         void setCurrentPose(const geometry_msgs::PoseStamped msg);
-		// {
-		// 	current_pose_ = msg.pose;
-		// }
 
 		// geometry pose
-		geometry_msgs::Pose initial_pose_;
         geometry_msgs::Pose current_pose_;
 
 
@@ -102,12 +94,6 @@ namespace platoon_control
 
         // pure pursuit controller object
         PurePursuit pp_;
-
-    	// double desiredTimeGap = 1.0; // s
-
-
-
-        double getCurrentDowntrackDistance(const cav_msgs::TrajectoryPlanPoint& point);
 
         double dist_to_front_vehicle;
 

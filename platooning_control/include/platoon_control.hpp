@@ -79,7 +79,6 @@ namespace platoon_control
 
 
 			// Variables
-			bool initial_pose_set_ = false;
 			PlatoonLeaderInfo platoon_leader_;
 
 			// callback function for pose

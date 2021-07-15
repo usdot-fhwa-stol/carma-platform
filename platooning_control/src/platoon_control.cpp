@@ -96,13 +96,6 @@ namespace platoon_control
 
     void  PlatoonControlPlugin::trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
         
-        if (!initial_pose_set_)
-        {
-            pcw_.setInitialPose(pose_msg_);
-            // ROS_DEBUG_STREAM("initial pose set");
-            initial_pose_set_ = true;
-        }
-
         cav_msgs::TrajectoryPlanPoint first_trajectory_point = tp->trajectory_points[1];
         cav_msgs::TrajectoryPlanPoint lookahead_point = getLookaheadTrajectoryPoint(*tp);
 

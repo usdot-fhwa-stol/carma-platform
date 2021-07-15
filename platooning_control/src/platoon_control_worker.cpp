@@ -22,17 +22,6 @@ namespace platoon_control
         return speedCmd_;
     }
 
-    void PlatoonControlWorker::setInitialPose(const geometry_msgs::PoseStamped msg)
-	{
-		// initial_pose_ = msg.pose;
-        // Summit Point
-        // initial_pose_.position.x =  -0.790936994017;
-        // initial_pose_.position.y =  558.514141773;
-        // ACM
-        initial_pose_.position.x =  493.068871238;
-        initial_pose_.position.y =  210.486698405;
-	}
-
     void PlatoonControlWorker::setCurrentPose(const geometry_msgs::PoseStamped msg)
 	{
 		current_pose_ = msg.pose;
@@ -74,7 +63,6 @@ namespace platoon_control
 	        // // The summation of the leader vehicle command speed and the output of PD controller will be used as speed commands
 	        // // The command speed of leader vehicle will act as the baseline for our speed control
 
-            // TODO: temporary used this way to get the correct downtrack
             double desiredHostPosition = leaderCurrentPosition - desired_gap_;
             ROS_DEBUG_STREAM("desiredHostPosition = " << desiredHostPosition);
 
@@ -170,20 +158,6 @@ namespace platoon_control
     void  PlatoonControlWorker::setCurrentSpeed(double speed){
     	currentSpeed = speed;
     }
-
-    double PlatoonControlWorker::getCurrentDowntrackDistance(const cav_msgs::TrajectoryPlanPoint& point) {
-        
-        double x_diff = (point.x - initial_pose_.position.x);
-		double y_diff = (point.y - initial_pose_.position.y);
-		double dist = std::sqrt(x_diff * x_diff + y_diff * y_diff);
-    	return dist;
-        ROS_DEBUG_STREAM("down track distance: " << dist);
-    }
-
-    // TODO Get information about front vehicle from world model (if needed)
-    // double PlatoonControlWorker::getDistanceToFrontVehicle(){
-    // 	return dist_to_front_vehicle;
-    // }
 
 
 
