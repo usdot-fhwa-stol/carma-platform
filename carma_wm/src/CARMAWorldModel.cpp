@@ -1016,7 +1016,7 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLane(const lanelet::Const
   return prev_lane;
 }
 
-std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& point,
+std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& point,
                                                                     const unsigned int n)
 {
   // Check if the map is loaded yet
@@ -1024,7 +1024,7 @@ std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::LaneletMapPtr&
   {
     throw std::invalid_argument("Map is not set or does not contain lanelets");
   }
-  std::vector<lanelet::Lanelet> possible_lanelets;
+  std::vector<lanelet::ConstLanelet> possible_lanelets;
   auto nearestLanelets = lanelet::geometry::findNearest(semantic_map->laneletLayer, point, n);
   if (nearestLanelets.size() == 0)
     return {};
@@ -1042,7 +1042,7 @@ std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::LaneletMapPtr&
 }
 
 
-std::vector<lanelet::Lanelet> getOppositeLaneletsFromPoint(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& input_point,
+std::vector<lanelet::ConstLanelet> getOppositeLaneletsFromPoint(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& input_point,
                                                                     const unsigned int n)
 {
   // Check if the map is loaded yet

@@ -340,7 +340,7 @@ public:
  *
  * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
  */
-std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& point,
+std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& point,
                                                           const unsigned int n = 10);
 
 /**
@@ -357,7 +357,7 @@ std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::LaneletMapPtr&
  *        The point is assumed to be on roughly similar shape of overlapping lanelets if any
  * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
  */
-std::vector<lanelet::Lanelet> getOppositeLaneletsFromPoint(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& input_point,
+std::vector<lanelet::ConstLanelet> getOppositeLaneletsFromPoint(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& input_point,
                                                           const unsigned int n = 10);
 
 
