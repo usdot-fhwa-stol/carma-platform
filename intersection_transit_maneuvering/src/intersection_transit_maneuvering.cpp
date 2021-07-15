@@ -31,7 +31,7 @@
 #include <Eigen/Geometry>
 #include <Eigen/LU>
 #include <Eigen/SVD>
-#include "intersection_transit_maneuvering.h"
+#include <intersection_transit_maneuvering.h>
 
 using oss = std::ostringstream;
 
@@ -81,77 +81,130 @@ namespace intersection_transit_maneuvering
 
 
     bool IntersectionTransitManeuvering::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
-    {/*Place Code Here*/}
+    {
+        
+        ros::WallTime start_time = ros::WallTime::now();  // Start timeing the execution time for planning so it can be logged
+
+        lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
+        double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
+
+        std::vector<cav_msgs::Maneuver> maneuver_plan;
+        for(size_t i = req.maneuver_index_to_plan; i < req.maneuver_plan.maneuvers.size(); i++)
+        {
+            if(req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ||
+            req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT || 
+            req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT )
+            {
+                maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
+                resp.related_maneuvers.push_back(i);
+            }
+            else
+                {
+                    break;
+                }
+        }
+        cav_srvs::PlanTrajectoryRequest& req2;
+        auto new_plan = convert_maneuver_plan(maneuver_plan);
+
+        for(const auto& man : new_plan)
+            {
+                req2.maneuver_plan.push_back(man);
+            }
+
+        /*Once the maneuvers have been successfully converted, call the inlanecruising plugin to calculate the trajectory*/
+        inlanecruising_plugin::InLaneCruisingPlugin::plan_trajectory_cb(req2, resp);
+        
+        return true;
+    }
+    
 
     void IntersectionTransitManeuvering::run()
-    {/**/}
-
-    std::vector<PointSpeedPair> IntersectionTransitManeuvering::maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers, double max_starting_downtrack, const carma_wm::WorldModelConstPtr& wm)
-    {/**/}
-
-    std::vector<cav_msgs::TrajectoryPlanPoint> IntersectionTransitManeuvering::compose_trajectory_from_centerline(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time);
-    {/**/}
-
-    std::vector<double> IntersectionTransitManeuvering::optimize_speed(const std::vector<double>& downtracks, const std::vector<double>& curve_speeds, double accel_limit);
     {
-        if (downtracks.size() != curve_speeds.size())
-        {
-            throw std::invalid_argument("Downtracks and speeds do not have the same size");
-        }
-
-      if (accel_limit <= 0)
-      {
-       throw std::invalid_argument("Accel limits should be positive");
-      }
-
-    bool optimize = true;
-    std::unordered_set<size_t> visited_idx;
-     visited_idx.reserve(curve_speeds.size());
-
-    std::vector<double> output = curve_speeds;
-
-    while (optimize)
-    {
-        auto min_pair = min_with_exclusions(curve_speeds, visited_idx);
-        size_t min_idx = std::get<1>(min_pair);
-        if (min_idx == -1) {
-          break;
-        }
-
-        visited_idx.insert(min_idx); // Mark this point as visited
-
-        double v_i = std::get<0>(min_pair);
-        double x_i = downtracks[min_idx];
-        for (int i = min_idx - 1; i > 0; i--) { // NOTE: Do not use size_t for i type here as -- with > 0 will result in overflow
-                                            //       First point's speed is left unchanged as it is current speed of the vehicle
-          double v_f = curve_speeds[i];
-          double dv = v_f - v_i;
-      
-          double x_f = downtracks[i];
-          double dx = x_f - x_i;
-
-          if(dv > 0) {
-            v_f = std::min(v_f, sqrt(v_i * v_i - 2 * accel_limit * dx)); // inverting accel as we are only visiting deceleration case
-            visited_idx.insert(i);
-          } else if (dv < 0) {
-            break;
-          }
-          output[i] = v_f;
-          v_i = v_f;
-          x_i = x_f;
-        }
+        /**/
+        initialize();
+        ros::CARMANodeHandle::spin();
+    
     }
 
-      log::printDoublesPerLineWithPrefix("only_reverse[i]: ", output);
+   
+    std::vector<cav_msgs::Maneuver> IntersectionTransitManeuvering::convert_maneuver_plan(const std::vector<cav_msgs::Maneuver>& maneuvers)
+    {
+        if (maneuvers.size().isEmpty())
+        {
+            throw std::invalid_argument("No maneuvers to convert");
+        }
+
+        std::vector<cav_msgs::LaneFollowingManeuver> new_maneuver_plan;
+        cav_msgs:LaneFollowingManeuver new_maneuver;
+        for(const auto& maneuver : maneuvers)
+        {
+            /*Throw exception if the manuever type does not match INTERSECTION_TRANSIT*/
+            if ( maneuver.type != cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ||
+                maneuver.type != cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ||
+                maneuver.type != cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ||)
+                {
+                    throw std::invalid_argument("Intersection transit maneuvering does not support this maneuver type");
+                }
+            
+            /*Convert IT Straight*/
+            if (maneuver.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT)
+            {
+                new_maneuver.parameters = maneuver.intersection_transit_straight_maneuver.parameters;
+
+                new_maneuver.start_dist = maneuver.intersection_transit_straight_maneuver.start_dist;
+                new_maneuver.start_speed = maneuver.intersection_transit_straight_maneuver.start_speed;
+                new_maneuver.start_time = maneuver.intersection_transit_straight_maneuver.start_time;
+
+                new_maneuver.end_dist = maneuver.intersection_transit_straight_maneuver.end_dist;
+                new_maneuver.end_speed = maneuver.intersection_transit_straight_maneuver.end_speed;
+                new_maneuver.end_time = maneuver.intersection_transit_straight_maneuver.end_time;
+
+                new_maneuver.lane_id = maneuver.intersection_transit_straight_maneuver.lane_id;
+
+                new_maneuver_plan.push_back(new_maneuver);
+            }
+
+             /*Convert IT LEFT TURN*/
+            if (maneuver.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN)
+            {
+                new_maneuver.parameters = maneuver.intersection_transit_left_turn_maneuver.parameters;
+
+                new_maneuver.start_dist = maneuver.intersection_transit_left_turn_maneuver.start_dist;
+                new_maneuver.start_speed = maneuver.intersection_transit_left_turn_maneuver.start_speed;
+                new_maneuver.start_time = maneuver.intersection_transit_left_turn_maneuver.start_time;
+
+                new_maneuver.end_dist = maneuver.intersection_transit_left_turn_maneuver.end_dist;
+                new_maneuver.end_speed = maneuver.intersection_transit_left_turn_maneuver.end_speed;
+                new_maneuver.end_time = maneuver.intersection_transit_left_turn_maneuver.end_time;
+
+                new_maneuver.lane_id = maneuver.intersection_transit_left_turn_maneuver.lane_id;
+
+                new_maneuver_plan.push_back(new_maneuver);
+            }
+
+             /*Convert IT RIGHT TURN*/
+            if (maneuver.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN)
+            {
+                new_maneuver.parameters = maneuver.intersection_transit_right_turn_maneuver.parameters;
+
+                new_maneuver.start_dist = maneuver.intersection_transit_right_turn_maneuver.start_dist;
+                new_maneuver.start_speed = maneuver.intersection_transit_right_turn_maneuver.start_speed;
+                new_maneuver.start_time = maneuver.intersection_transit_right_turn_maneuver.start_time;
+
+                new_maneuver.end_dist = maneuver.intersection_transit_right_turn_maneuver.end_dist;
+                new_maneuver.end_speed = maneuver.intersection_transit_right_turn_maneuver.end_speed;
+                new_maneuver.end_time = maneuver.intersection_transit_right_turn_maneuver.end_time;
+
+                new_maneuver.lane_id = maneuver.intersection_transit_right_turn_maneuver.lane_id;
+
+                new_maneuver_plan.push_back(new_maneuver);
+            }
   
-      output = trajectory_utils::apply_accel_limits_by_distance(downtracks, output, accel_limit, accel_limit);
-      log::printDoublesPerLineWithPrefix("after_forward[i]: ", output);
+        }//end for-loop
 
-      return output;
-}
+        return new_maneuver_plan;
 
-
-
+    }
 
 
 
