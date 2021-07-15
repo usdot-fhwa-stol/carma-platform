@@ -239,6 +239,7 @@ namespace route_following_plugin
             return;
 
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
+        current_loc_ = current_loc;
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         
         auto llts = wm_->getLaneletsFromPoint(current_loc, 10);                                          
