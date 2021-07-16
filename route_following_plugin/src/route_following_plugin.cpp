@@ -49,6 +49,36 @@ double getManeuverEndSpeed(const cav_msgs::Maneuver& mvr) {
     }
 }
 
+/**
+ * \brief Anonymous function to extract maneuver end speed which can not be optained with GET_MANEUVER_PROPERY calls due to it missing in stop and wait plugin
+ */ 
+void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanelet::Id end_id) {
+    switch(mvr.type) {
+        case cav_msgs::Maneuver::LANE_CHANGE:
+            mvr.lane_change_maneuver.starting_lane_id = start_id;
+            mvr.lane_change_maneuver.ending_lane_id = end_id;
+            break;
+        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+            mvr.intersection_transit_straight_maneuver.starting_lane_id = start_id;
+            mvr.intersection_transit_straight_maneuver.ending_lane_id = end_id;
+            break;
+        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+            mvr.intersection_transit_left_turn_maneuver.starting_lane_id = start_id;
+            mvr.intersection_transit_left_turn_maneuver.ending_lane_id = end_id;
+            break;
+        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+            mvr.intersection_transit_right_turn_maneuver.starting_lane_id = start_id;
+            mvr.intersection_transit_right_turn_maneuver.ending_lane_id = end_id;
+            break;
+        case cav_msgs::Maneuver::STOP_AND_WAIT:
+            mvr.stop_and_wait_maneuver.starting_lane_id = start_id;
+            mvr.stop_and_wait_maneuver.ending_lane_id = end_id;
+            break;
+        default:
+            throw std::invalid_argument("Maneuver type does not have start,end lane ids");
+    }
+}
+
 }
 
     void RouteFollowingPlugin::initialize()
@@ -201,8 +231,7 @@ double getManeuverEndSpeed(const cav_msgs::Maneuver& mvr) {
     std::vector<cav_msgs::Maneuver> RouteFollowingPlugin::addStopAndWaitAtRouteEnd (
         const std::vector<cav_msgs::Maneuver>& input_maneuvers, 
         double route_end_downtrack, double stopping_entry_speed, double stopping_logitudinal_accel,
-        double lateral_accel_limit, double min_maneuver_length,
-        lanelet::Id final_lanelet_id
+        double lateral_accel_limit, double min_maneuver_length
     ) const
     {
         /**
@@ -226,7 +255,7 @@ double getManeuverEndSpeed(const cav_msgs::Maneuver& mvr) {
         // Loop to drop any maneuvers which fully overlap our stopping maneuver while accounting for minimum length maneuver buffers
         while ( !maneuvers.empty() && maneuverWithBufferStartsAfterDowntrack(maneuvers.back(), required_start_downtrack, lateral_accel_limit, min_maneuver_length_) ) { 
             
-
+            ROS_WARN_STREAM("D");
             ROS_WARN_STREAM("Dropping maneuver with id: " <<  GET_MANEUVER_PROPERTY(maneuvers.back(), parameters.maneuver_id) );
 
             if (maneuvers.back().type == cav_msgs::Maneuver::LANE_CHANGE) {
@@ -243,14 +272,17 @@ double getManeuverEndSpeed(const cav_msgs::Maneuver& mvr) {
 
         if ( !maneuvers.empty() ) { // If there are existing maneuvers we need to make sure stop and wait does not overwrite them
             
-            double last_maneuver_end_downtrack = GET_MANEUVER_PROPERTY(maneuvers.back(), end_dist);
+            ROS_WARN_STREAM("C " + std::to_string((maneuvers.back()).type));
+            last_maneuver_end_downtrack = GET_MANEUVER_PROPERTY(maneuvers.back(), end_dist);
             
-            if ( required_start_downtrack >=  last_maneuver_end_downtrack ) { // If our stopping maneuver does not intersect with existing maneuvers
-
+            // If our stopping maneuver does not intersect with existing maneuvers
+            if ( required_start_downtrack >=  last_maneuver_end_downtrack ) {  
+                
                 // If the delta is under minimum_maneuver_length we can just extend the stopping maneuver
                 // Otherwise add a new lane follow maneuver
-                if (required_start_downtrack - last_maneuver_end_downtrack > min_maneuver_length) { 
-
+                if (required_start_downtrack - last_maneuver_end_downtrack > min_maneuver_length) {
+                 
+                    ROS_WARN_STREAM("HERE");
                     // Identify the lanelets which will be crossed by this lane follow maneuver
                     std::vector<lanelet::ConstLanelet> crossed_lanelets = wm_->getLaneletsBetween(last_maneuver_end_downtrack, required_start_downtrack, true, false); 
 
@@ -263,6 +295,8 @@ double getManeuverEndSpeed(const cav_msgs::Maneuver& mvr) {
                     
                     // Update last maneuver end downtrack so the stop and wait maneuver can be properly formulated
                     last_maneuver_end_downtrack = required_start_downtrack; 
+                } else {
+                    ROS_DEBUG_STREAM("Stop and wait maneuver being extended to nearest maneuver which is closer than the minimum maneuver length");
                 }
 
             } else { // If our stopping maneuver intersects with existing maneuvers
@@ -271,9 +305,11 @@ double getManeuverEndSpeed(const cav_msgs::Maneuver& mvr) {
                 SET_MANEUVER_PROPERTY(maneuvers.back(), end_dist, required_start_downtrack);
 
                 // Identify the lanelets which will be crossed by this updated maneuver
+                ROS_WARN_STREAM("B");
                 std::vector<lanelet::ConstLanelet> crossed_lanelets = wm_->getLaneletsBetween(GET_MANEUVER_PROPERTY(maneuvers.back(), start_dist), required_start_downtrack, true, false);
 
                 if (crossed_lanelets.size() == 0) {
+                    ROS_WARN_STREAM("A");
                     throw std::invalid_argument("Updated maneuver does not cross any lanelets going from: " + std::to_string(GET_MANEUVER_PROPERTY(maneuvers.back(), start_dist)) + " to: " + std::to_string(required_start_downtrack));
                 }
 
@@ -284,8 +320,7 @@ double getManeuverEndSpeed(const cav_msgs::Maneuver& mvr) {
 
                 } else {
 
-                    SET_MANEUVER_PROPERTY(maneuvers.back(), starting_lane_id, crossed_lanelets.front().id());
-                    SET_MANEUVER_PROPERTY(maneuvers.back(), ending_lane_id, crossed_lanelets.back().id());
+                    setManeuverLaneletIds(maneuvers.back(), crossed_lanelets.front().id(), crossed_lanelets.back().id());
 
                 }
 
@@ -297,19 +332,16 @@ double getManeuverEndSpeed(const cav_msgs::Maneuver& mvr) {
         // Identify the lanelets which will be crossed by this stop and wait maneuver
         std::vector<lanelet::ConstLanelet> crossed_lanelets = wm_->getLaneletsBetween(last_maneuver_end_downtrack, route_end_downtrack, true, false);
 
-        // TODO need to clean up method inputs and just accept that the world model was needed. 
-        lanelet::Id start_lane = route_shortest_path.back().id();
-        lanelet::Id end_lane = route_shortest_path.back().id();
-
         if (crossed_lanelets.size() == 0) {
 
             throw std::invalid_argument("Stopping maneuver does not cross any lanelets going from: " + std::to_string(last_maneuver_end_downtrack) + " to: " + std::to_string(route_end_downtrack));
 
-        } else {
-
-            start_lane = crossed_lanelets.front().id();
-            end_lane = crossed_lanelets.back().id();
         }
+
+        // TODO need to clean up method inputs and just accept that the world model was needed. 
+
+        lanelet::Id start_lane = crossed_lanelets.front().id();
+        lanelet::Id end_lane = crossed_lanelets.back().id();
 
         // Build stop and wait maneuver
         maneuvers.push_back(composeStopAndWaitManeuverMessage(last_maneuver_end_downtrack, route_end_downtrack, stopping_entry_speed, start_lane, end_lane));

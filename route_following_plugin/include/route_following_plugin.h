@@ -27,14 +27,20 @@
 #include <cav_msgs/UpcomingLaneChangeStatus.h>
 #include <gtest/gtest_prod.h>
 
+/**
+ * \brief Macro definition to enable easier access to fields shared across the maneuver types
+ * \param mvr The maneuver object to invoke the accessors on
+ * \param property The name of the field to access on the specific maneuver types. Must be shared by all extant maneuver types
+ * \return Expands to an expression (in the form of chained ternary operators) that evalutes to the desired field
+ */
 #define GET_MANEUVER_PROPERTY(mvr, property)\
         (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
             ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
                 ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
                     ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property :\
                         ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
-                        ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
-                            throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))))
+                            ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
+                                throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id " + std::to_string((mvr).type)))))))))
 
 #define SET_MANEUVER_PROPERTY(mvr, property, value)\
         (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property = (value) :\
@@ -42,7 +48,8 @@
                 ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property = (value) :\
                     ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property = (value) :\
                         ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property = (value) :\
-                            throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id")))))))
+                            ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property = (value) :\
+                                throw std::invalid_argument("SET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))))
 
                         
 namespace route_following_plugin
@@ -178,7 +185,7 @@ namespace route_following_plugin
 
         /**
          * \brief Adds a StopAndWait maneuver to the end of a maneuver set stopping at the provided downtrack value
-         *        NOTE: The priority of this method is to plan the stopping maneuver therefore earlier maneuvers will be modified or removed if possible to allow the stopping behavior to be executed
+         *        NOTE: The priority of this method is to plan the stopping maneuver therefore earlier maneuvers will be modified or removed if required to allow the stopping behavior to be executed
          * 
          * \param input_maneuvers The set of maneuvers to modify to support the StopAndWait maneuver.
          * \param route_end_downtrack The target stopping point (normally the end of the route) which the vehicle should stop before. Units meters
@@ -186,6 +193,10 @@ namespace route_following_plugin
          * \param stopping_logitudinal_accel The target deceleration (unsigned) for the stopping operation. Units m/s/s
          * \param lateral_accel_limit The lateral acceleration limit allowed for lane changes. Units m/s/s
          * \param min_maneuver_length The absolute minimum allowable maneuver length for any existing maneuvers in meters
+         * 
+         * \throw std::invalid_argument If existing maneuvers cannot be modified to allow stopping maneuver creation, or if the generated maneuvers do not overlap any lanelets in the map.
+         * 
+         * \return A list of maneuvers which mirrors the input list but with the modifications required to include a stopping maneuver at the end 
          * 
          * ASSUMPTION: At the moment the stopping entry speed is not updated because the assumption is
          * that any previous maneuvers which were slower need not be accounted for as planning for a higher speed will always be capable of handling that case 
@@ -242,7 +253,7 @@ namespace route_following_plugin
 
         double min_maneuver_length_ = 10.0; // Minimum length to allow for a maneuver when updating it for stop and wait
         
-        static constexpr double MAX_LANE_WIDTH=3.70; // Maximum lane width of a US highway
+        static constexpr double MAX_LANE_WIDTH = 3.70; // Maximum lane width of a US highway
 
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
@@ -297,6 +308,16 @@ namespace route_following_plugin
         FRIEND_TEST(RouteFollowingPlugin, TestAssociateSpeedLimit);
         FRIEND_TEST(RouteFollowingPlugin, TestAssociateSpeedLimitusingosm);
         FRIEND_TEST(RouteFollowingPlugin, TestHelperfunctions);
+        FRIEND_TEST(StopAndWaitTestFixture, CaseOne);
+        FRIEND_TEST(StopAndWaitTestFixture, CaseTwo);
+        FRIEND_TEST(StopAndWaitTestFixture, CaseThree);
+        FRIEND_TEST(StopAndWaitTestFixture, CaseFour);
+        FRIEND_TEST(StopAndWaitTestFixture, CaseFive);
+        FRIEND_TEST(StopAndWaitTestFixture, CaseSix);
+        FRIEND_TEST(StopAndWaitTestFixture, CaseSeven);
+        FRIEND_TEST(StopAndWaitTestFixture, CaseEight);
+        FRIEND_TEST(StopAndWaitTestFixture, CaseNine);
+        FRIEND_TEST(StopAndWaitTestFixture, CaseTen);
 
     };
 }
