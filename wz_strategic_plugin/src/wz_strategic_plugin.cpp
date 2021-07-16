@@ -59,38 +59,41 @@ namespace wz_strategic_plugin
 
     std::string traffic_light_interpreter(CarmaTrafficLightState state)
     {
+        std::string traffic_light_inter;
         switch(state) {
             case CarmaTrafficLightState::UNAVAILABLE:
-                // code block
+                traffic_light_inter = "R";
                 break;
             case CarmaTrafficLightState::DARK:
-                // code block
+                traffic_light_inter = "R";
                 break;
             case CarmaTrafficLightState::STOP_THEN_PROCEED:
-                // code block
+                traffic_light_inter = "R";
                 break;
             case CarmaTrafficLightState::STOP_AND_REMAIN:
-                // code block
+                traffic_light_inter = "R";
                 break;
             case CarmaTrafficLightState::PRE_MOVEMENT:
-                // code block
+                traffic_light_inter = "R";
                 break;
             case CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED:
-                // code block
+                traffic_light_inter = "R";
                 break;
             case CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED:
-                // code block
+                traffic_light_inter = "R";
                 break;
             case CarmaTrafficLightState::PERMISSIVE_CLEARANCE:
-                // code block
+                traffic_light_inter = "R";
                 break;
             case CarmaTrafficLightState::PROTECTED_CLEARANCE:
-                // code block
+                traffic_light_inter = "R";
                 break;
             case CarmaTrafficLightState::CAUTION_CONFLICTING_TRAFFIC:
-                // code block
+                traffic_light_inter = "R";
                 break;
         }
+
+        return traffic_light_inter;
 
     }
 
@@ -107,16 +110,16 @@ namespace wz_strategic_plugin
 
         ROS_DEBUG("\n\nFinding traffic_light information");
         auto traffic_list = current_lanelet.second.regulatoryElementsAs<lanelet::CarmaTrafficLight>();
-        
+
+        auto nearest_traffic_light = traffic_list.front();
+
         if(!traffic_list.empty()) {
 
             double traffic_light_down_track = 0;
 
-/*
-            auto point = lanelet::traits::to2D(traffic_list[0]->stopLine());
-            auto pos = carma_wm::geometry::trackPos(current_lanelet.second, point);
-            double traffic_light_down_track = pos.downtrack;
-*/
+            // auto point = lanelet::traits::to2D(nearest_traffic_light->stopLine());
+            // auto pos = carma_wm::geometry::trackPos(current_lanelet.second, point);
+            // double traffic_light_down_track = pos.downtrack;
 
             ROS_DEBUG("traffic_light_down_track %d", traffic_light_down_track);
 
@@ -127,10 +130,10 @@ namespace wz_strategic_plugin
             ROS_DEBUG("time_remaining_to_traffic_light %d", distance_remaining_to_traffic_light / current_speed_);
             ros::Duration time_remaining_to_traffic_light(distance_remaining_to_traffic_light / current_speed_);
 
-            auto traffic_light_current_state = traffic_list[0]->getState();
+            auto traffic_light_current_state = nearest_traffic_light->getState();
             ROS_DEBUG("traffic_light_current_state %d", traffic_light_current_state);
 
-            auto traffic_light_next_predicted_state = traffic_list[0]->getState(ros::Time::now() + time_remaining_to_traffic_light);
+            auto traffic_light_next_predicted_state = nearest_traffic_light->getState(ros::Time::now() + time_remaining_to_traffic_light);
             ROS_DEBUG("traffic_light_next_predicted_state %d", traffic_light_next_predicted_state);
 
             ROS_DEBUG("min_distance_to_traffic_light %d", min_distance_to_traffic_light);
