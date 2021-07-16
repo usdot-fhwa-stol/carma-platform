@@ -255,36 +255,19 @@ namespace platoon_strategic
 
     double PlatoonStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt)
     {
-        lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
-        double target_speed = 0.0, traffic_speed =0.0, param_speed =0.0;
-        double hardcoded_max=lanelet::Velocity(hardcoded_params::control_limits::MAX_LONGITUDINAL_VELOCITY_MPS * lanelet::units::MPS()).value();
+        double target_speed = 0.0;
 
+        lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
         if (traffic_rules)
         {
-            traffic_speed=(*traffic_rules)->speedLimit(llt).speedLimit.value();
-            
+            target_speed =(*traffic_rules)->speedLimit(llt).speedLimit.value();
         }
-        else{
-            ROS_WARN(" Valid traffic rules object could not be built.");
+        else
+        {
+            throw std::invalid_argument("Valid traffic rules object could not be built");
         }
 
-        if(config_.config_limit > 0.0 && config_.config_limit < hardcoded_max)
-        {
-            param_speed = config_.config_limit;
-            ROS_DEBUG_STREAM("Using Configurable value");
-        }
-        else 
-        {
-            param_speed = hardcoded_max;
-            ROS_DEBUG_STREAM(" Using Hardcoded maximum");
-        }
-        //If either value is 0, use the other valid limit
-        if(traffic_speed <= config_.epislon || param_speed <= config_.epislon){
-            target_speed = std::max(traffic_speed, param_speed);
-        }
-        else{
-            target_speed = std::min(traffic_speed,param_speed);
-        }
+        ROS_DEBUG_STREAM("target speed (limit) " << target_speed);
         
         return target_speed;
     }

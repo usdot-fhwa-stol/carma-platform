@@ -350,10 +350,12 @@ namespace route_following_plugin
 
     void RouteFollowingPlugin::updateEndingSpeed(cav_msgs::Maneuver &maneuver, double end_speed) const
     {
+        ROS_DEBUG_STREAM("end_speed: " << end_speed);
         switch (maneuver.type)
         {
         case cav_msgs::Maneuver::LANE_FOLLOWING:
             maneuver.lane_following_maneuver.end_speed = end_speed;
+            ROS_DEBUG_STREAM("end_speed updated for lane following: " << end_speed);
             break;
         case cav_msgs::Maneuver::LANE_CHANGE:
             maneuver.lane_change_maneuver.end_speed = end_speed;
