@@ -117,9 +117,9 @@ namespace wz_strategic_plugin
 
             double traffic_light_down_track = 0;
 
-            // auto point = lanelet::traits::to2D(nearest_traffic_light->stopLine());
-            // auto pos = carma_wm::geometry::trackPos(current_lanelet.second, point);
-            // double traffic_light_down_track = pos.downtrack;
+            auto point = lanelet::traits::to2D(nearest_traffic_light->stopLine());
+            auto pos = carma_wm::geometry::trackPos(current_lanelet.second, point);
+            double traffic_light_down_track = pos.downtrack;
 
             ROS_DEBUG("traffic_light_down_track %d", traffic_light_down_track);
 
@@ -149,11 +149,11 @@ namespace wz_strategic_plugin
                     if(traffic_light_interpreter(traffic_light_next_predicted_state) == "R") {
 
                         // stop_and_wait
-                        cav_msgs::Maneuver stop_and_wait = composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time)
+                        cav_msgs::Maneuver stop_and_wait = composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id);
                         resp.new_plan.maneuvers.push_back(stop_and_wait);
 
                         // workzone_tactical
-                        cav_msgs::Maneuver workzone_tactical = composeWorkZoneManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time)
+                        cav_msgs::Maneuver workzone_tactical = composeWorkZoneManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time);
                         resp.new_plan.maneuvers.push_back(workzone_tactical);
 
                     }
@@ -176,7 +176,7 @@ namespace wz_strategic_plugin
                     if(traffic_light_interpreter(traffic_light_current_state) == "R") {
 
                         // stop_and_wait
-                        cav_msgs::Maneuver stop_and_wait = composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time);
+                        cav_msgs::Maneuver stop_and_wait = composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id);
                         resp.new_plan.maneuvers.push_back(stop_and_wait);
 
                         // workzone_tactical
@@ -188,11 +188,11 @@ namespace wz_strategic_plugin
                     if(traffic_light_interpreter(traffic_light_current_state) == "G") {
 
                         // LaneFollowing
-                        cav_msgs::Maneuver Lane_Following = composeLaneFollowingManeuverMessage(current_car_down_track, traffic_light_down_track, current_speed_, current_speed_, lane_id)
+                        cav_msgs::Maneuver Lane_Following = composeLaneFollowingManeuverMessage(current_car_down_track, traffic_light_down_track, current_speed_, current_speed_, lane_id);
                         resp.new_plan.maneuvers.push_back(Lane_Following);
 
                         // workzone_tactical
-                        cav_msgs::Maneuver workzone_tactical = composeWorkZoneManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time)
+                        cav_msgs::Maneuver workzone_tactical = composeWorkZoneManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time);
                         resp.new_plan.maneuvers.push_back(workzone_tactical);
 
                     }
@@ -225,27 +225,30 @@ namespace wz_strategic_plugin
         return maneuver_msg;
     }
 
-    cav_msgs::Maneuver WzStrategicPlugin::composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int end_lane_id, ros::Time current_time, double end_time)
+    cav_msgs::Maneuver WzStrategicPlugin::composeStopAndWaitManeuverMessage(double start_dist, double end_dist, double start_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id) const
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
         maneuver_msg.stop_and_wait_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
-        maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
-        maneuver_msg.stop_and_wait_maneuver.parameters.planning_tactical_plugin = "StopandWaitPlugin";
+        maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN
+                                                                        | cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA;
+        maneuver_msg.stop_and_wait_maneuver.parameters.planning_tactical_plugin = stop_and_wait_plugin_;
         maneuver_msg.stop_and_wait_maneuver.parameters.planning_strategic_plugin = planning_strategic_plugin_;
-        maneuver_msg.stop_and_wait_maneuver.start_dist = current_dist;
-        maneuver_msg.stop_and_wait_maneuver.start_speed = current_speed;
+        maneuver_msg.stop_and_wait_maneuver.start_dist = start_dist;
+        maneuver_msg.stop_and_wait_maneuver.start_speed = start_speed;
         maneuver_msg.stop_and_wait_maneuver.end_dist = end_dist;
-        maneuver_msg.stop_and_wait_maneuver.start_time = current_time;
-        maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(start_lane_id);
-        maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(end_lane_id);
-        if(end_time < mvr_duration_){
-            end_time = mvr_duration_;
-        }
+        maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(starting_lane_id);
+        maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(ending_lane_id);
+        //Start time and end time for maneuver are assigned in updateTimeProgress
 
-        maneuver_msg.stop_and_wait_maneuver.end_time = current_time + ros::Duration(end_time);
+        // // Set the meta-data for the StopAndWait Maneuver to define the buffer in the route end point stopping location
+        // maneuver_msg.stop_and_wait_maneuver.parameters.float_valued_meta_data.push_back(route_end_point_buffer_);
 
-        ROS_INFO_STREAM("Creating StopandWait start dist: " << current_dist << " end dist: " << end_dist);
+        // NOTE: The maneuver id is set here because maneuvers are regenerated once per route, so it is acceptable to regenerate them on route updates.
+        //       If maneuvers were not generated only on route updates we would want to preserve the ids across plans
+        maneuver_msg.stop_and_wait_maneuver.parameters.maneuver_id = getNewManeuverId();
+
+        ROS_DEBUG_STREAM("Creating stop and wait maneuver id:" << maneuver_msg.stop_and_wait_maneuver.parameters.maneuver_id << "start dist: " << start_dist << " end dist: " << end_dist << " start_speed: " << start_speed << " Starting llt: " << starting_lane_id << " Ending llt: " << ending_lane_id);
 
         return maneuver_msg;
     }
