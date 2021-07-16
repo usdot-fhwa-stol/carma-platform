@@ -205,6 +205,31 @@ namespace route_following_plugin
         updateTimeProgress(resp.new_plan.maneuvers, ros::Time::now());
         //update starting speed of first maneuver
         updateStartingSpeed(resp.new_plan.maneuvers.front(), current_speed_);
+        //TO DO - replace block below with better method to update ending speed if speed limit changes
+        //update End distance for current maneuver based on speed limit of current lanelet
+        auto shortest_path = wm_->getRoute()->shortestPath();
+        auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc_, 10);
+        lanelet::ConstLanelet current_lanelet;
+        int last_lanelet_index = -1;
+        for (auto llt : current_lanelets)
+        {
+            if (boost::geometry::within(current_loc_, llt.second.polygon2d()))
+            {
+                int potential_index = findLaneletIndexFromPath(llt.second.id(), shortest_path);
+                if (potential_index != -1)
+                {
+                    last_lanelet_index = potential_index;
+                    current_lanelet = shortest_path[last_lanelet_index];
+                    break;
+                }
+            }
+        }
+        if(last_lanelet_index == -1)
+        {
+            ROS_ERROR_STREAM("Current position is not on the shortest path! Returning an empty maneuver");
+            return true;
+        }
+        updateEndingSpeed(resp.new_plan.maneuvers.front(), findSpeedLimit(current_lanelet));
 
         return true;
     }
@@ -320,6 +345,33 @@ namespace route_following_plugin
                 throw std::invalid_argument("Invalid maneuver type, cannot update time progress for maneuver");
             }
             prev_time = time_progress;
+        }
+    }
+
+    void RouteFollowingPlugin::updateEndingSpeed(cav_msgs::Maneuver &maneuver, double end_speed) const
+    {
+        switch (maneuver.type)
+        {
+        case cav_msgs::Maneuver::LANE_FOLLOWING:
+            maneuver.lane_following_maneuver.end_speed = end_speed;
+            break;
+        case cav_msgs::Maneuver::LANE_CHANGE:
+            maneuver.lane_change_maneuver.end_speed = end_speed;
+            break;
+        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+            maneuver.intersection_transit_straight_maneuver.end_speed = end_speed;
+            break;
+        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+            maneuver.intersection_transit_left_turn_maneuver.end_speed = end_speed;
+            break;
+        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+            maneuver.intersection_transit_right_turn_maneuver.end_speed = end_speed;
+            break;
+        case cav_msgs::Maneuver::STOP_AND_WAIT:
+            //Do nothing
+            break;
+        default:
+            throw std::invalid_argument("Invalid maneuver type, cannot update starting speed for maneuver");
         }
     }
 

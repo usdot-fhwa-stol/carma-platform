@@ -138,6 +138,9 @@ namespace route_following_plugin
          * \param start_time The starting speed for the maneuver passed as argument
          */
         void updateStartingSpeed(cav_msgs::Maneuver& maneuver, double start_speed) const;
+
+        void updateEndingSpeed(cav_msgs::Maneuver& maneuver, double end_speed) const;
+
         /**
          * \brief Service callback for arbitrator maneuver planning
          * \param req Plan maneuver request
