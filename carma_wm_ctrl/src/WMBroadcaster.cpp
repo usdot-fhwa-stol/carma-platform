@@ -300,7 +300,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
     }
     else
     {
-      return_list = processWorkZone();
+      return_list = createWorkzoneGeofence();
       return return_list;
     }
   }
@@ -313,58 +313,149 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
   return return_list;
 }
 
-std::vector<std::shared_ptr<Geofence>> WMBroadcaster::processWorkZone()
+std::vector<std::shared_ptr<Geofence>> WMBroadcaster::createWorkzoneGeofence()
 {
-  //TODO: FIll in
-  //////////////////
-  /// TAPERRIGHT
-  /////////////////
-
-  // utilize the cache_
-  auto taper_right_first_pt = work_zone_geofence_cache_[cav_msgs::TrafficControlDetail::TAPERRIGHT]->gf_pts.front().basicPoint2d();
-  auto taper_right_last_llt = work_zone_geofence_cache_[cav_msgs::TrafficControlDetail::TAPERRIGHT]->affected_parts_.front().lanelet().get();
-  // TODO: fix below...
   std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
   std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+  preprocessWorkzoneGeometry(work_zone_geofence_cache_, parallel_llts, opposite_llts);
 
-  processTapers(parallel_llts, opposite_llts, taper_right_first_pt, taper_right_last_llt);
+  // Create geofence for adding all lanelets that own required stoprule and trafficlights inside
+  auto gf_ptr = createWorkzoneGeometry(work_zone_geofence_cache_, parallel_llts->front(), parallel_llts->back(), opposite_llts->back(), opposite_llts->front());
 
-  //////////////////////////
-  /// OPENRIGHT
-  ///////////////////////////
+  // copy static info from the existing workzone
+  // TODO:
+  // id
+  // schedule
 
-  // utilize the cache_
-  auto open_right_last_pt = work_zone_geofence_cache_[cav_msgs::TrafficControlDetail::OPENRIGHT]->gf_pts.back().basicPoint2d();
-  auto open_right_last_llt = work_zone_geofence_cache_[cav_msgs::TrafficControlDetail::OPENRIGHT]->affected_parts_.back().lanelet().get();
-
-  processTapers(parallel_llts, opposite_llts, open_right_last_pt, open_right_last_llt);
-
-  // split both sides as needed and "block" any old ones?
-  // Create 3 additional lanelets and "block" any old ones.
-  return {};
+  return {gf_ptr};
 }
 
-void WMBroadcaster::processTapers(std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts, const lanelet::BasicPoint2d& input_pt, const lanelet::ConstLanelet& input_llt)
+std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache, lanelet::Lanelet parallel_llt_front, lanelet::Lanelet parallel_llt_back, 
+                          lanelet::Lanelet opposite_llt_back,  lanelet::Lanelet opposite_llt_front)
 {
-  //TODO: it could potentiall filter????
-  
+  auto gf_ptr = std::make_shared<Geofence>(Geofence());
+
+  //create trapezoids and mid lanelet
+  lanelet::LineString2d front_left_ls(utils::getId(), {parallel_llt_front.leftBound2d().back(), opposite_llt_back.rightBound2d().back()});
+  lanelet::LineString2d front_right_ls(utils::getId(), {parallel_llt_front.rightBound2d().back(), opposite_llt_back.leftBound2d().back()});
+  lanelet::Lanelet front_llt_diag(utils::getId(), front_left_ls, front_right_ls);
+
+  lanelet::LineString2d mid_left_ls(utils::getId(), {opposite_llt_back.rightBound2d().back(), opposite_llt_back.rightBound2d().front()});  
+  lanelet::LineString2d mid_right_ls(utils::getId(), {opposite_llt_back.leftBound2d().back(), opposite_llt_back.leftBound2d().front()});
+  lanelet::Lanelet mid_llt (utils::getId(), mid_left_ls, mid_right_ls);
+
+  lanelet::LineString2d back_left_ls(utils::getId(), { opposite_llt_front.rightBound2d().front(), parallel_llt_back.leftBound2d().front()});  
+  lanelet::LineString2d back_right_ls(utils::getId(), { opposite_llt_front.leftBound2d().front(), parallel_llt_back.rightBound2d().front()});
+  lanelet::Lanelet back_llt_diag (utils::getId(), back_left_ls, back_right_ls);
+
+  std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+  processOppositeTaper(opposite_llts, work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->gf_pts.back().basicPoint2d(), 
+                        work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->affected_parts_.back());
+
+  // add traffic light and stoprule to parallel
+  lanelet::LineString2d parallel_stop_ls(utils::getId(), {parallel_llt_front.leftBound2d().back(), parallel_llt_front.rightBound2d().back()});
+  lanelet::CarmaTrafficLightPtr tfl_parallel = std::make_shared<lanelet::CarmaTrafficLight>(lanelet::CarmaTrafficLight::buildData(lanelet::utils::getId(), parallel_stop_ls, {parallel_llt_front}, {}));
+  lanelet::StopRulePtr stop_rule_parallel = std::make_shared<lanelet::StopRule>(lanelet::StopRule::buildData(lanelet::utils::getId(), parallel_stop_ls, lanelet::Participants::Vehicle));
+  parallel_llt_front.addRegulatoryElement(tfl_parallel);
+  parallel_llt_front.addRegulatoryElement(stop_rule_parallel);
+
+  // add traffic light and stoprule to opposite
+  std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+  processOppositeTaper(opposite_llts, work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->gf_pts.back().basicPoint2d(), 
+                        work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->affected_parts_.back());
+  auto opposite_llt = opposite_llts->front();
+  lanelet::LineString2d opposite_stop_ls(utils::getId(), {opposite_llt.leftBound2d().back(), opposite_llt.rightBound2d().back()});
+  lanelet::CarmaTrafficLightPtr tfl_opposite = std::make_shared<lanelet::CarmaTrafficLight>(lanelet::CarmaTrafficLight::buildData(lanelet::utils::getId(), opposite_stop_ls, {opposite_llt}, {}));
+  lanelet::StopRulePtr stop_rule_opposite = std::make_shared<lanelet::StopRule>(lanelet::StopRule::buildData(lanelet::utils::getId(), opposite_stop_ls, lanelet::Participants::Vehicle));
+  opposite_llt.addRegulatoryElement(tfl_opposite);
+  opposite_llt.addRegulatoryElement(stop_rule_opposite);
+
+  for (auto regem : parallel_llt_front.regulatoryElements()) //copy existing regem into the new llts
+  {
+    parallel_llt_front.addRegulatoryElement(regem);
+    front_llt_diag.addRegulatoryElement(regem);
+    mid_llt.addRegulatoryElement(regem);
+  }
+
+  for (auto regem : parallel_llt_back.regulatoryElements()) //copy existing regem into the new llts
+  {
+    back_llt_diag.addRegulatoryElement(regem);
+    parallel_llt_back.addRegulatoryElement(regem);
+  }
+
+  for (lanelet::Lanelet llt: opposite_llts.get())
+  {
+    for (auto regem : opposite_llt_front.regulatoryElements())
+    {
+      llt.addRegulatoryElement(regem);
+    }
+    gf_ptr->affected_parts_.push_back(llt);
+  }
+
+  gf_ptr->affected_parts_.push_back(parallel_llt_front);
+  gf_ptr->affected_parts_.push_back(front_llt_diag);
+  gf_ptr->affected_parts_.push_back(mid_llt);
+  gf_ptr->affected_parts_.push_back(back_llt_diag);
+  gf_ptr->affected_parts_.push_back(parallel_llt_back);
+
+  // TODO: add regem and ids in the gfptr
+
+  return gf_ptr;
+}
+
+void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache, std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts)
+{
+  /// TAPERRIGHT PARALLEL
+  auto taper_right_first_pt = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::TAPERRIGHT]->gf_pts.front().basicPoint2d();
+  auto taper_right_first_llt = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::TAPERRIGHT]->affected_parts_.front().lanelet().get();
+
+  processParallelTaper(parallel_llts, taper_right_first_pt, taper_right_first_llt);
+
+  /// OPENRIGHT PARALLEL
+  auto open_right_last_pt = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->gf_pts.back().basicPoint2d();
+  auto open_right_last_llt = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->affected_parts_.back().lanelet().get();
+
+  processParallelTaper(parallel_llts, open_right_last_pt, open_right_last_llt);
+
+  /// OPENRIGHT OPPOSITE
+  auto open_right_first_pt = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->gf_pts.front().basicPoint2d();
+  auto open_right_first_llt = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->affected_parts_.front().lanelet().get();
+
+  processOppositeTaper(opposite_llts, open_right_last_pt, open_right_last_llt);
+
+   /// TAPERRIGHT OPPOSITE
+  auto taper_right_last_pt = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::TAPERRIGHT]->gf_pts.back().basicPoint2d();
+  auto taper_right_last_llt = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::TAPERRIGHT]->affected_parts_.back().lanelet().get();
+
+  processOppositeTaper(opposite_llts, taper_right_last_pt, taper_right_last_llt);
+}
+
+void WMBroadcaster::processParallelTaper(std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, const lanelet::BasicPoint2d& input_pt, const lanelet::ConstLanelet& input_llt)
+{
   // get ratio of this point and split
   auto point_downtrack = carma_wm::geometry::trackPos(input_llt, input_pt).downtrack;
   auto point_downtrack_ratio = point_downtrack / carma_wm::geometry::trackPos(input_llt, input_llt.centerline().back().basicPoint2d()).downtrack;
   auto new_parallel_llts = splitLaneletWithRatio(point_downtrack_ratio, input_llt);
-  
+
+  parallel_llts->insert(parallel_llts->begin(),new_parallel_llts.begin(), new_parallel_llts.end());
+}
+
+void WMBroadcaster::processOppositeTaper(std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts, const lanelet::BasicPoint2d& input_pt, const lanelet::ConstLanelet& input_llt)
+{
+  // get ratio of this point and split
+  auto point_downtrack = carma_wm::geometry::trackPos(input_llt, input_pt).downtrack;
+  auto point_downtrack_ratio = point_downtrack / carma_wm::geometry::trackPos(input_llt, input_llt.centerline().back().basicPoint2d()).downtrack;
+
   // get opposing lanelets and split
   auto opposing_llts = carma_wm::getOppositeLaneletsFromPoint(current_map_, input_pt);
-
+  
   if (opposing_llts.empty())
   {
     ROS_ERROR_STREAM("WMBroadcaster was not able to find opposing lane for given point in geofence related to Work Zone! Returning");
     return;
   }
   auto new_llts_opposite = splitLaneletWithRatio(1 - point_downtrack_ratio, opposing_llts[0]);
-
-  parallel_llts->insert(parallel_llts->begin(),new_parallel_llts.begin(), new_parallel_llts.end());
-  opposite_llts->insert(parallel_llts->begin(),new_parallel_llts.begin(), new_parallel_llts.end());
+  opposite_llts->insert(opposite_llts->begin(),new_llts_opposite.begin(), new_llts_opposite.end());
 }
 
 std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithRatio(double ratio, const lanelet::ConstLanelet& input_lanelet) const

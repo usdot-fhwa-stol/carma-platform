@@ -25,6 +25,8 @@
 #include <lanelet2_io/io_handlers/Serialize.h>
 #include <lanelet2_core/primitives/Point.h>
 #include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
+#include <lanelet2_extension/regulatory_elements/StopRule.h>
+#include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
 #include <lanelet2_extension/regulatory_elements/DigitalMinimumGap.h>
 #include <lanelet2_core/primitives/LaneletOrArea.h>

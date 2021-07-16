@@ -246,16 +246,25 @@ public:
   cav_msgs::Route getRoute();
 
   // TODO: fill in inputs and description
-  std::vector<std::shared_ptr<Geofence>> processWorkZone();
+  std::vector<std::shared_ptr<Geofence>> createWorkzoneGeofence();
 
   // TODO: fill in inputs and description
-  void processTapers(std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts, const lanelet::BasicPoint2d& input_pt, const lanelet::ConstLanelet& input_llt);
+  void processParallelTaper(std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, const lanelet::BasicPoint2d& input_pt, const lanelet::ConstLanelet& input_llt);
+  void processOppositeTaper(std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts, const lanelet::BasicPoint2d& input_pt, const lanelet::ConstLanelet& input_llt);
 
   // TODO: fill in inputs and description
   //  Fill in like using both sides of linestrings and create additional two lanelets from one and return
 
   std::vector<lanelet::Lanelet> splitLaneletWithRatio(double ratio, const lanelet::ConstLanelet& input_lanelet) const;
+  // TODO: fill inputs and description
+  // creates the "bridge lanelets" and adds traffic light and stoprule inside relevant lanelets
+  std::shared_ptr<Geofence> createWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache, lanelet::Lanelet parallel_llt_front, lanelet::Lanelet parallel_llt_back, 
+                          lanelet::Lanelet opposite_llt_back, lanelet::Lanelet opposite_llt_front);
 
+  // TODO: fill inputs and description
+  // filter parallel and opposite lanelets
+  void preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache, std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, 
+                                                    std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts);
 private:
   lanelet::ConstLanelets route_path_;
   std::unordered_set<lanelet::Id> active_geofence_llt_ids_; 
