@@ -59,6 +59,12 @@ namespace route_following_plugin
             this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
         });
 
+        wml_->setMapCallback([this]() {
+            if (wm_->getRoute()) { // If this map update occured after a route was provided we need to regenerate maneuvers
+                this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
+            }
+        });
+
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
             [this](const auto &) { plugin_discovery_pub_.publish(plugin_discovery_msg_); });
@@ -205,31 +211,6 @@ namespace route_following_plugin
         updateTimeProgress(resp.new_plan.maneuvers, ros::Time::now());
         //update starting speed of first maneuver
         updateStartingSpeed(resp.new_plan.maneuvers.front(), current_speed_);
-        //TO DO - replace block below with better method to update ending speed if speed limit changes
-        //update End distance for current maneuver based on speed limit of current lanelet
-        auto shortest_path = wm_->getRoute()->shortestPath();
-        auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc_, 10);
-        lanelet::ConstLanelet current_lanelet;
-        int last_lanelet_index = -1;
-        for (auto llt : current_lanelets)
-        {
-            if (boost::geometry::within(current_loc_, llt.second.polygon2d()))
-            {
-                int potential_index = findLaneletIndexFromPath(llt.second.id(), shortest_path);
-                if (potential_index != -1)
-                {
-                    last_lanelet_index = potential_index;
-                    current_lanelet = shortest_path[last_lanelet_index];
-                    break;
-                }
-            }
-        }
-        if(last_lanelet_index == -1)
-        {
-            ROS_ERROR_STREAM("Current position is not on the shortest path! Returning an empty maneuver");
-            return true;
-        }
-        updateEndingSpeed(resp.new_plan.maneuvers.front(), findSpeedLimit(current_lanelet));
 
         return true;
     }
