@@ -24,6 +24,10 @@
 
 namespace route_following_plugin
 {
+/**
+ * NOTE: This file contains test cases labeled by number
+ *        These test cases refer to the various scenarios shown here route_following_plugin/resource/media/StopAndWaitTestCases.png
+ */ 
 class StopAndWaitTestFixture : public ::testing::Test
 {
   /**
