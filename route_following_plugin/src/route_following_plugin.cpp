@@ -329,35 +329,6 @@ namespace route_following_plugin
         }
     }
 
-    void RouteFollowingPlugin::updateEndingSpeed(cav_msgs::Maneuver &maneuver, double end_speed) const
-    {
-        ROS_DEBUG_STREAM("end_speed: " << end_speed);
-        switch (maneuver.type)
-        {
-        case cav_msgs::Maneuver::LANE_FOLLOWING:
-            maneuver.lane_following_maneuver.end_speed = end_speed;
-            ROS_DEBUG_STREAM("end_speed updated for lane following: " << end_speed);
-            break;
-        case cav_msgs::Maneuver::LANE_CHANGE:
-            maneuver.lane_change_maneuver.end_speed = end_speed;
-            break;
-        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
-            maneuver.intersection_transit_straight_maneuver.end_speed = end_speed;
-            break;
-        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
-            maneuver.intersection_transit_left_turn_maneuver.end_speed = end_speed;
-            break;
-        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
-            maneuver.intersection_transit_right_turn_maneuver.end_speed = end_speed;
-            break;
-        case cav_msgs::Maneuver::STOP_AND_WAIT:
-            //Do nothing
-            break;
-        default:
-            throw std::invalid_argument("Invalid maneuver type, cannot update starting speed for maneuver");
-        }
-    }
-
     void RouteFollowingPlugin::updateStartingSpeed(cav_msgs::Maneuver &maneuver, double start_speed) const
     {
         switch (maneuver.type)
@@ -410,20 +381,6 @@ namespace route_following_plugin
         default:
             throw std::invalid_argument("Invalid maneuver type");
         }
-    }
-
-    int RouteFollowingPlugin::findLaneletIndexFromPath(int target_id, const lanelet::routing::LaneletPath &path) const
-    {
-        for (size_t i = 0; i < path.size(); ++i)
-        {
-            if (path[i].id() == target_id)
-            {
-                return i;
-            }
-        }
-        ROS_DEBUG_STREAM("Returning -1 because could not find lanelet id" << target_id);
-
-        return -1;
     }
 
     cav_msgs::Maneuver RouteFollowingPlugin::composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id) const

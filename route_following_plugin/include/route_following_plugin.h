@@ -81,14 +81,6 @@ namespace route_following_plugin
         private:
 
         /**
-         * \brief Given a LaneletPath object, find index of the lanelet which has target_id as its lanelet ID
-         * \param target_id The laenlet ID this function is looking for
-         * \param path A list of lanelet with different lanelet IDs
-         * \return Index of the target lanelet in the list
-         */
-        int findLaneletIndexFromPath(int target_id,const lanelet::routing::LaneletPath& path) const;
-
-        /**
          * \brief Compose a lane keeping maneuver message based on input params
          * \param start_dist Start downtrack distance of the current maneuver
          * \param end_dist End downtrack distance of the current maneuver
@@ -138,8 +130,6 @@ namespace route_following_plugin
          * \param start_time The starting speed for the maneuver passed as argument
          */
         void updateStartingSpeed(cav_msgs::Maneuver& maneuver, double start_speed) const;
-
-        void updateEndingSpeed(cav_msgs::Maneuver& maneuver, double end_speed) const;
 
         /**
          * \brief Service callback for arbitrator maneuver planning
@@ -226,7 +216,6 @@ namespace route_following_plugin
         ros::Duration getManeuverDuration(cav_msgs::Maneuver &maneuver, double epsilon) const;
 
         //Unit Tests
-        FRIEND_TEST(RouteFollowingPluginTest, testFindLaneletIndexFromPath);
         FRIEND_TEST(RouteFollowingPluginTest, testComposeManeuverMessage);
         FRIEND_TEST(RouteFollowingPluginTest, testIdentifyLaneChange);
         FRIEND_TEST(RouteFollowingPlugin, TestAssociateSpeedLimit);

@@ -34,18 +34,6 @@
 
 namespace route_following_plugin
 {
-    
-    TEST(RouteFollowingPluginTest, testFindLaneletIndexFromPath)
-    {
-        RouteFollowingPlugin rfp;
-        lanelet::ConstLanelets lls;
-        lanelet::Lanelet ll;
-        ll.setId(15);
-        lls.push_back(ll);
-        lanelet::routing::LaneletPath path(lls);
-        EXPECT_EQ(0, rfp.findLaneletIndexFromPath(15, path));
-        EXPECT_EQ(-1, rfp.findLaneletIndexFromPath(5, path));
-    }
 
     TEST(RouteFollowingPluginTest, testComposeManeuverMessage)
     {
