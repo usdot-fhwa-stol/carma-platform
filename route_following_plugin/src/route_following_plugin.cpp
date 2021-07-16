@@ -50,29 +50,30 @@ double getManeuverEndSpeed(const cav_msgs::Maneuver& mvr) {
 }
 
 /**
- * \brief Anonymous function to extract maneuver end speed which can not be optained with GET_MANEUVER_PROPERY calls due to it missing in stop and wait plugin
+ * \brief Anonymous function to set the lanelet ids for all maneuver types except lane change
  */ 
 void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanelet::Id end_id) {
+
     switch(mvr.type) {
         case cav_msgs::Maneuver::LANE_CHANGE:
-            mvr.lane_change_maneuver.starting_lane_id = start_id;
-            mvr.lane_change_maneuver.ending_lane_id = end_id;
+            mvr.lane_change_maneuver.starting_lane_id = std::to_string(start_id);
+            mvr.lane_change_maneuver.ending_lane_id = std::to_string(end_id);
             break;
         case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
-            mvr.intersection_transit_straight_maneuver.starting_lane_id = start_id;
-            mvr.intersection_transit_straight_maneuver.ending_lane_id = end_id;
+            mvr.intersection_transit_straight_maneuver.starting_lane_id = std::to_string(start_id);
+            mvr.intersection_transit_straight_maneuver.ending_lane_id = std::to_string(end_id);
             break;
         case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
-            mvr.intersection_transit_left_turn_maneuver.starting_lane_id = start_id;
-            mvr.intersection_transit_left_turn_maneuver.ending_lane_id = end_id;
+            mvr.intersection_transit_left_turn_maneuver.starting_lane_id = std::to_string(start_id);
+            mvr.intersection_transit_left_turn_maneuver.ending_lane_id = std::to_string(end_id);
             break;
         case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
-            mvr.intersection_transit_right_turn_maneuver.starting_lane_id = start_id;
-            mvr.intersection_transit_right_turn_maneuver.ending_lane_id = end_id;
+            mvr.intersection_transit_right_turn_maneuver.starting_lane_id = std::to_string(start_id);
+            mvr.intersection_transit_right_turn_maneuver.ending_lane_id = std::to_string(end_id);
             break;
         case cav_msgs::Maneuver::STOP_AND_WAIT:
             mvr.stop_and_wait_maneuver.starting_lane_id = start_id;
-            mvr.stop_and_wait_maneuver.ending_lane_id = end_id;
+            mvr.stop_and_wait_maneuver.ending_lane_id = std::to_string(end_id);
             break;
         default:
             throw std::invalid_argument("Maneuver type does not have start,end lane ids");
@@ -250,7 +251,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         double stopping_distance = 0.5 * (stopping_entry_speed * stopping_entry_speed) / stopping_logitudinal_accel;
 
         // Compute required starting downtrack for maneuver
-        double required_start_downtrack = route_end_downtrack - stopping_distance;
+        double required_start_downtrack = std::max(0.0, route_end_downtrack - stopping_distance);
 
         // Loop to drop any maneuvers which fully overlap our stopping maneuver while accounting for minimum length maneuver buffers
         while ( !maneuvers.empty() && maneuverWithBufferStartsAfterDowntrack(maneuvers.back(), required_start_downtrack, lateral_accel_limit, min_maneuver_length_) ) { 

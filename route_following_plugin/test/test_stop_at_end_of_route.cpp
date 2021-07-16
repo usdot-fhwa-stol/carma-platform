@@ -392,7 +392,7 @@ TEST_F(StopAndWaitTestFixture, CaseSeven)
   ASSERT_EQ(1, result[1].lane_following_maneuver.lane_ids.size());
   ASSERT_TRUE(result[1].lane_following_maneuver.lane_ids[0].compare("1202") == 0);
 
-  // Stop And Wait should have been extended
+  // Stop And Wait 
   ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result[2].type);
   ASSERT_NEAR(75.0, result[2].stop_and_wait_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(100.0, result[2].stop_and_wait_maneuver.end_dist, 0.00001);
@@ -403,14 +403,95 @@ TEST_F(StopAndWaitTestFixture, CaseSeven)
 
 TEST_F(StopAndWaitTestFixture, CaseEight)
 {
+            RouteFollowingPlugin worker;
+  worker.wm_ = cmw_;  // Set world model from test fixture
+
+  double entry_speed = 10.0;
+  double long_accel_limit = 2.0;
+  double lat_accel_limit = 1.0;
+  double min_maneuver_length = 10.0;
+  double route_end_downtrack = 100.0;
+
+  cav_msgs::Maneuver m1;
+  m1.type = cav_msgs::Maneuver::LANE_CHANGE;
+  m1.lane_change_maneuver.start_dist = 50.01;
+  m1.lane_change_maneuver.end_dist = 85;
+  m1.lane_change_maneuver.start_speed = entry_speed;
+  m1.lane_change_maneuver.end_speed = entry_speed;
+  m1.lane_change_maneuver.starting_lane_id = "1202";
+  m1.lane_change_maneuver.ending_lane_id = "1203";
+
+  auto result = worker.addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
+                                                lat_accel_limit, min_maneuver_length);
+
+  ASSERT_EQ(2, result.size());
+
+  // m1
+  ASSERT_EQ(cav_msgs::Maneuver::LANE_CHANGE, result[0].type);
+  ASSERT_NEAR(50.01, result[0].lane_change_maneuver.start_dist, 0.00001);
+  ASSERT_NEAR(75.0, result[0].lane_change_maneuver.end_dist, 0.00001);
+  ASSERT_NEAR(entry_speed, result[0].lane_change_maneuver.start_speed, 0.00001);
+  ASSERT_NEAR(entry_speed, result[0].lane_change_maneuver.end_speed, 0.00001);
+  ASSERT_TRUE(result[0].lane_change_maneuver.starting_lane_id.compare("1202") == 0);
+  ASSERT_TRUE(result[0].lane_change_maneuver.ending_lane_id.compare("1202") == 0);
+
+  // Stop And Wait 
+  ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result[1].type);
+  ASSERT_NEAR(75.0, result[1].stop_and_wait_maneuver.start_dist, 0.00001);
+  ASSERT_NEAR(100.0, result[1].stop_and_wait_maneuver.end_dist, 0.00001);
+  ASSERT_NEAR(entry_speed, result[1].stop_and_wait_maneuver.start_speed, 0.00001);
+  ASSERT_TRUE(result[1].stop_and_wait_maneuver.starting_lane_id.compare("1203") == 0);
+  ASSERT_TRUE(result[1].stop_and_wait_maneuver.ending_lane_id.compare("1203") == 0);
 }
 
 TEST_F(StopAndWaitTestFixture, CaseNine)
 {
+                RouteFollowingPlugin worker;
+  worker.wm_ = cmw_;  // Set world model from test fixture
+
+  double entry_speed = 10.0;
+  double long_accel_limit = 2.0;
+  double lat_accel_limit = 1.0;
+  double min_maneuver_length = 10.0;
+  double route_end_downtrack = 100.0;
+
+  cav_msgs::Maneuver m1;
+  m1.type = cav_msgs::Maneuver::LANE_CHANGE;
+  m1.lane_change_maneuver.start_dist = 70;
+  m1.lane_change_maneuver.end_dist = 90;
+  m1.lane_change_maneuver.start_speed = entry_speed;
+  m1.lane_change_maneuver.end_speed = entry_speed;
+  m1.lane_change_maneuver.starting_lane_id = "1202";
+  m1.lane_change_maneuver.ending_lane_id = "1203";
+
+  // Cannot shrink lane change maneuver this much. Expect exception to be thrown
+  ASSERT_THROW(worker.addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
+                                                lat_accel_limit, min_maneuver_length), std::invalid_argument);
 }
 
 TEST_F(StopAndWaitTestFixture, CaseTen)
 {
+                RouteFollowingPlugin worker;
+  worker.wm_ = cmw_;  // Set world model from test fixture
+
+  double entry_speed = 10.0;
+  double long_accel_limit = 2.0;
+  double lat_accel_limit = 1.0;
+  double min_maneuver_length = 10.0;
+  double route_end_downtrack = 100.0;
+
+  auto result = worker.addStopAndWaitAtRouteEnd({ }, route_end_downtrack, entry_speed, long_accel_limit,
+                                                lat_accel_limit, min_maneuver_length);
+
+  ASSERT_EQ(1, result.size());
+
+  // Stop And Wait
+  ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result[0].type);
+  ASSERT_NEAR(75.0, result[0].stop_and_wait_maneuver.start_dist, 0.00001);
+  ASSERT_NEAR(100.0, result[0].stop_and_wait_maneuver.end_dist, 0.00001);
+  ASSERT_NEAR(entry_speed, result[0].stop_and_wait_maneuver.start_speed, 0.00001);
+  ASSERT_TRUE(result[0].stop_and_wait_maneuver.starting_lane_id.compare("1203") == 0);
+  ASSERT_TRUE(result[0].stop_and_wait_maneuver.ending_lane_id.compare("1203") == 0);
 }
 
 }  // namespace route_following_plugin

@@ -194,6 +194,8 @@ namespace route_following_plugin
          * \param lateral_accel_limit The lateral acceleration limit allowed for lane changes. Units m/s/s
          * \param min_maneuver_length The absolute minimum allowable maneuver length for any existing maneuvers in meters
          * 
+         * NOTE: Only min_maneuver_length can be a zero-valued input. All other parameters must be positive values greater than zero.
+         * 
          * \throw std::invalid_argument If existing maneuvers cannot be modified to allow stopping maneuver creation, or if the generated maneuvers do not overlap any lanelets in the map.
          * 
          * \return A list of maneuvers which mirrors the input list but with the modifications required to include a stopping maneuver at the end 
