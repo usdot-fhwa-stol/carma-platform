@@ -49,7 +49,7 @@
                     ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property = (value) :\
                         ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property = (value) :\
                             ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property = (value) :\
-                                throw std::invalid_argument("SET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))))
+                                throw std::invalid_argument("SET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id " + std::to_string((mvr).type)))))))))
 
                         
 namespace route_following_plugin
