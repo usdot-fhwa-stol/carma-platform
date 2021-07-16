@@ -15,6 +15,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
+#include <ros/ros.h>
+#include <string>
 #include <carma_utils/CARMAUtils.h>
 #include <cav_srvs/PlanManeuvers.h>
 #include <cav_msgs/Plugin.h>
@@ -23,6 +26,11 @@
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
 #include <carma_utils/CARMAUtils.h>
+#include <carma_wm/Geometry.h>
+
+#include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
+
+enum class CarmaTrafficLightState {UNAVAILABLE=0,DARK=1,STOP_THEN_PROCEED=2,STOP_AND_REMAIN=3,PRE_MOVEMENT=4,PERMISSIVE_MOVEMENT_ALLOWED=5,PROTECTED_MOVEMENT_ALLOWED=6,PERMISSIVE_CLEARANCE=7,PROTECTED_CLEARANCE=8,CAUTION_CONFLICTING_TRAFFIC=9};
 
 namespace wz_strategic_plugin
 {
@@ -48,6 +56,7 @@ namespace wz_strategic_plugin
             bool planManeuverCb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
 
             ros::Publisher plugin_discovery_pub_;
+
             ros::Subscriber pose_sub_;
             ros::Subscriber twist_sub_;
 
@@ -67,7 +76,7 @@ namespace wz_strategic_plugin
 
             // Current vehicle pose in map
             geometry_msgs::PoseStampedConstPtr pose_msg_;
-            // lanelet::BasicPoint2d current_loc_;
+            lanelet::BasicPoint2d current_loc_;
 
             /**
              * \brief Callback for the pose subscriber, which will store latest pose locally
@@ -87,7 +96,7 @@ namespace wz_strategic_plugin
 
             cav_msgs::Maneuver composeWorkZoneManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id);
 
-            std::string traffic_light_interpreter(int state);
+            std::string traffic_light_interpreter(CarmaTrafficLightState state);
 
         private:
             // CARMA ROS node handles

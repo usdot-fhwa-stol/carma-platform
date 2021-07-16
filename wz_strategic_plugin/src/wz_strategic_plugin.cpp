@@ -13,8 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include <ros/ros.h>
-#include <string>
 #include "wz_strategic_plugin/wz_strategic_plugin.h"
 
 namespace wz_strategic_plugin
@@ -58,59 +56,46 @@ namespace wz_strategic_plugin
     {
         current_speed_ = msg->twist.linear.x;
     }
-    // enum class CarmaTrafficLightState {UNAVAILABLE=0,DARK=1,STOP_THEN_PROCEED=2,STOP_AND_REMAIN=3,PRE_MOVEMENT=4,PERMISSIVE_MOVEMENT_ALLOWED=5,PROTECTED_MOVEMENT_ALLOWED=6,PERMISSIVE_CLEARANCE=7,PROTECTED_CLEARANCE=8,CAUTION_CONFLICTING_TRAFFIC=9};
 
     std::string traffic_light_interpreter(CarmaTrafficLightState state)
     {
         switch(state) {
-            case UNAVAILABLE:
+            case CarmaTrafficLightState::UNAVAILABLE:
                 // code block
                 break;
-            case DARK:
+            case CarmaTrafficLightState::DARK:
                 // code block
                 break;
-            case STOP_THEN_PROCEED:
+            case CarmaTrafficLightState::STOP_THEN_PROCEED:
                 // code block
                 break;
-            case STOP_AND_REMAIN:
+            case CarmaTrafficLightState::STOP_AND_REMAIN:
                 // code block
                 break;
-            case PRE_MOVEMENT:
+            case CarmaTrafficLightState::PRE_MOVEMENT:
                 // code block
                 break;
-            case PERMISSIVE_MOVEMENT_ALLOWED:
+            case CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED:
                 // code block
                 break;
-            case PROTECTED_MOVEMENT_ALLOWED:
+            case CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED:
                 // code block
                 break;
-            case PERMISSIVE_CLEARANCE:
+            case CarmaTrafficLightState::PERMISSIVE_CLEARANCE:
                 // code block
                 break;
-            case PROTECTED_CLEARANCE:
+            case CarmaTrafficLightState::PROTECTED_CLEARANCE:
                 // code block
                 break;
-            case CAUTION_CONFLICTING_TRAFFIC:
+            case CarmaTrafficLightState::CAUTION_CONFLICTING_TRAFFIC:
                 // code block
                 break;
-            case 10:
-                // code block
-                break;
-            case 11:
-                // code block
-                break;
-            case 12:
-                // code block
-                break;
-            default:
-                // code block
         }
 
     }
 
     bool WzStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp)
     {
-
         ROS_DEBUG("Finding car infomrmation");
 
         // find car_down_track
@@ -118,13 +103,20 @@ namespace wz_strategic_plugin
         ROS_DEBUG("current_car_down_track %d", current_car_down_track);
 
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc_, 1);
+        auto current_lanelet = current_lanelets[0];
 
         ROS_DEBUG("\n\nFinding traffic_light information");
-        auto traffic_list = current_lanelets[0].regulatoryElementsAs<lanelet::CarmaTrafficLight>();
-        double traffic_light_down_track = 0;
+        auto traffic_list = current_lanelet.second.regulatoryElementsAs<lanelet::CarmaTrafficLight>();
+        
         if(!traffic_list.empty()) {
 
-            traffic_light_down_track = traffic_list[0].stopLine().down_track;
+            double traffic_light_down_track = 0;
+
+/*
+            auto point = lanelet::traits::to2D(traffic_list[0]->stopLine());
+            auto pos = carma_wm::geometry::trackPos(current_lanelet.second, point);
+            double traffic_light_down_track = pos.downtrack;
+*/
 
             ROS_DEBUG("traffic_light_down_track %d", traffic_light_down_track);
 
@@ -135,13 +127,11 @@ namespace wz_strategic_plugin
             ROS_DEBUG("time_remaining_to_traffic_light %d", distance_remaining_to_traffic_light / current_speed_);
             ros::Duration time_remaining_to_traffic_light(distance_remaining_to_traffic_light / current_speed_);
 
-            auto traffic_light_current_state = traffic_list[0].getState();
+            auto traffic_light_current_state = traffic_list[0]->getState();
             ROS_DEBUG("traffic_light_current_state %d", traffic_light_current_state);
 
-            auto traffic_light_next_predicted_state = traffic_list[0].getState(ros::Time::now() + time_remaining_to_traffic_light);
+            auto traffic_light_next_predicted_state = traffic_list[0]->getState(ros::Time::now() + time_remaining_to_traffic_light);
             ROS_DEBUG("traffic_light_next_predicted_state %d", traffic_light_next_predicted_state);
-
-            // enum class CarmaTrafficLightState {UNAVAILABLE=0,DARK=1,STOP_THEN_PROCEED=2,STOP_AND_REMAIN=3,PRE_MOVEMENT=4,PERMISSIVE_MOVEMENT_ALLOWED=5,PROTECTED_MOVEMENT_ALLOWED=6,PERMISSIVE_CLEARANCE=7,PROTECTED_CLEARANCE=8,CAUTION_CONFLICTING_TRAFFIC=9};
 
             ROS_DEBUG("min_distance_to_traffic_light %d", min_distance_to_traffic_light);
 
