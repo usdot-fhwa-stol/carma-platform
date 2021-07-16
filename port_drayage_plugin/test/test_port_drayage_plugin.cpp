@@ -80,7 +80,7 @@ TEST(PortDrayageTest, testCheckStop1)
     cav_msgs::ManeuverPlan plan;
     cav_msgs::Maneuver mvr;
     mvr.type = cav_msgs::Maneuver::STOP_AND_WAIT;
-    mvr.stop_and_wait_maneuver.parameters.planning_strategic_plugin = "Port Drayage Plugin";
+    mvr.stop_and_wait_maneuver.parameters.planning_strategic_plugin = "PortDrayagePlugin";
     plan.maneuvers.push_back(mvr);
     cav_msgs::ManeuverPlanConstPtr planptr{ new cav_msgs::ManeuverPlan{plan}};
     pdw.set_maneuver_plan(planptr);
@@ -355,7 +355,7 @@ TEST(PortDrayageTest, testComposeSetActiveRouteRequest)
     pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr); 
 
     // Verify the results of PortDrayageWorker's compose_set_active_route_request() method
-    cav_srvs::SetActiveRoute route_req = pdw.compose_set_active_route_request();
+    cav_srvs::SetActiveRoute route_req = pdw.compose_set_active_route_request(*pdw._latest_mobility_operation_msg.dest_latitude, *pdw._latest_mobility_operation_msg.dest_longitude);
     ASSERT_EQ(cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY, route_req.request.choice);
     ASSERT_EQ(1, route_req.request.destination_points.size());
     ASSERT_EQ(38.9550038, route_req.request.destination_points[0].latitude);

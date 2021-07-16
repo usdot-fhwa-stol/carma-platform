@@ -33,6 +33,8 @@ namespace port_drayage_plugin
         _pnh->param<std::string>("cmv_id", cmv_id, "");
         std::string cargo_id;
         _pnh->param<std::string>("cargo_id", cargo_id, "");
+        std::string host_id;
+        _pnh->param<std::string>("host_id", host_id, "");
 
         ros::Publisher outbound_mob_op = _nh->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
         _outbound_mobility_operations_publisher = std::make_shared<ros::Publisher>(outbound_mob_op);
@@ -42,7 +44,7 @@ namespace port_drayage_plugin
         PortDrayageWorker pdw{
             cmv_id,
             cargo_id,
-            "HOST_ID",
+            host_id,
             [this](cav_msgs::MobilityOperation msg) {
                _outbound_mobility_operations_publisher->publish<cav_msgs::MobilityOperation>(msg);
             },

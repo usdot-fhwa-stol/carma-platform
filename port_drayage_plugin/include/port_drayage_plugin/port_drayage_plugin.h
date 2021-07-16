@@ -55,6 +55,13 @@ namespace port_drayage_plugin
             // ROS service clients
             ros::ServiceClient _set_active_route_client;
 
+            /**
+             * \brief Calls the /guidance/set_active_route service client to set an active route 
+             * \param req The service request being used to call the service client
+             * \return If the service client call was successful and no errors occurred while setting the new active route
+             */
+            bool call_set_active_route_client(cav_srvs::SetActiveRoute req);
+
         public:
             double declaration;
             std::shared_ptr<geometry_msgs::PoseStamped> curr_pose_ = nullptr;
@@ -90,13 +97,6 @@ namespace port_drayage_plugin
              * \return The exit code of the application
              */
             int run();
-            
-            /**
-             * \brief Calls the /guidance/set_active_route service client to set an active route 
-             * \param req The service request being used to call the service client
-             * \return If the service client call was successful and no errors occurred while setting the new active route
-             */
-            bool call_set_active_route_client(cav_srvs::SetActiveRoute req);
 
             /**
              * \brief Service callback for arbitrator maneuver planning

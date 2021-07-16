@@ -70,20 +70,21 @@ namespace port_drayage_plugin
 
     void PortDrayageWorker::on_received_new_destination() {       
         //  Populate the service request with the destination coordinates from the last received port drayage mobility operation message
-        cav_srvs::SetActiveRoute route_req = compose_set_active_route_request();
+        cav_srvs::SetActiveRoute route_req = compose_set_active_route_request(_latest_mobility_operation_msg.dest_latitude, _latest_mobility_operation_msg.dest_longitude);
 
         // Call service client to set the new active route
-        bool is_route_generation_successful = _call_set_active_route_client(route_req);
+        bool is_route_generation_successful = _set_active_route(route_req);
 
         // Throw exception if route generation was not successful
         if (!is_route_generation_successful) {
+            ROS_DEBUG_STREAM("Route generation failed. Routing could not be completed.");
             throw std::invalid_argument("Route generation failed. Routing could not be completed.");
         }
     }
 
-    cav_srvs::SetActiveRoute PortDrayageWorker::compose_set_active_route_request() const {
+    cav_srvs::SetActiveRoute PortDrayageWorker::compose_set_active_route_request(boost::optional<double> dest_latitude, boost::optional<double> dest_longitude) const {
         cav_srvs::SetActiveRoute route_req;
-        if (_latest_mobility_operation_msg.dest_latitude && _latest_mobility_operation_msg.dest_longitude) {
+        if (dest_latitude && dest_longitude) {
             route_req.request.choice = cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY;
 
             cav_msgs::Position3D destination_point;
@@ -94,6 +95,7 @@ namespace port_drayage_plugin
             route_req.request.destination_points.push_back(destination_point);
         }
         else {
+            ROS_DEBUG_STREAM("No destination points were received. Routing could not be completed.");
             throw std::invalid_argument("No destination points were received. Routing could not be completed");
         }
 
