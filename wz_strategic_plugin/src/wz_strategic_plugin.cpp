@@ -115,8 +115,6 @@ namespace wz_strategic_plugin
 
         if(!traffic_list.empty()) {
 
-            double traffic_light_down_track = 0;
-
             auto point = lanelet::traits::to2D(nearest_traffic_light->stopLine());
             auto pos = carma_wm::geometry::trackPos(current_lanelet.second, point);
             double traffic_light_down_track = pos.downtrack;
@@ -149,7 +147,7 @@ namespace wz_strategic_plugin
                     if(traffic_light_interpreter(traffic_light_next_predicted_state) == "R") {
 
                         // stop_and_wait
-                        cav_msgs::Maneuver stop_and_wait = composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id);
+                        cav_msgs::Maneuver stop_and_wait = composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, current_lanelet.id, end_lane_id);
                         resp.new_plan.maneuvers.push_back(stop_and_wait);
 
                         // workzone_tactical
@@ -161,11 +159,11 @@ namespace wz_strategic_plugin
                     if(traffic_light_interpreter(traffic_light_next_predicted_state) == "G") {
 
                         // LaneFollowing
-                        cav_msgs::Maneuver Lane_Following = composeLaneFollowingManeuverMessage(current_car_down_track, traffic_light_down_track, current_speed_, current_speed_, lane_id);
+                        cav_msgs::Maneuver Lane_Following = composeLaneFollowingManeuverMessage(current_car_down_track, traffic_light_down_track, current_speed_, current_speed_, current_lanelet.id);
                         resp.new_plan.maneuvers.push_back(Lane_Following);
 
                         // workzone_tactical
-                        cav_msgs::Maneuver workzone_tactical = composeWorkZoneManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time);
+                        cav_msgs::Maneuver workzone_tactical = composeWorkZoneManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, current_lanelet.id, end_lane_id, current_time, end_time);
                         resp.new_plan.maneuvers.push_back(workzone_tactical);
 
                     }
@@ -176,11 +174,11 @@ namespace wz_strategic_plugin
                     if(traffic_light_interpreter(traffic_light_current_state) == "R") {
 
                         // stop_and_wait
-                        cav_msgs::Maneuver stop_and_wait = composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id);
+                        cav_msgs::Maneuver stop_and_wait = composeStopandWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, current_lanelet.id, end_lane_id);
                         resp.new_plan.maneuvers.push_back(stop_and_wait);
 
                         // workzone_tactical
-                        cav_msgs::Maneuver workzone_tactical = composeWorkZoneManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time);
+                        cav_msgs::Maneuver workzone_tactical = composeWorkZoneManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, current_lanelet.id, end_lane_id, current_time, end_time);
                         resp.new_plan.maneuvers.push_back(workzone_tactical);
 
                     }
@@ -192,13 +190,11 @@ namespace wz_strategic_plugin
                         resp.new_plan.maneuvers.push_back(Lane_Following);
 
                         // workzone_tactical
-                        cav_msgs::Maneuver workzone_tactical = composeWorkZoneManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, start_lane_id, end_lane_id, current_time, end_time);
+                        cav_msgs::Maneuver workzone_tactical = composeWorkZoneManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, current_lanelet.id, end_lane_id, current_time, end_time);
                         resp.new_plan.maneuvers.push_back(workzone_tactical);
 
                     }
-
                 }
-
             }
         }
 
