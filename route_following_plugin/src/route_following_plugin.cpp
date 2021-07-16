@@ -61,6 +61,7 @@ namespace route_following_plugin
 
         wml_->setMapCallback([this]() {
             if (wm_->getRoute()) { // If this map update occured after a route was provided we need to regenerate maneuvers
+                ROS_INFO_STREAM("Recomputing maneuvers due to map update");
                 this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
             }
         });
