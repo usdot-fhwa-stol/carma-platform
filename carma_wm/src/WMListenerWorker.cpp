@@ -190,6 +190,13 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
 
   
   ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_); 
+
+  // Call user defined map callback
+  if (map_callback_)
+  {
+    ROS_INFO_STREAM("Calling user defined map update callback");
+    map_callback_();
+  }
 }
 
 /*!
