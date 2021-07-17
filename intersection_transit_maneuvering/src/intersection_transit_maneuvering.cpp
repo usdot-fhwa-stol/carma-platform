@@ -1,7 +1,5 @@
-#pragma once
-
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,48 +35,15 @@ using oss = std::ostringstream;
 
 namespace intersection_transit_maneuvering
 {
-    IntersectionTransitManeuvering::IntersectionTransitManeuvering();
-
-
-    void IntersectionTransitManeuvering::initialize()
-    {
-         nh_.reset(new ros::CARMANodeHandle());
-        pnh_.reset(new ros::CARMANodeHandle("~"));
-        pnh2_.reset(new ros::CARMANodeHandle("/"));
-
-        trajectory_srv_ = nh_->advertiseService("plan_trajectory",&IntersectionTransitManeuvering::plan_trajectory_cb, this);
-        
-        plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery",1);
-        jerk_pub_ = nh_->advertise<std_msgs::Float64>("jerk",1);
+    IntersectionTransitManeuvering::IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr wm)
+    {        
         plugin_discovery_msg_.name = "IntersectionTransitManeuvering";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = false;
         plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
         plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
-        
-        pose_sub_ = nh_->subscribe("current_pose",1, &IntersectionTransitManeuvering::pose_cb, this);
-        twist_sub_ = nh_->subscribe("current_velocity", 1, &IntersectionTransitManeuvering::twist_cb, this);
-
-        wml_.reset(new carma_wm::WMListener());
-        wm_ = wml_->getWorldModel();
-        
-        pnh_->param<double>("minimal_trajectory_duration", minimal_trajectory_duration_);
-        pnh_->param<double>("max_jerk_limit", max_jerk_limit_);
-        pnh_->param<double>("min_timestep",min_timestep_);
-        pnh_->param<double>("min_jerk", min_jerk_limit_);
-
-        discovery_pub_timer_ = pnh_->createTimer(
-            ros::Duration(ros::Rate(10.0)),
-            [this](const auto&) { 
-                plugin_discovery_pub_.publish(plugin_discovery_msg_);
-                std_msgs::Float64 jerk_msg;
-                jerk_msg.data = jerk_;
-                jerk_pub_.publish(jerk_msg);
-             });
     }
-
-
 
     bool IntersectionTransitManeuvering::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
     {
@@ -112,20 +77,43 @@ namespace intersection_transit_maneuvering
             }
 
         /*Once the maneuvers have been successfully converted, call the inlanecruising plugin to calculate the trajectory*/
-        inlanecruising_plugin::InLaneCruisingPlugin::plan_trajectory_cb(req2, resp);
+
+        if (trajectory_client_ && trajectory_client_.exists() && trajectory_client_.isValid())
+        {
+            ROS_DEBUG_STREAM("Trajectory Client is valid");
+            cav_srvs::PlanTrajectory traj_srv;
+            traj_srv.request.initial_trajectory_plan = original_trajectory;
+            traj_srv.request.vehicle_state = req.vehicle_state;
+
+            if (trajectory_client_.call(traj_srv))
+            {
+                ROS_DEBUG_STREAM("Received Traj from InlaneCruisingPlugin");
+                cav_msgs::TrajectoryPlan traj_plan = traj_srv.response.trajectory_plan;
+                if (validate_trajectory_plan(traj_plan))
+                {
+                    ROS_DEBUG_STREAM("Inlane Cruising trajectory validated");
+                    resp.trajectory_plan = traj_plan;
+                }
+                else
+                {
+                    throw std::invalid_argument("Invalid Trajectory");
+                }
+            }
+            else
+            {
+                throw std::invalid_argument("Unable to Call InlaneCruising Plugin");
+            }
+        }
+
+
+        resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+        ros::WallTime end_time = ros::WallTime::now();
+
+        ros::WallDuration duration = end_time - start_time;
+        ROS_DEBUG_STREAM("ExecutionTime: " << duration.toSec());
         
         return true;
     }
-    
-
-    void IntersectionTransitManeuvering::run()
-    {
-        /**/
-        initialize();
-        ros::CARMANodeHandle::spin();
-    
-    }
-
    
     std::vector<cav_msgs::Maneuver> IntersectionTransitManeuvering::convert_maneuver_plan(const std::vector<cav_msgs::Maneuver>& maneuvers)
     {
@@ -134,8 +122,9 @@ namespace intersection_transit_maneuvering
             throw std::invalid_argument("No maneuvers to convert");
         }
 
-        std::vector<cav_msgs::LaneFollowingManeuver> new_maneuver_plan;
-        cav_msgs:LaneFollowingManeuver new_maneuver;
+        std::vector<cav_msgs::Maneuver> new_maneuver_plan;
+        cav_msgs:Maneuver new_maneuver;
+        new_maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING; //All of the converted maneuvers will be of type LANE_FOLLOWING
         for(const auto& maneuver : maneuvers)
         {
             /*Throw exception if the manuever type does not match INTERSECTION_TRANSIT*/
@@ -149,17 +138,17 @@ namespace intersection_transit_maneuvering
             /*Convert IT Straight*/
             if (maneuver.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT)
             {
-                new_maneuver.parameters = maneuver.intersection_transit_straight_maneuver.parameters;
+                new_maneuver.lane_following_maneuver.parameters = maneuver.intersection_transit_straight_maneuver.parameters;
 
-                new_maneuver.start_dist = maneuver.intersection_transit_straight_maneuver.start_dist;
-                new_maneuver.start_speed = maneuver.intersection_transit_straight_maneuver.start_speed;
-                new_maneuver.start_time = maneuver.intersection_transit_straight_maneuver.start_time;
+                new_maneuver.lane_following_maneuver.start_dist = maneuver.intersection_transit_straight_maneuver.start_dist;
+                new_maneuver.lane_following_maneuver.start_speed = maneuver.intersection_transit_straight_maneuver.start_speed;
+                new_maneuver.lane_following_maneuver.start_time = maneuver.intersection_transit_straight_maneuver.start_time;
 
-                new_maneuver.end_dist = maneuver.intersection_transit_straight_maneuver.end_dist;
-                new_maneuver.end_speed = maneuver.intersection_transit_straight_maneuver.end_speed;
-                new_maneuver.end_time = maneuver.intersection_transit_straight_maneuver.end_time;
+                new_maneuver.lane_following_maneuver.end_dist = maneuver.intersection_transit_straight_maneuver.end_dist;
+                new_maneuver.lane_following_maneuver.end_speed = maneuver.intersection_transit_straight_maneuver.end_speed;
+                new_maneuver.lane_following_maneuver.end_time = maneuver.intersection_transit_straight_maneuver.end_time;
 
-                new_maneuver.lane_id = maneuver.intersection_transit_straight_maneuver.lane_id;
+                new_maneuver.lane_following_maneuver.lane_id = maneuver.intersection_transit_straight_maneuver.lane_id;
 
                 new_maneuver_plan.push_back(new_maneuver);
             }
@@ -169,15 +158,15 @@ namespace intersection_transit_maneuvering
             {
                 new_maneuver.parameters = maneuver.intersection_transit_left_turn_maneuver.parameters;
 
-                new_maneuver.start_dist = maneuver.intersection_transit_left_turn_maneuver.start_dist;
-                new_maneuver.start_speed = maneuver.intersection_transit_left_turn_maneuver.start_speed;
-                new_maneuver.start_time = maneuver.intersection_transit_left_turn_maneuver.start_time;
+                new_maneuver.lane_following_maneuver.start_dist = maneuver.intersection_transit_left_turn_maneuver.start_dist;
+                new_maneuver.lane_following_maneuver.start_speed = maneuver.intersection_transit_left_turn_maneuver.start_speed;
+                new_maneuver.lane_following_maneuver.start_time = maneuver.intersection_transit_left_turn_maneuver.start_time;
 
-                new_maneuver.end_dist = maneuver.intersection_transit_left_turn_maneuver.end_dist;
-                new_maneuver.end_speed = maneuver.intersection_transit_left_turn_maneuver.end_speed;
-                new_maneuver.end_time = maneuver.intersection_transit_left_turn_maneuver.end_time;
+                new_maneuver.lane_following_maneuver.end_dist = maneuver.intersection_transit_left_turn_maneuver.end_dist;
+                new_maneuver.lane_following_maneuver.end_speed = maneuver.intersection_transit_left_turn_maneuver.end_speed;
+                new_maneuver.lane_following_maneuver.end_time = maneuver.intersection_transit_left_turn_maneuver.end_time;
 
-                new_maneuver.lane_id = maneuver.intersection_transit_left_turn_maneuver.lane_id;
+                new_maneuver.lane_following_maneuver.lane_id = maneuver.intersection_transit_left_turn_maneuver.lane_id;
 
                 new_maneuver_plan.push_back(new_maneuver);
             }
@@ -185,17 +174,17 @@ namespace intersection_transit_maneuvering
              /*Convert IT RIGHT TURN*/
             if (maneuver.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN)
             {
-                new_maneuver.parameters = maneuver.intersection_transit_right_turn_maneuver.parameters;
+                new_maneuver.lane_following_maneuver.parameters = maneuver.intersection_transit_right_turn_maneuver.parameters;
 
-                new_maneuver.start_dist = maneuver.intersection_transit_right_turn_maneuver.start_dist;
-                new_maneuver.start_speed = maneuver.intersection_transit_right_turn_maneuver.start_speed;
-                new_maneuver.start_time = maneuver.intersection_transit_right_turn_maneuver.start_time;
+                new_maneuver.lane_following_maneuver.start_dist = maneuver.intersection_transit_right_turn_maneuver.start_dist;
+                new_maneuver.lane_following_maneuver.start_speed = maneuver.intersection_transit_right_turn_maneuver.start_speed;
+                new_maneuver.lane_following_maneuver.start_time = maneuver.intersection_transit_right_turn_maneuver.start_time;
 
-                new_maneuver.end_dist = maneuver.intersection_transit_right_turn_maneuver.end_dist;
-                new_maneuver.end_speed = maneuver.intersection_transit_right_turn_maneuver.end_speed;
-                new_maneuver.end_time = maneuver.intersection_transit_right_turn_maneuver.end_time;
+                new_maneuver.lane_following_maneuver.end_dist = maneuver.intersection_transit_right_turn_maneuver.end_dist;
+                new_maneuver.lane_following_maneuver.end_speed = maneuver.intersection_transit_right_turn_maneuver.end_speed;
+                new_maneuver.lane_following_maneuver.end_time = maneuver.intersection_transit_right_turn_maneuver.end_time;
 
-                new_maneuver.lane_id = maneuver.intersection_transit_right_turn_maneuver.lane_id;
+                new_maneuver.lane_following_maneuver.lane_id = maneuver.intersection_transit_right_turn_maneuver.lane_id;
 
                 new_maneuver_plan.push_back(new_maneuver);
             }
@@ -205,6 +194,36 @@ namespace intersection_transit_maneuvering
         return new_maneuver_plan;
 
     }
+
+
+    void IntersectionTransitManeuvering::set_trajectory_client(ros::ServiceClient& client)
+    {
+        trajectory_client_ = client;
+    }
+
+    bool IntersectionTransitManeuvering::validate_trajectory_plan(const cav_msgs::TrajectoryPlan& traj_plan)
+    {
+        if (traj_plan.trajectory_points.size()>= 2)
+        {
+            ROS_DEBUG_STREAM("Inlane Cruising Trajectory Time" << (double)traj_plan.trajectory_points[0].target_time.toSec());
+            ROS_DEBUG_STREAM("Now:" << (double)ros::Time::now().toSec());
+            if (traj_plan.trajectory_points[0].target_time + ros::Duration(5.0) > ros::Time::now())
+            {
+              return true;
+            }
+            else
+            {
+                ROS_DEBUG_STREAM("Old InlaneCruising Trajectory");
+            }
+        }
+        else
+        {
+            ROS_DEBUG_STREAM("Invalid InlaneCruising Trajectory"); 
+        }
+        return false;
+    }
+
+
 
 
 

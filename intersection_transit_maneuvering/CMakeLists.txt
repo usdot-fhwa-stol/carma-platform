@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(intersection_transit_maneuvering)
 
-## Compile as C++11, supported in ROS Kinetic and newer
+## Compile as C++14, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
@@ -30,10 +30,13 @@ set( CATKIN_DEPS
   carma_utils
   trajectory_utils
   autoware_msgs
+  autoware_lanelet2_msgs
+  lanelet2_core
+  lanelet2_maps
+  lanelet2_routing
+  lanelet2_traffic_rules
+  lanelet2_extension
   carma_wm
-  tf
-  tf2
-  tf2_geometry_msgs
   carma_debug_msgs
   basic_autonomy
 )

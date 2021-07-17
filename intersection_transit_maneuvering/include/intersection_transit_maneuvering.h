@@ -27,14 +27,11 @@
 #include <cav_srvs/PlanTrajectory.h>
 #include <carma_wm/WMListener.h>
 #include <functional>
-#include <inlanecruising_plugin/smoothing/SplineI.h>
-#include "inlanecruising_config.h"
 #include <unordered_set>
 #include <autoware_msgs/Lane.h>
 #include <ros/ros.h>
 #include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
 #include <basic_autonomy/helper_functions.h>
-#include <inlanecruising_plugin/inlanecruising_plugin.h>
 
 namespace intersection_transit_maneuvering
 {
@@ -46,9 +43,9 @@ namespace intersection_transit_maneuvering
         /**
         * \brief Constructor
         * 
-       
+        * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
         */ 
-        IntersectionTransitManeuvering();
+        IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr wm);
                        
         /**
          * \brief Service callback for trajectory planning
@@ -60,10 +57,12 @@ namespace intersection_transit_maneuvering
          */ 
         bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
 
-        /**
-         * \brief General entry point to begin the operation of this class
-         */
-        void run();
+         /**
+        * \brief set the trajectory service
+        * 
+        * \param client input trajectory service
+        */
+        void set_trajectory_client(ros::ServiceClient& client);
 
 
         /**
@@ -75,50 +74,18 @@ namespace intersection_transit_maneuvering
         */
         std::vector<cav_msgs::Maneuver> convert_maneuver_plan(const std::vector<cav_msgs::Maneuver>& maneuvers);
 
-        private:
-            //CARMA ROS node handles
-            std::shared_ptr<ros::CARMANodeHandle> nh_,pnh_;
+        /**
+        * \brief verify if the input InlaneCruising trajectory plan is valid
+        * 
+        * \param traj_plan input InlaneCruising trajectory plan
+        *
+        * \return true or false
+        */
+        bool validate_trajectory_plan(const cav_msgs::TrajectoryPlan& traj_plan);
 
-            // ROS service servers
-            ros::ServiceServer trajectory_srv_;
+    private:
+        ros::ServiceClient trajectory_client_;
 
-            //ROS publishers and subscribers
-            ros::Publisher plugin_discovery_pub_;
-            ros::Subscriber pose_sub_;
-            ros::Subscriber twist_sub_;
-            ros::Publisher jerk_pub_;
-            ros::Timer discovery_pub_timer_;
-
-            // Current vehicle pose in map
-            geometry_msgs::PoseStamped pose_msg_;
-
-            //Plugin discovery message
-            cav_msgs::Plugin plugin_discovery_msg_;
-
-            //Calculated jerk for maneuver in m/s3
-            double jerk_ =0.0;
-            //Total time required to complete the maneuver
-            double maneuver_time_;
-
-            /**
-            * \brief Initialize ROS publishers, subscribers, service servers and service clients
-            */
-            void initialize();
-
-            /**
-            * \brief Callback for the pose subscriber, which will store latest pose locally
-            * \param msg Latest pose message
-            */
-            void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
-
-            /**
-            * \brief Callback for the twist subscriber, which will store latest twist locally
-            * \param msg Latest twist message
-            */
-            void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
-
-  
-            carma_wm::WorldModelConstPtr wm_;
 
 
     }
