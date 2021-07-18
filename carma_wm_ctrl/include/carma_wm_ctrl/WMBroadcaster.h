@@ -258,11 +258,12 @@ public:
   std::vector<lanelet::Lanelet> splitLaneletWithRatio(double ratio, const lanelet::ConstLanelet& input_lanelet) const;
   // TODO: fill inputs and description
   // creates the "bridge lanelets" and adds traffic light and stoprule inside relevant lanelets
-  std::shared_ptr<Geofence> createWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache, lanelet::Lanelet parallel_llt_front, lanelet::Lanelet parallel_llt_back, 
-                          lanelet::Lanelet opposite_llt_back, lanelet::Lanelet opposite_llt_front);
+  std::shared_ptr<Geofence> createWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache, lanelet::Lanelet parallel_llt_front,  lanelet::Lanelet parallel_llt_back, 
+                                                    std::shared_ptr<std::vector<lanelet::Lanelet>> middle_opposite_lanelets);
 
   // TODO: fill inputs and description
   // filter parallel and opposite lanelets
+  // NOTE: the direction of geofence points saved matters!, if it is on opposite direction, it should pick that direction
   void preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache, std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, 
                                                     std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts);
 private:
