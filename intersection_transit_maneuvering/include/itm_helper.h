@@ -33,5 +33,5 @@
 class Interface
 {
     public:
-        virtual bool call() = 0;
+        virtual bool call(const std::string& service_name,cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp) = 0;
 };

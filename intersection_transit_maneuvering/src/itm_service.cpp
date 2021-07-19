@@ -14,12 +14,14 @@ namespace itm_servicer
 
     Servicer::Servicer();
 
-    bool Servicer::call(const cav_srvs::PlanTrajectory& traj)
+    bool Servicer::call(const std::string& service_name,cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
     {
-        client.call(traj);
+        client.call(service_name,req,resp);
+
     }
     void Servicer::setClient(ros::ServiceClient srv_client)
     {
         client = srv_client;
     }
+    
 }

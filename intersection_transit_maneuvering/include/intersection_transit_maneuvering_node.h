@@ -57,7 +57,6 @@ class IntersectionTransitManeuveringNode
 
             //Plugin discovery message
             cav_msgs::Plugin plugin_discovery_msg_;
-
   
             carma_wm::WorldModelConstPtr wm_;
 
@@ -71,13 +70,12 @@ class IntersectionTransitManeuveringNode
             wm_ = wml_->getWorldModel();
 
             itm_servicer::Servicer::Servicer srv;
-            IntersectionTransitManeuvering::IntersectionTransitManeuvering worker(wm_, srv);
-            
-            trajectory_srv_ = nh_.advertiseService("plan_trajectory",&IntersectionTransitManeuvering::plan_trajectory_cb, &worker);
+            IntersectionTransitManeuvering::IntersectionTransitManeuvering worker(wm_,[&discovery_pub](const auto& msg) { discovery_pub.publish(msg); }, srv);
             ros::ServiceClient trajectory_client = nh_.serviceClient<cav_srvs::PluginTrajectory>("plugin/InlaneCruisingPlugin/plan_trajectory");
-            srv.setClient(trajectory_client);
-            srv.call(traj_srv);
+            srv.set_client(trajectory_client);
 
+            trajectory_srv_ = nh_.advertiseService("plan_trajectory",&IntersectionTransitManeuvering::plan_trajectory_cb, &worker);           
+            
             ros::Timer discovery_pub_timer_ = nh.createTimer(
                     ros::Duration(ros::Rate(10.0)),
                     [&worker](const auto&) {worker.onSpin();});

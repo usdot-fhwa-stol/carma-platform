@@ -20,6 +20,7 @@
 #include <cav_msgs/TrajectoryPlan.h>
 #include <cav_msgs/TrajectoryPlanPoint.h>
 #include <cav_msgs/Plugin.h>
+#include <cav_msgs/Maneuver.h>
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <boost/geometry.hpp>
@@ -34,19 +35,22 @@
 #include <itm_helper.h>
 #include <basic_autonomy/helper_functions.h>
 
+using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
+
 namespace intersection_transit_maneuvering
 {
 
 
-    class IntersectionTransitManeuvering: public Interface
+    class IntersectionTransitManeuvering
     {
         public:
         /**
         * \brief Constructor
         * 
         * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
+        * \param obj Interface object to initialize ros::Service::call
         */ 
-        IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr wm);
+        IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr wm, PublishPluginDiscoveryCB plugin_discovery_publisher, std::shared_ptr<Interface> obj);
                        
         /**
          * \brief Service callback for trajectory planning
@@ -58,7 +62,6 @@ namespace intersection_transit_maneuvering
          */ 
         bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
 
-
         /**
          *  \brief Converts a sequence of INTERSECTION_TRANSIT maneuvers to LANE_FOLLOWING maneuvers
          * 
@@ -69,8 +72,17 @@ namespace intersection_transit_maneuvering
         std::vector<cav_msgs::Maneuver> convert_maneuver_plan(const std::vector<cav_msgs::Maneuver>& maneuvers);
 
     private:
-        //Plan Trajectory Service to send to Inlane Cruising
-        cav_srvs::PlanTrajectory traj_srv;
+
+        std::shared_ptr<Interface> object;
+        std::vector<cav_msgs::Maneuver> converted_maneuvers;
+        cav_msgs::TrajectoryPlan trajectory_plan;
+        cav_msgs::VehicleState vehicle_state_;
+        cav_msgs::Plugin plugin_discovery_msg_;
+        PublishPluginDiscoveryCB plugin_discovery_publisher_;
+
+        
+
+
 
 
     }

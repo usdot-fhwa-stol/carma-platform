@@ -30,12 +30,14 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 #include <intersection_transit_maneuvering.h>
+#include <itm_helper.h>
 
 using oss = std::ostringstream;
 
 namespace intersection_transit_maneuvering
 {
-    IntersectionTransitManeuvering::IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr wm)
+    IntersectionTransitManeuvering::IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr wm, plugin_discovery_publisher_(plugin_discovery_publisher),
+                                                                     std::shared_ptr<Interface> obj)
     {        
         plugin_discovery_msg_.name = "IntersectionTransitManeuvering";
         plugin_discovery_msg_.versionId = "v1.0";
@@ -43,6 +45,8 @@ namespace intersection_transit_maneuvering
         plugin_discovery_msg_.activated = false;
         plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
         plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
+
+        object = obj;
     }
 
     bool IntersectionTransitManeuvering::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
@@ -68,21 +72,26 @@ namespace intersection_transit_maneuvering
                     break;
                 }
         }
-        auto new_plan = convert_maneuver_plan(maneuver_plan);
 
-        for(const auto& man : new_plan)
-            {
-                traj_srv.request.maneuver_plan.push_back(man);
-            }
-        traj_srv.request.initial_trajectory_plan = original_trajectory;
-        traj_srv.request.vehicle_state = req.vehicle_state;
+        converted_maneuvers = convert_maneuver_plan(maneuver_plan);
+        cav_srvs::PlanTrajectoryRequest req2;
 
+        for(auto i : converted_maneuvers)
+        {
+            req2.maneuver_plan.maneuvers.push_back(i);
+        }
+            req2.vehicle_state = req.vehicle_state;
+            req2.initial_trajectory_plan = req.initial_trajectory_plan;
 
-        //traj_srv.response.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+        
+
+        object->call("plan_trajectory", req2,resp); //Since we're using an interface for this process, the call functionality will be referenced in the Servicer
+
         ros::WallTime end_time = ros::WallTime::now();
 
         ros::WallDuration duration = end_time - start_time;
         ROS_DEBUG_STREAM("ExecutionTime: " << duration.toSec());
+
         
         return true;
     }
@@ -167,6 +176,13 @@ namespace intersection_transit_maneuvering
 
     }
 
+    bool IntersectionTransitManeuvering::onSpin()
+    {
+        plugin_discovery_publisher_(plugin_discovery_msg_);
+        return true;
+    }
+
+    
 
 
 

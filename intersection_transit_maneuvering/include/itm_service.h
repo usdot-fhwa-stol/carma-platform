@@ -18,6 +18,7 @@
 #include <vector>
 #include <cav_msgs/TrajectoryPlan.h>
 #include <cav_msgs/TrajectoryPlanPoint.h>
+#include <cav_msgs/Maneuver.h>
 #include <cav_msgs/Plugin.h>
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
@@ -37,14 +38,16 @@ class Servicer
          */
         Servicer();
 
-        bool call(const cav_srvs::PlanTrajectory& traj);
+        bool call(const std::string& service_name,cav_srvs::PlanTrajectory::Request& req, cav_srvs::PlanTrajectory::Response& resp);
 
         /**
         * \brief set the trajectory service client
         * 
         * \param client input trajectory service client
         */
-        void setClient(ros::ServiceClient srv_client);
+        void set_client(ros::ServiceClient srv_client);
+
+        cav_srvs::PlanTrajectory make_plan_trajectory(std::vector<cav_msgs::Maneuver> maneuvers, cav_msgs::VehicleState vehicle_state);
     
     private:
         ros::ServiceClient client;
