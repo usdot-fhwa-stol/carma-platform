@@ -59,6 +59,13 @@ namespace route_following_plugin
             this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
         });
 
+        wml_->setMapCallback([this]() {
+            if (wm_->getRoute()) { // If this map update occured after a route was provided we need to regenerate maneuvers
+                ROS_INFO_STREAM("Recomputing maneuvers due to map update");
+                this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
+            }
+        });
+
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
             [this](const auto &) { plugin_discovery_pub_.publish(plugin_discovery_msg_); });
@@ -205,31 +212,6 @@ namespace route_following_plugin
         updateTimeProgress(resp.new_plan.maneuvers, ros::Time::now());
         //update starting speed of first maneuver
         updateStartingSpeed(resp.new_plan.maneuvers.front(), current_speed_);
-        //TO DO - replace block below with better method to update ending speed if speed limit changes
-        //update End distance for current maneuver based on speed limit of current lanelet
-        auto shortest_path = wm_->getRoute()->shortestPath();
-        auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc_, 10);
-        lanelet::ConstLanelet current_lanelet;
-        int last_lanelet_index = -1;
-        for (auto llt : current_lanelets)
-        {
-            if (boost::geometry::within(current_loc_, llt.second.polygon2d()))
-            {
-                int potential_index = findLaneletIndexFromPath(llt.second.id(), shortest_path);
-                if (potential_index != -1)
-                {
-                    last_lanelet_index = potential_index;
-                    current_lanelet = shortest_path[last_lanelet_index];
-                    break;
-                }
-            }
-        }
-        if(last_lanelet_index == -1)
-        {
-            ROS_ERROR_STREAM("Current position is not on the shortest path! Returning an empty maneuver");
-            return true;
-        }
-        updateEndingSpeed(resp.new_plan.maneuvers.front(), findSpeedLimit(current_lanelet));
 
         return true;
     }
@@ -348,35 +330,6 @@ namespace route_following_plugin
         }
     }
 
-    void RouteFollowingPlugin::updateEndingSpeed(cav_msgs::Maneuver &maneuver, double end_speed) const
-    {
-        ROS_DEBUG_STREAM("end_speed: " << end_speed);
-        switch (maneuver.type)
-        {
-        case cav_msgs::Maneuver::LANE_FOLLOWING:
-            maneuver.lane_following_maneuver.end_speed = end_speed;
-            ROS_DEBUG_STREAM("end_speed updated for lane following: " << end_speed);
-            break;
-        case cav_msgs::Maneuver::LANE_CHANGE:
-            maneuver.lane_change_maneuver.end_speed = end_speed;
-            break;
-        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
-            maneuver.intersection_transit_straight_maneuver.end_speed = end_speed;
-            break;
-        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
-            maneuver.intersection_transit_left_turn_maneuver.end_speed = end_speed;
-            break;
-        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
-            maneuver.intersection_transit_right_turn_maneuver.end_speed = end_speed;
-            break;
-        case cav_msgs::Maneuver::STOP_AND_WAIT:
-            //Do nothing
-            break;
-        default:
-            throw std::invalid_argument("Invalid maneuver type, cannot update starting speed for maneuver");
-        }
-    }
-
     void RouteFollowingPlugin::updateStartingSpeed(cav_msgs::Maneuver &maneuver, double start_speed) const
     {
         switch (maneuver.type)
@@ -429,20 +382,6 @@ namespace route_following_plugin
         default:
             throw std::invalid_argument("Invalid maneuver type");
         }
-    }
-
-    int RouteFollowingPlugin::findLaneletIndexFromPath(int target_id, const lanelet::routing::LaneletPath &path) const
-    {
-        for (size_t i = 0; i < path.size(); ++i)
-        {
-            if (path[i].id() == target_id)
-            {
-                return i;
-            }
-        }
-        ROS_DEBUG_STREAM("Returning -1 because could not find lanelet id" << target_id);
-
-        return -1;
     }
 
     cav_msgs::Maneuver RouteFollowingPlugin::composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id) const
