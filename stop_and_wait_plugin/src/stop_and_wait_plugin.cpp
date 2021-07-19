@@ -96,7 +96,7 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
   // Trajectory plan
   cav_msgs::TrajectoryPlan trajectory;
   trajectory.header.frame_id = "map";
-  trajectory.header.stamp = ros::Time::now();
+  trajectory.header.stamp = req.header.stamp;
   trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
   double stop_location_buffer = 3.0;  // By default use a 3m stopping buffer
@@ -104,13 +104,16 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
       cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA)
   {
     stop_location_buffer = maneuver_plan[0].stop_and_wait_maneuver.parameters.float_valued_meta_data[0];
+
     ROS_DEBUG_STREAM("Using stop buffer from meta data: " << stop_location_buffer);
   }
 
   trajectory.trajectory_points = compose_trajectory_from_centerline(
       points_and_target_speeds, current_downtrack, req.vehicle_state.longitudinal_vel,
       maneuver_plan[0].stop_and_wait_maneuver.end_dist, stop_location_buffer, req.header.stamp);
+
   ROS_DEBUG_STREAM("Trajectory points size:" << trajectory.trajectory_points.size());
+
   trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
   resp.trajectory_plan = trajectory;
   resp.related_maneuvers.push_back(cav_msgs::Maneuver::STOP_AND_WAIT);

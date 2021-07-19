@@ -664,7 +664,8 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
         maneuver_msg.stop_and_wait_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
-        maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
+        maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN
+                                                                        | cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA;
         maneuver_msg.stop_and_wait_maneuver.parameters.planning_tactical_plugin = stop_and_wait_plugin_;
         maneuver_msg.stop_and_wait_maneuver.parameters.planning_strategic_plugin = planning_strategic_plugin_;
         maneuver_msg.stop_and_wait_maneuver.start_dist = start_dist;
@@ -673,6 +674,9 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(starting_lane_id);
         maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(ending_lane_id);
         //Start time and end time for maneuver are assigned in updateTimeProgress
+
+        // Set the meta-data for the StopAndWait Maneuver to define the buffer in the route end point stopping location
+        maneuver_msg.stop_and_wait_maneuver.parameters.float_valued_meta_data.push_back(route_end_point_buffer_);
 
         // NOTE: The maneuver id is set here because maneuvers are regenerated once per route, so it is acceptable to regenerate them on route updates.
         //       If maneuvers were not generated only on route updates we would want to preserve the ids across plans
