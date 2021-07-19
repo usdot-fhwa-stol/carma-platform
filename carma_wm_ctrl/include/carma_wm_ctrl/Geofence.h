@@ -60,7 +60,12 @@ specific type of regulatory element (such as digital speed limit, passing contro
 
   lanelet::RegulatoryElementPtr regulatory_element_ = lanelet::RegulatoryElementFactory::create("regulatory_element", lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_mph, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
-                                                     
+  
+  // traffic light id lookup
+  std::vector<std::pair<uint32_t, lanelet::Id>> traffic_light_id_lookup_;
+  // used for storing intersection and signal group id for trafficlight
+  std::string label_;
+
   // elements needed for broadcasting to the rest of map users
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;

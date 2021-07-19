@@ -1041,6 +1041,27 @@ std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMa
   return possible_lanelets;
 }
 
+std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& point,
+                                                                    const unsigned int n)
+{
+  auto possible_lanelets = getLaneletsFromPoint(semantic_map, point, n);
+  for (auto llt : possible_lanelets)
+  {
+    semantic_map->laneletLayer.get(llt.id());
+  }
+  return possible_lanelets;
+}
+
+std::vector<lanelet::Lanelet> getOppositeLaneletsFromPoint(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& point,
+                                                                    const unsigned int n)
+{
+  auto possible_lanelets = getOppositeLaneletsFromPoint(semantic_map, point, n);
+  for (auto llt : possible_lanelets)
+  {
+    semantic_map->laneletLayer.get(llt.id());
+  }
+  return possible_lanelets;
+}
 
 std::vector<lanelet::ConstLanelet> getOppositeLaneletsFromPoint(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& input_point,
                                                                     const unsigned int n)

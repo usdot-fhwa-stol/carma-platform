@@ -246,16 +246,19 @@ public:
   cav_msgs::Route getRoute();
 
   // TODO: fill in inputs and description
-  std::vector<std::shared_ptr<Geofence>> createWorkzoneGeofence();
+  std::vector<std::shared_ptr<Geofence>> createWorkzoneGeofence(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache);
 
   // TODO: fill in inputs and description
-  void processParallelTaper(std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, const lanelet::BasicPoint2d& input_pt, const lanelet::ConstLanelet& input_llt);
-  void processOppositeTaper(std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts, const lanelet::BasicPoint2d& input_pt, const lanelet::ConstLanelet& input_llt);
+  void splitLaneletWithPoint(std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, const std::vector<lanelet::BasicPoint2d>& input_pts, const lanelet::Lanelet& input_llt, double error_distance = 20);
+
+  lanelet::Lanelets splitOppositeLaneletWithPoint(std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts, const lanelet::BasicPoint2d& input_pt, const lanelet::Lanelet& input_llt, double error_distance = 20);
 
   // TODO: fill in inputs and description
   //  Fill in like using both sides of linestrings and create additional two lanelets from one and return
+  // assumes the linestrings have roughly the same number of points
 
-  std::vector<lanelet::Lanelet> splitLaneletWithRatio(double ratio, const lanelet::ConstLanelet& input_lanelet) const;
+  std::vector<lanelet::Lanelet> splitLaneletWithRatio(std::vector<double> ratios, lanelet::Lanelet input_lanelet, double error_distance = 20) const;
+
   // TODO: fill inputs and description
   // creates the "bridge lanelets" and adds traffic light and stoprule inside relevant lanelets
   std::shared_ptr<Geofence> createWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache, lanelet::Lanelet parallel_llt_front,  lanelet::Lanelet parallel_llt_back, 
@@ -266,14 +269,20 @@ public:
   // NOTE: the direction of geofence points saved matters!, if it is on opposite direction, it should pick that direction
   void preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache, std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, 
                                                     std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts);
+  
+   /*! \brief helper for generating 32bit traffic light Id from label consisting workzone intersection/signal group ids
+   */
+  uint32_t generate32BitId(const std::string& label);
+
 private:
   lanelet::ConstLanelets route_path_;
   std::unordered_set<lanelet::Id> active_geofence_llt_ids_; 
   std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache_;
+  std::unordered_map<uint32_t, lanelet::Id> traffic_light_id_lookup_;
   void addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
   void addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
   void removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const;
-  void addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const;
+  void addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
   bool shouldChangeControlLine(const lanelet::ConstLaneletOrArea& el,const lanelet::RegulatoryElementConstPtr& regem, std::shared_ptr<Geofence> gf_ptr) const;
   void addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const; 
   void addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01);
