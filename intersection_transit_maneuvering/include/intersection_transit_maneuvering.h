@@ -31,13 +31,14 @@
 #include <autoware_msgs/Lane.h>
 #include <ros/ros.h>
 #include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
+#include <itm_helper.h>
 #include <basic_autonomy/helper_functions.h>
 
 namespace intersection_transit_maneuvering
 {
 
 
-    class IntersectionTransitManeuvering
+    class IntersectionTransitManeuvering: public Interface
     {
         public:
         /**
@@ -57,13 +58,6 @@ namespace intersection_transit_maneuvering
          */ 
         bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
 
-         /**
-        * \brief set the trajectory service
-        * 
-        * \param client input trajectory service
-        */
-        void set_trajectory_client(ros::ServiceClient& client);
-
 
         /**
          *  \brief Converts a sequence of INTERSECTION_TRANSIT maneuvers to LANE_FOLLOWING maneuvers
@@ -74,18 +68,9 @@ namespace intersection_transit_maneuvering
         */
         std::vector<cav_msgs::Maneuver> convert_maneuver_plan(const std::vector<cav_msgs::Maneuver>& maneuvers);
 
-        /**
-        * \brief verify if the input InlaneCruising trajectory plan is valid
-        * 
-        * \param traj_plan input InlaneCruising trajectory plan
-        *
-        * \return true or false
-        */
-        bool validate_trajectory_plan(const cav_msgs::TrajectoryPlan& traj_plan);
-
     private:
-        ros::ServiceClient trajectory_client_;
-
+        //Plan Trajectory Service to send to Inlane Cruising
+        cav_srvs::PlanTrajectory traj_srv;
 
 
     }

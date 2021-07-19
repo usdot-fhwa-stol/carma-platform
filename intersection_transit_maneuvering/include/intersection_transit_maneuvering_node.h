@@ -24,6 +24,7 @@
 #include <autoware_msgs/Lane.h>
 #include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
 #include "intersection_transit_maneuvering.h"
+#include "itm_service.h"
 
 namespace intersection_transit_maneuvering
 {
@@ -59,26 +60,23 @@ class IntersectionTransitManeuveringNode
 
   
             carma_wm::WorldModelConstPtr wm_;
-            IntersectionTransitManeuvering::IntersectionTransitManeuvering worker(wm_);
-
 
             nh_.reset(new ros::CARMANodeHandle());
             pnh_.reset(new ros::CARMANodeHandle("~"));
             pnh2_.reset(new ros::CARMANodeHandle("/"));
 
-            trajectory_srv_ = nh_.advertiseService("plan_trajectory",&IntersectionTransitManeuvering::plan_trajectory_cb, this);
-        
             plugin_discovery_pub_ = nh_.advertise<cav_msgs::Plugin>("plugin_discovery",1);
         
             wml_.reset(new carma_wm::WMListener());
             wm_ = wml_->getWorldModel();
 
-        
-
+            itm_servicer::Servicer::Servicer srv;
+            IntersectionTransitManeuvering::IntersectionTransitManeuvering worker(wm_, srv);
+            
+            trajectory_srv_ = nh_.advertiseService("plan_trajectory",&IntersectionTransitManeuvering::plan_trajectory_cb, &worker);
             ros::ServiceClient trajectory_client = nh_.serviceClient<cav_srvs::PluginTrajectory>("plugin/InlaneCruisingPlugin/plan_trajectory");
-
-            worker.set_traajectory_client(trajectory_client);
-            ROS_INFO_STREAM("InlaneCruising Trajectory Client Set");
+            srv.setClient(trajectory_client);
+            srv.call(traj_srv);
 
             ros::Timer discovery_pub_timer_ = nh.createTimer(
                     ros::Duration(ros::Rate(10.0)),
@@ -86,6 +84,8 @@ class IntersectionTransitManeuveringNode
 
             ros::CARMANodeHandle::spin();
         }
+
+
 
 
 

@@ -68,45 +68,17 @@ namespace intersection_transit_maneuvering
                     break;
                 }
         }
-        cav_srvs::PlanTrajectoryRequest& req2;
         auto new_plan = convert_maneuver_plan(maneuver_plan);
 
         for(const auto& man : new_plan)
             {
-                req2.maneuver_plan.push_back(man);
+                traj_srv.request.maneuver_plan.push_back(man);
             }
-
-        /*Once the maneuvers have been successfully converted, call the inlanecruising plugin to calculate the trajectory*/
-
-        if (trajectory_client_ && trajectory_client_.exists() && trajectory_client_.isValid())
-        {
-            ROS_DEBUG_STREAM("Trajectory Client is valid");
-            cav_srvs::PlanTrajectory traj_srv;
-            traj_srv.request.initial_trajectory_plan = original_trajectory;
-            traj_srv.request.vehicle_state = req.vehicle_state;
-
-            if (trajectory_client_.call(traj_srv))
-            {
-                ROS_DEBUG_STREAM("Received Traj from InlaneCruisingPlugin");
-                cav_msgs::TrajectoryPlan traj_plan = traj_srv.response.trajectory_plan;
-                if (validate_trajectory_plan(traj_plan))
-                {
-                    ROS_DEBUG_STREAM("Inlane Cruising trajectory validated");
-                    resp.trajectory_plan = traj_plan;
-                }
-                else
-                {
-                    throw std::invalid_argument("Invalid Trajectory");
-                }
-            }
-            else
-            {
-                throw std::invalid_argument("Unable to Call InlaneCruising Plugin");
-            }
-        }
+        traj_srv.request.initial_trajectory_plan = original_trajectory;
+        traj_srv.request.vehicle_state = req.vehicle_state;
 
 
-        resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+        //traj_srv.response.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
         ros::WallTime end_time = ros::WallTime::now();
 
         ros::WallDuration duration = end_time - start_time;
@@ -193,34 +165,6 @@ namespace intersection_transit_maneuvering
 
         return new_maneuver_plan;
 
-    }
-
-
-    void IntersectionTransitManeuvering::set_trajectory_client(ros::ServiceClient& client)
-    {
-        trajectory_client_ = client;
-    }
-
-    bool IntersectionTransitManeuvering::validate_trajectory_plan(const cav_msgs::TrajectoryPlan& traj_plan)
-    {
-        if (traj_plan.trajectory_points.size()>= 2)
-        {
-            ROS_DEBUG_STREAM("Inlane Cruising Trajectory Time" << (double)traj_plan.trajectory_points[0].target_time.toSec());
-            ROS_DEBUG_STREAM("Now:" << (double)ros::Time::now().toSec());
-            if (traj_plan.trajectory_points[0].target_time + ros::Duration(5.0) > ros::Time::now())
-            {
-              return true;
-            }
-            else
-            {
-                ROS_DEBUG_STREAM("Old InlaneCruising Trajectory");
-            }
-        }
-        else
-        {
-            ROS_DEBUG_STREAM("Invalid InlaneCruising Trajectory"); 
-        }
-        return false;
     }
 
 
