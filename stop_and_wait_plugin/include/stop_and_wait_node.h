@@ -81,7 +81,7 @@ public:
         nh.advertiseService("plan_trajectory", &StopandWait::plan_trajectory_cb, &plugin);
 
     ros::Timer discovery_pub_timer =
-        pnh_->createTimer(ros::Duration(ros::Rate(10.0)), [&plugin](const auto&) { plugin.spinCallback(); });
+        pnh.createTimer(ros::Duration(ros::Rate(10.0)), [&plugin](const auto&) { plugin.spinCallback(); });
 
     ros::CARMANodeHandle::spin();
   }
