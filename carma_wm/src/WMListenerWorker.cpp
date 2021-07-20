@@ -97,40 +97,7 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
 
 void WMListenerWorker::incomingSpatCallback(const cav_msgs::SPAT& spat_msg)
 {
-  if (spat_msg.intersection_state_list.empty())
-  {
-    ROS_WARN_STREAM("No intersection_state_list in the newly received SPAT msg. Returning...");
-    return;
-  }
-  for (auto curr_intersection : spat_msg.intersection_state_list)
-  {
-    for (auto current_movement_state : curr_intersection.movement_list) 
-    {
-      lanelet::Id curr_light_id = world_model_->getTrafficLightId(curr_intersection.id.id, current_movement_state.signal_group);
-      if (curr_light_id == lanelet::InvalId)
-      {
-        ROS_WARN_STREAM("Received a SPAT message for traffic light that is not in the map with intersection_id: " << curr_intersection.id.id << 
-                           ", and signal_group_id: " << current_movement_state.signal_group);
-        continue;
-      }
-      auto general_regem = world_model_->getMutableMap()->regulatoryElementLayer.get(curr_light_id);
-      
-      // get ptr to the regem in the map
-      lanelet::CarmaTrafficLightPtr curr_light = world_model_->getMutableMap()->laneletLayer.findUsages(general_regem)[0].regulatoryElementsAs<lanelet::CarmaTrafficLight>()[0];
-
-      // check if we have processed this already or not
-      if (curr_light->revision_ == curr_intersection.revision)
-      {
-        continue;
-      }
-      std::vector<std::pair<ros::Time, lanelet::CarmaTrafficLightState>> new_states;
-      for (auto event : current_movement_state.movement_event_list)
-      {
-        new_states.push_back(std::make_pair(ros::Time(event.timing.min_end_time), static_cast<lanelet::CarmaTrafficLightState>(event.event_state.movement_phase_state)));
-      }
-      curr_light->setStates(new_states, curr_intersection.revision);
-    }
-  }
+  world_model_->processSpatFromMsg(spat_msg);
 }
 
 bool WMListenerWorker::checkIfReRoutingNeeded() const
@@ -225,11 +192,18 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     }
   }
   
-  // set the map to set a new routing
-  world_model_->setMap(world_model_->getMutableMap(), current_map_version_);
+  // set the Map to trigger a new route graph construction if rerouting was required by the updates. 
+  world_model_->setMap(world_model_->getMutableMap(), current_map_version_, rerouting_flag_);
 
   
   ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_); 
+
+  // Call user defined map callback
+  if (map_callback_)
+  {
+    ROS_INFO_STREAM("Calling user defined map update callback");
+    map_callback_();
+  }
 }
 
 /*!

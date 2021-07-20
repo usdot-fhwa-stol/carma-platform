@@ -1226,5 +1226,87 @@ TEST(CARMAWorldModelTest, sampleRoutePoints)
   }
 }
 
+TEST(CARMAWorldModelTest, getTrafficLightId)
+{
+  CARMAWorldModel cmw;
+  uint32_t id_bit = 257;
+  cmw.traffic_light_ids_[id_bit] = 1000;
+  uint16_t intersection_id=1;
+  uint8_t signal_group_id=1;
+
+  EXPECT_EQ(cmw.getTrafficLightId(intersection_id, signal_group_id), 1000); 
+}
+
+TEST(CARMAWorldModelTest, processSpatFromMsg)
+{
+  CARMAWorldModel cmw;
+  auto pl1 = carma_wm::getPoint(0, 0, 0);
+  auto pl2 = carma_wm::getPoint(0, 1, 0);
+  auto pl3 = carma_wm::getPoint(0, 2, 0);
+  auto pr1 = carma_wm::getPoint(1, 0, 0);
+  auto pr2 = carma_wm::getPoint(1, 1, 0);
+  auto pr3 = carma_wm::getPoint(1, 2, 0);
+  std::vector<lanelet::Point3d> left_1 = { pl1, pl2, pl3 };
+  std::vector<lanelet::Point3d> right_1 = { pr1, pr2, pr3 };
+  auto ll_1 = carma_wm::getLanelet(left_1, right_1, lanelet::AttributeValueString::SolidDashed,lanelet::AttributeValueString::Dashed);
+  lanelet::Id traffic_light_id = lanelet::utils::getId();
+  lanelet::LineString3d virtual_stop_line(lanelet::utils::getId(), {pl2, pr2});
+  // Creat passing control line for solid dashed line
+  std::shared_ptr<lanelet::CarmaTrafficLight> traffic_light(new lanelet::CarmaTrafficLight(lanelet::CarmaTrafficLight::buildData(traffic_light_id, { virtual_stop_line })));
+  traffic_light->revision_ = 0;
+  ll_1.addRegulatoryElement(traffic_light);
+  auto map = lanelet::utils::createMap({ ll_1 }, {});
+  map->add(traffic_light);
+  cmw.setMap(std::move(map));
+  uint32_t id_bit = 257;
+  cmw.traffic_light_ids_[id_bit] = traffic_light_id;
+  // create sample SPAT.msg and fill its entries
+  cav_msgs::SPAT spat;
+  cav_msgs::IntersectionState state;
+  state.id.id = 1;
+  state.revision = 0;
+  cav_msgs::MovementState movement;
+  movement.signal_group = 1;
+  cav_msgs::MovementEvent event;
+  // call the processSpatFromMsg with that msg 0
+  event.event_state.movement_phase_state = 0;
+  event.timing.min_end_time = 1;
+  movement.movement_event_list.push_back(event);
+  state.movement_list.push_back(movement);
+  spat.intersection_state_list.push_back(state);
+  cmw.processSpatFromMsg(spat);
+  // call the processSpatFromMsg with that msg 1
+  event.event_state.movement_phase_state = 1;
+  event.timing.min_end_time = 2;
+  movement.movement_event_list[0] = event;
+  state.movement_list[0] = movement;
+  spat.intersection_state_list[0] = state;
+  cmw.processSpatFromMsg(spat);
+  // call the processSpatFromMsg with that msg 2
+  event.event_state.movement_phase_state = 2;
+  event.timing.min_end_time = 3;
+  movement.movement_event_list[0] = event;
+  state.movement_list[0] = movement;
+  spat.intersection_state_list[0] = state;
+  cmw.processSpatFromMsg(spat);
+  // call the processSpatFromMsg with that msg 3
+  event.event_state.movement_phase_state = 0;
+  event.timing.min_end_time = 4;
+  movement.movement_event_list[0] = event;
+  state.movement_list[0] = movement;
+  spat.intersection_state_list[0] = state;
+  cmw.processSpatFromMsg(spat);
+  // call the processSpatFromMsg with that msg 4
+  event.event_state.movement_phase_state = 1;
+  event.timing.min_end_time = 5;
+  movement.movement_event_list[0] = event;
+  state.movement_list[0] = movement;
+  spat.intersection_state_list[0] = state;
+  cmw.processSpatFromMsg(spat);
+
+  auto lights = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficLight>();
+  // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
+  EXPECT_EQ(ros::Duration(3), lights[0]->fixed_cycle_duration);
+}
 
 }  // namespace carma_wm

@@ -25,6 +25,7 @@
 #include <cav_msgs/ExternalObjectList.h>
 #include <cav_msgs/RoadwayObstacle.h>
 #include <cav_msgs/RoadwayObstacleList.h>
+#include <cav_msgs/SPAT.h>
 #include "TrackPos.h"
 
 namespace carma_wm
@@ -58,8 +59,9 @@ public:
    *
    *  \param map A shared pointer to the map which will share ownership to this object
    *  \param map_version Optional field to set the map version. While this is technically optional its uses is highly advised to manage synchronization.
+   *  \param recompute_routing_graph Optional field which if true will result in the routing graph being recomputed. NOTE: If this map is the first map set the graph will always be recomputed
    */
-  void setMap(lanelet::LaneletMapPtr map, size_t map_version = 0);
+  void setMap(lanelet::LaneletMapPtr map, size_t map_version = 0, bool recompute_routing_graph = true);
 
   /*! \brief Set the current route. This route must match the current map for this class to function properly
    *
@@ -78,6 +80,13 @@ public:
    * These are detected by the sensor fusion node and are passed as objects compatible with lanelet 
    */
   void setRoadwayObjects(const std::vector<cav_msgs::RoadwayObstacle>& rw_objs);
+
+  /**
+   * @brief processSpatFromMsg update map's traffic light states with SPAT msg
+   *
+   * @param spat_msg Msg to update with
+   */
+  void processSpatFromMsg(const cav_msgs::SPAT& spat_msg);
 
   /**
    * \brief This function is called by distanceToObjectBehindInLane or distanceToObjectAheadInLane. 
@@ -156,6 +165,9 @@ public:
 
   size_t getMapVersion() const override;
 
+  std::vector<lanelet::CarmaTrafficLightPtr> predictTrafficLight(const lanelet::BasicPoint2d& loc) const override;
+  
+  std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 
 private:
   
@@ -183,7 +195,7 @@ private:
   LaneletRoutePtr route_;
   LaneletRoutingGraphPtr map_routing_graph_;
   double route_length_ = 0;
-  
+  std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::vector<std::pair<ros::Time, lanelet::CarmaTrafficLightState>>>> traffic_light_states_; //[intersection_id][signal_group_id]
   lanelet::LaneletSubmapConstUPtr shortest_path_view_;  // Map containing only lanelets along the shortest path of the
                                                      // route
   std::vector<lanelet::LineString3d> shortest_path_centerlines_;  // List of disjoint centerlines seperated by lane
@@ -194,7 +206,7 @@ private:
   std::vector<cav_msgs::RoadwayObstacle> roadway_objects_; // 
 
   size_t map_version_ = 0; // The current map version. This is cached from calls to setMap();
-  std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
+  
 
   
 };

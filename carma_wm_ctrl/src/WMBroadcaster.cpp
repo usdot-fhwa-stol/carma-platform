@@ -81,11 +81,19 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   lanelet::MapConformer::ensureCompliance(base_map_, config_limit);     // Update map to ensure it complies with expectations
   lanelet::MapConformer::ensureCompliance(current_map_, config_limit);
 
+  ROS_INFO_STREAM("Building routing graph for base map");
+
+  lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
+  lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::VehicleCar);
+  current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
+
+  ROS_INFO_STREAM("Done building routing graph for base map");
+
   // Publish map
   current_map_version_ += 1; // Increment the map version. It should always start from 1 for the first map
   map_update_message_queue_.clear(); // Clear the update queue as the map version has changed
   autoware_lanelet2_msgs::MapBin compliant_map_msg;
-  lanelet::utils::conversion::toBinMsg(base_map_, &compliant_map_msg);
+  lanelet::utils::conversion::toBinMsg(current_map_, &compliant_map_msg);
   compliant_map_msg.map_version = current_map_version_;
   map_pub_(compliant_map_msg);
 };
@@ -691,17 +699,17 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
 // helper function that filters successor lanelets of root_lanelets from possible_lanelets
 std::unordered_set<lanelet::Lanelet> WMBroadcaster::filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets)
 {
+  if (!current_routing_graph_) {
+    throw std::invalid_argument("No routing graph available");
+  }
+  
   std::unordered_set<lanelet::Lanelet> filtered_lanelets;
   // we utilize routes to filter llts that are overlapping but not connected
-  lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
-  lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::VehicleCar);
-  lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
-  
   // as this is the last lanelet 
   // we have to filter the llts that are only geometrically overlapping yet not connected to prev llts
   for (auto recorded_llt: root_lanelets)
   {
-    for (auto following_llt: map_graph->following(recorded_llt, false))
+    for (auto following_llt: current_routing_graph_->following(recorded_llt, false))
     {
       auto mutable_llt = current_map_->laneletLayer.get(following_llt.id());
       auto it = possible_lanelets.find(mutable_llt);
@@ -827,6 +835,19 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   addGeofenceHelper(gf_ptr);
   
   for (auto pair : gf_ptr->update_list_) active_geofence_llt_ids_.insert(pair.first);
+
+  // If the geofence invalidates the route graph then recompute the routing graph now that the map has been updated
+  if (gf_ptr->invalidate_route_) {
+
+    ROS_INFO_STREAM("Rebuilding routing graph after is was invalidated by geofence");
+
+    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
+    lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::VehicleCar);
+    current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
+
+    ROS_INFO_STREAM("Done rebuilding routing graph after is was invalidated by geofence");
+
+  }
   
 
   // Publish

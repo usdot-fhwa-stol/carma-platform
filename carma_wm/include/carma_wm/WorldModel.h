@@ -31,6 +31,7 @@
 #include <cav_msgs/RoadwayObstacleList.h>
 #include <cav_msgs/ExternalObject.h>
 #include <cav_msgs/ExternalObjectList.h>
+#include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
 #include "TrackPos.h"
 
 namespace carma_wm
@@ -332,6 +333,18 @@ public:
    */
   virtual std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point,
                                                              const unsigned int n) const = 0;
+
+    /**
+   * \brief  Return a list of traffic lights/intersections along the current route.  
+   * The traffic lights along a route and the next traffic light ahead of us on the route specifically, 
+   * so a sorted list (by downtrack distance) of traffic lights on the route ahead of us thus eliminating those behind the vehicle.
+   *
+   * \param loc location
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or route is not set
+   *
+   * \return list of traffic lights along the current route
+   */
+  virtual std::vector<lanelet::CarmaTrafficLightPtr> predictTrafficLight(const lanelet::BasicPoint2d& loc) const = 0;
 
   /**
    * \brief Returns a monotonically increasing version number which represents the version stamp of the map geometry data
