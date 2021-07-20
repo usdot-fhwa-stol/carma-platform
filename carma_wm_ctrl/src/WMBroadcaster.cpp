@@ -371,7 +371,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   lanelet::LineString3d parallel_stop_ls(lanelet::utils::getId(), {parallel_llt_front.leftBound3d().back(), parallel_llt_front.rightBound3d().back()});
   lanelet::CarmaTrafficLightPtr tfl_parallel = std::make_shared<lanelet::CarmaTrafficLight>(lanelet::CarmaTrafficLight::buildData(lanelet::utils::getId(), {parallel_stop_ls}, {parallel_llt_front}, {}));
   gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::TAPERRIGHT]->label_),tfl_parallel->id()});
-  lanelet::StopRulePtr stop_rule_parallel = std::make_shared<lanelet::StopRule>(lanelet::StopRule::buildData(lanelet::utils::getId(), {parallel_stop_ls}, {lanelet::Participants::Vehicle})); //TODO: change this default 'vehicle' option if participants are used
+  lanelet::StopRulePtr stop_rule_parallel = std::make_shared<lanelet::StopRule>(lanelet::StopRule::buildData(lanelet::utils::getId(), {parallel_stop_ls}, {lanelet::Participants::Vehicle}));
   parallel_llt_front.addRegulatoryElement(tfl_parallel);
   parallel_llt_front.addRegulatoryElement(stop_rule_parallel);
 
@@ -381,7 +381,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
                         current_map_->laneletLayer.get(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->affected_parts_.back().lanelet().get().id()));
   lanelet::LineString3d opposite_stop_ls(lanelet::utils::getId(), {opposite_llts_with_stop_line->front().leftBound3d().back(), opposite_llts_with_stop_line->front().rightBound3d().back()});
   lanelet::CarmaTrafficLightPtr tfl_opposite = std::make_shared<lanelet::CarmaTrafficLight>(lanelet::CarmaTrafficLight::buildData(lanelet::utils::getId(), {opposite_stop_ls}, {opposite_llts_with_stop_line->front()}, {}));
-  lanelet::StopRulePtr stop_rule_opposite = std::make_shared<lanelet::StopRule>(lanelet::StopRule::buildData(lanelet::utils::getId(), {opposite_stop_ls}, {lanelet::Participants::Vehicle})); //TODO: change this default 'vehicle' option if participants are used
+  lanelet::StopRulePtr stop_rule_opposite = std::make_shared<lanelet::StopRule>(lanelet::StopRule::buildData(lanelet::utils::getId(), {opposite_stop_ls}, {lanelet::Participants::Vehicle}));
   gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->label_), tfl_opposite->id()});
   opposite_llts_with_stop_line->front().addRegulatoryElement(tfl_opposite);
   opposite_llts_with_stop_line->front().addRegulatoryElement(stop_rule_opposite);
@@ -446,26 +446,75 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     splitLaneletWithPoint(opposite_llts, {work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.front().basicPoint2d(), 
                                           work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.back().basicPoint2d()},
                                           current_map_->laneletLayer.get(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->affected_parts_.front().lanelet().get().id()));
+    std::vector<lanelet::Lanelet> trimmed_llts;
+    if (opposite_llts->size() < 2) // if there is only 1 lanelet
+    {
+      return;
+    }
+    else if (opposite_llts->size() == 2) // determine which 
+    {
+      // back gap is bigger than front's, we should lose front lanelet from the two
+      if (lanelet::geometry::distance2d(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.back().basicPoint2d(), reverse_front_llt.centerline2d().back().basicPoint2d()) >
+        lanelet::geometry::distance2d(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.front().basicPoint2d(), reverse_front_llt.centerline2d().front().basicPoint2d()))
+        {
+          trimmed_llts.push_back(opposite_llts->back());
+        }
+        else
+        {
+          trimmed_llts.push_back(opposite_llts->front());
+        }
+    }
+    else if (opposite_llts->size() == 3) // leave only middle lanelets from 3
+    {
+      trimmed_llts.insert(trimmed_llts.end(), opposite_llts->begin() + 1, opposite_llts->end()- 1);
+    }
 
-    
+    *opposite_llts.get() = trimmed_llts;
   }
-  else
+  else //if there are two or more lanelets
   {
     /// OPPOSITE FRONT (OPENRIGHT side) 
     auto reverse_first_pt = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.front().basicPoint2d();
     auto reverse_first_llt = current_map_->laneletLayer.get(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->affected_parts_.front().lanelet().get().id());
-
+    std::vector<lanelet::Lanelet> trimmed_llts;
     splitLaneletWithPoint(opposite_llts, {reverse_first_pt}, reverse_first_llt);
 
+    if (opposite_llts->size() > 1)
+    {
+      trimmed_llts.insert(trimmed_llts.end(), opposite_llts->begin() + 1, opposite_llts->end());
+    }
+    else
+    {
+      trimmed_llts.insert(trimmed_llts.end(), opposite_llts->begin(), opposite_llts->end());
+    }
+    /// FILL in the middle lanelets
+    if (work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->affected_parts_.size() > 2)
+    {
+      for (auto llt_or_area: work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->affected_parts_)
+      {
+        trimmed_llts.push_back(current_map_->laneletLayer.get(llt_or_area.id()));
+      }
+    }
     /// OPPOSITE BACK (TAPERRIGHT side)
+    *opposite_llts.get() = {};
     auto reverse_last_pt = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.back().basicPoint2d();
     auto reverse_last_llt = current_map_->laneletLayer.get(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->affected_parts_.back().lanelet().get().id());
 
     splitLaneletWithPoint(opposite_llts, {reverse_last_pt}, reverse_last_llt);
 
+    if (opposite_llts->size() > 1)
+    {
+      trimmed_llts.insert(trimmed_llts.end(), opposite_llts->begin(), opposite_llts->end()- 1);
+    }
+    else
+    {
+      trimmed_llts.insert(trimmed_llts.end(), opposite_llts->begin(), opposite_llts->end());
+    }
     
-
+    *opposite_llts.get() = trimmed_llts;
   }
+
+
   // cut two ends TODO
 }
 
