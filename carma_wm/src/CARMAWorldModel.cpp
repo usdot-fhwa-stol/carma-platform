@@ -485,9 +485,13 @@ void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map, size_t map_version, boo
   // If the routing graph should be updated then recompute it
   if (recompute_routing_graph) {
 
+    ROS_INFO_STREAM("Building routing graph");
+
     TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
     map_routing_graph_ = std::move(map_graph);
+
+    ROS_INFO_STREAM("Done building routing graph");
 
   }
 }
