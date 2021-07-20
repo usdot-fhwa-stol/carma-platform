@@ -228,7 +228,7 @@ namespace port_drayage_plugin
         maneuver_msg.lane_following_maneuver.end_speed = target_speed;
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         maneuver_msg.lane_following_maneuver.end_time = time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
-        maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
+        maneuver_msg.lane_following_maneuver.lane_ids = { std::to_string(lane_id) };
         return maneuver_msg;
     }
     // @SONAR_START@

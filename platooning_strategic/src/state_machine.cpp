@@ -132,7 +132,7 @@ namespace platoon_strategic
             // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
             maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration(mvr_duration_);
 	    //TODO: Add actual lane id here
-            maneuver_msg.lane_following_maneuver.lane_id = "";
+            maneuver_msg.lane_following_maneuver.lane_ids = {""};
         }
         
         return maneuver_msg;
