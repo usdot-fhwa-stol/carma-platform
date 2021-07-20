@@ -157,6 +157,8 @@ namespace platoon_control
 
     void  PlatoonControlWorker::setCurrentSpeed(double speed){
     	currentSpeed = speed;
+        // last speed command for smooth speed transition
+        lastCmdSpeed = speed;
     }
 
 
