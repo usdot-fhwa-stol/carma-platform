@@ -78,6 +78,9 @@ namespace wz_strategic_plugin
             geometry_msgs::PoseStampedConstPtr pose_msg_;
             lanelet::BasicPoint2d current_loc_;
 
+            std::string planning_strategic_plugin_ = "WorkZonePlugin";
+            std::string intersection_transit_planning_tactical_plugin_ = "IntersectionTransitPlugin";
+
             /**
              * \brief Callback for the pose subscriber, which will store latest pose locally
              * \param msg Latest pose message
@@ -92,11 +95,11 @@ namespace wz_strategic_plugin
 
             cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id);
 
-            cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double start_dist, double end_dist, double start_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id);
+            cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, ros::Time time, double time_to_stop);
 
-            cav_msgs::Maneuver composeWorkZoneManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id);
+            cav_msgs::Maneuver composeIntersectionTransitMessage(double start_dist, double end_dist, double start_speed, double target_speed, ros::Time start_time, ros::Time end_time, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id);
 
-            std::string traffic_light_interpreter(CarmaTrafficLightState state);
+            std::string traffic_light_interpreter(lanelet::CarmaTrafficLightState& state);
 
         private:
             // CARMA ROS node handles
