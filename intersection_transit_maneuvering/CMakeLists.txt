@@ -30,12 +30,6 @@ set( CATKIN_DEPS
   carma_utils
   trajectory_utils
   autoware_msgs
-  autoware_lanelet2_msgs
-  lanelet2_core
-  lanelet2_maps
-  lanelet2_routing
-  lanelet2_traffic_rules
-  lanelet2_extension
   carma_wm
   carma_debug_msgs
   basic_autonomy

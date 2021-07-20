@@ -25,6 +25,7 @@
 #include <boost/geometry.hpp>
 #include <carma_wm/Geometry.h>
 #include <cav_srvs/PlanTrajectory.h>
+#include <itm_helper.h>
 
 
 namespace itm_servicer
@@ -53,6 +54,6 @@ class Servicer
         ros::ServiceClient client;
 
 
-}
+};
 
 }

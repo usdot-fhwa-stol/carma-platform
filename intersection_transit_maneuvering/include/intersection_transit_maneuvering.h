@@ -25,6 +25,9 @@
 #include <carma_utils/CARMAUtils.h>
 #include <boost/geometry.hpp>
 #include <carma_wm/Geometry.h>
+#include <cav_msgs/IntersectionTransitLeftTurnManeuver.h>
+#include <cav_msgs/IntersectionTransitRightTurnManeuver.h>
+#include <cav_msgs/IntersectionTransitStraightManeuver.h>
 #include <cav_srvs/PlanTrajectory.h>
 #include <carma_wm/WMListener.h>
 #include <functional>
@@ -50,7 +53,7 @@ namespace intersection_transit_maneuvering
         * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
         * \param obj Interface object to initialize ros::Service::call
         */ 
-        IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr wm, PublishPluginDiscoveryCB plugin_discovery_publisher, std::shared_ptr<Interface> obj);
+        IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr& wm, PublishPluginDiscoveryCB plugin_discovery_publisher, std::shared_ptr<Interface> obj);
                        
         /**
          * \brief Service callback for trajectory planning
@@ -71,6 +74,8 @@ namespace intersection_transit_maneuvering
         */
         std::vector<cav_msgs::Maneuver> convert_maneuver_plan(const std::vector<cav_msgs::Maneuver>& maneuvers);
 
+        bool onSpin();
+
     private:
 
         std::shared_ptr<Interface> object;
@@ -85,21 +90,7 @@ namespace intersection_transit_maneuvering
 
 
 
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    };
 
 
 }

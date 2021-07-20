@@ -39,7 +39,7 @@ class IntersectionTransitManeuveringNode
         {
 
             //CARMA ROS node handles
-            ros::CARMANodeHandle nh_,pnh_, pnh2_;
+            ros::CARMANodeHandle nh_;
 
             // ROS service servers
             ros::ServiceServer trajectory_srv_;
@@ -51,44 +51,32 @@ class IntersectionTransitManeuveringNode
             ros::Publisher jerk_pub_;
             ros::Timer discovery_pub_timer_;
 
-            ros::ServiceServer trajectory_srv_;
             // Current vehicle pose in map
             geometry_msgs::PoseStamped pose_msg_;
 
             //Plugin discovery message
             cav_msgs::Plugin plugin_discovery_msg_;
   
-            carma_wm::WorldModelConstPtr wm_;
-
-            nh_.reset(new ros::CARMANodeHandle());
-            pnh_.reset(new ros::CARMANodeHandle("~"));
-            pnh2_.reset(new ros::CARMANodeHandle("/"));
-
             plugin_discovery_pub_ = nh_.advertise<cav_msgs::Plugin>("plugin_discovery",1);
-        
-            wml_.reset(new carma_wm::WMListener());
-            wm_ = wml_->getWorldModel();
+            carma_wm::WMListener wml_;
 
-            itm_servicer::Servicer::Servicer srv;
-            IntersectionTransitManeuvering::IntersectionTransitManeuvering worker(wm_,[&discovery_pub](const auto& msg) { discovery_pub.publish(msg); }, srv);
-            ros::ServiceClient trajectory_client = nh_.serviceClient<cav_srvs::PluginTrajectory>("plugin/InlaneCruisingPlugin/plan_trajectory");
+            carma_wm::WorldModelConstPtr wm_ = wml_.getWorldModel();
+
+            itm_servicer::Servicer srv;
+            IntersectionTransitManeuvering worker(wm_,[&plugin_discovery_pub_](const auto& msg) {plugin_discovery_pub_.publish(msg);}, srv);
+            ros::ServiceClient trajectory_client = nh_.serviceClient<cav_srvs::PlanTrajectory>("plugin/InlaneCruisingPlugin/plan_trajectory");
             srv.set_client(trajectory_client);
 
             trajectory_srv_ = nh_.advertiseService("plan_trajectory",&IntersectionTransitManeuvering::plan_trajectory_cb, &worker);           
             
-            ros::Timer discovery_pub_timer_ = nh.createTimer(
+            discovery_pub_timer_ = nh_.createTimer(
                     ros::Duration(ros::Rate(10.0)),
                     [&worker](const auto&) {worker.onSpin();});
 
             ros::CARMANodeHandle::spin();
         }
 
-
-
-
-
-
-}
+};
 
 
 }

@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 {
   
     ros::init(argc, argv, "intersection_transit_maneuvering");
-    intersection_transit_maneuvering::IntersectionTransitManeuvering() itm;
+    intersection_transit_maneuvering::IntersectionTransitManeuveringNode itm;
     itm.run();
     return 0;
 

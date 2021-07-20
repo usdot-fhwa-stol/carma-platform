@@ -30,13 +30,12 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 #include <intersection_transit_maneuvering.h>
-#include <itm_helper.h>
 
 using oss = std::ostringstream;
 
 namespace intersection_transit_maneuvering
 {
-    IntersectionTransitManeuvering::IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr wm, plugin_discovery_publisher_(plugin_discovery_publisher),
+    IntersectionTransitManeuvering::IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr& wm, PublishPluginDiscoveryCB plugin_discovery_publisher,
                                                                      std::shared_ptr<Interface> obj)
     {        
         plugin_discovery_msg_.name = "IntersectionTransitManeuvering";
@@ -54,22 +53,19 @@ namespace intersection_transit_maneuvering
         
         ros::WallTime start_time = ros::WallTime::now();  // Start timeing the execution time for planning so it can be logged
 
-        lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
-        double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
-
         std::vector<cav_msgs::Maneuver> maneuver_plan;
         for(size_t i = req.maneuver_index_to_plan; i < req.maneuver_plan.maneuvers.size(); i++)
         {
             if(req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ||
-            req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT || 
-            req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT )
+            req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN || 
+            req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN )
             {
                 maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
                 resp.related_maneuvers.push_back(i);
             }
             else
                 {
-                    break;
+                    throw std::invalid_argument("Invalid Maneuver Type");
                 }
         }
 
@@ -87,6 +83,8 @@ namespace intersection_transit_maneuvering
 
         object->call("plan_trajectory", req2,resp); //Since we're using an interface for this process, the call functionality will be referenced in the Servicer
 
+        resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+
         ros::WallTime end_time = ros::WallTime::now();
 
         ros::WallDuration duration = end_time - start_time;
@@ -98,20 +96,20 @@ namespace intersection_transit_maneuvering
    
     std::vector<cav_msgs::Maneuver> IntersectionTransitManeuvering::convert_maneuver_plan(const std::vector<cav_msgs::Maneuver>& maneuvers)
     {
-        if (maneuvers.size().isEmpty())
+        if (maneuvers.size() == 0)
         {
             throw std::invalid_argument("No maneuvers to convert");
         }
 
         std::vector<cav_msgs::Maneuver> new_maneuver_plan;
-        cav_msgs:Maneuver new_maneuver;
+        cav_msgs::Maneuver new_maneuver;
         new_maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING; //All of the converted maneuvers will be of type LANE_FOLLOWING
         for(const auto& maneuver : maneuvers)
         {
             /*Throw exception if the manuever type does not match INTERSECTION_TRANSIT*/
             if ( maneuver.type != cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ||
                 maneuver.type != cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ||
-                maneuver.type != cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ||)
+                maneuver.type != cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN)
                 {
                     throw std::invalid_argument("Intersection transit maneuvering does not support this maneuver type");
                 }
@@ -129,7 +127,7 @@ namespace intersection_transit_maneuvering
                 new_maneuver.lane_following_maneuver.end_speed = maneuver.intersection_transit_straight_maneuver.end_speed;
                 new_maneuver.lane_following_maneuver.end_time = maneuver.intersection_transit_straight_maneuver.end_time;
 
-                new_maneuver.lane_following_maneuver.lane_id = maneuver.intersection_transit_straight_maneuver.lane_id;
+                new_maneuver.lane_following_maneuver.lane_id = maneuver.intersection_transit_straight_maneuver.starting_lane_id;
 
                 new_maneuver_plan.push_back(new_maneuver);
             }
@@ -137,7 +135,7 @@ namespace intersection_transit_maneuvering
              /*Convert IT LEFT TURN*/
             if (maneuver.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN)
             {
-                new_maneuver.parameters = maneuver.intersection_transit_left_turn_maneuver.parameters;
+                new_maneuver.lane_following_maneuver.parameters = maneuver.intersection_transit_left_turn_maneuver.parameters;
 
                 new_maneuver.lane_following_maneuver.start_dist = maneuver.intersection_transit_left_turn_maneuver.start_dist;
                 new_maneuver.lane_following_maneuver.start_speed = maneuver.intersection_transit_left_turn_maneuver.start_speed;
@@ -147,13 +145,13 @@ namespace intersection_transit_maneuvering
                 new_maneuver.lane_following_maneuver.end_speed = maneuver.intersection_transit_left_turn_maneuver.end_speed;
                 new_maneuver.lane_following_maneuver.end_time = maneuver.intersection_transit_left_turn_maneuver.end_time;
 
-                new_maneuver.lane_following_maneuver.lane_id = maneuver.intersection_transit_left_turn_maneuver.lane_id;
+                new_maneuver.lane_following_maneuver.lane_id = maneuver.intersection_transit_left_turn_maneuver.starting_lane_id;
 
                 new_maneuver_plan.push_back(new_maneuver);
             }
 
              /*Convert IT RIGHT TURN*/
-            if (maneuver.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN)
+            if (maneuver.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN)
             {
                 new_maneuver.lane_following_maneuver.parameters = maneuver.intersection_transit_right_turn_maneuver.parameters;
 
@@ -165,7 +163,7 @@ namespace intersection_transit_maneuvering
                 new_maneuver.lane_following_maneuver.end_speed = maneuver.intersection_transit_right_turn_maneuver.end_speed;
                 new_maneuver.lane_following_maneuver.end_time = maneuver.intersection_transit_right_turn_maneuver.end_time;
 
-                new_maneuver.lane_following_maneuver.lane_id = maneuver.intersection_transit_right_turn_maneuver.lane_id;
+                new_maneuver.lane_following_maneuver.lane_id = maneuver.intersection_transit_right_turn_maneuver.starting_lane_id;
 
                 new_maneuver_plan.push_back(new_maneuver);
             }
