@@ -96,6 +96,8 @@ namespace platoon_control
         {
             ROS_DEBUG_STREAM("Host vehicle is the leader");
             speed_cmd = currentSpeed;
+            // last speed command for smooth speed transition
+            lastCmdSpeed = currentSpeed;
 
             if(enableMaxAdjustmentFilter) 
             {
@@ -157,8 +159,7 @@ namespace platoon_control
 
     void  PlatoonControlWorker::setCurrentSpeed(double speed){
     	currentSpeed = speed;
-        // last speed command for smooth speed transition
-        lastCmdSpeed = speed;
+        
     }
 
 
