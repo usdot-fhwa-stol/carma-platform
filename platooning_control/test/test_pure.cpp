@@ -1,4 +1,4 @@
-#include "pure_pursuit.hpp"
+#include "pure_pursuit.h"
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 
