@@ -57,44 +57,43 @@ namespace wz_strategic_plugin
         current_speed_ = msg->twist.linear.x;
     }
 
-    std::string WzStrategicPlugin::traffic_light_interpreter(lanelet::CarmaTrafficLightState& state)
+    int WzStrategicPlugin::traffic_light_interpreter(const lanelet::CarmaTrafficLightState& state)
     {
-        std::string traffic_light_inter;
+        int traffic_light_inter;
         switch(state) {
             case lanelet::CarmaTrafficLightState::UNAVAILABLE:
-                traffic_light_inter = "R";
+                traffic_light_inter = 0;
                 break;
             case lanelet::CarmaTrafficLightState::DARK:
-                traffic_light_inter = "R";
+                traffic_light_inter = 0;
                 break;
             case lanelet::CarmaTrafficLightState::STOP_THEN_PROCEED:
-                traffic_light_inter = "R";
+                traffic_light_inter = 0;
                 break;
             case lanelet::CarmaTrafficLightState::STOP_AND_REMAIN:
-                traffic_light_inter = "R";
+                traffic_light_inter = 0;
                 break;
             case lanelet::CarmaTrafficLightState::PRE_MOVEMENT:
-                traffic_light_inter = "R";
+                traffic_light_inter = 0;
                 break;
             case lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED:
-                traffic_light_inter = "R";
+                traffic_light_inter = 0;
                 break;
             case lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED:
-                traffic_light_inter = "R";
+                traffic_light_inter = 0;
                 break;
             case lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE:
-                traffic_light_inter = "R";
+                traffic_light_inter = 0;
                 break;
             case lanelet::CarmaTrafficLightState::PROTECTED_CLEARANCE:
-                traffic_light_inter = "R";
+                traffic_light_inter = 0;
                 break;
             case lanelet::CarmaTrafficLightState::CAUTION_CONFLICTING_TRAFFIC:
-                traffic_light_inter = "R";
+                traffic_light_inter = 0;
                 break;
         }
 
         return traffic_light_inter;
-
     }
 
     bool WzStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp)
@@ -126,27 +125,60 @@ namespace wz_strategic_plugin
                 ROS_DEBUG("distance_remaining_to_traffic_light is larger than min_distance_to_traffic_light %d %d", distance_remaining_to_traffic_light, min_distance_to_traffic_light);
 
                 ROS_DEBUG("current_speed_ %d", current_speed_);
+
                 ROS_DEBUG("time_remaining_to_traffic_light %d", distance_remaining_to_traffic_light / current_speed_);
                 ros::Duration time_remaining_to_traffic_light(distance_remaining_to_traffic_light / current_speed_);
-
-                auto traffic_light_current_state = nearest_traffic_light->getState();
-                ROS_DEBUG("traffic_light_current_state %d", traffic_light_current_state);
-
-                auto traffic_light_next_predicted_state = nearest_traffic_light->getState(ros::Time::now() + time_remaining_to_traffic_light);
-                ROS_DEBUG("traffic_light_next_predicted_state %d", traffic_light_next_predicted_state);
 
                 lanelet::Id start_lane_id = current_lanelet.second.id();
                 lanelet::Id end_lane_id = traffic_light_lanelet.second.id();
 
+                ros::Time start_time;
+                double current_progress = 0;
+                
+                if(req.prior_plan.maneuvers.size() > 0) {
+                    switch(req.prior_plan.maneuvers.back().type) {
+                        case cav_msgs::Maneuver::LANE_FOLLOWING : 
+                            start_time = req.prior_plan.maneuvers.back().lane_following_maneuver.end_time;
+                            current_progress = req.prior_plan.maneuvers.back().lane_following_maneuver.end_dist;
+                            break;
+                        case cav_msgs::Maneuver::LANE_CHANGE : 
+                            start_time = req.prior_plan.maneuvers.back().lane_change_maneuver.end_time;
+                            current_progress = req.prior_plan.maneuvers.back().lane_change_maneuver.end_dist;
+                            break;
+                        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT : 
+                            start_time = req.prior_plan.maneuvers.back().intersection_transit_straight_maneuver.end_time;
+                            current_progress = req.prior_plan.maneuvers.back().intersection_transit_straight_maneuver.end_dist;
+                            break;
+                        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN : 
+                            start_time = req.prior_plan.maneuvers.back().intersection_transit_left_turn_maneuver.end_time;
+                            current_progress = req.prior_plan.maneuvers.back().intersection_transit_left_turn_maneuver.end_dist;
+                            break;
+                        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN : 
+                            start_time = req.prior_plan.maneuvers.back().intersection_transit_right_turn_maneuver.end_time;
+                            current_progress = req.prior_plan.maneuvers.back().intersection_transit_right_turn_maneuver.end_dist;
+                            break;
+                        case cav_msgs::Maneuver::STOP_AND_WAIT : 
+                            start_time = req.prior_plan.maneuvers.back().stop_and_wait_maneuver.end_time;
+                            current_progress = req.prior_plan.maneuvers.back().stop_and_wait_maneuver.end_dist;
+                            break;
+                    }
+                } else {
+                    start_time = ros::Time::now();
+                    current_progress = current_car_down_track;
+                }
+
+                auto traffic_light_current_state = traffic_light_interpreter(nearest_traffic_light->predictState(start_time));
+                ROS_DEBUG("traffic_light_current_state %d", traffic_light_current_state);
+
+                auto traffic_light_next_predicted_state = traffic_light_interpreter(nearest_traffic_light->predictState(start_time + time_remaining_to_traffic_light));
+                ROS_DEBUG("traffic_light_next_predicted_state %d", traffic_light_next_predicted_state);
+
                 if(traffic_light_current_state != traffic_light_next_predicted_state) {
 
-                    ROS_DEBUG("traffic_light_current_state %d", traffic_light_current_state);
-                    ROS_DEBUG("traffic_light_next_predicted_state %d", traffic_light_next_predicted_state);
-
-                    if(traffic_light_interpreter(traffic_light_next_predicted_state) == "R") {
+                    if(traffic_light_next_predicted_state == 0) {
 
                         // stop_and_wait
-                        cav_msgs::Maneuver stop_and_wait = composeStopAndWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, 0.0, start_lane_id, end_lane_id, ros::Time::now(), time_remaining_to_traffic_light.toSec());
+                        cav_msgs::Maneuver stop_and_wait = composeStopAndWaitManeuverMessage( current_progress, traffic_light_down_track, current_speed_, 0.0, start_lane_id, end_lane_id, start_time, time_remaining_to_traffic_light.toSec());
                         resp.new_plan.maneuvers.push_back(stop_and_wait);
 
                         // workzone_tactical
@@ -155,10 +187,10 @@ namespace wz_strategic_plugin
 
                     }
 
-                    if(traffic_light_interpreter(traffic_light_next_predicted_state) == "G") {
+                    if(traffic_light_next_predicted_state == 1) {
 
                         // LaneFollowing
-                        cav_msgs::Maneuver Lane_Following = composeLaneFollowingManeuverMessage(current_car_down_track, traffic_light_down_track, current_speed_, current_speed_, start_lane_id);
+                        cav_msgs::Maneuver Lane_Following = composeLaneFollowingManeuverMessage(current_progress, traffic_light_down_track, current_speed_, current_speed_, start_lane_id);
                         resp.new_plan.maneuvers.push_back(Lane_Following);
 
                         // workzone_tactical
@@ -170,10 +202,10 @@ namespace wz_strategic_plugin
                 }
                 else {
 
-                    if(traffic_light_interpreter(traffic_light_current_state) == "R") {
+                    if(traffic_light_current_state == 0) {
 
                         // stop_and_wait
-                        cav_msgs::Maneuver stop_and_wait = composeStopAndWaitManeuverMessage( current_car_down_track, traffic_light_down_track, current_speed_, 0.0, start_lane_id, end_lane_id, ros::Time::now(), time_remaining_to_traffic_light.toSec());
+                        cav_msgs::Maneuver stop_and_wait = composeStopAndWaitManeuverMessage( current_progress, traffic_light_down_track, current_speed_, 0.0, start_lane_id, end_lane_id, start_time, time_remaining_to_traffic_light.toSec());
                         resp.new_plan.maneuvers.push_back(stop_and_wait);
 
                         // workzone_tactical
@@ -182,10 +214,10 @@ namespace wz_strategic_plugin
 
                     }
 
-                    if(traffic_light_interpreter(traffic_light_current_state) == "G") {
+                    if(traffic_light_current_state == 1) {
 
                         // LaneFollowing
-                        cav_msgs::Maneuver Lane_Following = composeLaneFollowingManeuverMessage(current_car_down_track, traffic_light_down_track, current_speed_, current_speed_, start_lane_id);
+                        cav_msgs::Maneuver Lane_Following = composeLaneFollowingManeuverMessage(current_progress, traffic_light_down_track, current_speed_, current_speed_, start_lane_id);
                         resp.new_plan.maneuvers.push_back(Lane_Following);
 
                         // workzone_tactical

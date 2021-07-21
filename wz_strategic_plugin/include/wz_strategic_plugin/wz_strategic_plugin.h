@@ -30,7 +30,6 @@
 
 #include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
 
-enum class CarmaTrafficLightState {UNAVAILABLE=0,DARK=1,STOP_THEN_PROCEED=2,STOP_AND_REMAIN=3,PRE_MOVEMENT=4,PERMISSIVE_MOVEMENT_ALLOWED=5,PROTECTED_MOVEMENT_ALLOWED=6,PERMISSIVE_CLEARANCE=7,PROTECTED_CLEARANCE=8,CAUTION_CONFLICTING_TRAFFIC=9};
 
 namespace wz_strategic_plugin
 {
@@ -99,7 +98,7 @@ namespace wz_strategic_plugin
 
             cav_msgs::Maneuver composeIntersectionTransitMessage(double start_dist, double end_dist, double start_speed, double target_speed, ros::Time start_time, ros::Time end_time, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id);
 
-            std::string traffic_light_interpreter(lanelet::CarmaTrafficLightState& state);
+            int traffic_light_interpreter(const lanelet::CarmaTrafficLightState& state);
 
         private:
             // CARMA ROS node handles
