@@ -31,8 +31,13 @@ namespace platoon_control
     {
         double speed_cmd = 0;
         
-        // last speed command for smooth speed transition
-        lastCmdSpeed = currentSpeed;
+        if (!last_cmd_set_)
+        {
+            // last speed command for smooth speed transition
+            lastCmdSpeed = currentSpeed;
+            last_cmd_set_ = true;
+        }
+        
 
         PlatoonLeaderInfo leader = platoon_leader;
     	if(leader.staticId != "" && leader.staticId != ctrl_config.vehicle_id)
