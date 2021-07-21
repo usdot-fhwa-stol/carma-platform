@@ -353,6 +353,7 @@ private:
   std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets);
   lanelet::LaneletMapPtr base_map_;
   lanelet::LaneletMapPtr current_map_;
+  lanelet::routing::RoutingGraphUPtr current_routing_graph_; // Current map routing graph
   lanelet::Velocity config_limit;
   std::unordered_set<std::string>  checked_geofence_ids_;
   std::unordered_set<std::string>  generated_geofence_reqids_;
