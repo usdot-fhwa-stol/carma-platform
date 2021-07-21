@@ -31,6 +31,9 @@ namespace platoon_control
     {
         double speed_cmd = 0;
         
+        // last speed command for smooth speed transition
+        lastCmdSpeed = currentSpeed;
+
         PlatoonLeaderInfo leader = platoon_leader;
     	if(leader.staticId != "" && leader.staticId != ctrl_config.vehicle_id)
         {
@@ -96,8 +99,6 @@ namespace platoon_control
         {
             ROS_DEBUG_STREAM("Host vehicle is the leader");
             speed_cmd = currentSpeed;
-            // last speed command for smooth speed transition
-            lastCmdSpeed = currentSpeed;
 
             if(enableMaxAdjustmentFilter) 
             {
