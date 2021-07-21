@@ -105,20 +105,25 @@ namespace cooperative_lanechange
 
     void CooperativeLaneChangePlugin::mobilityresponse_cb(const cav_msgs::MobilityResponse &msg){
         //@SONAR_STOP@
-        cav_msgs::LaneChangeStatus lc_status_msg;
-        if(msg.is_accepted){
-            is_lanechange_accepted_ = true;
-            lc_status_msg.status = cav_msgs::LaneChangeStatus::ACCEPTANCE_RECEIVED;
-            lc_status_msg.description = "Received lane merge acceptance";
-            
+        if (clc_called_)
+        {
+            cav_msgs::LaneChangeStatus lc_status_msg;
+            if(msg.is_accepted)
+            {
+                is_lanechange_accepted_ = true;
+                lc_status_msg.status = cav_msgs::LaneChangeStatus::ACCEPTANCE_RECEIVED;
+                lc_status_msg.description = "Received lane merge acceptance";
+            }
+            else
+            {
+                is_lanechange_accepted_ = false;
+                lc_status_msg.status = cav_msgs::LaneChangeStatus::REJECTION_RECEIVED;
+                lc_status_msg.description = "Received lane merge rejection";
+            }
+            lanechange_status_pub_.publish(lc_status_msg);
+            //@SONAR_START@
         }
-        else{
-            is_lanechange_accepted_ = false;
-            lc_status_msg.status = cav_msgs::LaneChangeStatus::REJECTION_RECEIVED;
-            lc_status_msg.description = "Received lane merge rejection";
-        }
-        lanechange_status_pub_.publish(lc_status_msg);
-        //@SONAR_START@
+        
     }
 
 
@@ -206,6 +211,10 @@ namespace cooperative_lanechange
     bool CooperativeLaneChangePlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
         //@SONAR_STOP@
         //  Only plan the trajectory for the requested LANE_CHANGE maneuver
+        if (!clc_called_)
+        {
+            clc_called_ = true;
+        }
         std::vector<cav_msgs::Maneuver> maneuver_plan;
         if(req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].type != cav_msgs::Maneuver::LANE_CHANGE)
         {
