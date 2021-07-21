@@ -43,7 +43,6 @@ struct PointSpeedPair
 {
   lanelet::BasicPoint2d point;
   double speed = 0;
-  lanelet::Id lanelet_id;
 };
 
 class StopandWait

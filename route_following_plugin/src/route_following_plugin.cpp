@@ -50,7 +50,7 @@ double getManeuverEndSpeed(const cav_msgs::Maneuver& mvr) {
 }
 
 /**
- * \brief Anonymous function to set the lanelet ids for all maneuver types except lane change
+ * \brief Anonymous function to set the lanelet ids for all maneuver types except lane following
  */ 
 void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanelet::Id end_id) {
 
@@ -72,7 +72,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             mvr.intersection_transit_right_turn_maneuver.ending_lane_id = std::to_string(end_id);
             break;
         case cav_msgs::Maneuver::STOP_AND_WAIT:
-            mvr.stop_and_wait_maneuver.starting_lane_id = start_id;
+            mvr.stop_and_wait_maneuver.starting_lane_id = std::to_string(start_id);
             mvr.stop_and_wait_maneuver.ending_lane_id = std::to_string(end_id);
             break;
         default:
@@ -218,7 +218,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             double stopping_accel_limit = accel_limit_ * stopping_accel_limit_multiplier_;
 
             // Estimate the entry speed for the stopping maneuver
-            double stopping_entry_speed = maneuvers.empty() ? findSpeedLimit(route_shortest_path.back()) : getManeuverEndSpeed(maneuvers.back());
+            double stopping_entry_speed = maneuvers.empty() ? current_speed_ : getManeuverEndSpeed(maneuvers.back());
 
             // Add stop and wait maneuver based on deceleration target and entry speed
             maneuvers = addStopAndWaitAtRouteEnd( maneuvers, route_length, stopping_entry_speed, stopping_accel_limit, lateral_accel_limit_, min_maneuver_length_ );
@@ -523,6 +523,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             case cav_msgs::Maneuver::STOP_AND_WAIT:
                 maneuver.stop_and_wait_maneuver.start_time = prev_time;
                 maneuver.stop_and_wait_maneuver.start_time = time_progress;
+                maneuver.stop_and_wait_maneuver.end_time = start_time + ros::Duration(86400); // Set maneuver time period as 24hrs since this is the end of the route
                 break;
             default:
                 throw std::invalid_argument("Invalid maneuver type, cannot update time progress for maneuver");

@@ -167,6 +167,7 @@ namespace plan_delegator
             // ignore expired maneuvers
             if(isManeuverExpired(maneuver))
             {
+                ROS_INFO_STREAM("Dropping expired maneuver: " << GET_MANEUVER_PROPERTY(maneuver, parameters.maneuver_id));
                 // Update the maneuver plan index for the next loop
                 ++current_maneuver_index;
                 continue;

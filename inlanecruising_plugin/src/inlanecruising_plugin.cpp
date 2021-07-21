@@ -568,7 +568,10 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     ROS_DEBUG_STREAM("Maneuver");
 
     lanelet::BasicLineString2d downsampled_centerline;
-    downsampled_centerline.reserve(400);
+    // 400 value here is an arbitrary attempt at improving inlane-cruising performance by reducing copy operations. 
+    // Value picked based on annecdotal evidence from STOL system testing
+    downsampled_centerline.reserve(400); 
+    
 
     // getLaneletsBetween is inclusive lanelets between its two boundaries
     // which may return lanechange lanelets, so 
