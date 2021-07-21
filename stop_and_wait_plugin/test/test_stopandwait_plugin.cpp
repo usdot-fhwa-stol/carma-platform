@@ -97,6 +97,7 @@ TEST(StopandWait, TestStopandWaitPlanning)
   maneuver.stop_and_wait_maneuver.end_time = ros::Time(11.175999999999998);
 
   req.maneuver_plan.maneuvers.push_back(maneuver);
+  req.maneuver_index_to_plan = 0;
 
   cav_srvs::PlanTrajectoryResponse resp;
   plugin.plan_trajectory_cb(req, resp);

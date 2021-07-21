@@ -77,7 +77,7 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
 
   if (req.maneuver_index_to_plan >= req.maneuver_plan.maneuvers.size()) {
 
-    throw std::invalid_argument("StopAndWait plugin asked to plan invalid maneuver index: " << req.maneuver_index_to_plan << " for plan of size: " << req.maneuver_plan.maneuvers.size());
+    throw std::invalid_argument("StopAndWait plugin asked to plan invalid maneuver index: " + std::to_string(req.maneuver_index_to_plan) + " for plan of size: " + std::to_string(req.maneuver_plan.maneuvers.size()));
   
   }
 
@@ -87,7 +87,7 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
 
   }
 
-  if (req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].stop_and_wait_maneuver.end_dist > current_downtrack) {
+  if (req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].stop_and_wait_maneuver.end_dist < current_downtrack) {
 
     throw std::invalid_argument("StopAndWait plugin asked to plan maneuver that ends earlier than the current state.");
 
@@ -272,7 +272,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
   std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(raw_points);
 
-  double downtrack = 0;
   bool in_range = false;
   double stopped_downtrack = 0;
   lanelet::BasicPoint2d stopped_point;
