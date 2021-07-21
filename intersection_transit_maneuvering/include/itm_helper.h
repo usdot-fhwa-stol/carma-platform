@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2021 LEIDOS.
  *
@@ -33,5 +34,5 @@
 class Interface
 {
     public:
-        virtual bool call(const std::string& service_name,cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp) = 0;
+        virtual bool call(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp) = 0;
 };

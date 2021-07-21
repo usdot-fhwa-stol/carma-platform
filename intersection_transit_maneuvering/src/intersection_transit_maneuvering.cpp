@@ -81,7 +81,7 @@ namespace intersection_transit_maneuvering
 
         
 
-        object->call("plan_trajectory", req2,resp); //Since we're using an interface for this process, the call functionality will be referenced in the Servicer
+        object->call(req2,resp); //Since we're using an interface for this process, the call functionality will be referenced in the Servicer
 
         resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 

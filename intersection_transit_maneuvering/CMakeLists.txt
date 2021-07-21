@@ -67,9 +67,11 @@ include_directories(
 
 add_executable( ${PROJECT_NAME}
   src/main.cpp)
+
+  
 add_library(intersection_transit_maneuvering_library 
   src/intersection_transit_maneuvering.cpp
-  #src/smoothing/BSpline.cpp
+  src/itm_service.cpp
 )
 target_link_libraries(intersection_transit_maneuvering_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(intersection_transit_maneuvering_library ${catkin_EXPORTED_TARGETS})
@@ -77,16 +79,6 @@ add_dependencies(intersection_transit_maneuvering_library ${catkin_EXPORTED_TARG
 target_link_libraries(${PROJECT_NAME} intersection_transit_maneuvering_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(${PROJECT_NAME} intersection_transit_maneuvering_library ${catkin_EXPORTED_TARGETS})
 
-#add_library(helper src/helper.cpp)
-#target_link_libraries(helper
-#  ${catkin_LIBRARIES}
-#)
-
-#add_executable(helper_node src/helper.cpp)
-#target_link_libraries(helper_node
-#  helper
-#  ${catkin_LIBRARIES}
-#)
 #############
 ## Install ##
 #############
@@ -112,10 +104,14 @@ install(DIRECTORY launch config
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_intersection_transit_maneuvering.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+
+catkin_add_gmock(${PROJECT_NAME}-test 
+    test/test_intersection_transit_maneuvering.cpp
+)
+#catkin_add_gtest(${PROJECT_NAME}-test test/test_intersection_transit_maneuvering.cpp)
+if(TARGET ${PROJECT_NAME}-test)
+ target_link_libraries(${PROJECT_NAME}-test intersection_transit_maneuvering_library ${catkin_LIBRARIES})
+endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)

@@ -30,7 +30,7 @@
 
 namespace itm_servicer
 {
-class Servicer
+class Servicer: public Interface
 {
     public:
         /**
@@ -39,7 +39,7 @@ class Servicer
          */
         Servicer();
 
-        bool call(const std::string& service_name,cav_srvs::PlanTrajectory::Request& req, cav_srvs::PlanTrajectory::Response& resp);
+        bool call(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
 
         /**
         * \brief set the trajectory service client
@@ -47,8 +47,6 @@ class Servicer
         * \param client input trajectory service client
         */
         void set_client(ros::ServiceClient srv_client);
-
-        cav_srvs::PlanTrajectory make_plan_trajectory(std::vector<cav_msgs::Maneuver> maneuvers, cav_msgs::VehicleState vehicle_state);
     
     private:
         ros::ServiceClient client;

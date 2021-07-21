@@ -62,10 +62,10 @@ class IntersectionTransitManeuveringNode
 
             carma_wm::WorldModelConstPtr wm_ = wml_.getWorldModel();
 
-            itm_servicer::Servicer srv;
+            std::shared_ptr<itm_servicer::Servicer> srv;
             IntersectionTransitManeuvering worker(wm_,[&plugin_discovery_pub_](const auto& msg) {plugin_discovery_pub_.publish(msg);}, srv);
             ros::ServiceClient trajectory_client = nh_.serviceClient<cav_srvs::PlanTrajectory>("plugin/InlaneCruisingPlugin/plan_trajectory");
-            srv.set_client(trajectory_client);
+            srv->set_client(trajectory_client);
 
             trajectory_srv_ = nh_.advertiseService("plan_trajectory",&IntersectionTransitManeuvering::plan_trajectory_cb, &worker);           
             

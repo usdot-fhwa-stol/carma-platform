@@ -34,7 +34,6 @@
 #include <unordered_set>
 #include <autoware_msgs/Lane.h>
 #include <ros/ros.h>
-#include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
 #include <itm_helper.h>
 #include <basic_autonomy/helper_functions.h>
 
