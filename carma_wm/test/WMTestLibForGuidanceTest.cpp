@@ -25,7 +25,6 @@
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
 #include <carma_wm/WMTestLibForGuidance.h>
 #include <ros/ros.h>
-#include <lanelet2_extension/utility/query.h>
 
 using ::testing::_;
 using ::testing::A;
@@ -38,7 +37,7 @@ namespace carma_wm
 {
 namespace test
 {
-TEST(WMTestLibForGuidanceTest, DISABLED_getGuidanceTestMap)
+TEST(WMTestLibForGuidanceTest, getGuidanceTestMap)
 {
     auto cmw = getGuidanceTestMap();
     // Overall sanity check
@@ -76,7 +75,7 @@ TEST(WMTestLibForGuidanceTest, DISABLED_getGuidanceTestMap)
 
 }
 
-TEST(WMTestLibForGuidanceTest, DISABLED_buildGuidanceTestMap)
+TEST(WMTestLibForGuidanceTest, buildGuidanceTestMap)
 {
     auto map = buildGuidanceTestMap(1,1); // unit length lanelets for easy testing as some developers might prefer
     // Sanity check on lanelets
@@ -84,7 +83,7 @@ TEST(WMTestLibForGuidanceTest, DISABLED_buildGuidanceTestMap)
     ASSERT_EQ(map->laneletLayer.get(1200).leftBound()[1].y(), 1);
 }
 
-TEST(WMTestLibForGuidanceTest, DISABLED_addObstacle)
+TEST(WMTestLibForGuidanceTest, addObstacle)
 {
     MapOptions mp(1,1);
     auto cmw = getGuidanceTestMap(mp);
@@ -137,47 +136,42 @@ TEST(WMTestLibForGuidanceTest, DISABLED_addObstacle)
 
 TEST(WMTestLibForGuidanceTest, setRouteByIds)
 {
-    MapOptions options;
-    options.lane_width_ = 1.0;
-    options.lane_length_ = 1.0;
-
-    auto cmw = getGuidanceTestMap(options);
+    auto cmw = getGuidanceTestMap();
     EXPECT_THROW(setRouteByIds({1200}, cmw), lanelet::InvalidInputError);
-    EXPECT_NO_THROW(setRouteByIds({1200,1201,1211,1221,1222,1223}, cmw));
-    // ASSERT_EQ(cmw->getRoute()->shortestPath().size(), 6);
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1200)));
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1210)));
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1220)));
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1221)));
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1222)));
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1223)));
+    EXPECT_NO_THROW(setRouteByIds({1200,1210,1220,1221,1222,1223}, cmw));
+    ASSERT_EQ(cmw->getRoute()->shortestPath().size(), 6);
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1200)));
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1210)));
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1220)));
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1221)));
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1222)));
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1223)));
     
-    // EXPECT_NO_THROW(setRouteByIds({1200,1210}, cmw));
-    // ASSERT_EQ(cmw->getRoute()->shortestPath().size(), 2);
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1200)));
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1210)));
+    EXPECT_NO_THROW(setRouteByIds({1200,1210}, cmw));
+    ASSERT_EQ(cmw->getRoute()->shortestPath().size(), 2);
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1200)));
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1210)));
 
-    // EXPECT_NO_THROW(setRouteByIds({1200,1201,1211,1212,1222,1223}, cmw));
-    // ASSERT_EQ(cmw->getRoute()->shortestPath().size(), 6);
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1200)));
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1201)));
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1211)));
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1212)));
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1222)));
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1223)));
+    EXPECT_NO_THROW(setRouteByIds({1200,1201,1211,1212,1222,1223}, cmw));
+    ASSERT_EQ(cmw->getRoute()->shortestPath().size(), 6);
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1200)));
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1201)));
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1211)));
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1212)));
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1222)));
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1223)));
 
-    // EXPECT_NO_THROW(setRouteByIds({1200,1201,1211,1221,1222,1223}, cmw));
-    // ASSERT_EQ(cmw->getRoute()->shortestPath().size(), 6);
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1200)));
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1223)));
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1211)));
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1221)));
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1222)));
-    // ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1220)));
-
+    EXPECT_NO_THROW(setRouteByIds({1200,1201,1211,1221,1222,1223}, cmw));
+    ASSERT_EQ(cmw->getRoute()->shortestPath().size(), 6);
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1200)));
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1223)));
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1211)));
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1221)));
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1222)));
+    ASSERT_TRUE(cmw->getRoute()->contains(cmw->getMap()->laneletLayer.get(1220)));
 }
 
-TEST(WMTestLibForGuidanceTest, DISABLED_setRouteByLanelets)
+TEST(WMTestLibForGuidanceTest, setRouteByLanelets)
 {
     auto cmw = getGuidanceTestMap();
     auto ll_1200 = cmw->getMap()->laneletLayer.get(1200);
@@ -224,7 +218,7 @@ TEST(WMTestLibForGuidanceTest, DISABLED_setRouteByLanelets)
     ASSERT_TRUE(cmw->getRoute()->contains(ll_1220));
 }
 
-TEST(WMTestLibForGuidanceTest, DISABLED_setSpeedLimit)
+TEST(WMTestLibForGuidanceTest, setSpeedLimit)
 {
     MapOptions mp(3.7,25,MapOptions::Obstacle::DEFAULT, MapOptions::SpeedLimit::NONE);
     auto cmw = getGuidanceTestMap(mp);

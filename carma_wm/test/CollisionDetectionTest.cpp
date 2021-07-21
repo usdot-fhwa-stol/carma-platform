@@ -37,7 +37,7 @@ using ::testing::ReturnArg;
 namespace carma_wm
 {
 
-  TEST(CollisionDetectionTest, DISABLED_CheckPolygonIntersection)
+  TEST(CollisionDetectionTest, CheckPolygonIntersection)
   {
 
     geometry_msgs::Vector3 linear_velocity;
@@ -73,7 +73,7 @@ namespace carma_wm
   }
 
 
-  TEST(CollisionDetectionTest, DISABLED_ObjectToBoostPolygon)
+  TEST(CollisionDetectionTest, ObjectToBoostPolygon)
   {
     geometry_msgs::Pose pose;
     pose.position.x = 6;
@@ -111,7 +111,7 @@ namespace carma_wm
   }
 
 
-  TEST(CollisionDetectionTest, DISABLED_PredictObjectPosition)
+  TEST(CollisionDetectionTest, PredictObjectPosition)
   {
 
     geometry_msgs::Vector3 linear_velocity;
@@ -178,7 +178,7 @@ namespace carma_wm
   }
 
 
-  TEST(CollisionDetectionTest, DISABLED_DetectCollision)
+  TEST(CollisionDetectionTest, DetectCollision)
   {
 
     geometry_msgs::Vector3 linear_velocity;
@@ -387,7 +387,7 @@ namespace carma_wm
 
   }
 
-  TEST(CollisionDetectionFalseTest, DISABLED_WorldCollisionDetection)
+  TEST(CollisionDetectionFalseTest, WorldCollisionDetection)
   {
 
     cav_msgs::RoadwayObstacleList rwol;
