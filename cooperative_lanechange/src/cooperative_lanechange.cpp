@@ -105,7 +105,7 @@ namespace cooperative_lanechange
 
     void CooperativeLaneChangePlugin::mobilityresponse_cb(const cav_msgs::MobilityResponse &msg){
         //@SONAR_STOP@
-        if (clc_called_)
+        if (clc_called_ && clc_request_id_ == msg.header.plan_id)
         {
             cav_msgs::LaneChangeStatus lc_status_msg;
             if(msg.is_accepted)
@@ -122,6 +122,10 @@ namespace cooperative_lanechange
             }
             lanechange_status_pub_.publish(lc_status_msg);
             //@SONAR_START@
+        }
+        else
+        {
+            ROS_DEBUG_STREAM("received mobility response is not related to CLC");
         }
         
     }
@@ -353,6 +357,7 @@ namespace cooperative_lanechange
         header.recipient_id = DEFAULT_STRING_;  
         header.sender_bsm_id = bsmIDtoString(bsm_core_);
         header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
+        clc_request_id_ = header.plan_id;
         header.timestamp = trajectory_plan.front().target_time.toNSec() *1000000;
         request_msg.header = header;
 

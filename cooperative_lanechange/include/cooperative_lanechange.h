@@ -292,6 +292,8 @@ namespace cooperative_lanechange
             double maneuver_fraction_completed_ = 0;
             // flag to check if CLC plugin is called
             bool clc_called_ = false;
+            // Mobility request id
+            std::string clc_request_id_ = "default_request_id";
             // ROS params
             //Vehicle params
             std::string sender_id_ = DEFAULT_STRING_;
