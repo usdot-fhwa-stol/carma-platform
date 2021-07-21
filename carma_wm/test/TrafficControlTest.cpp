@@ -89,8 +89,8 @@ TEST(TrafficControl, TrafficControlBinMsgTest)
   ASSERT_EQ(data_received->update_list_[0].first, gf_ptr->update_list_[0].first);
   ASSERT_NE(data_received->update_list_[0].second, gf_ptr->update_list_[0].second); // they are now not same because of serialization, the data address is different
                                                                                     // but again, they are same elements
-  ASSERT_EQ(data_received->lanelet_addition_.size(), 1);
-  ASSERT_EQ(data_received->lanelet_addition_[0].id(), ll_1.id());
+  ASSERT_EQ(data_received->lanelet_additions_.size(), 1);
+  ASSERT_EQ(data_received->lanelet_additions_[0].id(), ll_1.id());
 
 }
 

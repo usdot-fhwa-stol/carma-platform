@@ -275,7 +275,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
 TEST(WMBroadcaster, geofenceCallback)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
-  auto gf = std::make_shared<Geofence>(Geofence());
+  auto gf = std::make_shared<Geofence>();
 
   boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
   std::size_t curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
@@ -716,7 +716,7 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
 TEST(WMBroadcaster, RegulatoryPCLTest)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
-  auto gf_ptr = std::make_shared<Geofence>(Geofence());
+  auto gf_ptr = std::make_shared<Geofence>();
 
   boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
   std::size_t curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
@@ -839,7 +839,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   msg_v01.geometry.proj = proj_string;
   // set the points
   cav_msgs::PathNode pt;
-  // check points that are inside lanelets, thauto gf_ptr = std::make_shared<Geofence>(Geofence());ese correspond to id 10000, 10007
+  // check points that are inside lanelets, thauto gf_ptr = std::make_shared<Geofence>();ese correspond to id 10000, 10007
   pt.x = 0.5; pt.y = 0.5; pt.z = 0;  
   msg_v01.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 1.5; pt.z = 0;
@@ -1105,7 +1105,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
 TEST(WMBroadcaster, distToNearestActiveGeofence)
 {
    // Test adding then evaluate if the calls to active and inactive are done correctly
-  auto gf = std::make_shared<Geofence>(Geofence());
+  auto gf = std::make_shared<Geofence>();
 
   boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
   std::size_t curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
@@ -1245,7 +1245,7 @@ TEST(WMBroadcaster, distToNearestActiveGeofence)
 
 TEST(WMBroadcaster, addRegionAccessRule)
 {
-  auto gf_ptr = std::make_shared<Geofence>(Geofence());
+  auto gf_ptr = std::make_shared<Geofence>();
   auto map = carma_wm::getBroadcasterTestMap();
 
   std::vector<lanelet::Lanelet> affected_llts {map->laneletLayer.get(map->laneletLayer.begin()->id())};
@@ -1271,7 +1271,7 @@ TEST(WMBroadcaster, addRegionAccessRule)
   msg_v02.params.vclasses = {};
   msg_v02.params.vclasses.push_back(participant2);
   msg_v02.package.label = "Move over law";
-  gf_ptr = std::make_shared<Geofence>(Geofence());
+  gf_ptr = std::make_shared<Geofence>();
   wmb.addRegionAccessRule(gf_ptr,msg_v02,affected_llts);
 
   ASSERT_EQ(gf_ptr->invalidate_route_,false);
@@ -1284,7 +1284,7 @@ TEST(WMBroadcaster, addRegionAccessRule)
 
 TEST(WMBroadcaster, addRegionMinimumGap)
 {
-  auto gf_ptr = std::make_shared<Geofence>(Geofence());
+  auto gf_ptr = std::make_shared<Geofence>();
   auto map = carma_wm::getBroadcasterTestMap();
 
   std::vector<lanelet::Lanelet> affected_llts {map->laneletLayer.get(map->laneletLayer.begin()->id())};
@@ -1313,7 +1313,7 @@ TEST(WMBroadcaster, addRegionMinimumGap)
 
 TEST(WMBroadcaster, invertParticipants)
 {
-  auto gf_ptr = std::make_shared<Geofence>(Geofence());
+  auto gf_ptr = std::make_shared<Geofence>();
   auto map = carma_wm::getBroadcasterTestMap();
 
   std::vector<lanelet::Lanelet> affected_llts {map->laneletLayer.get(map->laneletLayer.begin()->id())};
@@ -1334,7 +1334,7 @@ TEST(WMBroadcaster, currentLocationCallback)
 {
 
    // Test adding then evaluate if the calls to active and inactive are done correctly
-  auto gf = std::make_shared<Geofence>(Geofence());
+  auto gf = std::make_shared<Geofence>();
 
   boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
   std::size_t curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
@@ -1483,7 +1483,7 @@ TEST(WMBroadcaster, currentLocationCallback)
 TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
 {
    // Create geofence pointer
-  auto gf = std::make_shared<Geofence>(Geofence());
+  auto gf = std::make_shared<Geofence>();
   gf->schedules.push_back(carma_wm_ctrl::GeofenceSchedule(ros::Time(0),  // Schedule between 0 and 8
                                  ros::Time(8),
                                  ros::Duration(0),    // Starts at 0
@@ -1715,7 +1715,7 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
 TEST(WMBroadcaster, RegionAccessRuleTest)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
-  auto gf_ptr = std::make_shared<Geofence>(Geofence());
+  auto gf_ptr = std::make_shared<Geofence>();
 
   boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
   std::size_t curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
@@ -1832,7 +1832,7 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
 
   // set the points
   cav_msgs::PathNode pt;
-  // check points that are inside lanelets, thauto gf_ptr = std::make_shared<Geofence>(Geofence());ese correspond to id 10000, 10007
+  // check points that are inside lanelets, thauto gf_ptr = std::make_shared<Geofence>();ese correspond to id 10000, 10007
   pt.x = 0.5; pt.y = 0.5; pt.z = 0;  
   msg_v01.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 1.5; pt.z = 0;

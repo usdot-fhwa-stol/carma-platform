@@ -139,8 +139,8 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
 
   ROS_INFO_STREAM("Processing Map Update with Geofence Id:" << gf_ptr->id_);
 
-  ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " requests addition of lanelets size: " << gf_ptr->lanelet_addition_.size());
-  for (auto llt : gf_ptr->lanelet_addition_)
+  ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " requests addition of lanelets size: " << gf_ptr->lanelet_additions_.size());
+  for (auto llt : gf_ptr->lanelet_additions_)
   {
     // world model here should blindly accept the map update received
     ROS_DEBUG_STREAM("Adding new lanelet with id: " << llt.id());

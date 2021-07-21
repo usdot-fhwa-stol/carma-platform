@@ -56,6 +56,7 @@
 
 namespace carma_wm_ctrl
 {
+  const int WORKZONE_TCM_REQUIRED_SIZE = 4;
 
 /*!
  * \brief Class which provies exposes map publication and carma_wm update logic
@@ -72,7 +73,7 @@ public:
   using PublishMapUpdateCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
   using PublishCtrlRequestCallback = std::function<void(const cav_msgs::TrafficControlRequest&)>;
   using PublishActiveGeofCallback = std::function<void(const cav_msgs::CheckActiveGeofence&)>;
-
+  
 
   /*!
    * \brief Constructor
@@ -247,7 +248,7 @@ public:
 
   /*!
    * \brief Creates a single workzone geofence (in the vector) that includes all additional lanelets (housing traffic lights and stoprules) and update_list that blocks old lanelets.
-            Geofence will have minimum of 6 lanelet_addition_ (front parallel, front diagonal, middle lanelet(s), back diagonal, back parallel, 1 opposing lanelet with stoprule/trafficlight). 
+            Geofence will have minimum of 6 lanelet_additions_ (front parallel, front diagonal, middle lanelet(s), back diagonal, back parallel, 1 opposing lanelet with stoprule/trafficlight). 
             And regulatory_element_ of this geofence will be region_access_rule, where it blocks entire affected_parts of CLOSED, TAPERRIGHT, OPENRIGHT.
             It also blocks the opposing lane's lanelet that would have had the stoprule, and new lanelet(s) would be added to replace it.
 
@@ -274,7 +275,7 @@ public:
                                                     std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts);
 
   /*!
-   * \brief Create workzone geofence. Create diagonal lanelets and a lanelet that houses opposing lane's stoprule. Fill lanelet_addition_ with every newly created lanelets
+   * \brief Create workzone geofence. Create diagonal lanelets and a lanelet that houses opposing lane's stoprule. Fill lanelet_additions_ with every newly created lanelets
             New lanelets will have stoprule and traffic light. Old lanelets (and those from CLOSED) will be blocked using update_list as region_access_rule 
 
    * \param work_zone_geofence_cache Geofence map with size of 4 corresponding to CLOSED, TAPERRIGHT, OPENRIGHT, REVERSE TrafficControlMessages.

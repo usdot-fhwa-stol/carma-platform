@@ -47,11 +47,11 @@ public:
                  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list, 
                  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list,
                  std::vector<lanelet::Lanelet> lanelet_addition):
-                 id_(id), update_list_(update_list), remove_list_(remove_list), lanelet_addition_(lanelet_addition){}  
+                 id_(id), update_list_(update_list), remove_list_(remove_list), lanelet_additions_(lanelet_addition){}  
 
   boost::uuids::uuid id_;  // Unique id of this geofence
   // lanelets additions needed or broadcasting to the rest of map users
-  std::vector<lanelet::Lanelet> lanelet_addition_;
+  std::vector<lanelet::Lanelet> lanelet_additions_;
 
   // elements needed for broadcasting to the rest of map users
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
@@ -97,9 +97,9 @@ inline void save(Archive& ar, const carma_wm::TrafficControl& gf, unsigned int /
   ar << string_id;
 
   // convert the lanelet that need to be added
-  size_t lanelet_addition_size = gf.lanelet_addition_.size();
-  ar << lanelet_addition_size;
-  for (auto llt : gf.lanelet_addition_) ar << llt;
+  size_t lanelet_additions_size = gf.lanelet_additions_.size();
+  ar << lanelet_additions_size;
+  for (auto llt : gf.lanelet_additions_) ar << llt;
 
   // convert the regems that need to be removed
   size_t remove_list_size = gf.remove_list_.size();
@@ -127,13 +127,13 @@ inline void load(Archive& ar, carma_wm::TrafficControl& gf, unsigned int /*versi
   gf.id_ = gen(id);
 
   // save llts to add
-  size_t lanelet_addition_size;
-  ar >> lanelet_addition_size;
-  for (auto i = 0u; i < lanelet_addition_size; ++i) 
+  size_t lanelet_additions_size;
+  ar >> lanelet_additions_size;
+  for (auto i = 0u; i < lanelet_additions_size; ++i) 
   {
     lanelet::Lanelet llt;
     ar >> llt;
-    gf.lanelet_addition_.push_back(llt);
+    gf.lanelet_additions_.push_back(llt);
   }
 
   // save regems to remove
