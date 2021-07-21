@@ -245,32 +245,96 @@ public:
    */ 
   cav_msgs::Route getRoute();
 
-  // TODO: fill in inputs and description
+  /*!
+   * \brief Creates a single workzone geofence (in the vector) that includes all additional lanelets (housing traffic lights and stoprules) and update_list that blocks old lanelets.
+            Geofence will have minimum of 6 lanelet_addition_ (front parallel, front diagonal, middle lanelet(s), back diagonal, back parallel, 1 opposing lanelet with stoprule/trafficlight). 
+            And regulatory_element_ of this geofence will be region_access_rule, where it blocks entire affected_parts of CLOSED, TAPERRIGHT, OPENRIGHT.
+            It also blocks the opposing lane's lanelet that would have had the stoprule, and new lanelet(s) would be added to replace it.
+
+   * \param work_zone_geofence_cache Geofence map with size of 4 corresponding to CLOSED, TAPERRIGHT, OPENRIGHT, REVERSE TrafficControlMessages.
+                                     Each should have gf_pts, affected_parts, schedule, and id filled. TAPERRIGHT's id and schedule is used as all should have same schedule.
+     \throw InvalidObjectStateError if no map is available
+     \return vector with one geofence housing all necessary workzone elements
+   */
   std::vector<std::shared_ptr<Geofence>> createWorkzoneGeofence(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache);
 
-  // TODO: fill in inputs and description
-  void splitLaneletWithPoint(std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, const std::vector<lanelet::BasicPoint2d>& input_pts, const lanelet::Lanelet& input_llt, double error_distance = 20);
+  /*!
+   * \brief Preprocess for workzone area. Parallel_llts will have front_parallel and back_parallel lanelets that were created from splitting (if necessary)
+            TAPERRIGHT and OPENRIGHT lanelets. Opposite_llts will have new lanelets split from REVERSE part with same direction as parallel lanelets that connect
+            to diagonal ones
 
-  lanelet::Lanelets splitOppositeLaneletWithPoint(std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts, const lanelet::BasicPoint2d& input_pt, const lanelet::Lanelet& input_llt, double error_distance = 20);
+   * \param work_zone_geofence_cache Geofence map with size of 4 corresponding to CLOSED, TAPERRIGHT, OPENRIGHT, REVERSE TrafficControlMessages.
+                                     Each should have gf_pts, affected_parts.
+   * \param parallel_llts list holding front_parallel and back_parallel. These are created from splitting old ones in place such that they connect to diagonal ones
+   * \param opposite_llts list holding split and filtered lanelets from REVERSE part that connect to diagonal ones
+     \throw InvalidObjectStateError if no map is available
+     NOTE: REVERSE part's geofence points should have same direction as opposite lane's as that is what getAffectedLaneletOrArea requires.
+   */
+  void preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache, std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, 
+                                                    std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts);
 
-  // TODO: fill in inputs and description
-  //  Fill in like using both sides of linestrings and create additional two lanelets from one and return
-  // assumes the linestrings have roughly the same number of points
+  /*!
+   * \brief Create workzone geofence. Create diagonal lanelets and a lanelet that houses opposing lane's stoprule. Fill lanelet_addition_ with every newly created lanelets
+            New lanelets will have stoprule and traffic light. Old lanelets (and those from CLOSED) will be blocked using update_list as region_access_rule 
 
-  std::vector<lanelet::Lanelet> splitLaneletWithRatio(std::vector<double> ratios, lanelet::Lanelet input_lanelet, double error_distance = 20) const;
-
-  // TODO: fill inputs and description
-  // creates the "bridge lanelets" and adds traffic light and stoprule inside relevant lanelets
+   * \param work_zone_geofence_cache Geofence map with size of 4 corresponding to CLOSED, TAPERRIGHT, OPENRIGHT, REVERSE TrafficControlMessages.
+                                     Each should have gf_pts, affected_parts.
+   * \param parallel_llt_front A lanelet whose end should connect to front diagonal lanelet
+   * \param parallel_llt_back A lanelet whose start should connect to back diagonal lanelet
+   * \param middle_opposite_lanelets A lanelet list whose front() connects to front diagonal, 
+   *                                 back() connects to back diagonal (their directions are expected to be opposite of parallel ones)
+   * \throw InvalidObjectStateError if no map is available
+   */
   std::shared_ptr<Geofence> createWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache, lanelet::Lanelet parallel_llt_front,  lanelet::Lanelet parallel_llt_back, 
                                                     std::shared_ptr<std::vector<lanelet::Lanelet>> middle_opposite_lanelets);
 
-  // TODO: fill inputs and description
-  // filter parallel and opposite lanelets
-  // NOTE: the direction of geofence points saved matters!, if it is on opposite direction, it should pick that direction
-  void preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache, std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, 
-                                                    std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts);
+  /*!
+   * \brief Split given lanelet with same proportion as the given points' downtrack relative to the lanelet. 
+            Newly created lanelet will have old regulatory elements copied into each of them. 
+            Only for front and back points, it is deemed not necessary to split if the point is within error_distance from any of the boundary.
+            For example, if front and back points of 3 points given are both within error_distance, only middle point will be used to split into 2 lanelets.
+            It will return duplicate of old lanelet (with different id) if no splitting was done.
+
+   * \param parallel_llts return lanelets split form original one. lanelets sorted from front to back.
+   * \param input_pts Points whose downtrack ratio relative to given lanelet will be used to split the lanelet
+   * \param input_llt A lanelet to split
+   * \param error_distance if within this distance (in meters) the point will be ignored
+   * \throw InvalidObjectStateError if no map is available. NOTE: this is requried to return mutable objects.
+   */
+  void splitLaneletWithPoint(std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, const std::vector<lanelet::BasicPoint2d>& input_pts, const lanelet::Lanelet& input_llt, double error_distance = 20);
+
+  /*!
+   * \brief Split given lanelet's adjacent, OPPOSITE lanelet with same proportion as the given point's downtrack relative to the lanelet. 
+            Newly created lanelet will have old regulatory elements copied into each of them. 
+            Only for front and back points, it is deemed not necessary to split if the point is within error_distance from any of the boundary.
+            It will return duplicate of old lanelet (with different id) if no splitting was done.
+
+   * \param opposite_llts return lanelets split form original one. lanelets sorted from front to back.
+   * \param input_pt A point whose downtrack ratio relative to given lanelet will be used to split the lanelet
+   * \param input_llt A lanelet to split
+   * \param error_distance if within this distance (in meters) the point will be ignored
+   * \return return original opposite lanelet(s if overlapping)
+   * \throw InvalidObjectStateError if no map is available. NOTE: this is requried to return mutable objects.
+   * NOTE: Opposite lanelet doesn't have to share points with current lanelet
+   */
+  lanelet::Lanelets splitOppositeLaneletWithPoint(std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts, const lanelet::BasicPoint2d& input_pt, const lanelet::Lanelet& input_llt, double error_distance = 20);
+
+  /*!
+   * \brief Split given lanelet with given downtrack ratios relative to the lanelet. 
+            Newly created lanelet will have old regulatory elements copied into each of them. 
+            Only for front and back ratios, it is deemed not necessary to split if the ratio is within error_distance from any of the boundary.
+            For example, if front and back points of 3 ratios given are both within error_distance, only middle ratio will be used to split, so 2 lanelets.
+            It will return duplicate of old lanelet (with different id) if no splitting was done.
+
+   * \param ratios Ratios relative to given lanelet will be used to split the lanelet
+   * \param input_llt A lanelet to split
+   * \param error_distance if within this distance (in meters) the ratio will be ignored as it is too small
+   * \return parallel_llts return lanelets split form original one. lanelets sorted from front to back.
+   * \throw InvalidObjectStateError if no map is available. NOTE: this is requried to return mutable objects. 
+   */
+  std::vector<lanelet::Lanelet> splitLaneletWithRatio(std::vector<double> ratios, lanelet::Lanelet input_lanelet, double error_distance = 20) const;
   
-   /*! \brief helper for generating 32bit traffic light Id from label consisting workzone intersection/signal group ids
+   /*! \brief helper for generating 32bit traffic light Id from TCM label field consisting workzone intersection/signal group ids
    */
   uint32_t generate32BitId(const std::string& label);
 

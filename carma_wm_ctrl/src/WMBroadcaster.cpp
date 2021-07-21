@@ -487,7 +487,7 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     {
       trimmed_llts.insert(trimmed_llts.end(), opposite_llts->begin(), opposite_llts->end());
     }
-    /// FILL in the middle lanelets
+    /// Fill in the middle lanelets
     if (work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->affected_parts_.size() > 2)
     {
       for (auto llt_or_area: work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->affected_parts_)
@@ -513,9 +513,6 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     
     *opposite_llts.get() = trimmed_llts;
   }
-
-
-  // cut two ends TODO
 }
 
 void WMBroadcaster::splitLaneletWithPoint(std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, const std::vector<lanelet::BasicPoint2d>& input_pts, const lanelet::Lanelet& input_llt, double error_distance)
