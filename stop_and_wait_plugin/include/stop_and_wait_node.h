@@ -72,6 +72,8 @@ public:
     pnh.param<double>("accel_limit_multiplier", config.accel_limit_multiplier, config.accel_limit_multiplier);
     pnh.param<double>("/vehicle_acceleration_limit", config.accel_limit, config.accel_limit);
     pnh.param<double>("crawl_speed", config.crawl_speed, config.crawl_speed);
+    pnh.param<double>("cernterline_sampling_spacing", config.cernterline_sampling_spacing, config.cernterline_sampling_spacing);
+    pnh.param<double>("default_stopping_buffer", config.default_stopping_buffer, config.default_stopping_buffer);
 
     ros::Publisher plugin_discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
 

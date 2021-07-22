@@ -70,27 +70,29 @@ bool StopandWait::spinCallback()
 bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
 {
   lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
+
   ROS_DEBUG_STREAM("planning state x:" << req.vehicle_state.X_pos_global << ", y: " << req.vehicle_state.Y_pos_global);
+
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
+
   ROS_DEBUG_STREAM("Starting stop&wait planning");
   ROS_DEBUG_STREAM("Current_downtrack" << current_downtrack);
 
-  if (req.maneuver_index_to_plan >= req.maneuver_plan.maneuvers.size()) {
-
-    throw std::invalid_argument("StopAndWait plugin asked to plan invalid maneuver index: " + std::to_string(req.maneuver_index_to_plan) + " for plan of size: " + std::to_string(req.maneuver_plan.maneuvers.size()));
-  
+  if (req.maneuver_index_to_plan >= req.maneuver_plan.maneuvers.size())
+  {
+    throw std::invalid_argument(
+        "StopAndWait plugin asked to plan invalid maneuver index: " + std::to_string(req.maneuver_index_to_plan) +
+        " for plan of size: " + std::to_string(req.maneuver_plan.maneuvers.size()));
   }
 
-  if (req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].type != cav_msgs::Maneuver::STOP_AND_WAIT) {
-
+  if (req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].type != cav_msgs::Maneuver::STOP_AND_WAIT)
+  {
     throw std::invalid_argument("StopAndWait plugin asked to plan non STOP_AND_WAIT maneuver");
-
   }
 
-  if (req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].stop_and_wait_maneuver.end_dist < current_downtrack) {
-
+  if (req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].stop_and_wait_maneuver.end_dist < current_downtrack)
+  {
     throw std::invalid_argument("StopAndWait plugin asked to plan maneuver that ends earlier than the current state.");
-
   }
 
   // Maneuver input is valid so continue with execution
@@ -105,7 +107,9 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
   trajectory.header.stamp = req.header.stamp;
   trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-  double stop_location_buffer = 3.0;  // By default use a 3m stopping buffer
+  // Extract the stopping buffer used to consider a stopping behavior complete
+  double stop_location_buffer = config_.default_stopping_buffer;  // If no maneuver meta data is provided we will use the default buffer
+  
   if (maneuver_plan[0].stop_and_wait_maneuver.parameters.presence_vector &
       cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA)
   {
@@ -136,36 +140,26 @@ std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<c
   std::vector<PointSpeedPair> points_and_target_speeds;
   std::unordered_set<lanelet::Id> visited_lanelets;
 
-  if (maneuvers.size() > 1)
-  {
-    ROS_WARN_STREAM("StopAndWait plugin can only plan one stopping maenuver at a time");
-  }
-
-  if (maneuvers[0].type != cav_msgs::Maneuver::STOP_AND_WAIT)
-  {
-    throw std::invalid_argument("Stop and Wait Maneuver Plugin doesn't support this maneuver type");
-  }
-
   cav_msgs::StopAndWaitManeuver stop_and_wait_maneuver = maneuvers[0].stop_and_wait_maneuver;
 
   lanelet::BasicPoint2d veh_pos(state.X_pos_global, state.Y_pos_global);
   double starting_downtrack = wm_->routeTrackPos(veh_pos).downtrack;  // The vehicle position
   double starting_speed = state.longitudinal_vel;
 
-  // Sample the lanelet centerline at fixed increments. 
+  // Sample the lanelet centerline at fixed increments.
   // std::min call here is a guard against starting_downtrack being within 1m of the maneuver end_dist
   // in this case the sampleRoutePoints method will return a single point allowing execution to continue
-  std::vector<lanelet::BasicPoint2d> route_points =
-      wm->sampleRoutePoints(std::min(starting_downtrack + 1, stop_and_wait_maneuver.end_dist),
-                            stop_and_wait_maneuver.end_dist, 1.0);  // TODO make step size a parameter
-  
+  std::vector<lanelet::BasicPoint2d> route_points = wm->sampleRoutePoints(
+      std::min(starting_downtrack + config_.cernterline_sampling_spacing, stop_and_wait_maneuver.end_dist),
+      stop_and_wait_maneuver.end_dist, config_.cernterline_sampling_spacing);
+
   route_points.insert(route_points.begin(), veh_pos);
 
   for (const auto& p : route_points)
   {
     PointSpeedPair pair;
     pair.point = p;
-    pair.speed = starting_speed;
+    pair.speed = starting_speed; // NOTE: Since the vehicle is trying to stop the assumption made is that the speed limit is irrelevant. 
     points_and_target_speeds.push_back(pair);
   }
 
@@ -184,7 +178,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::trajectory_from_points_t
   std::vector<cav_msgs::TrajectoryPlanPoint> traj;
   traj.reserve(points.size());
 
-  for (int i = 0; i < points.size(); i++)
+  for (size_t i = 0; i < points.size(); i++)
   {
     cav_msgs::TrajectoryPlanPoint tpp;
     ros::Duration relative_time(times[i]);
@@ -215,16 +209,18 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
   std::vector<PointSpeedPair> final_points;
 
-  double remaining_distance = stop_location - starting_downtrack; // TODO review. Should the remaining distance be in the middle of the stopping buffer?
+  double remaining_distance = stop_location - starting_downtrack;  // TODO review. Should the remaining distance be in
+                                                                   // the middle of the stopping buffer?
   double target_accel = config_.accel_limit_multiplier * config_.accel_limit;
-  double req_dist =
-      (starting_speed * starting_speed) / (2.0 * target_accel);  // Distance needed to go from current speed to 0 at target accel
+  double req_dist = (starting_speed * starting_speed) /
+                    (2.0 * target_accel);  // Distance needed to go from current speed to 0 at target accel
 
   if (req_dist > remaining_distance)
   {
     ROS_DEBUG_STREAM("Target Accel Update From: " << target_accel);
-    target_accel = (starting_speed * starting_speed) / (2.0 * remaining_distance);  // If we cannot reach the end point it the required
-                                                                                    // distance update the accel target
+    target_accel =
+        (starting_speed * starting_speed) / (2.0 * remaining_distance);  // If we cannot reach the end point it the
+                                                                         // required distance update the accel target
     ROS_DEBUG_STREAM("Target Accel Update To: " << target_accel);
   }
 
@@ -297,7 +293,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
     }
     else
     {
-      speeds[i] = std::max(speeds[i], config_.crawl_speed); 
+      speeds[i] = std::max(speeds[i], config_.crawl_speed);
     }
   }
 
@@ -314,7 +310,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
   std::vector<double> yaws = carma_wm::geometry::compute_tangent_orientations(raw_points);
 
-  for (int i = 0; i < points.size(); i++)
+  for (size_t i = 0; i < points.size(); i++)
   {
     ROS_DEBUG_STREAM("1d: " << downtracks[i] << " t: " << times[i] << " v: " << speeds[i]);
   }

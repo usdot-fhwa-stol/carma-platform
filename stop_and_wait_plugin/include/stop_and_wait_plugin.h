@@ -82,8 +82,10 @@ public:
    * the vehicle position or earlier. If the first maneuver exceeds this then it's downtrack will be shifted to this
    * value.
    *
-   *
-   * \return List of centerline points paired with speed limits
+   * ASSUMPTION: Since the vehicle is trying to stop the assumption made is that the speed limit is irrelevant. 
+   * ASSUMPTION: The provided maneuver lies on the route shortest path
+   * 
+   * \return List of centerline points paired with speed limits. All output points will have speed matching state.logitudinal_velocity
    */
   std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
                                                   const carma_wm::WorldModelConstPtr& wm,
@@ -113,10 +115,12 @@ public:
       const std::vector<double>& yaws, ros::Time startTime);
 
 private:
-  PublishPluginDiscoveryCB plugin_discovery_publisher_;
-  StopandWaitConfig config_;
+
   // pointer to the actual wm object
   carma_wm::WorldModelConstPtr wm_;
+  StopandWaitConfig config_;
+  PublishPluginDiscoveryCB plugin_discovery_publisher_;
+  
   cav_msgs::Plugin plugin_discovery_msg_;
 };
 }  // namespace stop_and_wait_plugin
