@@ -81,11 +81,19 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   lanelet::MapConformer::ensureCompliance(base_map_, config_limit);     // Update map to ensure it complies with expectations
   lanelet::MapConformer::ensureCompliance(current_map_, config_limit);
 
+  ROS_INFO_STREAM("Building routing graph for base map");
+
+  lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
+  lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::VehicleCar);
+  current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
+
+  ROS_INFO_STREAM("Done building routing graph for base map");
+
   // Publish map
   current_map_version_ += 1; // Increment the map version. It should always start from 1 for the first map
   map_update_message_queue_.clear(); // Clear the update queue as the map version has changed
   autoware_lanelet2_msgs::MapBin compliant_map_msg;
-  lanelet::utils::conversion::toBinMsg(base_map_, &compliant_map_msg);
+  lanelet::utils::conversion::toBinMsg(current_map_, &compliant_map_msg);
   compliant_map_msg.map_version = current_map_version_;
   map_pub_(compliant_map_msg);
 };
@@ -98,6 +106,11 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
 
   // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
   gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(msg_v01);
+
+  if (gf_ptr->affected_parts_.size() == 0) {
+    ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
+    return nullptr; // Return null geofence
+  }
 
   std::vector<lanelet::Lanelet> affected_llts;
   std::vector<lanelet::Area> affected_areas;
@@ -464,9 +477,9 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
     
   checked_geofence_ids_.insert(boost::uuids::to_string(id));
   auto gf_ptr = geofenceFromMsg(geofence_msg.tcmV01);
-  if (gf_ptr->affected_parts_.size() == 0)
+  if (gf_ptr == nullptr || gf_ptr->affected_parts_.size() == 0)
   {
-    ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
+    ROS_WARN_STREAM("Geofence message could not be converted");
     tcm_marker_array_.markers.resize(tcm_marker_array_.markers.size() - 1); //truncate this geofence
     return;
   }
@@ -505,35 +518,23 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
                                           std::string("get transformation between the geofence and the map"));
 
 
-  // There are two ways to store the projection used in the traffic control message
-  // The first approach is to store the entire projection in the proj string. 
-  // The second approach is to populate the other fields in the TCM message.
-  // Here we check which fields were already provided in the projection string and if they were not provided we set them with the value provided in the TCM message
+  // This next section handles the geofence projection conversion
+  // The datum field is used to identify the frame for the provided referance lat/lon. 
+  // This reference is then converted to the provided projection as a reference origin point
+  // From the reference the message projection to map projection transformation is used to convert the nodes in the TrafficControlMessage
   std::string projection = tcmV01.geometry.proj;
-  std::string universal_frame = "EPSG:4326"; //lat/long included in TCM is in this frame as it is universal
-  
-  ROS_DEBUG_STREAM("Projection field before remaning message processing: " << projection);
-
-  if (projection.find("epsg") == std::string::npos && projection.find("EPSG") == std::string::npos)
-  {
-    if (projection.find("+datum=") == std::string::npos && !tcmV01.geometry.datum.empty()) { // Datum is not a universal projection so only add it if it was provided
-    projection.append(" +datum=" + tcmV01.geometry.datum);
-    }
-
-    if (projection.find("+lat_0=") == std::string::npos && tcmV01.geometry.reflat!= 0.0) { // Lat and Lon are universal proj string attributes and can always be used
-      projection.append(" +lat_0=" + std::to_string(tcmV01.geometry.reflat));
-    }
-
-    if (projection.find("+lon_0=") == std::string::npos && tcmV01.geometry.reflon!= 0.0) {
-      projection.append(" +lon_0=" + std::to_string(tcmV01.geometry.reflon));
-    }
-
-    if (projection.find("+h_0=") == std::string::npos && tcmV01.geometry.refelv != 0.0) { // Height only applies to some projections and should only be set if elevation is non-zero
-      projection.append(" +h_0=" + std::to_string(tcmV01.geometry.refelv));
-    }
+  std::string datum = tcmV01.geometry.datum;
+  if (datum.empty()) {
+    ROS_WARN_STREAM("Datum field not populated. Attempting to use WGS84");
+    datum = "WGS84";
   }
+
   
-  ROS_DEBUG_STREAM("Projection field after remaning message processing: " << projection);
+  ROS_DEBUG_STREAM("Projection field: " << projection);
+  ROS_DEBUG_STREAM("Datum field: " << datum);
+  
+  std::string universal_frame = datum; //lat/long included in TCM is in this datum
+
 
   ROS_DEBUG_STREAM("Traffic Control heading provided: " << tcmV01.geometry.heading << " System understanding is that this value will not affect the projection and is only provided for supporting derivative calculations.");
   
@@ -581,7 +582,7 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
     prev_pt.y += pt.y;
 
     ROS_DEBUG_STREAM("After conversion in Map frame: Point X "<< gf_pts.back().x() <<" After conversion: Point Y "<< gf_pts.back().y());
-  }
+   }
 
   tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(gf_pts));
 
@@ -698,17 +699,17 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
 // helper function that filters successor lanelets of root_lanelets from possible_lanelets
 std::unordered_set<lanelet::Lanelet> WMBroadcaster::filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets)
 {
+  if (!current_routing_graph_) {
+    throw std::invalid_argument("No routing graph available");
+  }
+  
   std::unordered_set<lanelet::Lanelet> filtered_lanelets;
   // we utilize routes to filter llts that are overlapping but not connected
-  lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
-  lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::VehicleCar);
-  lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
-  
   // as this is the last lanelet 
   // we have to filter the llts that are only geometrically overlapping yet not connected to prev llts
   for (auto recorded_llt: root_lanelets)
   {
-    for (auto following_llt: map_graph->following(recorded_llt, false))
+    for (auto following_llt: current_routing_graph_->following(recorded_llt, false))
     {
       auto mutable_llt = current_map_->laneletLayer.get(following_llt.id());
       auto it = possible_lanelets.find(mutable_llt);
@@ -834,6 +835,19 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   addGeofenceHelper(gf_ptr);
   
   for (auto pair : gf_ptr->update_list_) active_geofence_llt_ids_.insert(pair.first);
+
+  // If the geofence invalidates the route graph then recompute the routing graph now that the map has been updated
+  if (gf_ptr->invalidate_route_) {
+
+    ROS_INFO_STREAM("Rebuilding routing graph after is was invalidated by geofence");
+
+    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
+    lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::VehicleCar);
+    current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
+
+    ROS_INFO_STREAM("Done rebuilding routing graph after is was invalidated by geofence");
+
+  }
   
 
   // Publish
@@ -1356,6 +1370,5 @@ void WMBroadcaster::newUpdateSubscriber(const ros::SingleSubscriberPublisher& si
 
 
 }  // namespace carma_wm_ctrl
-
 
 

@@ -505,4 +505,3 @@ namespace cooperative_lanechange
     }
    
 }
-

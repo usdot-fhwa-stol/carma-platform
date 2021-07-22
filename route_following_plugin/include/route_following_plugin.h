@@ -24,6 +24,7 @@
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
 #include <cav_srvs/PlanManeuvers.h>
+#include <cav_msgs/UpcomingLaneChangeStatus.h>
 #include <gtest/gtest_prod.h>
 
 /**
@@ -64,15 +65,20 @@ namespace route_following_plugin
          */
         void initialize();
 
-        private:
+        // wm listener pointer and pointer to the actual wm object
+        std::shared_ptr<carma_wm::WMListener> wml_;
+        carma_wm::WorldModelConstPtr wm_;
 
         /**
-         * \brief Given a LaneletPath object, find index of the lanelet which has target_id as its lanelet ID
-         * \param target_id The laenlet ID this function is looking for
-         * \param path A list of lanelet with different lanelet IDs
-         * \return Index of the target lanelet in the list
+         * \brief Compose UpcomingLaneChangeStatus msg from given starting and ending lanelets
+         * \param start_lanelet lanelet the lanechange is starting from
+         * \param ending_lanelet lanelet the lanechange is starting from
+         * \return UpcomingLaneChangeStatus Note: this method will only work correctly if the 
+         * two provided lanelets are forming a lane change
          */
-        int findLaneletIndexFromPath(int target_id,const lanelet::routing::LaneletPath& path) const;
+        cav_msgs::UpcomingLaneChangeStatus ComposeLaneChangeStatus(lanelet::ConstLanelet starting_lanelet,lanelet::ConstLanelet ending_lanelet);
+        
+        private:
 
         /**
          * \brief Compose a lane keeping maneuver message based on input params
@@ -124,6 +130,7 @@ namespace route_following_plugin
          * \param start_time The starting speed for the maneuver passed as argument
          */
         void updateStartingSpeed(cav_msgs::Maneuver& maneuver, double start_speed) const;
+
         /**
          * \brief Service callback for arbitrator maneuver planning
          * \param req Plan maneuver request
@@ -138,6 +145,7 @@ namespace route_following_plugin
          * \return value of speed limit in mps
          */
         double findSpeedLimit(const lanelet::ConstLanelet& llt);
+
         /**
          * \brief Calculate maneuver plan for remaining route. This callback is triggered when a new route has been received and processed by the world model
          * \param route_shortest_path A list of lanelets along the shortest path of the route using which the maneuver plan is calculated.
@@ -151,6 +159,7 @@ namespace route_following_plugin
 
         // ROS publishers and subscribers
         ros::Publisher plugin_discovery_pub_;
+        ros::Publisher upcoming_lane_change_status_pub_;
         ros::Subscriber pose_sub_;
         ros::Subscriber twist_sub_;
         ros::Timer discovery_pub_timer_;
@@ -158,24 +167,24 @@ namespace route_following_plugin
         // ROS service servers
         ros::ServiceServer plan_maneuver_srv_;  
 
-
         // Minimal duration of maneuver, loaded from config file
         double min_plan_duration_;
-
 
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
 
+        //Upcoming Lane Change downtrack and its lanechange status message map
+        std::queue<std::pair<double, cav_msgs::UpcomingLaneChangeStatus>> upcoming_lane_change_status_msg_map_;
+        
         // Current vehicle forward speed
         double current_speed_;
 
-        // Current vehicle pose in map
-        geometry_msgs::PoseStampedConstPtr pose_msg_;
-        lanelet::BasicPoint2d current_loc_;
+        //Small constant to compare doubles against
+        double epsilon_ = 0.0001;
 
-        // wm listener pointer and pointer to the actual wm object
-        std::shared_ptr<carma_wm::WMListener> wml_;
-        carma_wm::WorldModelConstPtr wm_;
+        // Current vehicle pose in map
+        geometry_msgs::PoseStamped pose_msg_;
+        lanelet::BasicPoint2d current_loc_;
 
         //Queue of maneuver plans
         std::vector<cav_msgs::Maneuver> latest_maneuver_plan_;
@@ -185,9 +194,6 @@ namespace route_following_plugin
 
         std::string planning_strategic_plugin_ = "RouteFollowingPlugin";
         std::string lanefollow_planning_tactical_plugin_ = "InLaneCruisingPlugin"; 
-
-        //Small constant to compare doubles against
-        double epsilon_ = 0.0001;
 
         /**
          * \brief Callback for the pose subscriber, which will store latest pose locally
@@ -210,7 +216,6 @@ namespace route_following_plugin
         ros::Duration getManeuverDuration(cav_msgs::Maneuver &maneuver, double epsilon) const;
 
         //Unit Tests
-        FRIEND_TEST(RouteFollowingPluginTest, testFindLaneletIndexFromPath);
         FRIEND_TEST(RouteFollowingPluginTest, testComposeManeuverMessage);
         FRIEND_TEST(RouteFollowingPluginTest, testIdentifyLaneChange);
         FRIEND_TEST(RouteFollowingPlugin, TestAssociateSpeedLimit);
