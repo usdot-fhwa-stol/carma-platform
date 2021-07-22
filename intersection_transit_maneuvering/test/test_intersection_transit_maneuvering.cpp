@@ -179,6 +179,8 @@ TEST(Intersection_Transit_Maneuvering_Test, Convert_Maneuvers_Test)
     man1.intersection_transit_straight_maneuver.end_dist = 5.0;
     man1.intersection_transit_straight_maneuver.start_time = ros::Time(0.0);
     man1.intersection_transit_straight_maneuver.end_time = ros::Time(1.7701);
+    man1.intersection_transit_straight_maneuver.start_speed = 25.0;
+    man1.intersection_transit_straight_maneuver.end_speed = 1.0;
     man1.intersection_transit_straight_maneuver.starting_lane_id = 1200;
 
 
@@ -187,6 +189,8 @@ TEST(Intersection_Transit_Maneuvering_Test, Convert_Maneuvers_Test)
     man2.intersection_transit_left_turn_maneuver.end_dist = 5.0;
     man2.intersection_transit_left_turn_maneuver.start_time = ros::Time(0.0);
     man2.intersection_transit_left_turn_maneuver.end_time = ros::Time(1.7701);
+    man2.intersection_transit_left_turn_maneuver.start_speed = 25.0;
+    man2.intersection_transit_left_turn_maneuver.end_speed = 1.0;
     man2.intersection_transit_left_turn_maneuver.starting_lane_id = 1200;
 
     man3.type = cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN;
@@ -194,6 +198,9 @@ TEST(Intersection_Transit_Maneuvering_Test, Convert_Maneuvers_Test)
     man3.intersection_transit_right_turn_maneuver.end_dist = 5.0;
     man3.intersection_transit_right_turn_maneuver.start_time = ros::Time(0.0);
     man3.intersection_transit_right_turn_maneuver.end_time = ros::Time(1.7701);
+    man3.intersection_transit_right_turn_maneuver.start_speed = 25.0;
+    man3.intersection_transit_right_turn_maneuver.end_speed = 1.0;
+
     man3.intersection_transit_right_turn_maneuver.starting_lane_id = 1200;
 
 
@@ -206,7 +213,20 @@ TEST(Intersection_Transit_Maneuvering_Test, Convert_Maneuvers_Test)
         ASSERT_EQ(true, i.type == cav_msgs::Maneuver::LANE_FOLLOWING); //Test that each maneuver has been converted to LANE_FOLLOWING
     }
 
+    /*Test Converted Values*/
+    for(size_t i = 0; i < converted.size(); i++ )
+    {
+        ASSERT_EQ(true, converted[i].type == cav_msgs::Maneuver::LANE_FOLLOWING); //Test that each maneuver has been converted to LANE_FOLLOWING
+        ASSERT_EQ(0.0, converted[i].lane_following_maneuver.start_dist);
+        ASSERT_EQ(5.0, converted[i].lane_following_maneuver.end_dist);
+        ASSERT_EQ(ros::Time(0.0), converted[i].lane_following_maneuver.start_time);
+        ASSERT_EQ(ros::Time(1.7701), converted[i].lane_following_maneuver.end_time);
+        ASSERT_EQ(25.0, converted[i].lane_following_maneuver.start_speed);
+        ASSERT_EQ(1.0, converted[i].lane_following_maneuver.end_speed);
+    }
 }
+
+
 
 
 }
