@@ -100,6 +100,10 @@ namespace wz_strategic_plugin
 
             int traffic_light_interpreter(const lanelet::CarmaTrafficLightState& state);
 
+            double estimate_distance_to_stop(double v, double a);
+
+            double estimate_time_to_stop(double d, double v);
+
         private:
             // CARMA ROS node handles
             std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
@@ -109,5 +113,6 @@ namespace wz_strategic_plugin
             carma_wm::WorldModelConstPtr wm_;
 
             int min_distance_to_traffic_light = 30;
+            double declaration = 0.5;
     };
 }
