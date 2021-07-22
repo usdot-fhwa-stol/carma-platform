@@ -164,6 +164,8 @@ namespace wz_strategic_plugin
             double traffic_light_down_track = wm_->routeTrackPos(nearest_traffic_light->stopLine().front().front().basicPoint2d()).downtrack;
             ROS_DEBUG("traffic_light_down_track %d", traffic_light_down_track);
 
+            double workzone_end_point_down_track = wm_->routeTrackPos(nearest_traffic_light->getControlledLanelets().back().centerline2d().back()).downtrack;
+
             auto traffic_light_lanelet = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, nearest_traffic_light->stopLine().front().front().basicPoint2d(), 1)[0];
 
             double distance_remaining_to_traffic_light  = traffic_light_down_track - current_progress;
@@ -196,15 +198,6 @@ namespace wz_strategic_plugin
 
                         double lane_following_distance = traffic_light_down_track - estimated_distance_to_stop;
 
-
-                        cav_msgs::Maneuver Lane_Following = composeLaneFollowingManeuverMessage(current_progress, 
-                                                current_progress + lane_following_distance, 
-                                                current_speed_, 
-                                                current_speed_, 
-                                                current_lanelet.second.id(), 
-                                                start_time));
-                        resp.new_plan.maneuvers.push_back(Lane_Following);
-
                         // fix time
                         // stop_and_wait
                         cav_msgs::Maneuver stop_and_wait = composeStopAndWaitManeuverMessage(current_progress + lane_following_distance, 
@@ -214,19 +207,17 @@ namespace wz_strategic_plugin
                                                 start_lane_id,
                                                 end_lane_id,
                                                 start_time,
-                                                estimated_time_to_stop));
+                                                estimated_time_to_stop);
 
                         resp.new_plan.maneuvers.push_back(stop_and_wait);
 
                         // workzone_tactical
                         cav_msgs::Maneuver workzone_tactical = composeIntersectionTransitMessage( traffic_light_down_track,
-                                                                                                  traffic_light_down_track, 
+                                                                                                  workzone_end_point_down_track, 
                                                                                                   current_speed_, 
                                                                                                   current_speed_, 
-                                                                                                  start_time + time_remaining_to_traffic_light.toSec(), 
-                                                                                                  end_time, 
-                                                                                                  start_lane_id, 
-                                                                                                  end_lane_id);
+                                                                                                  start_time + ros::Duration(std::max(15.0,time_to_stop)),
+                                                                                                  start_lane_id);
                         resp.new_plan.maneuvers.push_back(workzone_tactical);
 
                     }
@@ -241,13 +232,13 @@ namespace wz_strategic_plugin
                                                                                                 start_lane_id);
                         resp.new_plan.maneuvers.push_back(Lane_Following);
 
+
                         // workzone_tactical
                         cav_msgs::Maneuver workzone_tactical = composeIntersectionTransitMessage(traffic_light_down_track, 
-                                                                                                 traffic_light_down_track, 
+                                                                                                 workzone_end_point_down_track, 
                                                                                                  current_speed_, 
                                                                                                  current_speed_, 
-                                                                                                 current_time, 
-                                                                                                 end_time, 
+                                                                                                 start_time + time_remaining_to_traffic_light.toSec(), 
                                                                                                  start_lane_id, 
                                                                                                  end_lane_id);
                         resp.new_plan.maneuvers.push_back(workzone_tactical);
@@ -264,14 +255,6 @@ namespace wz_strategic_plugin
 
                         double lane_following_distance = traffic_light_down_track - estimated_distance_to_stop;
 
-                        cav_msgs::Maneuver Lane_Following = composeLaneFollowingManeuverMessage(current_progress, 
-                                                current_progress + lane_following_distance, 
-                                                current_speed_, 
-                                                current_speed_, 
-                                                start_lane_id, 
-                                                start_time));
-                        resp.new_plan.maneuvers.push_back(Lane_Following);
-
                         // stop_and_wait
                         cav_msgs::Maneuver stop_and_wait = composeStopAndWaitManeuverMessage(current_progress + lane_following_distance, 
                                                 traffic_light_down_track, 
@@ -280,19 +263,17 @@ namespace wz_strategic_plugin
                                                 start_lane_id,
                                                 end_lane_id,
                                                 start_time,
-                                                estimated_time_to_stop));
+                                                estimated_time_to_stop);
 
                         resp.new_plan.maneuvers.push_back(stop_and_wait);
 
                         // workzone_tactical
                         cav_msgs::Maneuver workzone_tactical = composeIntersectionTransitMessage( traffic_light_down_track,
-                                                                                                  traffic_light_down_track, 
+                                                                                                  workzone_end_point_down_track, 
                                                                                                   current_speed_, 
                                                                                                   current_speed_, 
-                                                                                                  start_time + time_remaining_to_traffic_light.toSec(), 
-                                                                                                  end_time, 
-                                                                                                  start_lane_id, 
-                                                                                                  end_lane_id);
+                                                                                                  start_time + ros::Duration(std::max(15.0,time_to_stop)), 
+                                                                                                  start_lane_id);
                         resp.new_plan.maneuvers.push_back(workzone_tactical);
 
                     }
@@ -309,13 +290,11 @@ namespace wz_strategic_plugin
 
                         // workzone_tactical
                         cav_msgs::Maneuver workzone_tactical = composeIntersectionTransitMessage(traffic_light_down_track, 
-                                                                                                 traffic_light_down_track, 
+                                                                                                 workzone_end_point_down_track, 
                                                                                                  current_speed_, 
                                                                                                  current_speed_, 
-                                                                                                 current_time, 
-                                                                                                 end_time, 
-                                                                                                 start_lane_id, 
-                                                                                                 end_lane_id);
+                                                                                                 start_time + time_remaining_to_traffic_light.toSec(),
+                                                                                                 start_lane_id);
                         resp.new_plan.maneuvers.push_back(workzone_tactical);
 
                     }
