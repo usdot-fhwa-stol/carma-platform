@@ -81,7 +81,6 @@ namespace intersection_transit_maneuvering
 
         std::shared_ptr<CallInterface> object_;
         std::vector<cav_msgs::Maneuver> converted_maneuvers_;
-        //cav_msgs::TrajectoryPlan trajectory_plan_;
         cav_msgs::VehicleState vehicle_state_;
         cav_msgs::Plugin plugin_discovery_msg_;
         PublishPluginDiscoveryCB plugin_discovery_publisher_;

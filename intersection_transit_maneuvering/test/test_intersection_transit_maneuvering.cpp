@@ -182,6 +182,7 @@ TEST(Intersection_Transit_Maneuvering_Test, Convert_Maneuvers_Test)
     man1.intersection_transit_straight_maneuver.start_speed = 25.0;
     man1.intersection_transit_straight_maneuver.end_speed = 1.0;
     man1.intersection_transit_straight_maneuver.starting_lane_id = 1200;
+    man1.intersection_transit_straight_maneuver.parameters.maneuver_id = "asdf";
 
 
     man2.type = cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN;
@@ -192,6 +193,7 @@ TEST(Intersection_Transit_Maneuvering_Test, Convert_Maneuvers_Test)
     man2.intersection_transit_left_turn_maneuver.start_speed = 25.0;
     man2.intersection_transit_left_turn_maneuver.end_speed = 1.0;
     man2.intersection_transit_left_turn_maneuver.starting_lane_id = 1200;
+    man2.intersection_transit_left_turn_maneuver.parameters.maneuver_id = "asdf";
 
     man3.type = cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN;
     man3.intersection_transit_right_turn_maneuver.start_dist = 0.0;
@@ -200,6 +202,7 @@ TEST(Intersection_Transit_Maneuvering_Test, Convert_Maneuvers_Test)
     man3.intersection_transit_right_turn_maneuver.end_time = ros::Time(1.7701);
     man3.intersection_transit_right_turn_maneuver.start_speed = 25.0;
     man3.intersection_transit_right_turn_maneuver.end_speed = 1.0;
+    man3.intersection_transit_right_turn_maneuver.parameters.maneuver_id = "asdf";
 
     man3.intersection_transit_right_turn_maneuver.starting_lane_id = 1200;
 
@@ -213,6 +216,7 @@ TEST(Intersection_Transit_Maneuvering_Test, Convert_Maneuvers_Test)
     for(size_t i = 0; i < converted.size(); i++ )
     {
         ASSERT_EQ(true, converted[i].type == cav_msgs::Maneuver::LANE_FOLLOWING); //Test that each maneuver has been converted to LANE_FOLLOWING
+        ASSERT_EQ("asdf", converted[i].lane_following_maneuver.parameters.maneuver_id);
         ASSERT_EQ(0.0, converted[i].lane_following_maneuver.start_dist);
         ASSERT_EQ(5.0, converted[i].lane_following_maneuver.end_dist);
         ASSERT_EQ(ros::Time(0.0), converted[i].lane_following_maneuver.start_time);
