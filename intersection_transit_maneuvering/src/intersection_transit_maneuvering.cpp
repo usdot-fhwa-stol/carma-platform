@@ -117,6 +117,7 @@ namespace intersection_transit_maneuvering
                 new_maneuver.lane_following_maneuver.parameters.planning_strategic_plugin = maneuver.intersection_transit_straight_maneuver.parameters.planning_strategic_plugin;
                 new_maneuver.lane_following_maneuver.parameters.planning_tactical_plugin = maneuver.intersection_transit_straight_maneuver.parameters.planning_tactical_plugin;
                 new_maneuver.lane_following_maneuver.parameters.neogition_type = maneuver.intersection_transit_straight_maneuver.parameters.neogition_type;
+                new_maneuver.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
 
                 new_maneuver.lane_following_maneuver.start_dist = maneuver.intersection_transit_straight_maneuver.start_dist;
                 new_maneuver.lane_following_maneuver.start_speed = maneuver.intersection_transit_straight_maneuver.start_speed;
@@ -126,8 +127,6 @@ namespace intersection_transit_maneuvering
                 new_maneuver.lane_following_maneuver.end_speed = maneuver.intersection_transit_straight_maneuver.end_speed;
                 new_maneuver.lane_following_maneuver.end_time = maneuver.intersection_transit_straight_maneuver.end_time;
 
-                new_maneuver.lane_following_maneuver.parameters.bool_valued_meta_data.clear();
-                new_maneuver.lane_following_maneuver.parameters.float_valued_meta_data.clear();
 
                 new_maneuver.lane_following_maneuver.lane_id = maneuver.intersection_transit_straight_maneuver.starting_lane_id;
 
@@ -141,6 +140,7 @@ namespace intersection_transit_maneuvering
                 new_maneuver.lane_following_maneuver.parameters.planning_strategic_plugin = maneuver.intersection_transit_left_turn_maneuver.parameters.planning_strategic_plugin;
                 new_maneuver.lane_following_maneuver.parameters.planning_tactical_plugin = maneuver.intersection_transit_left_turn_maneuver.parameters.planning_tactical_plugin;
                 new_maneuver.lane_following_maneuver.parameters.neogition_type = maneuver.intersection_transit_left_turn_maneuver.parameters.neogition_type;
+                new_maneuver.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
 
                 new_maneuver.lane_following_maneuver.start_dist = maneuver.intersection_transit_left_turn_maneuver.start_dist;
                 new_maneuver.lane_following_maneuver.start_speed = maneuver.intersection_transit_left_turn_maneuver.start_speed;
@@ -162,6 +162,7 @@ namespace intersection_transit_maneuvering
                 new_maneuver.lane_following_maneuver.parameters.planning_strategic_plugin = maneuver.intersection_transit_right_turn_maneuver.parameters.planning_strategic_plugin;
                 new_maneuver.lane_following_maneuver.parameters.planning_tactical_plugin = maneuver.intersection_transit_right_turn_maneuver.parameters.planning_tactical_plugin;
                 new_maneuver.lane_following_maneuver.parameters.neogition_type = maneuver.intersection_transit_right_turn_maneuver.parameters.neogition_type;
+                new_maneuver.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
 
                 new_maneuver.lane_following_maneuver.start_dist = maneuver.intersection_transit_right_turn_maneuver.start_dist;
                 new_maneuver.lane_following_maneuver.start_speed = maneuver.intersection_transit_right_turn_maneuver.start_speed;

@@ -217,6 +217,7 @@ TEST(Intersection_Transit_Maneuvering_Test, Convert_Maneuvers_Test)
     {
         ASSERT_EQ(true, converted[i].type == cav_msgs::Maneuver::LANE_FOLLOWING); //Test that each maneuver has been converted to LANE_FOLLOWING
         ASSERT_EQ("asdf", converted[i].lane_following_maneuver.parameters.maneuver_id);
+        ASSERT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN, converted[i].lane_following_maneuver.parameters.presence_vector);
         ASSERT_EQ(0.0, converted[i].lane_following_maneuver.start_dist);
         ASSERT_EQ(5.0, converted[i].lane_following_maneuver.end_dist);
         ASSERT_EQ(ros::Time(0.0), converted[i].lane_following_maneuver.start_time);
