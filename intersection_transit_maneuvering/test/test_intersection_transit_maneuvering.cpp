@@ -208,10 +208,6 @@ TEST(Intersection_Transit_Maneuvering_Test, Convert_Maneuvers_Test)
     maneuvers.push_back(man2);
     maneuvers.push_back(man3);
     auto converted = itm_node.convert_maneuver_plan(maneuvers);
-    for(auto i: converted)
-    {
-        ASSERT_EQ(true, i.type == cav_msgs::Maneuver::LANE_FOLLOWING); //Test that each maneuver has been converted to LANE_FOLLOWING
-    }
 
     /*Test Converted Values*/
     for(size_t i = 0; i < converted.size(); i++ )
