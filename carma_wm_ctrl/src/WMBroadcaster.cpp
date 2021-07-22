@@ -469,8 +469,8 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
   splitLaneletWithPoint(parallel_llts, {open_right_last_pt}, open_right_last_llt);
 
   /// HANDLE MID HERE
-  auto reverse_back_llt = carma_wm::editor::getLaneletsFromPoint(current_map_,  work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.back().basicPoint2d())[0];
-  auto reverse_front_llt = carma_wm::editor::getLaneletsFromPoint(current_map_,  work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.front().basicPoint2d())[0];
+  auto reverse_back_llt = carma_wm::utils::getLaneletsFromPoint(current_map_,  work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.back().basicPoint2d())[0];
+  auto reverse_front_llt = carma_wm::utils::getLaneletsFromPoint(current_map_,  work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.front().basicPoint2d())[0];
   
   if (reverse_back_llt.id() == reverse_front_llt.id()) //means there is only 1 middle lanelet, which needs to be split into 3 lanelets
   {
@@ -571,7 +571,7 @@ lanelet::Lanelets WMBroadcaster::splitOppositeLaneletWithPoint(std::shared_ptr<s
   auto point_downtrack_ratio = point_downtrack / carma_wm::geometry::trackPos(input_llt, input_llt.centerline().back().basicPoint2d()).downtrack;
 
   // get opposing lanelets and split
-  auto opposing_llts = carma_wm::editor::nonConnectedAdjacentLeft(current_map_, input_pt);
+  auto opposing_llts = carma_wm::utils::nonConnectedAdjacentLeft(current_map_, input_pt);
   
   if (opposing_llts.empty())
   {
@@ -864,12 +864,7 @@ uint32_t WMBroadcaster::generate32BitId(const std::string& label)
   uint16_t intersection_id = std::stoi(label.substr(pos1, pos2 - pos1));
   uint8_t signal_id = std::stoi(label.substr(pos2, label.size() - pos2));
 
-  uint32_t temp;
-  temp |= intersection_id;
-  temp = temp << 8;
-  temp |= signal_id;
-
-  return temp;
+  return carma_wm::utils::get32BitId(intersection_id, signal_id);
 }
 
 // currently only supports geofence message version 1: TrafficControlMessageV01 

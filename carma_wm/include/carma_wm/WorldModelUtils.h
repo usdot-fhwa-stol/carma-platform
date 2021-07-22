@@ -34,11 +34,10 @@
 namespace carma_wm
 {
 /**
- * \brief editor namespace contains implementations for utility read or write functions for stand-alone lanelet map without rest of the CARMAWorldModel features.
- *        NOTE: Functions allowed for normal users are exposed in WorldModel.h interface, so normal users should NOT use this file.
- *        Currently only WMBroadcaster (carma_wm_ctrl) is using this to manipulate map without instance of carma_wm
+ * \brief carma_wm::utils namespace contains implementations for utility read or write functions for stand-alone lanelet map without rest of the CARMAWorldModel features.
+ *        Currently mainly WMBroadcaster (carma_wm_ctrl) is using this to manipulate its own map without creating instance of carma_wm
  */
-namespace editor
+namespace utils
 {
 
 /**
@@ -100,6 +99,13 @@ std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::Lanel
 std::vector<lanelet::Lanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& input_point,
                                                           const unsigned int n = 10);
 
-}  // namespace editor
+/*! \brief Get 32bit id by concatenating 16bit id with 8bit signal_group_id
+ *  \param intersection_id 16bit id which will be shifted left 8bits
+ *  \param signal_group_id 8bit signal_group_id
+ *  \return 32bit id where last 24bit is combined id of inputs
+ */
+uint32_t get32BitId(uint16_t intersection_id, uint8_t signal_group_id);
+
+}  // namespace utils
 
 }  // namespace carma_wm

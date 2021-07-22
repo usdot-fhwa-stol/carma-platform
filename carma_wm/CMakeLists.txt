@@ -59,7 +59,7 @@ add_library(
   src/WMListener.cpp
   src/WMListenerWorker.cpp
   src/Geometry.cpp
-  src/WorldModelEditor.cpp
+  src/WorldModelUtils.cpp
   src/TrafficControl.cpp
   src/IndexedDistanceMap.cpp
   src/collision_detection.cpp

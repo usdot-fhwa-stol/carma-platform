@@ -14,11 +14,11 @@
  * the License.
  */
 
-#include <carma_wm/WorldModelEditor.h>
+#include <carma_wm/WorldModelUtils.h>
 
 namespace carma_wm
 {
-namespace editor
+namespace utils
 {
 
 std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& point,
@@ -112,6 +112,15 @@ std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::Lanel
   return opposite_lanelets;
 }
 
-}  // namespace editor
+uint32_t get32BitId(uint16_t intersection_id, uint8_t signal_group_id)
+{
+  uint32_t temp;
+  temp |= intersection_id;
+  temp = temp << 8;
+  temp |= signal_group_id;
+  return temp;
+}
+
+}  // namespace utils
 
 }  // namespace carma_wm

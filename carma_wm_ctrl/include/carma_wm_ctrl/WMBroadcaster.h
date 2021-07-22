@@ -248,10 +248,10 @@ public:
   cav_msgs::Route getRoute();
 
   /*!
-   * \brief Creates a single workzone geofence (in the vector) that includes all additional lanelets (housing traffic lights and stoprules) and update_list that blocks old lanelets.
-            Geofence will have minimum of 6 lanelet_additions_ (front parallel, front diagonal, middle lanelet(s), back diagonal, back parallel, 1 opposing lanelet with stoprule/trafficlight). 
+   * \brief Creates a single workzone geofence (in the vector) that includes all additional lanelets (housing traffic lights) and update_list that blocks old lanelets.
+            Geofence will have minimum of 6 lanelet_additions_ (front parallel, front diagonal, middle lanelet(s), back diagonal, back parallel, 1 opposing lanelet with trafficlight). 
             And regulatory_element_ of this geofence will be region_access_rule, where it blocks entire affected_parts of CLOSED, TAPERRIGHT, OPENRIGHT.
-            It also blocks the opposing lane's lanelet that would have had the stoprule, and new lanelet(s) would be added to replace it.
+            It also blocks the opposing lane's lanelet that would have had the trafficlight, and new lanelet(s) would be added to replace it.
 
    * \param work_zone_geofence_cache Geofence map with size of 4 corresponding to CLOSED, TAPERRIGHT, OPENRIGHT, REVERSE TrafficControlMessages.
                                      Each should have gf_pts, affected_parts, schedule, and id filled. TAPERRIGHT's id and schedule is used as all should have same schedule.
@@ -276,8 +276,8 @@ public:
                                                     std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts);
 
   /*!
-   * \brief Create workzone geofence. Create diagonal lanelets and a lanelet that houses opposing lane's stoprule. Fill lanelet_additions_ with every newly created lanelets
-            New lanelets will have stoprule and traffic light. Old lanelets (and those from CLOSED) will be blocked using update_list as region_access_rule 
+   * \brief Create workzone geofence. Create diagonal lanelets and a lanelet that houses opposing lane's trafficlight. Fill lanelet_additions_ with every newly created lanelets
+            New lanelets will have traffic light. Old lanelets (and those from CLOSED) will be blocked using update_list as region_access_rule 
 
    * \param work_zone_geofence_cache Geofence map with size of 4 corresponding to CLOSED, TAPERRIGHT, OPENRIGHT, REVERSE TrafficControlMessages.
                                      Each should have gf_pts, affected_parts.
