@@ -238,11 +238,18 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     }
   }
   
-  // set the map to set a new routing
-  world_model_->setMap(world_model_->getMutableMap(), current_map_version_);
+  // set the Map to trigger a new route graph construction if rerouting was required by the updates. 
+  world_model_->setMap(world_model_->getMutableMap(), current_map_version_, rerouting_flag_);
 
   
   ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_); 
+
+  // Call user defined map callback
+  if (map_callback_)
+  {
+    ROS_INFO_STREAM("Calling user defined map update callback");
+    map_callback_();
+  }
 }
 
 /*!
