@@ -22,16 +22,21 @@
 #include <lanelet2_core/primitives/Point.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/Polygon.h>
+#include <lanelet2_core/geometry/Polygon.h>
+#include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/utility/Optional.h>
 #include "TrackPos.h"
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
 #include <ros/ros.h>
+#include <carma_wm/Geometry.h>
 
 namespace carma_wm
 {
 /**
- * \brief TODO:
+ * \brief editor namespace contains implementations for utility read or write functions for stand-alone lanelet map without rest of the CARMAWorldModel features.
+ *        NOTE: Functions allowed for normal users are exposed in WorldModel.h interface, so normal users should NOT use this file.
+ *        Currently only WMBroadcaster (carma_wm_ctrl) is using this to manipulate map without instance of carma_wm
  */
 namespace editor
 {
@@ -60,7 +65,7 @@ std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMa
  * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
  */
 std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& point,
-                                                                    const unsigned int n);
+                                                                    const unsigned int n = 10);
 /**
  * \brief Given the cartesian point on the map, tries to get the opposite direction lanelet on the left
  *        This function is intended to find "adjacentLeft lanelets" that doesn't share points between lanelets

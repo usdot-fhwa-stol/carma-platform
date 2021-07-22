@@ -1051,4 +1051,17 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsFromPoint(const l
 {
   return carma_wm::editor::getLaneletsFromPoint(getMap(), point, n);
 }
+
+std::vector<lanelet::Lanelet> CARMAWorldModel::nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n)
+{
+  return carma_wm::editor::nonConnectedAdjacentLeft(semantic_map_, input_point, n);
+}
+
+std::vector<lanelet::ConstLanelet> CARMAWorldModel::nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n) const
+{
+  return carma_wm::editor::nonConnectedAdjacentLeft(getMap(), input_point, n);
+}
+
+
+
 }  // namespace carma_wm

@@ -21,7 +21,6 @@ namespace carma_wm
 namespace editor
 {
 
-
 std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& point,
                                                                     const unsigned int n)
 {

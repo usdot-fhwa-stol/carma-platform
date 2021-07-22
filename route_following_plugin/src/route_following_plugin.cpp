@@ -249,7 +249,7 @@ namespace route_following_plugin
         current_loc_ = current_loc;
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         
-        auto llts = carma_wm::getLaneletsFromPoint(wm_->getMap(), current_loc, 10);                                          
+        auto llts = wm_->getLaneletsFromPoint(current_loc, 10);                                          
 
         ROS_DEBUG_STREAM("pose_cb : current_progress" << current_progress << ", and upcoming_lane_change_status_msg_map_.size(): " << upcoming_lane_change_status_msg_map_.size());
 
