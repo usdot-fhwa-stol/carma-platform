@@ -348,10 +348,9 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   //////////////////////////////
   //FRONT DIAGONAL LANELET
   //////////////////////////////
-  // TODO: more sophisticated diagonal llt?
-  lanelet::LineString3d front_left_ls(lanelet::utils::getId(), {parallel_llt_front.leftBound3d().back(), middle_opposite_lanelets->back().rightBound3d().back()});
-  lanelet::LineString3d front_right_ls(lanelet::utils::getId(), {parallel_llt_front.rightBound3d().back(), middle_opposite_lanelets->back().leftBound3d().back()});
-  lanelet::Lanelet front_llt_diag(lanelet::utils::getId(), front_left_ls, front_right_ls);
+
+  lanelet::Lanelet front_llt_diag = createLinearInterpolatingLanelet(parallel_llt_front.leftBound3d().back(), parallel_llt_front.rightBound3d().back(), 
+                                                                        middle_opposite_lanelets->back().rightBound3d().back(), middle_opposite_lanelets->back().leftBound3d().back());
   for (auto regem : parallel_llt_front.regulatoryElements()) //copy existing regem into the new llts
   {
     front_llt_diag.addRegulatoryElement(regem);
@@ -360,10 +359,9 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   //////////////////////////////
   //BACK DIAGONAL LANELET
   //////////////////////////////
-  // TODO: more sophisticated diagonal llt?
-  lanelet::LineString3d back_left_ls(lanelet::utils::getId(), { middle_opposite_lanelets->front().rightBound3d().front(), parallel_llt_back.leftBound3d().front()});  
-  lanelet::LineString3d back_right_ls(lanelet::utils::getId(), { middle_opposite_lanelets->front().leftBound3d().front(), parallel_llt_back.rightBound3d().front()});
-  lanelet::Lanelet back_llt_diag (lanelet::utils::getId(), back_left_ls, back_right_ls);
+
+  lanelet::Lanelet back_llt_diag = createLinearInterpolatingLanelet(middle_opposite_lanelets->front().rightBound3d().front(),  middle_opposite_lanelets->front().leftBound3d().front(), 
+                                                                     parallel_llt_back.leftBound3d().front(), parallel_llt_back.rightBound3d().front());
   for (auto regem : parallel_llt_back.regulatoryElements()) //copy existing regem into the new llts
   {
     back_llt_diag.addRegulatoryElement(regem);
@@ -1753,6 +1751,31 @@ void WMBroadcaster::newUpdateSubscriber(const ros::SingleSubscriberPublisher& si
   for (const auto& msg : map_update_message_queue_) {
     single_sub_pub.publish(msg); // For each applied update for the current map version publish the update to the new subscriber
   }
+}
+
+lanelet::LineString3d WMBroadcaster::createLinearInterpolatingLinestring(const lanelet::Point3d& front_pt, const lanelet::Point3d& back_pt, double increment_distance)
+{
+  double dx = back_pt.x() - front_pt.x();
+  double dy = back_pt.y() - front_pt.y();
+  std::vector<lanelet::Point3d> points;
+  double distance = std::sqrt(pow(dx, 2) + pow(dy,2));
+  double cos = dx / distance;
+  double sin = dy / distance;
+  points.push_back(front_pt);
+  double sum = increment_distance;
+  while ( sum < distance)
+  {
+    points.push_back(lanelet::Point3d(lanelet::utils::getId(),front_pt.x() + sum * cos, front_pt.y() + sum * sin, 0.0));
+    sum += increment_distance;
+  }
+  points.push_back(back_pt);
+
+  return lanelet::LineString3d(lanelet::utils::getId(), points);
+}
+
+lanelet::Lanelet  WMBroadcaster::createLinearInterpolatingLanelet(const lanelet::Point3d& left_front_pt, const lanelet::Point3d& right_front_pt, const lanelet::Point3d& left_back_pt, const lanelet::Point3d& right_back_pt, double increment_distance)
+{
+  return lanelet::Lanelet(lanelet::utils::getId(), createLinearInterpolatingLinestring(left_front_pt, left_back_pt, increment_distance), createLinearInterpolatingLinestring(right_front_pt, right_back_pt, increment_distance));
 }
 
 
