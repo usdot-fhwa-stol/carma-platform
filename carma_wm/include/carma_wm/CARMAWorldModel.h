@@ -26,7 +26,7 @@
 #include <cav_msgs/RoadwayObstacle.h>
 #include <cav_msgs/RoadwayObstacleList.h>
 #include "TrackPos.h"
-#include <carma_wm/WorldModelEditor.h>
+#include <carma_wm/WorldModelUtils.h>
 
 namespace carma_wm
 {

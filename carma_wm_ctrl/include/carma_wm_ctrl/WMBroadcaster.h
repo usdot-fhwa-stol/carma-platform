@@ -53,7 +53,7 @@
 #include <unordered_set>
 #include <visualization_msgs/MarkerArray.h>
 #include <cav_msgs/TrafficControlRequestPolygon.h>
-#include <carma_wm/WorldModelEditor.h>
+#include <carma_wm/WorldModelUtils.h>
 
 namespace carma_wm_ctrl
 {
