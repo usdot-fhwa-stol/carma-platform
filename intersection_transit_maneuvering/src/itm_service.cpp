@@ -12,8 +12,6 @@
 namespace itm_servicer
 {
 
-    //Servicer::Servicer();
-
     Servicer::Servicer(){};
 
     bool Servicer::call(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)

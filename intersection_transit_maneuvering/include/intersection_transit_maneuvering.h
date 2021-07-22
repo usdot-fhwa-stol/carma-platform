@@ -50,6 +50,7 @@ namespace intersection_transit_maneuvering
         * \brief Constructor
         * 
         * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
+        * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
         * \param obj Interface object to initialize ros::Service::call
         */ 
         IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr& wm, PublishPluginDiscoveryCB plugin_discovery_publisher, std::shared_ptr<Interface> obj);

@@ -31,6 +31,7 @@
 #include <Eigen/SVD>
 #include <intersection_transit_maneuvering.h>
 
+
 using oss = std::ostringstream;
 
 namespace intersection_transit_maneuvering
@@ -50,7 +51,6 @@ namespace intersection_transit_maneuvering
 
     bool IntersectionTransitManeuvering::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
     {
-        
         ros::WallTime start_time = ros::WallTime::now();  // Start timeing the execution time for planning so it can be logged
 
         std::vector<cav_msgs::Maneuver> maneuver_plan;
@@ -76,12 +76,14 @@ namespace intersection_transit_maneuvering
         {
             req2.maneuver_plan.maneuvers.push_back(i);
         }
+
             req2.vehicle_state = req.vehicle_state;
             req2.initial_trajectory_plan = req.initial_trajectory_plan;
 
-        
-
-        object->call(req2,resp); //Since we're using an interface for this process, the call functionality will be referenced in the Servicer
+        if(object->call(req2,resp))//Since we're using an interface for this process, the call() functionality will come from somewhere else
+        {
+            ROS_DEBUG_STREAM("Call Successful");
+        }
 
         resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
@@ -89,8 +91,6 @@ namespace intersection_transit_maneuvering
 
         ros::WallDuration duration = end_time - start_time;
         ROS_DEBUG_STREAM("ExecutionTime: " << duration.toSec());
-
-        
         return true;
     }
    
@@ -104,16 +104,17 @@ namespace intersection_transit_maneuvering
         std::vector<cav_msgs::Maneuver> new_maneuver_plan;
         cav_msgs::Maneuver new_maneuver;
         new_maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING; //All of the converted maneuvers will be of type LANE_FOLLOWING
+        ROS_DEBUG_STREAM("Maneuver Type = "<< static_cast<int>(maneuvers.front().type));
         for(const auto& maneuver : maneuvers)
         {
             /*Throw exception if the manuever type does not match INTERSECTION_TRANSIT*/
-            if ( maneuver.type != cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ||
-                maneuver.type != cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ||
+            if ( maneuver.type != cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT &&
+                maneuver.type != cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN &&
                 maneuver.type != cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN)
                 {
                     throw std::invalid_argument("Intersection transit maneuvering does not support this maneuver type");
                 }
-            
+
             /*Convert IT Straight*/
             if (maneuver.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT)
             {

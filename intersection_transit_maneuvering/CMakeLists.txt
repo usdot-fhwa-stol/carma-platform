@@ -72,6 +72,7 @@ add_executable( ${PROJECT_NAME}
 add_library(intersection_transit_maneuvering_library 
   src/intersection_transit_maneuvering.cpp
   src/itm_service.cpp
+  src/call_test.cpp
 )
 target_link_libraries(intersection_transit_maneuvering_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(intersection_transit_maneuvering_library ${catkin_EXPORTED_TARGETS})
@@ -107,6 +108,7 @@ install(DIRECTORY launch config
 
 catkin_add_gmock(${PROJECT_NAME}-test 
     test/test_intersection_transit_maneuvering.cpp
+    test/test_main.cpp
 )
 #catkin_add_gtest(${PROJECT_NAME}-test test/test_intersection_transit_maneuvering.cpp)
 if(TARGET ${PROJECT_NAME}-test)

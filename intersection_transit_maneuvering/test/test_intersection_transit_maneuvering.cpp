@@ -14,28 +14,27 @@
  * the License.
  */
 
-#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <ros/ros.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <cav_msgs/Maneuver.h>
 #include <intersection_transit_maneuvering.h>
+#include <chrono>
+#include <ctime>
 #include <cav_srvs/PlanTrajectory.h>
 #include <math.h>
 #include <tf/LinearMath/Vector3.h>
 #include <string>
 #include <algorithm>
 #include <memory>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
 #include <lanelet2_core/geometry/Point.h>
 #include <trajectory_utils/trajectory_utils.h>
 #include <trajectory_utils/conversions/conversions.h>
 #include <sstream>
 #include <carma_utils/containers/containers.h>
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-#include <Eigen/LU>
-#include <Eigen/SVD>
+#include <ros/console.h>
+#include <carma_wm/WMTestLibForGuidance.h>
+#include "call_test.h"
 
 namespace intersection_transit_maneuvering
 {
@@ -46,20 +45,34 @@ TEST(Intersection_Transit_Maneuvering_Test, Planning_Callback_Test)
     /*Create World Model Pointer and Set the Map */
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
     auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10);
-
     wm->setMap(map);
 
-    carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
+    carma_wm::WorldModelConstPtr wm_ = wm;
+    std::shared_ptr<call_test::CallTest> object = std::make_shared<call_test::CallTest>();
+    std::shared_ptr<Interface> obj = object;
+    
+    IntersectionTransitManeuvering itm_node(wm_, [&](auto msg) {}, obj);
 
-    IntersectionTransitManeuvering::IntersectionTransitManeuvering itm_node(wm,[&](auto msg),{});
     cav_msgs::Maneuver man0, man1;
+    std::vector<cav_msgs::TrajectoryPlanPoint> points; 
 
-    man1.type = cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT;
-    man1.intersection_transit_straight_maneuver.start_dist = 0.0;
-    man1.intersection_transit_straight_maneuver.end_dist = 5.0;
-    man1.intersection_transit_straight_maneuver.start_time = ros::Time(0.0);
-    man1.intersection_transit_straight_maneuver.end_time = ros::Time(1.7701);
-    man1.intersection_transit_straight_maneuver.starting_lane_id = 1200;
+    /*Create and populate the PlanTrajectory Service*/
+    cav_msgs::TrajectoryPlanPoint p1, p2, p3;
+    p1.controller_plugin_name = "Point1";
+    p1.x = 0.0;
+    p1.y = 1.0;
+    p1.lane_id = "abcd";
+
+    p2.controller_plugin_name = "Point2";
+    p2.x = 0.0;
+    p2.y = 2.0;
+    p2.lane_id = "efgh";
+    
+    p3.controller_plugin_name = "Point3";
+    p3.x = 0.0;
+    p3.y = 3.0;
+    p3.lane_id = "ijkl";
+
 
     cav_srvs::PlanTrajectoryRequest req;
     req.vehicle_state.X_pos_global = 1.5;
@@ -67,48 +80,107 @@ TEST(Intersection_Transit_Maneuvering_Test, Planning_Callback_Test)
     req.vehicle_state.orientation = 0;
     req.vehicle_state.longitudinal_vel = 0.0;
 
-    req.maneuver_plan.maneuvers.push_back(man1);
-
+    req.initial_trajectory_plan.trajectory_id = "TEST";
+    req.initial_trajectory_plan.trajectory_points.push_back(p1);
+    req.initial_trajectory_plan.trajectory_points.push_back(p2);
+    req.initial_trajectory_plan.trajectory_points.push_back(p3); 
     cav_srvs::PlanTrajectoryResponse resp;
 
-    itm_node.plan_trajectory_cb(req, resp);
-
-    //Assert that the maneuver status will be updated after the callback function
-    ASSERT_EQ(1, resp.maneuver_status.size());
-
+    //Invalid Maneuver Type
     man0.type = cav_msgs::Maneuver::LANE_FOLLOWING;
     man0.lane_following_maneuver.start_dist = 0.0;
     man0.lane_following_maneuver.end_dist = 5.0;
     man0.lane_following_maneuver.start_time = ros::Time(0.0);
     man0.lane_following_maneuver.end_time = ros::Time(1.7701);
-    man0.lane_following_maneuver.starting_lane_id = 1200;
+    man0.lane_following_maneuver.lane_id = 1200;
 
     req.maneuver_plan.maneuvers.push_back(man0);
 
-    //Test that the operation will throw an invalid argrument error statement due to a non-applicable maneuver type being used
-    EXPECT_THROW(itm_node.plan_trajectory_cb(req, resp),std::invalid_argument());
+    /*Test that the operation will throw an invalid argrument error statement due to a non-applicable maneuver type being used*/
+    EXPECT_THROW(itm_node.plan_trajectory_cb(req, resp), std::invalid_argument);
+    ASSERT_EQ(0, resp.maneuver_status.size());
 
-}
 
-TEST(Intersection_Transit_Maneuvering_Test, Convert_Maneuvers_Test)
-{
-    /*Create World Model Pointer and Set the Map */
-    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-    auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10);
-
-    wm->setMap(map);
-
-    carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
-
-    IntersectionTransitManeuvering::IntersectionTransitManeuvering itm_node(wm,[&](auto msg),{});
-    cav_msgs::Maneuver man1, man2, man3;
-
+    /*Valid Maneuver Type */
     man1.type = cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT;
     man1.intersection_transit_straight_maneuver.start_dist = 0.0;
     man1.intersection_transit_straight_maneuver.end_dist = 5.0;
     man1.intersection_transit_straight_maneuver.start_time = ros::Time(0.0);
     man1.intersection_transit_straight_maneuver.end_time = ros::Time(1.7701);
     man1.intersection_transit_straight_maneuver.starting_lane_id = 1200;
+
+    req.maneuver_plan.maneuvers.pop_back();
+    ASSERT_EQ(0,req.maneuver_plan.maneuvers.size());
+
+    req.maneuver_plan.maneuvers.push_back(man1);
+    
+    auto plan = itm_node.plan_trajectory_cb(req, resp);
+
+    /*Get req and resp values from the test call() function*/
+    auto test_req = object->getRequest();
+    auto test_resp = object->getResponse();
+
+    /*Test call() function*/
+    ASSERT_EQ(1, test_req.maneuver_plan.maneuvers.size());
+    ASSERT_EQ(req.vehicle_state.X_pos_global, test_req.vehicle_state.X_pos_global);
+    ASSERT_EQ(req.vehicle_state.Y_pos_global, test_req.vehicle_state.Y_pos_global);
+    ASSERT_EQ(req.vehicle_state.longitudinal_vel, test_req.vehicle_state.longitudinal_vel);
+    ASSERT_EQ(req.vehicle_state.orientation, test_req.vehicle_state.orientation);
+    ASSERT_EQ(req.initial_trajectory_plan.trajectory_id, test_req.initial_trajectory_plan.trajectory_id);
+
+    for(size_t i = 0; i < req.initial_trajectory_plan.trajectory_points.size(); i++)
+    {
+        ASSERT_EQ(req.initial_trajectory_plan.trajectory_points[i].controller_plugin_name, test_req.initial_trajectory_plan.trajectory_points[i].controller_plugin_name);
+        ASSERT_EQ(req.initial_trajectory_plan.trajectory_points[i].x, test_req.initial_trajectory_plan.trajectory_points[i].x);
+        ASSERT_EQ(req.initial_trajectory_plan.trajectory_points[i].y, test_req.initial_trajectory_plan.trajectory_points[i].y);
+        ASSERT_EQ(req.initial_trajectory_plan.trajectory_points[i].lane_id, test_req.initial_trajectory_plan.trajectory_points[i].lane_id);
+    }
+
+    /*Assert that the maneuver status will be updated after the callback function*/
+    ASSERT_EQ(0, test_resp.maneuver_status.size());
+    ASSERT_EQ(1, resp.maneuver_status.size());
+    ASSERT_EQ(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS, resp.maneuver_status.back());
+
+}//End Test Case
+
+TEST(Intersection_Transit_Maneuvering_Test, Convert_Maneuvers_Test)
+{
+    /*Create World Model Pointer and Set the Map */
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+    auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10);
+    wm->setMap(map);
+
+    carma_wm::WorldModelConstPtr wm_ = wm;
+    std::shared_ptr<Interface> obj;
+    IntersectionTransitManeuvering itm_node(wm_, [&](auto msg) {}, obj);
+
+    std::vector<cav_msgs::Maneuver> maneuvers;
+
+    EXPECT_THROW(itm_node.convert_maneuver_plan(maneuvers), std::invalid_argument); //Test that the operation will throw an exception due to there being no maneuvers to convert
+
+    cav_msgs::Maneuver man0, man1, man2, man3;
+
+    /*Invalid Maneuver Type*/
+    man0.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+    man0.lane_following_maneuver.start_dist = 0.0;
+    man0.lane_following_maneuver.end_dist = 5.0;
+    man0.lane_following_maneuver.start_time = ros::Time(0.0);
+    man0.lane_following_maneuver.end_time = ros::Time(1.7701);
+    man0.lane_following_maneuver.lane_id = 1200;
+
+    /*Test that the operation will throw an invalid argrument error statement due to a non-applicable maneuver type being used*/
+    maneuvers.push_back(man0);
+    EXPECT_THROW(itm_node.convert_maneuver_plan(maneuvers), std::invalid_argument); 
+    maneuvers.pop_back();
+
+    /*Valid Maneuver Types */
+    man1.type = cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT;
+    man1.intersection_transit_straight_maneuver.start_dist = 0.0;
+    man1.intersection_transit_straight_maneuver.end_dist = 5.0;
+    man1.intersection_transit_straight_maneuver.start_time = ros::Time(0.0);
+    man1.intersection_transit_straight_maneuver.end_time = ros::Time(1.7701);
+    man1.intersection_transit_straight_maneuver.starting_lane_id = 1200;
+
 
     man2.type = cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN;
     man2.intersection_transit_left_turn_maneuver.start_dist = 0.0;
@@ -124,20 +196,14 @@ TEST(Intersection_Transit_Maneuvering_Test, Convert_Maneuvers_Test)
     man3.intersection_transit_right_turn_maneuver.end_time = ros::Time(1.7701);
     man3.intersection_transit_right_turn_maneuver.starting_lane_id = 1200;
 
-    std::vector<cav_msgs::Maneuver> maneuvers;
-
-    auto converted = itm_node.convert_maneuver_plan(maneuvers);
-    EXPECT_THROW(converted, std::invalid_argument); //Test that the operation will throw an exception due to there being no maneuvers to convert
 
     maneuvers.push_back(man1);
     maneuvers.push_back(man2);
     maneuvers.push_back(man3);
-
-    auto converted2 = itm_node.convert_maneuver_plan(maneuvers);
-
-    for(auto i: maneuvers)
+    auto converted = itm_node.convert_maneuver_plan(maneuvers);
+    for(auto i: converted)
     {
-        ASSERT_EQ(true, i.maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING); //Test that each maneuver has been converted to LANE_FOLLOWING
+        ASSERT_EQ(true, i.type == cav_msgs::Maneuver::LANE_FOLLOWING); //Test that each maneuver has been converted to LANE_FOLLOWING
     }
 
 }
