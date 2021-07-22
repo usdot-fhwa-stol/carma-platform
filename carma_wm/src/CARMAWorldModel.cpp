@@ -93,7 +93,7 @@ lanelet::Id CARMAWorldModel::getTrafficLightId(uint16_t intersection_id, uint8_t
   }
   else
   {
-    ROS_ERROR_STREAM("Did not find any traffic light with intersection_id: " << intersection_id << ", and signal_group_id: " << signal_group_id);
+    ROS_DEBUG_STREAM("Did not find any traffic light with intersection_id: " << intersection_id << ", and signal_group_id: " << signal_group_id);
     return lanelet::InvalId;
   }
 

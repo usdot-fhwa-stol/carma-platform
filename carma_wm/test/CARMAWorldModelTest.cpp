@@ -1225,6 +1225,38 @@ TEST(CARMAWorldModelTest, sampleRoutePoints)
     i++; 
   }
 }
+/*
+TEST(CARMAWorldModelTest, getSetMap)
+{
+  CARMAWorldModel cmw;
+  uint32_t id_bit = 0000000100000001;// create the 32 bit called id_bit;
+  cmw.traffic_light_ids_[id_bit] = 1000;
+  // 1000 is the lanelet::Id
+  EXPETCT_EQ(cmw.getgetTrafficLightId(intersection_id, signal_group_id), 1000)_; // to match the above 32bit. 1, 1 etc.
+}
 
+TEST(CARMAWorldModelTest, testincomingSpatCallback)
+{
+  CARMAWorldModel cmw;
+  std::vector<lanelet::Point3d> left = {
+    getPoint(0, 0, 0),
+    getPoint(0, 1, 0),
+  };
+  std::vector<lanelet::Point3d> right = {
+    getPoint(1, 0, 0),
+    getPoint(1, 1, 0),
+  };
+  // Create basic map and verify that the map and routing graph can be build, but the route remains false
+  auto ll = getLanelet(left, right);
+  auto map = lanelet::utils::createMap({ ll }, {});
+  cmw.setMap(std::move(map));
+  // TODO pseudocode:
+  // 1. create CarmaTrafficLight "regem" (see examples from other regem  unit tests in autoware.ai)
+  // 2. update the lanelet with regem like below:
+  cmw.getMutableMap()->update(ll, regem);
+  // 3. create sample SPAT.msg and fill its entries
+  // 4. call the incomingSpatCallback with that msg
+  // 5. and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
+}*/
 
 }  // namespace carma_wm
