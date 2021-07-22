@@ -330,7 +330,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::createWorkzoneGeofence(std
   // Split existing lanelets and filter into parallel_llts and middle_opposite_lanelets
   preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
 
-  // Create geofence and rest of the required lanelets along with traffic light and stop rule for completing workzone area
+  // Create geofence and rest of the required lanelets along with traffic light for completing workzone area
   auto gf_ptr = createWorkzoneGeometry(work_zone_geofence_cache, parallel_llts->front(), parallel_llts->back(), middle_opposite_lanelets );
 
   // copy static info from the existing workzone
@@ -391,10 +391,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
 
   gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::TAPERRIGHT]->label_),tfl_parallel->id()});
 
-  lanelet::StopRulePtr stop_rule_parallel = std::make_shared<lanelet::StopRule>(lanelet::StopRule::buildData(lanelet::utils::getId(), {parallel_stop_ls}, {lanelet::Participants::Vehicle}));
-
   parallel_llt_front.addRegulatoryElement(tfl_parallel);
-  parallel_llt_front.addRegulatoryElement(stop_rule_parallel);
 
   //////////////////////////////
   //ADD TF_LIGHT and STOP_RULE TO OPPOSITE LANELET
@@ -408,12 +405,9 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   
   lanelet::CarmaTrafficLightPtr tfl_opposite = std::make_shared<lanelet::CarmaTrafficLight>(lanelet::CarmaTrafficLight::buildData(lanelet::utils::getId(), {opposite_stop_ls}, {opposite_llts_with_stop_line->front()}, {}));
   
-  lanelet::StopRulePtr stop_rule_opposite = std::make_shared<lanelet::StopRule>(lanelet::StopRule::buildData(lanelet::utils::getId(), {opposite_stop_ls}, {lanelet::Participants::Vehicle}));
-  
   gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->label_), tfl_opposite->id()});
   
   opposite_llts_with_stop_line->front().addRegulatoryElement(tfl_opposite);
-  opposite_llts_with_stop_line->front().addRegulatoryElement(stop_rule_opposite);
 
   //////////////////////////////
   //ADD ALL NEWLY CREATED LANELETS INTO GEOFENCE 
