@@ -84,6 +84,7 @@ namespace platoon_control
         double speedCmd;
         double currentSpeed;
         double lastCmdSpeed = 0.0;
+        bool last_cmd_set_ = false;
 
 
         double speedCmd_ = 0;
