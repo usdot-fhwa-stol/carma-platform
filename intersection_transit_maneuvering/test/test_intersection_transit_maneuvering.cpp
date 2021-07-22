@@ -49,7 +49,7 @@ TEST(Intersection_Transit_Maneuvering_Test, Planning_Callback_Test)
 
     carma_wm::WorldModelConstPtr wm_ = wm;
     std::shared_ptr<call_test::CallTest> object = std::make_shared<call_test::CallTest>();
-    std::shared_ptr<Interface> obj = object;
+    std::shared_ptr<CallInterface> obj = object;
     
     IntersectionTransitManeuvering itm_node(wm_, [&](auto msg) {}, obj);
 
@@ -96,7 +96,7 @@ TEST(Intersection_Transit_Maneuvering_Test, Planning_Callback_Test)
 
     req.maneuver_plan.maneuvers.push_back(man0);
 
-    /*Test that the operation will throw an invalid argrument error statement due to a non-applicable maneuver type being used*/
+    /*Test that the operation will throw an invalid argrument error statement due to no maneuvers being available for conversion*/
     EXPECT_THROW(itm_node.plan_trajectory_cb(req, resp), std::invalid_argument);
     ASSERT_EQ(0, resp.maneuver_status.size());
 
@@ -151,7 +151,7 @@ TEST(Intersection_Transit_Maneuvering_Test, Convert_Maneuvers_Test)
     wm->setMap(map);
 
     carma_wm::WorldModelConstPtr wm_ = wm;
-    std::shared_ptr<Interface> obj;
+    std::shared_ptr<CallInterface> obj;
     IntersectionTransitManeuvering itm_node(wm_, [&](auto msg) {}, obj);
 
     std::vector<cav_msgs::Maneuver> maneuvers;

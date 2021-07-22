@@ -23,8 +23,6 @@
 #include <cav_msgs/Maneuver.h>
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
-#include <boost/geometry.hpp>
-#include <carma_wm/Geometry.h>
 #include <cav_msgs/IntersectionTransitLeftTurnManeuver.h>
 #include <cav_msgs/IntersectionTransitRightTurnManeuver.h>
 #include <cav_msgs/IntersectionTransitStraightManeuver.h>
@@ -32,10 +30,8 @@
 #include <carma_wm/WMListener.h>
 #include <functional>
 #include <unordered_set>
-#include <autoware_msgs/Lane.h>
 #include <ros/ros.h>
-#include <itm_helper.h>
-#include <basic_autonomy/helper_functions.h>
+#include <call_interface.h>
 
 using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
 
@@ -53,7 +49,7 @@ namespace intersection_transit_maneuvering
         * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
         * \param obj Interface object to initialize ros::Service::call
         */ 
-        IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr& wm, PublishPluginDiscoveryCB plugin_discovery_publisher, std::shared_ptr<Interface> obj);
+        IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr wm, PublishPluginDiscoveryCB plugin_discovery_publisher, std::shared_ptr<CallInterface> obj);
                        
         /**
          * \brief Service callback for trajectory planning
@@ -74,13 +70,18 @@ namespace intersection_transit_maneuvering
         */
         std::vector<cav_msgs::Maneuver> convert_maneuver_plan(const std::vector<cav_msgs::Maneuver>& maneuvers);
 
+        /**
+         * @brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
+         * 
+         * @return true if successful, otherwise false
+         */
         bool onSpin();
 
     private:
 
-        std::shared_ptr<Interface> object;
-        std::vector<cav_msgs::Maneuver> converted_maneuvers;
-        cav_msgs::TrajectoryPlan trajectory_plan;
+        std::shared_ptr<CallInterface> object_;
+        std::vector<cav_msgs::Maneuver> converted_maneuvers_;
+        //cav_msgs::TrajectoryPlan trajectory_plan_;
         cav_msgs::VehicleState vehicle_state_;
         cav_msgs::Plugin plugin_discovery_msg_;
         PublishPluginDiscoveryCB plugin_discovery_publisher_;

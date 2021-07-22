@@ -24,29 +24,27 @@
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <boost/geometry.hpp>
-#include <carma_wm/Geometry.h>
 #include <cav_srvs/PlanTrajectory.h>
-#include <itm_helper.h>
+#include <call_interface.h>
 
 
 namespace call_test
 {
-class CallTest: public Interface
+class CallTest: public CallInterface
 {
     public:
         /**
          * @brief Construct a call() function to use for unit testing
          * 
          */
-        CallTest();
+        CallTest() = default;
 
         /**
          * @brief Test call() function for unit testing
          * 
          * @param req Incoming PlanTrajectory service request 
          * @param resp Incoming PlanTrajectory service response
-         * @return true 
-         * @return false 
+         * @return true if method successfully completes, otherwise false
          */
         bool call(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
 

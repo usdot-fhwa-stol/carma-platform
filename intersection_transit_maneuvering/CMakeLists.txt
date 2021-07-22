@@ -27,12 +27,9 @@ set( CATKIN_DEPS
   std_msgs
   cav_msgs
   cav_srvs
+  carma_wm
   carma_utils
   trajectory_utils
-  autoware_msgs
-  carma_wm
-  carma_debug_msgs
-  basic_autonomy
 )
 
 ## Find catkin macros and libraries
@@ -114,6 +111,3 @@ catkin_add_gmock(${PROJECT_NAME}-test
 if(TARGET ${PROJECT_NAME}-test)
  target_link_libraries(${PROJECT_NAME}-test intersection_transit_maneuvering_library ${catkin_LIBRARIES})
 endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)

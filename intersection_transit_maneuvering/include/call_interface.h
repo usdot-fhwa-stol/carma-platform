@@ -17,22 +17,11 @@
 
 #include <ros/ros.h>
 #include <string>
-#include <algorithm>
-#include <memory>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
-#include <lanelet2_core/geometry/Point.h>
-#include <trajectory_utils/trajectory_utils.h>
-#include <trajectory_utils/conversions/conversions.h>
-#include <sstream>
 #include <carma_utils/containers/containers.h>
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-#include <Eigen/LU>
-#include <Eigen/SVD>
 
-class Interface
+class CallInterface
 {
     public:
         virtual bool call(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp) = 0;
+        virtual ~CallInterface() {};
 };

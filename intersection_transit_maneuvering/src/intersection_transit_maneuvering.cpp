@@ -20,15 +20,10 @@
 #include <memory>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <lanelet2_core/geometry/Point.h>
 #include <trajectory_utils/trajectory_utils.h>
 #include <trajectory_utils/conversions/conversions.h>
 #include <sstream>
 #include <carma_utils/containers/containers.h>
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-#include <Eigen/LU>
-#include <Eigen/SVD>
 #include <intersection_transit_maneuvering.h>
 
 
@@ -36,17 +31,17 @@ using oss = std::ostringstream;
 
 namespace intersection_transit_maneuvering
 {
-    IntersectionTransitManeuvering::IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr& wm, PublishPluginDiscoveryCB plugin_discovery_publisher,
-                                                                     std::shared_ptr<Interface> obj)
+    IntersectionTransitManeuvering::IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr wm, PublishPluginDiscoveryCB plugin_discovery_publisher,
+                                                                     std::shared_ptr<CallInterface> obj)
     {        
         plugin_discovery_msg_.name = "IntersectionTransitManeuvering";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
-        plugin_discovery_msg_.activated = false;
+        plugin_discovery_msg_.activated = true;
         plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
         plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
 
-        object = obj;
+        object_ = obj;
     }
 
     bool IntersectionTransitManeuvering::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
@@ -65,14 +60,14 @@ namespace intersection_transit_maneuvering
             }
             else
                 {
-                    throw std::invalid_argument("Invalid Maneuver Type");
+                    break;
                 }
         }
 
-        converted_maneuvers = convert_maneuver_plan(maneuver_plan);
+        converted_maneuvers_ = convert_maneuver_plan(maneuver_plan);
         cav_srvs::PlanTrajectoryRequest req2;
 
-        for(auto i : converted_maneuvers)
+        for(auto i : converted_maneuvers_)
         {
             req2.maneuver_plan.maneuvers.push_back(i);
         }
@@ -80,7 +75,7 @@ namespace intersection_transit_maneuvering
             req2.vehicle_state = req.vehicle_state;
             req2.initial_trajectory_plan = req.initial_trajectory_plan;
 
-        if(object->call(req2,resp))//Since we're using an interface for this process, the call() functionality will come from somewhere else
+        if(object_->call(req2,resp))//Since we're using an interface for this process, the call() functionality will come from somewhere else
         {
             ROS_DEBUG_STREAM("Call Successful");
         }

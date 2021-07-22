@@ -4,8 +4,6 @@
 namespace call_test
 {
 
-    CallTest::CallTest(){};
-
     bool CallTest::call(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
     {
         request = req;

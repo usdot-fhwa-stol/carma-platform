@@ -7,16 +7,15 @@
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <boost/geometry.hpp>
-#include <carma_wm/Geometry.h>
 #include <cav_srvs/PlanTrajectory.h>
-namespace itm_servicer
+namespace intersection_transit_maneuvering
 {
 
     Servicer::Servicer(){};
 
     bool Servicer::call(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
     {
-        client.call(req,resp);
+       return client.call(req,resp);
 
     }
     void Servicer::set_client(ros::ServiceClient srv_client)

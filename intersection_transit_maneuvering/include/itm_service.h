@@ -23,14 +23,13 @@
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <boost/geometry.hpp>
-#include <carma_wm/Geometry.h>
 #include <cav_srvs/PlanTrajectory.h>
-#include <itm_helper.h>
+#include <call_interface.h>
 
 
-namespace itm_servicer
+namespace intersection_transit_maneuvering
 {
-class Servicer: public Interface
+class Servicer: public CallInterface
 {
     public:
         /**
@@ -39,6 +38,13 @@ class Servicer: public Interface
          */
         Servicer();
 
+        /**
+         * @brief Method that uses the ros::Service::call() definition as specified in the ROS API
+         * 
+         *@param req Incoming PlanTrajectory service request 
+         * @param resp Incoming PlanTrajectory service response
+         * @return true if successful, otherwise false
+         */
         bool call(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
 
         /**

@@ -46,9 +46,6 @@ class IntersectionTransitManeuveringNode
 
             //ROS publishers and subscribers
             ros::Publisher plugin_discovery_pub_;
-            ros::Subscriber pose_sub_;
-            ros::Subscriber twist_sub_;
-            ros::Publisher jerk_pub_;
             ros::Timer discovery_pub_timer_;
 
             // Current vehicle pose in map
@@ -62,13 +59,12 @@ class IntersectionTransitManeuveringNode
 
             carma_wm::WorldModelConstPtr wm_ = wml_.getWorldModel();
 
-            std::shared_ptr<itm_servicer::Servicer> srv;
-            IntersectionTransitManeuvering worker(wm_,[&plugin_discovery_pub_](const auto& msg) {plugin_discovery_pub_.publish(msg);}, srv);
+            std::shared_ptr<intersection_transit_maneuvering::Servicer> srv;
             ros::ServiceClient trajectory_client = nh_.serviceClient<cav_srvs::PlanTrajectory>("plugin/InlaneCruisingPlugin/plan_trajectory");
             srv->set_client(trajectory_client);
-
+            IntersectionTransitManeuvering worker(wm_,[&plugin_discovery_pub_](const auto& msg) {plugin_discovery_pub_.publish(msg);}, srv);
             trajectory_srv_ = nh_.advertiseService("plan_trajectory",&IntersectionTransitManeuvering::plan_trajectory_cb, &worker);           
-            
+
             discovery_pub_timer_ = nh_.createTimer(
                     ros::Duration(ros::Rate(10.0)),
                     [&worker](const auto&) {worker.onSpin();});
