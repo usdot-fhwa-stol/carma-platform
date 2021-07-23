@@ -15,6 +15,14 @@
  */
 #include "wz_strategic_plugin/wz_strategic_plugin.h"
 
+#define GET_MANEUVER_PROPERTY(mvr, property)\
+        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
+            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
+                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
+                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property :\
+                        (mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
+                        throw new std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))
+
 namespace wz_strategic_plugin
 {
 
@@ -91,6 +99,10 @@ namespace wz_strategic_plugin
             case lanelet::CarmaTrafficLightState::CAUTION_CONFLICTING_TRAFFIC:
                 traffic_light_inter = 0;
                 break;
+            default:
+                ROS_DEBUG("no state");
+                break;
+
         }
 
         return traffic_light_inter;
@@ -124,36 +136,13 @@ namespace wz_strategic_plugin
         double current_progress = 0;
 
         if(req.prior_plan.maneuvers.size() > 0) {
-            switch(req.prior_plan.maneuvers.back().type) {
-                case cav_msgs::Maneuver::LANE_FOLLOWING : 
-                    start_time = req.prior_plan.maneuvers.back().lane_following_maneuver.end_time;
-                    current_progress = req.prior_plan.maneuvers.back().lane_following_maneuver.end_dist;
-                    break;
-                case cav_msgs::Maneuver::LANE_CHANGE : 
-                    start_time = req.prior_plan.maneuvers.back().lane_change_maneuver.end_time;
-                    current_progress = req.prior_plan.maneuvers.back().lane_change_maneuver.end_dist;
-                    break;
-                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT : 
-                    start_time = req.prior_plan.maneuvers.back().intersection_transit_straight_maneuver.end_time;
-                    current_progress = req.prior_plan.maneuvers.back().intersection_transit_straight_maneuver.end_dist;
-                    break;
-                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN : 
-                    start_time = req.prior_plan.maneuvers.back().intersection_transit_left_turn_maneuver.end_time;
-                    current_progress = req.prior_plan.maneuvers.back().intersection_transit_left_turn_maneuver.end_dist;
-                    break;
-                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN : 
-                    start_time = req.prior_plan.maneuvers.back().intersection_transit_right_turn_maneuver.end_time;
-                    current_progress = req.prior_plan.maneuvers.back().intersection_transit_right_turn_maneuver.end_dist;
-                    break;
-                case cav_msgs::Maneuver::STOP_AND_WAIT : 
-                    start_time = req.prior_plan.maneuvers.back().stop_and_wait_maneuver.end_time;
-                    current_progress = req.prior_plan.maneuvers.back().stop_and_wait_maneuver.end_dist;
-                    break;
-            }
+            current_progress = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_dist);
+            start_time = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_time);
         } else {
             start_time = ros::Time::now();
             current_progress = current_car_down_track;
         }
+
 
         ROS_DEBUG("\n\nFinding traffic_light information");
         auto traffic_list = wm_->predictTrafficLight(current_loc_);
@@ -184,10 +173,17 @@ namespace wz_strategic_plugin
                 lanelet::Id end_lane_id = traffic_light_lanelet.second.id();
 
                 auto traffic_light_current_state = traffic_light_interpreter(nearest_traffic_light->predictState(start_time));
+
+                if(!traffic_light_current_state) {
+                    return true;
+                }
                 ROS_DEBUG("traffic_light_current_state %d", traffic_light_current_state);
 
                 auto traffic_light_next_predicted_state = traffic_light_interpreter(nearest_traffic_light->predictState(start_time + time_remaining_to_traffic_light));
                 ROS_DEBUG("traffic_light_next_predicted_state %d", traffic_light_next_predicted_state);
+                if(!traffic_light_next_predicted_state) {
+                    return true;
+                }
 
                 if(traffic_light_current_state != traffic_light_next_predicted_state) {
 
