@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>guidance_plugin_validator</name>
+  <version>3.3.0</version>
+  <description>The node validates the communication interfaces of Guidance Strategic, Tactical, and Control Plugins</description>
+  <maintainer email="CARMA@dot.gov">carma</maintainer>
+  <license>Apache 2.0 License</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>rospy</depend>
+  <depend>rosnode</depend>
+  <depend>std_msgs</depend>
+  <depend>cav_msgs</depend>
+</package>
