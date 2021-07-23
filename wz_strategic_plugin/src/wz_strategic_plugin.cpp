@@ -173,16 +173,14 @@ namespace wz_strategic_plugin
                 lanelet::Id end_lane_id = traffic_light_lanelet.second.id();
 
                 auto traffic_light_current_state = traffic_light_interpreter(nearest_traffic_light->predictState(start_time));
+                ROS_DEBUG("traffic_light_current_state %d", traffic_light_current_state);
 
                 if(!traffic_light_current_state) {
                     return true;
                 }
 
-                ROS_DEBUG("traffic_light_current_state %d", traffic_light_current_state);
-                ROS_DEBUG("traffic_light_current_state %d", traffic_light_current_state.get());
-
                 auto traffic_light_next_predicted_state = traffic_light_interpreter(nearest_traffic_light->predictState(start_time + time_remaining_to_traffic_light));
-                ROS_DEBUG("traffic_light_next_predicted_state %d", traffic_light_next_predicted_state.get());
+                ROS_DEBUG("traffic_light_next_predicted_state %d", traffic_light_next_predicted_state);
 
                 if(!traffic_light_next_predicted_state) {
                     return true;
