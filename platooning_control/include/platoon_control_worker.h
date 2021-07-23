@@ -92,6 +92,7 @@ namespace platoon_control
         double angVelCmd_ = 0;
         double desired_gap_ = ctrl_config_.standStillHeadway;
         double actual_gap_ = 0.0;
+        bool last_cmd_set_ = false;
 
         PlatoonLeaderInfo platoon_leader;
 
