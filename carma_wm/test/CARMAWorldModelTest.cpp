@@ -1225,17 +1225,19 @@ TEST(CARMAWorldModelTest, sampleRoutePoints)
     i++; 
   }
 }
-/*
-TEST(CARMAWorldModelTest, getSetMap)
+
+TEST(CARMAWorldModelTest, getTrafficLightId)
 {
   CARMAWorldModel cmw;
-  uint32_t id_bit = 0000000100000001;// create the 32 bit called id_bit;
+  uint32_t id_bit = 257;
   cmw.traffic_light_ids_[id_bit] = 1000;
-  // 1000 is the lanelet::Id
-  EXPETCT_EQ(cmw.getgetTrafficLightId(intersection_id, signal_group_id), 1000)_; // to match the above 32bit. 1, 1 etc.
-}
+  uint16_t intersection_id=1;
+  uint8_t signal_group_id=1;
 
-TEST(CARMAWorldModelTest, testincomingSpatCallback)
+  EXPECT_EQ(cmw.getTrafficLightId(intersection_id, signal_group_id), 1000); 
+}
+/*
+TEST(CARMAWorldModelTest, testIncomingSpatCallback)
 {
   CARMAWorldModel cmw;
   std::vector<lanelet::Point3d> left = {
@@ -1252,6 +1254,14 @@ TEST(CARMAWorldModelTest, testincomingSpatCallback)
   cmw.setMap(std::move(map));
   // TODO pseudocode:
   // 1. create CarmaTrafficLight "regem" (see examples from other regem  unit tests in autoware.ai)
+    // add regems
+
+  lanelet::DigitalSpeedLimitPtr speed_limit_old = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(9000, 5_mph, {ll_1}, {},
+                                                     { lanelet::Participants::VehicleCar }));
+  lanelet::DigitalSpeedLimitPtr speed_limit_new = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(9001, 5_mph, {ll_1}, {},
+                                                     { lanelet::Participants::VehicleCar }));
+
+
   // 2. update the lanelet with regem like below:
   cmw.getMutableMap()->update(ll, regem);
   // 3. create sample SPAT.msg and fill its entries

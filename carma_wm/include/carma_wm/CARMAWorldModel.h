@@ -156,7 +156,8 @@ public:
   std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n = 10) const override;
 
   size_t getMapVersion() const override;
-
+  
+  std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 
 private:
   
@@ -195,7 +196,7 @@ private:
   std::vector<cav_msgs::RoadwayObstacle> roadway_objects_; // 
 
   size_t map_version_ = 0; // The current map version. This is cached from calls to setMap();
-  std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
+  
 
   
 };
