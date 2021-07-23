@@ -220,6 +220,11 @@
     <include file = "$(find platoon_strategic)/launch/platoon_strategic.launch"/>
   </group>
 
+  <!-- Intersection Transit Maneuvering Plugin-->
+  <group>
+   <include file = "$(find intersection_transit_maneuvering)/launch/intersection_transit_maneuvering.launch"/>
+  </group>
+
 
 </launch>
 
