@@ -73,6 +73,7 @@ namespace wz_strategic_plugin
                 ROS_DEBUG("UNAVAILABLE");
                 break;
             case lanelet::CarmaTrafficLightState::DARK:
+                ROS_DEBUG("UNAVAILABLE");
                 traffic_light_inter = 0;
                 break;
             case lanelet::CarmaTrafficLightState::STOP_THEN_PROCEED:
@@ -178,9 +179,10 @@ namespace wz_strategic_plugin
                 }
 
                 ROS_DEBUG("traffic_light_current_state %d", traffic_light_current_state);
+                ROS_DEBUG("traffic_light_current_state %d", traffic_light_current_state.get());
 
                 auto traffic_light_next_predicted_state = traffic_light_interpreter(nearest_traffic_light->predictState(start_time + time_remaining_to_traffic_light));
-                ROS_DEBUG("traffic_light_next_predicted_state %d", traffic_light_next_predicted_state);
+                ROS_DEBUG("traffic_light_next_predicted_state %d", traffic_light_next_predicted_state.get());
 
                 if(!traffic_light_next_predicted_state) {
                     return true;
