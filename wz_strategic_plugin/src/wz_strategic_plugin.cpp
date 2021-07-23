@@ -160,9 +160,9 @@ namespace wz_strategic_plugin
             double distance_remaining_to_traffic_light  = traffic_light_down_track - current_progress;
             ROS_DEBUG("distance_remaining_to_traffic_light %d", distance_remaining_to_traffic_light);
 
-            if(distance_remaining_to_traffic_light <= min_distance_to_traffic_light ) {        
+            if(distance_remaining_to_traffic_light <= max_distance_to_traffic_light ) {        
 
-                ROS_DEBUG("distance_remaining_to_traffic_light is smaller than min_distance_to_traffic_light %d %d", distance_remaining_to_traffic_light, min_distance_to_traffic_light);
+                ROS_DEBUG("distance_remaining_to_traffic_light is smaller than max_distance_to_traffic_light %d %d", distance_remaining_to_traffic_light, max_distance_to_traffic_light);
 
                 ROS_DEBUG("current_speed_ %d", current_speed_);
 
@@ -298,7 +298,7 @@ namespace wz_strategic_plugin
                 }
             }
             else {
-                ROS_DEBUG("distance_remaining_to_traffic_light is larger than min_distance_to_traffic_light ");
+                ROS_DEBUG("distance_remaining_to_traffic_light is larger than max_distance_to_traffic_light ");
             }
         }
 
