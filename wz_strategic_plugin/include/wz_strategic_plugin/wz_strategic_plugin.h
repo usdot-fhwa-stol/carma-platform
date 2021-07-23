@@ -51,7 +51,6 @@ namespace wz_strategic_plugin
              */
             void initialize();
 
-
             bool planManeuverCb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
 
             ros::Publisher plugin_discovery_pub_;
@@ -70,16 +69,6 @@ namespace wz_strategic_plugin
 
             ros::Timer discovery_pub_timer_;
 
-            // Current vehicle forward speed
-            double current_speed_;
-
-            // Current vehicle pose in map
-            geometry_msgs::PoseStampedConstPtr pose_msg_;
-            lanelet::BasicPoint2d current_loc_;
-
-            std::string planning_strategic_plugin_ = "WorkZonePlugin";
-            std::string intersection_transit_planning_tactical_plugin_ = "IntersectionTransitPlugin";
-
             /**
              * \brief Callback for the pose subscriber, which will store latest pose locally
              * \param msg Latest pose message
@@ -94,11 +83,12 @@ namespace wz_strategic_plugin
 
             cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id);
 
-            cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, ros::Time time, double time_to_stop);
+            cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double& end_dist, double start_speed, lanelet::Id& starting_lane_id, lanelet::Id& ending_lane_id, ros::Time time, double& time_to_stop);
 
-            cav_msgs::Maneuver composeIntersectionTransitMessage(double start_dist, double end_dist, double start_speed, double target_speed, ros::Time start_time, ros::Time end_time, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id);
+            cav_msgs::Maneuver composeIntersectionTransitMessage(double& start_dist, double& end_dist, double& start_speed, double& target_speed, ros::Time start_time, lanelet::Id& starting_lane_id);
 
-            int traffic_light_interpreter(const lanelet::CarmaTrafficLightState& state);
+
+            int traffic_light_interpreter(boost::optional<lanelet::CarmaTrafficLightState> state);
 
             double estimate_distance_to_stop(double v, double a);
 
@@ -114,5 +104,16 @@ namespace wz_strategic_plugin
 
             int min_distance_to_traffic_light = 30;
             double declaration = 0.5;
+
+            // Current vehicle forward speed
+            double current_speed_;
+
+            // Current vehicle pose in map
+            geometry_msgs::PoseStampedConstPtr pose_msg_;
+            lanelet::BasicPoint2d current_loc_;
+
+            std::string planning_strategic_plugin_ = "WorkZonePlugin";
+            std::string intersection_transit_planning_tactical_plugin_ = "IntersectionTransitPlugin";
+
     };
 }
