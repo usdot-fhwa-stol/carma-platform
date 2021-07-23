@@ -92,6 +92,10 @@ install(TARGETS ${PROJECT_NAME} intersection_transit_maneuvering_library
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+## Install Other Resources
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 #############
 ## Testing ##
