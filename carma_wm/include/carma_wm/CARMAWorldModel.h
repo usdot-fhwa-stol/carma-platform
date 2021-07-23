@@ -156,6 +156,8 @@ public:
   std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n = 10) const override;
 
   size_t getMapVersion() const override;
+
+  std::vector<lanelet::CarmaTrafficLightPtr> predictTrafficLight(const lanelet::BasicPoint2d& loc) const override;
   
   std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 

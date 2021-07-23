@@ -1081,4 +1081,42 @@ void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
   config_speed_limit_ = config_lim;
 }
 
+std::vector<lanelet::CarmaTrafficLightPtr> CARMAWorldModel::predictTrafficLight(const lanelet::BasicPoint2d& loc) const
+{
+  // Check if the map is loaded yet
+  if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
+  {
+    ROS_ERROR_STREAM("Map is not set or does not contain lanelets");
+    return {};
+  }
+  // Check if the route was loaded yet
+  if (!route_)
+  {
+    ROS_ERROR_STREAM("Route has not yet been loaded");
+    return {};
+  }
+  std::vector<lanelet::CarmaTrafficLightPtr> light_list;
+  auto curr_downtrack = routeTrackPos(loc).downtrack;
+  // shortpath is already sorted by distance
+  for(const auto& ll : route_->shortestPath())
+  {
+    auto lights = semantic_map_->laneletLayer.get(ll.id()).regulatoryElementsAs<lanelet::CarmaTrafficLight>();
+    if (lights.empty())
+    {
+      continue;
+    }
+    for (auto light : lights)
+    {
+      double light_downtrack = routeTrackPos(light->stopLine().front().front().basicPoint2d()).downtrack;
+      if (light_downtrack < curr_downtrack)
+      {
+        continue;
+      }
+      light_list.push_back(light);
+    }
+  }
+  return light_list;
+}
+
+
 }  // namespace carma_wm
