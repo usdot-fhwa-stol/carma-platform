@@ -297,15 +297,15 @@ public:
             For example, if front and back points of 3 points given are both within error_distance, only middle point will be used to split into 2 lanelets.
             It will return duplicate of old lanelet (with different id) if no splitting was done.
 
-   * \param parallel_llts return lanelets split form original one. lanelets sorted from front to back.
    * \param input_pts Points whose downtrack ratio relative to given lanelet will be used to split the lanelet
    * \param input_llt A lanelet to split
    * \param error_distance if within this distance (in meters) the point will be ignored
+   * \return lanelets split form original one. lanelets sorted from front to back.
    * \throw InvalidObjectStateError if no map is available. NOTE: this is requried to return mutable objects.
    */
-  void splitLaneletWithPoint(std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, const std::vector<lanelet::BasicPoint2d>& input_pts, const lanelet::Lanelet& input_llt, double error_distance = 20);
+  std::vector<lanelet::Lanelet> splitLaneletWithPoint(const std::vector<lanelet::BasicPoint2d>& input_pts, const lanelet::Lanelet& input_llt, double error_distance = 20);
 
-  /*!
+  /*
    * \brief Split given lanelet's adjacent, OPPOSITE lanelet with same proportion as the given point's downtrack relative to the lanelet. 
             Newly created lanelet will have old regulatory elements copied into each of them. 
             Only for front and back points, it is deemed not necessary to split if the point is within error_distance from any of the boundary.
