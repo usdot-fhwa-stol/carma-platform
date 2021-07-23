@@ -340,6 +340,10 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::createWorkzoneGeofence(std
   gf_ptr->schedules = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::TAPERRIGHT]->schedules; //using taperright's schedule as the whole geofence's schedule
   
   // erase cache now that it is processed
+  for (auto pair : work_zone_geofence_cache)
+  {
+    ROS_INFO_STREAM("Workzone geofence finished processing. Therefore following geofence id is being dropped from cache as it is processed as part of it: " << pair.second->id_);
+  }
   work_zone_geofence_cache.clear();
 
   return {gf_ptr};
