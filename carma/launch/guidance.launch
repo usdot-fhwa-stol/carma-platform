@@ -23,7 +23,7 @@
   <!-- Arguments -->
   <arg name="route_file_folder" default="$(find carma)/routes" doc="Path of folder containing routes to load"/>
   <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle" doc="The directory continaing vehicle calibration type parameters"/>
-  
+  <arg name="enable_guidance_plugin_validator" default="false" doc="Flag indicating whether the Guidance Plugin Validator node will actively validate guidance strategic, tactical, and control plugins"/>
   
   <!-- Remap topics from external packages -->
   <remap from="bsm" to="$(optenv CARMA_MSG_NS)/outgoing_bsm"/>
@@ -204,6 +204,13 @@
     <include file="$(find port_drayage_plugin)/launch/port_drayage_plugin.launch" />
   </group>
 
+  <!-- Guidance Plugin Validator -->
+  <group>
+    <remap from="plugin_discovery" to="$(optenv CARMA_GUIDE_NS)/plugin_discovery"/>
+    <include file="$(find guidance_plugin_validator)/launch/guidance_plugin_validator.launch">
+      <arg name="enable_guidance_plugin_validator" value="$(arg enable_guidance_plugin_validator)"/>
+    </include>
+  </group>
 
 </launch>
 

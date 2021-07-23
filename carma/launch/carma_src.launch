@@ -35,7 +35,8 @@
   <arg name="vehicle_calibration_dir" default="/opt/carma/vehicle/calibration" doc="The directory continaing vehicle calibration type parameters"/>
   <arg name="yolo_dir" default="/opt/carma/yolo" doc="The directory continaing yolo weights files for the perception stack"/>
   <arg name="cuda" default="true" doc="cuda flag for vision_darknet_detect (true if cuda is available)"/>
-  
+  <arg name="enable_guidance_plugin_validator" default="false" doc="Flag indicating whether the Guidance Plugin Validator node will actively validate guidance strategic, tactical, and control plugins"/>
+
 	<!-- Startup Drivers With Main CARMA System -->
   <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
 
@@ -129,6 +130,7 @@
     <include file="$(find carma)/launch/guidance.launch">
       <arg name="route_file_folder" value="$(arg route_file_folder)"/>
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
+      <arg name="enable_guidance_plugin_validator" value="$(arg enable_guidance_plugin_validator)"/>
     </include>
   </group>
 
