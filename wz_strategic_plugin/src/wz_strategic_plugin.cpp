@@ -68,9 +68,9 @@ namespace wz_strategic_plugin
     int WzStrategicPlugin::traffic_light_interpreter(boost::optional<lanelet::CarmaTrafficLightState> state)
     {
         int traffic_light_inter;
-        switch(*state) {
+        switch(state.get()) {
             case lanelet::CarmaTrafficLightState::UNAVAILABLE:
-                traffic_light_inter = 0;
+                ROS_DEBUG("UNAVAILABLE");
                 break;
             case lanelet::CarmaTrafficLightState::DARK:
                 traffic_light_inter = 0;
@@ -100,9 +100,8 @@ namespace wz_strategic_plugin
                 traffic_light_inter = 0;
                 break;
             default:
-                ROS_DEBUG("no state");
+                ROS_DEBUG("No State");
                 break;
-
         }
 
         return traffic_light_inter;
@@ -177,10 +176,12 @@ namespace wz_strategic_plugin
                 if(!traffic_light_current_state) {
                     return true;
                 }
+
                 ROS_DEBUG("traffic_light_current_state %d", traffic_light_current_state);
 
                 auto traffic_light_next_predicted_state = traffic_light_interpreter(nearest_traffic_light->predictState(start_time + time_remaining_to_traffic_light));
                 ROS_DEBUG("traffic_light_next_predicted_state %d", traffic_light_next_predicted_state);
+
                 if(!traffic_light_next_predicted_state) {
                     return true;
                 }
