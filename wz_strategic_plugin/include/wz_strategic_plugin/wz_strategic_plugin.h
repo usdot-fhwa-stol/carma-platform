@@ -51,6 +51,8 @@ namespace wz_strategic_plugin
              */
             void initialize();
 
+        private:
+
             bool planManeuverCb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
 
             ros::Publisher plugin_discovery_pub_;
@@ -94,7 +96,6 @@ namespace wz_strategic_plugin
 
             double estimate_time_to_stop(double d, double v);
 
-        private:
             // CARMA ROS node handles
             std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
