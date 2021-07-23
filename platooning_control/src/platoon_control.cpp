@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  * the License.
  */
 
-#include "platoon_control.hpp"
+#include "platoon_control.h"
 
 namespace platoon_control
 {
@@ -39,19 +39,19 @@ namespace platoon_control
         pnh_->param<double>("Kp", config.Kp, config.Kp);
         pnh_->param<double>("Kd", config.Kd, config.Kd);
         pnh_->param<double>("Ki", config.Ki, config.Ki);
-        pnh_->param<double>("max_value", config.max_value, config.max_value);
-        pnh_->param<double>("min_value", config.min_value, config.min_value);
+        pnh_->param<double>("maxValue", config.maxValue, config.maxValue);
+        pnh_->param<double>("minValue", config.minValue, config.minValue);
         pnh_->param<double>("dt", config.dt, config.dt);
         pnh_->param<double>("adjustmentCap", config.adjustmentCap, config.adjustmentCap);
         pnh_->param<double>("integratorMax", config.integratorMax, config.integratorMax);
         pnh_->param<double>("integratorMin", config.integratorMin, config.integratorMin);
         pnh_->param<double>("Kdd", config.Kdd, config.Kdd);
-        pnh_->param<int>("CMD_TIMESTEP", config.CMD_TIMESTEP, config.CMD_TIMESTEP);
-        pnh_->param<double>("lowpass_gain", config.lowpass_gain, config.lowpass_gain);
-        pnh_->param<double>("lookahead_ratio", config.lookahead_ratio, config.lookahead_ratio);
-        pnh_->param<double>("min_lookahead_dist", config.min_lookahead_dist, config.min_lookahead_dist);
-        pnh_->getParam("/vehicle_id", config.vehicle_id);
-        pnh_->getParam("/vehicle_wheel_base", config.vehicle_id);
+        pnh_->param<int>("cmdTmestamp", config.cmdTmestamp, config.cmdTmestamp);
+        pnh_->param<double>("lowpassGain", config.lowpassGain, config.lowpassGain);
+        pnh_->param<double>("lookaheadRatio", config.lookaheadRatio, config.lookaheadRatio);
+        pnh_->param<double>("minLookaheadDist", config.minLookaheadDist, config.minLookaheadDist);
+        pnh_->getParam("/vehicle_id", config.vehicleID);
+        pnh_->getParam("/vehicle_wheel_base", config.wheelBase);
 
         pcw_.updateConfigParams(config);
         config_ = config;
@@ -112,10 +112,10 @@ namespace platoon_control
     {   
         cav_msgs::TrajectoryPlanPoint lookahead_point;
 
-        double lookahead_dist = config_.lookahead_ratio * current_speed_;
+        double lookahead_dist = config_.lookaheadRatio * current_speed_;
         ROS_DEBUG_STREAM("lookahead based on speed: " << lookahead_dist);
 
-        lookahead_dist = std::max(config_.min_lookahead_dist, lookahead_dist);
+        lookahead_dist = std::max(config_.minLookaheadDist, lookahead_dist);
         ROS_DEBUG_STREAM("final lookahead: " << lookahead_dist);
             
         double traveled_dist = 0.0;

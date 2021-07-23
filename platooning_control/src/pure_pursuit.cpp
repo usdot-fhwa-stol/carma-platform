@@ -1,4 +1,21 @@
-#include "pure_pursuit.hpp"
+/*
+ * Copyright (C) 2021 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+
+#include "pure_pursuit.h"
 #include <tf/transform_datatypes.h>
 #include <tf/LinearMath/Matrix3x3.h>
 
@@ -56,9 +73,9 @@ namespace platoon_control
 
 		double kappa = calculateKappa(tp);
 		
-		double steering = atan(config_.wheelbase * kappa);
+		double steering = atan(config_.wheelBase * kappa);
 		ROS_DEBUG_STREAM("calculated steering angle: " << steering);
-		double filtered_steering = lowPassfilter(config_.lowpass_gain, prev_steering, steering);
+		double filtered_steering = lowPassfilter(config_.lowpassGain, prev_steering, steering);
 		ROS_DEBUG_STREAM("filtered steering: " << filtered_steering);
 		if (std::isnan(filtered_steering)) filtered_steering = prev_steering;
 		prev_steering = filtered_steering;
@@ -66,7 +83,7 @@ namespace platoon_control
 		
 		double ang_vel = velocity_ * kappa;
 		ROS_DEBUG_STREAM("calculated angular velocity: " << ang_vel);
-		double filtered_ang_vel = lowPassfilter(config_.lowpass_gain, prev_ang_vel, ang_vel);
+		double filtered_ang_vel = lowPassfilter(config_.lowpassGain, prev_ang_vel, ang_vel);
 		ROS_DEBUG_STREAM("filtered angular velocity: " << filtered_ang_vel);
 		prev_ang_vel = filtered_ang_vel;
 		if (std::isnan(filtered_ang_vel)) filtered_ang_vel = prev_ang_vel;
@@ -113,7 +130,6 @@ namespace platoon_control
 
 	double PurePursuit::lowPassfilter(double gain, double prev_value, double value)
 	{	
-		// angle = config_.lowpass_gain * angle + (1 - config_.lowpass_gain) * prev_steering;
 		value = prev_value + gain*(value - prev_value);
     	return value;
 	}

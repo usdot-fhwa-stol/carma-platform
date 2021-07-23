@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,19 +29,19 @@ struct PlatooningControlPluginConfig
   double Kp = 0.5;
   double Kd = -0.5;
   double Ki = 0.0;
-  double max_value = 100;
-  double min_value = -100;
+  double maxValue = 100;
+  double minValue = -100;
   double dt = 0.1;
   double adjustmentCap = 10;
-  int CMD_TIMESTEP = 100;
+  int cmdTmestamp = 100;
   double integratorMax = 100;
   double integratorMin = -100;
   double Kdd = 4.5;                             //coeficient for smooth steering
-  double wheelbase = 2.7;
-  double lowpass_gain = 0.5;
-  double lookahead_ratio = 2.0;
-  double min_lookahead_dist = 6.0;
-  std::string vehicle_id = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
+  double wheelBase = 3.09;
+  double lowpassGain = 0.5;
+  double lookaheadRatio = 2.0;
+  double minLookaheadDist = 6.0;
+  std::string vehicleID = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
   
   
   friend std::ostream& operator<<(std::ostream& output, const PlatooningControlPluginConfig& c)
@@ -53,19 +53,19 @@ struct PlatooningControlPluginConfig
            << "Kp: " << c.Kp << std::endl
            << "Kd: " << c.Kd << std::endl
            << "Ki: " << c.Ki << std::endl
-           << "max_value: " << c.max_value << std::endl
-           << "min_value: " << c.min_value << std::endl
+           << "maxValue: " << c.maxValue << std::endl
+           << "minValue: " << c.minValue << std::endl
            << "dt: " << c.dt << std::endl
            << "adjustmentCap: " << c.adjustmentCap << std::endl
-           << "CMD_TIMESTEP: " << c.CMD_TIMESTEP << std::endl
+           << "cmdTmestamp: " << c.cmdTmestamp << std::endl
            << "integratorMax: " << c.integratorMax << std::endl
            << "integratorMin: " << c.integratorMin << std::endl
            << "Kdd: " << c.Kdd << std::endl
-           << "wheelbase: " << c.wheelbase << std::endl
-           << "lowpass_gain: " << c.lowpass_gain << std::endl
-           << "lookahead_ratio: " << c.lookahead_ratio << std::endl
-           << "min_lookahead_dist: " << c.min_lookahead_dist << std::endl
-           << "vehicle_id: " << c.vehicle_id << std::endl
+           << "wheelBase: " << c.wheelBase << std::endl
+           << "lowpassGain: " << c.lowpassGain << std::endl
+           << "lookaheadRatio: " << c.lookaheadRatio << std::endl
+           << "minLookaheadDist: " << c.minLookaheadDist << std::endl
+           << "vehicleID: " << c.vehicleID << std::endl
            << "}" << std::endl;
     return output;
   }

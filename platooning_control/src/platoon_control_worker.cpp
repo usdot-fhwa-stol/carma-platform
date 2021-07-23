@@ -1,4 +1,20 @@
-#include "platoon_control_worker.hpp"
+/*
+ * Copyright (C) 2021 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+#include "platoon_control_worker.h"
 
 
 namespace platoon_control
@@ -13,7 +29,7 @@ namespace platoon_control
 
     void PlatoonControlWorker::updateConfigParams(PlatooningControlPluginConfig new_config)
     {
-        ctrl_config = new_config;
+        ctrl_config_ = new_config;
         pid_ctrl_.config_ = new_config;
         pp_.config_ = new_config;
     }
@@ -30,46 +46,22 @@ namespace platoon_control
     void PlatoonControlWorker::generateSpeed(const cav_msgs::TrajectoryPlanPoint& point)
     {
         double speed_cmd = 0;
-        
+
         if (!last_cmd_set_)
         {
             // last speed command for smooth speed transition
             lastCmdSpeed = currentSpeed;
             last_cmd_set_ = true;
         }
-        
 
         PlatoonLeaderInfo leader = platoon_leader;
-    	if(leader.staticId != "" && leader.staticId != ctrl_config.vehicle_id)
+    	if(leader.staticId != "" && leader.staticId != ctrl_config_.vehicleID)
         {
             double controllerOutput = 0.0;
 
 
 	        double leaderCurrentPosition = leader.vehiclePosition;
 	        ROS_DEBUG_STREAM("The current leader position is " << leaderCurrentPosition);
-
-	        // double hostVehiclePosition = getCurrentDowntrackDistance(point);
-	        // double hostVehicleSpeed = currentSpeed;
-
-            // actual_gap_ = leaderCurrentPosition - hostVehiclePosition;
-            // ROS_DEBUG_STREAM("actual gap " << actual_gap_);
-
-	        // ROS_DEBUG_STREAM("The host vehicle speed is " << hostVehicleSpeed << " and its position is " << hostVehiclePosition);
-	        // // If the host vehicle is the fifth vehicle and it is following the third vehicle, the leader index here is 2
-	        // // vehiclesInFront should be 2, because number of vehicles in front is 4, then numOfVehiclesGaps = VehicleInFront - leaderIndex   
-	        // int leaderIndex = leader.leaderIndex;
-	        // int numOfVehiclesGaps = leader.NumberOfVehicleInFront - leaderIndex;
-	        // ROS_DEBUG_STREAM("The host vehicle have " << numOfVehiclesGaps << " vehicles between itself and its leader (includes the leader)");
-	        // double desiredGap = std::max(hostVehicleSpeed * ctrl_config.timeHeadway * numOfVehiclesGaps, ctrl_config.standStillHeadway * numOfVehiclesGaps);
-            // desired_gap_ = desiredGap;
-	        // ROS_DEBUG_STREAM("The desired gap with the leader is " << desiredGap);
-	        // double desiredHostPosition = leaderCurrentPosition - desiredGap;
-	        // ROS_DEBUG_STREAM("The desired host position and the setpoint for pid controller is " << desiredHostPosition);
-	        // // PD controller is used to adjust the speed to maintain the distance gap between the subject vehicle and leader vehicle
-	        // // Error input for PD controller is defined as the difference between leaderCurrentPosition and desiredLeaderPosition
-	        // // A positive error implies that that the two vehicles are too far and a negative error implies that the two vehicles are too close
-	        // // The summation of the leader vehicle command speed and the output of PD controller will be used as speed commands
-	        // // The command speed of leader vehicle will act as the baseline for our speed control
 
             double desiredHostPosition = leaderCurrentPosition - desired_gap_;
             ROS_DEBUG_STREAM("desiredHostPosition = " << desiredHostPosition);
@@ -81,7 +73,7 @@ namespace platoon_control
 
 		    double adjSpeedCmd = controllerOutput + leader.commandSpeed;
 	        ROS_DEBUG_STREAM("Adjusted Speed Cmd = " << adjSpeedCmd << "; Controller Output = " << controllerOutput
-	        	<< "; Leader CmdSpeed= " << leader.commandSpeed << "; Adjustment Cap " << ctrl_config.adjustmentCap);
+	        	<< "; Leader CmdSpeed= " << leader.commandSpeed << "; Adjustment Cap " << ctrl_config_.adjustmentCap);
 	            // After we get a adjSpeedCmd, we apply three filters on it if the filter is enabled
 	            // First: we do not allow the difference between command speed of the host vehicle and the leader's commandSpeed higher than adjustmentCap
 	        
@@ -90,26 +82,26 @@ namespace platoon_control
 
             if(enableMaxAdjustmentFilter)
             {
-                if(speed_cmd > leader.commandSpeed + ctrl_config.adjustmentCap) {
-                    speed_cmd = leader.commandSpeed + ctrl_config.adjustmentCap;
-                } else if(speed_cmd < leader.commandSpeed - ctrl_config.adjustmentCap) {
-                    speed_cmd = leader.commandSpeed - ctrl_config.adjustmentCap;
+                if(speed_cmd > leader.commandSpeed + ctrl_config_.adjustmentCap) {
+                    speed_cmd = leader.commandSpeed + ctrl_config_.adjustmentCap;
+                } else if(speed_cmd < leader.commandSpeed - ctrl_config_.adjustmentCap) {
+                    speed_cmd = leader.commandSpeed - ctrl_config_.adjustmentCap;
                 }
                 ROS_DEBUG_STREAM("The adjusted cmd speed after max adjustment cap is " << speed_cmd << " m/s");
             }
 
         }
 
-        else if (leader.staticId == ctrl_config.vehicle_id)
+        else if (leader.staticId == ctrl_config_.vehicleID)
         {
             ROS_DEBUG_STREAM("Host vehicle is the leader");
             speed_cmd = currentSpeed;
 
             if(enableMaxAdjustmentFilter) 
             {
-                if(speed_cmd > ctrl_config.adjustmentCap)
+                if(speed_cmd > ctrl_config_.adjustmentCap)
                 {
-                    speed_cmd = ctrl_config.adjustmentCap;
+                    speed_cmd = ctrl_config_.adjustmentCap;
                 } 
 
                 ROS_DEBUG_STREAM("The adjusted leader cmd speed after max adjustment cap is " << speed_cmd << " m/s");
@@ -131,8 +123,8 @@ namespace platoon_control
         // Third: we allow do not a large gap between two consecutive speed commands
         if(enableMaxAccelFilter) {
                 
-                double max = lastCmdSpeed + (ctrl_config.maxAccel * (ctrl_config.CMD_TIMESTEP / 1000.0));
-                double min = lastCmdSpeed - (ctrl_config.maxAccel * (ctrl_config.CMD_TIMESTEP / 1000.0));
+                double max = lastCmdSpeed + (ctrl_config_.maxAccel * (ctrl_config_.cmdTmestamp / 1000.0));
+                double min = lastCmdSpeed - (ctrl_config_.maxAccel * (ctrl_config_.cmdTmestamp / 1000.0));
                 if(speed_cmd > max) {
                     speed_cmd = max; 
                 } else if (speed_cmd < min) {

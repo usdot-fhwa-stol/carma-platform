@@ -273,7 +273,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::trajectory_
     tpp.y = points[i].y();
     tpp.yaw = yaws[i];
 
-    // TODO: update the name
     tpp.controller_plugin_name = "PlatooningControlPlugin";
     tpp.planner_plugin_name = plugin_discovery_msg_.name;
 
@@ -303,16 +302,6 @@ std::vector<PointSpeedPair> PlatooningTacticalPlugin::maneuvers_to_points(const 
     {
       throw std::invalid_argument("NO_NEGOTIATION maneuver is not supported by this plugin");
     }
-
-
-    // if (manuever.lane_following_maneuver.parameters.neogition_type == cav_msgs::ManeuverParameters::PLATOONING)
-    // {
-    //   // TODO: start and end speed are floats, sp compare them with epsilon 
-    //   // if ( manuever.lane_following_maneuver.start_speed != manuever.lane_following_maneuver.end_speed)
-    //   // {
-    //   //   throw std::invalid_argument("Invalid Platooning Maneuver");
-    //   // }
-    // }
 
     cav_msgs::LaneFollowingManeuver lane_following_maneuver = manuever.lane_following_maneuver;
 
@@ -468,39 +457,6 @@ std::vector<PointSpeedPair> PlatooningTacticalPlugin::maneuvers_to_points(const 
 
     std::vector<PointSpeedPair> constrained_points(points_and_target_speeds.begin(), points_and_target_speeds.begin() + max_i);
     return constrained_points;
-
-
-
-////
-  //   std::vector<lanelet::ConstLanelet> lanelets_to_add;
-  //   for (auto l : lanelets)
-  //   {
-  //     ROS_DEBUG_STREAM("Lanelet ID: " << l.id());
-  //     if (visited_lanelets.find(l.id()) == visited_lanelets.end())
-  //     {
-  //       lanelets_to_add.push_back(l);
-  //       visited_lanelets.insert(l.id());
-  //     }
-  //   }
-
-  //   lanelet::BasicLineString2d route_geometry = carma_wm::geometry::concatenate_lanelets(lanelets_to_add);
-
-  //   first = true;
-  //   for (auto p : route_geometry)
-  //   {
-  //     if (first && points_and_target_speeds.size() != 0)
-  //     {
-  //       first = false;
-  //       continue;  // Skip the first point if we have already added points from a previous maneuver to avoid duplicates
-  //     }
-  //     PointSpeedPair pair;
-  //     pair.point = p;
-  //     pair.speed = lane_following_maneuver.end_speed;
-  //     points_and_target_speeds.push_back(pair);
-  //   }
-  // }
-
-  // return points_and_target_speeds;
 }
 
 int PlatooningTacticalPlugin::getNearestPointIndex(const std::vector<PointSpeedPair>& points,

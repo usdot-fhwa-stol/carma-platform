@@ -1,6 +1,5 @@
-
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,9 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
+
 #include <ros/ros.h>
 #include <string>
-#include "platoon_strategic.hpp"
+#include "platoon_strategic.h"
 
 
 namespace platoon_strategic
@@ -65,10 +66,6 @@ namespace platoon_strategic
         {
             run_leader_waiting();
         }
-        // else if (pm_.current_platoon_state == PlatoonState::STANDBY)
-        // {
-        //     run_standby();
-        // }
 
         cav_msgs::PlatooningInfo platoon_status = compose_platoon_info_msg();
         platooning_info_publisher_(platoon_status);
@@ -246,8 +243,8 @@ namespace platoon_strategic
         }
 
         
-        pm_.current_downtrack_didtance_ = current_downtrack_;
-        pm_.HostMobilityId = config_.vehicle_id;
+        pm_.current_downtrack_distance_ = current_downtrack_;
+        pm_.HostMobilityId = config_.vehicleID;
         ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
         
         return true;
@@ -442,7 +439,7 @@ namespace platoon_strategic
                     request.header.plan_id = planId;
                     request.header.recipient_id = pm_.targetLeaderId;
                     request.header.sender_bsm_id = host_bsm_id_;
-                    request.header.sender_id = config_.vehicle_id;
+                    request.header.sender_id = config_.vehicleID;
                     request.header.timestamp = currentTime;
                     request.plan_type.type = cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
                     request.strategy = MOBILITY_STRATEGY;
@@ -503,7 +500,7 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::mob_req_cb(const cav_msgs::MobilityRequest& msg)
     {
         cav_msgs::MobilityResponse response;
-        response.header.sender_id = config_.vehicle_id;
+        response.header.sender_id = config_.vehicleID;
         response.header.recipient_id = msg.header.sender_id;
         response.header.plan_id = pm_.currentPlatoonID;
         response.header.sender_bsm_id = host_bsm_id_;
@@ -832,7 +829,7 @@ namespace platoon_strategic
             }
             else
             {
-                status_msg.leader_id = config_.vehicle_id;
+                status_msg.leader_id = config_.vehicleID;
                 status_msg.leader_downtrack_distance = current_downtrack_;
                 status_msg.leader_cmd_speed = cmd_speed_;
                 status_msg.host_platoon_position = 0;
@@ -1081,7 +1078,7 @@ namespace platoon_strategic
                 request.header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
                 request.header.recipient_id = senderId;
                 request.header.sender_bsm_id = host_bsm_id_;
-                request.header.sender_id = config_.vehicle_id;
+                request.header.sender_id = config_.vehicleID;
                 request.header.timestamp = ros::Time::now().toNSec()/1000000;
                 request.location = pose_to_ecef(pose_msg_);
                 request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_AT_REAR;
@@ -1214,7 +1211,7 @@ namespace platoon_strategic
         msg.header.plan_id = pm_.currentPlatoonID;
         msg.header.recipient_id = "";
         msg.header.sender_bsm_id = host_bsm_id_;
-        std::string hostStaticId = config_.vehicle_id;
+        std::string hostStaticId = config_.vehicleID;
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toNSec()/1000000;;
         msg.strategy = MOBILITY_STRATEGY;
@@ -1270,7 +1267,7 @@ namespace platoon_strategic
         // All platoon mobility operation message is just for broadcast
         msg.header.recipient_id = "";
         msg.header.sender_bsm_id = host_bsm_id_;
-        std::string hostStaticId = config_.vehicle_id;
+        std::string hostStaticId = config_.vehicleID;
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toNSec()/1000000;
         msg.strategy = MOBILITY_STRATEGY;
@@ -1298,7 +1295,7 @@ namespace platoon_strategic
         // This message is for broadcast
         msg.header.recipient_id = "";
         msg.header.sender_bsm_id = host_bsm_id_;
-        std::string hostStaticId = config_.vehicle_id;
+        std::string hostStaticId = config_.vehicleID;
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toNSec()/1000000;
 
@@ -1319,21 +1316,6 @@ namespace platoon_strategic
         return msg;
     }
 
-    void PlatoonStrategicPlugin::lookupECEFtoMapTransform()
-    {
-        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
-        tf2_buffer_.setUsingDedicatedThread(true);
-        try
-        {
-            tf_ = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0), ros::Duration(60.0)); //save to local copy of transform 20 sec timeout
-            ROS_DEBUG_STREAM("got the transform");
-        }
-        catch (const tf2::TransformException &ex)
-        {
-        ROS_WARN("%s", ex.what());
-        }
-    }
-
     cav_msgs::MobilityOperation PlatoonStrategicPlugin::composeMobilityOperationCandidateFollower()
     {
         cav_msgs::MobilityOperation msg;
@@ -1342,7 +1324,7 @@ namespace platoon_strategic
         // All platoon mobility operation message is just for broadcast
         msg.header.recipient_id = "";
         msg.header.sender_bsm_id = host_bsm_id_;
-        std::string hostStaticId = config_.vehicle_id;
+        std::string hostStaticId = config_.vehicleID;
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toNSec()/1000000;
         msg.strategy = MOBILITY_STRATEGY;

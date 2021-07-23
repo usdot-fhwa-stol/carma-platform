@@ -1,7 +1,8 @@
 
+#pragma once
 
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,8 +16,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#pragma once
 
 #include <vector>
 #include <ros/ros.h>
@@ -44,7 +43,7 @@
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include "platoon_config.h"
-#include <platoon_manager.hpp>
+#include <platoon_manager.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -117,8 +116,6 @@ namespace platoon_strategic
             void run_candidate_follower();
             void run_follower();
             
-            void lookupECEFtoMapTransform();
-
             cav_msgs::LocationECEF pose_ecef_point_;
 
         

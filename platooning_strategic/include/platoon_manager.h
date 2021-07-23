@@ -1,5 +1,21 @@
 #pragma once
 
+/*
+ * Copyright (C) 2021 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 #include <ros/ros.h>
 #include <cav_msgs/MobilityOperation.h>
 #include <cav_msgs/MobilityRequest.h>
@@ -24,7 +40,6 @@ namespace platoon_strategic
         long planStartTime;
         std::string planId;
         std::string peerId;
-        // PlatoonPlan(){} ;
         PlatoonPlan():valid(false), planStartTime(0), planId(""), peerId("") {} ;
         PlatoonPlan(bool valid, long planStartTime, std::string planId, std::string peerId): 
             valid(valid), planStartTime(planStartTime), planId(planId), peerId(peerId) {}  
@@ -79,7 +94,7 @@ namespace platoon_strategic
 
         PlatoonManager();
 
-        // todo initialize as empty
+        // Platoon List (initialized empty)
         std::vector<PlatoonMember> platoon{};
 
         
@@ -87,13 +102,7 @@ namespace platoon_strategic
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
 
-        double current_downtrack_didtance_ = 0;
-
-        // wm listener pointer and pointer to the actual wm object
-        // std::shared_ptr<carma_wm::WMListener> wml_;
-        // carma_wm::WorldModelConstPtr wm_;
-
-
+        double current_downtrack_distance_ = 0;
 
         void memberUpdates(const std::string& senderId,const std::string& platoonId,const std::string& senderBsmId,const std::string& params, const double& DtD);
 
@@ -144,8 +153,8 @@ namespace platoon_strategic
 
 
         int platoonSize = 2;
-        std::string leaderID = "";
-        std::string currentPlatoonID = "test_plan";
+        std::string leaderID = "default_leader_id";
+        std::string currentPlatoonID = "default_test_id";
         bool isFollower = false;
 
         double current_speed_ = 0;
@@ -155,18 +164,12 @@ namespace platoon_strategic
 
         PlatoonPlan current_plan;
 
-        std::string targetLeaderId = "2";
+        std::string targetLeaderId = "default_target_leader_id";
 
-        std::string HostMobilityId = "hostid";
+        std::string HostMobilityId = "default_host_id";
 
 
     private:
-
-    double maxAllowedJoinTimeGap = 15.0;
-        double maxAllowedJoinGap = 90;
-        int maxPlatoonSize = 10;
-        double vehicleLength = 5.0;
-        int infoMessageInterval = 200;
 
         std::string targetPlatoonId;
         std::string OPERATION_INFO_TYPE = "INFO";
@@ -175,39 +178,36 @@ namespace platoon_strategic
         std::string  MOBILITY_STRATEGY = "Carma/Platooning";
     
 
+        double minGap_ = 22.0;
+        double maxGap_ = 32.0;
+        std::string previousFunctionalLeaderID_ = "";
+        int previousFunctionalLeaderIndex_ = -1;
+
+        double maxSpacing_ = 4.0;
+        double minSpacing_ = 3.9;
+        double lowerBoundary_ = 1.6;
+        double upperBoundary_ = 1.7 ;
+
+        double vehicleLength_ = 5.0;  // m
+
+        double gapWithFront_ = 0.0;
+
+        double downtrack_progress_ = 0;
 
 
+        std::string algorithmType_ = "APF_ALGORITHM";
 
-    double minGap_ = 22.0;
-    double maxGap_ = 32.0;
-    std::string previousFunctionalLeaderID_ = "";
-    int previousFunctionalLeaderIndex_ = -1;
+        bool insufficientGapWithPredecessor(double distanceToFrontVehicle);
+        std::vector<double> calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed) const;
+        int determineLeaderBasedOnViolation(std::vector<double> timeHeadways);
 
-    double maxSpacing_ = 4.0;
-    double minSpacing_ = 3.9;
-    double lowerBoundary_ = 1.6;
-    double upperBoundary_ = 1.7 ;
+        // helper method for APF algorithm
+        int findLowerBoundaryViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const;
 
-    double vehicleLength_ = 5.0;  // m
+        // helper method for APF algorithm
+        int findMaximumSpacingViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const;
 
-    double gapWithFront_ = 0.0;
-
-    double downtrack_progress_ = 0;
-
-
-    std::string algorithmType_ = "APF_ALGORITHM";
-
-    bool insufficientGapWithPredecessor(double distanceToFrontVehicle);
-    std::vector<double> calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed) const;
-    int determineLeaderBasedOnViolation(std::vector<double> timeHeadways);
-
-    // helper method for APF algorithm
-    int findLowerBoundaryViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const;
-
-    // helper method for APF algorithm
-    int findMaximumSpacingViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const;
-
-    std::vector<double> getTimeHeadwayFromIndex(std::vector<double> timeHeadways, int start) const;
+        std::vector<double> getTimeHeadwayFromIndex(std::vector<double> timeHeadways, int start) const;
 
 
     
