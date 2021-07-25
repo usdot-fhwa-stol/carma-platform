@@ -69,14 +69,8 @@ bool StopandWait::spinCallback()
 
 bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
 {
-  lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
-
-  ROS_DEBUG_STREAM("planning state x:" << req.vehicle_state.X_pos_global << ", y: " << req.vehicle_state.Y_pos_global);
-
-  double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
   ROS_DEBUG_STREAM("Starting stop&wait planning");
-  ROS_DEBUG_STREAM("Current_downtrack" << current_downtrack);
 
   if (req.maneuver_index_to_plan >= req.maneuver_plan.maneuvers.size())
   {
@@ -90,10 +84,33 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
     throw std::invalid_argument("StopAndWait plugin asked to plan non STOP_AND_WAIT maneuver");
   }
 
+  lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
+
+  ROS_DEBUG_STREAM("planning state x:" << req.vehicle_state.X_pos_global << ", y: " << req.vehicle_state.Y_pos_global);
+
+  double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
+
+  ROS_DEBUG_STREAM("Current_downtrack" << current_downtrack);
+
   if (req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].stop_and_wait_maneuver.end_dist < current_downtrack)
   {
     throw std::invalid_argument("StopAndWait plugin asked to plan maneuver that ends earlier than the current state.");
   }
+
+  resp.related_maneuvers.push_back(cav_msgs::Maneuver::STOP_AND_WAIT);
+  resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+
+  std::string maneuver_id = req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].stop_and_wait_maneuver.parameters.maneuver_id;
+
+  if (planned_trajectories_.find(maneuver_id) != planned_trajectories_.end()) // Maneuver already planned
+  {
+    ROS_INFO_STREAM("Maneuver already planned returning previous trajectory");
+    resp.trajectory_plan = planned_trajectories_[maneuver_id]; // TODO_SINGLE_TRAJ
+
+    return true;
+  }
+
+  ROS_INFO_STREAM("Maneuver not yet planned planning new trajectory");
 
   // Maneuver input is valid so continue with execution
   std::vector<cav_msgs::Maneuver> maneuver_plan = { req.maneuver_plan.maneuvers[req.maneuver_index_to_plan] };
@@ -125,9 +142,9 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
   ROS_DEBUG_STREAM("Trajectory points size:" << trajectory.trajectory_points.size());
 
   trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
+
   resp.trajectory_plan = trajectory;
-  resp.related_maneuvers.push_back(cav_msgs::Maneuver::STOP_AND_WAIT);
-  resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+  planned_trajectories_[maneuver_id] = trajectory; // TODO_SINGLE_TRAJ
 
   return true;
 }
@@ -195,7 +212,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::trajectory_from_points_t
 
   return traj;
 }
-// TODO how are we going to handle crawling to the stop line if stopped before?
+
 std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_centerline(
     const std::vector<PointSpeedPair>& points, double starting_downtrack, double starting_speed, double stop_location,
     double stop_location_buffer, ros::Time start_time)

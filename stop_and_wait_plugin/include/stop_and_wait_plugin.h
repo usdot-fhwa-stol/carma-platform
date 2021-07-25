@@ -31,6 +31,7 @@
 #include <lanelet2_core/geometry/LineString.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <boost/optional.hpp>
 #include "stop_and_wait_config.h"
 
 namespace stop_and_wait_plugin
@@ -122,5 +123,8 @@ private:
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
   
   cav_msgs::Plugin plugin_discovery_msg_;
+
+  std::unordered_map<std::string, cav_msgs::TrajectoryPlan> planned_trajectories_; // TODO_SINGLE_TRAJ
+  
 };
 }  // namespace stop_and_wait_plugin
