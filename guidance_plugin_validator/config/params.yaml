@@ -14,24 +14,24 @@
 
 # Double: The time allocated for system startup. Validation begins after this much time has passed.
 # Units: s
-startup_duration: 45.0
+startup_duration: 60.0
 
 # Double: The time allocated for validation; once startup is complete, validation is complete after this much time has passed.
 # Units: s
-validation_duration: 10.0
+validation_duration: 60.0
 
 # List of String: Guidance Strategic Plugins that will be validated by this node
 guidance_strategic_plugins:
-  - RouteFollowing # route_following_plugin
+  - RouteFollowing 
 
 # List of String: Guidance Tactical Plugins that will be validated by this node
 guidance_tactical_plugins:
-  - InLaneCruisingPlugin # inlanecruising_plugin
-  - StopandWaitPlugin # stop_and_wait_plugin
-  - CooperativeLaneChangePlugin # cooperative_lanechange
-  - UnobstructedLaneChangePlugin # unobstructed_lanechange
-  - YieldPlugin # yield_plugin
+  - InLaneCruisingPlugin 
+  - StopandWaitPlugin 
+  - CooperativeLaneChangePlugin 
+  - UnobstructedLaneChangePlugin 
+  - YieldPlugin 
 
 # List of String: Guidance Control-Wrapper Plugins that will be validated by this node
 guidance_control_plugins:
-  - Pure Pursuit # pure_pursuit_wrapper_node
+  - Pure Pursuit 
