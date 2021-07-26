@@ -97,53 +97,7 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
 
 void WMListenerWorker::incomingSpatCallback(const cav_msgs::SPAT& spat_msg)
 {
-  if (spat_msg.intersection_state_list.empty())
-  {
-    ROS_WARN_STREAM("No intersection_state_list in the newly received SPAT msg. Returning...");
-    return;
-  }
-  for (auto curr_intersection : spat_msg.intersection_state_list)
-  {
-    for (auto current_movement_state : curr_intersection.movement_list) 
-    {
-      lanelet::Id curr_light_id = world_model_->getTrafficLightId(curr_intersection.id.id, current_movement_state.signal_group);
-      if (curr_light_id == lanelet::InvalId)
-      {
-        ROS_DEBUG_STREAM("Received a SPAT message for traffic light that is not in the map with intersection_id: " << curr_intersection.id.id << 
-                           ", and signal_group_id: " << current_movement_state.signal_group);
-        continue;
-      }
-      auto general_regem = world_model_->getMutableMap()->regulatoryElementLayer.get(curr_light_id);
-      
-      auto lanelets_general = world_model_->getMutableMap()->laneletLayer.findUsages(general_regem);
-      if (lanelets_general.empty())
-      {
-        ROS_WARN_STREAM("Received a SPAT message for traffic light that is not owned by any lanelet with intersection_id: " << curr_intersection.id.id << 
-                           ", and signal_group_id: " << current_movement_state.signal_group);
-        continue;
-      }
-      auto curr_light_list = lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficLight>();
-      if (curr_light_list.empty())
-      {
-        ROS_WARN_STREAM("There was an error querying traffic light with intersection_id: " << curr_intersection.id.id << 
-                           ", and signal_group_id: " << current_movement_state.signal_group);
-        continue;
-      }
-      lanelet::CarmaTrafficLightPtr curr_light = curr_light_list[0];
-
-      // check if we have processed this already or not
-      if (curr_light->revision_ == curr_intersection.revision)
-      {
-        continue;
-      }
-      std::vector<std::pair<ros::Time, lanelet::CarmaTrafficLightState>> new_states;
-      for (auto event : current_movement_state.movement_event_list)
-      {
-        new_states.push_back(std::make_pair(ros::Time(event.timing.min_end_time), static_cast<lanelet::CarmaTrafficLightState>(event.event_state.movement_phase_state)));
-      }
-      curr_light->setStates(new_states, curr_intersection.revision);
-    }
-  }
+  world_model_->processSpatFromMsg(spat_msg);
 }
 
 bool WMListenerWorker::checkIfReRoutingNeeded() const

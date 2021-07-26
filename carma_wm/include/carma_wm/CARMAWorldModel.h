@@ -25,6 +25,7 @@
 #include <cav_msgs/ExternalObjectList.h>
 #include <cav_msgs/RoadwayObstacle.h>
 #include <cav_msgs/RoadwayObstacleList.h>
+#include <cav_msgs/SPAT.h>
 #include "TrackPos.h"
 
 namespace carma_wm
@@ -79,6 +80,13 @@ public:
    * These are detected by the sensor fusion node and are passed as objects compatible with lanelet 
    */
   void setRoadwayObjects(const std::vector<cav_msgs::RoadwayObstacle>& rw_objs);
+
+  /**
+   * @brief processSpatFromMsg update map's traffic light states with SPAT msg
+   *
+   * @param spat_msg Msg to update with
+   */
+  void processSpatFromMsg(const cav_msgs::SPAT& spat_msg);
 
   /**
    * \brief This function is called by distanceToObjectBehindInLane or distanceToObjectAheadInLane. 
@@ -187,7 +195,7 @@ private:
   LaneletRoutePtr route_;
   LaneletRoutingGraphPtr map_routing_graph_;
   double route_length_ = 0;
-  
+  std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::vector<std::pair<ros::Time, lanelet::CarmaTrafficLightState>>>> traffic_light_states_; //[intersection_id][signal_group_id]
   lanelet::LaneletSubmapConstUPtr shortest_path_view_;  // Map containing only lanelets along the shortest path of the
                                                      // route
   std::vector<lanelet::LineString3d> shortest_path_centerlines_;  // List of disjoint centerlines seperated by lane
