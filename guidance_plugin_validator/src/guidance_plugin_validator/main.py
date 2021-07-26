@@ -18,8 +18,6 @@
 
 import rospy
 import guidance_plugin_validator
-from std_msgs.msg import String
-from cav_msgs.msg import Plugin # This import should work after updating CMakeLists and package.xml?
 
 if __name__ == "__main__":
     """Main function to initialize the 'guidance_plugin_validator' node."""
