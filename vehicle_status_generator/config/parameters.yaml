@@ -1,0 +1,4 @@
+# The desired frequency for Mobility Operation generation
+vehicle_status_generation_frequency_: 10.0
+yield_max_deceleration: 1.0
+x_gap: 2.0
