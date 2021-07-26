@@ -1275,6 +1275,12 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   state.movement_list.push_back(movement);
   spat.intersection_state_list.push_back(state);
   cmw.processSpatFromMsg(spat);
+  
+  // default
+  auto lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficLight>();
+  // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
+  EXPECT_EQ(ros::Duration(43), lights1[0]->fixed_cycle_duration);
+  
   // call the processSpatFromMsg with that msg 1
   event.event_state.movement_phase_state = 1;
   event.timing.min_end_time = 2;
@@ -1308,5 +1314,38 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
   EXPECT_EQ(ros::Duration(3), lights[0]->fixed_cycle_duration);
 }
+
+TEST(CARMAWorldModelTest, getLightsAlongRoute)
+{
+  carma_wm::CARMAWorldModel cmw;
+  lanelet::LaneletMapPtr map;
+  // Create a complete map
+  test::MapOptions mp(1,1);
+  auto cmw_ptr = test::getGuidanceTestMap(mp);
+  
+  auto pl2 = carma_wm::getPoint(0, 1, 0);
+  auto pl3 = carma_wm::getPoint(0, 2, 0);
+  auto pr2 = carma_wm::getPoint(1, 1, 0);
+  auto pr3 = carma_wm::getPoint(1, 2, 0);
+
+  lanelet::Id traffic_light_id1 = lanelet::utils::getId();
+  lanelet::Id traffic_light_id2 = lanelet::utils::getId();
+  lanelet::LineString3d virtual_stop_line1(lanelet::utils::getId(), {pl2, pr2});
+  std::shared_ptr<lanelet::CarmaTrafficLight> traffic_light1(new lanelet::CarmaTrafficLight(lanelet::CarmaTrafficLight::buildData(traffic_light_id1, { virtual_stop_line1 })));
+  lanelet::LineString3d virtual_stop_line2(lanelet::utils::getId(), {pl3, pr3});
+  std::shared_ptr<lanelet::CarmaTrafficLight> traffic_light2(new lanelet::CarmaTrafficLight(lanelet::CarmaTrafficLight::buildData(traffic_light_id2, { virtual_stop_line2 })));
+
+  cmw_ptr->getMutableMap()->update(cmw_ptr->getMutableMap()->laneletLayer.get(1200), traffic_light1);
+  cmw_ptr->getMutableMap()->update(cmw_ptr->getMutableMap()->laneletLayer.get(1201), traffic_light2);
+  carma_wm::test::setRouteByIds({ 1200, 1201, 1202}, cmw_ptr);
+
+  auto lights = cmw_ptr->getLightsAlongRoute({0.5, 0});
+  
+  EXPECT_EQ(lights.size(), 2);
+  EXPECT_EQ(lights[0]->id(), traffic_light_id1);
+  EXPECT_EQ(lights[1]->id(), traffic_light_id2);
+
+}
+
 
 }  // namespace carma_wm

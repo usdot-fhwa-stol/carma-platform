@@ -1081,7 +1081,7 @@ void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
   config_speed_limit_ = config_lim;
 }
 
-std::vector<lanelet::CarmaTrafficLightPtr> CARMAWorldModel::predictTrafficLight(const lanelet::BasicPoint2d& loc) const
+std::vector<lanelet::CarmaTrafficLightPtr> CARMAWorldModel::getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const
 {
   // Check if the map is loaded yet
   if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
@@ -1131,6 +1131,7 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
     ROS_WARN_STREAM("No intersection_state_list in the newly received SPAT msg. Returning...");
     return;
   }
+
   for (auto curr_intersection : spat_msg.intersection_state_list)
   {
     for (auto current_movement_state : curr_intersection.movement_list) 
@@ -1187,7 +1188,17 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
              traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second)
           {
             curr_light->setStates(traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group], curr_intersection.revision);
-          } 
+          }
+      else if (curr_light->recorded_time_stamps.empty()) // if it was never initialized, do its best to plan with the current state until the future state is also received.
+      {
+        std::vector<std::pair<ros::Time, lanelet::CarmaTrafficLightState>> default_state;
+        // green 20sec, yellow 3sec, red 20sec, back to green 20sec etc...
+        default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(5), lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
+        default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(8), lanelet::CarmaTrafficLightState::PRE_MOVEMENT));
+        default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(28), lanelet::CarmaTrafficLightState::STOP_AND_REMAIN));
+        default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(48), lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
+        curr_light->setStates(default_state, curr_light->revision_);
+      }
     }
   }
 }
