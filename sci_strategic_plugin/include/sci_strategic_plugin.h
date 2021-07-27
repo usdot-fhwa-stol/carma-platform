@@ -247,6 +247,11 @@ public:
    *
    */
   void caseThreeSpeedProfile(double stop_dist, double current_speed, double stop_time, std::vector<double>* float_metadata_list) const;
+
+
+  cav_msgs::MobilityOperation generateMobilityOperation();
+
+  std::vector<uint8_t> getMsgId(const ros::Time now);
   
   ////////// VARIABLES ///////////
 
@@ -269,10 +274,13 @@ public:
 
   bool approaching_stop_controlled_interction_ = false;
 
+  double vehicle_status_generation_frequency_;
+
+  uint8_t msg_count_ {0};
+  int random_id_ {0};
+  ros::Time last_id_generation_time_;
 
   private:
-
-
   //! World Model pointer
   carma_wm::WorldModelConstPtr wm_;
 

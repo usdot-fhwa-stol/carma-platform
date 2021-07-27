@@ -277,7 +277,7 @@ void SCIStrategicPlugin::caseOneSpeedProfile(double speed_before_decel, double c
                                             std::vector<double>* float_metadata_list) const
 {
   double desired_acceleration = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
-  double desired_deceleration = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+  double desired_deceleration = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;  
 
   // Equations obtained from TSMO UC 1 Algorithm draft doc
   double a_acc = ((1 - desired_acceleration/desired_deceleration)*speed_before_decel - current_speed)/stop_time;
@@ -393,5 +393,44 @@ double SCIStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt) cons
     throw std::invalid_argument("Valid traffic rules object could not be built");
   }
 }
+
+cav_msgs::MobilityOperation SCIStrategicPlugin::generateMobilityOperation()
+{
+    cav_msgs::MobilityOperation mo_;
+    mo_.header.timestamp = ros::Time::now().toNSec();
+    mo_.header.sender_bsm_id = std::string(reinterpret_cast<const char*>(getMsgId(ros::Time::now())[0]), getMsgId(ros::Time::now()).size());
+
+    int flag = (approaching_stop_controlled_interction_ ? 1 : 0);
+
+    double vehicle_acceleration_limit_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
+    double vehicle_deceleration_limit_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+
+    mo_.strategy_params = "intersection_box_flag, acceleration_limit, deceleration_limit," + std::to_string(flag) + "," + std::to_string(vehicle_acceleration_limit_) + "," + std::to_string(vehicle_deceleration_limit_);
+
+    return mo_;
+}
+
+std::vector<uint8_t> SCIStrategicPlugin::getMsgId(const ros::Time now)
+{
+    std::vector<uint8_t> id(4);
+    // need to change ID every 5 mins
+    ros::Duration id_timeout(60 * 5);
+
+    std::default_random_engine generator;
+    std::uniform_int_distribution<int> dis(0,INT_MAX);
+
+    if(now - last_id_generation_time_ >= id_timeout)
+    {
+        random_id_ = dis(generator);
+        last_id_generation_time_ = now;
+    }
+    for(int i = 0; i < id.size(); ++i)
+    {
+        id[i] = random_id_ >> (8 * i);
+    }
+    return id;
+}
+
+
 
 }  // namespace SCI_strategic_plugin
