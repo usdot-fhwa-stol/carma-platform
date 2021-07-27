@@ -1193,10 +1193,10 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
       {
         std::vector<std::pair<ros::Time, lanelet::CarmaTrafficLightState>> default_state;
         // green 20sec, yellow 3sec, red 20sec, back to green 20sec etc...
-        default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(5), lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
-        default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(8), lanelet::CarmaTrafficLightState::PRE_MOVEMENT));
-        default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(28), lanelet::CarmaTrafficLightState::STOP_AND_REMAIN));
-        default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(48), lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
+        default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(0), lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
+        default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(3), lanelet::CarmaTrafficLightState::PRE_MOVEMENT));
+        default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(23), lanelet::CarmaTrafficLightState::STOP_AND_REMAIN));
+        default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(43), lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
         curr_light->setStates(default_state, curr_light->revision_);
       }
     }
