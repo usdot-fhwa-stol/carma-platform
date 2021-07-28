@@ -123,8 +123,6 @@ private:
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
   
   cav_msgs::Plugin plugin_discovery_msg_;
-
-  std::unordered_map<std::string, cav_msgs::TrajectoryPlan> planned_trajectories_; // TODO_SINGLE_TRAJ
   
 };
 }  // namespace stop_and_wait_plugin

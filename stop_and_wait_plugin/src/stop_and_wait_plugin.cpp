@@ -102,14 +102,6 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
 
   std::string maneuver_id = req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].stop_and_wait_maneuver.parameters.maneuver_id;
 
-  // if (planned_trajectories_.find(maneuver_id) != planned_trajectories_.end()) // Maneuver already planned
-  // {
-  //   ROS_INFO_STREAM("Maneuver already planned returning previous trajectory");
-  //   resp.trajectory_plan = planned_trajectories_[maneuver_id]; // TODO_SINGLE_TRAJ
-
-  //   return true;
-  // }
-
   ROS_INFO_STREAM("Maneuver not yet planned planning new trajectory");
 
   // Maneuver input is valid so continue with execution
@@ -144,7 +136,6 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
   trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
 
   resp.trajectory_plan = trajectory;
-  planned_trajectories_[maneuver_id] = trajectory; // TODO_SINGLE_TRAJ
 
   return true;
 }
