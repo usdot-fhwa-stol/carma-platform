@@ -33,8 +33,6 @@ int main(int argc, char** argv)
   // Create publishers
   ros::Publisher plugin_discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
 
-  ros::Publisher mobility_operation_pub = nh.advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
-
   // Initialize world model
   carma_wm::WMListener wml;
 
@@ -69,12 +67,9 @@ int main(int argc, char** argv)
       nh.createTimer(ros::Duration(ros::Rate(10.0)), [&plugin, &plugin_discovery_pub](const auto&) {
         plugin_discovery_pub.publish(plugin.getDiscoveryMsg());
       });
+  
 
-
-  ros::Timer mobility_operation_pub_timer =
-      nh.createTimer(ros::Duration(1.0 / config.vehicle_status_generation_frequency_), [&plugin, &mobility_operation_pub](const auto&) {
-        mobility_operation_pub.publish(plugin.generateMobilityOperation());
-      });
+  plugin.mobility_operation_pub = nh.advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
 
   // Start
   ros::CARMANodeHandle::spin();

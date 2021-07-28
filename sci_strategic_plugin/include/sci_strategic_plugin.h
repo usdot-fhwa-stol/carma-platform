@@ -280,6 +280,8 @@ public:
   int random_id_ {0};
   ros::Time last_id_generation_time_;
 
+  ros::Publisher mobility_operation_pub;
+
   private:
   //! World Model pointer
   carma_wm::WorldModelConstPtr wm_;
@@ -296,8 +298,7 @@ public:
 
   // strategy for stop controlled intersection
   std::string stop_controlled_intersection_strategy_ = "Carma/stop_controlled_intersection";
-  std::string previous_strategy_params_ = "";
-  
+  std::string previous_strategy_params_ = "";  
   
 
 };

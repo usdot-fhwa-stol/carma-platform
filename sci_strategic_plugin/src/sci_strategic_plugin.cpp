@@ -87,12 +87,15 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
   if (msg->strategy == stop_controlled_intersection_strategy_)
   {
     // TODO: Add Samir's code here to detect approaching an intersection and publish status and intent
+
     approaching_stop_controlled_interction_ = true;
     if (msg->strategy_params != previous_strategy_params_)
     {
       parseStrategyParams(msg->strategy_params); 
     }
     previous_strategy_params_ = msg->strategy_params;
+
+    generateMobilityOperation();
   }
   
 }
@@ -407,7 +410,7 @@ cav_msgs::MobilityOperation SCIStrategicPlugin::generateMobilityOperation()
 
     mo_.strategy_params = "intersection_box_flag, acceleration_limit, deceleration_limit," + std::to_string(flag) + "," + std::to_string(vehicle_acceleration_limit_) + "," + std::to_string(vehicle_deceleration_limit_);
 
-    return mo_;
+    mobility_operation_pub.publish(mo_);
 }
 
 std::vector<uint8_t> SCIStrategicPlugin::getMsgId(const ros::Time now)
