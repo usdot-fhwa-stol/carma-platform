@@ -94,9 +94,11 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
                                                                             config_.curvature_moving_average_window_size, config_.back_distance,
                                                                             config_.buffer_ending_downtrack);
   
-  auto points_and_target_speeds = basic_autonomy:: waypoint_generation::maneuvers_to_points_lanefollow(maneuver_plan, 
-                                                                        std::max((double)0, current_downtrack - config_.back_distance), 
-                                                                        wm_, ending_state_before_buffer_, wpg_general_config, wpg_detail_config); // Convert maneuvers to points
+  auto points_and_target_speeds = basic_autonomy::waypoint_generation::create_geometry_profile(maneuver_plan, std::max((double)0, current_downtrack - config_.back_distance),
+                                                                         wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config);
+  // auto points_and_target_speeds = basic_autonomy:: waypoint_generation::maneuvers_to_points_lanefollow(maneuver_plan, 
+  //                                                                       std::max((double)0, current_downtrack - config_.back_distance), 
+  //                                                                       wm_, ending_state_before_buffer_, wpg_general_config, wpg_detail_config); // Convert maneuvers to points
 
   ROS_DEBUG_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
 

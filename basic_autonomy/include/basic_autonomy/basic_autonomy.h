@@ -38,6 +38,21 @@
 #include <ros/ros.h>
 #include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
 
+/**
+ * \brief Macro definition to enable easier access to fields shared across the maneuver types
+ * \param mvr The maneuver object to invoke the accessors on
+ * \param property The name of the field to access on the specific maneuver types. Must be shared by all extant maneuver types
+ * \return Expands to an expression (in the form of chained ternary operators) that evalutes to the desired field
+ */
+#define GET_MANEUVER_PROPERTY(mvr, property)\
+        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
+            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
+                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
+                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property :\
+                        (mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
+                        (mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).lane_following_maneuver.property :\
+                        throw new std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))
+
 namespace basic_autonomy
 {
     namespace waypoint_generation
@@ -69,6 +84,20 @@ namespace basic_autonomy
             double back_distance = 20;                    // Number of meters behind the first maneuver that need to be included in points for curvature calculation
             double buffer_ending_downtrack = 20.0;        //The additional downtrack beyond requested end dist used to fit points along spline
         };
+     
+     std::vector<PointSpeedPair> create_geometry_profile(const std::vector<cav_msgs::Maneuver> &maneuvers, double max_starting_downtrack, const carma_wm::WorldModelConstPtr &wm,
+                                                                   cav_msgs::VehicleState &ending_state_before_buffer,
+                                                                    const cav_msgs::VehicleState& state,const GeneralTrajConfig &general_config,
+                                                                   const DetailedTrajConfig &detailed_config);
+
+     std::vector<PointSpeedPair> create_lanefollow_geometry(const cav_msgs::Maneuver &maneuver, double max_starting_downtrack,
+                                                                   const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
+                                                                   const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config);
+
+     std::vector<PointSpeedPair> create_lanechange_geometry(const cav_msgs::Maneuver &maneuver, double max_starting_downtrack,
+                                                                   const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
+                                                                   const cav_msgs::VehicleState &state, const DetailedTrajConfig &detailed_config);
+
 
         /**
    * \brief Applies the provided speed limits to the provided speeds such that each element is capped at its corresponding speed limit if needed
@@ -270,5 +299,8 @@ namespace basic_autonomy
                                                         int default_downsample_ratio,
                                                         int turn_downsample_ratio);
 
+     std::vector<std::string> lane_follow_plugins_list = {"inlanecruising"};
+     std::vector<std::string> lane_change_plugins_list = { "cooperative_lanechange", "unobstructed_lanechange"};   
+                                                  
     }
 }

@@ -21,6 +21,266 @@ namespace basic_autonomy
 {
     namespace waypoint_generation
     {
+         std::vector<PointSpeedPair> create_geometry_profile(const std::vector<cav_msgs::Maneuver> &maneuvers, double max_starting_downtrack,const carma_wm::WorldModelConstPtr &wm,
+                                                                   cav_msgs::VehicleState &ending_state_before_buffer,const cav_msgs::VehicleState& state,
+                                                                   const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config){
+            std::vector<PointSpeedPair> points_and_target_speeds;
+            
+            bool first = true;
+            ROS_DEBUG_STREAM("VehDowntrack:"<<max_starting_downtrack);
+            for(const auto &maneuver : maneuvers)
+            {
+                if(std::find(lane_follow_plugins_list.begin(), lane_follow_plugins_list.end(), general_config.trajectory_type) !=lane_follow_plugins_list.end() && maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING)
+                {
+                    throw std::invalid_argument("lane following tactical plugin doesn't support this maneuver type");
+                }
+                else if(std::find(lane_change_plugins_list.begin(), lane_change_plugins_list.end(), general_config.trajectory_type) !=lane_change_plugins_list.end() && maneuver.type != cav_msgs::Maneuver::LANE_CHANGE)
+                {
+                    throw std::invalid_argument("lane change tactical plugin doesn't support this maneuver type");
+                }
+                else{
+                    double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
+                    if(first){
+                        if (starting_downtrack > max_starting_downtrack)
+                        {
+                            starting_downtrack = max_starting_downtrack;
+                        }
+                        first = false;
+                    }
+                    ROS_DEBUG_STREAM("Used downtrack: " << starting_downtrack);
+
+                    if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING){
+                        ROS_DEBUG_STREAM("Creating Lane Follow Geometry");
+                        std::vector<PointSpeedPair> lane_follow_points = create_lanefollow_geometry(maneuver, max_starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config);
+                        points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
+                    }
+                    else if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE){
+                        ROS_DEBUG_STREAM("Creating Lane Change Geometry");
+                        std::vector<PointSpeedPair> lane_change_points = create_lanechange_geometry(maneuver, max_starting_downtrack, wm, ending_state_before_buffer, state, detailed_config);
+                        points_and_target_speeds.insert(points_and_target_speeds.end(), lane_change_points.begin(), lane_change_points.end());
+                    }
+                    else{
+                        throw std::invalid_argument("This maneuver type is not supported");
+                    }
+                }
+            }
+            return points_and_target_speeds;
+
+        }
+
+        std::vector<PointSpeedPair> create_lanefollow_geometry(const cav_msgs::Maneuver &maneuver, double starting_downtrack,
+                                                                   const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
+                                                                    const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config)
+        {
+            std::vector<PointSpeedPair> points_and_target_speeds;
+
+            cav_msgs::LaneFollowingManeuver lane_following_maneuver = maneuver.lane_following_maneuver;
+            
+            auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist, true, true);
+
+            if (lanelets.empty())
+            {
+                ROS_ERROR_STREAM("Detected no lanelets between starting downtrack: "<< starting_downtrack << ", and lane_following_maneuver.end_dist: "<< lane_following_maneuver.end_dist);
+                throw std::invalid_argument("Detected no lanelets between starting_downtrack and end_dist");
+            }
+
+            ROS_DEBUG_STREAM("Maneuver");
+
+            lanelet::BasicLineString2d downsampled_centerline;
+            downsampled_centerline.reserve(200);
+            
+            //getLaneletsBetween is inclusive of lanelets between its two boundaries
+            //which may return lanechange lanelets, so
+            //exclude lanechanges and plan for only the straight part
+            int curr_idx = 0;
+            auto following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
+            lanelet::ConstLanelets straight_lanelets;
+
+            if(lanelets.size() <= 1) //no lane change anyways if only size 1
+            {
+                ROS_DEBUG_STREAM("Detected one straight lanelet Id:" << lanelets[curr_idx].id());
+                straight_lanelets = lanelets;
+            }
+            else
+            {
+                // skip all lanechanges until lane follow starts
+                while (curr_idx + 1 < lanelets.size() && 
+                        std::find(following_lanelets.begin(),following_lanelets.end(), lanelets[curr_idx + 1]) != following_lanelets.end())
+                {
+                    curr_idx++;
+                    ROS_DEBUG_STREAM("Added lanelet Id forlane follow: " << lanelets[curr_idx].id());
+                    straight_lanelets.push_back(lanelets[curr_idx]);
+                    following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
+                }
+
+            }
+
+            std::unordered_set<lanelet::Id> visited_lanelets;
+            for (const auto& l : lanelets)
+            {
+                ROS_DEBUG_STREAM("Processing Lanelet ID: " << l.id());
+                if (visited_lanelets.find(l.id()) == visited_lanelets.end())
+                {
+                    bool is_turn = false;
+                    if (l.hasAttribute("turn_direction"))
+                    {
+                        std::string turn_direction = l.attribute("turn_direction").value();
+                        is_turn = turn_direction.compare("left") == 0 || turn_direction.compare("right") == 0;
+                    }
+
+                    lanelet::BasicLineString2d centerline = l.centerline2d().basicLineString();
+                    lanelet::BasicLineString2d downsampled_points;
+                    if (is_turn)
+                    {
+                        downsampled_points = carma_utils::containers::downsample_vector(centerline, general_config.turn_downsample_ratio);
+                    }
+                    else
+                    {
+                        downsampled_points = carma_utils::containers::downsample_vector(centerline, general_config.default_downsample_ratio);
+                    }
+                    downsampled_centerline = carma_wm::geometry::concatenate_line_strings(downsampled_centerline, downsampled_points);
+                    visited_lanelets.insert(l.id());
+                }
+            }
+
+            bool first = true;
+            for (auto p : downsampled_centerline)
+            {
+                if (first && !points_and_target_speeds.empty())
+                {
+                    first = false;
+                    continue; // Skip the first point if we have already added points from a previous maneuver to avoid duplicates
+                }
+                PointSpeedPair pair;
+                pair.point = p;
+                pair.speed = lane_following_maneuver.end_speed;
+                points_and_target_speeds.push_back(pair);
+            }
+            
+
+            //Here we are limiting the trajectory length to the given length by maneuver end dist as opposed to the end of lanelets involved.
+            double starting_route_downtrack = wm->routeTrackPos(points_and_target_speeds.front().point).downtrack;
+            double ending_downtrack = maneuver.lane_following_maneuver.end_dist;
+
+            if(ending_downtrack + detailed_config.buffer_ending_downtrack < wm->getRouteEndTrackPos().downtrack){
+                ending_downtrack = ending_downtrack + detailed_config.buffer_ending_downtrack;
+            }
+            else{
+                ending_downtrack = wm->getRouteEndTrackPos().downtrack;
+            }
+
+            size_t max_i = points_and_target_speeds.size() - 1;
+            size_t unbuffered_idx = points_and_target_speeds.size() - 1;
+            bool found_unbuffered_idx = false;
+            double dist_accumulator = starting_route_downtrack;
+            lanelet::BasicPoint2d prev_point;
+
+            for (int i = 0; i < points_and_target_speeds.size(); i ++) {
+                auto current_point = points_and_target_speeds[i].point;
+                if (i == 0) {
+                    prev_point = current_point;
+                    continue;
+                }
+
+                double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
+                ROS_DEBUG_STREAM("Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() << 
+                "current_point.y():" << current_point.y());
+
+                dist_accumulator += delta_d;
+                if (dist_accumulator > maneuver.lane_following_maneuver.end_dist && !found_unbuffered_idx)
+                {
+                    unbuffered_idx = i - 1;
+                    ROS_DEBUG_STREAM("Found index unbuffered_idx at: " << unbuffered_idx);
+                    found_unbuffered_idx = true;
+                }
+                
+                if (dist_accumulator > ending_downtrack) {
+                    max_i = i - 1;
+                    ROS_DEBUG_STREAM("Max_i breaking at: i: " << i << ", max_i: " << max_i);
+                    break;
+                }
+                prev_point = current_point;
+            }
+
+            ending_state_before_buffer.X_pos_global = points_and_target_speeds[unbuffered_idx].point.x();
+            ending_state_before_buffer.Y_pos_global = points_and_target_speeds[unbuffered_idx].point.y();
+            ROS_DEBUG_STREAM("Here ending_state_before_buffer.X_pos_global: " << ending_state_before_buffer.X_pos_global << 
+            ", and Y_pos_global" << ending_state_before_buffer.Y_pos_global);
+
+            std::vector<PointSpeedPair> constrained_points(points_and_target_speeds.begin(), points_and_target_speeds.begin() + max_i);
+
+            return constrained_points;
+
+        }
+
+        std::vector<PointSpeedPair> create_lanechange_geometry(const cav_msgs::Maneuver &maneuver, double starting_downtrack,
+                                                                   const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
+                                                                    const cav_msgs::VehicleState &state, const DetailedTrajConfig &detailed_config)
+        {
+            std::vector<PointSpeedPair> points_and_target_speeds;
+            std::unordered_set<lanelet::Id> visited_lanelets;
+
+            cav_msgs::LaneChangeManeuver lane_change_maneuver = maneuver.lane_change_maneuver;
+            double ending_downtrack = lane_change_maneuver.end_dist;
+            ROS_DEBUG_STREAM("Maneuver ending downtrack:"<<ending_downtrack);
+            if(starting_downtrack >= ending_downtrack)
+            {
+                throw(std::invalid_argument("Start distance is greater than or equal to ending distance"));
+            }
+
+            //get route between starting and ending downtracks
+            std::vector<lanelet::BasicPoint2d> route_geometry = create_route_geom(starting_downtrack, stoi(lane_change_maneuver.starting_lane_id), ending_downtrack + detailed_config.buffer_ending_downtrack, wm);
+            ROS_DEBUG_STREAM("Route geometry size:"<<route_geometry.size());
+
+            lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
+            double current_downtrack = wm->routeTrackPos(state_pos).downtrack;
+            int nearest_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, current_downtrack);
+            int ending_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, ending_downtrack);
+            ROS_DEBUG_STREAM("Nearest pt index in maneuvers to points: "<< nearest_pt_index);
+            ROS_DEBUG_STREAM("Ending pt index in maneuvers to points: "<< ending_pt_index);
+
+            ending_state_before_buffer.X_pos_global = route_geometry[ending_pt_index].x();
+            ending_state_before_buffer.Y_pos_global = route_geometry[ending_pt_index].y();
+
+            ROS_DEBUG_STREAM("ending_state_before_buffer_:"<<ending_state_before_buffer.X_pos_global << 
+                    ", ending_state_before_buffer_.Y_pos_global" << ending_state_before_buffer.Y_pos_global);
+
+            
+            double route_length = wm->getRouteEndTrackPos().downtrack;
+
+            if (ending_downtrack + detailed_config.buffer_ending_downtrack < route_length)
+            {
+                ending_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, ending_downtrack + detailed_config.buffer_ending_downtrack);
+            }
+            else
+            {
+                ending_pt_index = route_geometry.size() - 1;
+            }
+
+            lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin() + ending_pt_index);
+            bool first = true;
+            ROS_DEBUG_STREAM("Future geom size:"<< future_route_geometry.size());
+
+            for (auto p : future_route_geometry)
+            {
+                if (first && !points_and_target_speeds.empty())
+                {
+                    first = false;
+                    continue; // Skip the first point if we have already added points from a previous maneuver to avoid duplicates
+                }
+                PointSpeedPair pair;
+                pair.point = p;
+                //If current speed is above min speed, keep at current speed. Otherwise use end speed from maneuver.
+                pair.speed = (state.longitudinal_vel > detailed_config.minimum_speed) ? state.longitudinal_vel : lane_change_maneuver.end_speed;
+                points_and_target_speeds.push_back(pair);
+                
+            }
+
+            return points_and_target_speeds;
+            
+
+        } 
+
         std::vector<double> apply_speed_limits(const std::vector<double> speeds,
                                                const std::vector<double> speed_limits)
         {
@@ -195,173 +455,6 @@ namespace basic_autonomy
             return traj;
         }
 
-        std::vector<PointSpeedPair> maneuvers_to_points_lanefollow(const std::vector<cav_msgs::Maneuver> &maneuvers,
-                                                                   double max_starting_downtrack,
-                                                                   const carma_wm::WorldModelConstPtr &wm,
-                                                                   cav_msgs::VehicleState &ending_state_before_buffer,
-                                                                   const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config)
-        {
-            std::vector<PointSpeedPair> points_and_target_speeds;
-            std::unordered_set<lanelet::Id> visited_lanelets;
-
-            bool first = true;
-            ROS_DEBUG_STREAM("VehDowntrack: " << max_starting_downtrack);
-            for (const auto &manuever : maneuvers)
-            {
-                if (general_config.trajectory_type == "inlanecruising" && manuever.type != cav_msgs::Maneuver::LANE_FOLLOWING)
-                {
-                    throw std::invalid_argument("In-Lane Cruising does not support this maneuver type");
-                }
-
-                cav_msgs::LaneFollowingManeuver lane_following_maneuver = manuever.lane_following_maneuver;
-
-                double starting_downtrack = lane_following_maneuver.start_dist;
-                if (first)
-                {
-                    if (starting_downtrack > max_starting_downtrack)
-                    {
-                        starting_downtrack = max_starting_downtrack;
-                    }
-                    first = false;
-                }
-
-                ROS_DEBUG_STREAM("Used downtrack: " << starting_downtrack);
-
-                auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist, true, true);
-
-                if (lanelets.empty())
-                {
-                    ROS_ERROR_STREAM("Detected no lanelets between starting downtrack: "<< starting_downtrack << ", and lane_following_maneuver.end_dist: "<< lane_following_maneuver.end_dist);
-                    throw std::invalid_argument("Detected no lanelets between starting_downtrack and end_dist");
-                }
-
-                ROS_DEBUG_STREAM("Maneuver");
-
-                lanelet::BasicLineString2d downsampled_centerline;
-                downsampled_centerline.reserve(200);
-
-                //getLaneletsBetween is inclusive of lanelets between its two boundaries
-                //which may return lanechange lanelets, so
-                //exclude lanechanges and plan for only the straight part
-                int curr_idx = 0;
-                auto following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
-                lanelet::ConstLanelets straight_lanelets;
-
-                if(lanelets.size() <= 1) //no lane change anyways if only size 1
-                {
-                    ROS_DEBUG_STREAM("Detected one straight lanelet Id:" << lanelets[curr_idx].id());
-                    straight_lanelets = lanelets;
-                }
-                else
-                {
-                    // skip all lanechanges until lane follow starts
-                    while (curr_idx + 1 < lanelets.size() && 
-                            std::find(following_lanelets.begin(),following_lanelets.end(), lanelets[curr_idx + 1]) != following_lanelets.end())
-                    {
-                        curr_idx++;
-                        ROS_DEBUG_STREAM("Added lanelet Id forlane follow: " << lanelets[curr_idx].id());
-                        straight_lanelets.push_back(lanelets[curr_idx]);
-                        following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
-                    }
-
-                }
-
-                for (const auto& l : lanelets)
-                {
-                    ROS_DEBUG_STREAM("Processing Lanelet ID: " << l.id());
-                    if (visited_lanelets.find(l.id()) == visited_lanelets.end())
-                    {
-                        bool is_turn = false;
-                        if (l.hasAttribute("turn_direction"))
-                        {
-                            std::string turn_direction = l.attribute("turn_direction").value();
-                            is_turn = turn_direction.compare("left") == 0 || turn_direction.compare("right") == 0;
-                        }
-
-                        lanelet::BasicLineString2d centerline = l.centerline2d().basicLineString();
-                        lanelet::BasicLineString2d downsampled_points;
-                        if (is_turn)
-                        {
-                            downsampled_points = carma_utils::containers::downsample_vector(centerline, general_config.turn_downsample_ratio);
-                        }
-                        else
-                        {
-                            downsampled_points = carma_utils::containers::downsample_vector(centerline, general_config.default_downsample_ratio);
-                        }
-                        downsampled_centerline = carma_wm::geometry::concatenate_line_strings(downsampled_centerline, downsampled_points);
-                        visited_lanelets.insert(l.id());
-                    }
-                }
-
-                first = true;
-                for (auto p : downsampled_centerline)
-                {
-                    if (first && !points_and_target_speeds.empty())
-                    {
-                        first = false;
-                        continue; // Skip the first point if we have already added points from a previous maneuver to avoid duplicates
-                    }
-                    PointSpeedPair pair;
-                    pair.point = p;
-                    pair.speed = lane_following_maneuver.end_speed;
-                    points_and_target_speeds.push_back(pair);
-                }
-            }
-
-            //Here we are limiting the trajectory length to the given length by maneuver end dist as opposed to the end of lanelets involved.
-            double starting_route_downtrack = wm->routeTrackPos(points_and_target_speeds.front().point).downtrack;
-            double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist;
-
-            if(ending_downtrack + detailed_config.buffer_ending_downtrack < wm->getRouteEndTrackPos().downtrack){
-                ending_downtrack = ending_downtrack + detailed_config.buffer_ending_downtrack;
-            }
-            else{
-                ending_downtrack = wm->getRouteEndTrackPos().downtrack;
-            }
-
-            size_t max_i = points_and_target_speeds.size() - 1;
-            size_t unbuffered_idx = points_and_target_speeds.size() - 1;
-            bool found_unbuffered_idx = false;
-            double dist_accumulator = starting_route_downtrack;
-            lanelet::BasicPoint2d prev_point;
-
-            for (int i = 0; i < points_and_target_speeds.size(); i ++) {
-                auto current_point = points_and_target_speeds[i].point;
-                if (i == 0) {
-                    prev_point = current_point;
-                    continue;
-                }
-
-                double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
-                ROS_DEBUG_STREAM("Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() << 
-                "current_point.y():" << current_point.y());
-
-                dist_accumulator += delta_d;
-                if (dist_accumulator > maneuvers.back().lane_following_maneuver.end_dist && !found_unbuffered_idx)
-                {
-                    unbuffered_idx = i - 1;
-                    ROS_DEBUG_STREAM("Found index unbuffered_idx at: " << unbuffered_idx);
-                    found_unbuffered_idx = true;
-                }
-                
-                if (dist_accumulator > ending_downtrack) {
-                    max_i = i - 1;
-                    ROS_DEBUG_STREAM("Max_i breaking at: i: " << i << ", max_i: " << max_i);
-                    break;
-                }
-                prev_point = current_point;
-            }
-
-            ending_state_before_buffer.X_pos_global = points_and_target_speeds[unbuffered_idx].point.x();
-            ending_state_before_buffer.Y_pos_global = points_and_target_speeds[unbuffered_idx].point.y();
-            ROS_DEBUG_STREAM("Here ending_state_before_buffer.X_pos_global: " << ending_state_before_buffer.X_pos_global << 
-            ", and Y_pos_global" << ending_state_before_buffer.Y_pos_global);
-
-            std::vector<PointSpeedPair> constrained_points(points_and_target_speeds.begin(), points_and_target_speeds.begin() + max_i);
-
-            return constrained_points;
-            
-        }
 
         std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair> &points,
                                                        const int nearest_pt_index, std::vector<PointSpeedPair> future_points, double back_distance)
@@ -635,98 +728,14 @@ namespace basic_autonomy
             general_config.default_downsample_ratio = default_downsample_ratio;
             general_config.turn_downsample_ratio = turn_downsample_ratio;
 
+            std::cout<<"Printing general traj config"<<std::endl;
+            std::cout<<"trajectory type:"<<general_config.trajectory_type<<std::endl;
+            std::cout<<"Default downsample: "<<general_config.default_downsample_ratio<<std::endl;
+            std::cout<<"Turn downsample: "<<general_config.turn_downsample_ratio<<std::endl;
+
             return general_config;
         }
 
-        std::vector<PointSpeedPair> maneuvers_to_points_lanechange(const std::vector<cav_msgs::Maneuver> &maneuvers,
-                                                                   double max_starting_downtrack,
-                                                                   const carma_wm::WorldModelConstPtr &wm,
-                                                                   const cav_msgs::VehicleState& state, double &maneuver_fraction_completed, cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config)
-        {
-            std::vector<PointSpeedPair> points_and_target_speeds;
-            std::unordered_set<lanelet::Id> visited_lanelets;
-            ROS_DEBUG_STREAM("Maneuvers to points maneuver size:"<<maneuvers.size());
-            bool first = true;
-            for (const auto &maneuver : maneuvers)
-            {
-                if (maneuver.type != cav_msgs::Maneuver::LANE_CHANGE)
-                {
-                    throw std::invalid_argument("Not a lanechange maneuver, cannot create lane change points.");
-                }
-                cav_msgs::LaneChangeManeuver lane_change_maneuver = maneuver.lane_change_maneuver;
-
-                double starting_downtrack = lane_change_maneuver.start_dist;
-                if (first)
-                {
-                    if (starting_downtrack > max_starting_downtrack)
-                    {
-                        starting_downtrack = max_starting_downtrack;
-                    }
-                    first = false;
-                }
-                ROS_DEBUG_STREAM("Maneuvers to points starting downtrack:"<<starting_downtrack);
-                //get lane change route
-                double ending_downtrack = lane_change_maneuver.end_dist;
-                ROS_DEBUG_STREAM("Maneuvers to points ending downtrack:"<<ending_downtrack);
-                //Get geometry for maneuver
-                if (starting_downtrack >= ending_downtrack)
-                {
-                    throw std::invalid_argument("Start distance is greater than or equal to ending distance");
-                }
-
-                //get route geometry between starting and ending downtracks
-                std::vector<lanelet::BasicPoint2d> route_geometry = create_route_geom(starting_downtrack, stoi(lane_change_maneuver.starting_lane_id), ending_downtrack + detailed_config.buffer_ending_downtrack, wm);
-                ROS_DEBUG_STREAM("Route geometry size : "<<route_geometry.size());
-
-                lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
-                double current_downtrack = wm->routeTrackPos(state_pos).downtrack;
-                int nearest_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, current_downtrack);
-                int ending_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, ending_downtrack);
-                ROS_DEBUG_STREAM("Nearest pt index in maneuvers to points: "<< nearest_pt_index);
-                ROS_DEBUG_STREAM("Ending pt index in maneuvers to points: "<< ending_pt_index);
-
-                //find percentage of maneuver left - for yield plugin use
-                int maneuver_points_size = route_geometry.size() - ending_pt_index;
-                maneuver_fraction_completed = nearest_pt_index / maneuver_points_size;
-
-                ending_state_before_buffer.X_pos_global = route_geometry[ending_pt_index].x();
-                ending_state_before_buffer.Y_pos_global = route_geometry[ending_pt_index].y();
-
-                ROS_DEBUG_STREAM("ending_state_before_buffer_:"<<ending_state_before_buffer.X_pos_global << 
-                    ", ending_state_before_buffer_.Y_pos_global" << ending_state_before_buffer.Y_pos_global);
-
-                double route_length = wm->getRouteEndTrackPos().downtrack;
-
-                if (ending_downtrack + detailed_config.buffer_ending_downtrack < route_length)
-                {
-                    ending_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, ending_downtrack + detailed_config.buffer_ending_downtrack);
-                }
-                else
-                {
-                    ending_pt_index = route_geometry.size() - 1;
-                }
-
-                lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin() + ending_pt_index);
-                first = true;
-                ROS_DEBUG_STREAM("Future geom size:"<< future_route_geometry.size());
-
-                for (auto p : future_route_geometry)
-                {
-                    if (first && !points_and_target_speeds.empty())
-                    {
-                        first = false;
-                        continue; // Skip the first point if we have already added points from a previous maneuver to avoid duplicates
-                    }
-                    PointSpeedPair pair;
-                    pair.point = p;
-                    //If current speed is above min speed, keep at current speed. Otherwise use end speed from maneuver.
-                    pair.speed = (state.longitudinal_vel > detailed_config.minimum_speed) ? state.longitudinal_vel : lane_change_maneuver.end_speed;
-                    points_and_target_speeds.push_back(pair);
-                }
-            }
-
-            return points_and_target_speeds;
-        }
 
         std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanechange_trajectory_from_centerline(
             const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time,

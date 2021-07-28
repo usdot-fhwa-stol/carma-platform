@@ -91,6 +91,8 @@ public:
    * \return true or falss
    */
   bool validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan);
+
+  cav_msgs::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
   
 private:
 
@@ -102,9 +104,6 @@ private:
   cav_msgs::Plugin plugin_discovery_msg_;
   DebugPublisher debug_publisher_;
   carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg_;
-  cav_msgs::VehicleState ending_state_before_buffer; //state before applying extra points for curvature calculation that are removed later
-
-  cav_msgs::VehicleState ending_state_before_buffer_;
 
 };
 

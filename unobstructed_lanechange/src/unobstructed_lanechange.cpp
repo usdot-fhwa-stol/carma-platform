@@ -121,9 +121,11 @@ namespace unobstructed_lanechange
                                                                             buffer_ending_downtrack_);
 
         ROS_DEBUG_STREAM("Current downtrack:"<<current_downtrack);
-        auto points_and_target_speeds = basic_autonomy::waypoint_generation::maneuvers_to_points_lanechange(maneuver_plan, current_downtrack, wm_, 
-                                                                                                    req.vehicle_state, maneuver_fraction_completed_, 
-                                                                                                    ending_state_before_buffer_, wpg_detail_config);                                                                                                    
+        // auto points_and_target_speeds = basic_autonomy::waypoint_generation::maneuvers_to_points_lanechange(maneuver_plan, current_downtrack, wm_, 
+        //                                                                                             req.vehicle_state, maneuver_fraction_completed_, 
+        //                                                                                             ending_state_before_buffer_, wpg_detail_config);                                                                                                    
+
+        auto points_and_target_speeds = basic_autonomy::waypoint_generation::create_geometry_profile(maneuver_plan, current_downtrack,wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config);
         ROS_DEBUG_STREAM("Maneuvers to points size:"<<points_and_target_speeds.size());
         auto downsampled_points = carma_utils::containers::downsample_vector(points_and_target_speeds, downsample_ratio_);
 

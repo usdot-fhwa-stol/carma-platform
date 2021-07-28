@@ -38,7 +38,7 @@
 namespace basic_autonomy
 {
 
-    // Test to ensure Eigen::Isometry2d behaves like tf2::Transform
+// Test to ensure Eigen::Isometry2d behaves like tf2::Transform
     TEST(BasicAutonomyTest, validate_eigen)
     {
         Eigen::Rotation2Dd frame_rot(M_PI_2);
@@ -112,15 +112,9 @@ namespace basic_autonomy
         ASSERT_EQ(0, traj_points[2].controller_plugin_name.compare(controller_plugin));
         ASSERT_EQ(0, traj_points[3].controller_plugin_name.compare(controller_plugin));
 
-        // TODO: planning plugin name set added to the library
-        // std::string expected_plugin_name = "InLaneCruisingPlugin";
-        // ASSERT_EQ(0, traj_points[0].planner_plugin_name.compare(expected_plugin_name));
-        // ASSERT_EQ(0, traj_points[1].planner_plugin_name.compare(expected_plugin_name));
-        // ASSERT_EQ(0, traj_points[2].planner_plugin_name.compare(expected_plugin_name));
-        // ASSERT_EQ(0, traj_points[3].planner_plugin_name.compare(expected_plugin_name));
     }
 
-    TEST(BasicAutonomyTest, constrain_to_time_boundary)
+     TEST(BasicAutonomyTest, constrain_to_time_boundary)
     {
 
         std::vector<waypoint_generation::PointSpeedPair> points;
@@ -648,10 +642,15 @@ namespace basic_autonomy
         state.Y_pos_global = veh_pos.y();
         state.longitudinal_vel = 8.0;
 
+        std::string trajectory_type = "cooperative_lanechange";
+        waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 0, 0);
         const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0, 0, 0, 0, 0, 5, 0, 0, 20);
         double maneuver_fraction_completed;
         cav_msgs::VehicleState ending_state;
-        std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::maneuvers_to_points_lanechange(maneuvers, starting_downtrack, cmw, state, maneuver_fraction_completed, ending_state, config);
+        //std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::maneuvers_to_points_lanechange(maneuvers, starting_downtrack, cmw, state, maneuver_fraction_completed, ending_state, config);
+        std::cout<<"Starting compose geometry profile"<<std::endl;
+        std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers, 
+                                                                                    starting_downtrack, cmw, ending_state, state, general_config, config);
         ros::Time state_time = ros::Time::now();
         double target_speed = 11.176;
         EXPECT_EQ(points.back().speed, state.longitudinal_vel);
@@ -671,9 +670,8 @@ namespace basic_autonomy
                                                                                                          
         ASSERT_NEAR(lc_start_point.y(), lc_geom.front().y(), 0.000001);
         ASSERT_NEAR(lc_start_point.x(), lc_geom.front().x(), 0.000001);
-
-        EXPECT_TRUE(true);
-    }
+        std::cout<<"Exiting Test, lane change path size:"<<lc_geom.size()<<std::endl;
+    } 
 
 } //basic_autonomy namespace
 
@@ -683,9 +681,8 @@ int main(int argc, char **argv)
     testing::InitGoogleTest(&argc, argv);
     ros::Time::init();
     ROSCONSOLE_AUTOINIT;
-    if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
-    {
-        ros::console::notifyLoggerLevelsChanged();
+    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+      ros::console::notifyLoggerLevelsChanged();
     }
     return RUN_ALL_TESTS();
 }

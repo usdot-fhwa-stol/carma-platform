@@ -146,6 +146,8 @@ namespace cooperative_lanechange
             ros::Publisher outgoing_mobility_request_;
             ros::Publisher lanechange_status_pub_;
 
+            cav_msgs::VehicleState ending_state_before_buffer_;
+
             private:
 
             // node handles
@@ -212,7 +214,7 @@ namespace cooperative_lanechange
             double back_distance_ = 0.0;
             double buffer_ending_downtrack_ = 0.0;
             
-            cav_msgs::VehicleState ending_state_before_buffer_;
+            
             
             // generated trajectory plan
             cav_msgs::TrajectoryPlan trajectory_msg;
