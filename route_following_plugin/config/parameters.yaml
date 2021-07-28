@@ -21,4 +21,4 @@ lane_following_plugin : "InLaneCruisingPlugin"
 
 # Double : The minimum length a maneuver can be when it is being modified to support stopping behavior.
 # Units : meters
-min_maneuver_length : 20.0
+min_maneuver_length : 45.0 # TODO update in lane cruising so that such an exterme value is not needed
