@@ -50,7 +50,6 @@ int main(int argc, char** argv)
   pnh.param<std::string>("lane_following_plugin_name",       config.lane_following_plugin_name, config.lane_following_plugin_name);
   pnh.param<std::string>("intersection_transit_plugin_name", config.intersection_transit_plugin_name, config.intersection_transit_plugin_name);
   pnh.getParam("/vehicle_id", config.vehicle_id);
-  pnh.param<double>("vehicle_status_generation_frequency_", config.vehicle_status_generation_frequency_, 10.0);
   // clang-format on
 
   // Construct plugin
@@ -62,6 +61,8 @@ int main(int argc, char** argv)
   
   // Mobility Operation Subscriber
   ros::Subscriber mob_operation_sub = nh.subscribe("incoming_mobility_operation", 1, &sci_strategic_plugin::SCIStrategicPlugin::mobilityOperationCb, &plugin);
+
+  ros::Subscriber bsm_sub = nh.subscribe("BSM", 1, &sci_strategic_plugin::SCIStrategicPlugin::BSMCb, &plugin);
 
   ros::Timer discovery_pub_timer =
       nh.createTimer(ros::Duration(ros::Rate(10.0)), [&plugin, &plugin_discovery_pub](const auto&) {

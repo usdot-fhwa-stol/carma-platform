@@ -57,7 +57,5 @@ struct SCIStrategicPluginConfig
 
   //! License plate of the vehicle.
   std::string vehicle_id = "default_id";
-
-  double vehicle_status_generation_frequency_;
 };
 }  // namespace localizer

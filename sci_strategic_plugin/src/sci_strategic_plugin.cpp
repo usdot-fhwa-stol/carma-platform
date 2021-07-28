@@ -100,6 +100,11 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
   
 }
 
+void SCIStrategicPlugin::BSMCb(const cav_msgs::BSMConstPtr& msg)
+{
+  bsm_id = msg->core_data.id;
+}
+
 void SCIStrategicPlugin::parseStrategyParams(const std::string& strategy_params)
 {
   std::istringstream strategy_params_ss(strategy_params);
@@ -397,11 +402,13 @@ double SCIStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt) cons
   }
 }
 
-cav_msgs::MobilityOperation SCIStrategicPlugin::generateMobilityOperation()
+void SCIStrategicPlugin::generateMobilityOperation()
 {
     cav_msgs::MobilityOperation mo_;
     mo_.header.timestamp = ros::Time::now().toNSec();
-    mo_.header.sender_bsm_id = std::string(reinterpret_cast<const char*>(getMsgId(ros::Time::now())[0]), getMsgId(ros::Time::now()).size());
+
+    std::string id(bsm_id.begin(), bsm_id.end());
+    mo_.header.sender_bsm_id = id;
 
     int flag = (approaching_stop_controlled_interction_ ? 1 : 0);
 
@@ -412,28 +419,6 @@ cav_msgs::MobilityOperation SCIStrategicPlugin::generateMobilityOperation()
 
     mobility_operation_pub.publish(mo_);
 }
-
-std::vector<uint8_t> SCIStrategicPlugin::getMsgId(const ros::Time now)
-{
-    std::vector<uint8_t> id(4);
-    // need to change ID every 5 mins
-    ros::Duration id_timeout(60 * 5);
-
-    std::default_random_engine generator;
-    std::uniform_int_distribution<int> dis(0,INT_MAX);
-
-    if(now - last_id_generation_time_ >= id_timeout)
-    {
-        random_id_ = dis(generator);
-        last_id_generation_time_ = now;
-    }
-    for(int i = 0; i < id.size(); ++i)
-    {
-        id[i] = random_id_ >> (8 * i);
-    }
-    return id;
-}
-
 
 
 }  // namespace SCI_strategic_plugin
