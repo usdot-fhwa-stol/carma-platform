@@ -33,12 +33,12 @@
 
 namespace carma_wm
 {
+namespace query
+{
 /**
- * \brief carma_wm::utils namespace contains implementations for utility read or write functions for stand-alone lanelet map without rest of the CARMAWorldModel features.
+ * \brief carma_wm::query namespace contains implementations for query functions (input and output read or write-able) for stand-alone lanelet map without rest of the CARMAWorldModel features.
  *        Currently mainly WMBroadcaster (carma_wm_ctrl) is using this to manipulate its own map without creating instance of carma_wm
  */
-namespace utils
-{
 
 /**
  * \brief Gets the underlying lanelet, given the cartesian point on the map
@@ -74,7 +74,7 @@ std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::LaneletMapPtr&
  * \param point         Cartesian point to check the corressponding lanelet
  * \param n             Number of lanelets to return. Default is 10. As there could be many lanelets overlapping.
  * 
- * \throw std::invalid_argument if the map is not set, contains no lanelets
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or if adjacent lanelet is not opposite direction
  * NOTE:  Only to be used on 2 lane, opposite direction road. Number of points in all linestrings are assumed to be roughly the same.
  *        The point is assumed to be on roughly similar shape of overlapping lanelets if any
  * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
@@ -91,13 +91,18 @@ std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::Lanel
  * \param point         Cartesian point to check the corressponding lanelet
  * \param n             Number of lanelets to return. Default is 10. As there could be many lanelets overlapping.
  * 
- * \throw std::invalid_argument if the map is not set, contains no lanelets
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or if adjacent lanelet is not opposite direction
  * NOTE:  Only to be used on 2 lane, opposite direction road. Number of points in all linestrings are assumed to be roughly the same.
  *        The point is assumed to be on roughly similar shape of overlapping lanelets if any
  * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
  */
 std::vector<lanelet::Lanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& input_point,
                                                           const unsigned int n = 10);
+
+} // namespace query
+
+namespace utils
+{
 
 /*! \brief Get 32bit id by concatenating 16bit id with 8bit signal_group_id
  *  \param intersection_id 16bit id which will be shifted left 8bits

@@ -1044,22 +1044,22 @@ void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
 
 std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n)
 {
-  return carma_wm::utils::getLaneletsFromPoint(semantic_map_, point, n);
+  return carma_wm::query::getLaneletsFromPoint(semantic_map_, point, n);
 }
 
 std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n) const
 {
-  return carma_wm::utils::getLaneletsFromPoint(getMap(), point, n);
+  return carma_wm::query::getLaneletsFromPoint(getMap(), point, n);
 }
 
 std::vector<lanelet::Lanelet> CARMAWorldModel::nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n)
 {
-  return carma_wm::utils::nonConnectedAdjacentLeft(semantic_map_, input_point, n);
+  return carma_wm::query::getLaneletsFromPoint(semantic_map_, input_point, n);
 }
 
 std::vector<lanelet::ConstLanelet> CARMAWorldModel::nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n) const
 {
-  return carma_wm::utils::nonConnectedAdjacentLeft(getMap(), input_point, n);
+  return carma_wm::query::getLaneletsFromPoint(getMap(), input_point, n);
 }
 
 

@@ -104,10 +104,13 @@ std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::Lanel
 
   auto opposite_lanelets = getLaneletsFromPoint(semantic_map, point_on_opposite_lane, n);
 
+  // TODO: create opposite directio
   for (auto llt: opposite_lanelets)
   {
-      ROS_DEBUG_STREAM("potential_opposite_lanelets llt: "  << llt.id());
+    ROS_DEBUG_STREAM("potential_opposite_lanelets llt: "  << llt.id());
+    
   }
+
 
   return opposite_lanelets;
 }

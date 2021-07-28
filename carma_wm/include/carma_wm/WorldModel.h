@@ -349,7 +349,7 @@ public:
    * \param point         Cartesian point to check the corressponding lanelet
    * \param n             Number of lanelets to return. Default is 10. As there could be many lanelets overlapping.
    * 
-   * \throw std::invalid_argument if the map is not set, contains no lanelets
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or if adjacent lanelet is not opposite direction
    * NOTE:  Only to be used on 2 lane, opposite direction road. Number of points in all linestrings are assumed to be roughly the same.
    *        The point is assumed to be on roughly similar shape of overlapping lanelets if any
    * \return vector of underlying lanelet, empty vector if it is not part of any lanelet

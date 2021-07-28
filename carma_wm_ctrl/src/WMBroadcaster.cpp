@@ -563,8 +563,8 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
   /// HANDLE MID HERE
   ////////////////////
   
-  auto reverse_back_llt = carma_wm::utils::getLaneletsFromPoint(current_map_,  work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.back().basicPoint2d())[0];
-  auto reverse_front_llt = carma_wm::utils::getLaneletsFromPoint(current_map_,  work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.front().basicPoint2d())[0];
+  auto reverse_back_llt = carma_wm::query::getLaneletsFromPoint(current_map_,  work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.back().basicPoint2d())[0];
+  auto reverse_front_llt = carma_wm::query::getLaneletsFromPoint(current_map_,  work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.front().basicPoint2d())[0];
   
   std::vector<lanelet::Lanelet> trimmed_llts;
 
@@ -674,7 +674,7 @@ lanelet::Lanelets WMBroadcaster::splitOppositeLaneletWithPoint(std::shared_ptr<s
   auto point_downtrack_ratio = point_downtrack / carma_wm::geometry::trackPos(input_llt, input_llt.centerline().back().basicPoint2d()).downtrack;
 
   // get opposing lanelets and split
-  auto opposing_llts = carma_wm::utils::nonConnectedAdjacentLeft(current_map_, input_pt);
+  auto opposing_llts = carma_wm::query::getLaneletsFromPoint(current_map_, input_pt);
   
   if (opposing_llts.empty())
   {
