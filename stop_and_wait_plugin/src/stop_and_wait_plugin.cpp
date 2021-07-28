@@ -217,8 +217,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
   std::vector<PointSpeedPair> final_points;
 
-  double remaining_distance = stop_location - starting_downtrack;  // TODO review. Should the remaining distance be in
-                                                                   // the middle of the stopping buffer?
+  double remaining_distance = stop_location - starting_downtrack;  
   double target_accel = config_.accel_limit_multiplier * config_.accel_limit;
   double req_dist = (starting_speed * starting_speed) /
                     (2.0 * target_accel);  // Distance needed to go from current speed to 0 at target accel
@@ -268,7 +267,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
   // Now we have a trajectory that decelerates from our end point to somewhere in the maneuver
   std::reverse(final_points.begin(),
-               final_points.end());  // TODO seems lik final_points does not contain start and end point for some reason
+               final_points.end());  
 
   std::vector<double> speeds;
   std::vector<lanelet::BasicPoint2d> raw_points;
