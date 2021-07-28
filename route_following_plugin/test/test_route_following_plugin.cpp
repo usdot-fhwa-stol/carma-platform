@@ -34,18 +34,6 @@
 
 namespace route_following_plugin
 {
-    
-    TEST(RouteFollowingPluginTest, testFindLaneletIndexFromPath)
-    {
-        RouteFollowingPlugin rfp;
-        lanelet::ConstLanelets lls;
-        lanelet::Lanelet ll;
-        ll.setId(15);
-        lls.push_back(ll);
-        lanelet::routing::LaneletPath path(lls);
-        EXPECT_EQ(0, rfp.findLaneletIndexFromPath(15, path));
-        EXPECT_EQ(-1, rfp.findLaneletIndexFromPath(5, path));
-    }
 
     TEST(RouteFollowingPluginTest, testComposeManeuverMessage)
     {
@@ -54,7 +42,7 @@ namespace route_following_plugin
         ros::Time current_time = ros::Time::now();
         auto msg = rfp.composeLaneFollowingManeuverMessage(1.0, 10.0, 0.9, 11.176, {2});
         EXPECT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, msg.type);
-        EXPECT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, msg.lane_following_maneuver.parameters.neogition_type);
+        EXPECT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, msg.lane_following_maneuver.parameters.negotiation_type);
         EXPECT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN, msg.lane_following_maneuver.parameters.presence_vector);
         EXPECT_EQ("InLaneCruisingPlugin", msg.lane_following_maneuver.parameters.planning_tactical_plugin);
         EXPECT_EQ("RouteFollowingPlugin", msg.lane_following_maneuver.parameters.planning_strategic_plugin);

@@ -123,6 +123,13 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
         });
 
+        wml_->setMapCallback([this]() {
+            if (wm_->getRoute()) { // If this map update occured after a route was provided we need to regenerate maneuvers
+                ROS_INFO_STREAM("Recomputing maneuvers due to map update");
+                this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
+            }
+        });
+
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
             [this](const auto &) { plugin_discovery_pub_.publish(plugin_discovery_msg_); });
@@ -586,25 +593,11 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         }
     }
 
-    int RouteFollowingPlugin::findLaneletIndexFromPath(int target_id, const lanelet::routing::LaneletPath &path) const
-    {
-        for (size_t i = 0; i < path.size(); ++i)
-        {
-            if (path[i].id() == target_id)
-            {
-                return i;
-            }
-        }
-        ROS_DEBUG_STREAM("Returning -1 because could not find lanelet id" << target_id);
-
-        return -1;
-    }
-
     cav_msgs::Maneuver RouteFollowingPlugin::composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, const std::vector<lanelet::Id>& lane_ids) const
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-        maneuver_msg.lane_following_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.lane_following_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = lanefollow_planning_tactical_plugin_;
         maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = planning_strategic_plugin_;
@@ -633,7 +626,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_CHANGE;
-        maneuver_msg.lane_change_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.lane_change_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.lane_change_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.lane_change_maneuver.parameters.planning_tactical_plugin = lane_change_plugin_;
         maneuver_msg.lane_change_maneuver.parameters.planning_strategic_plugin = planning_strategic_plugin_;

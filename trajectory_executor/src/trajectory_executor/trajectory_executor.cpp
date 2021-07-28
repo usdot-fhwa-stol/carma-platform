@@ -43,6 +43,12 @@ namespace trajectory_executor
 
         out[default_control_plugin_] = default_control_plugin_topic_;
 
+        //Hardcoding platoon control plugins
+
+        std::string control_plugin2 = "PlatooningControlPlugin";
+        std::string control_plugin_topic2 = "/guidance/PlatooningControlPlugin/plan_trajectory";
+        out[control_plugin2]=control_plugin_topic2;
+
         return out;
     }
     
@@ -66,7 +72,6 @@ namespace trajectory_executor
         {
         	_cur_traj= nullptr;
         }
-
     }
 
     void TrajectoryExecutor::onTrajEmitTick(const ros::TimerEvent& te)
