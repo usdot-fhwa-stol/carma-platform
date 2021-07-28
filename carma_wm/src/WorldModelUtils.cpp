@@ -18,7 +18,7 @@
 
 namespace carma_wm
 {
-namespace utils
+namespace query
 {
 
 std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& point,
@@ -104,26 +104,30 @@ std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::Lanel
 
   auto opposite_lanelets = getLaneletsFromPoint(semantic_map, point_on_opposite_lane, n);
 
-  // TODO: create opposite directio
+  // TODO: create opposite direction 
   for (auto llt: opposite_lanelets)
   {
     ROS_DEBUG_STREAM("potential_opposite_lanelets llt: "  << llt.id());
-    
+
   }
 
 
   return opposite_lanelets;
 }
+}  // namespace query
+
+namespace utils
+{
 
 uint32_t get32BitId(uint16_t intersection_id, uint8_t signal_group_id)
 {
-  uint32_t temp;
+  uint32_t temp = 0;
   temp |= intersection_id;
   temp = temp << 8;
   temp |= signal_group_id;
   return temp;
 }
 
-}  // namespace utils
 
+} // namespace utils
 }  // namespace carma_wm

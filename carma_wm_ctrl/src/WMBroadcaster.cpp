@@ -692,6 +692,10 @@ std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithRatio(std::vector<d
   {
     throw lanelet::InvalidObjectStateError(std::string("Base lanelet map is not loaded to the WMBroadcaster"));
   }
+  if (ratios.empty())
+  {
+    throw lanelet::InvalidInputError(std::string("Ratios is empty! Cannot split"));
+  }
 
   std::vector<lanelet::Lanelet> created_llts;
 
@@ -962,10 +966,11 @@ void WMBroadcaster::setConfigSpeedLimit(double cL)
 
 uint32_t WMBroadcaster::generate32BitId(const std::string& label)
 {
-  auto pos1 = label.find("INT_ID:");
-  auto pos2 = label.find("SG_ID:");
-  uint16_t intersection_id = std::stoi(label.substr(pos1, pos2 - pos1));
-  uint8_t signal_id = std::stoi(label.substr(pos2, label.size() - pos2));
+  auto pos1 = label.find("INT_ID:") + 7;
+  auto pos2 = label.find("SG_ID:") + 6;
+  
+  uint16_t intersection_id = std::stoi(label.substr(pos1 , 4));
+  uint8_t signal_id = std::stoi(label.substr(pos2 , 3));
 
   return carma_wm::utils::get32BitId(intersection_id, signal_id);
 }

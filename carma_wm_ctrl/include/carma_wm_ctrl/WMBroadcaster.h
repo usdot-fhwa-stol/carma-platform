@@ -305,7 +305,7 @@ public:
    */
   std::vector<lanelet::Lanelet> splitLaneletWithPoint(const std::vector<lanelet::BasicPoint2d>& input_pts, const lanelet::Lanelet& input_llt, double error_distance = 20);
 
-  /*
+  /*!
    * \brief Split given lanelet's adjacent, OPPOSITE lanelet with same proportion as the given point's downtrack relative to the lanelet. 
             Newly created lanelet will have old regulatory elements copied into each of them. 
             Only for front and back points, it is deemed not necessary to split if the point is within error_distance from any of the boundary.
