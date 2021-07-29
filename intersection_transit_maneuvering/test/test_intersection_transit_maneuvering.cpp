@@ -61,17 +61,17 @@ TEST(Intersection_Transit_Maneuvering_Test, Planning_Callback_Test)
     p1.controller_plugin_name = "Point1";
     p1.x = 0.0;
     p1.y = 1.0;
-    p1.lane_id = "abcd";
+    p1.lane_ids = { "abcd" };
 
     p2.controller_plugin_name = "Point2";
     p2.x = 0.0;
     p2.y = 2.0;
-    p2.lane_id = "efgh";
+    p2.lane_ids = { "efgh" };
     
     p3.controller_plugin_name = "Point3";
     p3.x = 0.0;
     p3.y = 3.0;
-    p3.lane_id = "ijkl";
+    p3.lane_ids = { "ijkl" };
 
 
     cav_srvs::PlanTrajectoryRequest req;
@@ -92,7 +92,7 @@ TEST(Intersection_Transit_Maneuvering_Test, Planning_Callback_Test)
     man0.lane_following_maneuver.end_dist = 5.0;
     man0.lane_following_maneuver.start_time = ros::Time(0.0);
     man0.lane_following_maneuver.end_time = ros::Time(1.7701);
-    man0.lane_following_maneuver.lane_id = 1200;
+    man0.lane_following_maneuver.lane_ids = { 1200 };
 
     req.maneuver_plan.maneuvers.push_back(man0);
 
@@ -166,7 +166,7 @@ TEST(Intersection_Transit_Maneuvering_Test, Convert_Maneuvers_Test)
     man0.lane_following_maneuver.end_dist = 5.0;
     man0.lane_following_maneuver.start_time = ros::Time(0.0);
     man0.lane_following_maneuver.end_time = ros::Time(1.7701);
-    man0.lane_following_maneuver.lane_id = 1200;
+    man0.lane_following_maneuver.lane_ids = { 1200 };
 
     /*Test that the operation will throw an invalid argrument error statement due to a non-applicable maneuver type being used*/
     maneuvers.push_back(man0);
