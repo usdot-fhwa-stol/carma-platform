@@ -61,17 +61,17 @@ TEST(Intersection_Transit_Maneuvering_Test, Planning_Callback_Test)
     p1.controller_plugin_name = "Point1";
     p1.x = 0.0;
     p1.y = 1.0;
-    p1.lane_ids = { "abcd" };
+    p1.lane_id = "abcd";
 
     p2.controller_plugin_name = "Point2";
     p2.x = 0.0;
     p2.y = 2.0;
-    p2.lane_ids = { "efgh" };
+    p2.lane_id = "efgh";
     
     p3.controller_plugin_name = "Point3";
     p3.x = 0.0;
     p3.y = 3.0;
-    p3.lane_ids = { "ijkl" };
+    p3.lane_id = "ijkl";
 
 
     cav_srvs::PlanTrajectoryRequest req;
