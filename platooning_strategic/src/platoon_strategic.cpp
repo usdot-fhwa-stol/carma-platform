@@ -133,7 +133,12 @@ namespace platoon_strategic
         if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING){
             speed =  maneuver.lane_following_maneuver.end_speed;
             current_progress =  maneuver.lane_following_maneuver.end_dist;
-            lane_id =  stoi(maneuver.lane_following_maneuver.lane_id);
+            if (maneuver.lane_following_maneuver.lane_ids.empty()) {
+                ROS_WARN_STREAM("Lane id of lane following maneuver not set. Using 0");
+                lane_id = 0;
+            } else {
+                lane_id =  stoi(maneuver.lane_following_maneuver.lane_ids[0]);
+            }
         }
     }
 
@@ -273,7 +278,7 @@ namespace platoon_strategic
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-        maneuver_msg.lane_following_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::PLATOONING;
+        maneuver_msg.lane_following_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::PLATOONING;
         maneuver_msg.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "PlatooningTacticalPlugin";
         maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "PlatooningStrategicPlugin";
@@ -290,7 +295,7 @@ namespace platoon_strategic
         } else {
             maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * cur_plus_target));
         }
-        maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
+        maneuver_msg.lane_following_maneuver.lane_ids = { std::to_string(lane_id) };
         current_time = maneuver_msg.lane_following_maneuver.end_time;
         ROS_DEBUG_STREAM("Creating lane follow start dist:"<<current_dist<<" end dist:"<<end_dist);
         ROS_DEBUG_STREAM("Duration:"<< maneuver_msg.lane_following_maneuver.end_time.toSec() - maneuver_msg.lane_following_maneuver.start_time.toSec());

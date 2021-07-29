@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -15,32 +15,40 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(route_following_plugin)
+project(intersection_transit_maneuvering)
 
-## Compile as C++11, supported in ROS Kinetic and newer
+## Compile as C++14, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
+set( CATKIN_DEPS
   roscpp
   std_msgs
   cav_msgs
   cav_srvs
-  carma_utils
   carma_wm
+  carma_utils
+  trajectory_utils
+)
+
+## Find catkin macros and libraries
+find_package(catkin REQUIRED COMPONENTS
+ ${CATKIN_DEPS}
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost)
+find_package(Eigen3 REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils cav_msgs carma_wm
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS ${CATKIN_DEPS}
+  DEPENDS Boost EIGEN3
 )
 
 ###########
@@ -48,56 +56,58 @@ catkin_package(
 ###########
 
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
-  include
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
-
 add_executable( ${PROJECT_NAME}
-  ${headers}
-  src/route_following_plugin.cpp
   src/main.cpp)
 
-#add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_library(route_following_plugin_lib src/route_following_plugin.cpp)
-add_dependencies(route_following_plugin_lib ${catkin_EXPORTED_TARGETS})
+  
+add_library(intersection_transit_maneuvering_library 
+  src/intersection_transit_maneuvering.cpp
+  src/itm_service.cpp
+  src/call_test.cpp
+)
+target_link_libraries(intersection_transit_maneuvering_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_dependencies(intersection_transit_maneuvering_library ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME} route_following_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} intersection_transit_maneuvering_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_dependencies(${PROJECT_NAME} intersection_transit_maneuvering_library ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
 #############
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} intersection_transit_maneuvering_library
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Install Other Resources
-install(DIRECTORY launch config
+install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
 #############
 ## Testing ##
 #############
-catkin_add_gmock(${PROJECT_NAME}-test
-test/test_route_following_plugin.cpp
- WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
 
-catkin_add_gmock(${PROJECT_NAME}-stopping-test
-test/test_stop_at_end_of_route.cpp
- WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
- 
-target_link_libraries(${PROJECT_NAME}-test route_following_plugin_lib ${catkin_LIBRARIES})
-target_link_libraries(${PROJECT_NAME}-stopping-test route_following_plugin_lib ${catkin_LIBRARIES})
+## Add gtest based cpp test target and link libraries
+
+catkin_add_gmock(${PROJECT_NAME}-test 
+    test/test_intersection_transit_maneuvering.cpp
+    test/test_main.cpp
+)
+#catkin_add_gtest(${PROJECT_NAME}-test test/test_intersection_transit_maneuvering.cpp)
+if(TARGET ${PROJECT_NAME}-test)
+ target_link_libraries(${PROJECT_NAME}-test intersection_transit_maneuvering_library ${catkin_LIBRARIES})
+endif()

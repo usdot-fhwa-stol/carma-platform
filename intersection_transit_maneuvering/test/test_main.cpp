@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,13 @@
  * the License.
  */
 
+#include <gtest/gtest.h>
 #include <ros/ros.h>
 
-#include <stop_and_wait_node.h>
-
+// Run all the tests
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "stop_and_wait_plugin");
-  stop_and_wait_plugin::StopandWaitNode sw;
-  sw.run();
-  return 0;
+  testing::InitGoogleTest(&argc, argv);
+  ros::Time::init();
+  return RUN_ALL_TESTS();
 }

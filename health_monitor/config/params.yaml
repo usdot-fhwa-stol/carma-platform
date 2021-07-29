@@ -28,7 +28,7 @@ startup_duration: 30.0
 required_plugins:
   - RouteFollowing
   - InLaneCruisingPlugin
-  - StopandWaitPlugin
+  - StopAndWaitPlugin
   - Pure Pursuit
 
 # String: Plugin service name prefix
