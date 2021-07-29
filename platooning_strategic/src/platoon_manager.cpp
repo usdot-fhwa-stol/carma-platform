@@ -197,7 +197,6 @@ namespace platoon_strategic
             downtrackDistance[i] = platoon[i].vehiclePosition; 
         }
 
-        // downtrackDistance[downtrackDistance.length - 1] = inputs.getDistanceFromRouteStart();
         double dt = getCurrentDowntrackDistance();
         downtrackDistance[downtrackDistance.size() - 1] = dt;
         

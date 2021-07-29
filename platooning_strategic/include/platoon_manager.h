@@ -34,6 +34,9 @@
 
 namespace platoon_strategic
 {
+    /**
+    * \brief Struct for a platoon plan
+    */ 
     struct PlatoonPlan {
         
         bool valid;
@@ -46,18 +49,20 @@ namespace platoon_strategic
     };
 
     /**
-        * A response to an MobilityRequest message.
-        * ACK - indicates that the plugin accepts the MobilityRequest and will handle making any adjustments needed to avoid a conflict
-        * NACK - indicates that the plugin rejects the MobilityRequest and would suggest the other vehicle replan
-        * NO_RESPONSE - indicates that the plugin is indifferent but sees no conflict
+    * \brief A response to an MobilityRequest message.
+    * ACK - indicates that the plugin accepts the MobilityRequest and will handle making any adjustments needed to avoid a conflict
+    * NACK - indicates that the plugin rejects the MobilityRequest and would suggest the other vehicle replan
+    * NO_RESPONSE - indicates that the plugin is indifferent but sees no conflict
     */
-
     enum MobilityRequestResponse {
             ACK,
             NACK,
             NO_RESPONSE
     };
 
+    /**
+    * \brief Platoon States
+    */
     enum PlatoonState{
         STANDBY,
         LEADERWAITING,
@@ -66,23 +71,24 @@ namespace platoon_strategic
         FOLLOWER
     };
 
-    
-        struct PlatoonMember{
-            // Static ID is permanent ID for each vehicle
-            std::string staticId;
-            // Current BSM Id for each CAV
-            std::string bsmId;
-            // Vehicle real time command speed in m/s
-            double commandSpeed;
-            // Actual vehicle speed in m/s
-            double vehicleSpeed;
-            // Vehicle current down track distance on the current route in m
-            double vehiclePosition;
-            // The local time stamp when the host vehicle update any informations of this member
-            long   timestamp;
-            // PlatoonMember(){};
-            PlatoonMember(): staticId(""), bsmId(""), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), timestamp(0) {} 
-            PlatoonMember(std::string staticId, std::string bsmId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
+    /**
+    * \brief Platoon States
+    */
+    struct PlatoonMember{
+        // Static ID is permanent ID for each vehicle
+        std::string staticId;
+        // Current BSM Id for each CAV
+        std::string bsmId;
+        // Vehicle real time command speed in m/s
+        double commandSpeed;
+        // Actual vehicle speed in m/s
+        double vehicleSpeed;
+        // Vehicle current down track distance on the current route in m
+        double vehiclePosition;
+        // The local time stamp when the host vehicle update any informations of this member
+        long   timestamp;
+        PlatoonMember(): staticId(""), bsmId(""), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), timestamp(0) {} 
+        PlatoonMember(std::string staticId, std::string bsmId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
             bsmId(bsmId), commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), vehiclePosition(vehiclePosition), timestamp(timestamp) {}
         };
         
@@ -92,6 +98,9 @@ namespace platoon_strategic
     {
     public:
 
+        /**
+        * \brief Default constructor
+        */
         PlatoonManager();
 
         // Platoon List (initialized empty)
@@ -102,8 +111,18 @@ namespace platoon_strategic
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
 
+        // Current vehicle downtrack
         double current_downtrack_distance_ = 0;
 
+        /**
+        * \brief Update platoon members information
+        * 
+        * \param senderId static id of the broadcasting vehicle
+        * \param platoonId platoon id
+        * \param senderBsmId bsm id of the broadcasting vehicle
+        * \param params strategy parameters
+        * \param Dtd downtrack distance
+        */
         void memberUpdates(const std::string& senderId,const std::string& platoonId,const std::string& senderBsmId,const std::string& params, const double& DtD);
 
         /**
@@ -111,16 +130,22 @@ namespace platoon_strategic
          * in leader state this method will add/updates the information of platoon member if it is using
          * the same platoon ID, in follower state this method will updates the vehicle information who
          * is in front of the subject vehicle or update platoon id if the leader is join another platoon
-         * @param senderId sender ID for the current info
-         * @param platoonId sender platoon id
-         * @param senderBsmId sender BSM ID
-         * @param params strategy params from STATUS message in the format of "CMDSPEED:xx,DOWNTRACK:xx,SPEED:xx"
+         * \param senderId sender ID for the current info
+         * \param platoonId sender platoon id
+         * \param senderBsmId sender BSM ID
+         * \param params strategy params from STATUS message in the format of "CMDSPEED:xx,DOWNTRACK:xx,SPEED:xx"
          **/
         void updatesOrAddMemberInfo(std::string senderId, std::string senderBsmId, double cmdSpeed, double dtDistance, double curSpeed);
-
+        
+        /**
+        * \brief Returns total size of the platoon
+        */
         int getTotalPlatooningSize() const;
 
 
+        /**
+        * \brief Returns leader of the platoon
+        */
         PlatoonMember getLeader();
 
         /**
@@ -139,19 +164,59 @@ namespace platoon_strategic
 
         int allPredecessorFollowing();
 
+        /**
+        * \brief Update status when state change from Follower to Leader
+        */
         void changeFromFollowerToLeader();
+        
+        /**
+        * \brief Update status when state change from Leader to Follower
+        *
+        * \param newPlatoonId platoon id of the leader
+        */
         void changeFromLeaderToFollower(std::string newPlatoonId);
+        
+        /**
+        * \brief Get number of vehicles in front of host vehicle in platoon
+        */
         int getNumberOfVehicleInFront();
+        
+        /**
+        * \brief Returns Length of the platoon
+        */
         double getCurrentPlatoonLength();
+
+        /**
+        * \brief Returns downtrack distance of the rear vehicle in platoon
+        */
         double getPlatoonRearDowntrackDistance();
         
+        /**
+        * \brief Returns distance from start of the route
+        */
         double getDistanceFromRouteStart() const;
+        
+        /**
+        * \brief Returns distance to the front vehicle
+        */
         double getDistanceToFrontVehicle();
+        
+        /**
+        * \brief Returns current speed
+        */
         double getCurrentSpeed() const;
+        
+        /**
+        * \brief Returns command speed
+        */
         double getCommandSpeed();
+
+        /**
+        * \brief Returns current downtrack distance
+        */
         double getCurrentDowntrackDistance() const;
 
-
+        // Member variables
         int platoonSize = 2;
         std::string leaderID = "default_leader_id";
         std::string currentPlatoonID = "default_test_id";
@@ -160,8 +225,10 @@ namespace platoon_strategic
         double current_speed_ = 0;
         double command_speed_ = 0;
 
+        // Platoon State
         PlatoonState current_platoon_state = PlatoonState::STANDBY;
-
+        
+        // Platooning PLan
         PlatoonPlan current_plan;
 
         std::string targetLeaderId = "default_target_leader_id";
@@ -198,6 +265,7 @@ namespace platoon_strategic
         std::string algorithmType_ = "APF_ALGORITHM";
 
         bool insufficientGapWithPredecessor(double distanceToFrontVehicle);
+        
         std::vector<double> calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed) const;
         int determineLeaderBasedOnViolation(std::vector<double> timeHeadways);
 
