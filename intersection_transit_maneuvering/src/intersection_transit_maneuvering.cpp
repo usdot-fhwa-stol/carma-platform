@@ -128,7 +128,7 @@ namespace intersection_transit_maneuvering
                 new_maneuver.lane_following_maneuver.end_time = maneuver.intersection_transit_straight_maneuver.end_time;
 
 
-                new_maneuver.lane_following_maneuver.lane_id = maneuver.intersection_transit_straight_maneuver.starting_lane_id;
+                new_maneuver.lane_following_maneuver.lane_ids = { maneuver.intersection_transit_straight_maneuver.starting_lane_id };
 
                 new_maneuver_plan.push_back(new_maneuver);
             }
@@ -150,7 +150,7 @@ namespace intersection_transit_maneuvering
                 new_maneuver.lane_following_maneuver.end_speed = maneuver.intersection_transit_left_turn_maneuver.end_speed;
                 new_maneuver.lane_following_maneuver.end_time = maneuver.intersection_transit_left_turn_maneuver.end_time;
 
-                new_maneuver.lane_following_maneuver.lane_id = maneuver.intersection_transit_left_turn_maneuver.starting_lane_id;
+                new_maneuver.lane_following_maneuver.lane_ids = { maneuver.intersection_transit_left_turn_maneuver.starting_lane_id };
 
                 new_maneuver_plan.push_back(new_maneuver);
             }
@@ -172,7 +172,7 @@ namespace intersection_transit_maneuvering
                 new_maneuver.lane_following_maneuver.end_speed = maneuver.intersection_transit_right_turn_maneuver.end_speed;
                 new_maneuver.lane_following_maneuver.end_time = maneuver.intersection_transit_right_turn_maneuver.end_time;
 
-                new_maneuver.lane_following_maneuver.lane_id = maneuver.intersection_transit_right_turn_maneuver.starting_lane_id;
+                new_maneuver.lane_following_maneuver.lane_ids = { maneuver.intersection_transit_right_turn_maneuver.starting_lane_id };
 
                 new_maneuver_plan.push_back(new_maneuver);
             }

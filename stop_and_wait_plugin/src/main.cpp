@@ -14,16 +14,14 @@
  * the License.
  */
 
-
 #include <ros/ros.h>
 
-#include <stop_and_wait_plugin.h>
+#include <stop_and_wait_node.h>
 
 int main(int argc, char** argv)
 {
-
-    ros::init(argc, argv, "stop_and_wait_plugin");
-    stop_and_wait_plugin::StopandWait sw;
-    sw.run();
-    return 0;
+  ros::init(argc, argv, "stop_and_wait_plugin");
+  stop_and_wait_plugin::StopandWaitNode sw;
+  sw.run();
+  return 0;
 }
