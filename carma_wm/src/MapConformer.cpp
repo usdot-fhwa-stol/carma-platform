@@ -536,7 +536,7 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
       lanelet.removeRegulatoryElement(speed_limit.back());
       lanelet.addRegulatoryElement(rar);
       map->update(lanelet, rar);//Add DigitalSpeedLimit data to the map
-      ROS_INFO_STREAM("Number of Regulatory Elements: "<< map->regulatoryElementLayer.size());
+      //ROS_INFO_STREAM("Number of Regulatory Elements: "<< map->regulatoryElementLayer.size());
 
 
     }
@@ -549,7 +549,6 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
 
 void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit)
 {
-
   auto default_traffic_rules = getAllGermanTrafficRules();  // Use german traffic rules as default as they most closely
                                                             // match the generic traffic rules
   // Handle lanelets

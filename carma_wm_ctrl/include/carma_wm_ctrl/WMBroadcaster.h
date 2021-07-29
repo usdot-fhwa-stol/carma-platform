@@ -58,6 +58,7 @@
 namespace carma_wm_ctrl
 {
   const int WORKZONE_TCM_REQUIRED_SIZE = 4;
+  struct WorkZoneSection { static const uint8_t OPEN; static const uint8_t CLOSED; static const uint8_t TAPERLEFT; static const uint8_t TAPERRIGHT; static const uint8_t OPENLEFT; static const uint8_t OPENRIGHT; static const uint8_t REVERSE;}; 
 
 /*!
  * \brief Class which provies exposes map publication and carma_wm update logic
@@ -163,7 +164,7 @@ public:
    */
   void setMaxLaneWidth(double max_lane_width);
 
-/*!
+  /*!
    * \brief Sets the configured speed limit. 
    */
   void setConfigSpeedLimit(double cL);
@@ -293,7 +294,7 @@ public:
   /*!
    * \brief Split given lanelet with same proportion as the given points' downtrack relative to the lanelet. 
             Newly created lanelet will have old regulatory elements copied into each of them. 
-            Only for front and back points, it is deemed not necessary to split if the point is within error_distance from any of the boundary.
+            From the front and back boundaries, it is deemed not necessary to split if the ratios are within error_distance from either of it.
             For example, if front and back points of 3 points given are both within error_distance, only middle point will be used to split into 2 lanelets.
             It will return duplicate of old lanelet (with different id) if no splitting was done.
 
@@ -303,12 +304,12 @@ public:
    * \return lanelets split form original one. lanelets sorted from front to back.
    * \throw InvalidObjectStateError if no map is available. NOTE: this is requried to return mutable objects.
    */
-  std::vector<lanelet::Lanelet> splitLaneletWithPoint(const std::vector<lanelet::BasicPoint2d>& input_pts, const lanelet::Lanelet& input_llt, double error_distance = 20);
+  std::vector<lanelet::Lanelet> splitLaneletWithPoint(const std::vector<lanelet::BasicPoint2d>& input_pts, const lanelet::Lanelet& input_llt, double error_distance);
 
   /*!
    * \brief Split given lanelet's adjacent, OPPOSITE lanelet with same proportion as the given point's downtrack relative to the lanelet. 
             Newly created lanelet will have old regulatory elements copied into each of them. 
-            Only for front and back points, it is deemed not necessary to split if the point is within error_distance from any of the boundary.
+            From the front and back boundaries, it is deemed not necessary to split if the ratios are within error_distance from either of it.
             It will return duplicate of old lanelet (with different id) if no splitting was done.
 
    * \param opposite_llts return lanelets split form original one. lanelets sorted from front to back.
@@ -319,13 +320,13 @@ public:
    * \throw InvalidObjectStateError if no map is available. NOTE: this is requried to return mutable objects.
    * NOTE: Opposite lanelet doesn't have to share points with current lanelet
    */
-  lanelet::Lanelets splitOppositeLaneletWithPoint(std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts, const lanelet::BasicPoint2d& input_pt, const lanelet::Lanelet& input_llt, double error_distance = 20);
+  lanelet::Lanelets splitOppositeLaneletWithPoint(std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts, const lanelet::BasicPoint2d& input_pt, const lanelet::Lanelet& input_llt, double error_distance);
 
   /*!
    * \brief Split given lanelet with given downtrack ratios relative to the lanelet. 
             Newly created lanelet will have old regulatory elements copied into each of them. 
-            Only for front and back ratios, it is deemed not necessary to split if the ratio is within error_distance from any of the boundary.
-            For example, if front and back points of 3 ratios given are both within error_distance, only middle ratio will be used to split, so 2 lanelets.
+            From the front and back boundaries, it is deemed not necessary to split if the ratios are within error_distance from either of it.
+            For example, if front and back points of 3 ratios given are both within error_distance, only middle ratio will be used to split, so 2 lanelets will be returned.
             It will return duplicate of old lanelet (with different id) if no splitting was done.
 
    * \param ratios Ratios relative to given lanelet will be used to split the lanelet
@@ -334,14 +335,15 @@ public:
    * \return parallel_llts return lanelets split form original one. lanelets sorted from front to back.
    * \throw InvalidObjectStateError if no map is available. NOTE: this is requried to return mutable objects. 
    */
-  std::vector<lanelet::Lanelet> splitLaneletWithRatio(std::vector<double> ratios, lanelet::Lanelet input_lanelet, double error_distance = 20) const;
+  std::vector<lanelet::Lanelet> splitLaneletWithRatio(std::vector<double> ratios, lanelet::Lanelet input_lanelet, double error_distance) const;
   
    /*! \brief helper for generating 32bit traffic light Id from TCM label field consisting workzone intersection/signal group ids
    */
   uint32_t generate32BitId(const std::string& label);
 
-
+  void setErrorDistance (double error_distance);
 private:
+  double error_distance_ = 20; //meters
   lanelet::ConstLanelets route_path_;
   std::unordered_set<lanelet::Id> active_geofence_llt_ids_; 
   std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache_;
@@ -389,6 +391,8 @@ private:
   size_t update_count_ = 0; // Records the total number of sent map updates. Used as the set value for update.header.seq
 
 };
+
+
 }  // namespace carma_wm_ctrl
 
 

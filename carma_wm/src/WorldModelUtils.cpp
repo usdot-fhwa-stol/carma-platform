@@ -24,15 +24,18 @@ namespace query
 std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& point,
                                                                     const unsigned int n)
 {
+  ROS_ERROR_STREAM("getLaneletsFromPoint 1aaa");
   // Check if the map is loaded yet
   if (!semantic_map || semantic_map->laneletLayer.size() == 0)
   {
     throw std::invalid_argument("Map is not set or does not contain lanelets");
   }
   std::vector<lanelet::ConstLanelet> possible_lanelets;
+  ROS_ERROR_STREAM("getLaneletsFromPoint 1a");
   auto nearestLanelets = lanelet::geometry::findNearest(semantic_map->laneletLayer, point, n);
   if (nearestLanelets.size() == 0)
     return {};
+  ROS_ERROR_STREAM("getLaneletsFromPoint 1b");
   int id = 0;  // closest ones are in the back
   // loop through until the point is no longer geometrically in the lanelet
 
@@ -43,6 +46,12 @@ std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMa
     if (id >= nearestLanelets.size())
       break;
   }
+  ROS_ERROR_STREAM("getLaneletsFromPoint 2");
+  for (auto llt : possible_lanelets)
+  {
+    ROS_ERROR_STREAM(llt.id());
+  }
+
   return possible_lanelets;
 }
 

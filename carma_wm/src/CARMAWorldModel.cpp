@@ -471,6 +471,7 @@ TrackPos CARMAWorldModel::getRouteEndTrackPos() const
 
 void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map, size_t map_version, bool recompute_routing_graph)
 {
+  std::cerr << "SetMap================ " << std::endl;
   // If this is the first time the map has been set, then recompute the routing graph
   if (!semantic_map_) {
 

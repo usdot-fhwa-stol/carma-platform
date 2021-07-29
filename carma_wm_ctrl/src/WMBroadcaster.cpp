@@ -43,7 +43,6 @@ namespace carma_wm_ctrl
 {
 using std::placeholders::_1;
 
-
 WMBroadcaster::WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const PublishCtrlRequestCallback& control_msg_pub,
 const PublishActiveGeofCallback& active_pub, std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory)
   : map_pub_(map_pub), map_update_pub_(map_update_pub), control_msg_pub_(control_msg_pub), active_pub_(active_pub), scheduler_(std::move(timer_factory))
@@ -301,7 +300,14 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
   if (detected_workzone_signal) // if workzone message detected, save to cache to process later
   {
     gf_ptr->label_ = msg_v01.package.label; // to extract intersection, and signal group id
-    work_zone_geofence_cache_[msg_detail.choice] = gf_ptr;
+    if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE)
+    {
+      work_zone_geofence_cache_[msg_detail.closed] = gf_ptr;
+    }
+    else if (msg_detail.choice == cav_msgs::TrafficControlDetail::DIRECTION_CHOICE)
+    {
+      work_zone_geofence_cache_[WorkZoneSection::REVERSE] = gf_ptr;
+    }
     if (work_zone_geofence_cache_.size() < WORKZONE_TCM_REQUIRED_SIZE)
     {
       ROS_INFO_STREAM("Received 'SIG_WZ' signal. Waiting for the rest of the messages, returning for now...");
@@ -334,10 +340,10 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::createWorkzoneGeofence(std
   auto gf_ptr = createWorkzoneGeometry(work_zone_geofence_cache, parallel_llts->front(), parallel_llts->back(), middle_opposite_lanelets );
 
   // copy static info from the existing workzone
-  gf_ptr->id_ = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::TAPERRIGHT]->id_; //using taperright's id as the whole geofence's id
+  gf_ptr->id_ = work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->id_; //using taperright's id as the whole geofence's id
   
   // schedule
-  gf_ptr->schedules = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::TAPERRIGHT]->schedules; //using taperright's schedule as the whole geofence's schedule
+  gf_ptr->schedules = work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->schedules; //using taperright's schedule as the whole geofence's schedule
   
   // erase cache now that it is processed
   for (auto pair : work_zone_geofence_cache)
@@ -396,9 +402,9 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   //////////////////////////////
   lanelet::LineString3d parallel_stop_ls(lanelet::utils::getId(), {parallel_llt_front.leftBound3d().back(), parallel_llt_front.rightBound3d().back()});
 
-  lanelet::CarmaTrafficLightPtr tfl_parallel = std::make_shared<lanelet::CarmaTrafficLight>(lanelet::CarmaTrafficLight::buildData(lanelet::utils::getId(), {parallel_stop_ls}));
+  lanelet::CarmaTrafficLightPtr tfl_parallel = std::make_shared<lanelet::CarmaTrafficLight>(lanelet::CarmaTrafficLight::buildData(lanelet::utils::getId(), {parallel_stop_ls}, {})); //TODO
 
-  gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::TAPERRIGHT]->label_),tfl_parallel->id()});
+  gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->label_),tfl_parallel->id()});
 
   parallel_llt_front.addRegulatoryElement(tfl_parallel);
 
@@ -407,14 +413,14 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   //////////////////////////////
   std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts_with_stop_line = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
   
-  auto old_opposite_llts = splitOppositeLaneletWithPoint(opposite_llts_with_stop_line, work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->gf_pts.back().basicPoint2d(), 
-                        current_map_->laneletLayer.get(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->affected_parts_.back().lanelet().get().id()));
+  auto old_opposite_llts = splitOppositeLaneletWithPoint(opposite_llts_with_stop_line, work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->gf_pts.back().basicPoint2d(), 
+                        current_map_->laneletLayer.get(work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.back().lanelet().get().id()), error_distance_);
   
   lanelet::LineString3d opposite_stop_ls(lanelet::utils::getId(), {opposite_llts_with_stop_line->front().leftBound3d().back(), opposite_llts_with_stop_line->front().rightBound3d().back()});
   
-  lanelet::CarmaTrafficLightPtr tfl_opposite = std::make_shared<lanelet::CarmaTrafficLight>(lanelet::CarmaTrafficLight::buildData(lanelet::utils::getId(), {opposite_stop_ls}));
+  lanelet::CarmaTrafficLightPtr tfl_opposite = std::make_shared<lanelet::CarmaTrafficLight>(lanelet::CarmaTrafficLight::buildData(lanelet::utils::getId(), {opposite_stop_ls}, {}));// TODO
   
-  gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->label_), tfl_opposite->id()});
+  gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->label_), tfl_opposite->id()});
   
   opposite_llts_with_stop_line->front().addRegulatoryElement(tfl_opposite);
 
@@ -440,7 +446,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   // AS WELL AS LANELETS BEING BLOCKED BY WORKZONE GEOFENCE
   //////////////////////////////
 
-  gf_ptr->affected_parts_ = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::CLOSED]->affected_parts_;
+  gf_ptr->affected_parts_ = work_zone_geofence_cache[WorkZoneSection::CLOSED]->affected_parts_;
   gf_ptr->affected_parts_.push_back(old_opposite_llts[0]); // block old lanelet that will be replaced with split lanelets that have trafficlight
 
   // fill information for paricipants and reason for blocking
@@ -469,6 +475,11 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   return gf_ptr;
 }
 
+void WMBroadcaster::setErrorDistance(double error_distance)
+{
+  error_distance_ = error_distance;
+}
+
 void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache, std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts, std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts)
 {
   if (!current_map_ || current_map_->laneletLayer.size() == 0)
@@ -479,10 +490,10 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
   /// PARALLEL FRONT (TAPERRIGHT side)
   ////////////////////////////////////
   std::vector <lanelet::Lanelet> new_taper_right_llts;
-  auto taper_right_first_pt = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::TAPERRIGHT]->gf_pts.front().basicPoint2d();
-  auto taper_right_first_llt = current_map_->laneletLayer.get(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::TAPERRIGHT]->affected_parts_.front().lanelet().get().id());
+  auto taper_right_first_pt = work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->gf_pts.front().basicPoint2d();
+  auto taper_right_first_llt = current_map_->laneletLayer.get(work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.front().lanelet().get().id());
 
-  new_taper_right_llts = splitLaneletWithPoint({taper_right_first_pt}, taper_right_first_llt);
+  new_taper_right_llts = splitLaneletWithPoint({taper_right_first_pt}, taper_right_first_llt, error_distance_);
 
   // if no splitting happened, we need to create dupliacate of previous lanelet of TAPERRIGHT's first lanelet
   // to match the output expected of this function as if split happened
@@ -491,7 +502,7 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     bool found_previous_lanelet = false;
     for (size_t i = 0; i < getRoute().shortest_path_lanelet_ids.size(); i ++)
     {
-      if (i != work_zone_geofence_cache[cav_msgs::TrafficControlDetail::TAPERRIGHT]->affected_parts_.front().lanelet().get().id() )
+      if (i != work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.front().lanelet().get().id() )
       {
         continue; //skip if no match
       }
@@ -507,7 +518,7 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
       auto prev_lanelet_to_copy  = current_map_->laneletLayer.get(getRoute().shortest_path_lanelet_ids[i - 1]);
 
       // parallel_llts will have a copy of `prev_lanelet_to_copy` with new id to be used as part of workzone area
-      new_taper_right_llts = splitLaneletWithPoint({prev_lanelet_to_copy.centerline2d().back()}, prev_lanelet_to_copy);
+      new_taper_right_llts = splitLaneletWithPoint({prev_lanelet_to_copy.centerline2d().back()}, prev_lanelet_to_copy, error_distance_);
     }
     if (!found_previous_lanelet)
     {
@@ -516,15 +527,15 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     }
   }
   parallel_llts->insert(parallel_llts->end(), new_taper_right_llts.begin(), new_taper_right_llts.begin());
-
+  ROS_ERROR_STREAM("1=============");
   //////////////////////////////////
   /// PARALLEL BACK (OPENRIGHT side)
   //////////////////////////////////
   std::vector <lanelet::Lanelet> new_open_right_llts;
-  auto open_right_last_pt = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->gf_pts.back().basicPoint2d();
-  auto open_right_last_llt = current_map_->laneletLayer.get(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->affected_parts_.back().lanelet().get().id());
+  auto open_right_last_pt = work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->gf_pts.back().basicPoint2d();
+  auto open_right_last_llt = current_map_->laneletLayer.get(work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.back().lanelet().get().id());
 
-  new_open_right_llts = splitLaneletWithPoint({open_right_last_pt}, open_right_last_llt);
+  new_open_right_llts = splitLaneletWithPoint({open_right_last_pt}, open_right_last_llt, error_distance_);
 
   // if no splitting happened, we need to create dupliacate of next lanelet of OPENRIGHT's last lanelet
   // to match the output expected of this function as if split happened
@@ -533,7 +544,7 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     bool found_next_lanelet = false;
     for (size_t i = 0; i < getRoute().shortest_path_lanelet_ids.size(); i ++)
     {
-      if (i != work_zone_geofence_cache[cav_msgs::TrafficControlDetail::OPENRIGHT]->affected_parts_.back().lanelet().get().id() )
+      if (i != work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.back().lanelet().get().id() )
       {
         continue; //skip if no match
       }
@@ -549,7 +560,7 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
       auto next_lanelet_to_copy  = current_map_->laneletLayer.get(getRoute().shortest_path_lanelet_ids[i + 1]);
 
       // parallel_llts will have a copy of `next_lanelet_to_copy` with new id to be used as part of workzone area
-      new_open_right_llts = splitLaneletWithPoint({next_lanelet_to_copy.centerline2d().back()}, next_lanelet_to_copy);
+      new_open_right_llts = splitLaneletWithPoint({next_lanelet_to_copy.centerline2d().back()}, next_lanelet_to_copy, error_distance_);
     }
     if (!found_next_lanelet)
     {
@@ -558,23 +569,35 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     }
   }
   parallel_llts->insert(parallel_llts->end(), new_open_right_llts.begin(), new_open_right_llts.begin());
-
+  ROS_ERROR_STREAM("2=============");
   ////////////////////
   /// HANDLE MID HERE
   ////////////////////
+
+
+  ROS_ERROR_STREAM("size: " << work_zone_geofence_cache[WorkZoneSection::REVERSE]->gf_pts.size());
+  ROS_ERROR_STREAM("2=============");
+  ROS_ERROR_STREAM("2=============");
   
-  auto reverse_back_llt = carma_wm::query::getLaneletsFromPoint(current_map_,  work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.back().basicPoint2d())[0];
-  auto reverse_front_llt = carma_wm::query::getLaneletsFromPoint(current_map_,  work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.front().basicPoint2d())[0];
+  auto reverse_back_llts = carma_wm::query::getLaneletsFromPoint(current_map_,  work_zone_geofence_cache[WorkZoneSection::REVERSE]->gf_pts.back().basicPoint2d());
+  ROS_ERROR_STREAM("size reverse_back_llt: " << reverse_back_llts.size());
+  auto reverse_back_llt = reverse_back_llts[0];
+  auto reverse_front_llts = carma_wm::query::getLaneletsFromPoint(current_map_,  work_zone_geofence_cache[WorkZoneSection::REVERSE]->gf_pts.front().basicPoint2d());
+  ROS_ERROR_STREAM("size reverse_front_llt: " << reverse_front_llts.size());
+  auto reverse_front_llt = reverse_front_llts[0];
   
+  
+  
+  ROS_ERROR_STREAM("2a=============");
   std::vector<lanelet::Lanelet> trimmed_llts;
 
   if (reverse_back_llt.id() == reverse_front_llt.id()) //means there is only 1 middle lanelet, which needs to be split into 3 lanelets
   {
     std::vector<lanelet::Lanelet> temp_llts;
-
-    temp_llts = splitLaneletWithPoint({work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.front().basicPoint2d(), 
-                                          work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.back().basicPoint2d()},
-                                          current_map_->laneletLayer.get(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->affected_parts_.front().lanelet().get().id()));
+    ROS_ERROR_STREAM("2b=============");
+    temp_llts = splitLaneletWithPoint({work_zone_geofence_cache[WorkZoneSection::REVERSE]->gf_pts.front().basicPoint2d(), 
+                                          work_zone_geofence_cache[WorkZoneSection::REVERSE]->gf_pts.back().basicPoint2d()},
+                                          current_map_->laneletLayer.get(work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_.front().lanelet().get().id()), error_distance_);
     
     if (temp_llts.size() < 2) // if there is only 1 lanelet
     {
@@ -584,8 +607,8 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     else if (temp_llts.size() == 2) // determine which 
     {
       // back gap is bigger than front's, we should lose front lanelet from the two
-      if (lanelet::geometry::distance2d(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.back().basicPoint2d(), reverse_front_llt.centerline2d().back().basicPoint2d()) >
-        lanelet::geometry::distance2d(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.front().basicPoint2d(), reverse_front_llt.centerline2d().front().basicPoint2d()))
+      if (lanelet::geometry::distance2d(work_zone_geofence_cache[WorkZoneSection::REVERSE]->gf_pts.back().basicPoint2d(), reverse_front_llt.centerline2d().back().basicPoint2d()) >
+        lanelet::geometry::distance2d(work_zone_geofence_cache[WorkZoneSection::REVERSE]->gf_pts.front().basicPoint2d(), reverse_front_llt.centerline2d().front().basicPoint2d()))
         {
           trimmed_llts.push_back(temp_llts.back());
         }
@@ -601,12 +624,13 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
   }
   else //if there are two or more lanelets
   {
+    ROS_ERROR_STREAM("2c=============");
     /// OPPOSITE FRONT (OPENRIGHT side) 
-    auto reverse_first_pt = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.front().basicPoint2d();
-    auto reverse_first_llt = current_map_->laneletLayer.get(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->affected_parts_.front().lanelet().get().id());
+    auto reverse_first_pt = work_zone_geofence_cache[WorkZoneSection::REVERSE]->gf_pts.front().basicPoint2d();
+    auto reverse_first_llt = current_map_->laneletLayer.get(work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_.front().lanelet().get().id());
     std::vector<lanelet::Lanelet> temp_opposite_front_llts;
     std::vector<lanelet::Lanelet> trimmed_llts;
-    temp_opposite_front_llts = splitLaneletWithPoint( {reverse_first_pt}, reverse_first_llt);
+    temp_opposite_front_llts = splitLaneletWithPoint( {reverse_first_pt}, reverse_first_llt, error_distance_);
 
     if (temp_opposite_front_llts.size() > 1)
     {
@@ -618,9 +642,9 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     }
 
     /// Fill in the middle part of middle lanelets
-    if (work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->affected_parts_.size() > 2)
+    if (work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_.size() > 2)
     {
-      for (auto llt_or_area: work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->affected_parts_)
+      for (auto llt_or_area: work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_)
       {
         trimmed_llts.push_back(current_map_->laneletLayer.get(llt_or_area.id()));
       }
@@ -628,10 +652,10 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
 
     /// OPPOSITE BACK (TAPERRIGHT side)
     
-    auto reverse_last_pt = work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->gf_pts.back().basicPoint2d();
-    auto reverse_last_llt = current_map_->laneletLayer.get(work_zone_geofence_cache[cav_msgs::TrafficControlDetail::REVERSE]->affected_parts_.back().lanelet().get().id());
+    auto reverse_last_pt = work_zone_geofence_cache[WorkZoneSection::REVERSE]->gf_pts.back().basicPoint2d();
+    auto reverse_last_llt = current_map_->laneletLayer.get(work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_.back().lanelet().get().id());
     std::vector<lanelet::Lanelet> temp_opposite_back_llts;
-    temp_opposite_back_llts = splitLaneletWithPoint({reverse_last_pt}, reverse_last_llt);
+    temp_opposite_back_llts = splitLaneletWithPoint({reverse_last_pt}, reverse_last_llt, error_distance_);
 
     if (temp_opposite_back_llts.size() > 1)
     {
@@ -644,11 +668,13 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     
   }
 
+  ROS_ERROR_STREAM("3=============");
   opposite_llts->insert(opposite_llts->end(), trimmed_llts.begin(), trimmed_llts.begin());
 }
 
 std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithPoint(const std::vector<lanelet::BasicPoint2d>& input_pts, const lanelet::Lanelet& input_llt, double error_distance)
 {
+  ROS_ERROR_STREAM("Called splitLaneletWithPoint...");
   // get ratio of this point and split
   std::vector<lanelet::Lanelet> parallel_llts;
   double llt_downtrack = carma_wm::geometry::trackPos(input_llt, input_llt.centerline().back().basicPoint2d()).downtrack;
@@ -657,18 +683,21 @@ std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithPoint(const std::ve
   for (auto pt : input_pts)
   {
     double point_downtrack = carma_wm::geometry::trackPos(input_llt, pt).downtrack;
+    ROS_ERROR_STREAM(" point_downtrack" << point_downtrack << ", pt.x" << pt.x() << ", pt.y" << pt.y() << ", input_llt: " << input_llt.id());
     double point_downtrack_ratio = point_downtrack / llt_downtrack;
     ratios.push_back(point_downtrack_ratio);
   }
   
-  auto new_parallel_llts = splitLaneletWithRatio(ratios, input_llt);
+  auto new_parallel_llts = splitLaneletWithRatio(ratios, input_llt, error_distance);
 
   parallel_llts.insert(parallel_llts.end(),new_parallel_llts.begin(), new_parallel_llts.end());
+  ROS_ERROR_STREAM("Ended splitLaneletWithPoint");
   return parallel_llts;
 }
 
 lanelet::Lanelets WMBroadcaster::splitOppositeLaneletWithPoint(std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts, const lanelet::BasicPoint2d& input_pt, const lanelet::Lanelet& input_llt, double error_distance)
 {
+  ROS_ERROR_STREAM("Called splitOppositeLaneletWithPoint");
   // get ratio of this point and split
   auto point_downtrack = carma_wm::geometry::trackPos(input_llt, input_pt).downtrack;
   auto point_downtrack_ratio = point_downtrack / carma_wm::geometry::trackPos(input_llt, input_llt.centerline().back().basicPoint2d()).downtrack;
@@ -683,25 +712,30 @@ lanelet::Lanelets WMBroadcaster::splitOppositeLaneletWithPoint(std::shared_ptr<s
   }
   auto new_llts_opposite = splitLaneletWithRatio({1 - point_downtrack_ratio}, opposing_llts[0], error_distance);
   opposite_llts->insert(opposite_llts->begin(),new_llts_opposite.begin(), new_llts_opposite.end());
+    ROS_ERROR_STREAM("Ended splitOppositeLaneletWithPoint");
   return opposing_llts;
 }
 
 std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithRatio(std::vector<double> ratios, lanelet::Lanelet input_lanelet, double error_distance) const
 {
+  ROS_ERROR_STREAM("Called splitLaneletWithRatio");
   if (!current_map_ || current_map_->laneletLayer.size() == 0)
   {
     throw lanelet::InvalidObjectStateError(std::string("Base lanelet map is not loaded to the WMBroadcaster"));
   }
   if (ratios.empty())
   {
-    throw lanelet::InvalidInputError(std::string("Ratios is empty! Cannot split"));
+    throw lanelet::InvalidInputError(std::string("Ratios list is empty! Cannot split"));
   }
 
   std::vector<lanelet::Lanelet> created_llts;
 
   std::sort(ratios.begin(), ratios.end());
+  ratios.push_back(1.0); //needed to complete the loop
+
   int left_ls_size = input_lanelet.leftBound2d().size();
   int right_ls_size = input_lanelet.rightBound2d().size();
+  ROS_ERROR_STREAM("1b left_ls_size" << left_ls_size  << ", right_ls_size" << right_ls_size);
 
   int left_next_pt_idx = 0;
   int left_prev_pt_idx = 0;
@@ -709,43 +743,59 @@ std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithRatio(std::vector<d
   int right_prev_pt_idx = 0;
   for (int i = 0 ; i < ratios.size(); i ++)
   {
-    left_next_pt_idx = ratios[i] * (left_ls_size - 1);
-    right_next_pt_idx = ratios[i] * (right_ls_size - 1);
-    // check if edge ratios are too close to boundaries. if so, skip
-    if (i == 0)
+    ROS_ERROR_STREAM("1a ratios[i]" << ratios[i] );
+    left_next_pt_idx = std::round(ratios[i] * (left_ls_size - 1));
+    right_next_pt_idx = std::round(ratios[i] * (right_ls_size - 1));
+    ROS_ERROR_STREAM("1b left_next_pt_idx: " << left_next_pt_idx  << ", right_next_pt_idx: " << right_next_pt_idx);
+    // check if edge ratios are too close to any boundaries. if so, skip
+    if (lanelet::geometry::distance2d(input_lanelet.leftBound2d().front().basicPoint2d(), input_lanelet.leftBound2d()[left_next_pt_idx].basicPoint2d()) <= error_distance)
     {
       // assuming both linestrings have roughly the same number of points and
       // assuming distance between 0th and index-th points are small enough we can approximate the curve between them as a line:
-      if (lanelet::geometry::distance2d(input_lanelet.leftBound2d().front().basicPoint2d(), input_lanelet.leftBound2d()[left_next_pt_idx].basicPoint2d()) <= error_distance) continue;
-    }
-    else if (i == ratios.size() - 1)
+      ROS_DEBUG_STREAM("Ratio: " << ratios[i] << ", is too close to the lanelet's front boundary! Therefore, ignoring... Allowed error_distance: " << error_distance << ", Distance: " 
+                        << lanelet::geometry::distance2d(input_lanelet.leftBound2d().front().basicPoint2d(), input_lanelet.leftBound2d()[left_next_pt_idx].basicPoint2d()));
+      continue;
+    } 
+    if (lanelet::geometry::distance2d(input_lanelet.leftBound2d().back().basicPoint2d(), input_lanelet.leftBound2d()[left_next_pt_idx].basicPoint2d()) <= error_distance)
     {
-      if (lanelet::geometry::distance2d(input_lanelet.leftBound2d().back().basicPoint2d(), input_lanelet.leftBound2d()[left_next_pt_idx].basicPoint2d()) <= error_distance)
-      {
-        left_next_pt_idx = input_lanelet.leftBound2d().size() - 1;
-        right_next_pt_idx = input_lanelet.rightBound2d().size() - 1;
-      }
+      ROS_DEBUG_STREAM("Ratio: " << ratios[i] << ", is too close to the lanelet's back boundary! Therefore, ignoring... Allowed error_distance: " << error_distance << ", Distance: " 
+                  << lanelet::geometry::distance2d(input_lanelet.leftBound2d().back().basicPoint2d(), input_lanelet.leftBound2d()[left_next_pt_idx].basicPoint2d()));
+
+      left_next_pt_idx = left_ls_size - 1;
+      right_next_pt_idx = right_ls_size - 1;
     }
     // create lanelet
     std::vector<lanelet::Point3d> left_pts;
-    left_pts.insert(left_pts.begin(), input_lanelet.leftBound3d().begin() + left_prev_pt_idx, input_lanelet.leftBound3d().begin() + left_next_pt_idx);
+    left_pts.insert(left_pts.begin(), input_lanelet.leftBound3d().begin() + left_prev_pt_idx, input_lanelet.leftBound3d().begin() + left_next_pt_idx + 1);
+
     lanelet::LineString3d left_ls(lanelet::utils::getId(), left_pts);  
 
     std::vector<lanelet::Point3d> right_pts;
-    right_pts.insert(right_pts.begin(), input_lanelet.rightBound3d().begin() + right_prev_pt_idx, input_lanelet.rightBound3d().begin() + right_next_pt_idx);
+    right_pts.insert(right_pts.begin(), input_lanelet.rightBound3d().begin() + right_prev_pt_idx, input_lanelet.rightBound3d().begin() + right_next_pt_idx + 1);
+    
     lanelet::LineString3d right_ls(lanelet::utils::getId(), right_pts);  
 
     lanelet::Lanelet new_llt (lanelet::utils::getId(), left_ls, right_ls);
-    for (auto regem : input_lanelet.regulatoryElements()) //copy existing regem into the new llts
+    
+    for (auto regem : input_lanelet.regulatoryElements()) //copy existing regem into new llts
     {
       new_llt.addRegulatoryElement(current_map_->regulatoryElementLayer.get(regem->id()));
     }
+    
     left_prev_pt_idx = left_next_pt_idx;
     right_prev_pt_idx = right_next_pt_idx;
-
+    
     created_llts.push_back(new_llt);
+    
+    // Detected the end already. Exiting now
+    if (left_prev_pt_idx == left_ls_size - 1 || right_prev_pt_idx == right_ls_size - 1)
+    {
+      
+      break;
+    }
+    
   }
-
+  ROS_ERROR_STREAM("Ended splitLaneletWithRatio");
   return created_llts;
 }
 
@@ -1058,7 +1108,7 @@ lanelet::Points3d WMBroadcaster::getPointsInLocalFrame(const cav_msgs::TrafficCo
 lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const lanelet::Points3d& gf_pts)
 {
   // Logic to detect which part is affected
-  ROS_DEBUG_STREAM("Get affected lanelets loop");
+  ROS_ERROR_STREAM("Get affected lanelets loop");
   std::unordered_set<lanelet::Lanelet> affected_lanelets;
   for (size_t idx = 0; idx < gf_pts.size(); idx ++)
   {
@@ -1112,7 +1162,7 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const lane
       break;
     } 
 
-    ROS_DEBUG_STREAM("Checking possible lanelets");
+    ROS_ERROR_STREAM("Checking possible lanelets");
     // check if each lines connecting end points of the llt is crossing with the line connecting current and next gf_pts
     for (auto llt: possible_lanelets)
     {
@@ -1124,6 +1174,7 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const lane
       if (boost::geometry::intersects(llt_boundary, gf_dir_line))
       {
         ROS_DEBUG_STREAM("Overlaps end line");
+        ROS_ERROR_STREAM("llt.  " << llt.id());
         affected_lanelets.insert(llt);
       }
       // check condition if two geofence points are in one lanelet then check matching direction and record it also
@@ -1154,16 +1205,34 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const lane
         ROS_DEBUG_STREAM("start_to_end: " << start_to_end.x() << ", " << start_to_end.y());
         ROS_DEBUG_STREAM("interior_angle: " << interior_angle);
         // Save the lanelet if the direction of two points inside aligns with that of the lanelet
+        ROS_ERROR_STREAM("llt.  " << llt.id());
+
         if (interior_angle < M_PI_2 && interior_angle >= 0) affected_lanelets.insert(llt); 
       }
+
     }
+  
   }
   
   ROS_DEBUG_STREAM("affected_lanelets size: " << affected_lanelets.size());
   // Currently only returning lanelet, but this could be expanded to LanelerOrArea compound object 
   // by implementing non-const version of that LaneletOrArea
   lanelet::ConstLaneletOrAreas affected_parts;
-  affected_parts.insert(affected_parts.end(), affected_lanelets.begin(), affected_lanelets.end());
+  // return results in ascending downtrack order from the first point of geofence
+  std::vector<std::pair<double, lanelet::Lanelet>> sorted_parts;
+  for (auto llt : affected_lanelets)
+  {
+    sorted_parts.push_back(std::make_pair(carma_wm::geometry::trackPos(llt, gf_pts.front().basicPoint2d()).downtrack, llt));
+  }
+
+  std::sort(sorted_parts.begin(), sorted_parts.end(), [](const auto& x, const auto& y){return x.first > y.first;});
+
+  for (auto pair : sorted_parts)
+  {
+    ROS_ERROR_STREAM(pair.first);
+    affected_parts.push_back(pair.second);
+  }
+
   return affected_parts;
 }
 
@@ -1186,6 +1255,7 @@ std::unordered_set<lanelet::Lanelet> WMBroadcaster::filterSuccessorLanelets(cons
       auto it = possible_lanelets.find(mutable_llt);
       if (it != possible_lanelets.end())
       {
+        ROS_ERROR_STREAM("successor: " << mutable_llt.id());
         filtered_lanelets.insert(mutable_llt);
       }
     }
@@ -1876,7 +1946,13 @@ lanelet::Lanelet  WMBroadcaster::createLinearInterpolatingLanelet(const lanelet:
 }
 
 
+const uint8_t WorkZoneSection::TAPERLEFT = 0;
+const uint8_t WorkZoneSection::TAPERRIGHT = 1;
+const uint8_t WorkZoneSection::OPENRIGHT = 2;
+const uint8_t WorkZoneSection::OPENLEFT = 3;
+const uint8_t WorkZoneSection::CLOSED = 4;
+const uint8_t WorkZoneSection::REVERSE = 6;
+
 
 }  // namespace carma_wm_ctrl
-
 

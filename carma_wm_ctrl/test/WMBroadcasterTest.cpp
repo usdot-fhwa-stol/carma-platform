@@ -1880,7 +1880,7 @@ TEST(WMBroadcaster, DISABLED_RegionAccessRuleTest)
   ASSERT_EQ(2, active_call_count.load());
 }
 
-TEST(WMBroadcaster, generate32BitId)
+TEST(WMBroadcaster, DISABLED_generate32BitId)
 {
   
   WMBroadcaster wmb(
@@ -1894,10 +1894,8 @@ TEST(WMBroadcaster, generate32BitId)
   EXPECT_EQ(bits, 257);
 }
 
-
-TEST(WMBroadcaster, splitLaneletWithRatio)
+TEST(WMBroadcaster, DISABLED_splitLaneletWithRatio)
 {
-   
   // Create WMBroadcaster object
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {},
@@ -1906,8 +1904,8 @@ TEST(WMBroadcaster, splitLaneletWithRatio)
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
-  // Get and convert map to binary message
-  auto map = carma_wm::test::buildGuidanceTestMap(5, 25);
+  // Get and convert map to binary message with 26 points of 1 meter in-between distances
+  auto map = carma_wm::test::buildGuidanceTestMap(5, 25, 25);
   autoware_lanelet2_msgs::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map, &msg);
   autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
@@ -1916,15 +1914,259 @@ TEST(WMBroadcaster, splitLaneletWithRatio)
   wmb.baseMapCallback(map_msg_ptr);
   auto first_lanelet = map->laneletLayer.get(1200);
   EXPECT_THROW(wmb.splitLaneletWithRatio({}, first_lanelet, 0.5), lanelet::InvalidInputError);
-  
+
+  // check front ratio TOO CLOSE (0.5 meter error for 25 meter lanelet)
   auto copy_lanelet = wmb.splitLaneletWithRatio({0.99}, first_lanelet, 0.5);
   EXPECT_EQ(copy_lanelet.size(), 1);
   EXPECT_NE(copy_lanelet.front().id(), first_lanelet.id());
+
+  // multiple front TOO CLOSE ratios
+  copy_lanelet = wmb.splitLaneletWithRatio({0.001, 0.002, 0.003, 0.004, 0.005}, first_lanelet, 0.5);
+  EXPECT_EQ(copy_lanelet.size(), 1);
+  EXPECT_NE(copy_lanelet.front().id(), first_lanelet.id());
+
+  copy_lanelet = wmb.splitLaneletWithRatio({0.01}, first_lanelet, 0.5);
+  EXPECT_EQ(copy_lanelet.size(), 1);
+  EXPECT_NE(copy_lanelet.front().id(), first_lanelet.id());
+
+  // check one valid ratio
   copy_lanelet = wmb.splitLaneletWithRatio({0.6}, first_lanelet, 0.5);
   EXPECT_EQ(copy_lanelet.size(), 2);
   EXPECT_NE(copy_lanelet.front().id(), first_lanelet.id());
+  EXPECT_NE(copy_lanelet.back().id(), first_lanelet.id());
+  
+  // check connection of two new lanelets using ids
+  EXPECT_EQ(copy_lanelet.front().leftBound2d().front().id(), first_lanelet.leftBound2d().front().id());
+  EXPECT_EQ(copy_lanelet.front().rightBound2d().front().id(), first_lanelet.rightBound2d().front().id());
+  EXPECT_EQ(copy_lanelet.back().leftBound2d().back().id(), first_lanelet.leftBound2d().back().id());
+  EXPECT_EQ(copy_lanelet.back().rightBound2d().back().id(), first_lanelet.rightBound2d().back().id());
+  EXPECT_EQ(copy_lanelet.front().leftBound2d().back().id(), copy_lanelet.back().leftBound2d().front().id());
+  EXPECT_EQ(copy_lanelet.front().rightBound2d().back().id(), copy_lanelet.back().rightBound2d().front().id());
+  
+  // check if matches previous original lanelet using geometry
+  EXPECT_NEAR(lanelet::geometry::distance2d(copy_lanelet.front().leftBound2d().front().basicPoint2d(), first_lanelet.leftBound2d().front().basicPoint2d()), 0.0, 0.0001);
+  EXPECT_NEAR(lanelet::geometry::distance2d(copy_lanelet.front().rightBound2d().front().basicPoint2d(), first_lanelet.rightBound2d().front().basicPoint2d()), 0.0, 0.0001);
+  EXPECT_NEAR(lanelet::geometry::distance2d(copy_lanelet.back().leftBound2d().back().basicPoint2d(), first_lanelet.leftBound2d().back().basicPoint2d()), 0.0, 0.0001);
+  EXPECT_NEAR(lanelet::geometry::distance2d(copy_lanelet.back().rightBound2d().back().basicPoint2d(), first_lanelet.rightBound2d().back().basicPoint2d()), 0.0, 0.0001);
+
+  // check multiple valid ratios
+  copy_lanelet = wmb.splitLaneletWithRatio({0.3, 0.6}, first_lanelet, 0.5);
+  EXPECT_EQ(copy_lanelet.size(), 3);
+  // check connection of two new lanelets
+  EXPECT_NEAR(lanelet::geometry::distance2d(copy_lanelet.front().leftBound2d().back().basicPoint2d(), copy_lanelet[1].leftBound2d().front().basicPoint2d()), 0.0, 0.0001);
+  EXPECT_NEAR(lanelet::geometry::distance2d(copy_lanelet[1].rightBound2d().back().basicPoint2d(), copy_lanelet.back().rightBound2d().front().basicPoint2d()), 0.0, 0.0001);
+  // check if matches previous original lanelet
+  EXPECT_NEAR(lanelet::geometry::distance2d(copy_lanelet.front().leftBound2d().front().basicPoint2d(), first_lanelet.leftBound2d().front().basicPoint2d()), 0.0, 0.0001);
+  EXPECT_NEAR(lanelet::geometry::distance2d(copy_lanelet.front().rightBound2d().front().basicPoint2d(), first_lanelet.rightBound2d().front().basicPoint2d()), 0.0, 0.0001);
+  EXPECT_NEAR(lanelet::geometry::distance2d(copy_lanelet.back().leftBound2d().back().basicPoint2d(), first_lanelet.leftBound2d().back().basicPoint2d()), 0.0, 0.0001);
+  EXPECT_NEAR(lanelet::geometry::distance2d(copy_lanelet.back().rightBound2d().back().basicPoint2d(), first_lanelet.rightBound2d().back().basicPoint2d()), 0.0, 0.0001);
+
+  // check multiple valid ratios of mixed
+  copy_lanelet = wmb.splitLaneletWithRatio({0.3, 0.6, 0.99}, first_lanelet, 0.5);
+  EXPECT_EQ(copy_lanelet.size(), 3);
+
+  // check multiple valid ratios of mixed and not sorted
+  copy_lanelet = wmb.splitLaneletWithRatio({0.3, 0.01, 0.6, 0.99}, first_lanelet, 0.5);
+  EXPECT_EQ(copy_lanelet.size(), 3);
+} 
+
+TEST(WMBroadcaster, DISABLED_splitLaneletWithPoint)
+{
+  // Create WMBroadcaster object
+  WMBroadcaster wmb(
+      [&](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {
+      }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
+      std::make_unique<TestTimerFactory>());
+
+  // Get and convert map to binary message with 26 points of 1 meter in-between distances
+  auto map = carma_wm::test::buildGuidanceTestMap(5, 25, 25);
+  autoware_lanelet2_msgs::MapBin msg;
+  lanelet::utils::conversion::toBinMsg(map, &msg);
+  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
+
+  // Trigger basemap callback
+  wmb.baseMapCallback(map_msg_ptr);
+  auto first_lanelet = map->laneletLayer.get(1200);
+  EXPECT_THROW(wmb.splitLaneletWithPoint({}, first_lanelet, 0.5), lanelet::InvalidInputError);
+
+  // check front ratio TOO CLOSE (0.5 meter error for 25 meter lanelet)
+  lanelet::BasicPoint2d point{2.5, 0.4};
+  auto copy_lanelet = wmb.splitLaneletWithPoint({point}, first_lanelet, 0.5);
+  EXPECT_EQ(copy_lanelet.size(), 1);
+  EXPECT_NE(copy_lanelet.front().id(), first_lanelet.id());
+
+  // check back TOO CLOSE ratio (0.5 meter error for 25 meter lanelet)
+  lanelet::BasicPoint2d point1{2.5, 24.7};
+  copy_lanelet = wmb.splitLaneletWithPoint({point1}, first_lanelet, 0.5);
+  EXPECT_EQ(copy_lanelet.size(), 1);
+  EXPECT_NE(copy_lanelet.front().id(), first_lanelet.id());
+
+  // check one valid ratio
+  lanelet::BasicPoint2d point2{2.5, 24.0};
+  copy_lanelet = wmb.splitLaneletWithPoint({point2}, first_lanelet, 0.5);
+  EXPECT_EQ(copy_lanelet.size(), 2);
+  EXPECT_NE(copy_lanelet.front().id(), first_lanelet.id());
+  EXPECT_NE(copy_lanelet.back().id(), first_lanelet.id());
+
+  // check one valid ratio
+  lanelet::BasicPoint2d point3{2.5, 10.0};
+  copy_lanelet = wmb.splitLaneletWithPoint({point3}, first_lanelet, 0.5);
+  EXPECT_EQ(copy_lanelet.size(), 2);
+  EXPECT_NE(copy_lanelet.front().id(), first_lanelet.id());
+  EXPECT_NE(copy_lanelet.back().id(), first_lanelet.id());
+  EXPECT_NEAR(carma_wm::geometry::trackPos(first_lanelet, copy_lanelet.front().centerline2d().back().basicPoint2d()).downtrack, 10.0, 0.001);
+  EXPECT_NEAR(carma_wm::geometry::trackPos(first_lanelet, copy_lanelet.back().centerline2d().front().basicPoint2d()).downtrack, 10.0, 0.001);
 
 } 
+
+TEST(WMBroadcaster, preprocessWorkzoneGeometry)
+{
+  // Create WMBroadcaster object
+  WMBroadcaster wmb(
+      [&](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {
+      }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
+      std::make_unique<TestTimerFactory>());
+
+  // create opposite direction road on the left lane
+  auto map = carma_wm::test::buildGuidanceTestMap(5, 25, 25);
+  
+  auto ll_0 = map->laneletLayer.get(1200).invert();
+  auto ll_1 = map->laneletLayer.get(1201).invert();
+  auto ll_2 = map->laneletLayer.get(1202).invert();
+  auto ll_3 = map->laneletLayer.get(1203).invert();
+  
+  std::vector<lanelet::Point3d> pts0;
+  std::vector<lanelet::Point3d> pts1;
+  std::vector<lanelet::Point3d> pts2;
+  
+  pts0.push_back(ll_3.leftBound3d().back());
+  pts0.push_back(carma_wm::test::getPoint(0.0, 101.0, 0));
+  pts0.push_back(carma_wm::test::getPoint(0.0, 102.0, 0));
+  pts0.push_back(carma_wm::test::getPoint(0.0, 103.0, 0));
+  pts0.push_back(carma_wm::test::getPoint(0.0, 104.0, 0));
+  pts0.push_back(carma_wm::test::getPoint(0.0, 105.0, 0));
+  
+  pts1.push_back(ll_3.rightBound3d().back());
+  pts1.push_back(carma_wm::test::getPoint(5.0, 101.0, 0));
+  pts1.push_back(carma_wm::test::getPoint(5.0, 102.0, 0));
+  pts1.push_back(carma_wm::test::getPoint(5.0, 103.0, 0));
+  pts1.push_back(carma_wm::test::getPoint(5.0, 104.0, 0));
+  pts1.push_back(carma_wm::test::getPoint(5.0, 105.0, 0));
+  
+  pts2.push_back(map->laneletLayer.get(1213).rightBound3d().back());
+  pts2.push_back(carma_wm::test::getPoint(10.0, 101.0, 0));
+  pts2.push_back(carma_wm::test::getPoint(10.0, 102.0, 0));
+  pts2.push_back(carma_wm::test::getPoint(10.0, 103.0, 0));
+  pts2.push_back(carma_wm::test::getPoint(10.0, 104.0, 0));
+  pts2.push_back(carma_wm::test::getPoint(10.0, 105.0, 0));
+  
+  lanelet::LineString3d ls00(lanelet::utils::getId(), pts0);
+  lanelet::LineString3d ls01(lanelet::utils::getId(), pts1);
+  lanelet::LineString3d ls02(lanelet::utils::getId(), pts2);
+
+  auto ll_4 = carma_wm::test::getLanelet(9904, ls00,ls01,lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
+  auto ll_5 = carma_wm::test::getLanelet(9914, ls01,ls02,lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Solid);
+  
+  map->add(ll_4);
+  map->add(ll_5);
+  
+/**
+ *        |9904|9914|
+ *        | _  _  _ |_  _
+ *        |1203|1213|1223|
+ *        | _  _  _  _  _|
+ *        |1202| Ob |1222|
+ *        | _  _  _  _  _|
+ *        |1201|1211|1221|    num   = lanelet id hardcoded for easier testing
+ *        | _  _  _  _  _|    |     = lane lines
+ *        |1200|1210|1220|    - - - = Lanelet boundary
+ *        |              |    O     = Default Obstacle
+ *        ****************
+ *           START_LINE
+ */
+
+  autoware_lanelet2_msgs::MapBin msg;
+  lanelet::utils::conversion::toBinMsg(map, &msg);
+  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
+
+  // Trigger basemap callback
+  wmb.baseMapCallback(map_msg_ptr);
+  wmb.setErrorDistance(0.5);
+  
+  
+  std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+  std::shared_ptr<std::vector<lanelet::Lanelet>> middle_opposite_lanelets = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+  std::unordered_map<uint8_t, std::shared_ptr<carma_wm_ctrl::Geofence>> work_zone_geofence_cache;
+  
+  std::shared_ptr<Geofence> gf_ptr1 =  std::make_shared<Geofence>();
+  std::shared_ptr<Geofence> gf_ptr2 =  std::make_shared<Geofence>();
+  std::shared_ptr<Geofence> gf_ptr3 =  std::make_shared<Geofence>();
+  std::shared_ptr<Geofence> gf_ptr4 =  std::make_shared<Geofence>();
+
+  gf_ptr1->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
+  gf_ptr2->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
+  gf_ptr3->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
+  gf_ptr4->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
+  
+
+  std::vector<lanelet::Point3d> taper_right_pts = {};
+  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 12.5, 0));
+  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 25.0, 0));
+  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 37.5, 0));
+
+  std::vector<lanelet::Point3d> reverse_pts = {};
+  reverse_pts.push_back(carma_wm::test::getPoint(2.5, 62.5, 0)); // notice the direction
+  reverse_pts.push_back(carma_wm::test::getPoint(2.5, 37.5, 0));
+
+  std::vector<lanelet::Point3d> open_right_pts = {};
+  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 62.5, 0));
+  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 75.0, 0));
+  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 87.5, 0));
+
+  std::vector<lanelet::Point3d> closed = {};
+  closed.push_back(carma_wm::test::getPoint(7.5, 40.0, 0));
+  closed.push_back(carma_wm::test::getPoint(7.5, 50.0, 0));
+  closed.push_back(carma_wm::test::getPoint(7.5, 60.0, 0));
+
+  gf_ptr1->gf_pts = taper_right_pts;
+  gf_ptr2->gf_pts = reverse_pts;
+  gf_ptr3->gf_pts = open_right_pts;
+  gf_ptr4->gf_pts = closed;
+
+  gf_ptr1->affected_parts_ = wmb.getAffectedLaneletOrAreas(gf_ptr1->gf_pts);
+
+  for (auto llt : gf_ptr1->affected_parts_)
+  {
+    ROS_ERROR_STREAM("llt.id()" << llt.id());
+  }
+
+  gf_ptr2->affected_parts_ = wmb.getAffectedLaneletOrAreas(gf_ptr2->gf_pts);
+  gf_ptr4->affected_parts_ = wmb.getAffectedLaneletOrAreas(gf_ptr4->gf_pts);
+  gf_ptr3->affected_parts_ = wmb.getAffectedLaneletOrAreas(gf_ptr3->gf_pts);
+
+  work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT] = gf_ptr1;
+  work_zone_geofence_cache[WorkZoneSection::REVERSE] = gf_ptr2;
+  work_zone_geofence_cache[WorkZoneSection::OPENRIGHT] = gf_ptr3;
+  work_zone_geofence_cache[WorkZoneSection::CLOSED] = gf_ptr4;
+  ROS_ERROR_STREAM("size: " << work_zone_geofence_cache[WorkZoneSection::REVERSE]->gf_pts.size());
+  for (auto pt : work_zone_geofence_cache[WorkZoneSection::REVERSE]->gf_pts)
+  {
+    ROS_ERROR_STREAM("wrong pt.x: " << pt.x() << ", pt.y: " << pt.y());
+
+  }
+  // get parallel and opposite lanelets
+  
+  wmb.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
+  
+  EXPECT_EQ(parallel_llts->size(), 4);
+  EXPECT_EQ(middle_opposite_lanelets->size(), 2);
+
+} 
+
 
 
 }  // namespace carma_wm_ctrl
