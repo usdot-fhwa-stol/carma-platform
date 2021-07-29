@@ -73,6 +73,7 @@ namespace basic_autonomy
                                                                     const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config)
         {
             std::vector<PointSpeedPair> points_and_target_speeds;
+            std::unordered_set<lanelet::Id> visited_lanelets;
 
             cav_msgs::LaneFollowingManeuver lane_following_maneuver = maneuver.lane_following_maneuver;
             
@@ -107,36 +108,43 @@ namespace basic_autonomy
                 while (curr_idx + 1 < lanelets.size() && 
                         std::find(following_lanelets.begin(),following_lanelets.end(), lanelets[curr_idx + 1]) != following_lanelets.end())
                 {
+                    ROS_DEBUG_STREAM("As there were no directly following lanelets after this, skipping lanelet id: " << lanelets[curr_idx].id());
+                    curr_idx ++;
+                    following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
+                }
+                ROS_DEBUG_STREAM("Added lanelet Id for lane follow: " << lanelets[curr_idx].id());
+                // guaranteed to have at least one "straight" lanelet (e.g the last one in the list)
+                straight_lanelets.push_back(lanelets[curr_idx]);
+                      // add all lanelets on the straight road until next lanechange
+                while (curr_idx + 1 < lanelets.size() && 
+                        std::find(following_lanelets.begin(),following_lanelets.end(), lanelets[curr_idx + 1]) != following_lanelets.end())
+                {
                     curr_idx++;
                     ROS_DEBUG_STREAM("Added lanelet Id forlane follow: " << lanelets[curr_idx].id());
                     straight_lanelets.push_back(lanelets[curr_idx]);
                     following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
                 }
-
+                
             }
-
-            std::unordered_set<lanelet::Id> visited_lanelets;
-            for (const auto& l : lanelets)
+            
+            for (auto l : straight_lanelets)
             {
-                ROS_DEBUG_STREAM("Processing Lanelet ID: " << l.id());
+                ROS_DEBUG_STREAM("Processing lanelet ID: " << l.id());
                 if (visited_lanelets.find(l.id()) == visited_lanelets.end())
                 {
-                    bool is_turn = false;
-                    if (l.hasAttribute("turn_direction"))
-                    {
-                        std::string turn_direction = l.attribute("turn_direction").value();
-                        is_turn = turn_direction.compare("left") == 0 || turn_direction.compare("right") == 0;
-                    }
 
+                    bool is_turn = false;
+                    if(l.hasAttribute("turn_direction")) {
+                    std::string turn_direction = l.attribute("turn_direction").value();
+                    is_turn = turn_direction.compare("left") == 0 || turn_direction.compare("right") == 0;
+                    }
+                    
                     lanelet::BasicLineString2d centerline = l.centerline2d().basicLineString();
                     lanelet::BasicLineString2d downsampled_points;
-                    if (is_turn)
-                    {
-                        downsampled_points = carma_utils::containers::downsample_vector(centerline, general_config.turn_downsample_ratio);
-                    }
-                    else
-                    {
-                        downsampled_points = carma_utils::containers::downsample_vector(centerline, general_config.default_downsample_ratio);
+                    if (is_turn) {
+                    downsampled_points = carma_utils::containers::downsample_vector(centerline, general_config.turn_downsample_ratio);
+                    } else {
+                    downsampled_points = carma_utils::containers::downsample_vector(centerline, general_config.default_downsample_ratio);
                     }
                     downsampled_centerline = carma_wm::geometry::concatenate_line_strings(downsampled_centerline, downsampled_points);
                     visited_lanelets.insert(l.id());
@@ -275,7 +283,7 @@ namespace basic_autonomy
                 points_and_target_speeds.push_back(pair);
                 
             }
-
+            ROS_DEBUG_STREAM("Const speed assigned:"<<points_and_target_speeds.back().speed);
             return points_and_target_speeds;
             
 
@@ -728,10 +736,6 @@ namespace basic_autonomy
             general_config.default_downsample_ratio = default_downsample_ratio;
             general_config.turn_downsample_ratio = turn_downsample_ratio;
 
-            std::cout<<"Printing general traj config"<<std::endl;
-            std::cout<<"trajectory type:"<<general_config.trajectory_type<<std::endl;
-            std::cout<<"Default downsample: "<<general_config.default_downsample_ratio<<std::endl;
-            std::cout<<"Turn downsample: "<<general_config.turn_downsample_ratio<<std::endl;
 
             return general_config;
         }

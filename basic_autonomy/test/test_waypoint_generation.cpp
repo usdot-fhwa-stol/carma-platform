@@ -647,8 +647,7 @@ namespace basic_autonomy
         const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0, 0, 0, 0, 0, 5, 0, 0, 20);
         double maneuver_fraction_completed;
         cav_msgs::VehicleState ending_state;
-        //std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::maneuvers_to_points_lanechange(maneuvers, starting_downtrack, cmw, state, maneuver_fraction_completed, ending_state, config);
-        std::cout<<"Starting compose geometry profile"<<std::endl;
+        
         std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers, 
                                                                                     starting_downtrack, cmw, ending_state, state, general_config, config);
         ros::Time state_time = ros::Time::now();
@@ -670,7 +669,6 @@ namespace basic_autonomy
                                                                                                          
         ASSERT_NEAR(lc_start_point.y(), lc_geom.front().y(), 0.000001);
         ASSERT_NEAR(lc_start_point.x(), lc_geom.front().x(), 0.000001);
-        std::cout<<"Exiting Test, lane change path size:"<<lc_geom.size()<<std::endl;
     } 
 
 } //basic_autonomy namespace

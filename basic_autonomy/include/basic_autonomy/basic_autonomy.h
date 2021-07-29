@@ -299,8 +299,8 @@ namespace basic_autonomy
                                                         int default_downsample_ratio,
                                                         int turn_downsample_ratio);
 
-     std::vector<std::string> lane_follow_plugins_list = {"inlanecruising"};
-     std::vector<std::string> lane_change_plugins_list = { "cooperative_lanechange", "unobstructed_lanechange"};   
+     const std::vector<std::string> lane_follow_plugins_list = {"inlanecruising"};
+     const std::vector<std::string> lane_change_plugins_list = { "cooperative_lanechange", "unobstructed_lanechange"};   
                                                   
     }
 }
