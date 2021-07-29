@@ -67,7 +67,7 @@ namespace platoon_strategic
             run_leader_waiting();
         }
 
-        cav_msgs::PlatooningInfo platoon_status = compose_platoon_info_msg();
+        cav_msgs::PlatooningInfo platoon_status = composePlatoonInfoMsg();
         platooning_info_publisher_(platoon_status);
 
         return true;
@@ -312,7 +312,6 @@ namespace platoon_strategic
                 // Task 2
                 cav_msgs::MobilityOperation status;
                 status = composeMobilityOperationLeaderWaiting();
-                std::cerr << status << std::endl;
                 mobility_operation_publisher_(status);
                 ROS_DEBUG_STREAM("publish status message");
                 long tsEnd = ros::Time::now().toNSec()/1000000; 
@@ -571,7 +570,6 @@ namespace platoon_strategic
 
     MobilityRequestResponse PlatoonStrategicPlugin::mob_req_cb_leader(const cav_msgs::MobilityRequest& msg)
     {
-        mobility_req_msg_ = msg;
         cav_msgs::PlanType plan_type= msg.plan_type;
         if (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR)
         {
@@ -775,7 +773,7 @@ namespace platoon_strategic
         }
     }
 
-    cav_msgs::PlatooningInfo PlatoonStrategicPlugin::compose_platoon_info_msg()
+    cav_msgs::PlatooningInfo PlatoonStrategicPlugin::composePlatoonInfoMsg()
     {
         cav_msgs::PlatooningInfo status_msg;
 
