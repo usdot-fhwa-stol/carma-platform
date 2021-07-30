@@ -16,8 +16,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(motion_computation)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+## Compile as C++14
+add_compile_options(-std=c++14)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -27,6 +27,10 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   carma_utils
   motion_predict
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
+  lanelet2_extension
 )
 
 ###################################
@@ -40,8 +44,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    INCLUDE_DIRS include
-  LIBRARIES ${PROJECT_NAME}
- CATKIN_DEPENDS cav_msgs roscpp carma_utils motion_predict
+#  LIBRARIES ${PROJECT_NAME}
+ CATKIN_DEPENDS cav_msgs roscpp carma_utils motion_predict tf2 tf2_ros tf2_geometry_msgs lanelet2_extension
 #  DEPENDS system_lib
 )
 
@@ -56,47 +60,31 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(${PROJECT_NAME}
- src/motion_computation_worker.cpp
- )
+add_executable(motion_computation_node src/main.cpp src/motion_computation_node.cpp)
+add_library(motion_computation_worker_lib
 
-add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+  src/motion_computation_worker.cpp
+)
+
+add_dependencies(motion_computation_worker_lib ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-
-add_library(${PROJECT_NAME}_node
- src/main.cpp 
- src/motion_computation_node.cpp
-)
-
-
-add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-
-target_link_libraries(${PROJECT_NAME}_node
- ${PROJECT_NAME}
- ${catkin_LIBRARIES})
-
+target_link_libraries(motion_computation_node motion_computation_worker_lib ${catkin_LIBRARIES})
 #############
 ## Install ##
 #############
 
 ## Mark executables for installation
-install(TARGETS 
-	${PROJECT_NAME}_node 
-	${PROJECT_NAME}
+install(TARGETS motion_computation_node
+	motion_computation_worker_lib
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-        FILES_MATCHING PATTERN "*.h"
-        PATTERN ".svn" EXCLUDE
 )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
@@ -121,9 +109,8 @@ catkin_add_gmock(${PROJECT_NAME}-test
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 
-
 if(TARGET ${PROJECT_NAME}-test)
- target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME}-test motion_computation_worker_lib ${catkin_LIBRARIES})
 endif()
 
 

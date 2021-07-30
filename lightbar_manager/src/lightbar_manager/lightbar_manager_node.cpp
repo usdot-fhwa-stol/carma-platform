@@ -363,8 +363,8 @@ int LightBarManager::run()
 
     // Spin until system shutdown
     ROS_INFO_STREAM("LightBarManager node initialized, spinning at " << spin_rate_ << "hz...");
-    ros::CARMANodeHandle::setSpinCallback(std::bind(&LightBarManager::spinCallBack, this));
     ros::CARMANodeHandle::setSpinRate(spin_rate_);
+    ros::CARMANodeHandle::setSpinCallback(std::bind(&LightBarManager::spinCallBack, this));
     ros::CARMANodeHandle::spin();
 
     // return

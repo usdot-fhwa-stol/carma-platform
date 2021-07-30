@@ -19,10 +19,12 @@
 -->
 <launch>
 
-
+   
   <!-- Remap topics from external packages -->
   <remap from="inbound_binary_msg" to="$(optenv CARMA_INTR_NS)/comms/inbound_binary_msg"/>
   <remap from="outbound_binary_msg" to="$(optenv CARMA_INTR_NS)/comms/outbound_binary_msg"/>
+  <remap from="outgoing_mobility_path" to="mobility_path_msg"/>  
+ 
 
   <remap from="system_alert" to="/system_alert"/>
 
@@ -33,14 +35,16 @@
     <remap from="vehicle_speed" to="$(optenv CARMA_INTR_NS)/pacmod/as_tx/vehicle_speed"/>
     <remap from="dual_antenna_heading" to="$(optenv CARMA_INTR_NS)/gnss/dual_antenna_heading"/>
     <remap from="steering_wheel_angle" to="$(optenv CARMA_INTR_NS)/can/steering_wheel_angle"/>
-    <remap from="brake_position" to="$(optenv CARMA_INTR_NS)/can/brake_position"/>
 
   <!-- j2735 Convertor Node -->
   <node pkg="j2735_convertor" type="j2735_convertor_node" name="j2735_convertor">
     <remap from="outgoing_bsm" to="bsm_outbound"/>
   </node>
 
-  <include file="$(find bsm_generator)/launch/bsm_generator.launch"/>
+  <group>
+    <remap from="georeference" to="$(optenv CARMA_LOCZ_NS)/map_param_loader/georeference"/>
+    <include file="$(find bsm_generator)/launch/bsm_generator.launch"/>
+  </group>
 
   <!-- Message Encoder/Decoder Node -->
   <include file="$(find cpp_message)/launch/cpp_message.launch"/>

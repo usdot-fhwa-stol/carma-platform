@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='UTF-8'?>
+﻿<?xml version='1.0' encoding='UTF-8'?>
 <osm version='0.6' generator='JOSM'>
 <geoReference v="+proj=tmerc +lat_0=4.9000000000000000e+1 +lon_0=8.0000000000000000e+0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs" />
   <node id='1000000' visible='true' version='1' lat='48.99821748787' lon='7.99992549542'>
@@ -54878,7 +54878,7 @@
   </relation>
   <relation id='10500' visible='true' version='1'>
     <member type='relation' ref='105' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
@@ -54983,7 +54983,7 @@
   </relation>
   <relation id='12000' visible='true' version='1'>
     <member type='relation' ref='120' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
@@ -55011,7 +55011,7 @@
   </relation>
   <relation id='12400' visible='true' version='1'>
     <member type='relation' ref='124' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
@@ -55039,7 +55039,7 @@
   </relation>
   <relation id='12800' visible='true' version='1'>
     <member type='relation' ref='128' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
@@ -55067,7 +55067,7 @@
   </relation>
   <relation id='13200' visible='true' version='1'>
     <member type='relation' ref='132' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
@@ -55088,7 +55088,7 @@
   </relation>
   <relation id='13500' visible='true' version='1'>
     <member type='relation' ref='135' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
@@ -55116,7 +55116,7 @@
   </relation>
   <relation id='13900' visible='true' version='1'>
     <member type='relation' ref='139' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
@@ -55151,7 +55151,7 @@
   </relation>
   <relation id='14400' visible='true' version='1'>
     <member type='relation' ref='144' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
@@ -55165,7 +55165,7 @@
   </relation>
   <relation id='14600' visible='true' version='1'>
     <member type='relation' ref='146' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
@@ -55179,7 +55179,7 @@
   </relation>
   <relation id='14800' visible='true' version='1'>
     <member type='relation' ref='148' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
@@ -55200,7 +55200,7 @@
   </relation>
   <relation id='15100' visible='true' version='1'>
     <member type='relation' ref='151' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
@@ -55221,7 +55221,7 @@
   </relation>
   <relation id='15400' visible='true' version='1'>
     <member type='relation' ref='154' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
@@ -55249,7 +55249,7 @@
   </relation>
   <relation id='15800' visible='true' version='1'>
     <member type='relation' ref='158' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
@@ -55277,21 +55277,21 @@
   </relation>
   <relation id='16200' visible='true' version='1'>
     <member type='relation' ref='162' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
   </relation>
   <relation id='16300' visible='true' version='1'>
     <member type='relation' ref='163' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
   </relation>
   <relation id='16400' visible='true' version='1'>
     <member type='relation' ref='164' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
@@ -55312,14 +55312,14 @@
   </relation>
   <relation id='16700' visible='true' version='1'>
     <member type='relation' ref='167' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
   </relation>
   <relation id='16800' visible='true' version='1'>
     <member type='relation' ref='168' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
@@ -55340,7 +55340,7 @@
   </relation>
   <relation id='17100' visible='true' version='1'>
     <member type='relation' ref='171' role='' />
-    <tag k='limit' v='25' />
+    <tag k='limit' v='25 mph' />
     <tag k='participant:vehicle' v='yes' />
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />

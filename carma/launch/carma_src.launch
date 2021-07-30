@@ -34,6 +34,7 @@
   <arg name="vehicle_config_dir" default="/opt/carma/vehicle/config" doc="The directory continaing vehicle config type parameters"/>
   <arg name="vehicle_calibration_dir" default="/opt/carma/vehicle/calibration" doc="The directory continaing vehicle calibration type parameters"/>
   <arg name="yolo_dir" default="/opt/carma/yolo" doc="The directory continaing yolo weights files for the perception stack"/>
+  <arg name="cuda" default="true" doc="cuda flag for vision_darknet_detect (true if cuda is available)"/>
   
 	<!-- Startup Drivers With Main CARMA System -->
   <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
@@ -101,6 +102,7 @@
   <!-- Environment Perception Stack -->
   <group ns="$(env CARMA_ENV_NS)">
     <include file="$(find carma)/launch/environment.launch">
+      <arg name="cuda" value="$(arg cuda)"/>
       <arg name="vector_map_file" value="$(arg vector_map_file)" />
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
       <arg name="yolo_dir" value="$(arg yolo_dir)"/>
@@ -118,6 +120,7 @@
       <remap from="system_alert" to="/system_alert"/>
       <remap from="~required_drivers" to="/required_drivers"/> 
       <remap from="~lidar_gps_drivers" to="/lidar_gps_drivers"/>
+      <remap from="~camera_drivers" to="/camera_drivers"/>
       <remap from="~truck" to="/truck"/>
       <remap from="~car" to="/car"/> 
       <rosparam command="load" file="$(find health_monitor)/config/params.yaml"/>
@@ -134,6 +137,12 @@
     <include file="$(find carma)/launch/ui.launch"/>
   </group>
 
-  <!-- TODO should there be a data collection launch file. Record Rosbag of all topics excluding /rosout and CAN messages since they may contain sensetive data -->
-  <node pkg="rosbag" type="record" name="rosbag_node" args="record -o /opt/carma/logs/ --lz4 -a -x '/rosout(.*)|(.*)/received_messages|(.*)/sent_messages|(.*)/scan|$(arg rosbag_exclusions)'" if="$(arg use_rosbag)" />
+  <!-- Set up the rosbag record node that will exclude sensitive topics -->
+  <group ns="carma_record">
+    <include file="$(find carma_record)/launch/carma_record.launch" if="$(arg use_rosbag)" />
+  </group>
+
+  <!-- Dump all ros parameters to a file -->
+  <node name="param_dump" pkg="carma_record" type="param_dump.sh"/>
+  
 </launch>

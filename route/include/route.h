@@ -20,6 +20,7 @@
 #include <std_msgs/String.h>
 #include <carma_utils/CARMAUtils.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <carma_wm/WMListener.h>
 
 #include "route_generator_worker.h"
 
@@ -37,9 +38,9 @@ namespace route {
     public:
 
         /**
-         * \brief Default constructor for arbitrator class
+         * \brief Default constructor
          */
-        Route();
+        Route() = default;
 
         /**
          * \brief General starting point to run this node
@@ -55,11 +56,6 @@ namespace route {
         carma_wm::WMListener wml_;
         carma_wm::WorldModelConstPtr wm_;
 
-        // tf buffer holds the tree of transforms
-        tf2_ros::Buffer tf_buffer_;
-        // tf2 listener subscribes to the /tf and /tf_static topics
-        tf2_ros::TransformListener tf_listener_;
-
         // route generator worker
         RouteGeneratorWorker rg_worker_;
 
@@ -71,6 +67,8 @@ namespace route {
 
         // subscriber to current pose in the map
         ros::Subscriber pose_sub_;
+        ros::Subscriber twist_sub_;
+        ros::Subscriber geo_sub_;
         
         // route service servers
         ros::ServiceServer get_available_route_srv_;

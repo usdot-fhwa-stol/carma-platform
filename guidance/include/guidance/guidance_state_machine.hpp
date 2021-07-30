@@ -20,6 +20,7 @@
 #include <cav_msgs/RobotEnabled.h>
 #include <cav_msgs/GuidanceState.h>
 #include <cav_msgs/RouteEvent.h>
+#include <autoware_msgs/VehicleStatus.h>
 
 namespace guidance
 {
@@ -35,6 +36,7 @@ namespace guidance
                 DISENGAGED = 3,
                 SHUTDOWN = 4,
                 OVERRIDE = 5,
+                PARK = 6,
             };
 
             enum State
@@ -45,12 +47,18 @@ namespace guidance
                 ACTIVE = 3,
                 ENGAGED = 4,
                 INACTIVE = 5,
+                ENTER_PARK = 6,
             };
 
             /*!
              * \brief Default constructor for GuidanceStateMachine
              */
             GuidanceStateMachine() = default;
+
+            /*!
+             * \brief Handle vehicle status message from ROS network.
+             */
+            void onVehicleStatus(const autoware_msgs::VehicleStatusConstPtr& msg);
 
             /*!
              * \brief Handle system_alert message from ROS network.
@@ -97,6 +105,14 @@ namespace guidance
 
             // make one service call in ACTIVE state to engage
             bool called_robotic_engage_in_active_{false};
+
+            // Flag indicating that DRIVERS_READY signal was received during system startup.
+            // This is needed for state transitions since the most recent system alert message may contain unrelated information
+            bool operational_drivers_{false}; 
+
+            // Current vehicle speed in m/s. Used to handle end of route state transition.
+            double current_velocity_ = 0.0;
+
     };
 
 }

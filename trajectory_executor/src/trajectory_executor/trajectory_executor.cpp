@@ -22,20 +22,6 @@
 
 namespace trajectory_executor 
 {
-    cav_msgs::TrajectoryPlan trimPastPoints(const cav_msgs::TrajectoryPlan &plan) {
-        cav_msgs::TrajectoryPlan out(plan);
-        out.trajectory_points = std::vector<cav_msgs::TrajectoryPlanPoint>();
-
-        ros::Time current_time = ros::Time::now();
-
-        for (int i = 0; i < plan.trajectory_points.size(); i++) {
-            if (plan.trajectory_points[i].target_time > current_time) {
-                out.trajectory_points.push_back(plan.trajectory_points[i]);
-            }
-        }
-
-        return out;
-    }
 
     TrajectoryExecutor::TrajectoryExecutor(int traj_frequency) :
         _timesteps_since_last_traj(0),
@@ -56,6 +42,13 @@ namespace trajectory_executor
         _private_nh->param<std::string>("default_control_plugin_topic", default_control_plugin_topic_, "NULL");
 
         out[default_control_plugin_] = default_control_plugin_topic_;
+
+        //Hardcoding platoon control plugins
+
+        std::string control_plugin2 = "PlatooningControlPlugin";
+        std::string control_plugin_topic2 = "/guidance/PlatooningControlPlugin/plan_trajectory";
+        out[control_plugin2]=control_plugin_topic2;
+
         return out;
     }
     
@@ -71,19 +64,9 @@ namespace trajectory_executor
         ROS_DEBUG_STREAM("Successfully swapped trajectories!");
     }
 
-    void TrajectoryExecutor::guidanceStateMonitor(cav_msgs::GuidanceState msg)
+    void TrajectoryExecutor::guidanceStateMonitor(const cav_msgs::GuidanceStateConstPtr& msg)
     {
         std::unique_lock<std::mutex> lock(_cur_traj_mutex); // Acquire lock until end of this function scope
-        if(msg.state==cav_msgs::GuidanceState::INACTIVE)
-        {
-        	_cur_traj= nullptr;
-        }
-
-    }
-
-    void TrajectoryExecutor::guidanceStateCb(const cav_msgs::GuidanceStateConstPtr& msg)
-    {
-        std::unique_lock<std::mutex> lock(_cur_traj_mutex);
         // TODO need to handle control handover once alernative planner system is finished
         if(msg->state != cav_msgs::GuidanceState::ENGAGED)
         {
@@ -97,9 +80,6 @@ namespace trajectory_executor
         ROS_DEBUG("TrajectoryExecutor tick start!");
 
         if (_cur_traj != nullptr) {
-            if (_timesteps_since_last_traj > 0) {
-                _cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>(new cav_msgs::TrajectoryPlan(trimPastPoints(*_cur_traj)));
-            }
             if (!_cur_traj->trajectory_points.empty()) {
                 // Determine the relevant control plugin for the current timestep
                 std::string control_plugin = _cur_traj->trajectory_points[0].controller_plugin_name;
@@ -141,10 +121,7 @@ namespace trajectory_executor
 
         ROS_DEBUG("TrajectoryExecutor component started succesfully! Starting to spin.");
 
-        ros::CARMANodeHandle::setSpinRate(_default_spin_rate);
         ros::CARMANodeHandle::spin();
-
-        ros::shutdown();
     }
 
     bool TrajectoryExecutor::init()
@@ -155,11 +132,9 @@ namespace trajectory_executor
         _private_nh = std::unique_ptr<ros::CARMANodeHandle>(new ros::CARMANodeHandle("~"));
         ROS_DEBUG("Initialized all node handles");
 
-        _private_nh->param("spin_rate", _default_spin_rate, 10);
         _private_nh->param("trajectory_publish_rate", _min_traj_publish_tickrate_hz, 10);
 
-        ROS_DEBUG_STREAM("Initalized params with default_spin_rate " << _default_spin_rate 
-            << " and trajectory_publish_rate " << _min_traj_publish_tickrate_hz);
+        ROS_DEBUG_STREAM("Initalized params with trajectory_publish_rate " << _min_traj_publish_tickrate_hz);
 
         this->_plan_sub = this->_public_nh->subscribe<const cav_msgs::TrajectoryPlan&>("trajectory", 5, &TrajectoryExecutor::onNewTrajectoryPlan, this);
         this->_state_sub = this->_public_nh->subscribe<cav_msgs::GuidanceState>("state", 5, &TrajectoryExecutor::guidanceStateMonitor, this);

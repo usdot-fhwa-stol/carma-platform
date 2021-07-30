@@ -15,10 +15,14 @@
  */
 
 #include <gtest/gtest.h>
-
+#include <ros/console.h>
 // Run all the tests
 int main(int argc, char** argv)
 {
   testing::InitGoogleTest(&argc, argv);
+      ROSCONSOLE_AUTOINIT;
+    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+      ros::console::notifyLoggerLevelsChanged();
+    }
   return RUN_ALL_TESTS();
 }

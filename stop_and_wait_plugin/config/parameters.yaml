@@ -1,0 +1,29 @@
+# Double: The minimum duration of a trajectory length
+# Units: seconds
+minimal_trajectory_duration : 6.0
+
+# Double: Size of timesteps between stopped trajectory points when stopped
+# Units: seconds
+stop_timestep : 0.1
+
+# Double: Downtrack distance between trajectory points
+# Units: m
+trajectory_step_size : 1.0
+
+# Double: Downtrack distance between trajectory points
+# Units: percentage
+accel_limit_multiplier : 0.7
+
+# Double: Minimum speed the vehicle can command before being ready to stop
+# Units: m/s
+crawl_speed : 1.34112
+
+# Double: The gap in meters between points sampled from the lanelet centerlines for planning trajectory positions
+# Units: m
+cernterline_sampling_spacing: 1.0
+
+
+# Double: The default buffer in meters used for where the vehicle can come to a stop during execution. 
+#         This value is overriden by the first value in maneuver.parameters.float_valued_meta_data[]
+# Units: m
+default_stopping_buffer: 3.0

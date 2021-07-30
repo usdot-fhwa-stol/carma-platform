@@ -28,8 +28,9 @@ namespace plan_delegator
 
         pnh_.param<std::string>("planning_topic_prefix", planning_topic_prefix_, "/plugins/");        
         pnh_.param<std::string>("planning_topic_suffix", planning_topic_suffix_, "/plan_trajectory");
-        pnh_.param<double>("spin_rate", spin_rate_, 10.0);
+        pnh_.param<double>("trajectory_planning_rate", trajectory_planning_rate_, 10.0);
         pnh_.param<double>("trajectory_duration_threshold", max_trajectory_duration_, 6.0);
+        pnh_.param<double>("min_speed", min_crawl_speed_, min_crawl_speed_);
 
         traj_pub_ = nh_.advertise<cav_msgs::TrajectoryPlan>("plan_trajectory", 5);
         plan_sub_ = nh_.subscribe("final_maneuver_plan", 5, &PlanDelegator::maneuverPlanCallback, this);
@@ -40,8 +41,11 @@ namespace plan_delegator
         guidance_state_sub_ = nh_.subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &PlanDelegator::guidanceStateCallback, this);
 
 
-        ros::CARMANodeHandle::setSpinCallback(std::bind(&PlanDelegator::spinCallback, this));
-        ros::CARMANodeHandle::setSpinRate(spin_rate_);
+        
+        traj_timer_ = pnh_.createTimer(
+            ros::Duration(ros::Rate(trajectory_planning_rate_)),
+            &PlanDelegator::onTrajPlanTick, 
+            this);
     }
     
     void PlanDelegator::run() 
@@ -96,22 +100,24 @@ namespace plan_delegator
 
     bool PlanDelegator::isManeuverExpired(const cav_msgs::Maneuver& maneuver, ros::Time current_time) const
     {
-        return GET_MANEUVER_PROPERTY(maneuver, end_time) <= current_time;
+        return GET_MANEUVER_PROPERTY(maneuver, end_time) <= current_time; // TODO maneuver expiration should maybe be based off of distance not time? https://github.com/usdot-fhwa-stol/carma-platform/issues/1107
     }
 
-    cav_srvs::PlanTrajectory PlanDelegator::composePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan) const
+    cav_srvs::PlanTrajectory PlanDelegator::composePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const
     {
         auto plan_req = cav_srvs::PlanTrajectory{};
         plan_req.request.maneuver_plan = latest_maneuver_plan_;
         // set current vehicle state if we have NOT planned any previous trajectories
         if(latest_trajectory_plan.trajectory_points.empty())
         {
+            plan_req.request.header.stamp = latest_pose_.header.stamp;
             plan_req.request.vehicle_state.longitudinal_vel = latest_twist_.twist.linear.x;
             plan_req.request.vehicle_state.X_pos_global = latest_pose_.pose.position.x;
             plan_req.request.vehicle_state.Y_pos_global = latest_pose_.pose.position.y;
             double roll, pitch, yaw;
             carma_wm::geometry::rpyFromQuaternion(latest_pose_.pose.orientation, roll, pitch, yaw);
             plan_req.request.vehicle_state.orientation = yaw;
+            plan_req.request.maneuver_index_to_plan = current_maneuver_index;
         }
         // set vehicle state based on last two planned trajectory points
         else
@@ -123,7 +129,9 @@ namespace plan_delegator
             auto distance_diff = std::sqrt(std::pow(last_point.x - second_last_point.x, 2) + std::pow(last_point.y - second_last_point.y, 2));
             ros::Duration time_diff = last_point.target_time - second_last_point.target_time;
             auto time_diff_sec = time_diff.toSec();
+            plan_req.request.maneuver_index_to_plan = current_maneuver_index;
             // this assumes the vehicle does not have significant lateral velocity
+            plan_req.request.header.stamp = latest_trajectory_plan.trajectory_points.back().target_time;
             plan_req.request.vehicle_state.longitudinal_vel = distance_diff / time_diff_sec;
             // TODO develop way to set yaw value for future points
         }
@@ -144,20 +152,33 @@ namespace plan_delegator
             ROS_INFO_STREAM("Guidance is not engaged. Plan delegator will not plan trajectory.");
             return latest_trajectory_plan;
         }
-        // iterate through maneuver list to make service call
-    
-        for(const auto& maneuver : latest_maneuver_plan_.maneuvers)
+
+        // Flag for the first received trajectory plan service response
+        bool first_trajectory_plan = true;
+        
+        // Track the index of the starting maneuver in the maneuver plan that this trajectory plan service request is for
+        uint16_t current_maneuver_index = 0;
+        
+        // Loop through maneuver list to make service call to applicable Tactical Plugin
+        while(current_maneuver_index < latest_maneuver_plan_.maneuvers.size())
         {
+            const auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
+
             // ignore expired maneuvers
             if(isManeuverExpired(maneuver))
             {
+                ROS_INFO_STREAM("Dropping expired maneuver: " << GET_MANEUVER_PROPERTY(maneuver, parameters.maneuver_id));
+                // Update the maneuver plan index for the next loop
+                ++current_maneuver_index;
                 continue;
             }
             // get corresponding ros service client for plan trajectory
             auto maneuver_planner = GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin);
             auto client = getPlannerClientByName(maneuver_planner);
+
             // compose service request
-            auto plan_req = composePlanTrajectoryRequest(latest_trajectory_plan);
+            auto plan_req = composePlanTrajectoryRequest(latest_trajectory_plan, current_maneuver_index);
+
             if(client.call(plan_req))
             {
                 // validate trajectory before add to the plan
@@ -166,15 +187,37 @@ namespace plan_delegator
                     ROS_WARN_STREAM("Found invalid trajectory with less than 2 trajectory points for " << latest_maneuver_plan_.maneuver_plan_id);
                     break;
                 }
+                //Remove duplicate point from start of trajectory
+                if(latest_trajectory_plan.trajectory_points.size() !=0){
+                    
+                    if(latest_trajectory_plan.trajectory_points.back().target_time == plan_req.response.trajectory_plan.trajectory_points.front().target_time){
+                        ROS_DEBUG_STREAM("Removing duplicate point");
+                        plan_req.response.trajectory_plan.trajectory_points.erase(plan_req.response.trajectory_plan.trajectory_points.begin());
+                    }
+                }
                 latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
                                                                 plan_req.response.trajectory_plan.trajectory_points.begin(),
                                                                 plan_req.response.trajectory_plan.trajectory_points.end());
-                latest_trajectory_plan.initial_longitudinal_velocity = plan_req.response.trajectory_plan.initial_longitudinal_velocity;
+                
+                // Assign the trajectory plan's initial longitudinal velocity based on the first tactical plugin's response
+                if(first_trajectory_plan == true)
+                {
+                    latest_trajectory_plan.initial_longitudinal_velocity = plan_req.response.trajectory_plan.initial_longitudinal_velocity;
+                    first_trajectory_plan = false;
+                }
+
                 if(isTrajectoryLongEnough(latest_trajectory_plan))
                 {
                     ROS_INFO_STREAM("Plan Trajectory completed for " << latest_maneuver_plan_.maneuver_plan_id);
                     break;
                 }
+
+                // Update the maneuver plan index based on the last maneuver index converted to a trajectory
+                // This is required since inlanecruising_plugin can plan a trajectory over contiguous LANE_FOLLOWING maneuvers
+                if(plan_req.response.related_maneuvers.size() > 0)
+                {
+                    current_maneuver_index = plan_req.response.related_maneuvers.back() + 1;
+                } 
             }
             else
             {
@@ -183,10 +226,11 @@ namespace plan_delegator
                 break;
             }
         }
+
         return latest_trajectory_plan;
     }
 
-    bool PlanDelegator::spinCallback()
+    void PlanDelegator::onTrajPlanTick(const ros::TimerEvent& te)
     {
         cav_msgs::TrajectoryPlan trajectory_plan = planTrajectory();
         // Check if planned trajectory is valid before send out
@@ -199,6 +243,5 @@ namespace plan_delegator
         {
             ROS_WARN_STREAM("Planned trajectory is empty. It will not be published!");
         }
-        return true;
     }
 }

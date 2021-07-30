@@ -48,6 +48,7 @@ void MockDriverNode::setSpinCallback(std::function<bool()> cb) const
 {
   if (!dummy_)
   {
+    ros::CARMANodeHandle::setSpinRate(10.0); // Set spin to avoid exception until spin is called and this value updated
     ros::CARMANodeHandle::setSpinCallback(cb);
   }
 }

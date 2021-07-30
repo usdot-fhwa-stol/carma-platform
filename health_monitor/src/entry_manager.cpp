@@ -24,7 +24,8 @@ namespace health_monitor
 
     EntryManager::EntryManager(std::vector<std::string> required_entries):required_entries_(required_entries) {} 
     
-    EntryManager::EntryManager(std::vector<std::string> required_entries,std::vector<std::string> lidar_gps_entries) :required_entries_(required_entries),lidar_gps_entries_(lidar_gps_entries){}
+    EntryManager::EntryManager(std::vector<std::string> required_entries,std::vector<std::string> lidar_gps_entries, 
+    std::vector<std::string> camera_entries) :required_entries_(required_entries),lidar_gps_entries_(lidar_gps_entries), camera_entries_(camera_entries){}
 
     void EntryManager::update_entry(const Entry& entry)
     {
@@ -99,6 +100,19 @@ namespace health_monitor
         }
 
         return -1;
+    }
+
+    int EntryManager::is_camera_entry_required(const std::string& name) const
+    {
+        for(int i = 0;i < camera_entries_.size(); i++)
+        {
+            if(camera_entries_[i].compare(name) == 0)
+            {
+                return i;
+            }
+        }
+
+
     }
 
 }

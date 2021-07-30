@@ -83,6 +83,7 @@ class MPCFollowerWrapper {
 
         // @brief ROS publishers.
         ros::Publisher way_points_pub_;
+        ros::Timer discovery_pub_timer_;
 
 
         MPCFollowerWrapperWorker mpcww;

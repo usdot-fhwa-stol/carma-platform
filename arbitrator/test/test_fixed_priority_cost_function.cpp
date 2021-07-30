@@ -27,7 +27,7 @@ namespace arbitrator
         mvr1.type = cav_msgs::Maneuver::LANE_FOLLOWING;
         mvr1.lane_following_maneuver.start_dist = 0;
         mvr1.lane_following_maneuver.start_time = ros::Time::now();
-        mvr1.lane_following_maneuver.lane_id.push_back(0);
+        mvr1.lane_following_maneuver.lane_ids = {"0"};
         mvr1.lane_following_maneuver.end_dist = 1;
         mvr1.lane_following_maneuver.end_time = ros::Time::now();
         mvr1.lane_following_maneuver.start_speed = 10;
@@ -48,7 +48,7 @@ namespace arbitrator
         mvr1.type = cav_msgs::Maneuver::LANE_FOLLOWING;
         mvr1.lane_following_maneuver.start_dist = 0;
         mvr1.lane_following_maneuver.start_time = ros::Time::now();
-        mvr1.lane_following_maneuver.lane_id.push_back(0);
+        mvr1.lane_following_maneuver.lane_ids = {"0"};
         mvr1.lane_following_maneuver.end_dist = 1;
         mvr1.lane_following_maneuver.end_time = ros::Time::now();
         mvr1.lane_following_maneuver.start_speed = 10;
@@ -60,7 +60,7 @@ namespace arbitrator
         mvr2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
         mvr2.lane_following_maneuver.start_dist = 1;
         mvr2.lane_following_maneuver.start_time = ros::Time::now();
-        mvr2.lane_following_maneuver.lane_id.push_back(0);
+        mvr2.lane_following_maneuver.lane_ids = {"0"};
         mvr2.lane_following_maneuver.end_dist = 2;
         mvr2.lane_following_maneuver.end_time = ros::Time::now();
         mvr2.lane_following_maneuver.start_speed = 10;
@@ -82,7 +82,7 @@ namespace arbitrator
         mvr1.type = cav_msgs::Maneuver::LANE_FOLLOWING;
         mvr1.lane_following_maneuver.start_dist = 0;
         mvr1.lane_following_maneuver.start_time = ros::Time::now();
-        mvr1.lane_following_maneuver.lane_id.push_back(0);
+        mvr1.lane_following_maneuver.lane_ids = {"0"};
         mvr1.lane_following_maneuver.end_dist = 1;
         mvr1.lane_following_maneuver.end_time = ros::Time::now();
         mvr1.lane_following_maneuver.start_speed = 10;
@@ -103,7 +103,7 @@ namespace arbitrator
         mvr2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
         mvr2.lane_following_maneuver.start_dist = 0;
         mvr2.lane_following_maneuver.start_time = ros::Time::now();
-        mvr2.lane_following_maneuver.lane_id.push_back(0);
+        mvr2.lane_following_maneuver.lane_ids = {"0"};
         mvr2.lane_following_maneuver.end_dist = 1;
         mvr2.lane_following_maneuver.end_time = ros::Time::now();
         mvr2.lane_following_maneuver.start_speed = 10;
@@ -114,7 +114,7 @@ namespace arbitrator
         mvr3.type = cav_msgs::Maneuver::LANE_FOLLOWING;
         mvr3.lane_following_maneuver.start_dist = 1;
         mvr3.lane_following_maneuver.start_time = ros::Time::now();
-        mvr3.lane_following_maneuver.lane_id.push_back(0);
+        mvr3.lane_following_maneuver.lane_ids = {"0"};
         mvr3.lane_following_maneuver.end_dist = 2;
         mvr3.lane_following_maneuver.end_time = ros::Time::now();
         mvr3.lane_following_maneuver.start_speed = 10;

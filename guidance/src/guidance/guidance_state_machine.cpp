@@ -15,6 +15,7 @@
  */
 
 #include "guidance/guidance_state_machine.hpp"
+#include <ros/ros.h>
 
 namespace guidance
 {
@@ -54,12 +55,27 @@ namespace guidance
                 } else if(signal == Signal::OVERRIDE)
                 {
                     current_guidance_state_ = State::INACTIVE;
+                } else if(signal == Signal::PARK)
+                {
+                    current_guidance_state_ = State::ENTER_PARK;
                 }
                 break;
             case State::INACTIVE:
                 if(signal == Signal::ACTIVATED)
                 {
                     current_guidance_state_ = State::ACTIVE;
+                }else if(signal == Signal::INITIALIZED){
+                    current_guidance_state_ = State::DRIVERS_READY;
+                }
+                break;
+            case State::ENTER_PARK:
+                if(signal == Signal::OVERRIDE)
+                {
+                    current_guidance_state_ = State::INACTIVE;
+                } 
+                else if(signal == Signal::DISENGAGED)
+                {
+                    current_guidance_state_ = State::DRIVERS_READY;
                 }
                 break;
             default:
@@ -67,13 +83,32 @@ namespace guidance
         }
     }
 
+    void GuidanceStateMachine::onVehicleStatus(const autoware_msgs::VehicleStatusConstPtr& msg)
+    {
+        current_velocity_ = msg->speed * 0.277777; // Convert kilometers per hour to meters per second. Rounded down so that it comes under epsilon for parking check
+        if (current_guidance_state_ == State::ENTER_PARK)
+        {
+            // '3' indicates vehicle gearshift is currently set to PARK
+            if(msg->gearshift == 3)
+            {
+                onGuidanceSignal(Signal::OVERRIDE); // Required for ENTER_PARK -> INACTIVE
+
+                if(operational_drivers_){
+                    onGuidanceSignal(Signal::INITIALIZED); 
+                }
+            }
+        }
+    }
+
     void GuidanceStateMachine::onSystemAlert(const cav_msgs::SystemAlertConstPtr& msg)
     {
         if(msg->type == msg->DRIVERS_READY)
         {
+            operational_drivers_ = true;
             onGuidanceSignal(Signal::INITIALIZED);
-        } else if(msg->type == msg->SHUTDOWN || msg->type == msg->FATAL)
+        } else if(msg->type == msg->SHUTDOWN)
         {
+            operational_drivers_ = false;
             onGuidanceSignal(Signal::SHUTDOWN);
         }
     }
@@ -109,10 +144,17 @@ namespace guidance
     void GuidanceStateMachine::onRouteEvent(const cav_msgs::RouteEventConstPtr& msg)
     {
         if(msg->event == cav_msgs::RouteEvent::ROUTE_DEPARTED ||
-           msg->event == cav_msgs::RouteEvent::ROUTE_COMPLETED ||
            msg->event == cav_msgs::RouteEvent::ROUTE_ABORTED) {
                onGuidanceSignal(Signal::DISENGAGED);
            }
+        else if(msg->event == cav_msgs::RouteEvent::ROUTE_COMPLETED){
+            if (fabs(current_velocity_) < 0.001) { // Check we have successfully stopped
+                onGuidanceSignal(Signal::PARK); // ENGAGED -> ENTER_PARK this state restricts transitioning out of ENTER_PARK until vehicle is shifted to PARK
+            } else { // Vehicle was not able to stop transition to inactive
+                ROS_WARN_STREAM("Vehicle failed to park on route completion because current velocity was " << current_velocity_);
+                onGuidanceSignal(Signal::OVERRIDE);
+            }
+        }
     }
 
     uint8_t GuidanceStateMachine::getCurrentState()

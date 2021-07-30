@@ -1,5 +1,4 @@
 #pragma once
-
 /*
  * Copyright (C) 2018-2021 LEIDOS.
  *
@@ -16,71 +15,78 @@
  * the License.
  */
 
-#include <ros/ros.h>
-#include <tf2_ros/transform_listener.h>
-#include <cav_srvs/GetTransform.h>
-#include <wgs84_utils/wgs84_utils.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
-#include <sensor_msgs/NavSatFix.h>
-#include <novatel_gps_msgs/NovatelDualAntennaHeading.h>
-#include <novatel_gps_msgs/NovatelPosition.h>
-#include <novatel_gps_msgs/NovatelXYZ.h>
 #include <gnss_to_map_convertor/GNSSToMapConvertor.h>
-#include <carma_utils/CARMAUtils.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <carma_utils/CARMANodeHandle.h>
+#include <vector>
+#include <string>
+#include <boost/algorithm/string.hpp>
+#include <algorithm>
 
-namespace gnss_to_map_convertor {
+namespace gnss_to_map_convertor
+{
+class GNSSToMapNode
+{
+public:
   /**
-   * \class GNSSToMapNode
-   * \brief ROS Node which maintains a tf2 transform tree which can be accessed by other nodes.
-   *
-   * The get_transform service can be used to obtain coordinate transformations between two frames.
-   * Only transforms published on the /tf or /tf_static topics are recorded by this node.
-   */
-  class GNSSToMapNode {
+   * \brief Run this node. This method is responsable for setting up the ros network wiring and starting callback execution.
+   * \return Linux error code if needed. 0 on no error 
+   */ 
+  int run()
+  {
+    // Buffer which holds the tree of transforms
+    tf2_ros::Buffer tfBuffer;
+    // tf2 listeners. Subscribes to the /tf and /tf_static topics
+    tf2_ros::TransformListener tfListener{ tfBuffer };
 
-    private:
-      // Buffer which holds the tree of transforms
-      tf2_ros::Buffer tfBuffer_;
-      // tf2 listeners. Subscribes to the /tf and /tf_static topics
-      tf2_ros::TransformListener tfListener_ {tfBuffer_};
-      
-      // Ros node handle
-      ros::CARMANodeHandle cnh_;
-      ros::CARMANodeHandle p_cnh_ {"~"}; // Private node handle initialized in constructor
+    ros::CARMANodeHandle cnh;
+    ros::CARMANodeHandle pnh("~");
 
-      ros::Publisher ecef_pose_pub_;
-      ros::Publisher map_pose_pub_;
+    // Load parameters
+    std::string base_link_frame;
+    pnh.param<std::string>("base_link_frame_id", base_link_frame, "base_link");
+    
+    std::string map_frame;
+    pnh.param<std::string>("map_frame_id", map_frame, "map");
 
-      ros::Subscriber fix_sub_;
+    std::string heading_frame;
+    pnh.param<std::string>("heading_frame_id", heading_frame, "ned_heading");
 
-      tf2::Transform baselink_in_sensor_; 
-      tf2::Transform sensor_in_ned_; 
-      bool baselink_in_sensor_set_ = false;
-      std::string base_link_frame_ = "base_link";
-      std::string earth_frame_ = "earth";
-      std::string map_frame_ = "map";
-      std::string ned_heading_frame_ = "ned_heading";
+    // Map pose publisher
+    ros::Publisher map_pose_pub = cnh.advertise<geometry_msgs::PoseStamped>("gnss_pose", 10, true);
 
-      /**
-       * @brief GPSFix callback which publishes the updated ecef and map poses
-       * 
-       * @param fix_msg The gnss fix message which must contain the position and heading information
-       */ 
-      void fixCb(const gps_common::GPSFixConstPtr& fix_msg);
+    // Initialize primary worker object 
+    GNSSToMapConvertor convertor(
+        [&map_pose_pub](const auto& msg) { map_pose_pub.publish(msg); },  // Lambda representing publication
 
-    public:
-      /**
-       * @brief Default Constructor
-       */
-      GNSSToMapNode();
+        [&tfBuffer](const auto& target, const auto& source) -> boost::optional<geometry_msgs::TransformStamped> {  // Lambda representing transform lookup
+          geometry_msgs::TransformStamped tf;
+          try
+          {
+            tf = tfBuffer.lookupTransform(target, source, ros::Time(0));
+          }
+          catch (tf2::TransformException& ex)
+          {
+            ROS_ERROR_STREAM("Could not lookup transform with exception " << ex.what());
+            return boost::none;
+          }
+          return tf;
+        },
 
-      /**
-       * @brief Starts the Node
-       *
-       * @return 0 on exit with no errors
-       */
-      int run();
-  };
-}
+        map_frame, base_link_frame, heading_frame);
+
+    // Fix Subscriber
+    ros::Subscriber fix_sub_ = cnh.subscribe("gnss_fix_fused", 2, &GNSSToMapConvertor::gnssFixCb, &convertor);
+
+    // Georeference subsciber
+    ros::Subscriber geo_sub = cnh.subscribe("georeference", 1, &GNSSToMapConvertor::geoReferenceCallback, &convertor);
+
+    // Spin
+    cnh.spin();
+    return 0;
+  }
+};
+}  // namespace gnss_to_map_convertor

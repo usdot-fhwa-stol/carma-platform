@@ -320,6 +320,93 @@ private:
   std::vector<lanelet::Lanelet> non_map_lanelets_;
 };
 
+/**
+ * \brief This method is used in the split_lanes unit test to split an individual lanelet. See that variables by the same name in that test for the input parameters. 
+ */ 
+void splitLanelet(lanelet::LaneletMapPtr map, lanelet::Lanelet& current_lanelet, 
+  const std::string& type_string, const std::string& sub_type_string,
+  const std::vector<std::string>& left_participants, const std::vector<std::string>& right_participants,
+  lanelet::Point3d& previous_end_point, lanelet::Point3d& start_point,
+  std::vector<lanelet::Lanelet>& new_lanelets,
+  std::unordered_map<lanelet::Id, lanelet::RegulatoryElementPtr>& regulations_to_modify,
+  std::unordered_map<lanelet::Id, std::vector<lanelet::Lanelet>>& regulation_lanelets_to_replace,
+  std::unordered_map<lanelet::Id, std::vector<lanelet::Lanelet>>& replacement_lanelets) {
+
+  // Create deep copy of centerline
+  lanelet::LineString3d centerline(lanelet::utils::getId());  // New ID
+  if (current_lanelet.centerline3d().inverted())
+  {  // Apply inversion
+    centerline = centerline.invert();
+  }
+
+  // Copy points
+  for (auto point : current_lanelet.centerline3d().basicLineString())
+  {  
+    // Check ends of centerline for existing points 
+    if (start_point.id() == lanelet::InvalId)
+    {
+      previous_end_point = lanelet::Point3d(lanelet::utils::getId(), point);
+      start_point = previous_end_point;  // Start point is needed for closed loops
+    }
+    if (lanelet::geometry::distance3d(start_point, point) < 0.1)
+    {
+      centerline.push_back(start_point);
+    }
+    else if (lanelet::geometry::distance3d(previous_end_point, point) < 0.1)
+    {
+      centerline.push_back(previous_end_point);
+    }
+    else
+    {
+      centerline.push_back(lanelet::Point3d(lanelet::utils::getId(), point));
+    }
+  }
+
+  previous_end_point = centerline.back();
+
+  // Assign user specified attributes to centerline
+  centerline.attributes()[lanelet::AttributeName::Type] = type_string;
+  centerline.attributes()[lanelet::AttributeName::Subtype] = sub_type_string;
+
+  // Build new lanelets
+  lanelet::Lanelet left_ll(lanelet::utils::getId(), current_lanelet.leftBound3d(), centerline,
+                            current_lanelet.attributes());
+
+  lanelet::Lanelet right_ll(lanelet::utils::getId(), centerline, current_lanelet.rightBound3d(),
+                            current_lanelet.attributes());
+
+  // Add a passing control line for the centerline and apply to both lanelets
+  std::shared_ptr<lanelet::PassingControlLine> control_line_ptr(
+      new lanelet::PassingControlLine(lanelet::PassingControlLine::buildData(lanelet::utils::getId(), { centerline },
+                                                                              left_participants, right_participants)));
+
+  left_ll.addRegulatoryElement(control_line_ptr);
+  right_ll.addRegulatoryElement(control_line_ptr);
+
+  // Find all references to old lanelet
+  auto reg_elements = map->regulatoryElementLayer.findUsages(current_lanelet);
+
+  // Mark all regulatory elements that reference the old lanelet for replacement with the two split lanelets
+  for (auto reg : reg_elements)
+  {
+    regulations_to_modify[reg->id()] = reg;
+    if (regulation_lanelets_to_replace.find(reg->id()) != regulation_lanelets_to_replace.end())
+    {
+      regulation_lanelets_to_replace[reg->id()].push_back(current_lanelet);
+    }
+    else
+    {
+      regulation_lanelets_to_replace[reg->id()] = { current_lanelet };
+    }
+  }
+
+  replacement_lanelets[current_lanelet.id()] = { left_ll, right_ll };
+
+  // Store new lanelets
+  new_lanelets.push_back(left_ll);
+  new_lanelets.push_back(right_ll);
+}
+
 TEST(MapTools, DISABLED_split_lanes)  // Remove DISABLED_ to enable unit test
 {
   ///////////
@@ -327,9 +414,10 @@ TEST(MapTools, DISABLED_split_lanes)  // Remove DISABLED_ to enable unit test
   ///////////
 
   // File to process. Path is relative to test folder
-  std::string file = "resource/SummitPoint_Pretty_fixed.osm";
+  std::string file = "resource/Summit_Point_1.26.21.fixed.xodr.osm";
   // Id of lanelet to start combing from
-  lanelet::Id starting_id = 100;
+  lanelet::Id starting_id = 885;
+  lanelet::Id ending_id = 15237;
   // List of participants allowed to pass the centerline from the left
   std::vector<std::string> left_participants = { lanelet::Participants::Vehicle };
   // List of participants allowed to pass the centerline from the right
@@ -376,116 +464,46 @@ TEST(MapTools, DISABLED_split_lanes)  // Remove DISABLED_ to enable unit test
   std::unordered_map<lanelet::Id, std::vector<lanelet::Lanelet>> replacement_lanelets; // Mapping of lanelet ids to the list of lanelets to use as replacements in their regulations
 
   std::vector<lanelet::Lanelet> new_lanelets; // Set of new lanelets to use for building the new map
+  lanelet::Lanelet start_lanelet;
+  lanelet::Lanelet end_lanelet;
 
-  // Starting with the specified lanelet we will iterate over the
-  lanelet::Lanelet current_lanelet;
-  try
-  {
-    current_lanelet = map->laneletLayer.get(starting_id);
+  try {
+      start_lanelet = map->laneletLayer.get(starting_id);
   }
-  catch (const lanelet::NoSuchPrimitiveError& e)
-  {
-    FAIL() << "The specified starting lanelet Id of " << starting_id << " does not exist in the provided map.";
+  catch (const lanelet::NoSuchPrimitiveError& e) {
+      FAIL() << "The specified starting lanelet Id of " << starting_id << " does not exist in the provided map.";
+  }
+  try {
+      end_lanelet = map->laneletLayer.get(ending_id);
+  }
+  catch (const lanelet::NoSuchPrimitiveError& e) {
+      FAIL() << "The specified ending lanelet Id of " << ending_id << " does not exist in the provided map.";
+  }
+
+  auto route = routing_graph->getRoute(start_lanelet, end_lanelet);
+  if(!route) {
+      FAIL() << "Route could not be generated between " << starting_id << " and " << ending_id;
+  } else {
+      std::cout << "Splitting lanelets on path: \n";
+      for(const auto& ll : route.get().shortestPath()) {
+          std::cout << ll.id() << " ";
+      }
   }
 
   // Start and end points of lanelets used for closing loops and connecting centerlines
   lanelet::Point3d previous_end_point(lanelet::InvalId, { 0, 0, 0 });
   lanelet::Point3d start_point(lanelet::InvalId, { 0, 0, 0 });
 
-  // Iterate over the lanelet loop
-  while (visited_lanelets.find(current_lanelet.id()) == visited_lanelets.end())
-  {
-    visited_lanelets.emplace(current_lanelet.id());      // Add current lanelet to set of explored lanelets
+  // Iterate over the lanelets in the route
+  for (auto const_current_lanelet : route.get().shortestPath()) {
+    lanelet::Lanelet current_lanelet = map->laneletLayer.get(const_current_lanelet.id());
     lanelets_for_removal.emplace(current_lanelet.id());  // Any lanelet we visit gets replaced and should be removed
 
-    // Create deep copy of centerline
-    lanelet::LineString3d centerline(lanelet::utils::getId());  // New ID
-    if (current_lanelet.centerline3d().inverted())
-    {  // Apply inversion
-      centerline = centerline.invert();
-    }
 
-    // Copy points
-    for (auto point : current_lanelet.centerline3d().basicLineString())
-    {  
-      // Check ends of centerline for existing points 
-      if (start_point.id() == lanelet::InvalId)
-      {
-        previous_end_point = lanelet::Point3d(lanelet::utils::getId(), point);
-        start_point = previous_end_point;  // Start point is needed for closed loops
-      }
-      if (lanelet::geometry::distance3d(start_point, point) < 0.1)
-      {
-        centerline.push_back(start_point);
-      }
-      else if (lanelet::geometry::distance3d(previous_end_point, point) < 0.1)
-      {
-        centerline.push_back(previous_end_point);
-      }
-      else
-      {
-        centerline.push_back(lanelet::Point3d(lanelet::utils::getId(), point));
-      }
-    }
+    splitLanelet(map, current_lanelet, type_string, sub_type_string,
+      left_participants, right_participants, previous_end_point, start_point, new_lanelets,
+      regulations_to_modify, regulation_lanelets_to_replace, replacement_lanelets); //Split the lanelet
 
-    previous_end_point = centerline.back();
-
-    // Assign user specified attributes to centerline
-    centerline.attributes()[lanelet::AttributeName::Type] = type_string;
-    centerline.attributes()[lanelet::AttributeName::Subtype] = sub_type_string;
-
-    // Build new lanelets
-    lanelet::Lanelet left_ll(lanelet::utils::getId(), current_lanelet.leftBound3d(), centerline,
-                             current_lanelet.attributes());
-
-    lanelet::Lanelet right_ll(lanelet::utils::getId(), centerline, current_lanelet.rightBound3d(),
-                              current_lanelet.attributes());
-
-    // Add a passing control line for the centerline and apply to both lanelets
-    std::shared_ptr<lanelet::PassingControlLine> control_line_ptr(
-        new lanelet::PassingControlLine(lanelet::PassingControlLine::buildData(lanelet::utils::getId(), { centerline },
-                                                                               left_participants, right_participants)));
-
-    left_ll.addRegulatoryElement(control_line_ptr);
-    right_ll.addRegulatoryElement(control_line_ptr);
-
-    // Find all references to old lanelet
-    auto reg_elements = map->regulatoryElementLayer.findUsages(current_lanelet);
-
-    // Mark all regulatory elements that reference the old lanelet for replacement with the two split lanelets
-    for (auto reg : reg_elements)
-    {
-      regulations_to_modify[reg->id()] = reg;
-      if (regulation_lanelets_to_replace.find(reg->id()) != regulation_lanelets_to_replace.end())
-      {
-        regulation_lanelets_to_replace[reg->id()].push_back(current_lanelet);
-      }
-      else
-      {
-        regulation_lanelets_to_replace[reg->id()] = { current_lanelet };
-      }
-    }
-
-    replacement_lanelets[current_lanelet.id()] = { left_ll, right_ll };
-
-    // Store new lanelets
-    new_lanelets.push_back(left_ll);
-    new_lanelets.push_back(right_ll);
-
-    // Get next lanelet
-    auto following_set = routing_graph->following(current_lanelet, false);
-    if (following_set.size() > 1)
-    {
-      std::cerr << "Cannot combine lanelets when there are multiple followers. Your map is not a single loop. Ending "
-                   "update and saving current map state."
-                << std::endl;
-      break;
-    }
-    else if (following_set.size() == 1)
-    {
-      auto lanelet = following_set[0];
-      current_lanelet = map->laneletLayer.get(lanelet.id());
-    }
   }
 
   // Update regulatory elements

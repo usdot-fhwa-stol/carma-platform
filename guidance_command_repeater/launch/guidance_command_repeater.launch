@@ -14,7 +14,7 @@ the License.
 <?xml version="1.0"?>
 <launch>
     <!-- New Guidance Commands Node -->
-        <node pkg="guidance_command_repeater" type="guidance_command_repeater" name="guidance_command_repeater" output="screen">
+        <node pkg="guidance_command_repeater" type="guidance_command_repeater" name="guidance_command_repeater">
             <rosparam command="load" file="$(find guidance_command_repeater)/config/default.yaml" />
             <remap from="/cmd_speed" to="/controller/cmd_speed"/>
             <remap from="/cmd_longitudinal_effort" to="/controller/cmd_longitudinal_effort"/>

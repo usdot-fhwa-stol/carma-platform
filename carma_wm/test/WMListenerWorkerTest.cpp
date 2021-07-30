@@ -26,6 +26,15 @@
 #include <sstream>
 #include <string>
 #include "TestHelpers.h"
+#include <carma_wm/MapConformer.h>
+#include <lanelet2_io/Io.h>
+#include <lanelet2_io/io_handlers/Factory.h>
+#include <lanelet2_io/io_handlers/Writer.h>
+#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+#include <lanelet2_extension/utility/query.h>
+#include <lanelet2_extension/utility/utilities.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <lanelet2_extension/io/autoware_osm_parser.h>
 
 using ::testing::_;
 using ::testing::A;
@@ -125,6 +134,16 @@ TEST(WMListenerWorkerTest, routeCallback)
   wmlw.routeCallback(rpt);
 
   ASSERT_TRUE(flag);
+
+  ///test route_node_flag_ and rerouting_flag_
+  autoware_lanelet2_msgs::MapBin geofence_msg;
+  geofence_msg.invalidates_route=true;
+  autoware_lanelet2_msgs::MapBinPtr geo_ptr(new autoware_lanelet2_msgs::MapBin(geofence_msg));
+
+  wmlw.mapUpdateCallback(geo_ptr);
+  wmlw.enableUpdatesWithoutRoute();
+  wmlw.routeCallback(rpt);
+  
 }
 
 TEST(WMListenerWorkerTest, mapUpdateCallback)
@@ -177,7 +196,7 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
             wmlw.getWorldModel()->getMap()->regulatoryElementLayer.end());
 
   // test the MapUpdateCallback
-  auto gf_msg_ptr =  boost::make_shared<const autoware_lanelet2_msgs::MapBin>(gf_obj_msg);
+  auto gf_msg_ptr =  boost::make_shared<autoware_lanelet2_msgs::MapBin>(gf_obj_msg);
   wmlw.mapUpdateCallback(gf_msg_ptr);
   
   // check if the map has the new speed limit now
@@ -211,7 +230,7 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   carma_wm::toBinMsg(reverse_data, &gf_reverse_msg);
 
   // test the MapUpdateCallback reverse
-  auto gf_rev_msg_ptr =  boost::make_shared<const autoware_lanelet2_msgs::MapBin>(gf_reverse_msg);
+  auto gf_rev_msg_ptr =  boost::make_shared<autoware_lanelet2_msgs::MapBin>(gf_reverse_msg);
   EXPECT_THROW(wmlw.mapUpdateCallback(gf_msg_ptr), lanelet::InvalidInputError); // because we are trying update the exact same llt and regem relationship again
   wmlw.mapUpdateCallback(gf_rev_msg_ptr);
 
@@ -248,5 +267,20 @@ TEST(WMListenerWorkerTest, setConfigSpeedLimitTest)
 
 }
 
+TEST(WMListenerWorkerTest, checkIfReRoutingNeeded1)
+{
+  WMListenerWorker wmlw;
+  ASSERT_EQ(false, wmlw.checkIfReRoutingNeeded());
+}
+
+TEST(WMListenerWorkerTest, checkIfReRoutingNeeded2)
+{
+  WMListenerWorker wmlw;
+  autoware_lanelet2_msgs::MapBin geofence_msg;
+  geofence_msg.invalidates_route=true;
+  autoware_lanelet2_msgs::MapBinPtr geo_ptr(new autoware_lanelet2_msgs::MapBin(geofence_msg));
+  wmlw.mapUpdateCallback(geo_ptr);
+  ASSERT_EQ(true, wmlw.checkIfReRoutingNeeded());
+}
 
 }  // namespace carma_wm

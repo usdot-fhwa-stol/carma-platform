@@ -63,7 +63,7 @@ void GeofenceScheduler::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   ROS_INFO_STREAM("Attempting to add Geofence with Id: " << gf_ptr->id_);
 
   // Create timer for next start time
-  for (auto schedule_idx = 0; schedule_idx < gf_ptr->schedules.size(); schedule_idx++)
+  for (size_t schedule_idx = 0; schedule_idx < gf_ptr->schedules.size(); schedule_idx++)
   {
     auto interval_info = gf_ptr->schedules[schedule_idx].getNextInterval(ros::Time::now());
     ros::Time startTime = interval_info.second;

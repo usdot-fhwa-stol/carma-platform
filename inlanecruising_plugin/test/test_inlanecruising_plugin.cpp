@@ -19,9 +19,12 @@
 #include <ros/ros.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <math.h>
+#include <tf/LinearMath/Vector3.h>
 
 using namespace inlanecruising_plugin;
 // Test to ensure Eigen::Isometry2d behaves like tf2::Transform
+
+
 TEST(InLaneCruisingPluginTest, validate_eigen)
 {
   Eigen::Rotation2Dd frame_rot(M_PI_2);
@@ -52,32 +55,10 @@ TEST(InLaneCruisingPluginTest, validate_eigen)
   ASSERT_NEAR(M_PI_2, P_in_A_rot.smallestAngle(), 0.000000001);
 }
 
-TEST(InLaneCruisingPluginTest, curvePointInMapTF)
-{
-  InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
-  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
-
-  Eigen::Rotation2Dd frame_rot(M_PI_2);
-  lanelet::BasicPoint2d origin(1, 1);
-  Eigen::Isometry2d C_in_M = carma_wm::geometry::build2dEigenTransform(origin, frame_rot);
-
-  lanelet::BasicPoint2d p_in_B(0.5, -1);
-  Eigen::Isometry2d P_in_M = plugin.curvePointInMapTF(C_in_M, p_in_B, M_PI_2);
-
-  Eigen::Rotation2Dd P_in_M_rot(P_in_M.rotation());
-
-  ASSERT_EQ(2, P_in_M.translation().size());
-  ASSERT_NEAR(2.0, P_in_M.translation()[0], 0.000000001);
-  ASSERT_NEAR(1.5, P_in_M.translation()[1], 0.000000001);
-  ASSERT_NEAR(M_PI, fabs(P_in_M_rot.smallestAngle()), 0.000000001);
-}
-
 TEST(InLaneCruisingPluginTest, trajectory_from_points_times_orientations)
 {
   InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
 
@@ -131,7 +112,7 @@ TEST(InLaneCruisingPluginTest, trajectory_from_points_times_orientations)
 TEST(InLaneCruisingPluginTest, constrain_to_time_boundary)
 {
   InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
 
@@ -181,10 +162,53 @@ TEST(InLaneCruisingPluginTest, constrain_to_time_boundary)
   ASSERT_NEAR(1.0, time_bound_points[5].speed, 0.0000001);
 }
 
-TEST(InLaneCruisingPluginTest, getNearestPointIndex)
+TEST(InLaneCruisingPluginTest, get_nearest_index_by_downtrack_test)
 {
   InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+  std::vector<PointSpeedPair> points;
+  std::vector<lanelet::BasicPoint2d> basic_points;
+  PointSpeedPair p;
+  p.point = lanelet::BasicPoint2d(0, 0);
+  p.speed = 1.0;
+  points.push_back(p);
+  basic_points.push_back(p.point);
+  p.point = lanelet::BasicPoint2d(1, 1);
+  points.push_back(p);
+  basic_points.push_back(p.point);
+  p.point = lanelet::BasicPoint2d(2, 2);
+  points.push_back(p);
+  basic_points.push_back(p.point);
+  p.point = lanelet::BasicPoint2d(3, 3);
+  points.push_back(p);
+  basic_points.push_back(p.point);
+  p.point = lanelet::BasicPoint2d(4, 4);
+  points.push_back(p);
+  basic_points.push_back(p.point);
+  p.point = lanelet::BasicPoint2d(5, 5);
+  points.push_back(p);
+  basic_points.push_back(p.point);
+  p.point = lanelet::BasicPoint2d(6, 6);
+  points.push_back(p);
+  basic_points.push_back(p.point);
+  p.point = lanelet::BasicPoint2d(7, 7);
+  points.push_back(p);
+  basic_points.push_back(p.point);
+
+  cav_msgs::VehicleState state;
+  state.X_pos_global = 3.3;
+  state.Y_pos_global = 3.3;
+
+  ASSERT_EQ(3, basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(points, wm, state));
+  ASSERT_EQ(3, basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(basic_points, wm, state));
+}
+
+TEST(InLaneCruisingPluginTest, get_nearest_basic_point_index)
+{
+  InLaneCruisingPluginConfig config;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
 
@@ -213,54 +237,13 @@ TEST(InLaneCruisingPluginTest, getNearestPointIndex)
   state.X_pos_global = 3.3;
   state.Y_pos_global = 3.3;
 
-  ASSERT_EQ(3, plugin.getNearestPointIndex(points, state));
+  //ASSERT_EQ(3, basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(points, wm, state));
 }
 
-TEST(InLaneCruisingPluginTest, get_lookahead_speed)
+TEST(InLaneCruisingPluginTest, split_point_speed_pairs)
 {
   InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
-  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
-
-  lanelet::BasicPoint2d p1(10.0, 0.0);
-  lanelet::BasicPoint2d p2(20.0, 0.0);
-  lanelet::BasicPoint2d p3(30, 0.0);
-  lanelet::BasicPoint2d p4(40, 0.0);
-
-  std::vector<lanelet::BasicPoint2d> points = { p1, p2, p3, p4 };
-  std::vector<double> speeds = {8, 9, 10, 11};
-
-  std::vector<double> out;
-  out = plugin.get_lookahead_speed(points, speeds, 10);
-  ASSERT_EQ(4, out.size());
-  ASSERT_EQ(9, out[0]);
-  ASSERT_EQ(10, out[1]);
-  ASSERT_EQ(11, out[2]);
-  ASSERT_EQ(11, out[3]);
-
-  // ASSERT_EQ(3, plugin.getNearestPointIndex(points, state));
-}
-
-TEST(InLaneCruisingPluginTest, get_adaptive_lookahead)
-{
-  InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
-  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
-
-  
-  ASSERT_EQ(5.0, plugin.get_adaptive_lookahead(2.0));
-  ASSERT_EQ(2.0*6.0, plugin.get_adaptive_lookahead(6.0));
-  ASSERT_EQ(25.0, plugin.get_adaptive_lookahead(22.0));
-
-
-}
-
-TEST(InLaneCruisingPluginTest, splitPointSpeedPairs)
-{
-  InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
 
@@ -284,7 +267,7 @@ TEST(InLaneCruisingPluginTest, splitPointSpeedPairs)
   std::vector<lanelet::BasicPoint2d> basic_points;
   std::vector<double> speeds;
 
-  plugin.splitPointSpeedPairs(points, &basic_points, &speeds);
+  basic_autonomy::waypoint_generation::split_point_speed_pairs(points, &basic_points, &speeds);
 
   ASSERT_EQ(points.size(), basic_points.size());
   ASSERT_NEAR(0.0, basic_points[0].x(), 0.0000001);
@@ -309,162 +292,401 @@ TEST(InLaneCruisingPluginTest, splitPointSpeedPairs)
   ASSERT_NEAR(1.0, speeds[5], 0.0000001);
 }
 
-TEST(InLaneCruisingPluginTest, compute_sub_curves)
+TEST(InLaneCruisingPluginTest, compute_fit)
 {
   InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+
+  ///////////////////////
+  // Check straight line
+  ///////////////////////
+  std::vector<lanelet::BasicPoint2d> points;
+  auto p = lanelet::BasicPoint2d(20, 30);
+  points.push_back(p);
+  p = lanelet::BasicPoint2d(21, 30);
+  points.push_back(p);
+  p = lanelet::BasicPoint2d(22, 30);
+  points.push_back(p);
+  p = lanelet::BasicPoint2d(23, 30);
+  points.push_back(p);
+  
+  std::unique_ptr<smoothing::SplineI> fit_curve = plugin.compute_fit(points);
+  std::vector<lanelet::BasicPoint2d> spline_points;
+  // Following logic is written for BSpline library. Switch with appropriate call of the new library if different.
+  double parameter = 0.0;
+
+  for(int i=0; i< points.size(); i++){
+    auto values = (*fit_curve)(parameter);
+  
+    // Uncomment to print and check if this generated map matches with the original one above 
+    // ROS_INFO_STREAM("BSpline point: x: " << values.x() << "y: " << values.y());
+    spline_points.push_back({values.x(),values.y()});
+    parameter += 1.0/(points.size()*1.0);
+  }
+
+
+  ASSERT_EQ(spline_points.size(), points.size());
+  int error_count = 0;
+  
+  tf::Vector3 original_vector_1(points[1].x() - points[0].x(), 
+                      points[1].y() - points[0].y(), 0);
+  original_vector_1.setZ(0);
+  tf::Vector3 spline_vector_1(spline_points[1].x() - spline_points[0].x(), 
+                      spline_points[1].y() - spline_points[0].y(), 0);
+  spline_vector_1.setZ(0);
+    tf::Vector3 original_vector_2(points[2].x() - points[1].x(), 
+                      points[2].y() - points[1].y(), 0);
+  original_vector_2.setZ(0);
+  tf::Vector3 spline_vector_2(spline_points[2].x() - spline_points[1].x(), 
+                      spline_points[2].y() - spline_points[1].y(), 0);
+  spline_vector_2.setZ(0);
+  double angle_in_rad_1 = std::fabs(tf::tfAngle(original_vector_1, spline_vector_1));
+  double angle_in_rad_2 = std::fabs(tf::tfAngle(original_vector_2, spline_vector_2));
+
+  ASSERT_NEAR(angle_in_rad_1, 0.0, 0.0001);
+  ASSERT_NEAR(angle_in_rad_2, 0.0, 0.0001);
+
+  ///////////////////////
+  // S curve
+  ///////////////////////
+  points = {};
+  lanelet::BasicPoint2d po1(3,4);
+  points.push_back( po1);
+  lanelet::BasicPoint2d po2(5,4);
+  points.push_back( po2);
+  lanelet::BasicPoint2d po3(8,9);
+  points.push_back( po3);
+  lanelet::BasicPoint2d po4(8,23);
+  points.push_back( po4);
+  lanelet::BasicPoint2d po5(3.5,25);
+  points.push_back( po5);
+  lanelet::BasicPoint2d po6(3,25);
+  points.push_back( po6);
+  lanelet::BasicPoint2d po7(2.5,26);
+  points.push_back( po7);
+  lanelet::BasicPoint2d po8(2.25,27);
+  points.push_back( po8);
+  lanelet::BasicPoint2d po9(2.0,28);
+  points.push_back( po9);
+  lanelet::BasicPoint2d po10(1.5,30);
+  points.push_back(po10);
+  lanelet::BasicPoint2d po11(1.0,32);
+  points.push_back(po11);
+  lanelet::BasicPoint2d po12(1.25,34);
+  points.push_back(po12);
+  lanelet::BasicPoint2d po13(2.0,35);
+  points.push_back(po13);
+  lanelet::BasicPoint2d po14(4.0,35);
+  points.push_back(po14);
+  lanelet::BasicPoint2d po15(5.0,35.5);
+  points.push_back(po15);
+  lanelet::BasicPoint2d po16(6.0,36);
+  points.push_back(po16);
+  lanelet::BasicPoint2d po17(7.0,50);
+  points.push_back(po17);
+  lanelet::BasicPoint2d po18(6.5,48);
+  points.push_back(po18);
+  lanelet::BasicPoint2d po19(4.0,43);
+  points.push_back(po19);
+
+  // As different libraries may fit S curves differently, we are only checking if we can get any fit here.
+  ASSERT_NO_THROW(plugin.compute_fit(points));
+
+  std::unique_ptr<smoothing::SplineI> fit_s_curve = plugin.compute_fit(points);
+
+  ASSERT_TRUE(!!fit_s_curve);
+
+}
+
+TEST(InLaneCruisingPluginTest, optimize_speed)
+{
+  InLaneCruisingPluginConfig config;
+  config.default_downsample_ratio = 1;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+
+  std::vector<double> downtracks, curv_speeds;
+  downtracks.push_back(0);
+  downtracks.push_back(2);
+  downtracks.push_back(4);
+  downtracks.push_back(6);
+  downtracks.push_back(8);
+  downtracks.push_back(10);
+  downtracks.push_back(12);
+  downtracks.push_back(14);
+  downtracks.push_back(16);
+
+  config.max_accel = 2.0;
+  double max_accel = config.max_accel;
+
+  ASSERT_THROW(plugin.optimize_speed(downtracks, curv_speeds, max_accel), std::invalid_argument);
+
+  curv_speeds.push_back(1);
+  curv_speeds.push_back(3);
+  curv_speeds.push_back(4);
+  curv_speeds.push_back(4);
+  curv_speeds.push_back(1);
+  curv_speeds.push_back(0);
+  curv_speeds.push_back(3);
+  curv_speeds.push_back(3);
+  curv_speeds.push_back(6);
+
+  ASSERT_THROW(plugin.optimize_speed(downtracks, curv_speeds, -10), std::invalid_argument);
+
+  std::vector<double> expected_results;
+  expected_results.push_back(1);
+  expected_results.push_back(3);
+  expected_results.push_back(4);
+  expected_results.push_back(3);
+  expected_results.push_back(1);
+  expected_results.push_back(0);
+  expected_results.push_back(2.82843);
+  expected_results.push_back(3);
+  expected_results.push_back(4.12311);
+  auto test_results = plugin.optimize_speed(downtracks, curv_speeds, max_accel);
+  
+  ASSERT_NEAR(expected_results[0], test_results[0], 0.001);
+  ASSERT_NEAR(expected_results[1], test_results[1], 0.001);
+  ASSERT_NEAR(expected_results[2], test_results[2], 0.001);
+  ASSERT_NEAR(expected_results[3], test_results[3], 0.001);
+  ASSERT_NEAR(expected_results[4], test_results[4], 0.001);
+  ASSERT_NEAR(expected_results[5], test_results[5], 0.001);
+  ASSERT_NEAR(expected_results[6], test_results[6], 0.001);
+  ASSERT_NEAR(expected_results[7], test_results[7], 0.001);
+  ASSERT_NEAR(expected_results[8], test_results[8], 0.001);
+
+  // Check if the first speed is same
+  curv_speeds = {};
+  curv_speeds.push_back(4);
+  curv_speeds.push_back(1);
+  curv_speeds.push_back(3);
+  curv_speeds.push_back(4);
+  curv_speeds.push_back(1);
+  curv_speeds.push_back(0);
+  curv_speeds.push_back(3);
+  curv_speeds.push_back(3);
+  curv_speeds.push_back(6);
+
+  expected_results = {};
+  expected_results.push_back(4);
+  expected_results.push_back(2.82847);
+  expected_results.push_back(3);
+  expected_results.push_back(3);
+  expected_results.push_back(1);
+  expected_results.push_back(0);
+  expected_results.push_back(2.82843);
+  expected_results.push_back(3);
+  expected_results.push_back(4.12311);
+
+  test_results = plugin.optimize_speed(downtracks, curv_speeds, max_accel);
+
+  ASSERT_NEAR(expected_results[0], test_results[0], 0.001);
+  ASSERT_NEAR(expected_results[1], test_results[1], 0.001);
+  ASSERT_NEAR(expected_results[2], test_results[2], 0.001);
+  ASSERT_NEAR(expected_results[3], test_results[3], 0.001);
+  ASSERT_NEAR(expected_results[4], test_results[4], 0.001);
+  ASSERT_NEAR(expected_results[5], test_results[5], 0.001);
+  ASSERT_NEAR(expected_results[6], test_results[6], 0.001);
+  ASSERT_NEAR(expected_results[7], test_results[7], 0.001);
+  ASSERT_NEAR(expected_results[8], test_results[8], 0.001);
+  
+}
+
+TEST(InLaneCruisingPluginTest, compute_curvature_at)
+{
+  InLaneCruisingPluginConfig config;
+  config.default_downsample_ratio = 1;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+
+  ///////////////////////
+  // Check straight line
+  ///////////////////////
+  std::vector<lanelet::BasicPoint2d> points;
+  auto p = lanelet::BasicPoint2d(20, 30);
+  points.push_back(p);
+  p = lanelet::BasicPoint2d(21, 30);
+  points.push_back(p);
+  p = lanelet::BasicPoint2d(22, 30);
+  points.push_back(p);
+  p = lanelet::BasicPoint2d(23, 30);
+  points.push_back(p);
+  std::unique_ptr<smoothing::SplineI> fit_curve = plugin.compute_fit(points);
+
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_curve), 0.0), 0, 0.001); // check start
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_curve), 1.0), 0, 0.001); // check end
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_curve), 0.23), 0, 0.001); // check random 1
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_curve), 0.97), 0, 0.001); // check random 2
+
+  ///////////////////////
+  // Circle (0,0 centered, R radius)
+  ///////////////////////
+  points = {};
+  std::vector<double> x,y;
+  double x_ = 0.0;
+  double radius = 20;
+  for (int i = 0; i < 10; i++)
+  { 
+    x.push_back(x_);
+    y.push_back(-sqrt(pow(radius,2) - pow(x_,2))); //y-
+    x_ += radius/(double)10;
+  }
+  for (int i = 0; i < 10; i++)
+  { 
+    x.push_back(x_);
+    y.push_back(sqrt(pow(radius,2) - pow(x_,2))); //y+
+    x_ -= radius/(double)10;
+  }
+  for (int i = 0; i < 10; i++)
+  { 
+    x.push_back(x_);
+    y.push_back(sqrt(pow(radius,2) - pow(x_,2))); //y+
+    x_ -= radius/(double)10;
+  }
+  for (int i = 0; i < 10; i++)
+  { 
+    x.push_back(x_);
+    y.push_back(-sqrt(pow(radius,2) - pow(x_,2))); //y-
+    x_ += radius/(double)10;
+  }
+  y.push_back(-sqrt(pow(radius,2) - pow(x_,2))); // to close the loop with redundant first point
+
+  for (auto i = 0; i < y.size(); i ++)
+  {
+    points.push_back({x[i],y[i]});
+  }
+
+  std::unique_ptr<smoothing::SplineI> fit_circle = plugin.compute_fit(points);
+  double param = 0.0;
+  for (int i = 0 ; i < 40; i ++)
+  {
+    auto pt = (*fit_circle)(param);
+    param += 1.0/40.0;
+  }
+  auto pt = (*fit_circle)(param);
+
+  double circle_param = 0.0;
+  for ( auto i= 0; i < 50; i++)
+  {
+    circle_param += 0.02;
+  }
+
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.0), 1.0/radius, 0.005); // check start curvature 1/r
+  // check curvature is consistent
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.42), plugin.compute_curvature_at((*fit_circle), 0.85), 0.005); 
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.0), plugin.compute_curvature_at((*fit_circle), 1.0), 0.005); 
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.23), plugin.compute_curvature_at((*fit_circle), 0.99), 0.005); 
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.12), plugin.compute_curvature_at((*fit_circle), 0.76), 0.005);  
+}
+
+TEST(InLaneCruisingPluginTest, attach_back_points)
+{
+  InLaneCruisingPluginConfig config;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
 
   std::vector<PointSpeedPair> points;
-  double speed = 1.0;
+  std::vector<PointSpeedPair> future_points;
+
   PointSpeedPair p;
-  p.point = lanelet::BasicPoint2d(20, 30);
-  p.speed = speed;
+  p.point = lanelet::BasicPoint2d(0, 1);
+  p.speed = 1.0;
   points.push_back(p);
-  p.point = lanelet::BasicPoint2d(21, 30);
+  p.point = lanelet::BasicPoint2d(1, 2);
   points.push_back(p);
-  p.point = lanelet::BasicPoint2d(22, 30);
+  p.point = lanelet::BasicPoint2d(2, 3);
   points.push_back(p);
-  p.point = lanelet::BasicPoint2d(23, 30);
+  p.point = lanelet::BasicPoint2d(3, 4);
+  future_points.push_back(p);
   points.push_back(p);
-  p.point = lanelet::BasicPoint2d(24, 30);
+  p.point = lanelet::BasicPoint2d(4, 5);
+  future_points.push_back(p);
   points.push_back(p);
-  p.point = lanelet::BasicPoint2d(24, 31);
-  points.push_back(p);
-  p.point = lanelet::BasicPoint2d(24, 32);
-  points.push_back(p);
-  p.point = lanelet::BasicPoint2d(24, 33);
-  points.push_back(p);
-  p.point = lanelet::BasicPoint2d(23, 33);
-  points.push_back(p);
-  p.point = lanelet::BasicPoint2d(22, 33);
-  points.push_back(p);
-  p.point = lanelet::BasicPoint2d(21, 33);
-  points.push_back(p);
-  p.point = lanelet::BasicPoint2d(21, 34);
-  points.push_back(p);
-  p.point = lanelet::BasicPoint2d(21, 35);
-  points.push_back(p);
-  p.point = lanelet::BasicPoint2d(21, 36);
-  points.push_back(p);
-  p.point = lanelet::BasicPoint2d(21, 37);
-  points.push_back(p);
-  p.point = lanelet::BasicPoint2d(22, 37);
-  points.push_back(p);
-  p.point = lanelet::BasicPoint2d(23, 37);
-  points.push_back(p);
-  p.point = lanelet::BasicPoint2d(24, 37);
-  points.push_back(p);
-  p.point = lanelet::BasicPoint2d(25, 37);
-  points.push_back(p);
-  p.point = lanelet::BasicPoint2d(26, 37);
+  p.point = lanelet::BasicPoint2d(5, 6);
+  future_points.push_back(p);
   points.push_back(p);
 
-  std::vector<PointSpeedPair> c1;
-  p.point = lanelet::BasicPoint2d(0, 0);
-  c1.push_back(p);
-  p.point = lanelet::BasicPoint2d(1, 0);
-  c1.push_back(p);
-  p.point = lanelet::BasicPoint2d(2, 0);
-  c1.push_back(p);
-  p.point = lanelet::BasicPoint2d(3, 0);
-  c1.push_back(p);
-  p.point = lanelet::BasicPoint2d(4, 0);
-  c1.push_back(p);
+  int nearest_pt_index = 2;
 
-  std::vector<PointSpeedPair> c2;
-  p.point = lanelet::BasicPoint2d(0, 0);
-  c2.push_back(p);
-  p.point = lanelet::BasicPoint2d(1, 0);
-  c2.push_back(p);
-  p.point = lanelet::BasicPoint2d(2, 0);
-  c2.push_back(p);
-  p.point = lanelet::BasicPoint2d(3, 0);
-  c2.push_back(p);
+  auto result = plugin.attach_back_points(points, nearest_pt_index, future_points, 1.5);
 
-  std::vector<PointSpeedPair> c3;
-  p.point = lanelet::BasicPoint2d(0, 0);
-  c3.push_back(p);
-  p.point = lanelet::BasicPoint2d(1, 0);
-  c3.push_back(p);
-  p.point = lanelet::BasicPoint2d(2, 0);
-  c3.push_back(p);
-  p.point = lanelet::BasicPoint2d(3, 0);
-  c3.push_back(p);
+  ASSERT_EQ(points.size()  -1, result.size());
+  ASSERT_NEAR(1.0, result[0].point.x(), 0.0000001);
+  ASSERT_NEAR(2.0, result[1].point.x(), 0.0000001);
+  ASSERT_NEAR(3.0, result[2].point.x(), 0.0000001);
+  ASSERT_NEAR(4.0, result[3].point.x(), 0.0000001);
+  ASSERT_NEAR(5.0, result[4].point.x(), 0.0000001);
 
-  std::vector<PointSpeedPair> c4;
-  p.point = lanelet::BasicPoint2d(0, 0);
-  c4.push_back(p);
-  p.point = lanelet::BasicPoint2d(1, 0);
-  c4.push_back(p);
-  p.point = lanelet::BasicPoint2d(2, 0);
-  c4.push_back(p);
-  p.point = lanelet::BasicPoint2d(3, 0);
-  c4.push_back(p);
-  p.point = lanelet::BasicPoint2d(4, 0);
-  c4.push_back(p);
+  ASSERT_NEAR(2.0, result[0].point.y(), 0.0000001);
+  ASSERT_NEAR(3.0, result[1].point.y(), 0.0000001);
+  ASSERT_NEAR(4.0, result[2].point.y(), 0.0000001);
+  ASSERT_NEAR(5.0, result[3].point.y(), 0.0000001);
+  ASSERT_NEAR(6.0, result[4].point.y(), 0.0000001);
 
-  std::vector<PointSpeedPair> c5;
-  p.point = lanelet::BasicPoint2d(0, 0);
-  c5.push_back(p);
-  p.point = lanelet::BasicPoint2d(1, 0);
-  c5.push_back(p);
-  p.point = lanelet::BasicPoint2d(2, 0);
-  c5.push_back(p);
-  p.point = lanelet::BasicPoint2d(3, 0);
-  c5.push_back(p);
-  p.point = lanelet::BasicPoint2d(4, 0);
-  c5.push_back(p);
-  // p.point = lanelet::BasicPoint2d(5, 0); // Last point is not added because compute_sub_curves always drops the last point
-  // c5.push_back(p);
-
-  std::vector<DiscreteCurve> discrete_curves = plugin.compute_sub_curves(points);
-  ASSERT_EQ(5, discrete_curves.size());
-
-  ASSERT_EQ(c1.size(), discrete_curves[0].points.size());
-  for (size_t i = 0; i < discrete_curves[0].points.size(); i++)
-  {
-    auto p = discrete_curves[0].points[i];
-    ASSERT_NEAR(c1[i].point.x(), p.point.x(), 0.0000001);
-    ASSERT_NEAR(c1[i].point.y(), p.point.y(), 0.0000001);
-    ASSERT_NEAR(c1[i].speed, p.speed, 0.0000001);
-  }
-
-  ASSERT_EQ(c2.size(), discrete_curves[1].points.size());
-  for (size_t i = 0; i < discrete_curves[1].points.size(); i++)
-  {
-    auto p = discrete_curves[1].points[i];
-    ASSERT_NEAR(c2[i].point.x(), p.point.x(), 0.0000001);
-    ASSERT_NEAR(c2[i].point.y(), p.point.y(), 0.0000001);
-    ASSERT_NEAR(c2[i].speed, p.speed, 0.0000001);
-  }
-
-  ASSERT_EQ(c3.size(), discrete_curves[2].points.size());
-  for (size_t i = 0; i < discrete_curves[2].points.size(); i++)
-  {
-    auto p = discrete_curves[2].points[i];
-    ASSERT_NEAR(c3[i].point.x(), p.point.x(), 0.0000001);
-    ASSERT_NEAR(c3[i].point.y(), p.point.y(), 0.0000001);
-    ASSERT_NEAR(c3[i].speed, p.speed, 0.0000001);
-  }
-
-  ASSERT_EQ(c4.size(), discrete_curves[3].points.size());
-  for (size_t i = 0; i < discrete_curves[3].points.size(); i++)
-  {
-    auto p = discrete_curves[3].points[i];
-    ASSERT_NEAR(c4[i].point.x(), p.point.x(), 0.0000001);
-    ASSERT_NEAR(c4[i].point.y(), p.point.y(), 0.0000001);
-    ASSERT_NEAR(c4[i].speed, p.speed, 0.0000001);
-  }
-
-  ASSERT_EQ(c5.size(), discrete_curves[4].points.size());
-  for (size_t i = 0; i < discrete_curves[4].points.size(); i++)
-  {
-    auto p = discrete_curves[4].points[i];
-    ASSERT_NEAR(c5[i].point.x(), p.point.x(), 0.0000001);
-    ASSERT_NEAR(c5[i].point.y(), p.point.y(), 0.0000001);
-    ASSERT_NEAR(c5[i].speed, p.speed, 0.0000001);
-  }
 }
 
+TEST(InLaneCruisingPluginTest, test_verify_yield)
+{
+  InLaneCruisingPluginConfig config;
+  config.enable_object_avoidance = true;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+
+  std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points;
+
+    ros::Time startTime(ros::Time::now());
+
+    cav_msgs::TrajectoryPlanPoint point_2;
+    point_2.x = 5.0;
+    point_2.y = 0.0;
+    point_2.target_time = startTime + ros::Duration(1);
+    point_2.lane_id = "1";
+    trajectory_points.push_back(point_2);
+
+    cav_msgs::TrajectoryPlanPoint point_3;
+    point_3.x = 10.0;
+    point_3.y = 0.0;
+    point_3.target_time = startTime + ros::Duration(2);
+    point_3.lane_id = "1";
+    trajectory_points.push_back(point_3);
+
+
+    cav_msgs::TrajectoryPlan tp;
+    tp.trajectory_points = trajectory_points;
+
+    bool res = plugin.validate_yield_plan(tp);
+    ASSERT_TRUE(plugin.validate_yield_plan(tp));
+
+    cav_msgs::TrajectoryPlan tp2;
+
+    cav_msgs::TrajectoryPlanPoint point_4;
+    point_4.x = 5.0;
+    point_4.y = 0.0;
+    point_4.target_time = startTime + ros::Duration(1);
+    point_4.lane_id = "1";
+    tp2.trajectory_points.push_back(point_4);
+    
+    ASSERT_FALSE(plugin.validate_yield_plan(tp2));
+
+    cav_msgs::TrajectoryPlan tp3;
+
+    cav_msgs::TrajectoryPlanPoint point_5;
+    point_5.x = 5.0;
+    point_5.y = 0.0;
+    point_5.target_time = startTime;
+    point_5.lane_id = "1";
+    tp3.trajectory_points.push_back(point_5);
+
+    cav_msgs::TrajectoryPlanPoint point_6;
+    point_6.x = 10.0;
+    point_6.y = 0.0;
+    point_6.target_time = startTime + ros::Duration(1);
+    point_6.lane_id = "1";
+    tp3.trajectory_points.push_back(point_6);
+
+    ASSERT_FALSE(plugin.validate_yield_plan(tp2));
+    
+}

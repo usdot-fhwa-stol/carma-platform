@@ -49,7 +49,7 @@
 
             double getSpinRate()
             {
-                return this->spin_rate_;
+                return this->trajectory_planning_rate_;
             }
 
             double getMaxTrajDuration()
@@ -105,6 +105,7 @@
         ros::Time test_time_eariler(0, 500);
         EXPECT_EQ(false, pd.isManeuverExpired(test_maneuver, test_time_eariler));
         // test compose new plan trajectory request
+        uint16_t current_maneuver_index = 0;
         cav_msgs::TrajectoryPlan traj_plan;
         cav_msgs::TrajectoryPlanPoint point_1;
         point_1.x = 0.0;
@@ -116,17 +117,18 @@
         point_2.target_time = ros::Time(1.41421);
         traj_plan.trajectory_points.push_back(point_1);
         traj_plan.trajectory_points.push_back(point_2);
-        cav_srvs::PlanTrajectory req = pd.composePlanTrajectoryRequest(traj_plan);
+        cav_srvs::PlanTrajectory req = pd.composePlanTrajectoryRequest(traj_plan, current_maneuver_index);
         EXPECT_NEAR(1.0, req.request.vehicle_state.X_pos_global, 0.01);
         EXPECT_NEAR(1.0, req.request.vehicle_state.Y_pos_global, 0.01);
         EXPECT_NEAR(1.0, req.request.vehicle_state.longitudinal_vel, 0.1);
+        EXPECT_EQ(0, req.request.maneuver_index_to_plan);
     }
 
     TEST(TestPlanDelegator, TestPlanDelegator) {
         ros::NodeHandle nh = ros::NodeHandle();
         cav_msgs::TrajectoryPlan res_plan;
         // bool flag = false;
-        ros::Publisher maneuver_pub = nh.advertise<cav_msgs::ManeuverPlan>("maneuver_plan", 5);
+        ros::Publisher maneuver_pub = nh.advertise<cav_msgs::ManeuverPlan>("final_maneuver_plan", 5);
         // ros::Subscriber traj_sub = nh.subscribe<cav_msgs::TrajectoryPlan>("plan_trajectory", 5, [&](cav_msgs::TrajectoryPlanConstPtr msg){
         //     res_plan = msg.get();
             

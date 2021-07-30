@@ -68,6 +68,7 @@ namespace truck_inspection_client
             nh_->publishSystemAlert(alert_msg);
         }
 
+        ros::CARMANodeHandle::setSpinRate(20.0);
         // set vin publisher
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
             cav_msgs::MobilityOperation msg_out;

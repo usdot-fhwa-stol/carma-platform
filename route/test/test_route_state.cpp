@@ -39,4 +39,9 @@ TEST(RouteStateTest, testStateTransitions)
     worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_SELECTED);
     worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
     ASSERT_EQ(route::RouteStateWorker::RouteState::SELECTION, worker.get_route_state());
+    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_LOADED);
+    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_SELECTED);
+    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_STARTED);
+    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
+    ASSERT_EQ(route::RouteStateWorker::RouteState::ROUTING, worker.get_route_state());
 }

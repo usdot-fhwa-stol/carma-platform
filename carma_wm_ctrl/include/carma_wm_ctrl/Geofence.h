@@ -22,6 +22,7 @@
 #include <lanelet2_core/primitives/RegulatoryElement.h>
 #include <lanelet2_core/primitives/LaneletOrArea.h>
 #include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
+#include <lanelet2_extension/regulatory_elements/DigitalMinimumGap.h>
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
 
 #include <boost/uuid/uuid.hpp>
@@ -67,5 +68,7 @@ specific type of regulatory element (such as digital speed limit, passing contro
   // Helper member for PassingControlLine type regulatory geofence
   bool pcl_affects_left_ = false;
   bool pcl_affects_right_ = false;
+  // Flag for route invalidation
+  bool invalidate_route_=false;
 };
 }  // namespace carma_wm_ctrl

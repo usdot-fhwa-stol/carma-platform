@@ -20,11 +20,30 @@
 #include <cav_msgs/MobilityOperation.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <boost/optional.hpp>
 
 #include "port_drayage_plugin/port_drayage_state_machine.h"
 
 namespace port_drayage_plugin
 {
+    /**
+     * Convenience struct for storing all data contained in a received MobilityOperation message's
+     * strategy_params field with strategy "carma/port_drayage"
+     */
+    struct PortDrayageMobilityOperationMsg
+    {
+        std::string cargo_id;
+        std::string operation;
+        PortDrayageEvent port_drayage_event_type; // PortDrayageEvent associated with this message
+        bool has_cargo; // Flag to indicate whether vehicle has cargo during this action
+        std::string current_action_id;
+        std::string next_action_id;
+        boost::optional<double> dest_longitude;
+        boost::optional<double> dest_latitude;
+        boost::optional<double> start_longitude; // Starting longitude of the carma vehicle
+        boost::optional<double> start_latitude; // Starting latitude of the carma vehicle
+    };
+
     /**
      * Implementation class for all the business logic of the PortDrayagePlugin
      * 
@@ -45,6 +64,9 @@ namespace port_drayage_plugin
             std::string _cmv_id;
             std::string _cargo_id;
             std::function<void(cav_msgs::MobilityOperation)> _publish_mobility_operation;
+
+            // Data member for storing the strategy_params field of the last processed port drayage MobilityOperation message intended for this vehicle's cmv_id
+            std::string _previous_strategy_params;
 
             // Constants
             const std::string PORT_DRAYAGE_PLUGIN_ID = "Port Drayage Plugin";
@@ -114,6 +136,20 @@ namespace port_drayage_plugin
             void set_current_speed(const geometry_msgs::TwistStampedConstPtr& speed);
 
             /**
+             * \brief Callback to process a received MobilityOperation message
+             * \param mobility_operation_msg a received MobilityOperation message
+             */
+            void on_inbound_mobility_operation(const cav_msgs::MobilityOperationConstPtr& mobility_operation_msg);
+
+            /**
+             * \brief Function to help parse the text included in an inbound MobilityOperation message's 
+             *  strategy_params field according to the JSON schema intended for MobilityOperation messages
+             *  with strategy type 'carma/port_drayage'. Stores the parsed information in _latest_mobility_operation_msg.
+             * \param mobility_operation_strategy_params the strategy_params field of a MobilityOperation message
+             */
+            void mobility_operation_message_parser(std::string mobility_operation_strategy_params);
+
+            /**
              * \brief Spin and process data
              */
             bool spin();
@@ -129,6 +165,8 @@ namespace port_drayage_plugin
              */
             bool check_for_stop(const cav_msgs::ManeuverPlanConstPtr& plan, const geometry_msgs::TwistStampedConstPtr& speed) const;
 
+            // PortDrayageMobilityOperationMsg object for storing strategy_params data of a received port drayage MobilityOperation message intended for this vehicle's cmv_id
+            PortDrayageMobilityOperationMsg _latest_mobility_operation_msg;
 
     };
 } // namespace port_drayage_plugin

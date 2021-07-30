@@ -17,13 +17,13 @@
 #include <sstream>
 
 #include <ros/ros.h>
-#include "platooning_tactical_plugin/platooning_tactical_plugin.h"
+#include "platooning_tactical_plugin/platooning_tactical_plugin_node.h"
 
 int main(int argc, char** argv)
 {
 
   ros::init(argc, argv, "platooning_tactical_plugin");
-  platooning_tactical_plugin::PlatooningTacticalPlugin platooning_tactical_plugin;
+  platooning_tactical_plugin::PlatooningTacticalPluginNode platooning_tactical_plugin;
   platooning_tactical_plugin.run();
 
   return 0;

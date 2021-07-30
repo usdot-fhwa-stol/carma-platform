@@ -38,6 +38,17 @@ double safeAcos (double x)
   return std::acos(x) ;
 }
 
+// This safeAcos implementation is based on Stack Overflow answer: https://stackoverflow.com/questions/8489792/is-it-legal-to-take-acos-of-1-0f-or-1-0f
+// Asked by SirYakalot: https://stackoverflow.com/users/956689/siryakalot
+// Answered by TonyK: https://stackoverflow.com/users/428857/tonyk
+// Credited in accordance with Stack Overflow's CC-BY license
+double safeAsin (double x)
+{
+  if (x < -1.0) x = -1.0 ;
+  else if (x > 1.0) x = 1.0 ;
+  return std::asin(x) ;
+}
+
 void rpyFromQuaternion(const tf2::Quaternion& q, double& roll, double& pitch, double& yaw) 
 {
   tf2::Matrix3x3 mat(q);

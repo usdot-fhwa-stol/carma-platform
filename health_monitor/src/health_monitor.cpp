@@ -54,7 +54,8 @@ namespace health_monitor
         
         pnh_->getParam("required_plugins", required_plugins_);
         pnh_->getParam("required_drivers", required_drivers_);
-        pnh_->getParam("lidar_gps_drivers", lidar_gps_drivers_); 
+        pnh_->getParam("lidar_gps_drivers", lidar_gps_drivers_);
+        pnh_->getParam("camera_drivers",camera_drivers_);
 
         truck_=false;
         car_=false;
@@ -88,13 +89,20 @@ namespace health_monitor
             ROS_INFO_STREAM("   " << p);
         }
         ROS_INFO_STREAM("  ]");
+
+        ROS_INFO_STREAM("camera_drivers: [");
+        for(auto p : camera_drivers_) {
+            ROS_INFO_STREAM("   " << p);
+        }
+
+        ROS_INFO_STREAM("  ]");
         ROS_INFO_STREAM("}");
         
          
 
         // initialize worker class
         plugin_manager_ = PluginManager(required_plugins_, plugin_service_prefix_, strategic_plugin_service_suffix_, tactical_plugin_service_suffix_);
-        driver_manager_ = DriverManager(required_drivers_, driver_timeout_,lidar_gps_drivers_); 
+        driver_manager_ = DriverManager(required_drivers_, driver_timeout_,lidar_gps_drivers_,camera_drivers_); 
 
         // record starup time
         start_up_timestamp_ = ros::Time::now().toNSec() / 1e6;
@@ -130,8 +138,8 @@ namespace health_monitor
     void HealthMonitor::run()
     {
         initialize();
-        ros::CARMANodeHandle::setSpinCallback(std::bind(&HealthMonitor::spin_cb, this));
         ros::CARMANodeHandle::setSpinRate(spin_rate_);
+        ros::CARMANodeHandle::setSpinCallback(std::bind(&HealthMonitor::spin_cb, this));
         ros::CARMANodeHandle::spin();
     }
 

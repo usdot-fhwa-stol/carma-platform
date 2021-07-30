@@ -15,11 +15,12 @@
  */
 
 #include "route.h"
+#include <carma_wm/WMListener.h>
 
 namespace route {
 
-    Route::Route() : tf_listener_(tf_buffer_), rg_worker_(tf_buffer_) {}
-
+    using std::placeholders::_1;
+ 
     void Route::initialize()
     {
         // init CARMANodeHandle
@@ -29,21 +30,29 @@ namespace route {
         route_pub_ = nh_->advertise<cav_msgs::Route>("route", 1, true);
         route_event_pub_ = nh_->advertise<cav_msgs::RouteEvent>("route_event", 1);
         route_state_pub_ = nh_->advertise<cav_msgs::RouteState>("route_state", 1, true);
-        route_marker_pub_= nh_->advertise<visualization_msgs::MarkerArray>("route_marker", 1, true);
+        route_marker_pub_= nh_->advertise<visualization_msgs::Marker>("route_marker", 1, true);
         // init subscribers
         pose_sub_ = nh_->subscribe("current_pose", 1, &RouteGeneratorWorker::pose_cb, &rg_worker_);
+        twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteGeneratorWorker::twist_cb, &rg_worker_);
+        geo_sub_ = nh_->subscribe("georeference", 1, &RouteGeneratorWorker::georeference_cb, &rg_worker_);
         // init service server
         get_available_route_srv_ = nh_->advertiseService("get_available_routes", &RouteGeneratorWorker::get_available_route_cb, &rg_worker_);
         set_active_route_srv_ = nh_->advertiseService("set_active_route", &RouteGeneratorWorker::set_active_route_cb, &rg_worker_);
         abort_active_route_srv_ = nh_->advertiseService("abort_active_route", &RouteGeneratorWorker::abort_active_route_cb, &rg_worker_);
         // set world model point form wm listener
         wm_ = wml_.getWorldModel();
+        wml_.enableUpdatesWithoutRouteWL();
         rg_worker_.setWorldModelPtr(wm_);
+        rg_worker_.setReroutingChecker(std::bind(&carma_wm::WMListener::checkIfReRoutingNeededWL,&wml_));
         // load params and pass to route generator worker
         double ct_error, dt_range;
+        int cte_count_max;
         pnh_->getParam("max_crosstrack_error", ct_error);
         pnh_->getParam("destination_downtrack_range", dt_range);
+        pnh_->getParam("cte_count_max", cte_count_max);
         rg_worker_.set_ctdt_param(ct_error, dt_range);
+        rg_worker_.set_CTE_dist(ct_error);
+        rg_worker_.set_CTE_count_max(cte_count_max);
         std::string route_file_location;
         pnh_->getParam("route_file_path", route_file_location);
         rg_worker_.set_route_file_path(route_file_location);
@@ -53,8 +62,12 @@ namespace route {
     void Route::run()
     {
         initialize();
+
         // spin with spin_callback function from RouteGeneratorWorker
-        ros::CARMANodeHandle::setSpinCallback(std::bind(&RouteGeneratorWorker::spin_callback, &rg_worker_));
+        ros::Timer spin_timer = pnh_->createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [this](const auto&) { rg_worker_.spin_callback(); });
+
         ros::CARMANodeHandle::spin();
     }
 

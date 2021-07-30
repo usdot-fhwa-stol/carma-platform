@@ -136,10 +136,20 @@ catkin_add_gmock(map-tools
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 
+catkin_add_gmock(tcm-test
+ test/TestMain.cpp
+ test/TCMTest.cpp
+ WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
+)
+
 if(TARGET ${PROJECT_NAME}-test)
  target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
 endif()
 
 if(TARGET map-tools)
  target_link_libraries(map-tools ${PROJECT_NAME} ${catkin_LIBRARIES})
+endif()
+
+if(TARGET tcm-test)
+ target_link_libraries(tcm-test ${PROJECT_NAME} ${catkin_LIBRARIES})
 endif()

@@ -34,7 +34,7 @@ namespace port_drayage_plugin
         std::string cargo_id;
         _pnh->param<std::string>("cargo_id", cargo_id, "");
 
-        ros::Publisher outbound_mob_op = _nh->advertise<cav_msgs::MobilityOperation>("outbound_mobility_operation", 5);
+        ros::Publisher outbound_mob_op = _nh->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
         _outbound_mobility_operations_publisher = std::make_shared<ros::Publisher>(outbound_mob_op);
         PortDrayageWorker pdw{
             cmv_id,
@@ -46,13 +46,13 @@ namespace port_drayage_plugin
             speed_epsilon
         };
         
-        ros::Subscriber maneuver_sub = _nh->subscribe<cav_msgs::ManeuverPlan>("final_Maneuver_plan", 5, 
+        ros::Subscriber maneuver_sub = _nh->subscribe<cav_msgs::ManeuverPlan>("final_maneuver_plan", 5, 
             [&](const cav_msgs::ManeuverPlanConstPtr& plan) {
                 pdw.set_maneuver_plan(plan);
         });
         _maneuver_plan_subscriber = std::make_shared<ros::Subscriber>(maneuver_sub);
 
-        ros::Subscriber twist_sub = _nh->subscribe<geometry_msgs::TwistStamped>("localization/ekf_twist", 5, 
+        ros::Subscriber twist_sub = _nh->subscribe<geometry_msgs::TwistStamped>("/localization/ekf_twist", 5, 
             [&](const geometry_msgs::TwistStampedConstPtr& speed) {
                 pdw.set_current_speed(speed);
                 _cur_speed = speed->twist;
@@ -68,10 +68,16 @@ namespace port_drayage_plugin
 
         _pose_subscriber = std::make_shared<ros::Subscriber>(pose_sub);
 
-        std::function<bool()> spin_cb = [&]() {
-            return pdw.spin();
-        };
-        _nh->setSpinCallback(spin_cb);
+        ros::Subscriber inbound_mobility_operation_sub = _nh->subscribe<cav_msgs::MobilityOperation>("incoming_mobility_operation", 5,
+            [&](const cav_msgs::MobilityOperationConstPtr& mobility_msg){
+            pdw.on_inbound_mobility_operation(mobility_msg);
+        });
+
+        _inbound_mobility_operation_subscriber = std::make_shared<ros::Subscriber>(inbound_mobility_operation_sub);
+        
+        ros::Timer discovery_pub_timer_ = _nh->createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [&pdw](const auto&) { pdw.spin(); });
 
         ros::CARMANodeHandle::spin();
 
@@ -193,7 +199,7 @@ namespace port_drayage_plugin
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
-        maneuver_msg.stop_and_wait_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.stop_and_wait_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.stop_and_wait_maneuver.parameters.planning_tactical_plugin = "StopAndWaitPlugin";
         maneuver_msg.stop_and_wait_maneuver.parameters.planning_strategic_plugin = "PortDrayageWorkerPlugin";
@@ -211,7 +217,7 @@ namespace port_drayage_plugin
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-        maneuver_msg.lane_following_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.lane_following_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "InlaneCruisingPlugin";
         maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "RouteFollowingPlugin";
@@ -222,7 +228,7 @@ namespace port_drayage_plugin
         maneuver_msg.lane_following_maneuver.end_speed = target_speed;
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         maneuver_msg.lane_following_maneuver.end_time = time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
-        maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
+        maneuver_msg.lane_following_maneuver.lane_ids = { std::to_string(lane_id) };
         return maneuver_msg;
     }
     // @SONAR_START@

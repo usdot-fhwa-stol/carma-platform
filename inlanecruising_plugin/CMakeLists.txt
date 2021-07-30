@@ -34,6 +34,8 @@ set( CATKIN_DEPS
   tf
   tf2
   tf2_geometry_msgs
+  carma_debug_msgs
+  basic_autonomy
 )
 
 ## Find catkin macros and libraries
@@ -50,8 +52,9 @@ find_package(Eigen3 REQUIRED)
 ###################################
 
 catkin_package(
+  INCLUDE_DIRS include
   CATKIN_DEPENDS ${CATKIN_DEPS}
-  DEPENDS Boost Eigen3
+  DEPENDS Boost EIGEN3
 )
 
 ###########
@@ -69,7 +72,7 @@ add_executable( ${PROJECT_NAME}
   src/main.cpp)
 add_library(inlanecruising_plugin_library 
   src/inlanecruising_plugin.cpp
-  src/smoothing/CubicSpline.cpp
+  src/smoothing/BSpline.cpp
 )
 target_link_libraries(inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
@@ -77,6 +80,16 @@ add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
 
+add_library(helper src/helper.cpp)
+target_link_libraries(helper
+  ${catkin_LIBRARIES}
+)
+
+add_executable(helper_node src/helper.cpp)
+target_link_libraries(helper_node
+  helper
+  ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############
@@ -101,10 +114,16 @@ install(DIRECTORY launch config
 ## Testing ##
 #############
 
-catkin_add_gmock(${PROJECT_NAME}-test 
-  test/test_inlanecruising_plugin_planning.cpp
-  test/test_inlanecruising_plugin.cpp
-)
-target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
+if(CATKIN_ENABLE_TESTING)
 
+  catkin_add_gmock(${PROJECT_NAME}-test 
+    test/test_inlanecruising_plugin_planning.cpp
+    test/test_inlanecruising_plugin.cpp
+  )
+  target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
+
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(rostest_ilc test/ilc_plugin.test test/rostest_ilc.cpp)
+  target_link_libraries(rostest_ilc ${catkin_LIBRARIES})
+endif()
 

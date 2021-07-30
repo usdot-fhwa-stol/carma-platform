@@ -28,7 +28,7 @@ TEST(CostPluginWorkerTest, testSingleManeuver)
     mvr1.type = cav_msgs::Maneuver::LANE_FOLLOWING;
     mvr1.lane_following_maneuver.start_dist = 0;
     mvr1.lane_following_maneuver.start_time = ros::Time(0);
-    mvr1.lane_following_maneuver.lane_id.push_back(0);
+    mvr1.lane_following_maneuver.lane_ids = {"0"};
     mvr1.lane_following_maneuver.end_dist = 1;
     mvr1.lane_following_maneuver.end_time = ros::Time(1.0);
     mvr1.lane_following_maneuver.start_speed = 10;
@@ -50,7 +50,7 @@ TEST(CostPluginWorkerTest, testMixedPlanners)
     mvr1.type = cav_msgs::Maneuver::LANE_FOLLOWING;
     mvr1.lane_following_maneuver.start_dist = 0;
     mvr1.lane_following_maneuver.start_time = ros::Time(0);
-    mvr1.lane_following_maneuver.lane_id.push_back(0);
+    mvr1.lane_following_maneuver.lane_ids = {"0"};
     mvr1.lane_following_maneuver.end_dist = 1;
     mvr1.lane_following_maneuver.end_time = ros::Time(1.0);
     mvr1.lane_following_maneuver.start_speed = 10;
@@ -62,7 +62,7 @@ TEST(CostPluginWorkerTest, testMixedPlanners)
     mvr2.type = cav_msgs::Maneuver::STOP_AND_WAIT;
     mvr2.lane_following_maneuver.start_dist = 1;
     mvr2.lane_following_maneuver.start_time = ros::Time(1.0);
-    mvr2.lane_following_maneuver.lane_id.push_back(0);
+    mvr2.lane_following_maneuver.lane_ids = {"0"};
     mvr2.lane_following_maneuver.end_dist = 5;
     mvr2.lane_following_maneuver.end_time = ros::Time(5.0);
     mvr2.lane_following_maneuver.start_speed = 10;

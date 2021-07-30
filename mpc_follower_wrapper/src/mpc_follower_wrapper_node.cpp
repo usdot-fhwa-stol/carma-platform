@@ -25,7 +25,6 @@ int main(int argc, char** argv) {
 
   mpc_follower_wrapper::MPCFollowerWrapper MPCFollowerWrapper(nh);
   
-  ros::CARMANodeHandle::setSpinRate(10);
   ros::CARMANodeHandle::spin();
 
   ROS_INFO("Node Exiting");

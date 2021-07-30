@@ -29,6 +29,7 @@ find_package(catkin REQUIRED COMPONENTS
   cav_srvs
   roscpp
   std_msgs
+  autoware_msgs
 )
 
 ###################################
@@ -43,7 +44,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES ui_integration
-   CATKIN_DEPENDS carma_utils cav_msgs cav_srvs roscpp std_msgs
+   CATKIN_DEPENDS carma_utils cav_msgs cav_srvs roscpp std_msgs autoware_msgs
 #  DEPENDS system_lib
 )
 

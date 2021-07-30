@@ -31,6 +31,7 @@ set ( PKG_CATKIN_DEPS
   lanelet2_extension
   carma_utils
   cav_msgs
+  carma_debug_msgs
   roscpp
   tf2
   tf2_geometry_msgs
@@ -92,16 +93,33 @@ target_link_libraries(
   ${Boost_LIBRARIES}
 )
 
+add_executable(
+  map_update_logger_node
+  src/MapUpdateLoggerNode.cpp
+)
+
+target_link_libraries(
+  map_update_logger_node
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+add_dependencies(
+  map_update_logger_node
+  ${catkin_EXPORTED_TARGETS}
+)
+
 #############
 ## Install ##
 #############
 
 # Mark libraries for installation
 # See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} map_update_logger_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 # Mark cpp header files for installation
@@ -125,6 +143,15 @@ catkin_add_gmock(${PROJECT_NAME}-test
   test/TrafficControlTest.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
+
+catkin_add_gmock(segfault
+ test/TestMain.cpp
+ test/SegFaultTest.cpp
+ WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
+)
+if(TARGET segfault)
+ target_link_libraries(segfault ${PROJECT_NAME} ${catkin_LIBRARIES})
+endif()
 
 if(TARGET ${PROJECT_NAME}-test)
   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})

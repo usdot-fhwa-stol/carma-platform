@@ -25,13 +25,13 @@ the License.
         <remap from="steer_lim_deg" to="/vehicle_steer_lim_deg"/>
         <remap from="steering_gear_ratio" to="/vehicle_steering_gear_ratio"/>
 
-        <node pkg="mpc_follower" type="mpc_waypoints_converter" name="mpc_waypoints_converter" output="screen">
+        <node pkg="mpc_follower" type="mpc_waypoints_converter" name="mpc_waypoints_converter">
 			<remap from="/base_waypoints" to="base_waypoints"/>
 			<remap from="/closest_waypoint" to="closest_waypoint"/>
 			<remap from="/final_waypoints" to="carma_final_waypoints"/>
 		</node>
 
-		<node pkg="mpc_follower" type="mpc_follower" name="mpc_follower" output="screen">
+		<node pkg="mpc_follower" type="mpc_follower" name="mpc_follower">
 			<remap from="/ctrl_raw" to="ctrl_raw"/>
 			<remap from="/twist_raw" to="twist_raw"/>
             <rosparam command="load" file="$(arg vehicle_calibration_dir)/mpc_follower/calibration.yaml"/>
@@ -39,7 +39,7 @@ the License.
 
     </group>
     <!-- MPC Follower Wrapper Node -->
-    <node pkg="mpc_follower_wrapper" type="mpc_follower_wrapper_node" name="mpc_follower_wrapper_node" output="screen">
+    <node pkg="mpc_follower_wrapper" type="mpc_follower_wrapper_node" name="mpc_follower_wrapper_node">
         <rosparam command="load" file="$(find mpc_follower_wrapper)/config/default.yaml" />
     </node>
 </launch>
