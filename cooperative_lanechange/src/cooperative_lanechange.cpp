@@ -905,4 +905,3 @@ namespace cooperative_lanechange
         map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());  // Build projector from proj string
     }
 }
-

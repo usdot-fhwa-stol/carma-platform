@@ -690,4 +690,3 @@ TEST(InLaneCruisingPluginTest, test_verify_yield)
     ASSERT_FALSE(plugin.validate_yield_plan(tp2));
     
 }
-

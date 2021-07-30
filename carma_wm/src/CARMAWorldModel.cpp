@@ -469,15 +469,31 @@ TrackPos CARMAWorldModel::getRouteEndTrackPos() const
   return p;
 }
 
-void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map, size_t map_version)
+void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map, size_t map_version, bool recompute_routing_graph)
 {
+  // If this is the first time the map has been set, then recompute the routing graph
+  if (!semantic_map_) {
+
+    ROS_INFO_STREAM("First time map is set in carma_wm. Routing graph will be recomputed reguardless of method inputs.");
+
+    recompute_routing_graph = true;
+  }
+
   semantic_map_ = map;
   map_version_ = map_version;
-  // Build routing graph from map
-  TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
+  
+  // If the routing graph should be updated then recompute it
+  if (recompute_routing_graph) {
 
-  lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
-  map_routing_graph_ = std::move(map_graph);
+    ROS_INFO_STREAM("Building routing graph");
+
+    TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
+    lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
+    map_routing_graph_ = std::move(map_graph);
+
+    ROS_INFO_STREAM("Done building routing graph");
+
+  }
 }
 
 size_t CARMAWorldModel::getMapVersion() const 
@@ -496,14 +512,23 @@ void CARMAWorldModel::setRoute(LaneletRoutePtr route)
   lanelet::ConstLanelets path_lanelets(route_->shortestPath().begin(), route_->shortestPath().end());
   shortest_path_view_ = lanelet::utils::createConstSubmap(path_lanelets, {});
   computeDowntrackReferenceLine();
+  // NOTE: Setting the route_length_ field here will likely result in the final lanelets final point being used. Call setRouteEndPoint to use the destination point value
   route_length_ = routeTrackPos(route_->getEndPoint().basicPoint2d()).downtrack;  // Cache the route length with
                                                                                   // consideration for endpoint
 }
 
 void CARMAWorldModel::setRouteEndPoint(const lanelet::BasicPoint3d& end_point)
 {
+  if (!route_) {
+    throw std::invalid_argument("Route endpoint set before route was available.");
+  }
+
   lanelet::ConstPoint3d const_end_point{ lanelet::utils::getId(), end_point.x(), end_point.y(), end_point.z() };
+
   route_->setEndPoint(const_end_point);
+  
+  route_length_ = routeTrackPos(route_->getEndPoint().basicPoint2d()).downtrack;  // Cache the route length with
+                                                                                  // consideration for endpoint
 }
 
 lanelet::LineString3d CARMAWorldModel::copyConstructLineString(const lanelet::ConstLineString3d& line) const
