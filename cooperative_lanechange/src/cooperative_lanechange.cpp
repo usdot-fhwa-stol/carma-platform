@@ -26,8 +26,6 @@
 #include "smoothing/filters.h"
 #include <cav_msgs/MobilityPath.h>
 #include <cav_msgs/RoadwayObstacle.h>
-#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
-#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <lanelet2_extension/utility/query.h>
 #include <lanelet2_extension/utility/utilities.h>
 
@@ -146,10 +144,8 @@ namespace cooperative_lanechange
         //Create temporary route between the two vehicles
         lanelet::ConstLanelet start_lanelet = veh2_lanelet;
         lanelet::ConstLanelet end_lanelet = current_lanelet;
-        lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany,lanelet::Participants::VehicleCar);
-        ROS_DEBUG_STREAM("traffic rules created");
         
-        lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*(wm_->getMap()), *traffic_rules);
+        auto map_graph = wm_->getMapRoutingGraph();
         ROS_DEBUG_STREAM("Graph created");
 
         auto temp_route = map_graph->getRoute(start_lanelet, end_lanelet);
