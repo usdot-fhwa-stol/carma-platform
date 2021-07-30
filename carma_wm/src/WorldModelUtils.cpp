@@ -24,18 +24,17 @@ namespace query
 std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& point,
                                                                     const unsigned int n)
 {
-  ROS_ERROR_STREAM("getLaneletsFromPoint 1aaa");
+  ROS_ERROR_STREAM("START getLaneletsFromPoint");
   // Check if the map is loaded yet
   if (!semantic_map || semantic_map->laneletLayer.size() == 0)
   {
     throw std::invalid_argument("Map is not set or does not contain lanelets");
   }
   std::vector<lanelet::ConstLanelet> possible_lanelets;
-  ROS_ERROR_STREAM("getLaneletsFromPoint 1a");
   auto nearestLanelets = lanelet::geometry::findNearest(semantic_map->laneletLayer, point, n);
   if (nearestLanelets.size() == 0)
     return {};
-  ROS_ERROR_STREAM("getLaneletsFromPoint 1b");
+
   int id = 0;  // closest ones are in the back
   // loop through until the point is no longer geometrically in the lanelet
 
@@ -46,35 +45,38 @@ std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMa
     if (id >= nearestLanelets.size())
       break;
   }
-  ROS_ERROR_STREAM("getLaneletsFromPoint 2");
+
   for (auto llt : possible_lanelets)
   {
     ROS_ERROR_STREAM(llt.id());
   }
-
+  ROS_ERROR_STREAM("END getLaneletsFromPoint");
   return possible_lanelets;
 }
 
 std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& point,
                                                                     const unsigned int n)
 {
-  auto possible_lanelets = getLaneletsFromPoint(semantic_map, point, n);
+  lanelet::LaneletMapConstPtr const_ptr = semantic_map;
+  auto possible_lanelets = getLaneletsFromPoint(const_ptr, point, n);
+  std::vector<lanelet::Lanelet> return_lanelets;
   for (auto llt : possible_lanelets)
   {
-    semantic_map->laneletLayer.get(llt.id());
+    return_lanelets.push_back(semantic_map->laneletLayer.get(llt.id()));
   }
-  return possible_lanelets;
+  return return_lanelets;
 }
 
 std::vector<lanelet::Lanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& point,
                                                                     const unsigned int n)
 {
   auto possible_lanelets = nonConnectedAdjacentLeft(semantic_map, point, n);
+  std::vector<lanelet::Lanelet> return_lanelets;
   for (auto llt : possible_lanelets)
   {
-    semantic_map->laneletLayer.get(llt.id());
+    return_lanelets.push_back(semantic_map->laneletLayer.get(llt.id()));
   }
-  return possible_lanelets;
+  return return_lanelets;
 }
 
 std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& input_point,
