@@ -41,10 +41,7 @@ namespace basic_autonomy
                 else{
                     double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
                     if(first){
-                        if (starting_downtrack > max_starting_downtrack)
-                        {
-                            starting_downtrack = max_starting_downtrack;
-                        }
+                        starting_downtrack = std::min(starting_downtrack, max_starting_downtrack);
                         first = false;
                     }
                     ROS_DEBUG_STREAM("Used downtrack: " << starting_downtrack);
@@ -77,7 +74,7 @@ namespace basic_autonomy
 
             cav_msgs::LaneFollowingManeuver lane_following_maneuver = maneuver.lane_following_maneuver;
             
-            auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist, true, true);
+            auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack, true, true);
 
             if (lanelets.empty())
             {
@@ -88,7 +85,9 @@ namespace basic_autonomy
             ROS_DEBUG_STREAM("Maneuver");
 
             lanelet::BasicLineString2d downsampled_centerline;
-            downsampled_centerline.reserve(200);
+            // 400 value here is an arbitrary attempt at improving inlane-cruising performance by reducing copy operations. 
+            // Value picked based on annecdotal evidence from STOL system testing
+            downsampled_centerline.reserve(400);
             
             //getLaneletsBetween is inclusive of lanelets between its two boundaries
             //which may return lanechange lanelets, so
@@ -106,12 +105,13 @@ namespace basic_autonomy
             {
                 // skip all lanechanges until lane follow starts
                 while (curr_idx + 1 < lanelets.size() && 
-                        std::find(following_lanelets.begin(),following_lanelets.end(), lanelets[curr_idx + 1]) != following_lanelets.end())
+                        std::find(following_lanelets.begin(),following_lanelets.end(), lanelets[curr_idx + 1]) == following_lanelets.end())
                 {
                     ROS_DEBUG_STREAM("As there were no directly following lanelets after this, skipping lanelet id: " << lanelets[curr_idx].id());
                     curr_idx ++;
                     following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
                 }
+
                 ROS_DEBUG_STREAM("Added lanelet Id for lane follow: " << lanelets[curr_idx].id());
                 // guaranteed to have at least one "straight" lanelet (e.g the last one in the list)
                 straight_lanelets.push_back(lanelets[curr_idx]);
@@ -135,8 +135,8 @@ namespace basic_autonomy
 
                     bool is_turn = false;
                     if(l.hasAttribute("turn_direction")) {
-                    std::string turn_direction = l.attribute("turn_direction").value();
-                    is_turn = turn_direction.compare("left") == 0 || turn_direction.compare("right") == 0;
+                        std::string turn_direction = l.attribute("turn_direction").value();
+                        is_turn = turn_direction.compare("left") == 0 || turn_direction.compare("right") == 0;
                     }
                     
                     lanelet::BasicLineString2d centerline = l.centerline2d().basicLineString();
@@ -146,6 +146,12 @@ namespace basic_autonomy
                     } else {
                     downsampled_points = carma_utils::containers::downsample_vector(centerline, general_config.default_downsample_ratio);
                     }
+                    
+                    if(downsampled_centerline.size() != 0 && downsampled_points.size() != 0 // If this is not the first lanelet and the points are closer than 1m drop the first point to prevent overlap
+                    && lanelet::geometry::distance2d(downsampled_points.front(), downsampled_centerline.back()) <1.2){
+                        downsampled_points = lanelet::BasicLineString2d(downsampled_points.begin() + 1, downsampled_points.end());
+                    }
+
                     downsampled_centerline = carma_wm::geometry::concatenate_line_strings(downsampled_centerline, downsampled_points);
                     visited_lanelets.insert(l.id());
                 }
