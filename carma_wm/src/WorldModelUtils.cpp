@@ -24,7 +24,7 @@ namespace query
 std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& point,
                                                                     const unsigned int n)
 {
-  ROS_ERROR_STREAM("START getLaneletsFromPoint");
+  
   // Check if the map is loaded yet
   if (!semantic_map || semantic_map->laneletLayer.size() == 0)
   {
@@ -46,11 +46,6 @@ std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMa
       break;
   }
 
-  for (auto llt : possible_lanelets)
-  {
-    ROS_ERROR_STREAM(llt.id());
-  }
-  ROS_ERROR_STREAM("END getLaneletsFromPoint");
   return possible_lanelets;
 }
 
@@ -70,10 +65,10 @@ std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::LaneletMapPtr&
 std::vector<lanelet::Lanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& point,
                                                                     const unsigned int n)
 {
-  ROS_ERROR_STREAM("x:" << point.x() << ", y: " << point.y());
+  
   lanelet::LaneletMapConstPtr const_ptr = semantic_map;
   auto possible_lanelets = nonConnectedAdjacentLeft(const_ptr, point, n);
-  ROS_ERROR_STREAM("next");
+  
   
   std::vector<lanelet::Lanelet> return_lanelets;
   for (auto llt : possible_lanelets)
@@ -86,7 +81,7 @@ std::vector<lanelet::Lanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMap
 std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& input_point,
                                                                     const unsigned int n)
 {
-  ROS_ERROR_STREAM("WHAT1");
+  
   // Check if the map is loaded yet
   if (!semantic_map || semantic_map->laneletLayer.size() == 0)
   {
@@ -99,37 +94,22 @@ std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::Lanel
   {
     throw std::invalid_argument("Input point x: " + std::to_string(input_point.x()) + ", y: " + std::to_string(input_point.y()) + " is not in the map");
   }
-  ROS_DEBUG_STREAM("What");
   
   auto input_lanelet = input_lanelets[0]; 
-
-  ROS_DEBUG_STREAM("left ls size: " << input_lanelet.leftBound2d().size());
   
   auto point_downtrack = carma_wm::geometry::trackPos(input_lanelet, input_point).downtrack;
-  ROS_DEBUG_STREAM("point_downtrack: " << point_downtrack);
   
   auto point_downtrack_ratio = point_downtrack / carma_wm::geometry::trackPos(input_lanelet, input_lanelet.centerline().back().basicPoint2d()).downtrack;
-  ROS_DEBUG_STREAM("point_downtrack_ratio: " << point_downtrack_ratio);
 
   auto point_on_ls = input_lanelet.leftBound2d()[std::round((input_lanelet.leftBound2d().size()- 1) * point_downtrack_ratio) ];
-
-  ROS_DEBUG_STREAM("x: " << point_on_ls.basicPoint2d().x() <<  ", y: " << point_on_ls.basicPoint2d().y());
 
   // point_on_opposite_lane coord is acquired by extrapolating the line from input_point to point_on_ls with same distance.
   // threfore point_on_opposite_lane.x() = input_point.x() + 2dx, where dx = point_on_ls.x() - input_point.x(). Here, one of input_point.x() cancels out, results in:
   auto point_on_opposite_lane = lanelet::BasicPoint2d{2 * point_on_ls.x() - input_point.x(), 2 * point_on_ls.y() - input_point.y()};
 
-  ROS_DEBUG_STREAM("x: " << point_on_opposite_lane.x() <<  ", y: " << point_on_opposite_lane.y());
-
   auto opposite_lanelets = getLaneletsFromPoint(semantic_map, point_on_opposite_lane, n);
 
-  // TODO: create opposite direction 
-  for (auto llt: opposite_lanelets)
-  {
-    ROS_DEBUG_STREAM("potential_opposite_lanelets llt: "  << llt.id());
-
-  }
-
+  // TODO: create opposite direction protection throw
 
   return opposite_lanelets;
 }

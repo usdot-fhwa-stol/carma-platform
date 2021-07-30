@@ -1880,7 +1880,7 @@ TEST(WMBroadcaster, DISABLED_RegionAccessRuleTest)
   ASSERT_EQ(2, active_call_count.load());
 }
 
-TEST(WMBroadcaster, DISABLED_generate32BitId)
+TEST(WMBroadcaster, generate32BitId)
 {
   
   WMBroadcaster wmb(
@@ -1894,7 +1894,7 @@ TEST(WMBroadcaster, DISABLED_generate32BitId)
   EXPECT_EQ(bits, 257);
 }
 
-TEST(WMBroadcaster, DISABLED_splitLaneletWithRatio)
+TEST(WMBroadcaster, splitLaneletWithRatio)
 {
   // Create WMBroadcaster object
   WMBroadcaster wmb(
@@ -1970,7 +1970,7 @@ TEST(WMBroadcaster, DISABLED_splitLaneletWithRatio)
   EXPECT_EQ(copy_lanelet.size(), 3);
 } 
 
-TEST(WMBroadcaster, DISABLED_splitLaneletWithPoint)
+TEST(WMBroadcaster, splitLaneletWithPoint)
 {
   // Create WMBroadcaster object
   WMBroadcaster wmb(
@@ -2021,7 +2021,7 @@ TEST(WMBroadcaster, DISABLED_splitLaneletWithPoint)
 
 } 
 
-TEST(WMBroadcaster, DISABLED_preprocessWorkzoneGeometry)
+TEST(WMBroadcaster, preprocessWorkzoneGeometry)
 {
   // TESTING WORLD IS IN wmb_;
   // Create WMBroadcaster object
@@ -2168,10 +2168,6 @@ TEST(WMBroadcaster, DISABLED_preprocessWorkzoneGeometry)
   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.size(), 2);
   work_zone_geofence_cache[WorkZoneSection::CLOSED] = gf_ptr4;
   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::CLOSED]->affected_parts_.size(), 2);
-  for (auto llt : work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_)
-  {
-    ROS_ERROR_STREAM("REVERSE id: " << llt.lanelet().get().id());
-  }
   // get parallel and opposite lanelets
   
   wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
@@ -2239,13 +2235,9 @@ TEST(WMBroadcaster, DISABLED_preprocessWorkzoneGeometry)
   gf_ptr3->gf_pts = open_right_pts;
   gf_ptr4->gf_pts = closed;
 
-  ROS_WARN_STREAM("TAPERRIGHT");
   gf_ptr1->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr1->gf_pts);
-  ROS_WARN_STREAM("REVERSE");
   gf_ptr2->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr2->gf_pts);
-  ROS_WARN_STREAM("OPENRIGHT");
   gf_ptr4->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr4->gf_pts);
-  ROS_WARN_STREAM("CLOSED");
   gf_ptr3->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr3->gf_pts);
 
   work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT] = gf_ptr1;
@@ -2323,13 +2315,13 @@ TEST(WMBroadcaster, DISABLED_preprocessWorkzoneGeometry)
   gf_ptr3->gf_pts = open_right_pts;
   gf_ptr4->gf_pts = closed;
 
-  ROS_WARN_STREAM("TAPERRIGHT");
+  
   gf_ptr1->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr1->gf_pts);
-  ROS_WARN_STREAM("REVERSE");
+  
   gf_ptr2->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr2->gf_pts);
-  ROS_WARN_STREAM("OPENRIGHT");
+  
   gf_ptr4->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr4->gf_pts);
-  ROS_WARN_STREAM("CLOSED");
+  
   gf_ptr3->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr3->gf_pts);
 
   work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT] = gf_ptr1;
@@ -2404,13 +2396,13 @@ TEST(WMBroadcaster, DISABLED_preprocessWorkzoneGeometry)
   gf_ptr3->gf_pts = open_right_pts;
   gf_ptr4->gf_pts = closed;
 
-  ROS_WARN_STREAM("TAPERRIGHT");
+  
   gf_ptr1->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr1->gf_pts);
-  ROS_WARN_STREAM("REVERSE");
+  
   gf_ptr2->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr2->gf_pts);
-  ROS_WARN_STREAM("OPENRIGHT");
+  
   gf_ptr4->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr4->gf_pts);
-  ROS_WARN_STREAM("CLOSED");
+  
   gf_ptr3->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr3->gf_pts);
 
   work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT] = gf_ptr1;
@@ -2443,7 +2435,6 @@ TEST(WMBroadcaster, DISABLED_preprocessWorkzoneGeometry)
   EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().y(), 75.0, 0.0001);
   EXPECT_NEAR((*(middle_opposite_lanelets.get())).back().rightBound2d().back().basicPoint2d().y(), 50.0, 0.0001);
 } 
-
 
 TEST(WMBroadcaster, createWorkzoneGeometry)
 {
@@ -2592,10 +2583,6 @@ TEST(WMBroadcaster, createWorkzoneGeometry)
   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.size(), 2);
   work_zone_geofence_cache[WorkZoneSection::CLOSED] = gf_ptr4;
   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::CLOSED]->affected_parts_.size(), 2);
-  for (auto llt : work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_)
-  {
-    ROS_ERROR_STREAM("REVERSE id: " << llt.lanelet().get().id());
-  }
   // get parallel and opposite lanelets
   
   wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
@@ -2656,7 +2643,6 @@ TEST(WMBroadcaster, createWorkzoneGeometry)
 
   for (auto lanelet_or_area : gf_ptr->affected_parts_)
   {
-    ROS_ERROR_STREAM("...blocked " << lanelet_or_area.lanelet().get().id());
     map->update(map->laneletLayer.get(lanelet_or_area.lanelet().get().id()), rar);
   }
 
@@ -2667,20 +2653,6 @@ TEST(WMBroadcaster, createWorkzoneGeometry)
   auto route_ = map_graph->getRoute(gf_ptr->lanelet_additions_[0], gf_ptr->lanelet_additions_[5]);
 
   EXPECT_TRUE(!!route_);
-  EXPECT_EQ(route_.get().shortestPath().size(), 6);
-  ROS_WARN_STREAM("llt: " << gf_ptr->lanelet_additions_[0].id());
-  ROS_WARN_STREAM("llt: " << gf_ptr->lanelet_additions_[1].id());
-  ROS_WARN_STREAM("llt: " << gf_ptr->lanelet_additions_[2].id());
-  ROS_WARN_STREAM("llt: " << gf_ptr->lanelet_additions_[3].id());
-  ROS_WARN_STREAM("llt: " << gf_ptr->lanelet_additions_[4].id());
-  ROS_WARN_STREAM("llt: " << gf_ptr->lanelet_additions_[5].id());
-  ROS_WARN_STREAM("llt: " << gf_ptr->lanelet_additions_[6].id());
-  ROS_WARN_STREAM("llt: " << gf_ptr->lanelet_additions_[7].id());
-  
-  for (auto llt : route_.get().shortestPath())
-  {
-    ROS_ERROR_STREAM("...rerouted " << llt.id());
-  }
 
   // check if outdated lanelets blocked
   auto route1_ = map_graph->getRoute(map->laneletLayer.get(1210), map->laneletLayer.get(9914));
