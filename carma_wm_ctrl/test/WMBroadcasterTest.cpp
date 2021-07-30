@@ -2626,10 +2626,12 @@ TEST(WMBroadcaster, createWorkzoneGeometry)
   auto opposite_lights1 = gf_ptr->lanelet_additions_[6].regulatoryElementsAs<lanelet::CarmaTrafficLight>();
   EXPECT_EQ(opposite_lights1.size(), 1);
   EXPECT_NEAR(opposite_lights1.front()->stopLine().front().front().y(), 88, 0.001);
+  EXPECT_EQ(opposite_lights1.front()->getControlledLanelets().size(), 4);
 
   auto opposite_lights2 = gf_ptr->lanelet_additions_[0].regulatoryElementsAs<lanelet::CarmaTrafficLight>();
   EXPECT_EQ(opposite_lights2.size(), 1);
   EXPECT_NEAR(opposite_lights2.front()->stopLine().front().front().y(), 13, 0.001);
+  EXPECT_EQ(opposite_lights2.front()->getControlledLanelets().size(), 5);
 
   // update the map with new lanelets
   for(auto llt : gf_ptr->lanelet_additions_)

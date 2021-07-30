@@ -401,8 +401,18 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   //ADD TF_LIGHT and STOP_RULE TO PARALLEL LANELET
   //////////////////////////////
   lanelet::LineString3d parallel_stop_ls(lanelet::utils::getId(), {parallel_llt_front.leftBound3d().back(), parallel_llt_front.rightBound3d().back()});
+  // controlled lanelet:
+  std::vector<lanelet::Lanelet> controlled_taper_right;
 
-  lanelet::CarmaTrafficLightPtr tfl_parallel = std::make_shared<lanelet::CarmaTrafficLight>(lanelet::CarmaTrafficLight::buildData(lanelet::utils::getId(), {parallel_stop_ls}, {})); //TODOcontrolled lanelet
+  controlled_taper_right.push_back(parallel_llt_front); //which has the light
+
+  controlled_taper_right.push_back(front_llt_diag);
+
+  controlled_taper_right.insert(controlled_taper_right.end(), middle_llts.begin(), middle_llts.end());
+
+  controlled_taper_right.push_back(back_llt_diag);
+
+  lanelet::CarmaTrafficLightPtr tfl_parallel = std::make_shared<lanelet::CarmaTrafficLight>(lanelet::CarmaTrafficLight::buildData(lanelet::utils::getId(), {parallel_stop_ls}, controlled_taper_right)); 
 
   gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->label_),tfl_parallel->id()});
 
@@ -418,7 +428,16 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   
   lanelet::LineString3d opposite_stop_ls(lanelet::utils::getId(), {opposite_llts_with_stop_line->front().leftBound3d().back(), opposite_llts_with_stop_line->front().rightBound3d().back()});
   
-  lanelet::CarmaTrafficLightPtr tfl_opposite = std::make_shared<lanelet::CarmaTrafficLight>(lanelet::CarmaTrafficLight::buildData(lanelet::utils::getId(), {opposite_stop_ls}, {}));// TODO controlled lanelet
+  std::vector<lanelet::Lanelet> controlled_open_right;
+  
+  controlled_open_right.insert(controlled_open_right.end(), opposite_llts_with_stop_line->begin(), opposite_llts_with_stop_line->end());; //split lanelet one of which has light
+  
+  for (auto llt : work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_)
+  {
+    controlled_open_right.push_back(current_map_->laneletLayer.get(llt.lanelet().get().id()));
+  }
+
+  lanelet::CarmaTrafficLightPtr tfl_opposite = std::make_shared<lanelet::CarmaTrafficLight>(lanelet::CarmaTrafficLight::buildData(lanelet::utils::getId(), {opposite_stop_ls}, controlled_open_right));
   
   gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->label_), tfl_opposite->id()});
   
