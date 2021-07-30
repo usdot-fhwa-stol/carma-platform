@@ -2393,7 +2393,7 @@ TEST(WorkZoneGeometryTest, preprocessWorkzoneGeometry)
 
   open_right_pts = {};
   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 75.5, 0));
-  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 87.0, 0));
+  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 99.5, 0));
 
   closed = {};
   closed.push_back(carma_wm::test::getPoint(7.5, 50.5, 0)); 
@@ -2435,8 +2435,8 @@ TEST(WorkZoneGeometryTest, preprocessWorkzoneGeometry)
 
   // Must be in certain order (openright):
   EXPECT_NEAR((*(parallel_llts.get()))[1].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[1].leftBound2d().front().basicPoint2d().y(), 75.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[1].rightBound2d().back().basicPoint2d().y(), 100.0, 0.0001);
+  EXPECT_NEAR((*(parallel_llts.get()))[1].leftBound2d().front().basicPoint2d().y(), 100.0, 0.0001);
+  EXPECT_NEAR((*(parallel_llts.get()))[1].rightBound2d().back().basicPoint2d().y(), 105.0, 0.0001);
 
   // Must be in certain order (reverse, note that it is still in opposite direction):
   EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);

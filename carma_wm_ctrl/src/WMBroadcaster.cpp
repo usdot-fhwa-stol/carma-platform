@@ -499,32 +499,19 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
   // to match the output expected of this function as if split happened
   if (new_taper_right_llts.size() == 1)
   {
-    bool found_previous_lanelet = false;
-    for (size_t i = 0; i < getRoute().shortest_path_lanelet_ids.size(); i ++)
+    auto previous_lanelets = current_routing_graph_->previous(work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.front().lanelet().get());
+    if (previous_lanelets.empty()) //error if bad match
     {
-      if (getRoute().shortest_path_lanelet_ids[i] != work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.front().lanelet().get().id() )
-      {
-        continue; //skip if no match
-      }
-      if (i == 0) //error if bad match
-      {
-        ROS_ERROR_STREAM("Workzone area starts from the vehicle's starting lanelet (Id : " << getRoute().shortest_path_lanelet_ids.front() 
-                        << ". This case is rare and not supported at the moment.");
-        return;
-      }
-      found_previous_lanelet = true;
-
-      // get previous lanelet of affected part of TAPERRIGHT
-      auto prev_lanelet_to_copy  = current_map_->laneletLayer.get(getRoute().shortest_path_lanelet_ids[i - 1]);
-
-      // parallel_llts will have a copy of `prev_lanelet_to_copy` with new id to be used as part of workzone area
-      new_taper_right_llts = splitLaneletWithPoint({prev_lanelet_to_copy.centerline2d().back()}, prev_lanelet_to_copy, error_distance_);
-    }
-    if (!found_previous_lanelet)
-    {
-      ROS_INFO_STREAM("This workzone area is applied to a segment not part of the route. Therefore, no need to process. Returning...");
+      ROS_ERROR_STREAM("Workzone area starts from lanelet with no previous lanelet (Id : " << work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.front().lanelet().get().id()
+                      << ". This case is rare and not supported at the moment.");
       return;
     }
+    
+    // get previous lanelet of affected part of TAPERRIGHT (doesn't matter which previous, as the new lanelet will only be duplicate anyways)
+    auto prev_lanelet_to_copy  = current_map_->laneletLayer.get(previous_lanelets.front().id());
+
+    // parallel_llts will have a copy of `prev_lanelet_to_copy` with new id to be used as part of workzone area
+    new_taper_right_llts = splitLaneletWithPoint({prev_lanelet_to_copy.centerline2d().back()}, prev_lanelet_to_copy, error_distance_);
   }
   parallel_llts->insert(parallel_llts->end(), new_taper_right_llts.begin(), new_taper_right_llts.end());
   for (auto llt : new_taper_right_llts)
@@ -545,32 +532,19 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
   // to match the output expected of this function as if split happened
   if (new_open_right_llts.size() == 1) 
   {
-    bool found_next_lanelet = false;
-    for (size_t i = 0; i < getRoute().shortest_path_lanelet_ids.size(); i ++)
+    auto next_lanelets = current_routing_graph_->following(work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.front().lanelet().get());
+    if (next_lanelets.empty()) //error if bad match
     {
-      if (getRoute().shortest_path_lanelet_ids[i] != work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.back().lanelet().get().id() )
-      {
-        continue; //skip if no match
-      }
-      if (i == getRoute().shortest_path_lanelet_ids.size() - 1) //error if bad match
-      {
-        ROS_ERROR_STREAM("Workzone area ends at the vehicle's ending lanelet (Id : " << getRoute().shortest_path_lanelet_ids.back() 
-                        << ". This case is rare and not supported at the moment.");
-        return;
-      }
-      found_next_lanelet = true;
-
-      // get next lanelet of affected part of OPENRIGHT
-      auto next_lanelet_to_copy  = current_map_->laneletLayer.get(getRoute().shortest_path_lanelet_ids[i + 1]);
-
-      // parallel_llts will have a copy of `next_lanelet_to_copy` with new id to be used as part of workzone area
-      new_open_right_llts = splitLaneletWithPoint({next_lanelet_to_copy.centerline2d().back()}, next_lanelet_to_copy, error_distance_);
-    }
-    if (!found_next_lanelet)
-    {
-      ROS_INFO_STREAM("This workzone area is applied to a segment not part of the route. Therefore, no need to process. Returning...");
+      ROS_ERROR_STREAM("Workzone area starts from lanelet with no previous lanelet (Id : " << work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.front().lanelet().get().id()
+                      << ". This case is rare and not supported at the moment.");
       return;
     }
+    
+    // get previous lanelet of affected part of TAPERRIGHT (doesn't matter which previous, as the new lanelet will only be duplicate anyways)
+    auto next_lanelet_to_copy  = current_map_->laneletLayer.get(next_lanelets.front().id());
+
+    // parallel_llts will have a copy of `next_lanelet_to_copy` with new id to be used as part of workzone area
+    new_open_right_llts = splitLaneletWithPoint({next_lanelet_to_copy.centerline2d().back()}, next_lanelet_to_copy, error_distance_);
   }
   parallel_llts->insert(parallel_llts->end(), new_open_right_llts.begin(), new_open_right_llts.end());
   for (auto llt : new_open_right_llts)
@@ -597,7 +571,6 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
   
   
   ROS_ERROR_STREAM("2a=============");
-  std::vector<lanelet::Lanelet> trimmed_llts;
 
   if (reverse_back_llt.id() == reverse_front_llt.id()) //means there is only 1 middle lanelet, which needs to be split into 3 lanelets
   {
@@ -609,7 +582,9 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     
     if (temp_llts.size() < 2) // if there is only 1 lanelet
     {
-      opposite_llts->insert(opposite_llts->end(), trimmed_llts.begin(), trimmed_llts.begin());
+      ROS_ERROR_STREAM("Found less than 2 elements. temp_llts size: " << temp_llts.size());
+      opposite_llts->insert(opposite_llts->end(), temp_llts.begin(), temp_llts.end());
+
       return;
     }
     else if (temp_llts.size() == 2) // determine which 
@@ -618,16 +593,16 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
       if (lanelet::geometry::distance2d(work_zone_geofence_cache[WorkZoneSection::REVERSE]->gf_pts.back().basicPoint2d(), reverse_front_llt.centerline2d().back().basicPoint2d()) >
         lanelet::geometry::distance2d(work_zone_geofence_cache[WorkZoneSection::REVERSE]->gf_pts.front().basicPoint2d(), reverse_front_llt.centerline2d().front().basicPoint2d()))
         {
-          trimmed_llts.push_back(temp_llts.back());
+          opposite_llts->push_back(temp_llts.back());
         }
         else
         {
-          trimmed_llts.push_back(temp_llts.front());
+          opposite_llts->push_back(temp_llts.front());
         }
     }
     else if (temp_llts.size() == 3) // leave only middle lanelets from 3
     {
-      trimmed_llts.insert(trimmed_llts.end(), temp_llts.begin() + 1, temp_llts.end()- 1);
+      opposite_llts->insert(opposite_llts->end(), temp_llts.begin() + 1, temp_llts.end()- 1);
     }
   }
   else //if there are two or more lanelets
@@ -644,11 +619,11 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     ROS_ERROR_STREAM("2c1=============");
     if (temp_opposite_front_llts.size() > 1)
     {
-      trimmed_llts.insert(trimmed_llts.end(), temp_opposite_front_llts.begin() + 1, temp_opposite_front_llts.end());
+      opposite_llts->insert(opposite_llts->end(), temp_opposite_front_llts.begin() + 1, temp_opposite_front_llts.end());
     }
     else
     {
-      trimmed_llts.insert(trimmed_llts.end(), temp_opposite_front_llts.begin(), temp_opposite_front_llts.end());
+      opposite_llts->insert(opposite_llts->end(), temp_opposite_front_llts.begin(), temp_opposite_front_llts.end());
     }
     ROS_ERROR_STREAM("2c2=============");
     /// Fill in the middle part of middle lanelets
@@ -657,7 +632,7 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
       
       for (int i = 1; i <  work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_.size() - 1; i ++)
       {
-        trimmed_llts.push_back(current_map_->laneletLayer.get(work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_[i].id()));
+        opposite_llts->push_back(current_map_->laneletLayer.get(work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_[i].id()));
       }
     }
     ROS_ERROR_STREAM("2c3=============");
@@ -670,22 +645,17 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     ROS_ERROR_STREAM("2c4============= temp_opposite_back_llts.size(): " << temp_opposite_back_llts.size());
     if (temp_opposite_back_llts.size() > 1)
     {
-      trimmed_llts.insert(trimmed_llts.end(), temp_opposite_back_llts.begin(), temp_opposite_back_llts.end()- 1);
-      ROS_ERROR_STREAM("2c41============= trimmed_llts.size(): " << trimmed_llts.size());
+      opposite_llts->insert(opposite_llts->end(), temp_opposite_back_llts.begin(), temp_opposite_back_llts.end()- 1);
+      ROS_ERROR_STREAM("2c41============= opposite_llts->size(): " << opposite_llts->size());
     }
     else
     {
-      trimmed_llts.insert(trimmed_llts.end(), temp_opposite_back_llts.begin(), temp_opposite_back_llts.end());
-      ROS_ERROR_STREAM("2c42============= trimmed_llts.size(): " << trimmed_llts.size());
+      opposite_llts->insert(opposite_llts->end(), temp_opposite_back_llts.begin(), temp_opposite_back_llts.end());
+      ROS_ERROR_STREAM("2c42============= opposite_llts->size(): " << opposite_llts->size());
     }
     
   }
-  for (auto llt : trimmed_llts)
-  {
-    ROS_ERROR_STREAM("trimmed_llts llt " << llt.id());
-  }
-  ROS_ERROR_STREAM("3=============");
-  opposite_llts->insert(opposite_llts->end(), trimmed_llts.begin(), trimmed_llts.end());
+
   ROS_ERROR_STREAM("3============= opposite_llts.size()" << opposite_llts->size());
 }
 
@@ -807,12 +777,12 @@ std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithRatio(std::vector<d
     // Detected the end already. Exiting now
     if (left_prev_pt_idx == left_ls_size - 1 || right_prev_pt_idx == right_ls_size - 1)
     {
-      
+      ROS_ERROR_STREAM("found the last");
       break;
     }
     
   }
-  ROS_ERROR_STREAM("Ended splitLaneletWithRatio");
+  ROS_ERROR_STREAM("Ended splitLaneletWithRatio with size: " << created_llts.size());
   return created_llts;
 }
 
