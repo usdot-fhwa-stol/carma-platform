@@ -70,7 +70,11 @@ std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::LaneletMapPtr&
 std::vector<lanelet::Lanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& point,
                                                                     const unsigned int n)
 {
-  auto possible_lanelets = nonConnectedAdjacentLeft(semantic_map, point, n);
+  ROS_ERROR_STREAM("x:" << point.x() << ", y: " << point.y());
+  lanelet::LaneletMapConstPtr const_ptr = semantic_map;
+  auto possible_lanelets = nonConnectedAdjacentLeft(const_ptr, point, n);
+  ROS_ERROR_STREAM("next");
+  
   std::vector<lanelet::Lanelet> return_lanelets;
   for (auto llt : possible_lanelets)
   {
@@ -82,6 +86,7 @@ std::vector<lanelet::Lanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMap
 std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& input_point,
                                                                     const unsigned int n)
 {
+  ROS_ERROR_STREAM("WHAT1");
   // Check if the map is loaded yet
   if (!semantic_map || semantic_map->laneletLayer.size() == 0)
   {
@@ -89,13 +94,16 @@ std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::Lanel
   }
   
   auto input_lanelets = getLaneletsFromPoint(semantic_map, input_point);
+  
   if (input_lanelets.empty())
   {
     throw std::invalid_argument("Input point x: " + std::to_string(input_point.x()) + ", y: " + std::to_string(input_point.y()) + " is not in the map");
   }
+  ROS_DEBUG_STREAM("What");
+  
   auto input_lanelet = input_lanelets[0]; 
 
-  ROS_DEBUG_STREAM("right ls size: " << input_lanelet.leftBound2d().size());
+  ROS_DEBUG_STREAM("left ls size: " << input_lanelet.leftBound2d().size());
   
   auto point_downtrack = carma_wm::geometry::trackPos(input_lanelet, input_point).downtrack;
   ROS_DEBUG_STREAM("point_downtrack: " << point_downtrack);
