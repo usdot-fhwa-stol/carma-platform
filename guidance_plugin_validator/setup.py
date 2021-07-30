@@ -13,11 +13,13 @@
 # the License.
 
 ## ! DO NOT MANUALLY INVOKE THIS setup.py, USE CATKIN INSTEAD
-from distutils.core import setup
+from setuptools import setup
 from catkin_pkg.python_setup import generate_distutils_setup
 
 setup_args = generate_distutils_setup(
     packages=['guidance_plugin_validator'],
+
+    # TODO: Remove this line after migrating to Python3/ROS2
     package_dir={'': 'src'},
 )
 
