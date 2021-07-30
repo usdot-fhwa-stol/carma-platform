@@ -61,6 +61,11 @@ namespace basic_autonomy
                     }
                 }
             }
+
+            if(maneuvers.back().type == cav_msgs::Maneuver::LANE_FOLLOWING){
+                points_and_target_speeds = post_process_lanefollow_pair(wm, points_and_target_speeds, maneuvers, ending_state_before_buffer, detailed_config);
+
+            }
             return points_and_target_speeds;
 
         }
@@ -171,10 +176,15 @@ namespace basic_autonomy
                 points_and_target_speeds.push_back(pair);
             }
             
+            return points_and_target_speeds;
 
+        }
+
+        std::vector<PointSpeedPair> post_process_lanefollow_pair(const carma_wm::WorldModelConstPtr &wm, std::vector<PointSpeedPair>& points_and_target_speeds, const std::vector<cav_msgs::Maneuver> &maneuvers,
+             cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config){
             //Here we are limiting the trajectory length to the given length by maneuver end dist as opposed to the end of lanelets involved.
             double starting_route_downtrack = wm->routeTrackPos(points_and_target_speeds.front().point).downtrack;
-            double ending_downtrack = maneuver.lane_following_maneuver.end_dist;
+            double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist;
 
             if(ending_downtrack + detailed_config.buffer_ending_downtrack < wm->getRouteEndTrackPos().downtrack){
                 ending_downtrack = ending_downtrack + detailed_config.buffer_ending_downtrack;
@@ -201,7 +211,7 @@ namespace basic_autonomy
                 "current_point.y():" << current_point.y());
 
                 dist_accumulator += delta_d;
-                if (dist_accumulator > maneuver.lane_following_maneuver.end_dist && !found_unbuffered_idx)
+                if (dist_accumulator > maneuvers.back().lane_following_maneuver.end_dist && !found_unbuffered_idx)
                 {
                     unbuffered_idx = i - 1;
                     ROS_DEBUG_STREAM("Found index unbuffered_idx at: " << unbuffered_idx);
@@ -224,7 +234,6 @@ namespace basic_autonomy
             std::vector<PointSpeedPair> constrained_points(points_and_target_speeds.begin(), points_and_target_speeds.begin() + max_i);
 
             return constrained_points;
-
         }
 
         std::vector<PointSpeedPair> create_lanechange_geometry(const cav_msgs::Maneuver &maneuver, double starting_downtrack,

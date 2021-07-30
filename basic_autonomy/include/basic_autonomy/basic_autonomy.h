@@ -94,6 +94,9 @@ namespace basic_autonomy
                                                                    const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
                                                                    const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config);
 
+     std::vector<PointSpeedPair> post_process_lanefollow_pair(const carma_wm::WorldModelConstPtr &wm, std::vector<PointSpeedPair>& points_and_target_speeds, const std::vector<cav_msgs::Maneuver> &maneuvers,
+             cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config);
+
      std::vector<PointSpeedPair> create_lanechange_geometry(const cav_msgs::Maneuver &maneuver, double max_starting_downtrack,
                                                                    const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
                                                                    const cav_msgs::VehicleState &state, const DetailedTrajConfig &detailed_config);
