@@ -33,6 +33,7 @@
 
 namespace wz_strategic_plugin
 {
+
     class WzStrategicPlugin
     {
         public:
@@ -89,6 +90,8 @@ namespace wz_strategic_plugin
 
             cav_msgs::Maneuver composeIntersectionTransitMessage(double& start_dist, double& end_dist, double& start_speed, double& target_speed, ros::Time start_time, lanelet::Id& starting_lane_id);
 
+
+            bool supportedLightState(lanelet::CarmaTrafficLightState state) const;
 
             int traffic_light_interpreter(boost::optional<lanelet::CarmaTrafficLightState> state);
 

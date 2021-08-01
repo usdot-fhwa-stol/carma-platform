@@ -65,47 +65,26 @@ namespace wz_strategic_plugin
         current_speed_ = msg->twist.linear.x;
     }
 
-    int WzStrategicPlugin::traffic_light_interpreter(boost::optional<lanelet::CarmaTrafficLightState> state)
-    {
-        int traffic_light_inter;
-        switch(state.get()) {
-            case lanelet::CarmaTrafficLightState::UNAVAILABLE:
-                ROS_DEBUG("UNAVAILABLE");
-                break;
-            case lanelet::CarmaTrafficLightState::DARK:
-                ROS_DEBUG("UNAVAILABLE");
-                traffic_light_inter = 0;
-                break;
-            case lanelet::CarmaTrafficLightState::STOP_THEN_PROCEED:
-                traffic_light_inter = 0;
-                break;
-            case lanelet::CarmaTrafficLightState::STOP_AND_REMAIN:
-                traffic_light_inter = 0;
-                break;
-            case lanelet::CarmaTrafficLightState::PRE_MOVEMENT:
-                traffic_light_inter = 0;
-                break;
-            case lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED:
-                traffic_light_inter = 0;
-                break;
-            case lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED:
-                traffic_light_inter = 0;
-                break;
-            case lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE:
-                traffic_light_inter = 0;
-                break;
-            case lanelet::CarmaTrafficLightState::PROTECTED_CLEARANCE:
-                traffic_light_inter = 0;
-                break;
-            case lanelet::CarmaTrafficLightState::CAUTION_CONFLICTING_TRAFFIC:
-                traffic_light_inter = 0;
-                break;
+    bool WzStrategicPlugin::supportedLightState(lanelet::CarmaTrafficLightState state) const {
+        switch(state) {
+            // NOTE: Following cases are intentional fall through.
+            // Supported light states
+            case lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED: // Solid Green there could be conflict traffic
+            case lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE: // Yellow Solid there is a chance of conflicting traffic
+            case lanelet::CarmaTrafficLightState::STOP_AND_REMAIN: // Solid Red
+                return true;
+            
+            // Unsupported light states
+            case lanelet::CarmaTrafficLightState::UNAVAILABLE: // No data available
+            case lanelet::CarmaTrafficLightState::DARK: // Light is non-functional
+            case lanelet::CarmaTrafficLightState::STOP_THEN_PROCEED: // Flashing Red
+            case lanelet::CarmaTrafficLightState::PRE_MOVEMENT: // Yellow Red transition (Found only in the EU)
+            case lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED: // Solid Green no chance of conflict traffic (normally used with arrows)
+            case lanelet::CarmaTrafficLightState::PROTECTED_CLEARANCE: // Yellow Solid no chance of conflicting traffic (normally used with arrows)
+            case lanelet::CarmaTrafficLightState::CAUTION_CONFLICTING_TRAFFIC: // Yellow Flashing
             default:
-                ROS_DEBUG("No State");
-                break;
+                return false;
         }
-
-        return traffic_light_inter;
     }
 
     double WzStrategicPlugin::estimate_distance_to_stop(double v, double a) {
@@ -172,23 +151,43 @@ namespace wz_strategic_plugin
                 lanelet::Id start_lane_id = current_lanelet.second.id();
                 lanelet::Id end_lane_id = traffic_light_lanelet.second.id();
 
-                auto traffic_light_current_state = traffic_light_interpreter(nearest_traffic_light->predictState(start_time));
-                ROS_DEBUG("traffic_light_current_state %d", traffic_light_current_state);
+                auto traffic_light_current_state = nearest_traffic_light->predictState(start_time); 
+                
+                if (!traffic_light_current_state) { // Check if light state was available
+                    ROS_WARN_STREAM("Traffic light data no available for start time " << start_time.toSec());
+                    // TODO what to return here?
+                }     
 
-                if(!traffic_light_current_state) {
-                    return true;
+                if (!supportedLightState(traffic_light_current_state.get())) { // Check if current state is supported type
+                    ROS_ERROR_STREAM("WorkZone Plugin asked to handle CarmaTrafficLightState: " << traffic_light_current_state.get() << " which is not supported.");
+                    // TODO what to return here?
                 }
 
-                auto traffic_light_next_predicted_state = traffic_light_interpreter(nearest_traffic_light->predictState(start_time + time_remaining_to_traffic_light));
-                ROS_DEBUG("traffic_light_next_predicted_state %d", traffic_light_next_predicted_state);
+                ROS_DEBUG_STREAM("traffic_light_current_state" << traffic_light_current_state.get());
+                
 
-                if(!traffic_light_next_predicted_state) {
-                    return true;
+
+
+                auto traffic_light_next_predicted_state = nearest_traffic_light->predictState(start_time + time_remaining_to_traffic_light);
+
+                if (!traffic_light_next_predicted_state) { // Check if light state was available
+                    ROS_WARN_STREAM("Traffic light data no available for start time " << start_time.toSec());
+                    // TODO what to return here?
+                }     
+
+                if (!supportedLightState(traffic_light_next_predicted_state.get())) { // Check if current state is supported type
+                    ROS_ERROR_STREAM("WorkZone Plugin asked to handle CarmaTrafficLightState: " << traffic_light_next_predicted_state.get() << " which is not supported.");
+                    // TODO what to return here?
                 }
 
-                if(traffic_light_current_state != traffic_light_next_predicted_state) {
+                ROS_DEBUG_STREAM("traffic_light_next_predicted_state" << traffic_light_next_predicted_state.get());
 
-                    if(traffic_light_next_predicted_state == 0) {
+
+                if(traffic_light_current_state.get() != traffic_light_next_predicted_state.get()) {
+                    
+                    // Treat both red and yellow lights the same
+                    if(traffic_light_next_predicted_state.get() == lanelet::CarmaTrafficLightState::STOP_AND_REMAIN 
+                        || traffic_light_next_predicted_state.get() == lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE) {
 
                         double estimated_distance_to_stop = estimate_distance_to_stop(current_speed_,declaration);
                         double estimated_time_to_stop = estimate_time_to_stop(estimated_distance_to_stop,current_speed_);
@@ -218,7 +217,8 @@ namespace wz_strategic_plugin
 
                     }
 
-                    if(traffic_light_next_predicted_state == 1) {
+                    // Green light
+                    if(traffic_light_next_predicted_state.get() == lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED) {
 
                         // LaneFollowing
                         cav_msgs::Maneuver Lane_Following = composeLaneFollowingManeuverMessage(current_progress, 
@@ -243,7 +243,9 @@ namespace wz_strategic_plugin
                 }
                 else {
 
-                    if(traffic_light_current_state == 0) {
+                    // Treat both red and yellow lights the same
+                    if(traffic_light_current_state.get() == lanelet::CarmaTrafficLightState::STOP_AND_REMAIN 
+                        || traffic_light_current_state.get() == lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE) {
 
                         double estimated_distance_to_stop = estimate_distance_to_stop(current_speed_,declaration);
                         double estimated_time_to_stop = estimate_time_to_stop(estimated_distance_to_stop,current_speed_);
@@ -272,7 +274,8 @@ namespace wz_strategic_plugin
 
                     }
 
-                    if(traffic_light_current_state == 1) {
+                    // Green light
+                    if(traffic_light_current_state.get() == lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED) {
 
                         // LaneFollowing
                         cav_msgs::Maneuver Lane_Following = composeLaneFollowingManeuverMessage(current_progress, 
@@ -307,7 +310,7 @@ namespace wz_strategic_plugin
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-        maneuver_msg.lane_following_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.lane_following_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "InLaneCruisingPlugin";
         maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = planning_strategic_plugin_;
@@ -315,7 +318,7 @@ namespace wz_strategic_plugin
         maneuver_msg.lane_following_maneuver.start_speed = start_speed;
         maneuver_msg.lane_following_maneuver.end_dist = end_dist;
         maneuver_msg.lane_following_maneuver.end_speed = target_speed;
-        maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
+        maneuver_msg.lane_following_maneuver.lane_ids = { std::to_string(lane_id) }; // TODO might not be valid assumption
         //Start time and end time for maneuver are assigned in updateTimeProgress
 
         ROS_INFO_STREAM("Creating lane follow start dist: " << start_dist << " end dist: " << end_dist);
@@ -327,7 +330,7 @@ namespace wz_strategic_plugin
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
-        maneuver_msg.stop_and_wait_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.stop_and_wait_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.stop_and_wait_maneuver.parameters.planning_tactical_plugin = "StopAndWaitPlugin";
         maneuver_msg.stop_and_wait_maneuver.parameters.planning_strategic_plugin = planning_strategic_plugin_;
@@ -348,7 +351,7 @@ namespace wz_strategic_plugin
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT;
-        maneuver_msg.intersection_transit_straight_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.intersection_transit_straight_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.intersection_transit_straight_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.intersection_transit_straight_maneuver.parameters.planning_tactical_plugin = "IntersectionTransitPlugin";
         maneuver_msg.intersection_transit_straight_maneuver.parameters.planning_strategic_plugin = planning_strategic_plugin_;
