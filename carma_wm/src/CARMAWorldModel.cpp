@@ -260,9 +260,9 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
   {
     throw std::invalid_argument("Route has not yet been loaded");
   }
-  if (start >= end)
+  if (start > end)
   {
-    throw std::invalid_argument("Start distance is greater than or equal to end distance");
+    throw std::invalid_argument("Start distance is greater than end distance");
   }
 
   std::vector<lanelet::ConstLanelet> output;
