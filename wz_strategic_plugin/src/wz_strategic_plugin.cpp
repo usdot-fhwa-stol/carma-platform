@@ -99,9 +99,27 @@ namespace wz_strategic_plugin
     {
         ROS_DEBUG("Finding car infomrmation");
 
+        if (wm_->getRoute()) {
+            ROS_ERROR_STREAM("Could not plan maneuvers as route was not available");
+            return true;
+        }
+
         // find car_down_track
         double current_car_down_track = wm_->routeTrackPos(current_loc_).downtrack;
         ROS_DEBUG("current_car_down_track %d", current_car_down_track);
+
+        
+        // Algorithm should be 
+        // 1. Get vehicle state (downtrack, speed, time) based on 
+        // 2. Identify distance required to stop
+        // 3. Get lanelets from current location to either distance required to stop or end of maneuver planning distance
+        // 4. Check retrieved lanelts for traffic lights. 
+        // 5. Calculate stopping 
+
+
+
+
+
 
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc_, 1);
         if(current_lanelets.size() == 0) {
