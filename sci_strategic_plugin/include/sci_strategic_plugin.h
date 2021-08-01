@@ -110,6 +110,12 @@ public:
   void mobilityOperationCb(const cav_msgs::MobilityOperationConstPtr& msg);
 
   /**
+   * \brief callback function for current pose
+   * \param msg input pose stamed msg
+   */
+  void currentPoseCb(const geometry_msgs::PoseStampedConstPtr& msg);
+
+  /**
    * \brief Compose a lane keeping maneuver message based on input params
    *
    * \param start_dist Start downtrack distance of the current maneuver
@@ -126,6 +132,14 @@ public:
   cav_msgs::Maneuver composeLaneFollowingManeuverMessage(int case_num, double start_dist, double end_dist, double start_speed,
                                                          double target_speed, ros::Time start_time, double time_to_stop,
                                                          std::vector<lanelet::Id> lane_ids);
+
+  cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double end_dist, double start_speed,
+                                                      const lanelet::Id& starting_lane_id, const lanelet::Id& ending_lane_id,
+                                                      ros::Time start_time, ros::Time end_time) const;
+
+  cav_msgs::Maneuver composeIntersectionTransitMessage(double start_dist, double end_dist, double start_speed, 
+                                                      double target_speed, ros::Time start_time, ros::Time end_time,
+                                                      const lanelet::Id& starting_lane_id, const lanelet::Id& ending_lane_id) const;
 
   /**
    * \brief Helper method to extract the initial vehicle state from the planning request method based on if the
@@ -249,9 +263,14 @@ public:
    */
   void caseThreeSpeedProfile(double stop_dist, double current_speed, double stop_time, std::vector<double>* float_metadata_list) const;
 
-
+  /**
+   * \brief Generates Mobility Operation messages
+   */
   void generateMobilityOperation();
 
+  /**
+   * \brief BSM callback function
+   */
   void BSMCb(const cav_msgs::BSMConstPtr& msg);
   
   ////////// VARIABLES ///////////
@@ -272,6 +291,9 @@ public:
 
   // approximate speed limit 
   double speed_limit_ = 100.0;
+
+  // downtrack of host vehicle
+  double current_downtrack_ = 0.0;
 
   bool approaching_stop_controlled_interction_ = false;
 
