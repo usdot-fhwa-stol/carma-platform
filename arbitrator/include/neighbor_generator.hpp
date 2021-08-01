@@ -33,9 +33,11 @@ namespace arbitrator
              * \brief Generate the list of neighbors/children that a given node in the search graph
              *      expands to
              * \param plan The maneuver plan to expand upon
+             * \param initial_state The initial state of the vehicle at the start of plan. This will be provided to planners for specific use when plan is empty
+             *
              * \return A vector containing the new plans generated from it, if any
              */
-            virtual std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan) const = 0;
+            virtual std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan, const VehicleState& initial_state) const = 0;
 
             /**
              * \brief Virtual destructor provided for memory safety

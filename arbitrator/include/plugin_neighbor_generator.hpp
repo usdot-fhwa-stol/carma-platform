@@ -46,9 +46,10 @@ namespace arbitrator
              * Generates a list of neighbor states for the given plan using 
              * the plugins available to the system
              * \param plan The plan that is the current search state
+             * \param initial_state The initial state of the vehicle at the start of plan. This will be provided to planners for specific use when plan is empty
              * \return A list of subsequent plans building on top of the input plan
              */
-            std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan) const;
+            std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan, const VehicleState& initial_state) const;
         private:
             T &ci_;
     };
