@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -109,7 +109,10 @@ double get_maneuver_end_speed(const cav_msgs::Maneuver &mvr)
 std::string get_maneuver_starting_lane_id(const cav_msgs::Maneuver &mvr)
 {
     if (mvr.type == cav_msgs::Maneuver::LANE_FOLLOWING){
-        return mvr.lane_following_maneuver.lane_id;
+        if (mvr.lane_following_maneuver.lane_ids.empty()) {
+            throw std::invalid_argument("Lane following maneuver has");
+        }
+        return mvr.lane_following_maneuver.lane_ids[0];
     } else if (mvr.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN) {
         return mvr.intersection_transit_left_turn_maneuver.starting_lane_id;
     } else if (mvr.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN) {
@@ -128,7 +131,10 @@ std::string get_maneuver_starting_lane_id(const cav_msgs::Maneuver &mvr)
 std::string get_maneuver_ending_lane_id(const cav_msgs::Maneuver &mvr)
 {
     if (mvr.type == cav_msgs::Maneuver::LANE_FOLLOWING){
-        return mvr.lane_following_maneuver.lane_id;
+        if (mvr.lane_following_maneuver.lane_ids.size() < 2) {
+            throw std::invalid_argument("Lane following maneuver does not have ending lane");
+        }
+        return mvr.lane_following_maneuver.lane_ids[1];
     } else if (mvr.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN) {
         return mvr.intersection_transit_left_turn_maneuver.ending_lane_id;
     } else if (mvr.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN) {

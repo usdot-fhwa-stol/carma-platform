@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -551,10 +551,7 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     double starting_downtrack = lane_following_maneuver.start_dist;
     if (first)
     {
-      if (starting_downtrack > max_starting_downtrack)
-      {
-        starting_downtrack = max_starting_downtrack;
-      }
+      starting_downtrack = std::min(starting_downtrack, max_starting_downtrack);
       first = false;
     }
 
@@ -571,7 +568,10 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     ROS_DEBUG_STREAM("Maneuver");
 
     lanelet::BasicLineString2d downsampled_centerline;
-    downsampled_centerline.reserve(200);
+    // 400 value here is an arbitrary attempt at improving inlane-cruising performance by reducing copy operations. 
+    // Value picked based on annecdotal evidence from STOL system testing
+    downsampled_centerline.reserve(400); 
+    
 
     // getLaneletsBetween is inclusive lanelets between its two boundaries
     // which may return lanechange lanelets, so 
@@ -630,18 +630,25 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
         } else {
           downsampled_points = carma_utils::containers::downsample_vector(centerline, config_.default_downsample_ratio);
         }
+
+        if (downsampled_centerline.size() != 0 && downsampled_points.size() != 0 // If this is not the first lanelet and the points are closer than 1m drop the first point to prevent overlap
+        && lanelet::geometry::distance2d(downsampled_points.front(), downsampled_centerline.back()) < 1.2) { 
+          ROS_DEBUG_STREAM("Dropping first point due to overlap");
+          downsampled_points = lanelet::BasicLineString2d(downsampled_points.begin() + 1, downsampled_points.end());
+        }
+
         downsampled_centerline = carma_wm::geometry::concatenate_line_strings(downsampled_centerline, downsampled_points);
+        
         visited_lanelets.insert(l.id());
       }
     }
 
-
-    first = true;
+    bool loop_first = true;
     for (auto p : downsampled_centerline)
     {
-      if (first && points_and_target_speeds.size() != 0)
+      if (loop_first && points_and_target_speeds.size() != 0)
       {
-        first = false;
+        loop_first = false;
         continue;  // Skip the first point if we have already added points from a previous maneuver to avoid duplicates
       }
       PointSpeedPair pair;
