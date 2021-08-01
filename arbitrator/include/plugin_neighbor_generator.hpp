@@ -19,6 +19,7 @@
 
 #include "neighbor_generator.hpp"
 #include "capabilities_interface.hpp"
+#include "vehicle_state.hpp"
 
 namespace arbitrator
 {

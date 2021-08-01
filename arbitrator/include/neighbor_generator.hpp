@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <cav_msgs/ManeuverPlan.h>
+#include "vehicle_state.hpp"
 
 namespace arbitrator
 {

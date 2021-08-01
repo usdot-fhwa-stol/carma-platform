@@ -68,7 +68,8 @@ namespace arbitrator
                     std::map<std::string, cav_srvs::PlanManeuvers>()));
 
         cav_msgs::ManeuverPlan plan;
-        std::vector<cav_msgs::ManeuverPlan> plans = png.generate_neighbors(plan);
+        VehicleState vs;
+        std::vector<cav_msgs::ManeuverPlan> plans = png.generate_neighbors(plan, vs);
 
         ASSERT_EQ(0, plans.size());
         ASSERT_TRUE(plans.empty());
@@ -92,7 +93,8 @@ namespace arbitrator
                     responses));
 
         cav_msgs::ManeuverPlan plan;
-        std::vector<cav_msgs::ManeuverPlan> plans = png.generate_neighbors(plan);
+        VehicleState vs;
+        std::vector<cav_msgs::ManeuverPlan> plans = png.generate_neighbors(plan, vs);
 
         ASSERT_FALSE(plans.empty());
         ASSERT_EQ(3, plans.size());
