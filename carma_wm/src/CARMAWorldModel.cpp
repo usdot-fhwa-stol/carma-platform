@@ -35,6 +35,7 @@
 
 namespace carma_wm
 {
+
 std::pair<TrackPos, TrackPos> CARMAWorldModel::routeTrackPos(const lanelet::ConstArea& area) const
 {
   // Check if the route was loaded yet
@@ -319,7 +320,7 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
   //Sort lanelets according to shortest path if using shortest path
   std::vector<lanelet::ConstLanelet> sorted_output;
   for(auto llt : route_->shortestPath()){
-    for(int i=0; i < output.size();i++){
+    for(size_t i=0; i < output.size();i++){
       if(llt.id() == output[i].id()){
         sorted_output.push_back(llt);
         break;
@@ -1090,10 +1091,10 @@ void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
   config_speed_limit_ = config_lim;
 }
 
-std::vector<lanelet::CarmaTrafficLightPtr> CARMAWorldModel::predictTrafficLight(const lanelet::BasicPoint2d& loc) const
+std::vector<lanelet::CarmaTrafficLightPtr> CARMAWorldModel::getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const
 {
   // Check if the map is loaded yet
-  if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
+  if (!semantic_map_ || semantic_map_->laneletLayer.empty())
   {
     ROS_ERROR_STREAM("Map is not set or does not contain lanelets");
     return {};
@@ -1140,9 +1141,10 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
     ROS_WARN_STREAM("No intersection_state_list in the newly received SPAT msg. Returning...");
     return;
   }
-  for (auto curr_intersection : spat_msg.intersection_state_list)
+
+  for (const auto& curr_intersection : spat_msg.intersection_state_list)
   {
-    for (auto current_movement_state : curr_intersection.movement_list) 
+    for (const auto& current_movement_state : curr_intersection.movement_list) 
     {
       lanelet::Id curr_light_id = getTrafficLightId(curr_intersection.id.id, current_movement_state.signal_group);
 
@@ -1196,7 +1198,51 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
              traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second)
           {
             curr_light->setStates(traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group], curr_intersection.revision);
-          } 
+          }
+      else if (curr_light->recorded_time_stamps.empty()) // if it was never initialized, do its best to plan with the current state until the future state is also received.
+      {
+        std::vector<std::pair<ros::Time, lanelet::CarmaTrafficLightState>> default_state;
+        // green 20sec, yellow 3sec, red 20sec, back to green 20sec etc...
+        default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(0), lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
+        default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(default_state.back().first + ros::Duration(YELLOW_LIGHT_DURATION), lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE));
+        default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(default_state.back().first + ros::Duration(RED_LIGHT_DURATION), lanelet::CarmaTrafficLightState::STOP_AND_REMAIN));
+        default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(default_state.back().first + ros::Duration(GREEN_LIGHT_DURATION), lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
+        curr_light->setStates(default_state, curr_light->revision_);
+      }
+      else if (traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 2 )
+      {
+        ros::Duration green_light_duration = ros::Duration(GREEN_LIGHT_DURATION);
+        ros::Duration yellow_light_duration = ros::Duration(YELLOW_LIGHT_DURATION);
+        ros::Duration red_light_duration = ros::Duration(RED_LIGHT_DURATION);
+
+        std::vector<std::pair<ros::Time, lanelet::CarmaTrafficLightState>> partial_states;
+        // set the partial cycle.
+
+        for (size_t i = 0; i < traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() - 1; i ++)
+        {
+          auto light_state = traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].second;
+
+          if (light_state == lanelet::CarmaTrafficLightState::STOP_AND_REMAIN || light_state == lanelet::CarmaTrafficLightState::STOP_THEN_PROCEED)
+            red_light_duration = traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
+          
+          else if (light_state == lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED || light_state == lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED)
+            green_light_duration = traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
+          
+          else if (light_state == lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE || light_state == lanelet::CarmaTrafficLightState::PROTECTED_CLEARANCE)
+            yellow_light_duration = traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
+        }
+
+        partial_states.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(0), lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
+        partial_states.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(partial_states.back().first + yellow_light_duration, lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE));
+        partial_states.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(partial_states.back().first + red_light_duration, lanelet::CarmaTrafficLightState::STOP_AND_REMAIN));
+        partial_states.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(partial_states.back().first + green_light_duration, lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
+        
+        curr_light->setStates(partial_states, curr_light->revision_);
+      }
+      else // traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() == 1
+      {
+        throw std::invalid_argument("Reached unreachable case where traffic light contains only single state.");
+      }
     }
   }
 }

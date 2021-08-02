@@ -344,7 +344,7 @@ public:
    *
    * \return list of traffic lights along the current route
    */
-  virtual std::vector<lanelet::CarmaTrafficLightPtr> predictTrafficLight(const lanelet::BasicPoint2d& loc) const = 0;
+  virtual std::vector<lanelet::CarmaTrafficLightPtr> getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const = 0;
 
   /**
    * \brief Returns a monotonically increasing version number which represents the version stamp of the map geometry data

@@ -165,7 +165,7 @@ public:
 
   size_t getMapVersion() const override;
 
-  std::vector<lanelet::CarmaTrafficLightPtr> predictTrafficLight(const lanelet::BasicPoint2d& loc) const override;
+  std::vector<lanelet::CarmaTrafficLightPtr> getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
   
   std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 
@@ -207,7 +207,12 @@ private:
 
   size_t map_version_ = 0; // The current map version. This is cached from calls to setMap();
   
-
+  // The following constants are default timining plans for recieved traffic lights. 
+  // The light is assumed to use these values until otherwise known
+  // TODO can these be optional parameters?
+  static constexpr double RED_LIGHT_DURATION = 20.0; //in sec
+  static constexpr double YELLOW_LIGHT_DURATION = 3.0; //in sec
+  static constexpr double GREEN_LIGHT_DURATION = 20.0; //in sec
   
 };
 }  // namespace carma_wm
