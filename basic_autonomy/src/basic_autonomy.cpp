@@ -62,8 +62,9 @@ namespace basic_autonomy
                 }
             }
 
+            //Add buffer ending to lane follow points at the end of maneuver(s) end dist 
             if(maneuvers.back().type == cav_msgs::Maneuver::LANE_FOLLOWING){
-                points_and_target_speeds = post_process_lanefollow_pair(wm, points_and_target_speeds, maneuvers, ending_state_before_buffer, detailed_config);
+                points_and_target_speeds = add_lanefollow_buffer(wm, points_and_target_speeds, maneuvers, ending_state_before_buffer, detailed_config);
 
             }
             return points_and_target_speeds;
@@ -180,9 +181,10 @@ namespace basic_autonomy
 
         }
 
-        std::vector<PointSpeedPair> post_process_lanefollow_pair(const carma_wm::WorldModelConstPtr &wm, std::vector<PointSpeedPair>& points_and_target_speeds, const std::vector<cav_msgs::Maneuver> &maneuvers,
+        std::vector<PointSpeedPair> add_lanefollow_buffer(const carma_wm::WorldModelConstPtr &wm, std::vector<PointSpeedPair>& points_and_target_speeds, const std::vector<cav_msgs::Maneuver> &maneuvers,
              cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config){
-            //Here we are limiting the trajectory length to the given length by maneuver end dist as opposed to the end of lanelets involved.
+            
+
             double starting_route_downtrack = wm->routeTrackPos(points_and_target_speeds.front().point).downtrack;
             double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist;
 

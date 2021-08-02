@@ -85,22 +85,6 @@ namespace basic_autonomy
             double buffer_ending_downtrack = 20.0;        //The additional downtrack beyond requested end dist used to fit points along spline
         };
      
-     std::vector<PointSpeedPair> create_geometry_profile(const std::vector<cav_msgs::Maneuver> &maneuvers, double max_starting_downtrack, const carma_wm::WorldModelConstPtr &wm,
-                                                                   cav_msgs::VehicleState &ending_state_before_buffer,
-                                                                    const cav_msgs::VehicleState& state,const GeneralTrajConfig &general_config,
-                                                                   const DetailedTrajConfig &detailed_config);
-
-     std::vector<PointSpeedPair> create_lanefollow_geometry(const cav_msgs::Maneuver &maneuver, double max_starting_downtrack,
-                                                                   const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
-                                                                   const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config);
-
-     std::vector<PointSpeedPair> post_process_lanefollow_pair(const carma_wm::WorldModelConstPtr &wm, std::vector<PointSpeedPair>& points_and_target_speeds, const std::vector<cav_msgs::Maneuver> &maneuvers,
-             cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config);
-
-     std::vector<PointSpeedPair> create_lanechange_geometry(const cav_msgs::Maneuver &maneuver, double max_starting_downtrack,
-                                                                   const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
-                                                                   const cav_msgs::VehicleState &state, const DetailedTrajConfig &detailed_config);
-
 
         /**
    * \brief Applies the provided speed limits to the provided speeds such that each element is capped at its corresponding speed limit if needed
@@ -198,21 +182,50 @@ namespace basic_autonomy
    */
         double compute_curvature_at(const basic_autonomy::smoothing::SplineI &fit_curve, double step_along_the_curve);
 
+     /**
+      * \brief Creates geometry profile to return a point speed pair struct for LANE FOLLOW and LANE CHANGE maneuver types
+      * \param maneuvers The list of maneuvers to convert to geometry points and calculate associated speed
+      *  \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to the vehicle position or earlier.
+      *                               If the first maneuver exceeds this then it's downtrack will be shifted to this value. 
+      * \param wm Pointer to intialized world model for semantic map access
+      * \param ending_state_before_buffer reference to Vehicle state, which is state before applying extra points for curvature calculation that are removed later
+      * \param state The vehicle state at the time the function is called
+      * \param general_config Basic autonomy struct defined to load general config parameters from tactical plugins
+      * \param detailed_config Basic autonomy struct defined to load detailed config parameters from tactical plugins
+      * \return A vector of point speed pair struct which contains geometry points as basicpoint::lanelet2d and speed as a double for the maneuver
+      */
+     std::vector<PointSpeedPair> create_geometry_profile(const std::vector<cav_msgs::Maneuver> &maneuvers, double max_starting_downtrack, const carma_wm::WorldModelConstPtr &wm,
+                                                                   cav_msgs::VehicleState &ending_state_before_buffer,
+                                                                    const cav_msgs::VehicleState& state,const GeneralTrajConfig &general_config,
+                                                                   const DetailedTrajConfig &detailed_config);
         /**
      * \brief Converts a set of requested LANE_FOLLOWING maneuvers to point speed limit pairs. 
-     * \param maneuvers The list of maneuvers to convert
+     * \param maneuvers The list of maneuvers to convert geometry points and calculate associated speed
      * \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to the vehicle position or earlier.
      *                               If the first maneuver exceeds this then it's downtrack will be shifted to this value.
      * \param wm Pointer to intialized world model for semantic map access
+     * \param ending_state_before_buffer reference to Vehicle state, which is state before applying extra points for curvature calculation that are removed later
+     * \param general_config Basic autonomy struct defined to load general config parameters from tactical plugins
+     * \param detailed_config Basic autonomy struct defined to load detailed config parameters from tactical plugins
      * 
      * \return List of centerline points paired with speed limits
      */
-        std::vector<PointSpeedPair> maneuvers_to_points_lanefollow(const std::vector<cav_msgs::Maneuver> &maneuvers,
-                                                                   double max_starting_downtrack,
-                                                                   const carma_wm::WorldModelConstPtr &wm,
-                                                                   cav_msgs::VehicleState &ending_state_before_buffer,
-                                                                   const GeneralTrajConfig &general_config,
-                                                                   const DetailedTrajConfig &detailed_config);
+          std::vector<PointSpeedPair> create_lanefollow_geometry(const cav_msgs::Maneuver &maneuver, double max_starting_downtrack,
+                                                                   const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
+                                                                   const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config);
+
+     /**
+      * \brief Adds buffer points to lane follow maneuver points
+      * \param wm Pointer to intialized world model for semantic map access
+      * \param points_and_target_speeds set of lane follow maneuver points to which buffer is added
+      * \param maneuvers The list of lane follow maneuvers which were converted to geometry points and associated speed
+      * \param ending_state_before_buffer reference to Vehicle state, which is state before applying extra points for curvature calculation that are removed later
+      * \param detailed_config Basic autonomy struct defined to load detailed config parameters from tactical plugins
+      * 
+      * \return List of centerline points paired with speed limits returned with added buffer 
+      */ 
+     std::vector<PointSpeedPair> add_lanefollow_buffer(const carma_wm::WorldModelConstPtr &wm, std::vector<PointSpeedPair>& points_and_target_speeds, const std::vector<cav_msgs::Maneuver> &maneuvers,
+             cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config);
 
         /**
      * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning for a Lane following maneuver.
@@ -230,25 +243,24 @@ namespace basic_autonomy
                                                       const DetailedTrajConfig &detailed_config);
 
         //Functions specific to lane change
-        /**
-   * \brief Converts a set of requested LANE_CHANGE maneuvers to point speed limit pairs. 
-   * 
-   * \param maneuvers The list of maneuvers to convert
-   * \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to the vehicle position or earlier.
-   *                               If the first maneuver exceeds this then it's downtrack will be shifted to this value.
-   * 
-   * \param wm Pointer to intialized world model for semantic map access
-   * \param maneuver_fraction_completed is a reference to double which tracks the percentage of maneuver completed
-   * \param ending_state_before_buffer is a cav_msgs Vehicle State type variable which records the vehicle state before a buffer is added to the maneuver points
-   * \param detail_config is a struct recording the ros param values for parameters defined within it.
-   * 
-   * \return List of centerline points paired with speed limits
-   */
-    std::vector<PointSpeedPair> maneuvers_to_points_lanechange(const std::vector<cav_msgs::Maneuver> &maneuvers,
-                                                                double max_starting_downtrack,
-                                                                const carma_wm::WorldModelConstPtr &wm,
-                                                                const cav_msgs::VehicleState& state, double &maneuver_fraction_completed,
-                                                                cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config);
+   /**
+      * \brief Converts a set of requested LANE_CHANGE maneuvers to point speed limit pairs. 
+      * 
+      * \param maneuvers The list of maneuvers to convert
+      * \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to the vehicle position or earlier.
+      *                               If the first maneuver exceeds this then it's downtrack will be shifted to this value.
+      * 
+      * \param wm Pointer to intialized world model for semantic map access
+      * \param ending_state_before_buffer reference to Vehicle state, which is state before applying extra points for curvature calculation that are removed later
+      * \param state The vehicle state at the time the function is called
+      * \param general_config Basic autonomy struct defined to load general config parameters from tactical plugins
+     *  \param detailed_config Basic autonomy struct defined to load detailed config parameters from tactical plugins
+      * 
+      * \return A vector of point speed pair struct which contains geometry points as basicpoint::lanelet2d and speed as a double for the maneuver
+      */
+     std::vector<PointSpeedPair> create_lanechange_geometry(const cav_msgs::Maneuver &maneuver, double max_starting_downtrack,
+                                                                   const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
+                                                                   const cav_msgs::VehicleState &state, const DetailedTrajConfig &detailed_config);
 
         /**
    * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning for a Lane following maneuver.

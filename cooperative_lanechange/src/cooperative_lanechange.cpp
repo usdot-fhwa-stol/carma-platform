@@ -263,6 +263,7 @@ namespace cooperative_lanechange
             if(desired_gap < 5.0){
                 desired_gap = 5.0;
             }
+            //TO DO - this condition needs to be re-enabled after testing
             // if(current_gap > desired_gap){
             //     negotiate = false;  //No need for negotiation
             // }
@@ -485,15 +486,14 @@ namespace cooperative_lanechange
                                                                             buffer_ending_downtrack_);
 
         ROS_DEBUG_STREAM("Current downtrack:"<<current_downtrack);
-        //auto points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_,req.vehicle_state);
-        //auto points_and_target_speeds = basic_autonomy::waypoint_generation::maneuvers_to_points_lanechange(maneuver_plan, current_downtrack, wm_, 
-        //                                                                                            req.vehicle_state, maneuver_fraction_completed_, ending_state_before_buffer_, wpg_detail_config);
         
         auto points_and_target_speeds = basic_autonomy::waypoint_generation::create_geometry_profile(maneuver_plan, current_downtrack,wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config);
 
         //Calculate maneuver fraction completed (current_downtrack/(ending_downtrack-starting_downtrack)
-        //Find current maneuver in plan and then compute fraction
-        //maneuver_fraction_completed_ = current_downtrack
+        auto maneuver_end_dist = maneuver_plan.back().lane_change_maneuver.end_dist;
+        auto maneuver_start_dist = maneuver_plan.front().lane_change_maneuver.start_dist;
+        maneuver_fraction_completed_ = (maneuver_start_dist - current_downtrack)/(maneuver_end_dist - maneuver_start_dist);
+
         ROS_DEBUG_STREAM("Maneuvers to points size:"<<points_and_target_speeds.size());
         auto downsampled_points = carma_utils::containers::downsample_vector(points_and_target_speeds, downsample_ratio_);
 
