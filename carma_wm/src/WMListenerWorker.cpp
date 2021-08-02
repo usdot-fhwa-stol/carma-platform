@@ -17,11 +17,12 @@
 #include <lanelet2_extension/utility/message_conversion.h>
 #include <lanelet2_extension/regulatory_elements/DirectionOfTravel.h>
 #include <lanelet2_extension/regulatory_elements/StopRule.h>
+#include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
 #include "WMListenerWorker.h"
 
 namespace carma_wm
 {
-enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, REGION_ACCESS_RULE, DIGITAL_MINIMUM_GAP, DIRECTION_OF_TRAVEL, STOP_RULE/* ... others */ };
+enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, REGION_ACCESS_RULE, DIGITAL_MINIMUM_GAP, DIRECTION_OF_TRAVEL, STOP_RULE, CARMA_TRAFFIC_LIGHT/* ... others */ };
 // helper function that return geofence type as an enum, which makes it cleaner by allowing switch statement
 GeofenceType resolveGeofenceType(const std::string& rule_name)
 {
@@ -31,6 +32,7 @@ GeofenceType resolveGeofenceType(const std::string& rule_name)
   if (rule_name.compare(lanelet::DigitalMinimumGap::RuleName) == 0) return GeofenceType::DIGITAL_MINIMUM_GAP;
   if (rule_name.compare(lanelet::DirectionOfTravel::RuleName) == 0) return GeofenceType::DIRECTION_OF_TRAVEL;
   if (rule_name.compare(lanelet::StopRule::RuleName) == 0) return GeofenceType::STOP_RULE;
+  if (rule_name.compare(lanelet::CarmaTrafficLight::RuleName) == 0) return GeofenceType::CARMA_TRAFFIC_LIGHT;
 
   return GeofenceType::INVALID;
 }
@@ -91,6 +93,11 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
       ROS_INFO_STREAM("There is a delayed route message still waiting to be applied in carma_wm");
     }
   }
+}
+
+void WMListenerWorker::incomingSpatCallback(const cav_msgs::SPAT& spat_msg)
+{
+  world_model_->processSpatFromMsg(spat_msg);
 }
 
 bool WMListenerWorker::checkIfReRoutingNeeded() const
@@ -204,7 +211,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   *        as we need to dynamic_cast from general regem to specific type of regem based on the geofence
   * \param parent_llt The Lanelet that need to register the regem
   * \param regem lanelet::RegulatoryElement* which is the type that the serializer decodes from binary
-  * NOTE: Currently this function supports digital speed limit and passing control line geofence type
+  * NOTE: Currently this function supports items in carma_wm::GeofenceType
   */
 void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const
 {
@@ -260,6 +267,14 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
 
       lanelet::StopRulePtr sr = std::dynamic_pointer_cast<lanelet::StopRule>(factory_pcl);
       world_model_->getMutableMap()->update(parent_llt, sr);
+
+      break;
+    }
+    case GeofenceType::CARMA_TRAFFIC_LIGHT:
+    {
+
+      lanelet::CarmaTrafficLightPtr ctl = std::dynamic_pointer_cast<lanelet::CarmaTrafficLight>(factory_pcl);
+      world_model_->getMutableMap()->update(parent_llt, ctl);
 
       break;
     }
