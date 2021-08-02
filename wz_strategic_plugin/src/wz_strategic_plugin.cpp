@@ -142,7 +142,7 @@ namespace wz_strategic_plugin
 
 
         ROS_DEBUG("\n\nFinding traffic_light information");
-        auto traffic_list = wm_->predictTrafficLight(current_loc_);
+        auto traffic_list = wm_->getLightsAlongRoute(current_loc_);
 
         if(!traffic_list.empty()) {
 
