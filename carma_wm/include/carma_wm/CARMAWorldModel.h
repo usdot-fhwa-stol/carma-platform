@@ -25,6 +25,7 @@
 #include <cav_msgs/ExternalObjectList.h>
 #include <cav_msgs/RoadwayObstacle.h>
 #include <cav_msgs/RoadwayObstacleList.h>
+#include <cav_msgs/SPAT.h>
 #include "TrackPos.h"
 
 namespace carma_wm
@@ -81,6 +82,13 @@ public:
   void setRoadwayObjects(const std::vector<cav_msgs::RoadwayObstacle>& rw_objs);
 
   /**
+   * @brief processSpatFromMsg update map's traffic light states with SPAT msg
+   *
+   * @param spat_msg Msg to update with
+   */
+  void processSpatFromMsg(const cav_msgs::SPAT& spat_msg);
+
+  /**
    * \brief This function is called by distanceToObjectBehindInLane or distanceToObjectAheadInLane. 
    * Gets Downtrack distance to AND copy of the closest object on the same lane as the given point. Also returns crosstrack
    * distance relative to that object. Plus downtrack if the object is ahead along the lane, and also plus crosstrack
@@ -106,6 +114,10 @@ public:
   /*! \brief Set endpoint of the route
    */
   void setRouteEndPoint(const lanelet::BasicPoint3d& end_point);
+ 
+  /*! \brief helper for traffic light Id
+   */
+  lanelet::Id getTrafficLightId(uint16_t intersection_id,uint8_t signal_id);
 
   ////
   // Overrides
@@ -153,6 +165,9 @@ public:
 
   size_t getMapVersion() const override;
 
+  std::vector<lanelet::CarmaTrafficLightPtr> getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
+  
+  std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 
 private:
   
@@ -180,7 +195,7 @@ private:
   LaneletRoutePtr route_;
   LaneletRoutingGraphPtr map_routing_graph_;
   double route_length_ = 0;
-  
+  std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::vector<std::pair<ros::Time, lanelet::CarmaTrafficLightState>>>> traffic_light_states_; //[intersection_id][signal_group_id]
   lanelet::LaneletSubmapConstUPtr shortest_path_view_;  // Map containing only lanelets along the shortest path of the
                                                      // route
   std::vector<lanelet::LineString3d> shortest_path_centerlines_;  // List of disjoint centerlines seperated by lane
@@ -191,7 +206,13 @@ private:
   std::vector<cav_msgs::RoadwayObstacle> roadway_objects_; // 
 
   size_t map_version_ = 0; // The current map version. This is cached from calls to setMap();
-
+  
+  // The following constants are default timining plans for recieved traffic lights. 
+  // The light is assumed to use these values until otherwise known
+  // TODO can these be optional parameters?
+  static constexpr double RED_LIGHT_DURATION = 20.0; //in sec
+  static constexpr double YELLOW_LIGHT_DURATION = 3.0; //in sec
+  static constexpr double GREEN_LIGHT_DURATION = 20.0; //in sec
   
 };
 }  // namespace carma_wm
