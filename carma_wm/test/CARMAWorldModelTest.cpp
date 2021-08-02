@@ -1268,51 +1268,62 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   cav_msgs::MovementState movement;
   movement.signal_group = 1;
   cav_msgs::MovementEvent event;
+
   // call the processSpatFromMsg with that msg 0
-  event.event_state.movement_phase_state = 0;
-  event.timing.min_end_time = 1;
+  event.event_state.movement_phase_state = 5;
+  event.timing.min_end_time = 20;
   movement.movement_event_list.push_back(event);
   state.movement_list.push_back(movement);
   spat.intersection_state_list.push_back(state);
   cmw.processSpatFromMsg(spat);
-  
-  // default
   auto lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficLight>();
-  // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
+  // default
   EXPECT_EQ(ros::Duration(43), lights1[0]->fixed_cycle_duration);
-  
+
   // call the processSpatFromMsg with that msg 1
-  event.event_state.movement_phase_state = 1;
-  event.timing.min_end_time = 2;
+  event.event_state.movement_phase_state = 7;
+  event.timing.min_end_time = 24;
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
   cmw.processSpatFromMsg(spat);
+  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficLight>();
+  // partial green
+  EXPECT_EQ(ros::Duration(44), lights1[0]->fixed_cycle_duration);
+
   // call the processSpatFromMsg with that msg 2
-  event.event_state.movement_phase_state = 2;
-  event.timing.min_end_time = 3;
+  event.event_state.movement_phase_state = 3;
+  event.timing.min_end_time = 45;
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
   cmw.processSpatFromMsg(spat);
+  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficLight>();
+  // partial green
+  EXPECT_EQ(ros::Duration(45), lights1[0]->fixed_cycle_duration);
+
   // call the processSpatFromMsg with that msg 3
-  event.event_state.movement_phase_state = 0;
-  event.timing.min_end_time = 4;
+  event.event_state.movement_phase_state = 5;
+  event.timing.min_end_time = 66;
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
   cmw.processSpatFromMsg(spat);
+  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficLight>();
+  // partial green
+  EXPECT_EQ(ros::Duration(46), lights1[0]->fixed_cycle_duration);
+  
   // call the processSpatFromMsg with that msg 4
   event.event_state.movement_phase_state = 1;
-  event.timing.min_end_time = 5;
+  event.timing.min_end_time = 68;
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
   cmw.processSpatFromMsg(spat);
 
-  auto lights = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficLight>();
+  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficLight>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
-  EXPECT_EQ(ros::Duration(3), lights[0]->fixed_cycle_duration);
+  EXPECT_EQ(ros::Duration(46), lights1[0]->fixed_cycle_duration);
 }
 
 TEST(CARMAWorldModelTest, getLightsAlongRoute)
