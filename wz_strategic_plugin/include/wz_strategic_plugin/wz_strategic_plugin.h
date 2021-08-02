@@ -106,7 +106,7 @@ namespace wz_strategic_plugin
             std::shared_ptr<carma_wm::WMListener> wml_;
             carma_wm::WorldModelConstPtr wm_;
 
-            int max_distance_to_traffic_light = 30;
+            double max_distance_to_traffic_light = 30;
             double declaration = 0.5;
 
             // Current vehicle forward speed

@@ -106,7 +106,7 @@ namespace wz_strategic_plugin
 
         // find car_down_track
         double current_car_down_track = wm_->routeTrackPos(current_loc_).downtrack;
-        ROS_DEBUG("current_car_down_track %d", current_car_down_track);
+        ROS_DEBUG("current_car_down_track %f", current_car_down_track);
 
         
         // Algorithm should be 
@@ -148,22 +148,22 @@ namespace wz_strategic_plugin
 
             auto nearest_traffic_light = traffic_list.front();
             double traffic_light_down_track = wm_->routeTrackPos(nearest_traffic_light->stopLine().front().front().basicPoint2d()).downtrack;
-            ROS_DEBUG("traffic_light_down_track %d", traffic_light_down_track);
+            ROS_DEBUG("traffic_light_down_track %f", traffic_light_down_track);
 
             double workzone_end_point_down_track = wm_->routeTrackPos(nearest_traffic_light->getControlledLanelets().back().centerline2d().back()).downtrack;
 
             auto traffic_light_lanelet = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, nearest_traffic_light->stopLine().front().front().basicPoint2d(), 1)[0];
 
             double distance_remaining_to_traffic_light  = traffic_light_down_track - current_progress;
-            ROS_DEBUG("distance_remaining_to_traffic_light %d", distance_remaining_to_traffic_light);
+            ROS_DEBUG("distance_remaining_to_traffic_light %f", distance_remaining_to_traffic_light);
 
             if(distance_remaining_to_traffic_light <= max_distance_to_traffic_light ) {        
 
-                ROS_DEBUG("distance_remaining_to_traffic_light is smaller than max_distance_to_traffic_light %d %d", distance_remaining_to_traffic_light, max_distance_to_traffic_light);
+                ROS_DEBUG("distance_remaining_to_traffic_light is smaller than max_distance_to_traffic_light %f %f", distance_remaining_to_traffic_light, max_distance_to_traffic_light);
 
-                ROS_DEBUG("current_speed_ %d", current_speed_);
+                ROS_DEBUG("current_speed_ %f", current_speed_);
 
-                ROS_DEBUG("time_remaining_to_traffic_light %d", distance_remaining_to_traffic_light / current_speed_);
+                ROS_DEBUG("time_remaining_to_traffic_light %f", distance_remaining_to_traffic_light / current_speed_);
                 ros::Duration time_remaining_to_traffic_light(distance_remaining_to_traffic_light / current_speed_);
 
                 lanelet::Id start_lane_id = current_lanelet.second.id();
