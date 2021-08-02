@@ -210,9 +210,9 @@ private:
   // The following constants are default timining plans for recieved traffic lights. 
   // The light is assumed to use these values until otherwise known
   // TODO can these be optional parameters?
-  constexpr double RED_LIGHT_DURATION = 20.0; //in sec
-  constexpr double YELLOW_LIGHT_DURATION = 3.0; //in sec
-  constexpr double GREEN_LIGHT_DURATION = 20.0; //in sec
+  static constexpr double RED_LIGHT_DURATION = 20.0; //in sec
+  static constexpr double YELLOW_LIGHT_DURATION = 3.0; //in sec
+  static constexpr double GREEN_LIGHT_DURATION = 20.0; //in sec
   
 };
 }  // namespace carma_wm

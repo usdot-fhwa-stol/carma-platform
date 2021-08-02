@@ -1094,7 +1094,7 @@ void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
 std::vector<lanelet::CarmaTrafficLightPtr> CARMAWorldModel::getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const
 {
   // Check if the map is loaded yet
-  if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
+  if (!semantic_map_ || semantic_map_->laneletLayer.empty())
   {
     ROS_ERROR_STREAM("Map is not set or does not contain lanelets");
     return {};
@@ -1142,9 +1142,9 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
     return;
   }
 
-  for (auto curr_intersection : spat_msg.intersection_state_list)
+  for (const auto& curr_intersection : spat_msg.intersection_state_list)
   {
-    for (auto current_movement_state : curr_intersection.movement_list) 
+    for (const auto& current_movement_state : curr_intersection.movement_list) 
     {
       lanelet::Id curr_light_id = getTrafficLightId(curr_intersection.id.id, current_movement_state.signal_group);
 
