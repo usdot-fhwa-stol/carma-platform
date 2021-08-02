@@ -207,7 +207,12 @@ private:
 
   size_t map_version_ = 0; // The current map version. This is cached from calls to setMap();
   
-
+  // The following constants are default timining plans for recieved traffic lights. 
+  // The light is assumed to use these values until otherwise known
+  // TODO can these be optional parameters?
+  constexpr double RED_LIGHT_DURATION = 20.0; //in sec
+  constexpr double YELLOW_LIGHT_DURATION = 3.0; //in sec
+  constexpr double GREEN_LIGHT_DURATION = 20.0; //in sec
   
 };
 }  // namespace carma_wm

@@ -35,9 +35,6 @@
 
 namespace carma_wm
 {
-  const double RED_LIGHT_DURATION = 20.0; //in sec
-  const double YELLOW_LIGHT_DURATION = 3.0; //in sec
-  const double GREEN_LIGHT_DURATION = 20.0; //in sec
 
 std::pair<TrackPos, TrackPos> CARMAWorldModel::routeTrackPos(const lanelet::ConstArea& area) const
 {
@@ -323,7 +320,7 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
   //Sort lanelets according to shortest path if using shortest path
   std::vector<lanelet::ConstLanelet> sorted_output;
   for(auto llt : route_->shortestPath()){
-    for(int i=0; i < output.size();i++){
+    for(size_t i=0; i < output.size();i++){
       if(llt.id() == output[i].id()){
         sorted_output.push_back(llt);
         break;
@@ -1221,14 +1218,16 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
         std::vector<std::pair<ros::Time, lanelet::CarmaTrafficLightState>> partial_states;
         // set the partial cycle.
 
-        for (int i = 0; i < traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() - 1; i ++)
+        for (size_t i = 0; i < traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() - 1; i ++)
         {
           auto light_state = traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].second;
 
           if (light_state == lanelet::CarmaTrafficLightState::STOP_AND_REMAIN || light_state == lanelet::CarmaTrafficLightState::STOP_THEN_PROCEED)
             red_light_duration = traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
+          
           else if (light_state == lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED || light_state == lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED)
             green_light_duration = traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
+          
           else if (light_state == lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE || light_state == lanelet::CarmaTrafficLightState::PROTECTED_CLEARANCE)
             yellow_light_duration = traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
         }
@@ -1239,6 +1238,10 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
         partial_states.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(partial_states.back().first + green_light_duration, lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
         
         curr_light->setStates(partial_states, curr_light->revision_);
+      }
+      else // traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() == 1
+      {
+        throw std::invalid_argument("Reached unreachable case where traffic light contains only single state.");
       }
     }
   }
