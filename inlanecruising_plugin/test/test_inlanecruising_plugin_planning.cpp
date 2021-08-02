@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -101,7 +101,7 @@ TEST(InLaneCruisingPluginTest, testPlanningCallback)
 
   cav_msgs::Maneuver maneuver;
   maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-  maneuver.lane_following_maneuver.lane_id = 1200;
+  maneuver.lane_following_maneuver.lane_ids = {"1200"};
   maneuver.lane_following_maneuver.start_dist = 5.0;
   maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
   maneuver.lane_following_maneuver.start_speed = 0.0;
@@ -112,7 +112,7 @@ TEST(InLaneCruisingPluginTest, testPlanningCallback)
 
   cav_msgs::Maneuver maneuver2;
   maneuver2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-  maneuver2.lane_following_maneuver.lane_id = 1200;
+  maneuver2.lane_following_maneuver.lane_ids = {"1200"};
   maneuver2.lane_following_maneuver.start_dist = 14.98835712;
   maneuver2.lane_following_maneuver.start_speed = 6.7056;
   maneuver2.lane_following_maneuver.start_time = ros::Time(4.4704);
@@ -194,7 +194,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
 
   cav_msgs::Maneuver maneuver;
   maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-  maneuver.lane_following_maneuver.lane_id = 110;
+  maneuver.lane_following_maneuver.lane_ids = {"110"};
   maneuver.lane_following_maneuver.start_dist = 14.98835712 + 45+ 180;
   maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
   maneuver.lane_following_maneuver.start_speed = 0.0;
@@ -205,7 +205,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
 
   cav_msgs::Maneuver maneuver2;
   maneuver2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-  maneuver2.lane_following_maneuver.lane_id = 110;
+  maneuver2.lane_following_maneuver.lane_ids = {"110"};
   maneuver2.lane_following_maneuver.start_dist = 14.98835712 + 45+ 202;
   maneuver2.lane_following_maneuver.start_speed = 6.7056;
   maneuver2.lane_following_maneuver.start_time = ros::Time(4.4704);

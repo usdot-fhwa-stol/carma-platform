@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 LEIDOS.
+ * Copyright (C) 2018-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,8 @@
 #include "pure_pursuit_wrapper/pure_pursuit_wrapper.hpp"
 #include <trajectory_utils/conversions/conversions.h>
 #include <carma_wm/Geometry.h>
+#include <algorithm>
+
 
 namespace pure_pursuit_wrapper
 {
@@ -57,6 +59,10 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
   if (speeds.size() != trajectory_points.size())
   {
     throw std::invalid_argument("Speeds and trajectory points sizes do not match");
+  }
+
+  for (size_t i =0; i < speeds.size(); i++) { // Ensure 0 is min speed
+    speeds[i] = std::max(0.0, speeds[i]);
   }
 
   std::vector<double> lag_speeds = apply_response_lag(speeds, downtracks, config_.vehicle_response_lag); // This call requires that the first speed point be current speed to work as expected
