@@ -143,6 +143,10 @@ void processWhenUNAVAILABLE(const cav_srvs::PlanManeuversRequest& req, cav_srvs:
                             const VehicleState& current_state,
                             const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights)
 {
+  // Reset intersection state since in this state we are not yet known to be in or approaching an intersection
+  intersection_speed_ = boost::none;
+  intersection_end_downtrack_ = boost::none;
+
   if (traffic_lights.empty())
   {
     ROS_DEBUG("No lights found along route. Returning maneuver plan unchanged");
@@ -208,7 +212,7 @@ void processWhenAPPROACHING(const cav_srvs::PlanManeuversRequest& req, cav_srvs:
   // fine as that would hit the following red phase.
   double time_remaining_to_traffic_light =
       (2.0 * distance_remaining_to_traffic_light) /
-      (intersection_speed_ + current_maneuver_end_speed);  // Kinematic Equation: 2*d / (vf + vi) = t
+      (intersection_speed_.get() + current_maneuver_end_speed);  // Kinematic Equation: 2*d / (vf + vi) = t
 
   ros::Time light_arrival_time_at_freeflow = current_state.stamp + ros::Duration(time_remaining_to_traffic_light);
   ros::Time early_arrival_time_at_freeflow =
@@ -239,19 +243,19 @@ void processWhenAPPROACHING(const cav_srvs::PlanManeuversRequest& req, cav_srvs:
 
     // TODO do we need to check for anything before pushing onto the plan?
     resp.new_plan.push_back(composeLaneFollowingManeuverMessage(
-        current_state.downtrack, traffic_light_down_track, current_state.speed, intersection_speed_, current_state.stamp, light_arrival_time_at_freeflow)
+        current_state.downtrack, traffic_light_down_track, current_state.speed, intersection_speed_.get(), current_state.stamp, light_arrival_time_at_freeflow)
         lanelet::utils::transform(crossed_lanelets, [](const auto& ll) {
       return ll.id(); })));
 
-    double intersection_length = intersection_end_downtrack_ - traffic_light_down_track;
+    double intersection_length = intersection_end_downtrack_.get() - traffic_light_down_track;
 
     ros::Time intersection_exit_time =
-        light_arrival_time_at_freeflow + ros::Duration(intersection_length / intersection_speed_);
+        light_arrival_time_at_freeflow + ros::Duration(intersection_length / intersection_speed_.get());
 
-    resp.new_plan.push_back(
-        composeIntersectionTransitMessage(traffic_light_down_track, intersection_end_downtrack_, intersection_speed_,
-                                          intersection_speed_, light_arrival_time_at_freeflow, intersection_exit_time,
-                                          lanelet::Id & starting_lane_id, lanelet::Id & ending_lane_id));
+    resp.new_plan.push_back(composeIntersectionTransitMessage(
+        traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
+        intersection_speed_.get(), light_arrival_time_at_freeflow, intersection_exit_time,
+        lanelet::Id & starting_lane_id, lanelet::Id & ending_lane_id));
   }
   else  // Red or Yellow light
   {
@@ -367,7 +371,13 @@ bool WzStrategicPlugin::altLogic(const cav_srvs::PlanManeuversRequest& req, cav_
         break;
 
       case TransitState::DEPARTING:
-        processWhenDEPARTING(req, resp, current_state, traffic_list.front());
+        // Reset intersection state since we are no longer in an intersection
+        if (!intersection_end_downtrack_ || !intersection_speed_)
+        {
+          throw std::invalid_argument("State is DEPARTING but the intersection variables are not available");
+        }
+        processWhenDEPARTING(req, resp, current_state, traffic_list.front(), intersection_end_downtrack_,
+                             intersection_speed_);
         break;
 
       default:

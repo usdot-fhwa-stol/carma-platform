@@ -54,9 +54,9 @@ public:
 
   /**
    * \brief Returns the current plugin discovery message reflecting system status
-   * 
+   *
    * \return cav_msgs::Plugin The plugin discovery message
-   */ 
+   */
   cav_msgs::Plugin getDiscoveryMsg();
 
 private:
@@ -71,9 +71,23 @@ private:
     lanelet::Id lane_id;  // The current lane id of the vehicle at time stamp
   }
 
-
-  cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed,
-                                                         double target_speed, lanelet::Id lane_id);
+  /**
+   * \brief Compose a lane keeping maneuver message based on input params
+   *
+   * \param start_dist Start downtrack distance of the current maneuver
+   * \param end_dist End downtrack distance of the current maneuver
+   * \param start_speed Start speed of the current maneuver
+   * \param target_speed Target speed pf the current maneuver, usually it is the lanelet speed limit
+   * \param start_time The starting time of the maneuver
+   * \param end_time The ending time of the maneuver
+   * \param lane_ids List of lanelet IDs that the current maneuver traverses. Message expects these to be contiguous and
+   * end to end
+   * 
+   * \return A lane keeping maneuver message which is ready to be published
+   */
+  cav_msgs::Maneuver
+  composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed,
+                                      ros::Time start_time, ros::Time end_time, std::vector<lanelet::Id> lane_ids);
 
   cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double& end_dist, double start_speed,
                                                        lanelet::Id& starting_lane_id, lanelet::Id& ending_lane_id,
@@ -104,6 +118,10 @@ private:
 
   std::string planning_strategic_plugin_ = "WorkZonePlugin";
   std::string intersection_transit_planning_tactical_plugin_ = "IntersectionTransitPlugin";
+
+  // Cache variables for storing the current intersection state between state machine transitions
+  boost::optional<double> intersection_speed_;
+  boost::optional<double> intersection_end_downtrack_;
 
   WorkZoneStateTransitionTable transition_table_;
 };
