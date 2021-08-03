@@ -96,6 +96,7 @@ public:
   std::unique_lock<std::mutex> getLock(bool pre_locked = true);
 
 
+
 /*!
    * \brief Allows user to set a callback to be triggered when a route update is received
    *        NOTE: If operating in multi-threaded mode the world model will remain locked until the user function
@@ -130,8 +131,10 @@ private:
   std::unique_ptr<ros::AsyncSpinner> wm_spinner_;
   ros::Subscriber map_sub_;
   ros::Subscriber route_sub_;
+  ros::Subscriber traffic_spat_sub_;
   const bool multi_threaded_;
   std::mutex mw_mutex_;
+  
  
   ros::CARMANodeHandle nh2_{"/"};
   lanelet::Velocity config_speed_limit_;

@@ -95,6 +95,11 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
   }
 }
 
+void WMListenerWorker::incomingSpatCallback(const cav_msgs::SPAT& spat_msg)
+{
+  world_model_->processSpatFromMsg(spat_msg);
+}
+
 bool WMListenerWorker::checkIfReRoutingNeeded() const
 {
   return rerouting_flag_;

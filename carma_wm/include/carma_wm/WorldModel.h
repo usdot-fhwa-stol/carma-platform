@@ -31,6 +31,7 @@
 #include <cav_msgs/RoadwayObstacleList.h>
 #include <cav_msgs/ExternalObject.h>
 #include <cav_msgs/ExternalObjectList.h>
+#include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
 #include "TrackPos.h"
 
 namespace carma_wm
@@ -339,6 +340,18 @@ public:
    * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
    */
   virtual std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n = 10) const = 0;
+
+    /**
+   * \brief  Return a list of traffic lights/intersections along the current route.  
+   * The traffic lights along a route and the next traffic light ahead of us on the route specifically, 
+   * so a sorted list (by downtrack distance) of traffic lights on the route ahead of us thus eliminating those behind the vehicle.
+   *
+   * \param loc location
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or route is not set
+   *
+   * \return list of traffic lights along the current route
+   */
+  virtual std::vector<lanelet::CarmaTrafficLightPtr> getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const = 0;
 
   /**
    * \brief Given the cartesian point on the map, tries to get the opposite direction lanelet on the left
