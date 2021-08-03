@@ -343,7 +343,7 @@ public:
 
   void setErrorDistance (double error_distance);
 private:
-  double error_distance_ = 20; //meters
+  double error_distance_ = 5; //meters
   lanelet::ConstLanelets route_path_;
   std::unordered_set<lanelet::Id> active_geofence_llt_ids_; 
   std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache_;

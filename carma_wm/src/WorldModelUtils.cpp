@@ -24,7 +24,6 @@ namespace query
 std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& point,
                                                                     const unsigned int n)
 {
-  
   // Check if the map is loaded yet
   if (!semantic_map || semantic_map->laneletLayer.size() == 0)
   {
@@ -45,7 +44,6 @@ std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMa
     if (id >= nearestLanelets.size())
       break;
   }
-
   return possible_lanelets;
 }
 
