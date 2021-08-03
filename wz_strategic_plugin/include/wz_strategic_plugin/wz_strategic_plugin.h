@@ -29,95 +29,82 @@
 #include <carma_wm/Geometry.h>
 
 #include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
-
+#include "wz_strategic_plugin/wz_state_transition_table.h"
 
 namespace wz_strategic_plugin
 {
+class WzStrategicPlugin
+{
+public:
+  /**
+   * \brief Constructor
+   *
+   * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
+   * \param config The configuration to be used for this object
+   */
+  WzStrategicPlugin(carma_wm::WorldModelConstPtr wm, WzStrategicPluginConfig config);
 
-    class WzStrategicPlugin
-    {
-        public:
-            /**
-             * \brief Default constructor for WzStrategicPlugin class
-             */
-            WzStrategicPlugin() = default;
+  /**
+   * \brief Service callback for arbitrator maneuver planning
+   * \param req Plan maneuver request
+   * \param resp Plan maneuver response with a list of maneuver plan
+   * \return If service call successed
+   */
+  bool planManeuverCb(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp);
 
-            /**
-             * \brief General entry point to begin the operation of this class
-             */
-            void run();
+  /**
+   * \brief Returns the current plugin discovery message reflecting system status
+   * 
+   * \return cav_msgs::Plugin The plugin discovery message
+   */ 
+  cav_msgs::Plugin getDiscoveryMsg();
 
-            /**
-             * \brief Initialize ROS publishers, subscribers, service servers and service clients
-             */
-            void initialize();
-
-        private:
-
-            bool planManeuverCb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
-
-            ros::Publisher plugin_discovery_pub_;
-
-            ros::Subscriber pose_sub_;
-            ros::Subscriber twist_sub_;
-
-            // ROS service servers
-            ros::ServiceServer plan_maneuver_srv_;  
-
-            // Plugin discovery message
-            cav_msgs::Plugin plugin_discovery_msg_;
-
-            //Queue of maneuver plans
-            std::vector<cav_msgs::Maneuver> latest_maneuver_plan_;
-
-            ros::Timer discovery_pub_timer_;
-
-            /**
-             * \brief Callback for the pose subscriber, which will store latest pose locally
-             * \param msg Latest pose message
-             */
-            void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
-
-            /**
-             * \brief Callback for the twist subscriber, which will store latest twist locally
-             * \param msg Latest twist message
-             */
-            void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
-
-            cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id);
-
-            cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double& end_dist, double start_speed, lanelet::Id& starting_lane_id, lanelet::Id& ending_lane_id, ros::Time time, double& time_to_stop);
-
-            cav_msgs::Maneuver composeIntersectionTransitMessage(double& start_dist, double& end_dist, double& start_speed, double& target_speed, ros::Time start_time, lanelet::Id& starting_lane_id);
+private:
+  /**
+   * \brief Struct representing a vehicle state for the purposes of planning
+   */
+  struct VehicleState
+  {
+    ros::Time stamp;      // Timestamp of this state data
+    double downtrack;     // The downtrack of the vehicle along the route at time stamp
+    double speed;         // The speed of the vehicle at time stamp
+    lanelet::Id lane_id;  // The current lane id of the vehicle at time stamp
+  }
 
 
-            bool supportedLightState(lanelet::CarmaTrafficLightState state) const;
+  cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed,
+                                                         double target_speed, lanelet::Id lane_id);
 
-            int traffic_light_interpreter(boost::optional<lanelet::CarmaTrafficLightState> state);
+  cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double& end_dist, double start_speed,
+                                                       lanelet::Id& starting_lane_id, lanelet::Id& ending_lane_id,
+                                                       ros::Time time, double& time_to_stop);
 
-            double estimate_distance_to_stop(double v, double a);
+  cav_msgs::Maneuver composeIntersectionTransitMessage(double& start_dist, double& end_dist, double& start_speed,
+                                                       double& target_speed, ros::Time start_time,
+                                                       lanelet::Id& starting_lane_id);
 
-            double estimate_time_to_stop(double d, double v);
+  bool supportedLightState(lanelet::CarmaTrafficLightState state) const;
 
-            // CARMA ROS node handles
-            std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
+  int traffic_light_interpreter(boost::optional<lanelet::CarmaTrafficLightState> state);
 
-            // wm listener pointer and pointer to the actual wm object
-            std::shared_ptr<carma_wm::WMListener> wml_;
-            carma_wm::WorldModelConstPtr wm_;
+  double estimate_distance_to_stop(double v, double a);
 
-            double max_distance_to_traffic_light = 30;
-            double declaration = 0.5;
+  double estimate_time_to_stop(double d, double v);
 
-            // Current vehicle forward speed
-            double current_speed_;
+  double findSpeedLimit(const lanelet::ConstLanelet& llt);
 
-            // Current vehicle pose in map
-            geometry_msgs::PoseStampedConstPtr pose_msg_;
-            lanelet::BasicPoint2d current_loc_;
+  carma_wm::WorldModelConstPtr wm_;
 
-            std::string planning_strategic_plugin_ = "WorkZonePlugin";
-            std::string intersection_transit_planning_tactical_plugin_ = "IntersectionTransitPlugin";
+  WzStrategicPluginConfig config_;
 
-    };
-}
+  // Plugin discovery message
+  cav_msgs::Plugin plugin_discovery_msg_;
+
+  // TODO make intersection variables members
+
+  std::string planning_strategic_plugin_ = "WorkZonePlugin";
+  std::string intersection_transit_planning_tactical_plugin_ = "IntersectionTransitPlugin";
+
+  WorkZoneStateTransitionTable transition_table_;
+};
+}  // namespace wz_strategic_plugin
