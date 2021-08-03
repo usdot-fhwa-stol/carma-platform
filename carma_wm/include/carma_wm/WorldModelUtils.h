@@ -77,6 +77,8 @@ std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::LaneletMapPtr&
    * \throw std::invalid_argument if the map is not set, contains no lanelets, or if adjacent lanelet is not opposite direction
  * NOTE:  Only to be used on 2 lane, opposite direction road. Number of points in all linestrings are assumed to be roughly the same.
  *        The point is assumed to be on roughly similar shape of overlapping lanelets if any
+ *        Enhancement issue for protection against checking if the laneis opposite direction here:
+ *        https://github.com/usdot-fhwa-stol/carma-platform/issues/1381
  * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
  */
 std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& input_point,
@@ -94,6 +96,8 @@ std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::Lanel
    * \throw std::invalid_argument if the map is not set, contains no lanelets, or if adjacent lanelet is not opposite direction
  * NOTE:  Only to be used on 2 lane, opposite direction road. Number of points in all linestrings are assumed to be roughly the same.
  *        The point is assumed to be on roughly similar shape of overlapping lanelets if any
+ *        Enhancement issue for protection against checking if the laneis opposite direction here:
+ *        https://github.com/usdot-fhwa-stol/carma-platform/issues/1381
  * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
  */
 std::vector<lanelet::Lanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& input_point,
