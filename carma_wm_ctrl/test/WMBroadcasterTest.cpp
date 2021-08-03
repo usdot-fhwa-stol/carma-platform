@@ -954,7 +954,7 @@ TEST(WMBroadcaster, DISABLED_geofenceFromMsgTest)
   auto gf_ptr = wmb.geofenceFromMsg(msg_v01).front();
   ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   lanelet::DigitalSpeedLimitPtr max_speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
-  ROS_ERROR_STREAM("Speed Limit: "<<max_speed->speed_limit_.value());
+
   ASSERT_NEAR(max_speed->speed_limit_.value(), limit.value(),0.0001) ;//Check that the maximum speed limit is not larger than 80_mph
   ASSERT_GE(max_speed->speed_limit_, 0_mph);//Check that the maximum speed limit is not smaller than 0_mph
   ROS_WARN_STREAM("Maximum speed limit is valid (1).");
@@ -1909,7 +1909,7 @@ TEST(WMBroadcaster, splitLaneletWithRatio)
   autoware_lanelet2_msgs::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map, &msg);
   autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
-
+  ROS_WARN_STREAM("Error messages below are expected...");
   // Trigger basemap callback
   wmb.baseMapCallback(map_msg_ptr);
   auto first_lanelet = map->laneletLayer.get(1200);
@@ -1989,6 +1989,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
   // Trigger basemap callback
   wmb.baseMapCallback(map_msg_ptr);
   auto first_lanelet = map->laneletLayer.get(1200);
+  ROS_WARN_STREAM("Error messages below are expected...");
   EXPECT_THROW(wmb.splitLaneletWithPoint({}, first_lanelet, 0.5), lanelet::InvalidInputError);
 
   // check front ratio TOO CLOSE (0.5 meter error for 25 meter lanelet)
@@ -2630,6 +2631,7 @@ TEST(WMBroadcaster, createWorkzoneGeometry)
   // update the map with new lanelets (mapUpdateCallback should follow this pattern as well)
   for(auto llt : gf_ptr->lanelet_additions_)
   {
+    ROS_INFO_STREAM("Adding llt with id:" << llt.id());
     auto left = llt.leftBound3d(); //new lanelet coming in
     for (int i = 0; i < left.size(); i ++)
     {
@@ -2674,7 +2676,7 @@ TEST(WMBroadcaster, createWorkzoneGeometry)
   auto route_ = map_graph->getRoute(cmw->getMutableMap()->laneletLayer.get(1210), cmw->getMutableMap()->laneletLayer.get(9914));
   
   // check if memory addresses of connecting points of lanelets actually match after the update
-  EXPECT_EQ(cmw->getMutableMap()->laneletLayer.get(9981).leftBound2d().front().constData(), cmw->getMutableMap()->laneletLayer.get(1210).leftBound2d().back().constData());
+  EXPECT_EQ(cmw->getMutableMap()->laneletLayer.get(gf_ptr->lanelet_additions_[0].id()).leftBound2d().front().constData(), cmw->getMutableMap()->laneletLayer.get(1210).leftBound2d().back().constData());
   EXPECT_EQ(cmw->getMutableMap()->laneletLayer.get(1211).leftBound2d().front().constData(), cmw->getMutableMap()->laneletLayer.get(1210).leftBound2d().back().constData());
   
   EXPECT_EQ(gf_ptr->lanelet_additions_[0].leftBound2d().front().id(), cmw->getMutableMap()->laneletLayer.get(1210).leftBound2d().back().id());

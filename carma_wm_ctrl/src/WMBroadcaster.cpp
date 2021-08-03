@@ -321,7 +321,6 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
   }
   else if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && msg_detail.closed==cav_msgs::TrafficControlDetail::CLOSED) // if stand-alone closed signal apart from Workzone
   {
-    ROS_ERROR_STREAM("WE SHOULD NOT REACH HERE!");
     addRegionAccessRule(gf_ptr,msg_v01,affected_llts);
   }
  
@@ -367,7 +366,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
 
   lanelet::Lanelet front_llt_diag = createLinearInterpolatingLanelet(parallel_llt_front.leftBound3d().back(), parallel_llt_front.rightBound3d().back(), 
                                                                         middle_opposite_lanelets->back().rightBound3d().back(), middle_opposite_lanelets->back().leftBound3d().back());
-  ROS_ERROR_STREAM("Created diag front_llt_diag id:" << front_llt_diag.id());
+  ROS_DEBUG_STREAM("Created diag front_llt_diag id:" << front_llt_diag.id());
   for (auto regem : parallel_llt_front.regulatoryElements()) //copy existing regem into the new llts
   {
     front_llt_diag.addRegulatoryElement(regem);
@@ -379,7 +378,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
 
   lanelet::Lanelet back_llt_diag = createLinearInterpolatingLanelet(middle_opposite_lanelets->front().rightBound3d().front(),  middle_opposite_lanelets->front().leftBound3d().front(), 
                                                                      parallel_llt_back.leftBound3d().front(), parallel_llt_back.rightBound3d().front());
-  ROS_ERROR_STREAM("Created back_llt_diag diag id:" << back_llt_diag.id());
+  ROS_DEBUG_STREAM("Created back_llt_diag diag id:" << back_llt_diag.id());
   for (auto regem : parallel_llt_back.regulatoryElements()) //copy existing regem into the new llts
   {
     back_llt_diag.addRegulatoryElement(regem);
@@ -398,7 +397,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
       middle_llt.addRegulatoryElement(regem); //copy existing regem into the new llts
     }
     middle_llts.push_back(middle_llt);
-    ROS_ERROR_STREAM("Created middle opposite middle_llt id:" << middle_llt.id());
+    ROS_DEBUG_STREAM("Created matching direction of middle_llt id:" << middle_llt.id());
   }
 
   //////////////////////////////
@@ -451,7 +450,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   //ADD ALL NEWLY CREATED LANELETS INTO GEOFENCE 
   //OBJECTS TO BE PROCESSED LATER BY SCHEDULER
   //////////////////////////////
-  ROS_ERROR_STREAM("Added parallel_llt_front id:" << parallel_llt_front.id());
+  ROS_DEBUG_STREAM("Added parallel_llt_front id:" << parallel_llt_front.id());
   gf_ptr->lanelet_additions_.push_back(parallel_llt_front);
 
   gf_ptr->lanelet_additions_.push_back(front_llt_diag);
@@ -459,7 +458,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   gf_ptr->lanelet_additions_.insert(gf_ptr->lanelet_additions_.end(), middle_llts.begin(), middle_llts.end());
 
   gf_ptr->lanelet_additions_.push_back(back_llt_diag);
-  ROS_ERROR_STREAM("Added parallel_llt_back id:" << parallel_llt_back.id());
+  ROS_DEBUG_STREAM("Added parallel_llt_back id:" << parallel_llt_back.id());
   gf_ptr->lanelet_additions_.push_back(parallel_llt_back);
 
   gf_ptr->lanelet_additions_.insert(gf_ptr->lanelet_additions_.end(), opposite_llts_with_stop_line->begin(), opposite_llts_with_stop_line->end());;
@@ -543,7 +542,6 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
   ////////////////////////////////////
   /// PARALLEL FRONT (TAPERRIGHT side)
   ////////////////////////////////////
-  ROS_ERROR_STREAM("STARTING TAPERRIGHT llt !!!! " );
   std::vector <lanelet::Lanelet> new_taper_right_llts;
   auto taper_right_first_pt = work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->gf_pts.front().basicPoint2d();
   auto taper_right_first_llt = current_map_->laneletLayer.get(work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.front().lanelet().get().id());
@@ -659,7 +657,6 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     {
       for (int i = 1; i <  work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_.size() - 1; i ++)
       {
-        ROS_ERROR_STREAM("2c2: Adding extra lanelets! id: " << work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_[i].id());
         opposite_llts->push_back(current_map_->laneletLayer.get(work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_[i].id()));
       }
     }
@@ -738,10 +735,6 @@ std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithRatio(std::vector<d
 
   std::sort(ratios.begin(), ratios.end());
   ratios.push_back(1.0); //needed to complete the loop
-  for (auto ratio : ratios)
-  {
-    ROS_ERROR_STREAM("1bb ratio: " << ratio);
-  }
 
   int left_ls_size = input_lanelet.leftBound2d().size();
   int right_ls_size = input_lanelet.rightBound2d().size();
@@ -759,13 +752,13 @@ std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithRatio(std::vector<d
     {
       // assuming both linestrings have roughly the same number of points and
       // assuming distance between 0th and index-th points are small enough we can approximate the curve between them as a line:
-      ROS_ERROR_STREAM("Ratio: " << ratios[i] << ", is too close to the lanelet's front boundary! Therefore, ignoring... Allowed error_distance: " << error_distance << ", Distance: " 
+      ROS_INFO_STREAM("Ratio: " << ratios[i] << ", is too close to the lanelet's front boundary! Therefore, ignoring... Allowed error_distance: " << error_distance << ", Distance: " 
                         << lanelet::geometry::distance2d(input_lanelet.leftBound2d().front().basicPoint2d(), input_lanelet.leftBound2d()[left_next_pt_idx].basicPoint2d()));
       continue;
     } 
     if (lanelet::geometry::distance2d(input_lanelet.leftBound2d().back().basicPoint2d(), input_lanelet.leftBound2d()[left_next_pt_idx].basicPoint2d()) <= error_distance)
     {
-      ROS_ERROR_STREAM("Ratio: " << ratios[i] << ", is too close to the lanelet's back boundary! Therefore, ignoring... Allowed error_distance: " << error_distance << ", Distance: " 
+      ROS_INFO_STREAM("Ratio: " << ratios[i] << ", is too close to the lanelet's back boundary! Therefore, ignoring... Allowed error_distance: " << error_distance << ", Distance: " 
                   << lanelet::geometry::distance2d(input_lanelet.leftBound2d().back().basicPoint2d(), input_lanelet.leftBound2d()[left_next_pt_idx].basicPoint2d()));
 
       left_next_pt_idx = left_ls_size - 1;
@@ -859,12 +852,10 @@ void WMBroadcaster::addRegionAccessRule(std::shared_ptr<Geofence> gf_ptr, const 
   if(!regulatory_element->accessable(lanelet::Participants::VehicleCar) || !regulatory_element->accessable(lanelet::Participants::VehicleTruck )) 
   {
     gf_ptr->invalidate_route_=true;
-    ROS_ERROR_STREAM("Tagged validate_route_=true;");
   }
   else
   {
     gf_ptr->invalidate_route_=false;
-    ROS_ERROR_STREAM("Tagged validate_route_=false;");
   }
   gf_ptr->regulatory_element_ = regulatory_element;
 }
@@ -1086,82 +1077,27 @@ lanelet::Points3d WMBroadcaster::getPointsInLocalFrame(const cav_msgs::TrafficCo
   
   // convert all geofence points into our map's frame
   std::vector<lanelet::Point3d> gf_pts;
-  if (tcmV01.geometry.nodes.empty())
-  {
-    ROS_ERROR_STREAM("ENTERING TESTING MODE!");
-    if (tcmV01.params.detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE || tcmV01.params.detail.choice == cav_msgs::TrafficControlDetail::DIRECTION_CHOICE)
-    { 
-      if (tcmV01.params.detail.closed == cav_msgs::TrafficControlDetail::TAPERRIGHT)
-      {
-        auto pt1 = current_map_->laneletLayer.get(12459).centerline2d()[40];
-        gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), pt1.x(), pt1.y()});
-        ROS_ERROR_STREAM("TAPERRIGHT TESTING MODE! 1 " << pt1.x() << ", " << pt1.y());
-        auto pt2 = current_map_->laneletLayer.get(12459).centerline2d()[92];
-        gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), pt2.x(), pt2.y()});
-        ROS_ERROR_STREAM("TAPERRIGHT TESTING MODE! 2 " << pt2.x() << ", " << pt2.y());
-      }
-      else if (tcmV01.params.detail.closed == cav_msgs::TrafficControlDetail::OPENRIGHT)
-      {
-        auto pt1 = current_map_->laneletLayer.get(1245998).centerline2d()[2];
-        gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), pt1.x(), pt1.y()});
-        auto sizes = current_map_->laneletLayer.get(1245998).centerline2d().size();
-        auto pt2 = current_map_->laneletLayer.get(1245998).centerline2d()[sizes/2];
-        gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), pt2.x(), pt2.y()});
-        ROS_ERROR_STREAM("OPENRIGHT TESTING MODE! 1 " << pt1.x() << ", " << pt1.y());
-        ROS_ERROR_STREAM("OPENRIGHT TESTING MODE! 2 " << pt2.x() << ", " << pt2.y());
-      }
-      else if (tcmV01.params.detail.closed == cav_msgs::TrafficControlDetail::CLOSED)
-      {
-        auto pt1 = current_map_->laneletLayer.get(1245999).centerline2d()[2];
-        gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), pt1.x(), pt1.y()});
-        
-        auto pt2 = *(current_map_->laneletLayer.get(1245999).centerline2d().end() - 3);
-        gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), pt2.x(), pt2.y()});
-        ROS_ERROR_STREAM("CLOSED TESTING MODE! 1 " << pt1.x() << ", " << pt1.y());
-        ROS_ERROR_STREAM("CLOSED TESTING MODE! 2 " << pt2.x() << ", " << pt2.y());
-      }
-      else if (tcmV01.params.detail.direction == cav_msgs::TrafficControlDetail::REVERSE)
-      {
-        auto pt1 = current_map_->laneletLayer.get(1302199).centerline2d()[2];
-        gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), pt1.x(), pt1.y()});
-        
-        auto pt2 = *(current_map_->laneletLayer.get(1302199).centerline2d().end() - 3);
-        gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), pt2.x(), pt2.y()});
-        ROS_ERROR_STREAM("REVERSE TESTING MODE! 1 " << pt1.x() << ", " << pt1.y());
-        ROS_ERROR_STREAM("REVERSE TESTING MODE! 2 " << pt2.x() << ", " << pt2.y());
-      }
+  cav_msgs::PathNode prev_pt;
+  PJ_COORD c_init_latlong{{tcmV01.geometry.reflat, tcmV01.geometry.reflon, tcmV01.geometry.refelv}};
+  PJ_COORD c_init = proj_trans(universal_to_target, PJ_FWD, c_init_latlong);
 
-    }
-    else
-    {
-      ROS_ERROR_STREAM("Detected no valid entry!!!");
-    }
+  prev_pt.x = c_init.xyz.x;
+  prev_pt.y =  c_init.xyz.y;
 
-  }
-  else
-  {
-    cav_msgs::PathNode prev_pt;
-    PJ_COORD c_init_latlong{{tcmV01.geometry.reflat, tcmV01.geometry.reflon, tcmV01.geometry.refelv}};
-    PJ_COORD c_init = proj_trans(universal_to_target, PJ_FWD, c_init_latlong);
+  ROS_DEBUG_STREAM("In TCM's frame, initial Point X "<< prev_pt.x<<" Before conversion: Point Y "<< prev_pt.y );
+  for (auto pt : tcmV01.geometry.nodes)
+  { 
+    ROS_DEBUG_STREAM("Before conversion in TCM frame: Point X "<< pt.x <<" Before conversion: Point Y "<< pt.y);
 
-    prev_pt.x = c_init.xyz.x;
-    prev_pt.y =  c_init.xyz.y;
+    PJ_COORD c {{prev_pt.x + pt.x, prev_pt.y + pt.y, 0, 0}}; // z is not currently used
+    PJ_COORD c_out;
+    c_out = proj_trans(target_to_map, PJ_FWD, c);
 
-    ROS_DEBUG_STREAM("In TCM's frame, initial Point X "<< prev_pt.x<<" Before conversion: Point Y "<< prev_pt.y );
-    for (auto pt : tcmV01.geometry.nodes)
-    { 
-      ROS_DEBUG_STREAM("Before conversion in TCM frame: Point X "<< pt.x <<" Before conversion: Point Y "<< pt.y);
+    gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), c_out.xyz.x, c_out.xyz.y});
+    prev_pt.x += pt.x;
+    prev_pt.y += pt.y;
 
-      PJ_COORD c {{prev_pt.x + pt.x, prev_pt.y + pt.y, 0, 0}}; // z is not currently used
-      PJ_COORD c_out;
-      c_out = proj_trans(target_to_map, PJ_FWD, c);
-
-      gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), c_out.xyz.x, c_out.xyz.y});
-      prev_pt.x += pt.x;
-      prev_pt.y += pt.y;
-
-      ROS_DEBUG_STREAM("After conversion in Map frame: Point X "<< gf_pts.back().x() <<" After conversion: Point Y "<< gf_pts.back().y());
-    }
+    ROS_DEBUG_STREAM("After conversion in Map frame: Point X "<< gf_pts.back().x() <<" After conversion: Point Y "<< gf_pts.back().y());
   }
   
   // save the points converted to local map frame
@@ -1218,11 +1154,14 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const lane
     // among these llts, filter the ones that are on same direction as the geofence using routing
     if (idx + 1 == gf_pts.size()) // we only check this for the last gf_pt after saving everything
     {
+      ROS_DEBUG_STREAM("Last point");
       std::unordered_set<lanelet::Lanelet> filtered = filterSuccessorLanelets(possible_lanelets, affected_lanelets);
+      ROS_DEBUG_STREAM("Got successor lanelets of size: " << filtered.size());
       affected_lanelets.insert(filtered.begin(), filtered.end());
       break;
     } 
 
+    ROS_DEBUG_STREAM("Checking possible lanelets");
     // check if each lines connecting end points of the llt is crossing with the line connecting current and next gf_pts
     for (auto llt: possible_lanelets)
     {
@@ -1367,7 +1306,6 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) con
         lanelet::RegulatoryElementPtr nonconst_regem = current_map_->regulatoryElementLayer.get(regem->id());
         gf_ptr->prev_regems_.push_back(std::make_pair(el.id(), nonconst_regem));
         gf_ptr->remove_list_.push_back(std::make_pair(el.id(), nonconst_regem));
-        ROS_ERROR_STREAM("addRegulatoryComponent remove lanelet: " << el.id() << ", regem: " << nonconst_regem->id());
         current_map_->remove(current_map_->laneletLayer.get(el.lanelet()->id()), nonconst_regem);
       }
     }
@@ -1383,7 +1321,6 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) con
     {
       current_map_->update(current_map_->laneletLayer.get(el.id()), gf_ptr->regulatory_element_);
       gf_ptr->update_list_.push_back(std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>(el.id(), gf_ptr->regulatory_element_));
-      ROS_ERROR_STREAM("addRegulatoryComponent updatge lanelet: " << el.id() << ", regem: " << gf_ptr->regulatory_element_->id());
     } else {
       ROS_WARN_STREAM("Regulatory element with invalid id in geofence cannot be added to the map");
     }
@@ -1407,7 +1344,6 @@ void WMBroadcaster::addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr)
       {
         auto nonconst_regem = current_map_->regulatoryElementLayer.get(regem->id());
         gf_ptr->remove_list_.push_back(std::make_pair(el.id(), nonconst_regem));
-        ROS_ERROR_STREAM("addBackRegulatoryComponent remove lanelet: " << el.id() << ", regem: " << nonconst_regem->id());
         current_map_->remove(current_map_->laneletLayer.get(el.lanelet()->id()), nonconst_regem);
       }
     }
@@ -1420,7 +1356,6 @@ void WMBroadcaster::addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr)
     if (pair.second->attribute(lanelet::AttributeName::Subtype).value() ==  gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value())
     {
       current_map_->update(current_map_->laneletLayer.get(pair.first), pair.second);
-      ROS_ERROR_STREAM("addBackRegulatoryComponent updatge lanelet: " << pair.first << ", regem: " << pair.second->id());
       gf_ptr->update_list_.push_back(pair);
     } 
   }
@@ -1783,7 +1718,6 @@ void WMBroadcaster::addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr)
   // add additional lanelets that need to be added
   for (auto llt : gf_ptr->lanelet_additions_)
   {
-    ROS_ERROR_STREAM("Adding the lanelet additions to map in CARMA_WM_CTRL!");
     current_map_->add(llt);
   }
 

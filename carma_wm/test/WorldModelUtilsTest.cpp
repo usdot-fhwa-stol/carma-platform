@@ -31,10 +31,6 @@ using ::testing::ReturnArg;
 
 namespace carma_wm
 {
-namespace query
-{
-  //TODO::
-}
 
 namespace utils
 {

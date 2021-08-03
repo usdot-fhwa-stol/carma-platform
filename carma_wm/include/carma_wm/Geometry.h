@@ -365,7 +365,6 @@ double circular_arc_curvature(const lanelet::BasicPoint2d& cur_point, const lane
  */
 std::vector<double> local_circular_arc_curvatures(const std::vector<lanelet::BasicPoint2d>& points, int lookahead);
 
-
 }  // namespace geometry
 
 }  // namespace carma_wm
