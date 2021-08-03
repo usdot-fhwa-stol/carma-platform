@@ -401,7 +401,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   }
 
   //////////////////////////////
-  //ADD TF_LIGHT and STOP_RULE TO PARALLEL LANELET
+  //ADD TF_LIGHT TO PARALLEL LANELET
   //////////////////////////////
   lanelet::LineString3d parallel_stop_ls(lanelet::utils::getId(), {parallel_llt_front.leftBound3d().back(), parallel_llt_front.rightBound3d().back()});
   // controlled lanelet:
@@ -420,9 +420,10 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->label_),tfl_parallel->id()});
 
   parallel_llt_front.addRegulatoryElement(tfl_parallel);
+  ROS_DEBUG_STREAM("Created TF_LIGHT of Id: " << tfl_parallel->id() << ", to parallel_llt_front id:" << parallel_llt_front.id());
 
   //////////////////////////////
-  //ADD TF_LIGHT and STOP_RULE TO OPPOSITE LANELET
+  //ADD TF_LIGHT TO OPPOSITE LANELET
   //////////////////////////////
   std::shared_ptr<std::vector<lanelet::Lanelet>> opposite_llts_with_stop_line = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
   
@@ -445,6 +446,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->label_), tfl_opposite->id()});
   
   opposite_llts_with_stop_line->front().addRegulatoryElement(tfl_opposite);
+  ROS_DEBUG_STREAM("Created TF_LIGHT of Id: " << tfl_opposite->id() << ", to opposite_llts_with_stop_line->front() id:" << opposite_llts_with_stop_line->front().id());
 
   //////////////////////////////
   //ADD ALL NEWLY CREATED LANELETS INTO GEOFENCE 
@@ -491,9 +493,9 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
 
   participants_and_reason_only.package.label = "SIG_WZ";
 
-  std::vector<lanelet::Lanelet> old_or_blocked_llts;
+  std::vector<lanelet::Lanelet> old_or_blocked_llts; // this is needed to addRegionAccessRule input signatures
   
-  // create list of lanelets with only single entries of old lanelets
+  // from all affected parts, remove duplicate entries
   for (auto llt : work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_)
   {
     if (std::find(old_or_blocked_llts.begin(), old_or_blocked_llts.end(), llt) == old_or_blocked_llts.end())
@@ -567,6 +569,7 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     new_taper_right_llts = splitLaneletWithPoint({prev_lanelet_to_copy.centerline2d().back()}, prev_lanelet_to_copy, error_distance_);
   }
   parallel_llts->insert(parallel_llts->end(), new_taper_right_llts.begin(), new_taper_right_llts.end());
+  ROS_DEBUG_STREAM("Finished TAPERRIGHT processing of size: " << new_taper_right_llts.size());
 
   //////////////////////////////////
   /// PARALLEL BACK (OPENRIGHT side)
@@ -596,6 +599,7 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     new_open_right_llts = splitLaneletWithPoint({next_lanelet_to_copy.centerline2d().back()}, next_lanelet_to_copy, error_distance_);
   }
   parallel_llts->insert(parallel_llts->end(), new_open_right_llts.begin(), new_open_right_llts.end());
+  ROS_DEBUG_STREAM("Finished OPENRIGHT processing of size: " << new_open_right_llts.size());
 
   ////////////////////
   /// HANDLE MID HERE
@@ -617,6 +621,7 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     {
       // we found what we want, so return
       opposite_llts->insert(opposite_llts->end(), temp_llts.begin(), temp_llts.end());
+      ROS_DEBUG_STREAM("Ended preprocessWorkzoneGeometry with opposite_llts.size()" << opposite_llts->size() << ", and parallel_llts.size()" << parallel_llts->size());
       return;
     }
     else if (temp_llts.size() == 2) // determine which 
@@ -636,6 +641,7 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     {
       opposite_llts->insert(opposite_llts->end(), temp_llts.begin() + 1, temp_llts.end()- 1);
     }
+    ROS_DEBUG_STREAM("Finished REVERSE processing of size: " << opposite_llts->size() << " from original of 1 REVERSE lanelet size");
   }
   else //if there are two or more lanelets
   {
@@ -674,10 +680,10 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     {
       opposite_llts->insert(opposite_llts->end(), temp_opposite_back_llts.begin(), temp_opposite_back_llts.end());
     }
-    
+    ROS_DEBUG_STREAM("Finished REVERSE processing of size: " << opposite_llts->size() << " from original of more than one REVERSE lanelet size");
   }
 
-  ROS_DEBUG_STREAM("Ended preprocessWorkzoneGeometry with opposite_llts.size()" << opposite_llts->size());
+  ROS_DEBUG_STREAM("Ended preprocessWorkzoneGeometry with opposite_llts.size()" << opposite_llts->size() << ", and parallel_llts.size()" << parallel_llts->size());
 }
 
 std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithPoint(const std::vector<lanelet::BasicPoint2d>& input_pts, const lanelet::Lanelet& input_llt, double error_distance)
@@ -697,6 +703,7 @@ std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithPoint(const std::ve
   auto new_parallel_llts = splitLaneletWithRatio(ratios, input_llt, error_distance);
 
   parallel_llts.insert(parallel_llts.end(),new_parallel_llts.begin(), new_parallel_llts.end());
+  ROS_DEBUG_STREAM("splitLaneletWithPoint returning lanelets size: " << parallel_llts.size());
   return parallel_llts;
 }
 
@@ -717,6 +724,7 @@ lanelet::Lanelets WMBroadcaster::splitOppositeLaneletWithPoint(std::shared_ptr<s
 
   auto new_llts_opposite = splitLaneletWithRatio({1 - point_downtrack_ratio}, opposing_llts[0], error_distance);
   opposite_llts->insert(opposite_llts->begin(),new_llts_opposite.begin(), new_llts_opposite.end());
+  ROS_DEBUG_STREAM("splitOppositeLaneletWithPoint returning lanelets size: " << opposite_llts->size());
   return opposing_llts;
 }
 
@@ -734,6 +742,9 @@ std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithRatio(std::vector<d
   std::vector<lanelet::Lanelet> created_llts;
 
   std::sort(ratios.begin(), ratios.end());
+
+  ROS_DEBUG_STREAM("splitLaneletWithRatio evaluating input ratios of size: " << ratios.size());
+
   ratios.push_back(1.0); //needed to complete the loop
 
   int left_ls_size = input_lanelet.leftBound2d().size();
@@ -794,6 +805,9 @@ std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithRatio(std::vector<d
     }
     
   }
+
+  ROS_DEBUG_STREAM("splitLaneletWithRatio returning lanelets size: " << created_llts.size());
+
   return created_llts;
 }
 
