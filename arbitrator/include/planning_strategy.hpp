@@ -18,9 +18,11 @@
 #define __ARBITRATOR_INCLUDE_PLANNING_STRATEGY_HPP__
 
 #include <cav_msgs/ManeuverPlan.h>
+#include "vehicle_state.hpp"
 
 namespace arbitrator
 {
+
     /**
      * \brief Generic interface representing a strategy for arriving at a maneuver
      * plan
@@ -30,9 +32,12 @@ namespace arbitrator
         public:
             /**
              * \brief Generate a plausible maneuver plan
+             * 
+             * \param start_state The starting state of the vehicle to plan for
+             * 
              * \return A maneuver plan from the vehicle's current state
              */
-            virtual cav_msgs::ManeuverPlan generate_plan() = 0;
+            virtual cav_msgs::ManeuverPlan generate_plan(const VehicleState& start_state) = 0;
 
             /**
              * \brief Virtual destructor provided for memory safety
