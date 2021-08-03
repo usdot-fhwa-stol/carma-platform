@@ -58,13 +58,13 @@ namespace carma_wm_ctrl
 
 {
 
-TEST(WMBroadcaster, DISABLED_Constructor)
+TEST(WMBroadcaster, Constructor)
 {
   WMBroadcaster([](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
    [](const cav_msgs::TrafficControlRequest& control_msg_pub_){}, [](const cav_msgs::CheckActiveGeofence& active_pub_){}, std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check helps
                                                         // verify that the timers do not crash on destruction
 }
-TEST(WMBroadcaster, DISABLED_baseMapCallback)
+TEST(WMBroadcaster, baseMapCallback)
 {
   ros::Time::setNow(ros::Time(0));  // Set current time
 
@@ -98,7 +98,7 @@ TEST(WMBroadcaster, DISABLED_baseMapCallback)
 }
 
 // here test the proj string transform test
-TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasFromTransform)
+TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
 {
   using namespace lanelet::units::literals;
   size_t base_map_call_count = 0;
@@ -166,7 +166,7 @@ TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasFromTransform)
 }
 
 // here test assuming the georeference proj strings are the same
-TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasOnlyLogic)
+TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
 {
   using namespace lanelet::units::literals;
   // Set the environment  
@@ -272,7 +272,7 @@ TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasOnlyLogic)
   ASSERT_EQ(affected_parts.size(), 2); // they should not be considered to be on the lanelet
 }
 
-TEST(WMBroadcaster, DISABLED_geofenceCallback)
+TEST(WMBroadcaster, geofenceCallback)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf = std::make_shared<Geofence>();
@@ -428,7 +428,7 @@ TEST(WMBroadcaster, DISABLED_geofenceCallback)
 
 }
   
-TEST(WMBroadcaster, DISABLED_routeCallbackMessage) 
+TEST(WMBroadcaster, routeCallbackMessage) 
 {
   cav_msgs::Route route_msg;
   
@@ -497,7 +497,7 @@ TEST(WMBroadcaster, DISABLED_routeCallbackMessage)
 
 }
 
-TEST(WMBroadcaster, DISABLED_addAndRemoveGeofence)
+TEST(WMBroadcaster, addAndRemoveGeofence)
 {
   using namespace lanelet::units::literals;
   // Set the environment  
@@ -597,7 +597,7 @@ TEST(WMBroadcaster, DISABLED_addAndRemoveGeofence)
 
 }
 
-TEST(WMBroadcaster, DISABLED_GeofenceBinMsgTest)
+TEST(WMBroadcaster, GeofenceBinMsgTest)
 {
   using namespace lanelet::units::literals;
   // Set the environment  
@@ -713,7 +713,7 @@ TEST(WMBroadcaster, DISABLED_GeofenceBinMsgTest)
   
 }
 
-TEST(WMBroadcaster, DISABLED_RegulatoryPCLTest)
+TEST(WMBroadcaster, RegulatoryPCLTest)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf_ptr = std::make_shared<Geofence>();
@@ -888,7 +888,7 @@ TEST(WMBroadcaster, DISABLED_RegulatoryPCLTest)
   ASSERT_EQ(2, active_call_count.load());
 }
 
-TEST(WMBroadcaster, DISABLED_geofenceFromMsgTest)
+TEST(WMBroadcaster, geofenceFromMsgTest)
 {
   using namespace lanelet::units::literals;
   // Start creating ROS msg
@@ -1102,7 +1102,7 @@ TEST(WMBroadcaster, DISABLED_geofenceFromMsgTest)
   
 }
 
-TEST(WMBroadcaster, DISABLED_distToNearestActiveGeofence)
+TEST(WMBroadcaster, distToNearestActiveGeofence)
 {
    // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf = std::make_shared<Geofence>();
@@ -1243,7 +1243,7 @@ TEST(WMBroadcaster, DISABLED_distToNearestActiveGeofence)
   ASSERT_NEAR(nearest_gf_dist, 0, 0.0001);  // it should point the next
 }
 
-TEST(WMBroadcaster, DISABLED_addRegionAccessRule)
+TEST(WMBroadcaster, addRegionAccessRule)
 {
   auto gf_ptr = std::make_shared<Geofence>();
   auto map = carma_wm::getBroadcasterTestMap();
@@ -1282,7 +1282,7 @@ TEST(WMBroadcaster, DISABLED_addRegionAccessRule)
 }
 
 
-TEST(WMBroadcaster, DISABLED_addRegionMinimumGap)
+TEST(WMBroadcaster, addRegionMinimumGap)
 {
   auto gf_ptr = std::make_shared<Geofence>();
   auto map = carma_wm::getBroadcasterTestMap();
@@ -1311,7 +1311,7 @@ TEST(WMBroadcaster, DISABLED_addRegionMinimumGap)
   ASSERT_EQ(result.size(), 1);
 }
 
-TEST(WMBroadcaster, DISABLED_invertParticipants)
+TEST(WMBroadcaster, invertParticipants)
 {
   auto gf_ptr = std::make_shared<Geofence>();
   auto map = carma_wm::getBroadcasterTestMap();
@@ -1330,7 +1330,7 @@ TEST(WMBroadcaster, DISABLED_invertParticipants)
   ASSERT_EQ(result.size(), 6);
 }
 
-TEST(WMBroadcaster, DISABLED_currentLocationCallback)
+TEST(WMBroadcaster, currentLocationCallback)
 {
 
    // Test adding then evaluate if the calls to active and inactive are done correctly
@@ -1480,7 +1480,7 @@ TEST(WMBroadcaster, DISABLED_currentLocationCallback)
   ASSERT_EQ(2, map_update_call_count.load());
 }
 
-TEST(WMBroadcaster, DISABLED_checkActiveGeofenceLogicTest)
+TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
 {
    // Create geofence pointer
   auto gf = std::make_shared<Geofence>();
@@ -1712,7 +1712,7 @@ TEST(WMBroadcaster, DISABLED_checkActiveGeofenceLogicTest)
   EXPECT_FALSE(check.is_on_active_geofence);
 }
 
-TEST(WMBroadcaster, DISABLED_RegionAccessRuleTest)
+TEST(WMBroadcaster, RegionAccessRuleTest)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf_ptr = std::make_shared<Geofence>();

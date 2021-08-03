@@ -108,6 +108,7 @@ std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::Lanel
   auto opposite_lanelets = getLaneletsFromPoint(semantic_map, point_on_opposite_lane, n);
 
   // TODO: create opposite direction protection throw
+  // currently the function doesn't recognize if adjacent lane is opposite direction, but assumes it
 
   return opposite_lanelets;
 }
