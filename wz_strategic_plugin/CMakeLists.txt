@@ -86,11 +86,10 @@ install(DIRECTORY launch config
 ## Testing ##
 #############
 
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_wz_strategic_plugin.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+catkin_add_gmock(${PROJECT_NAME}-test 
+ test/test_main.cpp
+ test/test_fixture.h
+ test/test_strategic_plugin_helpers.cpp
+ WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
 
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})

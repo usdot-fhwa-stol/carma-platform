@@ -79,12 +79,12 @@ bool WzStrategicPlugin::supportedLightState(lanelet::CarmaTrafficLightState stat
 
 double WzStrategicPlugin::estimate_distance_to_stop(double v, double a) const
 {
-  return (v * v) / 2 * a;
+  return (v * v) / (2.0 * a);
 }
 
 double WzStrategicPlugin::estimate_time_to_stop(double d, double v) const
 {
-  return 2 * d / v;
+  return 2.0 * d / v;
 };
 
 WzStrategicPlugin::VehicleState WzStrategicPlugin::extractInitialState(const cav_srvs::PlanManeuversRequest& req) const
@@ -365,6 +365,9 @@ bool WzStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_
 
   do
   {
+    // Clear previous maneuvers planned by this plugin as guard against state change since each state generates an independant set of maneuvers
+    resp.new_plan =  cav_msgs::ManeuverPlan();
+
     prev_state = transition_table_.getState();  // Cache previous state to check if state has changed after 1 iteration
 
     switch (transition_table_.getState())
@@ -417,9 +420,10 @@ cav_msgs::Maneuver WzStrategicPlugin::composeLaneFollowingManeuverMessage(double
   maneuver_msg.lane_following_maneuver.start_speed = start_speed;
   maneuver_msg.lane_following_maneuver.end_dist = end_dist;
   maneuver_msg.lane_following_maneuver.end_speed = target_speed;
+  maneuver_msg.lane_following_maneuver.start_time = start_time;
+  maneuver_msg.lane_following_maneuver.end_time = end_time;
   maneuver_msg.lane_following_maneuver.lane_ids =
       lanelet::utils::transform(lane_ids, [](auto id) { return std::to_string(id); });
-  // Start time and end time for maneuver are assigned in updateTimeProgress
 
   ROS_INFO_STREAM("Creating lane follow start dist: " << start_dist << " end dist: " << end_dist);
 
@@ -435,17 +439,16 @@ cav_msgs::Maneuver WzStrategicPlugin::composeStopAndWaitManeuverMessage(double c
   cav_msgs::Maneuver maneuver_msg;
   maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
   maneuver_msg.stop_and_wait_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
-  maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
+  maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN | cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA;
   maneuver_msg.stop_and_wait_maneuver.parameters.planning_tactical_plugin = config_.stop_and_wait_plugin_name;
   maneuver_msg.stop_and_wait_maneuver.parameters.planning_strategic_plugin = config_.strategic_plugin_name;
   maneuver_msg.stop_and_wait_maneuver.start_dist = current_dist;
   maneuver_msg.stop_and_wait_maneuver.end_dist = end_dist;
   maneuver_msg.stop_and_wait_maneuver.start_speed = start_speed;
-  // maneuver_msg.stop_and_wait_maneuver.target_speed = target_speed;
   maneuver_msg.stop_and_wait_maneuver.start_time = start_time;
   maneuver_msg.stop_and_wait_maneuver.end_time = end_time;
-  maneuver_msg.stop_and_wait_maneuver.starting_lane_id = starting_lane_id;
-  maneuver_msg.stop_and_wait_maneuver.ending_lane_id = ending_lane_id;
+  maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(starting_lane_id);
+  maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(ending_lane_id);
 
   // Set the meta data for the stop location buffer
   maneuver_msg.stop_and_wait_maneuver.parameters.float_valued_meta_data.push_back(config_.stopping_location_buffer);
@@ -489,7 +492,7 @@ cav_msgs::Maneuver WzStrategicPlugin::composeIntersectionTransitMessage(double s
   return maneuver_msg;
 }
 
-double WzStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt)
+double WzStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt) const 
 {
   lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
   if (traffic_rules)

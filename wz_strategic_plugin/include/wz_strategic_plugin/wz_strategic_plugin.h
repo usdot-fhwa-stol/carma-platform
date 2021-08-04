@@ -25,6 +25,7 @@
 #include <carma_utils/CARMAUtils.h>
 #include <carma_wm/Geometry.h>
 #include <lanelet2_core/Forward.h>
+#include <gtest/gtest_prod.h>
 
 #include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
 #include "wz_strategic_plugin/wz_state_transition_table.h"
@@ -252,7 +253,7 @@ private:
    *
    * \return value of speed limit in mps
    */
-  double findSpeedLimit(const lanelet::ConstLanelet& llt);
+  double findSpeedLimit(const lanelet::ConstLanelet& llt) const;
 
   ////////// VARIABLES ///////////
 
@@ -271,5 +272,19 @@ private:
   //! Cache variables for storing the current intersection state between state machine transitions
   boost::optional<double> intersection_speed_;
   boost::optional<double> intersection_end_downtrack_;
+
+  //Unit Tests
+  FRIEND_TEST(WorkZoneTestFixture, getDiscoveryMsg);
+  FRIEND_TEST(WorkZoneTestFixture, supportedLightState);
+  FRIEND_TEST(WorkZoneTestFixture, estimate_distance_to_stop);
+  FRIEND_TEST(WorkZoneTestFixture, estimate_time_to_stop);
+  FRIEND_TEST(WorkZoneTestFixture, extractInitialState);
+  FRIEND_TEST(WorkZoneTestFixture, validLightState);
+  FRIEND_TEST(WorkZoneTestFixture, getLaneletsBetweenWithException);
+  FRIEND_TEST(WorkZoneTestFixture, composeLaneFollowingManeuverMessage);
+  FRIEND_TEST(WorkZoneTestFixture, composeStopAndWaitManeuverMessage);
+  FRIEND_TEST(WorkZoneTestFixture, composeIntersectionTransitMessage);
+  FRIEND_TEST(WorkZoneTestFixture, findSpeedLimit);
+
 };
 }  // namespace wz_strategic_plugin

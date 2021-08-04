@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2021 LEIDOS.
  *
@@ -14,8 +15,10 @@
  * the License.
  */
 
-#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <ros/console.h>
+#include <carma_wm/CARMAWorldModel.h>
+#include <carma_wm/WMTestLibForGuidance.h>
 
 // Unit tests for transition table
 namespace wz_strategic_plugin
