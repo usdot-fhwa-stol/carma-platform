@@ -32,7 +32,6 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   carma_wm
-  novatel_gps_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -50,7 +49,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES port_drayage_plugin
-  CATKIN_DEPENDS carma_utils cav_msgs cav_srvs roscpp std_msgs carma_wm novatel_gps_msgs
+  CATKIN_DEPENDS carma_utils cav_msgs cav_srvs roscpp std_msgs carma_wm
 #  DEPENDS system_lib
 )
 
