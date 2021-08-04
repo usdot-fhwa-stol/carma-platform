@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2020-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,8 +19,6 @@
 
 namespace route {
 
-    Route::Route() : tf_listener_(tf_buffer_), rg_worker_(tf_buffer_) {}
-
     using std::placeholders::_1;
  
     void Route::initialize()
@@ -32,10 +30,11 @@ namespace route {
         route_pub_ = nh_->advertise<cav_msgs::Route>("route", 1, true);
         route_event_pub_ = nh_->advertise<cav_msgs::RouteEvent>("route_event", 1);
         route_state_pub_ = nh_->advertise<cav_msgs::RouteState>("route_state", 1, true);
-        route_marker_pub_= nh_->advertise<visualization_msgs::MarkerArray>("route_marker", 1, true);
+        route_marker_pub_= nh_->advertise<visualization_msgs::Marker>("route_marker", 1, true);
         // init subscribers
         pose_sub_ = nh_->subscribe("current_pose", 1, &RouteGeneratorWorker::pose_cb, &rg_worker_);
-        twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteGeneratorWorker::twist_cd, &rg_worker_);
+        twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteGeneratorWorker::twist_cb, &rg_worker_);
+        geo_sub_ = nh_->subscribe("georeference", 1, &RouteGeneratorWorker::georeference_cb, &rg_worker_);
         // init service server
         get_available_route_srv_ = nh_->advertiseService("get_available_routes", &RouteGeneratorWorker::get_available_route_cb, &rg_worker_);
         set_active_route_srv_ = nh_->advertiseService("set_active_route", &RouteGeneratorWorker::set_active_route_cb, &rg_worker_);

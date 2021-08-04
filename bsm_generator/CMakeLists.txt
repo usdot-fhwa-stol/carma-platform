@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2018-2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(bsm_generator)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
@@ -34,6 +34,7 @@ find_package(catkin REQUIRED COMPONENTS
   j2735_msgs
   novatel_gps_msgs
   wgs84_utils
+  lanelet2_extension
 )
 
 ## System dependencies are found with CMake's conventions
@@ -45,7 +46,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
   CATKIN_DEPENDS roscpp std_msgs cav_msgs carma_utils automotive_platform_msgs
-                 geometry_msgs pacmod_msgs j2735_msgs novatel_gps_msgs wgs84_utils
+                 geometry_msgs pacmod_msgs j2735_msgs novatel_gps_msgs wgs84_utils lanelet2_extension
 )
 
 ###########

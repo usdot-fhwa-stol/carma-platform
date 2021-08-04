@@ -1,5 +1,5 @@
 <!--
-  Copyright (C) 2018-2020 LEIDOS.
+  Copyright (C) 2018-2021 LEIDOS.
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
@@ -14,6 +14,7 @@
   This file is used to launch a ros wrapper of Autoware planner as a CARMA strategic plugin.
 -->
 <launch>
-    <rosparam command="load" file="$(find route_following_plugin)/config/parameters.yaml"/>
-    <node name="route_following_plugin" pkg="route_following_plugin" type="route_following_plugin" output="log"/>
+    <node name="route_following_plugin" pkg="route_following_plugin" type="route_following_plugin" output="log">
+      <rosparam command="load" file="$(find route_following_plugin)/config/parameters.yaml"/>
+    </node>
 </launch>

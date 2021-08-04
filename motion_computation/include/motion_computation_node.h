@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@
 #include <carma_utils/CARMAUtils.h>
 #include <functional>
 #include "motion_computation_worker.h"
-#include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
@@ -39,6 +38,7 @@ class MotionComputationNode
   //subscriber
   ros::Subscriber motion_comp_sub_;
   ros::Subscriber mobility_path_sub_;
+  ros::Subscriber georeference_sub_; 
 
   //publisher
   ros::Publisher carma_obj_pub_;
@@ -50,16 +50,7 @@ class MotionComputationNode
   \brief initialize this node before running
   */
   void initialize();
-
-  // tf buffer holds the tree of transforms
-  tf2_ros::Buffer tf_buffer_;
-  std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
   
-  /*!fn initialize()
-  \brief lookup ECEF to Map transform from tf2 tree
-  \return ECEF to Map transform
-  */
-  tf2::Transform lookupECEFtoMapTransform();
 
  public:
   

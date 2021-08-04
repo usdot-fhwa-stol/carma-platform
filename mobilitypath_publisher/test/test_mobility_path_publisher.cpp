@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,30 +22,38 @@ TEST(MobilityPathPublicationTest, test1)
 {
     ros::Time::init();
     cav_msgs::TrajectoryPlan plan;
-    for (int i=1; i<5; i++){
-        cav_msgs::TrajectoryPlanPoint point;
-        point.x = i;
-        point.y = i;
-        point.target_time = ros::Time(0,i);
-        plan.trajectory_points.push_back(point);
-    }
+    cav_msgs::TrajectoryPlanPoint p1;
+    p1.x = 20.0;
+    p1.y = 0.0;
+    p1.target_time = ros::Time(0,0);
+
+    cav_msgs::TrajectoryPlanPoint p2;
+    p2.x = 19.0;
+    p2.y = 0.0;
+    p2.target_time = ros::Time(0,1);
+
+    plan.trajectory_points.push_back(p1);
+    plan.trajectory_points.push_back(p2);
+    
     mobilitypath_publisher::MobilityPathPublication worker;
-    geometry_msgs::PoseStamped pose;
-    pose.pose.position.x = -1.0;
-    worker.current_pose_.reset(new geometry_msgs::PoseStamped(pose));
-    geometry_msgs::TransformStamped tf;
-    tf.transform.translation.x = 1;
-    tf.transform.translation.y = 2;
-    tf.transform.translation.z = 3;
-    tf.transform.rotation.w =1;
-    auto res = worker.mobilityPathMessageGenerator(plan, tf);
-    EXPECT_EQ(3, res.trajectory.offsets.size());
-    EXPECT_EQ(200, res.trajectory.location.ecef_x);
-    EXPECT_EQ(100, res.trajectory.offsets[0].offset_x);
-    EXPECT_EQ(300, res.trajectory.location.ecef_y);
-    EXPECT_EQ(100, res.trajectory.offsets[1].offset_y);
-    EXPECT_EQ(300, res.trajectory.location.ecef_z);
-    EXPECT_EQ(0, res.trajectory.offsets[2].offset_z);
+
+    std::string base_proj = "+proj=tmerc +lat_0=0.0 +lon_0=0.0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m "
+                        "+no_defs";
+    std_msgs::String msg;
+    msg.data = base_proj;
+    std_msgs::StringConstPtr msg_ptr(new std_msgs::String(msg));
+    worker.georeference_cb(msg_ptr);  // Set projection
+
+    auto res = worker.mobilityPathMessageGenerator(plan);
+    ASSERT_EQ(1, res.trajectory.offsets.size());
+
+    ASSERT_EQ(637813699.0, res.trajectory.location.ecef_x);
+    ASSERT_EQ(1999.0, res.trajectory.location.ecef_y);
+    ASSERT_EQ(0.0, res.trajectory.location.ecef_z);
+
+    ASSERT_EQ(res.trajectory.offsets[0].offset_x, 0);
+    ASSERT_EQ(res.trajectory.offsets[0].offset_y, -100);
+    ASSERT_EQ(res.trajectory.offsets[0].offset_z, 0);
 }
 
 TEST(MobilityPathPublicationTest, test2)
@@ -57,16 +65,15 @@ TEST(MobilityPathPublicationTest, test2)
     point.y = 1;
     point.target_time = ros::Time(0,1);
     plan.trajectory_points.push_back(point);
-    mobilitypath_publisher::MobilityPathPublication worker;
-    geometry_msgs::PoseStamped pose;
-    pose.pose.position.x = -1.0;
-    worker.current_pose_.reset(new geometry_msgs::PoseStamped(pose));
-    geometry_msgs::TransformStamped tf;
-    tf.transform.translation.x = 1;
-    tf.transform.translation.y = 2;
-    tf.transform.rotation.w =1;
 
-    auto res = worker.mobilityPathMessageGenerator(plan, tf);
+    mobilitypath_publisher::MobilityPathPublication worker;
+
+    auto res = worker.mobilityPathMessageGenerator(plan);
+
+    // Check values are unset as georeference was not provided
+    ASSERT_EQ(0, res.trajectory.location.ecef_x);
+    ASSERT_EQ(0, res.trajectory.location.ecef_y);
+    ASSERT_EQ(0, res.trajectory.location.ecef_z);
     EXPECT_EQ(0, res.trajectory.offsets.size());
     
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  Copyright (C) 2018-2020 LEIDOS.
+  Copyright (C) 2018-2021 LEIDOS.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -17,43 +17,12 @@
 <package format = "3">
   <name>gnss_to_map_convertor</name>
   <version>3.3.0</version>
-  <description>The gnss_to_map_convertor converts incomping GNSS messages (NavSatFix) to poses in the ECEF and Map frames </description>
+  <description>The gnss_to_map_convertor converts incomping GNSS messages (NavSatFix) to poses in the Map frames </description>
 
-  <!-- One maintainer tag required, multiple allowed, one person per tag -->
-  <!-- Example:  -->
-  <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="carma@todo.todo">carma</maintainer>
+  <maintainer email="carma@dot.gov">carma</maintainer>
 
-
-  <!-- One license tag required, multiple allowed, one license per tag -->
-  <!-- Commonly used license strings: -->
-  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
   <license>Apache 2.0</license>
 
-
-  <!-- Url tags are optional, but multiple are allowed, one per tag -->
-  <!-- Optional attribute type can be: website, bugtracker, or repository -->
-  <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/gnss_to_map_convertor</url> -->
-
-
-  <!-- Author tags are optional, multiple are allowed, one per tag -->
-  <!-- Authors do not have to be maintainers, but could be -->
-  <!-- Example: -->
-  <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
-
-
-  <!-- The *_depend tags are used to specify dependencies -->
-  <!-- Dependencies can be catkin packages or system dependencies -->
-  <!-- Examples: -->
-  <!-- Use depend for packages you need at compile time: -->
-  <!--   <depend>message_generation</depend> -->
-  <!-- Use buildtool_depend for build tool packages: -->
-  <!--   <buildtool_depend>catkin</buildtool_depend> -->
-  <!-- Use run_depend for packages you need at runtime: -->
-  <!--   <run_depend>message_runtime</run_depend> -->
-  <!-- Use test_depend for packages you need only for testing: -->
-  <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <depend>geometry_msgs</depend>
   <depend>roscpp</depend>
@@ -67,11 +36,7 @@
   <depend>novatel_gps_msgs</depend>
   <depend>carma_utils</depend>
   <depend>tf2_geometry_msgs</depend>
+  <depend>lanelet2_extension</depend>
+  <depend>lanelet2_core</depend>
   
-
-  <!-- The export tag contains other, unspecified, tags -->
-  <export>
-    <!-- Other tools can request additional information be placed here -->
-
-  </export>
 </package>

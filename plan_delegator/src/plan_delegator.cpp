@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -167,6 +167,7 @@ namespace plan_delegator
             // ignore expired maneuvers
             if(isManeuverExpired(maneuver))
             {
+                ROS_INFO_STREAM("Dropping expired maneuver: " << GET_MANEUVER_PROPERTY(maneuver, parameters.maneuver_id));
                 // Update the maneuver plan index for the next loop
                 ++current_maneuver_index;
                 continue;
@@ -185,6 +186,14 @@ namespace plan_delegator
                 {
                     ROS_WARN_STREAM("Found invalid trajectory with less than 2 trajectory points for " << latest_maneuver_plan_.maneuver_plan_id);
                     break;
+                }
+                //Remove duplicate point from start of trajectory
+                if(latest_trajectory_plan.trajectory_points.size() !=0){
+                    
+                    if(latest_trajectory_plan.trajectory_points.back().target_time == plan_req.response.trajectory_plan.trajectory_points.front().target_time){
+                        ROS_DEBUG_STREAM("Removing duplicate point");
+                        plan_req.response.trajectory_plan.trajectory_points.erase(plan_req.response.trajectory_plan.trajectory_points.begin());
+                    }
                 }
                 latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
                                                                 plan_req.response.trajectory_plan.trajectory_points.begin(),
@@ -217,19 +226,7 @@ namespace plan_delegator
                 break;
             }
         }
-        //////////
-        // TODO UPDATE THE FOLLOWING IF STATEMENT AFTER VANDEN-PLAS release https://github.com/usdot-fhwa-stol/carma-platform/issues/1106
-        /////////
-        if (latest_trajectory_plan.trajectory_points.size() > 0) {
-            if(latest_trajectory_plan.trajectory_points[0].planner_plugin_name == "InLaneCruisingPlugin" || 
-            latest_trajectory_plan.trajectory_points[0].planner_plugin_name == "CooperativeLaneChangePlugin"){
-                latest_trajectory_plan.initial_longitudinal_velocity = std::max(latest_twist_.twist.linear.x, min_crawl_speed_); 
-            }
-            else{
-                latest_trajectory_plan.initial_longitudinal_velocity = latest_twist_.twist.linear.x; 
-            }
-        }
-        //////////////////// END TODO BLOCK
+
         return latest_trajectory_plan;
     }
 

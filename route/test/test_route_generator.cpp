@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2020-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,9 +50,8 @@ Using this file:
 
 TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
 {
-    tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
-    route::RouteGeneratorWorker worker(tf_buffer);
+    route::RouteGeneratorWorker worker;
 
     int projector_type = 0;
     std::string target_frame;
@@ -94,33 +93,36 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
     
     // Create MarkerArray to test
-    visualization_msgs::MarkerArray route_marker_msg;
-    route_marker_msg.markers={};
 
     visualization_msgs::Marker marker;
     marker.header.frame_id = "map";
     marker.header.stamp = ros::Time();
-    marker.type = visualization_msgs::Marker::SPHERE;//
+    marker.type = visualization_msgs::Marker::SPHERE_LIST;//
     marker.action = visualization_msgs::Marker::ADD;
     marker.ns = "route_visualizer";
 
-    marker.scale.x = 0.5;
-    marker.scale.y = 0.5;
-    marker.scale.z = 0.5;
+    marker.scale.x = 0.65;
+    marker.scale.y = 0.65;
+    marker.scale.z = 0.65;
     marker.frame_locked = true;
 
-    marker.color.r = 1.0f;
-    marker.color.g = 1.0f;
-    marker.color.b = 1.0f;
-    marker.color.a = 1.0f;
+    marker.id = 0;
+    marker.color.r = 1.0F;
+    marker.color.g = 1.0F;
+    marker.color.b = 1.0F;
+    marker.color.a = 1.0F;
 
-    marker.pose.position.x = start_lanelet.centerline3d().front().x();
-    marker.pose.position.y = start_lanelet.centerline3d().front().y();
+    geometry_msgs::Point p1;
+    p1.x = start_lanelet.centerline3d().front().x();
+    p1.y = start_lanelet.centerline3d().front().y();
 
-    route_marker_msg.markers.push_back(marker);
-    marker.pose.position.x = end_lanelet.centerline3d().back().x();
-    marker.pose.position.y = end_lanelet.centerline3d().back().y();
-    route_marker_msg.markers.push_back(marker);
+    marker.points.push_back(p1);
+
+    geometry_msgs::Point p2;
+    p2.x = start_lanelet.centerline3d().back().x();
+    p2.y = start_lanelet.centerline3d().back().y();
+
+    marker.points.push_back(p2);
 
 
     // Computes the shortest path and prints the list of lanelet IDs to get from the start to the end. Can be manually confirmed in JOSM
@@ -135,10 +137,11 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
         }
         std::cout << "\n";
         auto test_msg = worker.compose_route_marker_msg(route);
-        EXPECT_NEAR(route_marker_msg.markers[0].pose.position.x, test_msg.markers[0].pose.position.x, 10.0);
-        EXPECT_NEAR(route_marker_msg.markers[0].pose.position.y, test_msg.markers[0].pose.position.y, 10.0);
-        EXPECT_NEAR(route_marker_msg.markers[1].pose.position.x, test_msg.markers[1].pose.position.x, 10.0);
-        EXPECT_NEAR(route_marker_msg.markers[1].pose.position.y, test_msg.markers[1].pose.position.y, 10.0);
+        ASSERT_EQ(marker.points.size(), test_msg.points.size());
+        EXPECT_NEAR(marker.points[0].x, test_msg.points[0].x, 10.0);
+        EXPECT_NEAR(marker.points[0].y, test_msg.points[0].y, 10.0);
+        EXPECT_NEAR(marker.points[1].x, test_msg.points[1].x, 10.0);
+        EXPECT_NEAR(marker.points[1].y, test_msg.points[1].y, 10.0);
     }
     
     
@@ -146,9 +149,8 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
 
 TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
 {
-    tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
-    route::RouteGeneratorWorker worker(tf_buffer);
+    route::RouteGeneratorWorker worker;
 
     int projector_type = 0;
     std::string target_frame;
@@ -212,9 +214,8 @@ TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
 
 TEST(RouteGeneratorTest, testLaneletRoutingTown02VectorMap)
 {
-    tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
-    route::RouteGeneratorWorker worker(tf_buffer);
+    route::RouteGeneratorWorker worker;
 
     int projector_type = 0;
     std::string target_frame;
@@ -289,61 +290,11 @@ TEST(RouteGeneratorTest, testLaneletRoutingTown02VectorMap)
 
 }
 
-TEST(RouteGeneratorTest, testReadLanelet111RouteFile)
-{
-    tf2_ros::Buffer tf_buffer;
-    carma_wm::WorldModelConstPtr wm;
-    route::RouteGeneratorWorker worker(tf_buffer);
-    worker.set_route_file_path("../resource/route/");
-    cav_srvs::GetAvailableRoutesRequest req;
-    cav_srvs::GetAvailableRoutesResponse resp;
-    ASSERT_TRUE(worker.get_available_route_cb(req, resp));
-    for(auto i = 0; i < resp.availableRoutes.size();i++)    
-    {
-        std::cout<< "Route #: " << (i+1) << "\n";
-        std::cout<< "Route ID: " << resp.availableRoutes[i].route_id << "\n";
-        std::cout<< "Route Name: " << resp.availableRoutes[i].route_name << "\n";
-    }
-    auto points = worker.load_route_destinations_in_ecef("Test_lanelet111_route_2");
-    std::cout << "Point Size : " << points.size()<<"\n";
-    ASSERT_EQ(8, points.size());    
-    ASSERT_NEAR(4.15171e+06, points[0].getX(), 5.0);
-    ASSERT_NEAR(583682, points[0].getY(), 5.0);    
-    ASSERT_NEAR(4.79047e+06, points[0].getZ(), 5.0);
-}
-
-TEST(RouteGeneratorTest, testReadRoutetfhrcFile)
-{
-    tf2_ros::Buffer tf_buffer;
-    carma_wm::WorldModelConstPtr wm;
-    route::RouteGeneratorWorker worker(tf_buffer);
-    worker.set_route_file_path("../resource/route/");
-    cav_srvs::GetAvailableRoutesRequest req;
-    cav_srvs::GetAvailableRoutesResponse resp;
-    ASSERT_TRUE(worker.get_available_route_cb(req, resp));
-    std::cout << "Available Route : " << resp.availableRoutes.size() << "\n";
-    ASSERT_EQ(4, resp.availableRoutes.size());
-    for(auto i = 0; i < resp.availableRoutes.size();i++)    
-    {
-        if(resp.availableRoutes[i].route_id  == "tfhrc_test_route")
-        {
-            std::cout <<"C-HUB : " << resp.availableRoutes[i].route_name << "\n";
-            auto points = worker.load_route_destinations_in_ecef("tfhrc_test_route");
-            std::cout << "Point Size : " << points.size()<<"\n";
-            ASSERT_EQ(5, points.size());
-            ASSERT_NEAR(1106580, points[0].getX(), 5.0);
-            ASSERT_NEAR(894697, points[0].getY(), 5.0);  
-            ASSERT_NEAR(-6196590, points[0].getZ(), 5.0);
-        }
-   }
-}
-
 TEST(RouteGeneratorTest, test_crosstrack_error_check)
 {
-     tf2_ros::Buffer tf_buffer;
      std::shared_ptr<carma_wm::WMListener> wml;
     std::shared_ptr<carma_wm::CARMAWorldModel> cmw=std::make_shared<carma_wm::CARMAWorldModel>();
-    route::RouteGeneratorWorker worker(tf_buffer);
+    route::RouteGeneratorWorker worker;
 
     int projector_type = 0;
     std::string target_frame;
@@ -457,13 +408,19 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
 
 TEST(RouteGeneratorTest, test_set_active_route_cb)
 {
-    tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
-    route::RouteGeneratorWorker worker(tf_buffer);
+    route::RouteGeneratorWorker worker;
     worker.set_route_file_path("../resource/route/");
     cav_srvs::GetAvailableRoutesRequest req;
     cav_srvs::GetAvailableRoutesResponse resp;
     ASSERT_TRUE(worker.get_available_route_cb(req, resp));
+
+    std::string proj = "+proj=tmerc +lat_0=38.95197911150576 +lon_0=-77.14835128349988 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+    
+    std_msgs::String str_msg;
+    str_msg.data = proj;
+    std_msgs::StringConstPtr msg_ptr(new std_msgs::String(str_msg));
+    worker.georeference_cb(msg_ptr);  // Set projection
 
     std::cout << "Available Route : " << resp.availableRoutes.size() << "\n";
     ASSERT_EQ(4, resp.availableRoutes.size());
@@ -472,12 +429,12 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
         if(resp.availableRoutes[i].route_id  == "tfhrc_test_route")
         {
             std::cout <<"C-HUB : " << resp.availableRoutes[i].route_name << "\n";
-            auto points = worker.load_route_destinations_in_ecef("tfhrc_test_route");
+            auto points = worker.load_route_destinations_in_map_frame("tfhrc_test_route");
             std::cout << "Point Size : " << points.size()<<"\n";
             ASSERT_EQ(5, points.size());
-            ASSERT_NEAR(1106580, points[0].getX(), 5.0);
-            ASSERT_NEAR(894697, points[0].getY(), 5.0);  
-            ASSERT_NEAR(-6196590, points[0].getZ(), 5.0);
+            ASSERT_NEAR(-170.21389078, points[0].x(), 0.001);
+            ASSERT_NEAR(498.11200005, points[0].y(), 0.001);  
+            ASSERT_NEAR(72, points[0].z(), 0.001);
         }
     }
     cav_srvs::SetActiveRouteRequest req2;
@@ -487,9 +444,7 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     //Assign vehicle position
     msg.pose.position.x = 1106580;
     msg.pose.position.y = 894697;
-
     geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
-
     worker.pose_cb(mpt);
 
     resp2.errorStatus = 0;
@@ -508,9 +463,8 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
 
 TEST(RouteGeneratorTest, test_duplicate_lanelets_in_shortest_path)
 {
-    tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
-    route::RouteGeneratorWorker worker(tf_buffer);
+    route::RouteGeneratorWorker worker;
 
     int projector_type = 0;
     std::string target_frame;
@@ -557,8 +511,7 @@ TEST(RouteGeneratorTest, test_duplicate_lanelets_in_shortest_path)
 
 TEST(RouteGeneratorTest, test_reroute_after_route_invalidation)
 {
-    tf2_ros::Buffer tf_buffer;
-    route::RouteGeneratorWorker worker(tf_buffer);
+    route::RouteGeneratorWorker worker;
 
     auto cmw= carma_wm::test::getGuidanceTestMap();
     worker.setWorldModelPtr(cmw);
@@ -590,8 +543,7 @@ TEST(RouteGeneratorTest, test_reroute_after_route_invalidation)
 
 TEST(RouteGeneratorTest, test_setReroutingChecker)
 {
-    tf2_ros::Buffer tf_buffer;
-    route::RouteGeneratorWorker worker(tf_buffer);
+    route::RouteGeneratorWorker worker;
     bool flag = false;
     worker.setReroutingChecker([&]{
         flag = true;
@@ -603,10 +555,9 @@ TEST(RouteGeneratorTest, test_setReroutingChecker)
 
 TEST(RouteGeneratorTest, test_get_closest_lanelet_from_route_llts)
 {
-     tf2_ros::Buffer tf_buffer;
      std::shared_ptr<carma_wm::WMListener> wml;
     std::shared_ptr<carma_wm::CARMAWorldModel> cmw=std::make_shared<carma_wm::CARMAWorldModel>();
-    route::RouteGeneratorWorker worker(tf_buffer);
+    route::RouteGeneratorWorker worker;
 
     int projector_type = 0;
     std::string target_frame;

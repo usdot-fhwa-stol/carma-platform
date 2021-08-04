@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,7 @@
 
 namespace arbitrator
 {
-    cav_msgs::ManeuverPlan TreePlanner::generate_plan() 
+    cav_msgs::ManeuverPlan TreePlanner::generate_plan(const VehicleState& start_state) 
     {
         cav_msgs::ManeuverPlan root;
         std::vector<std::pair<cav_msgs::ManeuverPlan, double>> open_list;
@@ -57,7 +57,7 @@ namespace arbitrator
                 }
 
                 // Expand it, and reprioritize
-                std::vector<cav_msgs::ManeuverPlan> children = neighbor_generator_.generate_neighbors(cur_plan);
+                std::vector<cav_msgs::ManeuverPlan> children = neighbor_generator_.generate_neighbors(cur_plan, start_state);
                 
                 // Compute cost for each child and store in open list
                 for (auto child = children.begin(); child != children.end(); child++)

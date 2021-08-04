@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_wm/TrafficControl.h>
 #include <queue>
-
+#include <cav_msgs/SPAT.h>
 
 namespace carma_wm
 {
@@ -57,7 +57,7 @@ public:
   void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg);
 
   /*!
-   * \brief Callback for route message. It is a TODO: To update function when route message spec is defined
+   * \brief Callback for route message.
    */
   void routeCallback(const cav_msgs::RouteConstPtr& route_msg);
 
@@ -103,6 +103,11 @@ public:
  * 
 */
   void enableUpdatesWithoutRoute();
+/**
+ *  \brief incoming spat message
+ * 
+*/
+  void incomingSpatCallback(const cav_msgs::SPAT& spat_msg);
 
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
@@ -117,5 +122,6 @@ private:
 
   bool rerouting_flag_=false;
   bool route_node_flag_=false;
+  long most_recent_update_msg_seq_ = -1; // Tracks the current sequence number for map update messages. Dropping even a single message would invalidate the map
 };
 }  // namespace carma_wm

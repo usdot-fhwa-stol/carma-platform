@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2018-2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -28,8 +28,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   cav_msgs
   carma_utils
-  tf2_ros
-  tf2
+  lanelet2_extension
 )
 
 ## System dependencies are found with CMake's conventions
@@ -40,7 +39,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_msgs carma_utils tf2_ros tf2
+  CATKIN_DEPENDS roscpp std_msgs cav_msgs carma_utils lanelet2_extension
 )
 
 ###########

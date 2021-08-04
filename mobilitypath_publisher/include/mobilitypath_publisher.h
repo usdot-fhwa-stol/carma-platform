@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@
 #include <vector>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <tf2_ros/transform_listener.h>
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <cav_msgs/TrajectoryPlan.h>
@@ -28,6 +27,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <std_msgs/String.h>
 
 namespace mobilitypath_publisher
 {
@@ -42,10 +43,13 @@ namespace mobilitypath_publisher
         // general starting point of this node
         void run();
 
-        // local copy of pose
-        boost::shared_ptr<geometry_msgs::PoseStamped const> current_pose_;
+        cav_msgs::MobilityPath mobilityPathMessageGenerator(const cav_msgs::TrajectoryPlan& trajectory_plan);
 
-        cav_msgs::MobilityPath mobilityPathMessageGenerator(const cav_msgs::TrajectoryPlan& trajectory_plan, const geometry_msgs::TransformStamped& tf);
+        /**
+         * \brief Callback for map projection string to define lat/lon -> map conversion
+         * \brief msg The proj string defining the projection.
+         */ 
+        void georeference_cb(const std_msgs::StringConstPtr& msg);
         
 
     private:
@@ -62,9 +66,9 @@ namespace mobilitypath_publisher
 
         // ROS subscribers
         ros::Subscriber traj_sub_;
-        ros::Subscriber pose_sub_;
         ros::Subscriber accel_sub_;
         ros::Subscriber bsm_sub_;
+        ros::Subscriber georeference_sub_;
 
         ros::Timer path_pub_timer_;
 
@@ -74,9 +78,7 @@ namespace mobilitypath_publisher
         cav_msgs::TrajectoryPlan latest_trajectory_;
         cav_msgs::MobilityPath latest_mobility_path_;
 
-        // TF listenser
-        tf2_ros::Buffer tf2_buffer_;
-        std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
+        std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
         // BSM Message
         cav_msgs::BSMCoreData bsm_core_;
@@ -89,16 +91,17 @@ namespace mobilitypath_publisher
         void currentpose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
         void trajectory_cb(const cav_msgs::TrajectoryPlanConstPtr& msg);
         void bsm_cb(const cav_msgs::BSMConstPtr& msg);
+        
 
         // Compose Mobility Header
         cav_msgs::MobilityHeader composeMobilityHeader(uint64_t time);
 
         // Convert Trajectory Plan to (Mobility) Trajectory
-        cav_msgs::Trajectory TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const;
+        cav_msgs::Trajectory TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points) const;
 
     
         // Convert Trajectory Point to ECEF Transform (accepts meters and outputs in cm)
-        cav_msgs::LocationECEF TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const tf2::Transform& transform) const;
+        cav_msgs::LocationECEF TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point) const;
 
         // sender's static ID which is its license plate
         std::string sender_id = "USDOT-49096";

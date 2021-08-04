@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2020-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,6 +39,7 @@ struct InLaneCruisingPluginConfig
   double back_distance = 20;               // Number of meters behind the first maneuver that need to be included in points for curvature calculation
   bool enable_object_avoidance = true;    // Activate object avoidance logic
   bool publish_debug = false; // True if debug publishing will be enabled
+  double buffer_ending_downtrack = 20.0;
   
   friend std::ostream& operator<<(std::ostream& output, const InLaneCruisingPluginConfig& c)
   {
@@ -57,6 +58,7 @@ struct InLaneCruisingPluginConfig
            << "back_distance: " << c.back_distance << std::endl
            << "enable_object_avoidance: " << c.enable_object_avoidance << std::endl
            << "publish_debug: " << c.publish_debug << std::endl
+           << "buffer_ending_downtrack: " << c.buffer_ending_downtrack << std::endl
            << "}" << std::endl;
     return output;
   }

@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2020-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,9 +38,9 @@ namespace route {
     public:
 
         /**
-         * \brief Default constructor for arbitrator class
+         * \brief Default constructor
          */
-        Route();
+        Route() = default;
 
         /**
          * \brief General starting point to run this node
@@ -56,11 +56,6 @@ namespace route {
         carma_wm::WMListener wml_;
         carma_wm::WorldModelConstPtr wm_;
 
-        // tf buffer holds the tree of transforms
-        tf2_ros::Buffer tf_buffer_;
-        // tf2 listener subscribes to the /tf and /tf_static topics
-        tf2_ros::TransformListener tf_listener_;
-
         // route generator worker
         RouteGeneratorWorker rg_worker_;
 
@@ -73,6 +68,7 @@ namespace route {
         // subscriber to current pose in the map
         ros::Subscriber pose_sub_;
         ros::Subscriber twist_sub_;
+        ros::Subscriber geo_sub_;
         
         // route service servers
         ros::ServiceServer get_available_route_srv_;

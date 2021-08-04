@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2020-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,5 +22,9 @@ int main(int argc, char** argv)
 {
   testing::InitGoogleTest(&argc, argv);
   ros::Time::init();
+  ROSCONSOLE_AUTOINIT;
+  if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+    ros::console::notifyLoggerLevelsChanged();
+  }
   return RUN_ALL_TESTS();
 }

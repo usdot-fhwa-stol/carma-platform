@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,19 +33,13 @@
 #include <autoware_msgs/Lane.h>
 #include <ros/ros.h>
 #include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
+#include <basic_autonomy/helper_functions.h>
+
 namespace inlanecruising_plugin
 {
 using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
 using DebugPublisher = std::function<void(const carma_debug_msgs::TrajectoryCurvatureSpeeds&)>;
-
-/**
- * \brief Convenience class for pairing 2d points with speeds
- */ 
-struct PointSpeedPair
-{
-  lanelet::BasicPoint2d point;
-  double speed = 0;
-};
+using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
 
 /**
  * \brief Class containing primary business logic for the In-Lane Cruising Plugin
@@ -157,32 +151,6 @@ public:
                                                   const carma_wm::WorldModelConstPtr& wm);
 
   /**
-   * \brief Returns the nearest point to the provided vehicle pose in the provided list
-   * 
-   * \param points The points to evaluate
-   * \param state The current vehicle state
-   * 
-   * \return index of nearest point in points
-   */ 
-  int get_nearest_point_index(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state) const;
-
-  /**
-   * \brief Returns the nearest point to the provided vehicle pose in the provided list
-   * 
-   * \param points The points to evaluate
-   * \param state The current vehicle state
-   * 
-   * \return index of nearest point in points
-   */ 
-  int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points, const cav_msgs::VehicleState& state) const;
-
-  /**
-   * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
-   */ 
-  void split_point_speed_pairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
-                            std::vector<double>* speeds) const;
-
-  /**
    * \brief Computes a spline based on the provided points
    * 
    * \param basic_points The points to use for fitting the spline
@@ -274,6 +242,10 @@ private:
   cav_msgs::Plugin plugin_discovery_msg_;
   DebugPublisher debug_publisher_;
   carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg_;
+  cav_msgs::VehicleState ending_state_before_buffer; //state before applying extra points for curvature calculation that are removed later
 
 };
+
+
+
 };  // namespace inlanecruising_plugin

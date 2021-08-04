@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2020-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,24 +54,28 @@ WMBroadcasterNode::WMBroadcasterNode()
 int WMBroadcasterNode::run()
 {
   // Map Publisher
-  // When a new node connects to this topic that node should be provided with an updated map which includes any already included map updates
-  map_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("semantic_map", 1, [this](auto& pub){ wmb_.newMapSubscriber(pub); });
+  map_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("semantic_map", 1, true);
   // Map Update Publisher
-  map_update_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("map_update", 1, true);
+  // When a new node connects to this topic that node should be provided with all previous updates for the current map version
+  map_update_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("map_update", 200, [this](auto& pub){ wmb_.newUpdateSubscriber(pub); });
   //Route Message Publisher
   control_msg_pub_= cnh_.advertise<cav_msgs::TrafficControlRequest>("outgoing_geofence_request", 1, true);
   //Check Active Geofence Publisher
-  active_pub_ = cnh_.advertise<cav_msgs::CheckActiveGeofence>("active_geofence", 1000, true);
+  active_pub_ = cnh_.advertise<cav_msgs::CheckActiveGeofence>("active_geofence", 200, true);
   // Base Map Sub
   base_map_sub_ = cnh_.subscribe("base_map", 1, &WMBroadcaster::baseMapCallback, &wmb_);
   // Base Map Georeference Sub
   georef_sub_ = cnh_.subscribe("georeference", 1, &WMBroadcaster::geoReferenceCallback, &wmb_);
   // Geofence Sub
-  geofence_sub_ = cnh_.subscribe("geofence", 100, &WMBroadcaster::geofenceCallback, &wmb_);
+  geofence_sub_ = cnh_.subscribe("geofence", 200, &WMBroadcaster::geofenceCallback, &wmb_);
   //Route Message Sub
   route_callmsg_sub_ = cnh_.subscribe("route", 1, &WMBroadcaster::routeCallbackMessage, &wmb_);
   //Current Location Sub
   curr_location_sub_ = cnh_.subscribe("current_pose", 1,&WMBroadcaster::currentLocationCallback, &wmb_);
+  //TCM Visualizer pub
+  tcm_visualizer_pub_= cnh_.advertise<visualization_msgs::MarkerArray>("tcm_visualizer",1,true);
+  //TCR Visualizer pub (visualized on UI)
+  tcr_visualizer_pub_ = cnh_.advertise<cav_msgs::TrafficControlRequestPolygon>("tcr_bounding_points",1,true);
   
   double config_limit;
   double lane_max_width;
@@ -80,12 +84,20 @@ int WMBroadcasterNode::run()
 
   pnh2_.getParam("/config_speed_limit", config_limit);
   wmb_.setConfigSpeedLimit(config_limit);
+
   
- 
+    timer = cnh_.createTimer(ros::Duration(10.0), [this](auto){
+      tcm_visualizer_pub_.publish(wmb_.tcm_marker_array_);
+      tcr_visualizer_pub_.publish(wmb_.tcr_polygon_);
+      if(wmb_.getRoute().route_path_lanelet_ids.size() > 0)
+        wmb_.routeCallbackMessage(wmb_.getRoute());
+      }, false);
+
   // Spin
   cnh_.spin();
   return 0;
 }
+
 
 // @SONAR_START@
 

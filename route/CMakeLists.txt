@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2018-2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -31,9 +31,6 @@ find_package(catkin REQUIRED COMPONENTS
   autoware_msgs
   wgs84_utils
   carma_wm
-  tf2_geometry_msgs
-  tf2_ros
-  tf2
 )
 
 ## System dependencies are found with CMake's conventions
@@ -44,7 +41,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils autoware_msgs wgs84_utils carma_wm tf2_geometry_msgs tf2_ros tf2
+  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils autoware_msgs wgs84_utils carma_wm
 )
 
 ###########

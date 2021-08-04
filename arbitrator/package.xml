@@ -20,6 +20,8 @@
   <depend>cav_msgs</depend>
   <depend>cav_srvs</depend>
   <depend>roscpp</depend>
+  <depend>lanelet2_core</depend>
+  <depend>carma_wm</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
