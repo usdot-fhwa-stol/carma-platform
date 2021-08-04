@@ -409,10 +409,10 @@ inline void setSpeedLimit (lanelet::Velocity speed_limit, std::shared_ptr<carma_
       }
     }
     lanelet::DigitalSpeedLimitPtr sl = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), speed_limit, {llt}, {},
-                                                     { lanelet::Participants::VehicleCar }));
+                                                     { lanelet::Participants::Vehicle }));
     cmw->getMutableMap()->update(llt, sl);
   }
-  ROS_INFO_STREAM("Set the new speed limit!");
+  ROS_INFO_STREAM("Set the new speed limit! Value: " << speed_limit.value());
 }
 
 /**
