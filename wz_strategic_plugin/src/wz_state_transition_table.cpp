@@ -39,15 +39,15 @@ void WorkZoneStateTransitionTable::signal(TransitEvent signal)
       signalWhenUNAVAILABLE(signal);
       break;
 
-    case TransitState::UNAVAILABLE:
+    case TransitState::APPROACHING:
       signalWhenAPPROACHING(signal);
       break;
 
-    case TransitState::UNAVAILABLE:
+    case TransitState::WAITING:
       signalWhenWAITING(signal);
       break;
 
-    case TransitState::UNAVAILABLE:
+    case TransitState::DEPARTING:
       signalWhenDEPARTING(signal);
       break;
 
@@ -121,7 +121,7 @@ void WorkZoneStateTransitionTable::logDebugSignal(TransitEvent signal) const
                                                                                   << state_);
 }
 
-void WorkZoneStateTransitionTable::setAndLogState(TransitState new_state, TransitState source_signal)
+void WorkZoneStateTransitionTable::setAndLogState(TransitState new_state, TransitEvent source_signal)
 {
   if (new_state == state_)
   {

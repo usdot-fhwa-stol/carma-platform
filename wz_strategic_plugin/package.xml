@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--  
- Copyright (C) 2018-2020 LEIDOS.
+ Copyright (C) 2021 LEIDOS.
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  use this file except in compliance with the License. You may obtain a copy of
  the License at
@@ -13,7 +13,7 @@
  the License.
 -->
 
-<package format="2">
+<package format="3">
   <name>wz_strategic_plugin</name>
   <version>1.0.0</version>
   <description>The strategic plugin generates maneuvers to make the vehicle go through the workzone. </description>
@@ -22,9 +22,10 @@
   <author email="carma@dot.gov">carma</author>
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
-  <depend>std_msgs</depend>
   <depend>cav_srvs</depend>
   <depend>cav_msgs</depend>
   <depend>carma_utils</depend>
   <depend>carma_wm</depend>
+  <depend>lanelet2_core</depend>
+  <depend>lanelet2_traffic_rules</depend>
 </package>

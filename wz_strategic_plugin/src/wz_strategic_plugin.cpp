@@ -36,7 +36,7 @@
 namespace wz_strategic_plugin
 {
 WzStrategicPlugin::WzStrategicPlugin(carma_wm::WorldModelConstPtr wm, WzStrategicPluginConfig config)
-  : wm_(wm), config_(config))
+  : wm_(wm), config_(config)
 {
   plugin_discovery_msg_.name = config_.strategic_plugin_name;
   plugin_discovery_msg_.versionId = "v1.0";
@@ -45,6 +45,10 @@ WzStrategicPlugin::WzStrategicPlugin(carma_wm::WorldModelConstPtr wm, WzStrategi
   plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
   plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
 };
+
+cav_msgs::Plugin WzStrategicPlugin::getDiscoveryMsg() const {
+  return plugin_discovery_msg_;
+}
 
 bool WzStrategicPlugin::supportedLightState(lanelet::CarmaTrafficLightState state) const
 {
@@ -73,17 +77,17 @@ bool WzStrategicPlugin::supportedLightState(lanelet::CarmaTrafficLightState stat
   }
 }
 
-double WzStrategicPlugin::estimate_distance_to_stop(double v, double a)
+double WzStrategicPlugin::estimate_distance_to_stop(double v, double a) const
 {
   return (v * v) / 2 * a;
 }
 
-double WzStrategicPlugin::estimate_time_to_stop(double d, double v)
+double WzStrategicPlugin::estimate_time_to_stop(double d, double v) const
 {
   return 2 * d / v;
 };
 
-VehicleState extractInitialState(const cav_srvs::PlanManeuversRequest& req)
+WzStrategicPlugin::VehicleState WzStrategicPlugin::extractInitialState(const cav_srvs::PlanManeuversRequest& req) const
 {
   VehicleState state;
   if (!req.prior_plan.maneuvers.empty())
@@ -91,7 +95,7 @@ VehicleState extractInitialState(const cav_srvs::PlanManeuversRequest& req)
     state.stamp = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_time);
     state.downtrack = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_dist);
     state.speed = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_speed);
-    state.lane_id = wm_->getLaneletsBetween(state.downtrack, state.downtrack, true);
+    state.lane_id = getLaneletsBetweenWithException(state.downtrack, state.downtrack, true).front().id();
   }
   else
   {
@@ -104,7 +108,8 @@ VehicleState extractInitialState(const cav_srvs::PlanManeuversRequest& req)
   return state;
 }
 
-bool validLightState(const boost::optional<CarmaTrafficLightState>& optional_state, const ros::Time& source_time)
+bool WzStrategicPlugin::validLightState(const boost::optional<lanelet::CarmaTrafficLightState>& optional_state,
+                                        const ros::Time& source_time) const
 {
   if (!optional_state)
   {
@@ -112,7 +117,7 @@ bool validLightState(const boost::optional<CarmaTrafficLightState>& optional_sta
     return false;
   }
 
-  CarmaTrafficLightState light_state = optional_state.get();
+  lanelet::CarmaTrafficLightState light_state = optional_state.get();
 
   if (!supportedLightState(light_state))
   {
@@ -124,10 +129,13 @@ bool validLightState(const boost::optional<CarmaTrafficLightState>& optional_sta
   return true;
 }
 
-std::vector<lanelet::ConstLanelet> getLaneletsBetweenWithException(double start_downtrack, double end_downtrack)
+std::vector<lanelet::ConstLanelet> WzStrategicPlugin::getLaneletsBetweenWithException(double start_downtrack,
+                                                                                      double end_downtrack,
+                                                                                      bool shortest_path_only,
+                                                                                      bool bounds_inclusive) const
 {
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
-      wm_->getLaneletsBetween(current_state.downtrack, intersection_end_downtrack, true, false);
+      wm_->getLaneletsBetween(start_downtrack, end_downtrack, shortest_path_only, bounds_inclusive);
 
   if (crossed_lanelets.size() == 0)
   {
@@ -139,9 +147,9 @@ std::vector<lanelet::ConstLanelet> getLaneletsBetweenWithException(double start_
   return crossed_lanelets;
 }
 
-void processWhenUNAVAILABLE(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
-                            const VehicleState& current_state,
-                            const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights)
+void WzStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversRequest& req,
+                                            cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
+                                            const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights)
 {
   // Reset intersection state since in this state we are not yet known to be in or approaching an intersection
   intersection_speed_ = boost::none;
@@ -173,9 +181,9 @@ void processWhenUNAVAILABLE(const cav_srvs::PlanManeuversRequest& req, cav_srvs:
   }
 }
 // TODO should we handle when the vehicle is not going to make the light but doesn't have space to stop?
-void processWhenAPPROACHING(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
-                            const VehicleState& current_state,
-                            const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights)
+void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest& req,
+                                            cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
+                                            const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights)
 {
   if (traffic_lights.empty())  // If are are in the approaching state and there is no longer any lights ahead of us then
                                // the vehicle must have crossed the stop bar
@@ -191,10 +199,12 @@ void processWhenAPPROACHING(const cav_srvs::PlanManeuversRequest& req, cav_srvs:
 
   ROS_DEBUG("traffic_light_down_track %f", traffic_light_down_track);
 
+  double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack;
+
   // If the vehicle is at a stop trigger the
-  constexpr HALF_MPH_IN_MPS = 0.22352;
+  constexpr double HALF_MPH_IN_MPS = 0.22352;
   if (current_state.speed < HALF_MPH_IN_MPS &&
-      fabs(current_state.downtrack - traffic_light_down_track) < config_.stopping_location_buffer)
+      fabs(distance_remaining_to_traffic_light) < config_.stopping_location_buffer)
   {
     transition_table_.signal(TransitEvent::STOPPED);  // The vehicle has come to a stop at the light
     return;
@@ -205,14 +215,15 @@ void processWhenAPPROACHING(const cav_srvs::PlanManeuversRequest& req, cav_srvs:
 
   intersection_speed_ = findSpeedLimit(nearest_traffic_light->getControlledLanelets().front());
 
-  intersection_end_downtrack_ = wm_->routeTrackPos(traffic_light->getControlledLanelets().back().centerline2d().back());
+  intersection_end_downtrack_ =
+      wm_->routeTrackPos(nearest_traffic_light->getControlledLanelets().back().centerline2d().back()).downtrack;
 
   // Estimate the time to reach the traffic light assuming we decelerate to the speed of the intersection before arrival
   // In the case of higher accel limits this calculation should always overestimate the arrival time which should be
   // fine as that would hit the following red phase.
   double time_remaining_to_traffic_light =
       (2.0 * distance_remaining_to_traffic_light) /
-      (intersection_speed_.get() + current_maneuver_end_speed);  // Kinematic Equation: 2*d / (vf + vi) = t
+      (intersection_speed_.get() + current_state.speed);  // Kinematic Equation: 2*d / (vf + vi) = t
 
   ros::Time light_arrival_time_at_freeflow = current_state.stamp + ros::Duration(time_remaining_to_traffic_light);
   ros::Time early_arrival_time_at_freeflow =
@@ -232,7 +243,7 @@ void processWhenAPPROACHING(const cav_srvs::PlanManeuversRequest& req, cav_srvs:
 
   // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
-      getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track);
+      getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, false);
 
   // We will cross the light on the green phase even if we arrive early or late
   if (early_arrival_state_at_freeflow_optional.get() == lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED &&
@@ -242,33 +253,33 @@ void processWhenAPPROACHING(const cav_srvs::PlanManeuversRequest& req, cav_srvs:
     // TODO plan lane follow from current speed to intersection speed (does inlane-cruising even support this???)
 
     // TODO do we need to check for anything before pushing onto the plan?
-    resp.new_plan.push_back(composeLaneFollowingManeuverMessage(
-        current_state.downtrack, traffic_light_down_track, current_state.speed, intersection_speed_.get(), current_state.stamp, light_arrival_time_at_freeflow)
-        lanelet::utils::transform(crossed_lanelets, [](const auto& ll) {
-      return ll.id(); })));
+    resp.new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(
+        current_state.downtrack, traffic_light_down_track, current_state.speed, intersection_speed_.get(),
+        current_state.stamp, light_arrival_time_at_freeflow,
+        lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); })));
 
     double intersection_length = intersection_end_downtrack_.get() - traffic_light_down_track;
 
     ros::Time intersection_exit_time =
         light_arrival_time_at_freeflow + ros::Duration(intersection_length / intersection_speed_.get());
 
-    resp.new_plan.push_back(composeIntersectionTransitMessage(
+    resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
         traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
-        intersection_speed_.get(), light_arrival_time_at_freeflow, intersection_exit_time,
-        lanelet::Id & starting_lane_id, lanelet::Id & ending_lane_id));
+        intersection_speed_.get(), light_arrival_time_at_freeflow, intersection_exit_time, crossed_lanelets.back().id(),
+        nearest_traffic_light->getControlledLanelets().back().id()));
   }
   else  // Red or Yellow light
   {
-    resp.new_plan.push_back(composeStopAndWaitManeuverMessage(
+    resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
         current_state.downtrack, traffic_light_down_track, current_state.speed, crossed_lanelets.front().id(),
         crossed_lanelets.back().id(), current_state.stamp,
         req.header.stamp + ros::Duration(config_.min_maneuver_planning_period)));
   }
 }
 
-void processWhenWAITING(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
-                        const VehicleState& current_state,
-                        const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights)
+void WzStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& req,
+                                        cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
+                                        const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights)
 {
   if (traffic_lights.empty())
   {
@@ -295,15 +306,15 @@ void processWhenWAITING(const cav_srvs::PlanManeuversRequest& req, cav_srvs::Pla
   }
 
   // If the light is not green then continue waiting by creating a stop and wait maneuver ontop of the vehicle
-  resp.new_plan.push_back(
+  resp.new_plan.maneuvers.push_back(
       composeStopAndWaitManeuverMessage(current_state.downtrack - 10.0, traffic_light_down_track, current_state.speed,
-                                        crossed_lanelets.front().id(), current_state.lane_id, current_state.lane_id,
-                                        req.header.stamp + ros::Duration(config_.min_maneuver_planning_period)));
+                                        current_state.lane_id, current_state.lane_id, current_state.stamp,
+                                        current_state.stamp + ros::Duration(config_.min_maneuver_planning_period) ));
 }
 
-void processWhenDEPARTING(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
-                          const VehicleState& current_state, double intersection_end_downtrack,
-                          double intersection_speed_limit)
+void WzStrategicPlugin::planWhenDEPARTING(const cav_srvs::PlanManeuversRequest& req,
+                                          cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
+                                          double intersection_end_downtrack, double intersection_speed_limit)
 {
   if (current_state.downtrack > intersection_end_downtrack)
   {
@@ -317,15 +328,15 @@ void processWhenDEPARTING(const cav_srvs::PlanManeuversRequest& req, cav_srvs::P
 
   // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
-      getLaneletsBetweenWithException(current_state.downtrack, intersection_end_downtrack);
+      getLaneletsBetweenWithException(current_state.downtrack, intersection_end_downtrack, true, false);
 
   // Compose intersection transit maneuver
-  resp.new_plan.push_back(composeIntersectionTransitMessage(
+  resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
       current_state.downtrack, intersection_end_downtrack, intersection_speed_limit, intersection_speed_limit,
       current_state.stamp, intersection_exit_time, crossed_lanelets.front().id(), crossed_lanelets.back().id()));
 }
 
-bool WzStrategicPlugin::altLogic(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp)
+bool WzStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp)
 {
   if (!wm_->getRoute())
   {
@@ -359,15 +370,15 @@ bool WzStrategicPlugin::altLogic(const cav_srvs::PlanManeuversRequest& req, cav_
     switch (transition_table_.getState())
     {
       case TransitState::UNAVAILABLE:
-        processWhenUNAVAILABLE(req, resp, current_state, traffic_list.front());
+        planWhenUNAVAILABLE(req, resp, current_state, traffic_list);
         break;
 
       case TransitState::APPROACHING:
-        processWhenAPPROACHING(req, resp, current_state, traffic_list.front());
+        planWhenAPPROACHING(req, resp, current_state, traffic_list);
         break;
 
       case TransitState::WAITING:
-        processWhenWAITING(req, resp, current_state, traffic_list.front());
+        planWhenWAITING(req, resp, current_state, traffic_list);
         break;
 
       case TransitState::DEPARTING:
@@ -376,8 +387,8 @@ bool WzStrategicPlugin::altLogic(const cav_srvs::PlanManeuversRequest& req, cav_
         {
           throw std::invalid_argument("State is DEPARTING but the intersection variables are not available");
         }
-        processWhenDEPARTING(req, resp, current_state, traffic_list.front(), intersection_end_downtrack_,
-                             intersection_speed_);
+        planWhenDEPARTING(req, resp, current_state, intersection_end_downtrack_.get(),
+                          intersection_speed_.get());
         break;
 
       default:
@@ -385,16 +396,16 @@ bool WzStrategicPlugin::altLogic(const cav_srvs::PlanManeuversRequest& req, cav_
         break;
     }
 
-  } while (transition_table_.getState() != prev_state)  // If the state has changed then continue looping
+  } while (transition_table_.getState() != prev_state);  // If the state has changed then continue looping
 
-      return true;
+  return true;
   // We need to evaluate the events so the state transitions can be triggered
 }
 
 cav_msgs::Maneuver WzStrategicPlugin::composeLaneFollowingManeuverMessage(double start_dist, double end_dist,
                                                                           double start_speed, double target_speed,
                                                                           ros::Time start_time, ros::Time end_time,
-                                                                          std::vector<lanelet::Id> lane_ids)
+                                                                          std::vector<lanelet::Id> lane_ids) const
 {
   cav_msgs::Maneuver maneuver_msg;
   maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
@@ -415,11 +426,11 @@ cav_msgs::Maneuver WzStrategicPlugin::composeLaneFollowingManeuverMessage(double
   return maneuver_msg;
 }
 
-cav_msgs::Maneuver WzStrategicPlugin::composeStopAndWaitManeuverMessage(double current_dist, double& end_dist,
+cav_msgs::Maneuver WzStrategicPlugin::composeStopAndWaitManeuverMessage(double current_dist, double end_dist,
                                                                         double start_speed,
-                                                                        lanelet::Id& starting_lane_id,
-                                                                        lanelet::Id& ending_lane_id,
-                                                                        ros::Time start_time, ros::Time end_time)
+                                                                        const lanelet::Id& starting_lane_id,
+                                                                        const lanelet::Id& ending_lane_id,
+                                                                        ros::Time start_time, ros::Time end_time) const
 {
   cav_msgs::Maneuver maneuver_msg;
   maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
@@ -444,11 +455,11 @@ cav_msgs::Maneuver WzStrategicPlugin::composeStopAndWaitManeuverMessage(double c
   return maneuver_msg;
 }
 
-cav_msgs::Maneuver WzStrategicPlugin::composeIntersectionTransitMessage(double& start_dist, double& end_dist,
-                                                                        double& start_speed, double& target_speed,
+cav_msgs::Maneuver WzStrategicPlugin::composeIntersectionTransitMessage(double start_dist, double end_dist,
+                                                                        double start_speed, double target_speed,
                                                                         ros::Time start_time, ros::Time end_time,
-                                                                        lanelet::Id& starting_lane_id,
-                                                                        lanelet::Id& ending_lane_id)
+                                                                        const lanelet::Id& starting_lane_id,
+                                                                        const lanelet::Id& ending_lane_id) const
 {
   cav_msgs::Maneuver maneuver_msg;
   maneuver_msg.type = cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT;

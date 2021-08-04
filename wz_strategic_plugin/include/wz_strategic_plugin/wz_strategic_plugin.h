@@ -18,18 +18,18 @@
 
 #include <ros/ros.h>
 #include <string>
-#include <carma_utils/CARMAUtils.h>
 #include <cav_srvs/PlanManeuvers.h>
 #include <cav_msgs/Plugin.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
 #include <carma_utils/CARMAUtils.h>
 #include <carma_wm/Geometry.h>
+#include <lanelet2_core/Forward.h>
 
 #include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
 #include "wz_strategic_plugin/wz_state_transition_table.h"
+#include "wz_strategic_plugin/wz_strategic_plugin_config.h"
+#include "wz_strategic_plugin/wz_states.h"
 
 namespace wz_strategic_plugin
 {
@@ -47,17 +47,17 @@ public:
   /**
    * \brief Service callback for arbitrator maneuver planning
    * \param req Plan maneuver request
-   * \param resp Plan maneuver response with a list of maneuver plan
+   * \param[out] resp Plan maneuver response with a list of maneuver plan
    * \return If service call successed
    */
-  bool planManeuverCb(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp);
+  bool planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp);
 
   /**
    * \brief Returns the current plugin discovery message reflecting system status
    *
    * \return cav_msgs::Plugin The plugin discovery message
    */
-  cav_msgs::Plugin getDiscoveryMsg();
+  cav_msgs::Plugin getDiscoveryMsg() const;
 
 private:
   /**
@@ -69,7 +69,64 @@ private:
     double downtrack;     // The downtrack of the vehicle along the route at time stamp
     double speed;         // The speed of the vehicle at time stamp
     lanelet::Id lane_id;  // The current lane id of the vehicle at time stamp
-  }
+  };
+
+  /**
+   * \brief Method for performing maneuver planning when the current plugin state is TransitState::UNAVAILABLE
+   *        Therefor no maneuvers are planned but the system checks for the precense of traffic lights ahead of it
+   *
+   * \param req Plan maneuver request
+   * \param[out] resp Plan maneuver response with a list of maneuver plan
+   * \param current_state The current state of the vehicle at the start of planning
+   * \param traffic_lights A list of traffic lights along the vehicle's route which lie in front of the vehicle
+   *
+   */
+  void planWhenUNAVAILABLE(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
+                           const VehicleState& current_state,
+                           const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights);
+
+  /**
+   * \brief Method for performing maneuver planning when the current plugin state is TransitState::APPROACHING
+   *        Therefor the planned maneuvers deal with approaching a traffic light
+   *
+   * \param req Plan maneuver request
+   * \param[out] resp Plan maneuver response with a list of maneuver plan
+   * \param current_state The current state of the vehicle at the start of planning
+   * \param traffic_lights A list of traffic lights along the vehicle's route which lie in front of the vehicle
+   *
+   */
+  void planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
+                           const VehicleState& current_state,
+                           const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights);
+
+  /**
+   * \brief Method for performing maneuver planning when the current plugin state is TransitState::WAITING
+   *        Therefor the planned maneuvers deal with waiting at a red light
+   *
+   * \param req Plan maneuver request
+   * \param[out] resp Plan maneuver response with a list of maneuver plan
+   * \param current_state The current state of the vehicle at the start of planning
+   * \param traffic_lights A list of traffic lights along the vehicle's route which lie in front of the vehicle
+   *
+   */
+  void planWhenWAITING(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
+                       const VehicleState& current_state,
+                       const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights);
+
+  /**
+   * \brief Method for performing maneuver planning when the current plugin state is TransitState::DEPARTING
+   *        Therefor the planned maneuvers deal with the transit of the intersection once the stop bar has been crossed
+   *
+   * \param req Plan maneuver request
+   * \param[out] resp Plan maneuver response with a list of maneuver plan
+   * \param current_state The current state of the vehicle at the start of planning
+   * \param intersection_end_downtrack The ending downtrack in meters of the current intersection
+   * \param intersection_speed_limit The speed limit of the current intersection
+   *
+   */
+  void planWhenDEPARTING(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
+                         const VehicleState& current_state, double intersection_end_downtrack,
+                         double intersection_speed_limit);
 
   /**
    * \brief Compose a lane keeping maneuver message based on input params
@@ -82,47 +139,137 @@ private:
    * \param end_time The ending time of the maneuver
    * \param lane_ids List of lanelet IDs that the current maneuver traverses. Message expects these to be contiguous and
    * end to end
-   * 
+   *
    * \return A lane keeping maneuver message which is ready to be published
    */
-  cav_msgs::Maneuver
-  composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed,
-                                      ros::Time start_time, ros::Time end_time, std::vector<lanelet::Id> lane_ids);
+  cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed,
+                                                         double target_speed, ros::Time start_time, ros::Time end_time,
+                                                         std::vector<lanelet::Id> lane_ids) const;
 
-  cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double& end_dist, double start_speed,
-                                                       lanelet::Id& starting_lane_id, lanelet::Id& ending_lane_id,
-                                                       ros::Time time, double& time_to_stop);
+  /**
+   * \brief Compose a stop and wait maneuver message based on input params
+   *
+   * \param current_dist Start downtrack distance of the current maneuver
+   * \param end_dist End downtrack distance of the current maneuver
+   * \param start_speed Start speed of the current maneuver
+   * \param starting_lane_id The starting lanelet id of this maneuver
+   * \param ending_lane_id The ending lanelet id of this maneuver
+   * \param start_time The starting time of the maneuver
+   * \param end_time The ending time of the maneuver
+   *
+   * \return A stop and wait maneuver message which is ready to be published
+   */
+  cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double end_dist, double start_speed,
+                                                       const lanelet::Id& starting_lane_id,
+                                                       const lanelet::Id& ending_lane_id, ros::Time start_time,
+                                                       ros::Time end_time) const;
 
-  cav_msgs::Maneuver composeIntersectionTransitMessage(double& start_dist, double& end_dist, double& start_speed,
-                                                       double& target_speed, ros::Time start_time,
-                                                       lanelet::Id& starting_lane_id);
+  /**
+   * \brief Compose a intersection transit maneuver message based on input params
+   *
+   * \param start_dist Start downtrack distance of the current maneuver
+   * \param end_dist End downtrack distance of the current maneuver
+   * \param start_speed Start speed of the current maneuver
+   * \param target_speed Target speed pf the current maneuver, usually it is the lanelet speed limit
+   * \param start_time The starting time of the maneuver
+   * \param end_time The ending time of the maneuver
+   * \param starting_lane_id The starting lanelet id of this maneuver
+   * \param ending_lane_id The ending lanelet id of this maneuver
+   *
+   * \return A intersection transit maneuver maneuver message which is ready to be published
+   */
+  cav_msgs::Maneuver composeIntersectionTransitMessage(double start_dist, double end_dist, double start_speed,
+                                                       double target_speed, ros::Time start_time, ros::Time end_time,
+                                                       const lanelet::Id& starting_lane_id,
+                                                       const lanelet::Id& ending_lane_id) const;
 
+  /**
+   * \brief Helper method to evaluate if the given traffic light state is supported by this plugin
+   *
+   * \param state The state to evaluate
+   *
+   * \return true if the state is supported, flase otherwise
+   */
   bool supportedLightState(lanelet::CarmaTrafficLightState state) const;
 
-  int traffic_light_interpreter(boost::optional<lanelet::CarmaTrafficLightState> state);
+  /**
+   * \brief Helper method that checks both if the input optional light state is set and if the state it contains is
+   * supported via supportedLightState.
+   *
+   * \param optional_state An optional light state. If this is unset the method will retun false
+   * \param source_time The time used to optain the optional light state. This is used for logging only
+   *
+   * \return True if the optional is set and the contained state is supported. False otherwise
+   */
+  bool validLightState(const boost::optional<lanelet::CarmaTrafficLightState>& optional_state,
+                       const ros::Time& source_time) const;
 
-  double estimate_distance_to_stop(double v, double a);
+  /**
+   * \brief Helper method to extract the initial vehicle state from the planning request method based on if the
+   * prior_plan was set or not.
+   *
+   * \param req The maneuver planning request to extract the vehicle state from
+   *
+   * \return The extracted VehicleState
+   */
+  VehicleState extractInitialState(const cav_srvs::PlanManeuversRequest& req) const;
 
-  double estimate_time_to_stop(double d, double v);
+  /**
+   * \brief Helper method which calls carma_wm::WorldModel::getLaneletsBetween(start_downtrack, end_downtrack, shortest_path_only,
+   * bounds_inclusive) and throws and exception if the returned list of lanelets is empty. See the referenced method for additional
+   * details on parameters.
+   */
+  std::vector<lanelet::ConstLanelet> getLaneletsBetweenWithException(double start_downtrack, double end_downtrack,
+                                                                     bool shortest_path_only = false,
+                                                                     bool bounds_inclusive = true) const;
 
+  /**
+   * \brief Helper method to use basic kinematics to compute an estimated stopping distance from from the inputs
+   *
+   * \param v The initial velocity in m/s
+   * \param a The deceleration in m/s^2
+   *
+   * \return The estimated stopping distance in meters
+   */
+  double estimate_distance_to_stop(double v, double a) const;
+
+  /**
+   * \brief Helper method to use basic kinematics to compute an estimated stopping time from from the inputs
+   *
+   * \param d The distance to travel in meters
+   * \param v The initial velocity in m/s
+   *
+   * \return The estimated stopping time in seconds
+   */
+  double estimate_time_to_stop(double d, double v) const;
+
+  /**
+   * \brief Given a Lanelet, find it's associated Speed Limit
+   *
+   * \param llt Constant Lanelet object
+   *
+   * \throw std::invalid_argument if the speed limit could not be retrieved
+   *
+   * \return value of speed limit in mps
+   */
   double findSpeedLimit(const lanelet::ConstLanelet& llt);
 
+  ////////// VARIABLES ///////////
+
+  //! World Model pointer
   carma_wm::WorldModelConstPtr wm_;
 
+  //! Config containing configurable algorithm parameters
   WzStrategicPluginConfig config_;
 
-  // Plugin discovery message
+  //! State Machine Transition table
+  WorkZoneStateTransitionTable transition_table_;
+
+  //! Plugin discovery message
   cav_msgs::Plugin plugin_discovery_msg_;
 
-  // TODO make intersection variables members
-
-  std::string planning_strategic_plugin_ = "WorkZonePlugin";
-  std::string intersection_transit_planning_tactical_plugin_ = "IntersectionTransitPlugin";
-
-  // Cache variables for storing the current intersection state between state machine transitions
+  //! Cache variables for storing the current intersection state between state machine transitions
   boost::optional<double> intersection_speed_;
   boost::optional<double> intersection_end_downtrack_;
-
-  WorkZoneStateTransitionTable transition_table_;
 };
 }  // namespace wz_strategic_plugin

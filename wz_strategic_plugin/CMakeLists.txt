@@ -9,21 +9,28 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
+
+set(PKG_CATKIN_DEPS
+  roscpp
+  cav_srvs
+  cav_msgs
   carma_utils
   carma_wm
-  cav_msgs
-  cav_srvs
-  roscpp
-  std_msgs
+  lanelet2_core
+  lanelet2_traffic_rules
+)
+
+find_package(catkin REQUIRED COMPONENTS
+  ${PKG_CATKIN_DEPS}
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED)
 
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils cav_msgs # carma_wm
+  CATKIN_DEPENDS ${PKG_CATKIN_DEPS}
+  DEPENDS Boost
 )
 
 ###########
@@ -36,18 +43,24 @@ include_directories(
   include
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
+# Build Lib
+add_library(${PROJECT_NAME} 
+  src/wz_strategic_plugin.cpp
+  src/wz_states.cpp
+  src/wz_state_transition_table.cpp
+)
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
-add_executable( ${PROJECT_NAME}
-  ${headers}
-  src/${PROJECT_NAME}.cpp
-  src/main.cpp)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
-#add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_library(${PROJECT_NAME}_node src/${PROJECT_NAME}.cpp)
+# Build Node Executable
+add_executable( ${PROJECT_NAME}_node
+  src/main.cpp
+)
+
 add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 #############
 ## Install ##
@@ -55,12 +68,10 @@ target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_node ${catkin_LIBRARIES} $
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,21 +15,29 @@
  */
 
 #include <ros/ros.h>
+#include <carma_utils/CARMAUtils.h>
+#include <carma_wm/WorldModel.h>
+#include <carma_wm/WMListener.h>
 #include "wz_strategic_plugin/wz_strategic_plugin.h"
 #include "wz_strategic_plugin/wz_strategic_plugin_config.h"
 
 int main(int argc, char** argv)
 {
+  // Initialize ros connection
   ros::init(argc, argv, "wz_strategic_plugin");
 
+  // Setup node handles
   ros::CARMANodeHandle nh;
   ros::CARMANodeHandle pnh("~");
 
+  // Create publishers
   ros::Publisher plugin_discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
 
+  // Initialize world model
   carma_wm::WMListener wml;
 
-  WzStrategicPluginConfig config;
+  // Load Parameters
+  wz_strategic_plugin::WzStrategicPluginConfig config;
 
   // clang-format off
   pnh.param<double>("/vehicle_deceleration_limit",      config.vehicle_decel_limit, config.vehicle_decel_limit);
@@ -38,23 +46,26 @@ int main(int argc, char** argv)
   pnh.param<double>("stopping_location_buffer",         config.stopping_location_buffer, config.stopping_location_buffer);
   pnh.param<double>("green_light_time_buffer",          config.green_light_time_buffer, config.green_light_time_buffer);
   pnh.param<double>("min_maneuver_planning_period",     config.min_maneuver_planning_period, config.min_maneuver_planning_period);
-  pnh.param<double>("strategic_plugin_name",            config.strategic_plugin_name, config.strategic_plugin_name);
-  pnh.param<double>("lane_following_plugin_name",       config.lane_following_plugin_name, config.lane_following_plugin_name);
-  pnh.param<double>("stop_and_wait_plugin_name",        config.stop_and_wait_plugin_name, config.stop_and_wait_plugin_name);
-  pnh.param<double>("intersection_transit_plugin_name", config.intersection_transit_plugin_name, config.intersection_transit_plugin_name);
+  pnh.param<std::string>("strategic_plugin_name",            config.strategic_plugin_name, config.strategic_plugin_name);
+  pnh.param<std::string>("lane_following_plugin_name",       config.lane_following_plugin_name, config.lane_following_plugin_name);
+  pnh.param<std::string>("stop_and_wait_plugin_name",        config.stop_and_wait_plugin_name, config.stop_and_wait_plugin_name);
+  pnh.param<std::string>("intersection_transit_plugin_name", config.intersection_transit_plugin_name, config.intersection_transit_plugin_name);
   // clang-format on
 
-  wz_strategic_plugin::WzStrategicPlugin wzp(
-      wml.getWorldModel(), config, [&plugin_discovery_pub](const auto& msg) { plugin_discovery_pub.publish(msg); });
+  // Construct plugin
+  wz_strategic_plugin::WzStrategicPlugin wzp(wml.getWorldModel(), config);
 
-  ros::Service plan_maneuver_srv =
-      nh.advertiseService("plugins/WzStrategic/plan_maneuvers", &WzStrategicPlugin::planManeuverCb, &wzp);
+  // Setup callback connections
+  ros::ServiceServer plan_maneuver_srv =
+      nh.advertiseService("plugins/WzStrategic/plan_maneuvers", &wz_strategic_plugin::WzStrategicPlugin::planManeuverCb, &wzp);
 
   ros::Timer discovery_pub_timer =
       nh.createTimer(ros::Duration(ros::Rate(10.0)), [&wzp, &plugin_discovery_pub](const auto&) {
         plugin_discovery_pub.publish(wzp.getDiscoveryMsg());
       });
 
+  // Start
   ros::CARMANodeHandle::spin();
+
   return 0;
 };

@@ -78,6 +78,6 @@ private:
    * \param new_state The state to set.
    * \param source_signal The signal which caused the new_state to be set
    */
-  void setAndLogState(TransitState new_state, TransitState source_signal);
+  void setAndLogState(TransitState new_state, TransitEvent source_signal);
 };
 }  // namespace wz_strategic_plugin
