@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,27 +34,15 @@
 
 namespace route_following_plugin
 {
-    
-    TEST(RouteFollowingPluginTest, testFindLaneletIndexFromPath)
-    {
-        RouteFollowingPlugin rfp;
-        lanelet::ConstLanelets lls;
-        lanelet::Lanelet ll;
-        ll.setId(15);
-        lls.push_back(ll);
-        lanelet::routing::LaneletPath path(lls);
-        EXPECT_EQ(0, rfp.findLaneletIndexFromPath(15, path));
-        EXPECT_EQ(-1, rfp.findLaneletIndexFromPath(5, path));
-    }
 
     TEST(RouteFollowingPluginTest, testComposeManeuverMessage)
     {
         RouteFollowingPlugin rfp;
         ros::Time::init();
         ros::Time current_time = ros::Time::now();
-        auto msg = rfp.composeLaneFollowingManeuverMessage(1.0, 10.0, 0.9, 11.176, 2);
+        auto msg = rfp.composeLaneFollowingManeuverMessage(1.0, 10.0, 0.9, 11.176, {2});
         EXPECT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, msg.type);
-        EXPECT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, msg.lane_following_maneuver.parameters.neogition_type);
+        EXPECT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, msg.lane_following_maneuver.parameters.negotiation_type);
         EXPECT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN, msg.lane_following_maneuver.parameters.presence_vector);
         EXPECT_EQ("InLaneCruisingPlugin", msg.lane_following_maneuver.parameters.planning_tactical_plugin);
         EXPECT_EQ("RouteFollowingPlugin", msg.lane_following_maneuver.parameters.planning_strategic_plugin);
@@ -62,7 +50,8 @@ namespace route_following_plugin
         EXPECT_NEAR(0.9, msg.lane_following_maneuver.start_speed, 0.01);
         EXPECT_NEAR(10.0, msg.lane_following_maneuver.end_dist, 0.01);
         EXPECT_NEAR(25 / 2.237, msg.lane_following_maneuver.end_speed, 0.01);
-        EXPECT_EQ("2", msg.lane_following_maneuver.lane_id);
+        EXPECT_EQ(1, msg.lane_following_maneuver.lane_ids.size());
+        EXPECT_EQ("2", msg.lane_following_maneuver.lane_ids[0]);
     }
 
     TEST(RouteFollowingPluginTest, testIdentifyLaneChange)
@@ -127,7 +116,7 @@ namespace route_following_plugin
         plan_req1.planning_completion_time;
 
         ros::Time current_time = ros::Time::now();
-        plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0, 0, 0, 11.176, 0));
+        plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0, 0, 0, 11.176, {0}));
         pplan.prior_plan = plan_req1;
         plan.request = pplan;
         //PlanManeuversResponse
@@ -147,10 +136,14 @@ namespace route_following_plugin
             //check target speeds in updated response
             lanelet::Velocity limit = 30_mph;
             ASSERT_EQ(plan.response.new_plan.maneuvers[0].lane_following_maneuver.end_speed, 11.176);
-            for (auto i = 1; i < plan.response.new_plan.maneuvers.size(); i++)
+            for (auto i = 1; i < plan.response.new_plan.maneuvers.size() - 1; i++)
             {
                 ASSERT_EQ(plan.response.new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value());
             }
+
+            ASSERT_FALSE(plan.response.new_plan.maneuvers.empty());
+            ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, plan.response.new_plan.maneuvers.back().type);
+            ASSERT_EQ(plan.response.new_plan.maneuvers.back().stop_and_wait_maneuver.start_speed, limit.value());
         }
         else
         {
@@ -235,7 +228,7 @@ namespace route_following_plugin
         plan_req1.planning_start_time;
         plan_req1.planning_completion_time;
         ros::Time current_time = ros::Time::now();
-        plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0.0, 100.0, 0, 11.176, start_id));
+        plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0.0, 100.0, 0, 11.176, {start_id}));
         pplan.prior_plan = plan_req1;
         plan.request = pplan;
         //PlanManeuversResponse
@@ -254,6 +247,7 @@ namespace route_following_plugin
             {
                 ASSERT_EQ(plan.response.new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value());
             }
+
         }
         else
         {
@@ -322,7 +316,7 @@ namespace route_following_plugin
         /*composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, int lane_id, ros::Time start_time);*/
         ros::Time::init();
         ros::Time start_time = ros::Time::now();
-        cav_msgs::Maneuver maneuver = worker.composeLaneFollowingManeuverMessage(10.0, 100.0, 0.0, 100.0, 101);
+        cav_msgs::Maneuver maneuver = worker.composeLaneFollowingManeuverMessage(10.0, 100.0, 0.0, 100.0, {101});
 
         worker.setManeuverStartDist(maneuver, 50.0);
         ASSERT_EQ(maneuver.lane_following_maneuver.start_dist, 50.0);

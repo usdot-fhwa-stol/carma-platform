@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2018-2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -78,14 +78,14 @@ target_link_libraries(${PROJECT_NAME} platoon_control_plugin_lib ${catkin_LIBRAR
 #############
 
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
   PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} platoon_control_plugin_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -93,7 +93,7 @@ install(TARGETS ${PROJECT_NAME}
 
 # Mark other files for installation (e.g. launch and bag files, etc.)
 install(DIRECTORY
-  launch
+  launch config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

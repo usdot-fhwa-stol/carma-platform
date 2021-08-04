@@ -2,7 +2,7 @@
 
 
 /*
- * Copyright (C) 2019 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,9 @@
 #include <cav_msgs/ExternalObjectList.h>
 #include <cav_msgs/RoadwayObstacle.h>
 #include <cav_msgs/RoadwayObstacleList.h>
+#include <cav_msgs/SPAT.h>
 #include "TrackPos.h"
+#include <carma_wm/WorldModelUtils.h>
 
 namespace carma_wm
 {
@@ -58,14 +60,21 @@ public:
    *
    *  \param map A shared pointer to the map which will share ownership to this object
    *  \param map_version Optional field to set the map version. While this is technically optional its uses is highly advised to manage synchronization.
+   *  \param recompute_routing_graph Optional field which if true will result in the routing graph being recomputed. NOTE: If this map is the first map set the graph will always be recomputed
    */
-  void setMap(lanelet::LaneletMapPtr map, size_t map_version = 0);
+  void setMap(lanelet::LaneletMapPtr map, size_t map_version = 0, bool recompute_routing_graph = true);
 
   /*! \brief Set the current route. This route must match the current map for this class to function properly
    *
    *  \param route A shared pointer to the route which will share ownership to this object
    */
   void setRoute(LaneletRoutePtr route);
+
+  /*! \brief Sets the id mapping between intersection/signal group and lanelet::Id for traffic lights in the map.
+   *  \param id intersection_id (16bit) and signal_group_id (8bit) concatenated in that order and saved in 32bit
+   *  \param lanelet_id lanelet_id
+   */
+  void setTrafficLightIds(uint32_t id, lanelet::Id lanelet_id);
 
   /*! \brief Get a mutable version of the current map
    * 
@@ -78,6 +87,13 @@ public:
    * These are detected by the sensor fusion node and are passed as objects compatible with lanelet 
    */
   void setRoadwayObjects(const std::vector<cav_msgs::RoadwayObstacle>& rw_objs);
+
+  /**
+   * @brief processSpatFromMsg update map's traffic light states with SPAT msg
+   *
+   * @param spat_msg Msg to update with
+   */
+  void processSpatFromMsg(const cav_msgs::SPAT& spat_msg);
 
   /**
    * \brief This function is called by distanceToObjectBehindInLane or distanceToObjectAheadInLane. 
@@ -105,6 +121,36 @@ public:
   /*! \brief Set endpoint of the route
    */
   void setRouteEndPoint(const lanelet::BasicPoint3d& end_point);
+ 
+  /*! \brief helper for traffic light Id
+   */
+  lanelet::Id getTrafficLightId(uint16_t intersection_id,uint8_t signal_id);
+
+  /**
+   * \brief (non-const version) Gets the underlying lanelet, given the cartesian point on the map 
+   *
+   * \param point         Cartesian point to check the corressponding lanelet
+   * \param n             Number of lanelets to return. Default is 10. As there could be many lanelets overlapping.
+   * \throw std::invalid_argument if the map is not set, contains no lanelets
+   *
+   * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
+   */
+  std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n);
+
+  /**
+   * \brief (non-const version) Given the cartesian point on the map, tries to get the opposite direction lanelet on the left
+   *        This function is intended to find "adjacentLeft lanelets" that doesn't share points between lanelets
+   *        where adjacentLeft of lanelet library fails
+   *
+   * \param point         Cartesian point to check the corressponding lanelet
+   * \param n             Number of lanelets to return. Default is 10. As there could be many lanelets overlapping.
+   * 
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or if adjacent lanelet is not opposite direction
+   * NOTE:  Only to be used on 2 lane, opposite direction road. Number of points in all linestrings are assumed to be roughly the same.
+   *        The point is assumed to be on roughly similar shape of overlapping lanelets if any
+   * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
+   */
+  std::vector<lanelet::Lanelet> nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n = 10);
 
   ////
   // Overrides
@@ -148,13 +194,18 @@ public:
 
   std::vector<lanelet::ConstLanelet> getLane(const lanelet::ConstLanelet& lanelet, const LaneSection& section = LANE_AHEAD) const override;
 
-  std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n = 10) const override;
-
   size_t getMapVersion() const override;
 
+  std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n = 10) const override;
+
+  std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n = 10) const override;
+
+  std::vector<lanelet::CarmaTrafficLightPtr> getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
+  
+  std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 
 private:
-  
+
   double config_speed_limit_;
   
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
@@ -179,7 +230,7 @@ private:
   LaneletRoutePtr route_;
   LaneletRoutingGraphPtr map_routing_graph_;
   double route_length_ = 0;
-  
+  std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::vector<std::pair<ros::Time, lanelet::CarmaTrafficLightState>>>> traffic_light_states_; //[intersection_id][signal_group_id]
   lanelet::LaneletSubmapConstUPtr shortest_path_view_;  // Map containing only lanelets along the shortest path of the
                                                      // route
   std::vector<lanelet::LineString3d> shortest_path_centerlines_;  // List of disjoint centerlines seperated by lane
@@ -190,7 +241,13 @@ private:
   std::vector<cav_msgs::RoadwayObstacle> roadway_objects_; // 
 
   size_t map_version_ = 0; // The current map version. This is cached from calls to setMap();
-
+  
+  // The following constants are default timining plans for recieved traffic lights. 
+  // The light is assumed to use these values until otherwise known
+  // TODO can these be optional parameters?
+  static constexpr double RED_LIGHT_DURATION = 20.0; //in sec
+  static constexpr double YELLOW_LIGHT_DURATION = 3.0; //in sec
+  static constexpr double GREEN_LIGHT_DURATION = 20.0; //in sec
   
 };
 }  // namespace carma_wm

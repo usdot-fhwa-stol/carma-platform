@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -68,7 +68,8 @@ namespace arbitrator
                     std::map<std::string, cav_srvs::PlanManeuvers>()));
 
         cav_msgs::ManeuverPlan plan;
-        std::vector<cav_msgs::ManeuverPlan> plans = png.generate_neighbors(plan);
+        VehicleState vs;
+        std::vector<cav_msgs::ManeuverPlan> plans = png.generate_neighbors(plan, vs);
 
         ASSERT_EQ(0, plans.size());
         ASSERT_TRUE(plans.empty());
@@ -92,7 +93,8 @@ namespace arbitrator
                     responses));
 
         cav_msgs::ManeuverPlan plan;
-        std::vector<cav_msgs::ManeuverPlan> plans = png.generate_neighbors(plan);
+        VehicleState vs;
+        std::vector<cav_msgs::ManeuverPlan> plans = png.generate_neighbors(plan, vs);
 
         ASSERT_FALSE(plans.empty());
         ASSERT_EQ(3, plans.size());

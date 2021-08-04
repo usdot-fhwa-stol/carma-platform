@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 LEIDOS.
+ * Copyright (C) 2018-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License") { you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,7 @@ TEST_F(TrajectoryExecutorTestSuite, test_message_no_crash) {
  */
 TEST_F(TrajectoryExecutorTestSuite, test_emit_traj) {
     waitForSubscribers(traj_pub, 1, 500);
-    cav_msgs::TrajectoryPlan plan = buildSampleTraj();
+    cav_msgs::TrajectoryPlan plan = buildSampleTraj2();
 
     traj_pub.publish(plan);
 

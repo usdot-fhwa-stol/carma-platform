@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2020-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -63,10 +63,11 @@ struct MapOptions
 {
   enum class Obstacle {DEFAULT, NONE};
   enum class SpeedLimit {DEFAULT, NONE};
-  MapOptions(double lane_width = 3.7, double lane_length = 25, Obstacle obstacle =  Obstacle::DEFAULT, SpeedLimit speed_limit = SpeedLimit::DEFAULT): 
-                            lane_width_(lane_width), lane_length_(lane_length), obstacle_(obstacle), speed_limit_(speed_limit){}
+  MapOptions(double lane_width = 3.7, double lane_length = 25, Obstacle obstacle =  Obstacle::DEFAULT, SpeedLimit speed_limit = SpeedLimit::DEFAULT, int seg_num = 1): 
+                            lane_width_(lane_width), lane_length_(lane_length), obstacle_(obstacle), speed_limit_(speed_limit), seg_num_(seg_num){}
   double lane_width_;
   double lane_length_;
+  int seg_num_;
   Obstacle obstacle_ ;
   SpeedLimit speed_limit_;
 };
@@ -175,50 +176,54 @@ inline lanelet::Lanelet getLanelet(lanelet::Id id, std::vector<lanelet::Point3d>
  * \brief helper function for creating lanelet map for getGuidanceTestMap
  * \param width width of single lanelet, default is 3.7 meters which is US standard
  * \param length length of a single lanelet, default is 25 meters to accomplish 100 meters of full lane
+ * \param num how many number of segments should linestrings of the lanelet have. a.k.a num + 1 points in each linestring
  */
-inline lanelet::LaneletMapPtr buildGuidanceTestMap(double width, double length)
+inline lanelet::LaneletMapPtr buildGuidanceTestMap(double width, double length, int num = 1)
 {
   std::vector<lanelet::Lanelet> all_lanelets;
-  auto pt00 = carma_wm::test::getPoint(0.0,0, 0);
-  auto pt01 = carma_wm::test::getPoint(0.0,1 * length, 0);
-  auto pt02 = carma_wm::test::getPoint(0.0,2 * length, 0);
-  auto pt03 = carma_wm::test::getPoint(0.0,3 * length, 0);
-  auto pt04 = carma_wm::test::getPoint(0.0,4 * length, 0);
-  auto pt10 = carma_wm::test::getPoint(1 * width,0, 0);
-  auto pt11 = carma_wm::test::getPoint(1 * width,1 * length, 0);
-  auto pt12 = carma_wm::test::getPoint(1 * width,2 * length, 0);
-  auto pt13 = carma_wm::test::getPoint(1 * width,3 * length, 0);
-  auto pt14 = carma_wm::test::getPoint(1 * width,4 * length, 0);
-  auto pt20 = carma_wm::test::getPoint(2 * width,0, 0);
-  auto pt21 = carma_wm::test::getPoint(2 * width,1 * length, 0);
-  auto pt22 = carma_wm::test::getPoint(2 * width,2 * length, 0);
-  auto pt23 = carma_wm::test::getPoint(2 * width,3 * length, 0);
-  auto pt24 = carma_wm::test::getPoint(2 * width,4 * length, 0);
-  auto pt30 = carma_wm::test::getPoint(3 * width,0, 0);
-  auto pt31 = carma_wm::test::getPoint(3 * width,1 * length, 0);
-  auto pt32 = carma_wm::test::getPoint(3 * width,2 * length, 0);
-  auto pt33 = carma_wm::test::getPoint(3 * width,3 * length, 0);
-  auto pt34 = carma_wm::test::getPoint(3 * width,4 * length, 0);
+  double step_length = length / num;  // 26 points in one lanelet's lanelent
 
-  lanelet::LineString3d ls00(lanelet::utils::getId(), {pt00,pt01} );
-  lanelet::LineString3d ls01(lanelet::utils::getId(), {pt01,pt02} );
-  lanelet::LineString3d ls02(lanelet::utils::getId(), {pt02,pt03} );
-  lanelet::LineString3d ls03(lanelet::utils::getId(), {pt03,pt04} );
+  std::vector<lanelet::Point3d> pts0;
+  std::vector<lanelet::Point3d> pts1;
+  std::vector<lanelet::Point3d> pts2;
+  std::vector<lanelet::Point3d> pts3;
 
-  lanelet::LineString3d ls10(lanelet::utils::getId(), {pt10,pt11} );
-  lanelet::LineString3d ls11(lanelet::utils::getId(), {pt11,pt12} );
-  lanelet::LineString3d ls12(lanelet::utils::getId(), {pt12,pt13} );
-  lanelet::LineString3d ls13(lanelet::utils::getId(), {pt13,pt14} );
+  for (int i = 0; i < num * 4 + 1; i ++)
+  {
+    pts0.push_back(carma_wm::test::getPoint(0.0, i * step_length, 0));
+  } 
+  for (int i = 0; i < num * 4 + 1; i ++)
+  {
+    pts1.push_back(carma_wm::test::getPoint(1 * width, i * step_length, 0));
+  } 
+  for (int i = 0; i < num * 4 + 1; i ++)
+  {
+    pts2.push_back(carma_wm::test::getPoint(2 * width, i * step_length, 0));
+  } 
+  for (int i = 0; i < num * 4 + 1; i ++)
+  {
+    pts3.push_back(carma_wm::test::getPoint(3 * width, i * step_length, 0));
+  } 
 
-  lanelet::LineString3d ls20(lanelet::utils::getId(), {pt20,pt21} );
-  lanelet::LineString3d ls21(lanelet::utils::getId(), {pt21,pt22} );
-  lanelet::LineString3d ls22(lanelet::utils::getId(), {pt22,pt23} );
-  lanelet::LineString3d ls23(lanelet::utils::getId(), {pt23,pt24} );
+  lanelet::LineString3d ls00(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts0.begin(), pts0.begin() + num + 1));
+  lanelet::LineString3d ls01(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts0.begin() + num, pts0.begin() + 2 * num + 1));
+  lanelet::LineString3d ls02(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts0.begin() + 2 * num, pts0.begin() + 3 * num + 1)) ;
+  lanelet::LineString3d ls03(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts0.begin() + 3 * num, pts0.begin() + 4 * num + 1));
 
-  lanelet::LineString3d ls30(lanelet::utils::getId(), {pt30,pt31} );
-  lanelet::LineString3d ls31(lanelet::utils::getId(), {pt31,pt32} );
-  lanelet::LineString3d ls32(lanelet::utils::getId(), {pt32,pt33} );
-  lanelet::LineString3d ls33(lanelet::utils::getId(), {pt33,pt34} );
+  lanelet::LineString3d ls10(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts1.begin(), pts1.begin() + num + 1));
+  lanelet::LineString3d ls11(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts1.begin() + num, pts1.begin() + 2 * num + 1));
+  lanelet::LineString3d ls12(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts1.begin() + 2 * num, pts1.begin() + 3 * num + 1));
+  lanelet::LineString3d ls13(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts1.begin() + 3 * num, pts1.begin() + 4 * num + 1));
+
+  lanelet::LineString3d ls20(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts2.begin(), pts2.begin() + num + 1));
+  lanelet::LineString3d ls21(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts2.begin() + num, pts2.begin() + 2 * num + 1));
+  lanelet::LineString3d ls22(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts2.begin() + 2 * num, pts2.begin() + 3 * num + 1));
+  lanelet::LineString3d ls23(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts2.begin() + 3 * num, pts2.begin() + 4 * num + 1));
+
+  lanelet::LineString3d ls30(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts3.begin(), pts3.begin() + num + 1));
+  lanelet::LineString3d ls31(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts3.begin() + num, pts3.begin() + 2 * num + 1));
+  lanelet::LineString3d ls32(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts3.begin() + 2 * num, pts3.begin() + 3 * num + 1));
+  lanelet::LineString3d ls33(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts3.begin() + 3 * num, pts3.begin() + 4 * num + 1));
 
   all_lanelets.push_back(getLanelet(1200, ls00,ls10,lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed));
   all_lanelets.push_back(getLanelet(1201, ls01,ls11,lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed));
@@ -484,9 +489,11 @@ inline std::shared_ptr<carma_wm::CARMAWorldModel> getGuidanceTestMap(MapOptions 
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();	
   // create the semantic map
-  auto map = buildGuidanceTestMap(map_options.lane_width_, map_options.lane_length_);
+  
+  auto map = buildGuidanceTestMap(map_options.lane_width_, map_options.lane_length_, map_options.seg_num_);
 
   // set the map, with default routingGraph
+  
   cmw->setMap(map);
 
   // set default route, from 1200 to 1203 (it will automatically pick the shortest)
