@@ -30,11 +30,11 @@ namespace port_drayage_plugin
         double speed_epsilon = _pnh->param("stop_speed_epsilon", 1.0);
         declaration = _pnh->param("declaration", 1.0);
         std::string cargo_id;
-        _pnh->param<std::string>("cargo_id", cargo_id, ""); 
+        _pnh->param<std::string>("cargo_id", cargo_id, "UNDEFINED-CARGO-ID"); 
 
         // Read in 'cmv_id' parameter as a string, then convert to an unsigned long before initializing the PortDrayageWorker object
         std::string cmv_id_string;
-        _pnh->param<std::string>("cmv_id", cmv_id_string, "123");
+        _pnh->param<std::string>("cmv_id", cmv_id_string, "0");
         unsigned long cmv_id = std::stoul(cmv_id_string);
 
         ros::Publisher outbound_mob_op = _nh->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
@@ -67,6 +67,7 @@ namespace port_drayage_plugin
         ros::Subscriber pose_sub = _nh->subscribe<geometry_msgs::PoseStamped>("current_pose", 5, 
             [&](const geometry_msgs::PoseStampedConstPtr& pose) {
                 curr_pose_ = std::make_shared<geometry_msgs::PoseStamped>(*pose);
+                pdw.on_new_pose(pose);
         });
 
         _pose_subscriber = std::make_shared<ros::Subscriber>(pose_sub);
@@ -77,13 +78,13 @@ namespace port_drayage_plugin
         });
 
         _inbound_mobility_operation_subscriber = std::make_shared<ros::Subscriber>(inbound_mobility_operation_sub);
-        
-        ros::Subscriber gps_sub = _nh->subscribe<novatel_gps_msgs::Inspva>("current_gps_position", 5,
-            [&](const novatel_gps_msgs::InspvaConstPtr& gps_position) {
-            pdw.set_current_gps_position(gps_position);
+
+        ros::Subscriber georeference_sub = _nh->subscribe<std_msgs::String>("georeference", 1,
+            [&](const std_msgs::StringConstPtr& georeference_msg) {
+            pdw.on_new_georeference(georeference_msg);
         });
-        
-        _gps_position_subscriber = std::make_shared<ros::Subscriber>(gps_sub);
+
+        _georeference_subscriber = std::make_shared<ros::Subscriber>(georeference_sub);
         
         ros::Timer discovery_pub_timer_ = _nh->createTimer(
             ros::Duration(ros::Rate(10.0)),

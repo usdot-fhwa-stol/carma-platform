@@ -86,8 +86,8 @@ namespace port_drayage_plugin
 
         // Add current vehicle location (latitude and longitude)
         ptree location;
-        location.put("latitude", _current_gps_position.latitude * 10000000); // Convert degrees to 1/10 microdegrees
-        location.put("longitude", _current_gps_position.longitude * 10000000); // Convert degrees to 1/10 microdegrees
+        location.put("latitude", _current_gps_position.latitude); 
+        location.put("longitude", _current_gps_position.longitude); 
         pt.put_child("location", location);
 
         // Add cargo-related fields based on whether the vehicle is currently carrying cargo
@@ -181,8 +181,8 @@ namespace port_drayage_plugin
 
         // Parse starting longitude/latitude fields if 'location' field exists in strategy_params:
         if (pt.count("location") != 0){
-            _latest_mobility_operation_msg.start_longitude = pt.get<double>("location.longitude") / 10000000; // Convert 1/10 microdegrees to degrees
-            _latest_mobility_operation_msg.start_latitude = pt.get<double>("location.latitude") / 10000000; // Convert 1/10 microdegrees to degrees
+            _latest_mobility_operation_msg.start_longitude = pt.get<double>("location.longitude");
+            _latest_mobility_operation_msg.start_latitude = pt.get<double>("location.latitude"); 
             ROS_DEBUG_STREAM("start long: " << *_latest_mobility_operation_msg.start_longitude);
             ROS_DEBUG_STREAM("start lat: " << *_latest_mobility_operation_msg.start_latitude);
         }
@@ -193,8 +193,8 @@ namespace port_drayage_plugin
 
         // Parse destination longitude/latitude fields if 'destination' field exists in strategy_params:
         if (pt.count("destination") != 0) {
-            _latest_mobility_operation_msg.dest_longitude = pt.get<double>("destination.longitude") / 10000000; // Convert 1/10 microdegrees to degrees
-            _latest_mobility_operation_msg.dest_latitude = pt.get<double>("destination.latitude") / 10000000; // Convert 1/10 microdegrees to degrees
+            _latest_mobility_operation_msg.dest_longitude = pt.get<double>("destination.longitude"); 
+            _latest_mobility_operation_msg.dest_latitude = pt.get<double>("destination.latitude"); 
             ROS_DEBUG_STREAM("dest long: " << *_latest_mobility_operation_msg.dest_longitude);
             ROS_DEBUG_STREAM("dest lat: " << *_latest_mobility_operation_msg.dest_latitude);
         }
@@ -204,9 +204,24 @@ namespace port_drayage_plugin
         }
     }
 
-    void PortDrayageWorker::set_current_gps_position(const novatel_gps_msgs::InspvaConstPtr& gps_position) {
-        _current_gps_position.latitude = gps_position->latitude;
-        _current_gps_position.longitude = gps_position->longitude;
-    }
+    void PortDrayageWorker::on_new_pose(const geometry_msgs::PoseStampedConstPtr& msg) {
+        if (!_map_projector) {
+            ROS_DEBUG_STREAM("Ignoring pose message as projection string has not been defined");
+            return;
+        }
+
+        // Convert pose message contents to a GPS coordinate
+        lanelet::GPSPoint coord = _map_projector->reverse( { msg->pose.position.x, msg->pose.position.y, msg->pose.position.z } );
+
+        // Update the locally-stored GPS position of the CMV
+        _current_gps_position.latitude = coord.lat;
+        _current_gps_position.longitude = coord.lon;
+    }        
+
+    void PortDrayageWorker::on_new_georeference(const std_msgs::StringConstPtr& msg) {
+        // Build projector from proj string
+        _map_projector = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());  
+    }        
+
 
 } // namespace port_drayage_plugin

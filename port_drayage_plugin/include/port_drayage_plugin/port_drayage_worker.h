@@ -20,8 +20,10 @@
 #include <cav_msgs/MobilityOperation.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <novatel_gps_msgs/Inspva.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <std_msgs/String.h>
 #include <boost/optional.hpp>
+
 
 #include "port_drayage_plugin/port_drayage_state_machine.h"
 
@@ -74,6 +76,8 @@ namespace port_drayage_plugin
             std::string _cargo_id;
             std::function<void(cav_msgs::MobilityOperation)> _publish_mobility_operation;
             bool _has_cargo;
+
+            std::shared_ptr<lanelet::projection::LocalFrameProjector> _map_projector = nullptr;
 
             // Data member for storing the strategy_params field of the last processed port drayage MobilityOperation message intended for this vehicle's cmv_id
             std::string _previous_strategy_params;
@@ -148,6 +152,18 @@ namespace port_drayage_plugin
             void set_current_speed(const geometry_msgs::TwistStampedConstPtr& speed);
 
             /**
+            * \brief Callback for map projection string to define lat/lon <--> map conversion
+            * \param msg The proj string defining the projection.
+             */
+            void on_new_georeference(const std_msgs::StringConstPtr& msg);   
+
+            /**
+             * \brief Callback for the pose subscriber. The pose will be converted into lat/lon and stored locally.
+             * \param msg Latest pose message
+             */
+            void on_new_pose(const geometry_msgs::PoseStampedConstPtr& msg);          
+
+            /**
              * \brief Callback to process a received MobilityOperation message
              * \param mobility_operation_msg a received MobilityOperation message
              */
@@ -160,11 +176,6 @@ namespace port_drayage_plugin
              * \param mobility_operation_strategy_params the strategy_params field of a MobilityOperation message
              */
             void mobility_operation_message_parser(std::string mobility_operation_strategy_params);
-
-            /**
-             * \brief Callback to store the host vehicle's current latitude/longitude coordinates 
-             */
-            void set_current_gps_position(const novatel_gps_msgs::InspvaConstPtr& gps_position);
 
             /**
              * \brief Spin and process data
