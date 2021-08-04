@@ -52,7 +52,7 @@ TEST(GeofenceScheduler, addGeofence)
 {
   // Test adding then evaulate if the calls to active and inactive are done correctly
   // Finally test cleaing the timers
-  auto gf_ptr = std::make_shared<Geofence>(Geofence());
+  auto gf_ptr = std::make_shared<Geofence>();
   
   boost::uuids::uuid first_id = boost::uuids::random_generator()(); 
   std::size_t first_id_hashed = boost::hash<boost::uuids::uuid>()(first_id);

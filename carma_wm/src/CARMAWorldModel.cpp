@@ -1062,33 +1062,34 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLane(const lanelet::Const
   return prev_lane;
 }
 
-std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point,
-                                                                    const unsigned int n) const
+void CARMAWorldModel::setTrafficLightIds(uint32_t id, lanelet::Id lanelet_id)
 {
-  // Check if the map is loaded yet
-  if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
-  {
-    throw std::invalid_argument("Map is not set or does not contain lanelets");
-  }
-  std::vector<lanelet::Lanelet> possible_lanelets;
-  auto nearestLanelets = lanelet::geometry::findNearest(semantic_map_->laneletLayer, point, n);
-  if (nearestLanelets.size() == 0)
-    return {};
-  int id = 0;  // closest ones are in the back
-  // loop through until the point is no longer geometrically in the lanelet
-  while (boost::geometry::within(point, nearestLanelets[id].second.polygon2d()))
-  {
-    possible_lanelets.push_back(nearestLanelets[id].second);
-    id++;
-    if (id >= nearestLanelets.size())
-      break;
-  }
-  return possible_lanelets;
+  traffic_light_ids_[id] = lanelet_id;
 }
 
 void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
 {
   config_speed_limit_ = config_lim;
+}
+
+std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n)
+{
+  return carma_wm::query::getLaneletsFromPoint(semantic_map_, point, n);
+}
+
+std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n) const
+{
+  return carma_wm::query::getLaneletsFromPoint(getMap(), point, n);
+}
+
+std::vector<lanelet::Lanelet> CARMAWorldModel::nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n)
+{
+  return carma_wm::query::getLaneletsFromPoint(semantic_map_, input_point, n);
+}
+
+std::vector<lanelet::ConstLanelet> CARMAWorldModel::nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n) const
+{
+  return carma_wm::query::getLaneletsFromPoint(getMap(), input_point, n);
 }
 
 std::vector<lanelet::CarmaTrafficLightPtr> CARMAWorldModel::getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const
