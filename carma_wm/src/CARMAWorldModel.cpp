@@ -1208,7 +1208,7 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
         default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(default_state.back().first + ros::Duration(YELLOW_LIGHT_DURATION), lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE));
         default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(default_state.back().first + ros::Duration(RED_LIGHT_DURATION), lanelet::CarmaTrafficLightState::STOP_AND_REMAIN));
         default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(default_state.back().first + ros::Duration(GREEN_LIGHT_DURATION), lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
-        curr_light->setStates(default_state, curr_light->revision_);
+        curr_light->setStates(default_state, curr_intersection.revision);
       }
       else if (traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 2 )
       {
@@ -1238,7 +1238,7 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
         partial_states.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(partial_states.back().first + red_light_duration, lanelet::CarmaTrafficLightState::STOP_AND_REMAIN));
         partial_states.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(partial_states.back().first + green_light_duration, lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
         
-        curr_light->setStates(partial_states, curr_light->revision_);
+        curr_light->setStates(partial_states, curr_intersection.revision);
       }
       else // traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() == 1
       {
