@@ -46,7 +46,8 @@ WzStrategicPlugin::WzStrategicPlugin(carma_wm::WorldModelConstPtr wm, WzStrategi
   plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
 };
 
-cav_msgs::Plugin WzStrategicPlugin::getDiscoveryMsg() const {
+cav_msgs::Plugin WzStrategicPlugin::getDiscoveryMsg() const
+{
   return plugin_discovery_msg_;
 }
 
@@ -177,6 +178,7 @@ void WzStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversRequest
 
   if (current_state.downtrack >= plugin_activation_distance)
   {
+    ROS_INFO_STREAM("Within intersection range");
     transition_table_.signal(TransitEvent::IN_STOPPING_RANGE);  // Evaluate Signal
   }
 }
@@ -185,7 +187,7 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
                                             cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
                                             const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights)
 {
-  if (traffic_lights.empty())  // If are are in the approaching state and there is no longer any lights ahead of us then
+  if (traffic_lights.empty())  // If we are in the approaching state and there is no longer any lights ahead of us then
                                // the vehicle must have crossed the stop bar
   {
     transition_table_.signal(TransitEvent::CROSSED_STOP_BAR);
@@ -305,11 +307,14 @@ void WzStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& re
     return;
   }
 
+  // A fixed buffer to add to stopping maneuvers once the vehicle is already stopped to ensure that they can have their trajectory planned
+  constexpr double stop_maneuver_buffer = 10.0;  
+
   // If the light is not green then continue waiting by creating a stop and wait maneuver ontop of the vehicle
   resp.new_plan.maneuvers.push_back(
-      composeStopAndWaitManeuverMessage(current_state.downtrack - 10.0, traffic_light_down_track, current_state.speed,
+      composeStopAndWaitManeuverMessage(current_state.downtrack - stop_maneuver_buffer, traffic_light_down_track, current_state.speed,
                                         current_state.lane_id, current_state.lane_id, current_state.stamp,
-                                        current_state.stamp + ros::Duration(config_.min_maneuver_planning_period) ));
+                                        current_state.stamp + ros::Duration(config_.min_maneuver_planning_period)));
 }
 
 void WzStrategicPlugin::planWhenDEPARTING(const cav_srvs::PlanManeuversRequest& req,
@@ -365,8 +370,9 @@ bool WzStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_
 
   do
   {
-    // Clear previous maneuvers planned by this plugin as guard against state change since each state generates an independant set of maneuvers
-    resp.new_plan =  cav_msgs::ManeuverPlan();
+    // Clear previous maneuvers planned by this plugin as guard against state change since each state generates an
+    // independant set of maneuvers
+    resp.new_plan = cav_msgs::ManeuverPlan();
 
     prev_state = transition_table_.getState();  // Cache previous state to check if state has changed after 1 iteration
 
@@ -390,8 +396,7 @@ bool WzStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_
         {
           throw std::invalid_argument("State is DEPARTING but the intersection variables are not available");
         }
-        planWhenDEPARTING(req, resp, current_state, intersection_end_downtrack_.get(),
-                          intersection_speed_.get());
+        planWhenDEPARTING(req, resp, current_state, intersection_end_downtrack_.get(), intersection_speed_.get());
         break;
 
       default:
@@ -439,7 +444,8 @@ cav_msgs::Maneuver WzStrategicPlugin::composeStopAndWaitManeuverMessage(double c
   cav_msgs::Maneuver maneuver_msg;
   maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
   maneuver_msg.stop_and_wait_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
-  maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN | cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA;
+  maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector =
+      cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN | cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA;
   maneuver_msg.stop_and_wait_maneuver.parameters.planning_tactical_plugin = config_.stop_and_wait_plugin_name;
   maneuver_msg.stop_and_wait_maneuver.parameters.planning_strategic_plugin = config_.strategic_plugin_name;
   maneuver_msg.stop_and_wait_maneuver.start_dist = current_dist;
@@ -492,7 +498,7 @@ cav_msgs::Maneuver WzStrategicPlugin::composeIntersectionTransitMessage(double s
   return maneuver_msg;
 }
 
-double WzStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt) const 
+double WzStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt) const
 {
   lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
   if (traffic_rules)
