@@ -181,6 +181,10 @@ void WzStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversRequest
     ROS_INFO_STREAM("Within intersection range");
     transition_table_.signal(TransitEvent::IN_STOPPING_RANGE);  // Evaluate Signal
   }
+  else
+  {
+    ROS_DEBUG_STREAM("Not within intersection range");
+  }
 }
 // TODO should we handle when the vehicle is not going to make the light but doesn't have space to stop?
 void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest& req,
@@ -307,14 +311,15 @@ void WzStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& re
     return;
   }
 
-  // A fixed buffer to add to stopping maneuvers once the vehicle is already stopped to ensure that they can have their trajectory planned
-  constexpr double stop_maneuver_buffer = 10.0;  
+  // A fixed buffer to add to stopping maneuvers once the vehicle is already stopped to ensure that they can have their
+  // trajectory planned
+  constexpr double stop_maneuver_buffer = 10.0;
 
   // If the light is not green then continue waiting by creating a stop and wait maneuver ontop of the vehicle
-  resp.new_plan.maneuvers.push_back(
-      composeStopAndWaitManeuverMessage(current_state.downtrack - stop_maneuver_buffer, traffic_light_down_track, current_state.speed,
-                                        current_state.lane_id, current_state.lane_id, current_state.stamp,
-                                        current_state.stamp + ros::Duration(config_.min_maneuver_planning_period)));
+  resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
+      current_state.downtrack - stop_maneuver_buffer, traffic_light_down_track, current_state.speed,
+      current_state.lane_id, current_state.lane_id, current_state.stamp,
+      current_state.stamp + ros::Duration(config_.min_maneuver_planning_period)));
 }
 
 void WzStrategicPlugin::planWhenDEPARTING(const cav_srvs::PlanManeuversRequest& req,
