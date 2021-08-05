@@ -356,7 +356,7 @@ bool WzStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_
 
   if (traffic_list.empty())  // If there were no lights found on the route then this plugin is not applicable
   {
-    ROS_DEBUG("No lights found along route. Returning maneuver plan unchanged");
+    ROS_DEBUG("No lights found along route. No new maneuvers added. ");
     // Return empty maneuver plan unchanged
     return true;
   }

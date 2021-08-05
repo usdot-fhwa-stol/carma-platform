@@ -40,7 +40,7 @@ enum class TransitEvent
   IN_STOPPING_RANGE, // Transition event representing that the vehicle is in the stopping range of a light
   STOPPED, // Transition event representing that the vehicle has come to a full stop
   CROSSED_STOP_BAR, // Transition event representing that the vehicle has crossed the stop bar
-  RED_TO_GREEN_LIGHT, // Transition event representing that the current light of intereset has changed from red to green
+  RED_TO_GREEN_LIGHT, // Transition event representing that the current light of interest has changed from red to green
   INTERSECTION_EXIT // Transition event representing that the end of the current intersection was crossed
 };
 /**
