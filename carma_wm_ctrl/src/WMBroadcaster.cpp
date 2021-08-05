@@ -300,7 +300,9 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
   if (detected_workzone_signal) // if workzone message detected, save to cache to process later
   {
     gf_ptr->label_ = msg_v01.package.label; // to extract intersection, and signal group id
-    if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE)
+    if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && (msg_detail.closed == cav_msgs::TrafficControlDetail::CLOSED ||
+                                                                                msg_detail.closed == cav_msgs::TrafficControlDetail::TAPERRIGHT ||
+                                                                                msg_detail.closed == cav_msgs::TrafficControlDetail::OPENRIGHT))
     {
       work_zone_geofence_cache_[msg_detail.closed] = gf_ptr;
     }
