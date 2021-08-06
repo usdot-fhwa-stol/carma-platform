@@ -350,6 +350,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 
     // After setting map evaluate the current update queue to apply any updates that arrived before the map
     bool more_updates_to_apply = true;
+    rerouting_flag_ = false;
     while(!map_update_queue_.empty() && more_updates_to_apply) {
       
       auto update = map_update_queue_.front(); // Get first update
