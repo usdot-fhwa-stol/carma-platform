@@ -26,7 +26,7 @@ struct WzStrategicPluginConfig
   double vehicle_decel_limit = 2.0;
 
   //! A multiplier to apply to the maximum allowable vehicle deceleration limit so we plan under our capabilities
-  double vehicle_decel_limit_multiplier = 0.5;
+  double vehicle_decel_limit_multiplier = 0.75;
 
   //! The minimum distance in meters that the vehicle can be at before requiring a transition to the APPROACH state
   double min_approach_distance = 30.0;
