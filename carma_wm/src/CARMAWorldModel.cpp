@@ -1240,10 +1240,6 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
         
         curr_light->setStates(partial_states, curr_intersection.revision);
       }
-      else // traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() == 1
-      {
-        throw std::invalid_argument("Reached unreachable case where traffic light contains only single state.");
-      }
     }
   }
 }
