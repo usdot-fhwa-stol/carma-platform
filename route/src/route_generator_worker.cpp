@@ -357,7 +357,7 @@ namespace route {
 
         route_marker_msg_.markers={};
 
-        if (!points.empty())
+        if (points.empty())
         {
             ROS_WARN_STREAM("No central line points! Returning");
         }
