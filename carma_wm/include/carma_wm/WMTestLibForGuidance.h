@@ -30,6 +30,7 @@
 #include <carma_wm/Geometry.h>
 #include <carma_wm/MapConformer.h>
 #include <ros/ros.h>
+#include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
 /**
  * This is a test library made for guidance unit tests. In general, it includes the following :
  * - Helper functions to create the world from scratch or extend the world in getGuidanceTestMap()
@@ -409,10 +410,10 @@ inline void setSpeedLimit (lanelet::Velocity speed_limit, std::shared_ptr<carma_
       }
     }
     lanelet::DigitalSpeedLimitPtr sl = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), speed_limit, {llt}, {},
-                                                     { lanelet::Participants::VehicleCar }));
+                                                     { lanelet::Participants::Vehicle }));
     cmw->getMutableMap()->update(llt, sl);
   }
-  ROS_INFO_STREAM("Set the new speed limit!");
+  ROS_INFO_STREAM("Set the new speed limit! Value: " << speed_limit.value());
 }
 
 /**
@@ -474,6 +475,64 @@ inline void setRouteByIds (std::vector<lanelet::Id> lanelet_ids, std::shared_ptr
       lanelets.push_back(cmw->getMap()->laneletLayer.get(id));
   }
   setRouteByLanelets(lanelets, cmw);
+}
+
+
+
+
+/**
+ * \brief Method adds a traffic light to the provided world model instance
+ *        NOTE: The stop line for the light will be located at the end of the owning_lanelet and formed from its two bound end points 
+ * 
+ * \param cmw The world model instance to update
+ * \param light_id The lanelet id to use for the generated traffic light regulatory element. This id should NOT be present in the map prior to this method call
+ * \param owning_lanelet_id The id of the lanelet which will own thr traffic light element. This id MUST be present in the map prior to this method being called
+ * \param controlled_lanelet_ids A list of lanelet ids which the traffic light will control access to. The ids MUST be present in the map. Additionally, they should be listed in order along the direction of travel.
+ * \param timeing_plan Optional parameter that is the timing plan to use for the light. The specifications match those of CarmaTrafficLightState.setStates()
+ *                     The default timing plan is 4sec yewllow, 20sec red, 20sec green
+ */ 
+inline void addTrafficLight(std::shared_ptr<carma_wm::CARMAWorldModel> cmw, lanelet::Id light_id, lanelet::Id owning_lanelet_id, std::vector<lanelet::Id> controlled_lanelet_ids, 
+std::vector<std::pair<ros::Time, lanelet::CarmaTrafficLightState>> timing_plan =
+{
+  std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(0), lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED), // Just ended green
+  std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(4.0), lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE), // 4 sec yellow
+  std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(24.0), lanelet::CarmaTrafficLightState::STOP_AND_REMAIN), // 20 sec red
+  std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(44.0), lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED) // 20 sec green
+}) {
+  
+  std::vector<lanelet::Lanelet> controlled_lanelets;
+
+  for (auto id : controlled_lanelet_ids) {
+    auto iterator = cmw->getMutableMap()->laneletLayer.find(id);
+    
+    if (iterator == cmw->getMutableMap()->laneletLayer.end())
+      throw std::invalid_argument("Provided with lanelet id not in map: " + std::to_string(id));
+
+    controlled_lanelets.push_back(*iterator);
+  }
+
+  // Get owning lanelet by id
+  auto iterator = cmw->getMutableMap()->laneletLayer.find(owning_lanelet_id);
+    
+  if (iterator == cmw->getMutableMap()->laneletLayer.end())
+    throw std::invalid_argument("Provided with lanelet id not in map: " + std::to_string(owning_lanelet_id));
+  
+  // Add traffic light to owning lanelet
+  auto owning_lanelet = *iterator;
+
+    // Create stop line at end of owning lanelet
+  lanelet::LineString3d virtual_stop_line(lanelet::utils::getId(), { owning_lanelet.leftBound().back(), owning_lanelet.rightBound().back() });
+
+  // Build traffic light
+  std::shared_ptr<lanelet::CarmaTrafficLight> traffic_light(new lanelet::CarmaTrafficLight(lanelet::CarmaTrafficLight::buildData(light_id, { virtual_stop_line }, controlled_lanelets )));
+  
+  // Set the timing plan
+  traffic_light->setStates(timing_plan,0);
+  
+  owning_lanelet.addRegulatoryElement(traffic_light);
+
+  // Ensure map lookup tables are updated
+  cmw->getMutableMap()->update(owning_lanelet, traffic_light);
 }
 
 /**
