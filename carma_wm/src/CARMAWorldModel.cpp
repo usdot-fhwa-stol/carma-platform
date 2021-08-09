@@ -287,7 +287,7 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
     if (!bounds_inclusive) // reduce bounds slightly to avoid including exact bounds
     {
       if (std::max(min.downtrack, start + 0.00001) > std::min(max.downtrack, end - 0.00001)
-        || (start == end && (min.downtrack >= start || max.downtrack <= start)))
+        || (start == end && (min.downtrack >= start || max.downtrack <= end)))
       {  // Check for 1d intersection
         // No intersection so continue
         continue;
