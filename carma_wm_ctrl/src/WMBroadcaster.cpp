@@ -551,11 +551,13 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
   auto taper_right_first_llt = current_map_->laneletLayer.get(work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.front().lanelet().get().id());
 
   new_taper_right_llts = splitLaneletWithPoint({taper_right_first_pt}, taper_right_first_llt, error_distance_);
+  double check_dist_tpr = lanelet::geometry::distance2d(taper_right_first_llt.centerline2d().front().basicPoint2d(), taper_right_first_pt);
 
-  // if no splitting happened, we need to create dupliacate of previous lanelet of TAPERRIGHT's first lanelet
+  // if no splitting happened and taperright's first point is close to starting boundary, we need to create duplicate of previous lanelet of TAPERRIGHT's first lanelet
   // to match the output expected of this function as if split happened
-  if (new_taper_right_llts.size() == 1)
+  if (new_taper_right_llts.size() == 1 && check_dist_tpr <= error_distance_)
   {
+    ROS_DEBUG_STREAM("Creating duplicate lanelet of 'previous lanelet' due to TAPERRIGHT using entire lanelet...");
     auto previous_lanelets = current_routing_graph_->previous(work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.front().lanelet().get());
     if (previous_lanelets.empty()) //error if bad match
     {
@@ -563,7 +565,7 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
                       << ". This case is rare and not supported at the moment.");
       return;
     }
-    
+
     // get previous lanelet of affected part of TAPERRIGHT (doesn't matter which previous, as the new lanelet will only be duplicate anyways)
     auto prev_lanelet_to_copy  = current_map_->laneletLayer.get(previous_lanelets.front().id());
 
@@ -581,15 +583,17 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
   auto open_right_last_llt = current_map_->laneletLayer.get(work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.back().lanelet().get().id());
 
   new_open_right_llts = splitLaneletWithPoint({open_right_last_pt}, open_right_last_llt, error_distance_);
+  double check_dist_opr = lanelet::geometry::distance2d(open_right_last_llt.centerline2d().back().basicPoint2d(), open_right_last_pt);
 
   // if no splitting happened, we need to create duplicate of next lanelet of OPENRIGHT's last lanelet
   // to match the output expected of this function as if split happened
-  if (new_open_right_llts.size() == 1) 
+  if (new_open_right_llts.size() == 1 && check_dist_opr <= error_distance_) 
   {
-    auto next_lanelets = current_routing_graph_->following(work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.front().lanelet().get());
+    ROS_DEBUG_STREAM("Creating duplicate lanelet of 'next lanelet' due to OPENRIGHT using entire lanelet...");
+    auto next_lanelets = current_routing_graph_->following(work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.back().lanelet().get());
     if (next_lanelets.empty()) //error if bad match
     {
-      ROS_ERROR_STREAM("Workzone area ends at lanelet with no following lanelet (Id : " << work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.front().lanelet().get().id()
+      ROS_ERROR_STREAM("Workzone area ends at lanelet with no following lanelet (Id : " << work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.back().lanelet().get().id()
                       << ". This case is rare and not supported at the moment.");
       return;
     }
