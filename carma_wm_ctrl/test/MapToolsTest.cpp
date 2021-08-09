@@ -609,7 +609,7 @@ TEST(MapTools, DISABLED_split_lanes)  // Remove DISABLED_ to enable unit test
  * \param file The file to read the map from
  * \param lanelet_ids A list of lanelet IDs where the associated lanelets are contiguous. 
  */ 
-TEST(MapTools, extract_centerline)
+TEST(MapTools, DISABLED_extract_centerline)
 {
 
   ///////////
@@ -617,11 +617,11 @@ TEST(MapTools, extract_centerline)
   ///////////
 
   // File location of osm file
-  std::string file = "../resource/ACM_06.02.21.xodr.osm";    
+  std::string file = "resource/ACM_06.02.21.xodr.osm";    
 
   // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
   // For the output to be meaningful these lanelets MUST be contigous
-  std::vector<lanelet::Id> lanelet_ids = { };
+  std::vector<lanelet::Id> lanelet_ids = { 28113, 29083, 30095, 104191, 57801, 58979, 91965, 6835, 117009, 43306, 110987, 9409, 11912, 119541, 22975, 119667, 17802, 125749 };
 
   ///////////
   // START OF LOGIC
