@@ -589,12 +589,12 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     auto next_lanelets = current_routing_graph_->following(work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.front().lanelet().get());
     if (next_lanelets.empty()) //error if bad match
     {
-      ROS_ERROR_STREAM("Workzone area starts from lanelet with no previous lanelet (Id : " << work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.front().lanelet().get().id()
+      ROS_ERROR_STREAM("Workzone area ends at lanelet with no following lanelet (Id : " << work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.front().lanelet().get().id()
                       << ". This case is rare and not supported at the moment.");
       return;
     }
     
-    // get previous lanelet of affected part of TAPERRIGHT (doesn't matter which previous, as the new lanelet will only be duplicate anyways)
+    // get next lanelet of affected part of OPENRIGHT (doesn't matter which next, as the new lanelet will only be duplicate anyways)
     auto next_lanelet_to_copy  = current_map_->laneletLayer.get(next_lanelets.front().id());
 
     // parallel_llts will have a copy of `next_lanelet_to_copy` with new id to be used as part of workzone area
