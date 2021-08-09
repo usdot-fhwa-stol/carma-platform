@@ -1152,8 +1152,6 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
       {
         continue;
       }
-      ROS_DEBUG_STREAM("Received a SPAT message for traffic light with lanelet id: " << curr_light_id << ", with intersection_id: " << (int)curr_intersection.id.id << 
-                           ", and signal_group_id: " << (int)current_movement_state.signal_group);
       
       auto general_regem = semantic_map_->regulatoryElementLayer.get(curr_light_id);
       
