@@ -49,6 +49,7 @@
   <!-- CARMA Motion Computation Node -->
   <group>
     <remap to="$(optenv CARMA_MSG_NS)/incoming_mobility_path" from="incoming_mobility_path"/>
+    <remap from="georeference" to="$(optenv CARMA_LOCZ_NS)/map_param_loader/georeference"/>
     <include file="$(find motion_computation)/launch/motion_computation.launch"/>
   </group>
 
@@ -63,6 +64,12 @@
  <group>
   <remap from= "external_objects" to= "external_object_predictions"/>
   <include file="$(find roadway_objects)/launch/roadway_objects.launch"/>
+</group>
+
+  <!-- CARMA Motion Computation Visualizer Node -->
+ <group>
+  <remap from= "external_objects" to= "external_object_predictions"/>
+  <include file="$(find motion_prediction_visualizer)/launch/motion_prediction_visualizer.launch"/>
 </group>
 
   <!-- calibration_publisher -->
@@ -227,6 +234,7 @@
   <!-- Traffic Incident Parser -->
   <group>
     <remap from="georeference" to="$(optenv CARMA_LOCZ_NS)/map_param_loader/georeference"/>
+    <remap from="geofence" to="$(optenv CARMA_MSG_NS)/incoming_geofence_control"/>
     <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
     <include file="$(find traffic_incident_parser)/launch/traffic_incident_parser.launch"/>
   </group>

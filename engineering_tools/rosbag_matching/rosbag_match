@@ -1,0 +1,66 @@
+
+#!/bin/bash 
+
+rosbag=$1
+logfile=$2
+
+# get the bag time from rosbag info
+while read -r line ; do
+
+	if [[ $line =~ \([0-9]+\.[0-9]+\) ]]; then
+		IFS=" "
+		read -ra bagtime <<< "$line"
+		ros_time=$(echo "${bagtime[5]:1:13}" | bc -l)
+		break
+	fi
+
+done < <(rosbag info $rosbag) 
+
+
+# go inside logfiles
+cd $logfile
+
+
+match="0"
+# go through every log directory in logfiles
+for dir in */; do
+	cd $dir
+	echo Log Directory:
+	echo $dir
+	while read -r line ; do
+		if [[ $line =~ [0-9]+\.[0-9]+ ]]; then
+			# get the log time from rosout.log
+			IFS=" "
+			read -ra time <<< "$line"
+			
+			# determine match
+			difference=$(echo "${time[0]:0:13}-$ros_time" | bc -l)
+#			echo $difference
+			if [[ "$(echo "$difference<0 " | bc -l)" -eq "1"  ]]; then
+				difference=${difference:1}					
+			fi
+			echo Log Time: ${time:0:13} ; echo Rosbag Time: $ros_time ; echo
+			if [[ "$(echo "$difference<60" | bc -l)" -eq "1"  ]]; then
+				echo "Match!" ; echo
+				match="1"
+				match_dir=$dir
+				match_time=${time:0:13}
+				match_diff=$difference
+								
+				# rename the directory
+				cd ..
+				match_log=${rosbag%.bag}_log
+				mv $match_dir $match_log
+				cd $match_log
+			fi 			
+			break
+		fi
+	done < <(less rosout.log)
+	cd ..
+done
+
+if [[ "$match" -eq "1" ]]; then
+	echo "Match Found: Match at $match_dir. Renamed to $match_log Rosbag Time: $ros_time Logfile Time: $match_time Time difference: $match_diff" 
+else
+	echo "Match not found."
+fi
