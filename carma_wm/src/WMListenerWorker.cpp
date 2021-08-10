@@ -113,7 +113,12 @@ void WMListenerWorker::enableUpdatesWithoutRoute()
 void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg)
 {
   ROS_INFO_STREAM("Map Update Being Evaluated. SeqNum: " << geofence_msg->header.seq);
-
+  if (rerouting_flag_)
+  {
+    ROS_INFO_STREAM("Currently new route is being processed. Queueing this update. Received seq: " << geofence_msg->header.seq << " prev seq: " << most_recent_update_msg_seq_);
+    map_update_queue_.push(geofence_msg);
+    return;
+  }
   if (geofence_msg->header.seq <= most_recent_update_msg_seq_) {
     ROS_DEBUG_STREAM("Dropping map update which has already been processed. Received seq: " << geofence_msg->header.seq << " prev seq: " << most_recent_update_msg_seq_);
     return;
@@ -345,6 +350,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 
     // After setting map evaluate the current update queue to apply any updates that arrived before the map
     bool more_updates_to_apply = true;
+    rerouting_flag_ = false;
     while(!map_update_queue_.empty() && more_updates_to_apply) {
       
       auto update = map_update_queue_.front(); // Get first update

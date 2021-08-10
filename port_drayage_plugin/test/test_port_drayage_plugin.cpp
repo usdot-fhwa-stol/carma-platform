@@ -39,6 +39,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
+        std::function<bool(cav_srvs::SetActiveRoute)>(), 
         1.0};
 
     // Set the pdw's map projector set its current pose
@@ -123,6 +124,7 @@ TEST(PortDrayageTest, testCheckStop1)
         "321", // Cargo ID
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
+        std::function<bool(cav_srvs::SetActiveRoute)>(), 
         1.0};
 
     geometry_msgs::TwistStamped twist;
@@ -133,7 +135,7 @@ TEST(PortDrayageTest, testCheckStop1)
     cav_msgs::ManeuverPlan plan;
     cav_msgs::Maneuver mvr;
     mvr.type = cav_msgs::Maneuver::STOP_AND_WAIT;
-    mvr.stop_and_wait_maneuver.parameters.planning_strategic_plugin = "Port Drayage Plugin";
+    mvr.stop_and_wait_maneuver.parameters.planning_strategic_plugin = "PortDrayagePlugin";
     plan.maneuvers.push_back(mvr);
     cav_msgs::ManeuverPlanConstPtr planptr{ new cav_msgs::ManeuverPlan{plan}};
     pdw.set_maneuver_plan(planptr);
@@ -150,7 +152,8 @@ TEST(PortDrayageTest, testCheckStop2)
         123, // CMV ID 
         "321", // Cargo ID
         "TEST_CARMA_HOST_ID", 
-        std::function<void(cav_msgs::MobilityOperation)>(), 
+        std::function<void(cav_msgs::MobilityOperation)>(),
+        std::function<bool(cav_srvs::SetActiveRoute)>(), 
         1.0};
 
     geometry_msgs::TwistStamped twist;
@@ -179,6 +182,7 @@ TEST(PortDrayageTest, testCheckStop3)
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
+        std::function<bool(cav_srvs::SetActiveRoute)>(), 
         1.0};
 
     geometry_msgs::TwistStamped twist;
@@ -208,6 +212,7 @@ TEST(PortDrayageTest, testCheckStop4)
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
+        std::function<bool(cav_srvs::SetActiveRoute)>(), 
         1.0};
 
     geometry_msgs::TwistStamped twist;
@@ -382,6 +387,37 @@ TEST(PortDrayageTest, testPlanManeuverCb)
 
 }
 
+TEST(PortDrayageTest, testComposeSetActiveRouteRequest)
+{
+    // Create PortDrayageWorker object with _cmv_id of "123"
+    port_drayage_plugin::PortDrayageWorker pdw{
+        "123", 
+        "TEST_CARGO_ID", 
+        "TEST_CARMA_HOST_ID", 
+        std::function<void(cav_msgs::MobilityOperation)>(), 
+        std::function<bool(cav_srvs::SetActiveRoute)>(),
+        1.0};
+
+    // Create a MobilityOperationConstPtr with a cmv_id that is intended for this specific vehicle
+    // Note: The strategy_params using the schema for messages of this type that have strategy "carma/port_drayage"
+    cav_msgs::MobilityOperation mobility_operation_msg;
+    mobility_operation_msg.strategy = "carma/port_drayage";
+    mobility_operation_msg.strategy_params = "{ \"cmv_id\": \"123\", \"cargo_id\": \"321\", \"cargo\": \"false\", \"location\"\
+        : { \"latitude\": \"389554377\", \"longitude\": \"-771503421\" }, \"destination\": { \"latitude\"\
+        : \"389550038\", \"longitude\": \"-771481983\" }, \"operation\": \"MOVING_TO_LOADING_AREA\", \"action_id\"\
+        : \"32\", \"next_action\": \"33\" }";
+    cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr(new cav_msgs::MobilityOperation(mobility_operation_msg));
+    pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr); 
+
+    // Verify the results of PortDrayageWorker's compose_set_active_route_request() method
+    cav_srvs::SetActiveRoute route_req = pdw.compose_set_active_route_request(*pdw._latest_mobility_operation_msg.dest_latitude, *pdw._latest_mobility_operation_msg.dest_longitude);
+    ASSERT_EQ(cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY, route_req.request.choice);
+    ASSERT_EQ(1, route_req.request.destination_points.size());
+    ASSERT_EQ(38.9550038, route_req.request.destination_points[0].latitude);
+    ASSERT_EQ(-77.1481983, route_req.request.destination_points[0].longitude);
+    ASSERT_EQ(false, route_req.request.destination_points[0].elevation_exists);
+}
+
 TEST(PortDrayageTest, testInboundMobilityOperation)
 {
     // Create PortDrayageWorker object with _cmv_id of 123
@@ -390,6 +426,7 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
+        std::function<bool(cav_srvs::SetActiveRoute)>(), 
         1.0};
 
     // Create a MobilityOperationConstPtr with a cmv_id that is intended for this specific vehicle

@@ -31,21 +31,28 @@ namespace port_drayage_plugin
         declaration = _pnh->param("declaration", 1.0);
         std::string cargo_id;
         _pnh->param<std::string>("cargo_id", cargo_id, "UNDEFINED-CARGO-ID"); 
+        std::string host_id;
+        _pnh->param<std::string>("host_id", host_id, "UNDEFINED-HOST-ID");
 
         // Read in 'cmv_id' parameter as a string, then convert to an unsigned long before initializing the PortDrayageWorker object
         std::string cmv_id_string;
         _pnh->param<std::string>("cmv_id", cmv_id_string, "0");
         unsigned long cmv_id = std::stoul(cmv_id_string);
 
+
         ros::Publisher outbound_mob_op = _nh->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
         _outbound_mobility_operations_publisher = std::make_shared<ros::Publisher>(outbound_mob_op);
+
+        _set_active_route_client = _nh->serviceClient<cav_srvs::SetActiveRoute>("/guidance/set_active_route");
+
         PortDrayageWorker pdw{
             cmv_id,
             cargo_id,
-            "HOST_ID",
+            host_id,
             [this](cav_msgs::MobilityOperation msg) {
                _outbound_mobility_operations_publisher->publish<cav_msgs::MobilityOperation>(msg);
             },
+            std::bind(&PortDrayagePlugin::call_set_active_route_client, this, std::placeholders::_1),
             speed_epsilon
         };
         
@@ -93,6 +100,23 @@ namespace port_drayage_plugin
         ros::CARMANodeHandle::spin();
 
         return 0;
+    }
+
+    bool PortDrayagePlugin::call_set_active_route_client(cav_srvs::SetActiveRoute req){
+        if(_set_active_route_client.call(req)){
+            if(req.response.errorStatus == cav_srvs::SetActiveRouteResponse::NO_ERROR){
+                ROS_DEBUG_STREAM("Route Generation succeeded for Set Active Route service call.");
+                return true;
+            }
+            else{
+                ROS_DEBUG_STREAM("Route Generation failed for Set Active Route service call.");
+                return false;
+            }
+        }
+        else{
+            ROS_DEBUG_STREAM("Set Active Route service call was not successful.");
+            return false;
+        }
     }
 
     bool PortDrayagePlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp){
