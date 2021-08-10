@@ -58,8 +58,9 @@ public:
    *
    *  \param map A shared pointer to the map which will share ownership to this object
    *  \param map_version Optional field to set the map version. While this is technically optional its uses is highly advised to manage synchronization.
+   *  \param recompute_routing_graph Optional field which if true will result in the routing graph being recomputed. NOTE: If this map is the first map set the graph will always be recomputed
    */
-  void setMap(lanelet::LaneletMapPtr map, size_t map_version = 0);
+  void setMap(lanelet::LaneletMapPtr map, size_t map_version = 0, bool recompute_routing_graph = true);
 
   /*! \brief Set the current route. This route must match the current map for this class to function properly
    *
@@ -115,7 +116,7 @@ public:
 
   TrackPos routeTrackPos(const lanelet::BasicPoint2d& point) const override;
 
-  std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false) const override;
+  std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false,  bool bounds_inclusive = true) const override;
 
   std::vector<lanelet::BasicPoint2d> sampleRoutePoints(double start_downtrack, double end_downtrack, double step_size) const override;
 

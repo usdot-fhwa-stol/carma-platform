@@ -67,6 +67,10 @@ repositories:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-web-ui.git
     version: noetic/develop
+  carma/src/carma-lightbar-driver:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-lightbar-driver.git
+    version: noetic/develop
   carma/src/kvaser_interface:
     type: git
     url: git@github.com:astuff/kvaser_interface.git
