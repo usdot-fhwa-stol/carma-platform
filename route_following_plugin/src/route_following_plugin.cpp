@@ -91,7 +91,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
 
         plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
         upcoming_lane_change_status_pub_ = nh_->advertise<cav_msgs::UpcomingLaneChangeStatus>("upcoming_lane_change_status", 1);
-        plugin_discovery_msg_.name = "RouteFollowing";
+        plugin_discovery_msg_.name = planning_strategic_plugin_;
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = true;
