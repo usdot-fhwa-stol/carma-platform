@@ -725,17 +725,11 @@ def check_leader_state_after_platoon_negotiation(bag, time_last_received_join_at
 # BASIC TRAVEL B-11: During platooning operations, the time gap between the front vehicle and the rear 
 #                    vehicle shall always be +/- 0.5 seconds of the desired 2.5 second time gap.
 ###########################################################################################################
-def check_distance_gap_during_platooning(bag, time_received_second_acceptance):
+def check_distance_gap_during_platooning(bag, time_received_second_acceptance, time_end_engagement):
     threshold_time_gap = 0.5 # (seconds) Threshold offset from desired time gap; if the actual time gap is within this threshold, it is considered successful
     desired_time_gap = 2.5 # (seconds) The absolute desired time gap between the Follower vehicle and the Leader vehicle during platooning operations
     min_time_gap = desired_time_gap - threshold_time_gap # The minimum allowable time gap between the Follower vehicle and the Leader vehicle during platooning operations 
     max_time_gap = desired_time_gap + threshold_time_gap # The maximum allowable time gap between the Follower vehicle and the Leader vehicle during platooning operations
-
-    time_last_received_mob_op = rospy.Time()
-    for topic, msg, t in bag.read_messages(topics=['/message/incoming_mobility_operation'], start_time = time_received_second_acceptance):
-        time_last_received_mob_op = t
-    
-    print("Received last MobilityOperation message from Leader Vehicle at " + str(time_last_received_mob_op.to_sec()))
 
     count_follower_msgs = 0
     count_negative_gap_msgs = 0
@@ -745,7 +739,7 @@ def check_distance_gap_during_platooning(bag, time_received_second_acceptance):
     count_above_max_time_gap_msgs = 0
     count_successful_time_gap_msgs = 0
     prev_negative_t = rospy.Time()
-    for topic, msg, t in bag.read_messages(topics=['/guidance/platooning_info'], start_time = time_received_second_acceptance, end_time = time_last_received_mob_op):
+    for topic, msg, t in bag.read_messages(topics=['/guidance/platooning_info'], start_time = time_received_second_acceptance, end_time = time_end_engagement):
         # Only consider messages when the vehicle's platooning state is 'FOLLOWER'
         if msg.state == 5:
             if msg.actual_gap < 0:
@@ -1584,7 +1578,7 @@ def main():
             b_8_result = check_gap_after_platoon_negotiation(bag, time_received_second_acceptance)
             b_9_result = check_follower_state_after_platoon_negotiation(bag, time_last_sent_join_at_rear)
             print("B-10: N/A (Follower Vehicle)")
-            b_11_result = check_distance_gap_during_platooning(bag, time_received_second_acceptance)
+            b_11_result = check_distance_gap_during_platooning(bag, time_received_second_acceptance, time_test_end_engagement)
             b_12_result = check_status_msg_receiving_frequency(bag, time_received_second_acceptance)
 
         else:
