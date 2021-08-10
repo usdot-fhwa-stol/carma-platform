@@ -21,6 +21,7 @@ Loads parameters and configures logging for the node
  
 -->
 <launch>
-    <rosparam command="load" file="$(find unobstructed_lanechange)/config/parameters.yaml"/>
-    <node name="unobstructed_lanechange" pkg="unobstructed_lanechange" type="unobstructed_lanechange" output="log"/>
+    <node name="unobstructed_lanechange" pkg="unobstructed_lanechange" type="unobstructed_lanechange" output="log">
+      <rosparam command="load" file="$(find unobstructed_lanechange)/config/parameters.yaml"/>
+    </node>
 </launch>

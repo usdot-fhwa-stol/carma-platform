@@ -1,17 +1,35 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 3.7.0, released Aug 10th, 2021
+----------------------------------------
+
+**Summary:** 
+Carma-platform release version 3.7.0 is comprised of three major enhancements. First, Unobstructed lane change. Second Cooperative Lane Follow (CLF) - All Predecessor Following (APF) platooning. Third, Cooperative Traffic Management - Speed Advisory.  Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
+
+Enhancements in this release:
+-	Issue 1344: Added Platooning Strategic and developed Tactical and Control Plugins to enable CARMA Platform to perform platooning.
+
+Fixes in this release:
+-	Issue 957: Fixed Platooning code missing some of the mobility message fields where Platooning plugin messages are populated with correct data.
+-	Issue 1347: Fixed route following plugin and Inlane cruising plugin with error no points to fit in time span exception during platooning test.
+-	Issue 1351: Fixed Route Following Before passing the maneuver to the response the starting speed is updated but the ending speed is not changed and doesn't update speed limit if route not updated.
+-	Issue 1356: Fixed Routing Graph creation takes unacceptably long time on ACM map.
+-	Issue 1360: Fixed Smooth speed change when the control plugin first changes to platooning control.
+-	Issue 1364: Fixed Platoon gap control by adding last speed command as current speed for smooth speed transition.
+-	Issue 1227: Fixed cooperative lane change functionality by adding necessary components relates to yield plugin and fixed few other issues for CLC and integration tested.
+
 Version 3.6.0, released June 29th, 2021
 -------------------------------------
 
 **Summary:**
-Carma-platform release version 3.6.0 is comprised of five major enhancements. First, Added ADS unobstructed lane change. Second CTM Move-over law –When receiving a request from an emergency vehicle, CARMA Platform plans move over to the adjacent open lane. Third, Added Geofence speed, Gap control and lane closure. And fourth, added Carma-cloud integration. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
+Carma-platform release version 3.6.0 is comprised of four major enhancements. First, Added ADS unobstructed lane change. Second CTM Move-over law –When receiving a request from an emergency vehicle, CARMA Platform plans move over to the adjacent open lane. Third, Added Geofence speed, Gap control and lane closure. And fourth, added Carma-cloud integration. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
 
 Enhancements in this release:
 -	Issue 1195: Added new functions to World Model interface, like route conversion to map and sample Route Points.
--	Issue 1199&1200&1208: Added a new node that visualizes host's and incoming mobility path’s location and received mobility path is synchronized to that of the host by matching the time steps and interpolating the points.
+-	Issue 1199: Added a new node that visualizes host's and incoming mobility path’s location and received mobility path is synchronized to that of the host by matching the time steps and interpolating the points.
 -	Issue 1206: Added a debug topic to in-lane cruising to improve the data analysis experience. 
--	Issue 1209: Updated Yield plugin updated to receive adjustable inter-vehicle gap from the map and modify the trajectory accordingly.
+-	Issue 1209: Updated Yield plugin to receive adjustable inter-vehicle gap from the map and modify the trajectory accordingly.
 -	Issue 1216: Added the new Carma node handle spin behavior which improved vehicle control by reducing planning and feedback communications latencies. 
 -	Issue 1234: Added lane change status publisher to Yield plugin constructor to ensure the topic is published properly.
 -	Issue 1235: Added a ROS parameter for choosing the tactical plugin to be used for lane changing.
@@ -20,7 +38,7 @@ Enhancements in this release:
 
 Fixes in this release:
 -	Issue 1163: Modified the object detection tracking node to accurately relay the object id for classification.
--	Issue 506: When the arbitrator receives, a system alert SHUTDOWN message it will cause an error a clean shutdown handling logic is added for Arbitrator node to remove exception thrown in logs as part of normal shutdown procedure.
+-	Issue 509: Arbitrator doesn't handle shutdown state properly.
 -	Issue 1217: The EKF node and the pose to tf node both appear to be outputting the same transform which results in a frequency of 100Hz which will likely have a negative impact on system performance due to the extra high data frequency.
 -	Issue 1223: Fixed traffic incident parser node georeference remap to /map param loader/georeference.
 -	Issue 1231&866: Control requests are supposed to be published at periodic intervals (10s) after a route is selected.
@@ -28,7 +46,7 @@ Fixes in this release:
 -	Issue 1244: Motion prediction reports wrong speed on prediction state part of roadway object message.
 -	Issue 1267: Fixed Incorrect node placement from traffic incident parser node.
 -	Issue 1270: TIM scenario vehicle speed up to configured limit instead of slowing down when in Geofence region.
--	Issue 1280: Fixed TCR timer after selecting a route, the WMB should broadcast constantly every 10 seconds.
+-	Issue 1283: Fixed TCR timer after selecting a route, the WMB should broadcast constantly every 10 seconds.
 
 Version 3.5.3, released April 9th, 2021
 ----------------------------------------------
@@ -37,7 +55,7 @@ Version 3.5.3, released April 9th, 2021
 carma-platform release version 3.5.3 is comprised of five major enhancements. First, Added Automated Driving System (ADS) Lane Follow. Second Added ADS Motion Control. Third, ADS Perception. Fourth, ADS Planning. And fifth Operator UI. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
 
 Enhancements in this release:
-- Issues 731: Updated the platooning tactical plugin to be compatible with the new routing mechanism of CARMA that uses vector map instead of recorded waypoints.
+- Issue 731: Updated the platooning tactical plugin to be compatible with the new routing mechanism of CARMA that uses vector map instead of recorded waypoints.
 -	Issue 1022: Added Tactical Stop and Wait Maneuver Plugin that handles maneuver plans of type Stop and Wait.
 -	Issue 1023: Added filter to the incoming trajectory plan request so inlane cruising only works on lane following maneuver types.
 -	Issue 1031: Added a new carma_record package with rosbag record functionality which allows for carma config parameters to control the recording of certain Topics.
