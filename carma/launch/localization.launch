@@ -109,12 +109,6 @@
     </include>
   </group>
 
-  <!-- Pose To TF -->
-  <group>
-    <remap from="pose_stamped_to_tf" to="current_pose"/>
-    <include file="$(find pose_to_tf)/launch/pose_to_tf.launch"/>
-  </group>
-
   <!-- NDT Matching-->
   <!-- This namesapce sets the parameters which are not set by default in the ndt_matching.launch file -->
   <!-- These parameters are not in the ndt_matching node private namespace -->
@@ -135,7 +129,10 @@
   </group>
 
   <!-- GNSS To Map Convertor -->
-  <include file="$(find gnss_to_map_convertor)/launch/gnss_to_map_convertor.launch"/>
+  <group>
+    <remap from="georeference" to="map_param_loader/georeference"/>
+    <include file="$(find gnss_to_map_convertor)/launch/gnss_to_map_convertor.launch"/>
+  </group>
 
   <!-- GNSS/NDT selection localizer-->
   <group>

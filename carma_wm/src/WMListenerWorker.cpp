@@ -105,9 +105,12 @@ void WMListenerWorker::enableUpdatesWithoutRoute()
 
 void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg)
 {
-  ROS_INFO_STREAM("New Map Update Received. SeqNum: " << geofence_msg->header.seq);
+  ROS_INFO_STREAM("Map Update Being Evaluated. SeqNum: " << geofence_msg->header.seq);
 
-  if(!world_model_->getMap() || current_map_version_ < geofence_msg->map_version) { // If our current map version is older than the version target by this update
+  if (geofence_msg->header.seq <= most_recent_update_msg_seq_) {
+    ROS_DEBUG_STREAM("Dropping map update which has already been processed. Received seq: " << geofence_msg->header.seq << " prev seq: " << most_recent_update_msg_seq_);
+    return;
+  } else if(!world_model_->getMap() || current_map_version_ < geofence_msg->map_version) { // If our current map version is older than the version target by this update
     ROS_DEBUG_STREAM("Update recieved for newer map version than available. Queueing update until map is available.");
     map_update_queue_.push(geofence_msg);
     return;
@@ -115,6 +118,8 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     ROS_WARN_STREAM("Dropping old map update as newer map is already available.");
     return;
   }
+
+  most_recent_update_msg_seq_ = geofence_msg->header.seq; // Update current sequence count
 
   if(geofence_msg->invalidates_route==true && world_model_->getRoute())
   {  
@@ -162,27 +167,36 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
 
     auto regemptr_it = world_model_->getMutableMap()->regulatoryElementLayer.find(pair.second->id());
 
-    // if this regem is already in the map
-    if (regemptr_it != world_model_->getMutableMap()->regulatoryElementLayer.end())
+    // if this regem is already in the map.
+    // This section is expected to be called to add back regulations which were previously removed by expired geofences.
+    if (regemptr_it != world_model_->getMutableMap()->regulatoryElementLayer.end())  
     {
 
+      ROS_DEBUG_STREAM("Reapplying previously existing element");
       // again we should use the element with correct data address to be consistent
       world_model_->getMutableMap()->update(parent_llt, *regemptr_it);
-
     }
-    else
+    else // Updates are treated as new regulations after the old value was removed. In both cases we enter this block. 
     {
 
+      ROS_DEBUG_STREAM("New regulatory element " << pair.second->id());
       newRegemUpdateHelper(parent_llt, pair.second.get());
 
     }
   }
   
-  // set the map to set a new routing
-  world_model_->setMap(world_model_->getMutableMap(), current_map_version_);
+  // set the Map to trigger a new route graph construction if rerouting was required by the updates. 
+  world_model_->setMap(world_model_->getMutableMap(), current_map_version_, rerouting_flag_);
 
   
   ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_); 
+
+  // Call user defined map callback
+  if (map_callback_)
+  {
+    ROS_INFO_STREAM("Calling user defined map update callback");
+    map_callback_();
+  }
 }
 
 /*!
@@ -214,7 +228,7 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
 
       lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_pcl);
       world_model_->getMutableMap()->update(parent_llt, speed);
-
+      ROS_DEBUG_STREAM("updateed llt id:" << parent_llt.id() << ", with digital speed limit of: " << speed->speed_limit_.value()<<"in ms");
       break;
     }
     case GeofenceType::REGION_ACCESS_RULE:

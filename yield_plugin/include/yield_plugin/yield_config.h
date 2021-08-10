@@ -40,7 +40,8 @@ struct YieldPluginConfig
   double intervehicle_collision_distance = 10.0;    //Intervehicle distance that is considered a collision
   double safety_collision_time_gap = 2.0;          // Time gap to finish planning a yield earlier than collision time
   bool enable_adjustable_gap = true;          // Flag to enable yield plugin to check for adjustable gap for example digital gap from map
-  int acceptable_urgency = 5;
+  int acceptable_urgency = 5;                 //Minimum urgency value to consider the mobility request
+  double speed_moving_average_window_size = 3.0;  //Window size for speed moving average filter
 
   friend std::ostream& operator<<(std::ostream& output, const YieldPluginConfig& c)
   {
@@ -62,6 +63,7 @@ struct YieldPluginConfig
           << "safety_collision_time_gap: " << c.safety_collision_time_gap << std::endl
           << "enable_adjustable_gap: " << c.enable_adjustable_gap << std::endl
           << "acceptable_urgency: " << c.acceptable_urgency << std::endl
+          << "speed_moving_average_window_size: " << c.speed_moving_average_window_size << std::endl
           << "}" << std::endl;
     return output;
   }

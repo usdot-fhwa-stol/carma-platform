@@ -30,11 +30,10 @@ set( CATKIN_DEPS
   trajectory_utils
   autoware_msgs
   carma_wm
-  tf
-  tf2_ros
-  tf2_geometry_msgs
   unobstructed_lanechange
   roslib
+  lanelet2_extension
+  basic_autonomy
 )
 
 ## Find catkin macros and libraries

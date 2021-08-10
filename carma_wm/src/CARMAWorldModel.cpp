@@ -232,8 +232,8 @@ public:
   }
 };
 
-std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double start, double end,
-                                                                       bool shortest_path_only) const
+std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double start, double end, bool shortest_path_only,
+                                                                       bool bounds_inclusive) const
 {
   // Check if the route was loaded yet
   if (!route_)
@@ -263,10 +263,21 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
     TrackPos min = routeTrackPos(front);
     TrackPos max = routeTrackPos(back);
 
-    if (std::max(min.downtrack, start) > std::min(max.downtrack, end))
-    {  // Check for 1d intersection
-      // No intersection so continue
-      continue;
+    if (!bounds_inclusive) // reduce bounds slightly to avoid including exact bounds
+    {
+      if (std::max(min.downtrack, start + 0.00001) > std::min(max.downtrack, end - 0.00001))
+      {  // Check for 1d intersection
+        // No intersection so continue
+        continue;
+      }
+    }
+    else
+    {
+      if (std::max(min.downtrack, start) > std::min(max.downtrack, end))
+      {  // Check for 1d intersection
+        // No intersection so continue
+        continue;
+      }
     }
     // Intersection has occurred so add lanelet to list
     LaneletDowntrackPair pair(lanelet, min.downtrack);
@@ -458,15 +469,31 @@ TrackPos CARMAWorldModel::getRouteEndTrackPos() const
   return p;
 }
 
-void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map, size_t map_version)
+void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map, size_t map_version, bool recompute_routing_graph)
 {
+  // If this is the first time the map has been set, then recompute the routing graph
+  if (!semantic_map_) {
+
+    ROS_INFO_STREAM("First time map is set in carma_wm. Routing graph will be recomputed reguardless of method inputs.");
+
+    recompute_routing_graph = true;
+  }
+
   semantic_map_ = map;
   map_version_ = map_version;
-  // Build routing graph from map
-  TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
+  
+  // If the routing graph should be updated then recompute it
+  if (recompute_routing_graph) {
 
-  lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
-  map_routing_graph_ = std::move(map_graph);
+    ROS_INFO_STREAM("Building routing graph");
+
+    TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
+    lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
+    map_routing_graph_ = std::move(map_graph);
+
+    ROS_INFO_STREAM("Done building routing graph");
+
+  }
 }
 
 size_t CARMAWorldModel::getMapVersion() const 
