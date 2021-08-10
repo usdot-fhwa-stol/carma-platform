@@ -87,6 +87,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
         "", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
+        std::function<bool(cav_srvs::SetActiveRoute)>(), 
         1.0};
 
     pdw2.on_new_georeference(georeference_msg_ptr);
@@ -391,7 +392,7 @@ TEST(PortDrayageTest, testComposeSetActiveRouteRequest)
 {
     // Create PortDrayageWorker object with _cmv_id of "123"
     port_drayage_plugin::PortDrayageWorker pdw{
-        "123", 
+        123, 
         "TEST_CARGO_ID", 
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
@@ -403,8 +404,8 @@ TEST(PortDrayageTest, testComposeSetActiveRouteRequest)
     cav_msgs::MobilityOperation mobility_operation_msg;
     mobility_operation_msg.strategy = "carma/port_drayage";
     mobility_operation_msg.strategy_params = "{ \"cmv_id\": \"123\", \"cargo_id\": \"321\", \"cargo\": \"false\", \"location\"\
-        : { \"latitude\": \"389554377\", \"longitude\": \"-771503421\" }, \"destination\": { \"latitude\"\
-        : \"389550038\", \"longitude\": \"-771481983\" }, \"operation\": \"MOVING_TO_LOADING_AREA\", \"action_id\"\
+        : { \"latitude\": \"38.9554377\", \"longitude\": \"-77.1503421\" }, \"destination\": { \"latitude\"\
+        : \"38.9550038\", \"longitude\": \"-77.1481983\" }, \"operation\": \"MOVING_TO_LOADING_AREA\", \"action_id\"\
         : \"32\", \"next_action\": \"33\" }";
     cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr(new cav_msgs::MobilityOperation(mobility_operation_msg));
     pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr); 
