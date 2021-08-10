@@ -29,8 +29,6 @@ if __name__ == "__main__":
     if enable_guidance_plugin_validator:
         try:       
             validator = guidance_plugin_validator.GuidancePluginValidator()
-            validator.wait_for_startup_to_complete()
-            validator.conduct_node_validation()
             validator.spin()
         except rospy.ROSInterruptException:
             pass

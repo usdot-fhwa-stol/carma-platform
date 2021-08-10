@@ -16,6 +16,7 @@
  * the License.
 """
 import rospy
+from cav_msgs.msg import Plugin 
 
 class StrategicPluginResults:
     """
@@ -118,7 +119,7 @@ class RequiredStrategicComponents():
         self.has_plugin_discovery_pub = False
 
         # Validation results indicating whether strategic plugin's node publishes required information to the plugin_discovery topic
-        self.correct_plugin_discovery_type = 1
+        self.correct_plugin_discovery_type = Plugin.STRATEGIC
         self.has_correct_plugin_discovery_type = False
 
         self.correct_plugin_discovery_capability = "strategic_plan/plan_maneuvers"
@@ -253,7 +254,7 @@ class RequiredTacticalComponents():
         self.has_plugin_discovery_pub = False
 
         # Validation results indicating whether tactical plugin's node publishes required information to the plugin_discovery topic
-        self.correct_plugin_discovery_type = 2
+        self.correct_plugin_discovery_type = Plugin.TACTICAL
         self.has_correct_plugin_discovery_type = False
 
         self.correct_plugin_discovery_capability = "tactical_plan/plan_trajectory"
@@ -382,7 +383,7 @@ class RequiredControlComponents():
         self.has_final_waypoints_pub = False
 
         # Validation results indicating whether control plugin's node publishes required information to the plugin_discovery topic
-        self.correct_plugin_discovery_type = 3
+        self.correct_plugin_discovery_type = Plugin.CONTROL
         self.has_correct_plugin_discovery_type = False
 
         self.correct_plugin_discovery_capability = plugin_capability
