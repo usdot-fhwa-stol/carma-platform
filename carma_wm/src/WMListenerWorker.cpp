@@ -131,9 +131,10 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     return;
   }
 
-  if(!rerouting_flag_ && geofence_msg->invalidates_route==true && world_model_->getRoute())
+  if(geofence_msg->invalidates_route==true && world_model_->getRoute())
   {  
     rerouting_flag_=true;
+    recompute_route_flag_ = true;
     ROS_DEBUG_STREAM("Received notice that route has been invalidated in mapUpdateCallback");
 
     if(route_node_flag_!=true)
@@ -234,7 +235,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   }
   
   // set the Map to trigger a new route graph construction if rerouting was required by the updates. 
-  world_model_->setMap(world_model_->getMutableMap(), current_map_version_, geofence_msg->invalidates_route);
+  world_model_->setMap(world_model_->getMutableMap(), current_map_version_, recompute_route_flag_);
 
   
   ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_); 
@@ -354,6 +355,8 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
       
       auto update = map_update_queue_.front(); // Get first update
       map_update_queue_.pop(); // Remove update from queue
+      rerouting_flag_ = false;  // route node has finished routing, allow update
+      update->invalidates_route=false; // do not trigger rerouting for route node again
 
       if (update->map_version < current_map_version_) { // Drop any so far unapplied updates for the current map
         ROS_WARN_STREAM("Apply from reroute: There were unapplied updates in carma_wm when a new map was recieved.");
@@ -370,7 +373,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     }
 
   }
-
+  recompute_route_flag_ = false;
   rerouting_flag_ = false;
 
   if (!world_model_->getMap()) { // This check is a bit redundant but still useful from a debugging perspective as the alternative is a segfault
