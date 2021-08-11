@@ -33,16 +33,22 @@ namespace port_drayage_plugin
         _pnh->param<std::string>("cmv_id", cmv_id, "");
         std::string cargo_id;
         _pnh->param<std::string>("cargo_id", cargo_id, "");
+        std::string host_id;
+        _pnh->param<std::string>("host_id", host_id, "");
 
         ros::Publisher outbound_mob_op = _nh->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
         _outbound_mobility_operations_publisher = std::make_shared<ros::Publisher>(outbound_mob_op);
+
+        _set_active_route_client = _nh->serviceClient<cav_srvs::SetActiveRoute>("/guidance/set_active_route");
+
         PortDrayageWorker pdw{
             cmv_id,
             cargo_id,
-            "HOST_ID",
+            host_id,
             [this](cav_msgs::MobilityOperation msg) {
                _outbound_mobility_operations_publisher->publish<cav_msgs::MobilityOperation>(msg);
             },
+            std::bind(&PortDrayagePlugin::call_set_active_route_client, this, std::placeholders::_1),
             speed_epsilon
         };
         
@@ -82,6 +88,23 @@ namespace port_drayage_plugin
         ros::CARMANodeHandle::spin();
 
         return 0;
+    }
+
+    bool PortDrayagePlugin::call_set_active_route_client(cav_srvs::SetActiveRoute req){
+        if(_set_active_route_client.call(req)){
+            if(req.response.errorStatus == cav_srvs::SetActiveRouteResponse::NO_ERROR){
+                ROS_DEBUG_STREAM("Route Generation succeeded for Set Active Route service call.");
+                return true;
+            }
+            else{
+                ROS_DEBUG_STREAM("Route Generation failed for Set Active Route service call.");
+                return false;
+            }
+        }
+        else{
+            ROS_DEBUG_STREAM("Set Active Route service call was not successful.");
+            return false;
+        }
     }
 
     bool PortDrayagePlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp){
@@ -199,7 +222,7 @@ namespace port_drayage_plugin
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
-        maneuver_msg.stop_and_wait_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.stop_and_wait_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.stop_and_wait_maneuver.parameters.planning_tactical_plugin = "StopAndWaitPlugin";
         maneuver_msg.stop_and_wait_maneuver.parameters.planning_strategic_plugin = "PortDrayageWorkerPlugin";
@@ -217,7 +240,7 @@ namespace port_drayage_plugin
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-        maneuver_msg.lane_following_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.lane_following_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "InlaneCruisingPlugin";
         maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "RouteFollowingPlugin";
@@ -228,7 +251,7 @@ namespace port_drayage_plugin
         maneuver_msg.lane_following_maneuver.end_speed = target_speed;
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         maneuver_msg.lane_following_maneuver.end_time = time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
-        maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
+        maneuver_msg.lane_following_maneuver.lane_ids = { std::to_string(lane_id) };
         return maneuver_msg;
     }
     // @SONAR_START@

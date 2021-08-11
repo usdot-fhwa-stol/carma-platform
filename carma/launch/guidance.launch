@@ -81,6 +81,7 @@
   <remap from="semantic_map" to="$(optenv CARMA_ENV_NS)/semantic_map"/>
   <remap from="map_update" to="$(optenv CARMA_ENV_NS)/map_update"/>
   <remap from="roadway_objects" to="$(optenv CARMA_ENV_NS)/roadway_objects"/>
+  <remap from="incoming_spat" to="$(optenv CARMA_MSG_NS)/incoming_spat"/>
 
   <!-- Launch Guidance Main -->
   <include file="$(find guidance)/launch/guidance_main.launch"/>
@@ -104,9 +105,6 @@
   <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch">
 	  <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
   </include>
-  
-  <!-- Pure Pursuit Jerk Wrapper -->
-  <include file="$(find pure_pursuit_jerk_wrapper)/launch/pure_pursuit_jerk_wrapper.launch" />
 
     <!-- Route Following Plugin -->
   <group>
@@ -161,7 +159,6 @@
   
     <!-- StopandWait Plugin -->
   <group>
-    <remap from="final_waypoints" to="base_waypoints"/>
     <include file="$(find stop_and_wait_plugin)/launch/stop_and_wait_plugin.launch" />
   </group>
 
@@ -218,6 +215,11 @@
   <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
   <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
     <include file = "$(find platoon_strategic)/launch/platoon_strategic.launch"/>
+  </group>
+
+  <!-- Intersection Transit Maneuvering Plugin-->
+  <group>
+   <include file = "$(find intersection_transit_maneuvering)/launch/intersection_transit_maneuvering.launch"/>
   </group>
 
 
