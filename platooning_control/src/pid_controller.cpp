@@ -1,4 +1,3 @@
-
 /*------------------------------------------------------------------------------
 * Copyright (C) 2020-2021 LEIDOS.
 *
@@ -17,7 +16,7 @@
 ------------------------------------------------------------------------------*/
 
 #include "pid_controller.hpp"
-
+#include "pid_controller.h"
 
 
 namespace platoon_control
@@ -58,11 +57,10 @@ namespace platoon_control
 		ROS_DEBUG_STREAM("total controller output: " << output);
 
 	    // Restrict to max/min
-	    if( output > config_.max_value )
-	        output = config_.max_value;
-	    else if( output < config_.min_value )
-	        output = config_.min_value;
-
+	    if( output > config_.maxValue )
+	        output = config_.maxValue;
+	    else if( output < config_.minValue )
+	        output = config_.minValue;
 	    // Save error to previous error
 	    _pre_error = error;
 

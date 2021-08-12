@@ -18,6 +18,23 @@
 
 #include <vector>
 #include <ros/ros.h>
+/*
+ * Copyright (C) 2021 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+
 #include <string>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -29,7 +46,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <math.h>
 #include <carma_utils/CARMAUtils.h>
-#include "platoon_control_worker.hpp"
+#include "platoon_control_worker.h"
 
 
 
@@ -50,8 +67,11 @@ namespace platoon_control
 
 			// Compose twist message by calculating speed and steering commands.
 			void generateControlSignals(const cav_msgs::TrajectoryPlanPoint& point0, const cav_msgs::TrajectoryPlanPoint& point_end);
-
+			
+			// Compose twist message by calculating speed and steering commands.
 			geometry_msgs::TwistStamped composeTwistCmd(double linear_vel, double angular_vel);
+
+			// Compose control message by calculating speed and steering commands.
 			autoware_msgs::ControlCommandStamped composeCtrlCmd(double linear_vel, double steering_angle);
 
 			// find the point correspoding to the lookahead distance

@@ -17,6 +17,7 @@
 ------------------------------------------------------------------------------*/
 
 #include "pure_pursuit.hpp"
+#include "pure_pursuit.h"
 #include <tf/transform_datatypes.h>
 #include <tf/LinearMath/Matrix3x3.h>
 
@@ -74,9 +75,9 @@ namespace platoon_control
 
 		double kappa = calculateKappa(tp);
 		
-		double steering = atan(config_.wheelbase * kappa);
+		double steering = atan(config_.wheelBase * kappa);
 		ROS_DEBUG_STREAM("calculated steering angle: " << steering);
-		double filtered_steering = lowPassfilter(config_.lowpass_gain, prev_steering, steering);
+		double filtered_steering = lowPassfilter(config_.lowpassGain, prev_steering, steering);
 		ROS_DEBUG_STREAM("filtered steering: " << filtered_steering);
 		if (std::isnan(filtered_steering)) filtered_steering = prev_steering;
 		prev_steering = filtered_steering;
@@ -84,7 +85,7 @@ namespace platoon_control
 		
 		double ang_vel = velocity_ * kappa;
 		ROS_DEBUG_STREAM("calculated angular velocity: " << ang_vel);
-		double filtered_ang_vel = lowPassfilter(config_.lowpass_gain, prev_ang_vel, ang_vel);
+		double filtered_ang_vel = lowPassfilter(config_.lowpassGain, prev_ang_vel, ang_vel);
 		ROS_DEBUG_STREAM("filtered angular velocity: " << filtered_ang_vel);
 		prev_ang_vel = filtered_ang_vel;
 		if (std::isnan(filtered_ang_vel)) filtered_ang_vel = prev_ang_vel;
@@ -131,7 +132,6 @@ namespace platoon_control
 
 	double PurePursuit::lowPassfilter(double gain, double prev_value, double value)
 	{	
-		// angle = config_.lowpass_gain * angle + (1 - config_.lowpass_gain) * prev_steering;
 		value = prev_value + gain*(value - prev_value);
     	return value;
 	}

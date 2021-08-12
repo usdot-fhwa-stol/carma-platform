@@ -18,14 +18,30 @@
 
 #pragma once
 
+/*
+ * Copyright (C) 2021 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 #include <ros/ros.h>
 #include <cav_msgs/MobilityOperation.h>
 #include <cav_msgs/MobilityRequest.h>
 #include <cav_msgs/MobilityResponse.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <cav_msgs/PlanType.h>
-#include "pid_controller.hpp"
-#include "pure_pursuit.hpp"
+#include "pid_controller.h"
+#include "pure_pursuit.h"
 #include "platoon_control_config.h"
 #include <boost/optional.hpp>
 
@@ -37,7 +53,9 @@
 
 namespace platoon_control
 {
-
+    /**
+    * \brief Platoon Leader Struct
+    */
 	struct PlatoonLeaderInfo{
             // Static ID is permanent ID for each vehicle
             std::string staticId;
@@ -56,8 +74,6 @@ namespace platoon_control
             // Number of vehicles in front
             int NumberOfVehicleInFront;
 
-            // PlatoonMember(std::string staticId, std::string bsmId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
-            // bsmId(bsmId), commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), timestamp(timestamp) {}
         };
 
 
@@ -68,32 +84,53 @@ namespace platoon_control
     {
     public:
 
-        
+        /**
+        * \brief Default constructor for platooning control worker
+        */
         PlatoonControlWorker();
 
+        /**
+        * \brief Update configurations
+        */
         void updateConfigParams(PlatooningControlPluginConfig new_config);
 
+        /**
+        * \brief Returns latest speed command
+        */
         double getLastSpeedCommand() const;
 
-        // Update speed commands based on the list of platoon members
+        /**
+        * \brief Generates speed commands based on the trajectory point
+        */
         void generateSpeed(const cav_msgs::TrajectoryPlanPoint& point);
+        
+        /**
+        * \brief Generates steering commands based on lookahead trajectory point
+        */
         void generateSteer(const cav_msgs::TrajectoryPlanPoint& point);
 
-        // set platoon leader
+        /**
+        * \brief set platoon leader
+        */
         void setLeader(const PlatoonLeaderInfo& leader);
+        
+        /**
+        * \brief set current speed
+        */
         void setCurrentSpeed(double speed);
 
-        double speedCmd;
-        double currentSpeed;
+        // Member Variables
+        double speedCmd = 0;
+        double currentSpeed = 0;
         double lastCmdSpeed = 0.0;
-
-
         double speedCmd_ = 0;
         double steerCmd_ = 0;
         double angVelCmd_ = 0;
-        double desired_gap_ = ctrl_config.standStillHeadway;
+        double desired_gap_ = ctrl_config_.standStillHeadway;
         double actual_gap_ = 0.0;
+        bool last_cmd_set_ = false;
 
+        // Platoon Leader
         PlatoonLeaderInfo platoon_leader;
 
 
@@ -105,7 +142,7 @@ namespace platoon_control
 
     private:
         // config parameters
-        PlatooningControlPluginConfig ctrl_config;
+        PlatooningControlPluginConfig ctrl_config_;
 
         // pid controller object
         PIDController pid_ctrl_;

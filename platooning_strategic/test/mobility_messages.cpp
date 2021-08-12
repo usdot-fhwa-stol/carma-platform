@@ -16,7 +16,6 @@
 
 ------------------------------------------------------------------------------*/
 
- 
 #include <cav_msgs/MobilityRequest.h>
 #include <cav_msgs/MobilityResponse.h>
 #include <cav_msgs/MobilityOperation.h>

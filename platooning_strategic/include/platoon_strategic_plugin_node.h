@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,7 @@
 #include <cav_msgs/BSM.h>
 #include <carma_wm/WMListener.h>
 #include <functional>
-#include "platoon_strategic.hpp"
+#include "platoon_strategic.h"
 #include "platoon_config.h"
 
 namespace platoon_strategic
@@ -78,7 +78,7 @@ public:
     pnh.param<double>("maxGap", config.maxGap, config.maxGap);
     pnh.param<double>("maxCrosstrackError", config.maxCrosstrackError, config.maxCrosstrackError);
     pnh.getParam("/vehicle_length", config.vehicleLength);
-    pnh.getParam("/vehicle_id", config.vehicle_id);
+    pnh.getParam("/vehicle_id", config.vehicleID);
     
     ROS_INFO_STREAM("PlatoonPluginConfig Params" << config);
 
@@ -86,8 +86,6 @@ public:
                                     [&mob_request_pub](auto msg) { mob_request_pub.publish(msg); }, [&mob_operation_pub](auto msg) { mob_operation_pub.publish(msg); },
                                     [&platoon_info_pub](auto msg) { platoon_info_pub.publish(msg); } );
   
-    // worker.lookupECEFtoMapTransform();
-
     ros::ServiceServer maneuver_srv_ = nh.advertiseService("plugins/PlatooningStrategicPlugin/plan_maneuvers",
                                             &PlatoonStrategicPlugin::plan_maneuver_cb, &worker);
     ros::Subscriber mob_request_sub = nh.subscribe("incoming_mobility_request", 1, &PlatoonStrategicPlugin::mob_req_cb,  &worker);
