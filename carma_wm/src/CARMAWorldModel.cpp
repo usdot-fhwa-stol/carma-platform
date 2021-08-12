@@ -1259,8 +1259,6 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
         ROS_DEBUG_STREAM("Set new partial cycle of total seconds: " << curr_light->fixed_cycle_duration.toSec());                  
 
       }
-      auto this_regem = semantic_map_->regulatoryElementLayer.get(curr_light_id); // fix local variable
-      this_regem = curr_light;
     }
   }
 }
