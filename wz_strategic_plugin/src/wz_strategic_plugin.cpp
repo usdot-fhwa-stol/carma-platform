@@ -93,6 +93,7 @@ WzStrategicPlugin::VehicleState WzStrategicPlugin::extractInitialState(const cav
   VehicleState state;
   if (!req.prior_plan.maneuvers.empty())
   {
+    ROS_DEBUG_STREAM("Provided with initial plan...");
     state.stamp = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_time);
     state.downtrack = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_dist);
     state.speed = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_speed);
@@ -100,11 +101,17 @@ WzStrategicPlugin::VehicleState WzStrategicPlugin::extractInitialState(const cav
   }
   else
   {
+    ROS_DEBUG_STREAM("No initial plan provided...");
+    
     state.stamp = req.header.stamp;
     state.downtrack = req.veh_downtrack;
     state.speed = req.veh_logitudinal_velocity;
     state.lane_id = stoi(req.veh_lane_id);
   }
+  ROS_DEBUG_STREAM("extractInitialState >>>> state.stamp: " << state.stamp);
+  ROS_DEBUG_STREAM("extractInitialState >>>> state.downtrack : " << state.downtrack );
+  ROS_DEBUG_STREAM("extractInitialState >>>> state.speed: " << state.speed);
+  ROS_DEBUG_STREAM("extractInitialState >>>> state.lane_id: " << state.lane_id);
 
   return state;
 }
@@ -269,7 +276,7 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
 
   // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
-      getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, false);
+      getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
 
   // We will cross the light on the green phase even if we arrive early or late
   if (early_arrival_state_at_freeflow_optional.get() == lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED &&
@@ -362,7 +369,7 @@ void WzStrategicPlugin::planWhenDEPARTING(const cav_srvs::PlanManeuversRequest& 
 
   // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
-      getLaneletsBetweenWithException(current_state.downtrack, intersection_end_downtrack, true, false);
+      getLaneletsBetweenWithException(current_state.downtrack, intersection_end_downtrack, true, true);
 
   // Compose intersection transit maneuver
   resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
@@ -382,7 +389,11 @@ bool WzStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_
 
   // Extract vehicle data from request
   VehicleState current_state = extractInitialState(req);
-
+  if (transition_table_.getState() != TransitState::UNAVAILABLE && !req.prior_plan.maneuvers.empty())
+  {
+    ROS_WARN_STREAM("State is NOT UNAVAILABLE AND Maneuvers in request is NOT empty");
+    return true;
+  }
   // Get current traffic light information
   ROS_DEBUG("\n\nFinding traffic_light information");
 
