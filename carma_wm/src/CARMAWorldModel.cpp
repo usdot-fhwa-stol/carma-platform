@@ -1214,7 +1214,6 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
           {
             curr_light->setStates(traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group], curr_intersection.revision);
             ROS_DEBUG_STREAM("Set new cycle of total seconds: " << curr_light->fixed_cycle_duration.toSec());                  
-
           }
       else if (curr_light->recorded_time_stamps.empty()) // if it was never initialized, do its best to plan with the current state until the future state is also received.
       {
@@ -1260,6 +1259,8 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
         ROS_DEBUG_STREAM("Set new partial cycle of total seconds: " << curr_light->fixed_cycle_duration.toSec());                  
 
       }
+      auto this_regem = semantic_map_->regulatoryElementLayer.get(curr_light_id); // fix local variable
+      this_regem = curr_light;
     }
   }
 }
