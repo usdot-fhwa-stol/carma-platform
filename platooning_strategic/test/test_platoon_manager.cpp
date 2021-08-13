@@ -16,8 +16,6 @@
 
 ------------------------------------------------------------------------------*/
 
-#include "platoon_manager.hpp"
-#include "platoon_strategic.hpp"
 #include "platoon_manager.h"
 #include "platoon_strategic.h"
 #include "platoon_config.h"
