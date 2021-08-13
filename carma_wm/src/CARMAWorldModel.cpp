@@ -1208,7 +1208,7 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
       if (curr_intersection.moy_exists) //account for minute of the year
       {
         double approximate_sec_in_year = 31536000;
-        ROS_ERROR_STREAM("Old min_end_time: " << min_end_time.toSec());  
+        ROS_ERROR_STREAM("Old min_end_time: " << std::to_string(min_end_time.toSec()));  
         int approx_years_since_inception = ros::Time::now().toSec() / approximate_sec_in_year;
         ROS_ERROR_STREAM("Calculated approx_years_since_inception: " << approx_years_since_inception);
         int curr_year = 1970 + approx_years_since_inception; //Epoch time inception 1970
@@ -1218,7 +1218,7 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
         auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)curr_intersection.moy);
         auto curr_minute_stamp = ros::Time::fromBoost(curr_minute_stamp_boost);
         min_end_time += ros::Duration(curr_minute_stamp.toSec());
-        ROS_ERROR_STREAM("New min_end_time: " << min_end_time.toSec());
+        ROS_ERROR_STREAM("New min_end_time: " << std::to_string(min_end_time.toSec()));
         
       }
 
