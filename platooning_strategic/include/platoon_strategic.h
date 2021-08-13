@@ -14,6 +14,8 @@
  * the License.
  */
 
+#pragma once
+
 #include <vector>
 #include <ros/ros.h>
 #include <math.h>
