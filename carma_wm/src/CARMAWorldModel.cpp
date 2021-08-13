@@ -1205,9 +1205,21 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
 
       ros::Time min_end_time(current_movement_state.movement_event_list[0].timing.min_end_time);
       
-      if (curr_intersection.moy_exists)
+      if (curr_intersection.moy_exists) //account for minute of the year
       {
-        min_end_time += ros::Duration(curr_intersection.moy * 60.0);
+        double approximate_sec_in_year = 31536000;
+        ROS_ERROR_STREAM("Old min_end_time: " << min_end_time.toSec());  
+        int approx_years_since_inception = ros::Time::now().toSec() / approximate_sec_in_year;
+        ROS_ERROR_STREAM("Calculated approx_years_since_inception: " << approx_years_since_inception);
+        int curr_year = 1970 + approx_years_since_inception; //Epoch time inception 1970
+        ROS_ERROR_STREAM("Calculated current year: " << curr_year);
+        auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "-01-01 00:00:00.000")); // GMT is the standard
+        ROS_ERROR_STREAM("MOY extracted: " << (int)curr_intersection.moy);
+        auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)curr_intersection.moy);
+        auto curr_minute_stamp = ros::Time::fromBoost(curr_minute_stamp_boost);
+        min_end_time += ros::Duration(curr_minute_stamp.toSec());
+        ROS_ERROR_STREAM("New min_end_time: " << min_end_time.toSec());
+        
       }
 
       ROS_DEBUG_STREAM("Setting new state: " << curr_light_id << ", with state: " << static_cast<lanelet::CarmaTrafficLightState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state) <<
