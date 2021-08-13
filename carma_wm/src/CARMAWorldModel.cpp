@@ -94,7 +94,6 @@ lanelet::Id CARMAWorldModel::getTrafficLightId(uint16_t intersection_id, uint8_t
   }
   else
   {
-    ROS_DEBUG_STREAM("Did not find any traffic light with intersection_id: " << (int)intersection_id << ", and signal_group_id: " << (int)signal_group_id);
     return lanelet::InvalId;
   }
 
@@ -261,9 +260,9 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
   {
     throw std::invalid_argument("Route has not yet been loaded");
   }
-  if (start >= end)
+  if (start > end)
   {
-    throw std::invalid_argument("Start distance is greater than or equal to end distance");
+    throw std::invalid_argument("Start distance is greater than end distance");
   }
 
   std::vector<lanelet::ConstLanelet> output;
@@ -286,7 +285,8 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
 
     if (!bounds_inclusive) // reduce bounds slightly to avoid including exact bounds
     {
-      if (std::max(min.downtrack, start + 0.00001) > std::min(max.downtrack, end - 0.00001))
+      if (std::max(min.downtrack, start + 0.00001) > std::min(max.downtrack, end - 0.00001)
+        || (start == end && (min.downtrack >= start || max.downtrack <= end)))
       {  // Check for 1d intersection
         // No intersection so continue
         continue;
@@ -294,7 +294,8 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
     }
     else
     {
-      if (std::max(min.downtrack, start) > std::min(max.downtrack, end))
+      if (std::max(min.downtrack, start) > std::min(max.downtrack, end)
+        || (start == end && (min.downtrack > start || max.downtrack < end)))
       {  // Check for 1d intersection
         // No intersection so continue
         continue;
@@ -1062,33 +1063,34 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLane(const lanelet::Const
   return prev_lane;
 }
 
-std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point,
-                                                                    const unsigned int n) const
+void CARMAWorldModel::setTrafficLightIds(uint32_t id, lanelet::Id lanelet_id)
 {
-  // Check if the map is loaded yet
-  if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
-  {
-    throw std::invalid_argument("Map is not set or does not contain lanelets");
-  }
-  std::vector<lanelet::Lanelet> possible_lanelets;
-  auto nearestLanelets = lanelet::geometry::findNearest(semantic_map_->laneletLayer, point, n);
-  if (nearestLanelets.size() == 0)
-    return {};
-  int id = 0;  // closest ones are in the back
-  // loop through until the point is no longer geometrically in the lanelet
-  while (boost::geometry::within(point, nearestLanelets[id].second.polygon2d()))
-  {
-    possible_lanelets.push_back(nearestLanelets[id].second);
-    id++;
-    if (id >= nearestLanelets.size())
-      break;
-  }
-  return possible_lanelets;
+  traffic_light_ids_[id] = lanelet_id;
 }
 
 void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
 {
   config_speed_limit_ = config_lim;
+}
+
+std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n)
+{
+  return carma_wm::query::getLaneletsFromPoint(semantic_map_, point, n);
+}
+
+std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n) const
+{
+  return carma_wm::query::getLaneletsFromPoint(getMap(), point, n);
+}
+
+std::vector<lanelet::Lanelet> CARMAWorldModel::nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n)
+{
+  return carma_wm::query::getLaneletsFromPoint(semantic_map_, input_point, n);
+}
+
+std::vector<lanelet::ConstLanelet> CARMAWorldModel::nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n) const
+{
+  return carma_wm::query::getLaneletsFromPoint(getMap(), input_point, n);
 }
 
 std::vector<lanelet::CarmaTrafficLightPtr> CARMAWorldModel::getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const
@@ -1150,8 +1152,6 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
 
       if (curr_light_id == lanelet::InvalId)
       {
-        ROS_DEBUG_STREAM("Received a SPAT message for traffic light that is not in the map with intersection_id: " << (int)curr_intersection.id.id << 
-                           ", and signal_group_id: " << (int)current_movement_state.signal_group);
         continue;
       }
       
@@ -1181,23 +1181,40 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
                            ", and signal_group_id: " << (int)current_movement_state.signal_group);
         traffic_light_states_[curr_intersection.id.id].clear();
       }
+      // if full cycle is already set
+      if (traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 2 && 
+            traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].front().second == 
+            traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second)
+      {
+        continue;
+      }
 
       // currently expecting 1 lane, so 0th index is used only when setting states
       if (current_movement_state.movement_event_list.empty())
       {
-        ROS_INFO_STREAM("movement_event_list is empty . intersection_id: " << (int)curr_intersection.id.id << 
+        ROS_INFO_STREAM("Movement_event_list is empty . intersection_id: " << (int)curr_intersection.id.id << 
                            ", and signal_group_id: " << (int)current_movement_state.signal_group);
         continue;
       }
 
+      if (traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() > 0 && traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second ==
+          static_cast<lanelet::CarmaTrafficLightState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state)) //if same data as last time, skip
+      {
+        continue;
+      }
+      ROS_DEBUG_STREAM("Setting new state: " << curr_light_id << ", with state: " << static_cast<lanelet::CarmaTrafficLightState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state) <<
+                        ", time: " << ros::Time(current_movement_state.movement_event_list[0].timing.min_end_time));
+
       traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(ros::Time(current_movement_state.movement_event_list[0].timing.min_end_time), 
                               static_cast<lanelet::CarmaTrafficLightState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state)));
-      
+                       
       if (traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 2 
           && traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].front().second == 
              traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second)
           {
             curr_light->setStates(traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group], curr_intersection.revision);
+            ROS_DEBUG_STREAM("Set new cycle of total seconds: " << curr_light->fixed_cycle_duration.toSec());                  
+
           }
       else if (curr_light->recorded_time_stamps.empty()) // if it was never initialized, do its best to plan with the current state until the future state is also received.
       {
@@ -1207,7 +1224,9 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
         default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(default_state.back().first + ros::Duration(YELLOW_LIGHT_DURATION), lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE));
         default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(default_state.back().first + ros::Duration(RED_LIGHT_DURATION), lanelet::CarmaTrafficLightState::STOP_AND_REMAIN));
         default_state.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(default_state.back().first + ros::Duration(GREEN_LIGHT_DURATION), lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
-        curr_light->setStates(default_state, curr_light->revision_);
+        curr_light->setStates(default_state, curr_intersection.revision);
+        ROS_DEBUG_STREAM("Set default cycle of total seconds: " << curr_light->fixed_cycle_duration.toSec());                  
+
       }
       else if (traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 2 )
       {
@@ -1237,11 +1256,9 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
         partial_states.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(partial_states.back().first + red_light_duration, lanelet::CarmaTrafficLightState::STOP_AND_REMAIN));
         partial_states.push_back(std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(partial_states.back().first + green_light_duration, lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
         
-        curr_light->setStates(partial_states, curr_light->revision_);
-      }
-      else // traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() == 1
-      {
-        throw std::invalid_argument("Reached unreachable case where traffic light contains only single state.");
+        curr_light->setStates(partial_states, curr_intersection.revision);
+        ROS_DEBUG_STREAM("Set new partial cycle of total seconds: " << curr_light->fixed_cycle_duration.toSec());                  
+
       }
     }
   }

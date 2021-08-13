@@ -25,6 +25,8 @@
 #include <lanelet2_io/io_handlers/Serialize.h>
 #include <lanelet2_core/primitives/Point.h>
 #include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
+#include <lanelet2_extension/regulatory_elements/StopRule.h>
+#include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
 #include <lanelet2_extension/regulatory_elements/DigitalMinimumGap.h>
 #include <lanelet2_core/primitives/LaneletOrArea.h>
@@ -43,13 +45,20 @@ public:
   TrafficControl(){}
   TrafficControl(boost::uuids::uuid id,
                  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list, 
-                 std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list):
-                 id_(id), update_list_(update_list), remove_list_(remove_list){}  
+                 std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list,
+                 std::vector<lanelet::Lanelet> lanelet_addition):
+                 id_(id), update_list_(update_list), remove_list_(remove_list), lanelet_additions_(lanelet_addition){}  
 
   boost::uuids::uuid id_;  // Unique id of this geofence
+  // lanelets additions needed or broadcasting to the rest of map users
+  std::vector<lanelet::Lanelet> lanelet_additions_;
+
   // elements needed for broadcasting to the rest of map users
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;
+
+  // traffic light id lookup
+  std::vector<std::pair<uint32_t, lanelet::Id>> traffic_light_id_lookup_;
 };
 
 /**
@@ -86,6 +95,12 @@ inline void save(Archive& ar, const carma_wm::TrafficControl& gf, unsigned int /
 {
   std::string string_id = boost::uuids::to_string(gf.id_);
   ar << string_id;
+
+  // convert the lanelet that need to be added
+  size_t lanelet_additions_size = gf.lanelet_additions_.size();
+  ar << lanelet_additions_size;
+  for (auto llt : gf.lanelet_additions_) ar << llt;
+
   // convert the regems that need to be removed
   size_t remove_list_size = gf.remove_list_.size();
   ar << remove_list_size;
@@ -95,6 +110,11 @@ inline void save(Archive& ar, const carma_wm::TrafficControl& gf, unsigned int /
   size_t update_list_size = gf.update_list_.size();
   ar << update_list_size;
   for (auto pair : gf.update_list_) ar << pair;
+
+  // convert traffic light id lookup
+  size_t traffic_light_id_lookup_size = gf.traffic_light_id_lookup_.size();
+  ar << traffic_light_id_lookup_size;
+  for (auto pair : gf.traffic_light_id_lookup_) ar << pair;
 }
 
 template <class Archive>
@@ -105,6 +125,17 @@ inline void load(Archive& ar, carma_wm::TrafficControl& gf, unsigned int /*versi
   std::string id;
   ar >> id;
   gf.id_ = gen(id);
+
+  // save llts to add
+  size_t lanelet_additions_size;
+  ar >> lanelet_additions_size;
+  for (auto i = 0u; i < lanelet_additions_size; ++i) 
+  {
+    lanelet::Lanelet llt;
+    ar >> llt;
+    gf.lanelet_additions_.push_back(llt);
+  }
+
   // save regems to remove
   size_t remove_list_size;
   ar >> remove_list_size;
@@ -124,10 +155,27 @@ inline void load(Archive& ar, carma_wm::TrafficControl& gf, unsigned int /*versi
     ar >> update_item;
     gf.update_list_.push_back(update_item);
   }
+
+  // save ids 
+  size_t traffic_light_id_lookup_size;
+  ar >> traffic_light_id_lookup_size;
+  for (auto i = 0u; i < traffic_light_id_lookup_size; ++i) 
+  {
+    std::pair<uint32_t, lanelet::Id> traffic_light_id_pair;
+    ar >> traffic_light_id_pair;
+    gf.traffic_light_id_lookup_.push_back(traffic_light_id_pair);
+  }
 }
 
 template <typename Archive>
 void serialize(Archive& ar, std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>& p, unsigned int /*version*/) 
+{
+  ar& p.first;
+  ar& p.second;
+}
+
+template <typename Archive>
+void serialize(Archive& ar, std::pair<uint32_t, lanelet::Id>& p, unsigned int /*version*/) 
 {
   ar& p.first;
   ar& p.second;
