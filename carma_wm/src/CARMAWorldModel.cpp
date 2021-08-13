@@ -1202,10 +1202,18 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
       {
         continue;
       }
-      ROS_DEBUG_STREAM("Setting new state: " << curr_light_id << ", with state: " << static_cast<lanelet::CarmaTrafficLightState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state) <<
-                        ", time: " << ros::Time(current_movement_state.movement_event_list[0].timing.min_end_time));
 
-      traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(ros::Time(current_movement_state.movement_event_list[0].timing.min_end_time), 
+      ros::Time min_end_time(current_movement_state.movement_event_list[0].timing.min_end_time);
+      
+      if (curr_intersection.moy_exists)
+      {
+        min_end_time += ros::Duration(curr_intersection.moy * 60.0);
+      }
+
+      ROS_DEBUG_STREAM("Setting new state: " << curr_light_id << ", with state: " << static_cast<lanelet::CarmaTrafficLightState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state) <<
+                        ", time: " << ros::Time(min_end_time));
+
+      traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time, 
                               static_cast<lanelet::CarmaTrafficLightState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state)));
                        
       if (traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 2 
