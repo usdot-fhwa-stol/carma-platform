@@ -16,7 +16,6 @@
 
 ------------------------------------------------------------------------------*/
 
-#include "pid_controller.hpp"
 #include "pid_controller.h"
 #include <gtest/gtest.h>
 #include <ros/ros.h>

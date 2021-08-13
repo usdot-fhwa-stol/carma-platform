@@ -16,7 +16,6 @@
 
 ------------------------------------------------------------------------------*/
 
-#include "platoon_control_worker.hpp"
 #include "platoon_control_worker.h"
 #include <gtest/gtest.h>
 #include <ros/ros.h>

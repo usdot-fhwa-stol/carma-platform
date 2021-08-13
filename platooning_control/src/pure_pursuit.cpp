@@ -16,7 +16,6 @@
 
 ------------------------------------------------------------------------------*/
 
-#include "pure_pursuit.hpp"
 #include "pure_pursuit.h"
 #include <tf/transform_datatypes.h>
 #include <tf/LinearMath/Matrix3x3.h>

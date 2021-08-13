@@ -16,7 +16,6 @@
 
 ------------------------------------------------------------------------------*/
 
-#include "platoon_control_worker.hpp"
 #include "platoon_control_worker.h"
 
 
