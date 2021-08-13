@@ -1149,6 +1149,7 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
     for (const auto& current_movement_state : curr_intersection.movement_list) 
     {
       lanelet::Id curr_light_id = getTrafficLightId(curr_intersection.id.id, current_movement_state.signal_group);
+      // DEBUG
 
       if (curr_light_id == lanelet::InvalId)
       {
@@ -1181,11 +1182,36 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
                            ", and signal_group_id: " << (int)current_movement_state.signal_group);
         traffic_light_states_[curr_intersection.id.id].clear();
       }
+      
+      if (traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() > 0 && traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second ==
+          static_cast<lanelet::CarmaTrafficLightState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state)) //if same data as last time, skip
+      {
+        continue;
+      }
+
       // if full cycle is already set
       if (traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 2 && 
             traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].front().second == 
             traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second)
       {
+        // DEBUG TODO
+        if (curr_intersection.moy_exists && curr_intersection.id.id == 9001 && current_movement_state.signal_group == 4 ) // DEBUG
+        {
+          double approximate_sec_in_year = 31536000;
+          int approx_years_since_inception = ros::Time::now().toSec() / approximate_sec_in_year;
+          int curr_year = 1970 + approx_years_since_inception; //Epoch time inception 1970
+          auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "-01-01 00:00:00.000")); // GMT is the standard
+          auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)curr_intersection.moy) +  boost::posix_time::seconds(current_movement_state.movement_event_list[0].timing.min_end_time);
+          ROS_ERROR_STREAM("Received state: " <<  static_cast<lanelet::CarmaTrafficLightState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state) << ", at Time: " << boost::posix_time::to_simple_string(curr_minute_stamp_boost));
+          ROS_DEBUG_STREAM("Received state: " <<  static_cast<lanelet::CarmaTrafficLightState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state) << ", at Time: " << boost::posix_time::to_simple_string(curr_minute_stamp_boost));
+          
+          auto inception_boost(boost::posix_time::time_from_string("1970-01-01 00:00:00.000")); // GMT is the standard
+          auto time_now_boost =inception_boost +  boost::posix_time::seconds(ros::Time::now().toSec());
+          ROS_ERROR_STREAM("Predicted state: " <<  curr_light->predictState(ros::Time::now()).get() << ", at Time: " << boost::posix_time::to_simple_string(time_now_boost));
+          ROS_DEBUG_STREAM("Predicted state: " <<  curr_light->predictState(ros::Time::now()).get() << ", at Time: " << boost::posix_time::to_simple_string(time_now_boost));
+        }
+        
+        
         continue;
       }
 
@@ -1197,11 +1223,7 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
         continue;
       }
 
-      if (traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() > 0 && traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second ==
-          static_cast<lanelet::CarmaTrafficLightState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state)) //if same data as last time, skip
-      {
-        continue;
-      }
+
 
       ros::Time min_end_time(current_movement_state.movement_event_list[0].timing.min_end_time);
       
@@ -1216,9 +1238,17 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
         auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "-01-01 00:00:00.000")); // GMT is the standard
         ROS_ERROR_STREAM("MOY extracted: " << (int)curr_intersection.moy);
         auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)curr_intersection.moy);
-        auto curr_minute_stamp = ros::Time::fromBoost(curr_minute_stamp_boost);
-        min_end_time += ros::Duration(curr_minute_stamp.toSec());
+        
+        int hours_of_day = curr_minute_stamp_boost.time_of_day().hours();
+        int curr_month = curr_minute_stamp_boost.date().month(); 
+        int curr_day = curr_minute_stamp_boost.date().day(); 
+
+        auto curr_hour_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "/" + std::to_string(curr_month) + "/" + std::to_string(curr_day) +" 00:00:00.000")); // GMT is the standard
+        auto curr_hour_stamp = ros::Time::fromBoost(curr_hour_boost);
+
+        min_end_time += ros::Duration(curr_hour_stamp.toSec());
         ROS_ERROR_STREAM("New min_end_time: " << std::to_string(min_end_time.toSec()));
+
         
       }
 

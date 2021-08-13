@@ -61,16 +61,17 @@ bool WzStrategicPlugin::supportedLightState(lanelet::CarmaTrafficLightState stat
     case lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE:         // Yellow Solid there is a chance of conflicting
                                                                         // traffic
     case lanelet::CarmaTrafficLightState::STOP_AND_REMAIN:              // Solid Red
+    case lanelet::CarmaTrafficLightState::STOP_THEN_PROCEED:            // Flashing Red
+    case lanelet::CarmaTrafficLightState::PROTECTED_CLEARANCE:          // Yellow Solid no chance of conflicting traffic
       return true;
 
     // Unsupported light states
     case lanelet::CarmaTrafficLightState::UNAVAILABLE:                  // No data available
     case lanelet::CarmaTrafficLightState::DARK:                         // Light is non-functional
-    case lanelet::CarmaTrafficLightState::STOP_THEN_PROCEED:            // Flashing Red
+    
     case lanelet::CarmaTrafficLightState::PRE_MOVEMENT:                 // Yellow Red transition (Found only in the EU)
     case lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED:   // Solid Green no chance of conflict traffic
                                                                         // (normally used with arrows)
-    case lanelet::CarmaTrafficLightState::PROTECTED_CLEARANCE:          // Yellow Solid no chance of conflicting traffic
                                                                         // (normally used with arrows)
     case lanelet::CarmaTrafficLightState::CAUTION_CONFLICTING_TRAFFIC:  // Yellow Flashing
     default:
@@ -121,7 +122,7 @@ bool WzStrategicPlugin::validLightState(const boost::optional<lanelet::CarmaTraf
 {
   if (!optional_state)
   {
-    ROS_WARN_STREAM("Traffic light data not available for source_time " << source_time.toSec());
+    ROS_WARN_STREAM("Traffic light data not available for source_time " << std::to_string(source_time.toSec()));
     return false;
   }
 
@@ -256,9 +257,13 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
   ros::Time late_arrival_time_at_freeflow =
       light_arrival_time_at_freeflow + ros::Duration(config_.green_light_time_buffer);
 
-  ROS_DEBUG_STREAM("light_arrival_time_at_freeflow: " << light_arrival_time_at_freeflow.toSec());
-  ROS_DEBUG_STREAM("early_arrival_time_at_freeflow: " << early_arrival_time_at_freeflow.toSec());
-  ROS_DEBUG_STREAM("late_arrival_time_at_freeflow: " << late_arrival_time_at_freeflow.toSec());
+  ROS_DEBUG_STREAM("light_arrival_time_at_freeflow: " << std::to_string(light_arrival_time_at_freeflow.toSec()));
+  ROS_DEBUG_STREAM("early_arrival_time_at_freeflow: " << std::to_string(early_arrival_time_at_freeflow.toSec()));
+  ROS_DEBUG_STREAM("late_arrival_time_at_freeflow: " << std::to_string(late_arrival_time_at_freeflow.toSec()));
+
+  ROS_ERROR_STREAM("light_arrival_time_at_freeflow: " << std::to_string(light_arrival_time_at_freeflow.toSec()));
+  ROS_ERROR_STREAM("early_arrival_time_at_freeflow: " << std::to_string(early_arrival_time_at_freeflow.toSec()));
+  ROS_ERROR_STREAM("late_arrival_time_at_freeflow: " << std::to_string(late_arrival_time_at_freeflow.toSec()));
 
   auto early_arrival_state_at_freeflow_optional = nearest_traffic_light->predictState(early_arrival_time_at_freeflow);
 
@@ -266,6 +271,8 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
     return;
 
   ROS_DEBUG_STREAM("early_arrival_state_at_freeflow: " << early_arrival_state_at_freeflow_optional.get());
+  ROS_ERROR_STREAM("early_arrival_state_at_freeflow: " << early_arrival_state_at_freeflow_optional.get());
+
 
   auto late_arrival_state_at_freeflow_optional = nearest_traffic_light->predictState(late_arrival_time_at_freeflow);
 
