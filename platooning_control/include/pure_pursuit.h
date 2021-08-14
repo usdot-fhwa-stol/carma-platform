@@ -16,7 +16,6 @@
 
 ------------------------------------------------------------------------------*/
 
-#pragma once
 
 #include <ros/ros.h>
 #include <math.h> 
@@ -42,10 +41,20 @@ namespace platoon_control
 
 
     public:
+
+		/**
+        * \brief Default constructor for pure pursuit
+        */
     	PurePursuit();
 
+		/**
+        * \brief calculates steering angle based on lookahead trajectory point
+        */
     	void calculateSteer(const cav_msgs::TrajectoryPlanPoint& tp);
 
+		/**
+        * \brief calculates curvature to the lookahead trajectory point
+        */
 		double calculateKappa(const cav_msgs::TrajectoryPlanPoint& tp);
 
 		// geometry pose
@@ -56,10 +65,23 @@ namespace platoon_control
 
 		PlatooningControlPluginConfig config_;
 
+		/**
+        * \brief calculates sin of the heading angle to the target point
+        */ 
 		double getAlphaSin(cav_msgs::TrajectoryPlanPoint tp, geometry_msgs::Pose current_pose);
+
+		/**
+        * \brief Lowpass filter to smoothen control signal
+        */ 
 		double lowPassfilter(double gain, double prev_value, double value);
 
+		/**
+        * \brief returns steering angle
+        */ 
 		double getSteeringAngle();
+		
+		/**angular velocity
+        */ 
 		double getAngularVelocity();
 
     private:

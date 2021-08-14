@@ -6,6 +6,7 @@
  * the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -13,7 +14,7 @@
  * the License.
  */
 
-#include "platoon_manager.hpp"
+#include "platoon_manager.h"
 #include "platoon_config.h"
 #include <boost/algorithm/string.hpp>
 #include <ros/ros.h>
@@ -196,7 +197,6 @@ namespace platoon_strategic
             downtrackDistance[i] = platoon[i].vehiclePosition; 
         }
 
-        // downtrackDistance[downtrackDistance.length - 1] = inputs.getDistanceFromRouteStart();
         double dt = getCurrentDowntrackDistance();
         downtrackDistance[downtrackDistance.size() - 1] = dt;
         
@@ -398,7 +398,7 @@ namespace platoon_strategic
     
      //Currently not used in implementation
     double PlatoonManager::getDistanceFromRouteStart() const{
-        return current_downtrack_didtance_;
+        return current_downtrack_distance_;
     }
 
     double PlatoonManager::getDistanceToFrontVehicle() {
@@ -413,10 +413,9 @@ namespace platoon_strategic
         return command_speed_;
     }
 
-    // TODO: make sure we are not skipping lanelets!!
     double PlatoonManager::getCurrentDowntrackDistance() const
     {
-        double current_progress = current_downtrack_didtance_;
+        double current_progress = current_downtrack_distance_;
         return current_progress;
     }
 

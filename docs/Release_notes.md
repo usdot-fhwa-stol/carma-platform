@@ -1,6 +1,24 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 3.7.0, released Aug 10th, 2021
+----------------------------------------
+
+**Summary:** 
+Carma-platform release version 3.7.0 is comprised of three major enhancements. First, Unobstructed lane change. Second Cooperative Lane Follow (CLF) - All Predecessor Following (APF) platooning. Third, Cooperative Traffic Management - Speed Advisory.  Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
+
+Enhancements in this release:
+-	Issue 1344: Added Platooning Strategic and developed Tactical and Control Plugins to enable CARMA Platform to perform platooning.
+
+Fixes in this release:
+-	Issue 957: Fixed Platooning code missing some of the mobility message fields where Platooning plugin messages are populated with correct data.
+-	Issue 1347: Fixed route following plugin and Inlane cruising plugin with error no points to fit in time span exception during platooning test.
+-	Issue 1351: Fixed Route Following Before passing the maneuver to the response the starting speed is updated but the ending speed is not changed and doesn't update speed limit if route not updated.
+-	Issue 1356: Fixed Routing Graph creation takes unacceptably long time on ACM map.
+-	Issue 1360: Fixed Smooth speed change when the control plugin first changes to platooning control.
+-	Issue 1364: Fixed Platoon gap control by adding last speed command as current speed for smooth speed transition.
+-	Issue 1227: Fixed cooperative lane change functionality by adding necessary components relates to yield plugin and fixed few other issues for CLC and integration tested.
+
 Version 3.6.0, released June 29th, 2021
 -------------------------------------
 
@@ -37,7 +55,7 @@ Version 3.5.3, released April 9th, 2021
 carma-platform release version 3.5.3 is comprised of five major enhancements. First, Added Automated Driving System (ADS) Lane Follow. Second Added ADS Motion Control. Third, ADS Perception. Fourth, ADS Planning. And fifth Operator UI. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
 
 Enhancements in this release:
-- Issues 731: Updated the platooning tactical plugin to be compatible with the new routing mechanism of CARMA that uses vector map instead of recorded waypoints.
+- Issue 731: Updated the platooning tactical plugin to be compatible with the new routing mechanism of CARMA that uses vector map instead of recorded waypoints.
 -	Issue 1022: Added Tactical Stop and Wait Maneuver Plugin that handles maneuver plans of type Stop and Wait.
 -	Issue 1023: Added filter to the incoming trajectory plan request so inlane cruising only works on lane following maneuver types.
 -	Issue 1031: Added a new carma_record package with rosbag record functionality which allows for carma config parameters to control the recording of certain Topics.
