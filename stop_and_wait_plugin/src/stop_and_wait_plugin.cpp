@@ -278,6 +278,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   bool in_range = false;
   double stopped_downtrack = 0;
   lanelet::BasicPoint2d stopped_point;
+  int stopped_point_num = 0;
   for (size_t i = 0; i < speeds.size(); i++)
   {  // Apply minimum speed constraint
     double downtrack = downtracks[i];
@@ -294,9 +295,10 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
         stopped_point = raw_points[i];
         in_range = true;
       }
-
       downtracks[i] = stopped_downtrack;
       raw_points[i] = stopped_point;
+      stopped_point_num++;
+      ROS_WARN_STREAM("pt" << raw_points[i]);
     }
     else
     {
@@ -316,6 +318,22 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   }
 
   std::vector<double> yaws = carma_wm::geometry::compute_tangent_orientations(raw_points);
+  ROS_WARN_STREAM("raw_points,size()" << raw_points.size());
+  ROS_WARN_STREAM("yaws,size()" << yaws.size());
+
+  // preserve last valid yaw over stopped points
+  stopped_point_num --;  // there is 1 fewer invalid yaw for total number of stopped points
+  while (stopped_point_num > 0) 
+  {
+    yaws[yaws.size() - stopped_point_num] = yaws[yaws.size() - stopped_point_num - 1];
+    stopped_point_num--;
+    ROS_WARN_STREAM("yaws[yaws.size() - stopped_point_num]: " << yaws[yaws.size() - stopped_point_num]);
+  }
+
+  for (auto y : yaws)
+  {
+    ROS_ERROR_STREAM("yaw: " << y);
+  }
 
   for (size_t i = 0; i < points.size(); i++)
   {
@@ -330,6 +348,36 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
     new_point.target_time = new_point.target_time + ros::Duration(config_.stop_timestep);
     traj.push_back(new_point);
   }
+  
+  // in case if the car overshoots stopping point, extrapolate trajectory in order to prevent steering
+  /*
+  if(traj.size() > 2)
+  {
+    if (traj.back().x == (traj.end() - 2)->x && traj.back().y == (traj.end() - 2)->y)
+    {
+      ROS_WARN_STREAM(">>>>>>>>>> Starting a new safety computation!");
+      int num_points = 5;
+      for (int i = 0; i < num_points; i ++ ) // 100 meter 5 points, 20 meters with each 0.01 m/s speed
+      {
+        cav_msgs::TrajectoryPlanPoint new_point = traj.back();
+        ROS_DEBUG_STREAM("Before target_time "  << std::to_string(new_point.target_time.toSec()));
+        new_point.target_time = new_point.target_time + ros::Duration(config_.extrapolated_stopping_buffer / (0.01 * num_points)); // achieve time for 0.01 m/s for 5 points
+        ROS_DEBUG_STREAM("After target_time "  << std::to_string(new_point.target_time.toSec()));
+
+        ROS_DEBUG_STREAM("Before new_point x:" << new_point.x << ", new_point.y" << new_point.y);
+        new_point.x += ((config_.extrapolated_stopping_buffer / num_points) * std::cos(new_point.yaw));
+        new_point.y += ((config_.extrapolated_stopping_buffer / num_points) * std::sin(new_point.yaw));
+        ROS_DEBUG_STREAM("After new_point x:" << new_point.x << ", new_point.y" << new_point.y);
+
+        ROS_DEBUG_STREAM("yaw " << new_point.yaw << ", sin: " << std::sin(new_point.yaw) << ", cos:" << std::cos(new_point.yaw));
+        ROS_DEBUG_STREAM("extrapolated_stopping_buffer: " << config_.extrapolated_stopping_buffer << ", calc: " << std::to_string((config_.extrapolated_stopping_buffer / num_points)));
+
+        traj.push_back(new_point);
+      } 
+    }
+  }
+  */
+
 
   return traj;
 }
