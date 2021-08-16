@@ -40,12 +40,15 @@
 #include <cav_msgs/VehicleState.h>
 #include <cav_msgs/TrajectoryPlanPoint.h>
 #include <cav_srvs/PlanTrajectory.h>
+#include <ros/package.h>
 
 namespace unobstructed_lanechange
 {
     TEST(UnobstructedLaneChangePlugin,Testusingosm){
         // File to process. 
-        std::string file = "../resource/map/town01_vector_map_lane_change.osm";
+        std::string path = ros::package::getPath("basic_autonomy");
+        std::string file = "/resource/map/town01_vector_map_lane_change.osm";
+        file = path.append(file);
         lanelet::Id start_id = 101;
         lanelet::Id lane_change_start_id = 101;
         lanelet::Id end_id = 107;

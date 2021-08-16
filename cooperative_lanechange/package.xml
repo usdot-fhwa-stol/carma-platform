@@ -20,7 +20,6 @@
   <depend>roslib</depend>
   <depend>basic_autonomy</depend>
   <depend>carma_debug_msgs</depend> 
-  <depend>unobstructed_lanechange</depend> 
   <depend>lanelet2_extension</depend>
 </package>
 

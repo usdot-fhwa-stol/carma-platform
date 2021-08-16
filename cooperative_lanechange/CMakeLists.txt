@@ -36,7 +36,6 @@ set( CATKIN_DEPS
   tf2_geometry_msgs
   roslib
   carma_debug_msgs
-  unobstructed_lanechange
   lanelet2_extension
 )
 

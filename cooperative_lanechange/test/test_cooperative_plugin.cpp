@@ -87,7 +87,7 @@
     TEST(CooperativeLaneChangePlugin,TestLaneChangefunctions)
     {
          // File to process. 
-        std::string path = ros::package::getPath("unobstructed_lanechange");
+        std::string path = ros::package::getPath("basic_autonomy");
         std::string file = "/resource/map/town01_vector_map_lane_change.osm";
         file = path.append(file);
         lanelet::Id start_id = 107;
