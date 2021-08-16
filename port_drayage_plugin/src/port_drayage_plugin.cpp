@@ -30,26 +30,33 @@ namespace port_drayage_plugin
         double speed_epsilon = _pnh->param("stop_speed_epsilon", 1.0);
         declaration = _pnh->param("declaration", 1.0);
         std::string cargo_id;
-        _pnh->param<std::string>("cargo_id", cargo_id, ""); 
+        _pnh->param<std::string>("cargo_id", cargo_id, "UNDEFINED-CARGO-ID"); 
+        std::string host_id;
+        _pnh->param<std::string>("host_id", host_id, "UNDEFINED-HOST-ID");
         bool enable_port_drayage;
         _pnh->param<bool>("enable_port_drayage", enable_port_drayage, false);
 
         // Read in 'cmv_id' parameter as a string, then convert to an unsigned long before initializing the PortDrayageWorker object
         std::string cmv_id_string;
-        _pnh->param<std::string>("cmv_id", cmv_id_string, "123");
+        _pnh->param<std::string>("cmv_id", cmv_id_string, "0");
         unsigned long cmv_id = std::stoul(cmv_id_string);
+
 
         ros::Publisher outbound_mob_op = _nh->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
         _outbound_mobility_operations_publisher = std::make_shared<ros::Publisher>(outbound_mob_op);
+
+        _set_active_route_client = _nh->serviceClient<cav_srvs::SetActiveRoute>("/guidance/set_active_route");
+
         PortDrayageWorker pdw{
             cmv_id,
             cargo_id,
-            "HOST_ID",
+            host_id,
             [this](cav_msgs::MobilityOperation msg) {
                _outbound_mobility_operations_publisher->publish<cav_msgs::MobilityOperation>(msg);
             },
             speed_epsilon,
-            enable_port_drayage
+            enable_port_drayage,
+            std::bind(&PortDrayagePlugin::call_set_active_route_client, this, std::placeholders::_1)
         };
         
         ros::Subscriber maneuver_sub = _nh->subscribe<cav_msgs::ManeuverPlan>("final_maneuver_plan", 5, 
@@ -70,6 +77,7 @@ namespace port_drayage_plugin
         ros::Subscriber pose_sub = _nh->subscribe<geometry_msgs::PoseStamped>("current_pose", 5, 
             [&](const geometry_msgs::PoseStampedConstPtr& pose) {
                 curr_pose_ = std::make_shared<geometry_msgs::PoseStamped>(*pose);
+                pdw.on_new_pose(pose);
         });
 
         _pose_subscriber = std::make_shared<ros::Subscriber>(pose_sub);
@@ -80,11 +88,6 @@ namespace port_drayage_plugin
         });
 
         _inbound_mobility_operation_subscriber = std::make_shared<ros::Subscriber>(inbound_mobility_operation_sub);
-        
-        ros::Subscriber gps_sub = _nh->subscribe<novatel_gps_msgs::Inspva>("current_gps_position", 5,
-            [&](const novatel_gps_msgs::InspvaConstPtr& gps_position) {
-            pdw.set_current_gps_position(gps_position);
-        });
         
         _gps_position_subscriber = std::make_shared<ros::Subscriber>(gps_sub);
 
@@ -101,6 +104,13 @@ namespace port_drayage_plugin
         });
 
         _route_event_subscriber = std::make_shared<ros::Subscriber>(route_event_sub);
+
+        ros::Subscriber georeference_sub = _nh->subscribe<std_msgs::String>("georeference", 1,
+            [&](const std_msgs::StringConstPtr& georeference_msg) {
+            pdw.on_new_georeference(georeference_msg);
+        });
+
+        _georeference_subscriber = std::make_shared<ros::Subscriber>(georeference_sub);
         
         ros::Timer discovery_pub_timer_ = _nh->createTimer(
             ros::Duration(ros::Rate(10.0)),
@@ -109,6 +119,23 @@ namespace port_drayage_plugin
         ros::CARMANodeHandle::spin();
 
         return 0;
+    }
+
+    bool PortDrayagePlugin::call_set_active_route_client(cav_srvs::SetActiveRoute req){
+        if(_set_active_route_client.call(req)){
+            if(req.response.errorStatus == cav_srvs::SetActiveRouteResponse::NO_ERROR){
+                ROS_DEBUG_STREAM("Route Generation succeeded for Set Active Route service call.");
+                return true;
+            }
+            else{
+                ROS_DEBUG_STREAM("Route Generation failed for Set Active Route service call.");
+                return false;
+            }
+        }
+        else{
+            ROS_DEBUG_STREAM("Set Active Route service call was not successful.");
+            return false;
+        }
     }
 
     bool PortDrayagePlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp){
@@ -226,7 +253,7 @@ namespace port_drayage_plugin
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
-        maneuver_msg.stop_and_wait_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.stop_and_wait_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.stop_and_wait_maneuver.parameters.planning_tactical_plugin = "StopAndWaitPlugin";
         maneuver_msg.stop_and_wait_maneuver.parameters.planning_strategic_plugin = "PortDrayageWorkerPlugin";
@@ -244,7 +271,7 @@ namespace port_drayage_plugin
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-        maneuver_msg.lane_following_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.lane_following_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "InlaneCruisingPlugin";
         maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "RouteFollowingPlugin";
@@ -255,7 +282,7 @@ namespace port_drayage_plugin
         maneuver_msg.lane_following_maneuver.end_speed = target_speed;
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         maneuver_msg.lane_following_maneuver.end_time = time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
-        maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
+        maneuver_msg.lane_following_maneuver.lane_ids = { std::to_string(lane_id) };
         return maneuver_msg;
     }
     // @SONAR_START@

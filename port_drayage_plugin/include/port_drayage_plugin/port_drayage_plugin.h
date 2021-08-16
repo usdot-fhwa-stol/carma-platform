@@ -20,6 +20,7 @@
 #include <carma_utils/CARMAUtils.h>
 #include <memory>
 #include <cav_srvs/PlanManeuvers.h>
+#include <cav_srvs/SetActiveRoute.h>
 #include <cav_msgs/ManeuverPlan.h>
 #include <cav_msgs/MobilityOperation.h>
 #include <cav_msgs/GuidanceState.h>
@@ -30,7 +31,8 @@
 #include <carma_wm/Geometry.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <lanelet2_extension/regulatory_elements/StopRule.h>
-#include <novatel_gps_msgs/Inspva.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <std_msgs/String.h>
 
 namespace port_drayage_plugin
 {
@@ -52,10 +54,21 @@ namespace port_drayage_plugin
             std::shared_ptr<ros::Subscriber> _gps_position_subscriber = nullptr;
             std::shared_ptr<ros::Subscriber> _guidance_state_subscriber = nullptr;
             std::shared_ptr<ros::Subscriber> _route_event_subscriber = nullptr;
+            std::shared_ptr<ros::Subscriber> _georeference_subscriber = nullptr;
             std::shared_ptr<ros::Publisher> _outbound_mobility_operations_publisher = nullptr;
             
             // ROS service servers
             ros::ServiceServer plan_maneuver_srv_;  
+
+            // ROS service clients
+            ros::ServiceClient _set_active_route_client;
+
+            /**
+             * \brief Calls the /guidance/set_active_route service client to set an active route 
+             * \param req The service request being used to call the service client
+             * \return If the service client call was successful and no errors occurred while setting the new active route
+             */
+            bool call_set_active_route_client(cav_srvs::SetActiveRoute req);
 
         public:
             double declaration;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,10 @@
 #include "planning_strategy.hpp"
 #include "capabilities_interface.hpp"
 #include <cav_msgs/GuidanceState.h>
+#include "vehicle_state.hpp"
+#include <carma_wm/WorldModel.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TwistStamped.h>
 
 namespace arbitrator 
 {
@@ -45,6 +49,7 @@ namespace arbitrator
              * \param planning_strategy A planning strategy implementation for generating plans
              * \param min_plan_duration The minimum acceptable length of a plan
              * \param planning_frequency The frequency at which to generate high-level plans when engaged
+             * \param wm pointer to an inialized world model.
              */ 
             Arbitrator(ros::CARMANodeHandle *nh, 
                 ros::CARMANodeHandle *pnh, 
@@ -52,7 +57,8 @@ namespace arbitrator
                 CapabilitiesInterface *ci, 
                 PlanningStrategy &planning_strategy,
                 ros::Duration min_plan_duration,
-                ros::Rate planning_frequency):
+                ros::Rate planning_frequency,
+                carma_wm::WorldModelConstPtr wm):
                 sm_(sm),
                 nh_(nh),
                 pnh_(pnh),
@@ -60,7 +66,8 @@ namespace arbitrator
                 planning_strategy_(planning_strategy),
                 initialized_(false),
                 min_plan_duration_(min_plan_duration),
-                time_between_plans_(planning_frequency.expectedCycleTime()) {};
+                time_between_plans_(planning_frequency.expectedCycleTime()),
+                wm_(wm) {};
             
             /**
              * \brief Begin the operation of the arbitrator.
@@ -68,6 +75,19 @@ namespace arbitrator
              * Loops internally via ros::Duration sleeps and spins
              */
             void run();
+
+            /**
+             * \brief Callback for the pose subscriber, which will store latest pose locally
+             * \param msg Latest pose message
+             */
+            void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+
+            /**
+             * \brief Callback for the twist subscriber, which will store latest twist locally
+             * \param msg Latest twist message
+             */
+            void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+            
         protected:
             /**
              * \brief Function to be executed during the initial state of the Arbitrator
@@ -103,6 +123,9 @@ namespace arbitrator
             void guidance_state_cb(const cav_msgs::GuidanceState::ConstPtr& msg);
 
         private:
+            
+            VehicleState vehicle_state_; // The current state of the vehicle for populating planning requests
+
             ArbitratorStateMachine *sm_;
             ros::Publisher final_plan_pub_;
             ros::Subscriber guidance_state_sub_;
@@ -114,6 +137,8 @@ namespace arbitrator
             CapabilitiesInterface *capabilities_interface_;
             PlanningStrategy &planning_strategy_;
             bool initialized_;
+            carma_wm::WorldModelConstPtr wm_;
+
     };
 };
 

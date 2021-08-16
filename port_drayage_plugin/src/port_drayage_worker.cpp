@@ -60,12 +60,47 @@ namespace port_drayage_plugin
 
     void PortDrayageWorker::initialize() {
         _pdsm.set_on_arrived_at_destination_callback(std::bind(&PortDrayageWorker::on_arrived_at_destination, this));
+        _pdsm.set_on_received_new_destination_callback(std::bind(&PortDrayageWorker::on_received_new_destination, this));
     }
     // @SONAR_START@
 
     void PortDrayageWorker::on_arrived_at_destination() {
         cav_msgs::MobilityOperation msg = compose_arrival_message();
         _publish_mobility_operation(msg);
+    }
+
+    void PortDrayageWorker::on_received_new_destination() {       
+        //  Populate the service request with the destination coordinates from the last received port drayage mobility operation message
+        cav_srvs::SetActiveRoute route_req = compose_set_active_route_request(_latest_mobility_operation_msg.dest_latitude, _latest_mobility_operation_msg.dest_longitude);
+
+        // Call service client to set the new active route
+        bool is_route_generation_successful = _set_active_route(route_req);
+
+        // Throw exception if route generation was not successful
+        if (!is_route_generation_successful) {
+            ROS_DEBUG_STREAM("Route generation failed. Routing could not be completed.");
+            throw std::invalid_argument("Route generation failed. Routing could not be completed.");
+        }
+    }
+
+    cav_srvs::SetActiveRoute PortDrayageWorker::compose_set_active_route_request(boost::optional<double> dest_latitude, boost::optional<double> dest_longitude) const {
+        cav_srvs::SetActiveRoute route_req;
+        if (dest_latitude && dest_longitude) {
+            route_req.request.choice = cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY;
+
+            cav_msgs::Position3D destination_point;
+            destination_point.latitude = *_latest_mobility_operation_msg.dest_latitude;
+            destination_point.longitude = *_latest_mobility_operation_msg.dest_longitude;
+            destination_point.elevation_exists = false;
+            
+            route_req.request.destination_points.push_back(destination_point);
+        }
+        else {
+            ROS_DEBUG_STREAM("No destination points were received. Routing could not be completed.");
+            throw std::invalid_argument("No destination points were received. Routing could not be completed");
+        }
+
+        return route_req;
     }
 
     cav_msgs::MobilityOperation PortDrayageWorker::compose_arrival_message() const {
@@ -87,8 +122,8 @@ namespace port_drayage_plugin
 
         // Add current vehicle location (latitude and longitude)
         ptree location;
-        location.put("latitude", _current_gps_position.latitude * 10000000); // Convert degrees to 1/10 microdegrees
-        location.put("longitude", _current_gps_position.longitude * 10000000); // Convert degrees to 1/10 microdegrees
+        location.put("latitude", _current_gps_position.latitude); 
+        location.put("longitude", _current_gps_position.longitude); 
         pt.put_child("location", location);
 
         // If CMV has not received any port drayage messages yet, add necessary fields for its arrival at the port or staging area entrance
@@ -142,6 +177,8 @@ namespace port_drayage_plugin
             ptree pt;
             std::istringstream strategy_params_ss(msg->strategy_params);
             boost::property_tree::json_parser::read_json(strategy_params_ss, pt);
+
+            // Note: Size of 'unsigned long' is implementation/compiler/architecture specific. Behavior may be undefined if code is run on something with size of 'unsigned long' smaller than 4 bytes.
             unsigned long mobility_operation_cmv_id = pt.get<unsigned long>("cmv_id");
 
             // Check if the received MobilityOperation message is intended for this vehicle's cmv_id   
@@ -221,8 +258,8 @@ namespace port_drayage_plugin
 
         // Parse starting longitude/latitude fields if 'location' field exists in strategy_params:
         if (pt.count("location") != 0){
-            _latest_mobility_operation_msg.start_longitude = pt.get<double>("location.longitude") / 10000000; // Convert 1/10 microdegrees to degrees
-            _latest_mobility_operation_msg.start_latitude = pt.get<double>("location.latitude") / 10000000; // Convert 1/10 microdegrees to degrees
+            _latest_mobility_operation_msg.start_longitude = pt.get<double>("location.longitude");
+            _latest_mobility_operation_msg.start_latitude = pt.get<double>("location.latitude"); 
             ROS_DEBUG_STREAM("start long: " << *_latest_mobility_operation_msg.start_longitude);
             ROS_DEBUG_STREAM("start lat: " << *_latest_mobility_operation_msg.start_latitude);
         }
@@ -233,8 +270,8 @@ namespace port_drayage_plugin
 
         // Parse destination longitude/latitude fields if 'destination' field exists in strategy_params:
         if (pt.count("destination") != 0) {
-            _latest_mobility_operation_msg.dest_longitude = pt.get<double>("destination.longitude") / 10000000; // Convert 1/10 microdegrees to degrees
-            _latest_mobility_operation_msg.dest_latitude = pt.get<double>("destination.latitude") / 10000000; // Convert 1/10 microdegrees to degrees
+            _latest_mobility_operation_msg.dest_longitude = pt.get<double>("destination.longitude"); 
+            _latest_mobility_operation_msg.dest_latitude = pt.get<double>("destination.latitude"); 
             ROS_DEBUG_STREAM("dest long: " << *_latest_mobility_operation_msg.dest_longitude);
             ROS_DEBUG_STREAM("dest lat: " << *_latest_mobility_operation_msg.dest_latitude);
         }
@@ -264,10 +301,25 @@ namespace port_drayage_plugin
         } 
     }
 
-    void PortDrayageWorker::set_current_gps_position(const novatel_gps_msgs::InspvaConstPtr& gps_position) {
-        _current_gps_position.latitude = gps_position->latitude;
-        _current_gps_position.longitude = gps_position->longitude;
-    }
+    void PortDrayageWorker::on_new_pose(const geometry_msgs::PoseStampedConstPtr& msg) {
+        if (!_map_projector) {
+            ROS_DEBUG_STREAM("Ignoring pose message as projection string has not been defined");
+            return;
+        }
+
+        // Convert pose message contents to a GPS coordinate
+        lanelet::GPSPoint coord = _map_projector->reverse( { msg->pose.position.x, msg->pose.position.y, msg->pose.position.z } );
+
+        // Update the locally-stored GPS position of the CMV
+        _current_gps_position.latitude = coord.lat;
+        _current_gps_position.longitude = coord.lon;
+    }        
+
+    void PortDrayageWorker::on_new_georeference(const std_msgs::StringConstPtr& msg) {
+        // Build projector from proj string
+        _map_projector = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());  
+    }        
+
 
     void PortDrayageWorker::on_guidance_state(const cav_msgs::GuidanceStateConstPtr& msg) {
         if ((msg->state == cav_msgs::GuidanceState::ENGAGED) && (_pdsm.get_state() == PortDrayageState::INACTIVE) && _enable_port_drayage) {

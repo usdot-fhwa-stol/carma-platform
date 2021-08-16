@@ -81,6 +81,7 @@
   <remap from="semantic_map" to="$(optenv CARMA_ENV_NS)/semantic_map"/>
   <remap from="map_update" to="$(optenv CARMA_ENV_NS)/map_update"/>
   <remap from="roadway_objects" to="$(optenv CARMA_ENV_NS)/roadway_objects"/>
+  <remap from="incoming_spat" to="$(optenv CARMA_MSG_NS)/incoming_spat"/>
 
   <!-- Launch Guidance Main -->
   <include file="$(find guidance)/launch/guidance_main.launch"/>
@@ -104,15 +105,15 @@
   <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch">
 	  <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
   </include>
-  
-  <!-- Pure Pursuit Jerk Wrapper -->
-  <include file="$(find pure_pursuit_jerk_wrapper)/launch/pure_pursuit_jerk_wrapper.launch" />
 
     <!-- Route Following Plugin -->
   <group>
     <remap from="upcoming_lane_change_status" to="$(optenv CARMA_GUIDE_NS)/upcoming_lane_change_status"/>
     <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
   </group>
+  <!-- Platooning Control Plugin -->
+  <include file="$(find platoon_control)/launch/platoon_control.launch" />
+
   <!-- Twist Filter -->
   <group>
     <remap from="/accel_cmd" to="accel_cmd"/>
@@ -149,10 +150,15 @@
     <remap from="final_waypoints" to="base_waypoints"/>
     <include file="$(find inlanecruising_plugin)/launch/inlanecruising_plugin.launch" />
   </group>
+
+  <!-- Platooning Tactical Plugin -->
+  <group>
+    <remap from="final_waypoints" to="base_waypoints"/>
+    <include file="$(find platooning_tactical_plugin)/launch/platooning_tactical_plugin.launch" />
+  </group>
   
     <!-- StopandWait Plugin -->
   <group>
-    <remap from="final_waypoints" to="base_waypoints"/>
     <include file="$(find stop_and_wait_plugin)/launch/stop_and_wait_plugin.launch" />
   </group>
 
@@ -201,9 +207,24 @@
   <group>
     <remap from="outgoing_mobility_operation" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_operation"/>
     <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
+<<<<<<< HEAD
     <remap from="current_gps_position" to="$(optenv CARMA_INTR_NS)/Inspva"/>
     <remap from="route_event" to "$(optenv CARMA_GUIDE_NS)/route_event"/>
+=======
+>>>>>>> origin/feature/freight_arrival
     <include file="$(find port_drayage_plugin)/launch/port_drayage_plugin.launch" />
+  </group>
+  <!-- Platoon Strategic Plugin -->
+  <group>
+  <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
+  <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
+  <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
+    <include file = "$(find platoon_strategic)/launch/platoon_strategic.launch"/>
+  </group>
+
+  <!-- Intersection Transit Maneuvering Plugin-->
+  <group>
+   <include file = "$(find intersection_transit_maneuvering)/launch/intersection_transit_maneuvering.launch"/>
   </group>
 
 

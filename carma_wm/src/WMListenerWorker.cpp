@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,12 @@
 #include <lanelet2_extension/utility/message_conversion.h>
 #include <lanelet2_extension/regulatory_elements/DirectionOfTravel.h>
 #include <lanelet2_extension/regulatory_elements/StopRule.h>
+#include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
 #include "WMListenerWorker.h"
 
 namespace carma_wm
 {
-enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, REGION_ACCESS_RULE, DIGITAL_MINIMUM_GAP, DIRECTION_OF_TRAVEL, STOP_RULE/* ... others */ };
+enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, REGION_ACCESS_RULE, DIGITAL_MINIMUM_GAP, DIRECTION_OF_TRAVEL, STOP_RULE, CARMA_TRAFFIC_LIGHT/* ... others */ };
 // helper function that return geofence type as an enum, which makes it cleaner by allowing switch statement
 GeofenceType resolveGeofenceType(const std::string& rule_name)
 {
@@ -31,6 +32,7 @@ GeofenceType resolveGeofenceType(const std::string& rule_name)
   if (rule_name.compare(lanelet::DigitalMinimumGap::RuleName) == 0) return GeofenceType::DIGITAL_MINIMUM_GAP;
   if (rule_name.compare(lanelet::DirectionOfTravel::RuleName) == 0) return GeofenceType::DIRECTION_OF_TRAVEL;
   if (rule_name.compare(lanelet::StopRule::RuleName) == 0) return GeofenceType::STOP_RULE;
+  if (rule_name.compare(lanelet::CarmaTrafficLight::RuleName) == 0) return GeofenceType::CARMA_TRAFFIC_LIGHT;
 
   return GeofenceType::INVALID;
 }
@@ -93,6 +95,11 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
   }
 }
 
+void WMListenerWorker::incomingSpatCallback(const cav_msgs::SPAT& spat_msg)
+{
+  world_model_->processSpatFromMsg(spat_msg);
+}
+
 bool WMListenerWorker::checkIfReRoutingNeeded() const
 {
   return rerouting_flag_;
@@ -106,7 +113,12 @@ void WMListenerWorker::enableUpdatesWithoutRoute()
 void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg)
 {
   ROS_INFO_STREAM("Map Update Being Evaluated. SeqNum: " << geofence_msg->header.seq);
-
+  if (rerouting_flag_)
+  {
+    ROS_INFO_STREAM("Currently new route is being processed. Queueing this update. Received seq: " << geofence_msg->header.seq << " prev seq: " << most_recent_update_msg_seq_);
+    map_update_queue_.push(geofence_msg);
+    return;
+  }
   if (geofence_msg->header.seq <= most_recent_update_msg_seq_) {
     ROS_DEBUG_STREAM("Dropping map update which has already been processed. Received seq: " << geofence_msg->header.seq << " prev seq: " << most_recent_update_msg_seq_);
     return;
@@ -118,8 +130,6 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     ROS_WARN_STREAM("Dropping old map update as newer map is already available.");
     return;
   }
-
-  most_recent_update_msg_seq_ = geofence_msg->header.seq; // Update current sequence count
 
   if(geofence_msg->invalidates_route==true && world_model_->getRoute())
   {  
@@ -133,11 +143,49 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
      return;
     }
   }
+
+  most_recent_update_msg_seq_ = geofence_msg->header.seq; // Update current sequence count
+
   // convert ros msg to geofence object
   auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   carma_wm::fromBinMsg(*geofence_msg, gf_ptr);
 
   ROS_INFO_STREAM("Processing Map Update with Geofence Id:" << gf_ptr->id_);
+
+  ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " requests addition of lanelets size: " << gf_ptr->lanelet_additions_.size());
+  for (auto llt : gf_ptr->lanelet_additions_)
+  {
+    // world model here should blindly accept the map update received
+    ROS_DEBUG_STREAM("Adding new lanelet with id: " << llt.id());
+    auto left = llt.leftBound3d(); //new lanelet coming in
+    
+    // updating incoming points' memory addresses with local ones of same ids
+    // so that lanelet library can recognize they are same objects 
+    for (int i = 0; i < left.size(); i ++)
+    {
+      if (world_model_->getMutableMap()->pointLayer.exists(left[i].id())) //rewrite the memory address of new pts with that of local
+      {
+        llt.leftBound3d()[i] = world_model_->getMutableMap()->pointLayer.get(left[i].id());
+      }
+    }
+    auto right = llt.rightBound3d(); //new lanelet coming in
+    for (int i = 0; i < right.size(); i ++)
+    {
+      if (world_model_->getMutableMap()->pointLayer.exists(right[i].id())) //rewrite the memory address of new pts with that of local
+      {
+        llt.rightBound3d()[i] = world_model_->getMutableMap()->pointLayer.get(right[i].id());
+      }
+    }
+
+    world_model_->getMutableMap()->add(llt);
+  }
+
+  ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " sends record of traffic_lights_id size: " << gf_ptr->traffic_light_id_lookup_.size());
+  for (auto pair : gf_ptr->traffic_light_id_lookup_)
+  {
+    ROS_DEBUG_STREAM("Adding new pair for traffic light ids: " << pair.first << ", and lanelet::Id: " << pair.second);
+    world_model_->setTrafficLightIds(pair.first, pair.second);
+  }
 
   ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " requests removal of size: " << gf_ptr->remove_list_.size());
   for (auto pair : gf_ptr->remove_list_)
@@ -157,7 +205,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   }
 
   ROS_INFO_STREAM("Geofence id" << gf_ptr->id_ << " requests update of size: " << gf_ptr->update_list_.size());
-  
+
   // we should extract general regem to specific type of regem the geofence specifies
   
   for (auto pair : gf_ptr->update_list_)
@@ -185,11 +233,18 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     }
   }
   
-  // set the map to set a new routing
-  world_model_->setMap(world_model_->getMutableMap(), current_map_version_);
+  // set the Map to trigger a new route graph construction if rerouting was required by the updates. 
+  world_model_->setMap(world_model_->getMutableMap(), current_map_version_, rerouting_flag_);
 
   
   ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_); 
+
+  // Call user defined map callback
+  if (map_callback_)
+  {
+    ROS_INFO_STREAM("Calling user defined map update callback");
+    map_callback_();
+  }
 }
 
 /*!
@@ -197,7 +252,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   *        as we need to dynamic_cast from general regem to specific type of regem based on the geofence
   * \param parent_llt The Lanelet that need to register the regem
   * \param regem lanelet::RegulatoryElement* which is the type that the serializer decodes from binary
-  * NOTE: Currently this function supports digital speed limit and passing control line geofence type
+  * NOTE: Currently this function supports items in carma_wm::GeofenceType
   */
 void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const
 {
@@ -256,6 +311,14 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
 
       break;
     }
+    case GeofenceType::CARMA_TRAFFIC_LIGHT:
+    {
+
+      lanelet::CarmaTrafficLightPtr ctl = std::dynamic_pointer_cast<lanelet::CarmaTrafficLight>(factory_pcl);
+      world_model_->getMutableMap()->update(parent_llt, ctl);
+
+      break;
+    }
     default:
       ROS_WARN_STREAM("World Model instance received an unsupported geofence type in its map update callback!");
       break;
@@ -287,6 +350,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 
     // After setting map evaluate the current update queue to apply any updates that arrived before the map
     bool more_updates_to_apply = true;
+    rerouting_flag_ = false;
     while(!map_update_queue_.empty() && more_updates_to_apply) {
       
       auto update = map_update_queue_.front(); // Get first update

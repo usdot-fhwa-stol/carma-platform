@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 LEIDOS.
+ * Copyright (C) 2018-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,6 +58,7 @@ namespace port_drayage_plugin
     void PortDrayageStateMachine::set_on_received_new_destination_callback(const std::function<void()> &cb) {
         _on_received_new_destination = cb;
     }
+    
     void PortDrayageStateMachine::set_on_arrived_at_destination_callback(const std::function<void()> &cb) {
         _on_arrived_at_destination = cb;
     }
