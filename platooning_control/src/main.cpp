@@ -18,7 +18,7 @@
 
 
 #include <ros/ros.h>
-#include "platoon_control.hpp"
+#include "platoon_control.h"
 
 int main(int argc, char** argv)
 {

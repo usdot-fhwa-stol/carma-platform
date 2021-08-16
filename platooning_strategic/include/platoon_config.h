@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,6 @@ struct PlatoonPluginConfig
   int    statusMessageInterval = 100;  // ms
   int    infoMessageInterval   = 200;  // ms
   double mvr_duration          = 15;   // s
-  double config_limit          = 0.0;  // m/s
   double epislon              = 0.001; // m/s
   
   // following parameters are for platoon forming and operation
@@ -52,7 +51,7 @@ struct PlatoonPluginConfig
   double maxGap                = 32.0; // m
   double maxCrosstrackError    = 2.0;  // m
 
-  std::string vehicle_id       = "default_id";
+  std::string vehicleID       = "default_id";
 
 
   friend std::ostream& operator<<(std::ostream& output, const PlatoonPluginConfig& c)
@@ -76,7 +75,7 @@ struct PlatoonPluginConfig
           << "kpminGapPID: " << c.minGap << std::endl
           << "maxGap: " << c.maxGap << std::endl
           << "maxCrosstrackError: " << c.maxCrosstrackError << std::endl
-          << "vehicle_id: " << c.vehicle_id << std::endl
+          << "vehicleID: " << c.vehicleID << std::endl
           << "}" << std::endl;
     return output;
   }

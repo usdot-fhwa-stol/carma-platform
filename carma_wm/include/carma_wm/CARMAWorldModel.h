@@ -27,6 +27,7 @@
 #include <cav_msgs/RoadwayObstacleList.h>
 #include <cav_msgs/SPAT.h>
 #include "TrackPos.h"
+#include <carma_wm/WorldModelUtils.h>
 
 namespace carma_wm
 {
@@ -68,6 +69,12 @@ public:
    *  \param route A shared pointer to the route which will share ownership to this object
    */
   void setRoute(LaneletRoutePtr route);
+
+  /*! \brief Sets the id mapping between intersection/signal group and lanelet::Id for traffic lights in the map.
+   *  \param id intersection_id (16bit) and signal_group_id (8bit) concatenated in that order and saved in 32bit
+   *  \param lanelet_id lanelet_id
+   */
+  void setTrafficLightIds(uint32_t id, lanelet::Id lanelet_id);
 
   /*! \brief Get a mutable version of the current map
    * 
@@ -119,6 +126,32 @@ public:
    */
   lanelet::Id getTrafficLightId(uint16_t intersection_id,uint8_t signal_id);
 
+  /**
+   * \brief (non-const version) Gets the underlying lanelet, given the cartesian point on the map 
+   *
+   * \param point         Cartesian point to check the corressponding lanelet
+   * \param n             Number of lanelets to return. Default is 10. As there could be many lanelets overlapping.
+   * \throw std::invalid_argument if the map is not set, contains no lanelets
+   *
+   * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
+   */
+  std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n);
+
+  /**
+   * \brief (non-const version) Given the cartesian point on the map, tries to get the opposite direction lanelet on the left
+   *        This function is intended to find "adjacentLeft lanelets" that doesn't share points between lanelets
+   *        where adjacentLeft of lanelet library fails
+   *
+   * \param point         Cartesian point to check the corressponding lanelet
+   * \param n             Number of lanelets to return. Default is 10. As there could be many lanelets overlapping.
+   * 
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or if adjacent lanelet is not opposite direction
+   * NOTE:  Only to be used on 2 lane, opposite direction road. Number of points in all linestrings are assumed to be roughly the same.
+   *        The point is assumed to be on roughly similar shape of overlapping lanelets if any
+   * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
+   */
+  std::vector<lanelet::Lanelet> nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n = 10);
+
   ////
   // Overrides
   ////
@@ -161,16 +194,18 @@ public:
 
   std::vector<lanelet::ConstLanelet> getLane(const lanelet::ConstLanelet& lanelet, const LaneSection& section = LANE_AHEAD) const override;
 
-  std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n = 10) const override;
-
   size_t getMapVersion() const override;
+
+  std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n = 10) const override;
+
+  std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n = 10) const override;
 
   std::vector<lanelet::CarmaTrafficLightPtr> getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
   
   std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 
 private:
-  
+
   double config_speed_limit_;
   
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line

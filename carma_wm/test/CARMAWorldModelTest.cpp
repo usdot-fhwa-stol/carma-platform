@@ -799,7 +799,7 @@ TEST(CARMAWorldModelTest, routeTrackPos_area)
   ASSERT_THROW(cmw.routeTrackPos(a), std::invalid_argument);
 }
 
-TEST(CARMAWorldModelTest, getLaneletsBetween)
+TEST(CARMAWorldModelTest, getLaneletsBetween) // HERE
 {
   CARMAWorldModel cmw;
 
@@ -817,13 +817,39 @@ TEST(CARMAWorldModelTest, getLaneletsBetween)
   ASSERT_EQ(2, cmw.getRoute()->laneletMap()->laneletLayer.size());
 
   ///// Test 0 range
-  ASSERT_THROW(cmw.getLaneletsBetween(0, 0), std::invalid_argument);
+  auto result = cmw.getLaneletsBetween(0, 0);
+  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
+
+  result = cmw.getLaneletsBetween(0, 0, true, true);
+  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
+
+  result = cmw.getLaneletsBetween(0, 0, false, true);
+  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
+
+  result = cmw.getLaneletsBetween(1.0, 1.0, false, true);
+  ASSERT_EQ(2, result.size());
+  ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
+  ASSERT_EQ(result[1].id(),(cmw.getRoute()->shortestPath().begin() + 1)->id());
+
+  result = cmw.getLaneletsBetween(1.0, 1.0, true, false);
+  ASSERT_EQ(0, result.size());
+  
+  result = cmw.getLaneletsBetween(0.1, 0.2, false, false); // FAIL This fails when the bounds are not inclusive
+  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
+
+  result = cmw.getLaneletsBetween(0.1, 0.2, true, false); // FAIL
+  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
 
   ///// Test negative range
   ASSERT_THROW(cmw.getLaneletsBetween(1, 0), std::invalid_argument);
 
   ///// Test lanelet after range
-  auto result = cmw.getLaneletsBetween(2.5, 3.1);
+  result = cmw.getLaneletsBetween(2.5, 3.1);
   ASSERT_EQ(0, result.size());
 
   ///// Test lanelet before range

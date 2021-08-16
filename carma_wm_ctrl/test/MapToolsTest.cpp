@@ -31,6 +31,8 @@
 #include <carma_wm/CARMAWorldModel.h>
 #include <unordered_set>
 #include "TestHelpers.h"
+#include <iostream>
+#include <fstream>
 
 using ::testing::_;
 using ::testing::A;
@@ -597,6 +599,70 @@ TEST(MapTools, DISABLED_split_lanes)  // Remove DISABLED_ to enable unit test
   auto geo_ref_node = osm_node.insert_child_before("geoReference", first_osm_child);
   geo_ref_node.text().set(target_frame.c_str());
   doc.save_file(new_file.c_str());
+
+}
+
+/**
+ * \brief This Test extracts the cenerline of the provided lanelet id and writes it to a csv file.
+ *        Output file will be map_centerline.csv
+ *  
+ * \param file The file to read the map from
+ * \param lanelet_ids A list of lanelet IDs where the associated lanelets are contiguous. 
+ */ 
+TEST(MapTools, DISABLED_extract_centerline)
+{
+
+  ///////////
+  // UNIT TEST ARGUMENTS
+  ///////////
+
+  // File location of osm file
+  std::string file = "resource/ACM_06.02.21.xodr.osm";    
+
+  // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
+  // For the output to be meaningful these lanelets MUST be contigous
+  std::vector<lanelet::Id> lanelet_ids = { 28113, 29083, 30095, 104191, 57801, 58979, 91965, 6835, 117009, 43306, 110987, 9409, 11912, 119541, 22975, 119667, 17802, 125749 };
+
+  ///////////
+  // START OF LOGIC
+  ///////////
+  int projector_type = 0;
+  std::string target_frame;
+  lanelet::ErrorMessages load_errors;
+
+
+  // The parsing in this file was copied from 
+  lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+  lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+  lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+  // Grabs lanelet elements from the start and end IDs. Fails the unit test if there is no lanelet with the matching ID
+
+  std::vector<lanelet::Lanelet> lanelets;
+  std::vector<lanelet::BasicPoint2d> centerline;
+
+  // Process centerline
+  for (auto id : lanelet_ids) {
+    try {
+      auto ll = map->laneletLayer.get(id);
+      auto centerline2d = lanelet::utils::to2D(ll.centerline()); 
+      centerline.insert(centerline.end(), centerline2d.basicBegin() + 1, centerline2d.basicEnd()); // Skip first point to avoid overlaps
+    }
+    catch (const lanelet::NoSuchPrimitiveError& e) {
+        FAIL() << "The specified lanelet Id of " << id << " does not exist in the provided map.";
+    }
+  }
+
+  // Write centerline to file
+
+  std::ofstream myfile;
+  myfile.open ("map_centerline.csv");
+  myfile << "x (m), y (m) \n";
+  myfile << std::setprecision(12);
+  for (auto p : centerline) {
+    myfile << p.x() << "," << p.y() << "\n";
+  }
+  myfile.close();
 
 }
 

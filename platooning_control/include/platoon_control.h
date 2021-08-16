@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (C) 2019-2021 LEIDOS.
  *
@@ -29,7 +27,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <math.h>
 #include <carma_utils/CARMAUtils.h>
-#include "platoon_control_worker.hpp"
+#include "platoon_control_worker.h"
 
 
 
@@ -50,8 +48,11 @@ namespace platoon_control
 
 			// Compose twist message by calculating speed and steering commands.
 			void generateControlSignals(const cav_msgs::TrajectoryPlanPoint& point0, const cav_msgs::TrajectoryPlanPoint& point_end);
-
+			
+			// Compose twist message by calculating speed and steering commands.
 			geometry_msgs::TwistStamped composeTwistCmd(double linear_vel, double angular_vel);
+
+			// Compose control message by calculating speed and steering commands.
 			autoware_msgs::ControlCommandStamped composeCtrlCmd(double linear_vel, double steering_angle);
 
 			// find the point correspoding to the lookahead distance

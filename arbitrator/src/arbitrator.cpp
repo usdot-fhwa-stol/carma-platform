@@ -115,7 +115,7 @@ namespace arbitrator
     {
         ROS_INFO("Aribtrator beginning planning process!");
         ros::Time planning_process_start = ros::Time::now();
-        cav_msgs::ManeuverPlan plan = planning_strategy_.generate_plan();
+        cav_msgs::ManeuverPlan plan = planning_strategy_.generate_plan(vehicle_state_);
         if (!plan.maneuvers.empty()) 
         {
             ros::Time plan_end_time = arbitrator_utils::get_plan_end_time(plan);
@@ -163,5 +163,35 @@ namespace arbitrator
     {
         ROS_INFO_STREAM("Arbitrator shutting down...");
         ros::shutdown(); // Will stop upper level spin and shutdown node
+    }
+
+    void Arbitrator::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg) 
+    {
+        vehicle_state_.stamp = msg->header.stamp;
+        vehicle_state_.x = msg->pose.position.x;
+        vehicle_state_.y = msg->pose.position.y;
+        
+        // If the route is available then set the downtrack and lane id
+        if (wm_->getRoute()) {
+
+            vehicle_state_.downtrack = wm_->routeTrackPos( { vehicle_state_.x, vehicle_state_.y } ).downtrack;
+
+            auto lanelets = wm_->getLaneletsBetween(vehicle_state_.downtrack, vehicle_state_.downtrack, true);
+
+            if (lanelets.empty()) {
+
+                ROS_WARN_STREAM("Vehicle is not in a lanelet.");
+                vehicle_state_.lane_id = lanelet::InvalId;
+
+            } else {
+
+                vehicle_state_.lane_id = lanelets[0].id();
+            }
+        }
+    }
+
+    void Arbitrator::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg) 
+    {
+        vehicle_state_.velocity = msg->twist.linear.x;
     }
 };
