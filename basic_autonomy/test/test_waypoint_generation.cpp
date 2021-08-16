@@ -574,7 +574,7 @@ namespace basic_autonomy
 
         int nearest_pt_index = 2;
 
-        auto result = waypoint_generation::attach_back_points(points, nearest_pt_index, future_points, 1.5);
+        auto result = waypoint_generation::attach_back_points(points, future_points, nearest_pt_index, 1.5);
 
         ASSERT_EQ(points.size() - 1, result.size());
         ASSERT_NEAR(1.0, result[0].point.x(), 0.0000001);
@@ -653,7 +653,7 @@ namespace basic_autonomy
         ros::Time state_time = ros::Time::now();
         double target_speed = 11.176;
         EXPECT_EQ(points.back().speed, state.longitudinal_vel);
-        std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_centerline(points,
+        std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_path(points,
                                                                                                                                                           state, state_time, cmw, ending_state, config);
         EXPECT_TRUE(trajectory_points.size() > 2);
 

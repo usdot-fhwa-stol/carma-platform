@@ -67,7 +67,6 @@ enable_object_avoidance_lc : false
 #Units: seconds
 min_timestep : 0.1
 
-<<<<<<< HEAD
 #Int: Amount to downsample input lanelet centerline data on turns. Value corresponds to saving each nth point.
 turn_downsample_ratio: 0
 
@@ -79,8 +78,3 @@ back_distance: 0.0
 
 #Double: 
 buffer_ending_downtrack: 0.0
-=======
-# Double : The additional downtrack beyond requested end dist used to fit points along spline. Extra points removed before returning trajectory. Feature not used if end dist is route end
-#Units: meters
-ending_buffer_downtrack : 5.0
->>>>>>> develop

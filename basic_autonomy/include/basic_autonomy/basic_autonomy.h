@@ -153,17 +153,17 @@ namespace basic_autonomy
             const std::vector<double> &yaws, ros::Time startTime);
 
         /**
-   * \brief Attaches back_distance length of points in front of future points
+   * \brief Attaches back_distance length of points behind the future points
    * 
-   * \param points all point speed pairs
-   * \param nearest_pt_index idx of nearest point to the vehicle
+   * \param points_set all point speed pairs
    * \param future_points future points before which to attach the points
-   * \param back_distance number of back distance in meters
+   * \param nearest_pt_index idx of the first future_point in points_set 
+   * \param back_distance  the back distance to be added, in meters
    * 
    * \return point speed pairs with back distance length of points in front of future points
    */
-        std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair> &points, const int nearest_pt_index,
-                                                       std::vector<PointSpeedPair> future_points, double back_distance);
+        std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair> &points_set, std::vector<PointSpeedPair> future_points,
+                                                       const int nearest_pt_index, double back_distance);
 
         /**
    * \brief Computes a spline based on the provided points
@@ -215,7 +215,8 @@ namespace basic_autonomy
                                                                    const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config);
 
      /**
-      * \brief Adds buffer points to lane follow maneuver points
+      * \brief Adds extra centerline points beyond required message length to lane follow maneuver points so that there's always enough points to calculate trajectory
+      * (BUFFER POINTS SHOULD BE REMOVED BEFORE RETURNING FINAL TRAJECTORY)
       * \param wm Pointer to intialized world model for semantic map access
       * \param points_and_target_speeds set of lane follow maneuver points to which buffer is added
       * \param maneuvers The list of lane follow maneuvers which were converted to geometry points and associated speed
@@ -237,7 +238,7 @@ namespace basic_autonomy
      * \return A list of trajectory points to send to the carma planning stack
      */
         std::vector<cav_msgs::TrajectoryPlanPoint>
-        compose_lanefollow_trajectory_from_centerline(const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state,
+        compose_lanefollow_trajectory_from_path(const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state,
                                                       const ros::Time &state_time, const carma_wm::WorldModelConstPtr &wm, 
                                                       const cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg,
                                                       const DetailedTrajConfig &detailed_config);
@@ -275,7 +276,7 @@ namespace basic_autonomy
    * \return A list of trajectory points to send to the carma planning stack
    */
 
-        std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanechange_trajectory_from_centerline(
+        std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanechange_trajectory_from_path(
                const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time,
                const carma_wm::WorldModelConstPtr &wm, const cav_msgs::VehicleState &ending_state_before_buffer,
                const DetailedTrajConfig &detailed_config);
@@ -314,7 +315,10 @@ namespace basic_autonomy
                                                         int default_downsample_ratio,
                                                         int turn_downsample_ratio);
 
+     //Since the trajectory planning approach is specific to lane following and lane change, the plugins that use this library are defined in this list
+     //Plugins in the lane_follow_plugins_list have a lane follow trajectory (centerline points with optimized speed)
      const std::vector<std::string> lane_follow_plugins_list = {"inlanecruising"};
+     //Plugins in the lane change plugins list have a lane change trajectory (points moving from one centerline to another with constant speed)
      const std::vector<std::string> lane_change_plugins_list = { "cooperative_lanechange", "unobstructed_lanechange"};   
                                                   
     }

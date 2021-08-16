@@ -481,17 +481,17 @@ namespace basic_autonomy
         }
 
 
-        std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair> &points,
-                                                       const int nearest_pt_index, std::vector<PointSpeedPair> future_points, double back_distance)
+        std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair> &points_set, std::vector<PointSpeedPair> future_points,
+                                                       const int nearest_pt_index,  double back_distance)
         {
             std::vector<PointSpeedPair> back_and_future;
-            back_and_future.reserve(points.size());
+            back_and_future.reserve(points_set.size());
             double total_dist = 0;
             int min_i = 0;
             for (int i = nearest_pt_index; i > 0; --i)
             {
                 min_i = i;
-                total_dist += lanelet::geometry::distance2d(points[i].point, points[i - 1].point);
+                total_dist += lanelet::geometry::distance2d(points_set[i].point, points_set[i - 1].point);
 
                 if (total_dist > back_distance)
                 {
@@ -499,7 +499,7 @@ namespace basic_autonomy
                 }
             }
 
-            back_and_future.insert(back_and_future.end(), points.begin() + min_i, points.begin() + nearest_pt_index + 1);
+            back_and_future.insert(back_and_future.end(), points_set.begin() + min_i, points_set.begin() + nearest_pt_index + 1);
             back_and_future.insert(back_and_future.end(), future_points.begin(), future_points.end());
             return back_and_future;
         }
@@ -529,7 +529,7 @@ namespace basic_autonomy
             return (f_prime.cross(f_prime_prime)).norm() / (pow(f_prime.norm(), 3));
         }
 
-        std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanefollow_trajectory_from_centerline(
+        std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanefollow_trajectory_from_path(
             const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time, const carma_wm::WorldModelConstPtr &wm,
             const cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg, const DetailedTrajConfig &detailed_config)
         {
@@ -549,7 +549,7 @@ namespace basic_autonomy
             ROS_DEBUG_STREAM("Got time_bound_points with size:" << time_bound_points.size());
             log::printDebugPerLine(time_bound_points, &log::pointSpeedPairToStream);
 
-            std::vector<PointSpeedPair> back_and_future = attach_back_points(points, nearest_pt_index, time_bound_points, detailed_config.back_distance);
+            std::vector<PointSpeedPair> back_and_future = attach_back_points(points, time_bound_points, nearest_pt_index, detailed_config.back_distance);
 
             ROS_DEBUG_STREAM("Got back_and_future points with size" << back_and_future.size());
             log::printDebugPerLine(back_and_future, &log::pointSpeedPairToStream);
@@ -758,7 +758,7 @@ namespace basic_autonomy
         }
 
 
-        std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanechange_trajectory_from_centerline(
+        std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanechange_trajectory_from_path(
             const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time,
             const carma_wm::WorldModelConstPtr &wm, const cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config)
         {

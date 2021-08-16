@@ -131,12 +131,12 @@ namespace cooperative_lanechange
     }
 
 
-    double CooperativeLaneChangePlugin::find_current_gap(long veh2_lanelet_id, double veh2_downtrack, cav_msgs::VehicleState& state) const {
+    double CooperativeLaneChangePlugin::find_current_gap(long veh2_lanelet_id, double veh2_downtrack, cav_msgs::VehicleState& ego_state) const {
                 
         //find downtrack distance between ego and lag vehicle
         ROS_DEBUG_STREAM("entered find_current_gap");
         double current_gap = 0.0;
-        lanelet::BasicPoint2d ego_pos(state.X_pos_global, state.Y_pos_global);
+        lanelet::BasicPoint2d ego_pos(ego_state.X_pos_global, ego_state.Y_pos_global);
         //double ego_current_downtrack = wm_->routeTrackPos(ego_pos).downtrack;
         
         lanelet::LaneletMapConstPtr const_map(wm_->getMap());
@@ -516,7 +516,7 @@ namespace cooperative_lanechange
         ROS_DEBUG_STREAM("Maneuvers to points size:"<<points_and_target_speeds.size());
         auto downsampled_points = carma_utils::containers::downsample_vector(points_and_target_speeds, downsample_ratio_);
 
-        std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_centerline(downsampled_points, req.vehicle_state, req.header.stamp,
+        std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_path(downsampled_points, req.vehicle_state, req.header.stamp,
                                                                                          wm_, ending_state_before_buffer_, wpg_detail_config);
         ROS_DEBUG_STREAM("Compose Trajectory size:"<<trajectory_points.size());
         return trajectory_points;

@@ -76,10 +76,11 @@ namespace cooperative_lanechange
              * 
              * \param veh2_lanelet_id Current lanelet id of vehicle 2
              * \param veh2_downtrack Downtrack of vehicle 2 in its current lanelet
+             * \param ego_state vehicle state of the ego vehicle
              * 
              * \return the distance between subject vehicle and vehicle 2
              */ 
-            double find_current_gap(long veh2_lanelet_id, double veh2_downtrack) const ;
+            double find_current_gap(long veh2_lanelet_id, double veh2_downtrack, cav_msgs::VehicleState& ego_state) const ;
 
             /**
              * \brief Callback to subscribed mobility response topic

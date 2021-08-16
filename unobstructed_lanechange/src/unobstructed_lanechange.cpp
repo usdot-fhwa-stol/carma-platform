@@ -136,7 +136,7 @@ namespace unobstructed_lanechange
         original_trajectory.header.stamp = ros::Time::now();
         original_trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-        original_trajectory.trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_centerline(downsampled_points, req.vehicle_state, req.header.stamp,
+        original_trajectory.trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_path(downsampled_points, req.vehicle_state, req.header.stamp,
                                                                                      wm_, ending_state_before_buffer_, wpg_detail_config);
         ROS_DEBUG_STREAM("Compose Trajectory size:"<<original_trajectory.trajectory_points.size());
 
