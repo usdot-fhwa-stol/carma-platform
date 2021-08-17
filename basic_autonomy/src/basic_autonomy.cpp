@@ -30,36 +30,27 @@ namespace basic_autonomy
             ROS_DEBUG_STREAM("VehDowntrack:"<<max_starting_downtrack);
             for(const auto &maneuver : maneuvers)
             {
-                if(std::find(lane_follow_plugins_list.begin(), lane_follow_plugins_list.end(), general_config.trajectory_type) !=lane_follow_plugins_list.end() && maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING)
-                {
-                    throw std::invalid_argument("lane following tactical plugin doesn't support this maneuver type");
+                double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
+                if(first){
+                    starting_downtrack = std::min(starting_downtrack, max_starting_downtrack);
+                    first = false;
                 }
-                else if(std::find(lane_change_plugins_list.begin(), lane_change_plugins_list.end(), general_config.trajectory_type) !=lane_change_plugins_list.end() && maneuver.type != cav_msgs::Maneuver::LANE_CHANGE)
-                {
-                    throw std::invalid_argument("lane change tactical plugin doesn't support this maneuver type");
+                ROS_DEBUG_STREAM("Used downtrack: " << starting_downtrack);
+
+                if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING){
+                    ROS_DEBUG_STREAM("Creating Lane Follow Geometry");
+                    std::vector<PointSpeedPair> lane_follow_points = create_lanefollow_geometry(maneuver, max_starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config);
+                    points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
+                }
+                else if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE){
+                    ROS_DEBUG_STREAM("Creating Lane Change Geometry");
+                    std::vector<PointSpeedPair> lane_change_points = create_lanechange_geometry(maneuver, max_starting_downtrack, wm, ending_state_before_buffer, state, detailed_config);
+                    points_and_target_speeds.insert(points_and_target_speeds.end(), lane_change_points.begin(), lane_change_points.end());
                 }
                 else{
-                    double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
-                    if(first){
-                        starting_downtrack = std::min(starting_downtrack, max_starting_downtrack);
-                        first = false;
-                    }
-                    ROS_DEBUG_STREAM("Used downtrack: " << starting_downtrack);
-
-                    if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING){
-                        ROS_DEBUG_STREAM("Creating Lane Follow Geometry");
-                        std::vector<PointSpeedPair> lane_follow_points = create_lanefollow_geometry(maneuver, max_starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config);
-                        points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
-                    }
-                    else if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE){
-                        ROS_DEBUG_STREAM("Creating Lane Change Geometry");
-                        std::vector<PointSpeedPair> lane_change_points = create_lanechange_geometry(maneuver, max_starting_downtrack, wm, ending_state_before_buffer, state, detailed_config);
-                        points_and_target_speeds.insert(points_and_target_speeds.end(), lane_change_points.begin(), lane_change_points.end());
-                    }
-                    else{
-                        throw std::invalid_argument("This maneuver type is not supported");
-                    }
+                    throw std::invalid_argument("This maneuver type is not supported");
                 }
+                
             }
 
             //Add buffer ending to lane follow points at the end of maneuver(s) end dist 
@@ -75,6 +66,9 @@ namespace basic_autonomy
                                                                    const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
                                                                     const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config)
         {
+            if(maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING){
+                throw std::invalid_argument("Create_lanefollow called on a maneuver type which is not LANE_FOLLOW");
+            }
             std::vector<PointSpeedPair> points_and_target_speeds;
             std::unordered_set<lanelet::Id> visited_lanelets;
 
@@ -242,6 +236,9 @@ namespace basic_autonomy
                                                                    const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
                                                                     const cav_msgs::VehicleState &state, const DetailedTrajConfig &detailed_config)
         {
+            if(maneuver.type != cav_msgs::Maneuver::LANE_CHANGE){
+                throw std::invalid_argument("Create_lanechange called on a maneuver type which is not LANE_CHANGE");
+            }
             std::vector<PointSpeedPair> points_and_target_speeds;
             std::unordered_set<lanelet::Id> visited_lanelets;
 
@@ -481,7 +478,7 @@ namespace basic_autonomy
         }
 
 
-        std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair> &points_set, std::vector<PointSpeedPair> future_points,
+        std::vector<PointSpeedPair> attach_past_points(const std::vector<PointSpeedPair> &points_set, std::vector<PointSpeedPair> future_points,
                                                        const int nearest_pt_index,  double back_distance)
         {
             std::vector<PointSpeedPair> back_and_future;
@@ -549,7 +546,7 @@ namespace basic_autonomy
             ROS_DEBUG_STREAM("Got time_bound_points with size:" << time_bound_points.size());
             log::printDebugPerLine(time_bound_points, &log::pointSpeedPairToStream);
 
-            std::vector<PointSpeedPair> back_and_future = attach_back_points(points, time_bound_points, nearest_pt_index, detailed_config.back_distance);
+            std::vector<PointSpeedPair> back_and_future = attach_past_points(points, time_bound_points, nearest_pt_index, detailed_config.back_distance);
 
             ROS_DEBUG_STREAM("Got back_and_future points with size" << back_and_future.size());
             log::printDebugPerLine(back_and_future, &log::pointSpeedPairToStream);

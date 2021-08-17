@@ -161,8 +161,9 @@ namespace basic_autonomy
    * \param back_distance  the back distance to be added, in meters
    * 
    * \return point speed pairs with back distance length of points in front of future points
+   * NOTE- used to add past points to future trajectory for smooth spline calculation
    */
-        std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair> &points_set, std::vector<PointSpeedPair> future_points,
+        std::vector<PointSpeedPair> attach_past_points(const std::vector<PointSpeedPair> &points_set, std::vector<PointSpeedPair> future_points,
                                                        const int nearest_pt_index, double back_distance);
 
         /**
@@ -314,12 +315,7 @@ namespace basic_autonomy
     GeneralTrajConfig compose_general_trajectory_config(const std::string& trajectory_type,
                                                         int default_downsample_ratio,
                                                         int turn_downsample_ratio);
-
-     //Since the trajectory planning approach is specific to lane following and lane change, the plugins that use this library are defined in this list
-     //Plugins in the lane_follow_plugins_list have a lane follow trajectory (centerline points with optimized speed)
-     const std::vector<std::string> lane_follow_plugins_list = {"inlanecruising"};
-     //Plugins in the lane change plugins list have a lane change trajectory (points moving from one centerline to another with constant speed)
-     const std::vector<std::string> lane_change_plugins_list = { "cooperative_lanechange", "unobstructed_lanechange"};   
+   
                                                   
     }
 }

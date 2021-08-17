@@ -76,5 +76,6 @@ curve_resample_step_size: 1.0
 #Double: Number of meters behind the first maneuver that need to be included in points for curvature calculation
 back_distance: 0.0
 
-#Double: 
-buffer_ending_downtrack: 0.0
+# Double : The additional downtrack beyond requested end dist used to fit points along spline. Extra points removed before returning trajectory. Feature not used if end dist is route end
+#Units: meters
+ending_buffer_downtrack : 5.0

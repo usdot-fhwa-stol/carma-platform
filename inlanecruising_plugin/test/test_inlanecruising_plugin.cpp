@@ -611,7 +611,7 @@ TEST(InLaneCruisingPluginTest, attach_back_points)
 
   int nearest_pt_index = 2;
 
-  auto result = plugin.attach_back_points(points, future_points, nearest_pt_index, 1.5);
+  auto result = plugin.attach_past_points(points, future_points, nearest_pt_index, 1.5);
 
   ASSERT_EQ(points.size()  -1, result.size());
   ASSERT_NEAR(1.0, result[0].point.x(), 0.0000001);

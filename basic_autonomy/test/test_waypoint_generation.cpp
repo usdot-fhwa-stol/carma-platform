@@ -574,7 +574,7 @@ namespace basic_autonomy
 
         int nearest_pt_index = 2;
 
-        auto result = waypoint_generation::attach_back_points(points, future_points, nearest_pt_index, 1.5);
+        auto result = waypoint_generation::attach_past_points(points, future_points, nearest_pt_index, 1.5);
 
         ASSERT_EQ(points.size() - 1, result.size());
         ASSERT_NEAR(1.0, result[0].point.x(), 0.0000001);
