@@ -20,6 +20,7 @@ set ( PKG_CATKIN_DEPS
   roscpp
   tf2
   tf2_geometry_msgs
+  autoware_lanelet2_ros_interface
 )
 
 ## Find required catkin packages

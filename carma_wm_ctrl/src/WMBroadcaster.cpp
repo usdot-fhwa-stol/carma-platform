@@ -19,7 +19,7 @@
 #include <carma_wm_ctrl/WMBroadcaster.h>
 #include <carma_wm/Geometry.h>
 #include <carma_wm/MapConformer.h>
-#include <lanelet2_extension/utility/message_conversion.h>
+#include <autoware_lanelet2_ros_interface/utility/message_conversion.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/geometry/Lanelet.h>
@@ -32,7 +32,7 @@
 #include <lanelet2_io/Projection.h>
 #include <lanelet2_core/utility/Units.h>
 #include <lanelet2_core/Forward.h>
-#include <lanelet2_extension/utility/utilities.h>
+#include <autoware_lanelet2_ros_interface/utility/utilities.h>
 #include <algorithm>
 #include <limits>
 #include <carma_wm/Geometry.h>

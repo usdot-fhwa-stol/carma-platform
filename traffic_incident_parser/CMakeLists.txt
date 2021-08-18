@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   lanelet2_extension
   carma_wm 
   lanelet2_core
+  autoware_lanelet2_ros_interface
 )
 
 
@@ -29,7 +30,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES traffic_incident_parser
-  CATKIN_DEPENDS carma_utils cav_msgs roscpp lanelet2_extension carma_wm lanelet2_core
+  CATKIN_DEPENDS carma_utils cav_msgs roscpp lanelet2_extension carma_wm lanelet2_core autoware_lanelet2_ros_interface
 #  DEPENDS system_lib
 )
 

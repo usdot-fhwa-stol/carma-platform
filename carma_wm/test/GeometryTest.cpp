@@ -19,7 +19,7 @@
 #include <carma_wm/Geometry.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
-#include <lanelet2_extension/utility/utilities.h>
+#include <autoware_lanelet2_ros_interface/utility/utilities.h>
 #include <lanelet2_core/Attribute.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Quaternion.h>
