@@ -30,10 +30,13 @@ set( CATKIN_DEPS
   trajectory_utils
   autoware_msgs
   carma_wm
-  unobstructed_lanechange
-  roslib
-  lanelet2_extension
   basic_autonomy
+  tf
+  tf2_ros
+  tf2_geometry_msgs
+  roslib
+  carma_debug_msgs
+  lanelet2_extension
 )
 
 ## Find catkin macros and libraries
@@ -41,7 +44,7 @@ find_package(catkin REQUIRED COMPONENTS
  ${CATKIN_DEPS}
 )
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost)
 find_package(Eigen3 REQUIRED)
 
 ###################################
@@ -71,12 +74,12 @@ include_directories(
 file(GLOB_RECURSE headers */*.hpp */*.h)
 
 add_executable( ${PROJECT_NAME}
-  ${headers}
-  src/cooperative_lanechange.cpp
   src/main.cpp)
 
 
-add_library(cooperative_lanechange_plugin_lib src/cooperative_lanechange.cpp src/smoothing/BSpline.cpp)
+add_library(cooperative_lanechange_plugin_lib 
+src/cooperative_lanechange.cpp
+)
 
 add_dependencies(cooperative_lanechange_plugin_lib ${catkin_EXPORTED_TARGETS})
 
