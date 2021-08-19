@@ -755,10 +755,12 @@ def check_distance_gap_during_platooning(bag, time_received_second_acceptance, t
                 actual_speed = msg.desired_gap / desired_time_gap
                 actual_time_gap = msg.actual_gap / actual_speed
                 if (actual_time_gap < min_time_gap):
+                    #print("Found time headway below 2.0")
                     count_below_min_time_gap_msgs += 1
                     if actual_time_gap < lowest_time_gap:
                         lowest_time_gap = actual_time_gap
                 elif (actual_time_gap > max_time_gap):
+                    #print("Found time headway above 3.0 " + str((t - time_received_second_acceptance).to_sec()) + " sec after negotiation")
                     count_above_max_time_gap_msgs += 1
                     if actual_time_gap > largest_time_gap:
                         largest_time_gap = actual_time_gap
@@ -792,7 +794,7 @@ def check_distance_gap_during_platooning(bag, time_received_second_acceptance, t
 
 ###########################################################################################################
 # BASIC TRAVEL B-12: (FOLLOWER VEHICLE) During platooning operations, the front 'Leader' vehicle shall, on average, broadcast
-#                    its 'INFO' platooning MobilityOperation message to the rear 'Follower' vehicle with 
+#                    its 'STATUS' platooning MobilityOperation message to the rear 'Follower' vehicle with 
 #                    a frequency of at least 8 Hz. 
 ###########################################################################################################
 def check_status_msg_receiving_frequency(bag, time_received_second_acceptance):
@@ -1416,6 +1418,106 @@ def check_vehicle_always_within_maximum_crosstrack(bag, time_start_engagement, t
         is_successful = True
     return is_successful
 
+###########################################################################################################
+# BASIC TRAVEL B-24: (FOLLOWER VEHICLE) During platooning operations, the front 'Leader' vehicle shall, on average, broadcast
+#                    its 'INFO' platooning MobilityOperation message to the rear 'Follower' vehicle with 
+#                    a frequency of at least 4 Hz. 
+###########################################################################################################
+def check_info_msg_receiving_frequency(bag, time_received_second_acceptance):
+    min_frequency = 4.0 # Hz
+    max_duration_between_info_msgs = 1.0 / min_frequency # Seconds
+
+    time_last_received_mob_op = rospy.Time()
+    for topic, msg, t in bag.read_messages(topics=['/message/incoming_mobility_operation'], start_time = time_received_second_acceptance):
+        time_last_received_mob_op = t
+
+    is_first_info_msg = True
+    time_received_prev_info_msg = rospy.Time()
+    duration_since_prev_info_msg = 0.0
+    total_time_between_info_msgs = 0.0
+    largest_duration_between_info_msgs = 0.0
+    count_info_msgs = 0
+    count_info_msgs_above_max_duration = 0
+    for topic, msg, t in bag.read_messages(topics=['/message/incoming_mobility_operation'], start_time = time_received_second_acceptance, end_time = time_last_received_mob_op):
+        if "INFO" in msg.strategy_params:
+            if is_first_info_msg:
+                time_received_prev_info_msg = t
+                is_first_info_msg = False
+                continue
+            else:
+                duration_since_prev_info_msg = (t - time_received_prev_info_msg).to_sec()
+                if (duration_since_prev_info_msg > max_duration_between_info_msgs):
+                    count_info_msgs_above_max_duration += 1
+                    if duration_since_prev_info_msg > largest_duration_between_info_msgs:
+                        largest_duration_between_info_msgs = duration_since_prev_info_msg
+                total_time_between_info_msgs += duration_since_prev_info_msg
+                time_received_prev_info_msg = t
+                count_info_msgs += 1
+    
+    average_time_between_received_info_msgs = total_time_between_info_msgs / float(count_info_msgs)
+    average_frequency = 1.0 / average_time_between_received_info_msgs
+    print("Average time between received INFO MobilityOperation messages: " + str(round(average_time_between_received_info_msgs, 5)) + " seconds")
+
+    is_successful = False
+    if average_frequency >= min_frequency:
+        print("B-24 Succeeded; Average frequency of received INFO messages " + str(round(average_frequency,2)) + " Hz. Stats below.")
+        is_successful = True
+    else:
+        print("B-24 Failed; Average frequency of received INFO messages " + str(round(average_frequency,2)) + " Hz. Stats below.")
+        is_successful = False
+    
+    pct_above_max_duration = (float(count_info_msgs_above_max_duration) / float(count_info_msgs)) * 100.0
+    print(str(count_info_msgs) + " Total INFO Messages received (" + str(round(100-pct_above_max_duration,3)) + "% Successful); " + str(count_info_msgs_above_max_duration) + " after 0.25 sec (" \
+        + str(round(pct_above_max_duration,3)) + "%);; Longest duration " \
+          + " between INFO messages was " + str(largest_duration_between_info_msgs) + " sec")
+
+    return is_successful
+
+###########################################################################################################
+# BASIC TRAVEL B-25: After the rear vehicle broadcasts its 'Platoon Follower Join' MobilityRequest message 
+#                    (the message signaling that it is joining the platoon), it shall take no more than 
+#                    10 seconds for the rear vehicle to achieve a time headway of 2.5 sec (+/- 0.5 sec) 
+#                    with the front vehicle.
+###########################################################################################################
+def check_duration_before_successful_time_headway(bag, time_received_second_acceptance, time_enter_geofence):
+    threshold_time_gap = 0.5 # (seconds) Threshold offset from desired time gap; if the actual time gap is within this threshold, it is considered successful
+    desired_time_gap = 2.5 # (seconds) The absolute desired time gap between the Follower vehicle and the Leader vehicle during platooning operations
+    min_time_gap = desired_time_gap - threshold_time_gap # The minimum allowable time gap between the Follower vehicle and the Leader vehicle during platooning operations 
+    max_time_gap = desired_time_gap + threshold_time_gap # The maximum allowable time gap between the Follower vehicle and the Leader vehicle during platooning operations
+    max_duration_before_successful_time_gap = 10.0 # (seconds)
+
+    has_unsuccessful_time_gap = True
+    time_first_steady_state_successful_time_gap = rospy.Time()
+    for topic, msg, t in bag.read_messages(topics=['/guidance/platooning_info'], start_time = time_received_second_acceptance, end_time = time_enter_geofence):
+        # Only consider messages when the vehicle's platooning state is 'FOLLOWER'
+        if msg.state == 5:
+            # Obtain the current time headway
+            actual_speed = msg.desired_gap / desired_time_gap
+            actual_time_gap = msg.actual_gap / actual_speed
+
+            # Set flag if the current time headway is outside the desired range
+            if (actual_time_gap < min_time_gap or actual_time_gap > max_time_gap):
+                has_unsuccessful_time_gap = True
+
+            # Otherwise, get the time of the first time headway that is not outside the desired range
+            # Note: This must be after the last time headway that is outside the desired range
+            else:
+                if has_unsuccessful_time_gap:
+                    time_first_steady_state_successful_time_gap = t
+                    has_unsuccessful_time_gap = False
+
+    duration_before_successful_time_headway = (time_first_steady_state_successful_time_gap - time_received_second_acceptance).to_sec()
+
+    is_successful = False
+    if duration_before_successful_time_headway <= max_duration_before_successful_time_gap:
+        print("B-25 Succeeded; achieved steady state time headway within desired range " + str(duration_before_successful_time_headway) + " sec after platoon negotiation (<= 10 sec).")
+        is_successful = True
+    else:
+        print("B-25 Failed; achieved steady state time headway within desired range " + str(duration_before_successful_time_headway) + " sec after platoon negotiation. (> 10 sec)")
+        is_successful = False
+
+    return is_successful
+
 # Main Function; run all tests from here
 def main():  
     if len(sys.argv) < 2:
@@ -1438,7 +1540,7 @@ def main():
                                  "BT-B-1 Result", "BT-B-2 Result", "BT-B-3 Result", "BT-B-4 Result", "BT-B-5 Result", "BT-B-6 Result", 
                                  "BT-B-7 Result", "BT-B-8 Result", "BT-B-9 Result", "BT-B-10 Result","BT-B-11 Result", "BT-B-12 Result", 
                                  "BT-B-13 Result", "BT-B-14 Result", "BT-B-15 Result", "BT-B-16 Result", "BT-B-17 Result", "BT-B-18 Result", 
-                                 "BT-19 Result", "BT-20 Result", "BT-21 Result", "BT-22 Result", "BT-23 Result"])
+                                 "BT-19 Result", "BT-20 Result", "BT-21 Result", "BT-22 Result", "BT-23 Result", "BT-24 Result", "BT-25 Result"])
     
     # Create list of Basic Travel White Pacifica (Leader) bag files to be processed
     BT_leader_white_pacifica_bag_files = ["_2021-07-21-21-14-34_down-selected.bag",
@@ -1456,6 +1558,7 @@ def main():
                                                "_2021-07-22-15-20-10_down-selected.bag",
                                                "_2021-07-22-15-30-47_down-selected.bag",
                                                "_2021-07-22-15-41-31_down-selected.bag"]
+
     # Create list of Basic Travel Black Pacifica (Follower) bag files to be processed
     BT_follower_black_pacifica_bag_files = ["_2021-07-21-21-13-55_down-selected.bag",
                                                  "_2021-07-21-21-30-03_down-selected.bag",
@@ -1559,6 +1662,8 @@ def main():
         b_21_result = None
         b_22_result = None
         b_23_result = None
+        b_24_result = None
+        b_25_result = None
 
         # Metric BT-B-19
         advisory_speed_limit, time_received_first_msg, b_19_result = get_basic_travel_TCM_data(bag)
@@ -1631,12 +1736,15 @@ def main():
             print("B-21: N/A (Follower Vehicle)")
             b_22_result = check_vehicle_always_within_maximum_crosstrack(bag, time_test_start_engagement, time_test_end_engagement, is_front_vehicle = False)
             print("B-23: N/A (Follower Vehicle)")
+            b_24_result = check_info_msg_receiving_frequency(bag, time_received_second_acceptance)
+            b_25_result = check_duration_before_successful_time_headway(bag, time_received_second_acceptance, time_enter_geofence)
         else:
             print("B-20: N/A (Leader Vehicle)")
             b_21_result = check_vehicle_inside_lane(bag, time_test_start_engagement, time_test_end_engagement, is_front_vehicle = True)
             print("B-22: N/A (Leader Vehicle)")
             b_23_result = check_vehicle_always_within_maximum_crosstrack(bag, time_test_start_engagement, time_test_end_engagement, is_front_vehicle = True)
-
+            print("B-24: N/A (Leader Vehicle)")
+            print("B-25: N/A (Leader Vehicle)")
 
         # Get vehicle type that this bag file is from
         vehicle_name = "Unknown"
@@ -1659,7 +1767,7 @@ def main():
                                      b_1_result, b_2_result, b_3_result, b_4_result, b_5_result, b_6_result, b_7_result,
                                      b_8_result, b_9_result, b_10_result, b_11_result, b_12_result, b_13_result, b_14_result, 
                                      b_15_result, b_16_result, b_17_result, b_18_result, b_19_result, b_20_result,
-                                     b_21_result, b_22_result, b_23_result])
+                                     b_21_result, b_22_result, b_23_result, b_24_result, b_25_result])
         
     sys.stdout = orig_stdout
     text_log_file_writer.close()
