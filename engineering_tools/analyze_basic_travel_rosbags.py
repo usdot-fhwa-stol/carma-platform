@@ -902,126 +902,70 @@ def check_status_msg_sending_frequency(bag, time_sent_second_acceptance):
 # Basic Travel B-13: The planned trajectory to prepare for the geofence will include a deceleration section and 
 #           the average deceleration amount shall be no less than 1 m/s^2.
 ###########################################################################################################
-# TODO: Currently checks for deceleration only; must be updated to check whether vehicle actually 
-#       reaches the target advisory speed limit prior to geofence
-def check_deceleration_before_geofence(bag, time_start_engagement, time_enter_geofence):
-    threshold_distance_to_geofence = 5.0 # Threshold in meters for trajectory plan point intersecting the geofence
-    threshold_deceleration = 1 # Threshold for expected average deceleration in m/s^2
-    # TODO: Tune this threshold_speed_decrease_to_geofence
-    threshold_speed_decrease_to_geofence = 2.2352 # Threshold in m/s for trajectory speed decrease from start of plan to the geofence start (5 mph)
-                                                  #           to be considered a deceleration
-    threshold_current_speed_above_advisory_speed = 2.2352 # (m/s) If initial trajectory speed is at least this amount greater than the advisory
-                                                          #       speed, then a deceleration point should have been found
+def check_deceleration_before_geofence(bag, time_start_engagement, time_enter_geofence, original_speed_limit, advisory_speed_limit):  
+    # Parameters used for metric evaluation
+    min_average_deceleration = 1.0 # m/s^2  
+    start_decel_percent_of_original_speed_limit = 0.90 # Percentage (0.90 is 90%) of original speed limit for current speed to be considered the start of deceleration
+    end_decel_percent_of_advisory_speed_limit = 1.10 # Percentage (1.10 is 110%) of advisory speed limit for current speed to be considered the end of deceleration
 
-    # Get the location (in Map Frame) of the start of the geofence
-    for topic, msg, t in bag.read_messages(topics=['/localization/current_pose'], start_time = time_enter_geofence):
-        start_geofence_x = msg.pose.position.x
-        start_geofence_y = msg.pose.position.y
-        break
+    # Variables to track during metric evaluation
+    speed_start_decel = 0.0
+    speed_end_decel = 0.0
+    time_start_decel = rospy.Time()
+    time_end_decel = rospy.Time()
+    has_found_start_of_decel = False
+    has_found_end_of_decel = False
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_enter_geofence):
+        if has_found_start_of_decel:
+            decel = (msg.twist.linear.x - prev_speed) / (t-prev_time).to_sec()
+            #print("Time: " + str(t.to_sec()) + "; " + str(msg.twist.linear.x) + "; " + str(decel) + " m/s^2")
+            prev_speed = msg.twist.linear.x
+            prev_time = t  
 
-    count_success_traj_decel = 0 
-    count_fail_traj_decel = 0
-    for topic, msg, t in bag.read_messages(topics=['/guidance/plan_trajectory'], start_time = time_start_engagement, end_time = time_enter_geofence):
-        # Debug Statements
-        #print("*******************************")
-        #print("New Trajectory Plan; Size : " + str(len(msg.trajectory_points)) + "; Start: " + str(t))
+        # Get start time of deceleration
+        if not has_found_start_of_decel and (msg.twist.linear.x < (start_decel_percent_of_original_speed_limit * original_speed_limit)):
+            print("Start Time: " + str(t.to_sec()) + "; " + str(msg.twist.linear.x))
+            time_start_decel = t
+            speed_start_decel = msg.twist.linear.x
+            has_found_start_of_decel = True
+            prev_speed = msg.twist.linear.x
+            prev_time = t
 
-        # First pass through trajectory plan to check if it intercepts the geofence start (if it does, save its speed)
-        intercepts_geofence = False
-        prev_point = msg.trajectory_points[0]
-        for i in range(1, len(msg.trajectory_points)):
+        # Get end time of deceleration 
+        if has_found_start_of_decel and (msg.twist.linear.x < (end_decel_percent_of_advisory_speed_limit * advisory_speed_limit)):
+            print("End Time: " + str(t.to_sec()) + "; " + str(msg.twist.linear.x))
+            time_end_decel = t
+            speed_end_decel = msg.twist.linear.x
+            has_found_end_of_decel = True
+            break
+    
+    deceleration_completed_before_geofence = False
+    if (time_enter_geofence-time_end_decel).to_sec() > 0:
+        deceleration_completed_before_geofence = True
 
-            # Get the distance between this point and the start of the geofence (in meters)
-            distance_to_geofence_meters = ((msg.trajectory_points[i].x - start_geofence_x)**2 + (msg.trajectory_points[i].y - start_geofence_y)**2)**0.5 # In meters
-            
-            # If the trajectory plan point is within the set threshold distance of the geofence, get its speed
-            if(distance_to_geofence_meters <= threshold_distance_to_geofence):
-                # Get the trajectory plan speed at this geofence interception:
-                distance = ((msg.trajectory_points[i].x - prev_point.x)**2 + (msg.trajectory_points[i].y - prev_point.y)**2) ** 0.5
-                dt = msg.trajectory_points[i].target_time - prev_point.target_time
+    is_successful = False
+    if has_found_start_of_decel and has_found_end_of_decel:
 
-                # Debug Statements
-                #print("Distance to geofence: " + str(distance_to_geofence_meters) + " meters")
-                #print("Previous point time: " + str(prev_point.target_time.to_sec()) + "; " + str(prev_point.planner_plugin_name))
-                #print("Current point time: " + str(msg.trajectory_points[i].target_time.to_sec()) + "; i=" + str(i) + "; " + str(msg.trajectory_points[i].planner_plugin_name))
-                #print("Points distance: " + str(distance) + " meters")
-                #print("dt: " + str(dt.to_sec()))
+        # Calculate the average deceleration rate during the deceleration phase
+        average_deceleration = (speed_start_decel - speed_end_decel) / (time_end_decel - time_start_decel).to_sec()
 
-                # Current bug in trajectory plan; consecutive points can have same target time
-                if (dt.to_sec() <= 0.01):
-                    # Debug Statement
-                    #print("Skipping trajectory. Traj point dt is " + str(dt.to_sec()))
-                    continue
-                
-                speed_geofence_intercept = distance / dt.to_sec() # Speed in m/s
-
-                # Debug Statement
-                #print("Geofence Intercept Speed: " + str(speed_geofence_intercept) + " m/s")
-
-                intercept_geofence_idx = i
-                intercepts_geofence = True
-                break
-            
-            # Update Previous Point:
-            prev_point = msg.trajectory_points[i]
-
-        # Second pass through trajectory plan to evaluate its deceleration leading up to the geofence
-        if (intercepts_geofence):
-
-            # Get the speed difference between the plan's initial speed and the point that intercepts the geofence
-            delta_speed_to_geofence = msg.initial_longitudinal_velocity - speed_geofence_intercept # Speed difference in m/s
-            
-            # If there is a decrease in speed (beyond a threshold), evaluate the plan's deceleration leading up to the geofence
-            # Note: Assumes that if there is not a large enough speed decrease up to the geofence, then the system 
-            #       has already come close to the advisory speed limit
-            # TODO: Make more robust. This approach will not work if the peak speed is in the middle of the trajectory plan
-            if (delta_speed_to_geofence >= threshold_speed_decrease_to_geofence):
-
-                # Find the trajectory point at which deceleration begins.
-                # Note: Assumes deceleration begins at the first occurrence of the trajectory plan passing the deceleration threshold
-                # TODO: Create a more robust approach to determine when deceleration has begun
-                prev_point = msg.trajectory_points[0]
-                prev_point_speed = msg.initial_longitudinal_velocity
-                for i in range(1, intercept_geofence_idx + 1):
-                    # Get speed of the current trajectory point
-                    distance = ((msg.trajectory_points[i].x - prev_point.x)**2 + (msg.trajectory_points[i].y - prev_point.y)**2) ** 0.5
-                    dt = msg.trajectory_points[i].target_time - prev_point.target_time
-                    current_pt_speed = distance / dt.to_sec() # Speed in m/s
-
-                    # Get the deceleration of the current trajectory point
-                    current_pt_decel = (current_pt_speed - prev_point_speed) / dt
-                    
-                    # If this point passes the deceleration threshold, compute average deceleration from it to the geofence intersection
-                    if (current_pt_decel >= threshold_deceleration):
-                        average_decel = (prev_point_speed - speed_geofence_intercept) / (msg.trajectory_points[intercept_geofence_idx].target_time - prev_point.target_time)
-                        if (average_decel >= threshold_deceleration):
-                            count_success_traj_decel += 1
-                            break
-                        else:
-                            count_fail_traj_decel += 1
-
-                    # Update previous point
-                    prev_point = msg.trajectory_points[i]
-                    prev_point_speed = current_pt_speed
-            
-            # Only count as a failure if the initial trajectory speed is greater than a configured threshold above the advisory speed
-            else:
-                if (msg.initial_longitudinal_velocity >= threshold_current_speed_above_advisory_speed):
-                    count_fail_traj_decel += 1
-
-    # Get total number of trajectories that intercepted the start of the geofence
-    count_traj_plans_intercept_geofence = count_success_traj_decel + count_fail_traj_decel
-
-    # Determine success of metric from test data (fails if failed on more than 0 trajectory plans)
-    if (count_traj_plans_intercept_geofence == 0):
-        print("B-13 failed; no trajectory plans that intercept the geofence area were found.")
-    elif (count_fail_traj_decel == 0):
-        print("B-13 succeeded; a deceleration section with an average deceleration of at least 1 m/s^2  was found on " + str(count_success_traj_decel) + " of " \
-            + str(count_traj_plans_intercept_geofence) + " trajectory plans reaching the geofence.")
-        is_successful = True   
+        if average_deceleration >= min_average_deceleration and deceleration_completed_before_geofence:
+            print("B-13 succeeded; average deceleration above 1.0 m/s^2 occurred before geofence entrance: " + str(average_deceleration) + " m/s^2")
+            is_successful = True
+        elif average_deceleration >= min_average_deceleration and not deceleration_completed_before_geofence:
+            print("B-13 failed; average deceleration above 1.0 m/s^2 occurred after geofence entrance: " + str(average_deceleration) + " m/s^2")
+            is_successful = False
+        elif average_deceleration <= min_average_deceleration and deceleration_completed_before_geofence:
+            print("B-13 failed; a deceleration below 1.0 m/s^2 occurred before the geofence entrance: " + str(average_deceleration) + " m/s^2")
+            is_successful = False
+        elif average_deceleration <= min_average_deceleration and not deceleration_completed_before_geofence:
+            print("B-13 failed; a deceleration below 1.0 m/s^2 occurred after the geofence entrance: " + str(average_deceleration) + " m/s^2")
+            is_successful = False
+    elif has_found_start_of_decel:
+        print("B-13 failed; did not find end of deceleration phase")
+        is_successful = False
     else:
-        print("B-13 failed; a deceleration section with an average deceleration of at least 1 m/s^2  was found on " + str(count_success_traj_decel) + " of " \
-            + str(count_traj_plans_intercept_geofence) + " trajectory plans reaching the geofence.")
+        print("B-13 failed; did not find start of deceleration phase")
         is_successful = False
 
     return is_successful
@@ -1111,112 +1055,58 @@ def check_acceleration_distance_after_geofence(bag, time_exit_geofence, time_end
 # Basic Travel B-15: The planned trajectory back to normal operations will include an acceleration portion and 
 #           the average acceleration over the entire acceleration time shall be no less than 1 m/s^2.
 ###########################################################################################################
-def check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_end_engagement, original_speed_limit):
-    # (m/s^2) Minimum threshold of instantaneous acceleration for a point to be considered the start of the acceleration phase
-    min_instantaneous_acceleration = 0.4
-    # (m/s^2) Minimum threshold for average acceleration during acceleration phase in trajectory plan
-    min_average_acceleration = 1.0
-    # (m/s) Threshold offset from speed limit; once the start speed is within this offset of the speed limit, no more plans will be evaluated
-    threshold_speed_limit_offset = 2.2352 # 2.2352 m/s is 5 mph
-    # (m/s) Once the start speed of a trajectory plan surpasses this speed, no more trajectory plans will be evaluated
-    max_start_speed = original_speed_limit - threshold_speed_limit_offset
+def check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_end_engagement, original_speed_limit, advisory_speed_limit):
+    end_accel_percent_of_original_speed_limit = 0.90
+    start_accel_percent_of_advisory_speed_limit = 1.10
+    speed_start_accel = 0.0
+    speed_end_accel = 0.0
+    time_start_accel = rospy.Time()
+    time_end_accel = rospy.Time()
+    has_found_start_of_accel = False
+    has_found_end_of_accel = False
 
-    # Get the location (in Map Frame) of the end of the geofence
-    for topic, msg, t in bag.read_messages(topics=['/localization/current_pose'], start_time = time_exit_geofence):
-        exit_geofence_x = msg.pose.position.x
-        exit_geofence_y = msg.pose.position.y
-        break
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_exit_geofence):
+        if has_found_start_of_accel:
+            accel = (msg.twist.linear.x - prev_speed) / (t-prev_time).to_sec()
+            #print("Time: " + str(t.to_sec()) + "; " + str(msg.twist.linear.x) + "; " + str(accel) + " m/s^2")
+            prev_speed = msg.twist.linear.x
+            prev_time = t
+        
+        # Get start time of deceleration
+        if not has_found_start_of_accel and (msg.twist.linear.x > (start_accel_percent_of_advisory_speed_limit * advisory_speed_limit)):
+            print("Accel Start Time: " + str(t.to_sec()) + "; " + str(msg.twist.linear.x))
+            time_start_accel = t
+            speed_start_accel = msg.twist.linear.x
+            has_found_start_of_accel = True
+            prev_speed = msg.twist.linear.x
+            prev_time = t
 
-    count_success_traj_accel = 0
-    count_fail_traj_accel = 0
-    found_first_accel_traj = False
-    for topic, msg, t in bag.read_messages(topics=['/guidance/plan_trajectory'], start_time = time_exit_geofence, end_time = time_end_engagement):
-        # If the trajectory start speed is above the configured max start speed, assume the vehicle has reached steady state and stop evaluating trajectory plans
-        #print("*******************")
-        if (msg.initial_longitudinal_velocity >= max_start_speed):
+        # Get end time of deceleration 
+        if has_found_start_of_accel and (msg.twist.linear.x > (end_accel_percent_of_original_speed_limit * original_speed_limit)):
+            print("Accel End Time: " + str(t.to_sec()) + "; " + str(msg.twist.linear.x))
+            time_end_accel = t
+            speed_end_accel = msg.twist.linear.x
+            has_found_end_of_accel = True
             break
-        
-        # First pass through trajectory plan to determine whether it has a single occurrence of acceleration above the threshold along consecutive points
-        has_acceleration_phase = False # Flag that is set if first point in acceleration phase is found
-        prev_point = msg.trajectory_points[0]
-        prev_point_speed = msg.initial_longitudinal_velocity
-        for i in range(1, len(msg.trajectory_points)):    
-            # Obtain the current point's speed
-            distance = ((msg.trajectory_points[i].x - prev_point.x)**2 + (msg.trajectory_points[i].y - prev_point.y)**2) ** 0.5 # Distance in meters
-            dt = (msg.trajectory_points[i].target_time - prev_point.target_time).to_sec() # Time in seconds
-            current_pt_speed = distance / dt # Speed in m/s
 
-            # Obtain the current point's acceleration
-            current_pt_accel = (current_pt_speed - prev_point_speed) / dt # (m/s^2)
-
-            # Debug Statement
-            #print(str(msg.trajectory_points[i].planner_plugin_name) + "; " + str(current_pt_speed) + " m/s; " + str(current_pt_accel) + " m/s^2")
-
-            # Check if current point's acceleration is the beginning of an acceleration period
-            # Note: Beginning of acceleration period is the first point that has an acceleration above the configured minimum instantaneous acceleration
-            # TODO: Create a more robust approach for determining when an acceleration has begun
-            if (current_pt_accel >= min_instantaneous_acceleration and not has_acceleration_phase):
-                start_accel_point_idx = i - 1 # Acceleration begins with the previous point
-                start_accel_point_speed = prev_point_speed
-                has_acceleration_phase = True # First acceleration point has been found 
-            
-            # If start of acceleration phase has already been found, find the end point of the acceleration phase for average acceleration calculation
-            # Note: End of acceleration phase is defined by a single occurrence of deceleration (beyond a configured threshold) along consecutive points OR the last point in plan
-            # TODO: Create more robust determination of the end of the acceleration phase that is less susceptible to noise
-            elif (has_acceleration_phase):   
-                # If the current point's acceleration is below 0 m/s^2, the end of the acceleration phase has been found
-                # TODO: Tune this value?
-                if (current_pt_accel <= 0.0 or current_pt_speed >= 0.95 * original_speed_limit):
-                    end_accel_point_idx = i - 1 # Acceleration ends with the previous point
-                    end_accel_point_speed = prev_point_speed
-
-                    # Break from this trajectory plan since the start and end of the acceleration phase have been found
-                    break
-                
-                # If currently at the last point in the plan, set this point as the end of the acceleration phase
-                elif (i == len(msg.trajectory_points) - 1):
-                    end_accel_point_idx = i
-                    end_accel_point_speed = current_pt_speed
-
-            # Update previous point
-            prev_point = msg.trajectory_points[i]
-            prev_point_speed = current_pt_speed
-        
-        # If the full acceleration phase has been found, calculate its average acceleration
-        if (has_acceleration_phase):
-            delta_speed = end_accel_point_speed - start_accel_point_speed # m/s
-            dt = (msg.trajectory_points[end_accel_point_idx].target_time - msg.trajectory_points[start_accel_point_idx].target_time).to_sec() # Seconds
-            average_accel = delta_speed / dt # m/s^2
-
-            if (average_accel >= min_average_acceleration):
-                count_success_traj_accel += 1
-                #print("Success; avg accel: " + str(average_accel))
-            else:
-                count_fail_traj_accel += 1
-                #print("Fail; avg accel: " + str(average_accel))
-
-        
-        # Trajectory Plan did not have a single occurrence of acceleration above the configured minimum instantaneous value
-        else:
-
-            # If the previous trajectories did have an acceleration phase, this one should have had one as well
-            if found_first_accel_traj:
-                print("Fail; no acceleration in trajectory plan.")
-                count_fail_traj_accel = True
-                continue
+    if has_found_start_of_accel and has_found_end_of_accel:
+        average_acceleration = (speed_end_accel - speed_start_accel) / (time_end_accel - time_start_accel).to_sec()
+        print("Avg acceleration: " + str(average_acceleration))
 
     # Print success/failure statement and return success flag
-    count_traj_plans_with_accel = count_success_traj_accel + count_fail_traj_accel
-    if (count_traj_plans_with_accel == 0):
-        print("B-15 failed; no trajectory plans after exiting the geofence included an acceleration phase")
-        is_successful = False
-    elif (count_success_traj_accel == count_traj_plans_with_accel):
-        print("B-15 succeeded; an acceleration section with an average acceleration of at least 1 m/s^2  was found on " + str(count_success_traj_accel) + " of " \
-            + str(count_traj_plans_with_accel) + " trajectory plans after exiting the geofence.")
+    is_successful = False
+    if (has_found_start_of_accel and has_found_end_of_accel):
+        if average_acceleration >= 1.0:
+            print("B-15 succeeded; average acceleration after geofence was above 1.0 m/s^2: " + str(average_acceleration) + " m/s^2")
+            is_successful = True
+        else:
+            print("B-15 failed; average acceleration after geofence was below 1.0 m/s^2: " + str(average_acceleration) + " m/s^2")
+            is_successful = False
+    elif has_found_start_of_accel:
+        print("B-15 failed; no end of acceleration after exiting the geofence was found.")
         is_successful = True
     else:
-        print("B-15 failed; an acceleration section with an average acceleration of at least 1 m/s^2  was found on " + str(count_success_traj_accel) + " of " \
-            + str(count_traj_plans_with_accel) + " trajectory plans after exiting the geofence.")
+        print("B-15 failed; no acceleration after exiting the geofence was found.")
         is_successful = False
 
     return is_successful
@@ -1394,6 +1284,138 @@ def check_advisory_speed_limit(bag, advisory_speed_limit, original_speed_limit):
     
     return is_successful
 
+###########################################################################################################
+# Basic Travel B-20 (Front Vehicle) and B-21 (Rear Vehicle): The vehicle is fully contained within its lane 
+#                    (it does not breach either of the lane lines) for at least 95% of the time spent with
+#                     the CARMA system engaged.
+###########################################################################################################
+def check_vehicle_inside_lane(bag, time_start_engagement, time_end_engagement, is_front_vehicle):
+    # Parameters used for this metric evaulation
+    vehicle_half_width = 1.01 # (meters) for Chrysler Pacifica Minivan; 0.955 Ford Fusion; 0.947 Lexus
+    percent_required_inside_lane = 95.0 # (percentage; 0.0 to 100.0)
+    lane_width = 3.7 # (meters)
+    max_allowed_cross_track = (lane_width / 2.0) - vehicle_half_width
+    time_begin_evaluation_after_start_engagement = 5.0 # (seconds) Ensures we don't capture crosstrack error from driver manually positioning vehicle in poor position at start of test
+    time_start = rospy.Time(time_start_engagement.to_sec() + time_begin_evaluation_after_start_engagement)
+
+    # Variables to track during metric evaluation
+    max_found_cross_track = 0.0
+    time_outside_lane = 0.0
+    time_inside_lane = 0.0
+    prev_t = rospy.Time()
+    first = True
+    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_start, end_time = time_end_engagement):
+        # For first message, just save its timestamp within the 'prev_t' object
+        if first:
+            prev_t = t
+            first = False
+            continue
+        
+        # If cross track indicates vehicle is outside its lane, update total amount of time spent outside of lane
+        if msg.cross_track > max_allowed_cross_track:
+            time_outside_lane += (t - prev_t).to_sec()
+
+            # Debug Statement
+            #print("Time " + str(t.to_sec()) + ": Outside Lane CTE " + str(msg.cross_track) + " meters")
+        # If cross track indicates vehicle is inside its lane, update total amount of time spent inside of lane
+        else:
+            time_inside_lane += (t - prev_t).to_sec()
+
+            # Debug Statement
+            #print("Time " + str(t.to_sec()) + ": Inside Lane CTE " + str(msg.cross_track) + " meters")
+
+        if msg.cross_track > max_found_cross_track:
+            max_found_cross_track = msg.cross_track
+        
+        prev_t = t
+    
+    percent_inside_lane = (time_inside_lane / (time_inside_lane + time_outside_lane)) * 100.0
+    max_dist_outside_lane = (max_found_cross_track + vehicle_half_width) - (lane_width / 2.0) 
+
+    is_successful = False
+    if percent_inside_lane >= percent_required_inside_lane:
+        if is_front_vehicle:
+            print("B-20 succeeded; vehicle was fully inside its lane for " + str(round(percent_inside_lane,4)) + "% of time spent engaged (>= 95%).")
+        else:
+            print("B-21 succeeded; vehicle was fully inside its lane for " + str(round(percent_inside_lane,4)) + "% of time spent engaged (>= 95%).")
+        print(str(round(time_inside_lane,4)) + " sec inside lane; " + str(round(time_outside_lane,4)) + " sec outside lane; max crosstrack: " + str(round(max_found_cross_track,4)) + "; max dist outside lane: " + str(round(max_dist_outside_lane,4)) + " m")
+        is_successful = True
+    else:
+        if is_front_vehicle:
+            print("B-20 failed; vehicle was fully inside its lane for " + str(round(percent_inside_lane,4)) + "% of time spent engaged (< 95%).")
+        else:
+            print("B-21 failed; vehicle was fully inside its lane for " + str(round(percent_inside_lane,4)) + "% of time spent engaged (< 95%).")
+        print(str(round(time_inside_lane,4)) + " sec inside lane; " + str(round(time_outside_lane,4)) + " sec outside lane; max crosstrack: " + str(round(max_found_cross_track,4)) + "; max dist outside lane: " + str(round(max_dist_outside_lane,4)) + " m")
+        is_successful = True
+    return is_successful
+
+###########################################################################################################
+# Basic Travel B-22 (Front Vehicle) and B-23 (Rear Vehicle): The vehicle never breaches the left or right 
+#                   lane line associated with its current lane by more than 0.1 meters while the CARMA 
+#                   system is engaged.
+###########################################################################################################
+def check_vehicle_always_within_maximum_crosstrack(bag, time_start_engagement, time_end_engagement, is_front_vehicle):
+    # Parameters used for this metric evaulation
+    vehicle_half_width = 1.01 # (meters) for Chrysler Pacifica Minivan; 0.955 Ford Fusion; 0.947 Lexus
+    lane_width = 3.7 # (meters)
+    max_distance_over_lane_line = 0.1 # (meters)
+    max_allowed_cross_track = (lane_width / 2.0) - vehicle_half_width + max_distance_over_lane_line
+    time_begin_evaluation_after_start_engagement = 5.0 # (seconds) Ensures we don't capture crosstrack error from driver manually positioning vehicle in poor position at start of test
+    time_start = rospy.Time(time_start_engagement.to_sec() + time_begin_evaluation_after_start_engagement)
+
+    # Variables to track during metric evaluation
+    breached_max_cross_track = False
+    max_found_cross_track = 0.0
+    time_outside_allowable_cte = 0.0
+    time_inside_allowable_cte = 0.0
+    prev_t = rospy.Time()
+    first = True
+    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_start, end_time = time_end_engagement):        
+        # For first message, save its timestamp within the 'prev_t' object
+        if first:
+            prev_t = t
+            first = False
+            continue
+        
+        # If cross track indicates vehicle is outside its lane by more than allowable distance, update total amount of time spent outside of lane
+        if msg.cross_track > max_allowed_cross_track:
+            time_outside_allowable_cte += (t - prev_t).to_sec()
+            breached_max_cross_track = True
+
+            # Debug Statement
+            #print("Time " + str(t.to_sec()) + ": Outside Lane CTE " + str(msg.cross_track) + " meters")
+        # If cross track indicates vehicle is note outside its lane by more than allowable distance, update total amount of time spent inside of lane
+        else:
+            time_inside_allowable_cte += (t - prev_t).to_sec()
+
+            # Debug Statement
+            #print("Time " + str(t.to_sec()) + ": Inside Lane CTE " + str(msg.cross_track) + " meters")
+
+        if msg.cross_track > max_found_cross_track:
+            max_found_cross_track = msg.cross_track
+        
+        prev_t = t
+    
+    percent_inside_lane = (time_inside_allowable_cte / (time_inside_allowable_cte + time_outside_allowable_cte)) * 100.0
+    max_dist_outside_lane = (max_found_cross_track + vehicle_half_width) - (lane_width / 2.0) 
+
+    is_successful = False
+    if not breached_max_cross_track:
+        if is_front_vehicle:
+            print("B-22 succeeded; vehicle never breached lane lines by more than 0.1 meters.")
+        else:
+            print("B-23 succeeded; vehicle never breached lane lines by more than 0.1 meters.")
+        print(str(round(time_inside_allowable_cte,4)) + " sec not over line by 0.1 m; " + str(round(time_outside_allowable_cte,4)) + " sec over line by 0.1 m; max crosstrack: " + str(round(max_found_cross_track,4)) + "; max dist outside lane: " + str(round(max_dist_outside_lane,4)) + " m")
+        is_successful = True
+    else:
+        if is_front_vehicle:
+            print("B-22 failed; vehicle breached lane lines by more than 0.1 meters for " + str(round(percent_inside_lane,4)) + "% of time spent engaged (< 95%).")
+        else:
+            print("B-23 failed; vehicle breached lane lines by more than 0.1 meters for " + str(round(percent_inside_lane,4)) + "% of time spent engaged (< 95%).")
+        print(str(round(time_inside_allowable_cte,4)) + " sec not over line by 0.1 m; " + str(round(time_outside_allowable_cte,4)) + " sec ove rline by 0.1 m; max crosstrack: " + str(round(max_found_cross_track,4)) + "; max dist outside lane: " + str(round(max_dist_outside_lane,4)) + " m")
+        is_successful = True
+    return is_successful
+
 # Main Function; run all tests from here
 def main():  
     if len(sys.argv) < 2:
@@ -1416,7 +1438,7 @@ def main():
                                  "BT-B-1 Result", "BT-B-2 Result", "BT-B-3 Result", "BT-B-4 Result", "BT-B-5 Result", "BT-B-6 Result", 
                                  "BT-B-7 Result", "BT-B-8 Result", "BT-B-9 Result", "BT-B-10 Result","BT-B-11 Result", "BT-B-12 Result", 
                                  "BT-B-13 Result", "BT-B-14 Result", "BT-B-15 Result", "BT-B-16 Result", "BT-B-17 Result", "BT-B-18 Result", 
-                                 "BT-19 Result"])
+                                 "BT-19 Result", "BT-20 Result", "BT-21 Result", "BT-22 Result", "BT-23 Result"])
     
     # Create list of Basic Travel White Pacifica (Leader) bag files to be processed
     BT_leader_white_pacifica_bag_files = ["_2021-07-21-21-14-34_down-selected.bag",
@@ -1434,7 +1456,6 @@ def main():
                                                "_2021-07-22-15-20-10_down-selected.bag",
                                                "_2021-07-22-15-30-47_down-selected.bag",
                                                "_2021-07-22-15-41-31_down-selected.bag"]
-
     # Create list of Basic Travel Black Pacifica (Follower) bag files to be processed
     BT_follower_black_pacifica_bag_files = ["_2021-07-21-21-13-55_down-selected.bag",
                                                  "_2021-07-21-21-30-03_down-selected.bag",
@@ -1534,6 +1555,10 @@ def main():
         b_17_result = None
         b_18_result = None
         b_19_result = None
+        b_20_result = None
+        b_21_result = None
+        b_22_result = None
+        b_23_result = None
 
         # Metric BT-B-19
         advisory_speed_limit, time_received_first_msg, b_19_result = get_basic_travel_TCM_data(bag)
@@ -1591,16 +1616,28 @@ def main():
             b_10_result = check_leader_state_after_platoon_negotiation(bag, time_last_received_join_at_rear)
             print("B-11: N/A (Leader Vehicle)")
             b_12_result = check_status_msg_sending_frequency(bag, time_sent_second_acceptance)
-            b_13_result = check_deceleration_before_geofence(bag, time_test_start_engagement, time_enter_geofence)
+            b_13_result = check_deceleration_before_geofence(bag, time_test_start_engagement, time_enter_geofence, original_speed_limit, advisory_speed_limit)
             b_14_result = check_acceleration_distance_after_geofence(bag, time_exit_geofence, time_test_end_engagement, time_enter_geofence, advisory_speed_limit)
-            b_15_result = check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_test_end_engagement, original_speed_limit)
+            b_15_result = check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_test_end_engagement, original_speed_limit, advisory_speed_limit)
 
         b_16_result = check_steady_state_after_geofence(bag, time_exit_geofence, time_test_end_engagement, original_speed_limit)
 
         b_17_result = check_speed_limit_when_not_in_geofence(bag, time_test_start_engagement, time_enter_geofence, time_exit_geofence, time_test_end_engagement, original_speed_limit)
 
         b_18_result = check_advisory_speed_limit(bag, advisory_speed_limit, original_speed_limit)
-        
+
+        if bag_file in BT_follower_black_pacifica_bag_files:
+            b_20_result = check_vehicle_inside_lane(bag, time_test_start_engagement, time_test_end_engagement, is_front_vehicle = False)
+            print("B-21: N/A (Follower Vehicle)")
+            b_22_result = check_vehicle_always_within_maximum_crosstrack(bag, time_test_start_engagement, time_test_end_engagement, is_front_vehicle = False)
+            print("B-23: N/A (Follower Vehicle)")
+        else:
+            print("B-20: N/A (Leader Vehicle)")
+            b_21_result = check_vehicle_inside_lane(bag, time_test_start_engagement, time_test_end_engagement, is_front_vehicle = True)
+            print("B-22: N/A (Leader Vehicle)")
+            b_23_result = check_vehicle_always_within_maximum_crosstrack(bag, time_test_start_engagement, time_test_end_engagement, is_front_vehicle = True)
+
+
         # Get vehicle type that this bag file is from
         vehicle_name = "Unknown"
         if bag_file in BT_leader_white_pacifica_bag_files:
@@ -1621,7 +1658,8 @@ def main():
         csv_results_writer.writerow([bag_file, vehicle_name, vehicle_role,
                                      b_1_result, b_2_result, b_3_result, b_4_result, b_5_result, b_6_result, b_7_result,
                                      b_8_result, b_9_result, b_10_result, b_11_result, b_12_result, b_13_result, b_14_result, 
-                                     b_15_result, b_16_result, b_17_result, b_18_result, b_19_result])
+                                     b_15_result, b_16_result, b_17_result, b_18_result, b_19_result, b_20_result,
+                                     b_21_result, b_22_result, b_23_result])
         
     sys.stdout = orig_stdout
     text_log_file_writer.close()
