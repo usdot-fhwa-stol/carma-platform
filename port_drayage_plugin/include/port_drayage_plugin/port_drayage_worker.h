@@ -31,23 +31,7 @@
 #include "port_drayage_plugin/port_drayage_state_machine.h"
 
 namespace port_drayage_plugin
-{
-    /**
-     * \brief Enum containing the different destination types that the Port Drayage
-     * vehicle can arrive at.
-     */
-    enum PortDrayageDestination
-    {
-        STAGING_AREA_ENTRY,
-        STAGING_AREA_EXIT,
-        PORT_ENTRY,
-        PORT_EXIT,
-        LOADING_AREA,
-        UNLOADING_AREA,
-        INSPECTION_POINT,
-        HOLDING_AREA
-    };
-    
+{    
     /**
      * Convenience struct for storing all data contained in a received MobilityOperation message's
      * strategy_params field with strategy "carma/port_drayage"
@@ -55,10 +39,9 @@ namespace port_drayage_plugin
     struct PortDrayageMobilityOperationMsg
     {
         boost::optional<std::string> cargo_id;
-        std::string operation;
+        std::string operation = "";
         PortDrayageEvent port_drayage_event_type; // PortDrayageEvent associated with this message
-        PortDrayageDestination destination_type; // PortDrayageDestination associated with this message's destination
-        bool has_cargo; // Flag to indicate whether vehicle has cargo during this action
+        bool has_cargo = false; // Flag to indicate whether vehicle has cargo during this action
         boost::optional<std::string> current_action_id; // Identifier for the action this message is related to
         boost::optional<double> dest_longitude;  // Destination longitude for the carma vehicle
         boost::optional<double> dest_latitude;   // Destination latitude for the carma vehicle
@@ -71,8 +54,8 @@ namespace port_drayage_plugin
      */
     struct LatLonCoordinate
     {
-        double latitude;
-        double longitude;
+        double latitude = 0.0;
+        double longitude = 0.0;
     };
 
     /**
@@ -105,9 +88,11 @@ namespace port_drayage_plugin
             std::string _previous_strategy_params;
 
             // Constants
-            const std::string PORT_DRAYAGE_PLUGIN_ID = "PortDrayagePlugin";
+            const std::string PORT_DRAYAGE_PLUGIN_ID = "port_drayage_plugin";
             const std::string PORT_DRAYAGE_STRATEGY_ID = "carma/port_drayage";
-            const std::string PORT_DRAYAGE_ARRIVAL_OPERATION_ID = "ARRIVED_AT_DESTINATION";
+            const std::string PORT_DRAYAGE_INITIAL_ARRIVAL_OPERATION_ID = "ENTER_STAGING_AREA";
+            const std::string PORT_DRAYAGE_PICKUP_OPERATION_ID = "PICKUP";
+            const std::string PORT_DRAYAGE_DROPOFF_OPERATION_ID = "DROPOFF";
 
         public:
 
@@ -134,6 +119,11 @@ namespace port_drayage_plugin
              * \param enable_port_drayage A boolean flag indicating whether port drayage
              * operations are enabled or not. If false, the port drayage state machine
              * will remain in an INACTIVE state.
+             * 
+             * \param call_set_active_route_client A lambda containing the logic
+             * necessary to call the SetActiveRoute service client. This lambda should
+             * contain all the necessary ROS logic so that it does not leak into 
+             * the implementation of this class.
              */
             PortDrayageWorker(
                 unsigned long cmv_id,
@@ -212,7 +202,15 @@ namespace port_drayage_plugin
              * \brief Callback to process a received MobilityOperation message
              * \param mobility_operation_msg a received MobilityOperation message
              */
-            void on_inbound_mobility_operation(const cav_msgs::MobilityOperationConstPtr& mobility_operation_msg);
+            void on_inbound_mobility_operation(const cav_msgs::MobilityOperationConstPtr& msg);
+
+            /**
+             * \brief Method to update worker's cargo-related data members depending on whether
+             *  the previously completed action was for a pickup or dropoff.
+             * \param previous_port_drayage_msg The contents of the previously received MobilityOperation
+             *  port drayage message for this CMV stored in a PortDrayageMobilityOperationMsg object.
+             */
+            void update_cargo_information_after_action_completion(PortDrayageMobilityOperationMsg previous_port_drayage_msg);
 
             /**
              * \brief Function to help parse the text included in an inbound MobilityOperation message's 
@@ -223,17 +221,14 @@ namespace port_drayage_plugin
             void mobility_operation_message_parser(std::string mobility_operation_strategy_params);
 
             /**
-             * \brief Callback to store the host vehicle's current latitude/longitude coordinates 
-             */
-            void set_current_gps_position(const novatel_gps_msgs::InspvaConstPtr& gps_position);
-
-            /**
-             * \brief Callback to process the current status of the guidance state machine 
+             * \brief Callback to process the current status of the guidance state machine. 
+             * \param msg a received GuidanceState message
              */
             void on_guidance_state(const cav_msgs::GuidanceStateConstPtr& msg); 
 
             /**
-             * \brief Callback to process each Route Event 
+             * \brief Callback to process each Route Event
+             * \param msg a received RouteEvent message 
              */
             void on_route_event(const cav_msgs::RouteEventConstPtr& msg);
 
@@ -241,7 +236,7 @@ namespace port_drayage_plugin
              * \brief Get the current state of the port drayage state machine
              * \return The current state value
              */
-            const PortDrayageState get_state();
+            const PortDrayageState get_port_drayage_state();
 
             /**
              * \brief Spin and process data

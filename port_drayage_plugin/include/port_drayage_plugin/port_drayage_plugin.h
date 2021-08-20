@@ -51,7 +51,6 @@ namespace port_drayage_plugin
             std::shared_ptr<ros::Subscriber> _pose_subscriber = nullptr;
             std::shared_ptr<ros::Subscriber> _cur_speed_subscriber = nullptr;
             std::shared_ptr<ros::Subscriber> _inbound_mobility_operation_subscriber = nullptr;
-            std::shared_ptr<ros::Subscriber> _gps_position_subscriber = nullptr;
             std::shared_ptr<ros::Subscriber> _guidance_state_subscriber = nullptr;
             std::shared_ptr<ros::Subscriber> _route_event_subscriber = nullptr;
             std::shared_ptr<ros::Subscriber> _georeference_subscriber = nullptr;

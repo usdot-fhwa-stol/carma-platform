@@ -65,7 +65,7 @@ namespace port_drayage_plugin
         });
         _maneuver_plan_subscriber = std::make_shared<ros::Subscriber>(maneuver_sub);
 
-        ros::Subscriber twist_sub = _nh->subscribe<geometry_msgs::TwistStamped>("/localization/ekf_twist", 5, 
+        ros::Subscriber twist_sub = _nh->subscribe<geometry_msgs::TwistStamped>("current_velocity", 5, 
             [&](const geometry_msgs::TwistStampedConstPtr& speed) {
                 pdw.set_current_speed(speed);
                 _cur_speed = speed->twist;
@@ -89,8 +89,6 @@ namespace port_drayage_plugin
 
         _inbound_mobility_operation_subscriber = std::make_shared<ros::Subscriber>(inbound_mobility_operation_sub);
         
-        _gps_position_subscriber = std::make_shared<ros::Subscriber>(gps_sub);
-
         ros::Subscriber guidance_state_sub = _nh->subscribe<cav_msgs::GuidanceState>("guidance_state", 5,
             [&](const cav_msgs::GuidanceStateConstPtr& guidance_state) {
             pdw.on_guidance_state(guidance_state);
