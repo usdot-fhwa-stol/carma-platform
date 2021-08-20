@@ -16,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
   lanelet2_core
 )
 
+## System dependencies are found with CMake's conventions
+find_package(Boost REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -42,6 +44,7 @@ catkin_package(
 include_directories(
  include
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
 )
 
 add_executable(traffic_incident_parser_node src/main.cpp src/traffic_incident_parser_node.cpp)
@@ -50,7 +53,7 @@ add_library(traffic_incident_parser_worker_lib src/traffic_incident_parser_worke
 add_dependencies(traffic_incident_parser_worker_lib ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(traffic_incident_parser_node traffic_incident_parser_worker_lib ${catkin_LIBRARIES})
+target_link_libraries(traffic_incident_parser_node traffic_incident_parser_worker_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 #############
 ## Install ##
@@ -84,4 +87,4 @@ catkin_add_gmock(${PROJECT_NAME}-test
   test/test_traffic_parser.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
-target_link_libraries(${PROJECT_NAME}-test traffic_incident_parser_worker_lib ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}-test traffic_incident_parser_worker_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})

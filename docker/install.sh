@@ -24,12 +24,12 @@ source /opt/autoware.ai/ros/install/setup.bash --extend
 
 cd ~/carma_ws
 
-sudo mkdir /opt/carma # Create install directory
+sudo mkdir -p /opt/carma # Create install directory
 sudo chown carma /opt/carma # Set owner to expose permissions for build
 sudo chgrp carma /opt/carma # Set group to expose permissions for build
 
 echo "Building CARMA"
-
-colcon build --cmake-args --install --install-space /opt/carma/install -DCMAKE_BUILD_TYPE=Release
+# --packages-up-to traffic_incident_parser platoon_strategic
+colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 echo "Build Complete"
