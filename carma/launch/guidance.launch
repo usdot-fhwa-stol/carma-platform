@@ -207,11 +207,7 @@
   <group>
     <remap from="outgoing_mobility_operation" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_operation"/>
     <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
-<<<<<<< HEAD
-    <remap from="current_gps_position" to="$(optenv CARMA_INTR_NS)/Inspva"/>
     <remap from="route_event" to "$(optenv CARMA_GUIDE_NS)/route_event"/>
-=======
->>>>>>> origin/feature/freight_arrival
     <include file="$(find port_drayage_plugin)/launch/port_drayage_plugin.launch" />
   </group>
   <!-- Platoon Strategic Plugin -->
