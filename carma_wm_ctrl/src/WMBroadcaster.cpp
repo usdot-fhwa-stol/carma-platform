@@ -204,7 +204,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
   std::vector<std::shared_ptr<Geofence>> return_list;
   bool detected_workzone_signal = msg_v01.package.label_exists && msg_v01.package.label.find("SIG_WZ") != std::string::npos;
   cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
-  // int msg_num = 1;
+   int msg_num = 1;
    if (msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE)
    {
      //msg_num = 3;
@@ -222,11 +222,11 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
        ROS_DEBUG_STREAM("Detected that the workzone is published now! detected_workzone_signal "  << detected_workzone_signal);
      }
    }
-  // for (int i = 0 ; i < msg_num; i ++)
-  // {
-  //    auto gf_ptr = std::make_shared<Geofence>();
-  //   // Get ID
-  //   std::copy(msg_v01.id.id.begin(), msg_v01.id.id.end(), gf_ptr->id_.begin());
+  for (int i = 0 ; i < msg_num; i ++)
+  {
+      auto gf_ptr = std::make_shared<Geofence>();
+     // Get ID
+     std::copy(msg_v01.id.id.begin(), msg_v01.id.id.end(), gf_ptr->id_.begin());
 
   //   // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
   //   if (i == 0 && msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) // right to left, top
@@ -308,7 +308,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
   //     ROS_DEBUG_STREAM("MAXSPEED 4");
   //     //gf_ptr->gf_pts = getPointsInLocalFrame(msg_v01);
   //   }
-    auto gf_ptr = std::make_shared<Geofence>();
+    
     gf_ptr->gf_pts = getPointsInLocalFrame(msg_v01);
 
     gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(gf_ptr->gf_pts);
