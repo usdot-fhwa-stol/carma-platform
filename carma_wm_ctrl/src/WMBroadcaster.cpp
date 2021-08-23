@@ -204,114 +204,113 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
   std::vector<std::shared_ptr<Geofence>> return_list;
   bool detected_workzone_signal = msg_v01.package.label_exists && msg_v01.package.label.find("SIG_WZ") != std::string::npos;
   cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
-  int msg_num = 1;
-  if (msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE)
-  {
-    msg_num = 3;
-    // queue the msgs
-    if (!workzone_published_)
-    {
-      ROS_ERROR_STREAM("workzone miscellaneous msg is saved detected_workzone_signal: " << detected_workzone_signal);
-      ROS_DEBUG_STREAM("workzone miscellaneous msg is saved detected_workzone_signal: " << detected_workzone_signal);
-      workzone_remaining_msgs_.push_back(msg_v01);
-      return {};
-    }
-    else
-    {
-      ROS_ERROR_STREAM("Detected that the workzone is published now! detected_workzone_signal "  << detected_workzone_signal);
-      ROS_DEBUG_STREAM("Detected that the workzone is published now! detected_workzone_signal "  << detected_workzone_signal);
-    }
-  }
-  for (int i = 0 ; i < msg_num; i ++)
-  {
-     auto gf_ptr = std::make_shared<Geofence>();
-    // Get ID
-    std::copy(msg_v01.id.id.begin(), msg_v01.id.id.end(), gf_ptr->id_.begin());
+  // int msg_num = 1;
+   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE)
+   {
+     //msg_num = 3;
+     // queue the msgs
+     if (!workzone_published_)
+     {
+       ROS_ERROR_STREAM("workzone miscellaneous msg is saved detected_workzone_signal: " << detected_workzone_signal);
+       ROS_DEBUG_STREAM("workzone miscellaneous msg is saved detected_workzone_signal: " << detected_workzone_signal);
+       workzone_remaining_msgs_.push_back(msg_v01);
+       return {};
+     }
+     else
+     {
+       ROS_ERROR_STREAM("Detected that the workzone is published now! detected_workzone_signal "  << detected_workzone_signal);
+       ROS_DEBUG_STREAM("Detected that the workzone is published now! detected_workzone_signal "  << detected_workzone_signal);
+     }
+   }
+  // for (int i = 0 ; i < msg_num; i ++)
+  // {
+  //    auto gf_ptr = std::make_shared<Geofence>();
+  //   // Get ID
+  //   std::copy(msg_v01.id.id.begin(), msg_v01.id.id.end(), gf_ptr->id_.begin());
 
-    // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
-    if (i == 0 && msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) // right to left, top
-    {
-      ROS_ERROR_STREAM("MAXSPEED 1");
-      ROS_DEBUG_STREAM("MAXSPEED 1");
+  //   // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
+  //   if (i == 0 && msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) // right to left, top
+  //   {
+  //     ROS_ERROR_STREAM("MAXSPEED 1");
+  //     ROS_DEBUG_STREAM("MAXSPEED 1");
 
-      size_t center_idx = current_map_->laneletLayer.get(13021).centerline2d().size();
-      auto pt = current_map_->laneletLayer.get(13021).centerline2d()[center_idx - 2].basicPoint2d();
-      lanelet::Point3d pt3d_3{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-      gf_ptr->gf_pts.push_back(pt3d_3);
+  //     size_t center_idx = current_map_->laneletLayer.get(13021).centerline2d().size();
+  //     auto pt = current_map_->laneletLayer.get(13021).centerline2d()[center_idx - 2].basicPoint2d();
+  //     lanelet::Point3d pt3d_3{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+  //     gf_ptr->gf_pts.push_back(pt3d_3);
 
 
-      center_idx = current_map_->laneletLayer.get(1302199).centerline2d().size();
-      pt = current_map_->laneletLayer.get(1302199).centerline2d()[1].basicPoint2d();
-      lanelet::Point3d pt3d_2{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-      gf_ptr->gf_pts.push_back(pt3d_2);
+  //     center_idx = current_map_->laneletLayer.get(1302199).centerline2d().size();
+  //     pt = current_map_->laneletLayer.get(1302199).centerline2d()[1].basicPoint2d();
+  //     lanelet::Point3d pt3d_2{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+  //     gf_ptr->gf_pts.push_back(pt3d_2);
 
-      pt = current_map_->laneletLayer.get(1302199).centerline2d()[center_idx - 2].basicPoint2d();
-      lanelet::Point3d pt3d_4{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-      gf_ptr->gf_pts.push_back(pt3d_4);
+  //     pt = current_map_->laneletLayer.get(1302199).centerline2d()[center_idx - 2].basicPoint2d();
+  //     lanelet::Point3d pt3d_4{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+  //     gf_ptr->gf_pts.push_back(pt3d_4);
       
-      center_idx = current_map_->laneletLayer.get(1302198).centerline2d().size();
-      pt = current_map_->laneletLayer.get(1302198).centerline2d()[1].basicPoint2d();
-      lanelet::Point3d pt3d{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-      gf_ptr->gf_pts.push_back(pt3d);
+  //     center_idx = current_map_->laneletLayer.get(1302198).centerline2d().size();
+  //     pt = current_map_->laneletLayer.get(1302198).centerline2d()[1].basicPoint2d();
+  //     lanelet::Point3d pt3d{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+  //     gf_ptr->gf_pts.push_back(pt3d);
  
-    }
-    else if ( i == 1) //left to right, top
-    {
-      ROS_ERROR_STREAM("MAXSPEED 2");
-      ROS_DEBUG_STREAM("MAXSPEED 2");
+  //   }
+  //   else if ( i == 1) //left to right, top
+  //   {
+  //     ROS_ERROR_STREAM("MAXSPEED 2");
+  //     ROS_DEBUG_STREAM("MAXSPEED 2");
 
-      size_t center_idx = current_map_->laneletLayer.get(1302198).centerline2d().size();
-      auto pt = current_map_->laneletLayer.get(1302198).centerline2d()[2].basicPoint2d();
-      lanelet::Point3d pt3d{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-      gf_ptr->gf_pts.push_back(pt3d);
+  //     size_t center_idx = current_map_->laneletLayer.get(1302198).centerline2d().size();
+  //     auto pt = current_map_->laneletLayer.get(1302198).centerline2d()[2].basicPoint2d();
+  //     lanelet::Point3d pt3d{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+  //     gf_ptr->gf_pts.push_back(pt3d);
 
-      center_idx = current_map_->laneletLayer.get(1302199).centerline2d().size();
-      pt = current_map_->laneletLayer.get(1302199).centerline2d()[center_idx- 2].basicPoint2d();
-      lanelet::Point3d pt3d_4{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-      gf_ptr->gf_pts.push_back(pt3d_4);
+  //     center_idx = current_map_->laneletLayer.get(1302199).centerline2d().size();
+  //     pt = current_map_->laneletLayer.get(1302199).centerline2d()[center_idx- 2].basicPoint2d();
+  //     lanelet::Point3d pt3d_4{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+  //     gf_ptr->gf_pts.push_back(pt3d_4);
 
-      pt = current_map_->laneletLayer.get(1302199).centerline2d()[1].basicPoint2d();
-      lanelet::Point3d pt3d_2{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-      gf_ptr->gf_pts.push_back(pt3d_2);
+  //     pt = current_map_->laneletLayer.get(1302199).centerline2d()[1].basicPoint2d();
+  //     lanelet::Point3d pt3d_2{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+  //     gf_ptr->gf_pts.push_back(pt3d_2);
 
 
-      center_idx = current_map_->laneletLayer.get(13021).centerline2d().size();
-      pt = current_map_->laneletLayer.get(13021).centerline2d()[center_idx- 2].basicPoint2d();
-      lanelet::Point3d pt3d_3{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-      gf_ptr->gf_pts.push_back(pt3d_3);
+  //     center_idx = current_map_->laneletLayer.get(13021).centerline2d().size();
+  //     pt = current_map_->laneletLayer.get(13021).centerline2d()[center_idx- 2].basicPoint2d();
+  //     lanelet::Point3d pt3d_3{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+  //     gf_ptr->gf_pts.push_back(pt3d_3);
 
-    }
-    else if ( i == 2) //left to right, bottom
-    {
-      ROS_ERROR_STREAM("MAXSPEED 3");
-      ROS_DEBUG_STREAM("MAXSPEED 3");
+  //   }
+  //   else if ( i == 2) //left to right, bottom
+  //   {
+  //     ROS_ERROR_STREAM("MAXSPEED 3");
+  //     ROS_DEBUG_STREAM("MAXSPEED 3");
       
-      size_t center_idx = current_map_->laneletLayer.get(12459).centerline2d().size();
-      auto pt = current_map_->laneletLayer.get(12459).centerline2d()[center_idx - 2].basicPoint2d();
-      lanelet::Point3d pt3d{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+  //     size_t center_idx = current_map_->laneletLayer.get(12459).centerline2d().size();
+  //     auto pt = current_map_->laneletLayer.get(12459).centerline2d()[center_idx - 2].basicPoint2d();
+  //     lanelet::Point3d pt3d{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
       
-      gf_ptr->gf_pts.push_back(pt3d);
-      center_idx = current_map_->laneletLayer.get(1245999).centerline2d().size();
-      pt = current_map_->laneletLayer.get(1245999).centerline2d()[center_idx/2].basicPoint2d();
-      lanelet::Point3d pt3d_2{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-      gf_ptr->gf_pts.push_back(pt3d_2);
+  //     gf_ptr->gf_pts.push_back(pt3d);
+  //     center_idx = current_map_->laneletLayer.get(1245999).centerline2d().size();
+  //     pt = current_map_->laneletLayer.get(1245999).centerline2d()[center_idx/2].basicPoint2d();
+  //     lanelet::Point3d pt3d_2{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+  //     gf_ptr->gf_pts.push_back(pt3d_2);
 
-      center_idx = current_map_->laneletLayer.get(1245998).centerline2d().size();
-      pt = current_map_->laneletLayer.get(1245998).centerline2d()[1].basicPoint2d();
-      lanelet::Point3d pt3d_3{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-      gf_ptr->gf_pts.push_back(pt3d_3);
+  //     center_idx = current_map_->laneletLayer.get(1245998).centerline2d().size();
+  //     pt = current_map_->laneletLayer.get(1245998).centerline2d()[1].basicPoint2d();
+  //     lanelet::Point3d pt3d_3{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+  //     gf_ptr->gf_pts.push_back(pt3d_3);
 
-    }
-    else
-    {
-      ROS_ERROR_STREAM("MAXSPEED 4");
-      ROS_DEBUG_STREAM("MAXSPEED 4");
-      gf_ptr->gf_pts = getPointsInLocalFrame(msg_v01);
-    }
-    
+  //   }
+  //   else
+  //   {
+  //     ROS_ERROR_STREAM("MAXSPEED 4");
+  //     ROS_DEBUG_STREAM("MAXSPEED 4");
+  //     //gf_ptr->gf_pts = getPointsInLocalFrame(msg_v01);
+  //   }
+    auto gf_ptr = std::make_shared<Geofence>();
+    gf_ptr->gf_pts = getPointsInLocalFrame(msg_v01);
 
-
-    
     gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(gf_ptr->gf_pts);
 
     ROS_ERROR_STREAM(">>>> starting to print affected");

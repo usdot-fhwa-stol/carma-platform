@@ -1210,16 +1210,17 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
           int curr_month = curr_minute_stamp_boost.date().month(); 
           int curr_day = curr_minute_stamp_boost.date().day(); 
 
-          auto curr_hour_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "/" + std::to_string(curr_month) + "/" + std::to_string(curr_day) +" 00:00:00.000")); // GMT is the standard
+          auto curr_day_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "/" + std::to_string(curr_month) + "/" + std::to_string(curr_day) +" 00:00:00.000")); // GMT is the standard
+          auto curr_hour_boost = curr_day_boost + boost::posix_time::hours(hours_of_day);
           auto time_boost_received = curr_hour_boost + boost::posix_time::seconds(current_movement_state.movement_event_list[0].timing.min_end_time);
 
-          ROS_ERROR_STREAM("Received state: " <<  static_cast<lanelet::CarmaTrafficLightState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state) << ", at Time: " << boost::posix_time::to_simple_string(time_boost_received));
+          //ROS_ERROR_STREAM("Received state: " <<  static_cast<lanelet::CarmaTrafficLightState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state) << ", at Time: " << boost::posix_time::to_simple_string(time_boost_received));
           ROS_DEBUG_STREAM("Received state: " <<  static_cast<lanelet::CarmaTrafficLightState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state) << ", at Time: " << boost::posix_time::to_simple_string(time_boost_received));
           
           auto time_stamp_now = ros::Time::now();
           auto time_now_boost =inception_boost +  boost::posix_time::seconds(time_stamp_now.toSec());
           ROS_ERROR_STREAM("Predicted state: " <<  curr_light->predictState(time_stamp_now).get() << ", at Time: " << boost::posix_time::to_simple_string(time_now_boost));
-          ROS_DEBUG_STREAM("Predicted state: " <<  curr_light->predictState(time_stamp_now).get() << ", at Time: " << boost::posix_time::to_simple_string(time_now_boost));
+          //ROS_DEBUG_STREAM("Predicted state: " <<  curr_light->predictState(time_stamp_now).get() << ", at Time: " << boost::posix_time::to_simple_string(time_now_boost));
         }
         
         
@@ -1255,7 +1256,9 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
         int curr_month = curr_minute_stamp_boost.date().month(); 
         int curr_day = curr_minute_stamp_boost.date().day(); 
 
-        auto curr_hour_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "/" + std::to_string(curr_month) + "/" + std::to_string(curr_day) +" 00:00:00.000")); // GMT is the standard
+        auto curr_day_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "/" + std::to_string(curr_month) + "/" + std::to_string(curr_day) +" 00:00:00.000")); // GMT is the standard
+        auto curr_hour_boost = curr_day_boost + boost::posix_time::hours(hours_of_day);
+
         auto curr_hour_stamp = ros::Time::fromBoost(curr_hour_boost);
 
         min_end_time += ros::Duration(curr_hour_stamp.toSec());
