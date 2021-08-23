@@ -44,6 +44,7 @@
 #include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <functional>
 #include <std_msgs/String.h>
+#include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
 
 
 #include "route_state_worker.h"

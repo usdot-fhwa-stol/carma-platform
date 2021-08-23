@@ -58,9 +58,13 @@ void GeofenceScheduler::clearTimers()
 
 void GeofenceScheduler::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 {
+  ROS_INFO_STREAM("ATTEMPATING to add Geofence with Id: " << gf_ptr->id_);
+  ROS_ERROR_STREAM("ATTEMPATING to add Geofence with Id: " << gf_ptr->id_);
+  
   std::lock_guard<std::mutex> guard(mutex_);
 
   ROS_INFO_STREAM("Attempting to add Geofence with Id: " << gf_ptr->id_);
+  ROS_ERROR_STREAM("Attempting to add Geofence with Id: " << gf_ptr->id_);
 
   // Create timer for next start time
   for (size_t schedule_idx = 0; schedule_idx < gf_ptr->schedules.size(); schedule_idx++)
@@ -70,6 +74,9 @@ void GeofenceScheduler::addGeofence(std::shared_ptr<Geofence> gf_ptr)
     if (!interval_info.first && startTime == ros::Time(0))
     {
       ROS_WARN_STREAM(
+          "Failed to add geofence as its schedule did not contain an active or upcoming control period. GF Id: "
+          << gf_ptr->id_);
+      ROS_ERROR_STREAM(
           "Failed to add geofence as its schedule did not contain an active or upcoming control period. GF Id: "
           << gf_ptr->id_);
       return;
@@ -89,6 +96,10 @@ void GeofenceScheduler::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 
     timers_[timer_id] = std::make_pair(std::move(timer), false);  // Add start timer to map by Id
   }
+
+  ROS_INFO_STREAM("End of attempting to add Geofence with Id: " << gf_ptr->id_);
+  ROS_ERROR_STREAM("End of attempting to add Geofence with Id: " << gf_ptr->id_);
+
 }
 
 void GeofenceScheduler::startGeofenceCallback(const ros::TimerEvent& event, std::shared_ptr<Geofence> gf_ptr, const unsigned int schedule_id, const int32_t timer_id)

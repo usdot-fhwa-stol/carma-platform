@@ -480,6 +480,19 @@ namespace route {
     void RouteGeneratorWorker::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
         vehicle_pose_ = *msg;
+        if (world_model_->getMap())
+        {
+            auto current_loc = lanelet::BasicPoint2d(msg->pose.position.x, msg->pose.position.y);
+            auto llts = world_model_->getLaneletsFromPoint(current_loc);
+            for (auto llt : llts)
+            {
+                for (auto speed : llt.regulatoryElementsAs<lanelet::DigitalSpeedLimit>())
+                {
+                    ROS_ERROR_STREAM("llt id: " << llt.id() << ", speed ->" << speed->speed_limit_.value());
+                    ROS_DEBUG_STREAM("llt id: " << llt.id() << ", speed ->" << speed->speed_limit_.value());
+                }
+            }
+        }
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
             current_loc_ = lanelet::BasicPoint2d(msg->pose.position.x, msg->pose.position.y);

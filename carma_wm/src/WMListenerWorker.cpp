@@ -236,7 +236,10 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   
   // set the Map to trigger a new route graph construction if rerouting was required by the updates. 
   world_model_->setMap(world_model_->getMutableMap(), current_map_version_, recompute_route_flag_);
-
+  
+  // no need to reroute again unless received invalidated msg again
+  if (recompute_route_flag_)
+    recompute_route_flag_ = false;
   
   ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_); 
 
@@ -346,13 +349,15 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     return;
   }
 
-  if(rerouting_flag_==true && route_msg->is_rerouted && !route_node_flag_)
+  if(rerouting_flag_==true && route_msg->is_rerouted )
   {
 
     // After setting map evaluate the current update queue to apply any updates that arrived before the map
     bool more_updates_to_apply = true;
     while(!map_update_queue_.empty() && more_updates_to_apply) {
-      
+      ROS_ERROR_STREAM("more updates to apply" << map_update_queue_.size());
+      ROS_DEBUG_STREAM("more updates to apply" << map_update_queue_.size());
+
       auto update = map_update_queue_.front(); // Get first update
       map_update_queue_.pop(); // Remove update from queue
       rerouting_flag_ = false;  // route node has finished routing, allow update

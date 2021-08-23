@@ -92,6 +92,9 @@ int WMBroadcasterNode::run()
       if(wmb_.getRoute().route_path_lanelet_ids.size() > 0)
         wmb_.routeCallbackMessage(wmb_.getRoute());
       }, false);
+    timer1 = cnh_.createTimer(ros::Duration(0.1), [this](auto){
+        wmb_.publishQueuedUpdates();
+      }, false);
 
   // Spin
   cnh_.spin();
