@@ -41,7 +41,11 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
   double cL;
   nh2_.getParam("/config_speed_limit", cL);
   setConfigSpeedLimit(cL);
-  
+
+  lanelet::Participants part_;
+  nh2_.getParam("/participation_type", part_);
+  setVehicleParticipationType(part_);
+
   // Set up AsyncSpinner for multi-threaded use case
   if (multi_threaded_)
   {
