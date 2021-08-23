@@ -97,7 +97,7 @@ public:
 
 
 
-/*!
+  /*!
    * \brief Allows user to set a callback to be triggered when a route update is received
    *        NOTE: If operating in multi-threaded mode the world model will remain locked until the user function
    * completes.
@@ -105,6 +105,15 @@ public:
    * \param config_lim A function that populate the configurable speed limit value after the world model is updated with a new route
    */
   void setConfigSpeedLimit(double config_lim) const;
+
+  /*!
+   * \brief Allows user to set a callback to be triggered when a route update is received
+   *        NOTE: If operating in multi-threaded mode the world model will remain locked until the user function
+   * completes.
+   *
+   * \param participant A function that populate the vehicle participation type value after the world model is updated with a new route
+   */
+  void setVehicleParticipationType(lanelet::Participants participant) const;
 
   /*!
    * \brief Use to allow updates to occur even if they invalidate the current route.

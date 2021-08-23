@@ -88,11 +88,22 @@ public:
    */
   void setConfigSpeedLimit(double config_lim);
 
+
 /**
  *  \brief Returns the current configured speed limit value
  * 
 */
   double getConfigSpeedLimit() const;
+
+
+  /*!
+   * \brief Allows user to set a callback to be triggered when a map update is received
+   *
+   * \param participant A callback function that will be triggered after the world model receives a new map update
+   */
+  void setVehicleParticipationType(lanelet::Participants participant);
+
+
 /**
  *  \brief Check if re-routing is needed and returns re-routing flag
  * 
@@ -115,6 +126,7 @@ private:
   std::function<void()> route_callback_;
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
   double config_speed_limit_;
+  lanelet::Participants participant_;
 
   size_t current_map_version_ = 0; // Current map version based on recived map messages
   std::queue<autoware_lanelet2_msgs::MapBinPtr> map_update_queue_; // Update queue used to cache map updates when they cannot be immeadiatly applied due to waiting for rerouting

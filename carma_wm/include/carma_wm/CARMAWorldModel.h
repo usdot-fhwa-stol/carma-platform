@@ -117,6 +117,10 @@ public:
 *
 */
   void setConfigSpeedLimit(double config_lim);
+
+  /*! \brief Set vehicle participation type
+   */
+  void setVehicleParticipationType(const lanelet::Participants& participant);
   
   /*! \brief Set endpoint of the route
    */
@@ -207,6 +211,8 @@ public:
 private:
 
   double config_speed_limit_;
+
+  lanelet::Participants participant_type_;
   
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
    *         This function should generally only be called from inside the setRoute function as it uses member variables

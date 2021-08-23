@@ -1073,6 +1073,11 @@ void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
   config_speed_limit_ = config_lim;
 }
 
+void CARMAWorldModel::setVehicleParticipationType(lanelet::Participants& participant)
+{
+  participant_type_ = participant;
+}
+
 std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n)
 {
   return carma_wm::query::getLaneletsFromPoint(semantic_map_, point, n);

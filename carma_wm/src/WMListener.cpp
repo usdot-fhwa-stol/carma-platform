@@ -111,6 +111,11 @@ void WMListener::setConfigSpeedLimit(double config_lim) const
   worker_->setConfigSpeedLimit(config_lim);
 }
 
+void WMListener::setVehicleParticipationType(lanelet::Participants participant)
+{
+  worker_->setVehicleParticipationType(participant);
+}
+
 
 // @SONAR_START@
 
