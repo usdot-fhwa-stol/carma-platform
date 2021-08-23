@@ -204,248 +204,248 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
   std::vector<std::shared_ptr<Geofence>> return_list;
   bool detected_workzone_signal = msg_v01.package.label_exists && msg_v01.package.label.find("SIG_WZ") != std::string::npos;
   cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
-   int msg_num = 1;
-   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE)
-   {
-     //msg_num = 3;
-     // queue the msgs
-     if (!workzone_published_)
-     {
-       ROS_ERROR_STREAM("workzone miscellaneous msg is saved detected_workzone_signal: " << detected_workzone_signal);
-       ROS_DEBUG_STREAM("workzone miscellaneous msg is saved detected_workzone_signal: " << detected_workzone_signal);
-       workzone_remaining_msgs_.push_back(msg_v01);
-       return {};
-     }
-     else
-     {
-       ROS_ERROR_STREAM("Detected that the workzone is published now! detected_workzone_signal "  << detected_workzone_signal);
-       ROS_DEBUG_STREAM("Detected that the workzone is published now! detected_workzone_signal "  << detected_workzone_signal);
-     }
-   }
-  for (int i = 0 ; i < msg_num; i ++)
+  if (detected_workzone_signal && msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE)
   {
-      auto gf_ptr = std::make_shared<Geofence>();
-     // Get ID
-     std::copy(msg_v01.id.id.begin(), msg_v01.id.id.end(), gf_ptr->id_.begin());
+    //msg_num = 3;
+    // queue the msgs
+    if (!workzone_published_)
+    {
+      ROS_ERROR_STREAM("workzone miscellaneous msg is saved detected_workzone_signal: " << detected_workzone_signal);
+      ROS_DEBUG_STREAM("workzone miscellaneous msg is saved detected_workzone_signal: " << detected_workzone_signal);
+      // duplicate the message only with inverted points to detect all newly created lanelets
+      workzone_remaining_msgs_.push_back(msg_v01);
+      cav_msgs::TrafficControlMessageV01 duplicate_msg = msg_v01;
+      std::reverse(duplicate_msg.geometry.nodes.begin(), duplicate_msg.geometry.nodes.end());
+      workzone_remaining_msgs_.push_back(duplicate_msg);
+      return {};
+    }
+    else
+    {
+      ROS_ERROR_STREAM("Detected that the workzone is published now! detected_workzone_signal "  << detected_workzone_signal);
+      ROS_DEBUG_STREAM("Detected that the workzone is published now! detected_workzone_signal "  << detected_workzone_signal);
+    }
+  }
+    auto gf_ptr = std::make_shared<Geofence>();
+    // Get ID
+    std::copy(msg_v01.id.id.begin(), msg_v01.id.id.end(), gf_ptr->id_.begin());
 
-  //   // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
-  //   if (i == 0 && msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) // right to left, top
-  //   {
-  //     ROS_ERROR_STREAM("MAXSPEED 1");
-  //     ROS_DEBUG_STREAM("MAXSPEED 1");
+//   // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
+//   if (i == 0 && msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) // right to left, top
+//   {
+//     ROS_ERROR_STREAM("MAXSPEED 1");
+//     ROS_DEBUG_STREAM("MAXSPEED 1");
 
-  //     size_t center_idx = current_map_->laneletLayer.get(13021).centerline2d().size();
-  //     auto pt = current_map_->laneletLayer.get(13021).centerline2d()[center_idx - 2].basicPoint2d();
-  //     lanelet::Point3d pt3d_3{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-  //     gf_ptr->gf_pts.push_back(pt3d_3);
-
-
-  //     center_idx = current_map_->laneletLayer.get(1302199).centerline2d().size();
-  //     pt = current_map_->laneletLayer.get(1302199).centerline2d()[1].basicPoint2d();
-  //     lanelet::Point3d pt3d_2{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-  //     gf_ptr->gf_pts.push_back(pt3d_2);
-
-  //     pt = current_map_->laneletLayer.get(1302199).centerline2d()[center_idx - 2].basicPoint2d();
-  //     lanelet::Point3d pt3d_4{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-  //     gf_ptr->gf_pts.push_back(pt3d_4);
-      
-  //     center_idx = current_map_->laneletLayer.get(1302198).centerline2d().size();
-  //     pt = current_map_->laneletLayer.get(1302198).centerline2d()[1].basicPoint2d();
-  //     lanelet::Point3d pt3d{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-  //     gf_ptr->gf_pts.push_back(pt3d);
- 
-  //   }
-  //   else if ( i == 1) //left to right, top
-  //   {
-  //     ROS_ERROR_STREAM("MAXSPEED 2");
-  //     ROS_DEBUG_STREAM("MAXSPEED 2");
-
-  //     size_t center_idx = current_map_->laneletLayer.get(1302198).centerline2d().size();
-  //     auto pt = current_map_->laneletLayer.get(1302198).centerline2d()[2].basicPoint2d();
-  //     lanelet::Point3d pt3d{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-  //     gf_ptr->gf_pts.push_back(pt3d);
-
-  //     center_idx = current_map_->laneletLayer.get(1302199).centerline2d().size();
-  //     pt = current_map_->laneletLayer.get(1302199).centerline2d()[center_idx- 2].basicPoint2d();
-  //     lanelet::Point3d pt3d_4{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-  //     gf_ptr->gf_pts.push_back(pt3d_4);
-
-  //     pt = current_map_->laneletLayer.get(1302199).centerline2d()[1].basicPoint2d();
-  //     lanelet::Point3d pt3d_2{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-  //     gf_ptr->gf_pts.push_back(pt3d_2);
+//     size_t center_idx = current_map_->laneletLayer.get(13021).centerline2d().size();
+//     auto pt = current_map_->laneletLayer.get(13021).centerline2d()[center_idx - 2].basicPoint2d();
+//     lanelet::Point3d pt3d_3{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+//     gf_ptr->gf_pts.push_back(pt3d_3);
 
 
-  //     center_idx = current_map_->laneletLayer.get(13021).centerline2d().size();
-  //     pt = current_map_->laneletLayer.get(13021).centerline2d()[center_idx- 2].basicPoint2d();
-  //     lanelet::Point3d pt3d_3{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-  //     gf_ptr->gf_pts.push_back(pt3d_3);
+//     center_idx = current_map_->laneletLayer.get(1302199).centerline2d().size();
+//     pt = current_map_->laneletLayer.get(1302199).centerline2d()[1].basicPoint2d();
+//     lanelet::Point3d pt3d_2{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+//     gf_ptr->gf_pts.push_back(pt3d_2);
 
-  //   }
-  //   else if ( i == 2) //left to right, bottom
-  //   {
-  //     ROS_ERROR_STREAM("MAXSPEED 3");
-  //     ROS_DEBUG_STREAM("MAXSPEED 3");
-      
-  //     size_t center_idx = current_map_->laneletLayer.get(12459).centerline2d().size();
-  //     auto pt = current_map_->laneletLayer.get(12459).centerline2d()[center_idx - 2].basicPoint2d();
-  //     lanelet::Point3d pt3d{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-      
-  //     gf_ptr->gf_pts.push_back(pt3d);
-  //     center_idx = current_map_->laneletLayer.get(1245999).centerline2d().size();
-  //     pt = current_map_->laneletLayer.get(1245999).centerline2d()[center_idx/2].basicPoint2d();
-  //     lanelet::Point3d pt3d_2{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-  //     gf_ptr->gf_pts.push_back(pt3d_2);
-
-  //     center_idx = current_map_->laneletLayer.get(1245998).centerline2d().size();
-  //     pt = current_map_->laneletLayer.get(1245998).centerline2d()[1].basicPoint2d();
-  //     lanelet::Point3d pt3d_3{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
-  //     gf_ptr->gf_pts.push_back(pt3d_3);
-
-  //   }
-  //   else
-  //   {
-  //     ROS_ERROR_STREAM("MAXSPEED 4");
-  //     ROS_DEBUG_STREAM("MAXSPEED 4");
-  //     //gf_ptr->gf_pts = getPointsInLocalFrame(msg_v01);
-  //   }
+//     pt = current_map_->laneletLayer.get(1302199).centerline2d()[center_idx - 2].basicPoint2d();
+//     lanelet::Point3d pt3d_4{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+//     gf_ptr->gf_pts.push_back(pt3d_4);
     
-    gf_ptr->gf_pts = getPointsInLocalFrame(msg_v01);
+//     center_idx = current_map_->laneletLayer.get(1302198).centerline2d().size();
+//     pt = current_map_->laneletLayer.get(1302198).centerline2d()[1].basicPoint2d();
+//     lanelet::Point3d pt3d{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+//     gf_ptr->gf_pts.push_back(pt3d);
 
-    gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(gf_ptr->gf_pts);
+//   }
+//   else if ( i == 1) //left to right, top
+//   {
+//     ROS_ERROR_STREAM("MAXSPEED 2");
+//     ROS_DEBUG_STREAM("MAXSPEED 2");
 
-    ROS_ERROR_STREAM(">>>> starting to print affected");
-    ROS_DEBUG_STREAM(">>>> starting to print affected");
-      
-    for (auto llt : gf_ptr->affected_parts_)
-    {
-      
-      ROS_ERROR_STREAM("affected_llt: " << llt.id());
-      ROS_DEBUG_STREAM("affected_llt: " << llt.id());
+//     size_t center_idx = current_map_->laneletLayer.get(1302198).centerline2d().size();
+//     auto pt = current_map_->laneletLayer.get(1302198).centerline2d()[2].basicPoint2d();
+//     lanelet::Point3d pt3d{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+//     gf_ptr->gf_pts.push_back(pt3d);
 
-    }
-    if (gf_ptr->affected_parts_.size() == 0) {
-      ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
-      continue; // Return empty geofence list
-    }
+//     center_idx = current_map_->laneletLayer.get(1302199).centerline2d().size();
+//     pt = current_map_->laneletLayer.get(1302199).centerline2d()[center_idx- 2].basicPoint2d();
+//     lanelet::Point3d pt3d_4{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+//     gf_ptr->gf_pts.push_back(pt3d_4);
 
-    std::vector<lanelet::Lanelet> affected_llts;
-    std::vector<lanelet::Area> affected_areas;
+//     pt = current_map_->laneletLayer.get(1302199).centerline2d()[1].basicPoint2d();
+//     lanelet::Point3d pt3d_2{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+//     gf_ptr->gf_pts.push_back(pt3d_2);
 
-    // used for assigning them to the regem as parameters
-    for (auto llt_or_area : gf_ptr->affected_parts_)
-    {
-      if (llt_or_area.isLanelet()) affected_llts.push_back(current_map_->laneletLayer.get(llt_or_area.lanelet()->id()));
-      if (llt_or_area.isArea()) affected_areas.push_back(current_map_->areaLayer.get(llt_or_area.area()->id()));
-    }
 
-    // process schedule from message
-    addScheduleFromMsg(gf_ptr, msg_v01);
+//     center_idx = current_map_->laneletLayer.get(13021).centerline2d().size();
+//     pt = current_map_->laneletLayer.get(13021).centerline2d()[center_idx- 2].basicPoint2d();
+//     lanelet::Point3d pt3d_3{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+//     gf_ptr->gf_pts.push_back(pt3d_3);
 
-    // TODO: logic to determine what type of geofence goes here
-    // currently only converting portion of control message that is relevant to:
-    // - digital speed limit, passing control line, digital minimum gap, region access rule, and series of workzone related messages
-    lanelet::Velocity sL;
+//   }
+//   else if ( i == 2) //left to right, bottom
+//   {
+//     ROS_ERROR_STREAM("MAXSPEED 3");
+//     ROS_DEBUG_STREAM("MAXSPEED 3");
     
+//     size_t center_idx = current_map_->laneletLayer.get(12459).centerline2d().size();
+//     auto pt = current_map_->laneletLayer.get(12459).centerline2d()[center_idx - 2].basicPoint2d();
+//     lanelet::Point3d pt3d{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
     
-    if (msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) 
-    {  
-      //Acquire speed limit information from TafficControlDetail msg
-      sL = lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPH()); 
-      ROS_ERROR_STREAM("set the speed !" << msg_detail.maxspeed);
-      ROS_DEBUG_STREAM("set the speed !" << msg_detail.maxspeed);
+//     gf_ptr->gf_pts.push_back(pt3d);
+//     center_idx = current_map_->laneletLayer.get(1245999).centerline2d().size();
+//     pt = current_map_->laneletLayer.get(1245999).centerline2d()[center_idx/2].basicPoint2d();
+//     lanelet::Point3d pt3d_2{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+//     gf_ptr->gf_pts.push_back(pt3d_2);
 
-      if(config_limit > 0_mph && config_limit < 80_mph && config_limit < sL)//Accounting for the configured speed limit, input zero when not in use
-          sL = config_limit;
-      //Ensure Geofences do not provide invalid speed limit data (exceed predetermined maximum value)
-      // @SONAR_STOP@
-      if(sL > 80_mph )
-      {
-      ROS_WARN_STREAM("Digital maximum speed limit is invalid. Value capped at max speed limit."); //Output warning message
-      sL = 80_mph; //Cap the speed limit to the predetermined maximum value
+//     center_idx = current_map_->laneletLayer.get(1245998).centerline2d().size();
+//     pt = current_map_->laneletLayer.get(1245998).centerline2d()[1].basicPoint2d();
+//     lanelet::Point3d pt3d_3{current_map_->pointLayer.uniqueId(), pt.x(), pt.y()};
+//     gf_ptr->gf_pts.push_back(pt3d_3);
 
-      }
-      if(sL < 0_mph)
-      {
-            ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
-        sL = 0_mph;
-      }// @SONAR_START@
-      gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                          sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
-    }
-    if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINSPEED_CHOICE) 
-    {
-      //Acquire speed limit information from TafficControlDetail msg
-      sL = lanelet::Velocity(msg_detail.minspeed * lanelet::units::MPH());
-      if(config_limit > 0_mph && config_limit < 80_mph)//Accounting for the configured speed limit, input zero when not in use
-          sL = config_limit;
-      //Ensure Geofences do not provide invalid speed limit data 
-      // @SONAR_STOP@
-      if(sL > 80_mph )
-      {
-      ROS_WARN_STREAM("Digital speed limit is invalid. Value capped at max speed limit.");
-      sL = 80_mph;
-      }
-      if(sL < 0_mph)
-      {
-        ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
-        sL = 0_mph;
-      }// @SONAR_START@
-      gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                          sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
-    }
-    if (msg_detail.choice == cav_msgs::TrafficControlDetail::LATPERM_CHOICE || msg_detail.choice == cav_msgs::TrafficControlDetail::LATAFFINITY_CHOICE)
-    {
-      addPassingControlLineFromMsg(gf_ptr, msg_v01, affected_llts);
-    }
-    if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINHDWY_CHOICE) 
-    {
+//   }
+//   else
+//   {
+//     ROS_ERROR_STREAM("MAXSPEED 4");
+//     ROS_DEBUG_STREAM("MAXSPEED 4");
+//     //gf_ptr->gf_pts = getPointsInLocalFrame(msg_v01);
+//   }
+  
+  gf_ptr->gf_pts = getPointsInLocalFrame(msg_v01);
 
-      double min_gap = (double)msg_detail.minhdwy;
+  gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(gf_ptr->gf_pts);
 
-      if(min_gap < 0)
-      {
-        ROS_WARN_STREAM("Digital min gap is invalid. Value set to 0 meter.");
-        min_gap = 0;
-      }
-      addRegionMinimumGap(gf_ptr,msg_v01, min_gap, affected_llts, affected_areas);
-    }
-
-    if (detected_workzone_signal) // if workzone message detected, save to cache to process later
-    {
-      ROS_ERROR_STREAM("Just detected that detected_workzone_signal !"<< detected_workzone_signal);
-      ROS_DEBUG_STREAM("Just detected that detected_workzone_signal !"<< detected_workzone_signal);
-
-      gf_ptr->label_ = msg_v01.package.label; // to extract intersection, and signal group id
-      if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && (msg_detail.closed == cav_msgs::TrafficControlDetail::CLOSED ||
-                                                                                  msg_detail.closed == cav_msgs::TrafficControlDetail::TAPERRIGHT ||
-                                                                                  msg_detail.closed == cav_msgs::TrafficControlDetail::OPENRIGHT))
-      {
-        work_zone_geofence_cache_[msg_detail.closed] = gf_ptr;
-      }
-      else if (msg_detail.choice == cav_msgs::TrafficControlDetail::DIRECTION_CHOICE && msg_detail.direction == cav_msgs::TrafficControlDetail::REVERSE)
-      {
-        work_zone_geofence_cache_[WorkZoneSection::REVERSE] = gf_ptr;
-      }
-      if (work_zone_geofence_cache_.size() < WORKZONE_TCM_REQUIRED_SIZE)
-      {
-        ROS_INFO_STREAM("Received 'SIG_WZ' signal. Waiting for the rest of the messages, returning for now...");
-        continue;
-      }
-      else
-      {
-        return_list = createWorkzoneGeofence(work_zone_geofence_cache_);
-        return return_list;
-      }
-    }
-    else if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && msg_detail.closed==cav_msgs::TrafficControlDetail::CLOSED) // if stand-alone closed signal apart from Workzone
-    {
-      addRegionAccessRule(gf_ptr,msg_v01,affected_llts);
-    }
-    return_list.push_back(gf_ptr);
-    ROS_ERROR_STREAM("adding 1 here " << return_list.size());
-    ROS_DEBUG_STREAM("adding 1 here " << return_list.size());
+  ROS_ERROR_STREAM(">>>> starting to print affected");
+  ROS_DEBUG_STREAM(">>>> starting to print affected");
+    
+  for (auto llt : gf_ptr->affected_parts_)
+  {
+    
+    ROS_ERROR_STREAM("affected_llt: " << llt.id());
+    ROS_DEBUG_STREAM("affected_llt: " << llt.id());
 
   }
+  if (gf_ptr->affected_parts_.size() == 0) {
+    ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
+    return {}; // Return empty geofence list
+  }
+
+  std::vector<lanelet::Lanelet> affected_llts;
+  std::vector<lanelet::Area> affected_areas;
+
+  // used for assigning them to the regem as parameters
+  for (auto llt_or_area : gf_ptr->affected_parts_)
+  {
+    if (llt_or_area.isLanelet()) affected_llts.push_back(current_map_->laneletLayer.get(llt_or_area.lanelet()->id()));
+    if (llt_or_area.isArea()) affected_areas.push_back(current_map_->areaLayer.get(llt_or_area.area()->id()));
+  }
+
+  // process schedule from message
+  addScheduleFromMsg(gf_ptr, msg_v01);
+
+  // TODO: logic to determine what type of geofence goes here
+  // currently only converting portion of control message that is relevant to:
+  // - digital speed limit, passing control line, digital minimum gap, region access rule, and series of workzone related messages
+  lanelet::Velocity sL;
+  
+  
+  if (msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) 
+  {  
+    //Acquire speed limit information from TafficControlDetail msg
+    sL = lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPH()); 
+    ROS_ERROR_STREAM("set the speed !" << msg_detail.maxspeed);
+    ROS_DEBUG_STREAM("set the speed !" << msg_detail.maxspeed);
+
+    if(config_limit > 0_mph && config_limit < 80_mph && config_limit < sL)//Accounting for the configured speed limit, input zero when not in use
+        sL = config_limit;
+    //Ensure Geofences do not provide invalid speed limit data (exceed predetermined maximum value)
+    // @SONAR_STOP@
+    if(sL > 80_mph )
+    {
+    ROS_WARN_STREAM("Digital maximum speed limit is invalid. Value capped at max speed limit."); //Output warning message
+    sL = 80_mph; //Cap the speed limit to the predetermined maximum value
+
+    }
+    if(sL < 0_mph)
+    {
+          ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
+      sL = 0_mph;
+    }// @SONAR_START@
+    gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
+                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
+  }
+  if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINSPEED_CHOICE) 
+  {
+    //Acquire speed limit information from TafficControlDetail msg
+    sL = lanelet::Velocity(msg_detail.minspeed * lanelet::units::MPH());
+    if(config_limit > 0_mph && config_limit < 80_mph)//Accounting for the configured speed limit, input zero when not in use
+        sL = config_limit;
+    //Ensure Geofences do not provide invalid speed limit data 
+    // @SONAR_STOP@
+    if(sL > 80_mph )
+    {
+    ROS_WARN_STREAM("Digital speed limit is invalid. Value capped at max speed limit.");
+    sL = 80_mph;
+    }
+    if(sL < 0_mph)
+    {
+      ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
+      sL = 0_mph;
+    }// @SONAR_START@
+    gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
+                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
+  }
+  if (msg_detail.choice == cav_msgs::TrafficControlDetail::LATPERM_CHOICE || msg_detail.choice == cav_msgs::TrafficControlDetail::LATAFFINITY_CHOICE)
+  {
+    addPassingControlLineFromMsg(gf_ptr, msg_v01, affected_llts);
+  }
+  if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINHDWY_CHOICE) 
+  {
+
+    double min_gap = (double)msg_detail.minhdwy;
+
+    if(min_gap < 0)
+    {
+      ROS_WARN_STREAM("Digital min gap is invalid. Value set to 0 meter.");
+      min_gap = 0;
+    }
+    addRegionMinimumGap(gf_ptr,msg_v01, min_gap, affected_llts, affected_areas);
+  }
+
+  if (detected_workzone_signal && msg_detail.choice != cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) // if workzone message detected, save to cache to process later
+  {
+    ROS_ERROR_STREAM("Just detected that detected_workzone_signal !"<< detected_workzone_signal);
+    ROS_DEBUG_STREAM("Just detected that detected_workzone_signal !"<< detected_workzone_signal);
+
+    gf_ptr->label_ = msg_v01.package.label; // to extract intersection, and signal group id
+    if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && (msg_detail.closed == cav_msgs::TrafficControlDetail::CLOSED ||
+                                                                                msg_detail.closed == cav_msgs::TrafficControlDetail::TAPERRIGHT ||
+                                                                                msg_detail.closed == cav_msgs::TrafficControlDetail::OPENRIGHT))
+    {
+      work_zone_geofence_cache_[msg_detail.closed] = gf_ptr;
+    }
+    else if (msg_detail.choice == cav_msgs::TrafficControlDetail::DIRECTION_CHOICE && msg_detail.direction == cav_msgs::TrafficControlDetail::REVERSE)
+    {
+      work_zone_geofence_cache_[WorkZoneSection::REVERSE] = gf_ptr;
+    }
+    if (work_zone_geofence_cache_.size() < WORKZONE_TCM_REQUIRED_SIZE)
+    {
+      ROS_INFO_STREAM("Received 'SIG_WZ' signal. Waiting for the rest of the messages, returning for now...");
+      return {};
+    }
+    else
+    {
+      return_list = createWorkzoneGeofence(work_zone_geofence_cache_);
+      return return_list;
+    }
+  }
+  else if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && msg_detail.closed==cav_msgs::TrafficControlDetail::CLOSED) // if stand-alone closed signal apart from Workzone
+  {
+    addRegionAccessRule(gf_ptr,msg_v01,affected_llts);
+  }
+  return_list.push_back(gf_ptr);
+  ROS_ERROR_STREAM("adding 1 here " << return_list.size());
+  ROS_DEBUG_STREAM("adding 1 here " << return_list.size());
+
  
   return return_list;
 }
