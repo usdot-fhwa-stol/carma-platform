@@ -42,7 +42,7 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
   nh2_.getParam("/config_speed_limit", cL);
   setConfigSpeedLimit(cL);
 
-  lanelet::Participants part_;
+  std::string part_;
   nh2_.getParam("/participation_type", part_);
   setVehicleParticipationType(part_);
 
@@ -115,7 +115,7 @@ void WMListener::setConfigSpeedLimit(double config_lim) const
   worker_->setConfigSpeedLimit(config_lim);
 }
 
-void WMListener::setVehicleParticipationType(lanelet::Participants participant)
+void WMListener::setVehicleParticipationType(std::string participant) const
 {
   worker_->setVehicleParticipationType(participant);
 }

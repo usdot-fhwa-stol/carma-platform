@@ -425,9 +425,16 @@ double WMListenerWorker::getConfigSpeedLimit() const
   return config_speed_limit_;
 }
 
-void WMListenerWorker::setVehicleParticipationType(lanelet::Participants participant)
+void WMListenerWorker::setVehicleParticipationType(std::string participant)
 {
-  participant_ = participant;
+  if(participant == "vehicle:car")
+  {
+    participant_ = lanelet::Participants::VehicleCar;
+  }
+  if(participant == "vehicle:truck")
+  {
+    participant_ = lanelet::Participants::VehicleTruck;
+  }
   //Function to load participation type into CarmaWorldModel
   world_model_->setVehicleParticipationType(participant_);
 }

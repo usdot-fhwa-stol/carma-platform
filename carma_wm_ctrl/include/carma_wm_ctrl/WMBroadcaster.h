@@ -168,6 +168,13 @@ public:
    * \brief Sets the configured speed limit. 
    */
   void setConfigSpeedLimit(double cL);
+
+/**
+ * @brief Set the Vehicle Participation Type 
+ * 
+ * @param participant vehicle participation type
+ */
+  void setVehicleParticipationType(std::string participant);
   
   /*!
    * \brief Returns geofence object from TrafficControlMessageV01 ROS Msg
@@ -363,6 +370,7 @@ private:
   lanelet::LaneletMapPtr current_map_;
   lanelet::routing::RoutingGraphUPtr current_routing_graph_; // Current map routing graph
   lanelet::Velocity config_limit;
+  std::string participant_;
   std::unordered_set<std::string>  checked_geofence_ids_;
   std::unordered_set<std::string>  generated_geofence_reqids_;
   std::vector<lanelet::LaneletMapPtr> cached_maps_;

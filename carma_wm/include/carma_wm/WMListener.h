@@ -113,7 +113,7 @@ public:
    *
    * \param participant A function that populate the vehicle participation type value after the world model is updated with a new route
    */
-  void setVehicleParticipationType(lanelet::Participants participant) const;
+  void setVehicleParticipationType(std::string participant) const;
 
   /*!
    * \brief Use to allow updates to occur even if they invalidate the current route.

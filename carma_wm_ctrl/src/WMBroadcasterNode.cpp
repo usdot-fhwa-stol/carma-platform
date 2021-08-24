@@ -85,6 +85,9 @@ int WMBroadcasterNode::run()
   pnh2_.getParam("/config_speed_limit", config_limit);
   wmb_.setConfigSpeedLimit(config_limit);
 
+  std::string participant;
+  pnh2_.getParam("/participation_type", participant);
+  wmb_.setVehicleParticipationType(participant);
   
     timer = cnh_.createTimer(ros::Duration(10.0), [this](auto){
       tcm_visualizer_pub_.publish(wmb_.tcm_marker_array_);

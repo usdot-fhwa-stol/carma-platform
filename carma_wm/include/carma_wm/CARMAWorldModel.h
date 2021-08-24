@@ -120,7 +120,7 @@ public:
 
   /*! \brief Set vehicle participation type
    */
-  void setVehicleParticipationType(const lanelet::Participants& participant);
+  void setVehicleParticipationType(const std::string& participant);
   
   /*! \brief Set endpoint of the route
    */
@@ -180,7 +180,7 @@ public:
   LaneletRoutingGraphConstPtr getMapRoutingGraph() const override;
 
   lanelet::Optional<TrafficRulesConstPtr>
-  getTrafficRules(const std::string& participant = lanelet::Participants::Vehicle) const override;
+  getTrafficRules(const std::string& participant) const override;//Participant type is sent from WMListenerWorker
 
   std::vector<cav_msgs::RoadwayObstacle> getRoadwayObjects() const override;
 
@@ -212,7 +212,7 @@ private:
 
   double config_speed_limit_;
 
-  lanelet::Participants participant_type_;
+  std::string participant_type_;
   
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
    *         This function should generally only be called from inside the setRoute function as it uses member variables

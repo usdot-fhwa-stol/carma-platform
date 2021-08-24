@@ -509,7 +509,15 @@ void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map, size_t map_version, boo
 
     ROS_INFO_STREAM("Building routing graph");
 
-    TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
+    TrafficRulesConstPtr traffic_rules;
+    if(participant_type_ == lanelet::Participants::VehicleCar)
+    {
+      traffic_rules = *(getTrafficRules(lanelet::Participants::VehicleCar));
+    }
+    else if(participant_type_ == lanelet::Participants::VehicleTruck)
+    {
+      traffic_rules = *(getTrafficRules(lanelet::Participants::VehicleTruck));
+    }
     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
     map_routing_graph_ = std::move(map_graph);
 
@@ -572,7 +580,15 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
 
   lanelet::routing::LaneletPath shortest_path = route_->shortestPath();
   // Build shortest path routing graph
-  TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
+  TrafficRulesConstPtr traffic_rules;
+  if(participant_type_ == lanelet::Participants::VehicleCar)
+  {
+     traffic_rules = *(getTrafficRules(lanelet::Participants::VehicleCar));
+  }
+  else if(participant_type_ == lanelet::Participants::VehicleTruck)
+  {
+     traffic_rules = *(getTrafficRules(lanelet::Participants::VehicleTruck));
+  }
 
   lanelet::routing::RoutingGraphUPtr shortest_path_graph =
       lanelet::routing::RoutingGraph::build(*shortest_path_view_, *traffic_rules);
@@ -655,6 +671,7 @@ LaneletRoutingGraphConstPtr CARMAWorldModel::getMapRoutingGraph() const
 
 lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules(const std::string& participant) const
 {
+  //participant = participant_type_;
   lanelet::Optional<TrafficRulesConstPtr> optional_ptr;
   // Create carma traffic rules object
   try
@@ -1073,9 +1090,16 @@ void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
   config_speed_limit_ = config_lim;
 }
 
-void CARMAWorldModel::setVehicleParticipationType(lanelet::Participants& participant)
+void CARMAWorldModel::setVehicleParticipationType(const std::string& participant)
 {
-  participant_type_ = participant;
+  if(participant == "vehicle:car")
+  {
+    participant_type_ = lanelet::Participants::VehicleCar;
+  }
+  if(participant == "vehicle:truck")
+  {
+    participant_type_ = lanelet::Participants::VehicleTruck;
+  }
 }
 
 std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n)

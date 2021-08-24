@@ -1032,6 +1032,18 @@ void WMBroadcaster::setConfigSpeedLimit(double cL)
   config_limit = lanelet::Velocity(cL * lanelet::units::MPH());
 }
 
+void WMBroadcaster::setVehicleParticipationType(std::string participant)
+{
+  if(participant == "vehicle:car")
+  {
+    participant_ = lanelet::Participants::VehicleCar;
+  }
+  if(participant == "vehicle:truck")
+  {
+    participant_ = lanelet::Participants::VehicleTruck;
+  }
+}
+
 uint32_t WMBroadcaster::generate32BitId(const std::string& label)
 {
   auto pos1 = label.find("INT_ID:") + 7;
