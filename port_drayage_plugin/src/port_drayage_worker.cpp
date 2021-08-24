@@ -330,25 +330,19 @@ namespace port_drayage_plugin
     }
 
     void PortDrayageWorker::on_route_event(const cav_msgs::RouteEventConstPtr& msg) {
-        if (msg->event == cav_msgs::RouteEvent::ROUTE_COMPLETED) {
-            // Throw exception if no vehicle speed has been received yet
-            if (_cur_speed == nullptr) {
-                ROS_DEBUG_STREAM("CMV has completed its route, but no vehicle speed has been received.");
-                throw std::invalid_argument("CMV has completed its route, but no vehicle speed has been received.");
-            }
-
-            // If CMV has come to a stop at the end of its route. Process an 'ARRIVED_AT_DESTINATION' event.
-            double longitudinal_speed = _cur_speed->twist.linear.x;
-            if (fabs(longitudinal_speed) < _stop_speed_epsilon) {
-                ROS_DEBUG_STREAM("CMV has come to a stop at the end of the route. Processing ARRIVED_AT_DESTINATION event.");
-                _pdsm.process_event(PortDrayageEvent::ARRIVED_AT_DESTINATION);
-            }
-            // Throw an exception if CMV has not come to a stop at the end of its route.
-            else {
-                ROS_DEBUG_STREAM("CMV did not come to a stop at the end of the route.");
-                throw std::invalid_argument("CMV did not come to a stop at the end of the route.");
+        // CMV has officially arrived at its destination if the previous route was completed and is no longer active
+        if (_latest_route_event != nullptr) {
+            if (_latest_route_event->event == cav_msgs::RouteEvent::ROUTE_COMPLETED && msg->event == cav_msgs::RouteEvent::ROUTE_LOADED) {
+                if (_pdsm.get_state() == PortDrayageState::EN_ROUTE) {
+                    ROS_DEBUG_STREAM("CMV completed its previous route, and the previous route is no longer active.");
+                    ROS_DEBUG_STREAM("Processing ARRIVED_AT_DESTINATION event.");
+                    _pdsm.process_event(PortDrayageEvent::ARRIVED_AT_DESTINATION);
+                }           
             }
         }
+
+        // Update the latest received route event
+        _latest_route_event = msg;
     }
 
     const PortDrayageState PortDrayageWorker::get_port_drayage_state() {

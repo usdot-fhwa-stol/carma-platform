@@ -71,6 +71,7 @@ namespace port_drayage_plugin
         private:
             cav_msgs::ManeuverPlanConstPtr _cur_plan;
             geometry_msgs::TwistStampedConstPtr _cur_speed;
+            cav_msgs::RouteEventConstPtr _latest_route_event;
             double _stop_speed_epsilon;
             PortDrayageStateMachine _pdsm;
             std::string _host_id;
