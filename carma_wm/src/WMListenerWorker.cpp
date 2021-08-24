@@ -355,8 +355,6 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     // After setting map evaluate the current update queue to apply any updates that arrived before the map
     bool more_updates_to_apply = true;
     while(!map_update_queue_.empty() && more_updates_to_apply) {
-      ROS_ERROR_STREAM("more updates to apply" << map_update_queue_.size());
-      ROS_DEBUG_STREAM("more updates to apply" << map_update_queue_.size());
 
       auto update = map_update_queue_.front(); // Get first update
       map_update_queue_.pop(); // Remove update from queue

@@ -381,7 +381,7 @@ private:
   std::string base_map_georef_;
   double max_lane_width_;
   std::vector<cav_msgs::TrafficControlMessageV01> workzone_remaining_msgs_;
-  bool workzone_published_ = false;
+  bool workzone_geometry_published_ = false;
   /* Version ID of the current_map_ variable. Monotonically increasing value
    * NOTE: This parameter needs to be incremented any time a new map is ready to be published. 
    * It should not be incremented for updates that do not require a full map publication.

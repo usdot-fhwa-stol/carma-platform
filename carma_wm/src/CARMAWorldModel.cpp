@@ -1149,7 +1149,6 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
     for (const auto& current_movement_state : curr_intersection.movement_list) 
     {
       lanelet::Id curr_light_id = getTrafficLightId(curr_intersection.id.id, current_movement_state.signal_group);
-      // DEBUG
 
       if (curr_light_id == lanelet::InvalId)
       {
