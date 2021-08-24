@@ -1221,6 +1221,7 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
           ROS_ERROR_STREAM("Predicted state: " <<  curr_light->predictState(time_stamp_now).get() << ", at Time: " << boost::posix_time::to_simple_string(time_now_boost));
           //ROS_DEBUG_STREAM("Predicted state: " <<  curr_light->predictState(time_stamp_now).get() << ", at Time: " << boost::posix_time::to_simple_string(time_now_boost));
         }
+        /////
         
         
         continue;
