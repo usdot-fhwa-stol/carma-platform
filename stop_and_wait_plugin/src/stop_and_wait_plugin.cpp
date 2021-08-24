@@ -298,7 +298,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
       downtracks[i] = stopped_downtrack;
       raw_points[i] = stopped_point;
       stopped_point_num++;
-      ROS_WARN_STREAM("pt" << raw_points[i]);
     }
     else
     {
@@ -318,8 +317,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   }
 
   std::vector<double> yaws = carma_wm::geometry::compute_tangent_orientations(raw_points);
-  ROS_WARN_STREAM("raw_points,size()" << raw_points.size());
-  ROS_WARN_STREAM("yaws,size()" << yaws.size());
 
   // preserve last valid yaw over stopped points
   stopped_point_num --;  // there is 1 fewer invalid yaw for total number of stopped points
@@ -327,12 +324,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   {
     yaws[yaws.size() - stopped_point_num] = yaws[yaws.size() - stopped_point_num - 1];
     stopped_point_num--;
-    ROS_WARN_STREAM("yaws[yaws.size() - stopped_point_num]: " << yaws[yaws.size() - stopped_point_num]);
-  }
-
-  for (auto y : yaws)
-  {
-    ROS_ERROR_STREAM("yaw: " << y);
   }
 
   for (size_t i = 0; i < points.size(); i++)
