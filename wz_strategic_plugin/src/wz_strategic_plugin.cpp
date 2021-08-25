@@ -57,21 +57,21 @@ bool WzStrategicPlugin::supportedLightState(lanelet::CarmaTrafficLightState stat
   {
     // NOTE: Following cases are intentional fall through.
     // Supported light states
-    case lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED:  // Solid Green there could be conflict traffic
-    case lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE:         // Yellow Solid there is a chance of conflicting
-                                                                        // traffic
     case lanelet::CarmaTrafficLightState::STOP_AND_REMAIN:              // Solid Red
-    case lanelet::CarmaTrafficLightState::STOP_THEN_PROCEED:            // Flashing Red
     case lanelet::CarmaTrafficLightState::PROTECTED_CLEARANCE:          // Yellow Solid no chance of conflicting traffic
+    case lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED:   // Solid Green no chance of conflict traffic
+                                                                        // (normally used with arrows)
       return true;
 
     // Unsupported light states
+    case lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED:  // Solid Green there could be conflict traffic
+    case lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE:         // Yellow Solid there is a chance of conflicting
+                                                                        // traffic
     case lanelet::CarmaTrafficLightState::UNAVAILABLE:                  // No data available
     case lanelet::CarmaTrafficLightState::DARK:                         // Light is non-functional
-    
+    case lanelet::CarmaTrafficLightState::STOP_THEN_PROCEED:            // Flashing Red
+
     case lanelet::CarmaTrafficLightState::PRE_MOVEMENT:                 // Yellow Red transition (Found only in the EU)
-    case lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED:   // Solid Green no chance of conflict traffic
-                                                                        // (normally used with arrows)
                                                                         // (normally used with arrows)
     case lanelet::CarmaTrafficLightState::CAUTION_CONFLICTING_TRAFFIC:  // Yellow Flashing
     default:
@@ -286,9 +286,9 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
       getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
 
   // We will cross the light on the green phase even if we arrive early or late
-  if (early_arrival_state_at_freeflow_optional.get() == lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED &&
+  if (early_arrival_state_at_freeflow_optional.get() == lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED &&
       late_arrival_state_at_freeflow_optional.get() ==
-          lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED)  // Green light
+          lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED)  // Green light
   {
 
     ROS_DEBUG_STREAM("Planning lane follow and intersection transit maneuvers");
@@ -341,7 +341,7 @@ void WzStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& re
   if (!validLightState(current_light_state_optional, req.header.stamp))
     return;
 
-  if (current_light_state_optional.get() == lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED)
+  if (current_light_state_optional.get() == lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED)
   {
     transition_table_.signal(TransitEvent::RED_TO_GREEN_LIGHT);  // If the light is green send the light transition
                                                                  // signal

@@ -201,18 +201,8 @@ void WMBroadcaster::addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const c
 
 void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01)
 {
-  // queue speed updates related to workzone until geometry is updated
   bool detected_workzone_signal = msg_v01.package.label_exists && msg_v01.package.label.find("SIG_WZ") != std::string::npos;
   cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
-  // if (!workzone_geometry_published_ && detected_workzone_signal && msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE)
-  // {
-  //   // duplicate the messages with inverted points to detect all newly created lanelets
-  //   workzone_remaining_msgs_.push_back(msg_v01);
-  //   cav_msgs::TrafficControlMessageV01 duplicate_msg = msg_v01;
-  //   std::reverse(duplicate_msg.geometry.nodes.begin(), duplicate_msg.geometry.nodes.end());
-  //   workzone_remaining_msgs_.push_back(duplicate_msg);
-  //   return;
-  // }
 
   // Get ID
   std::copy(msg_v01.id.id.begin(), msg_v01.id.id.end(), gf_ptr->id_.begin());
@@ -333,16 +323,7 @@ void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_
     {
       work_zone_geofence_cache_[WorkZoneSection::REVERSE] = gf_ptr;
     }
-    if (work_zone_geofence_cache_.size() < WORKZONE_TCM_REQUIRED_SIZE)
-    {
-      ROS_INFO_STREAM("Received 'SIG_WZ' signal. Waiting for the rest of the messages, returning for now...");
-      return;
-    }
-    else
-    {
-      gf_ptr = createWorkzoneGeofence(work_zone_geofence_cache_);
-      return;
-    }
+    return;
   }
   else if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && msg_detail.closed==cav_msgs::TrafficControlDetail::CLOSED) // if stand-alone closed signal apart from Workzone
   {
@@ -391,7 +372,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   lanelet::Lanelet front_llt_diag = createLinearInterpolatingLanelet(parallel_llt_front.leftBound3d().back(), parallel_llt_front.rightBound3d().back(), 
                                                                         middle_opposite_lanelets->back().rightBound3d().back(), middle_opposite_lanelets->back().leftBound3d().back());
   ROS_DEBUG_STREAM("Created diag front_llt_diag id:" << front_llt_diag.id());
-  for (auto regem : parallel_llt_front.regulatoryElements()) //copy existing regem into the new llts
+  for (auto regem : middle_opposite_lanelets->back().regulatoryElements()) //copy existing regem into the new llts
   {
     front_llt_diag.addRegulatoryElement(regem);
   }
@@ -1036,9 +1017,58 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
 void WMBroadcaster::scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr)
 {
   ROS_INFO_STREAM("Scheduling new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
-
-  tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(gf_ptr->gf_pts)); // create visualizer in rviz
   
+  bool detected_workzone_signal = gf_ptr->msg_.package.label_exists && gf_ptr->msg_.package.label.find("SIG_WZ") != std::string::npos;
+  
+  cav_msgs::TrafficControlDetail msg_detail = gf_ptr->msg_.params.detail;
+  
+  // create workzone specific extra speed geofence
+  if (detected_workzone_signal && msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE)
+  {
+    // duplicate the messages with inverted points to detect all newly created lanelets
+    auto gf_ptr_speed = std::make_shared<Geofence>();
+    gf_ptr_speed->schedules = gf_ptr->schedules;
+
+    
+    cav_msgs::TrafficControlMessageV01 duplicate_msg = gf_ptr->msg_;
+    std::reverse(duplicate_msg.geometry.nodes.begin() + 1, duplicate_msg.geometry.nodes.end());
+    double first_x = 0;
+    double first_y = 0;
+
+    for (auto& pt: duplicate_msg.geometry.nodes)
+    {
+      pt.x = -1* pt.x;
+      pt.y = -1* pt.y;
+      first_x+= pt.x;
+      first_y+= pt.y;
+    }
+    duplicate_msg.geometry.nodes[0].x = first_x;
+    duplicate_msg.geometry.nodes[0].y = first_y;
+    
+    gf_ptr_speed->msg_ = duplicate_msg;
+    scheduler_.addGeofence(gf_ptr_speed);
+    return;
+  }
+  if (detected_workzone_signal && msg_detail.choice != cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) // if workzone message detected, save to cache to process later
+  {
+    gf_ptr->label_ = gf_ptr->msg_.package.label; // to extract intersection, and signal group id
+    if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && (msg_detail.closed == cav_msgs::TrafficControlDetail::CLOSED ||
+                                                                                msg_detail.closed == cav_msgs::TrafficControlDetail::TAPERRIGHT ||
+                                                                                msg_detail.closed == cav_msgs::TrafficControlDetail::OPENRIGHT))
+    {
+      work_zone_geofence_cache_[msg_detail.closed] = gf_ptr;
+    }
+    else if (msg_detail.choice == cav_msgs::TrafficControlDetail::DIRECTION_CHOICE && msg_detail.direction == cav_msgs::TrafficControlDetail::REVERSE)
+    {
+      work_zone_geofence_cache_[WorkZoneSection::REVERSE] = gf_ptr;
+    }
+    if (work_zone_geofence_cache_.size() < WORKZONE_TCM_REQUIRED_SIZE)
+    {
+      ROS_INFO_STREAM("Received 'SIG_WZ' signal. Waiting for the rest of the messages, returning for now...");
+      return;
+    }
+  }
+
   scheduler_.addGeofence(gf_ptr);  // Add the geofence to the scheduler
 
 }
@@ -1415,7 +1445,24 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Adding active geofence to the map with geofence id: " << gf_ptr->id_);
   
-  geofenceFromMsg(gf_ptr, gf_ptr->msg_);
+  // if applying workzone geometry geofence, utilize workzone chache to create one 
+  bool detected_workzone_signal = gf_ptr->msg_.package.label_exists && gf_ptr->msg_.package.label.find("SIG_WZ") != std::string::npos;
+  if (detected_workzone_signal && gf_ptr->msg_.params.detail.choice != cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE)
+  {
+    for (auto gf_cache_ptr : work_zone_geofence_cache_)
+    {
+      geofenceFromMsg(gf_cache_ptr.second, gf_cache_ptr.second->msg_);
+    }
+    gf_ptr = createWorkzoneGeofence(work_zone_geofence_cache_);
+  }
+  else
+  {
+    geofenceFromMsg(gf_ptr, gf_ptr->msg_);
+  }
+  
+
+  // add marker to rviz
+  tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(gf_ptr->gf_pts)); // create visualizer in rviz
 
   // Process the geofence object to populate update remove lists
   addGeofenceHelper(gf_ptr);
@@ -1446,13 +1493,6 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   gf_msg.map_version = current_map_version_;
   map_update_message_queue_.push_back(gf_msg); // Add diff to current map update queue
   map_update_pub_(gf_msg);
-  
-  bool detected_workzone_signal = gf_ptr->label_.find("SIG_WZ") != std::string::npos;
-
-  if (detected_workzone_signal && gf_ptr->invalidate_route_) // mark that geometry update has published
-  {
-    workzone_geometry_published_ = true;
-  }
 }
 
 void WMBroadcaster::publishQueuedUpdates()
