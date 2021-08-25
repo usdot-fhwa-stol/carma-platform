@@ -14,6 +14,7 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
+from inspect import TPFLAGS_IS_ABSTRACT
 import sys
 import csv
 import matplotlib.pyplot as plt
@@ -27,8 +28,8 @@ import datetime
 # Helper Function: Get times associated with the system entering the geofence and exiting the geofence
 def get_geofence_entrance_and_exit_times(bag):
     # Initialize geofence entrance and exit times
-    time_enter_active_geofence = rospy.Time()
-    time_exit_active_geofence = rospy.Time()
+    time_enter_active_geofence = rospy.Time() # Time that the vehicle has entered the geofence
+    time_exit_active_geofence = rospy.Time() # Time that the vehicle has exited the geofence--------------------------------------------------------------------------------------------------------
 
     # Find geofence entrance and exit times
     is_on_active_geofence = False
@@ -89,7 +90,7 @@ def get_test_case_engagement_times(bag, time_enter_active_geofence, time_exit_ac
 
     # Loop through /guidance/state messages to determine start and end times of engagement that include the in-geofence section
     is_engaged = False
-    found_test_case_engagement_times = False
+    found_engagement_times = False
     has_reached_geofence_entrance = False
     has_reached_geofence_exit = False
     for topic, msg, t in bag.read_messages(topics=['/guidance/state']):
@@ -121,12 +122,12 @@ def get_test_case_engagement_times(bag, time_enter_active_geofence, time_exit_ac
     
     # If CARMA ended engagement before guidance state could be updated, check if the last recorded
     #    time of engagement came after exiting the geofence
-    if not found_test_case_engagement_times:
+    if not found_engagement_times:
         if time_last_engaged >= time_exit_active_geofence:
             time_stop_engagement = time_last_engaged
-            found_test_case_engagement_times = True
+            found_engagement_times = True
     
-    return time_start_engagement, time_stop_engagement, found_test_case_engagement_times
+    return time_start_engagement, time_stop_engagement, found_engagement_times
 
 # Helper Function: Get the lanelet IDs that are included in the geofence.
 def get_geofence_lanelets(bag, time_start_engagement, advisory_speed_limit):
@@ -236,16 +237,16 @@ def get_follower_platoon_negotiation_times(bag, time_test_start_engagement):
             print("Error: New 'last' sent 'JOIN_PLATOON_AT_REAR' at time " + str(time_last_sent_join_at_rear))
             has_sent_additional_join_at_rear = True
         else:
-            has_sent_last_join_at_rear = True
-            print("Sent last 'JOIN_PLATOON_AT_REAR' at time " + str(time_last_sent_join_at_rear))   
+            print("Sent last 'JOIN_PLATOON_AT_REAR' at time " + str(time_last_sent_join_at_rear)) 
+            has_sent_last_join_at_rear = True  
     # Track whether the last broadcasted MobilityRequest message was a 'PLATOON_FOLLOWER_JOIN' message         
     elif previous_plan_type == 4:
         if has_sent_last_follower_join:
             print("Error: New 'last' sent 'PLATOON_FOLLOWER_JOIN' at time " + str(time_last_sent_join_at_rear))
             has_sent_additional_follower_join = True
         else:
-            has_sent_last_follower_join = True
             print("Sent last 'PLATOON_FOLLOWER_JOIN' at time " + str(time_last_sent_follower_join))
+            has_sent_last_follower_join = True
     
     if has_received_additional_acceptances or has_sent_additional_join_at_rear or has_sent_additional_follower_join:
         print("WARNING: Platooning metrics may be incorrect; multiple occurrences of one or more negotiation messages has occurred.")
@@ -362,23 +363,24 @@ def get_platoon_negotiation_duration(time_end_negotiation, time_start_negotiatio
 def get_basic_travel_TCM_data(bag):
     # Check that TCM Message is received for max speed (an advisory speed limit)
     has_advisory_speed = False
-    is_successful = False
     time_first_msg_received = rospy.Time()
     for topic, msg, t in bag.read_messages(topics=['/message/incoming_geofence_control']):
         if msg.tcmV01.params.detail.choice == 12:
             time_first_msg_received = t
             advisory_speed = msg.tcmV01.params.detail.maxspeed
             has_advisory_speed = True
-            is_successful = True
 
             print("TCM Messages Received: Advisory Speed: " + str(advisory_speed) + " mph")
 
             break
     
-    if is_successful:
+    is_successful = False
+    if has_advisory_speed:
         print("B-19 succeeded; TCM message received with advisory speed limit " + str(advisory_speed) + " mph")
+        is_successful = True
     else:
         print("B-19 failed; no TCM message with an advisory speed limit was received.")
+        is_successful = True
 
     return advisory_speed, time_first_msg_received, is_successful
 
@@ -443,40 +445,44 @@ def check_geofence_lanelet_speed_limits(bag, lanelets_in_geofence, advisory_spee
 #                   ahead, early enough that the vehicle could decelerate at a rate less than 2 m/s^2 
 #                   in order to enter the geofence at the advisory speed limit.
 ###########################################################################################################
-def check_time_received_first_TCM_message(bag, time_received_first_msg, time_enter_geofence, downtrack_enter_geofence, advisory_speed_limit):
+def check_time_received_first_TCM_message(bag, time_received_first_msg, time_enter_geofence, advisory_speed_limit):
     # (m/s^2) Maximum deceleration limit allowed to slow down for geofence's advisory speed limit
     max_decel_limit = 2.0 
     
     # Get the vehicle speed at the time the first TCM message is received
-    speed_received_first_msg = rospy.Time()
+    speed_received_first_msg = 0.0
     for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle_status'], start_time = time_received_first_msg):
         speed_received_first_msg = msg.speed * 0.277777 # Conversion from kph to m/s
         break
 
     # Get the route downtrack at the time the first TCM message is received
-    downtrack_received_first_msg = rospy.Time()
+    downtrack_received_first_msg = 0.0
     for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_received_first_msg):
         downtrack_received_first_msg = msg.down_track
         break
 
+    # Get the route downtrack at the time the geofence is entered
+    downtrack_enter_geofence = 0.0
+    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_enter_geofence):
+        downtrack_enter_geofence = msg.down_track
+        break
+
     # Determine if the message was received early enough that the vehicle could decelerate in preparation for the
     # geofence's advisory speed limit without surpassing the maximum deceleration limit
-    time_between_msg_and_geofence = (time_enter_geofence - time_received_first_msg).to_sec()
-    speed_difference_required = speed_received_first_msg - advisory_speed_limit
-    decel_required = 0.0
-    has_decel_within_limit = False
-    if time_between_msg_and_geofence != 0.0:
-        decel_required = speed_difference_required / time_between_msg_and_geofence
-
-        if decel_required <= max_decel_limit:
-            has_decel_within_limit = True
+    distance_for_decel = downtrack_enter_geofence - downtrack_received_first_msg
+    decel_required = ((speed_received_first_msg**2) - (advisory_speed_limit**2)) / (2*distance_for_decel)
+    if abs(decel_required) <= max_decel_limit:
+        has_decel_within_limit = True
     
+    is_successful = False
     if has_decel_within_limit:
         print("B-3 succeeded; TCM message received with deceleration of " + str(decel_required) + " m/s^2 required before geofence")
+        is_successful = True
     else:
         print("B-3 failed; TCM message received with deceleration of " + str(decel_required) + " m/s^2 required before geofence.")
+        is_successful = False
 
-    return has_decel_within_limit
+    return is_successful
 
 def get_route_original_speed_limit(bag, time_test_start_engagement):
     original_speed_limit = 0.0
@@ -487,92 +493,40 @@ def get_route_original_speed_limit(bag, time_test_start_engagement):
     return original_speed_limit
 
 ###########################################################################################################
-# Basic Travel B-4: After steady state, Trajectory Plan is +/- 2 mph of speed limit during lane keeping on straightaways
-# Note: This metric is mostly manually-evaluated using a vehicle speed plot for a test run. This function essentially 
-#       provides additional data related to the metric.
-# TODO: Implement checks for sections where the road geometry will cause speed to decrease outside of speed threshold,
-#       currently a trajectory plan will fail if it is at steady state and then decelerates due to a curve.
+# Basic Travel B-5: The rear vehicle conducts a full lane merge by travelling through the following lanelets in order: 
+#         (1) 96760, (2) 32982, (3) 34915
 ###########################################################################################################
-def check_lane_keeping_steady_state_speed(bag, time_start_engagement, time_enter_geofence, time_exit_geofence, original_speed_limit, advisory_speed_limit):
-    # (m/s) Threshold offset of trajectory point speed to the speed limit
-    threshold_speed_limit_offset = 0.89408 # 0.89408 m/s is 2 mph
-    min_steady_state_speed = original_speed_limit - threshold_speed_limit_offset
-    max_steady_state_speed = original_speed_limit + threshold_speed_limit_offset
+def check_lane_merge_before_geofence(bag):
+    lanelet_id_1 = 96760
+    lanelet_id_2 = 32982
+    lanelet_id_3 = 34915
 
-    # Check lane-keeping trajectory point speeds while vehicle is at steady state 
-    # Note: Assumes trajectory has reached steady state when the current vehicle speed is within a threshold offset of the speed limit
-    is_steady_state = False
-    is_first_steady_state_trajectory = True
-    count_successful_traj = 0
-    count_failed_traj = 0
-    for topic, msg, t in bag.read_messages(topics=['/guidance/plan_trajectory'], start_time = time_start_engagement, end_time = time_enter_geofence):
+    travels_from_lanelet_1_to_2 = False
+    travels_from_lanelet_2_to_3 = False
+    previous_lanelet_id = 0
+    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state']):
+        current_lanelet_id = msg.lanelet_id
 
-        # Check if initial speed is within steady state speed threshold and that it's planned by InLaneCruisingPlugin (lane-keeping)
-        if ((max_steady_state_speed >= msg.initial_longitudinal_velocity >= min_steady_state_speed) and msg.trajectory_points[0].planner_plugin_name == "InLaneCruisingPlugin"): 
+        if previous_lanelet_id == lanelet_id_1 and current_lanelet_id == lanelet_id_2:
+            travels_from_lanelet_1_to_2 = True
 
-            # Track the time of first steady state trajectory plan for debug statements
-            if (is_first_steady_state_trajectory):
-                time_first_steady_state_point = t
-                is_first_steady_state_trajectory = False
-            
-            # Evaluate the whole lane-keeping portion of trajectory plan to ensure that it maintains steady state speeds
-            is_steady_state = True
-            is_first_trajectory_point = True
-            for tpp in msg.trajectory_points:
-                if is_first_trajectory_point:
-                    prev_point = tpp
-                    is_first_trajectory_point = False
-                    continue
+        if travels_from_lanelet_1_to_2:
+            if previous_lanelet_id == lanelet_id_2 and current_lanelet_id == lanelet_id_3:
+                travels_from_lanelet_2_to_3 = True
+                break
 
-                # Evaluate the speed associated with the next point if next point is planned by InLaneCruisingPlugin (lane-keeping)
-                if (tpp.planner_plugin_name == "InLaneCruisingPlugin"):
-                    # Speed calculation: Speed = Distance / Time
-                    distance = ((tpp.x - prev_point.x)**2 + (tpp.y - prev_point.y)**2) ** 0.5 # meters
-                    dt = (tpp.target_time -prev_point.target_time).to_sec() # seconds
-                    speed = distance / dt # m/s
-
-                    # Update previous point
-                    prev_point = tpp
-
-                    # Check if point speed is within the steady state speed threshold
-                    if (max_steady_state_speed >= speed >= min_steady_state_speed):
-                        continue
-                    else:
-                        # Debug Statements
-                        #print("Lane-keeping trajectory plan point outside of speed limit threshold at target time " + str(tpp.target_time))
-                        #print("Speed Limit: " + str(original_speed_limit) + " m/s")
-                        #print("Point Speed: " + str(speed) + " m/s")
-                        #print("Time duration of continuous steady state trajectory points: " + str((tpp.target_time - time_first_steady_state_point).to_sec()) + " seconds")
-                        is_steady_state = False
-                        break
-
-                # Stop evaluating this trajectory plan if the next point is not planned by InLaneCruisingPlugin (lane-keeping)
-                else:
-                    is_steady_state = False
-                    break  
-            
-            if is_steady_state:
-                count_successful_traj += 1
-            else:
-                count_failed_traj += 1
-            
-    # TODO: Add logic for after geofence; update print statements with this information
-
-    # Print success/failure statement and return success flag
-    count_total_traj = count_successful_traj + count_failed_traj
-    if (count_total_traj == 0):
-        print("B-4 failed; no trajectories were published.")
-        is_successful = False
-    elif(count_failed_traj >= 0):
-        print("B-4 failed; steady state trajectory speed remained +/- 2 mph of speed limit during lane keeping on " \
-            + str(count_successful_traj) + " of " + str(count_total_traj) + " trajectories.")
-        is_successful = False
-    else:
-        print("B-4 succeeded; steady state trajectory speed remained +/- 2 mph of speed limit during lane keeping on " \
-            + str(count_successful_traj) + " of " + str(count_total_traj) + " trajectories.")
+        previous_lanelet_id = current_lanelet_id
+    
+    is_successful = False
+    if travels_from_lanelet_1_to_2 and travels_from_lanelet_2_to_3:
+        print("B-5 Succeeded: Vehicle travelled through the following lanelets in order: " + str(lanelet_id_1) + ", " + str(lanelet_id_2) + ", " + str(lanelet_id_3))
         is_successful = True
+    else:
+        print("B-5 Failed: Vehicle travelled through the following lanelets in order: " + str(lanelet_id_1) + ", " + str(lanelet_id_2) + ", " + str(lanelet_id_3))
+        is_successful = False
     
     return is_successful
+
 
 ###########################################################################################################
 # BASIC TRAVEL B-6: After the rear vehicle has completed its lane merge, the front vehicle will receive 
@@ -580,9 +534,7 @@ def check_lane_keeping_steady_state_speed(bag, time_start_engagement, time_enter
 #                   vehicle shall respond with an 'Acknowledgement' MobilityRequestResponse message 
 #                   signaling acceptance.
 ###########################################################################################################
-# TODO: As input for BT-B-6 metric, provide the time that the follower completed its lane merge
 def check_join_at_rear_negotiation(bag, time_received_first_acceptance, time_last_sent_join_at_rear, time_start_engagement, start_lane_following_lanelet):
-    # TODO: Check that this all occurs after the follower has completed its lane merge
     time_finish_lane_merge = rospy.Time()
     for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_start_engagement):
         if msg.lanelet_id == start_lane_following_lanelet:
@@ -630,28 +582,35 @@ def check_follower_join_negotiation(time_received_first_acceptance, time_last_se
 #                   (the message signaling that it is joining the platoon), the distance gap between the 
 #                   lead vehicle and rear vehicle shall be no more than 100 meters.
 ###########################################################################################################
-def check_gap_after_platoon_negotiation(bag, time_received_second_acceptance):
-    max_distance = 100.0 # (meters) Maximum distance that Follower vehicle should be from the Leader when
-                         # platoon negotiation is complete
+def check_time_headway_after_platoon_negotiation(bag, time_received_second_acceptance):
+    desired_time_headway = 2.5 # (seconds) Desired time headway between rear vehicle and front vehicle during platooning
+    threshold_time_headway = 2.0 # (seconds) Allowable time headway offset from the desired value at initial platoon formation
+    min_time_headway = desired_time_headway - threshold_time_headway # (seconds) 
+    max_time_headway = desired_time_headway + threshold_time_headway # (seconds)
     
-    has_found_actual_gap_at_platoon_start = False
+    # Obtain the distance headway between the rear vehicle and the front vehicle when the rear vehicle first becomes a 'Follower'
+    has_found_actual_time_headway_at_platoon_start = False
     actual_gap = 0.0
     duration_since_second_acceptance = 0.0
     for topic, msg, t in bag.read_messages(topics=['/guidance/platooning_info'], start_time = time_received_second_acceptance):
         if msg.state == 5:
             if (msg.actual_gap > 0):
-                actual_gap = msg.actual_gap
+                actual_speed = msg.desired_gap / desired_time_headway
+                actual_time_headway = msg.actual_gap / actual_speed
+                has_found_actual_time_headway_at_platoon_start = True
+
+                # Obtain the duration between this first occurrence of being a 'Follower' and when the second acceptance message was received
                 duration_since_second_acceptance = (t - time_received_second_acceptance).to_sec()
-                has_found_actual_gap_at_platoon_start = True
                 break
     
     is_successful = False
-    if has_found_actual_gap_at_platoon_start:
-        if (actual_gap <= max_distance):
-            print("B-8 succeeded; Gap between vehicles at start of platooning is " + str(actual_gap) + " meters (" + str(duration_since_second_acceptance) + " sec after 2nd acceptance)")
+    if has_found_actual_time_headway_at_platoon_start:
+        # Successful if the time headway at platooning start is within the minimum and maximum values
+        if (min_time_headway <= actual_time_headway <= max_time_headway):
+            print("B-8 succeeded; Time headway at start of platooning is " + str(actual_time_headway) + " sec (" + str(duration_since_second_acceptance) + " sec after 2nd acceptance)")
             is_successful = True
         else:
-            print("B-8 failed; Gap between vehicles at start of platooning is " + str(actual_gap) + " meters (" + str(duration_since_second_acceptance) + " sec after 2nd acceptance)")
+            print("B-8 failed; Time headway at start of platooning is " + str(actual_time_headway) + " sec (" + str(duration_since_second_acceptance) + " sec after 2nd acceptance)")
             is_successful = False
     else:
         print("B-8 failed; Rear vehicle never published PlatooningInfo msg with 'FOLLOWING' status")
@@ -664,15 +623,19 @@ def check_gap_after_platoon_negotiation(bag, time_received_second_acceptance):
 #                   from 'CandidateFollower' to 'Follower'.
 ###########################################################################################################
 def check_follower_state_after_platoon_negotiation(bag, time_last_sent_join_at_rear):
-    has_candidate_follower_state = False
-    has_follower_state = False
+    has_candidate_follower_state = False # Flag to track whether there has been a 'CandidateFollower' state
+    has_follower_state = False # Flag to track whether there has been a 'Follower' state
     duration_since_last_sent_join_at_rear = 0.0
     for topic, msg, t in bag.read_messages(topics=['/guidance/platooning_info'], start_time = time_last_sent_join_at_rear):
+        # If a 'CandidateFollower' state occurs for the first time, set the appropriate flag to True
         if not has_candidate_follower_state:
             if msg.state == 3:
                 has_candidate_follower_state = True
+        
+        # If a 'Follower' state occurs for the first time, set the appropriate flag to True
         elif not has_follower_state:
             if msg.state == 5:
+                # Obtain the time duration between the start of the 'Follower' state and time_last_sent_join_at_rear
                 duration_since_last_sent_join_at_rear = (t - time_last_sent_join_at_rear).to_sec()
                 has_follower_state = True
                 break
@@ -695,19 +658,22 @@ def check_follower_state_after_platoon_negotiation(bag, time_last_sent_join_at_r
 #                    from 'LeaderWaiting' to 'Leader'.
 ###########################################################################################################
 def check_leader_state_after_platoon_negotiation(bag, time_last_received_join_at_rear):
-    has_leader_waiting_state = False
-    has_leader_state = False
+    has_leader_waiting_state = False # Flag to track whether there has been a 'LeaderWaiting' state
+    has_leader_state = False # Flag to track whether there has been a 'Leader' state
     duration_since_last_received_join_at_rear = 0.0
     for topic, msg, t in bag.read_messages(topics=['/guidance/platooning_info'], start_time = time_last_received_join_at_rear):
+        # If this is the first occurrence of a 'LeaderWaiting' state, set the appropriate flag
         if not has_leader_waiting_state:
             if msg.state == 2:
                 has_leader_waiting_state = True
+        # If this is the first occurrence of a 'Leader' state, set the appropriate flag
         elif not has_leader_state:
             if msg.state == 4:
                 duration_since_last_received_join_at_rear = (t - time_last_received_join_at_rear).to_sec()
                 has_leader_state = True
                 break
     
+    # Successful if both flags are true
     is_successful = False
     if has_leader_waiting_state and has_leader_state:
         print("B-10 successful; Front vehicle transitioned from LEADERWAITING to LEADER (" + str(duration_since_last_received_join_at_rear) + " sec after 'JOIN_PLATOON_AT_REAR' msg)")
@@ -726,11 +692,13 @@ def check_leader_state_after_platoon_negotiation(bag, time_last_received_join_at
 #                    vehicle shall always be +/- 0.5 seconds of the desired 2.5 second time gap.
 ###########################################################################################################
 def check_distance_gap_during_platooning(bag, time_received_second_acceptance, time_end_engagement):
+    # Parameters used for this metric
     threshold_time_gap = 0.5 # (seconds) Threshold offset from desired time gap; if the actual time gap is within this threshold, it is considered successful
     desired_time_gap = 2.5 # (seconds) The absolute desired time gap between the Follower vehicle and the Leader vehicle during platooning operations
     min_time_gap = desired_time_gap - threshold_time_gap # The minimum allowable time gap between the Follower vehicle and the Leader vehicle during platooning operations 
     max_time_gap = desired_time_gap + threshold_time_gap # The maximum allowable time gap between the Follower vehicle and the Leader vehicle during platooning operations
 
+    # Variables that are tracked for this metric
     count_follower_msgs = 0
     count_negative_gap_msgs = 0
     lowest_time_gap = 100.0
@@ -798,13 +766,17 @@ def check_distance_gap_during_platooning(bag, time_received_second_acceptance, t
 #                    a frequency of at least 8 Hz. 
 ###########################################################################################################
 def check_status_msg_receiving_frequency(bag, time_received_second_acceptance):
+    # Parameters used for the computation of this metric
     min_frequency = 8.0 # Hz
     max_duration_between_status_msgs = 1.0 / min_frequency # Seconds
 
+    # Obtain the timestamp of the last received MobilityOperation message from the leader. This is considered the end of
+    #        platooning since the leader has disengaged.
     time_last_received_mob_op = rospy.Time()
     for topic, msg, t in bag.read_messages(topics=['/message/incoming_mobility_operation'], start_time = time_received_second_acceptance):
         time_last_received_mob_op = t
 
+    # Obtain the quantity of 'STATUS' MobilityOperation messages received during platooning operations
     is_first_status_msg = True
     time_received_prev_status_msg = rospy.Time()
     duration_since_prev_status_msg = 0.0
@@ -820,18 +792,24 @@ def check_status_msg_receiving_frequency(bag, time_received_second_acceptance):
                 continue
             else:
                 duration_since_prev_status_msg = (t - time_received_prev_status_msg).to_sec()
+
+                # Track the number of messages that are received after the (1/min_frequency) duration just for debugging purposes
                 if (duration_since_prev_status_msg > max_duration_between_status_msgs):
                     count_status_msgs_above_max_duration += 1
                     if duration_since_prev_status_msg > largest_duration_between_status_msgs:
                         largest_duration_between_status_msgs = duration_since_prev_status_msg
+
+                # Update variables that are tracked
                 total_time_between_status_msgs += duration_since_prev_status_msg
                 time_received_prev_status_msg = t
                 count_status_msgs += 1
     
+    # Obtain the average frequency during platooning operations
     average_time_between_received_status_msgs = total_time_between_status_msgs / float(count_status_msgs)
     average_frequency = 1.0 / average_time_between_received_status_msgs
     print("Average time between received STATUS MobilityOperation messages: " + str(round(average_time_between_received_status_msgs, 5)) + " seconds")
 
+    # Update is_successful flag and print debug statements
     is_successful = False
     if average_frequency >= 8.0:
         print("B-12 Succeeded; Average frequency of received STATUS messages " + str(round(average_frequency,2)) + " Hz. Stats below.")
@@ -841,7 +819,7 @@ def check_status_msg_receiving_frequency(bag, time_received_second_acceptance):
         is_successful = False
     
     pct_above_max_duration = (float(count_status_msgs_above_max_duration) / float(count_status_msgs)) * 100.0
-    print(str(count_status_msgs) + " Total STATUS Messages received (" + str(round(100-pct_above_max_duration,3)) + "% Successful); " + str(count_status_msgs_above_max_duration) + " after 0.125 sec (" \
+    print(str(count_status_msgs) + " Total STATUS Messages received (" + str(round(100-pct_above_max_duration,3)) + "% Successful); " + str(count_status_msgs_above_max_duration) + " after " + str(round(max_duration_between_status_msgs,3)) + " sec (" \
         + str(round(pct_above_max_duration,3)) + "%);; Longest duration " \
           + " between STATUS messages was " + str(largest_duration_between_status_msgs) + " sec")
 
@@ -853,13 +831,18 @@ def check_status_msg_receiving_frequency(bag, time_received_second_acceptance):
 #                    a frequency of at least 8 Hz. 
 ###########################################################################################################
 def check_status_msg_sending_frequency(bag, time_sent_second_acceptance):
-    min_frequency = 8.0 # Hz
+    # Parameters used for the computation of this metric
+    min_frequency = 3.0 # Hz
     max_duration_between_status_msgs = 1.0 / min_frequency # Seconds
 
+    # Obtain the timestamp of the last broadcasted MobilityOperation message from the leader. This is considered the end of
+    #        platooning since the leader has disengaged.
     time_last_sent_mob_op = rospy.Time()
     for topic, msg, t in bag.read_messages(topics=['/message/outgoing_mobility_operation'], start_time = time_sent_second_acceptance):
         time_last_sent_mob_op = t
+    print("Leader sent last MobilityOperation at " + str(time_last_sent_mob_op.to_sec()))
 
+    # Obtain the quantity of 'STATUS' MobilityOperation messages broadcasted during platooning operations
     is_first_status_msg = True
     time_sent_prev_status_msg = rospy.Time()
     duration_since_prev_status_msg = 0.0
@@ -875,7 +858,10 @@ def check_status_msg_sending_frequency(bag, time_sent_second_acceptance):
                 continue
             else:
                 duration_since_prev_status_msg = (t - time_sent_prev_status_msg).to_sec()
+
+                # Track the number of messages that are broadcasted after the (1/min_frequency) duration just for debugging purposes
                 if (duration_since_prev_status_msg > max_duration_between_status_msgs):
+                    print("Duration of " + str(duration_since_prev_status_msg) + " at " + str(t.to_sec()) + " sec")
                     count_status_msgs_above_max_duration += 1
                     if duration_since_prev_status_msg > largest_duration_between_status_msgs:
                         largest_duration_between_status_msgs = duration_since_prev_status_msg
@@ -883,10 +869,12 @@ def check_status_msg_sending_frequency(bag, time_sent_second_acceptance):
                 time_sent_prev_status_msg = t
                 count_status_msgs += 1
     
+    # Obtain the average frequency during platooning operations
     average_time_between_sent_status_msgs = total_time_between_status_msgs / float(count_status_msgs)
     average_frequency = 1.0 / average_time_between_sent_status_msgs
     print("Average time between sent STATUS MobilityOperation messages: " + str(round(average_time_between_sent_status_msgs, 5)) + " seconds")
 
+    # Update is_successful flag and print debug statements
     is_successful = False
     if average_frequency >= 8.0:
         print("B-12 Succeeded; Average frequency of sent STATUS messages " + str(round(average_frequency,2)) + " Hz. Stats below.")
@@ -900,11 +888,13 @@ def check_status_msg_sending_frequency(bag, time_sent_second_acceptance):
         + str(round(pct_above_max_duration,3)) + "%);; Longest duration " \
           + " between STATUS messages was " + str(largest_duration_between_status_msgs) + " sec")
 
+    return is_successful
+
 ###########################################################################################################
-# Basic Travel B-13: The planned trajectory to prepare for the geofence will include a deceleration section and 
+# Basic Travel B-13: The executed trajectory to prepare for the geofence will include a deceleration section and 
 #           the average deceleration amount shall be no less than 1 m/s^2.
 ###########################################################################################################
-def check_deceleration_before_geofence(bag, time_start_engagement, time_enter_geofence, original_speed_limit, advisory_speed_limit):  
+def check_deceleration_before_geofence(bag, time_enter_geofence, original_speed_limit, advisory_speed_limit):  
     # Parameters used for metric evaluation
     min_average_deceleration = 1.0 # m/s^2  
     start_decel_percent_of_original_speed_limit = 0.90 # Percentage (0.90 is 90%) of original speed limit for current speed to be considered the start of deceleration
@@ -973,93 +963,99 @@ def check_deceleration_before_geofence(bag, time_start_engagement, time_enter_ge
     return is_successful
 
 ###########################################################################################################
-# Basic Travel B-14: The planned trajectory will start calling for acceleration back to the original speed limit 
+# Basic Travel B-14: The executed trajectory will start calling for acceleration back to the original speed limit 
 #           no more than 30 feet away from the end of the geo-fenced area.
 ###########################################################################################################
-def check_acceleration_distance_after_geofence(bag, time_exit_geofence, time_end_engagement, time_enter_geofence, advisory_speed_limit):
+def check_acceleration_distance_after_geofence(bag, time_exit_geofence):
     max_distance_from_geofence_end = 30.0 # (feet) Max distance from end of geofence for first lane change point
     min_distance_from_geofence_end = 0.0 # (feet) Minimum distance from end of geofence for first lane change point
-    min_acceleration = 1.0 # (m/s^2) Minimum acceleration in m/s^2 for a point to be considered the start of a plan's acceleration
-    #min_consecutive_accel_points = 3
+    required_sequential_speed_increases = 5 # The number of sequential speed increases required to be considered the start of acceleration
+    conversion_meters_to_feet = 3.28084 # 1 meter is 3.28084 feet
 
-    # Get the location (in Map Frame) of the end of the geofence
-    for topic, msg, t in bag.read_messages(topics=['/localization/current_pose'], start_time = time_exit_geofence):
-        exit_geofence_x = msg.pose.position.x
-        exit_geofence_y = msg.pose.position.y
+    # Get the downtrack at the end of the geofence
+    downtrack_exit_geofence = 0.0
+    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_exit_geofence):
+        downtrack_exit_geofence = msg.down_track
         break
 
-    # Find the first acceleration point in the trajectory plan (if it exists)
-    # Note: An acceleration point is a point with acceleration above the minimum threshold (defined by the metric criteria) along consecutive points
-    # TODO: Create a more robust approach for determining when an acceleration has begun
-    has_found_acceleration_point = False
-    for topic, msg, t in bag.read_messages(topics=['/guidance/plan_trajectory'], start_time = time_enter_geofence, end_time = time_end_engagement):
-        #print("********************************")
-        total_distance = 0
-        is_first_trajectory_point = True
-        for tpp in msg.trajectory_points:
-            if is_first_trajectory_point:
-                prev_point = tpp
-                prev_point_speed = msg.initial_longitudinal_velocity
-                is_first_trajectory_point = False
-                continue
-            
-            # Obtain current point's speed
-            distance = ((tpp.x - prev_point.x)**2 + (tpp.y - prev_point.y)**2) ** 0.5
-            total_distance += distance
-            dt = (tpp.target_time - prev_point.target_time).to_sec()
-            current_pt_speed = distance / dt # Speed in m/s
+    # Variables to track during metric evaluation
+    has_found_start_of_accel = False
+    prev_speed = 0.0
+    prev_t = rospy.Time()
+    has_found_start_of_accel = False
+    time_start_of_accel = rospy.Time()
+    is_first_speed = True
+    count_speed_increases = 0
 
-            # Obtain current point's acceleration
-            current_pt_accel = (current_pt_speed - prev_point_speed) / dt
-            #print(str(tpp.planner_plugin_name) + ": " + str(tpp.target_time) + ", speed: " + str(current_pt_speed) + " m/s, " +str(current_pt_accel) + " m/s^2")
+    # Get the timestamp associated with the start of vehicle acceleration after exiting the geofence
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_exit_geofence):
+        if is_first_speed:
+            prev_speed = msg.twist.linear.x
+            prev_t = t
+            is_first_speed = False
+            continue
 
-            # Check if current point's acceleration meets the minimum acceleration criteria
-            if (current_pt_accel >= min_acceleration and current_pt_speed > advisory_speed_limit):
-                time_start_accel_after_geofence = t
-                time_between_accel_and_exit = time_exit_geofence - time_start_accel_after_geofence
-                has_found_acceleration_point = True
+        # Get start time of acceleration
+        current_speed = msg.twist.linear.x
+        duration_since_previous_speed = (t - prev_t).to_sec()
+        current_accel = (current_speed - prev_speed) / duration_since_previous_speed
+        #print("Current acceleration: " + str(current_accel) + " m/s^2; speed is " + str(current_speed) + " m/s")
 
-                # Get the distance between the point and the end of the geofence
-                distance_from_geofence_end_meters = ((tpp.x - exit_geofence_x)**2 + (tpp.y - exit_geofence_y)**2) ** 0.5
-                distance_from_geofence_end_feet = distance_from_geofence_end_meters * 3.28 # Conversion from meters to feet
-                
-                # Check if previous point is within min/max distance from the end of geofence (since acceleration began with previous point)
-                if (time_start_accel_after_geofence.to_sec() < time_exit_geofence.to_sec()):
-                    print("B-14 failed: vehicle began accelerating " + str(distance_from_geofence_end_feet) + " feet (" + \
-                         str(time_between_accel_and_exit.to_sec()) + " sec) before exiting geofence.")
-                    is_successful = False
-                elif (max_distance_from_geofence_end >= distance_from_geofence_end_feet >= min_distance_from_geofence_end):
-                    print("B-14 succeeded: vehicle began accelerating " + str(distance_from_geofence_end_feet) + " feet after exiting geofence.")
-                    is_successful = True
-                else:
-                    print("B-14 failed: vehicle began accelerating " + str(distance_from_geofence_end_feet) + " feet after exiting geofence.")
-                    is_successful = False
-                
-                # Break from trajectory plan loop since the first acceleration point has been found
-                break
+        # Check if this is the start of acceleration
+        if count_speed_increases == 0:
+            time_start_of_accel = t # Always track the start time of consecutive speed increases
 
-            # Update previous point
-            prev_point = tpp
-            prev_point_speed = current_pt_speed
-        
-        # Break from rostopic loop since the first acceleration point has been found
-        if (has_found_acceleration_point):
+        if current_speed > prev_speed:
+            count_speed_increases += 1
+        else:
+            count_speed_increases = 0
+
+        # End loop if reached the required number of consecutive speed increases
+        if count_speed_increases == required_sequential_speed_increases:
+            has_found_start_of_accel = True
             break
+
+        # Update variables
+        prev_t = t
+        prev_speed = current_speed
+
+    # Get the distance after the geofence that the vehicle begins accelerating if any acceleration was found
+    if has_found_start_of_accel:
+        # Get the downtrack at the start of acceleration back to the original speed limit
+        downtrack_start_of_accel = 0.0
+        for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_start_of_accel):
+            downtrack_start_of_accel = msg.down_track
+            break
+
+        # Obtain the distance (feet) after the geofence that the vehicle begins accelerating
+        distance_start_accel_after_geofence = (downtrack_start_of_accel - downtrack_exit_geofence) * conversion_meters_to_feet
     
-    # If no acceleration point was found in the trajectory plans after the geofence, set failure flag
-    if (not has_found_acceleration_point):
-        print("B-14 failed: No trajectory plan acceleration point above " + str(min_acceleration) + " m/s^2 was found after exiting the geofence.")
+    # Set is_successful flag and print debug statements
+    is_successful = False
+    if has_found_start_of_accel:
+        if distance_start_accel_after_geofence >= min_distance_from_geofence_end and distance_start_accel_after_geofence <= max_distance_from_geofence_end:
+            print("B-14 succeeded; vehicle acceleration began " + str(distance_start_accel_after_geofence) + " feet after exiting the geofence.")
+            is_successful = True
+        else:
+            print("B-14 failed; vehicle acceleration began " + str(distance_start_accel_after_geofence) + " feet after exiting the geofence.")
+            is_successful = False
+    else:
+        print("B-14 failed; no vehicle acceleration occurred after exiting the geofence.")
         is_successful = False
 
     return is_successful
 
 ###########################################################################################################
-# Basic Travel B-15: The planned trajectory back to normal operations will include an acceleration portion and 
+# Basic Travel B-15: The executed trajectory back to normal operations will include an acceleration portion and 
 #           the average acceleration over the entire acceleration time shall be no less than 1 m/s^2.
 ###########################################################################################################
-def check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_end_engagement, original_speed_limit, advisory_speed_limit):
+def check_acceleration_rate_after_geofence(bag, time_exit_geofence, original_speed_limit, advisory_speed_limit):
+    # Parameters used for metric evaluation
+    min_average_acceleration = 1.0 # m/s^2  
     end_accel_percent_of_original_speed_limit = 0.90
     start_accel_percent_of_advisory_speed_limit = 1.10
+
+    # Variables to track during metric evaluation
     speed_start_accel = 0.0
     speed_end_accel = 0.0
     time_start_accel = rospy.Time()
@@ -1091,6 +1087,7 @@ def check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_end_eng
             has_found_end_of_accel = True
             break
 
+    # If the full acceleration phase has been found, determine the average acceleration for this phase
     if has_found_start_of_accel and has_found_end_of_accel:
         average_acceleration = (speed_end_accel - speed_start_accel) / (time_end_accel - time_start_accel).to_sec()
         print("Avg acceleration: " + str(average_acceleration))
@@ -1098,7 +1095,7 @@ def check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_end_eng
     # Print success/failure statement and return success flag
     is_successful = False
     if (has_found_start_of_accel and has_found_end_of_accel):
-        if average_acceleration >= 1.0:
+        if average_acceleration >= min_average_acceleration:
             print("B-15 succeeded; average acceleration after geofence was above 1.0 m/s^2: " + str(average_acceleration) + " m/s^2")
             is_successful = True
         else:
@@ -1118,8 +1115,9 @@ def check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_end_eng
 #           maneuvers, for at least 10 seconds.
 ###########################################################################################################
 def check_steady_state_after_geofence(bag, time_exit_geofence, time_end_engagement, original_speed_limit):
-    # (m/s) Threshold offset from speed limit; vehicle considered at steady state when its first traj plan point is within this offset of the speed limit
-    threshold_speed_limit_offset = 1.1176 # 1.1176 m/s is 2.5 mph
+    # Parameters used for metric evaluation
+    # (m/s) Threshold offset from speed limit; vehicle considered at steady state when its speed is within this offset of the speed limit
+    threshold_speed_limit_offset = 0.894 # 0.894 m/s is 2 mph
     # (m/s) Minimum speed to be considered at steady state
     min_steady_state_speed = original_speed_limit - threshold_speed_limit_offset
     # (m/s) Maximum speed to be considered at steady state
@@ -1130,10 +1128,10 @@ def check_steady_state_after_geofence(bag, time_exit_geofence, time_end_engageme
     # Conduct steady state evaluation 
     # Get the start time of the vehicle reaching steady state (if one exists)
     has_steady_state = False
-    for topic, msg, t in bag.read_messages(topics=['/guidance/plan_trajectory'], start_time = time_exit_geofence, end_time = time_end_engagement):
-        # Vehicle has reached steady state when its first trajectory point is within threshold range of steady state speed
-        if (max_steady_state_speed >= msg.initial_longitudinal_velocity >= min_steady_state_speed):
-            time_first_start_steady_state = t
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_exit_geofence, end_time = time_end_engagement):
+        # Vehicle has reached steady state when its speed within threshold range of steady state speed
+        if (max_steady_state_speed >= msg.twist.linear.x >= min_steady_state_speed):
+            time_start_steady_state = t
             has_steady_state = True
             break
     
@@ -1141,12 +1139,11 @@ def check_steady_state_after_geofence(bag, time_exit_geofence, time_end_engageme
     has_passed_steady_state_time_threshold = False
     max_steady_state_duration = 0.0
     if (has_steady_state):
-        time_start_steady_state = time_first_start_steady_state # Tracks the current steady state start time
         has_passed_steady_state_time_threshold = False
         is_at_steady_state = True
         steady_state_duration = 0.0
-        for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle_status'], start_time = time_first_start_steady_state, end_time = time_end_engagement):
-            current_speed = msg.speed * 0.277777 # Conversion from kph to m/s
+        for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_start_steady_state, end_time = time_end_engagement):
+            current_speed = msg.twist.linear.x
 
             # If system is entering steady state, reset the steady state start time:
             if ((max_steady_state_speed >= current_speed >= min_steady_state_speed) and not is_at_steady_state):
@@ -1419,57 +1416,67 @@ def check_vehicle_always_within_maximum_crosstrack(bag, time_start_engagement, t
     return is_successful
 
 ###########################################################################################################
-# BASIC TRAVEL B-24: (FOLLOWER VEHICLE) During platooning operations, the front 'Leader' vehicle shall, on average, broadcast
+# BASIC TRAVEL B-24: (Leader VEHICLE) During platooning operations, the front 'Leader' vehicle shall, on average, broadcast
 #                    its 'INFO' platooning MobilityOperation message to the rear 'Follower' vehicle with 
 #                    a frequency of at least 4 Hz. 
 ###########################################################################################################
-def check_info_msg_receiving_frequency(bag, time_received_second_acceptance):
-    min_frequency = 4.0 # Hz
-    max_duration_between_info_msgs = 1.0 / min_frequency # Seconds
+def check_info_msg_sending_frequency(bag, time_sent_second_acceptance):
+    # Parameters used for the computation of this metric
+    min_frequency = 2.0 # Hz
+    max_duration_between_status_msgs = 1.0 / min_frequency # Seconds
 
-    time_last_received_mob_op = rospy.Time()
-    for topic, msg, t in bag.read_messages(topics=['/message/incoming_mobility_operation'], start_time = time_received_second_acceptance):
-        time_last_received_mob_op = t
+    # Obtain the timestamp of the last broadcasted MobilityOperation message from the leader. This is considered the end of
+    #        platooning since the leader has disengaged.
+    time_last_sent_mob_op = rospy.Time()
+    for topic, msg, t in bag.read_messages(topics=['/message/outgoing_mobility_operation'], start_time = time_sent_second_acceptance):
+        time_last_sent_mob_op = t
+    print("Leader sent last MobilityOperation at " + str(time_last_sent_mob_op.to_sec()))
 
-    is_first_info_msg = True
-    time_received_prev_info_msg = rospy.Time()
-    duration_since_prev_info_msg = 0.0
-    total_time_between_info_msgs = 0.0
-    largest_duration_between_info_msgs = 0.0
-    count_info_msgs = 0
-    count_info_msgs_above_max_duration = 0
-    for topic, msg, t in bag.read_messages(topics=['/message/incoming_mobility_operation'], start_time = time_received_second_acceptance, end_time = time_last_received_mob_op):
+    # Obtain the quantity of 'STATUS' MobilityOperation messages broadcasted during platooning operations
+    is_first_status_msg = True
+    time_sent_prev_status_msg = rospy.Time()
+    duration_since_prev_status_msg = 0.0
+    total_time_between_status_msgs = 0.0
+    largest_duration_between_status_msgs = 0.0
+    count_status_msgs = 0
+    count_status_msgs_above_max_duration = 0
+    for topic, msg, t in bag.read_messages(topics=['/message/outgoing_mobility_operation'], start_time = time_sent_second_acceptance, end_time = time_last_sent_mob_op):
         if "INFO" in msg.strategy_params:
-            if is_first_info_msg:
-                time_received_prev_info_msg = t
-                is_first_info_msg = False
+            if is_first_status_msg:
+                time_sent_prev_status_msg = t
+                is_first_status_msg = False
                 continue
             else:
-                duration_since_prev_info_msg = (t - time_received_prev_info_msg).to_sec()
-                if (duration_since_prev_info_msg > max_duration_between_info_msgs):
-                    count_info_msgs_above_max_duration += 1
-                    if duration_since_prev_info_msg > largest_duration_between_info_msgs:
-                        largest_duration_between_info_msgs = duration_since_prev_info_msg
-                total_time_between_info_msgs += duration_since_prev_info_msg
-                time_received_prev_info_msg = t
-                count_info_msgs += 1
-    
-    average_time_between_received_info_msgs = total_time_between_info_msgs / float(count_info_msgs)
-    average_frequency = 1.0 / average_time_between_received_info_msgs
-    print("Average time between received INFO MobilityOperation messages: " + str(round(average_time_between_received_info_msgs, 5)) + " seconds")
+                duration_since_prev_status_msg = (t - time_sent_prev_status_msg).to_sec()
 
+                # Track the number of messages that are broadcasted after the (1/min_frequency) duration just for debugging purposes
+                if (duration_since_prev_status_msg > max_duration_between_status_msgs):
+                    print("Duration of " + str(duration_since_prev_status_msg) + " at " + str(t.to_sec()) + " sec")
+                    count_status_msgs_above_max_duration += 1
+                    if duration_since_prev_status_msg > largest_duration_between_status_msgs:
+                        largest_duration_between_status_msgs = duration_since_prev_status_msg
+                total_time_between_status_msgs += duration_since_prev_status_msg
+                time_sent_prev_status_msg = t
+                count_status_msgs += 1
+    
+    # Obtain the average frequency during platooning operations
+    average_time_between_sent_status_msgs = total_time_between_status_msgs / float(count_status_msgs)
+    average_frequency = 1.0 / average_time_between_sent_status_msgs
+    print("Average time between sent STATUS MobilityOperation messages: " + str(round(average_time_between_sent_status_msgs, 5)) + " seconds")
+
+    # Update is_successful flag and print debug statements
     is_successful = False
     if average_frequency >= min_frequency:
-        print("B-24 Succeeded; Average frequency of received INFO messages " + str(round(average_frequency,2)) + " Hz. Stats below.")
+        print("B-24 Succeeded; Average frequency of sent STATUS messages " + str(round(average_frequency,2)) + " Hz. Stats below.")
         is_successful = True
     else:
-        print("B-24 Failed; Average frequency of received INFO messages " + str(round(average_frequency,2)) + " Hz. Stats below.")
+        print("B-24 Failed; Average frequency of sent STATUS messages " + str(round(average_frequency,2)) + " Hz. Stats below.")
         is_successful = False
     
-    pct_above_max_duration = (float(count_info_msgs_above_max_duration) / float(count_info_msgs)) * 100.0
-    print(str(count_info_msgs) + " Total INFO Messages received (" + str(round(100-pct_above_max_duration,3)) + "% Successful); " + str(count_info_msgs_above_max_duration) + " after 0.25 sec (" \
+    pct_above_max_duration = (float(count_status_msgs_above_max_duration) / float(count_status_msgs)) * 100.0
+    print(str(count_status_msgs) + " Total STATUS Messages sent (" + str(round(100-pct_above_max_duration,3)) + "% Successful); " + str(count_status_msgs_above_max_duration) + " after " + str(round(max_duration_between_status_msgs,3)) + " sec (" \
         + str(round(pct_above_max_duration,3)) + "%);; Longest duration " \
-          + " between INFO messages was " + str(largest_duration_between_info_msgs) + " sec")
+          + " between STATUS messages was " + str(largest_duration_between_status_msgs) + " sec")
 
     return is_successful
 
@@ -1680,22 +1687,15 @@ def main():
         b_2_result = check_geofence_lanelet_speed_limits(bag, lanelets_in_geofence, advisory_speed_limit)
 
         # Metric BT-B-3
-        b_3_result = check_time_received_first_TCM_message(bag, time_received_first_msg, time_enter_geofence, downtrack_enter_geofence, advisory_speed_limit)
+        b_3_result = check_time_received_first_TCM_message(bag, time_received_first_msg, time_enter_geofence, advisory_speed_limit)
 
-        # Metric BT-B-4
-        # Note: This metric is manually-evaluated using the vehicle speed plot
-        # TODO: Add in evaluation of speed during and after the geofence
-        b_4_result = None
-        if bag_file in BT_leader_white_pacifica_bag_files:
-            b_4_result = check_lane_keeping_steady_state_speed(bag, time_test_start_engagement, time_enter_geofence, time_exit_geofence, original_speed_limit, advisory_speed_limit)
-        else:
-            print("B-4: N/A (Follower Vehicle)")
+        # Metric BT-B-4: This metric is manually-evaluated using the vehicle speed plot
 
         # Metric BT-B-5 
-        # TODO: Get this lanelet ID for the other ACM map
+        # TODO: Add in lane merge metric computation
         b_5_result = None
         if bag_file in BT_follower_black_pacifica_bag_files:
-            b_5_result = False
+            check_lane_merge_before_geofence(bag)
         else:
             print("B-5: N/A (Leader Vehicle)")
 
@@ -1705,7 +1705,7 @@ def main():
             start_lane_following_lanelet = 34915
             b_6_result = check_join_at_rear_negotiation(bag, time_received_first_acceptance, time_last_sent_join_at_rear, time_test_start_engagement, start_lane_following_lanelet)
             b_7_result = check_follower_join_negotiation(time_received_first_acceptance, time_last_sent_follower_join)
-            b_8_result = check_gap_after_platoon_negotiation(bag, time_received_second_acceptance)
+            b_8_result = check_time_headway_after_platoon_negotiation(bag, time_received_second_acceptance)
             b_9_result = check_follower_state_after_platoon_negotiation(bag, time_last_sent_join_at_rear)
             print("B-10: N/A (Follower Vehicle)")
             b_11_result = check_distance_gap_during_platooning(bag, time_received_second_acceptance, time_test_end_engagement)
@@ -1721,9 +1721,9 @@ def main():
             b_10_result = check_leader_state_after_platoon_negotiation(bag, time_last_received_join_at_rear)
             print("B-11: N/A (Leader Vehicle)")
             b_12_result = check_status_msg_sending_frequency(bag, time_sent_second_acceptance)
-            b_13_result = check_deceleration_before_geofence(bag, time_test_start_engagement, time_enter_geofence, original_speed_limit, advisory_speed_limit)
-            b_14_result = check_acceleration_distance_after_geofence(bag, time_exit_geofence, time_test_end_engagement, time_enter_geofence, advisory_speed_limit)
-            b_15_result = check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_test_end_engagement, original_speed_limit, advisory_speed_limit)
+            b_13_result = check_deceleration_before_geofence(bag, time_enter_geofence, original_speed_limit, advisory_speed_limit)
+            b_14_result = check_acceleration_distance_after_geofence(bag, time_exit_geofence)
+            b_15_result = check_acceleration_rate_after_geofence(bag, time_exit_geofence, original_speed_limit, advisory_speed_limit)
 
         b_16_result = check_steady_state_after_geofence(bag, time_exit_geofence, time_test_end_engagement, original_speed_limit)
 
@@ -1736,14 +1736,14 @@ def main():
             print("B-21: N/A (Follower Vehicle)")
             b_22_result = check_vehicle_always_within_maximum_crosstrack(bag, time_test_start_engagement, time_test_end_engagement, is_front_vehicle = False)
             print("B-23: N/A (Follower Vehicle)")
-            b_24_result = check_info_msg_receiving_frequency(bag, time_received_second_acceptance)
+            print("B-24: N/A (Follower Vehicle)")
             b_25_result = check_duration_before_successful_time_headway(bag, time_received_second_acceptance, time_enter_geofence)
         else:
             print("B-20: N/A (Leader Vehicle)")
             b_21_result = check_vehicle_inside_lane(bag, time_test_start_engagement, time_test_end_engagement, is_front_vehicle = True)
             print("B-22: N/A (Leader Vehicle)")
             b_23_result = check_vehicle_always_within_maximum_crosstrack(bag, time_test_start_engagement, time_test_end_engagement, is_front_vehicle = True)
-            print("B-24: N/A (Leader Vehicle)")
+            b_24_result = check_info_msg_sending_frequency(bag, time_sent_second_acceptance)
             print("B-25: N/A (Leader Vehicle)")
 
         # Get vehicle type that this bag file is from

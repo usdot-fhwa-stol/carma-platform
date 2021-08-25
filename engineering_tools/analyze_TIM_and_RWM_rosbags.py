@@ -82,7 +82,7 @@ def adjust_geofence_exit_time(bag, time_exit_geofence, original_speed_limit):
     return true_time_exit_geofence
 
 # Helper Function: Get start and end times of the period of engagement that includes the in-geofence section
-def get_TIM_test_case_engagement_times(bag, time_enter_active_geofence, time_exit_active_geofence):
+def get_test_case_engagement_times(bag, time_enter_active_geofence, time_exit_active_geofence):
     # Initialize system engagement start and end times
     time_start_engagement = rospy.Time()
     time_stop_engagement = rospy.Time()
@@ -130,10 +130,12 @@ def get_TIM_test_case_engagement_times(bag, time_enter_active_geofence, time_exi
 
 ###########################################################################################################
 # TIM B-1: Geofenced area is a part of the initial route plan.
-# TIM B-11: The map is updated to reflect the closed lane included in the received geofence.
+# TIM B-11: The vehicle receives a message from the CM vehicle that includes the closed lane ahead. The 
+#           vehicle processes this closed lane information.
+# RWM B-1: Geofenced area is a part of the initial route plan.
+# RWM B-11: The vehicle receives a message from CC that includes the closed lane ahead. The vehicle processes 
+#           this closed lane information.
 ###########################################################################################################
-# TODO: Check if the received Mobility Operation msg was for a lanelet in the original 
-#       shortest path using its lat/long/uptrack/downtrack
 def check_geofence_route_metrics(bag, closed_lanelets):
     # Get each set route from the bag file (includes set routes and updated/re-rerouted routes)
     shortest_path_lanelets = []
@@ -183,10 +185,11 @@ def check_geofence_route_metrics(bag, closed_lanelets):
     return initial_route_includes_closed_lane, map_is_updated_for_closed_lane
 
 ###########################################################################################################
-# TIM B-10: Lanelet(s) affected by active geofence have had their speed limits adjusted properly
+# TIM B-10: The vehicle receives a message from the CM vehicle that includes the new speed limit ahead. 
+#           The vehicle processes this new speed limit.
+# RWM B-10: The vehicle receives a message from CARMA Cloud that includes the new speed limit ahead. 
+#           The vehicle processes this new speed limit.
 ###########################################################################################################
-# TODO: Currently only checks that the TrafficControlMessage has been published. Once route_state bug is 
-#       fixed, future runs can be validated for their in-geofence speed limits as well.
 def check_in_geofence_speed_limits(bag, time_enter_geofence, time_exit_geofence, advisory_speed_limit):
     # Check that a TrafficControlMessage was published using the correct advisory speed limit
     advisory_speed_limit_mph = advisory_speed_limit / 0.44704 # Conversion from m/s to mph
@@ -198,23 +201,18 @@ def check_in_geofence_speed_limits(bag, time_enter_geofence, time_exit_geofence,
         elif (msg.tcmV01.params.detail.choice == 12 and msg.tcmV01.params.detail.maxspeed != advisory_speed_limit_mph):
             has_communicated_advisory_speed_limit = False
             break
-    
-    # Uncomment this after bug is fixed that enables /guidance/route_state to be published after
-    # receiving a TIM Mobility Operation message that results in a map update
-    """
-    # During time period that vehicle is within the geofence, check that the lanelet speed limits match the advisory speed limit
-    has_updated_map_speed_limit = False
-    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_enter_geofence): #, end_time = time_exit_geofence):
-        if (msg.speed_limit == advisory_speed_limit):
-            has_updated_map_speed_limit = True
-        elif (msg.speed_limit != advisory_speed_limit):
-            # TODO: What to do if speed limit does not match advisory speed limit?
-            has_updated_map_speed_limit = False
-            print("Failure: Lanelet ID " + str(msg.lanelet_id) + " has speed limit " + str(msg.speed_limit) + " m/s, Advisory Speed Limit is " + str(advisory_speed_limit) + " m/s")
+
+    epsilon = 0.01
+    has_correct_geofence_lanelet_speed_limits = True
+    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_enter_geofence, end_time = time_exit_geofence):
+        # Failure if the current lanelet is one of the geofence lanelets and its speed limit doesn't match the advisory speed limit
+        if (abs(msg.speed_limit - advisory_speed_limit) >= epsilon):
+            print("Lanelet ID " + str(msg.lanelet_id) + " has speed limit of " + str(msg.speed_limit) + " m/s. " + \
+                  "Does not match advisory speed limit of " + str(advisory_speed_limit) + " m/s.")
+            has_correct_geofence_lanelet_speed_limits = False
             break
-    """
     
-    if (has_communicated_advisory_speed_limit):
+    if (has_communicated_advisory_speed_limit and has_correct_geofence_lanelet_speed_limits):
         print("B-10 succeeded; system processed an advisory speed limit of " + str(advisory_speed_limit) + " m/s")
         is_successful = True
     else:
@@ -223,13 +221,19 @@ def check_in_geofence_speed_limits(bag, time_enter_geofence, time_exit_geofence,
 
     return is_successful
 
-
-def get_TCM_data(bag):
+###########################################################################################################
+# RWM B-28: The information communicated by CC is closed area, what the new speed limit is in the closed 
+#           area, and what the minimum gap limits are in the closed area.
+###########################################################################################################
+def get_RWM_TCM_data(bag):
     # Check that TCM Messages are received for closed lane, max speed, and minimum headway (minimum gap)
     has_closed_lane = False
     has_advisory_speed = False
     has_minimum_gap = False
+    minimum_gap = 0.0
+    advisory_speed = 0.0
     time_first_msg_received = rospy.Time()
+    is_successful = False
     for topic, msg, t in bag.read_messages(topics=['/message/incoming_geofence_control']):
         time_first_msg_received = t
         if msg.tcmV01.params.detail.choice == 5 and msg.tcmV01.params.detail.closed == 1:
@@ -275,7 +279,7 @@ def get_TIM_mobility_operation_data(bag):
 
     # Parse the first received TIM use case Mobility Operation message
     for topic, msg, t in bag.read_messages(topics=['/message/incoming_mobility_operation']):
-        print(msg.strategy)
+        #print(msg.strategy)
         if (msg.strategy == "carma3/Incident_Use_Case"):
             time_first_msg_received = t
             print("Received carma3/Incident_Use_Case strategy_params: " + str(msg.strategy_params))
@@ -323,15 +327,16 @@ def get_TIM_mobility_operation_data(bag):
     return minimum_gap, advisory_speed, event_type, time_first_msg_received, is_successful
 
 ###########################################################################################################
-# TIM B-2: Vehicle must be at steady state for 10 seconds prior to first received MobilityOperation message
+# TIM B-2: Amount of time that the vehicle is going at a steady state (e.g. same lane, constant speed) 
+#          before it receives any messages.
+# RWM B-2: Amount of time that the vehicle is going at steady state (e.g. same lane, constant speed) before 
+#          it receives the first CC message.
 ###########################################################################################################
-# TODO: Implement a more robust approach to determine when vehicle has reached steady state. Current implementation
-#       determines start-of-steady-state as when vehicle speed is within a certain offset of the speed limit.
-def check_steady_state_before_first_received_message(bag, time_start_engagement, time_received_first_message, speed_limit):
+def check_steady_state_before_first_received_message(bag, time_start_engagement, time_received_first_message, original_speed_limit):
     # (m/s) Threshold offset of vehicle speed to speed limit to be considered at steady state
-    threshold_speed_limit_offset = 0.44704 # 0.44704 m/s is 1 mph
-    min_steady_state_speed = speed_limit - threshold_speed_limit_offset
-    max_steady_state_speed = speed_limit + threshold_speed_limit_offset
+    threshold_speed_limit_offset = 0.89408 # 0.89408 m/s is 1 mph
+    min_steady_state_speed = original_speed_limit - threshold_speed_limit_offset
+    max_steady_state_speed = original_speed_limit + threshold_speed_limit_offset
 
     # (seconds) Minimum time between vehicle reaching steady state and first TIM MobilityOperation message being received
     min_time_between_steady_state_and_msg = 10.0
@@ -339,8 +344,8 @@ def check_steady_state_before_first_received_message(bag, time_start_engagement,
     # Get the time that the vehicle reaches within the set offset of the speed limit (while system is engaged)
     time_start_steady_state = 0.0
     has_reached_steady_state = False
-    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle_status'], start_time = time_start_engagement):
-        current_speed = msg.speed * 0.277777 # Conversion from kph to m/s
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_start_engagement):
+        current_speed = msg.twist.linear.x # Current vehicle speed in m/s
         if (max_steady_state_speed >= current_speed >= min_steady_state_speed):
             has_reached_steady_state = True
             time_start_steady_state = t
@@ -364,114 +369,15 @@ def check_steady_state_before_first_received_message(bag, time_start_engagement,
 
     return is_successful
 
-def get_route_original_speed_limit(bag, time_test_start_engagement):
-    original_speed_limit = 0.0
-    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_test_start_engagement):
-        original_speed_limit = msg.speed_limit
-        break
-
-    return original_speed_limit
-
 ###########################################################################################################
-# TIM B-4: After steady state, Trajectory Plan is +/- 2 mph of speed limit during lane keeping on straightaways
-# TODO: Implement checks for sections where the road geometry will cause speed to decrease outside of speed threshold,
-#       currently a trajectory plan will fail if it is at steady state and then decelerates due to a curve.
-###########################################################################################################
-def check_lane_keeping_steady_state_speed(bag, time_start_engagement, time_enter_geofence, time_exit_geofence, original_speed_limit, advisory_speed_limit):
-    # (m/s) Threshold offset of trajectory point speed to the speed limit
-    threshold_speed_limit_offset = 0.89408 # 0.89408 m/s is 2 mph
-    min_steady_state_speed = original_speed_limit - threshold_speed_limit_offset
-    max_steady_state_speed = original_speed_limit + threshold_speed_limit_offset
-
-    # Check lane-keeping trajectory point speeds while vehicle is at steady state 
-    # Note: Assumes trajectory has reached steady state when the current vehicle speed is within a threshold offset of the speed limit
-    is_steady_state = False
-    is_first_steady_state_trajectory = True
-    count_successful_traj = 0
-    count_failed_traj = 0
-    for topic, msg, t in bag.read_messages(topics=['/guidance/plan_trajectory'], start_time = time_start_engagement, end_time = time_enter_geofence):
-
-        # Check if initial speed is within steady state speed threshold and that it's planned by InLaneCruisingPlugin (lane-keeping)
-        if ((max_steady_state_speed >= msg.initial_longitudinal_velocity >= min_steady_state_speed) and msg.trajectory_points[0].planner_plugin_name == "InLaneCruisingPlugin"): 
-
-            # Track the time of first steady state trajectory plan for debug statements
-            if (is_first_steady_state_trajectory):
-                time_first_steady_state_point = t
-                is_first_steady_state_trajectory = False
-            
-            # Evaluate the whole lane-keeping portion of trajectory plan to ensure that it maintains steady state speeds
-            is_steady_state = True
-            is_first_trajectory_point = True
-            for tpp in msg.trajectory_points:
-                if is_first_trajectory_point:
-                    prev_point = tpp
-                    is_first_trajectory_point = False
-                    continue
-
-                # Evaluate the speed associated with the next point if next point is planned by InLaneCruisingPlugin (lane-keeping)
-                if (tpp.planner_plugin_name == "InLaneCruisingPlugin"):
-                    # Speed calculation: Speed = Distance / Time
-                    distance = ((tpp.x - prev_point.x)**2 + (tpp.y - prev_point.y)**2) ** 0.5 # meters
-                    dt = (tpp.target_time -prev_point.target_time).to_sec() # seconds
-                    speed = distance / dt # m/s
-
-                    # Update previous point
-                    prev_point = tpp
-
-                    # Check if point speed is within the steady state speed threshold
-                    if (max_steady_state_speed >= speed >= min_steady_state_speed):
-                        continue
-                    else:
-                        # Debug Statements
-                        #print("Lane-keeping trajectory plan point outside of speed limit threshold at target time " + str(tpp.target_time))
-                        #print("Speed Limit: " + str(original_speed_limit) + " m/s")
-                        #print("Point Speed: " + str(speed) + " m/s")
-                        #print("Time duration of continuous steady state trajectory points: " + str((tpp.target_time - time_first_steady_state_point).to_sec()) + " seconds")
-                        is_steady_state = False
-                        break
-
-                # Stop evaluating this trajectory plan if the next point is not planned by InLaneCruisingPlugin (lane-keeping)
-                else:
-                    is_steady_state = False
-                    break  
-            
-            if is_steady_state:
-                count_successful_traj += 1
-            else:
-                count_failed_traj += 1
-            
-    # TODO: Add logic for after geofence; update print statements with this information
-
-    # Print success/failure statement and return success flag
-    count_total_traj = count_successful_traj + count_failed_traj
-    if (count_total_traj == 0):
-        print("B-4 failed; no trajectories were published.")
-        is_successful = False
-    elif(count_failed_traj >= 0):
-        print("B-4 failed; steady state trajectory speed remained +/- 2 mph of speed limit during lane keeping on " \
-            + str(count_successful_traj) + " of " + str(count_total_traj) + " trajectories.")
-        is_successful = False
-    else:
-        print("B-4 succeeded; steady state trajectory speed remained +/- 2 mph of speed limit during lane keeping on " \
-            + str(count_successful_traj) + " of " + str(count_total_traj) + " trajectories.")
-        is_successful = True
-    
-    return is_successful
-
-###########################################################################################################
-# TIM B-13: End point of lane-merge trajectory plan is 0 to 50 feet before start of geofence
+# TIM B-13: Ending point of the trajectory associated with lane merging, relative to the beginning of the geofence.
+# RWM B-13: Ending point of the trajectory associated with lane merging, relative to the beginning of the geofence.
 ###########################################################################################################
 def check_lane_merge_before_geofence(bag, time_start_engagement, time_enter_geofence):
     # (feet) Maximum distance that lane merge trajectory can end before geofence entrance
     max_distance_from_geofence = 50.0 
     # (feet) Minimum distance that lane merge trajectory can end before geofence entrance
     min_distance_from_geofence = 0.0
-
-    # Get the lanelet associated with the start of the geofence
-    # TODO: Re-introduce this logic once /guidance/route_state bug is fixed
-    #for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_enter_active_geofence):
-    #    start_geofence_lanelet_id = msg.lanelet_id
-    #    break
 
     """
     # DEBUG Statements: Maneuver Plan Output
@@ -584,10 +490,14 @@ def check_lane_merge_before_geofence(bag, time_start_engagement, time_enter_geof
                 """
 
     count_traj_plans_with_lane_merge = count_success_lane_merge_point + count_fail_lane_merge_point
-    average_distance_from_geofence = total_distance_from_geofence / float(count_traj_plans_with_lane_merge)
 
+    if count_traj_plans_with_lane_merge > 0:
+        average_distance_from_geofence = total_distance_from_geofence / float(count_traj_plans_with_lane_merge)
+
+    is_successful = False
     if (count_traj_plans_with_lane_merge == 0):
         print("B-13 failed; found no trajectories with a lane merge prior to entering the geofence.")
+        is_successful = False
     elif (count_fail_lane_merge_point == 0):
         print("B-13 succeeded; succeeded on " + str(count_success_lane_merge_point) + " of " + str(count_traj_plans_with_lane_merge) + " lane-merge trajectory plans." \
             + " Average lane merge end point distance from start of geofence was " + str(average_distance_from_geofence) + " feet.")
@@ -600,129 +510,75 @@ def check_lane_merge_before_geofence(bag, time_start_engagement, time_enter_geof
     return is_successful  
 
 ###########################################################################################################
-# TIM B-15: The planned trajectory to prepare for the geofence will include a deceleration section and 
+# TIM B-15: The actual trajectory to prepare for the geofence will include a deceleration section and 
+#           the average deceleration amount shall be no less than 1 m/s^2.
+# RWM B-15: The actual trajectory to prepare for the geofence will include a deceleration section and 
 #           the average deceleration amount shall be no less than 1 m/s^2.
 ###########################################################################################################
-# TODO: Currently checks for deceleration only; must be updated to check whether vehicle actually 
-#       reaches the target advisory speed limit prior to geofence
-def check_deceleration_before_geofence(bag, time_start_engagement, time_enter_geofence):
-    threshold_distance_to_geofence = 5.0 # Threshold in meters for trajectory plan point intersecting the geofence
-    threshold_deceleration = 1 # Threshold for expected average deceleration in m/s^2
-    # TODO: Tune this threshold_speed_decrease_to_geofence
-    threshold_speed_decrease_to_geofence = 2.2352 # Threshold in m/s for trajectory speed decrease from start of plan to the geofence start (5 mph)
-                                                  #           to be considered a deceleration
-    threshold_current_speed_above_advisory_speed = 2.2352 # (m/s) If initial trajectory speed is at least this amount greater than the advisory
-                                                          #       speed, then a deceleration point should have been found
+def check_deceleration_before_geofence(bag, time_enter_geofence, original_speed_limit, advisory_speed_limit):  
+    # Parameters used for metric evaluation
+    min_average_deceleration = 1.0 # m/s^2  
+    start_decel_percent_of_original_speed_limit = 0.90 # Percentage (0.90 is 90%) of original speed limit for current speed to be considered the start of deceleration
+    end_decel_percent_of_advisory_speed_limit = 1.10 # Percentage (1.10 is 110%) of advisory speed limit for current speed to be considered the end of deceleration
 
-    # Get the location (in Map Frame) of the start of the geofence
-    for topic, msg, t in bag.read_messages(topics=['/localization/current_pose'], start_time = time_enter_geofence):
-        start_geofence_x = msg.pose.position.x
-        start_geofence_y = msg.pose.position.y
-        break
+    # Variables to track during metric evaluation
+    speed_start_decel = 0.0
+    speed_end_decel = 0.0
+    time_start_decel = rospy.Time()
+    time_end_decel = rospy.Time()
+    has_found_start_of_decel = False
+    has_found_end_of_decel = False
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_enter_geofence):
+        if has_found_start_of_decel:
+            decel = (msg.twist.linear.x - prev_speed) / (t-prev_time).to_sec()
+            #print("Time: " + str(t.to_sec()) + "; " + str(msg.twist.linear.x) + "; " + str(decel) + " m/s^2")
+            prev_speed = msg.twist.linear.x
+            prev_time = t  
 
-    count_success_traj_decel = 0 
-    count_fail_traj_decel = 0
-    for topic, msg, t in bag.read_messages(topics=['/guidance/plan_trajectory'], start_time = time_start_engagement, end_time = time_enter_geofence):
-        # Debug Statements
-        #print("*******************************")
-        #print("New Trajectory Plan; Size : " + str(len(msg.trajectory_points)) + "; Start: " + str(t))
+        # Get start time of deceleration
+        if not has_found_start_of_decel and (msg.twist.linear.x < (start_decel_percent_of_original_speed_limit * original_speed_limit)):
+            print("Start Time: " + str(t.to_sec()) + "; " + str(msg.twist.linear.x))
+            time_start_decel = t
+            speed_start_decel = msg.twist.linear.x
+            has_found_start_of_decel = True
+            prev_speed = msg.twist.linear.x
+            prev_time = t
 
-        # First pass through trajectory plan to check if it intercepts the geofence start (if it does, save its speed)
-        intercepts_geofence = False
-        prev_point = msg.trajectory_points[0]
-        for i in range(1, len(msg.trajectory_points)):
+        # Get end time of deceleration 
+        if has_found_start_of_decel and (msg.twist.linear.x < (end_decel_percent_of_advisory_speed_limit * advisory_speed_limit)):
+            print("End Time: " + str(t.to_sec()) + "; " + str(msg.twist.linear.x))
+            time_end_decel = t
+            speed_end_decel = msg.twist.linear.x
+            has_found_end_of_decel = True
+            break
+    
+    deceleration_completed_before_geofence = False
+    if (time_enter_geofence-time_end_decel).to_sec() > 0:
+        deceleration_completed_before_geofence = True
 
-            # Get the distance between this point and the start of the geofence (in meters)
-            distance_to_geofence_meters = ((msg.trajectory_points[i].x - start_geofence_x)**2 + (msg.trajectory_points[i].y - start_geofence_y)**2)**0.5 # In meters
-            
-            # If the trajectory plan point is within the set threshold distance of the geofence, get its speed
-            if(distance_to_geofence_meters <= threshold_distance_to_geofence):
-                # Get the trajectory plan speed at this geofence interception:
-                distance = ((msg.trajectory_points[i].x - prev_point.x)**2 + (msg.trajectory_points[i].y - prev_point.y)**2) ** 0.5
-                dt = msg.trajectory_points[i].target_time - prev_point.target_time
+    is_successful = False
+    if has_found_start_of_decel and has_found_end_of_decel:
 
-                # Debug Statements
-                #print("Distance to geofence: " + str(distance_to_geofence_meters) + " meters")
-                #print("Previous point time: " + str(prev_point.target_time.to_sec()) + "; " + str(prev_point.planner_plugin_name))
-                #print("Current point time: " + str(msg.trajectory_points[i].target_time.to_sec()) + "; i=" + str(i) + "; " + str(msg.trajectory_points[i].planner_plugin_name))
-                #print("Points distance: " + str(distance) + " meters")
-                #print("dt: " + str(dt.to_sec()))
+        # Calculate the average deceleration rate during the deceleration phase
+        average_deceleration = (speed_start_decel - speed_end_decel) / (time_end_decel - time_start_decel).to_sec()
 
-                # Current bug in trajectory plan; consecutive points can have same target time
-                if (dt.to_sec() <= 0.01):
-                    # Debug Statement
-                    #print("Skipping trajectory. Traj point dt is " + str(dt.to_sec()))
-                    continue
-                
-                speed_geofence_intercept = distance / dt.to_sec() # Speed in m/s
-
-                # Debug Statement
-                #print("Geofence Intercept Speed: " + str(speed_geofence_intercept) + " m/s")
-
-                intercept_geofence_idx = i
-                intercepts_geofence = True
-                break
-            
-            # Update Previous Point:
-            prev_point = msg.trajectory_points[i]
-
-        # Second pass through trajectory plan to evaluate its deceleration leading up to the geofence
-        if (intercepts_geofence):
-
-            # Get the speed difference between the plan's initial speed and the point that intercepts the geofence
-            delta_speed_to_geofence = msg.initial_longitudinal_velocity - speed_geofence_intercept # Speed difference in m/s
-            
-            # If there is a decrease in speed (beyond a threshold), evaluate the plan's deceleration leading up to the geofence
-            # Note: Assumes that if there is not a large enough speed decrease up to the geofence, then the system 
-            #       has already come close to the advisory speed limit
-            # TODO: Make more robust. This approach will not work if the peak speed is in the middle of the trajectory plan
-            if (delta_speed_to_geofence >= threshold_speed_decrease_to_geofence):
-
-                # Find the trajectory point at which deceleration begins.
-                # Note: Assumes deceleration begins at the first occurrence of the trajectory plan passing the deceleration threshold
-                # TODO: Create a more robust approach to determine when deceleration has begun
-                prev_point = msg.trajectory_points[0]
-                prev_point_speed = msg.initial_longitudinal_velocity
-                for i in range(1, intercept_geofence_idx + 1):
-                    # Get speed of the current trajectory point
-                    distance = ((msg.trajectory_points[i].x - prev_point.x)**2 + (msg.trajectory_points[i].y - prev_point.y)**2) ** 0.5
-                    dt = msg.trajectory_points[i].target_time - prev_point.target_time
-                    current_pt_speed = distance / dt.to_sec() # Speed in m/s
-
-                    # Get the deceleration of the current trajectory point
-                    current_pt_decel = (current_pt_speed - prev_point_speed) / dt
-                    
-                    # If this point passes the deceleration threshold, compute average deceleration from it to the geofence intersection
-                    if (current_pt_decel >= threshold_deceleration):
-                        average_decel = (prev_point_speed - speed_geofence_intercept) / (msg.trajectory_points[intercept_geofence_idx].target_time - prev_point.target_time)
-                        if (average_decel >= threshold_deceleration):
-                            count_success_traj_decel += 1
-                            break
-                        else:
-                            count_fail_traj_decel += 1
-
-                    # Update previous point
-                    prev_point = msg.trajectory_points[i]
-                    prev_point_speed = current_pt_speed
-            
-            # Only count as a failure if the initial trajectory speed is greater than a configured threshold above the advisory speed
-            else:
-                if (msg.initial_longitudinal_velocity >= threshold_current_speed_above_advisory_speed):
-                    count_fail_traj_decel += 1
-
-    # Get total number of trajectories that intercepted the start of the geofence
-    count_traj_plans_intercept_geofence = count_success_traj_decel + count_fail_traj_decel
-
-    # Determine success of metric from test data (fails if failed on more than 0 trajectory plans)
-    if (count_traj_plans_intercept_geofence == 0):
-        print("B-15 failed; no trajectory plans that intercept the geofence area were found.")
-    elif (count_fail_traj_decel == 0):
-        print("B-15 succeeded; a deceleration section with an average deceleration of at least 1 m/s^2  was found on " + str(count_success_traj_decel) + " of " \
-            + str(count_traj_plans_intercept_geofence) + " trajectory plans reaching the geofence.")
-        is_successful = True   
+        if average_deceleration >= min_average_deceleration and deceleration_completed_before_geofence:
+            print("B-15 succeeded; average deceleration above 1.0 m/s^2 occurred before geofence entrance: " + str(average_deceleration) + " m/s^2")
+            is_successful = True
+        elif average_deceleration >= min_average_deceleration and not deceleration_completed_before_geofence:
+            print("B-15 failed; average deceleration above 1.0 m/s^2 occurred after geofence entrance: " + str(average_deceleration) + " m/s^2")
+            is_successful = False
+        elif average_deceleration <= min_average_deceleration and deceleration_completed_before_geofence:
+            print("B-15 failed; a deceleration below 1.0 m/s^2 occurred before the geofence entrance: " + str(average_deceleration) + " m/s^2")
+            is_successful = False
+        elif average_deceleration <= min_average_deceleration and not deceleration_completed_before_geofence:
+            print("B-15 failed; a deceleration below 1.0 m/s^2 occurred after the geofence entrance: " + str(average_deceleration) + " m/s^2")
+            is_successful = False
+    elif has_found_start_of_decel:
+        print("B-15 failed; did not find end of deceleration phase")
+        is_successful = False
     else:
-        print("B-15 failed; a deceleration section with an average deceleration of at least 1 m/s^2  was found on " + str(count_success_traj_decel) + " of " \
-            + str(count_traj_plans_intercept_geofence) + " trajectory plans reaching the geofence.")
+        print("B-15 failed; did not find start of deceleration phase")
         is_successful = False
 
     return is_successful
@@ -730,8 +586,10 @@ def check_deceleration_before_geofence(bag, time_start_engagement, time_enter_ge
 ###########################################################################################################
 # TIM B-20: After leaving the geofenced area, the planned trajectory for a lane change back to the 
 #           original lane will start within the first 30 feet.
+# RWM B-20:  After leaving the geofenced area, the planned trajectory for a lane change back to the 
+#           original lane will start within the first 30 feet.
 ###########################################################################################################
-def check_lane_change_after_geofence(bag, time_exit_geofence, time_end_engagement):
+def check_lane_change_after_geofence(bag, time_exit_geofence):
     max_distance_from_geofence_end = 30.0 # (feet) Max distance from end of geofence for first lane change point
     min_distance_from_geofence_end = 0.0 # (feet) Minimum distance from end of geofence for first lane change point
     is_successful = False
@@ -778,197 +636,154 @@ def check_lane_change_after_geofence(bag, time_exit_geofence, time_end_engagemen
     return is_successful
 
 ###########################################################################################################
-# TIM B-21: The planned trajectory will start calling for acceleration back to the original speed limit 
+# TIM B-21: The actual trajectory will start calling for acceleration back to the original speed limit 
+#           no more than 30 feet away from the end of the geo-fenced area.
+# RWM B-21: The actual trajectory will start calling for acceleration back to the original speed limit 
 #           no more than 30 feet away from the end of the geo-fenced area.
 ###########################################################################################################
-def check_acceleration_distance_after_geofence(bag, time_exit_geofence, time_end_engagement, time_enter_geofence, advisory_speed_limit):
+def check_acceleration_distance_after_geofence(bag, time_exit_geofence):
     max_distance_from_geofence_end = 30.0 # (feet) Max distance from end of geofence for first lane change point
     min_distance_from_geofence_end = 0.0 # (feet) Minimum distance from end of geofence for first lane change point
-    min_acceleration = 1.0 # (m/s^2) Minimum acceleration in m/s^2 for a point to be considered the start of a plan's acceleration
-    #min_consecutive_accel_points = 3
+    required_sequential_speed_increases = 5 # The number of sequential speed increases required to be considered the start of acceleration
+    conversion_meters_to_feet = 3.28084 # 1 meter is 3.28084 feet
 
-    # Get the location (in Map Frame) of the end of the geofence
-    for topic, msg, t in bag.read_messages(topics=['/localization/current_pose'], start_time = time_exit_geofence):
-        exit_geofence_x = msg.pose.position.x
-        exit_geofence_y = msg.pose.position.y
+    # Get the downtrack at the end of the geofence
+    downtrack_exit_geofence = 0.0
+    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_exit_geofence):
+        downtrack_exit_geofence = msg.down_track
         break
 
-    # Find the first acceleration point in the trajectory plan (if it exists)
-    # Note: An acceleration point is a point with acceleration above the minimum threshold (defined by the metric criteria) along consecutive points
-    # TODO: Create a more robust approach for determining when an acceleration has begun
-    has_found_acceleration_point = False
-    for topic, msg, t in bag.read_messages(topics=['/guidance/plan_trajectory'], start_time = time_enter_geofence, end_time = time_end_engagement):
-        #print("********************************")
-        total_distance = 0
-        is_first_trajectory_point = True
-        for tpp in msg.trajectory_points:
-            if is_first_trajectory_point:
-                prev_point = tpp
-                prev_point_speed = msg.initial_longitudinal_velocity
-                is_first_trajectory_point = False
-                continue
-            
-            # Obtain current point's speed
-            distance = ((tpp.x - prev_point.x)**2 + (tpp.y - prev_point.y)**2) ** 0.5
-            total_distance += distance
-            dt = (tpp.target_time - prev_point.target_time).to_sec()
-            current_pt_speed = distance / dt # Speed in m/s
+    # Variables to track during metric evaluation
+    has_found_start_of_accel = False
+    prev_speed = 0.0
+    prev_t = rospy.Time()
+    has_found_start_of_accel = False
+    time_start_of_accel = rospy.Time()
+    is_first_speed = True
+    count_speed_increases = 0
 
-            # Obtain current point's acceleration
-            current_pt_accel = (current_pt_speed - prev_point_speed) / dt
-            #print(str(tpp.planner_plugin_name) + ": " + str(tpp.target_time) + ", speed: " + str(current_pt_speed) + " m/s, " +str(current_pt_accel) + " m/s^2")
+    # Get the timestamp associated with the start of vehicle acceleration after exiting the geofence
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_exit_geofence):
+        if is_first_speed:
+            prev_speed = msg.twist.linear.x
+            prev_t = t
+            is_first_speed = False
+            continue
 
-            # Check if current point's acceleration meets the minimum acceleration criteria
-            if (current_pt_accel >= min_acceleration and current_pt_speed > advisory_speed_limit):
-                time_start_accel_after_geofence = t
-                time_between_accel_and_exit = time_exit_geofence - time_start_accel_after_geofence
-                has_found_acceleration_point = True
+        # Get start time of acceleration
+        current_speed = msg.twist.linear.x
+        duration_since_previous_speed = (t - prev_t).to_sec()
+        current_accel = (current_speed - prev_speed) / duration_since_previous_speed
+        #print("Current acceleration: " + str(current_accel) + " m/s^2; speed is " + str(current_speed) + " m/s")
 
-                # Get the distance between the point and the end of the geofence
-                distance_from_geofence_end_meters = ((tpp.x - exit_geofence_x)**2 + (tpp.y - exit_geofence_y)**2) ** 0.5
-                distance_from_geofence_end_feet = distance_from_geofence_end_meters * 3.28 # Conversion from meters to feet
-                
-                # Check if previous point is within min/max distance from the end of geofence (since acceleration began with previous point)
-                if (time_start_accel_after_geofence.to_sec() < time_exit_geofence.to_sec()):
-                    print("B-21 failed: vehicle began accelerating " + str(distance_from_geofence_end_feet) + " feet (" + \
-                         str(time_between_accel_and_exit.to_sec()) + " sec) before exiting geofence.")
-                    is_successful = False
-                elif (max_distance_from_geofence_end >= distance_from_geofence_end_feet >= min_distance_from_geofence_end):
-                    print("B-21 succeeded: vehicle began accelerating " + str(distance_from_geofence_end_feet) + " feet after exiting geofence.")
-                    is_successful = True
-                else:
-                    print("B-21 failed: vehicle began accelerating " + str(distance_from_geofence_end_feet) + " feet after exiting geofence.")
-                    is_successful = False
-                
-                # Break from trajectory plan loop since the first acceleration point has been found
-                break
+        # Check if this is the start of acceleration
+        if count_speed_increases == 0:
+            time_start_of_accel = t # Always track the start time of consecutive speed increases
 
-            # Update previous point
-            prev_point = tpp
-            prev_point_speed = current_pt_speed
-        
-        # Break from rostopic loop since the first acceleration point has been found
-        if (has_found_acceleration_point):
+        if current_speed > prev_speed:
+            count_speed_increases += 1
+        else:
+            count_speed_increases = 0
+
+        # End loop if reached the required number of consecutive speed increases
+        if count_speed_increases == required_sequential_speed_increases:
+            has_found_start_of_accel = True
             break
+
+        # Update variables
+        prev_t = t
+        prev_speed = current_speed
+
+    # Get the distance after the geofence that the vehicle begins accelerating if any acceleration was found
+    if has_found_start_of_accel:
+        # Get the downtrack at the start of acceleration back to the original speed limit
+        downtrack_start_of_accel = 0.0
+        for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_start_of_accel):
+            downtrack_start_of_accel = msg.down_track
+            break
+
+        # Obtain the distance (feet) after the geofence that the vehicle begins accelerating
+        distance_start_accel_after_geofence = (downtrack_start_of_accel - downtrack_exit_geofence) * conversion_meters_to_feet
     
-    # If no acceleration point was found in the trajectory plans after the geofence, set failure flag
-    if (not has_found_acceleration_point):
-        print("B-21 failed: No trajectory plan acceleration point above " + str(min_acceleration) + " m/s^2 was found after exiting the geofence.")
+    # Set is_successful flag and print debug statements
+    is_successful = False
+    if has_found_start_of_accel:
+        if distance_start_accel_after_geofence >= min_distance_from_geofence_end and distance_start_accel_after_geofence <= max_distance_from_geofence_end:
+            print("B-21 succeeded; vehicle acceleration began " + str(distance_start_accel_after_geofence) + " feet after exiting the geofence.")
+            is_successful = True
+        else:
+            print("B-21 failed; vehicle acceleration began " + str(distance_start_accel_after_geofence) + " feet after exiting the geofence.")
+            is_successful = False
+    else:
+        print("B-21 failed; no vehicle acceleration occurred after exiting the geofence.")
         is_successful = False
 
     return is_successful
 
 
 ###########################################################################################################
-# TIM B-22: The planned trajectory back to normal operations will include an acceleration portion and 
+# TIM B-22: The actual trajectory back to normal operations will include an acceleration portion and 
+#           the average acceleration over the entire acceleration time shall be no less than 1 m/s^2.
+# RWM B-22: The actual trajectory back to normal operations will include an acceleration portion and 
 #           the average acceleration over the entire acceleration time shall be no less than 1 m/s^2.
 ###########################################################################################################
-def check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_end_engagement, original_speed_limit):
-    # (m/s^2) Minimum threshold of instantaneous acceleration for a point to be considered the start of the acceleration phase
-    min_instantaneous_acceleration = 0.4
-    # (m/s^2) Minimum threshold for average acceleration during acceleration phase in trajectory plan
-    min_average_acceleration = 1.0
-    # (m/s) Threshold offset from speed limit; once the start speed is within this offset of the speed limit, no more plans will be evaluated
-    threshold_speed_limit_offset = 2.2352 # 2.2352 m/s is 5 mph
-    # (m/s) Once the start speed of a trajectory plan surpasses this speed, no more trajectory plans will be evaluated
-    max_start_speed = original_speed_limit - threshold_speed_limit_offset
+def check_acceleration_rate_after_geofence(bag, time_exit_geofence, original_speed_limit, advisory_speed_limit):
+    # Parameters used for metric evaluation
+    min_average_acceleration = 1.0 # m/s^2  
+    end_accel_percent_of_original_speed_limit = 0.90
+    start_accel_percent_of_advisory_speed_limit = 1.10
 
-    # Get the location (in Map Frame) of the end of the geofence
-    for topic, msg, t in bag.read_messages(topics=['/localization/current_pose'], start_time = time_exit_geofence):
-        exit_geofence_x = msg.pose.position.x
-        exit_geofence_y = msg.pose.position.y
-        break
+    # Variables to track during metric evaluation
+    speed_start_accel = 0.0
+    speed_end_accel = 0.0
+    time_start_accel = rospy.Time()
+    time_end_accel = rospy.Time()
+    has_found_start_of_accel = False
+    has_found_end_of_accel = False
 
-    count_success_traj_accel = 0
-    count_fail_traj_accel = 0
-    found_first_accel_traj = False
-    for topic, msg, t in bag.read_messages(topics=['/guidance/plan_trajectory'], start_time = time_exit_geofence, end_time = time_end_engagement):
-        # If the trajectory start speed is above the configured max start speed, assume the vehicle has reached steady state and stop evaluating trajectory plans
-        #print("*******************")
-        if (msg.initial_longitudinal_velocity >= max_start_speed):
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_exit_geofence):
+        if has_found_start_of_accel:
+            accel = (msg.twist.linear.x - prev_speed) / (t-prev_time).to_sec()
+            #print("Time: " + str(t.to_sec()) + "; " + str(msg.twist.linear.x) + "; " + str(accel) + " m/s^2")
+            prev_speed = msg.twist.linear.x
+            prev_time = t
+        
+        # Get start time of deceleration
+        if not has_found_start_of_accel and (msg.twist.linear.x > (start_accel_percent_of_advisory_speed_limit * advisory_speed_limit)):
+            print("Accel Start Time: " + str(t.to_sec()) + "; " + str(msg.twist.linear.x))
+            time_start_accel = t
+            speed_start_accel = msg.twist.linear.x
+            has_found_start_of_accel = True
+            prev_speed = msg.twist.linear.x
+            prev_time = t
+
+        # Get end time of deceleration 
+        if has_found_start_of_accel and (msg.twist.linear.x > (end_accel_percent_of_original_speed_limit * original_speed_limit)):
+            print("Accel End Time: " + str(t.to_sec()) + "; " + str(msg.twist.linear.x))
+            time_end_accel = t
+            speed_end_accel = msg.twist.linear.x
+            has_found_end_of_accel = True
             break
-        
-        # First pass through trajectory plan to determine whether it has a single occurrence of acceleration above the threshold along consecutive points
-        has_acceleration_phase = False # Flag that is set if first point in acceleration phase is found
-        prev_point = msg.trajectory_points[0]
-        prev_point_speed = msg.initial_longitudinal_velocity
-        for i in range(1, len(msg.trajectory_points)):    
-            # Obtain the current point's speed
-            distance = ((msg.trajectory_points[i].x - prev_point.x)**2 + (msg.trajectory_points[i].y - prev_point.y)**2) ** 0.5 # Distance in meters
-            dt = (msg.trajectory_points[i].target_time - prev_point.target_time).to_sec() # Time in seconds
-            current_pt_speed = distance / dt # Speed in m/s
 
-            # Obtain the current point's acceleration
-            current_pt_accel = (current_pt_speed - prev_point_speed) / dt # (m/s^2)
-
-            # Debug Statement
-            #print(str(msg.trajectory_points[i].planner_plugin_name) + "; " + str(current_pt_speed) + " m/s; " + str(current_pt_accel) + " m/s^2")
-
-            # Check if current point's acceleration is the beginning of an acceleration period
-            # Note: Beginning of acceleration period is the first point that has an acceleration above the configured minimum instantaneous acceleration
-            # TODO: Create a more robust approach for determining when an acceleration has begun
-            if (current_pt_accel >= min_instantaneous_acceleration and not has_acceleration_phase):
-                start_accel_point_idx = i - 1 # Acceleration begins with the previous point
-                start_accel_point_speed = prev_point_speed
-                has_acceleration_phase = True # First acceleration point has been found 
-            
-            # If start of acceleration phase has already been found, find the end point of the acceleration phase for average acceleration calculation
-            # Note: End of acceleration phase is defined by a single occurrence of deceleration (beyond a configured threshold) along consecutive points OR the last point in plan
-            # TODO: Create more robust determination of the end of the acceleration phase that is less susceptible to noise
-            elif (has_acceleration_phase):   
-                # If the current point's acceleration is below 0 m/s^2, the end of the acceleration phase has been found
-                # TODO: Tune this value?
-                if (current_pt_accel <= 0.0 or current_pt_speed >= 0.95 * original_speed_limit):
-                    end_accel_point_idx = i - 1 # Acceleration ends with the previous point
-                    end_accel_point_speed = prev_point_speed
-
-                    # Break from this trajectory plan since the start and end of the acceleration phase have been found
-                    break
-                
-                # If currently at the last point in the plan, set this point as the end of the acceleration phase
-                elif (i == len(msg.trajectory_points) - 1):
-                    end_accel_point_idx = i
-                    end_accel_point_speed = current_pt_speed
-
-            # Update previous point
-            prev_point = msg.trajectory_points[i]
-            prev_point_speed = current_pt_speed
-        
-        # If the full acceleration phase has been found, calculate its average acceleration
-        if (has_acceleration_phase):
-            delta_speed = end_accel_point_speed - start_accel_point_speed # m/s
-            dt = (msg.trajectory_points[end_accel_point_idx].target_time - msg.trajectory_points[start_accel_point_idx].target_time).to_sec() # Seconds
-            average_accel = delta_speed / dt # m/s^2
-
-            if (average_accel >= min_average_acceleration):
-                count_success_traj_accel += 1
-                #print("Success; avg accel: " + str(average_accel))
-            else:
-                count_fail_traj_accel += 1
-                #print("Fail; avg accel: " + str(average_accel))
-
-        
-        # Trajectory Plan did not have a single occurrence of acceleration above the configured minimum instantaneous value
-        else:
-
-            # If the previous trajectories did have an acceleration phase, this one should have had one as well
-            if found_first_accel_traj:
-                print("Fail; no acceleration in trajectory plan.")
-                count_fail_traj_accel = True
-                continue
+    # If the full acceleration phase has been found, determine the average acceleration for this phase
+    if has_found_start_of_accel and has_found_end_of_accel:
+        average_acceleration = (speed_end_accel - speed_start_accel) / (time_end_accel - time_start_accel).to_sec()
+        print("Avg acceleration: " + str(average_acceleration))
 
     # Print success/failure statement and return success flag
-    count_traj_plans_with_accel = count_success_traj_accel + count_fail_traj_accel
-    if (count_traj_plans_with_accel == 0):
-        print("B-22 failed; no trajectory plans after exiting the geofence included an acceleration phase")
-        is_successful = False
-    elif (count_success_traj_accel == count_traj_plans_with_accel):
-        print("B-22 succeeded; an acceleration section with an average acceleration of at least 1 m/s^2  was found on " + str(count_success_traj_accel) + " of " \
-            + str(count_traj_plans_with_accel) + " trajectory plans after exiting the geofence.")
+    is_successful = False
+    if (has_found_start_of_accel and has_found_end_of_accel):
+        if average_acceleration >= min_average_acceleration:
+            print("B-15 succeeded; average acceleration after geofence was above 1.0 m/s^2: " + str(average_acceleration) + " m/s^2")
+            is_successful = True
+        else:
+            print("B-15 failed; average acceleration after geofence was below 1.0 m/s^2: " + str(average_acceleration) + " m/s^2")
+            is_successful = False
+    elif has_found_start_of_accel:
+        print("B-15 failed; no end of acceleration after exiting the geofence was found.")
         is_successful = True
     else:
-        print("B-22 failed; an acceleration section with an average acceleration of at least 1 m/s^2  was found on " + str(count_success_traj_accel) + " of " \
-            + str(count_traj_plans_with_accel) + " trajectory plans after exiting the geofence.")
+        print("B-15 failed; no acceleration after exiting the geofence was found.")
         is_successful = False
 
     return is_successful
@@ -976,10 +791,13 @@ def check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_end_eng
 ###########################################################################################################
 # TIM B-23: The planned route must end with the CP vehicle having been at steady state, after all other 
 #           maneuvers, for at least 10 seconds.
+# RWM B-23: The planned route must end with the CP vehicle having been at steady state, after all other 
+#           maneuvers, for at least 10 seconds.
 ###########################################################################################################
 def check_steady_state_after_geofence(bag, time_exit_geofence, time_end_engagement, original_speed_limit):
-    # (m/s) Threshold offset from speed limit; vehicle considered at steady state when its first traj plan point is within this offset of the speed limit
-    threshold_speed_limit_offset = 1.1176 # 1.1176 m/s is 2.5 mph
+    # Parameters used for metric evaluation
+    # (m/s) Threshold offset from speed limit; vehicle considered at steady state when its speed is within this offset of the speed limit
+    threshold_speed_limit_offset = 0.894 # 0.894 m/s is 2 mph
     # (m/s) Minimum speed to be considered at steady state
     min_steady_state_speed = original_speed_limit - threshold_speed_limit_offset
     # (m/s) Maximum speed to be considered at steady state
@@ -987,75 +805,64 @@ def check_steady_state_after_geofence(bag, time_exit_geofence, time_end_engageme
     # (seconds) Minimum required threshold at steady state after completing all geofence-triggered maneuvers
     min_steady_state_time = 10.0
 
-
-    # Get the start time of the vehicle completing all maneuvers:
-    # Note: This means the first instance of lane-keeping after exiting the geofence and completing the final lane change
-    has_begun_final_lane_change = False
-    time_begin_final_lane_change = rospy.Time()
-    for topic, msg, t in bag.read_messages(topics=['/guidance/plan_trajectory'], start_time = time_exit_geofence, end_time = time_end_engagement):
-        #print("First: " + str(msg.trajectory_points[0].planner_plugin_name) + ", Last: " + str(msg.trajectory_points[-1].planner_plugin_name))
-        if (msg.trajectory_points[0].planner_plugin_name == "UnobstructedLaneChangePlugin" or msg.trajectory_points[0].planner_plugin_name == "CooperativeLaneChangePlugin"):
-            has_begun_final_lane_change = True
-            time_begin_final_lane_change = t
-
-    # If a lane change occurred after exiting the geofence, begin steady state evaluation
-    if (has_begun_final_lane_change):
-
-        # Get the start time of the vehicle reaching steady state (if one exists)
-        has_steady_state = False
-        for topic, msg, t in bag.read_messages(topics=['/guidance/plan_trajectory'], start_time = time_begin_final_lane_change, end_time = time_end_engagement):
-            # Vehicle has reached steady state when its first trajectory point is for lane-keeping and within threshold range of steady state speed
-            if (msg.trajectory_points[0].planner_plugin_name == "InLaneCruisingPlugin" and max_steady_state_speed >= msg.initial_longitudinal_velocity >= min_steady_state_speed):
-                time_first_start_steady_state = t
-                has_steady_state = True
-                break
-        
-        # If the start time of steady state was found, find the longest duration of steady state time
+    # Conduct steady state evaluation 
+    # Get the start time of the vehicle reaching steady state (if one exists)
+    has_steady_state = False
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_exit_geofence, end_time = time_end_engagement):
+        # Vehicle has reached steady state when its speed within threshold range of steady state speed
+        if (max_steady_state_speed >= msg.twist.linear.x >= min_steady_state_speed):
+            time_start_steady_state = t
+            has_steady_state = True
+            break
+    
+    # If the start time of steady state was found, find the longest duration of steady state time
+    has_passed_steady_state_time_threshold = False
+    max_steady_state_duration = 0.0
+    if (has_steady_state):
         has_passed_steady_state_time_threshold = False
-        if (has_steady_state):
-            time_start_steady_state = time_first_start_steady_state # Tracks the current steady state start time
-            has_passed_steady_state_time_threshold = False
-            is_at_steady_state = True
-            steady_state_duration = 0.0
-            for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle_status'], start_time = time_first_start_steady_state, end_time = time_end_engagement):
-                current_speed = msg.speed * 0.277777 # Conversion from kph to m/s
+        is_at_steady_state = True
+        steady_state_duration = 0.0
+        for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_start_steady_state, end_time = time_end_engagement):
+            current_speed = msg.twist.linear.x
 
-                # If system is entering steady state, reset the steady state start time:
-                if ((max_steady_state_speed >= current_speed >= min_steady_state_speed) and not is_at_steady_state):
-                    is_at_steady_state = True
-                    time_start_steady_state = t
+            # If system is entering steady state, reset the steady state start time:
+            if ((max_steady_state_speed >= current_speed >= min_steady_state_speed) and not is_at_steady_state):
+                is_at_steady_state = True
+                time_start_steady_state = t
 
-                # If system is maintaining steady state, check if it has passed the threshold time of continuous steady state:
-                elif ((max_steady_state_speed >= current_speed >= min_steady_state_speed) and is_at_steady_state):
-                    steady_state_duration = (t - time_start_steady_state).to_sec()
-                    if (steady_state_duration >= min_steady_state_time):
-                        has_passed_steady_state_time_threshold = True
-                        break       
-                
-                # If system has exited steady state, reset the steady state flag
-                elif  ((max_steady_state_speed <= current_speed or current_speed <= min_steady_state_speed) and is_at_steady_state):
-                    is_at_steady_state = False
+            # If system is maintaining steady state, check if it has passed the threshold time of continuous steady state:
+            elif ((max_steady_state_speed >= current_speed >= min_steady_state_speed) and is_at_steady_state):
+                steady_state_duration = (t - time_start_steady_state).to_sec()
 
-        if (has_passed_steady_state_time_threshold):
-            print("B-23 succeeded; system reached continuous steady state for more than " + str(min_steady_state_time) + " seconds after geofence-triggered maneuvers.")
-            is_successful = True
-        else:
-            if has_steady_state:
-                print("B-23 failed; system reached continuous steady state for " + str(steady_state_duration) + " seconds after geofence-triggered maneuvers. " \
-                    + " At least " + str(min_steady_state_time) + " seconds required.")
-                is_successful = False
-            if not has_steady_state:
-                print("B-23 failed; system did not reach steady state after geofence-triggered maneuvers.")
-                is_successful = False
+                if steady_state_duration > max_steady_state_duration:
+                    max_steady_state_duration = steady_state_duration
+
+                if (steady_state_duration >= min_steady_state_time):
+                    has_passed_steady_state_time_threshold = True
+            
+            # If system has exited steady state, reset the steady state flag
+            elif  ((max_steady_state_speed <= current_speed or current_speed <= min_steady_state_speed) and is_at_steady_state):
+                is_at_steady_state = False
+
+    if (has_passed_steady_state_time_threshold):
+        print("B-23 succeeded; system reached continuous steady state for " + str(max_steady_state_duration) + " seconds after geofence-triggered maneuvers.")
+        is_successful = True
     else:
-        print("B-23 failed; system never completed final lane change after exiting geofence.")
-        is_successful = False
+        if has_steady_state:
+            print("B-23 failed; system reached continuous steady state for " + str(steady_state_duration) + " seconds after geofence-triggered maneuvers. " \
+                + " At least " + str(min_steady_state_time) + " seconds required.")
+            is_successful = False
+        if not has_steady_state:
+            print("B-23 failed; system did not reach steady state after geofence-triggered maneuvers.")
+            is_successful = False
 
     return is_successful
 
 ###########################################################################################################
 # TIM B-24: The entire scenario will satisfy all previous criteria using any of the speeds given here for 
-#           the "regular speed limit" (i.e. the speed limit when not in the geo-fence).
+#           the "regular speed limit" (i.e. the speed limit when not in the geo-fence). (25 mph)
+# RWM B-24: The entire scenario will satisfy all previous criteria using any of the speeds given here for 
+#           the "regular speed limit" (i.e. the speed limit when not in the geo-fence). (25 mph)
 ###########################################################################################################
 def check_speed_limit_when_not_in_geofence(bag, time_start_engagement, time_enter_geofence, time_exit_geofence, time_end_engagement, original_speed_limit):
     # (m/s) Threshold offset from speed limit to account for floating point precision
@@ -1068,8 +875,6 @@ def check_speed_limit_when_not_in_geofence(bag, time_start_engagement, time_ente
     time_tolerance_geofence = 0.80 # seconds
 
     # Check speed limit before entering geofence
-    # TODO: Current bug causes route_state topic to not be published after first TIM MobilityOperation message is received
-    #       As a result, a portion of the before-geofence portion cannot be evaluated
     is_correct_speed_limit_before_geofence = False
     time_incorrect_speed_limit_before_geofence = 0
     for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_start_engagement, end_time = time_enter_geofence):
@@ -1092,8 +897,6 @@ def check_speed_limit_when_not_in_geofence(bag, time_start_engagement, time_ente
             break
 
     # Check speed limit after exiting geofence
-    # TODO: Current bug causes route_state topic to not be published after first TIM MobilityOperation message is received
-    #       As a result, the after-geofence portion cannot be evaluated
     is_correct_speed_limit_after_geofence = False
     time_incorrect_speed_limit_after_geofence = 0
     for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_exit_geofence, end_time = time_end_engagement):
@@ -1135,6 +938,8 @@ def check_speed_limit_when_not_in_geofence(bag, time_start_engagement, time_ente
 
 ###########################################################################################################
 # TIM B-25: The speed limit given by the CM vehicle shall be 10 mph less 
+#           than the regular speed limit.
+# RWM B-25: The speed limit given by CARMA Cloud shall be 10 mph less 
 #           than the regular speed limit.
 ###########################################################################################################
 def check_advisory_speed_limit(bag, time_start_engagement, advisory_speed_limit, original_speed_limit):
@@ -1191,7 +996,7 @@ def main():
     TIM_black_pacifica_bag_files = [] 
     
     # Create list of TIM Ford Fusion bag files to be processed
-    TIM_ford_fusion_bag_files =["_2021-06-24-18-03-35_down-selected.bag",
+    TIM_ford_fusion_bag_files = ["_2021-06-24-18-03-35_down-selected.bag",
                                 "_2021-06-24-18-14-20_down-selected.bag",
                                 "_2021-06-24-18-20-00_down-selected.bag",
                                 "_2021-06-24-18-26-11_down-selected.bag",
@@ -1261,7 +1066,7 @@ def main():
 
         # Get the rosbag times associated with the starting engagement and ending engagement for the TIM use case test (15-25 seconds)
         print("Getting engagement times at " + str(datetime.datetime.now()))
-        time_test_start_engagement, time_test_end_engagement, found_test_times = get_TIM_test_case_engagement_times(bag, time_enter_geofence, time_exit_geofence)
+        time_test_start_engagement, time_test_end_engagement, found_test_times = get_test_case_engagement_times(bag, time_enter_geofence, time_exit_geofence)
         print("Got engagement times at " + str(datetime.datetime.now()))
         if (not found_test_times):
             print("Could not find test case engagement start and end times in bag file.")
@@ -1286,11 +1091,27 @@ def main():
         time_exit_geofence = adjust_geofence_exit_time(bag, time_exit_geofence, original_speed_limit)
         print("Adjusted geofence exit time (based on /guidance/route_state): " + str(time_exit_geofence))
 
+        # Initialize results 
+        b_1_result = None
+        b_2_result = None
+        b_4_result = None
+        b_10_result = None
+        b_11_result = None
+        b_13_result = None
+        b_15_result = None
+        b_20_result = None
+        b_21_result = None
+        b_22_result = None
+        b_23_result = None
+        b_24_result = None
+        b_25_result = None
+        b_28_result = None
+
         # Metrics B-28
         if bag_file in TIM_bag_files:
             minimum_gap, advisory_speed_limit, event_type, time_received_first_msg, b_28_result = get_TIM_mobility_operation_data(bag)
         elif bag_file in RWM_bag_files:
-            minimum_gap, advisory_speed_limit, time_received_first_msg, b_28_result = get_TCM_data(bag)
+            minimum_gap, advisory_speed_limit, time_received_first_msg, b_28_result = get_RWM_TCM_data(bag)
         
         # Convert advisory speed limit from B-28 to m/s for future metric evaluations
         advisory_speed_limit = advisory_speed_limit * 0.44704 # Conversion from mph to m/s
@@ -1304,24 +1125,23 @@ def main():
         # Metrics B-2
         b_2_result = check_steady_state_before_first_received_message(bag, time_test_start_engagement, time_received_first_msg, original_speed_limit)
 
-        # Metrics B-4
-        # TODO: B-4 cannot be properly measured without knowing whether a trajectory plan deceleration is due to a curve.
-        b_4_result = check_lane_keeping_steady_state_speed(bag, time_test_start_engagement, time_enter_geofence, time_exit_geofence, original_speed_limit, advisory_speed_limit)
+        # Metrics B-4 (Currently B-4 is evaluated using the speed plot from Volpe's generate_plots.py script)
+        b_4_result = None
 
         # Metrics B-13
         b_13_result = check_lane_merge_before_geofence(bag, time_test_start_engagement, time_enter_geofence)
 
         # Metrics B-15
-        b_15_result = check_deceleration_before_geofence(bag, time_test_start_engagement, time_enter_geofence)
+        b_15_result = check_deceleration_before_geofence(bag, time_enter_geofence, original_speed_limit, advisory_speed_limit)
 
         # Metrics B-20
-        b_20_result = check_lane_change_after_geofence(bag, time_exit_geofence, time_test_end_engagement)
+        b_20_result = check_lane_change_after_geofence(bag, time_exit_geofence)
 
         # Metrics B-21
-        b_21_result = check_acceleration_distance_after_geofence(bag, time_exit_geofence, time_test_end_engagement, time_enter_geofence, advisory_speed_limit)
+        b_21_result = check_acceleration_distance_after_geofence(bag, time_exit_geofence)
 
         # Metrics B-22
-        b_22_result = check_acceleration_rate_after_geofence(bag, time_exit_geofence, time_test_end_engagement, original_speed_limit)
+        b_22_result = check_acceleration_rate_after_geofence(bag, time_exit_geofence, original_speed_limit, advisory_speed_limit)
 
         # Metrics B-23
         b_23_result = check_steady_state_after_geofence(bag, time_exit_geofence, time_test_end_engagement, original_speed_limit)
