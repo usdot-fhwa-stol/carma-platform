@@ -211,7 +211,7 @@ namespace port_drayage_plugin
              * \param previous_port_drayage_msg The contents of the previously received MobilityOperation
              *  port drayage message for this CMV stored in a PortDrayageMobilityOperationMsg object.
              */
-            void update_cargo_information_after_action_completion(PortDrayageMobilityOperationMsg previous_port_drayage_msg);
+            void update_cargo_information_after_action_completion(const PortDrayageMobilityOperationMsg& previous_port_drayage_msg);
 
             /**
              * \brief Function to help parse the text included in an inbound MobilityOperation message's 
@@ -237,7 +237,7 @@ namespace port_drayage_plugin
              * \brief Get the current state of the port drayage state machine
              * \return The current state value of the port drayage state machine
              */
-            const PortDrayageState get_port_drayage_state();
+            PortDrayageState get_port_drayage_state();
 
             /**
              * \brief Spin and process data

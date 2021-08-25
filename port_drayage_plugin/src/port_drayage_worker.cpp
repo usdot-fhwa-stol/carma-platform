@@ -211,14 +211,14 @@ namespace port_drayage_plugin
         }
     }
 
-    void PortDrayageWorker::update_cargo_information_after_action_completion(PortDrayageMobilityOperationMsg previous_port_drayage_msg) {
+    void PortDrayageWorker::update_cargo_information_after_action_completion(const PortDrayageMobilityOperationMsg& previous_port_drayage_msg) {
         // If the previously received message was for 'Pickup' or 'Dropoff', update this object's _has_cargo flag and _cargo_id members accordingly
         // Note: This assumes the previous 'Pickup' or 'Dropoff' action was successful
-        if (_latest_mobility_operation_msg.operation == PORT_DRAYAGE_PICKUP_OPERATION_ID) {
+        if (previous_port_drayage_msg.operation == PORT_DRAYAGE_PICKUP_OPERATION_ID) {
             _has_cargo = true;
 
-            if (_latest_mobility_operation_msg.cargo_id) {
-                _cargo_id = *_latest_mobility_operation_msg.cargo_id;
+            if (previous_port_drayage_msg.cargo_id) {
+                _cargo_id = *previous_port_drayage_msg.cargo_id;
                 ROS_DEBUG_STREAM("CMV completed pickup action. CMV is now carrying cargo " << _cargo_id);
             }
             else {
@@ -226,7 +226,7 @@ namespace port_drayage_plugin
                 throw std::invalid_argument("CMV has completed pickup, but there is no Cargo ID associated with the picked up cargo.");
             }
         }
-        else if (_latest_mobility_operation_msg.operation == PORT_DRAYAGE_DROPOFF_OPERATION_ID) {
+        else if (previous_port_drayage_msg.operation == PORT_DRAYAGE_DROPOFF_OPERATION_ID) {
             ROS_DEBUG_STREAM("CMV completed dropoff action. CMV is no longer carrying cargo " << _cargo_id);
             _has_cargo = false;
             _cargo_id = ""; // Empty string is used when no cargo is being carried
@@ -344,7 +344,7 @@ namespace port_drayage_plugin
         _latest_route_event = msg;
     }
 
-    const PortDrayageState PortDrayageWorker::get_port_drayage_state() {
+    PortDrayageState PortDrayageWorker::get_port_drayage_state() {
         return _pdsm.get_state();
     }
 
