@@ -216,6 +216,9 @@ public:
   virtual lanelet::Optional<TrafficRulesConstPtr>
   getTrafficRules(const std::string& participant = lanelet::Participants::Vehicle) const = 0;
 
+  virtual lanelet::Optional<TrafficRulesConstPtr>
+  getTrafficRules() const = 0;
+
   /**
    * \brief Converts an ExternalObject in a RoadwayObstacle by mapping its position onto the semantic map. Can also be
    * used to determine if the object is on the roadway

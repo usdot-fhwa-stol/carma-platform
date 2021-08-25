@@ -680,30 +680,12 @@ lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules(const s
   return optional_ptr;
 }
 
-lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules()
+lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules() const
 {
   std::string participant = participant_type_;
   lanelet::Optional<TrafficRulesConstPtr> optional_ptr;
-  // Create carma traffic rules object
-  try
-  {
-    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(
-        lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant);
+  return getTrafficRules(participant);
 
-    auto carma_traffic_rules = std::make_shared<lanelet::traffic_rules::CarmaUSTrafficRules>();
-
-    carma_traffic_rules = std::static_pointer_cast<lanelet::traffic_rules::CarmaUSTrafficRules>(
-        lanelet::traffic_rules::TrafficRulesPtr(std::move(traffic_rules)));
-    carma_traffic_rules->setConfigSpeedLimit(config_speed_limit_);
-
-    optional_ptr = std::static_pointer_cast<const lanelet::traffic_rules::CarmaUSTrafficRules>(carma_traffic_rules);
-  }
-  catch (const lanelet::InvalidInputError& e)
-  {
-    return optional_ptr;
-  }
-
-  return optional_ptr;
 }
 
 lanelet::Optional<cav_msgs::RoadwayObstacle>
