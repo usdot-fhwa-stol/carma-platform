@@ -295,16 +295,17 @@ TEST(PortDrayageTest, testPortDrayageStateMachine2)
 
     ASSERT_EQ(port_drayage_plugin::PortDrayageState::EN_ROUTE, pdw.get_port_drayage_state());
 
-    // State Machine should transition to AWAITING_DIRECTION if a ROUTE_COMPLETED event occurs while the vehicle is stopped
-    geometry_msgs::TwistStamped speed;
-    speed.twist.linear.x = 0.0; // Speed is 0 mph
-    geometry_msgs::TwistStampedConstPtr speed_pointer(new geometry_msgs::TwistStamped(speed));
-    pdw.set_current_speed(speed_pointer); // PortDrayageWorker receives message indicating vehicle speed is 0 mph
+    // State Machine should transition to AWAITING_DIRECTION if a 'ROUTE_LOADED' event occurs immediately after a 'ROUTE_COMPLETED' event
+    cav_msgs::RouteEvent route_event_1;
+    route_event_1.event = cav_msgs::RouteEvent::ROUTE_COMPLETED; 
+    cav_msgs::RouteEventConstPtr route_event_pointer_1(new cav_msgs::RouteEvent(route_event_1));
+    pdw.on_route_event(route_event_pointer_1); // PortDrayageWorker receives RouteEvent indicating route has been completed
 
-    cav_msgs::RouteEvent route_event;
-    route_event.event = cav_msgs::RouteEvent::ROUTE_COMPLETED; 
-    cav_msgs::RouteEventConstPtr route_event_pointer(new cav_msgs::RouteEvent(route_event));
-    pdw.on_route_event(route_event_pointer); // PortDrayageWorker receives message indicating route has been completed
+    cav_msgs::RouteEvent route_event_2;
+    route_event_2.event = cav_msgs::RouteEvent::ROUTE_LOADED; 
+    cav_msgs::RouteEventConstPtr route_event_pointer_2(new cav_msgs::RouteEvent(route_event_2));
+    pdw.on_route_event(route_event_pointer_2); // PortDrayageWorker receives RouteEvent indicating the previously completed route is no longer active
+    
     ASSERT_EQ(port_drayage_plugin::PortDrayageState::AWAITING_DIRECTION, pdw.get_port_drayage_state());
 
     // State Machine should transition to 'EN_ROUTE' if a new port drayage MobilityOperation message is received
@@ -323,7 +324,8 @@ TEST(PortDrayageTest, testPortDrayageStateMachine2)
     ASSERT_EQ(port_drayage_plugin::PortDrayageState::EN_ROUTE, pdw.get_port_drayage_state());
 
     // State Machine should transition to 'AWAITING_DIRECTION' again if a ROUTE_COMPLETED event occurs while the vehicle is stopped
-    pdw.on_route_event(route_event_pointer); // PortDrayageWorker receives message indicating route has been completed
+    pdw.on_route_event(route_event_pointer_1); // PortDrayageWorker receives RouteEvent indicating route has been completed
+    pdw.on_route_event(route_event_pointer_2); // PortDrayageWorker receives RouteEvent indicating the previously completed route is no longer active
     ASSERT_EQ(port_drayage_plugin::PortDrayageState::AWAITING_DIRECTION, pdw.get_port_drayage_state());
 }
 
@@ -524,8 +526,6 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
         true, // Flag to enable port drayage operations
         [](cav_srvs::SetActiveRoute){return true;}
     };
-
-    // 
 
     // Create a "PICKUP" MobilityOperationConstPtr for the newly created PortDrayageWorker
     cav_msgs::MobilityOperation mobility_operation_msg2;

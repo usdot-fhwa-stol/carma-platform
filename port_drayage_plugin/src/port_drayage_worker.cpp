@@ -323,6 +323,7 @@ namespace port_drayage_plugin
 
 
     void PortDrayageWorker::on_guidance_state(const cav_msgs::GuidanceStateConstPtr& msg) {
+        // Drayage operations have started when the CMV has been engaged for the first time
         if ((msg->state == cav_msgs::GuidanceState::ENGAGED) && (_pdsm.get_state() == PortDrayageState::INACTIVE) && _enable_port_drayage) {
             ROS_DEBUG_STREAM("CMV has been engaged for the first time. Processing DRAYAGE_START event.");
             _pdsm.process_event(PortDrayageEvent::DRAYAGE_START);
@@ -341,7 +342,7 @@ namespace port_drayage_plugin
             }
         }
 
-        // Update the latest received route event
+        // Update the latest received route event data member
         _latest_route_event = msg;
     }
 
