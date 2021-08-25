@@ -201,7 +201,7 @@ namespace port_drayage_plugin
 
             /**
              * \brief Callback to process a received MobilityOperation message
-             * \param mobility_operation_msg a received MobilityOperation message
+             * \param msg a received MobilityOperation message
              */
             void on_inbound_mobility_operation(const cav_msgs::MobilityOperationConstPtr& msg);
 
@@ -235,7 +235,7 @@ namespace port_drayage_plugin
 
             /**
              * \brief Get the current state of the port drayage state machine
-             * \return The current state value
+             * \return The current state value of the port drayage state machine
              */
             const PortDrayageState get_port_drayage_state();
 

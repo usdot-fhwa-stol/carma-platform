@@ -46,7 +46,6 @@ namespace port_drayage_plugin
             _pdsm.process_event(PortDrayageEvent::ARRIVED_AT_DESTINATION);
         }
 
-
         return true;
     }
 
@@ -220,13 +219,12 @@ namespace port_drayage_plugin
 
             if (_latest_mobility_operation_msg.cargo_id) {
                 _cargo_id = *_latest_mobility_operation_msg.cargo_id;
+                ROS_DEBUG_STREAM("CMV completed pickup action. CMV is now carrying cargo " << _cargo_id);
             }
             else {
                 ROS_DEBUG_STREAM("CMV has completed pickup, but there is no Cargo ID associated with the picked up cargo.");
                 throw std::invalid_argument("CMV has completed pickup, but there is no Cargo ID associated with the picked up cargo.");
             }
-
-            ROS_DEBUG_STREAM("CMV completed pickup action. CMV is now carrying cargo " << _cargo_id);
         }
         else if (_latest_mobility_operation_msg.operation == PORT_DRAYAGE_DROPOFF_OPERATION_ID) {
             ROS_DEBUG_STREAM("CMV completed dropoff action. CMV is no longer carrying cargo " << _cargo_id);
