@@ -180,7 +180,10 @@ public:
   LaneletRoutingGraphConstPtr getMapRoutingGraph() const override;
 
   lanelet::Optional<TrafficRulesConstPtr>
-  getTrafficRules(const std::string& participant) const override;//Participant type is sent from WMListenerWorker
+  getTrafficRules(const std::string& participant = lanelet::Participants::Vehicle) const override;
+
+  lanelet::Optional<TrafficRulesConstPtr>
+  getTrafficRules();//Participant type is sent from WMListenerWorker
 
   std::vector<cav_msgs::RoadwayObstacle> getRoadwayObjects() const override;
 

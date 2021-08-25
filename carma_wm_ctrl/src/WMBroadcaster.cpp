@@ -1034,14 +1034,7 @@ void WMBroadcaster::setConfigSpeedLimit(double cL)
 
 void WMBroadcaster::setVehicleParticipationType(std::string participant)
 {
-  if(participant == "vehicle:car")
-  {
-    participant_ = lanelet::Participants::VehicleCar;
-  }
-  if(participant == "vehicle:truck")
-  {
-    participant_ = lanelet::Participants::VehicleTruck;
-  }
+  participant_ = participant;
 }
 
 uint32_t WMBroadcaster::generate32BitId(const std::string& label)

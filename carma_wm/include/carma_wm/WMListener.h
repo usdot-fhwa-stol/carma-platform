@@ -106,14 +106,6 @@ public:
    */
   void setConfigSpeedLimit(double config_lim) const;
 
-  /*!
-   * \brief Allows user to set a callback to be triggered when a route update is received
-   *        NOTE: If operating in multi-threaded mode the world model will remain locked until the user function
-   * completes.
-   *
-   * \param participant A function that populate the vehicle participation type value after the world model is updated with a new route
-   */
-  void setVehicleParticipationType(std::string participant) const;
 
   /*!
    * \brief Use to allow updates to occur even if they invalidate the current route.
@@ -147,6 +139,7 @@ private:
  
   ros::CARMANodeHandle nh2_{"/"};
   lanelet::Velocity config_speed_limit_;
+  std::string participant_;
 
 };
 }  // namespace carma_wm

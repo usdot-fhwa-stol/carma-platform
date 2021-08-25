@@ -126,7 +126,6 @@ private:
   std::function<void()> route_callback_;
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
   double config_speed_limit_;
-  std::string participant_;
 
   size_t current_map_version_ = 0; // Current map version based on recived map messages
   std::queue<autoware_lanelet2_msgs::MapBinPtr> map_update_queue_; // Update queue used to cache map updates when they cannot be immeadiatly applied due to waiting for rerouting
