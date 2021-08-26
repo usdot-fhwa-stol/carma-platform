@@ -1031,23 +1031,31 @@ void WMBroadcaster::scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf
 
     
     cav_msgs::TrafficControlMessageV01 duplicate_msg = gf_ptr->msg_;
+    for (auto pt: duplicate_msg.geometry.nodes)
+    {
+      ROS_DEBUG_STREAM("x: " << pt.x << ", y: " << pt.y);
+    }
     std::reverse(duplicate_msg.geometry.nodes.begin() + 1, duplicate_msg.geometry.nodes.end());
     double first_x = 0;
     double first_y = 0;
 
     for (auto& pt: duplicate_msg.geometry.nodes)
     {
-      pt.x = -1* pt.x;
-      pt.y = -1* pt.y;
       first_x+= pt.x;
       first_y+= pt.y;
+      pt.x = -1* pt.x;
+      pt.y = -1* pt.y;
     }
     duplicate_msg.geometry.nodes[0].x = first_x;
     duplicate_msg.geometry.nodes[0].y = first_y;
     
+    for (auto pt: duplicate_msg.geometry.nodes)
+    {
+      ROS_DEBUG_STREAM("x: " << pt.x << ", y: " << pt.y);
+    }
+
     gf_ptr_speed->msg_ = duplicate_msg;
     scheduler_.addGeofence(gf_ptr_speed);
-    return;
   }
   if (detected_workzone_signal && msg_detail.choice != cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) // if workzone message detected, save to cache to process later
   {
