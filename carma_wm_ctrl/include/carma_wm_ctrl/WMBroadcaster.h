@@ -342,8 +342,6 @@ public:
 
   void setErrorDistance (double error_distance);
 
-  void publishQueuedUpdates();
-
 private:
   double error_distance_ = 5; //meters
   lanelet::ConstLanelets route_path_;

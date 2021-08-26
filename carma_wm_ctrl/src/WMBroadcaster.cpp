@@ -1503,23 +1503,6 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   map_update_pub_(gf_msg);
 }
 
-void WMBroadcaster::publishQueuedUpdates()
-{
-  // try to publish if there is any left over updates exist
-  if (workzone_geometry_published_)
-  {
-    for (auto msg : workzone_remaining_msgs_)
-    {
-      auto gf_ptr = std::make_shared<Geofence>();
-      geofenceFromMsg(gf_ptr, msg);
-      addGeofence(gf_ptr);
-    }
-    workzone_remaining_msgs_ = {}; //clear all updated
-    
-    workzone_geometry_published_ = false;
-  }
-}
-
 void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
