@@ -479,7 +479,7 @@ namespace route {
 
     void RouteGeneratorWorker::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
-        vehicle_pose_ = *msg;
+        vehicle_pose_ = *msg; 
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
             current_loc_ = lanelet::BasicPoint2d(msg->pose.position.x, msg->pose.position.y);

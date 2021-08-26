@@ -210,12 +210,7 @@ void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_
   gf_ptr->gf_pts = getPointsInLocalFrame(msg_v01);
 
   gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(gf_ptr->gf_pts);
-    
-  for (auto llt : gf_ptr->affected_parts_)
-  {
-    ROS_ERROR_STREAM("affected_llt: " << llt.id());
-    ROS_DEBUG_STREAM("affected_llt: " << llt.id());
-  }
+
   if (gf_ptr->affected_parts_.size() == 0) {
     ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
     return; // Return empty geofence list
@@ -244,9 +239,6 @@ void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_
     std::string reason = "";
     if (msg_v01.package.label_exists)
       reason = msg_v01.package.label;
-
-    ROS_ERROR_STREAM("set the speed !" << msg_detail.maxspeed);
-    ROS_DEBUG_STREAM("set the speed !" << msg_detail.maxspeed);
 
     if(config_limit > 0_mph && config_limit < 80_mph && config_limit < sL)//Accounting for the configured speed limit, input zero when not in use
         sL = config_limit;
@@ -1025,20 +1017,19 @@ void WMBroadcaster::scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf
   // create workzone specific extra speed geofence
   if (detected_workzone_signal && msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE)
   {
-    // duplicate the messages with inverted points to detect all newly created lanelets
+    // duplicate the messages with inverted points to support new lanelets created from workzone
+    // as carma-cloud currently does not support geofence points with direction opposite to that of the road
+
     auto gf_ptr_speed = std::make_shared<Geofence>();
     gf_ptr_speed->schedules = gf_ptr->schedules;
 
-    
     cav_msgs::TrafficControlMessageV01 duplicate_msg = gf_ptr->msg_;
-    for (auto pt: duplicate_msg.geometry.nodes)
-    {
-      ROS_DEBUG_STREAM("x: " << pt.x << ", y: " << pt.y);
-    }
+
     std::reverse(duplicate_msg.geometry.nodes.begin() + 1, duplicate_msg.geometry.nodes.end());
     double first_x = 0;
     double first_y = 0;
 
+    // this fancy logic is needed as each node is expressed as an offset from the last one
     for (auto& pt: duplicate_msg.geometry.nodes)
     {
       first_x+= pt.x;
@@ -1049,11 +1040,6 @@ void WMBroadcaster::scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf
     duplicate_msg.geometry.nodes[0].x = first_x;
     duplicate_msg.geometry.nodes[0].y = first_y;
     
-    for (auto pt: duplicate_msg.geometry.nodes)
-    {
-      ROS_DEBUG_STREAM("x: " << pt.x << ", y: " << pt.y);
-    }
-
     gf_ptr_speed->msg_ = duplicate_msg;
     scheduler_.addGeofence(gf_ptr_speed);
   }
