@@ -171,7 +171,7 @@ public:
   
   /*!
    * \brief Fills geofence object from TrafficControlMessageV01 ROS Msg
-   * \param Geofence object to fill wuth information extracted from this msg and previously cached msgs that are relevant
+   * \param Geofence object to fill with information extracted from this msg and previously cached msgs that are relevant
    * \param geofence_msg The ROS msg that contains geofence information
    * \throw InvalidObjectStateError if base_map is not set or the base_map's georeference is empty
    */
