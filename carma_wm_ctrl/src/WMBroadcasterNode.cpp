@@ -92,7 +92,7 @@ int WMBroadcasterNode::run()
       if(wmb_.getRoute().route_path_lanelet_ids.size() > 0)
         wmb_.routeCallbackMessage(wmb_.getRoute());
       }, false);
-
+      
   // Spin
   cnh_.spin();
   return 0;

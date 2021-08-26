@@ -28,6 +28,8 @@
 #include <cav_msgs/SPAT.h>
 #include "TrackPos.h"
 #include <carma_wm/WorldModelUtils.h>
+#include "boost/date_time/posix_time/posix_time.hpp"
+
 
 namespace carma_wm
 {

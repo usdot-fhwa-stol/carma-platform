@@ -199,20 +199,21 @@ void WMBroadcaster::addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const c
   }
 }
 
-std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& msg_v01)
+void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01)
 {
-  std::vector<std::shared_ptr<Geofence>> return_list;
-  auto gf_ptr = std::make_shared<Geofence>();
+  bool detected_workzone_signal = msg_v01.package.label_exists && msg_v01.package.label.find("SIG_WZ") != std::string::npos;
+  cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
+
   // Get ID
   std::copy(msg_v01.id.id.begin(), msg_v01.id.id.end(), gf_ptr->id_.begin());
-
-  // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
+  
   gf_ptr->gf_pts = getPointsInLocalFrame(msg_v01);
+
   gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(gf_ptr->gf_pts);
 
   if (gf_ptr->affected_parts_.size() == 0) {
     ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
-    return {}; // Return empty geofence list
+    return; // Return empty geofence list
   }
 
   std::vector<lanelet::Lanelet> affected_llts;
@@ -225,50 +226,56 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
     if (llt_or_area.isArea()) affected_areas.push_back(current_map_->areaLayer.get(llt_or_area.area()->id()));
   }
 
-  // process schedule from message
-  addScheduleFromMsg(gf_ptr, msg_v01);
-
   // TODO: logic to determine what type of geofence goes here
   // currently only converting portion of control message that is relevant to:
   // - digital speed limit, passing control line, digital minimum gap, region access rule, and series of workzone related messages
   lanelet::Velocity sL;
-  cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
+  
   
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) 
   {  
     //Acquire speed limit information from TafficControlDetail msg
     sL = lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPH()); 
-    
+    std::string reason = "";
+    if (msg_v01.package.label_exists)
+      reason = msg_v01.package.label;
+
     if(config_limit > 0_mph && config_limit < 80_mph && config_limit < sL)//Accounting for the configured speed limit, input zero when not in use
         sL = config_limit;
     //Ensure Geofences do not provide invalid speed limit data (exceed predetermined maximum value)
     // @SONAR_STOP@
     if(sL > 80_mph )
     {
-     ROS_WARN_STREAM("Digital maximum speed limit is invalid. Value capped at max speed limit."); //Output warning message
-     sL = 80_mph; //Cap the speed limit to the predetermined maximum value
+    ROS_WARN_STREAM("Digital maximum speed limit is invalid. Value capped at max speed limit."); //Output warning message
+    sL = 80_mph; //Cap the speed limit to the predetermined maximum value
 
     }
     if(sL < 0_mph)
     {
-           ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
+          ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
       sL = 0_mph;
     }// @SONAR_START@
+    
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
+                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01), reason));
   }
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINSPEED_CHOICE) 
   {
     //Acquire speed limit information from TafficControlDetail msg
-     sL = lanelet::Velocity(msg_detail.minspeed * lanelet::units::MPH());
-     if(config_limit > 0_mph && config_limit < 80_mph)//Accounting for the configured speed limit, input zero when not in use
+    sL = lanelet::Velocity(msg_detail.minspeed * lanelet::units::MPH());
+    if(config_limit > 0_mph && config_limit < 80_mph)//Accounting for the configured speed limit, input zero when not in use
         sL = config_limit;
+
+    std::string reason = "";
+    if (msg_v01.package.label_exists)
+      reason = msg_v01.package.label;
+
     //Ensure Geofences do not provide invalid speed limit data 
     // @SONAR_STOP@
     if(sL > 80_mph )
     {
-     ROS_WARN_STREAM("Digital speed limit is invalid. Value capped at max speed limit.");
-     sL = 80_mph;
+    ROS_WARN_STREAM("Digital speed limit is invalid. Value capped at max speed limit.");
+    sL = 80_mph;
     }
     if(sL < 0_mph)
     {
@@ -276,7 +283,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
       sL = 0_mph;
     }// @SONAR_START@
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
+                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01), reason));
   }
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::LATPERM_CHOICE || msg_detail.choice == cav_msgs::TrafficControlDetail::LATAFFINITY_CHOICE)
   {
@@ -295,9 +302,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
     addRegionMinimumGap(gf_ptr,msg_v01, min_gap, affected_llts, affected_areas);
   }
 
-  bool detected_workzone_signal = msg_v01.package.label_exists && msg_v01.package.label.find("SIG_WZ") != std::string::npos;
-
-  if (detected_workzone_signal) // if workzone message detected, save to cache to process later
+  if (detected_workzone_signal && msg_detail.choice != cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) // if workzone message detected, save to cache to process later
   {
     gf_ptr->label_ = msg_v01.package.label; // to extract intersection, and signal group id
     if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && (msg_detail.closed == cav_msgs::TrafficControlDetail::CLOSED ||
@@ -310,27 +315,17 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
     {
       work_zone_geofence_cache_[WorkZoneSection::REVERSE] = gf_ptr;
     }
-    if (work_zone_geofence_cache_.size() < WORKZONE_TCM_REQUIRED_SIZE)
-    {
-      ROS_INFO_STREAM("Received 'SIG_WZ' signal. Waiting for the rest of the messages, returning for now...");
-      return {};
-    }
-    else
-    {
-      return_list = createWorkzoneGeofence(work_zone_geofence_cache_);
-      return return_list;
-    }
+    return;
   }
   else if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && msg_detail.closed==cav_msgs::TrafficControlDetail::CLOSED) // if stand-alone closed signal apart from Workzone
   {
     addRegionAccessRule(gf_ptr,msg_v01,affected_llts);
   }
  
-  return_list.push_back(gf_ptr);
-  return return_list;
+  return;
 }
 
-std::vector<std::shared_ptr<Geofence>> WMBroadcaster::createWorkzoneGeofence(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache)
+std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeofence(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache)
 {
   std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
   std::shared_ptr<std::vector<lanelet::Lanelet>> middle_opposite_lanelets = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
@@ -354,7 +349,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::createWorkzoneGeofence(std
   }
   work_zone_geofence_cache.clear();
 
-  return {gf_ptr};
+  return gf_ptr;
 }
 
 std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache,  lanelet::Lanelet parallel_llt_front,  lanelet::Lanelet parallel_llt_back, 
@@ -369,7 +364,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   lanelet::Lanelet front_llt_diag = createLinearInterpolatingLanelet(parallel_llt_front.leftBound3d().back(), parallel_llt_front.rightBound3d().back(), 
                                                                         middle_opposite_lanelets->back().rightBound3d().back(), middle_opposite_lanelets->back().leftBound3d().back());
   ROS_DEBUG_STREAM("Created diag front_llt_diag id:" << front_llt_diag.id());
-  for (auto regem : parallel_llt_front.regulatoryElements()) //copy existing regem into the new llts
+  for (auto regem : middle_opposite_lanelets->back().regulatoryElements()) //copy existing regem into the new llts
   {
     front_llt_diag.addRegulatoryElement(regem);
   }
@@ -867,6 +862,7 @@ void WMBroadcaster::addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_pt
 void WMBroadcaster::addRegionAccessRule(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const
 {
   const std::string& reason = msg_v01.package.label;
+  gf_ptr->label_ = msg_v01.package.label;
   auto regulatory_element = std::make_shared<lanelet::RegionAccessRule>(lanelet::RegionAccessRule::buildData(lanelet::utils::getId(),affected_llts,{},invertParticipants(participantsChecker(msg_v01)), reason));
 
   if(!regulatory_element->accessable(lanelet::Participants::VehicleCar) || !regulatory_element->accessable(lanelet::Participants::VehicleTruck )) 
@@ -999,21 +995,77 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   }
     
   checked_geofence_ids_.insert(boost::uuids::to_string(id));
-  auto gf_ptr_list = geofenceFromMsg(geofence_msg.tcmV01);
-  if (gf_ptr_list.empty() ||
-      (!gf_ptr_list.empty() && gf_ptr_list.front()->affected_parts_.size() == 0))
-  {
-    ROS_WARN_STREAM("Geofence message could not be converted");
-    return;
-  }
-  for (auto gf_ptr : gf_ptr_list)
-  {
-    tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(gf_ptr->gf_pts)); // create visualizer in rviz
-    scheduler_.addGeofence(gf_ptr);  // Add the geofence to the scheduler
-    ROS_INFO_STREAM("New geofence message received by WMBroadcaster with id: " << gf_ptr->id_  << ", as part of total processed msgs size: " << gf_ptr_list.size());
-  }
+
+  auto gf_ptr = std::make_shared<Geofence>();
+
+  gf_ptr->msg_ = geofence_msg.tcmV01;
+
+  // process schedule from message
+  addScheduleFromMsg(gf_ptr, geofence_msg.tcmV01);
   
+  scheduleGeofence(gf_ptr);
 };
+
+void WMBroadcaster::scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr)
+{
+  ROS_INFO_STREAM("Scheduling new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
+  
+  bool detected_workzone_signal = gf_ptr->msg_.package.label_exists && gf_ptr->msg_.package.label.find("SIG_WZ") != std::string::npos;
+  
+  cav_msgs::TrafficControlDetail msg_detail = gf_ptr->msg_.params.detail;
+  
+  // create workzone specific extra speed geofence
+  if (detected_workzone_signal && msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE)
+  {
+    // duplicate the messages with inverted points to support new lanelets created from workzone
+    // as carma-cloud currently does not support geofence points with direction opposite to that of the road
+
+    auto gf_ptr_speed = std::make_shared<Geofence>();
+    gf_ptr_speed->schedules = gf_ptr->schedules;
+
+    cav_msgs::TrafficControlMessageV01 duplicate_msg = gf_ptr->msg_;
+
+    std::reverse(duplicate_msg.geometry.nodes.begin() + 1, duplicate_msg.geometry.nodes.end());
+    double first_x = 0;
+    double first_y = 0;
+
+    // this fancy logic is needed as each node is expressed as an offset from the last one
+    for (auto& pt: duplicate_msg.geometry.nodes)
+    {
+      first_x+= pt.x;
+      first_y+= pt.y;
+      pt.x = -1* pt.x;
+      pt.y = -1* pt.y;
+    }
+    duplicate_msg.geometry.nodes[0].x = first_x;
+    duplicate_msg.geometry.nodes[0].y = first_y;
+    
+    gf_ptr_speed->msg_ = duplicate_msg;
+    scheduler_.addGeofence(gf_ptr_speed);
+  }
+  if (detected_workzone_signal && msg_detail.choice != cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) // if workzone message detected, save to cache to process later
+  {
+    gf_ptr->label_ = gf_ptr->msg_.package.label; // to extract intersection, and signal group id
+    if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && (msg_detail.closed == cav_msgs::TrafficControlDetail::CLOSED ||
+                                                                                msg_detail.closed == cav_msgs::TrafficControlDetail::TAPERRIGHT ||
+                                                                                msg_detail.closed == cav_msgs::TrafficControlDetail::OPENRIGHT))
+    {
+      work_zone_geofence_cache_[msg_detail.closed] = gf_ptr;
+    }
+    else if (msg_detail.choice == cav_msgs::TrafficControlDetail::DIRECTION_CHOICE && msg_detail.direction == cav_msgs::TrafficControlDetail::REVERSE)
+    {
+      work_zone_geofence_cache_[WorkZoneSection::REVERSE] = gf_ptr;
+    }
+    if (work_zone_geofence_cache_.size() < WORKZONE_TCM_REQUIRED_SIZE)
+    {
+      ROS_INFO_STREAM("Received 'SIG_WZ' signal. Waiting for the rest of the messages, returning for now...");
+      return;
+    }
+  }
+
+  scheduler_.addGeofence(gf_ptr);  // Add the geofence to the scheduler
+
+}
 
 void WMBroadcaster::geoReferenceCallback(const std_msgs::String& geo_ref)
 {
@@ -1387,6 +1439,25 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Adding active geofence to the map with geofence id: " << gf_ptr->id_);
   
+  // if applying workzone geometry geofence, utilize workzone chache to create one 
+  bool detected_workzone_signal = gf_ptr->msg_.package.label_exists && gf_ptr->msg_.package.label.find("SIG_WZ") != std::string::npos;
+  if (detected_workzone_signal && gf_ptr->msg_.params.detail.choice != cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE)
+  {
+    for (auto gf_cache_ptr : work_zone_geofence_cache_)
+    {
+      geofenceFromMsg(gf_cache_ptr.second, gf_cache_ptr.second->msg_);
+    }
+    gf_ptr = createWorkzoneGeofence(work_zone_geofence_cache_);
+  }
+  else
+  {
+    geofenceFromMsg(gf_ptr, gf_ptr->msg_);
+  }
+  
+
+  // add marker to rviz
+  tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(gf_ptr->gf_pts)); // create visualizer in rviz
+
   // Process the geofence object to populate update remove lists
   addGeofenceHelper(gf_ptr);
   
@@ -1416,7 +1487,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   gf_msg.map_version = current_map_version_;
   map_update_message_queue_.push_back(gf_msg); // Add diff to current map update queue
   map_update_pub_(gf_msg);
-};
+}
 
 void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
 {
@@ -1440,7 +1511,7 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   map_update_pub_(gf_msg_revert);
 
 
-};
+}
   
 cav_msgs::Route WMBroadcaster::getRoute()
 {
@@ -1823,7 +1894,9 @@ cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geom
             lanelet::DigitalSpeedLimitPtr speed =  std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>
             (current_map_->regulatoryElementLayer.get(regem->id()));
             outgoing_geof.value = speed->speed_limit_.value();
-            outgoing_geof.advisory_speed = speed->speed_limit_.value(); 
+            outgoing_geof.advisory_speed = speed->speed_limit_.value();
+            outgoing_geof.reason = speed->getReason(); 
+
             ROS_DEBUG_STREAM("Active geofence has a speed limit of " << speed->speed_limit_.value());
                     
             // Cannot overrule outgoing_geof.type if it is already set to LANE_CLOSED

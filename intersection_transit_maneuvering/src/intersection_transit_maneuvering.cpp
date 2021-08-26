@@ -34,13 +34,13 @@ namespace intersection_transit_maneuvering
     IntersectionTransitManeuvering::IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr wm, PublishPluginDiscoveryCB plugin_discovery_publisher,
                                                                      std::shared_ptr<CallInterface> obj)
     {        
-        plugin_discovery_msg_.name = "IntersectionTransitManeuvering";
+        plugin_discovery_msg_.name = "IntersectionTransitPlugin";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = true;
         plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
         plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
-
+        plugin_discovery_publisher_ = plugin_discovery_publisher;
         object_ = obj;
     }
 
