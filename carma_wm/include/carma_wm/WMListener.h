@@ -111,7 +111,7 @@ public:
    *        NOTE: If operating in multi-threaded mode the world model will remain locked until the user function
    * completes.
    *
-   * \param participant A function that populate the vehicle participation type value after the world model is updated with a new route
+   * \param participant  The parameter that sets vehicle participation type value in each world model instance after it is updated with a new route
    */
   void setVehicleParticipationType(std::string participant);
 

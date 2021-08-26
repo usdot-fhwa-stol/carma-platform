@@ -179,11 +179,23 @@ public:
 
   LaneletRoutingGraphConstPtr getMapRoutingGraph() const override;
 
+  /**
+   * @brief Get the Traffic Rules object
+   * 
+   * @param participant The parameter that sets vehicle participation type value in each world model instance after it is updated with a new route
+   * 
+   * @return lanelet::Optional<TrafficRulesConstPtr> 
+   */
   lanelet::Optional<TrafficRulesConstPtr>
   getTrafficRules(const std::string& participant) const override;
 
+  /**
+   * @brief Get the Traffic Rules object with  a default value in case setVehicleParticipationType is not called
+   *    * 
+   * @return lanelet::Optional<TrafficRulesConstPtr> 
+   */
   lanelet::Optional<TrafficRulesConstPtr>
-  getTrafficRules() const override;//Participant type is sent from WMListenerWorker
+  getTrafficRules() const override;
 
   std::vector<cav_msgs::RoadwayObstacle> getRoadwayObjects() const override;
 

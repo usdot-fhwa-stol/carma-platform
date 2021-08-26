@@ -682,9 +682,8 @@ lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules(const s
 
 lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules() const
 {
-  std::string participant = participant_type_;
-  lanelet::Optional<TrafficRulesConstPtr> optional_ptr;
-  return getTrafficRules(participant);
+  
+  return getTrafficRules(participant_type_);
 
 }
 
