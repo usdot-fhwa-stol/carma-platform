@@ -317,28 +317,8 @@ namespace port_drayage_plugin
             _latest_mobility_operation_msg.dest_longitude = boost::optional<double>();
             _latest_mobility_operation_msg.dest_latitude = boost::optional<double>();
         }
-    }
-
-    void PortDrayageWorker::on_new_pose(const geometry_msgs::PoseStampedConstPtr& msg) {
-        if (!_map_projector) {
-            ROS_DEBUG_STREAM("Ignoring pose message as projection string has not been defined");
-            return;
-        }
-
-        // Convert pose message contents to a GPS coordinate
-        lanelet::GPSPoint coord = _map_projector->reverse( { msg->pose.position.x, msg->pose.position.y, msg->pose.position.z } );
-
-        // Update the locally-stored GPS position of the CMV
-        _current_gps_position.latitude = coord.lat;
-        _current_gps_position.longitude = coord.lon;
-    }        
-
-    void PortDrayageWorker::on_new_georeference(const std_msgs::StringConstPtr& msg) {
-        // Build projector from proj string
-        _map_projector = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());  
-    }        
-
-
+    }      
+    
     void PortDrayageWorker::on_guidance_state(const cav_msgs::GuidanceStateConstPtr& msg) {
         // Drayage operations have started when the CMV has been engaged for the first time
         if ((msg->state == cav_msgs::GuidanceState::ENGAGED) && (_pdsm.get_state() == PortDrayageState::INACTIVE) && _enable_port_drayage) {

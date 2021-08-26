@@ -109,13 +109,6 @@ namespace port_drayage_plugin
         });
 
         _route_event_subscriber = std::make_shared<ros::Subscriber>(route_event_sub);
-
-        ros::Subscriber georeference_sub = _nh->subscribe<std_msgs::String>("georeference", 1,
-            [&](const std_msgs::StringConstPtr& georeference_msg) {
-            pdw.on_new_georeference(georeference_msg);
-        });
-
-        _georeference_subscriber = std::make_shared<ros::Subscriber>(georeference_sub);
         
         ros::Timer discovery_pub_timer_ = _nh->createTimer(
             ros::Duration(ros::Rate(10.0)),

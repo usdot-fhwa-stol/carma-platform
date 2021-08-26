@@ -143,7 +143,6 @@ namespace port_drayage_plugin
                 _enable_port_drayage(enable_port_drayage) {
                     _has_cargo = (_cargo_id == "") ? false : true;
                     initialize();
-                    _has_cargo = (_cargo_id == "") ? false : true;
                 };
 
 
