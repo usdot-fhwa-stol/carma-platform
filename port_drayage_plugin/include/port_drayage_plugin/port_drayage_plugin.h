@@ -29,6 +29,8 @@
 #include <carma_wm/Geometry.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <lanelet2_extension/regulatory_elements/StopRule.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <std_msgs/String.h>
 
 namespace port_drayage_plugin
 {
@@ -47,6 +49,7 @@ namespace port_drayage_plugin
             std::shared_ptr<ros::Subscriber> _pose_subscriber = nullptr;
             std::shared_ptr<ros::Subscriber> _cur_speed_subscriber = nullptr;
             std::shared_ptr<ros::Subscriber> _inbound_mobility_operation_subscriber = nullptr;
+            std::shared_ptr<ros::Subscriber> _georeference_subscriber = nullptr;
             std::shared_ptr<ros::Publisher> _outbound_mobility_operations_publisher = nullptr;
             
             // ROS service servers
