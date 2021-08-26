@@ -88,6 +88,13 @@ namespace port_drayage_plugin
         });
 
         _inbound_mobility_operation_subscriber = std::make_shared<ros::Subscriber>(inbound_mobility_operation_sub);
+
+        ros::Subscriber georeference_sub = _nh->subscribe<std_msgs::String>("georeference", 1,
+            [&](const std_msgs::StringConstPtr& georeference_msg) {
+            pdw.on_new_georeference(georeference_msg);
+        });
+
+        _georeference_subscriber = std::make_shared<ros::Subscriber>(georeference_sub);
         
         ros::Subscriber guidance_state_sub = _nh->subscribe<cav_msgs::GuidanceState>("guidance_state", 5,
             [&](const cav_msgs::GuidanceStateConstPtr& guidance_state) {

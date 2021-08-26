@@ -195,6 +195,7 @@ namespace port_drayage_plugin
                 _previous_strategy_params = msg->strategy_params;
                 
                 // Process event based on the PortDrayageEvent associated with the received MobilityOperation message
+                // TODO: Update this object's '_has_cargo' flag and '_cargo_id' based on the received status message from a loading/unloading device
                 switch(_latest_mobility_operation_msg.port_drayage_event_type) {
                     case PortDrayageEvent::RECEIVED_NEW_DESTINATION:
                         ROS_DEBUG_STREAM("Processing RECEIVED_NEW_DESTINATION event for operation type " << _latest_mobility_operation_msg.operation);
@@ -263,6 +264,24 @@ namespace port_drayage_plugin
                 throw std::invalid_argument("Received 'PICKUP' operation, but no cargo_id was included.");
             }
 
+            _latest_mobility_operation_msg.cargo_id = boost::optional<std::string>();
+        }
+        
+        // Parse 'action_id' field  if it exists in strategy_params
+        if (pt.count("action_id") != 0){
+            _latest_mobility_operation_msg.current_action_id = pt.get<std::string>("action_id");
+            ROS_DEBUG_STREAM("action id: " << *_latest_mobility_operation_msg.current_action_id);
+        }
+        else{
+            _latest_mobility_operation_msg.current_action_id = boost::optional<std::string>();
+        }
+
+        // Parse 'cargo_id' field if it exists in strategy_params
+        if (pt.count("cargo_id") != 0){
+            _latest_mobility_operation_msg.cargo_id = pt.get<std::string>("cargo_id");
+            ROS_DEBUG_STREAM("cargo id: " << *_latest_mobility_operation_msg.cargo_id);
+        }
+        else{
             _latest_mobility_operation_msg.cargo_id = boost::optional<std::string>();
         }
         
@@ -347,5 +366,25 @@ namespace port_drayage_plugin
     PortDrayageState PortDrayageWorker::get_port_drayage_state() {
         return _pdsm.get_state();
     }
+
+    void PortDrayageWorker::on_new_pose(const geometry_msgs::PoseStampedConstPtr& msg) {
+        if (!_map_projector) {
+            ROS_DEBUG_STREAM("Ignoring pose message as projection string has not been defined");
+            return;
+        }
+
+        // Convert pose message contents to a GPS coordinate
+        lanelet::GPSPoint coord = _map_projector->reverse( { msg->pose.position.x, msg->pose.position.y, msg->pose.position.z } );
+
+        // Update the locally-stored GPS position of the CMV
+        _current_gps_position.latitude = coord.lat;
+        _current_gps_position.longitude = coord.lon;
+    }        
+
+    void PortDrayageWorker::on_new_georeference(const std_msgs::StringConstPtr& msg) {
+        // Build projector from proj string
+        _map_projector = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());  
+    }        
+
 
 } // namespace port_drayage_plugin

@@ -28,6 +28,7 @@
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_wm/WMTestLibForGuidance.h>
 #include <lanelet2_extension/regulatory_elements/StopRule.h>
+#include <novatel_gps_msgs/Inspva.h>
 
 TEST(PortDrayageTest, testComposeArrivalMessage)
 {
@@ -36,6 +37,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
     port_drayage_plugin::PortDrayageWorker pdw{
         123, // CMV ID 
         "321", // Cargo ID 
+<<<<<<< HEAD
         "TEST_CARMA_HOST_ID", // Host ID
         [](cav_msgs::MobilityOperation){}, 
         1.0, 
@@ -44,6 +46,26 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
     };
 
     // Set the pdw's map projector and its current pose
+    std::string base_proj = "+proj=tmerc +lat_0=38.95622708 +lon_0=-77.15066142 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m "
+                             "+no_defs";
+    std_msgs::String georeference_msg;
+    georeference_msg.data = base_proj;
+    std_msgs::StringConstPtr georeference_msg_ptr(new std_msgs::String(georeference_msg));
+    pdw.on_new_georeference(georeference_msg_ptr);
+
+    geometry_msgs::PoseStamped pose_msg;
+    pose_msg.pose.position.x = 0.0;
+    pose_msg.pose.position.y = 0.0;
+    geometry_msgs::PoseStampedConstPtr pose_msg_ptr(new geometry_msgs::PoseStamped(pose_msg));
+    pdw.on_new_pose(pose_msg_ptr); // Sets the host vehicle's current gps lat/lon position
+=======
+        "TEST_CARMA_HOST_ID", 
+        std::function<void(cav_msgs::MobilityOperation)>(), 
+        std::function<bool(cav_srvs::SetActiveRoute)>(), 
+        1.0};
+>>>>>>> develop
+
+    // Set the pdw's map projector set its current pose
     std::string base_proj = "+proj=tmerc +lat_0=38.95622708 +lon_0=-77.15066142 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m "
                              "+no_defs";
     std_msgs::String georeference_msg;
@@ -69,14 +91,23 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
     boost::property_tree::json_parser::read_json(strstream, pt);
 
     unsigned long cmv_id = pt.get<unsigned long>("cmv_id");
+<<<<<<< HEAD
+=======
+    std::string cargo_id = pt.get<std::string>("cargo_id");
+>>>>>>> develop
     std::string operation = pt.get<std::string>("operation");
     bool has_cargo = pt.get<bool>("cargo");
     double vehicle_longitude = pt.get<double>("location.longitude");
     double vehicle_latitude = pt.get<double>("location.latitude");
 
     ASSERT_EQ(123, cmv_id);
+<<<<<<< HEAD
     ASSERT_EQ("ENTER_STAGING_AREA", operation);
     ASSERT_EQ(pt.count("action_id"), 0);
+=======
+    ASSERT_EQ("321", cargo_id);
+    ASSERT_EQ("ARRIVED_AT_DESTINATION", operation);
+>>>>>>> develop
     ASSERT_TRUE(has_cargo);
     ASSERT_NEAR(38.95622708, vehicle_latitude, 0.00000001);
     ASSERT_NEAR(-77.15066142, vehicle_longitude, 0.00000001);
@@ -86,11 +117,17 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
         123, // CMV ID 
         "", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
+<<<<<<< HEAD
         [](cav_msgs::MobilityOperation){}, 
         1.0, 
         true, // Flag to enable port drayage operations
         [](cav_srvs::SetActiveRoute){return true;} 
     };
+=======
+        std::function<void(cav_msgs::MobilityOperation)>(), 
+        std::function<bool(cav_srvs::SetActiveRoute)>(), 
+        1.0};
+>>>>>>> develop
 
     pdw2.on_new_georeference(georeference_msg_ptr);
     pdw2.on_new_pose(pose_msg_ptr);
@@ -113,7 +150,11 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
 
     ASSERT_EQ(123, cmv_id2);
     ASSERT_EQ(0, pt2.count("cargo_id")); // Broadcasted arrival message should not include cargo_id since vehicle is not carrying cargo
+<<<<<<< HEAD
     ASSERT_EQ("ENTER_STAGING_AREA", operation2);
+=======
+    ASSERT_EQ("ARRIVED_AT_DESTINATION", operation2);
+>>>>>>> develop
     ASSERT_FALSE(has_cargo2); // False since vehicle is not currently carrying cargo
     ASSERT_NEAR(38.95622708, vehicle_latitude2, 0.00000001);
     ASSERT_NEAR(-77.15066142, vehicle_longitude2, 0.00000001);
@@ -492,10 +533,17 @@ TEST(PortDrayageTest, testComposeSetActiveRouteRequest)
 
 TEST(PortDrayageTest, testInboundMobilityOperation)
 {
+<<<<<<< HEAD
     // Create PortDrayageWorker object with _cmv_id of 123 that is carrying cargo
     port_drayage_plugin::PortDrayageWorker pdw{
         123, // CMV ID 
         "123", // Cargo ID
+=======
+    // Create PortDrayageWorker object with _cmv_id of 123
+    port_drayage_plugin::PortDrayageWorker pdw{
+        123, // CMV ID 
+        "321", // Cargo ID 
+>>>>>>> develop
         "TEST_CARMA_HOST_ID", 
         [](cav_msgs::MobilityOperation){}, 
         1.0, 
@@ -507,6 +555,7 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
     // Note: The strategy_params using the schema for messages of this type that have strategy "carma/port_drayage"
     cav_msgs::MobilityOperation mobility_operation_msg;
     mobility_operation_msg.strategy = "carma/port_drayage";
+<<<<<<< HEAD
     mobility_operation_msg.strategy_params = "{ \"cmv_id\": \"123\", \"cargo_id\": \"541\", \"location\"\
         : { \"latitude\": \"38.9554377\", \"longitude\": \"-77.1503421\" }, \"destination\": { \"latitude\"\
         : \"38.9550038\", \"longitude\": \"-77.1481983\" }, \"operation\": \"PICKUP\", \"action_id\"\
@@ -515,6 +564,24 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
     
     // Exception should be thrown since vehicle was initialized with cargo, and its first received message requires it to pickup new cargo
     ASSERT_THROW(pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr), std::invalid_argument);
+=======
+    mobility_operation_msg.strategy_params = "{ \"cmv_id\": \"123\", \"cargo_id\": \"321\", \"cargo\": \"false\", \"location\"\
+        : { \"latitude\": \"38.9554377\", \"longitude\": \"-77.1503421\" }, \"destination\": { \"latitude\"\
+        : \"38.9550038\", \"longitude\": \"-77.1481983\" }, \"operation\": \"MOVING_TO_LOADING_AREA\", \"action_id\"\
+        : \"32\" }";
+    cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr(new cav_msgs::MobilityOperation(mobility_operation_msg));
+    pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr);
+    
+    ASSERT_EQ("321", *pdw._latest_mobility_operation_msg.cargo_id);
+    ASSERT_EQ("MOVING_TO_LOADING_AREA", pdw._latest_mobility_operation_msg.operation);
+    ASSERT_EQ(port_drayage_plugin::PortDrayageEvent::RECEIVED_NEW_DESTINATION, pdw._latest_mobility_operation_msg.port_drayage_event_type);
+    ASSERT_EQ(false, pdw._latest_mobility_operation_msg.has_cargo);
+    ASSERT_NEAR(-77.1503421, *pdw._latest_mobility_operation_msg.start_longitude, 0.00000001);
+    ASSERT_NEAR(38.9554377, *pdw._latest_mobility_operation_msg.start_latitude, 0.00000001);
+    ASSERT_NEAR(-77.1481983, *pdw._latest_mobility_operation_msg.dest_longitude, 0.00000001);
+    ASSERT_NEAR(38.9550038, *pdw._latest_mobility_operation_msg.dest_latitude, 0.00000001);
+    ASSERT_EQ("32", *pdw._latest_mobility_operation_msg.current_action_id);
+>>>>>>> develop
 
     // Create a new PortDrayageWorker object with _cmv_id of 123 and no cargo
     port_drayage_plugin::PortDrayageWorker pdw2{
@@ -530,6 +597,7 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
     // Create a "PICKUP" MobilityOperationConstPtr for the newly created PortDrayageWorker
     cav_msgs::MobilityOperation mobility_operation_msg2;
     mobility_operation_msg2.strategy = "carma/port_drayage";
+<<<<<<< HEAD
     mobility_operation_msg2.strategy_params = "{ \"cmv_id\": \"123\", \"cargo_id\": \"321\", \"location\"\
         : { \"latitude\": \"38.9554377\", \"longitude\": \"-77.1503421\" }, \"destination\": { \"latitude\"\
         : \"38.9550038\", \"longitude\": \"-77.1481983\" }, \"operation\": \"PICKUP\", \"action_id\"\
@@ -611,6 +679,24 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
     ASSERT_EQ("32", action_id);
     ASSERT_NEAR(38.95622708, vehicle_latitude, 0.001);
     ASSERT_NEAR(-77.15066142, vehicle_longitude, 0.001);
+=======
+    mobility_operation_msg2.strategy_params = "{ \"cmv_id\": \"444\", \"cargo_id\": \"567\", \"cargo\": \"true\", \"location\"\
+        : { \"latitude\": \"48.9554377\", \"longitude\": \"-67.1503421\" }, \"destination\": { \"latitude\"\
+        : \"48.9550038\", \"longitude\": \"-57.1481983\" }, \"operation\": \"MOVING_FROM_LOADING_AREA\", \"action_id\"\
+        : \"44\" }";
+    cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr2(new cav_msgs::MobilityOperation(mobility_operation_msg2));
+    pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr2);
+
+    ASSERT_EQ("321", *pdw._latest_mobility_operation_msg.cargo_id);
+    ASSERT_EQ("MOVING_TO_LOADING_AREA", pdw._latest_mobility_operation_msg.operation);
+    ASSERT_EQ(port_drayage_plugin::PortDrayageEvent::RECEIVED_NEW_DESTINATION, pdw._latest_mobility_operation_msg.port_drayage_event_type);
+    ASSERT_EQ(false, pdw._latest_mobility_operation_msg.has_cargo);
+    ASSERT_NEAR(-77.1503421, *pdw._latest_mobility_operation_msg.start_longitude, 0.00000001);
+    ASSERT_NEAR(38.9554377, *pdw._latest_mobility_operation_msg.start_latitude, 0.00000001);
+    ASSERT_NEAR(-77.1481983, *pdw._latest_mobility_operation_msg.dest_longitude, 0.00000001);
+    ASSERT_NEAR(38.9550038, *pdw._latest_mobility_operation_msg.dest_latitude, 0.00000001);
+    ASSERT_EQ("32", *pdw._latest_mobility_operation_msg.current_action_id);
+>>>>>>> develop
 }
 
 // Run all the tests
