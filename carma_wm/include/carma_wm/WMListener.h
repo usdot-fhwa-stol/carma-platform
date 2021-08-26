@@ -107,15 +107,6 @@ public:
   void setConfigSpeedLimit(double config_lim) const;
 
   /*!
-   * \brief Allows user to set a callback to be triggered when a route update is received
-   *        NOTE: If operating in multi-threaded mode the world model will remain locked until the user function
-   * completes.
-   *
-   * \param participant  The parameter that sets vehicle participation type value in each world model instance after it is updated with a new route
-   */
-  void setVehicleParticipationType(std::string participant);
-
-  /*!
    * \brief Use to allow updates to occur even if they invalidate the current route.
    *        This is only meant to be used by components which generate the route
    */  

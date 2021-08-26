@@ -216,6 +216,11 @@ public:
   virtual lanelet::Optional<TrafficRulesConstPtr>
   getTrafficRules(const std::string& participant = lanelet::Participants::Vehicle) const = 0;
 
+  /**
+   * @brief Get the Traffic Rules object 
+   * @return  Optional Shared pointer to an intialized traffic rules object which is used by carma. A default participant value will be used
+   * in case setVehicleParticipationType is not called. Acceptable participants are Vehicle, VehicleCar, and VehicleTruck
+   */
   virtual lanelet::Optional<TrafficRulesConstPtr>
   getTrafficRules() const = 0;
 
