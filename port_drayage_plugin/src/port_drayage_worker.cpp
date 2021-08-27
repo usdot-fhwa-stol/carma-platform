@@ -75,8 +75,13 @@ namespace port_drayage_plugin
         // Call service client to set the new active route
         bool is_route_generation_successful = _set_active_route(route_req);
 
-        // Throw exception if route generation was not successful
-        if (!is_route_generation_successful) {
+        if (is_route_generation_successful) {
+            // Publish UI Instructions to trigger a pop-up on the Web UI for the user to engage on the newly received route if desired
+            cav_msgs::UIInstructions ui_instructions_msg = compose_ui_instructions(_latest_mobility_operation_msg);
+            _publish_ui_instructions(ui_instructions_msg);
+        }
+        else {
+            // Throw exception if route generation was not successful
             ROS_DEBUG_STREAM("Route generation failed. Routing could not be completed.");
             throw std::invalid_argument("Route generation failed. Routing could not be completed.");
         }
@@ -100,6 +105,19 @@ namespace port_drayage_plugin
         }
 
         return route_req;
+    }
+
+    cav_msgs::UIInstructions PortDrayageWorker::compose_ui_instructions(const PortDrayageMobilityOperationMsg& msg) {
+        // Populate the UIInstructions message
+        cav_msgs::UIInstructions ui_instructions_msg;
+        ui_instructions_msg.stamp = ros::Time::now();
+        ui_instructions_msg.msg = "A new Port Drayage route with operation type '" + msg.operation + "' has been received. "
+                                  "Select YES to engage the system on the route, or select NO to remain "
+                                  "disengaged.";
+        ui_instructions_msg.type = cav_msgs::UIInstructions::ACK_REQUIRED;
+        ui_instructions_msg.response_service = SET_GUIDANCE_ACTIVE_SERVICE_ID; 
+
+        return ui_instructions_msg;
     }
 
     cav_msgs::MobilityOperation PortDrayageWorker::compose_arrival_message() const {

@@ -20,6 +20,7 @@
 #include <cav_msgs/MobilityOperation.h>
 #include <cav_msgs/GuidanceState.h>
 #include <cav_msgs/RouteEvent.h>
+#include <cav_msgs/UIInstructions.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
@@ -79,6 +80,7 @@ namespace port_drayage_plugin
             unsigned long _cmv_id;
             std::string _cargo_id;
             std::function<void(cav_msgs::MobilityOperation)> _publish_mobility_operation;
+            std::function<void(cav_msgs::UIInstructions)> _publish_ui_instructions;
             std::function<bool(cav_srvs::SetActiveRoute)> _set_active_route;
             std::shared_ptr<lanelet::projection::LocalFrameProjector> _map_projector = nullptr;
             bool _has_cargo; // Flag for whether CMV is currently carrying cargo
@@ -94,6 +96,7 @@ namespace port_drayage_plugin
             const std::string PORT_DRAYAGE_INITIAL_ARRIVAL_OPERATION_ID = "ENTER_STAGING_AREA";
             const std::string PORT_DRAYAGE_PICKUP_OPERATION_ID = "PICKUP";
             const std::string PORT_DRAYAGE_DROPOFF_OPERATION_ID = "DROPOFF";
+            const std::string SET_GUIDANCE_ACTIVE_SERVICE_ID = "/guidance/set_guidance_active";
 
         public:
 
@@ -131,6 +134,7 @@ namespace port_drayage_plugin
                 std::string cargo_id,
                 std::string host_id,
                 std::function<void(cav_msgs::MobilityOperation)> mobility_operations_publisher, 
+                std::function<void(cav_msgs::UIInstructions)> ui_instructions_publisher,
                 double stop_speed_epsilon,
                 bool enable_port_drayage,
                 std::function<bool(cav_srvs::SetActiveRoute)> call_set_active_route_client) :
@@ -138,6 +142,7 @@ namespace port_drayage_plugin
                 _cargo_id(cargo_id),
                 _host_id(host_id),
                 _publish_mobility_operation(mobility_operations_publisher),
+                _publish_ui_instructions(ui_instructions_publisher),
                 _set_active_route(call_set_active_route_client),
                 _stop_speed_epsilon(stop_speed_epsilon),
                 _enable_port_drayage(enable_port_drayage) {
@@ -170,6 +175,13 @@ namespace port_drayage_plugin
              * \param dest_longitude The destination point's longitude
              */
             cav_srvs::SetActiveRoute compose_set_active_route_request(boost::optional<double> dest_latitude, boost::optional<double> dest_longitude) const;
+
+            /**
+             * \brief Creates a UIInstructions message that can be used to create a pop-up on the Web UI to notify a user that a new
+             *        route has been received for a specified destination type, and that the system can be engaged on that route.
+             * \param msg A PortDrayageMobilityOperationMsg object, which contains destination information for the Web UI pop-up
+             */
+            cav_msgs::UIInstructions compose_ui_instructions(const PortDrayageMobilityOperationMsg& msg);
 
             /**
              * \brief Assemble the current dataset into a MobilityOperations
