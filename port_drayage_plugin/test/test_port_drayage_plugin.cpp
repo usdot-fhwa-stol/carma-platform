@@ -38,6 +38,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", // Host ID
         [](cav_msgs::MobilityOperation){}, 
+        [](cav_msgs::UIInstructions){},
         1.0, 
         true, // Flag to enable port drayage operations
         [](cav_srvs::SetActiveRoute){return true;} 
@@ -87,6 +88,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
         "", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         [](cav_msgs::MobilityOperation){}, 
+        [](cav_msgs::UIInstructions){},
         1.0, 
         true, // Flag to enable port drayage operations
         [](cav_srvs::SetActiveRoute){return true;} 
@@ -127,6 +129,7 @@ TEST(PortDrayageTest, testCheckStop1)
         "321", // Cargo ID
         "TEST_CARMA_HOST_ID", 
         [](cav_msgs::MobilityOperation){}, 
+        [](cav_msgs::UIInstructions){},
         1.0, 
         true, // Flag to enable port drayage operations
         [](cav_srvs::SetActiveRoute){return true;}
@@ -158,6 +161,7 @@ TEST(PortDrayageTest, testCheckStop2)
         "321", // Cargo ID
         "TEST_CARMA_HOST_ID", 
         [](cav_msgs::MobilityOperation){}, 
+        [](cav_msgs::UIInstructions){},
         1.0, 
         true, // Flag to enable port drayage operations
         [](cav_srvs::SetActiveRoute){return true;}
@@ -189,6 +193,7 @@ TEST(PortDrayageTest, testCheckStop3)
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         [](cav_msgs::MobilityOperation){}, 
+        [](cav_msgs::UIInstructions){}, 
         1.0, 
         true, // Flag to enable port drayage operations
         [](cav_srvs::SetActiveRoute){return true;}
@@ -221,6 +226,7 @@ TEST(PortDrayageTest, testCheckStop4)
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         [](cav_msgs::MobilityOperation){}, 
+        [](cav_msgs::UIInstructions){}, 
         1.0, 
         true, // Flag to enable port drayage operations
         [](cav_srvs::SetActiveRoute){return true;}
@@ -279,6 +285,7 @@ TEST(PortDrayageTest, testPortDrayageStateMachine2)
         "", // Cargo ID; empty string indicates CMV begins without no cargo
         "TEST_CARMA_HOST_ID", 
         [](cav_msgs::MobilityOperation){}, 
+        [](cav_msgs::UIInstructions){}, 
         1.0, 
         true, // Flag to enable port drayage operations
         [](cav_srvs::SetActiveRoute){return true;}
@@ -465,6 +472,7 @@ TEST(PortDrayageTest, testComposeSetActiveRouteRequest)
         "TEST_CARGO_ID", 
         "TEST_CARMA_HOST_ID", 
         [](cav_msgs::MobilityOperation){}, 
+        [](cav_msgs::UIInstructions){},
         1.0, 
         true, // Flag to enable port drayage operations
         [](cav_srvs::SetActiveRoute){return true;} 
@@ -498,6 +506,7 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
         "123", // Cargo ID
         "TEST_CARMA_HOST_ID", 
         [](cav_msgs::MobilityOperation){}, 
+        [](cav_msgs::UIInstructions){},
         1.0, 
         true, // Flag to enable port drayage operations
         [](cav_srvs::SetActiveRoute){return true;}
@@ -522,6 +531,7 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
         "", // Cargo ID; empty string indicates it is not carrying cargo
         "TEST_CARMA_HOST_ID", 
         [](cav_msgs::MobilityOperation){}, 
+        [](cav_msgs::UIInstructions){},
         1.0, 
         true, // Flag to enable port drayage operations
         [](cav_srvs::SetActiveRoute){return true;}
@@ -611,6 +621,41 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
     ASSERT_EQ("32", action_id);
     ASSERT_NEAR(38.95622708, vehicle_latitude, 0.001);
     ASSERT_NEAR(-77.15066142, vehicle_longitude, 0.001);
+}
+
+TEST(PortDrayageTest, testComposeUIInstructions)
+{
+
+    // Create PortDrayageWorker object with _cmv_id of "123"
+    port_drayage_plugin::PortDrayageWorker pdw{
+        123, 
+        "TEST_CARGO_ID", 
+        "TEST_CARMA_HOST_ID", 
+        [](cav_msgs::MobilityOperation){}, 
+        [](cav_msgs::UIInstructions){},
+        1.0, 
+        true, // Flag to enable port drayage operations
+        [](cav_srvs::SetActiveRoute){return true;} 
+    };
+
+    port_drayage_plugin::PortDrayageMobilityOperationMsg mob_op_msg;
+    mob_op_msg.operation = "PICKUP";
+    cav_msgs::UIInstructions ui_instructions_msg = pdw.compose_ui_instructions(mob_op_msg);
+
+    ASSERT_EQ(ui_instructions_msg.msg, "A new Port Drayage route with operation type 'PICKUP' has been received. "
+                                  "Select YES to engage the system on the route, or select NO to remain "
+                                  "disengaged.");
+    ASSERT_EQ(ui_instructions_msg.type, cav_msgs::UIInstructions::ACK_REQUIRED);
+    ASSERT_EQ(ui_instructions_msg.response_service, "/guidance/set_guidance_active");
+    
+    mob_op_msg.operation = "DROPOFF";
+    ui_instructions_msg = pdw.compose_ui_instructions(mob_op_msg);
+
+    ASSERT_EQ(ui_instructions_msg.msg, "A new Port Drayage route with operation type 'DROPOFF' has been received. "
+                                  "Select YES to engage the system on the route, or select NO to remain "
+                                  "disengaged.");
+    ASSERT_EQ(ui_instructions_msg.type, cav_msgs::UIInstructions::ACK_REQUIRED);
+    ASSERT_EQ(ui_instructions_msg.response_service, "/guidance/set_guidance_active");
 }
 
 // Run all the tests
