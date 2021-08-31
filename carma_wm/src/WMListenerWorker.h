@@ -109,6 +109,11 @@ public:
 */
   void incomingSpatCallback(const cav_msgs::SPAT& spat_msg);
 
+  /***
+   * \brief Current vehicle location 
+   */
+  void currentLocationCallback(const geometry_msgs::PoseStamped& current_pos);
+
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
   std::function<void()> map_callback_;

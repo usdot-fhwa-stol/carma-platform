@@ -429,6 +429,30 @@ double WMListenerWorker::getConfigSpeedLimit() const
   return config_speed_limit_;
 }
 
+void WMListenerWorker::currentLocationCallback(const geometry_msgs::PoseStamped& current_pos)
+{  
+  const lanelet::BasicPoint2d cur_loc;
+  cur_loc.x() = current_pos.pose.position.x;
+  cur_loc.y() = current_pos.pose.position.y;
 
+  std::vector<lanelet::CarmaTrafficLightPtr> light_v = world_model_->getLightsAlongRoute(cur_loc);
+  lanelet::CarmaTrafficLightPtr first_light = light_v.front();
+  ROS_DEBUG_STREAM("Get First TF_LIGHT of Id: " << first_light->id());
+  
+  for( const auto& ligth_id_m : traffic_light_ids_ ) 
+  {
+        std::cout << "Key:[" << ligth_id_m.first << "] Value:[" << ligth_id_m.second << "]\n";
+        if(ligth_id_m.second == first_light->id() )
+        {
+            ROS_DEBUG_STREAM("CURRENT Key:[" << ligth_id_m.first << "] Value:[" << ligth_id_m.second << "]"));
+            ROS_DEBUG_STREAM("Get First TF_LIGHT of Id: " << first_light->id());
+            uint32_t temp = ligth_id_m.first;
+            //get intersection id and group id
+            unit8_t group_id = (uint8_t)(temp >> 0);
+            unit16_t intersection_id = (unit16_t)(temp >> 8);
+            ROS_DEBUG_STREAM("Intersection id:[" << intersection_id << "] Groupd id:[" << group_id << "]"));
+        }
+    }
+}
 
 }  // namespace carma_wm

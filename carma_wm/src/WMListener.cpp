@@ -37,6 +37,7 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
   route_sub_ = nh_.subscribe("route", 1, &WMListenerWorker::routeCallback, worker_.get());
   roadway_objects_sub_ = nh_.subscribe("roadway_objects", 1, &WMListenerWorker::roadwayObjectListCallback, worker_.get());
   traffic_spat_sub_ = nh_.subscribe("incoming_spat", 10, &WMListenerWorker::incomingSpatCallback, worker_.get());
+  curr_location_sub_ = cnh_.subscribe("current_pose", 1,&WMListenerWorker::currentLocationCallback, worker_.get());
 
   double cL;
   nh2_.getParam("/config_speed_limit", cL);
