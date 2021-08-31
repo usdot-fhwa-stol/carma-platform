@@ -354,7 +354,16 @@ public:
    */
   virtual std::vector<lanelet::CarmaTrafficLightPtr> getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const = 0;
 
-  
+  /**
+   * \brief  Return a list of all way stop intersections along the current route.  
+   * The tall way stop intersections along a route and the next all way stop intersections ahead of us on the route specifically, 
+   * so a sorted list (by downtrack distance) of all way stop intersections on the route ahead of us thus eliminating those behind the vehicle.
+   *
+   * \param loc location
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or route is not set
+   *
+   * \return list of all way stop intersections along the current route
+   */
   virtual std::vector<std::shared_ptr<lanelet::AllWayStop>> getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const = 0;
 
   /**
