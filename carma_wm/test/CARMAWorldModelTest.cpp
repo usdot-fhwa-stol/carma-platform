@@ -1314,30 +1314,19 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   spat.intersection_state_list[0] = state;
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficLight>();
-  // nothing changed
-  EXPECT_EQ(ros::Duration(43), lights1[0]->fixed_cycle_duration);
+  // partial green
+  EXPECT_EQ(ros::Duration(44), lights1[0]->fixed_cycle_duration);
 
-  // call the processSpatFromMsg with that msg 2a
+  // call the processSpatFromMsg with that msg 2
   event.event_state.movement_phase_state = 3;
-  event.timing.min_end_time = 44.5;
+  event.timing.min_end_time = 45;
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficLight>();
-  // partial state 7
-  EXPECT_EQ(ros::Duration(44.0), lights1[0]->fixed_cycle_duration);
-
-    // call the processSpatFromMsg with that msg 2b
-  event.event_state.movement_phase_state = 3;
-  event.timing.min_end_time = 45.0;
-  movement.movement_event_list[0] = event;
-  state.movement_list[0] = movement;
-  spat.intersection_state_list[0] = state;
-  cmw.processSpatFromMsg(spat);
-  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficLight>();
-  // partial state 7
-  EXPECT_EQ(ros::Duration(44.0), lights1[0]->fixed_cycle_duration);
+  // partial green
+  EXPECT_EQ(ros::Duration(45), lights1[0]->fixed_cycle_duration);
 
   // call the processSpatFromMsg with that msg 3
   event.event_state.movement_phase_state = 5;
@@ -1347,24 +1336,11 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   spat.intersection_state_list[0] = state;
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficLight>();
-  // partial state 3
-  EXPECT_EQ(ros::Duration(45), lights1[0]->fixed_cycle_duration);
+  // partial green
+  EXPECT_EQ(ros::Duration(46), lights1[0]->fixed_cycle_duration);
   
   // call the processSpatFromMsg with that msg 4
   event.event_state.movement_phase_state = 1;
-  event.timing.min_end_time = 68;
-  movement.movement_event_list[0] = event;
-  state.movement_list[0] = movement;
-  spat.intersection_state_list[0] = state;
-  cmw.processSpatFromMsg(spat);
-
-  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficLight>();
-  // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
-  EXPECT_EQ(ros::Duration(46), lights1[0]->fixed_cycle_duration);
-
-  ROS_DEBUG_STREAM("Calling again... Should have no change");
-  // call the processSpatFromMsg with that msg 5
-  event.event_state.movement_phase_state = 3;
   event.timing.min_end_time = 68;
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
@@ -1405,6 +1381,47 @@ TEST(CARMAWorldModelTest, getLightsAlongRoute)
   EXPECT_EQ(lights.size(), 2);
   EXPECT_EQ(lights[0]->id(), traffic_light_id1);
   EXPECT_EQ(lights[1]->id(), traffic_light_id2);
+
+}
+
+TEST(CARMAWorldModelTest, getIntersectionAlongRoute)
+{
+  lanelet::Id id{1200};
+  // intersection id
+  lanelet::Id int_id{1};
+  lanelet::Point3d p1, p2, p3, p4, p5, p6;
+  lanelet::LineString3d ls1, ls2, ls3, ls4, ls5, ls6;
+  lanelet::Lanelet ll1, ll2, ll3;
+
+  p1 = lanelet::Point3d(++id, 0., 1., 1.);
+  p2 = lanelet::Point3d(++id, 1., 1., 1.);
+  p3 = lanelet::Point3d(++id, 0., 0., 0.);
+  p4 = lanelet::Point3d(++id, 1., 0., 0.);
+
+  ls1 = lanelet::LineString3d(++id, lanelet::Points3d{p1, p2});
+  ls2 = lanelet::LineString3d(++id, lanelet::Points3d{p3, p4});
+  ls3 = lanelet::LineString3d(++id, lanelet::Points3d{p3, p1});
+
+
+  ll1 = lanelet::Lanelet(++id, ls1, ls2);
+  ll2 = lanelet::Lanelet(++id, ls2, ls3);
+
+  
+  carma_wm::CARMAWorldModel cmw;
+  lanelet::LaneletMapPtr map;
+  // Create a complete map
+  test::MapOptions mp(1,1);
+  auto cmw_ptr = test::getGuidanceTestMap(mp);
+
+  std::shared_ptr<lanelet::AllWayStop> row = lanelet::AllWayStop::make(int_id, lanelet::AttributeMap(), {{ll1, ls1}});
+  cmw_ptr->getMutableMap()->update(cmw_ptr->getMutableMap()->laneletLayer.get(1200), row);
+
+  carma_wm::test::setRouteByIds({ 1200, 1201, 1202}, cmw_ptr);
+
+  auto ints = cmw_ptr->getIntersectionsAlongRoute({0.5, 0});
+  
+  EXPECT_EQ(ints.size(), 1);
+  EXPECT_EQ(ints[0]->id(), int_id);
 
 }
 
