@@ -77,6 +77,7 @@ namespace port_drayage_plugin
             PortDrayageStateMachine _pdsm;
             std::string _host_id;
             std::string _host_bsm_id;
+            std::string _previously_completed_operation;
             unsigned long _cmv_id;
             std::string _cargo_id;
             std::function<void(cav_msgs::MobilityOperation)> _publish_mobility_operation;
@@ -180,8 +181,9 @@ namespace port_drayage_plugin
              * \brief Creates a UIInstructions message that can be used to create a pop-up on the Web UI to notify a user that a new
              *        route has been received for a specified destination type, and that the system can be engaged on that route.
              * \param msg A PortDrayageMobilityOperationMsg object, which contains destination information for the Web UI pop-up
+             * \param previous_operation The previously completed 'operation' identifier. This is an empty string if no 'operation' was previously completed.
              */
-            cav_msgs::UIInstructions compose_ui_instructions(const PortDrayageMobilityOperationMsg& msg);
+            cav_msgs::UIInstructions compose_ui_instructions(const PortDrayageMobilityOperationMsg& msg, const std::string& previous_operation);
 
             /**
              * \brief Assemble the current dataset into a MobilityOperations

@@ -77,7 +77,7 @@ namespace port_drayage_plugin
 
         if (is_route_generation_successful) {
             // Publish UI Instructions to trigger a pop-up on the Web UI for the user to engage on the newly received route if desired
-            cav_msgs::UIInstructions ui_instructions_msg = compose_ui_instructions(_latest_mobility_operation_msg);
+            cav_msgs::UIInstructions ui_instructions_msg = compose_ui_instructions(_latest_mobility_operation_msg, _previously_completed_operation);
             _publish_ui_instructions(ui_instructions_msg);
         }
         else {
@@ -107,13 +107,27 @@ namespace port_drayage_plugin
         return route_req;
     }
 
-    cav_msgs::UIInstructions PortDrayageWorker::compose_ui_instructions(const PortDrayageMobilityOperationMsg& msg) {
-        // Populate the UIInstructions message
+    cav_msgs::UIInstructions PortDrayageWorker::compose_ui_instructions(const PortDrayageMobilityOperationMsg& msg, const std::string& previous_operation) {
+        // Create the text that will be displayed in the Web UI popup
+        std::string popup_text = "";
+
+        // Add text that indicates the previous action was completed (if it was a pickup or dropoff action)
+        if (previous_operation == PORT_DRAYAGE_PICKUP_OPERATION_ID) {
+            popup_text += "The pickup action was completed successfully. ";
+        }
+        else if (previous_operation == PORT_DRAYAGE_DROPOFF_OPERATION_ID) {
+            popup_text += "The dropoff action was completed successfully. ";
+        }
+
+        // Add text to notify the user that the system can be engaged on the newly received route
+        popup_text += "A new Port Drayage route with operation type '" + msg.operation + "' has been received. "
+                      "Select YES to engage the system on the route, or select NO to remain "
+                       "disengaged.";
+
+        // Create and populate the UI Instructions message
         cav_msgs::UIInstructions ui_instructions_msg;
         ui_instructions_msg.stamp = ros::Time::now();
-        ui_instructions_msg.msg = "A new Port Drayage route with operation type '" + msg.operation + "' has been received. "
-                                  "Select YES to engage the system on the route, or select NO to remain "
-                                  "disengaged.";
+        ui_instructions_msg.msg = popup_text;
         ui_instructions_msg.type = cav_msgs::UIInstructions::ACK_REQUIRED;
         ui_instructions_msg.response_service = SET_GUIDANCE_ACTIVE_SERVICE_ID; 
 
@@ -205,8 +219,12 @@ namespace port_drayage_plugin
             if(mobility_operation_cmv_id == _cmv_id) {
                 _has_received_first_mobility_operation_msg = true;
 
-                // Since a new message indicates a the previous action was completed, update all cargo-related data members based on the previous action that was completed
+                // Since a new message indicates a the previous action was completed, update all cargo-related data members and the previous operation based on the previous action that was completed
                 update_cargo_information_after_action_completion(_latest_mobility_operation_msg);
+
+                if (_latest_mobility_operation_msg.operation != "") {
+                    _previously_completed_operation = _latest_mobility_operation_msg.operation;
+                }
 
                 ROS_DEBUG_STREAM("Processing new port drayage MobilityOperation message for cmv_id " << mobility_operation_cmv_id);
                 mobility_operation_message_parser(msg->strategy_params);  
