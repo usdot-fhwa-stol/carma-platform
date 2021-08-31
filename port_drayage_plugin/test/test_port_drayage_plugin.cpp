@@ -625,7 +625,6 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
 
 TEST(PortDrayageTest, testComposeUIInstructions)
 {
-
     // Create PortDrayageWorker object with _cmv_id of "123"
     port_drayage_plugin::PortDrayageWorker pdw{
         123, 
@@ -675,13 +674,6 @@ TEST(PortDrayageTest, testComposeUIInstructions)
                                   "disengaged.");
     ASSERT_EQ(ui_instructions_msg.type, cav_msgs::UIInstructions::ACK_REQUIRED);
     ASSERT_EQ(ui_instructions_msg.response_service, "/guidance/set_guidance_active");
-
-
-
-
-    // Receive a Dropoff action
-
-    // Receive some other location operation
 }
 
 // Run all the tests
