@@ -88,8 +88,6 @@ void WMListener::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geof
 void WMListener::currentLocationCallback(const geometry_msgs::PoseStamped& current_pos)
 {
   std_msgs::Int32MultiArray intersection_group_ids = worker_->getIntersectionGroupIdsByCurLoc(current_pos);
-
-  //If the intersection_group_ids has data, publishing intersection/group ids
   intersection_group_ids_pub_.publish(intersection_group_ids);
 }
 
