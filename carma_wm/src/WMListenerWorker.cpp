@@ -459,7 +459,7 @@ std_msgs::Int32MultiArray WMListenerWorker::getIntersectionGroupIdsByCurLoc(cons
                 ROS_DEBUG_STREAM("Intersection id: " << InterGroupIds->intersection_id << " Groupd id:" << InterGroupIds->group_id);
                 intersection_group_ids.data[0] = InterGroupIds->intersection_id;
                 intersection_group_ids.data[1] = InterGroupIds->group_id;
-                delete InterGroupIds;                                      
+                free(InterGroupIds);                                      
             }
         }
   }    
