@@ -128,7 +128,7 @@ uint32_t get32BitId(uint16_t intersection_id, uint8_t signal_group_id)
 
 InterGroupIds_t* getInterGroupIdsByLightRegId(uint32_t light_reg_id)
 {
-  intersection_t* InterGroupIds = (intersection_t*) malloc(sizeof(intersection_t));
+  InterGroupIds_t* InterGroupIds = (InterGroupIds_t*) malloc(sizeof(InterGroupIds_t));
   unsigned group_id = (light_reg_id & 0xFF);
   unsigned intersection_id = (light_reg_id >> 8);
   InterGroupIds->intersection_id = (uint16_t)intersection_id;
