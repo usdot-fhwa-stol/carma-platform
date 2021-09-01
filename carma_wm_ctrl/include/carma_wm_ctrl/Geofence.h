@@ -28,6 +28,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/uuid_generators.hpp>
+#include <cav_msgs/TrafficControlMessageV01.h>
 
 
 namespace carma_wm_ctrl
@@ -74,6 +75,9 @@ specific type of regulatory element (such as digital speed limit, passing contro
   // we need mutable elements saved here as they will be added back through update function which only accepts mutable objects
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> prev_regems_;
   lanelet::ConstLaneletOrAreas affected_parts_;
+
+  // original message for this geofence
+  cav_msgs::TrafficControlMessageV01 msg_;
   
   // Helper member for PassingControlLine type regulatory geofence
   bool pcl_affects_left_ = false;
