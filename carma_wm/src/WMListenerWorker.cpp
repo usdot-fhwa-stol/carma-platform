@@ -436,35 +436,38 @@ std_msgs::Int32MultiArray WMListenerWorker::getIntersectionGroupIdsByCurLoc(cons
   cur_loc.x() = current_pos.pose.position.x;
   cur_loc.y() = current_pos.pose.position.y;
   std::vector<lanelet::CarmaTrafficLightPtr> light_v = world_model_->getLightsAlongRoute(cur_loc);
-  lanelet::CarmaTrafficLightPtr first_light = light_v.front();
-  ROS_DEBUG_STREAM("Get Value TF_LIGHT of Id: " << first_light->id());
-  
-  /**
-   * Iterate all elements in the map (The traffic light regulatory element Ids and intersection/group ids mapping). 
-   * Return the intersection/group id that map to the first traffic light regulatory element Id along the subject vehicle route
-  ***/
-  for(const auto& ligth_id_m : world_model_->traffic_light_ids_ ) 
+  if(!light_v.empty())
   {
-        std::cout << "Key:[" << ligth_id_m.first << "] Value:[" << ligth_id_m.second << "]\n";
-        if( ligth_id_m.second == first_light->id() )
-        {
-            ROS_DEBUG_STREAM("CURRENT Key:" << ligth_id_m.first << "Value:" << ligth_id_m.second);
-            ROS_DEBUG_STREAM("Get First TF_LIGHT of Id: " << first_light->id());
-            uint32_t temp = ligth_id_m.first;
-            //get intersection id and group id
-            unsigned group_id = (temp & 0xFF);
-            unsigned intersection_id = (temp >> 8);
-            ROS_DEBUG_STREAM("Intersection id: " << intersection_id << " Groupd id:" << group_id);
-            
-            std_msgs::Int32MultiArray intersection_group_ids;
-            intersection_group_ids.data[0] = intersection_id;
-            intersection_group_ids.data[1] = group_id;
-            return intersection_group_ids;            
+      lanelet::CarmaTrafficLightPtr first_light = light_v.front();
+      ROS_DEBUG_STREAM("Get Value TF_LIGHT of Id: " << first_light->id());
+  
+      /**
+       * Iterate all elements in the map (The traffic light regulatory element Ids and intersection/group ids mapping). 
+       * Return the intersection/group id that map to the first traffic light regulatory element Id along the subject vehicle route
+      ***/
+      for(const auto& ligth_id_m : world_model_->traffic_light_ids_ ) 
+      {
+            std::cout << "Key:[" << ligth_id_m.first << "] Value:[" << ligth_id_m.second << "]\n";
+            if( ligth_id_m.second == first_light->id() )
+            {
+                ROS_DEBUG_STREAM("CURRENT Key:" << ligth_id_m.first << "Value:" << ligth_id_m.second);
+                ROS_DEBUG_STREAM("Get First TF_LIGHT of Id: " << first_light->id());
+                uint32_t temp = ligth_id_m.first;
+                //get intersection id and group id
+                unsigned group_id = (temp & 0xFF);
+                unsigned intersection_id = (temp >> 8);
+                ROS_DEBUG_STREAM("Intersection id: " << intersection_id << " Groupd id:" << group_id);
+                
+                std_msgs::Int32MultiArray intersection_group_ids;
+                intersection_group_ids.data[0] = intersection_id;
+                intersection_group_ids.data[1] = group_id;
+                return intersection_group_ids;            
+            }
         }
-    }
+  }  
 
-    //If no traffic light match the approaching traffic light for the SV, return NULL to indicate no traffic light
-    return NULL;
+  //If no traffic light match the approaching traffic light for the SV, return NULL to indicate no traffic light
+  return NULL;
 }
 
 }  // namespace carma_wm
