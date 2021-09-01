@@ -15,5 +15,6 @@
 -->
 <launch>
     <node name="wz_strategic_plugin" pkg="wz_strategic_plugin" type="wz_strategic_plugin_node">
+      <rosparam command="load" file="$(find wz_strategic_plugin)/config/parameters.yaml"/>
     </node>
 </launch>

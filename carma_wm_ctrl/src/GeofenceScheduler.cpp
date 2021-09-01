@@ -57,7 +57,7 @@ void GeofenceScheduler::clearTimers()
 }
 
 void GeofenceScheduler::addGeofence(std::shared_ptr<Geofence> gf_ptr)
-{
+{ 
   std::lock_guard<std::mutex> guard(mutex_);
 
   ROS_INFO_STREAM("Attempting to add Geofence with Id: " << gf_ptr->id_);
@@ -89,6 +89,7 @@ void GeofenceScheduler::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 
     timers_[timer_id] = std::make_pair(std::move(timer), false);  // Add start timer to map by Id
   }
+
 }
 
 void GeofenceScheduler::startGeofenceCallback(const ros::TimerEvent& event, std::shared_ptr<Geofence> gf_ptr, const unsigned int schedule_id, const int32_t timer_id)

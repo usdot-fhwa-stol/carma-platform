@@ -43,16 +43,16 @@ TEST_F(WorkZoneTestFixture, supportedLightState)
   WzStrategicPluginConfig config;
   WzStrategicPlugin wzp(cmw_, config);
 
-  ASSERT_TRUE(wzp.supportedLightState(lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
-  ASSERT_TRUE(wzp.supportedLightState(lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE));
+  ASSERT_TRUE(wzp.supportedLightState(lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED));
+  ASSERT_TRUE(wzp.supportedLightState(lanelet::CarmaTrafficLightState::PROTECTED_CLEARANCE));
   ASSERT_TRUE(wzp.supportedLightState(lanelet::CarmaTrafficLightState::STOP_AND_REMAIN));
 
   ASSERT_FALSE(wzp.supportedLightState(lanelet::CarmaTrafficLightState::UNAVAILABLE));
   ASSERT_FALSE(wzp.supportedLightState(lanelet::CarmaTrafficLightState::DARK));
   ASSERT_FALSE(wzp.supportedLightState(lanelet::CarmaTrafficLightState::STOP_THEN_PROCEED));
   ASSERT_FALSE(wzp.supportedLightState(lanelet::CarmaTrafficLightState::PRE_MOVEMENT));
-  ASSERT_FALSE(wzp.supportedLightState(lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED));
-  ASSERT_FALSE(wzp.supportedLightState(lanelet::CarmaTrafficLightState::PROTECTED_CLEARANCE));
+  ASSERT_FALSE(wzp.supportedLightState(lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED));
+  ASSERT_FALSE(wzp.supportedLightState(lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE));
   ASSERT_FALSE(wzp.supportedLightState(lanelet::CarmaTrafficLightState::CAUTION_CONFLICTING_TRAFFIC));
 }
 
@@ -96,16 +96,16 @@ TEST_F(WorkZoneTestFixture, validLightState)
   WzStrategicPluginConfig config;
   WzStrategicPlugin wzp(cmw_, config);
 
-  ASSERT_TRUE(wzp.validLightState(lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED, ros::Time(1)));
-  ASSERT_TRUE(wzp.validLightState(lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE, ros::Time(1)));
+  ASSERT_TRUE(wzp.validLightState(lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED, ros::Time(1)));
+  ASSERT_TRUE(wzp.validLightState(lanelet::CarmaTrafficLightState::PROTECTED_CLEARANCE, ros::Time(1)));
   ASSERT_TRUE(wzp.validLightState(lanelet::CarmaTrafficLightState::STOP_AND_REMAIN, ros::Time(1)));
 
   ASSERT_FALSE(wzp.validLightState(lanelet::CarmaTrafficLightState::UNAVAILABLE, ros::Time(1)));
   ASSERT_FALSE(wzp.validLightState(lanelet::CarmaTrafficLightState::DARK, ros::Time(1)));
   ASSERT_FALSE(wzp.validLightState(lanelet::CarmaTrafficLightState::STOP_THEN_PROCEED, ros::Time(1)));
   ASSERT_FALSE(wzp.validLightState(lanelet::CarmaTrafficLightState::PRE_MOVEMENT, ros::Time(1)));
-  ASSERT_FALSE(wzp.validLightState(lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED, ros::Time(1)));
-  ASSERT_FALSE(wzp.validLightState(lanelet::CarmaTrafficLightState::PROTECTED_CLEARANCE, ros::Time(1)));
+  ASSERT_FALSE(wzp.validLightState(lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED, ros::Time(1)));
+  ASSERT_FALSE(wzp.validLightState(lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE, ros::Time(1)));
   ASSERT_FALSE(wzp.validLightState(lanelet::CarmaTrafficLightState::CAUTION_CONFLICTING_TRAFFIC, ros::Time(1)));
   ASSERT_FALSE(wzp.validLightState(boost::none, ros::Time(1)));
 }

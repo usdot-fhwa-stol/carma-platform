@@ -278,6 +278,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   bool in_range = false;
   double stopped_downtrack = 0;
   lanelet::BasicPoint2d stopped_point;
+  int stopped_point_num = 0;
   for (size_t i = 0; i < speeds.size(); i++)
   {  // Apply minimum speed constraint
     double downtrack = downtracks[i];
@@ -294,9 +295,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
         stopped_point = raw_points[i];
         in_range = true;
       }
-
       downtracks[i] = stopped_downtrack;
       raw_points[i] = stopped_point;
+      stopped_point_num++;
     }
     else
     {
@@ -316,6 +317,14 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   }
 
   std::vector<double> yaws = carma_wm::geometry::compute_tangent_orientations(raw_points);
+
+  // preserve last valid yaw over stopped points
+  stopped_point_num --;  // there is 1 fewer invalid yaw for total number of stopped points
+  while (stopped_point_num > 0) 
+  {
+    yaws[yaws.size() - stopped_point_num] = yaws[yaws.size() - stopped_point_num - 1];
+    stopped_point_num--;
+  }
 
   for (size_t i = 0; i < points.size(); i++)
   {

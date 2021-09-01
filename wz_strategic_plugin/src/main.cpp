@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 
   // Setup callback connections
   ros::ServiceServer plan_maneuver_srv =
-      nh.advertiseService("plugins/WzStrategic/plan_maneuvers", &wz_strategic_plugin::WzStrategicPlugin::planManeuverCb, &wzp);
+      nh.advertiseService("plugins/" + config.strategic_plugin_name + "/plan_maneuvers", &wz_strategic_plugin::WzStrategicPlugin::planManeuverCb, &wzp);
 
   ros::Timer discovery_pub_timer =
       nh.createTimer(ros::Duration(ros::Rate(10.0)), [&wzp, &plugin_discovery_pub](const auto&) {
