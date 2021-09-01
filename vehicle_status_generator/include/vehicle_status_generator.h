@@ -52,7 +52,7 @@ namespace vehicle_status_generator
         // node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
-        double yield_max_deceleration = 3.0;
+        double vehicle_deceleration_limit = 3.0;
 
         // worker class
         VehicleStatusGeneratorWorker worker;
