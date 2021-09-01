@@ -24,6 +24,7 @@
 #include <cav_msgs/SPAT.h>
 #include "std_msgs/Int32MultiArray.h"
 #include "geometry_msgs/PoseStamped.h"
+#include <carma_wm/WorldModelUtils.h>
 
 namespace carma_wm
 {

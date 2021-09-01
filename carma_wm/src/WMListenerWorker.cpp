@@ -431,6 +431,9 @@ double WMListenerWorker::getConfigSpeedLimit() const
 
 std_msgs::Int32MultiArray WMListenerWorker::getIntersectionGroupIdsByCurLoc(const geometry_msgs::PoseStamped& current_pos)
 {  
+  
+  std_msgs::Int32MultiArray intersection_group_ids;
+
   //Get all traffic light regulatory elements along the route based on current SV position
   lanelet::BasicPoint2d cur_loc;
   cur_loc.x() = current_pos.pose.position.x;
@@ -451,23 +454,16 @@ std_msgs::Int32MultiArray WMListenerWorker::getIntersectionGroupIdsByCurLoc(cons
             if( ligth_id_m.second == first_light->id() )
             {
                 ROS_DEBUG_STREAM("CURRENT Key:" << ligth_id_m.first << "Value:" << ligth_id_m.second);
-                ROS_DEBUG_STREAM("Get First TF_LIGHT of Id: " << first_light->id());
                 uint32_t temp = ligth_id_m.first;
-                //get intersection id and group id
-                unsigned group_id = (temp & 0xFF);
-                unsigned intersection_id = (temp >> 8);
-                ROS_DEBUG_STREAM("Intersection id: " << intersection_id << " Groupd id:" << group_id);
-                
-                std_msgs::Int32MultiArray intersection_group_ids;
-                intersection_group_ids.data[0] = intersection_id;
-                intersection_group_ids.data[1] = group_id;
-                return intersection_group_ids;            
+                carma_wm::utils::InterGroupIds_t* InterGroupIds = carma_wm::utils::getInterGroupIdsByLightRegId(temp);                
+                ROS_DEBUG_STREAM("Intersection id: " << InterGroupIds->intersection_id << " Groupd id:" << InterGroupIds->group_id);
+                intersection_group_ids.data[0] = InterGroupIds->intersection_id;
+                intersection_group_ids.data[1] = InterGroupIds->group_id;
+                delete InterGroupIds;                                      
             }
         }
-  }  
-
-  //If no traffic light match the approaching traffic light for the SV, return NULL to indicate no traffic light
-  return NULL;
+  }    
+  return intersection_group_ids; 
 }
 
 }  // namespace carma_wm

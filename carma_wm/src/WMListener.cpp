@@ -90,10 +90,7 @@ void WMListener::currentLocationCallback(const geometry_msgs::PoseStamped& curre
   std_msgs::Int32MultiArray intersection_group_ids = worker_->getIntersectionGroupIdsByCurLoc(current_pos);
 
   //If the intersection_group_ids has data, publishing intersection/group ids
-  if(intersection_group_ids)
-  {
-    intersection_group_ids_pub_.publish(intersection_group_ids);
-  }
+  intersection_group_ids_pub_.publish(intersection_group_ids);
 }
 
 void WMListener::setMapCallback(std::function<void()> callback)

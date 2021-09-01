@@ -115,6 +115,13 @@ namespace utils
  */
 uint32_t get32BitId(uint16_t intersection_id, uint8_t signal_group_id);
 
+struct InterGroupIds_t{
+  uint16_t intersection_id;
+  uint8_t  group_id;
+};
+
+InterGroupIds_t* getInterGroupIdsByLightRegId(uint32_t light_reg_id);
+
 }  // namespace utils
 
 }  // namespace carma_wm
