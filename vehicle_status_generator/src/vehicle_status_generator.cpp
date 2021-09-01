@@ -30,9 +30,9 @@ namespace vehicle_status_generator
         nh_->param<double>("vehicle_length", vehicle_length_, 5.0);
         nh_->param<double>("vehicle_width", vehicle_width_, 2.0);
 
-        nh_->param<double>("vehicle_acceleration_limit", vehicle_acceleration_limit_, 2.0);
-        nh_->param<double>("yield_max_deceleration", yield_max_deceleration, 2.0);
-        nh_->param<double>("x_gap", x_gap, 2.0);
+        nh_->param<double>("/vehicle_acceleration_limit", vehicle_acceleration_limit_, 2.0);
+        nh_->param<double>("/vehicle_deceleration_limit", vehicle_deceleration_limit, 2.0);
+        nh_->param<double>("/guidance/yield_plugin/x_gap", x_gap, 2.0);
 
         vehicle_status_pub = nh_->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
         timer_ = nh_->createTimer(ros::Duration(1.0 / vehicle_status_generation_frequency_), &VehicleStatusGenerator::generateMobilityOperation, this);
@@ -55,7 +55,7 @@ namespace vehicle_status_generator
     {
         mo_.header.timestamp = ros::Time::now().toNSec();
         mo_.header.sender_bsm_id = std::string(reinterpret_cast<const char*>(&worker.getMsgId(ros::Time::now())[0]), worker.getMsgId(ros::Time::now()).size());
-        mo_.strategy_params = std::to_string(x_gap) + "," + std::to_string(vehicle_acceleration_limit_) + "," + std::to_string(yield_max_deceleration);
+        mo_.strategy_params = std::to_string(x_gap) + "," + std::to_string(vehicle_acceleration_limit_) + "," + std::to_string(vehicle_deceleration_limit);
 
         vehicle_status_pub.publish(mo_);
     }
