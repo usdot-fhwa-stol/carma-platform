@@ -22,6 +22,8 @@
 #include <carma_wm/TrafficControl.h>
 #include <queue>
 #include <cav_msgs/SPAT.h>
+#include "std_msgs/Int32MultiArray.h"
+#include "geometry_msgs/PoseStamped.h"
 
 namespace carma_wm
 {
@@ -110,9 +112,9 @@ public:
   void incomingSpatCallback(const cav_msgs::SPAT& spat_msg);
 
   /***
-   * \brief Current vehicle location 
+   * \brief Get the approaching intersection id and group id based on current vehicle location 
    */
-  void currentLocationCallback(const geometry_msgs::PoseStamped& current_pos);
+  std_msgs::Int32MultiArray getIntersectionGroupIdsByCurLoc(const geometry_msgs::PoseStamped& current_pos);
 
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;

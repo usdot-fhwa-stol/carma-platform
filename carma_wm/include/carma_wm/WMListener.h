@@ -24,6 +24,7 @@
 #include <carma_utils/CARMAUtils.h>
 #include <autoware_lanelet2_msgs/MapBin.h>
 #include <queue>
+#include <geometry_msgs/PoseStamped.h>
 
 namespace carma_wm
 {
@@ -123,6 +124,7 @@ public:
 private:
   // Callback function that uses lock to edit the map
   void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg);
+  void currentLocationCallback(const geometry_msgs::PoseStamped& current_pos);
   ros::Subscriber roadway_objects_sub_;
   ros::Subscriber map_update_sub_;
   std::unique_ptr<WMListenerWorker> worker_;
@@ -133,7 +135,7 @@ private:
   ros::Subscriber route_sub_;
   ros::Subscriber traffic_spat_sub_;
   ros::Subscriber curr_location_sub_;
-  ros::Publisher control_msg_pub_;
+  ros::Publisher intersection_group_ids_pub_;
   const bool multi_threaded_;
   std::mutex mw_mutex_;
   

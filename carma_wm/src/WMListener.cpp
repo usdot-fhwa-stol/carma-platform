@@ -37,7 +37,7 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
   route_sub_ = nh_.subscribe("route", 1, &WMListenerWorker::routeCallback, worker_.get());
   roadway_objects_sub_ = nh_.subscribe("roadway_objects", 1, &WMListenerWorker::roadwayObjectListCallback, worker_.get());
   traffic_spat_sub_ = nh_.subscribe("incoming_spat", 10, &WMListenerWorker::incomingSpatCallback, worker_.get());
-  curr_location_sub_ = cnh_.subscribe("current_pose", 1,&WMListenerWorker::currentLocationCallback, worker_.get());
+  curr_location_sub_ = nh_.subscribe("current_pose", 1, &WMListener::currentLocationCallback, this);
   intersection_group_ids_pub_ = nh_.advertise<std_msgs::Int32MultiArray>("intersection_signal_group_ids", 1, true);
 
   double cL;
@@ -83,6 +83,17 @@ void WMListener::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geof
   ROS_INFO_STREAM("New Map Update Received. SeqNum: " << geofence_msg->header.seq);
 
   worker_->mapUpdateCallback(geofence_msg);
+}
+
+void WMListener::currentLocationCallback(const geometry_msgs::PoseStamped& current_pos)
+{
+  std_msgs::Int32MultiArray intersection_group_ids = worker_->getIntersectionGroupIdsByCurLoc(current_pos);
+
+  //If the intersection_group_ids has data, publishing intersection/group ids
+  if(intersection_group_ids)
+  {
+    intersection_group_ids_pub_.publish(intersection_group_ids);
+  }
 }
 
 void WMListener::setMapCallback(std::function<void()> callback)
