@@ -117,9 +117,12 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   } else if (current_map_version_ > geofence_msg->map_version) { // If this update is for an older map
     ROS_WARN_STREAM("Dropping old map update as newer map is already available.");
     return;
+  } else if (most_recent_update_msg_seq_ + 1 < geofence_msg->header.seq) {
+    ROS_INFO_STREAM("Queuing map update as we are waiting on an earlier update to be applied. most_recent_update_msg_seq_: " << most_recent_update_msg_seq_ << "geofence_msg->header.seq: " << geofence_msg->header.seq);
+    map_update_queue_.push(geofence_msg);
+    return;
   }
 
-  most_recent_update_msg_seq_ = geofence_msg->header.seq; // Update current sequence count
 
   if(geofence_msg->invalidates_route==true && world_model_->getRoute())
   {  
@@ -133,6 +136,9 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
      return;
     }
   }
+
+  most_recent_update_msg_seq_ = geofence_msg->header.seq; // Update current sequence count
+
   // convert ros msg to geofence object
   auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   carma_wm::fromBinMsg(*geofence_msg, gf_ptr);
