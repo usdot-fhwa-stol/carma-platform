@@ -458,7 +458,7 @@ std_msgs::Int32MultiArray WMListenerWorker::getIntersectionGroupIdsByCurLoc(cons
             
             std_msgs::Int32MultiArray intersection_group_ids;
             intersection_group_ids.data[0] = intersection_id;
-            intersection_group_ids.data[1] = intersection_id;
+            intersection_group_ids.data[1] = group_id;
             return intersection_group_ids;            
         }
     }
