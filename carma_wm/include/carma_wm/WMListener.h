@@ -132,6 +132,8 @@ private:
   ros::Subscriber map_sub_;
   ros::Subscriber route_sub_;
   ros::Subscriber traffic_spat_sub_;
+  ros::Subscriber curr_location_sub_;
+  ros::Publisher control_msg_pub_;
   const bool multi_threaded_;
   std::mutex mw_mutex_;
   

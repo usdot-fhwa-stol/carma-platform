@@ -38,6 +38,7 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
   roadway_objects_sub_ = nh_.subscribe("roadway_objects", 1, &WMListenerWorker::roadwayObjectListCallback, worker_.get());
   traffic_spat_sub_ = nh_.subscribe("incoming_spat", 10, &WMListenerWorker::incomingSpatCallback, worker_.get());
   curr_location_sub_ = cnh_.subscribe("current_pose", 1,&WMListenerWorker::currentLocationCallback, worker_.get());
+  intersection_group_ids_pub_ = nh_.advertise<std_msgs::Int32MultiArray>("intersection_signal_group_ids", 1, true);
 
   double cL;
   nh2_.getParam("/config_speed_limit", cL);

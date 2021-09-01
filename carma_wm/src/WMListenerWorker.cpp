@@ -437,9 +437,9 @@ void WMListenerWorker::currentLocationCallback(const geometry_msgs::PoseStamped&
 
   std::vector<lanelet::CarmaTrafficLightPtr> light_v = world_model_->getLightsAlongRoute(cur_loc);
   lanelet::CarmaTrafficLightPtr first_light = light_v.front();
-  ROS_DEBUG_STREAM("Get First TF_LIGHT of Id: " << first_light->id());
+  ROS_DEBUG_STREAM("Get Value TF_LIGHT of Id: " << first_light->id());
   
-  for( const auto& ligth_id_m : traffic_light_ids_ ) 
+  for(const auto& ligth_id_m : traffic_light_ids_ ) 
   {
         std::cout << "Key:[" << ligth_id_m.first << "] Value:[" << ligth_id_m.second << "]\n";
         if(ligth_id_m.second == first_light->id() )
@@ -448,9 +448,16 @@ void WMListenerWorker::currentLocationCallback(const geometry_msgs::PoseStamped&
             ROS_DEBUG_STREAM("Get First TF_LIGHT of Id: " << first_light->id());
             uint32_t temp = ligth_id_m.first;
             //get intersection id and group id
-            unit8_t group_id = (uint8_t)(temp >> 0);
-            unit16_t intersection_id = (unit16_t)(temp >> 8);
+            unsigned group_id = (temp & 0xFF);
+            unsigned intersection_id = (temp >> 8);
             ROS_DEBUG_STREAM("Intersection id:[" << intersection_id << "] Groupd id:[" << group_id << "]"));
+            
+            std_msgs::Int32MultiArray intersection_group_ids;
+            intersection_group_ids.data[0] = intersection_id;
+            intersection_group_ids.data[1] = intersection_id;
+
+            //publish intersection and group ids
+            intersection_group_ids_pub_.publish(intersection_group_ids);
         }
     }
 }
