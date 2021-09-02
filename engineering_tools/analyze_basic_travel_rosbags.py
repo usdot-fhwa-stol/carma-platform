@@ -579,8 +579,8 @@ def check_follower_join_negotiation(time_received_first_acceptance, time_last_se
 
 ###########################################################################################################
 # BASIC TRAVEL B-8: When the rear vehicle broadcasts its 'Platoon Follower Join' MobilityRequest message 
-#                   (the message signaling that it is joining the platoon), the distance gap between the 
-#                   lead vehicle and rear vehicle shall be no more than 100 meters.
+#                   (the message signaling that it is joining the platoon), the time headway between the 
+#                   lead vehicle and the rear vehicle shall be +/- 2.0 seconds of the desired 2.5 second time headway.
 ###########################################################################################################
 def check_time_headway_after_platoon_negotiation(bag, time_received_second_acceptance):
     desired_time_headway = 2.5 # (seconds) Desired time headway between rear vehicle and front vehicle during platooning
@@ -761,14 +761,16 @@ def check_distance_gap_during_platooning(bag, time_received_second_acceptance, t
     return is_successful
 
 ###########################################################################################################
-# BASIC TRAVEL B-12: (FOLLOWER VEHICLE) During platooning operations, the front 'Leader' vehicle shall, on average, broadcast
-#                    its 'STATUS' platooning MobilityOperation message to the rear 'Follower' vehicle with 
-#                    a frequency of at least 8 Hz. 
+# BASIC TRAVEL B-12: (FOLLOWER VEHICLE) During platooning operations, the front 'Leader' vehicle shall
+#                    continuously broadcast 'STATUS' platooning MobilityOperation messages to the rear 'Follower'
+#                    vehicle with a time gap between sequentially broadcasted messages below 0.2 seconds
+#                    at least 90% of the time.
 ###########################################################################################################
-def check_status_msg_receiving_frequency(bag, time_received_second_acceptance):
+def check_percentage_successful_status_msg_follower(bag, time_received_second_acceptance):
     # Parameters used for the computation of this metric
-    min_frequency = 8.0 # Hz
-    max_duration_between_status_msgs = 1.0 / min_frequency # Seconds
+    min_percent_time_successful = 90.0 # (90%); Percent of active platooning time that the minimum 'STATUS' frequency must be achieved
+    max_duration_between_status_msgs = 0.20 # (Seconds); Minimum duration between sequentially broadcasted 'STATUS' messages
+
 
     # Obtain the timestamp of the last received MobilityOperation message from the leader. This is considered the end of
     #        platooning since the leader has disengaged.
@@ -778,62 +780,66 @@ def check_status_msg_receiving_frequency(bag, time_received_second_acceptance):
 
     # Obtain the quantity of 'STATUS' MobilityOperation messages received during platooning operations
     is_first_status_msg = True
-    time_received_prev_status_msg = rospy.Time()
+    time_sent_prev_status_msg = rospy.Time()
     duration_since_prev_status_msg = 0.0
-    total_time_between_status_msgs = 0.0
+    total_time_between_unsuccessful_status_msgs = 0.0
+    total_time_between_successful_status_msgs = 0.0
+    total_time_spent_platooning = 0.0
     largest_duration_between_status_msgs = 0.0
     count_status_msgs = 0
     count_status_msgs_above_max_duration = 0
-    for topic, msg, t in bag.read_messages(topics=['/message/incoming_mobility_operation'], start_time = time_received_second_acceptance, end_time = time_last_received_mob_op):
+    for topic, msg, t in bag.read_messages(topics=['/message/outgoing_mobility_operation'], start_time = time_received_second_acceptance, end_time = time_last_received_mob_op):
         if "STATUS" in msg.strategy_params:
             if is_first_status_msg:
-                time_received_prev_status_msg = t
+                time_sent_prev_status_msg = t
                 is_first_status_msg = False
                 continue
             else:
-                duration_since_prev_status_msg = (t - time_received_prev_status_msg).to_sec()
+                duration_since_prev_status_msg = (t - time_sent_prev_status_msg).to_sec()
 
-                # Track the number of messages that are received after the (1/min_frequency) duration just for debugging purposes
-                if (duration_since_prev_status_msg > max_duration_between_status_msgs):
+                # Track the number of messages that are broadcasted after the (1/min_frequency) duration just for debugging purposes
+                if (duration_since_prev_status_msg >= max_duration_between_status_msgs):
+                    #print("Duration of " + str(duration_since_prev_status_msg) + " at " + str(t.to_sec()) + " sec")
+                    total_time_between_unsuccessful_status_msgs += duration_since_prev_status_msg
                     count_status_msgs_above_max_duration += 1
                     if duration_since_prev_status_msg > largest_duration_between_status_msgs:
                         largest_duration_between_status_msgs = duration_since_prev_status_msg
-
-                # Update variables that are tracked
-                total_time_between_status_msgs += duration_since_prev_status_msg
-                time_received_prev_status_msg = t
+                else:
+                    total_time_between_successful_status_msgs += duration_since_prev_status_msg
+                total_time_spent_platooning += duration_since_prev_status_msg
+                time_sent_prev_status_msg = t
                 count_status_msgs += 1
     
-    # Obtain the average frequency during platooning operations
-    average_time_between_received_status_msgs = total_time_between_status_msgs / float(count_status_msgs)
-    average_frequency = 1.0 / average_time_between_received_status_msgs
-    print("Average time between received STATUS MobilityOperation messages: " + str(round(average_time_between_received_status_msgs, 5)) + " seconds")
+    percent_time_successful = (total_time_between_successful_status_msgs / total_time_spent_platooning) * 100.0
 
     # Update is_successful flag and print debug statements
     is_successful = False
-    if average_frequency >= 8.0:
-        print("B-12 Succeeded; Average frequency of received STATUS messages " + str(round(average_frequency,2)) + " Hz. Stats below.")
+    if percent_time_successful >= min_percent_time_successful:
+        print("B-12 Succeeded; Time between messages was below " + str(round(max_duration_between_status_msgs,3)) + " seconds " + str(round(percent_time_successful,3)) + \
+              "% of the time. (Must be greater than " + str(round(min_percent_time_successful,3)) + "%)")
         is_successful = True
     else:
-        print("B-12 Failed; Average frequency of received STATUS messages " + str(round(average_frequency,2)) + " Hz. Stats below.")
+        print("B-12 Failed; Time between messages was below " + str(round(max_duration_between_status_msgs,3)) + " seconds " + str(round(percent_time_successful,3)) + \
+              "% of the time. (Must be greater than " + str(round(min_percent_time_successful,3)) + "%)")        
         is_successful = False
     
     pct_above_max_duration = (float(count_status_msgs_above_max_duration) / float(count_status_msgs)) * 100.0
-    print(str(count_status_msgs) + " Total STATUS Messages received (" + str(round(100-pct_above_max_duration,3)) + "% Successful); " + str(count_status_msgs_above_max_duration) + " after " + str(round(max_duration_between_status_msgs,3)) + " sec (" \
+    print(str(count_status_msgs) + " Total STATUS Messages sent (" + str(round(100-pct_above_max_duration,3)) + "% Successful); " + str(count_status_msgs_above_max_duration) + " after " + str(round(max_duration_between_status_msgs,3)) + " sec (" \
         + str(round(pct_above_max_duration,3)) + "%);; Longest duration " \
           + " between STATUS messages was " + str(largest_duration_between_status_msgs) + " sec")
 
     return is_successful
 
 ###########################################################################################################
-# BASIC TRAVEL B-12: (LEADER VEHICLE) During platooning operations, the front 'Leader' vehicle shall, on average, broadcast
-#                    its 'INFO' platooning MobilityOperation message to the rear 'Follower' vehicle with 
-#                    a frequency of at least 8 Hz. 
+# BASIC TRAVEL B-12: (LEADER VEHICLE) During platooning operations, the front 'Leader' vehicle shall
+#                    continuously broadcast 'STATUS' platooning MobilityOperation messages to the rear 'Follower'
+#                    vehicle with a time gap between sequentially broadcasted messages below 0.2 seconds
+#                    at least 90% of the time.
 ###########################################################################################################
-def check_status_msg_sending_frequency(bag, time_sent_second_acceptance):
+def check_percentage_successful_status_msg_leader(bag, time_sent_second_acceptance):
     # Parameters used for the computation of this metric
-    min_frequency = 3.0 # Hz
-    max_duration_between_status_msgs = 1.0 / min_frequency # Seconds
+    min_percent_time_successful = 90.0 # (90%); Percent of active platooning time that the minimum 'STATUS' frequency must be achieved
+    max_duration_between_status_msgs = 0.20 # (Seconds); Minimum duration between sequentially broadcasted 'STATUS' messages
 
     # Obtain the timestamp of the last broadcasted MobilityOperation message from the leader. This is considered the end of
     #        platooning since the leader has disengaged.
@@ -846,7 +852,9 @@ def check_status_msg_sending_frequency(bag, time_sent_second_acceptance):
     is_first_status_msg = True
     time_sent_prev_status_msg = rospy.Time()
     duration_since_prev_status_msg = 0.0
-    total_time_between_status_msgs = 0.0
+    total_time_between_unsuccessful_status_msgs = 0.0
+    total_time_between_successful_status_msgs = 0.0
+    total_time_spent_platooning = 0.0
     largest_duration_between_status_msgs = 0.0
     count_status_msgs = 0
     count_status_msgs_above_max_duration = 0
@@ -860,31 +868,33 @@ def check_status_msg_sending_frequency(bag, time_sent_second_acceptance):
                 duration_since_prev_status_msg = (t - time_sent_prev_status_msg).to_sec()
 
                 # Track the number of messages that are broadcasted after the (1/min_frequency) duration just for debugging purposes
-                if (duration_since_prev_status_msg > max_duration_between_status_msgs):
-                    print("Duration of " + str(duration_since_prev_status_msg) + " at " + str(t.to_sec()) + " sec")
+                if (duration_since_prev_status_msg >= max_duration_between_status_msgs):
+                    #print("Duration of " + str(duration_since_prev_status_msg) + " at " + str(t.to_sec()) + " sec")
+                    total_time_between_unsuccessful_status_msgs += duration_since_prev_status_msg
                     count_status_msgs_above_max_duration += 1
                     if duration_since_prev_status_msg > largest_duration_between_status_msgs:
                         largest_duration_between_status_msgs = duration_since_prev_status_msg
-                total_time_between_status_msgs += duration_since_prev_status_msg
+                else:
+                    total_time_between_successful_status_msgs += duration_since_prev_status_msg
+                total_time_spent_platooning += duration_since_prev_status_msg
                 time_sent_prev_status_msg = t
                 count_status_msgs += 1
     
-    # Obtain the average frequency during platooning operations
-    average_time_between_sent_status_msgs = total_time_between_status_msgs / float(count_status_msgs)
-    average_frequency = 1.0 / average_time_between_sent_status_msgs
-    print("Average time between sent STATUS MobilityOperation messages: " + str(round(average_time_between_sent_status_msgs, 5)) + " seconds")
+    percent_time_successful = (total_time_between_successful_status_msgs / total_time_spent_platooning) * 100.0
 
     # Update is_successful flag and print debug statements
     is_successful = False
-    if average_frequency >= 8.0:
-        print("B-12 Succeeded; Average frequency of sent STATUS messages " + str(round(average_frequency,2)) + " Hz. Stats below.")
+    if percent_time_successful >= min_percent_time_successful:
+        print("B-12 Succeeded; Time between messages was below " + str(round(max_duration_between_status_msgs,3)) + " seconds " + str(round(percent_time_successful,3)) + \
+              "% of the time. (Must be greater than " + str(round(min_percent_time_successful,3)) + "%)")
         is_successful = True
     else:
-        print("B-12 Failed; Average frequency of sent STATUS messages " + str(round(average_frequency,2)) + " Hz. Stats below.")
+        print("B-12 Failed; Time between messages was below " + str(round(max_duration_between_status_msgs,3)) + " seconds " + str(round(percent_time_successful,3)) + \
+              "% of the time. (Must be greater than " + str(round(min_percent_time_successful,3)) + "%)")        
         is_successful = False
     
     pct_above_max_duration = (float(count_status_msgs_above_max_duration) / float(count_status_msgs)) * 100.0
-    print(str(count_status_msgs) + " Total STATUS Messages sent (" + str(round(100-pct_above_max_duration,3)) + "% Successful); " + str(count_status_msgs_above_max_duration) + " after 0.125 sec (" \
+    print(str(count_status_msgs) + " Total STATUS Messages sent (" + str(round(100-pct_above_max_duration,3)) + "% Successful); " + str(count_status_msgs_above_max_duration) + " after " + str(round(max_duration_between_status_msgs,3)) + " sec (" \
         + str(round(pct_above_max_duration,3)) + "%);; Longest duration " \
           + " between STATUS messages was " + str(largest_duration_between_status_msgs) + " sec")
 
@@ -1416,14 +1426,14 @@ def check_vehicle_always_within_maximum_crosstrack(bag, time_start_engagement, t
     return is_successful
 
 ###########################################################################################################
-# BASIC TRAVEL B-24: (Leader VEHICLE) During platooning operations, the front 'Leader' vehicle shall, on average, broadcast
-#                    its 'INFO' platooning MobilityOperation message to the rear 'Follower' vehicle with 
-#                    a frequency of at least 4 Hz. 
+# BASIC TRAVEL B-24: (Leader VEHICLE) During platooning operations, the front 'Leader' vehicle shall 
+#                    continuously broadcast 'INFO' platooning MobilityOperation messages with a time gap 
+#                    between sequentially broadcasted messages below 0.5 seconds at least 90% of the time.
 ###########################################################################################################
-def check_info_msg_sending_frequency(bag, time_sent_second_acceptance):
+def check_percentage_successful_info_msg(bag, time_sent_second_acceptance):
     # Parameters used for the computation of this metric
-    min_frequency = 2.0 # Hz
-    max_duration_between_status_msgs = 1.0 / min_frequency # Seconds
+    min_percent_time_successful = 90.0 # (90%); Percent of active platooning time that the minimum 'INFO' frequency must be achieved
+    max_duration_between_info_msgs = 0.50 # (Seconds); Maximum duration between sequentially broadcasted 'INFO' messages
 
     # Obtain the timestamp of the last broadcasted MobilityOperation message from the leader. This is considered the end of
     #        platooning since the leader has disengaged.
@@ -1432,59 +1442,61 @@ def check_info_msg_sending_frequency(bag, time_sent_second_acceptance):
         time_last_sent_mob_op = t
     print("Leader sent last MobilityOperation at " + str(time_last_sent_mob_op.to_sec()))
 
-    # Obtain the quantity of 'STATUS' MobilityOperation messages broadcasted during platooning operations
-    is_first_status_msg = True
-    time_sent_prev_status_msg = rospy.Time()
-    duration_since_prev_status_msg = 0.0
-    total_time_between_status_msgs = 0.0
-    largest_duration_between_status_msgs = 0.0
-    count_status_msgs = 0
-    count_status_msgs_above_max_duration = 0
+    # Obtain the quantity of 'INFO' MobilityOperation messages broadcasted during platooning operations
+    is_first_info_msg = True
+    time_sent_prev_info_msg = rospy.Time()
+    duration_since_prev_info_msg = 0.0
+    total_time_between_unsuccessful_info_msgs = 0.0
+    total_time_between_successful_info_msgs = 0.0
+    total_time_spent_platooning = 0.0
+    largest_duration_between_info_msgs = 0.0
+    count_info_msgs = 0
+    count_info_msgs_above_max_duration = 0
     for topic, msg, t in bag.read_messages(topics=['/message/outgoing_mobility_operation'], start_time = time_sent_second_acceptance, end_time = time_last_sent_mob_op):
         if "INFO" in msg.strategy_params:
-            if is_first_status_msg:
-                time_sent_prev_status_msg = t
-                is_first_status_msg = False
+            if is_first_info_msg:
+                time_sent_prev_info_msg = t
+                is_first_info_msg = False
                 continue
             else:
-                duration_since_prev_status_msg = (t - time_sent_prev_status_msg).to_sec()
+                duration_since_prev_info_msg = (t - time_sent_prev_info_msg).to_sec()
 
                 # Track the number of messages that are broadcasted after the (1/min_frequency) duration just for debugging purposes
-                if (duration_since_prev_status_msg > max_duration_between_status_msgs):
-                    print("Duration of " + str(duration_since_prev_status_msg) + " at " + str(t.to_sec()) + " sec")
-                    count_status_msgs_above_max_duration += 1
-                    if duration_since_prev_status_msg > largest_duration_between_status_msgs:
-                        largest_duration_between_status_msgs = duration_since_prev_status_msg
-                total_time_between_status_msgs += duration_since_prev_status_msg
-                time_sent_prev_status_msg = t
-                count_status_msgs += 1
+                if (duration_since_prev_info_msg >= max_duration_between_info_msgs):
+                    #print("Duration of " + str(duration_since_prev_info_msg) + " at " + str(t.to_sec()) + " sec")
+                    total_time_between_unsuccessful_info_msgs += duration_since_prev_info_msg
+                    count_info_msgs_above_max_duration += 1
+                    if duration_since_prev_info_msg > largest_duration_between_info_msgs:
+                        largest_duration_between_info_msgs = duration_since_prev_info_msg
+                else:
+                    total_time_between_successful_info_msgs += duration_since_prev_info_msg
+                total_time_spent_platooning += duration_since_prev_info_msg
+                time_sent_prev_info_msg = t
+                count_info_msgs += 1
     
-    # Obtain the average frequency during platooning operations
-    average_time_between_sent_status_msgs = total_time_between_status_msgs / float(count_status_msgs)
-    average_frequency = 1.0 / average_time_between_sent_status_msgs
-    print("Average time between sent STATUS MobilityOperation messages: " + str(round(average_time_between_sent_status_msgs, 5)) + " seconds")
+    percent_time_successful = (total_time_between_successful_info_msgs / total_time_spent_platooning) * 100.0
 
     # Update is_successful flag and print debug statements
     is_successful = False
-    if average_frequency >= min_frequency:
-        print("B-24 Succeeded; Average frequency of sent STATUS messages " + str(round(average_frequency,2)) + " Hz. Stats below.")
+    if percent_time_successful >= min_percent_time_successful:
+        print("B-24 Succeeded; Time between messages was below " + str(round(max_duration_between_info_msgs,3)) + " seconds " + str(round(percent_time_successful,3)) + \
+              "% of the time. (Must be greater than " + str(round(min_percent_time_successful,3)) + "%)")
         is_successful = True
     else:
-        print("B-24 Failed; Average frequency of sent STATUS messages " + str(round(average_frequency,2)) + " Hz. Stats below.")
+        print("B-24 Failed; Time between messages was below " + str(round(max_duration_between_info_msgs,3)) + " seconds " + str(round(percent_time_successful,3)) + \
+              "% of the time. (Must be greater than " + str(round(min_percent_time_successful,3)) + "%)")        
         is_successful = False
     
-    pct_above_max_duration = (float(count_status_msgs_above_max_duration) / float(count_status_msgs)) * 100.0
-    print(str(count_status_msgs) + " Total STATUS Messages sent (" + str(round(100-pct_above_max_duration,3)) + "% Successful); " + str(count_status_msgs_above_max_duration) + " after " + str(round(max_duration_between_status_msgs,3)) + " sec (" \
+    pct_above_max_duration = (float(count_info_msgs_above_max_duration) / float(count_info_msgs)) * 100.0
+    print(str(count_info_msgs) + " Total INFO Messages sent (" + str(round(100-pct_above_max_duration,3)) + "% Successful); " + str(count_info_msgs_above_max_duration) + " after " + str(round(max_duration_between_info_msgs,3)) + " sec (" \
         + str(round(pct_above_max_duration,3)) + "%);; Longest duration " \
-          + " between STATUS messages was " + str(largest_duration_between_status_msgs) + " sec")
-
-    return is_successful
+          + " between INFO messages was " + str(largest_duration_between_info_msgs) + " sec")
 
 ###########################################################################################################
-# BASIC TRAVEL B-25: After the rear vehicle broadcasts its 'Platoon Follower Join' MobilityRequest message 
-#                    (the message signaling that it is joining the platoon), it shall take no more than 
-#                    10 seconds for the rear vehicle to achieve a time headway of 2.5 sec (+/- 0.5 sec) 
-#                    with the front vehicle.
+# BASIC TRAVEL B-25: After the rear vehicle responds to the front vehicle with its 'Platoon Follower Join' 
+#                    MobilityRequest message (the message signaling that it is joining the platoon), it shall 
+#                    take no more than 10 seconds for the rear vehicle to achieve a time headway with the front 
+#                    vehicle that is within 0.5 seconds of the desired 2.5 second time headway.
 ###########################################################################################################
 def check_duration_before_successful_time_headway(bag, time_received_second_acceptance, time_enter_geofence):
     threshold_time_gap = 0.5 # (seconds) Threshold offset from desired time gap; if the actual time gap is within this threshold, it is considered successful
@@ -1525,6 +1537,144 @@ def check_duration_before_successful_time_headway(bag, time_received_second_acce
 
     return is_successful
 
+###########################################################################################################
+# BASIC TRAVEL B-26: During platooning operations, the time gap between sequentially broadcasted 'STATUS' platooning
+#                    MobilityOperation messages from the front 'Leader' vehicle to the rear 'Follower' vehicle
+#                    shall never exceed 1 second.
+###########################################################################################################
+def check_max_time_between_status_msg(bag, time_sent_second_acceptance):
+    # Parameters used for the computation of this metric
+    max_percent_time_unsuccessful = 0.0 # (Percent)
+    max_duration_between_status_msgs = 1.0 # (Seconds); Minimum duration between sequentially broadcasted 'STATUS' messages
+
+    # Obtain the timestamp of the last broadcasted MobilityOperation message from the leader. This is considered the end of
+    #        platooning since the leader has disengaged.
+    time_last_sent_mob_op = rospy.Time()
+    for topic, msg, t in bag.read_messages(topics=['/message/outgoing_mobility_operation'], start_time = time_sent_second_acceptance):
+        time_last_sent_mob_op = t
+    print("Leader sent last MobilityOperation at " + str(time_last_sent_mob_op.to_sec()))
+
+    # Obtain the quantity of 'STATUS' MobilityOperation messages broadcasted during platooning operations
+    is_first_status_msg = True
+    time_sent_prev_status_msg = rospy.Time()
+    duration_since_prev_status_msg = 0.0
+    total_time_between_unsuccessful_status_msgs = 0.0
+    total_time_between_successful_status_msgs = 0.0
+    total_time_spent_platooning = 0.0
+    largest_duration_between_status_msgs = 0.0
+    count_status_msgs = 0
+    count_status_msgs_above_max_duration = 0
+    for topic, msg, t in bag.read_messages(topics=['/message/outgoing_mobility_operation'], start_time = time_sent_second_acceptance, end_time = time_last_sent_mob_op):
+        if "STATUS" in msg.strategy_params:
+            if is_first_status_msg:
+                time_sent_prev_status_msg = t
+                is_first_status_msg = False
+                continue
+            else:
+                duration_since_prev_status_msg = (t - time_sent_prev_status_msg).to_sec()
+
+                # Track the number of messages that are broadcasted after the (1/min_frequency) duration just for debugging purposes
+                if (duration_since_prev_status_msg >= max_duration_between_status_msgs):
+                    #print("Duration of " + str(duration_since_prev_status_msg) + " at " + str(t.to_sec()) + " sec")
+                    total_time_between_unsuccessful_status_msgs += duration_since_prev_status_msg
+                    count_status_msgs_above_max_duration += 1
+                    if duration_since_prev_status_msg > largest_duration_between_status_msgs:
+                        largest_duration_between_status_msgs = duration_since_prev_status_msg
+                else:
+                    total_time_between_successful_status_msgs += duration_since_prev_status_msg
+                total_time_spent_platooning += duration_since_prev_status_msg
+                time_sent_prev_status_msg = t
+                count_status_msgs += 1
+    
+    percent_time_unsuccessful = (total_time_between_unsuccessful_status_msgs / total_time_spent_platooning) * 100.0
+
+    # Update is_successful flag and print debug statements
+    is_successful = False
+    if percent_time_unsuccessful <= max_percent_time_unsuccessful:
+        print("B-26 Succeeded; Time between STATUS messages was above " + str(round(max_duration_between_status_msgs,3)) + " seconds " + str(round(percent_time_unsuccessful,3)) + \
+              "% of the time. (Must be lower than " + str(round(max_percent_time_unsuccessful,3)) + "%)")
+        is_successful = True
+    else:
+        print("B-26 Failed; Time between STATUS messages was above " + str(round(max_duration_between_status_msgs,3)) + " seconds " + str(round(percent_time_unsuccessful,3)) + \
+              "% of the time. (Must be lower than " + str(round(max_percent_time_unsuccessful,3)) + "%)")        
+        is_successful = False
+    
+    pct_above_max_duration = (float(count_status_msgs_above_max_duration) / float(count_status_msgs)) * 100.0
+    print(str(count_status_msgs) + " Total STATUS Messages sent (" + str(round(100-pct_above_max_duration,3)) + "% Successful); " + str(count_status_msgs_above_max_duration) + " after " + str(round(max_duration_between_status_msgs,3)) + " sec (" \
+        + str(round(pct_above_max_duration,3)) + "%);; Longest duration " \
+          + " between STATUS messages was " + str(largest_duration_between_status_msgs) + " sec")
+
+    return is_successful
+
+###########################################################################################################
+# BASIC TRAVEL B-27: During platooning operations, the time gap between sequentially broadcasted 'Follower' platooning
+#                    MobilityOperation messages from the front 'Leader' vehicle to the rear 'Follower' vehicle
+#                    shall never exceed 1 second.
+###########################################################################################################
+def check_max_time_between_info_msg(bag, time_sent_second_acceptance):
+    # Parameters used for the computation of this metric
+    max_percent_time_unsuccessful = 0.0 # (Percent)
+    max_duration_between_info_msgs = 1.0 # (Seconds); Minimum duration between sequentially broadcasted 'INFO' messages
+
+    # Obtain the timestamp of the last broadcasted MobilityOperation message from the leader. This is considered the end of
+    #        platooning since the leader has disengaged.
+    time_last_sent_mob_op = rospy.Time()
+    for topic, msg, t in bag.read_messages(topics=['/message/outgoing_mobility_operation'], start_time = time_sent_second_acceptance):
+        time_last_sent_mob_op = t
+    print("Leader sent last MobilityOperation at " + str(time_last_sent_mob_op.to_sec()))
+
+    # Obtain the quantity of 'INFO' MobilityOperation messages broadcasted during platooning operations
+    is_first_info_msg = True
+    time_sent_prev_info_msg = rospy.Time()
+    duration_since_prev_info_msg = 0.0
+    total_time_between_unsuccessful_info_msgs = 0.0
+    total_time_between_successful_info_msgs = 0.0
+    total_time_spent_platooning = 0.0
+    largest_duration_between_info_msgs = 0.0
+    count_info_msgs = 0
+    count_info_msgs_above_max_duration = 0
+    for topic, msg, t in bag.read_messages(topics=['/message/outgoing_mobility_operation'], start_time = time_sent_second_acceptance, end_time = time_last_sent_mob_op):
+        if "INFO" in msg.strategy_params:
+            if is_first_info_msg:
+                time_sent_prev_info_msg = t
+                is_first_info_msg = False
+                continue
+            else:
+                duration_since_prev_info_msg = (t - time_sent_prev_info_msg).to_sec()
+
+                # Track the number of messages that are broadcasted after the (1/min_frequency) duration just for debugging purposes
+                if (duration_since_prev_info_msg >= max_duration_between_info_msgs):
+                    #print("Duration of " + str(duration_since_prev_info_msg) + " at " + str(t.to_sec()) + " sec")
+                    total_time_between_unsuccessful_info_msgs += duration_since_prev_info_msg
+                    count_info_msgs_above_max_duration += 1
+                    if duration_since_prev_info_msg > largest_duration_between_info_msgs:
+                        largest_duration_between_info_msgs = duration_since_prev_info_msg
+                else:
+                    total_time_between_successful_info_msgs += duration_since_prev_info_msg
+                total_time_spent_platooning += duration_since_prev_info_msg
+                time_sent_prev_info_msg = t
+                count_info_msgs += 1
+    
+    percent_time_unsuccessful = (total_time_between_unsuccessful_info_msgs / total_time_spent_platooning) * 100.0
+
+    # Update is_successful flag and print debug statements
+    is_successful = False
+    if percent_time_unsuccessful <= max_percent_time_unsuccessful:
+        print("B-27 Succeeded; Time between messages was above " + str(round(max_duration_between_info_msgs,3)) + " seconds " + str(round(percent_time_unsuccessful,3)) + \
+              "% of the time. (Must be lower than " + str(round(max_percent_time_unsuccessful,3)) + "%)")
+        is_successful = True
+    else:
+        print("B-27 Failed; Time between messages was above " + str(round(max_duration_between_info_msgs,3)) + " seconds " + str(round(percent_time_unsuccessful,3)) + \
+              "% of the time. (Must be lower than " + str(round(max_percent_time_unsuccessful,3)) + "%)")        
+        is_successful = False
+    
+    pct_above_max_duration = (float(count_info_msgs_above_max_duration) / float(count_info_msgs)) * 100.0
+    print(str(count_info_msgs) + " Total INFO Messages sent (" + str(round(100-pct_above_max_duration,3)) + "% Successful); " + str(count_info_msgs_above_max_duration) + " after " + str(round(max_duration_between_info_msgs,3)) + " sec (" \
+        + str(round(pct_above_max_duration,3)) + "%);; Longest duration " \
+          + " between INFO messages was " + str(largest_duration_between_info_msgs) + " sec")
+
+    return is_successful
+
 # Main Function; run all tests from here
 def main():  
     if len(sys.argv) < 2:
@@ -1547,7 +1697,8 @@ def main():
                                  "BT-B-1 Result", "BT-B-2 Result", "BT-B-3 Result", "BT-B-4 Result", "BT-B-5 Result", "BT-B-6 Result", 
                                  "BT-B-7 Result", "BT-B-8 Result", "BT-B-9 Result", "BT-B-10 Result","BT-B-11 Result", "BT-B-12 Result", 
                                  "BT-B-13 Result", "BT-B-14 Result", "BT-B-15 Result", "BT-B-16 Result", "BT-B-17 Result", "BT-B-18 Result", 
-                                 "BT-19 Result", "BT-20 Result", "BT-21 Result", "BT-22 Result", "BT-23 Result", "BT-24 Result", "BT-25 Result"])
+                                 "BT-19 Result", "BT-20 Result", "BT-21 Result", "BT-22 Result", "BT-23 Result", "BT-24 Result", "BT-25 Result",
+                                 "BT-26 Result", "BT-27 Result"])
     
     # Create list of Basic Travel White Pacifica (Leader) bag files to be processed
     BT_leader_white_pacifica_bag_files = ["_2021-07-21-21-14-34_down-selected.bag",
@@ -1671,6 +1822,8 @@ def main():
         b_23_result = None
         b_24_result = None
         b_25_result = None
+        b_26_result = None
+        b_27_result = None
 
         # Metric BT-B-19
         advisory_speed_limit, time_received_first_msg, b_19_result = get_basic_travel_TCM_data(bag)
@@ -1692,7 +1845,6 @@ def main():
         # Metric BT-B-4: This metric is manually-evaluated using the vehicle speed plot
 
         # Metric BT-B-5 
-        # TODO: Add in lane merge metric computation
         b_5_result = None
         if bag_file in BT_follower_black_pacifica_bag_files:
             check_lane_merge_before_geofence(bag)
@@ -1709,7 +1861,7 @@ def main():
             b_9_result = check_follower_state_after_platoon_negotiation(bag, time_last_sent_join_at_rear)
             print("B-10: N/A (Follower Vehicle)")
             b_11_result = check_distance_gap_during_platooning(bag, time_received_second_acceptance, time_test_end_engagement)
-            b_12_result = check_status_msg_receiving_frequency(bag, time_received_second_acceptance)
+            b_12_result = check_percentage_successful_status_msg_follower(bag, time_received_second_acceptance)
 
         else:
             print("B-6: N/A (Leader Vehicle)")
@@ -1720,7 +1872,7 @@ def main():
             duration_platoon_negotiation = get_platoon_negotiation_duration(time_sent_second_acceptance, time_last_received_join_at_rear, is_leader=True)
             b_10_result = check_leader_state_after_platoon_negotiation(bag, time_last_received_join_at_rear)
             print("B-11: N/A (Leader Vehicle)")
-            b_12_result = check_status_msg_sending_frequency(bag, time_sent_second_acceptance)
+            b_12_result = check_percentage_successful_status_msg_leader(bag, time_sent_second_acceptance)
             b_13_result = check_deceleration_before_geofence(bag, time_enter_geofence, original_speed_limit, advisory_speed_limit)
             b_14_result = check_acceleration_distance_after_geofence(bag, time_exit_geofence)
             b_15_result = check_acceleration_rate_after_geofence(bag, time_exit_geofence, original_speed_limit, advisory_speed_limit)
@@ -1732,19 +1884,23 @@ def main():
         b_18_result = check_advisory_speed_limit(bag, advisory_speed_limit, original_speed_limit)
 
         if bag_file in BT_follower_black_pacifica_bag_files:
-            b_20_result = check_vehicle_inside_lane(bag, time_test_start_engagement, time_test_end_engagement, is_front_vehicle = False)
-            print("B-21: N/A (Follower Vehicle)")
+            print("B-20: N/A (Follower Vehicle)")
+            b_21_result = check_vehicle_inside_lane(bag, time_test_start_engagement, time_test_end_engagement, is_front_vehicle = False)
             b_22_result = check_vehicle_always_within_maximum_crosstrack(bag, time_test_start_engagement, time_test_end_engagement, is_front_vehicle = False)
             print("B-23: N/A (Follower Vehicle)")
             print("B-24: N/A (Follower Vehicle)")
             b_25_result = check_duration_before_successful_time_headway(bag, time_received_second_acceptance, time_enter_geofence)
+            print("B-26: N/A (Follower Vehicle)")
+            print("B-26: N/A (Follower Vehicle)")
         else:
-            print("B-20: N/A (Leader Vehicle)")
-            b_21_result = check_vehicle_inside_lane(bag, time_test_start_engagement, time_test_end_engagement, is_front_vehicle = True)
+            b_20_result = check_vehicle_inside_lane(bag, time_test_start_engagement, time_test_end_engagement, is_front_vehicle = True)
+            print("B-21: N/A (Leader Vehicle)")
             print("B-22: N/A (Leader Vehicle)")
             b_23_result = check_vehicle_always_within_maximum_crosstrack(bag, time_test_start_engagement, time_test_end_engagement, is_front_vehicle = True)
-            b_24_result = check_info_msg_sending_frequency(bag, time_sent_second_acceptance)
+            b_24_result = check_percentage_successful_info_msg(bag, time_sent_second_acceptance)
             print("B-25: N/A (Leader Vehicle)")
+            b_26_result = check_max_time_between_status_msg(bag, time_sent_second_acceptance)
+            b_27_result = check_max_time_between_info_msg(bag, time_sent_second_acceptance)
 
         # Get vehicle type that this bag file is from
         vehicle_name = "Unknown"
@@ -1767,7 +1923,7 @@ def main():
                                      b_1_result, b_2_result, b_3_result, b_4_result, b_5_result, b_6_result, b_7_result,
                                      b_8_result, b_9_result, b_10_result, b_11_result, b_12_result, b_13_result, b_14_result, 
                                      b_15_result, b_16_result, b_17_result, b_18_result, b_19_result, b_20_result,
-                                     b_21_result, b_22_result, b_23_result, b_24_result, b_25_result])
+                                     b_21_result, b_22_result, b_23_result, b_24_result, b_25_result, b_26_result, b_27_result])
         
     sys.stdout = orig_stdout
     text_log_file_writer.close()
