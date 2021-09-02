@@ -117,13 +117,17 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   } else if (current_map_version_ > geofence_msg->map_version) { // If this update is for an older map
     ROS_WARN_STREAM("Dropping old map update as newer map is already available.");
     return;
+  } else if (most_recent_update_msg_seq_ + 1 < geofence_msg->header.seq) {
+    ROS_INFO_STREAM("Queuing map update as we are waiting on an earlier update to be applied. most_recent_update_msg_seq_: " << most_recent_update_msg_seq_ << "geofence_msg->header.seq: " << geofence_msg->header.seq);
+    map_update_queue_.push(geofence_msg);
+    return;
   }
 
-  most_recent_update_msg_seq_ = geofence_msg->header.seq; // Update current sequence count
 
   if(geofence_msg->invalidates_route==true && world_model_->getRoute())
   {  
     rerouting_flag_=true;
+    recompute_route_flag_=true;
     ROS_DEBUG_STREAM("Received notice that route has been invalidated in mapUpdateCallback");
 
     if(route_node_flag_!=true)
@@ -133,6 +137,9 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
      return;
     }
   }
+
+  most_recent_update_msg_seq_ = geofence_msg->header.seq; // Update current sequence count
+
   // convert ros msg to geofence object
   auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   carma_wm::fromBinMsg(*geofence_msg, gf_ptr);
@@ -186,9 +193,12 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   }
   
   // set the Map to trigger a new route graph construction if rerouting was required by the updates. 
-  world_model_->setMap(world_model_->getMutableMap(), current_map_version_, rerouting_flag_);
+  world_model_->setMap(world_model_->getMutableMap(), current_map_version_, recompute_route_flag_);
 
-  
+  // no need to reroute again unless received invalidated msg again
+  if (recompute_route_flag_)
+    recompute_route_flag_ = false;
+
   ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_); 
 
   // Call user defined map callback
@@ -289,7 +299,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     return;
   }
 
-  if(rerouting_flag_==true && route_msg->is_rerouted && !route_node_flag_)
+  if(rerouting_flag_==true && route_msg->is_rerouted)
   {
 
     // After setting map evaluate the current update queue to apply any updates that arrived before the map
@@ -298,7 +308,8 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
       
       auto update = map_update_queue_.front(); // Get first update
       map_update_queue_.pop(); // Remove update from queue
-      update->invalidates_route = false;
+      rerouting_flag_ = false;  // route node has finished routing, allow update
+      update->invalidates_route=false; // do not trigger rerouting for route node again
 
       if (update->map_version < current_map_version_) { // Drop any so far unapplied updates for the current map
         ROS_WARN_STREAM("Apply from reroute: There were unapplied updates in carma_wm when a new map was recieved.");
@@ -316,6 +327,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 
   }
 
+  recompute_route_flag_ = false;
   rerouting_flag_ = false;
 
   if (!world_model_->getMap()) { // This check is a bit redundant but still useful from a debugging perspective as the alternative is a segfault
