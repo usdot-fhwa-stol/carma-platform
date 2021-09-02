@@ -64,7 +64,7 @@ target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_LIBRARIES} $
 ## Install ##
 #############
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
@@ -79,3 +79,13 @@ install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
 install(DIRECTORY launch config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+#############
+## Testing ##
+#############
+
+catkin_add_gmock(${PROJECT_NAME}-test 
+ test/test_strategic_plugin.cpp
+ WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+
+target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
