@@ -24,6 +24,7 @@
 using namespace inlanecruising_plugin;
 // Test to ensure Eigen::Isometry2d behaves like tf2::Transform
 
+
 TEST(InLaneCruisingPluginTest, validate_eigen)
 {
   Eigen::Rotation2Dd frame_rot(M_PI_2);
@@ -160,9 +161,6 @@ TEST(InLaneCruisingPluginTest, constrain_to_time_boundary)
   ASSERT_NEAR(1.0, time_bound_points[4].speed, 0.0000001);
   ASSERT_NEAR(1.0, time_bound_points[5].speed, 0.0000001);
 }
-
-
-
 
 TEST(InLaneCruisingPluginTest, get_nearest_index_by_downtrack_test)
 {

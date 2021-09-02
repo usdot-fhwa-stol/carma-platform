@@ -70,7 +70,6 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   {
     if(req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_FOLLOWING)
     {
-      speed_limit_ = std::min(speed_limit_, req.maneuver_plan.maneuvers[i].lane_following_maneuver.end_speed);
       maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
       resp.related_maneuvers.push_back(i);
     }
@@ -111,21 +110,6 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
                                                                                 req.vehicle_state, req.header.stamp, wm_, ending_state_before_buffer_, debug_msg_, 
                                                                                 wpg_detail_config); // Compute the trajectory
   original_trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
-
-  
-  if (config_.check_for_stop_intersection)
-  {
-    // Checking for intersections
-    auto stop_intersection_list = wm_->getIntersectionsAlongRoute(veh_pos);
-    auto nearest_stop_intersection = stop_intersection_list.front();
-    double stop_intersection_down_track =
-      wm_->routeTrackPos(nearest_stop_intersection->stopLines().front().front().basicPoint2d()).downtrack;
-    
-    double time_to_schedule_stop = (scheduled_stop_time_ - street_msg_timestamp_)/1000.0;
-    int case_num = determine_case(stop_intersection_down_track, req.vehicle_state.longitudinal_vel, time_to_schedule_stop, speed_limit_);
-
-  }
-
 
   if (config_.enable_object_avoidance)
   {
@@ -208,100 +192,6 @@ bool InLaneCruisingPlugin::validate_yield_plan(const cav_msgs::TrajectoryPlan& y
     ROS_DEBUG_STREAM("Invalid Yield Trajectory"); 
   }
   return false;
-}
-
-void InLaneCruisingPlugin::mob_op_cb(const cav_msgs::MobilityOperationConstPtr& msg)
-{
-  if ((msg->strategy == stop_controlled_intersection_strategy_) && (msg->strategy_params != previous_strategy_params_))
-  {
-
-    parse_strategy_params(msg->strategy_params);
-    
-  }
-}
-
-void InLaneCruisingPlugin::parse_strategy_params(const std::string& strategy_params)
-{
-  std::istringstream strategy_params_ss(strategy_params);
-  boost::property_tree::ptree parser, child;
-  boost::property_tree::json_parser::read_json(strategy_params_ss, parser);
-  child = parser.get_child("schedule_plan");
-  for(auto& p : child)
-  {
-    if (p.first == "metadata")
-    {
-      street_msg_timestamp_ = p.second.get<uint32_t>("timestamp");
-      std::cout << "timestamp: " << street_msg_timestamp_ << std::endl;
-    }
-    if (p.first == "payload" && p.second.get<std::string>("veh_id") == config_.vehicle_id)
-    {        
-      // parse stop time in ms
-      scheduled_stop_time_ = p.second.get<uint32_t>("est_stop_t");
-      ROS_DEBUG_STREAM("scheduled_stop_time_: " << scheduled_stop_time_);
-
-      scheduled_enter_time_ = p.second.get<uint32_t>("est_enter_t");
-      ROS_DEBUG_STREAM("scheduled_enter_time_: " << scheduled_enter_time_);
-      
-      scheduled_depart_time_ = p.second.get<uint32_t>("est_depart_t");
-      ROS_DEBUG_STREAM("scheduled_depart_time_: " << scheduled_depart_time_);
-
-      scheduled_latest_depart_time_ = p.second.get<uint32_t>("latest_depart_p");
-      ROS_DEBUG_STREAM("scheduled_latest_depart_time_: " << scheduled_latest_depart_time_);
-
-      is_allowed_int_ = p.second.get<bool>("is_allowed_int");
-      ROS_DEBUG_STREAM("is_allowed_int: " << is_allowed_int_);
-    }
-  }
-}
-
-int InLaneCruisingPlugin::determine_case(double stop_dist, double current_speed, double schedule_stop_time, double speed_limit)
-{
-  int case_num = 0;
-  double estimated_stop_time = calc_estimated_stop_time(stop_dist, current_speed);
-  
-  ROS_DEBUG_STREAM("estimated_stop_time: " << estimated_stop_time);
-  if (estimated_stop_time < schedule_stop_time)
-  {
-    case_num = 3;
-  }
-  else
-  {
-    double speed_before_stop = calc_stop_speed(estimated_stop_time, stop_dist, current_speed);
-    if (speed_before_stop < speed_limit)
-    {
-      case_num = 1;
-    }
-    else
-    {
-      case_num = 2;
-    }
-  }
-  
-  return case_num;
-}
-
-
-double InLaneCruisingPlugin::calc_estimated_stop_time(double stop_dist, double current_speed)
-{
-  
-  double t_stop = 0;
-  t_stop = 2*stop_dist/current_speed;
-  return t_stop;
-}
-
-double InLaneCruisingPlugin::calc_stop_speed(double stop_time, double stop_dist, double current_speed)
-{
-  double stop_speed = 0;
-
-  double desired_acceleration = config_.max_accel;
-  double desired_deceleration = -1*config_.max_accel;
-
-  double sqr_term = sqrt(pow(1 - (desired_acceleration/desired_deceleration), 2) * pow(stop_dist/stop_time, 2) 
-                        + (1 - (desired_acceleration/desired_deceleration))*(current_speed*current_speed - 2*current_speed*stop_dist/stop_time));
-
-  stop_speed = (stop_dist/stop_time) + (sqr_term)/(1 - (desired_acceleration/desired_deceleration));
-
-  return stop_speed;
 }
 
 

@@ -68,8 +68,6 @@ public:
     pnh.param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
     pnh.param<bool>("enable_object_avoidance", config.enable_object_avoidance, config.enable_object_avoidance);
     pnh.param<double>("buffer_ending_downtrack", config.buffer_ending_downtrack, config.buffer_ending_downtrack);
-    pnh.param<bool>("check_for_stop_intersection", config.check_for_stop_intersection, config.check_for_stop_intersection);
-    pnh.getParam("/vehicle_id", config.vehicle_id);
 
     ROS_INFO_STREAM("InLaneCruisingPlugin Params" << config);
     
@@ -88,7 +86,6 @@ public:
 
     ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory",
                                             &InLaneCruisingPlugin::plan_trajectory_cb, &worker);
-    ros::Subscriber mob_operation_sub = nh.subscribe("incoming_mobility_operation", 1, &InLaneCruisingPlugin::mob_op_cb,  &worker);
 
     //TODO: Update yield client to use the Plugin Manager capabilities query, in case someone else wants to add an alternate yield implementation 
     ros::ServiceClient yield_client = nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");

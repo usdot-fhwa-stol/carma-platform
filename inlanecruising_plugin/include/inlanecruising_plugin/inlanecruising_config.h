@@ -40,8 +40,6 @@ struct InLaneCruisingPluginConfig
   bool enable_object_avoidance = true;    // Activate object avoidance logic
   bool publish_debug = false; // True if debug publishing will be enabled
   double buffer_ending_downtrack = 20.0;
-  bool check_for_stop_intersection = false;
-  std::string vehicle_id = "default_id";  //license plate of the vehicle.
   
   friend std::ostream& operator<<(std::ostream& output, const InLaneCruisingPluginConfig& c)
   {
@@ -61,8 +59,6 @@ struct InLaneCruisingPluginConfig
            << "enable_object_avoidance: " << c.enable_object_avoidance << std::endl
            << "publish_debug: " << c.publish_debug << std::endl
            << "buffer_ending_downtrack: " << c.buffer_ending_downtrack << std::endl
-           << "buffer_ending_downtrack: " << c.buffer_ending_downtrack << std::endl
-           << "check_for_stop_intersection: " << c.check_for_stop_intersection << std::endl
            << "}" << std::endl;
     return output;
   }
