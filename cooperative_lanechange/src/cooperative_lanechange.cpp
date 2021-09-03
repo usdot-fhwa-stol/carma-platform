@@ -820,8 +820,6 @@ namespace cooperative_lanechange
 
         int total_points = std::min(centerline_start_lane.size(), centerline_end_lane.size());
         double delta_step = 1.0/(total_points - 1);
-        
-        ROS_DEBUG_STREAM(">>>>>> Creating lanechange geom");
 
         for(int i=0; i<total_points;i++){ // start from 1 as star_lane_pt is included
             lanelet::BasicPoint2d current_position;
@@ -832,10 +830,7 @@ namespace cooperative_lanechange
             current_position.y() = end_lane_pt.y()*delta + (1-delta)* start_lane_pt.y();
 
             centerline_points.push_back(current_position);
-            ROS_DEBUG_STREAM("current_position x: " << current_position.x() << ", y: " << current_position.y());
-        }
-        ROS_DEBUG_STREAM(">>>>>> Ended lanechange geom");
-        
+        }        
 
         std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(centerline_points);
         if(!fit_curve)
