@@ -56,7 +56,7 @@ public:
    * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
    * \param config The configuration to be used for this object
    */
-  SCIStrategicPlugin(carma_wm::WorldModelConstPtr wm, SCIStrategicPluginConfig config);
+  SCIStrategicPlugin(carma_wm::WorldModelConstPtr wm, SCIStrategicPluginConfig& config);
 
   /**
    * \brief Service callback for arbitrator maneuver planning
@@ -64,7 +64,7 @@ public:
    * \param[out] resp Plan maneuver response with a list of maneuver plan
    * \return If service call successed
    */
-  bool planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp);
+  bool planManeuverCb(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp);
 
   /**
    * \brief Returns the current plugin discovery message reflecting system status
@@ -156,7 +156,7 @@ public:
    *
    * \return speed value
    */
-  double calcSpeedBeforeDecel(double stop_time, double stop_dist, double current_speed);
+  double calcSpeedBeforeDecel(double stop_time, double stop_dist, double current_speed) const;
 
     /**
    * \brief parse strategy parameters
@@ -174,7 +174,7 @@ public:
    *
    * \return the time vehicle will stop with optimal decelarion
    */
-  double calcEstimatedStopTime(double stop_dist, double current_speed);
+  double calcEstimatedStopTime(double stop_dist, double current_speed) const;
 
   /**
    * \brief Determine the desired speed profile parameters for Case 1
@@ -188,7 +188,7 @@ public:
    * \param float_metadata_list metadata vector for storing speed profile parameters
    *
    */
-  void caseOneSpeedProfile(double speed_before_decel, double current_speed, double stop_time, std::vector<double>* float_metadata_list);
+  void caseOneSpeedProfile(double speed_before_decel, double current_speed, double stop_time, std::vector<double>* float_metadata_list) const;
 
   /**
    * \brief Determine the desired speed profile parameters for Case 2
@@ -204,7 +204,7 @@ public:
    * \param float_metadata_list metadata vector for storing speed profile parameters
    *
    */
-  void caseTwoSpeedProfile(double stop_dist, double speed_before_decel, double current_speed, double stop_time,  double speed_limit, std::vector<double>* float_metadata_list);
+  void caseTwoSpeedProfile(double stop_dist, double speed_before_decel, double current_speed, double stop_time,  double speed_limit, std::vector<double>* float_metadata_list) const;
 
   /**
    * \brief Determine the desired speed profile parameters for Case 3
@@ -218,7 +218,7 @@ public:
    * \param float_metadata_list metadata vector for storing speed profile parameters
    *
    */
-  void caseThreeSpeedProfile(double stop_dist, double current_speed, double stop_time, std::vector<double>* float_metadata_list);
+  void caseThreeSpeedProfile(double stop_dist, double current_speed, double stop_time, std::vector<double>* float_metadata_list) const;
   
   ////////// VARIABLES ///////////
 

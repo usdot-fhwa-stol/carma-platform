@@ -34,7 +34,7 @@
 
 namespace sci_strategic_plugin
 {
-SCIStrategicPlugin::SCIStrategicPlugin(carma_wm::WorldModelConstPtr wm, SCIStrategicPluginConfig config)
+SCIStrategicPlugin::SCIStrategicPlugin(carma_wm::WorldModelConstPtr wm, SCIStrategicPluginConfig& config)
   : wm_(wm), config_(config)
 {
   plugin_discovery_msg_.name = config_.strategic_plugin_name;
@@ -98,15 +98,15 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
 void SCIStrategicPlugin::parseStrategyParams(const std::string& strategy_params)
 {
   std::istringstream strategy_params_ss(strategy_params);
-  boost::property_tree::ptree parser, child;
+  boost::property_tree::ptree parser;
+  boost::property_tree::ptree child;
   boost::property_tree::json_parser::read_json(strategy_params_ss, parser);
   child = parser.get_child("schedule_plan");
-  for(auto& p : child)
+  for(const auto& p : child)
   {
     if (p.first == "metadata")
     {
       street_msg_timestamp_ = p.second.get<uint32_t>("timestamp");
-      std::cout << "timestamp: " << street_msg_timestamp_ << std::endl;
     }
     if (p.first == "payload" && p.second.get<std::string>("veh_id") == config_.vehicle_id)
     {        
@@ -155,7 +155,7 @@ int SCIStrategicPlugin::determineSpeedProfileCase(double stop_dist, double curre
   return case_num;
 }
 
-double SCIStrategicPlugin::calcEstimatedStopTime(double stop_dist, double current_speed)
+double SCIStrategicPlugin::calcEstimatedStopTime(double stop_dist, double current_speed) const
 {
   
   double t_stop = 0;
@@ -163,7 +163,7 @@ double SCIStrategicPlugin::calcEstimatedStopTime(double stop_dist, double curren
   return t_stop;
 }
 
-double SCIStrategicPlugin::calcSpeedBeforeDecel(double stop_time, double stop_dist, double current_speed)
+double SCIStrategicPlugin::calcSpeedBeforeDecel(double stop_time, double stop_dist, double current_speed) const
 {
   double speed_before_decel = 0;
 
@@ -173,7 +173,7 @@ double SCIStrategicPlugin::calcSpeedBeforeDecel(double stop_time, double stop_di
   double sqr_term = sqrt(pow(1 - (desired_acceleration/desired_deceleration), 2) * pow(stop_dist/stop_time, 2) 
                         + (1 - (desired_acceleration/desired_deceleration))*(current_speed*current_speed - 2*current_speed*stop_dist/stop_time));
 
-  speed_before_decel = (stop_dist/stop_time) + (sqr_term)/(1 - (desired_acceleration/desired_deceleration));
+  speed_before_decel = (stop_dist/stop_time) + sqr_term/(1 - (desired_acceleration/desired_deceleration));
 
   return speed_before_decel;
 }
@@ -187,7 +187,7 @@ std::vector<lanelet::ConstLanelet> SCIStrategicPlugin::getLaneletsBetweenWithExc
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
       wm_->getLaneletsBetween(start_downtrack, end_downtrack, shortest_path_only, bounds_inclusive);
 
-  if (crossed_lanelets.size() == 0)
+  if (crossed_lanelets.empty())
   {
     throw std::invalid_argument("getLaneletsBetweenWithException called but inputs do not cross any lanelets going "
                                 "from: " +
@@ -199,7 +199,7 @@ std::vector<lanelet::ConstLanelet> SCIStrategicPlugin::getLaneletsBetweenWithExc
 
 
 
-bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp)
+bool SCIStrategicPlugin::planManeuverCb(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp)
 {
   if (!wm_->getRoute())
   {
@@ -270,7 +270,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 }
 
 void SCIStrategicPlugin::caseOneSpeedProfile(double speed_before_decel, double current_speed, double stop_time, 
-                                            std::vector<double>* float_metadata_list)
+                                            std::vector<double>* float_metadata_list) const
 {
   double desired_acceleration = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
   double desired_deceleration = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
@@ -288,7 +288,7 @@ void SCIStrategicPlugin::caseOneSpeedProfile(double speed_before_decel, double c
 
 void SCIStrategicPlugin::caseTwoSpeedProfile(double stop_dist, double speed_before_decel, 
                                             double current_speed, double stop_time,  double speed_limit, 
-                                            std::vector<double>* float_metadata_list)
+                                            std::vector<double>* float_metadata_list) const
 {
   double desired_acceleration = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
   double desired_deceleration = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
@@ -318,7 +318,7 @@ void SCIStrategicPlugin::caseTwoSpeedProfile(double stop_dist, double speed_befo
 }
 
 void SCIStrategicPlugin::caseThreeSpeedProfile(double stop_dist, double current_speed, double stop_time, 
-                                                std::vector<double>* float_metadata_list)
+                                                std::vector<double>* float_metadata_list) const
 {
   double a_dec = (2*stop_dist - current_speed*(stop_time + config_.delta_t))/(stop_time * config_.delta_t);
   float_metadata_list->push_back(a_dec);
