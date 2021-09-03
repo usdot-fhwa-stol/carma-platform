@@ -244,7 +244,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       speed_limit_ = findSpeedLimit(crossed_lanelets.front());
 
       resp.new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(
-        case_num, current_state.downtrack, stop_intersection_down_track, current_state.speed, speed_limit_,
+        case_num, current_state.downtrack, stop_intersection_down_track, current_state.speed, 0.0,
         current_state.stamp, time_to_schedule_stop,
         lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); })));
     }
