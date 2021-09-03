@@ -199,7 +199,7 @@ std::vector<lanelet::ConstLanelet> SCIStrategicPlugin::getLaneletsBetweenWithExc
 
 
 
-bool SCIStrategicPlugin::planManeuverCb(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp)
+bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp)
 {
   if (!wm_->getRoute())
   {

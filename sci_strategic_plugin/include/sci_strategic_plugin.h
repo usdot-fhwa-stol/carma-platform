@@ -64,7 +64,7 @@ public:
    * \param[out] resp Plan maneuver response with a list of maneuver plan
    * \return If service call successed
    */
-  bool planManeuverCb(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp);
+  bool planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp);
 
   /**
    * \brief Returns the current plugin discovery message reflecting system status
