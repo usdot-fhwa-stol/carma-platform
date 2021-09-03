@@ -157,9 +157,9 @@ TEST(SCIStrategicPluginTest, calcSpeedBeforeDeceltest)
   SCIStrategicPluginConfig config;
   SCIStrategicPlugin sci(wm, config);
 
-  double stop_speed = sci.calcSpeedBeforeDecel(33, 50, 15);
+  double stop_speed = sci.calcSpeedBeforeDecel(20, 250, 10);
 
-  EXPECT_NEAR(11, stop_speed, 0.2);
+  EXPECT_NEAR(21.5, stop_speed, 0.2);
 }
 
 TEST(SCIStrategicPluginTest, determineSpeedProfileCasetest)
@@ -206,13 +206,13 @@ TEST(SCIStrategicPluginTest, caseTwoSpeedProfiletest)
 
   std::vector<double> metadata{};
 
-  sci.caseTwoSpeedProfile(100, 17, 12, 44, 15, &metadata);
+  sci.caseTwoSpeedProfile(250, 21.2, 10, 20, 15, &metadata);
 
-  EXPECT_NEAR(0.2, metadata[0], 0.01);
-  EXPECT_NEAR(-0.2, metadata[1], 0.01);
-  EXPECT_NEAR(14.35, metadata[2], 0.01);
-  EXPECT_NEAR(71.8, metadata[3], 0.01);
-  EXPECT_NEAR(-42.15, metadata[4], 0.01);
+  EXPECT_NEAR(2.5, metadata[0], 0.01);
+  EXPECT_NEAR(-2.5, metadata[1], 0.01);
+  EXPECT_NEAR(2, metadata[2], 0.01);
+  EXPECT_NEAR(6, metadata[3], 0.01);
+  EXPECT_NEAR(12, metadata[4], 0.01);
 }
 
 
