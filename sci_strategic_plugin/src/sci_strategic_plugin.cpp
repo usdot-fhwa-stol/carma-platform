@@ -209,8 +209,8 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
   if (!approacing_stop_controlled_interction_)
   {
-    cav_msgs::Maneuver empty_maneuver;
-    resp.new_plan.maneuvers.push_back(empty_maneuver);
+    resp.new_plan.maneuvers = {};
+    ROS_WARN_STREAM("Not approaching stop-controlled itnersection so no maneuvers");
     return true;
   }
 
@@ -283,6 +283,7 @@ void SCIStrategicPlugin::caseOneSpeedProfile(double speed_before_decel, double c
   float_metadata_list->push_back(a_dec);
   float_metadata_list->push_back(t_acc);
   float_metadata_list->push_back(t_dec);
+  float_metadata_list->push_back(speed_before_decel);
 }
 
 void SCIStrategicPlugin::caseTwoSpeedProfile(double stop_dist, double speed_before_decel, 
@@ -312,6 +313,7 @@ void SCIStrategicPlugin::caseTwoSpeedProfile(double stop_dist, double speed_befo
   float_metadata_list->push_back(t_acc);
   float_metadata_list->push_back(t_dec);
   float_metadata_list->push_back(t_cruise);
+  float_metadata_list->push_back(speed_before_decel);
 
 }
 
