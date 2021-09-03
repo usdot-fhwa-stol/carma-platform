@@ -85,6 +85,7 @@ install(DIRECTORY launch config
 #############
 
 catkin_add_gmock(${PROJECT_NAME}-test 
+ test/test_main.cpp
  test/test_strategic_plugin.cpp
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
 

@@ -40,6 +40,9 @@ struct SCIStrategicPluginConfig
   //! The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
   double min_maneuver_planning_period = 15.1;
 
+  // Double: Approximate update time interval of carma streets
+  double delta_t = 1.0;
+
   //! The name to use for this plugin during comminications with the arbitrator
   std::string strategic_plugin_name = "SCIStrategicPlugin";
 

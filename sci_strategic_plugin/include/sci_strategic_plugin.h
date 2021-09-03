@@ -34,9 +34,22 @@
 
 namespace sci_strategic_plugin
 {
+
+
 class SCIStrategicPlugin
 {
 public:
+  /**
+   * \brief Struct representing a vehicle state for the purposes of planning
+   */
+  struct VehicleState
+  {
+    ros::Time stamp;      // Timestamp of this state data
+    double downtrack;     // The downtrack of the vehicle along the route at time stamp
+    double speed;         // The speed of the vehicle at time stamp
+    lanelet::Id lane_id;  // The current lane id of the vehicle at time stamp
+  };
+  
   /**
    * \brief Constructor
    *
@@ -66,34 +79,6 @@ public:
    * \param msg input mobility operation msg
    */
   void mobilityOperationCb(const cav_msgs::MobilityOperationConstPtr& msg);
-
-  // CARMA Streets Variakes
-  // timestamp for msg received from carma streets
-  uint32_t street_msg_timestamp_ = 0.0;
-  // scheduled stop time
-  uint32_t scheduled_stop_time_ = 0.0;
-  // scheduled enter time
-  uint32_t scheduled_enter_time_ = 0.0;
-  // scheduled depart time
-  uint32_t scheduled_depart_time_ = 0.0;
-  // scheduled latest depart time
-  uint32_t scheduled_latest_depart_time_ = 0.0;
-  // flag to show if the vehicle is allowed in intersection
-  bool is_allowed_int_ = false;
-
-private:
-  /**
-   * \brief Struct representing a vehicle state for the purposes of planning
-   */
-  struct VehicleState
-  {
-    ros::Time stamp;      // Timestamp of this state data
-    double downtrack;     // The downtrack of the vehicle along the route at time stamp
-    double speed;         // The speed of the vehicle at time stamp
-    lanelet::Id lane_id;  // The current lane id of the vehicle at time stamp
-  };
-
-
 
   /**
    * \brief Compose a lane keeping maneuver message based on input params
@@ -219,7 +204,7 @@ private:
    * \param float_metadata_list metadata vector for storing speed profile parameters
    *
    */
-  void caseTwoSpeedProfile(double stop_dist, double speed_before_decel, double current_speed, double stop_time, std::vector<double>* float_metadata_list);
+  void caseTwoSpeedProfile(double stop_dist, double speed_before_decel, double current_speed, double stop_time,  double speed_limit, std::vector<double>* float_metadata_list);
 
   /**
    * \brief Determine the desired speed profile parameters for Case 3
@@ -234,7 +219,31 @@ private:
    *
    */
   void caseThreeSpeedProfile(double stop_dist, double current_speed, double stop_time, std::vector<double>* float_metadata_list);
+  
   ////////// VARIABLES ///////////
+
+  // CARMA Streets Variakes
+  // timestamp for msg received from carma streets
+  uint32_t street_msg_timestamp_ = 0.0;
+  // scheduled stop time
+  uint32_t scheduled_stop_time_ = 0.0;
+  // scheduled enter time
+  uint32_t scheduled_enter_time_ = 0.0;
+  // scheduled depart time
+  uint32_t scheduled_depart_time_ = 0.0;
+  // scheduled latest depart time
+  uint32_t scheduled_latest_depart_time_ = 0.0;
+  // flag to show if the vehicle is allowed in intersection
+  bool is_allowed_int_ = false;
+
+  // approximate speed limit 
+  double speed_limit_ = 100.0;
+
+  bool approacing_stop_controlled_interction_ = false;
+
+
+  private:
+
 
   //! World Model pointer
   carma_wm::WorldModelConstPtr wm_;
@@ -252,9 +261,8 @@ private:
   // strategy for stop controlled intersection
   std::string stop_controlled_intersection_strategy_ = "Carma/stop_controlled_intersection";
   std::string previous_strategy_params_ = "";
-  bool approacing_stop_controlled_interction_ = false;
-  // approximate speed limit 
-  double speed_limit_ = 100.0;
+  
+  
 
 };
 }  // namespace sci_strategic_plugin

@@ -45,6 +45,7 @@ int main(int argc, char** argv)
   pnh.param<double>("/vehicle_acceleration_limit",      config.vehicle_decel_limit, config.vehicle_accel_limit);
   pnh.param<double>("vehicle_accel_limit_multiplier",   config.vehicle_decel_limit_multiplier, config.vehicle_accel_limit_multiplier);
   pnh.param<double>("stop_line_buffer",   config.stop_line_buffer, config.stop_line_buffer);
+  pnh.param<double>("delta_t",   config.delta_t, config.delta_t);
   pnh.param<std::string>("strategic_plugin_name",            config.strategic_plugin_name, config.strategic_plugin_name);
   pnh.param<std::string>("lane_following_plugin_name",       config.lane_following_plugin_name, config.lane_following_plugin_name);
   pnh.param<std::string>("intersection_transit_plugin_name", config.intersection_transit_plugin_name, config.intersection_transit_plugin_name);

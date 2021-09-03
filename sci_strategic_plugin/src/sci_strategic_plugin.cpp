@@ -220,9 +220,8 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
   // Get current traffic light information
   ROS_DEBUG("\n\nFinding intersecction information");
-  
+
   auto stop_intersection_list = wm_->getIntersectionsAlongRoute({ req.veh_x, req.veh_y });
-    
   auto nearest_stop_intersection = stop_intersection_list.front();
   double stop_intersection_down_track =
   wm_->routeTrackPos(nearest_stop_intersection->stopLines().front().front().basicPoint2d()).downtrack;
@@ -236,15 +235,16 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       // approaching stop line
       // lane following to intersection
       double time_to_schedule_stop = (scheduled_stop_time_ - street_msg_timestamp_)/1000.0;
-
       int case_num = determineSpeedProfileCase(stop_intersection_down_track, current_state.speed, time_to_schedule_stop, speed_limit_);
 
       // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
       std::vector<lanelet::ConstLanelet> crossed_lanelets =
           getLaneletsBetweenWithException(current_state.downtrack, stop_intersection_down_track, true, true);
 
+      speed_limit_ = findSpeedLimit(crossed_lanelets.front());
+
       resp.new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(
-        case_num, current_state.downtrack, stop_intersection_down_track, current_state.speed, intersection_speed_.get(),
+        case_num, current_state.downtrack, stop_intersection_down_track, current_state.speed, speed_limit_,
         current_state.stamp, time_to_schedule_stop,
         lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); })));
     }
@@ -259,6 +259,11 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   {
     // Passed the stop line
     // Intersection transit maneuver
+    
+    // when passing intersection, set the flag to false
+    // TODO: Another option, check the time on mobilityoperation
+    approacing_stop_controlled_interction_ = false;
+
   }
   
   return true;
@@ -272,8 +277,8 @@ void SCIStrategicPlugin::caseOneSpeedProfile(double speed_before_decel, double c
 
   double a_acc = ((1 - desired_acceleration/desired_deceleration)*speed_before_decel - current_speed)/stop_time;
   double a_dec = ((desired_deceleration - desired_acceleration)*speed_before_decel - desired_deceleration * current_speed)/(desired_acceleration * stop_time);
-  double t_acc = (speed_before_decel - current_speed)/desired_acceleration;
-  double t_dec = -speed_before_decel/desired_deceleration;
+  double t_acc = (speed_before_decel - current_speed)/a_acc;
+  double t_dec = -speed_before_decel/a_dec;
   float_metadata_list->push_back(a_acc);
   float_metadata_list->push_back(a_dec);
   float_metadata_list->push_back(t_acc);
@@ -281,25 +286,24 @@ void SCIStrategicPlugin::caseOneSpeedProfile(double speed_before_decel, double c
 }
 
 void SCIStrategicPlugin::caseTwoSpeedProfile(double stop_dist, double speed_before_decel, 
-                                            double current_speed, double stop_time,
+                                            double current_speed, double stop_time,  double speed_limit, 
                                             std::vector<double>* float_metadata_list)
 {
   double desired_acceleration = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
   double desired_deceleration = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
 
-  double speed_limit = 30.0;
   if (speed_before_decel > speed_limit)
   {
     speed_before_decel = speed_limit;
   }
   
-  double t_c_nom = 2*stop_dist * ((1 - desired_acceleration/desired_deceleration) - current_speed) - 
+  double t_c_nom = 2*stop_dist * ((1 - desired_acceleration/desired_deceleration)*speed_limit - current_speed) - 
                   stop_time * ((1 - desired_acceleration/desired_deceleration)*pow(speed_limit,2) - pow(current_speed, 2));
   double t_c_den = pow(speed_limit - current_speed, 2) - (desired_acceleration/desired_deceleration) * pow(speed_limit, 2);
   double t_cruise = t_c_nom / t_c_den;
   
   double a_acc = ((1 - desired_acceleration/desired_deceleration)*speed_limit - current_speed)/(stop_time - t_cruise);
-  double a_dec = ((desired_deceleration - desired_acceleration)*speed_limit - desired_deceleration * current_speed)/desired_acceleration*(stop_time - t_cruise);
+  double a_dec = ((desired_deceleration - desired_acceleration)*speed_limit - desired_deceleration * current_speed)/(desired_acceleration*(stop_time - t_cruise));
   double t_acc = (speed_limit - current_speed)/a_acc;
   double t_dec = -speed_limit/a_dec;
 
@@ -314,8 +318,7 @@ void SCIStrategicPlugin::caseTwoSpeedProfile(double stop_dist, double speed_befo
 void SCIStrategicPlugin::caseThreeSpeedProfile(double stop_dist, double current_speed, double stop_time, 
                                                 std::vector<double>* float_metadata_list)
 {
-  double delta_t = 1.0; //TODO add update interval to config
-  double a_dec = (2*stop_dist - current_speed*(stop_time + delta_t))/(stop_time * delta_t);
+  double a_dec = (2*stop_dist - current_speed*(stop_time + config_.delta_t))/(stop_time * config_.delta_t);
   float_metadata_list->push_back(a_dec);
 }
 
@@ -352,7 +355,7 @@ cav_msgs::Maneuver SCIStrategicPlugin::composeLaneFollowingManeuverMessage(int c
       caseOneSpeedProfile(speed_before_decel, start_speed, time_to_stop, &float_metadata_list);
       break;
     case 2:
-      caseTwoSpeedProfile(end_dist, speed_before_decel, start_speed, time_to_stop, &float_metadata_list);
+      caseTwoSpeedProfile(end_dist, speed_before_decel, start_speed, time_to_stop, speed_limit_, &float_metadata_list);
       break;
     case 3:
       caseThreeSpeedProfile(end_dist, start_speed, time_to_stop, &float_metadata_list);
