@@ -821,7 +821,7 @@ namespace cooperative_lanechange
         int total_points = std::min(centerline_start_lane.size(), centerline_end_lane.size());
         double delta_step = 1.0/(total_points - 1);
 
-        for(int i=0; i<total_points;i++){ // start from 1 as star_lane_pt is included
+        for(int i=0; i<total_points;i++){
             lanelet::BasicPoint2d current_position;
             start_lane_pt = centerline_start_lane[i];
             end_lane_pt = centerline_end_lane[i];
