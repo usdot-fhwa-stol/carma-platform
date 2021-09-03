@@ -819,11 +819,9 @@ namespace cooperative_lanechange
         double dist = sqrt(pow((end_lane_pt.x() - start_lane_pt.x()),2) + pow((end_lane_pt.y() - start_lane_pt.y()),2));
 
         int total_points = std::min(centerline_start_lane.size(), centerline_end_lane.size());
-        double delta_step = 1.0/total_points;
+        double delta_step = 1.0/(total_points - 1);
 
-        centerline_points.push_back(start_lane_pt);
-
-        for(int i=1;i<total_points;i++){ // start from 1 as star_lane_pt is included
+        for(int i=0; i<total_points;i++){
             lanelet::BasicPoint2d current_position;
             start_lane_pt = centerline_start_lane[i];
             end_lane_pt = centerline_end_lane[i];
@@ -832,9 +830,7 @@ namespace cooperative_lanechange
             current_position.y() = end_lane_pt.y()*delta + (1-delta)* start_lane_pt.y();
 
             centerline_points.push_back(current_position);
-        }
-
-        centerline_points.push_back(centerline_end_lane.back()); 
+        }        
 
         std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(centerline_points);
         if(!fit_curve)

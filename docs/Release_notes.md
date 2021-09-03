@@ -9,8 +9,8 @@ Carma-platform release version 3.7.1 is a hotfix release for 3.7.0.
 
 Fixes in this release:
 -	Issue 1426: Route Following Plugin can seg fault in the presence of a lane change after a reroute.
--	Issue 1347: Rerouting triggered multiple time from TIM geofence.
-
+-	Issue 1427: Rerouting triggered multiple time from TIM geofence.
+-	Issue 1428: Excessive steering during lane change along curve at ACM 
 
 Version 3.7.0, released Aug 10th, 2021
 ----------------------------------------
