@@ -90,3 +90,9 @@ catkin_add_gmock(${PROJECT_NAME}-test
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
 
 target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(test_sci_strategic_plugin test/sci_strategic_plugin.test test/test_sci_strategic_plugin.cpp)
+  target_link_libraries(test_sci_strategic_plugin ${catkin_LIBRARIES})
+endif()

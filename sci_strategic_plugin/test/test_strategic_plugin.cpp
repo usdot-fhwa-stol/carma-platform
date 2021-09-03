@@ -286,7 +286,7 @@ TEST(SCIStrategicPluginTest, maneuvercbtest)
 
   ASSERT_EQ(1, resp.new_plan.maneuvers.size());
   ASSERT_EQ(resp.new_plan.maneuvers[0].lane_following_maneuver.lane_ids[0], "1200");
-  ASSERT_NEAR(11.176, resp.new_plan.maneuvers[0].lane_following_maneuver.end_speed, 0.00001);
+  ASSERT_NEAR(0.0, resp.new_plan.maneuvers[0].lane_following_maneuver.end_speed, 0.00001);
   // case 3
   ASSERT_EQ(3, resp.new_plan.maneuvers[0].lane_following_maneuver.parameters.int_valued_meta_data[0]);
 
