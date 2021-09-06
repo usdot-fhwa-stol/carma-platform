@@ -23,8 +23,11 @@
   <!-- Arguments -->
   <arg name="route_file_folder" default="$(find carma)/routes" doc="Path of folder containing routes to load"/>
   <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle" doc="The directory continaing vehicle calibration type parameters"/>
-  
-  
+  <arg name="enable_guidance_plugin_validator" default="false" doc="Flag indicating whether the Guidance Plugin Validator node will actively validate guidance strategic, tactical, and control plugins"/>
+  <arg name="strategic_plugins_to_validate" default="[]" doc="List of String: Guidance Strategic Plugins that will be validated by the Guidance Plugin Validator Node if enabled"/>
+  <arg name="tactical_plugins_to_validate" default="[]" doc="List of String: Guidance Tactical Plugins that will be validated by the Guidance Plugin Validator Node if enabled"/>
+  <arg name="control_plugins_to_validate" default="[]" doc="List of String: Guidance Control Plugins that will be validated by the Guidance Plugin Validator Node if enabled"/>
+
   <!-- Remap topics from external packages -->
   <remap from="bsm" to="$(optenv CARMA_MSG_NS)/outgoing_bsm"/>
   <remap from="bsm_outbound" to="$(optenv CARMA_MSG_NS)/bsm_outbound"/>
@@ -111,6 +114,10 @@
     <remap from="upcoming_lane_change_status" to="$(optenv CARMA_GUIDE_NS)/upcoming_lane_change_status"/>
     <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
   </group>
+
+   <!-- Workzone Strategic Plugin -->
+  <include file="$(find wz_strategic_plugin)/launch/wz_strategic_plugin.launch" />
+
   <!-- Platooning Control Plugin -->
   <include file="$(find platoon_control)/launch/platoon_control.launch" />
 
@@ -222,6 +229,16 @@
    <include file = "$(find intersection_transit_maneuvering)/launch/intersection_transit_maneuvering.launch"/>
   </group>
 
+  <!-- Guidance Plugin Validator -->
+  <group>
+    <remap from="plugin_discovery" to="$(optenv CARMA_GUIDE_NS)/plugin_discovery"/>
+    <include file="$(find guidance_plugin_validator)/launch/guidance_plugin_validator.launch">
+      <arg name="enable_guidance_plugin_validator" value="$(arg enable_guidance_plugin_validator)"/>
+      <arg name="strategic_plugins_to_validate" value="$(arg strategic_plugins_to_validate)"/>
+      <arg name="tactical_plugins_to_validate" value="$(arg tactical_plugins_to_validate)"/>
+      <arg name="control_plugins_to_validate" value="$(arg control_plugins_to_validate)"/>
+    </include>
+  </group>
 
 </launch>
 

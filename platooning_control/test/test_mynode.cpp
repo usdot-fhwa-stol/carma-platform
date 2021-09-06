@@ -23,7 +23,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <thread>
 #include <chrono>
-#include "platoon_control.hpp"
+#include "platoon_control.h"
 
 
 
@@ -32,7 +32,7 @@
 TEST(TestSuite, testCase1)
 {
     ros::NodeHandle nh = ros::NodeHandle();
-    ros::Publisher traj_pub_ = nh.advertise<cav_msgs::TrajectoryPlan>("plan_trajectory", 5);
+    ros::Publisher traj_pub_ = nh.advertise<cav_msgs::TrajectoryPlan>("PlatooningControlPlugin/plan_trajectory", 5);
     cav_msgs::TrajectoryPlan tp;
     traj_pub_.publish(tp);
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
@@ -44,7 +44,7 @@ TEST(TestSuite, testCase1)
 TEST(TestSuite, testCase2)
 {
     ros::NodeHandle nh = ros::NodeHandle();
-    ros::Publisher twist_pub_ = nh.advertise<geometry_msgs::TwistStamped>("localization/ekf_twist", 5);
+    ros::Publisher twist_pub_ = nh.advertise<geometry_msgs::TwistStamped>("current_velocity", 5);
     geometry_msgs::TwistStamped twist1;
     twist1.twist.linear.x = 10.0;
     twist_pub_.publish(twist1);

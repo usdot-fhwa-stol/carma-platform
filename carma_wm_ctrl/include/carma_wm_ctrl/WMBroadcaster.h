@@ -170,13 +170,12 @@ public:
   void setConfigSpeedLimit(double cL);
   
   /*!
-   * \brief Returns geofence object from TrafficControlMessageV01 ROS Msg
+   * \brief Fills geofence object from TrafficControlMessageV01 ROS Msg
+   * \param Geofence object to fill with information extracted from this msg and previously cached msgs that are relevant
    * \param geofence_msg The ROS msg that contains geofence information
    * \throw InvalidObjectStateError if base_map is not set or the base_map's georeference is empty
-   * \return list of geofences extracted from this geofence and previously cached msgs that are relevant
-   * NOTE: Currently only work_zone related msgs return multiple geofences upon receiving all necessary msgs in work_zone_geofence_cache_
    */
-  std::vector<std::shared_ptr<Geofence>> geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& geofence_msg);
+  void geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& geofence_msg);
 
   /*!
    * \brief Returns the route distance (downtrack or crosstrack in meters) to the nearest active geofence lanelet
@@ -257,9 +256,9 @@ public:
    * \param work_zone_geofence_cache Geofence map with size of 4 corresponding to CLOSED, TAPERRIGHT, OPENRIGHT, REVERSE TrafficControlMessages.
                                      Each should have gf_pts, affected_parts, schedule, and id filled. TAPERRIGHT's id and schedule is used as all should have same schedule.
      \throw InvalidObjectStateError if no map is available
-     \return vector with one geofence housing all necessary workzone elements
+     \return geofence housing all necessary workzone elements
    */
-  std::vector<std::shared_ptr<Geofence>> createWorkzoneGeofence(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache);
+  std::shared_ptr<Geofence> createWorkzoneGeofence(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache);
 
   /*!
    * \brief Preprocess for workzone area. Parallel_llts will have front_parallel and back_parallel lanelets that were created from splitting (if necessary)
@@ -342,6 +341,7 @@ public:
   uint32_t generate32BitId(const std::string& label);
 
   void setErrorDistance (double error_distance);
+
 private:
   double error_distance_ = 5; //meters
   lanelet::ConstLanelets route_path_;
@@ -355,10 +355,13 @@ private:
   bool shouldChangeControlLine(const lanelet::ConstLaneletOrArea& el,const lanelet::RegulatoryElementConstPtr& regem, std::shared_ptr<Geofence> gf_ptr) const;
   void addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const; 
   void addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01);
+  void scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr_list);
+
   lanelet::LineString3d createLinearInterpolatingLinestring(const lanelet::Point3d& front_pt, const lanelet::Point3d& back_pt, double increment_distance = 0.25);
   lanelet::Lanelet  createLinearInterpolatingLanelet(const lanelet::Point3d& left_front_pt, const lanelet::Point3d& right_front_pt, 
                                                       const lanelet::Point3d& left_back_pt, const lanelet::Point3d& right_back_pt, double increment_distance = 0.25);
   std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets);
+  
   lanelet::LaneletMapPtr base_map_;
   lanelet::LaneletMapPtr current_map_;
   lanelet::routing::RoutingGraphUPtr current_routing_graph_; // Current map routing graph
@@ -374,6 +377,8 @@ private:
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
+  std::vector<cav_msgs::TrafficControlMessageV01> workzone_remaining_msgs_;
+  bool workzone_geometry_published_ = false;
   /* Version ID of the current_map_ variable. Monotonically increasing value
    * NOTE: This parameter needs to be incremented any time a new map is ready to be published. 
    * It should not be incremented for updates that do not require a full map publication.

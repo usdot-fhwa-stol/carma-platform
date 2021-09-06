@@ -18,7 +18,7 @@ namespace intersection_transit_maneuvering
        return client.call(req,resp);
 
     }
-    void Servicer::set_client(ros::ServiceClient srv_client)
+    void Servicer::set_client(ros::ServiceClient& srv_client)
     {
         client = srv_client;
     }

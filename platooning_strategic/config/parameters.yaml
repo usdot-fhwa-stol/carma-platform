@@ -1,7 +1,5 @@
 maxPlatoonSize: 10
 algorithmType: 0
-statusMessageInterval: 100
-infoMessageInterval: 200
 mvr_duration: 15
 timeHeadway: 2.5
 standStillHeadway: 12.0
@@ -18,4 +16,4 @@ minSpacing: 3.9
 minGap: 22.0
 maxGap: 32.0
 maxCrosstrackError: 0.8
-vehicle_length: 5.0
+vehicleLength: 5.0
