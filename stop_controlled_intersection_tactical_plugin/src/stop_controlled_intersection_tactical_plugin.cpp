@@ -161,6 +161,9 @@ std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_
         if(case_num == 1){
             points_and_target_speeds = create_case_one_speed_profile(wm, maneuver, route_points, starting_speed);
         }
+        else if(case_num = 2){
+            
+        }
         else if(case_num == 3)
         {
 
@@ -341,7 +344,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlu
 
     // Convert speeds to times
     std::vector<double> times;
-    
+
     //Force last point speed to 0.0
     final_actual_speeds.back() = 0.0;
 
