@@ -60,39 +60,36 @@ namespace stop_controlled_intersection_transit_plugin
     //speed_before_stop
      cav_srvs::PlanTrajectoryRequest req;
      req.vehicle_state.X_pos_global = 1.5;
-     req.vehicle_state.Y_pos_global = 0.1;
+     req.vehicle_state.Y_pos_global = 5.0;
      req.vehicle_state.orientation = 0;
      req.vehicle_state.longitudinal_vel = 11.176;
 
      cav_msgs::Maneuver maneuver;
      maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-     maneuver.lane_following_maneuver.start_dist = 5.0;
+     maneuver.lane_following_maneuver.start_dist = req.vehicle_state.Y_pos_global;
      maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
      maneuver.lane_following_maneuver.start_speed = 11.176;  //25 mph in mps
 
-     maneuver.lane_following_maneuver.end_dist = 125.0;
+     maneuver.lane_following_maneuver.end_dist = 100.0;
      maneuver.lane_following_maneuver.end_speed = 0.0;
-    //Calculate end time - Assuming constant deceleration of 0.5m/s2
-    double const_decel_assumed = 0.5;
-    double stopping_time_const_decel = maneuver.lane_following_maneuver.start_speed/const_decel_assumed;
-
-    maneuver.lane_following_maneuver.end_time = maneuver.lane_following_maneuver.start_time + ros::Duration(stopping_time_const_decel);
 
     //Enter meta data
-    maneuver.lane_following_maneuver.parameters.int_valued_meta_data.push_back(1);
+    maneuver.lane_following_maneuver.parameters.int_valued_meta_data.push_back(1);    //Case number
     maneuver.lane_following_maneuver.parameters.string_valued_meta_data.push_back("Carma/stop_controlled_intersection");
     //Float meta data list - a_acc, a_dec, t_acc, t_dec, speed_before_decel
     
     //Calculate speed before decel - The speed the vehicle should accelerate to before slowing down
     //Assuming the a_dec to be 2m/s^2, the vehicle should be able to stop at that deceleration- over total_dist/2
     //So accelerate half way and decelerate the rest
-    double a_dec = 2.0;
+    double a_dec = 0.5;
     double assumed_dec_dist = maneuver.lane_following_maneuver.end_dist/2;
     double speed_before_dec = sqrt(2*a_dec*assumed_dec_dist);
     
     double a_acc = (pow(speed_before_dec,2) - pow(maneuver.lane_following_maneuver.start_speed,2))/(2*(maneuver.lane_following_maneuver.end_dist - assumed_dec_dist));
     double t_acc = (speed_before_dec - maneuver.lane_following_maneuver.start_speed)/a_acc;
     double t_dec = (speed_before_dec)/a_dec;
+
+    maneuver.lane_following_maneuver.end_time = maneuver.lane_following_maneuver.start_time + ros::Duration(t_acc + t_dec);
 
     maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(a_acc);
     maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(a_dec);
@@ -109,7 +106,18 @@ namespace stop_controlled_intersection_transit_plugin
 
     EXPECT_EQ(0, resp.related_maneuvers.back());
 
+    //Test maneuvers_to_points
+    std::vector<cav_msgs::Maneuver> maneuver_plan;
+    maneuver_plan.push_back(maneuver);
+    std::vector<PointSpeedPair> points_and_target_speeds = plugin.maneuvers_to_points(maneuver_plan, wm, req.vehicle_state);
+    EXPECT_EQ(points_and_target_speeds[0].speed, req.vehicle_state.longitudinal_vel);
+
+    //Test compose_trajectory_from_centerline
+    req.header.stamp = ros::Time(0.0);
+    std::vector<cav_msgs::TrajectoryPlanPoint> trajectory = plugin.compose_trajectory_from_centerline(points_and_target_speeds, req.vehicle_state, req.header.stamp);
+    EXPECT_TRUE(trajectory.size() > 2);
   }
+
 }
 
 // Run all the tests

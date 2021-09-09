@@ -239,8 +239,6 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d> route_geo
 
         prev_point = route_geometry_points[i];
     }
-    //Ensure final speed is 0.0
-    points_and_target_speeds.back().speed = 0.0;    
 
     return points_and_target_speeds;
 
@@ -343,6 +341,10 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlu
 
     // Convert speeds to times
     std::vector<double> times;
+    
+    //Force last point speed to 0.0
+    final_actual_speeds.back() = 0.0;
+
     trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
     // Build trajectory points
