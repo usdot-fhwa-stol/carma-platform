@@ -15,13 +15,15 @@
  */
 
 #include <ros/ros.h>
-#include <stop_controlled_intersection_tactical_plugin/stop_controlled_intersection_plugin_node.h>
+
+#include <stop_controlled_intersection_plugin_node.h>
 
 int main(int argc, char** argv)
 {
   
     ros::init(argc, argv, "stop_controlled_intersection_tactical_plugin");
-
+    stop_controlled_intersection_transit_plugin::StopControlledIntersectionTransitPluginNode sc;
+    sc.run();
     return 0;
 
 };

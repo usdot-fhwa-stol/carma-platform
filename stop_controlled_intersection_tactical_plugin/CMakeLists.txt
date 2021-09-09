@@ -14,7 +14,7 @@
 # the License.
 #
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(stop_controlled_intersection_tactical_plugin)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
@@ -34,6 +34,7 @@ set(CATKIN_DEPS
   tf
   tf2
   tf2_geometry_msgs
+  basic_autonomy
   carma_debug_msgs
 )
 
@@ -69,12 +70,12 @@ include_directories(
 
 add_executable( ${PROJECT_NAME}
   src/main.cpp)
-  add_library(stop_controlled_intersection_tactical_library 
-  src/stop_controlled_intersection_tactical_plugin.cpp
-)
+
+add_library(stop_controlled_intersection_tactical_library 
+            src/stop_controlled_intersection_tactical_plugin.cpp)
 
 add_dependencies(stop_controlled_intersection_tactical_library ${catkin_EXPORTED_TARGETS})
-target_link_libraries(stop_controlled_intersection_tactical_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} stop_controlled_intersection_tactical_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 #############
 ## Install ##
@@ -99,3 +100,7 @@ install(DIRECTORY launch config
 #############
 ## Testing ##
 #############
+catkin_add_gmock(${PROJECT_NAME}-test 
+ test/test_sci_tactical_plugin.cpp
+ WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+target_link_libraries(${PROJECT_NAME}-test stop_controlled_intersection_tactical_library ${catkin_LIBRARIES})
