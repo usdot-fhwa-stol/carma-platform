@@ -114,6 +114,8 @@ public:
   std::vector<PointSpeedPair> create_case_one_speed_profile(const carma_wm::WorldModelConstPtr& wm, const cav_msgs::Maneuver& maneuver,
                                                             std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed);
   
+  std::vector<PointSpeedPair> create_case_two_speed_profile(const carma_wm::WorldModelConstPtr& wm, const cav_msgs::Maneuver& maneuver,
+                                                          std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed);
    /**
    * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning
    * 

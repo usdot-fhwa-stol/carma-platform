@@ -118,6 +118,10 @@ namespace stop_controlled_intersection_transit_plugin
     EXPECT_TRUE(trajectory.size() > 2);
   }
 
+  TEST(StopControlledIntersectionTacticalPlugin, TestSCIPlanning_case_two){
+
+  }
+
 }
 
 // Run all the tests

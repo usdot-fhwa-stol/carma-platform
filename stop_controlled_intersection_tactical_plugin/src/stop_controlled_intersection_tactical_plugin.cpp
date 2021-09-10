@@ -162,7 +162,7 @@ std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_
             points_and_target_speeds = create_case_one_speed_profile(wm, maneuver, route_points, starting_speed);
         }
         else if(case_num = 2){
-
+            points_and_target_speeds = create_case_two_speed_profile(wm, maneuver, route_points, starting_speed);
         }
         else if(case_num == 3)
         {
@@ -223,7 +223,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
         total_dist_covered += delta_d;      
         //Find speed at dist covered
         double speed_i; 
-        if(total_dist_covered < dist_acc){
+        if(total_dist_covered <= dist_acc){
             //Acceleration part
             speed_i = sqrt(pow(starting_speed,2) + 2*a_acc*total_dist_covered);
         }
@@ -241,6 +241,100 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
         points_and_target_speeds.push_back(p);
 
         prev_point = route_geometry_points[i];
+    }
+
+    return points_and_target_speeds;
+
+}
+
+std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::create_case_two_speed_profile(const carma_wm::WorldModelConstPtr& wm,
+const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed){
+    
+    //Derive meta data values from maneuver message - Using order in sci_strategic_plugin
+    double a_acc = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);
+    double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[1]);
+    double t_acc = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[2]);
+    double t_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[3]);
+    double t_cruise = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[4]);
+    double speed_before_decel = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[5]);
+
+    //Derive start and end dist from maneuver
+    double start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
+    double end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
+
+    //Checking route geometry start against start_dist and adjust profile
+    double route_starting_downtrack = wm->routeTrackPos(route_geometry_points[0]).downtrack;  //Starting downtrack based on geometry points
+    double dist_acc;        //Distance over which acceleration happens
+    double dist_cruise;     //Distance over which cruising happens
+    double dist_decel;      //Distance over which deceleration happens
+
+    if(route_starting_downtrack < start_dist){
+        //update parameters
+        //Keeping acceleration and deceleration part same as planned
+        dist_acc = starting_speed*t_acc + 0.5 * a_acc * pow(t_acc,2);
+        dist_decel = speed_before_decel*t_dec - 0.5 * a_dec * pow(t_dec,2);
+        dist_cruise = end_dist - route_starting_downtrack - (dist_acc + dist_decel);
+    }
+    else{   
+        //Use maneuver parameters to create speed profile
+        dist_acc = starting_speed*t_acc + 0.5 * a_acc * pow(t_acc,2);
+        dist_cruise = speed_before_decel*t_cruise;
+        dist_decel = speed_before_decel*t_dec - 0.5 * a_dec * pow(t_dec,2);
+    }
+
+    //Check calculated total dist against maneuver limits
+    double total_distance_needed = dist_acc + dist_cruise + dist_decel;
+    if(total_distance_needed - (end_dist - start_dist) > epsilon_ ){
+        //Requested maneuver needs to be modified to meet start and end dist req
+        //Sacrifice on cruising and then acceleration if needed
+        double delta_total_dist = total_distance_needed - (end_dist - start_dist);
+        dist_cruise -= delta_total_dist;
+        if(dist_cruise < 0){
+            dist_acc += dist_cruise;
+            dist_cruise = 0;
+        }
+        //Not considering dist_acc < 0 after this.
+    }
+
+    std::vector<PointSpeedPair> points_and_target_speeds;
+    PointSpeedPair first_point;
+    first_point.point = route_geometry_points[0];
+    first_point.speed = starting_speed;
+    points_and_target_speeds.push_back(first_point);
+
+    lanelet::BasicPoint2d prev_point = route_geometry_points[0];
+    double total_dist_planned = 0;                  //Starting dist for maneuver treated as 0.0
+    double prev_speed = starting_speed;
+    for(size_t i = 0; i < route_geometry_points.size(); i++){
+        lanelet::BasicPoint2d current_point = route_geometry_points[i];
+        double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
+        total_dist_planned += delta_d;  
+
+        //Find speed at dist covered
+        double speed_i;
+        if(total_dist_planned < dist_acc){
+            //Acceleration part
+            speed_i = sqrt(pow(starting_speed,2) + 2*a_acc*total_dist_planned);
+        }
+        else if(dist_cruise > 0 && total_dist_planned >= dist_acc && total_dist_planned <= (dist_acc + dist_cruise)){
+            //Cruising part
+            speed_i = prev_speed;
+        }
+        else{
+            //Deceleration part
+            speed_i = sqrt(pow(speed_before_decel,2) - 2*a_dec*(total_dist_planned - dist_acc));
+            if(speed_i < epsilon_){
+                speed_i = 0.0;
+            }
+        }
+        
+        PointSpeedPair p;
+        p.point = route_geometry_points[i];
+        p.speed = speed_i;
+        points_and_target_speeds.push_back(p);
+
+        prev_point = route_geometry_points[i];
+        prev_speed = speed_i;
     }
 
     return points_and_target_speeds;
