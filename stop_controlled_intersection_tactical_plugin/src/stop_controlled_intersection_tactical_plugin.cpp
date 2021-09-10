@@ -162,7 +162,7 @@ std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_
             points_and_target_speeds = create_case_one_speed_profile(wm, maneuver, route_points, starting_speed);
         }
         else if(case_num = 2){
-            
+
         }
         else if(case_num == 3)
         {
@@ -179,7 +179,7 @@ std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_
 }
 
 std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::create_case_one_speed_profile(const carma_wm::WorldModelConstPtr& wm,
-const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d> route_geometry_points, double starting_speed){
+const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed){
     //Derive meta data values from maneuver message - Using order in sci_strategic_plugin
     double a_acc = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);
     double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[1]);
