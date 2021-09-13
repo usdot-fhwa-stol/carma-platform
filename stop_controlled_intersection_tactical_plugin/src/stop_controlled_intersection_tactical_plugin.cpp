@@ -229,7 +229,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
         }
         else{
             //Deceleration part
-            speed_i = sqrt(pow(speed_before_decel,2) - 2*a_dec*(total_dist_covered - dist_acc));
+            speed_i = sqrt(std::max(pow(speed_before_decel,2) - 2*a_dec*(total_dist_covered - dist_acc),0.0)); //std::max to ensure negative value is not sqrt
             if(speed_i < epsilon_){
                 speed_i = 0.0;
             }
@@ -270,7 +270,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
 
     if(route_starting_downtrack < start_dist){
         //update parameters
-        //Keeping acceleration and deceleration part same as planned
+        //Keeping acceleration and deceleration part same as planned in strategic plugin
         dist_acc = starting_speed*t_acc + 0.5 * a_acc * pow(t_acc,2);
         dist_decel = speed_before_decel*t_dec - 0.5 * a_dec * pow(t_dec,2);
         dist_cruise = end_dist - route_starting_downtrack - (dist_acc + dist_decel);
@@ -322,15 +322,12 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
         }
         else{
             //Deceleration part
-            speed_i = sqrt(pow(speed_before_decel,2) - 2*a_dec*(total_dist_planned - dist_acc));
-            if(speed_i < epsilon_){
-                speed_i = 0.0;
-            }
+            speed_i = sqrt(std::max(pow(speed_before_decel,2) - 2*a_dec*(total_dist_planned - dist_acc - dist_cruise),0.0));//std::max to ensure negative value is not sqrt
         }
         
         PointSpeedPair p;
         p.point = route_geometry_points[i];
-        p.speed = speed_i;
+        p.speed = std::min(speed_i,speed_before_decel);
         points_and_target_speeds.push_back(p);
 
         prev_point = route_geometry_points[i];

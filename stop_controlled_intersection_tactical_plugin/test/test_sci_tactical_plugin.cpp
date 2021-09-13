@@ -26,7 +26,7 @@
 
 namespace stop_controlled_intersection_transit_plugin
 {
-    TEST(StopControlledIntersectionTacticalPlugin, TestSCIPlanning_case_one)
+    TEST(StopControlledIntersectionTacticalPlugin, DISABLED_TestSCIPlanning_case_one)
     {
       //Test Stop controlled Intersection tactical plugin generation
       ros::Time::setNow(ros::Time(0.0));
@@ -78,8 +78,8 @@ namespace stop_controlled_intersection_transit_plugin
     maneuver.lane_following_maneuver.parameters.string_valued_meta_data.push_back("Carma/stop_controlled_intersection");
     //Float meta data list - a_acc, a_dec, t_acc, t_dec, speed_before_decel
     
-    //Calculate speed before decel - The speed the vehicle should accelerate to before slowing down
-    //Assuming the a_dec to be 2m/s^2, the vehicle should be able to stop at that deceleration- over total_dist/2
+    //Calculate speed before decel - The speed the vehicle should accelerate before slowing down
+    //Assuming the a_dec to be 0.5m/s^2, the vehicle should be able to stop at that deceleration- over total_dist/2
     //So accelerate half way and decelerate the rest
     double a_dec = 0.5;
     double assumed_dec_dist = maneuver.lane_following_maneuver.end_dist/2;
@@ -119,7 +119,87 @@ namespace stop_controlled_intersection_transit_plugin
   }
 
   TEST(StopControlledIntersectionTacticalPlugin, TestSCIPlanning_case_two){
+    //Test Stop controlled Intersection tactical plugin generation
+    ros::Time::setNow(ros::Time(0.0));
+    StopControlledIntersectionTacticalPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+    StopControlledIntersectionTacticalPlugin plugin(wm, config, [&](auto msg) {});
+    
+    auto map = carma_wm::test::buildGuidanceTestMap(3.7, 50);
 
+    wm->setMap(map);
+    carma_wm::test::setSpeedLimit(30_mph, wm);
+    /**
+     * Total route length should be 100m
+     *
+     *        |1203|1213|1223|
+     *        | _  _  _  _  _|
+     *        |1202| Ob |1222|
+     *        | _  _  _  _  _|
+     *        |1201|1211|1221|    num   = lanelet id hardcoded for easier testing
+     *        | _  _  _  _  _|    |     = lane lines
+     *        |1200|1210|1220|    - - - = Lanelet boundary
+     *        |              |    O     = Default Obstacle
+     *        ****************
+     *           START_LINE
+    */
+
+    carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, wm);   
+
+    //Create a request and maneuver that meets case 1 criteria
+    //In order to be case 2 - estimated_stop_time > scheduled_stop_time and speed_before_decel =  speed_limit
+    //speed_before_stop
+     cav_srvs::PlanTrajectoryRequest req;
+     req.vehicle_state.X_pos_global = 1.5;
+     req.vehicle_state.Y_pos_global = 5.0;
+     req.vehicle_state.orientation = 0;
+     req.vehicle_state.longitudinal_vel = 11.176;
+
+     cav_msgs::Maneuver maneuver;
+     maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+     maneuver.lane_following_maneuver.start_dist = req.vehicle_state.Y_pos_global;
+     maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
+     maneuver.lane_following_maneuver.start_speed = 11.176;  //25 mph in mps
+
+     maneuver.lane_following_maneuver.end_dist = 100.0;
+     maneuver.lane_following_maneuver.end_speed = 0.0;
+
+    //Enter meta data
+    maneuver.lane_following_maneuver.parameters.int_valued_meta_data.push_back(2);    //Case number
+    maneuver.lane_following_maneuver.parameters.string_valued_meta_data.push_back("Carma/stop_controlled_intersection");
+
+    //Float meta data list - a_acc, a_dec, t_acc, t_dec, t_cruise, speed_before_decel
+    
+    //Calculate speed before decel - The speed the vehicle should accelerate and then cruise before slowing down
+    //Assuming the a_dec to be 2m/s^2, the vehicle should be able to stop at that deceleration starting from speed limit
+
+    double a_dec = 2.0;
+    double speed_before_decel = 13.4112; //30_mph in mps (Speed Limit)
+    double dist_decel = pow(speed_before_decel, 2)/(2*a_dec);
+    //Fix Cruising distance
+    double dist_cruising = 20.0;
+    double  dist_acc = (maneuver.lane_following_maneuver.end_dist - maneuver.lane_following_maneuver.start_dist) - dist_decel - dist_cruising;
+    double a_acc = (pow(speed_before_decel,2) - pow(maneuver.lane_following_maneuver.start_speed, 2))/(2*dist_acc);
+    double t_acc = (speed_before_decel - maneuver.lane_following_maneuver.start_speed)/a_acc;
+    double t_dec = speed_before_decel/a_dec;
+    double t_cruising = dist_cruising/speed_before_decel;
+
+    maneuver.lane_following_maneuver.end_time = maneuver.lane_following_maneuver.start_time + ros::Duration(t_acc + t_cruising + t_dec);
+
+    maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(a_acc);
+    maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(a_dec);
+    maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(t_acc);
+    maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(t_dec);
+    maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(t_cruising);
+    maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(speed_before_decel);
+
+    req.maneuver_plan.maneuvers.push_back(maneuver);
+    req.maneuver_index_to_plan = 0;
+
+    cav_srvs::PlanTrajectoryResponse resp;
+
+    plugin.plan_trajectory_cb(req, resp);
+    EXPECT_EQ(0, resp.related_maneuvers.back());
   }
 
 }
