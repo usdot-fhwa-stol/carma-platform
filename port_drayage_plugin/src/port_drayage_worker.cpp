@@ -187,7 +187,7 @@ namespace port_drayage_plugin
             if(mobility_operation_cmv_id == _cmv_id) {
                 _has_received_first_mobility_operation_msg = true;
 
-                // Since a new message indicates a the previous action was completed, update all cargo-related data members based on the previous action that was completed
+                // Since a new message indicates the previous action was completed, update all cargo-related data members based on the previous action that was completed
                 update_cargo_information_after_action_completion(_latest_mobility_operation_msg);
 
                 ROS_DEBUG_STREAM("Processing new port drayage MobilityOperation message for cmv_id " << mobility_operation_cmv_id);
