@@ -83,7 +83,7 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   ROS_INFO_STREAM("Building routing graph for base map");
 
   lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
-  lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::VehicleCar);
+  lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant_);
   current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
 
   ROS_INFO_STREAM("Done building routing graph for base map");
@@ -221,6 +221,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
   // used for assigning them to the regem as parameters
   for (auto llt_or_area : gf_ptr->affected_parts_)
   {
+
     if (llt_or_area.isLanelet()) affected_llts.push_back(current_map_->laneletLayer.get(llt_or_area.lanelet()->id()));
     if (llt_or_area.isArea()) affected_areas.push_back(current_map_->areaLayer.get(llt_or_area.area()->id()));
   }
@@ -238,7 +239,6 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
   {  
     //Acquire speed limit information from TafficControlDetail msg
     sL = lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPH()); 
-    
     if(config_limit > 0_mph && config_limit < 80_mph && config_limit < sL)//Accounting for the configured speed limit, input zero when not in use
         sL = config_limit;
     //Ensure Geofences do not provide invalid speed limit data (exceed predetermined maximum value)
@@ -256,6 +256,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
     }// @SONAR_START@
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
                                         sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
+
   }
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINSPEED_CHOICE) 
   {
@@ -294,11 +295,11 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
     }
     addRegionMinimumGap(gf_ptr,msg_v01, min_gap, affected_llts, affected_areas);
   }
-
   bool detected_workzone_signal = msg_v01.package.label_exists && msg_v01.package.label.find("SIG_WZ") != std::string::npos;
 
   if (detected_workzone_signal) // if workzone message detected, save to cache to process later
-  {
+  {  
+
     gf_ptr->label_ = msg_v01.package.label; // to extract intersection, and signal group id
     if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && (msg_detail.closed == cav_msgs::TrafficControlDetail::CLOSED ||
                                                                                 msg_detail.closed == cav_msgs::TrafficControlDetail::TAPERRIGHT ||
@@ -314,6 +315,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMsg(const cav_
     {
       ROS_INFO_STREAM("Received 'SIG_WZ' signal. Waiting for the rest of the messages, returning for now...");
       return {};
+      
     }
     else
     {
@@ -748,7 +750,6 @@ std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithRatio(std::vector<d
   std::vector<lanelet::Lanelet> created_llts;
 
   std::sort(ratios.begin(), ratios.end());
-
   ROS_DEBUG_STREAM("splitLaneletWithRatio evaluating input ratios of size: " << ratios.size());
 
   ratios.push_back(1.0); //needed to complete the loop
@@ -1037,6 +1038,11 @@ void WMBroadcaster::setVehicleParticipationType(std::string participant)
   participant_ = participant;
 }
 
+std::string WMBroadcaster::getVehicleParticipationType()
+{
+  return participant_;
+}
+
 uint32_t WMBroadcaster::generate32BitId(const std::string& label)
 {
   auto pos1 = label.find("INT_ID:") + 7;
@@ -1246,7 +1252,6 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const lane
   {
     sorted_parts.push_back(std::make_pair(carma_wm::geometry::trackPos(llt, gf_pts.front().basicPoint2d()).downtrack, llt));
   }
-
   std::sort(sorted_parts.begin(), sorted_parts.end(), [](const auto& x, const auto& y){return x.first > y.first;});
 
   for (auto pair : sorted_parts)
@@ -1403,7 +1408,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
     ROS_INFO_STREAM("Rebuilding routing graph after is was invalidated by geofence");
 
     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
-    lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::VehicleCar);
+    lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant_);
     current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
 
     ROS_INFO_STREAM("Done rebuilding routing graph after is was invalidated by geofence");

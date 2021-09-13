@@ -175,6 +175,14 @@ public:
  * @param participant vehicle participation type
  */
   void setVehicleParticipationType(std::string participant);
+
+  /**
+   * @brief Get the Vehicle Participation Type object
+   * 
+   * @return Current Vehicle Participation Type being used in this World Model Instance
+   */
+  std::string getVehicleParticipationType();
+
   
   /*!
    * \brief Returns geofence object from TrafficControlMessageV01 ROS Msg
@@ -370,7 +378,7 @@ private:
   lanelet::LaneletMapPtr current_map_;
   lanelet::routing::RoutingGraphUPtr current_routing_graph_; // Current map routing graph
   lanelet::Velocity config_limit;
-  std::string participant_ = lanelet::Participants::Vehicle;//Default participant type
+  std::string participant_ = lanelet::Participants::VehicleCar;//Default participant type
   std::unordered_set<std::string>  checked_geofence_ids_;
   std::unordered_set<std::string>  generated_geofence_reqids_;
   std::vector<lanelet::LaneletMapPtr> cached_maps_;

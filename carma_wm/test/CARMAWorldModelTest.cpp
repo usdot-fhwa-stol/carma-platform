@@ -1039,10 +1039,13 @@ TEST(CARMAWorldModelTest, setConfigSpeedLimitTest)
   double cL = 24.0;
   ///// Test without user defined config limit
   cmw.setConfigSpeedLimit(cL);
+  cmw.setVehicleParticipationType("vehicle:car");
 
   ASSERT_FALSE(flag);
 
 }
+
+
 
 TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
 {

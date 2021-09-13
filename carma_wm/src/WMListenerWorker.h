@@ -103,6 +103,12 @@ public:
    */
   void setVehicleParticipationType(std::string participant);
 
+/**
+ * @brief Returns the Vehicle Participation Type value
+ * 
+ */
+  std::string getVehicleParticipationType() const;
+
 
 /**
  *  \brief Check if re-routing is needed and returns re-routing flag
