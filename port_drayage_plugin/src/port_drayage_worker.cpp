@@ -276,24 +276,6 @@ namespace port_drayage_plugin
             _latest_mobility_operation_msg.current_action_id = boost::optional<std::string>();
         }
 
-        // Parse 'cargo_id' field if it exists in strategy_params
-        if (pt.count("cargo_id") != 0){
-            _latest_mobility_operation_msg.cargo_id = pt.get<std::string>("cargo_id");
-            ROS_DEBUG_STREAM("cargo id: " << *_latest_mobility_operation_msg.cargo_id);
-        }
-        else{
-            _latest_mobility_operation_msg.cargo_id = boost::optional<std::string>();
-        }
-        
-        // Parse 'action_id' field  if it exists in strategy_params
-        if (pt.count("action_id") != 0){
-            _latest_mobility_operation_msg.current_action_id = pt.get<std::string>("action_id");
-            ROS_DEBUG_STREAM("action id: " << *_latest_mobility_operation_msg.current_action_id);
-        }
-        else{
-            _latest_mobility_operation_msg.current_action_id = boost::optional<std::string>();
-        }
-
         // Parse starting longitude/latitude fields if 'location' field exists in strategy_params:
         if (pt.count("location") != 0){
             _latest_mobility_operation_msg.start_longitude = pt.get<double>("location.longitude");
