@@ -52,7 +52,7 @@ class Servicer: public CallInterface
         * 
         * \param client input trajectory service client
         */
-        void set_client(ros::ServiceClient srv_client);
+        void set_client(ros::ServiceClient& srv_client);
     
     private:
         ros::ServiceClient client;

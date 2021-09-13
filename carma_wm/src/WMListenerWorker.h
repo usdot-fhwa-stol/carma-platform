@@ -137,8 +137,9 @@ private:
   std::queue<autoware_lanelet2_msgs::MapBinPtr> map_update_queue_; // Update queue used to cache map updates when they cannot be immeadiatly applied due to waiting for rerouting
   boost::optional<cav_msgs::RouteConstPtr> delayed_route_msg_;
 
-  bool rerouting_flag_=false;
-  bool route_node_flag_=false;
+  bool recompute_route_flag_=false; // indicates whether if this node should recompute its route based on invalidated msg
+  bool rerouting_flag_=false; //indicates whether if route node is in middle of rerouting
+  bool route_node_flag_=false; //indicates whether if this node is route node
   long most_recent_update_msg_seq_ = -1; // Tracks the current sequence number for map update messages. Dropping even a single message would invalidate the map
 };
 }  // namespace carma_wm

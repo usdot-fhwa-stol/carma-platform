@@ -17,6 +17,7 @@
 #include "capabilities_interface.hpp"
 #include <cav_srvs/PlanManeuvers.h>
 #include <exception>
+#include <sstream>
 
 namespace arbitrator
 {
@@ -32,7 +33,15 @@ namespace arbitrator
         if (query_string == STRATEGIC_PLAN_CAPABILITY && sc_s.call(srv))
         {
             topics = srv.response.plan_service;
-            ROS_INFO_STREAM("Received Topic: " << topics.front());
+            
+            // Log the topics
+            std::ostringstream stream;
+            stream << "Received Topics: ";
+            for (const auto& topic : topics) {
+                stream << topic << ", ";
+            }
+            stream << std::endl;
+            ROS_INFO(stream.str().c_str());
         }
 
         return topics;
