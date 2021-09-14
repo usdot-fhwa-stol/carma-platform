@@ -2794,8 +2794,6 @@ ASSERT_EQ(value, p1);
 
   ROS_INFO_STREAM("Map Vehicle Participation Type Test Complete.");
 
-/*Test Vehicle Participation Type Values in the geofence*/
-
 
 }
 
