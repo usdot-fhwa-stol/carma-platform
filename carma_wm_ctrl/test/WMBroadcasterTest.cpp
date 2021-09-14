@@ -713,7 +713,7 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   
 }
 
-TEST(WMBroadcaster, DISABLED_RegulatoryPCLTest)
+TEST(WMBroadcaster, RegulatoryPCLTest)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf_ptr = std::make_shared<Geofence>();
@@ -888,7 +888,7 @@ TEST(WMBroadcaster, DISABLED_RegulatoryPCLTest)
   ASSERT_EQ(2, active_call_count.load());
 }
 
-TEST(WMBroadcaster, DISABLED_geofenceFromMsgTest)
+TEST(WMBroadcaster, geofenceFromMsgTest)
 {
   using namespace lanelet::units::literals;
   // Start creating ROS msg
@@ -1104,7 +1104,7 @@ TEST(WMBroadcaster, DISABLED_geofenceFromMsgTest)
   
 }
 
-TEST(WMBroadcaster, DISABLED_distToNearestActiveGeofence)
+TEST(WMBroadcaster, distToNearestActiveGeofence)
 {
    // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf = std::make_shared<Geofence>();
@@ -1245,7 +1245,7 @@ TEST(WMBroadcaster, DISABLED_distToNearestActiveGeofence)
   ASSERT_NEAR(nearest_gf_dist, 0, 0.0001);  // it should point the next
 }
 
-TEST(WMBroadcaster, DISABLED_addRegionAccessRule)
+TEST(WMBroadcaster, addRegionAccessRule)
 {
   auto gf_ptr = std::make_shared<Geofence>();
   auto map = carma_wm::getBroadcasterTestMap();
@@ -1284,7 +1284,7 @@ TEST(WMBroadcaster, DISABLED_addRegionAccessRule)
 }
 
 
-TEST(WMBroadcaster, DISABLED_addRegionMinimumGap)
+TEST(WMBroadcaster, addRegionMinimumGap)
 {
   auto gf_ptr = std::make_shared<Geofence>();
   auto map = carma_wm::getBroadcasterTestMap();
@@ -1313,7 +1313,7 @@ TEST(WMBroadcaster, DISABLED_addRegionMinimumGap)
   ASSERT_EQ(result.size(), 1);
 }
 
-TEST(WMBroadcaster, DISABLED_invertParticipants)
+TEST(WMBroadcaster, invertParticipants)
 {
   auto gf_ptr = std::make_shared<Geofence>();
   auto map = carma_wm::getBroadcasterTestMap();
@@ -1482,7 +1482,7 @@ TEST(WMBroadcaster, currentLocationCallback)
   ASSERT_EQ(2, map_update_call_count.load());
 }
 
-TEST(WMBroadcaster, DISABLED_checkActiveGeofenceLogicTest)
+TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
 {
    // Create geofence pointer
   auto gf = std::make_shared<Geofence>();
@@ -1714,7 +1714,7 @@ TEST(WMBroadcaster, DISABLED_checkActiveGeofenceLogicTest)
   EXPECT_FALSE(check.is_on_active_geofence);
 }
 
-TEST(WMBroadcaster, DISABLED_RegionAccessRuleTest)
+TEST(WMBroadcaster, RegionAccessRuleTest)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf_ptr = std::make_shared<Geofence>();
@@ -1896,7 +1896,7 @@ TEST(WMBroadcaster, generate32BitId)
   EXPECT_EQ(bits, 257);
 }
 
-TEST(WMBroadcaster, DISABLED_splitLaneletWithRatio)
+TEST(WMBroadcaster, splitLaneletWithRatio)
 {
   // Create WMBroadcaster object
   WMBroadcaster wmb(
@@ -1972,7 +1972,7 @@ TEST(WMBroadcaster, DISABLED_splitLaneletWithRatio)
   EXPECT_EQ(copy_lanelet.size(), 3);
 } 
 
-TEST(WMBroadcaster, DISABLED_splitLaneletWithPoint)
+TEST(WMBroadcaster, splitLaneletWithPoint)
 {
   // Create WMBroadcaster object
   WMBroadcaster wmb(
@@ -2024,7 +2024,7 @@ TEST(WMBroadcaster, DISABLED_splitLaneletWithPoint)
 
 } 
 
-TEST(WMBroadcaster, DISABLED_preprocessWorkzoneGeometry)
+TEST(WMBroadcaster, preprocessWorkzoneGeometry)
 {
   // TESTING WORLD IS IN wmb_;
   // Create WMBroadcaster object
@@ -2439,7 +2439,7 @@ TEST(WMBroadcaster, DISABLED_preprocessWorkzoneGeometry)
   EXPECT_NEAR((*(middle_opposite_lanelets.get())).back().rightBound2d().back().basicPoint2d().y(), 50.0, 0.0001);
 } 
 
-TEST(WMBroadcaster, DISABLED_createWorkzoneGeometry)
+TEST(WMBroadcaster, createWorkzoneGeometry)
 {
   /////////////////
   // CREATE WORLD
