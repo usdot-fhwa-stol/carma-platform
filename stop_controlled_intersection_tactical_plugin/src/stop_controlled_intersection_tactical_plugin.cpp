@@ -252,7 +252,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     
     //Derive meta data values from maneuver message - Using order in sci_strategic_plugin
     double a_acc = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);
-    double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[1]);
+    double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[1]); //a_dec is a -ve value
     double t_acc = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[2]);
     double t_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[3]);
     double t_cruise = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[4]);
@@ -272,14 +272,14 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
         //update parameters
         //Keeping acceleration and deceleration part same as planned in strategic plugin
         dist_acc = starting_speed*t_acc + 0.5 * a_acc * pow(t_acc,2);
-        dist_decel = speed_before_decel*t_dec - 0.5 * a_dec * pow(t_dec,2);
+        dist_decel = speed_before_decel*t_dec + 0.5 * a_dec * pow(t_dec,2);
         dist_cruise = end_dist - route_starting_downtrack - (dist_acc + dist_decel);
     }
     else{   
         //Use maneuver parameters to create speed profile
         dist_acc = starting_speed*t_acc + 0.5 * a_acc * pow(t_acc,2);
         dist_cruise = speed_before_decel*t_cruise;
-        dist_decel = speed_before_decel*t_dec - 0.5 * a_dec * pow(t_dec,2);
+        dist_decel = speed_before_decel*t_dec + 0.5 * a_dec * pow(t_dec,2);
     }
 
     //Check calculated total dist against maneuver limits
@@ -322,7 +322,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
         }
         else{
             //Deceleration part
-            speed_i = sqrt(std::max(pow(speed_before_decel,2) - 2*a_dec*(total_dist_planned - dist_acc - dist_cruise),0.0));//std::max to ensure negative value is not sqrt
+            speed_i = sqrt(std::max(pow(speed_before_decel,2) + 2*a_dec*(total_dist_planned - dist_acc - dist_cruise),0.0));//std::max to ensure negative value is not sqrt
         }
         
         PointSpeedPair p;

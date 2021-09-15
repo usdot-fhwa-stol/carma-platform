@@ -26,7 +26,7 @@
 
 namespace stop_controlled_intersection_transit_plugin
 {
-    TEST(StopControlledIntersectionTacticalPlugin, DISABLED_TestSCIPlanning_case_one)
+    TEST(StopControlledIntersectionTacticalPlugin, TestSCIPlanning_case_one)
     {
       //Test Stop controlled Intersection tactical plugin generation
       ros::Time::setNow(ros::Time(0.0));
@@ -205,15 +205,15 @@ namespace stop_controlled_intersection_transit_plugin
     //Calculate speed before decel - The speed the vehicle should accelerate and then cruise before slowing down
     //Assuming the a_dec to be 2m/s^2, the vehicle should be able to stop at that deceleration starting from speed limit
 
-    double a_dec = 2.0;
+    double a_dec = -2.0;
     double speed_before_decel = 13.4112; //30_mph in mps (Speed Limit)
-    double dist_decel = pow(speed_before_decel, 2)/(2*a_dec);
+    double dist_decel = pow(speed_before_decel, 2)/(2*std::abs(a_dec));
     //Fix Cruising distance
     double dist_cruising = 20.0;
     double  dist_acc = (maneuver.lane_following_maneuver.end_dist - maneuver.lane_following_maneuver.start_dist) - dist_decel - dist_cruising;
     double a_acc = (pow(speed_before_decel,2) - pow(maneuver.lane_following_maneuver.start_speed, 2))/(2*dist_acc);
     double t_acc = (speed_before_decel - maneuver.lane_following_maneuver.start_speed)/a_acc;
-    double t_dec = speed_before_decel/a_dec;
+    double t_dec = speed_before_decel/std::abs(a_dec);
     double t_cruising = dist_cruising/speed_before_decel;
 
     maneuver.lane_following_maneuver.end_time = maneuver.lane_following_maneuver.start_time + ros::Duration(t_acc + t_cruising + t_dec);
