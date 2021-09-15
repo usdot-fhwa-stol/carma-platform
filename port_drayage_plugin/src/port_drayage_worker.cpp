@@ -128,7 +128,7 @@ namespace port_drayage_plugin
         cav_msgs::UIInstructions ui_instructions_msg;
         ui_instructions_msg.stamp = ros::Time::now();
         ui_instructions_msg.msg = popup_text;
-        ui_instructions_msg.type = cav_msgs::UIInstructions::ACK_REQUIRED;
+        ui_instructions_msg.type = cav_msgs::UIInstructions::ACK_REQUIRED; // The popup will be displayed until the user interacts with it
         ui_instructions_msg.response_service = SET_GUIDANCE_ACTIVE_SERVICE_ID; 
 
         return ui_instructions_msg;
