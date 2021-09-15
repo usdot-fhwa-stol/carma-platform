@@ -1878,8 +1878,8 @@ void WMBroadcaster::publishLightId()
       if (convert_success)
       {
         ROS_DEBUG_STREAM("Found Traffic Light with Intersection id: " << intersection_id << " Groupd id:" << group_id);
-        upcoming_intersection_ids_.data.push_back(std::static_cast<int>(intersection_id));
-        upcoming_intersection_ids_.data.push_back(std::static_cast<int>(group_id));
+        upcoming_intersection_ids_.data.push_back(static_cast<int>(intersection_id));
+        upcoming_intersection_ids_.data.push_back(static_cast<int>(group_id));
       }
 
     }
