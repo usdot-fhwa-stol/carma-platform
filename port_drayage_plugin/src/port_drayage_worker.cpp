@@ -219,7 +219,7 @@ namespace port_drayage_plugin
             if(mobility_operation_cmv_id == _cmv_id) {
                 _has_received_first_mobility_operation_msg = true;
 
-                // Since a new message indicates a the previous action was completed, update all cargo-related data members and the previous operation based on the previous action that was completed
+                // Since a new message indicates the previous action was completed, update all cargo-related data members and the previous operation based on the previous action that was completed
                 update_cargo_information_after_action_completion(_latest_mobility_operation_msg);
 
                 if (_latest_mobility_operation_msg.operation != "") {
@@ -300,24 +300,6 @@ namespace port_drayage_plugin
                 throw std::invalid_argument("Received 'PICKUP' operation, but no cargo_id was included.");
             }
 
-            _latest_mobility_operation_msg.cargo_id = boost::optional<std::string>();
-        }
-        
-        // Parse 'action_id' field  if it exists in strategy_params
-        if (pt.count("action_id") != 0){
-            _latest_mobility_operation_msg.current_action_id = pt.get<std::string>("action_id");
-            ROS_DEBUG_STREAM("action id: " << *_latest_mobility_operation_msg.current_action_id);
-        }
-        else{
-            _latest_mobility_operation_msg.current_action_id = boost::optional<std::string>();
-        }
-
-        // Parse 'cargo_id' field if it exists in strategy_params
-        if (pt.count("cargo_id") != 0){
-            _latest_mobility_operation_msg.cargo_id = pt.get<std::string>("cargo_id");
-            ROS_DEBUG_STREAM("cargo id: " << *_latest_mobility_operation_msg.cargo_id);
-        }
-        else{
             _latest_mobility_operation_msg.cargo_id = boost::optional<std::string>();
         }
         
