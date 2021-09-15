@@ -54,6 +54,8 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <cav_msgs/TrafficControlRequestPolygon.h>
 #include <carma_wm/WorldModelUtils.h>
+#include <std_msgs/Int64MultiArray.h>
+
 
 namespace carma_wm_ctrl
 {
@@ -237,9 +239,6 @@ public:
    */ 
   void newUpdateSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const;
 
-  visualization_msgs::MarkerArray tcm_marker_array_;
-  cav_msgs::TrafficControlRequestPolygon tcr_polygon_;
-  
   /*!
    * \brief Returns the most recently recieved route message.
    * 
@@ -283,8 +282,7 @@ public:
                                      Each should have gf_pts, affected_parts.
    * \param parallel_llt_front A lanelet whose end should connect to front diagonal lanelet
    * \param parallel_llt_back A lanelet whose start should connect to back diagonal lanelet
-   * \param middle_opposite_lanelets A lanelet list whose front() connects to front diagonal, 
-   *                                 back() connects to back diagonal (their directions are expected to be opposite of parallel ones)
+   * \param middle_opposite_lanelets A lgetInterGroupIdsByLightRegIdk() connects to back diagonal (their directions are expected to be opposite of parallel ones)
    * \throw InvalidObjectStateError if no map is available
    */
   std::shared_ptr<Geofence> createWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache, lanelet::Lanelet parallel_llt_front,  lanelet::Lanelet parallel_llt_back, 
@@ -340,13 +338,23 @@ public:
    */
   uint32_t generate32BitId(const std::string& label);
 
+   /*! \brief helper for generating intersection and group Id of a traffic light from lanelet id
+      \return return true if conversion was successful
+   */
+  bool convertLightIdToInterGroupId(unsigned& intersection_id, unsigned& group_id, const lanelet::Id& lanelet_id);
+
   void setErrorDistance (double error_distance);
+
+  visualization_msgs::MarkerArray tcm_marker_array_;
+  cav_msgs::TrafficControlRequestPolygon tcr_polygon_;
+  std_msgs::Int64MultiArray upcoming_intersection_ids_;
 
 private:
   double error_distance_ = 5; //meters
   lanelet::ConstLanelets route_path_;
   std::unordered_set<lanelet::Id> active_geofence_llt_ids_; 
   std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache_;
+  bool traffic_light_published_;
   std::unordered_map<uint32_t, lanelet::Id> traffic_light_id_lookup_;
   void addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
   void addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
@@ -356,7 +364,7 @@ private:
   void addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const; 
   void addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01);
   void scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr_list);
-
+  void publishLightId();
   lanelet::LineString3d createLinearInterpolatingLinestring(const lanelet::Point3d& front_pt, const lanelet::Point3d& back_pt, double increment_distance = 0.25);
   lanelet::Lanelet  createLinearInterpolatingLanelet(const lanelet::Point3d& left_front_pt, const lanelet::Point3d& right_front_pt, 
                                                       const lanelet::Point3d& left_back_pt, const lanelet::Point3d& right_back_pt, double increment_distance = 0.25);

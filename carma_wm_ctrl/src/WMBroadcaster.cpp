@@ -1844,7 +1844,47 @@ void WMBroadcaster::currentLocationCallback(const geometry_msgs::PoseStamped& cu
   }
 
 }
+bool WMBroadcaster::convertLightIdToInterGroupId(unsigned& intersection_id, unsigned& group_id, const lanelet::Id& lanelet_id)
+{
+  for (auto it = traffic_light_id_lookup_.begin(); it != traffic_light_id_lookup_.end(); ++it)
+  {
+    if (it -> second == lanelet_id)
+    {
+      group_id = (it -> first & 0xFF);
+      intersection_id = (it -> first >> 8);
+      return true;
+    }
+  }
+  return false;
+}
 
+void WMBroadcaster::publishLightId()
+{
+  if (!traffic_light_published_ && !traffic_light_id_lookup_.empty())
+  {
+    for(auto id : current_route.route_path_lanelet_ids) 
+    {
+      bool convert_success = false;
+      unsigned intersection_id = 0;
+      unsigned group_id = 0;
+      auto route_lanelet= current_map_->laneletLayer.get(id);
+      auto traffic_lights = route_lanelet.regulatoryElementsAs<lanelet::CarmaTrafficLight>();
+      if (!traffic_lights.empty())
+      {
+        ROS_DEBUG_STREAM("Found Traffic Light Regulatory Element id: " << traffic_lights.front()->id());
+        convert_success = convertLightIdToInterGroupId(intersection_id,group_id,  traffic_lights.front()->id());
+      }
+      if (convert_success)
+      {
+        ROS_DEBUG_STREAM("Found Traffic Light with Intersection id: " << intersection_id << " Groupd id:" << group_id);
+        upcoming_intersection_ids_.data.push_back(intersection_id);
+        upcoming_intersection_ids_.data.push_back(group_id);
+        traffic_light_published_ = true;
+      }
+
+    }
+  }
+}
 cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geometry_msgs::PoseStamped& current_pos)
 {
 
@@ -1857,6 +1897,8 @@ cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geom
   double current_pos_x = current_pos.pose.position.x;
   double current_pos_y = current_pos.pose.position.y;
 
+  
+  
 
   lanelet::BasicPoint2d curr_pos;
   curr_pos.x() = current_pos_x;
