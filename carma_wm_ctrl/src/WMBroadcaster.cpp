@@ -1848,6 +1848,7 @@ bool WMBroadcaster::convertLightIdToInterGroupId(unsigned& intersection_id, unsi
 {
   for (auto it = traffic_light_id_lookup_.begin(); it != traffic_light_id_lookup_.end(); ++it)
   {
+    // Reverse of the logic for generating the lanelet_id. Reference function generate32BitId(const std::string& label)
     if (it -> second == lanelet_id)
     {
       group_id = (it -> first & 0xFF);
@@ -1860,7 +1861,7 @@ bool WMBroadcaster::convertLightIdToInterGroupId(unsigned& intersection_id, unsi
 
 void WMBroadcaster::publishLightId()
 {
-  if (!traffic_light_published_ && !traffic_light_id_lookup_.empty())
+  if (!traffic_light_id_lookup_.empty())
   {
     for(auto id : current_route.route_path_lanelet_ids) 
     {
@@ -1877,9 +1878,8 @@ void WMBroadcaster::publishLightId()
       if (convert_success)
       {
         ROS_DEBUG_STREAM("Found Traffic Light with Intersection id: " << intersection_id << " Groupd id:" << group_id);
-        upcoming_intersection_ids_.data.push_back(intersection_id);
-        upcoming_intersection_ids_.data.push_back(group_id);
-        traffic_light_published_ = true;
+        upcoming_intersection_ids_.data.push_back(std::static_cast<int>(intersection_id));
+        upcoming_intersection_ids_.data.push_back(std::static_cast<int>(group_id));
       }
 
     }
