@@ -81,7 +81,7 @@ namespace stop_controlled_intersection_transit_plugin
     //Calculate speed before decel - The speed the vehicle should accelerate to before slowing down
     //Assuming the a_dec to be 2m/s^2, the vehicle should be able to stop at that deceleration- over total_dist/2
     //So accelerate half way and decelerate the rest
-    double a_dec = -0.5;
+    double a_dec = -1.5;
     double assumed_dec_dist = maneuver.lane_following_maneuver.end_dist/2;
     double speed_before_dec = sqrt(2*std::abs(a_dec)*assumed_dec_dist);
     
@@ -111,6 +111,38 @@ namespace stop_controlled_intersection_transit_plugin
     maneuver_plan.push_back(maneuver);
     std::vector<PointSpeedPair> points_and_target_speeds = plugin.maneuvers_to_points(maneuver_plan, wm, req.vehicle_state);
     EXPECT_EQ(points_and_target_speeds[0].speed, req.vehicle_state.longitudinal_vel);
+
+    //Test create_case_one_speed_profile
+      //get geometry points from maneuvers_to_points
+    std::vector<lanelet::BasicPoint2d> geometry_profile;
+    std::vector<double> speeds;
+    basic_autonomy::waypoint_generation:: split_point_speed_pairs(points_and_target_speeds, &geometry_profile, &speeds);
+    std::vector<PointSpeedPair> case_one_profile = plugin.create_case_one_speed_profile(wm, maneuver, geometry_profile,  req.vehicle_state.longitudinal_vel);
+    //Ensure acceleration and deceleration is happening
+    double dist_to_cover = maneuver.lane_following_maneuver.end_dist - maneuver.lane_following_maneuver.start_dist;
+    double total_dist_covered = 0;
+  
+    double prev_speed = case_one_profile[0].speed;
+    lanelet::BasicPoint2d prev_point = case_one_profile[0].point;
+    double current_speed;
+    lanelet::BasicPoint2d current_point;
+    
+    for(int i = 0;i < case_one_profile.size();i++){
+      current_point = case_one_profile[i].point;
+      current_speed = case_one_profile[i].speed;
+      double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
+      total_dist_covered += delta_d;   
+      if(total_dist_covered < 50.1){ //According to test conditions acceleration till approx 50 meters 
+        EXPECT_TRUE(current_speed >= prev_speed);
+      }
+      else{
+        EXPECT_TRUE(current_speed <= prev_speed);
+      }
+
+      prev_speed = current_speed;
+      prev_point = current_point;
+    }
+
 
     //Test compose_trajectory_from_centerline
     req.header.stamp = ros::Time(0.0);
