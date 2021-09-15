@@ -214,7 +214,7 @@ public:
    * no rule set is available for the requested participant.
    */
   virtual lanelet::Optional<TrafficRulesConstPtr>
-  getTrafficRules(const std::string& participant = lanelet::Participants::Vehicle) const = 0;
+  getTrafficRules(const std::string& participant) const = 0;
 
   /**
    * @brief Get the Traffic Rules object 
