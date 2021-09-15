@@ -93,7 +93,7 @@ public:
    * \param wm Pointer to intialized world model for semantic map access
    * * \param state The current state of the vehicle
    * 
-   * \return List of centerline points paired with speed limits
+   * \return List of centerline points paired with target speeds
    */
   std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
                                                              const carma_wm::WorldModelConstPtr& wm,
@@ -109,7 +109,7 @@ public:
    * 
    * \param starting_speed The current speed of the vehicle at the time of the trajectory planning request
    * 
-   * \return List of centerline points paired with speed limits
+   * \return List of centerline points paired with target speeds
    */
   std::vector<PointSpeedPair> create_case_one_speed_profile(const carma_wm::WorldModelConstPtr& wm, const cav_msgs::Maneuver& maneuver,
                                                             std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed);

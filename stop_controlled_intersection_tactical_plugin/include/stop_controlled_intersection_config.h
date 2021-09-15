@@ -30,7 +30,8 @@ struct StopControlledIntersectionTacticalPluginConfig
     int curvature_moving_average_window_size = 9;  // Size of the window used in the moving average filter to smooth the curvature profile
                                            // computed curvature and output speeds
     double lateral_accel_limit = 2.5;        // Maximum allowable lateral acceleration m/s^2   
-    int speed_moving_average_window_size = 5;      // Size of the window used in the moving average filter to smooth both the speed profile                                        
+    int speed_moving_average_window_size = 5;      // Size of the window used in the moving average filter to smooth both the speed profile 
+    double back_distance = 20;               // Number of meters behind the first maneuver that need to be included in points for curvature calculation                                       
 
     friend std::ostream& operator<<(std::ostream& output, const StopControlledIntersectionTacticalPluginConfig& c)
     {
@@ -40,7 +41,8 @@ struct StopControlledIntersectionTacticalPluginConfig
                 << "cernterline_sampling_spacing: " << c.centerline_sampling_spacing << std::endl
                 << "curvature_moving_average_window_size: " << c.curvature_moving_average_window_size << std::endl
                 << "lateral_accel_limit: " << c.lateral_accel_limit << std::endl
-                 << "speed_moving_average_window_size: " << c.speed_moving_average_window_size << std::endl
+                << "speed_moving_average_window_size: " << c.speed_moving_average_window_size << std::endl
+                << "back_distance: " << c.back_distance << std::endl
                 << "}" << std::endl;
         return output;
     }
