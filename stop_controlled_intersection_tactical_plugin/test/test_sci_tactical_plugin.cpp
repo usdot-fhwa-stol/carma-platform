@@ -81,13 +81,13 @@ namespace stop_controlled_intersection_transit_plugin
     //Calculate speed before decel - The speed the vehicle should accelerate to before slowing down
     //Assuming the a_dec to be 2m/s^2, the vehicle should be able to stop at that deceleration- over total_dist/2
     //So accelerate half way and decelerate the rest
-    double a_dec = 0.5;
+    double a_dec = -0.5;
     double assumed_dec_dist = maneuver.lane_following_maneuver.end_dist/2;
-    double speed_before_dec = sqrt(2*a_dec*assumed_dec_dist);
+    double speed_before_dec = sqrt(2*std::abs(a_dec)*assumed_dec_dist);
     
     double a_acc = (pow(speed_before_dec,2) - pow(maneuver.lane_following_maneuver.start_speed,2))/(2*(maneuver.lane_following_maneuver.end_dist - assumed_dec_dist));
     double t_acc = (speed_before_dec - maneuver.lane_following_maneuver.start_speed)/a_acc;
-    double t_dec = (speed_before_dec)/a_dec;
+    double t_dec = (speed_before_dec)/std::abs(a_dec);
 
     maneuver.lane_following_maneuver.end_time = maneuver.lane_following_maneuver.start_time + ros::Duration(t_acc + t_dec);
 

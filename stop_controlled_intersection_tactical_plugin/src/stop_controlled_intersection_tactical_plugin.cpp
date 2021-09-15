@@ -182,7 +182,7 @@ std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::create_cas
 const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed){
     //Derive meta data values from maneuver message - Using order in sci_strategic_plugin
     double a_acc = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);
-    double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[1]);
+    double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[1]); //a_dec is a -ve value
     double t_acc = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[2]);
     double t_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[3]);
     double speed_before_decel = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[4]);
@@ -198,7 +198,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     if(route_starting_downtrack < start_dist){
         //Update parameters
         //Keeping the deceleration part the same
-        double dist_decel = pow(speed_before_decel, 2)/(2*a_dec);
+        double dist_decel = pow(speed_before_decel, 2)/(2*std::abs(a_dec));
 
         dist_acc = end_dist - dist_decel;
         a_acc = (pow(speed_before_decel, 2) - pow(starting_speed,2))/(2*dist_acc);
@@ -229,7 +229,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
         }
         else{
             //Deceleration part
-            speed_i = sqrt(pow(speed_before_decel,2) - 2*a_dec*(total_dist_covered - dist_acc));
+            speed_i = sqrt(pow(speed_before_decel,2) + 2*a_dec*(total_dist_covered - dist_acc));
             if(speed_i < epsilon_){
                 speed_i = 0.0;
             }
@@ -261,6 +261,10 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlu
     auto time_bound_points = basic_autonomy::waypoint_generation::constrain_to_time_boundary(future_points, config_.trajectory_time_length);
 
     ROS_DEBUG_STREAM("Got time bound points with size:" << time_bound_points.size());
+
+    //Attach past points
+    std::vector<PointSpeedPair> back_and_future = attach_past_points(points, time_bound_points, nearest_pt_index, config_.back_distance);
+    ROS_DEBUG_STREAM("Got back_and_future points with size: "<<back_and_future.size());
 
     std::vector<double> speed_limits;
     std::vector<lanelet::BasicPoint2d> curve_points;
@@ -329,30 +333,41 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlu
         return {};
     }
 
+    //Drop Past points
+    nearest_pt_index = basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(all_sampling_points, wm_, state);
+    std::vector<lanelet::BasicPoint2d> future_basic_points(all_sampling_points.begin() + nearest_pt_index + 1,
+                                                            all_sampling_points.end());
+    std::vector<double> future_speeds(final_actual_speeds.begin() + nearest_pt_index + 1, 
+                                    final_actual_speeds.end());                                                            
+    std::vector<double> future_yaw(final_yaw_values.begin() + nearest_pt_index + 1,
+                                    final_yaw_values.end());
+
     // Add current vehicle point to front of the trajectory
     lanelet::BasicPoint2d cur_veh_point(state.X_pos_global, state.Y_pos_global);
 
-    all_sampling_points.insert(all_sampling_points.begin(),
+    future_basic_points.insert(future_basic_points.begin(),
                                 cur_veh_point); // Add current vehicle position to front of sample points
-    final_actual_speeds.insert(final_actual_speeds.begin(), state.longitudinal_vel);
-    final_yaw_values.insert(final_yaw_values.begin(), state.orientation);
+    future_speeds.insert(future_speeds.begin(), state.longitudinal_vel);
+    future_yaw.insert(future_yaw.begin(), state.orientation);
 
     // Compute points to local downtracks
-    std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(all_sampling_points);
+    std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(future_basic_points);
 
-    final_actual_speeds = basic_autonomy::smoothing::moving_average_filter(final_actual_speeds, config_.speed_moving_average_window_size);
+    final_actual_speeds = basic_autonomy::smoothing::moving_average_filter(future_speeds, config_.speed_moving_average_window_size);
 
     // Convert speeds to times
     std::vector<double> times;
 
-    //Force last point speed to 0.0
-    final_actual_speeds.back() = 0.0;
+    //Force last point speed to 0.0 if close to end
+    if(lanelet::geometry::distance2d(future_basic_points.back(), points.back().point) < epsilon_){
+        final_actual_speeds.back() = 0.0;
+    }
 
     trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
     // Build trajectory points
     std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
-        basic_autonomy::waypoint_generation::trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, state_time);
+        basic_autonomy::waypoint_generation::trajectory_from_points_times_orientations(future_basic_points, times, future_yaw, state_time);
 
     return traj_points;
 }
