@@ -26,7 +26,7 @@
 
 namespace stop_controlled_intersection_transit_plugin
 {
-    TEST(StopControlledIntersectionTacticalPlugin, DISABLED_TestSCIPlanning_case_one)
+    TEST(StopControlledIntersectionTacticalPlugin, TestSCIPlanning_case_one)
     {
       //Test Stop controlled Intersection tactical plugin generation
       ros::Time::setNow(ros::Time(0.0));

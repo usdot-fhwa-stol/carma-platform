@@ -166,7 +166,7 @@ std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_
         }
         else if(case_num == 3)
         {
-
+            points_and_target_speeds = create_case_three_speed_profile(wm, maneuver, route_points, starting_speed);
         }
         else{
             throw std::invalid_argument("The stop controlled intersection tactical plugin doesn't handle the case number requested");
@@ -336,6 +336,54 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
 
     return points_and_target_speeds;
 
+}
+
+std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::create_case_three_speed_profile(const carma_wm::WorldModelConstPtr& wm,
+const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed){
+    //Derive meta data values from maneuver message - Using order in sci_strategic_plugin
+    double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[1]);
+
+    //Derive start and end dist from maneuver
+    double start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
+    double end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
+
+    //Checking route geometry start against start_dist and adjust profile
+    double route_starting_downtrack = wm->routeTrackPos(route_geometry_points[0]).downtrack;  //Starting downtrack based on geometry points
+
+    if(route_starting_downtrack < start_dist){
+        //update parameter
+        a_dec = pow(starting_speed, 2)/(2*(end_dist - route_starting_downtrack));
+    }
+
+    std::vector<PointSpeedPair> points_and_target_speeds;
+    PointSpeedPair first_point;
+    first_point.point = route_geometry_points[0];
+    first_point.speed = starting_speed;
+    points_and_target_speeds.push_back(first_point);
+
+    lanelet::BasicPoint2d prev_point = route_geometry_points[0];
+    double total_dist_covered = 0;          //Starting dist for maneuver treated as 0.0
+
+    for(size_t i = 0;i < route_geometry_points.size(); i++){
+        lanelet::BasicPoint2d current_point = route_geometry_points[i];
+        double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
+        total_dist_covered +=delta_d;
+        //Find speed at dist covered
+        double speed_i = sqrt(std::max(pow(starting_speed,2) + 2 * a_dec * total_dist_covered, 0.0)); //std::max to ensure negative value is not sqrt
+        
+        if(speed_i < epsilon_){
+            speed_i = 0.0;
+        }
+    
+        PointSpeedPair p;
+        p.point = route_geometry_points[i];
+        p.speed = speed_i;
+        points_and_target_speeds.push_back(p);
+
+        prev_point = current_point;
+    }
+
+    return points_and_target_speeds;
 }
 
 std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlugin::compose_trajectory_from_centerline(
