@@ -49,8 +49,8 @@ using oss = std::ostringstream;
 
 namespace stop_controlled_intersection_transit_plugin
 {
-StopControlledIntersectionTacticalPlugin::StopControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm, StopControlledIntersectionTacticalPluginConfig config,
-                                    PublishPluginDiscoveryCB plugin_discovery_publisher)
+StopControlledIntersectionTacticalPlugin::StopControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm,const StopControlledIntersectionTacticalPluginConfig& config,
+                                    const PublishPluginDiscoveryCB& plugin_discovery_publisher)
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
   {
     plugin_discovery_msg_.name = "StopControlledIntersectionTacticalPlugin";
@@ -157,16 +157,19 @@ std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_
         route_points.insert(route_points.begin(), veh_pos);
 
         //get case num from maneuver parameters
+        if(GET_MANEUVER_PROPERTY(maneuver,parameters.int_valued_meta_data).empty()){
+            throw std::invalid_argument("No case number specified for stop controlled intersection maneuver");
+        }
+        
         int case_num = GET_MANEUVER_PROPERTY(maneuver,parameters.int_valued_meta_data[0]);
         if(case_num == 1){
             points_and_target_speeds = create_case_one_speed_profile(wm, maneuver, route_points, starting_speed);
         }
-        else if(case_num = 2){
-
+        else if(case_num == 2){
+            //Add case 2 function call here
         }
-        else if(case_num == 3)
-        {
-
+        else if(case_num == 3){
+            //Add case 3 function call here
         }
         else{
             throw std::invalid_argument("The stop controlled intersection tactical plugin doesn't handle the case number requested");

@@ -72,8 +72,8 @@ public:
    * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
    * \param debug_publisher Callback which will publish a debug message. The callback defaults to no-op.
    */
-  StopControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm, StopControlledIntersectionTacticalPluginConfig config,
-                         PublishPluginDiscoveryCB plugin_discovery_publisher);
+  StopControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm,const StopControlledIntersectionTacticalPluginConfig& config,
+                         const PublishPluginDiscoveryCB &plugin_discovery_publisher);
 
       /**
    * \brief Service callback for trajectory planning
