@@ -909,6 +909,37 @@ TEST(CARMAWorldModelTest, getTrafficRules)
   ASSERT_FALSE(!!default_participant);
 }
 
+TEST(CARMAWorldModelTest, getTrafficRules2)
+{
+  CARMAWorldModel cmw;
+
+  ///// Test straight route
+  addStraightRoute(cmw);
+
+  auto default_participant = cmw.getTrafficRules();
+  ASSERT_TRUE(!!default_participant);  // Verify traffic rules object was returned
+  ASSERT_EQ(lanelet::Participants::Vehicle, (*default_participant)->participant());
+
+  default_participant = cmw.getTrafficRules(lanelet::Participants::VehicleCar);
+  ASSERT_TRUE(!!default_participant);
+  ASSERT_EQ(lanelet::Participants::VehicleCar, (*default_participant)->participant());
+
+  default_participant = cmw.getTrafficRules(lanelet::Participants::VehicleTruck);
+  ASSERT_TRUE(!!default_participant);
+  ASSERT_EQ(lanelet::Participants::VehicleTruck, (*default_participant)->participant());
+
+  default_participant = cmw.getTrafficRules(lanelet::Participants::Pedestrian);
+  ASSERT_TRUE(!!default_participant);
+  ASSERT_EQ(lanelet::Participants::Pedestrian, (*default_participant)->participant());
+
+  default_participant = cmw.getTrafficRules(lanelet::Participants::Bicycle);
+  ASSERT_TRUE(!!default_participant);
+  ASSERT_EQ(lanelet::Participants::Bicycle, (*default_participant)->participant());
+
+  default_participant = cmw.getTrafficRules("fake_person");
+  ASSERT_FALSE(!!default_participant);
+}
+
 TEST(CARMAWorldModelTest, toRoadwayObstacle)
 {
   CARMAWorldModel cmw;
@@ -1039,10 +1070,13 @@ TEST(CARMAWorldModelTest, setConfigSpeedLimitTest)
   double cL = 24.0;
   ///// Test without user defined config limit
   cmw.setConfigSpeedLimit(cL);
+  cmw.setVehicleParticipationType("vehicle:car");
 
   ASSERT_FALSE(flag);
 
 }
+
+
 
 TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
 {
