@@ -214,7 +214,15 @@ public:
    * no rule set is available for the requested participant.
    */
   virtual lanelet::Optional<TrafficRulesConstPtr>
-  getTrafficRules(const std::string& participant = lanelet::Participants::Vehicle) const = 0;
+  getTrafficRules(const std::string& participant) const = 0;
+
+  /**
+   * @brief Get the Traffic Rules object 
+   * @return  Optional Shared pointer to an intialized traffic rules object which is used by carma. A default participant value will be used
+   * in case setVehicleParticipationType is not called. Acceptable participants are Vehicle, VehicleCar, and VehicleTruck
+   */
+  virtual lanelet::Optional<TrafficRulesConstPtr>
+  getTrafficRules() const = 0;
 
   /**
    * \brief Converts an ExternalObject in a RoadwayObstacle by mapping its position onto the semantic map. Can also be

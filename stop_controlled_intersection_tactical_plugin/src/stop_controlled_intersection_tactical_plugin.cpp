@@ -49,8 +49,8 @@ using oss = std::ostringstream;
 
 namespace stop_controlled_intersection_transit_plugin
 {
-StopControlledIntersectionTacticalPlugin::StopControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm, StopControlledIntersectionTacticalPluginConfig config,
-                                    PublishPluginDiscoveryCB plugin_discovery_publisher)
+StopControlledIntersectionTacticalPlugin::StopControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm,const StopControlledIntersectionTacticalPluginConfig& config,
+                                    const PublishPluginDiscoveryCB& plugin_discovery_publisher)
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
   {
     plugin_discovery_msg_.name = "StopControlledIntersectionTacticalPlugin";
@@ -157,11 +157,15 @@ std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_
         route_points.insert(route_points.begin(), veh_pos);
 
         //get case num from maneuver parameters
+        if(GET_MANEUVER_PROPERTY(maneuver,parameters.int_valued_meta_data).empty()){
+            throw std::invalid_argument("No case number specified for stop controlled intersection maneuver");
+        }
+        
         int case_num = GET_MANEUVER_PROPERTY(maneuver,parameters.int_valued_meta_data[0]);
         if(case_num == 1){
             points_and_target_speeds = create_case_one_speed_profile(wm, maneuver, route_points, starting_speed);
         }
-        else if(case_num = 2){
+        else if(case_num == 2){
             points_and_target_speeds = create_case_two_speed_profile(wm, maneuver, route_points, starting_speed);
         }
         else if(case_num == 3)
@@ -252,7 +256,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     
     //Derive meta data values from maneuver message - Using order in sci_strategic_plugin
     double a_acc = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);
-    double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[1]);
+    double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[1]); //a_dec is a -ve value
     double t_acc = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[2]);
     double t_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[3]);
     double t_cruise = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[4]);
@@ -272,14 +276,14 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
         //update parameters
         //Keeping acceleration and deceleration part same as planned in strategic plugin
         dist_acc = starting_speed*t_acc + 0.5 * a_acc * pow(t_acc,2);
-        dist_decel = speed_before_decel*t_dec - 0.5 * a_dec * pow(t_dec,2);
+        dist_decel = speed_before_decel*t_dec + 0.5 * a_dec * pow(t_dec,2);
         dist_cruise = end_dist - route_starting_downtrack - (dist_acc + dist_decel);
     }
     else{   
         //Use maneuver parameters to create speed profile
         dist_acc = starting_speed*t_acc + 0.5 * a_acc * pow(t_acc,2);
         dist_cruise = speed_before_decel*t_cruise;
-        dist_decel = speed_before_decel*t_dec - 0.5 * a_dec * pow(t_dec,2);
+        dist_decel = speed_before_decel*t_dec + 0.5 * a_dec * pow(t_dec,2);
     }
 
     //Check calculated total dist against maneuver limits
@@ -302,11 +306,11 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     first_point.speed = starting_speed;
     points_and_target_speeds.push_back(first_point);
 
-    lanelet::BasicPoint2d prev_point = route_geometry_points[0];
+    lanelet::BasicPoint2d prev_point = route_geometry_points.front();
     double total_dist_planned = 0;                  //Starting dist for maneuver treated as 0.0
     double prev_speed = starting_speed;
-    for(size_t i = 0; i < route_geometry_points.size(); i++){
-        lanelet::BasicPoint2d current_point = route_geometry_points[i];
+    for(auto route_point : route_geometry_points){
+        lanelet::BasicPoint2d current_point = route_point;
         double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
         total_dist_planned += delta_d;  
 
@@ -322,15 +326,15 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
         }
         else{
             //Deceleration part
-            speed_i = sqrt(std::max(pow(speed_before_decel,2) - 2*a_dec*(total_dist_planned - dist_acc - dist_cruise),0.0));//std::max to ensure negative value is not sqrt
+            speed_i = sqrt(std::max(pow(speed_before_decel,2) + 2*a_dec*(total_dist_planned - dist_acc - dist_cruise),0.0));//std::max to ensure negative value is not sqrt
         }
         
         PointSpeedPair p;
-        p.point = route_geometry_points[i];
+        p.point = route_point;
         p.speed = std::min(speed_i,speed_before_decel);
         points_and_target_speeds.push_back(p);
 
-        prev_point = route_geometry_points[i];
+        prev_point = route_point;
         prev_speed = speed_i;
     }
 
