@@ -43,17 +43,6 @@ TEST(VehicleStatusWorkerTest, testMsgId)
     EXPECT_TRUE(msgId2 != msgId3);
 }
 
-TEST(VehicleStatusWorkerTest, testSecMark)
-{
-    vehicle_status_generator::VehicleStatusGeneratorWorker worker;
-    ros::Time time1(10, 0);
-    EXPECT_EQ(10000, worker.getSecMark(time1));
-    ros::Time time2(70, 0);
-    EXPECT_EQ(10000, worker.getSecMark(time2));
-    ros::Time time3(71, 0);
-    EXPECT_EQ(11000, worker.getSecMark(time3));
-}
-
 // Run all the tests
 int main(int argc, char **argv)
 {
