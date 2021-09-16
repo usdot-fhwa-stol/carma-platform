@@ -119,6 +119,10 @@ public:
 *
 */
   void setConfigSpeedLimit(double config_lim);
+
+  /*! \brief Set vehicle participation type
+   */
+  void setVehicleParticipationType(const std::string& participant);
   
   /*! \brief Set endpoint of the route
    */
@@ -176,9 +180,12 @@ public:
   TrackPos getRouteEndTrackPos() const override;
 
   LaneletRoutingGraphConstPtr getMapRoutingGraph() const override;
+  
+  lanelet::Optional<TrafficRulesConstPtr>
+  getTrafficRules(const std::string& participant) const override;
 
   lanelet::Optional<TrafficRulesConstPtr>
-  getTrafficRules(const std::string& participant = lanelet::Participants::Vehicle) const override;
+  getTrafficRules() const override;
 
   std::vector<cav_msgs::RoadwayObstacle> getRoadwayObjects() const override;
 
@@ -209,6 +216,8 @@ public:
 private:
 
   double config_speed_limit_;
+
+  std::string participant_type_ = lanelet::Participants::Vehicle;
   
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
    *         This function should generally only be called from inside the setRoute function as it uses member variables

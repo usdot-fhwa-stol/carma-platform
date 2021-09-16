@@ -88,11 +88,28 @@ public:
    */
   void setConfigSpeedLimit(double config_lim);
 
+
 /**
  *  \brief Returns the current configured speed limit value
  * 
 */
   double getConfigSpeedLimit() const;
+
+
+  /*!
+   * \brief Allows user to set a callback to be triggered when a map update is received
+   *
+   * \param participant A callback function that will be triggered after the world model receives a new map update
+   */
+  void setVehicleParticipationType(std::string participant);
+
+/**
+ * @brief Returns the Vehicle Participation Type value
+ * 
+ */
+  std::string getVehicleParticipationType() const;
+
+
 /**
  *  \brief Check if re-routing is needed and returns re-routing flag
  * 
