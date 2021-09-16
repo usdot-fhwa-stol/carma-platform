@@ -232,6 +232,30 @@ namespace stop_controlled_intersection_transit_plugin
 
     plugin.plan_trajectory_cb(req, resp);
     EXPECT_EQ(0, resp.related_maneuvers.back());
+
+    //Test create_case_two_speed_profile
+    std::vector<lanelet::BasicPoint2d> route_geometry_points = wm->sampleRoutePoints(
+            std::min(maneuver.lane_following_maneuver.start_dist + 1.0, maneuver.lane_following_maneuver.end_dist), 
+            maneuver.lane_following_maneuver.end_dist, 1.0);
+    
+    std::vector<PointSpeedPair> case_two_profile = plugin.create_case_two_speed_profile(wm, maneuver, route_geometry_points, req.vehicle_state.longitudinal_vel);
+
+    double prev_speed = case_two_profile[0].speed;
+    for(int i = 0;i< case_two_profile.size();i++){
+      double current_speed = case_two_profile[i].speed;
+      if(i <= 31){
+        EXPECT_TRUE(current_speed >= prev_speed);
+      }
+      else if(i > 31 && i < 52){
+        EXPECT_TRUE(current_speed == prev_speed);
+      }
+      else{
+        EXPECT_TRUE(current_speed < prev_speed);
+      }
+      
+      prev_speed = current_speed;
+    }
+
   }
 
 }
