@@ -391,9 +391,13 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
                                                          << getRouteEndTrackPos().downtrack);
     return boost::none;
   }
+    ROS_DEBUG_STREAM(">>> Downtrack:" << downtrack);
 
   // Use fast lookup to identify the points before and after the provided downtrack on the route
   size_t ls_i = shortest_path_distance_map_.getElementIndexByDistance(downtrack); // Get the linestring matching the provided downtrack
+    ROS_DEBUG_STREAM(">>> ls_i: " << ls_i << ", of size: " << shortest_path_distance_map_.size());
+
+
   double ls_length = shortest_path_distance_map_.elementLength(ls_i);
   double ls_downtrack = shortest_path_distance_map_.distanceToElement(ls_i);
   auto linestring = shortest_path_centerlines_[ls_i];
