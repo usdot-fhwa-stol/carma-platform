@@ -55,7 +55,7 @@ namespace stop_controlled_intersection_transit_plugin
 
      carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, wm);
     
-    //Create a request and maneuver that meets case 1 criteria
+    //Create a request and maneuver that meets case 2s criteria
     //In order to be case 1 - estimated_stop_time > scheduled_stop_time and speed_before_stop < speed_limit
     //speed_before_stop
      cav_srvs::PlanTrajectoryRequest req;
@@ -178,8 +178,7 @@ namespace stop_controlled_intersection_transit_plugin
 
     carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, wm);   
 
-    //Create a request and maneuver that meets case 1 criteria
-    //In order to be case 2 - estimated_stop_time > scheduled_stop_time and speed_before_decel =  speed_limit
+    //Create a request and maneuver that meets case 3 criteria
     //speed_before_stop
      cav_srvs::PlanTrajectoryRequest req;
      req.vehicle_state.X_pos_global = 1.5;
@@ -311,11 +310,6 @@ namespace stop_controlled_intersection_transit_plugin
     //Float meta data list - a_dec
     double a_dec = -pow(maneuver.lane_following_maneuver.start_speed, 2)/(2*(maneuver.lane_following_maneuver.end_dist - maneuver.lane_following_maneuver.start_dist));
     maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(a_dec);
-
-    req.maneuver_plan.maneuvers.push_back(maneuver);
-    req.maneuver_index_to_plan = 0;
-
-    cav_srvs::PlanTrajectoryResponse resp;
 
     //Test create_case_three_speed_profile
     std::vector<lanelet::BasicPoint2d> route_geometry_points = wm->sampleRoutePoints(
