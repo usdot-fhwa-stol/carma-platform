@@ -394,30 +394,33 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
     ROS_DEBUG_STREAM(">>> Downtrack:" << downtrack);
 
   // Use fast lookup to identify the points before and after the provided downtrack on the route
-  size_t ls_i = shortest_path_distance_map_.getElementIndexByDistance(downtrack); // Get the linestring matching the provided downtrack
+  auto indices = shortest_path_distance_map_.getElementIndexByDistance(downtrack, true); // Get the linestring matching the provided downtrack
+  size_t ls_i = std::get<0>(indices);
+  size_t pt_i = std::get<1>(indices);
+  
     ROS_DEBUG_STREAM(">>> ls_i: " << ls_i << ", of size: " << shortest_path_distance_map_.size());
 
-  double ls_length = shortest_path_distance_map_.elementLength(ls_i);
-  
-  double ls_downtrack = shortest_path_distance_map_.distanceToElement(ls_i);
   
   auto linestring = shortest_path_centerlines_[ls_i];
 
-  // Use the percentage traveled along this linestring to index into the cenertline
+  if (pt_i >= linestring.size()) {
+    throw std::invalid_argument("Impossible index: pt: " + std::to_string(pt_i) + " linestring: " + std::to_string(ls_i));
+  }
+
+
+  double ls_downtrack = shortest_path_distance_map_.distanceToElement(ls_i);
+  
   double relative_downtrack = downtrack - ls_downtrack;
 
-  double lanelet_percentage = relative_downtrack / ls_length;
+  ROS_DEBUG_STREAM(">>> ls_downtrack" << ls_downtrack << ", linestring.size():" << linestring.size() << 
+                       ", relative_downtrack:" << relative_downtrack << ", centerline_size:" << centerline_size);
 
-  int centerline_size = linestring.size();
-    ROS_DEBUG_STREAM(">>> ls_length: " << ls_length << ", : ls_downtrack" << ls_downtrack << ", linestring.size():" << linestring.size() << 
-                       ", relative_downtrack:" << relative_downtrack << ", lanelet_percentage: " << lanelet_percentage << ", centerline_size:" << centerline_size);
+  size_t centerline_size = linestring.size();
 
-  int index = lanelet_percentage * centerline_size;
+  size_t prior_idx = std::min(pt_i, centerline_size - 1);
 
-  int prior_idx = std::min(index, centerline_size - 1);
-
-  int next_idx = std::min(index + 1, centerline_size - 1);
-    ROS_DEBUG_STREAM(">>> index: " << index << ", of prior_idx: " << prior_idx << ", next_idx: "<<  next_idx);
+  size_t next_idx = std::min(pt_i + 1, centerline_size - 1);
+    ROS_DEBUG_STREAM(">>> pt_i: " << pt_i << ", of prior_idx: " << prior_idx << ", next_idx: "<<  next_idx);
 
   // This if block handles the edge case where the downtrack distance has landed exactly on an existing point
   if (prior_idx == next_idx)

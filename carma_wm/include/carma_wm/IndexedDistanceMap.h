@@ -147,10 +147,10 @@ public:
   /*!
    * \brief Returns index of the linestring which the provided distance is within.
    *        NOTE: Unlike the rest of this class, this method runs in O(log n) where n is this.size()
-   *
+   *  TODO: Add info about complexity and returned data
    * \throw std::invalid_argument if distance does not fit within bounds [0, totalLength()]
    * \return The linestring index which this distance is inside
    */
-  size_t getElementIndexByDistance(double distance) const;
+  std::pair<size_t, size_t> getElementIndexByDistance(double distance, bool get_point=true) const;
 };
 }  // namespace carma_wm
