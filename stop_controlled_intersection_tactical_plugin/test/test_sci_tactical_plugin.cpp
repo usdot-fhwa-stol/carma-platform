@@ -55,7 +55,7 @@ namespace stop_controlled_intersection_transit_plugin
 
      carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, wm);
     
-    //Create a request and maneuver that meets case 2s criteria
+    //Create a request and maneuver that meets case 1 criteria
     //In order to be case 1 - estimated_stop_time > scheduled_stop_time and speed_before_stop < speed_limit
     //speed_before_stop
      cav_srvs::PlanTrajectoryRequest req;
