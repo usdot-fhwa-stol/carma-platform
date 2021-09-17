@@ -412,10 +412,11 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
   
   double relative_downtrack = downtrack - ls_downtrack;
 
+  size_t centerline_size = linestring.size();
+
   ROS_DEBUG_STREAM(">>> ls_downtrack" << ls_downtrack << ", linestring.size():" << linestring.size() << 
                        ", relative_downtrack:" << relative_downtrack << ", centerline_size:" << centerline_size);
 
-  size_t centerline_size = linestring.size();
 
   size_t prior_idx = std::min(pt_i, centerline_size - 1);
 
