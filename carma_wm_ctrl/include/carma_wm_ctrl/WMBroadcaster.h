@@ -171,21 +171,6 @@ public:
    */
   void setConfigSpeedLimit(double cL);
 
-/**
- * @brief Set the Vehicle Participation Type 
- * 
- * @param participant vehicle participation type
- */
-  void setVehicleParticipationType(std::string participant);
-
-  /**
-   * @brief Get the Vehicle Participation Type object
-   * 
-   * @return Current Vehicle Participation Type being used in this World Model Instance
-   */
-  std::string getVehicleParticipationType();
-
-  
   /*!
    * \brief Fills geofence object from TrafficControlMessageV01 ROS Msg
    * \param Geofence object to fill with information extracted from this msg and previously cached msgs that are relevant
@@ -297,7 +282,7 @@ public:
                                      Each should have gf_pts, affected_parts.
    * \param parallel_llt_front A lanelet whose end should connect to front diagonal lanelet
    * \param parallel_llt_back A lanelet whose start should connect to back diagonal lanelet
-   * \param middle_opposite_lanelets A lgetInterGroupIdsByLightRegIdk() connects to back diagonal (their directions are expected to be opposite of parallel ones)
+   * \param middle_opposite_lanelets A getInterGroupIdsByLightReg() connects to back diagonal (their directions are expected to be opposite of parallel ones)
    * \throw InvalidObjectStateError if no map is available
    */
   std::shared_ptr<Geofence> createWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache, lanelet::Lanelet parallel_llt_front,  lanelet::Lanelet parallel_llt_back, 
@@ -393,7 +378,6 @@ private:
   lanelet::LaneletMapPtr current_map_;
   lanelet::routing::RoutingGraphUPtr current_routing_graph_; // Current map routing graph
   lanelet::Velocity config_limit;
-  std::string participant_ = lanelet::Participants::VehicleCar;//Default participant type
   std::unordered_set<std::string>  checked_geofence_ids_;
   std::unordered_set<std::string>  generated_geofence_reqids_;
   std::vector<lanelet::LaneletMapPtr> cached_maps_;
