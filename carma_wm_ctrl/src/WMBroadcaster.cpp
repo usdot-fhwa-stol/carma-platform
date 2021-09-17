@@ -83,7 +83,7 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   ROS_INFO_STREAM("Building routing graph for base map");
 
   lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
-  lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::VehicleCar);
+  lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant_);
   current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
 
   ROS_INFO_STREAM("Done building routing graph for base map");
@@ -222,6 +222,7 @@ void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_
   // used for assigning them to the regem as parameters
   for (auto llt_or_area : gf_ptr->affected_parts_)
   {
+
     if (llt_or_area.isLanelet()) affected_llts.push_back(current_map_->laneletLayer.get(llt_or_area.lanelet()->id()));
     if (llt_or_area.isArea()) affected_areas.push_back(current_map_->areaLayer.get(llt_or_area.area()->id()));
   }
@@ -743,7 +744,6 @@ std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithRatio(std::vector<d
   std::vector<lanelet::Lanelet> created_llts;
 
   std::sort(ratios.begin(), ratios.end());
-
   ROS_DEBUG_STREAM("splitLaneletWithRatio evaluating input ratios of size: " << ratios.size());
 
   ratios.push_back(1.0); //needed to complete the loop
@@ -1084,6 +1084,16 @@ void WMBroadcaster::setConfigSpeedLimit(double cL)
   config_limit = lanelet::Velocity(cL * lanelet::units::MPH());
 }
 
+void WMBroadcaster::setVehicleParticipationType(std::string participant)
+{
+  participant_ = participant;
+}
+
+std::string WMBroadcaster::getVehicleParticipationType()
+{
+  return participant_;
+}
+
 uint32_t WMBroadcaster::generate32BitId(const std::string& label)
 {
   auto pos1 = label.find("INT_ID:") + 7;
@@ -1293,7 +1303,6 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const lane
   {
     sorted_parts.push_back(std::make_pair(carma_wm::geometry::trackPos(llt, gf_pts.front().basicPoint2d()).downtrack, llt));
   }
-
   std::sort(sorted_parts.begin(), sorted_parts.end(), [](const auto& x, const auto& y){return x.first > y.first;});
 
   for (auto pair : sorted_parts)
@@ -1469,7 +1478,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
     ROS_INFO_STREAM("Rebuilding routing graph after is was invalidated by geofence");
 
     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
-    lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::VehicleCar);
+    lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant_);
     current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
 
     ROS_INFO_STREAM("Done rebuilding routing graph after is was invalidated by geofence");
@@ -1844,7 +1853,47 @@ void WMBroadcaster::currentLocationCallback(const geometry_msgs::PoseStamped& cu
   }
 
 }
+bool WMBroadcaster::convertLightIdToInterGroupId(unsigned& intersection_id, unsigned& group_id, const lanelet::Id& lanelet_id)
+{
+  for (auto it = traffic_light_id_lookup_.begin(); it != traffic_light_id_lookup_.end(); ++it)
+  {
+    // Reverse of the logic for generating the lanelet_id. Reference function generate32BitId(const std::string& label)
+    if (it -> second == lanelet_id)
+    {
+      group_id = (it -> first & 0xFF);
+      intersection_id = (it -> first >> 8);
+      return true;
+    }
+  }
+  return false;
+}
 
+void WMBroadcaster::publishLightId()
+{
+  if (!traffic_light_id_lookup_.empty())
+  {
+    for(auto id : current_route.route_path_lanelet_ids) 
+    {
+      bool convert_success = false;
+      unsigned intersection_id = 0;
+      unsigned group_id = 0;
+      auto route_lanelet= current_map_->laneletLayer.get(id);
+      auto traffic_lights = route_lanelet.regulatoryElementsAs<lanelet::CarmaTrafficLight>();
+      if (!traffic_lights.empty())
+      {
+        ROS_DEBUG_STREAM("Found Traffic Light Regulatory Element id: " << traffic_lights.front()->id());
+        convert_success = convertLightIdToInterGroupId(intersection_id,group_id,  traffic_lights.front()->id());
+      }
+      if (convert_success)
+      {
+        ROS_DEBUG_STREAM("Found Traffic Light with Intersection id: " << intersection_id << " Groupd id:" << group_id);
+        upcoming_intersection_ids_.data.push_back(static_cast<int>(intersection_id));
+        upcoming_intersection_ids_.data.push_back(static_cast<int>(group_id));
+      }
+
+    }
+  }
+}
 cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geometry_msgs::PoseStamped& current_pos)
 {
 
@@ -1857,6 +1906,8 @@ cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geom
   double current_pos_x = current_pos.pose.position.x;
   double current_pos_y = current_pos.pose.position.y;
 
+  
+  
 
   lanelet::BasicPoint2d curr_pos;
   curr_pos.x() = current_pos_x;
