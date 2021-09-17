@@ -345,7 +345,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
 std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::create_case_three_speed_profile(const carma_wm::WorldModelConstPtr& wm,
 const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed){
     //Derive meta data values from maneuver message - Using order in sci_strategic_plugin
-    double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[1]);
+    double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);
 
     //Derive start and end dist from maneuver
     double start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);

@@ -26,7 +26,7 @@
 
 namespace stop_controlled_intersection_transit_plugin
 {
-    TEST(StopControlledIntersectionTacticalPlugin, TestSCIPlanning_case_one)
+    TEST(StopControlledIntersectionTacticalPlugin, DISABLED_TestSCIPlanning_case_one)
     {
       //Test Stop controlled Intersection tactical plugin generation
       ros::Time::setNow(ros::Time(0.0));
@@ -150,7 +150,7 @@ namespace stop_controlled_intersection_transit_plugin
     EXPECT_TRUE(trajectory.size() > 2);
   }
 
-  TEST(StopControlledIntersectionTacticalPlugin, TestSCIPlanning_case_two){
+  TEST(StopControlledIntersectionTacticalPlugin, DISABLED_TestSCIPlanning_case_two){
     //Test Stop controlled Intersection tactical plugin generation
     ros::Time::setNow(ros::Time(0.0));
     StopControlledIntersectionTacticalPluginConfig config;
@@ -256,6 +256,80 @@ namespace stop_controlled_intersection_transit_plugin
       prev_speed = current_speed;
     }
 
+  }
+
+  TEST(StopControlledIntersectionTacticalPlugin, TestSCIPlanning_case_three){
+    //Test Stop controlled Intersection tactical plugin generation
+    ros::Time::setNow(ros::Time(0.0));
+    StopControlledIntersectionTacticalPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+    StopControlledIntersectionTacticalPlugin plugin(wm, config, [&](auto msg) {});
+    
+    auto map = carma_wm::test::buildGuidanceTestMap(3.7, 50);
+
+    wm->setMap(map);
+    carma_wm::test::setSpeedLimit(30_mph, wm);
+    /**
+     * Total route length should be 100m
+     *
+     *        |1203|1213|1223|
+     *        | _  _  _  _  _|
+     *        |1202| Ob |1222|
+     *        | _  _  _  _  _|
+     *        |1201|1211|1221|    num   = lanelet id hardcoded for easier testing
+     *        | _  _  _  _  _|    |     = lane lines
+     *        |1200|1210|1220|    - - - = Lanelet boundary
+     *        |              |    O     = Default Obstacle
+     *        ****************
+     *           START_LINE
+    */
+
+    carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, wm);   
+
+    //Create a request and maneuver that meets case 1 criteria
+    //In order to be case 2 - estimated_stop_time > scheduled_stop_time and speed_before_decel =  speed_limit
+    //speed_before_stop
+     cav_srvs::PlanTrajectoryRequest req;
+     req.vehicle_state.X_pos_global = 1.5;
+     req.vehicle_state.Y_pos_global = 5.0;
+     req.vehicle_state.orientation = 0;
+     req.vehicle_state.longitudinal_vel = 11.176;
+
+     cav_msgs::Maneuver maneuver;
+     maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+     maneuver.lane_following_maneuver.start_dist = req.vehicle_state.Y_pos_global;
+     maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
+     maneuver.lane_following_maneuver.start_speed = 11.176;  //25 mph in mps
+
+     maneuver.lane_following_maneuver.end_dist = 100.0;
+     maneuver.lane_following_maneuver.end_speed = 0.0;
+
+    //Enter meta data
+    maneuver.lane_following_maneuver.parameters.int_valued_meta_data.push_back(3);    //Case number
+    maneuver.lane_following_maneuver.parameters.string_valued_meta_data.push_back("Carma/stop_controlled_intersection");
+
+    //Float meta data list - a_dec
+    double a_dec = -pow(maneuver.lane_following_maneuver.start_speed, 2)/(2*(maneuver.lane_following_maneuver.end_dist - maneuver.lane_following_maneuver.start_dist));
+    maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(a_dec);
+
+    req.maneuver_plan.maneuvers.push_back(maneuver);
+    req.maneuver_index_to_plan = 0;
+
+    cav_srvs::PlanTrajectoryResponse resp;
+
+    //Test create_case_three_speed_profile
+    std::vector<lanelet::BasicPoint2d> route_geometry_points = wm->sampleRoutePoints(
+            std::min(maneuver.lane_following_maneuver.start_dist , maneuver.lane_following_maneuver.end_dist), 
+            maneuver.lane_following_maneuver.end_dist, 1.0);
+    
+    std::vector<PointSpeedPair> case_two_profile = plugin.create_case_three_speed_profile(wm, maneuver, route_geometry_points, req.vehicle_state.longitudinal_vel);
+    double prev_speed = case_two_profile.front().speed;
+    for(int i = 1;i <case_two_profile.size();i++){
+      double current_speed = case_two_profile[i].speed;
+      EXPECT_TRUE(current_speed <= prev_speed);
+      
+      prev_speed = current_speed;
+    }
   }
 
 }
