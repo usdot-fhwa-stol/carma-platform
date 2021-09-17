@@ -97,7 +97,7 @@ public:
 
 
 
-/*!
+  /*!
    * \brief Allows user to set a callback to be triggered when a route update is received
    *        NOTE: If operating in multi-threaded mode the world model will remain locked until the user function
    * completes.
