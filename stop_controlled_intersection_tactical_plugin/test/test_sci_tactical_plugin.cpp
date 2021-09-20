@@ -316,14 +316,15 @@ namespace stop_controlled_intersection_transit_plugin
             std::min(maneuver.lane_following_maneuver.start_dist , maneuver.lane_following_maneuver.end_dist), 
             maneuver.lane_following_maneuver.end_dist, 1.0);
     
-    std::vector<PointSpeedPair> case_two_profile = plugin.create_case_three_speed_profile(wm, maneuver, route_geometry_points, req.vehicle_state.longitudinal_vel);
-    double prev_speed = case_two_profile.front().speed;
-    for(int i = 1;i <case_two_profile.size();i++){
-      double current_speed = case_two_profile[i].speed;
+    std::vector<PointSpeedPair> case_three_profile = plugin.create_case_three_speed_profile(wm, maneuver, route_geometry_points, req.vehicle_state.longitudinal_vel);
+    double prev_speed = case_three_profile.front().speed;
+    for(int i = 1;i <case_three_profile.size();i++){
+      double current_speed = case_three_profile[i].speed;
       EXPECT_TRUE(current_speed <= prev_speed);
       
       prev_speed = current_speed;
     }
+    EXPECT_TRUE(case_three_profile.back().speed < 0.5); //Last speed is less than 0.5mps
   }
 
 }
