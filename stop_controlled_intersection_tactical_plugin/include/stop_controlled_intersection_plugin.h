@@ -129,6 +129,23 @@ public:
    */
   std::vector<PointSpeedPair> create_case_two_speed_profile(const carma_wm::WorldModelConstPtr& wm, const cav_msgs::Maneuver& maneuver,
                                                           std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed);
+
+       /**
+   * \brief Creates a speed profile according to case three of the stop controlled intersection, 
+   * where the vehicle continuously decelerates to a stop. 
+   * \param wm Pointer to intialized world model for semantic map access
+   * 
+   * \param maneuvers The maneuver to being planned for. Maneuver meta-dara parameters are used to create the trajectory profile.
+   * 
+   * \param route_geometry_points The geometry points along the route which are associated with a speed in this method.
+   * 
+   * \param starting_speed The current speed of the vehicle at the time of the trajectory planning request
+   * 
+   * \return List of centerline points paired with speed limits
+   */
+  std::vector<PointSpeedPair> create_case_three_speed_profile(const carma_wm::WorldModelConstPtr& wm, const cav_msgs::Maneuver& maneuver,
+                                                          std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed);
+
    /**
    * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning
    * 
