@@ -278,7 +278,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   bool in_range = false;
   double stopped_downtrack = 0;
   lanelet::BasicPoint2d stopped_point;
-  int stopped_point_num = 0;
+
+  bool vehicle_in_buffer = starting_downtrack > downtracks.back() - stop_location_buffer;
+
   for (size_t i = 0; i < speeds.size(); i++)
   {  // Apply minimum speed constraint
     double downtrack = downtracks[i];
@@ -287,17 +289,14 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
     if (downtrack > downtracks.back() - stop_location_buffer && speeds[i] < config_.crawl_speed + half_a_mph_in_mps)
     {  // if we are within the stopping buffer and going at near crawl speed then command stop
-      speeds[i] = 0.0;
-
-      if (!in_range)
-      {
-        stopped_downtrack = downtracks[i];
-        stopped_point = raw_points[i];
-        in_range = true;
+      
+      // To avoid any issues in control plugin behavior we only command 0 if the vehicle is inside the buffer
+      if (vehicle_in_buffer || (i == speeds.size() - 1)) { // Vehicle is in the buffer
+        speeds[i] = 0.0;
+      } else { // Vehicle is not in the buffer so fill buffer with crawl speed
+        speeds[i] = std::max(speeds[i], config_.crawl_speed);
       }
-      downtracks[i] = stopped_downtrack;
-      raw_points[i] = stopped_point;
-      stopped_point_num++;
+
     }
     else
     {
@@ -318,13 +317,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
   std::vector<double> yaws = carma_wm::geometry::compute_tangent_orientations(raw_points);
 
-  // preserve last valid yaw over stopped points
-  stopped_point_num --;  // there is 1 fewer invalid yaw for total number of stopped points
-  while (stopped_point_num > 0) 
-  {
-    yaws[yaws.size() - stopped_point_num] = yaws[yaws.size() - stopped_point_num - 1];
-    stopped_point_num--;
-  }
 
   for (size_t i = 0; i < points.size(); i++)
   {
