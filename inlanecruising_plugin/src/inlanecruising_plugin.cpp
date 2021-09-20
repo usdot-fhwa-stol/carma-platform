@@ -111,6 +111,12 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
                                                                                 wpg_detail_config); // Compute the trajectory
   original_trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
 
+  // Set the planning plugin field name
+  for (auto& p : original_trajectory.trajectory_points) {
+    p.planner_plugin_name = plugin_discovery_msg_.name;
+  }
+  
+  
   if (config_.enable_object_avoidance)
   {
     ROS_DEBUG_STREAM("Activate Object Avoidance");
