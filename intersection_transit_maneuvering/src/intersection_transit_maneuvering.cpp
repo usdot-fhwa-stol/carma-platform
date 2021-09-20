@@ -72,6 +72,7 @@ namespace intersection_transit_maneuvering
             new_req.maneuver_plan.maneuvers.push_back(i);
         }
 
+            new_req.header = req.header;
             new_req.vehicle_state = req.vehicle_state;
             new_req.initial_trajectory_plan = req.initial_trajectory_plan;
 

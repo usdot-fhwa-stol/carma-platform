@@ -410,6 +410,17 @@ bool WzStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_
 
     prev_state = transition_table_.getState();  // Cache previous state to check if state has changed after 1 iteration
 
+    if (!traffic_list.empty()) { // TODO remove block
+      auto nearest_traffic_light = traffic_list.front();
+      ROS_ERROR_STREAM("\n\nCurrent Light State: " << nearest_traffic_light->getState().get() 
+      << std::endl <<  "                      1: " << nearest_traffic_light->predictState(ros::Time::now() + ros::Duration(1.0)).get()
+      << std::endl <<  "                      2: " << nearest_traffic_light->predictState(ros::Time::now() + ros::Duration(2.0)).get()
+      << std::endl <<  "                      3: " << nearest_traffic_light->predictState(ros::Time::now() + ros::Duration(3.0)).get()
+      << std::endl <<  "                      4: " << nearest_traffic_light->predictState(ros::Time::now() + ros::Duration(4.0)).get()
+      << std::endl <<  "                      5: " << nearest_traffic_light->predictState(ros::Time::now() + ros::Duration(5.0)).get()
+      << std::endl);
+    }
+    ROS_INFO_STREAM("Planning in state: " << transition_table_.getState());
     switch (transition_table_.getState())
     {
       case TransitState::UNAVAILABLE:
