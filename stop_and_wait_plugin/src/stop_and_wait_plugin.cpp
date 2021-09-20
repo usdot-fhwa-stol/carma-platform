@@ -161,7 +161,9 @@ std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<c
       std::min(starting_downtrack + config_.cernterline_sampling_spacing, stop_and_wait_maneuver.end_dist),
       stop_and_wait_maneuver.end_dist, config_.cernterline_sampling_spacing);
 
+
   route_points.insert(route_points.begin(), veh_pos);
+
 
   for (const auto& p : route_points)
   {

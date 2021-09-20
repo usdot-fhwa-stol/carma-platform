@@ -261,18 +261,12 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
   ROS_DEBUG_STREAM("early_arrival_time_at_freeflow: " << std::to_string(early_arrival_time_at_freeflow.toSec()));
   ROS_DEBUG_STREAM("late_arrival_time_at_freeflow: " << std::to_string(late_arrival_time_at_freeflow.toSec()));
 
-  ROS_ERROR_STREAM("light_arrival_time_at_freeflow: " << std::to_string(light_arrival_time_at_freeflow.toSec()));
-  ROS_ERROR_STREAM("early_arrival_time_at_freeflow: " << std::to_string(early_arrival_time_at_freeflow.toSec()));
-  ROS_ERROR_STREAM("late_arrival_time_at_freeflow: " << std::to_string(late_arrival_time_at_freeflow.toSec()));
-
   auto early_arrival_state_at_freeflow_optional = nearest_traffic_light->predictState(early_arrival_time_at_freeflow);
 
   if (!validLightState(early_arrival_state_at_freeflow_optional, early_arrival_time_at_freeflow))
     return;
 
   ROS_DEBUG_STREAM("early_arrival_state_at_freeflow: " << early_arrival_state_at_freeflow_optional.get());
-  ROS_ERROR_STREAM("early_arrival_state_at_freeflow: " << early_arrival_state_at_freeflow_optional.get());
-
 
   auto late_arrival_state_at_freeflow_optional = nearest_traffic_light->predictState(late_arrival_time_at_freeflow);
 
