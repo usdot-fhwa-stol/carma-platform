@@ -49,6 +49,7 @@ namespace intersection_transit_maneuvering
         ros::WallTime start_time = ros::WallTime::now();  // Start timeing the execution time for planning so it can be logged
 
         std::vector<cav_msgs::Maneuver> maneuver_plan;
+        auto related_maneuvers = resp.related_maneuvers;
         for(size_t i = req.maneuver_index_to_plan; i < req.maneuver_plan.maneuvers.size(); i++)
         {
             if(req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ||
@@ -56,7 +57,7 @@ namespace intersection_transit_maneuvering
             req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN )
             {
                 maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
-                resp.related_maneuvers.push_back(i);
+                related_maneuvers.push_back(i);
             }
             else
                 {
@@ -81,7 +82,10 @@ namespace intersection_transit_maneuvering
             ROS_DEBUG_STREAM("Call Successful");
         }
 
-        resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+        resp.related_maneuvers = related_maneuvers; // Set the related maneuvers using the origional maneuver indexs not those sent to inlane-cruising
+        for (auto maneuver : related_maneuvers) {
+            resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+        }
 
         ros::WallTime end_time = ros::WallTime::now();
 
