@@ -59,7 +59,7 @@ std::pair<size_t, size_t> IndexedDistanceMap::getElementIndexByDistance(double d
   if (low == accum_lengths.end()) { // If we reached the end, it means we should pick the final point since we already checked the bounds
     ls_index = accum_lengths.size() - 1;
   } else {
-    ls_index = std::max(low - accum_lengths.begin() - 1, 0);
+    ls_index = std::max(low - accum_lengths.begin() - 1, (long int)0);
   }
 
   if (!get_point) { // If we are looking for the linestring index then return
@@ -73,7 +73,7 @@ std::pair<size_t, size_t> IndexedDistanceMap::getElementIndexByDistance(double d
   auto low_point = std::lower_bound (std::get<0>(accum_lengths[ls_index]).begin(), std::get<0>(accum_lengths[ls_index]).end(), relative_dist, // Binary search to find the point index 
     [](const double& a, const double& b){ return a < b; });
   
-  size_t point_idx = std::max(low_point - std::get<0>(accum_lengths[ls_index]).begin() - 1, 0);
+  size_t point_idx = std::max(low_point - std::get<0>(accum_lengths[ls_index]).begin() - 1, (long int)0);
   return std::make_pair(ls_index, point_idx);
 }
 

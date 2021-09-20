@@ -460,6 +460,7 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
   double prior_to_next_dist = next_downtrack - prior_downtrack;
   double prior_to_target_dist = relative_downtrack - prior_downtrack;
   double interpolation_percentage = 0;
+  
 
   if (prior_to_next_dist < 0.000001)
   {
