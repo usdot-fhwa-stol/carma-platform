@@ -149,7 +149,7 @@ public:
    *        NOTE: Unlike the rest of this class, this method runs in O(log n) where n is this.size() for accessing linestring index
    *              If accessing point index (get_point=true) then it runs an addition O(log m) where m is the linestring index.size();
    *              This means the max complexity of this function is O(log n) + O(log m)
-   *  TODO: Add info about complexity and returned data
+   *  
    * \throw std::invalid_argument if distance does not fit within bounds [0, totalLength()]
    * 
    * \param distance The downtrack distance in meters to get the element for
