@@ -171,7 +171,6 @@ std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<c
     pair.point = p;
     pair.speed = starting_speed; // NOTE: Since the vehicle is trying to stop the assumption made is that the speed limit is irrelevant. 
     points_and_target_speeds.push_back(pair);
-    ROS_DEBUG_STREAM("point.x: " << p.x() << ", point.y: " << p.y());
   }
 
   return points_and_target_speeds;

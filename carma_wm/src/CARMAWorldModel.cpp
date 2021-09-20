@@ -391,15 +391,11 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
                                                          << getRouteEndTrackPos().downtrack);
     return boost::none;
   }
-    ROS_DEBUG_STREAM(">>> Downtrack:" << downtrack);
 
   // Use fast lookup to identify the points before and after the provided downtrack on the route
   auto indices = shortest_path_distance_map_.getElementIndexByDistance(downtrack, true); // Get the linestring matching the provided downtrack
   size_t ls_i = std::get<0>(indices);
   size_t pt_i = std::get<1>(indices);
-  
-    ROS_DEBUG_STREAM(">>> ls_i: " << ls_i << ", of size: " << shortest_path_distance_map_.size());
-
   
   auto linestring = shortest_path_centerlines_[ls_i];
 
@@ -414,24 +410,17 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
 
   size_t centerline_size = linestring.size();
 
-  ROS_DEBUG_STREAM(">>> ls_downtrack" << ls_downtrack << ", linestring.size():" << linestring.size() << 
-                       ", relative_downtrack:" << relative_downtrack << ", centerline_size:" << centerline_size);
-
-
   size_t prior_idx = std::min(pt_i, centerline_size - 1);
 
   size_t next_idx = std::min(pt_i + 1, centerline_size - 1);
-    ROS_DEBUG_STREAM(">>> pt_i: " << pt_i << ", of prior_idx: " << prior_idx << ", next_idx: "<<  next_idx);
 
   // This if block handles the edge case where the downtrack distance has landed exactly on an existing point
   if (prior_idx == next_idx)
   {  // If both indexes are the same we are on the point
-    ROS_DEBUG_STREAM(">>> inside exactly existing point logic");
     
     if (crosstrack == 0)
     {  // Crosstrack not provided so we can return the point directly
       auto prior_point = linestring[prior_idx];
-    ROS_DEBUG_STREAM(">>> returning prior_point.x()" << prior_point.x() << ", prior_point.y() "<< prior_point.y());
 
       return lanelet::BasicPoint2d(prior_point.x(), prior_point.y());
     }
@@ -444,7 +433,6 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
       next_point = linestring[prior_idx + 1].basicPoint2d(); // No need to check bounds as this class will reject routes with fewer than 2 points in a centerline
       x = prior_point.x();
       y = prior_point.y();
-    ROS_DEBUG_STREAM(">>> 111 prior_point.x()" << prior_point.x() << ", prior_point.y() "<< prior_point.y());
 
     }
     else
@@ -453,7 +441,6 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
       next_point = linestring[prior_idx].basicPoint2d();
       x = next_point.x();
       y = next_point.y();
-    ROS_DEBUG_STREAM(">>> 1111 next_point.x()" << next_point.x() << ", next_point.y() "<< next_point.y());
 
     }
 
@@ -463,8 +450,6 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
                                     // to the target point
     double delta_x = cos(theta) * crosstrack;
     double delta_y = sin(theta) * crosstrack;
-    ROS_DEBUG_STREAM(">>> 1111 delta_x" << delta_x << ", delta_y "<< delta_y);
-    ROS_DEBUG_STREAM(">>> 1111 x" << x << ", y "<< y);
 
     return lanelet::BasicPoint2d(x + delta_x, y + delta_y);
   }
@@ -475,31 +460,22 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
   double prior_to_next_dist = next_downtrack - prior_downtrack;
   double prior_to_target_dist = relative_downtrack - prior_downtrack;
   double interpolation_percentage = 0;
-  
-  ROS_DEBUG_STREAM(">>> prior_downtrack: " << prior_downtrack << ", : next_downtrack" << next_downtrack << ", prior_to_next_dist:" << prior_to_next_dist << 
-                       ", prior_to_target_dist:" << prior_to_target_dist << ", interpolation_percentage: " << interpolation_percentage);
-
 
   if (prior_to_next_dist < 0.000001)
   {
     interpolation_percentage = 0;
-    ROS_DEBUG_STREAM(">>> here");
   }
   else
   {
     interpolation_percentage = prior_to_target_dist / prior_to_next_dist; // Use the percentage progress between both points to compute the downtrack point
   }
-  ROS_DEBUG_STREAM(">>> interpolation_percentage: " << interpolation_percentage);
 
   auto prior_point = linestring[prior_idx].basicPoint2d();
   auto next_point = linestring[next_idx].basicPoint2d();
   auto delta_vec = next_point - prior_point;
-    ROS_DEBUG_STREAM(">>>1 prior_point.x():" << prior_point.x() <<", prior_point.x()" << prior_point.x());
-    ROS_DEBUG_STREAM(">>>1 next_point.x():" << next_point.x() <<", next_point.x()" << next_point.x());
 
   double x = prior_point.x() + interpolation_percentage * delta_vec.x();
   double y = prior_point.y() + interpolation_percentage * delta_vec.y();
-    ROS_DEBUG_STREAM(">>>1 x: " << x << ", y:" << y);
 
   if (crosstrack != 0) // If the crosstrack is not set no need to do the costly computation.
   {  
@@ -508,11 +484,9 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
                                     // to the target point
     double delta_x = cos(theta) * crosstrack;
     double delta_y = sin(theta) * crosstrack;
-    ROS_DEBUG_STREAM(">>>2 delta_x: " << delta_x << ">>> delta_y: " << delta_y);
 
     x += delta_x;  // Adjust x and y of target point to account for crosstrack
     y += delta_y;
-    ROS_DEBUG_STREAM(">>>2 x: " << x << ">>> y: " << y);
     
   }
 
