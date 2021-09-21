@@ -44,9 +44,6 @@ class IntersectionTransitManeuveringNode
             ros::Publisher plugin_discovery_pub_;
             ros::Timer discovery_pub_timer_;
 
-            // Current vehicle pose in map
-            geometry_msgs::PoseStamped pose_msg_;
-
             //Plugin discovery message
             cav_msgs::Plugin plugin_discovery_msg_;
 
@@ -55,7 +52,7 @@ class IntersectionTransitManeuveringNode
             std::shared_ptr<intersection_transit_maneuvering::Servicer> srv = std::make_shared<intersection_transit_maneuvering::Servicer>();
             ros::ServiceClient trajectory_client = nh_.serviceClient<cav_srvs::PlanTrajectory>("plugin/InlaneCruisingPlugin/plan_trajectory");
             srv->set_client(trajectory_client);
-            IntersectionTransitManeuvering worker(wm_,[&plugin_discovery_pub_](const auto& msg) {plugin_discovery_pub_.publish(msg);}, srv);
+            IntersectionTransitManeuvering worker([&plugin_discovery_pub_](const auto& msg) {plugin_discovery_pub_.publish(msg);}, srv);
             trajectory_srv_ = nh_.advertiseService("plan_trajectory",&IntersectionTransitManeuvering::plan_trajectory_cb, &worker);           
             
             discovery_pub_timer_ = nh_.createTimer(
