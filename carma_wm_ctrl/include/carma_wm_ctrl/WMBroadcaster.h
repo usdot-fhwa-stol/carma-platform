@@ -54,7 +54,7 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <cav_msgs/TrafficControlRequestPolygon.h>
 #include <carma_wm/WorldModelUtils.h>
-#include <std_msgs/Int64MultiArray.h>
+#include <std_msgs/Int32MultiArray.h>
 
 
 namespace carma_wm_ctrl
@@ -353,7 +353,7 @@ public:
 
   visualization_msgs::MarkerArray tcm_marker_array_;
   cav_msgs::TrafficControlRequestPolygon tcr_polygon_;
-  std_msgs::Int64MultiArray upcoming_intersection_ids_;
+  std_msgs::Int32MultiArray upcoming_intersection_ids_;
 
 private:
   double error_distance_ = 5; //meters

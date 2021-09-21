@@ -22,7 +22,7 @@
 #include <carma_utils/CARMAUtils.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <carma_wm_ctrl/WMBroadcaster.h>
-#include <std_msgs/Int64MultiArray.h>
+#include <std_msgs/Int32MultiArray.h>
 #include <ros/ros.h>
 
 namespace carma_wm_ctrl

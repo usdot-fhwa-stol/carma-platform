@@ -77,7 +77,7 @@ int WMBroadcasterNode::run()
   //TCR Visualizer pub (visualized on UI)
   tcr_visualizer_pub_ = cnh_.advertise<cav_msgs::TrafficControlRequestPolygon>("tcr_bounding_points",1,true);
   //Upcoming intersection and group id of traffic light 
-  upcoming_intersection_ids_pub_ = cnh_.advertise<std_msgs::Int64MultiArray>("intersection_signal_group_ids", 1, true);
+  upcoming_intersection_ids_pub_ = cnh_.advertise<std_msgs::Int32MultiArray>("intersection_signal_group_ids", 1, true);
 
   double config_limit;
   double lane_max_width;

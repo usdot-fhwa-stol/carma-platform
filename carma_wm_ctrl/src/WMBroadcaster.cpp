@@ -1860,28 +1860,43 @@ bool WMBroadcaster::convertLightIdToInterGroupId(unsigned& intersection_id, unsi
 
 void WMBroadcaster::publishLightId()
 {
-  if (!traffic_light_id_lookup_.empty())
+  if (traffic_light_id_lookup_.empty())
   {
-    for(auto id : current_route.route_path_lanelet_ids) 
+    return;
+  }
+  for(auto id : current_route.route_path_lanelet_ids) 
+  {
+    bool convert_success = false;
+    unsigned intersection_id = 0;
+    unsigned group_id = 0;
+    auto route_lanelet= current_map_->laneletLayer.get(id);
+    auto traffic_lights = route_lanelet.regulatoryElementsAs<lanelet::CarmaTrafficLight>();
+    
+    if (!traffic_lights.empty())
     {
-      bool convert_success = false;
-      unsigned intersection_id = 0;
-      unsigned group_id = 0;
-      auto route_lanelet= current_map_->laneletLayer.get(id);
-      auto traffic_lights = route_lanelet.regulatoryElementsAs<lanelet::CarmaTrafficLight>();
-      if (!traffic_lights.empty())
-      {
-        ROS_DEBUG_STREAM("Found Traffic Light Regulatory Element id: " << traffic_lights.front()->id());
-        convert_success = convertLightIdToInterGroupId(intersection_id,group_id,  traffic_lights.front()->id());
-      }
-      if (convert_success)
-      {
-        ROS_DEBUG_STREAM("Found Traffic Light with Intersection id: " << intersection_id << " Groupd id:" << group_id);
-        upcoming_intersection_ids_.data.push_back(static_cast<int>(intersection_id));
-        upcoming_intersection_ids_.data.push_back(static_cast<int>(group_id));
-      }
-
+      ROS_DEBUG_STREAM("Found Traffic Light Regulatory Element id: " << traffic_lights.front()->id());
+      convert_success = convertLightIdToInterGroupId(intersection_id,group_id,  traffic_lights.front()->id());
     }
+
+    if (!convert_success)
+        continue; 
+
+    ROS_DEBUG_STREAM("Found Traffic Light with Intersection id: " << intersection_id << " Group id:" << group_id);
+    bool id_exists = false;
+    for (int idx = 0; idx < upcoming_intersection_ids_.data.size(); idx +2)
+    {
+      if (upcoming_intersection_ids_.data[idx] == intersection_id && upcoming_intersection_ids_.data[idx + 1] == group_id) //check if already there
+      {
+        id_exists = true;
+        break;
+      }
+    }
+
+    if (id_exists)
+      continue;
+
+    upcoming_intersection_ids_.data.push_back(static_cast<int>(intersection_id));
+    upcoming_intersection_ids_.data.push_back(static_cast<int>(group_id));
   }
 }
 cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geometry_msgs::PoseStamped& current_pos)
