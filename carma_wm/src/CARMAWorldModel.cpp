@@ -509,7 +509,8 @@ void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map, size_t map_version, boo
 
     ROS_INFO_STREAM("Building routing graph");
 
-    TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
+    TrafficRulesConstPtr traffic_rules = *(getTrafficRules(participant_type_ ));
+
     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
     map_routing_graph_ = std::move(map_graph);
 
@@ -572,7 +573,8 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
 
   lanelet::routing::LaneletPath shortest_path = route_->shortestPath();
   // Build shortest path routing graph
-  TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
+  TrafficRulesConstPtr traffic_rules = *(getTrafficRules(participant_type_ ));
+
 
   lanelet::routing::RoutingGraphUPtr shortest_path_graph =
       lanelet::routing::RoutingGraph::build(*shortest_path_view_, *traffic_rules);
@@ -676,6 +678,13 @@ lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules(const s
   }
 
   return optional_ptr;
+}
+
+lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules() const
+{
+  
+  return getTrafficRules(participant_type_);
+
 }
 
 lanelet::Optional<cav_msgs::RoadwayObstacle>
@@ -1071,6 +1080,11 @@ void CARMAWorldModel::setTrafficLightIds(uint32_t id, lanelet::Id lanelet_id)
 void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
 {
   config_speed_limit_ = config_lim;
+}
+
+void CARMAWorldModel::setVehicleParticipationType(const std::string& participant)
+{
+    participant_type_ = participant;
 }
 
 std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n)
