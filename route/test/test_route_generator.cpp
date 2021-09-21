@@ -449,7 +449,7 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     {
         if(resp.availableRoutes[i].route_id  == "tfhrc_test_route")
         {
-            ASSERT_EQ("DEST3", resp.availableRoutes[i].route_name);
+            ASSERT_EQ("DEST2", resp.availableRoutes[i].route_name);
             auto gps_points = worker.load_route_destination_gps_points_from_route_id("tfhrc_test_route");
             auto map_points = worker.load_route_destinations_in_map_frame(gps_points); // Problem
             ASSERT_EQ(2, map_points.size());
