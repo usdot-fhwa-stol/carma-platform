@@ -53,6 +53,14 @@ class Servicer: public CallInterface
         * \param client input trajectory service client
         */
         void set_client(ros::ServiceClient& srv_client);
+
+        std::string getTopic() override {
+            return client.getService();
+        }
+
+        bool exists() override {
+            return client.exists();
+        }
     
     private:
         ros::ServiceClient client;

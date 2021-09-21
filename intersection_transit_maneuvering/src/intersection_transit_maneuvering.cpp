@@ -182,9 +182,16 @@ std::ostream& operator<<(std::ostream& os, cav_msgs::Maneuver m) {
             new_req.initial_trajectory_plan = req.initial_trajectory_plan;
 
 
+        ROS_DEBUG_STREAM("About to call client for service: " << object_->getTopic());
+        ROS_DEBUG_STREAM("Client service actually exists: " << object_->exists());
+
+
         if(object_->call(new_req,resp))//Since we're using an interface for this process, the call() functionality will come from somewhere else
         {
             ROS_DEBUG_STREAM("Call Successful");
+        } else {
+            ROS_DEBUG_STREAM("Failed to call service");
+            return false;
         }
 
 
