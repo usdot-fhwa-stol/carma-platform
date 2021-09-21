@@ -116,7 +116,7 @@ std::ostream& operator<<(std::ostream& os, cav_msgs::Maneuver m) {
     }
 }
 
-    IntersectionTransitManeuvering::IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr wm, PublishPluginDiscoveryCB plugin_discovery_publisher,
+    IntersectionTransitManeuvering::IntersectionTransitManeuvering(PublishPluginDiscoveryCB plugin_discovery_publisher,
                                                                      std::shared_ptr<CallInterface> obj)
     {        
         plugin_discovery_msg_.name = "IntersectionTransitPlugin";

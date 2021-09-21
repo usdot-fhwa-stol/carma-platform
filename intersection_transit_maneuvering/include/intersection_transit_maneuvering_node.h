@@ -19,7 +19,6 @@
 #include <cav_msgs/Plugin.h>
 #include <carma_utils/CARMAUtils.h>
 #include <cav_srvs/PlanTrajectory.h>
-#include <carma_wm/WMListener.h>
 #include <functional>
 #include <autoware_msgs/Lane.h>
 #include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
@@ -54,10 +53,7 @@ class IntersectionTransitManeuveringNode
             cav_msgs::Plugin plugin_discovery_msg_;
 
             plugin_discovery_pub_ = nh_.advertise<cav_msgs::Plugin>("plugin_discovery",1);
-            carma_wm::WMListener wml_;
-            
-            carma_wm::WorldModelConstPtr wm_ = wml_.getWorldModel();
-            
+                        
             std::shared_ptr<intersection_transit_maneuvering::Servicer> srv = std::make_shared<intersection_transit_maneuvering::Servicer>();
             ros::ServiceClient trajectory_client = nh_.serviceClient<cav_srvs::PlanTrajectory>("plugin/InlaneCruisingPlugin/plan_trajectory");
             srv->set_client(trajectory_client);
