@@ -220,7 +220,8 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   std::vector<PointSpeedPair> final_points;
 
   // TODO think about targeting the middle of the buffer
-  double remaining_distance = stop_location - starting_downtrack;  
+  double half_stopping_buffer = stop_location_buffer * 0.5;
+  double remaining_distance = stop_location - half_stopping_buffer - starting_downtrack; // Target to stop in the middle of the buffer
   double target_accel = config_.accel_limit_multiplier * config_.accel_limit;
   double req_dist = (starting_speed * starting_speed) /
                     (2.0 * target_accel);  // Distance needed to go from current speed to 0 at target accel
@@ -234,18 +235,34 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
     ROS_DEBUG_STREAM("Target Accel Update To: " << target_accel);
   }
 
+  std::vector<double> inverse_downtracks; // Store downtracks in reverse
+  inverse_downtracks.reserve(points.size());
   final_points.reserve(points.size());
 
   PointSpeedPair prev_pair = points.back();
   prev_pair.speed = 0.0;
   final_points.push_back(prev_pair);  // Store the points in reverse
+  inverse_downtracks.push_back(0);
 
   bool reached_end = false;
   for (int i = points.size() - 2; i >= 0; i--)
   {  // NOTE: Do not use size_t for i type here as -- with > 0 will result in overflow
 
-    double v_i = prev_pair.speed;
 
+
+    double v_i = prev_pair.speed;
+    double dx = lanelet::geometry::distance2d(prev_pair.point, points[i].point);
+    double new_downtrack = inverse_downtracks.back() + dx;
+
+    if (new_downtrack < half_stopping_buffer) { // Points after (when viewed not in reverse) the midpoint of the buffer should be 0 speed
+      PointSpeedPair pair = points[i];
+      pair.speed = 0;
+      final_points.push_back(pair);  // Store the points in reverse
+      inverse_downtracks.push_back(new_downtrack);
+      prev_pair = pair;
+      continue;
+    }
+    
     if (reached_end || v_i >= starting_speed)
     {  // We are walking backward, so if the prev speed is greater than or equal to the starting speed then we are done
        // backtracking
@@ -253,17 +270,18 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
       PointSpeedPair pair = points[i];
       pair.speed = starting_speed;
       final_points.push_back(pair);  // Store the points in reverse
+      inverse_downtracks.push_back(new_downtrack);
       prev_pair = pair;
       continue;  // continue until loop end
     }
 
-    double dx = lanelet::geometry::distance2d(prev_pair.point, points[i].point);
-
+    
     double v_f = sqrt(v_i * v_i + 2 * target_accel * dx);
 
     PointSpeedPair pair = points[i];
     pair.speed = std::min(v_f, starting_speed);
     final_points.push_back(pair);  // Store the points in reverse
+    inverse_downtracks.push_back(new_downtrack);
 
     prev_pair = pair;
   }
@@ -276,7 +294,11 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   std::vector<lanelet::BasicPoint2d> raw_points;
   splitPointSpeedPairs(final_points, &raw_points, &speeds);
 
-  std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(raw_points);
+  // Convert the inverted downtracks back to regular downtracks
+  double max_downtrack = inverse_downtracks.back();
+  std::vector<double> downtracks = lanelet::utils::transform(inverse_downtracks, [max_downtrack](const auto& d) { return max_downtrack - d; });
+  std::reverse(downtracks.begin(),
+               downtracks.end()); 
 
   bool in_range = false;
   double stopped_downtrack = 0;
@@ -288,9 +310,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   {  // Apply minimum speed constraint
     double downtrack = downtracks[i];
 
-    constexpr double half_a_mph_in_mps = 0.22352;
+    constexpr double one_mph_in_mps = 0.44704;
 
-    if (downtracks.back() - downtrack < stop_location_buffer && speeds[i] < config_.crawl_speed + half_a_mph_in_mps)
+    if (downtracks.back() - downtrack < stop_location_buffer && speeds[i] < config_.crawl_speed + one_mph_in_mps)
     {  // if we are within the stopping buffer and going at near crawl speed then command stop
       
       // To avoid any issues in control plugin behavior we only command 0 if the vehicle is inside the buffer
