@@ -60,8 +60,8 @@ SCIStrategicPlugin::VehicleState SCIStrategicPlugin::extractInitialState(const c
   {
     ROS_DEBUG_STREAM("Provided with initial plan...");
     state.stamp = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_time);
-    state.downtrack = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_dist);
     state.speed = getManeuverEndSpeed(req.prior_plan.maneuvers.back());
+    state.downtrack = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_dist);
     state.lane_id = getLaneletsBetweenWithException(state.downtrack, state.downtrack, true).front().id();
   }
   else
@@ -73,10 +73,11 @@ SCIStrategicPlugin::VehicleState SCIStrategicPlugin::extractInitialState(const c
     state.speed = req.veh_logitudinal_velocity;
     state.lane_id = stoi(req.veh_lane_id);
   }
-  ROS_DEBUG_STREAM("extractInitialState >>>> state.stamp: " << state.stamp);
-  ROS_DEBUG_STREAM("extractInitialState >>>> state.downtrack : " << state.downtrack );
-  ROS_DEBUG_STREAM("extractInitialState >>>> state.speed: " << state.speed);
-  ROS_DEBUG_STREAM("extractInitialState >>>> state.lane_id: " << state.lane_id);
+  
+  ROS_DEBUG_STREAM("state.stamp: " << state.stamp);
+  ROS_DEBUG_STREAM("state.downtrack : " << state.downtrack );
+  ROS_DEBUG_STREAM("state.speed: " << state.speed);
+  ROS_DEBUG_STREAM("state.lane_id: " << state.lane_id);
 
   return state;
 }
@@ -337,13 +338,13 @@ cav_msgs::Maneuver SCIStrategicPlugin::composeLaneFollowingManeuverMessage(int c
   cav_msgs::Maneuver maneuver_msg;
   cav_msgs::Maneuver empty_msg;
   maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+  maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = config_.strategic_plugin_name;
   maneuver_msg.lane_following_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
   maneuver_msg.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
   maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = config_.lane_following_plugin_name;
-  maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = config_.strategic_plugin_name;
   maneuver_msg.lane_following_maneuver.start_dist = start_dist;
-  maneuver_msg.lane_following_maneuver.start_speed = start_speed;
   maneuver_msg.lane_following_maneuver.end_dist = end_dist;
+  maneuver_msg.lane_following_maneuver.start_speed = start_speed;
   maneuver_msg.lane_following_maneuver.end_speed = target_speed;
   maneuver_msg.lane_following_maneuver.start_time = start_time;
   maneuver_msg.lane_following_maneuver.end_time =  start_time + ros::Duration(time_to_stop);
