@@ -86,7 +86,7 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
 
   lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
 
-  ROS_DEBUG_STREAM("planning state x:" << req.vehicle_state.X_pos_global << ", y: " << req.vehicle_state.Y_pos_global);
+  ROS_DEBUG_STREAM("planning state x:" << req.vehicle_state.X_pos_global << ", y: " << req.vehicle_state.Y_pos_global << ", speed: " << req.vehicle_state.longitudinal_vel);
 
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
@@ -97,12 +97,12 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
     throw std::invalid_argument("StopAndWait plugin asked to plan maneuver that ends earlier than the current state.");
   }
 
-  resp.related_maneuvers.push_back(cav_msgs::Maneuver::STOP_AND_WAIT);
+  resp.related_maneuvers.push_back(req.maneuver_index_to_plan);
   resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
   std::string maneuver_id = req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].stop_and_wait_maneuver.parameters.maneuver_id;
 
-  ROS_INFO_STREAM("Maneuver not yet planned planning new trajectory");
+  ROS_INFO_STREAM("Maneuver not yet planned, planning new trajectory");
 
   // Maneuver input is valid so continue with execution
   std::vector<cav_msgs::Maneuver> maneuver_plan = { req.maneuver_plan.maneuvers[req.maneuver_index_to_plan] };
@@ -219,6 +219,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
   std::vector<PointSpeedPair> final_points;
 
+  // TODO think about targeting the middle of the buffer
   double remaining_distance = stop_location - starting_downtrack;  
   double target_accel = config_.accel_limit_multiplier * config_.accel_limit;
   double req_dist = (starting_speed * starting_speed) /
@@ -281,7 +282,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   double stopped_downtrack = 0;
   lanelet::BasicPoint2d stopped_point;
 
-  bool vehicle_in_buffer = starting_downtrack > downtracks.back() - stop_location_buffer;
+  bool vehicle_in_buffer = downtracks.back() < stop_location_buffer;
 
   for (size_t i = 0; i < speeds.size(); i++)
   {  // Apply minimum speed constraint
@@ -289,7 +290,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
     constexpr double half_a_mph_in_mps = 0.22352;
 
-    if (downtrack > downtracks.back() - stop_location_buffer && speeds[i] < config_.crawl_speed + half_a_mph_in_mps)
+    if (downtracks.back() - downtrack < stop_location_buffer && speeds[i] < config_.crawl_speed + half_a_mph_in_mps)
     {  // if we are within the stopping buffer and going at near crawl speed then command stop
       
       // To avoid any issues in control plugin behavior we only command 0 if the vehicle is inside the buffer
@@ -313,6 +314,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   {
     if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
     {  // If the time
+      ROS_WARN_STREAM("Detected non-normal (nan, inf, etc.) time.");
       times[i] = times[i - 1] + config_.stop_timestep;
     }
   }
