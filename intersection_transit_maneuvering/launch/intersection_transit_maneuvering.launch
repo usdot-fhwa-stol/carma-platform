@@ -16,8 +16,5 @@
 -->
 
 <launch>
-    <node name="intersection_transit_maneuvering" pkg="intersection_transit_maneuvering" type="intersection_transit_maneuvering">
-      <remap to="plugins/IntersectionTransitPlugin/plan_trajectory" from="plan_trajectory"/>
-       <remap to="plugins/InLaneCruisingPlugin/plan_trajectory" from="plugins/InlaneCruisingPlugin/plan_trajectory"/>
-    </node>
+    <node name="intersection_transit_maneuvering" pkg="intersection_transit_maneuvering" type="intersection_transit_maneuvering"/>
 </launch>

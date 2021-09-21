@@ -53,7 +53,7 @@ class IntersectionTransitManeuveringNode
             ros::ServiceClient trajectory_client = nh_.serviceClient<cav_srvs::PlanTrajectory>("plugins/InLaneCruisingPlugin/plan_trajectory", true);
             srv->set_client(trajectory_client);
             IntersectionTransitManeuvering worker([&plugin_discovery_pub_](const auto& msg) {plugin_discovery_pub_.publish(msg);}, srv);
-            trajectory_srv_ = nh_.advertiseService("plan_trajectory",&IntersectionTransitManeuvering::plan_trajectory_cb, &worker);           
+            trajectory_srv_ = nh_.advertiseService("plugins/IntersectionTransitPlugin/plan_trajectory",&IntersectionTransitManeuvering::plan_trajectory_cb, &worker);           
             
             if (!trajectory_client.waitForExistence(ros::Duration(20.0))) {
                 throw std::invalid_argument("Required service is not available: " + trajectory_client.getService());
