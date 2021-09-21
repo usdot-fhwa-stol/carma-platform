@@ -308,7 +308,7 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
   {
     ROS_DEBUG_STREAM("Planning stop and wait maneuver");
     resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-        current_state.downtrack, traffic_light_down_track, current_state.speed, crossed_lanelets.front().id(),
+        current_state.downtrack, traffic_light_down_track - config_.vehicle_length, current_state.speed, crossed_lanelets.front().id(),
         crossed_lanelets.back().id(), current_state.stamp,
         req.header.stamp + ros::Duration(config_.min_maneuver_planning_period)));
   }
