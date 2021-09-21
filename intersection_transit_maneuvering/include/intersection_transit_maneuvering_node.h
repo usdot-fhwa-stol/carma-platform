@@ -20,8 +20,6 @@
 #include <carma_utils/CARMAUtils.h>
 #include <cav_srvs/PlanTrajectory.h>
 #include <functional>
-#include <autoware_msgs/Lane.h>
-#include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
 #include "intersection_transit_maneuvering.h"
 #include "itm_service.h"
 

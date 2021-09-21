@@ -42,6 +42,7 @@ std::ostream& operator<<(std::ostream& os, cav_msgs::ManeuverParameters m) {
         << " planning_strategic_plugin: " << m.planning_strategic_plugin
         << " presence_vector: " << m.presence_vector
         << " planning_tactical_plugin: " << m.planning_tactical_plugin;
+    return os;
 }
 
 std::ostream& operator<<(std::ostream& os, cav_msgs::IntersectionTransitStraightManeuver m) {
@@ -54,6 +55,7 @@ std::ostream& operator<<(std::ostream& os, cav_msgs::IntersectionTransitStraight
         << " end_time: " << m.end_time.toSec()
         << " starting_lane_id: " << m.starting_lane_id
         << " ending_lane_id: " << m.ending_lane_id;
+    return os;
 }
 
 std::ostream& operator<<(std::ostream& os, cav_msgs::IntersectionTransitLeftTurnManeuver m) {
@@ -66,6 +68,7 @@ std::ostream& operator<<(std::ostream& os, cav_msgs::IntersectionTransitLeftTurn
         << " end_time: " << m.end_time.toSec()
         << " starting_lane_id: " << m.starting_lane_id
         << " ending_lane_id: " << m.ending_lane_id;
+    return os;
 }
 
 std::ostream& operator<<(std::ostream& os, cav_msgs::IntersectionTransitRightTurnManeuver m) {
@@ -78,6 +81,7 @@ std::ostream& operator<<(std::ostream& os, cav_msgs::IntersectionTransitRightTur
         << " end_time: " << m.end_time.toSec()
         << " starting_lane_id: " << m.starting_lane_id
         << " ending_lane_id: " << m.ending_lane_id;
+    return os;
 }
 
 std::ostream& operator<<(std::ostream& os, cav_msgs::LaneFollowingManeuver m) {
@@ -94,6 +98,8 @@ std::ostream& operator<<(std::ostream& os, cav_msgs::LaneFollowingManeuver m) {
             os << i << " ";
 
         os << "]";
+    
+    return os;
 
 }
 
@@ -114,6 +120,8 @@ std::ostream& operator<<(std::ostream& os, cav_msgs::Maneuver m) {
         default:
             os << "Maneuver Type: " << m.type << " not yet supported for printing. ";
     }
+
+    return os;
 }
 
     IntersectionTransitManeuvering::IntersectionTransitManeuvering(PublishPluginDiscoveryCB plugin_discovery_publisher,
