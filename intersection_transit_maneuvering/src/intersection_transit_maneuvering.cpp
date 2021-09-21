@@ -131,13 +131,24 @@ std::ostream& operator<<(std::ostream& os, cav_msgs::Maneuver m) {
 
     bool IntersectionTransitManeuvering::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
     {
+
+        ROS_DEBUG("HERE 1");
         ros::WallTime start_time = ros::WallTime::now();  // Start timeing the execution time for planning so it can be logged
 
         std::vector<cav_msgs::Maneuver> maneuver_plan;
+
+        ROS_DEBUG("HERE 2");
         auto related_maneuvers = resp.related_maneuvers;
+
+        ROS_DEBUG("HERE 3");
         ROS_DEBUG_STREAM("Starting planning for maneuver index: " << req.maneuver_index_to_plan);
+        ROS_DEBUG_STREAM("req.maneuver_plan.maneuvers.size(): " << req.maneuver_plan.maneuvers.size());
+        ROS_DEBUG("HERE 4");
+        ROS_DEBUG("HERE 5");
+        ROS_DEBUG("HERE 6");
         for(size_t i = req.maneuver_index_to_plan; i < req.maneuver_plan.maneuvers.size(); i++)
         {
+            ROS_DEBUG("Looping");
             if(req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ||
             req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN || 
             req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN )
@@ -152,8 +163,16 @@ std::ostream& operator<<(std::ostream& os, cav_msgs::Maneuver m) {
                 }
         }
 
+        ROS_DEBUG("HERE 7");
+        ROS_DEBUG("HERE 8");
+        ROS_DEBUG("HERE 9");
+
         converted_maneuvers_ = convert_maneuver_plan(maneuver_plan);
         cav_srvs::PlanTrajectoryRequest new_req;
+
+        ROS_DEBUG("HERE 10");
+        ROS_DEBUG("HERE 11");
+        ROS_DEBUG("HERE 12");
 
         for(auto i : converted_maneuvers_)
         {
@@ -164,15 +183,27 @@ std::ostream& operator<<(std::ostream& os, cav_msgs::Maneuver m) {
             new_req.vehicle_state = req.vehicle_state;
             new_req.initial_trajectory_plan = req.initial_trajectory_plan;
 
+        ROS_DEBUG("HERE 13");
+        ROS_DEBUG("HERE 14");
+        ROS_DEBUG("HERE 15");
+
         if(object_->call(new_req,resp))//Since we're using an interface for this process, the call() functionality will come from somewhere else
         {
             ROS_DEBUG_STREAM("Call Successful");
         }
 
+        ROS_DEBUG("HERE 16");
+        ROS_DEBUG("HERE 17");
+        ROS_DEBUG("HERE 18");
+
         resp.related_maneuvers = related_maneuvers; // Set the related maneuvers using the origional maneuver indexs not those sent to inlane-cruising
         for (auto maneuver : related_maneuvers) {
             resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
         }
+
+        ROS_DEBUG("HERE 19");
+        ROS_DEBUG("HERE 20");
+        ROS_DEBUG("HERE 21");
 
         ros::WallTime end_time = ros::WallTime::now();
 
