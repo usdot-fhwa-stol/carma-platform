@@ -2693,8 +2693,6 @@ TEST(WMBroadcaster, createWorkzoneGeometry)
   auto route1_ = map_graph->getRoute(map->laneletLayer.get(1210), map->laneletLayer.get(1211));
   ASSERT_FALSE(!!route1_);
 
-} 
-
-
+}
 
 }  // namespace carma_wm_ctrl
