@@ -35,6 +35,32 @@
 namespace sci_strategic_plugin
 {
 
+  /**
+  * \brief Anonymous function to extract maneuver end speed which can not be optained with GET_MANEUVER_PROPERY calls due to it missing in stop and wait plugin
+  * \param mvr input maneuver
+  * \return end speed
+ */ 
+double getManeuverEndSpeed(const cav_msgs::Maneuver& mvr)
+  {
+    switch(mvr.type) {
+        case cav_msgs::Maneuver::LANE_FOLLOWING:
+            return mvr.lane_following_maneuver.end_speed;
+        case cav_msgs::Maneuver::LANE_CHANGE:
+            return mvr.lane_change_maneuver.end_speed;
+        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+            return mvr.intersection_transit_straight_maneuver.end_speed;
+        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+            return mvr.intersection_transit_left_turn_maneuver.end_speed;
+        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+            return mvr.intersection_transit_right_turn_maneuver.end_speed;
+        case cav_msgs::Maneuver::STOP_AND_WAIT:
+            return 0;
+        default:
+            ROS_ERROR_STREAM("Requested end speed from unsupported maneuver type");
+            return 0;
+    }
+  }
+
 
 class SCIStrategicPlugin
 {
@@ -49,6 +75,7 @@ public:
     double speed;         // The speed of the vehicle at time stamp
     lanelet::Id lane_id;  // The current lane id of the vehicle at time stamp
   };
+
   
   /**
    * \brief Constructor
@@ -57,6 +84,7 @@ public:
    * \param config The configuration to be used for this object
    */
   SCIStrategicPlugin(carma_wm::WorldModelConstPtr wm, SCIStrategicPluginConfig& config);
+
 
   /**
    * \brief Service callback for arbitrator maneuver planning
@@ -239,7 +267,7 @@ public:
   // approximate speed limit 
   double speed_limit_ = 100.0;
 
-  bool approacing_stop_controlled_interction_ = false;
+  bool approaching_stop_controlled_interction_ = false;
 
 
   private:

@@ -23,14 +23,15 @@
              ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ?                                        \
                   (mvr).intersection_transit_straight_maneuver.property :                                              \
                   ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE    ? (mvr).lane_change_maneuver.property :            \
-                   (mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :         \
+                  ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :         \
+                  ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :           \
                                                                       throw new std::invalid_argument("GET_MANEUVER_"  \
                                                                                                       "PROPERTY "      \
                                                                                                       "(property) "    \
                                                                                                       "called on "     \
                                                                                                       "maneuver with " \
                                                                                                       "invalid type "  \
-                                                                                                      "id"))))))
+                                                                                                      "id"))))))))
 
 namespace sci_strategic_plugin
 {
@@ -60,7 +61,7 @@ SCIStrategicPlugin::VehicleState SCIStrategicPlugin::extractInitialState(const c
     ROS_DEBUG_STREAM("Provided with initial plan...");
     state.stamp = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_time);
     state.downtrack = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_dist);
-    state.speed = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_speed);
+    state.speed = getManeuverEndSpeed(req.prior_plan.maneuvers.back());
     state.lane_id = getLaneletsBetweenWithException(state.downtrack, state.downtrack, true).front().id();
   }
   else
@@ -85,7 +86,7 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
   if (msg->strategy == stop_controlled_intersection_strategy_)
   {
     // TODO: Add Samir's code here to detect approaching an intersection and publish status and intent
-    approacing_stop_controlled_interction_ = true;
+    approaching_stop_controlled_interction_ = true;
     if (msg->strategy_params != previous_strategy_params_)
     {
       parseStrategyParams(msg->strategy_params); 
@@ -207,7 +208,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     return true;
   }
 
-  if (!approacing_stop_controlled_interction_)
+  if (!approaching_stop_controlled_interction_)
   {
     resp.new_plan.maneuvers = {};
     ROS_WARN_STREAM("Not approaching stop-controlled itnersection so no maneuvers");
@@ -233,15 +234,17 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     if (distance_to_stopline > config_.stop_line_buffer)
     {
       // approaching stop line
-      // lane following to intersection
-      double time_to_schedule_stop = (scheduled_stop_time_ - street_msg_timestamp_)/1000.0;
-      int case_num = determineSpeedProfileCase(stop_intersection_down_track, current_state.speed, time_to_schedule_stop, speed_limit_);
+      
 
       // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
       std::vector<lanelet::ConstLanelet> crossed_lanelets =
           getLaneletsBetweenWithException(current_state.downtrack, stop_intersection_down_track, true, true);
 
       speed_limit_ = findSpeedLimit(crossed_lanelets.front());
+
+      // lane following to intersection
+      double time_to_schedule_stop = (scheduled_stop_time_ - street_msg_timestamp_)*1000.0;
+      int case_num = determineSpeedProfileCase(stop_intersection_down_track, current_state.speed, time_to_schedule_stop, speed_limit_);
 
       resp.new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(
         case_num, current_state.downtrack, stop_intersection_down_track, current_state.speed, 0.0,
@@ -262,7 +265,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     
     // when passing intersection, set the flag to false
     // TODO: Another option, check the time on mobilityoperation
-    approacing_stop_controlled_interction_ = false;
+    approaching_stop_controlled_interction_ = false;
 
   }
   
@@ -275,10 +278,11 @@ void SCIStrategicPlugin::caseOneSpeedProfile(double speed_before_decel, double c
   double desired_acceleration = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
   double desired_deceleration = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
 
+  // Equations obtained from TSMO UC 1 Algorithm draft doc
   double a_acc = ((1 - desired_acceleration/desired_deceleration)*speed_before_decel - current_speed)/stop_time;
   double a_dec = ((desired_deceleration - desired_acceleration)*speed_before_decel - desired_deceleration * current_speed)/(desired_acceleration * stop_time);
   double t_acc = (speed_before_decel - current_speed)/a_acc;
-  double t_dec = -speed_before_decel/a_dec;
+  double t_dec = -speed_before_decel/a_dec; // a_dec is negative so a - is used to make the t_dec positive. 
   float_metadata_list->push_back(a_acc);
   float_metadata_list->push_back(a_dec);
   float_metadata_list->push_back(t_acc);
@@ -303,10 +307,11 @@ void SCIStrategicPlugin::caseTwoSpeedProfile(double stop_dist, double speed_befo
   double t_c_den = pow(speed_limit - current_speed, 2) - (desired_acceleration/desired_deceleration) * pow(speed_limit, 2);
   double t_cruise = t_c_nom / t_c_den;
   
+  // Equations obtained from TSMO UC 1 Algorithm draft doc
   double a_acc = ((1 - desired_acceleration/desired_deceleration)*speed_limit - current_speed)/(stop_time - t_cruise);
   double a_dec = ((desired_deceleration - desired_acceleration)*speed_limit - desired_deceleration * current_speed)/(desired_acceleration*(stop_time - t_cruise));
   double t_acc = (speed_limit - current_speed)/a_acc;
-  double t_dec = -speed_limit/a_dec;
+  double t_dec = -speed_limit/a_dec; // a_dec is negative so a - is used to make the t_dec positive. 
 
   float_metadata_list->push_back(a_acc);
   float_metadata_list->push_back(a_dec);

@@ -267,7 +267,7 @@ TEST(SCIStrategicPluginTest, maneuvercbtest)
   SCIStrategicPluginConfig config;
   SCIStrategicPlugin sci(cmw_ptr, config);
 
-  sci.approacing_stop_controlled_interction_ = true;
+  sci.approaching_stop_controlled_interction_ = true;
 
   cav_srvs::PlanManeuversRequest req;
   cav_srvs::PlanManeuversResponse resp;
