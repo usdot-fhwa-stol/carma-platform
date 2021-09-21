@@ -22,11 +22,9 @@
 #include <ctime>
 #include <cav_srvs/PlanTrajectory.h>
 #include <math.h>
-#include <tf/LinearMath/Vector3.h>
 #include <string>
 #include <algorithm>
 #include <memory>
-#include <lanelet2_core/geometry/Point.h>
 #include <trajectory_utils/trajectory_utils.h>
 #include <trajectory_utils/conversions/conversions.h>
 #include <sstream>
