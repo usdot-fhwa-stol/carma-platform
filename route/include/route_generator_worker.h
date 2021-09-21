@@ -291,6 +291,10 @@ namespace route {
         int cte_count_ = 0;
 
         int cte_count_max_;
+
+        // counter to record how many times an active route has been generated from a SetActiveRoute request without a Route ID
+        int route_without_routeID_count_ = 0;
+
         // destination points in map
         std::vector<lanelet::BasicPoint2d> destination_points_in_map_;
 

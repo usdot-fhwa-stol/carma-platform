@@ -266,7 +266,9 @@ namespace route {
             }
             else if(req.choice == cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY)
             {
-                route_msg_.route_name = "Route";
+                // Increase counter to ensure this route name differs from any previous route that was set without a Route ID
+                ++route_without_routeID_count_;
+                route_msg_.route_name = "Route_" + std::to_string(route_without_routeID_count_);
             }
             route_marker_msg_ = compose_route_marker_msg(route);
             route_msg_.header.stamp = ros::Time::now();
@@ -491,6 +493,13 @@ namespace route {
                 ROS_WARN_STREAM("Routing has finished but carma_wm has not receive it!");
                 return;
             }
+
+            // Return if world model has not yet been updated with the current active route
+            if (this->world_model_->getRouteName() != route_msg_.route_name) {
+                ROS_WARN_STREAM("Current active route name is " << route_msg_.route_name << ", WorldModel is using " << this->world_model_->getRouteName());
+                return;
+            }
+
             auto current_lanelet = get_closest_lanelet_from_route_llts(current_loc_);
             auto lanelet_track = carma_wm::geometry::trackPos(current_lanelet, current_loc_);
             ll_id_ = current_lanelet.id();
