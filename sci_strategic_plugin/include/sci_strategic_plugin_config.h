@@ -53,7 +53,7 @@ struct SCIStrategicPluginConfig
   std::string stop_and_wait_plugin_name = "StopAndWaitPlugin";
 
   //! The name of the plugin to use for intersection transit trajectory planning
-  std::string intersection_transit_plugin_name = "StopControlledIntersectionTacticalPlugin";
+  std::string intersection_transit_plugin_name = "IntersectionTransitPlugin";
 
   //! License plate of the vehicle.
   std::string vehicle_id = "default_id";

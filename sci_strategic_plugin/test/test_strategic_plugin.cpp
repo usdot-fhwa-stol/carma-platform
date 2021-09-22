@@ -53,7 +53,8 @@ TEST(SCIStrategicPluginTest, composeLaneFollowingManeuverMessage)
 
   ASSERT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, result.type);
   ASSERT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, result.lane_following_maneuver.parameters.negotiation_type);
-  ASSERT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN,
+  ASSERT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN | cav_msgs::ManeuverParameters::HAS_INT_META_DATA | 
+  cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA | cav_msgs::ManeuverParameters::HAS_STRING_META_DATA,
             result.lane_following_maneuver.parameters.presence_vector);
   ASSERT_TRUE(config.lane_following_plugin_name.compare(
                   result.lane_following_maneuver.parameters.planning_tactical_plugin) == 0);
@@ -71,6 +72,62 @@ TEST(SCIStrategicPluginTest, composeLaneFollowingManeuverMessage)
   ASSERT_TRUE(result.lane_following_maneuver.lane_ids[1].compare("1201") == 0);
   ASSERT_TRUE(result.lane_following_maneuver.parameters.int_valued_meta_data[0] == 1);
 }
+
+TEST(SCIStrategicPluginTest, composeIntersectionTransitMessage)
+{
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm;
+  SCIStrategicPluginConfig config;
+  SCIStrategicPlugin sci(wm, config);
+
+  auto result = sci.composeIntersectionTransitMessage(10.2, 20.4, 5, 10, ros::Time(1.2), ros::Time(2.2), 1200, 1201);
+
+  ASSERT_EQ(cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT, result.type);
+  ASSERT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION,
+            result.intersection_transit_straight_maneuver.parameters.negotiation_type);
+  ASSERT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN,
+            result.intersection_transit_straight_maneuver.parameters.presence_vector);
+  ASSERT_TRUE(config.intersection_transit_plugin_name.compare(
+                  result.intersection_transit_straight_maneuver.parameters.planning_tactical_plugin) == 0);
+  ASSERT_TRUE(config.strategic_plugin_name.compare(
+                  result.intersection_transit_straight_maneuver.parameters.planning_strategic_plugin) == 0);
+
+  ASSERT_EQ(10.2, result.intersection_transit_straight_maneuver.start_dist);
+  ASSERT_EQ(20.4, result.intersection_transit_straight_maneuver.end_dist);
+  ASSERT_EQ(5, result.intersection_transit_straight_maneuver.start_speed);
+  ASSERT_EQ(10, result.intersection_transit_straight_maneuver.end_speed);
+  ASSERT_EQ(ros::Time(1.2), result.intersection_transit_straight_maneuver.start_time);
+  ASSERT_EQ(ros::Time(2.2), result.intersection_transit_straight_maneuver.end_time);
+  ASSERT_TRUE(result.intersection_transit_straight_maneuver.starting_lane_id.compare("1200") == 0);
+  ASSERT_TRUE(result.intersection_transit_straight_maneuver.ending_lane_id.compare("1201") == 0);
+}
+
+TEST(SCIStrategicPluginTest, composeStopAndWaitManeuverMessage)
+{
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm;
+  SCIStrategicPluginConfig config;
+  SCIStrategicPlugin sci(wm, config);
+
+  auto result = sci.composeStopAndWaitManeuverMessage(10.2, 20.4, 5, 1200, 1201, ros::Time(1.2), ros::Time(2.2));
+
+  ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result.type);
+  ASSERT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, result.stop_and_wait_maneuver.parameters.negotiation_type);
+  ASSERT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN | cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA,
+            result.stop_and_wait_maneuver.parameters.presence_vector);
+  ASSERT_TRUE(config.stop_and_wait_plugin_name.compare(
+                  result.stop_and_wait_maneuver.parameters.planning_tactical_plugin) == 0);
+  ASSERT_TRUE(
+      config.strategic_plugin_name.compare(result.stop_and_wait_maneuver.parameters.planning_strategic_plugin) == 0);
+
+  ASSERT_EQ(10.2, result.stop_and_wait_maneuver.start_dist);
+  ASSERT_EQ(20.4, result.stop_and_wait_maneuver.end_dist);
+  ASSERT_EQ(5, result.stop_and_wait_maneuver.start_speed);
+  ASSERT_EQ(ros::Time(1.2), result.stop_and_wait_maneuver.start_time);
+  ASSERT_EQ(ros::Time(2.2), result.stop_and_wait_maneuver.end_time);
+  ASSERT_TRUE(result.stop_and_wait_maneuver.starting_lane_id.compare("1200") == 0);
+  ASSERT_TRUE(result.stop_and_wait_maneuver.ending_lane_id.compare("1201") == 0);
+}
+
+
 
 TEST(SCIStrategicPluginTest, findSpeedLimit)
 {

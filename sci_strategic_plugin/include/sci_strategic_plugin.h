@@ -126,6 +126,14 @@ public:
                                                          double target_speed, ros::Time start_time, double time_to_stop,
                                                          std::vector<lanelet::Id> lane_ids);
 
+  cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double end_dist, double start_speed,
+                                                      const lanelet::Id& starting_lane_id, const lanelet::Id& ending_lane_id,
+                                                      ros::Time start_time, ros::Time end_time) const;
+
+  cav_msgs::Maneuver composeIntersectionTransitMessage(double start_dist, double end_dist, double start_speed, 
+                                                      double target_speed, ros::Time start_time, ros::Time end_time,
+                                                      const lanelet::Id& starting_lane_id, const lanelet::Id& ending_lane_id) const;
+
   /**
    * \brief Helper method to extract the initial vehicle state from the planning request method based on if the
    * prior_plan was set or not.
