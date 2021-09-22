@@ -24,4 +24,6 @@ class CallInterface
     public:
         virtual bool call(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp) = 0;
         virtual ~CallInterface() {};
+        virtual std::string getTopic() { return "Unknown Topic"; }
+        virtual bool exists() { throw std::invalid_argument("Unimplemented"); }
 };
