@@ -1,0 +1,23 @@
+# Double: multiplier to apply to the maximum allowable vehicle deceleration limit so we plan under our capabilities
+vehicle_decel_limit_multiplier : 0.50
+
+# Double: multiplier to apply to the maximum allowable vehicle acceleration limit so we plan under our capabilities
+vehicle_accel_limit_multiplier : 0.50
+
+# Double: A buffer infront of the stopping location which will still be considered a valid stop. Units in meters
+stop_line_buffer : 2.0
+
+# Double: Update time interval of carma streets. Units in s
+delta_t : 1.0
+
+# String: The name to use for this plugin during comminications with the arbitrator
+strategic_plugin_name : SCIStrategicPlugin
+
+# String: The name of the tactical plugin to use for Lane Following trajectory planning
+lane_following_plugin_name : StopControlledIntersectionTacticalPlugin
+
+# String: The name of the plugin to use for stop and wait trajectory planning
+stop_and_wait_plugin_name : StopAndWaitPlugin
+
+# String: The name of the plugin to use for intersection transit trajectory planning
+intersection_transit_plugin_name : StopControlledIntersectionTacticalPlugin

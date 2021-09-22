@@ -19,6 +19,7 @@
 
 #include "carma_wm/WorldModel.h"
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 #include <lanelet2_core/primitives/LineString.h>
 #include "IndexedDistanceMap.h"
 #include <cav_msgs/ExternalObject.h>
@@ -210,6 +211,8 @@ public:
   std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n = 10) const override;
 
   std::vector<lanelet::CarmaTrafficLightPtr> getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
+
+  std::vector<std::shared_ptr<lanelet::AllWayStop>> getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
   
   std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 

@@ -1442,5 +1442,46 @@ TEST(CARMAWorldModelTest, getLightsAlongRoute)
 
 }
 
+TEST(CARMAWorldModelTest, getIntersectionAlongRoute)
+{
+  lanelet::Id id{1200};
+  // intersection id
+  lanelet::Id int_id{1};
+  lanelet::Point3d p1, p2, p3, p4, p5, p6;
+  lanelet::LineString3d ls1, ls2, ls3, ls4, ls5, ls6;
+  lanelet::Lanelet ll1, ll2, ll3;
+
+  p1 = lanelet::Point3d(++id, 0., 1., 1.);
+  p2 = lanelet::Point3d(++id, 1., 1., 1.);
+  p3 = lanelet::Point3d(++id, 0., 0., 0.);
+  p4 = lanelet::Point3d(++id, 1., 0., 0.);
+
+  ls1 = lanelet::LineString3d(++id, lanelet::Points3d{p1, p2});
+  ls2 = lanelet::LineString3d(++id, lanelet::Points3d{p3, p4});
+  ls3 = lanelet::LineString3d(++id, lanelet::Points3d{p3, p1});
+
+
+  ll1 = lanelet::Lanelet(++id, ls1, ls2);
+  ll2 = lanelet::Lanelet(++id, ls2, ls3);
+
+  
+  carma_wm::CARMAWorldModel cmw;
+  lanelet::LaneletMapPtr map;
+  // Create a complete map
+  test::MapOptions mp(1,1);
+  auto cmw_ptr = test::getGuidanceTestMap(mp);
+
+  std::shared_ptr<lanelet::AllWayStop> row = lanelet::AllWayStop::make(int_id, lanelet::AttributeMap(), {{ll1, ls1}});
+  cmw_ptr->getMutableMap()->update(cmw_ptr->getMutableMap()->laneletLayer.get(1200), row);
+
+  carma_wm::test::setRouteByIds({ 1200, 1201, 1202}, cmw_ptr);
+
+  auto ints = cmw_ptr->getIntersectionsAlongRoute({0.5, 0});
+  
+  EXPECT_EQ(ints.size(), 1);
+  EXPECT_EQ(ints[0]->id(), int_id);
+
+}
+
 
 }  // namespace carma_wm
