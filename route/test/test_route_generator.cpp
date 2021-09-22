@@ -424,7 +424,7 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     lanelet::ErrorMessages load_errors;
 
     // Load map file and parameters
-    std::string file = "../resource/map/TFHRC_03.01.21.xodr.osm";
+    std::string file = "../resource/map/TFHRC_Innovation_Dr.osm";
     lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
     lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
     lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
@@ -449,12 +449,12 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     {
         if(resp.availableRoutes[i].route_id  == "tfhrc_test_route")
         {
-            ASSERT_EQ("DEST2", resp.availableRoutes[i].route_name);
+            ASSERT_EQ("DEST3", resp.availableRoutes[i].route_name);
             auto gps_points = worker.load_route_destination_gps_points_from_route_id("tfhrc_test_route");
-            auto map_points = worker.load_route_destinations_in_map_frame(gps_points); // Problem
-            ASSERT_EQ(2, map_points.size());
-            ASSERT_NEAR(9.23014, map_points[0].x(), 0.001);
-            ASSERT_NEAR(322.985, map_points[0].y(), 0.001);  
+            auto map_points = worker.load_route_destinations_in_map_frame(gps_points);
+            ASSERT_EQ(3, map_points.size());
+            ASSERT_NEAR(-217.318, map_points[0].x(), 0.001);
+            ASSERT_NEAR(423.456, map_points[0].y(), 0.001);  
             ASSERT_NEAR(72, map_points[0].z(), 0.001);
         }
     }
@@ -490,8 +490,8 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
 
     // Create array of destination points for the SetActiveRoute request
     cav_msgs::Position3D destination;
-    destination.latitude = 38.9561996;
-    destination.longitude = -77.1507210;
+    destination.latitude = 38.9549424;
+    destination.longitude = -77.1478039;
     destination.elevation_exists = false;
 
     // Create SetActiveRoute request and response, and set necessary fields in the request
