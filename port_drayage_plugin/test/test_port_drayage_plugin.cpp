@@ -31,7 +31,7 @@
 
 TEST(PortDrayageTest, testComposeArrivalMessage)
 {
-    // Test arrival message for pdw initialized with cargo
+    // Test initial arrival message for pdw initialized with cargo
     ros::Time::init();
     port_drayage_plugin::PortDrayageWorker pdw{
         123, // CMV ID 
@@ -50,6 +50,12 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
     georeference_msg.data = base_proj;
     std_msgs::StringConstPtr georeference_msg_ptr(new std_msgs::String(georeference_msg));
     pdw.on_new_georeference(georeference_msg_ptr);
+
+    // State Machine should transition to EN_ROUTE_TO_INITIAL_DESTINATION after guidance state is first engaged
+    cav_msgs::GuidanceState guidance_state;
+    guidance_state.state = cav_msgs::GuidanceState::ENGAGED;
+    cav_msgs::GuidanceStateConstPtr guidance_state_pointer(new cav_msgs::GuidanceState(guidance_state));
+    pdw.on_guidance_state(guidance_state_pointer);
 
     geometry_msgs::PoseStamped pose_msg;
     pose_msg.pose.position.x = 0.0;
@@ -81,7 +87,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
     ASSERT_NEAR(38.95622708, vehicle_latitude, 0.00000001);
     ASSERT_NEAR(-77.15066142, vehicle_longitude, 0.00000001);
 
-    // Test arrival message for pdw initialized without cargo
+    // Test initial arrival message for pdw initialized without cargo
     port_drayage_plugin::PortDrayageWorker pdw2{
         123, // CMV ID 
         "", // Cargo ID 
@@ -94,6 +100,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
 
     pdw2.on_new_georeference(georeference_msg_ptr);
     pdw2.on_new_pose(pose_msg_ptr);
+    pdw2.on_guidance_state(guidance_state_pointer);
 
     cav_msgs::MobilityOperation msg2 = pdw2.compose_arrival_message();
 
@@ -256,7 +263,7 @@ TEST(PortDrayageTest, testStateMachine1)
     pdsm.process_event(port_drayage_plugin::PortDrayageEvent::DRAYAGE_START);
 
     // Verify that we are en route to our next destination (port)
-    ASSERT_EQ(port_drayage_plugin::PortDrayageState::EN_ROUTE, pdsm.get_state());
+    ASSERT_EQ(port_drayage_plugin::PortDrayageState::EN_ROUTE_TO_INITIAL_DESTINATION, pdsm.get_state());
 
     // Notify state machine we've arrived
     pdsm.process_event(port_drayage_plugin::PortDrayageEvent::ARRIVED_AT_DESTINATION);
@@ -264,7 +271,7 @@ TEST(PortDrayageTest, testStateMachine1)
 
     // Notify state machine we've recieved the next destination
     pdsm.process_event(port_drayage_plugin::PortDrayageEvent::RECEIVED_NEW_DESTINATION);
-    ASSERT_EQ(port_drayage_plugin::PortDrayageState::EN_ROUTE, pdsm.get_state());
+    ASSERT_EQ(port_drayage_plugin::PortDrayageState::EN_ROUTE_TO_RECEIVED_DESTINATION, pdsm.get_state());
 
     // Rest of the state machine to be implemented and validated in future stories
 }
@@ -287,13 +294,13 @@ TEST(PortDrayageTest, testPortDrayageStateMachine2)
     // State Machine should begin in INACTIVE state
     ASSERT_EQ(port_drayage_plugin::PortDrayageState::INACTIVE, pdw.get_port_drayage_state());
 
-    // State Machine should transition to EN_ROUTE after guidance state is first engaged
+    // State Machine should transition to EN_ROUTE_TO_INITIAL_DESTINATION after guidance state is first engaged
     cav_msgs::GuidanceState guidance_state;
     guidance_state.state = cav_msgs::GuidanceState::ENGAGED;
     cav_msgs::GuidanceStateConstPtr guidance_state_pointer(new cav_msgs::GuidanceState(guidance_state));
     pdw.on_guidance_state(guidance_state_pointer);
 
-    ASSERT_EQ(port_drayage_plugin::PortDrayageState::EN_ROUTE, pdw.get_port_drayage_state());
+    ASSERT_EQ(port_drayage_plugin::PortDrayageState::EN_ROUTE_TO_INITIAL_DESTINATION, pdw.get_port_drayage_state());
 
     // State Machine should transition to AWAITING_DIRECTION if a 'ROUTE_LOADED' event occurs immediately after a 'ROUTE_COMPLETED' event
     cav_msgs::RouteEvent route_event_1;
@@ -308,7 +315,7 @@ TEST(PortDrayageTest, testPortDrayageStateMachine2)
     
     ASSERT_EQ(port_drayage_plugin::PortDrayageState::AWAITING_DIRECTION, pdw.get_port_drayage_state());
 
-    // State Machine should transition to 'EN_ROUTE' if a new port drayage MobilityOperation message is received
+    // State Machine should transition to 'EN_ROUTE_TO_RECEIVED_DESTINATION' if a new port drayage MobilityOperation message is received
 
     // Create a MobilityOperationConstPtr with a cmv_id that is intended for this specific vehicle
     // Note: The strategy_params using the schema for messages of this type that have strategy "carma/port_drayage"
@@ -321,7 +328,7 @@ TEST(PortDrayageTest, testPortDrayageStateMachine2)
     cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr(new cav_msgs::MobilityOperation(mobility_operation_msg));
     pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr); 
 
-    ASSERT_EQ(port_drayage_plugin::PortDrayageState::EN_ROUTE, pdw.get_port_drayage_state());
+    ASSERT_EQ(port_drayage_plugin::PortDrayageState::EN_ROUTE_TO_RECEIVED_DESTINATION, pdw.get_port_drayage_state());
 
     // State Machine should transition to 'AWAITING_DIRECTION' again if a ROUTE_COMPLETED event occurs while the vehicle is stopped
     pdw.on_route_event(route_event_pointer_1); // PortDrayageWorker receives RouteEvent indicating route has been completed
@@ -527,7 +534,24 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
         [](cav_srvs::SetActiveRoute){return true;}
     };
 
-    // Create a "PICKUP" MobilityOperationConstPtr for the newly created PortDrayageWorker
+    // State Machine should transition to EN_ROUTE_TO_INITIAL_DESTINATION after guidance state is first engaged
+    cav_msgs::GuidanceState guidance_state;
+    guidance_state.state = cav_msgs::GuidanceState::ENGAGED;
+    cav_msgs::GuidanceStateConstPtr guidance_state_pointer(new cav_msgs::GuidanceState(guidance_state));
+    pdw2.on_guidance_state(guidance_state_pointer);
+
+    // State Machine should transition to AWAITING_DIRECTION if a 'ROUTE_LOADED' event occurs immediately after a 'ROUTE_COMPLETED' event
+    cav_msgs::RouteEvent route_event_1;
+    route_event_1.event = cav_msgs::RouteEvent::ROUTE_COMPLETED; 
+    cav_msgs::RouteEventConstPtr route_event_pointer_1(new cav_msgs::RouteEvent(route_event_1));
+    pdw2.on_route_event(route_event_pointer_1); // PortDrayageWorker receives RouteEvent indicating route has been completed
+
+    cav_msgs::RouteEvent route_event_2;
+    route_event_2.event = cav_msgs::RouteEvent::ROUTE_LOADED; 
+    cav_msgs::RouteEventConstPtr route_event_pointer_2(new cav_msgs::RouteEvent(route_event_2));
+    pdw2.on_route_event(route_event_pointer_2); // PortDrayageWorker receives RouteEvent indicating the previously completed route is no longer active
+    
+    // Create a "PICKUP" MobilityOperationConstPtr for pdw2
     cav_msgs::MobilityOperation mobility_operation_msg2;
     mobility_operation_msg2.strategy = "carma/port_drayage";
     mobility_operation_msg2.strategy_params = "{ \"cmv_id\": \"123\", \"cargo_id\": \"321\", \"location\"\

@@ -127,12 +127,12 @@ namespace port_drayage_plugin
         // Add flag to indicate whether CMV is carring cargo
         pt.put("cargo", _has_cargo);
 
-        // If CMV has not received any port drayage messages yet, assign 'operation' field for its initial arrival message
-        if (!_has_received_first_mobility_operation_msg) {
+        // If CMV has arrived at its initial destination, assign 'operation' field for its initial arrival message
+        if (_pdsm.get_state() == PortDrayageState::EN_ROUTE_TO_INITIAL_DESTINATION) {
             pt.put("operation", PORT_DRAYAGE_INITIAL_ARRIVAL_OPERATION_ID);
         }
-        // If CMV has already received at least one port drayage message, add necessary fields based on the destination type that it has arrived at
-        else{
+        // If CMV has arrived at a received destination, add necessary fields based on the destination type that it has arrived at
+        else if (_pdsm.get_state() == PortDrayageState::EN_ROUTE_TO_RECEIVED_DESTINATION) {
             // Assign the 'operation' using the 'operation' from the last received port drayage message
             pt.put("operation", _latest_mobility_operation_msg.operation);
 
@@ -185,8 +185,6 @@ namespace port_drayage_plugin
 
             // Check if the received MobilityOperation message is intended for this vehicle's cmv_id   
             if(mobility_operation_cmv_id == _cmv_id) {
-                _has_received_first_mobility_operation_msg = true;
-
                 // Since a new message indicates the previous action was completed, update all cargo-related data members based on the previous action that was completed
                 update_cargo_information_after_action_completion(_latest_mobility_operation_msg);
 
@@ -313,7 +311,7 @@ namespace port_drayage_plugin
         // CMV has officially arrived at its destination if the previous route was completed and is no longer active
         if (_latest_route_event != nullptr) {
             if (_latest_route_event->event == cav_msgs::RouteEvent::ROUTE_COMPLETED && msg->event == cav_msgs::RouteEvent::ROUTE_LOADED) {
-                if (_pdsm.get_state() == PortDrayageState::EN_ROUTE) {
+                if (_pdsm.get_state() == PortDrayageState::EN_ROUTE_TO_INITIAL_DESTINATION || _pdsm.get_state() == PortDrayageState::EN_ROUTE_TO_RECEIVED_DESTINATION) {
                     ROS_DEBUG_STREAM("CMV completed its previous route, and the previous route is no longer active.");
                     ROS_DEBUG_STREAM("Processing ARRIVED_AT_DESTINATION event.");
                     _pdsm.process_event(PortDrayageEvent::ARRIVED_AT_DESTINATION);

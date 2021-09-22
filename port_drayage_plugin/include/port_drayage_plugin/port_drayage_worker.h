@@ -82,7 +82,6 @@ namespace port_drayage_plugin
             std::function<bool(cav_srvs::SetActiveRoute)> _set_active_route;
             std::shared_ptr<lanelet::projection::LocalFrameProjector> _map_projector = nullptr;
             bool _has_cargo; // Flag for whether CMV is currently carrying cargo
-            bool _has_received_first_mobility_operation_msg = false; // Flag for whether CMV has received its first Port Drayage mobility operation message
             bool _enable_port_drayage; // Flag to enable to port drayage operations. If false, state machine will remain in 'INACTIVE' state
 
             // Data member for storing the strategy_params field of the last processed port drayage MobilityOperation message intended for this vehicle's cmv_id
