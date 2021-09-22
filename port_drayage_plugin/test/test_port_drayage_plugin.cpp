@@ -541,7 +541,6 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
     ASSERT_EQ("321", *pdw._latest_mobility_operation_msg.cargo_id);
     ASSERT_EQ("PICKUP", pdw._latest_mobility_operation_msg.operation);
     ASSERT_EQ(port_drayage_plugin::PortDrayageEvent::RECEIVED_NEW_DESTINATION, pdw._latest_mobility_operation_msg.port_drayage_event_type);
-    ASSERT_EQ(false, pdw._latest_mobility_operation_msg.has_cargo);
     ASSERT_NEAR(-77.1503421, *pdw._latest_mobility_operation_msg.start_longitude, 0.00000001);
     ASSERT_NEAR(38.9554377, *pdw._latest_mobility_operation_msg.start_latitude, 0.00000001);
     ASSERT_NEAR(-77.1481983, *pdw._latest_mobility_operation_msg.dest_longitude, 0.00000001);
@@ -562,7 +561,6 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
     ASSERT_EQ("321", *pdw._latest_mobility_operation_msg.cargo_id);
     ASSERT_EQ("PICKUP", pdw._latest_mobility_operation_msg.operation);
     ASSERT_EQ(port_drayage_plugin::PortDrayageEvent::RECEIVED_NEW_DESTINATION, pdw._latest_mobility_operation_msg.port_drayage_event_type);
-    ASSERT_EQ(false, pdw._latest_mobility_operation_msg.has_cargo);
     ASSERT_NEAR(-77.1503421, *pdw._latest_mobility_operation_msg.start_longitude, 0.00000001);
     ASSERT_NEAR(38.9554377, *pdw._latest_mobility_operation_msg.start_latitude, 0.00000001);
     ASSERT_NEAR(-77.1481983, *pdw._latest_mobility_operation_msg.dest_longitude, 0.00000001);
@@ -594,7 +592,6 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
 
     unsigned long cmv_id = pt.get<unsigned long>("cmv_id");
     std::string cargo_id = pt.get<std::string>("cargo_id");
-    bool has_cargo = pt.get<bool>("cargo");
     std::string action_id = pt.get<std::string>("action_id");
     std::string operation = pt.get<std::string>("operation");
     double vehicle_longitude = pt.get<double>("location.longitude");
@@ -606,7 +603,6 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
     ASSERT_FALSE(msg.strategy_params.empty());
     ASSERT_EQ(123, cmv_id);
     ASSERT_EQ("321", cargo_id); 
-    ASSERT_FALSE(has_cargo);
     ASSERT_EQ("PICKUP", operation);
     ASSERT_EQ("32", action_id);
     ASSERT_NEAR(38.95622708, vehicle_latitude, 0.001);

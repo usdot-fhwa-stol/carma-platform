@@ -41,7 +41,6 @@ namespace port_drayage_plugin
         boost::optional<std::string> cargo_id;
         std::string operation = "";
         PortDrayageEvent port_drayage_event_type; // PortDrayageEvent associated with this message
-        bool has_cargo = false; // Flag to indicate whether vehicle has cargo during this action
         boost::optional<std::string> current_action_id; // Identifier for the action this message is related to
         boost::optional<double> dest_longitude;  // Destination longitude for the carma vehicle
         boost::optional<double> dest_latitude;   // Destination latitude for the carma vehicle
