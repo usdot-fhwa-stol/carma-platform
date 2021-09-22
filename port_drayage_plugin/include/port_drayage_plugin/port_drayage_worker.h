@@ -77,11 +77,10 @@ namespace port_drayage_plugin
             std::string _host_id;
             std::string _host_bsm_id;
             unsigned long _cmv_id;
-            std::string _cargo_id;
+            std::string _cargo_id; // Empty if CMV is not currently carrying cargo
             std::function<void(cav_msgs::MobilityOperation)> _publish_mobility_operation;
             std::function<bool(cav_srvs::SetActiveRoute)> _set_active_route;
             std::shared_ptr<lanelet::projection::LocalFrameProjector> _map_projector = nullptr;
-            bool _has_cargo; // Flag for whether CMV is currently carrying cargo
             bool _enable_port_drayage; // Flag to enable to port drayage operations. If false, state machine will remain in 'INACTIVE' state
 
             // Data member for storing the strategy_params field of the last processed port drayage MobilityOperation message intended for this vehicle's cmv_id
@@ -140,7 +139,6 @@ namespace port_drayage_plugin
                 _set_active_route(call_set_active_route_client),
                 _stop_speed_epsilon(stop_speed_epsilon),
                 _enable_port_drayage(enable_port_drayage) {
-                    _has_cargo = (_cargo_id == "") ? false : true;
                     initialize();
                 };
 
