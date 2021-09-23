@@ -97,6 +97,14 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
   
 }
 
+void SCIStrategicPlugin::currentPoseCb(const geometry_msgs::PoseStampedConstPtr& msg)
+{
+  geometry_msgs::PoseStamped pose_msg = geometry_msgs::PoseStamped(*msg.get());
+  lanelet::BasicPoint2d current_loc(pose_msg.pose.position.x, pose_msg.pose.position.y);
+  current_downtrack_ = wm_->routeTrackPos(current_loc).downtrack;
+  ROS_DEBUG_STREAM("Downtrack from current pose: " << current_downtrack_);
+}
+
 void SCIStrategicPlugin::parseStrategyParams(const std::string& strategy_params)
 {
   std::istringstream strategy_params_ss(strategy_params);
@@ -228,12 +236,13 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   double stop_intersection_down_track =
   wm_->routeTrackPos(nearest_stop_intersection->stopLines().front().front().basicPoint2d()).downtrack;
 
-  double distance_to_stopline = stop_intersection_down_track - current_state.downtrack;
+  double distance_to_stopline = stop_intersection_down_track - current_downtrack_;
 
   // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
       std::vector<lanelet::ConstLanelet> crossed_lanelets =
-          getLaneletsBetweenWithException(current_state.downtrack, stop_intersection_down_track, true, true);
+          getLaneletsBetweenWithException(current_downtrack_, stop_intersection_down_track, true, true);
 
+  auto current_lanelet = getLaneletsBetweenWithException(current_downtrack_, current_downtrack_, true).front();
 
   if (distance_to_stopline >= 0)
   {
@@ -241,16 +250,14 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     {
       // approaching stop line
       
-
-      
-      speed_limit_ = findSpeedLimit(crossed_lanelets.front());
+      speed_limit_ = findSpeedLimit(current_lanelet);
 
       // lane following to intersection
       double time_to_schedule_stop = (scheduled_stop_time_ - street_msg_timestamp_)*1000.0;
       int case_num = determineSpeedProfileCase(stop_intersection_down_track, current_state.speed, time_to_schedule_stop, speed_limit_);
 
       resp.new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(
-        case_num, current_state.downtrack, stop_intersection_down_track, current_state.speed, 0.0,
+        case_num, current_downtrack_, stop_intersection_down_track, current_state.speed, 0.0,
         current_state.stamp, time_to_schedule_stop,
         lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); })));
     }
@@ -258,12 +265,12 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     {
       // at the stop line
       // stop and wait maneuver
-      auto stop_line_lanelet = nearest_stop_intersection->stopLines().front();
+      auto stop_line_lanelet = nearest_stop_intersection->lanelets().front();
       
       double stop_duration = (scheduled_enter_time_ - scheduled_stop_time_)*1000.0;
       ROS_DEBUG_STREAM("Planning stop and wait maneuver");
       resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-        current_state.downtrack, stop_intersection_down_track, current_state.speed, current_state.lane_id,
+        current_downtrack_, stop_intersection_down_track, current_state.speed, current_lanelet.id(),
         stop_line_lanelet.id(), current_state.stamp,
         req.header.stamp + ros::Duration(stop_duration)));
     }
@@ -285,7 +292,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     double intersection_speed_limit = findSpeedLimit(nearest_stop_intersection->lanelets().front());
 
     resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
-      current_state.downtrack, intersection_end_downtrack, current_state.speed, intersection_speed_limit,
+      current_downtrack_, intersection_end_downtrack, current_state.speed, intersection_speed_limit,
       current_state.stamp, req.header.stamp + ros::Duration(intersection_transit_time), crossed_lanelets.front().id(), crossed_lanelets.back().id()));
     
     // when passing intersection, set the flag to false

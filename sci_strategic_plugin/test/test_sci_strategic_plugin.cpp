@@ -25,10 +25,12 @@ TEST(SCIStrategicPlugin, UnitTest1)
 {
     ros::CARMANodeHandle nh;
     ros::Publisher mob_op_pub = nh.advertise<cav_msgs::MobilityOperation>("incoming_mobility_operation", 5);
+    ros::Publisher pose_pub = nh.advertise<geometry_msgs::PoseStamped>("current_pose", 5);
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     ros::spinOnce(); 
     
     EXPECT_EQ(1, mob_op_pub.getNumSubscribers());
+    EXPECT_EQ(1, pose_pub.getNumSubscribers());
 }
 
 int main (int argc, char **argv) {

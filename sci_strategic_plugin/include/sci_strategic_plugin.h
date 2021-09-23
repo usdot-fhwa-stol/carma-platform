@@ -109,6 +109,12 @@ public:
   void mobilityOperationCb(const cav_msgs::MobilityOperationConstPtr& msg);
 
   /**
+   * \brief callback function for current pose
+   * \param msg input pose stamed msg
+   */
+  void currentPoseCb(const geometry_msgs::PoseStampedConstPtr& msg);
+
+  /**
    * \brief Compose a lane keeping maneuver message based on input params
    *
    * \param start_dist Start downtrack distance of the current maneuver
@@ -274,6 +280,9 @@ public:
 
   // approximate speed limit 
   double speed_limit_ = 100.0;
+
+  // downtrack of host vehicle
+  double current_downtrack_ = 0.0;
 
   bool approaching_stop_controlled_interction_ = false;
 
