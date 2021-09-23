@@ -26,21 +26,12 @@ namespace log
 /**
  * \brief Helper function to convert a lanelet::BasicPoint2d to a string
  */ 
-std::string basicPointToStream(lanelet::BasicPoint2d point)
-{
-  std::ostringstream out;
-  out << point.x() << ", " << point.y();
-  return out.str();
-}
+std::string basicPointToStream(lanelet::BasicPoint2d point);
+
 /**
  * \brief Helper function to convert a PointSpeedPair to a string
  */ 
-std::string pointSpeedPairToStream(waypoint_generation::PointSpeedPair point)
-{
-  std::ostringstream out;
-  out << "Point: " << basicPointToStream(point.point) << " Speed: " << point.speed;
-  return out.str();
-}
+std::string pointSpeedPairToStream(waypoint_generation::PointSpeedPair point);
 
 /**
  * \brief Print a ROS_DEBUG_STREAM for each value in values where the printed value is a string returned by func
@@ -67,13 +58,7 @@ void printDebugPerLine(const std::vector<T>& values, std::string (*free_func)(T)
 /**
  * \brief Print a ROS_DEBUG_STREAM for each value in values where the printed value is << prefix << value
  */ 
-void printDoublesPerLineWithPrefix(const std::string& prefix, const std::vector<double>& values)
-{
-  for (const auto& value : values)
-  {
-    ROS_DEBUG_STREAM(prefix << value);
-  }
-}
+void printDoublesPerLineWithPrefix(const std::string& prefix, const std::vector<double>& values);
 
 }  // namespace log
 }  // namespace basic_autonomy
