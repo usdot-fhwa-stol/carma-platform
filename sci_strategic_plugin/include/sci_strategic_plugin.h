@@ -249,9 +249,14 @@ public:
    */
   void caseThreeSpeedProfile(double stop_dist, double current_speed, double stop_time, std::vector<double>* float_metadata_list) const;
 
-
+  /**
+   * \brief Generates Mobility Operation messages
+   */
   void generateMobilityOperation();
 
+  /**
+   * \brief BSM callback function
+   */
   void BSMCb(const cav_msgs::BSMConstPtr& msg);
   
   ////////// VARIABLES ///////////
