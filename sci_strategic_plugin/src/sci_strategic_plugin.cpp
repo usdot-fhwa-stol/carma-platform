@@ -405,7 +405,7 @@ double SCIStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt) cons
 void SCIStrategicPlugin::generateMobilityOperation()
 {
     cav_msgs::MobilityOperation mo_;
-    mo_.header.timestamp = ros::Time::now().toNSec()/1000;
+    mo_.header.timestamp = ros::Time::now().toNSec() * 1000000;
 
     std::string id(bsm_id.begin(), bsm_id.end());
     mo_.header.sender_bsm_id = id;
