@@ -242,15 +242,13 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       std::vector<lanelet::ConstLanelet> crossed_lanelets =
           getLaneletsBetweenWithException(current_downtrack_, stop_intersection_down_track, true, true);
 
-  auto current_lanelet = getLaneletsBetweenWithException(current_downtrack_, current_downtrack_, true).front();
-
   if (distance_to_stopline >= 0)
   {
     if (distance_to_stopline > config_.stop_line_buffer)
     {
       // approaching stop line
       
-      speed_limit_ = findSpeedLimit(current_lanelet);
+      speed_limit_ = findSpeedLimit(crossed_lanelets.front());
 
       // lane following to intersection
       double time_to_schedule_stop = (scheduled_stop_time_ - street_msg_timestamp_)*1000.0;
@@ -270,7 +268,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       double stop_duration = (scheduled_enter_time_ - scheduled_stop_time_)*1000.0;
       ROS_DEBUG_STREAM("Planning stop and wait maneuver");
       resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-        current_downtrack_, stop_intersection_down_track, current_state.speed, current_lanelet.id(),
+        current_downtrack_, stop_intersection_down_track, current_state.speed, crossed_lanelets.front().id(),
         stop_line_lanelet.id(), current_state.stamp,
         req.header.stamp + ros::Duration(stop_duration)));
     }
