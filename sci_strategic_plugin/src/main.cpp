@@ -62,7 +62,7 @@ int main(int argc, char** argv)
   // Mobility Operation Subscriber
   ros::Subscriber mob_operation_sub = nh.subscribe("incoming_mobility_operation", 1, &sci_strategic_plugin::SCIStrategicPlugin::mobilityOperationCb, &plugin);
 
-  ros::Subscriber bsm_sub = nh.subscribe("BSM", 1, &sci_strategic_plugin::SCIStrategicPlugin::BSMCb, &plugin);
+  ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &sci_strategic_plugin::SCIStrategicPlugin::BSMCb, &plugin);
 
   ros::Timer discovery_pub_timer =
       nh.createTimer(ros::Duration(ros::Rate(10.0)), [&plugin, &plugin_discovery_pub](const auto&) {
