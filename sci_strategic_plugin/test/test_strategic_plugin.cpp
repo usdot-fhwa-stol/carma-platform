@@ -272,6 +272,19 @@ TEST(SCIStrategicPluginTest, caseTwoSpeedProfiletest)
   EXPECT_NEAR(12, metadata[4], 0.01);
 }
 
+TEST(SCIStrategicPluginTest, mob_op_cb_test)
+{
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  SCIStrategicPluginConfig config;
+  SCIStrategicPlugin sci(wm, config);
+  sci.approaching_stop_controlled_interction_ = false;
+  cav_msgs::MobilityOperation incoming_msg;
+  incoming_msg.strategy = "Carma/stop_controlled_intersection";
+  auto msg = boost::make_shared<const cav_msgs::MobilityOperation>(incoming_msg);
+  sci.mobilityOperationCb(msg);
+  EXPECT_EQ(true, sci.approaching_stop_controlled_interction_);
+}
+
 
 TEST(SCIStrategicPluginTest, caseThreeSpeedProfiletest)
 {
