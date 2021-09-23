@@ -259,17 +259,7 @@ namespace route {
 
             }
 
-
-            if(req.choice == cav_srvs::SetActiveRouteRequest::ROUTE_ID)
-            {
-                route_msg_.route_name = req.routeID;
-            }
-            else if(req.choice == cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY)
-            {
-                // Increase counter to ensure this route name differs from any previous route that was set without a Route ID
-                ++route_without_routeID_count_;
-                route_msg_.route_name = "Route_" + std::to_string(route_without_routeID_count_);
-            }
+            route_msg_.route_name = req.routeID;
             route_marker_msg_ = compose_route_marker_msg(route);
             route_msg_.header.stamp = ros::Time::now();
             route_msg_.header.frame_id = "map";
