@@ -346,11 +346,21 @@ TEST(SCIStrategicPluginTest, maneuvercbtest)
   SCIStrategicPluginConfig config;
   SCIStrategicPlugin sci(cmw_ptr, config);
 
+  // pose callback test
+  geometry_msgs::PoseStamped pose_msg;
+  pose_msg.pose.position.x = 1.0;
+  pose_msg.pose.position.y = 1.0;
+  auto msg = boost::make_shared<const geometry_msgs::PoseStamped>(pose_msg);
+  sci.currentPoseCb(msg);
+  ASSERT_NEAR(1.0, sci.current_downtrack_, 0.1);
+
+
   sci.approaching_stop_controlled_interction_ = true;
 
   cav_srvs::PlanManeuversRequest req;
   cav_srvs::PlanManeuversResponse resp;
 
+  // approaching intersection
   req = cav_srvs::PlanManeuversRequest();
   req.veh_x = 1.85;
   req.veh_y = 1.0; 
@@ -369,7 +379,7 @@ TEST(SCIStrategicPluginTest, maneuvercbtest)
   // case 3
   ASSERT_EQ(3, resp.new_plan.maneuvers[0].lane_following_maneuver.parameters.int_valued_meta_data[0]);
 
-
+  // at the stop line
   cav_srvs::PlanManeuversRequest req1;
   cav_srvs::PlanManeuversResponse resp1;
 
@@ -387,5 +397,6 @@ TEST(SCIStrategicPluginTest, maneuvercbtest)
   ASSERT_EQ(1, resp1.new_plan.maneuvers.size());
   ASSERT_EQ(resp1.new_plan.maneuvers[0].stop_and_wait_maneuver.starting_lane_id, "1212");
   ASSERT_EQ(resp1.new_plan.maneuvers[0].stop_and_wait_maneuver.ending_lane_id, "1212");
+
 
 }
