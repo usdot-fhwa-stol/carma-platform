@@ -61,6 +61,10 @@ int main(int argc, char** argv)
   
   // Mobility Operation Subscriber
   ros::Subscriber mob_operation_sub = nh.subscribe("incoming_mobility_operation", 1, &sci_strategic_plugin::SCIStrategicPlugin::mobilityOperationCb, &plugin);
+  
+  // Current Pose Subscriber
+  ros::Subscriber current_pose_sub = nh.subscribe("current_pose", 1, &sci_strategic_plugin::SCIStrategicPlugin::currentPoseCb, &plugin);
+
 
   ros::Timer discovery_pub_timer =
       nh.createTimer(ros::Duration(ros::Rate(10.0)), [&plugin, &plugin_discovery_pub](const auto&) {
