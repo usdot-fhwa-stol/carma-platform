@@ -236,17 +236,17 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   wm_->routeTrackPos(nearest_stop_intersection->stopLines().front().front().basicPoint2d()).downtrack;
 
   double distance_to_stopline = stop_intersection_down_track - current_downtrack_;
-
-  // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
-      std::vector<lanelet::ConstLanelet> crossed_lanelets =
-          getLaneletsBetweenWithException(current_downtrack_, stop_intersection_down_track, true, true);
+  std::cout << "distance_to_stopline  " << distance_to_stopline << std::endl;
 
   if (distance_to_stopline >= 0)
   {
     if (distance_to_stopline > config_.stop_line_buffer)
     {
+      // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
+      std::vector<lanelet::ConstLanelet> crossed_lanelets =
+          getLaneletsBetweenWithException(current_downtrack_, stop_intersection_down_track, true, true);
+
       // approaching stop line
-      
       speed_limit_ = findSpeedLimit(crossed_lanelets.front());
 
       // lane following to intersection
@@ -263,13 +263,13 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       // at the stop line
       // stop and wait maneuver
       auto stop_line_lanelet = nearest_stop_intersection->lanelets().front();
-      
       double stop_duration = (scheduled_enter_time_ - scheduled_stop_time_)*1000.0;
       ROS_DEBUG_STREAM("Planning stop and wait maneuver");
       resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-        current_downtrack_, stop_intersection_down_track, current_state.speed, crossed_lanelets.front().id(),
+        current_downtrack_, stop_intersection_down_track, current_state.speed, stop_line_lanelet.id(),
         stop_line_lanelet.id(), current_state.stamp,
-        req.header.stamp + ros::Duration(stop_duration)));
+        current_state.stamp + ros::Duration(stop_duration)));
+
     }
 
   }
@@ -278,20 +278,22 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     // Passed the stop line
     // Intersection transit maneuver
 
+    
     // Compose intersection transit maneuver
     double intersection_transit_time = (scheduled_depart_time_ - scheduled_enter_time_)*1000.0;
 
     double intersection_end_downtrack =
       wm_->routeTrackPos(nearest_stop_intersection->lanelets().back().centerline2d().back()).downtrack;
 
-    auto res = nearest_stop_intersection->lanelets();
+    // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
+    std::vector<lanelet::ConstLanelet> crossed_lanelets =
+          getLaneletsBetweenWithException(current_downtrack_, intersection_end_downtrack, true, true);
 
     double intersection_speed_limit = findSpeedLimit(nearest_stop_intersection->lanelets().front());
 
     resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
       current_downtrack_, intersection_end_downtrack, current_state.speed, intersection_speed_limit,
       current_state.stamp, req.header.stamp + ros::Duration(intersection_transit_time), crossed_lanelets.front().id(), crossed_lanelets.back().id()));
-    
     // when passing intersection, set the flag to false
     // TODO: Another option, check the time on mobilityoperation
     approaching_stop_controlled_interction_ = false;
@@ -444,10 +446,8 @@ cav_msgs::Maneuver SCIStrategicPlugin::composeStopAndWaitManeuverMessage(double 
   maneuver_msg.stop_and_wait_maneuver.end_time = end_time;
   maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(starting_lane_id);
   maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(ending_lane_id);
-
   // Set the meta data for the stop location buffer
   maneuver_msg.stop_and_wait_maneuver.parameters.float_valued_meta_data.push_back(config_.stop_line_buffer);
-
   return maneuver_msg;
 }
 
