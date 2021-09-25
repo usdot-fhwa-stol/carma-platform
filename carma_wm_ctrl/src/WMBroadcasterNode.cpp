@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2020-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -76,7 +76,9 @@ int WMBroadcasterNode::run()
   tcm_visualizer_pub_= cnh_.advertise<visualization_msgs::MarkerArray>("tcm_visualizer",1,true);
   //TCR Visualizer pub (visualized on UI)
   tcr_visualizer_pub_ = cnh_.advertise<cav_msgs::TrafficControlRequestPolygon>("tcr_bounding_points",1,true);
-  
+  //Upcoming intersection and group id of traffic light 
+  upcoming_intersection_ids_pub_ = cnh_.advertise<std_msgs::Int32MultiArray>("intersection_signal_group_ids", 1, true);
+
   double config_limit;
   double lane_max_width;
   pnh_.getParam("max_lane_width", lane_max_width);
@@ -85,14 +87,16 @@ int WMBroadcasterNode::run()
   pnh2_.getParam("/config_speed_limit", config_limit);
   wmb_.setConfigSpeedLimit(config_limit);
 
-  
     timer = cnh_.createTimer(ros::Duration(10.0), [this](auto){
       tcm_visualizer_pub_.publish(wmb_.tcm_marker_array_);
       tcr_visualizer_pub_.publish(wmb_.tcr_polygon_);
+      wmb_.publishLightId();
+      if (wmb_.upcoming_intersection_ids_.data.size() > 0)
+        upcoming_intersection_ids_pub_.publish(wmb_.upcoming_intersection_ids_);
       if(wmb_.getRoute().route_path_lanelet_ids.size() > 0)
         wmb_.routeCallbackMessage(wmb_.getRoute());
       }, false);
-
+      
   // Spin
   cnh_.spin();
   return 0;

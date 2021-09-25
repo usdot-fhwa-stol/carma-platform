@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,9 +31,9 @@ namespace bsm_generator
         bsm_pub_ = nh_->advertise<cav_msgs::BSM>("bsm_outbound", 5);
         timer_ = nh_->createTimer(ros::Duration(1.0 / bsm_generation_frequency_), &BSMGenerator::generateBSM, this);
         gear_sub_ = nh_->subscribe("transmission_state", 1, &BSMGenerator::gearCallback, this);
-        speed_sub_ = nh_->subscribe("vehicle_speed", 1, &BSMGenerator::speedCallback, this);
+        speed_sub_ = nh_->subscribe("vehicle_speed_cov", 1, &BSMGenerator::speedCallback, this);
         steer_wheel_angle_sub_ = nh_->subscribe("steering_wheel_angle", 1, &BSMGenerator::steerWheelAngleCallback, this);
-        accel_sub_ = nh_->subscribe("velocity_accel", 1, &BSMGenerator::accelCallback, this);
+        accel_sub_ = nh_->subscribe("velocity_accel_cov", 1, &BSMGenerator::accelCallback, this);
         yaw_sub_ = nh_->subscribe("yaw_rate_rpt", 1, &BSMGenerator::yawCallback, this);
         brake_sub_ = nh_->subscribe("brake_position", 1, &BSMGenerator::brakeCallback, this);
         pose_sub_ = nh_->subscribe("pose", 1, &BSMGenerator::poseCallback, this);
@@ -79,7 +79,7 @@ namespace bsm_generator
         bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.STEER_WHEEL_ANGLE_AVAILABLE;
     }
 
-    void BSMGenerator::accelCallback(const automotive_platform_msgs::VelocityAccelConstPtr& msg)
+    void BSMGenerator::accelCallback(const automotive_platform_msgs::VelocityAccelCovConstPtr& msg)
     {
         bsm_.core_data.accelSet.longitudinal = worker.getLongAccelInRange(msg->accleration);
         bsm_.core_data.accelSet.presence_vector = bsm_.core_data.accelSet.presence_vector | bsm_.core_data.accelSet.ACCELERATION_AVAILABLE;

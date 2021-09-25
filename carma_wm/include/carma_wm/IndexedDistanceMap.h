@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -146,11 +146,19 @@ public:
 
   /*!
    * \brief Returns index of the linestring which the provided distance is within.
-   *        NOTE: Unlike the rest of this class, this method runs in O(log n) where n is this.size()
-   *
+   *        NOTE: Unlike the rest of this class, this method runs in O(log n) where n is this.size() for accessing linestring index
+   *              If accessing point index (get_point=true) then it runs an addition O(log m) where m is the linestring index.size();
+   *              This means the max complexity of this function is O(log n) + O(log m)
+   *  
    * \throw std::invalid_argument if distance does not fit within bounds [0, totalLength()]
-   * \return The linestring index which this distance is inside
+   * 
+   * \param distance The downtrack distance in meters to get the element for
+   * \param get_point Set to true if you wish to access the index of the point prior to the provided distance. 
+   *                  If false then pair->second will always be 0
+   * 
+   * 
+   * \return A pair of the linestring index (first) and point index (second) which have their start distances before the provided distance
    */
-  size_t getElementIndexByDistance(double distance) const;
+  std::pair<size_t, size_t> getElementIndexByDistance(double distance, bool get_point=true) const;
 };
 }  // namespace carma_wm

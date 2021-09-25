@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -133,7 +133,17 @@ namespace platoon_strategic
         if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING){
             speed =  maneuver.lane_following_maneuver.end_speed;
             current_progress =  maneuver.lane_following_maneuver.end_dist;
-            lane_id =  stoi(maneuver.lane_following_maneuver.lane_id);
+            if (maneuver.lane_following_maneuver.lane_ids.empty()) {
+                ROS_WARN_STREAM("Lane id of lane following maneuver not set. Using 0");
+                lane_id = 0;
+            } else {
+                lane_id =  stoi(maneuver.lane_following_maneuver.lane_ids[0]);
+            }
+        }
+        else
+        {
+            ROS_WARN_STREAM("Detected a maneuver other than LANE_FOLLOWING, which is currently not supported. Using 0 index...");
+            lane_id = 0;
         }
     }
 
@@ -186,6 +196,11 @@ namespace platoon_strategic
             time_progress = req.prior_plan.planning_completion_time;
             int end_lanelet =0;
             updateCurrentStatus(req.prior_plan.maneuvers.back(),speed_progress,current_progress,end_lanelet);
+            if (end_lanelet == 0)
+            {
+                ROS_WARN_STREAM("Was not able to extract valid info from prior maneuver, returning...");
+                return true;
+            }
             last_lanelet_index = findLaneletIndexFromPath(end_lanelet,shortest_path);
         }
         bool approaching_route_end = false;
@@ -273,7 +288,7 @@ namespace platoon_strategic
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-        maneuver_msg.lane_following_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::PLATOONING;
+        maneuver_msg.lane_following_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::PLATOONING;
         maneuver_msg.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "PlatooningTacticalPlugin";
         maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "PlatooningStrategicPlugin";
@@ -290,7 +305,7 @@ namespace platoon_strategic
         } else {
             maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * cur_plus_target));
         }
-        maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
+        maneuver_msg.lane_following_maneuver.lane_ids = { std::to_string(lane_id) };
         current_time = maneuver_msg.lane_following_maneuver.end_time;
         ROS_DEBUG_STREAM("Creating lane follow start dist:"<<current_dist<<" end dist:"<<end_dist);
         ROS_DEBUG_STREAM("Duration:"<< maneuver_msg.lane_following_maneuver.end_time.toSec() - maneuver_msg.lane_following_maneuver.start_time.toSec());

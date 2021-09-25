@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 #include "test_utils.h"
 #include "tree_planner.hpp"
 #include <gmock/gmock.h>
+#include "vehicle_state.hpp"
 
 using ::testing::A;
 using ::testing::_;
@@ -48,7 +49,7 @@ namespace arbitrator
     class MockNeighborGenerator : public NeighborGenerator
     {
         public:
-            MOCK_CONST_METHOD1(generate_neighbors, std::vector<cav_msgs::ManeuverPlan>(cav_msgs::ManeuverPlan));
+            MOCK_CONST_METHOD2(generate_neighbors, std::vector<cav_msgs::ManeuverPlan>(cav_msgs::ManeuverPlan, const VehicleState&));
             ~MockNeighborGenerator(){};
     };
 
@@ -77,11 +78,11 @@ namespace arbitrator
 
         {
             InSequence seq;
-            EXPECT_CALL(mng, generate_neighbors(_))
+            EXPECT_CALL(mng, generate_neighbors(_,_))
                 .WillOnce(
                     Return(plans)
                 );
-            EXPECT_CALL(mng, generate_neighbors(_))
+            EXPECT_CALL(mng, generate_neighbors(_,_))
                 .WillRepeatedly(
                     Return(std::vector<cav_msgs::ManeuverPlan>())
                 );
@@ -97,7 +98,8 @@ namespace arbitrator
                 ReturnArg<0>()
             );
 
-        cav_msgs::ManeuverPlan plan = tp.generate_plan();
+        VehicleState state;
+        cav_msgs::ManeuverPlan plan = tp.generate_plan(state);
         ASSERT_FALSE(plan.maneuvers.empty());
         ASSERT_EQ(1, plan.maneuvers.size());
         ASSERT_EQ(ros::Time(0), plan.maneuvers[0].lane_following_maneuver.start_time);
@@ -128,11 +130,11 @@ namespace arbitrator
 
         {
             InSequence seq;
-            EXPECT_CALL(mng, generate_neighbors(_))
+            EXPECT_CALL(mng, generate_neighbors(_,_))
                 .WillOnce(
                     Return(plans)
                 );
-            EXPECT_CALL(mng, generate_neighbors(_))
+            EXPECT_CALL(mng, generate_neighbors(_,_))
                 .WillRepeatedly(
                     Return(std::vector<cav_msgs::ManeuverPlan>())
                 );
@@ -148,7 +150,8 @@ namespace arbitrator
                 ReturnArg<0>()
             );
 
-        cav_msgs::ManeuverPlan plan = tp.generate_plan();
+        VehicleState state;
+        cav_msgs::ManeuverPlan plan = tp.generate_plan(state);
         ASSERT_FALSE(plan.maneuvers.empty());
         ASSERT_EQ(1, plan.maneuvers.size());
         ASSERT_EQ(ros::Time(0), plan.maneuvers[0].lane_following_maneuver.start_time);
@@ -187,19 +190,19 @@ namespace arbitrator
 
         {
             InSequence seq;
-            EXPECT_CALL(mng, generate_neighbors(_))
+            EXPECT_CALL(mng, generate_neighbors(_,_))
                 .WillOnce(
                     Return(plans1)
                 );
-            EXPECT_CALL(mng, generate_neighbors(_))
+            EXPECT_CALL(mng, generate_neighbors(_,_))
                 .WillOnce(
                     Return(plans2)
                 );
-            EXPECT_CALL(mng, generate_neighbors(_))
+            EXPECT_CALL(mng, generate_neighbors(_,_))
                 .WillOnce(
                     Return(plans3)
                 );
-            EXPECT_CALL(mng, generate_neighbors(_))
+            EXPECT_CALL(mng, generate_neighbors(_,_))
                 .WillRepeatedly(
                     Return(std::vector<cav_msgs::ManeuverPlan>())
                 );
@@ -215,7 +218,8 @@ namespace arbitrator
                 ReturnArg<0>()
             );
 
-        cav_msgs::ManeuverPlan plan = tp.generate_plan();
+        VehicleState state;
+        cav_msgs::ManeuverPlan plan = tp.generate_plan(state);
         ASSERT_FALSE(plan.maneuvers.empty());
         ASSERT_EQ(3, plan.maneuvers.size());
         ASSERT_EQ(ros::Time(0), plan.maneuvers[0].lane_following_maneuver.start_time);

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#  Copyright (C) 2018-2020 LEIDOS.
+#  Copyright (C) 2018-2021 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
@@ -38,13 +38,13 @@ done
 cd ${dir}/src
 
 if [[ "$BRANCH" = "develop" ]]; then
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch carma-system-3.7.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch carma-system-3.7.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch carma-system-3.7.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch carma-system-3.7.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch carma-system-3.8.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch carma-system-3.8.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch carma-system-3.8.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch carma-system-3.8.0
 else
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch carma-system-3.7.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch carma-system-3.7.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch carma-system-3.7.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch carma-system-3.7.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch carma-system-3.8.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch carma-system-3.8.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch carma-system-3.8.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch carma-system-3.8.0
 fi

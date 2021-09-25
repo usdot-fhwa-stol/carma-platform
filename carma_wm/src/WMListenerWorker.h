@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_wm/TrafficControl.h>
 #include <queue>
-
+#include <cav_msgs/SPAT.h>
 
 namespace carma_wm
 {
@@ -57,7 +57,7 @@ public:
   void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg);
 
   /*!
-   * \brief Callback for route message. It is a TODO: To update function when route message spec is defined
+   * \brief Callback for route message.
    */
   void routeCallback(const cav_msgs::RouteConstPtr& route_msg);
 
@@ -103,6 +103,11 @@ public:
  * 
 */
   void enableUpdatesWithoutRoute();
+/**
+ *  \brief incoming spat message
+ * 
+*/
+  void incomingSpatCallback(const cav_msgs::SPAT& spat_msg);
 
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
@@ -115,8 +120,8 @@ private:
   std::queue<autoware_lanelet2_msgs::MapBinPtr> map_update_queue_; // Update queue used to cache map updates when they cannot be immeadiatly applied due to waiting for rerouting
   boost::optional<cav_msgs::RouteConstPtr> delayed_route_msg_;
 
-  bool rerouting_flag_=false; // indicates whether if this node should recompute its route based on invalidated msg
-  bool recompute_route_flag_= false; //indicates whether if route node is in middle of rerouting
+  bool recompute_route_flag_=false; // indicates whether if this node should recompute its route based on invalidated msg
+  bool rerouting_flag_=false; //indicates whether if route node is in middle of rerouting
   bool route_node_flag_=false; //indicates whether if this node is route node
   long most_recent_update_msg_seq_ = -1; // Tracks the current sequence number for map update messages. Dropping even a single message would invalidate the map
 };

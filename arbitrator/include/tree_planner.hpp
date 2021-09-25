@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@
 #include "cost_function.hpp"
 #include "neighbor_generator.hpp"
 #include "search_strategy.hpp"
+#include "vehicle_state.hpp"
 
 namespace arbitrator
 {
@@ -57,8 +58,10 @@ namespace arbitrator
             /**
              * \brief Utilize the configured cost function, neighbor generator, 
              *      and search strategy, to generate a plan by means of tree search
+             * 
+             * \param start_state The starting state of the vehicle to plan for
              */
-            cav_msgs::ManeuverPlan generate_plan();
+            cav_msgs::ManeuverPlan generate_plan(const VehicleState& start_state);
         protected:
             CostFunction &cost_function_;
             NeighborGenerator &neighbor_generator_;

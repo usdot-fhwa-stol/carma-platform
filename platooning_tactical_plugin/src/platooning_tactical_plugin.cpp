@@ -72,7 +72,7 @@ bool PlatooningTacticalPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryReques
   {
     if(req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_FOLLOWING)
     {
-      if (req.maneuver_plan.maneuvers[i].lane_following_maneuver.parameters.neogition_type != cav_msgs::ManeuverParameters::NO_NEGOTIATION)
+      if (req.maneuver_plan.maneuvers[i].lane_following_maneuver.parameters.negotiation_type != cav_msgs::ManeuverParameters::NO_NEGOTIATION)
       {
         maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
         resp.related_maneuvers.push_back(i);
@@ -298,10 +298,20 @@ std::vector<PointSpeedPair> PlatooningTacticalPlugin::maneuvers_to_points(const 
       throw std::invalid_argument("Platooning tactical plugin does not support this maneuver type");
     }
 
-    if (manuever.lane_following_maneuver.parameters.neogition_type == cav_msgs::ManeuverParameters::NO_NEGOTIATION)
+    if (manuever.lane_following_maneuver.parameters.negotiation_type == cav_msgs::ManeuverParameters::NO_NEGOTIATION)
     {
       throw std::invalid_argument("NO_NEGOTIATION maneuver is not supported by this plugin");
     }
+
+
+    // if (manuever.lane_following_maneuver.parameters.negotiation_type == cav_msgs::ManeuverParameters::PLATOONING)
+    // {
+    //   // TODO: start and end speed are floats, sp compare them with epsilon 
+    //   // if ( manuever.lane_following_maneuver.start_speed != manuever.lane_following_maneuver.end_speed)
+    //   // {
+    //   //   throw std::invalid_argument("Invalid Platooning Maneuver");
+    //   // }
+    // }
 
     cav_msgs::LaneFollowingManeuver lane_following_maneuver = manuever.lane_following_maneuver;
 

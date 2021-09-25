@@ -47,7 +47,8 @@ using ::testing::ReturnArg;
 
 namespace carma_wm
 {
-TEST(SegFaultTest, updateSegFault) {
+// Remove DISABLED and update file directory to test segfault.
+TEST(SegFaultTest, DISABLED_updateSegFault) {
   ///////////
   // UNIT TEST ARGUMENTS
   ///////////
