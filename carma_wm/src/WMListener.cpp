@@ -41,7 +41,12 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
   double cL;
   nh2_.getParam("/config_speed_limit", cL);
   setConfigSpeedLimit(cL);
-  
+
+  std::string participant;
+  nh2_.getParam("/vehicle_participant_type", participant);
+  worker_->setVehicleParticipationType(participant);
+
+
   // Set up AsyncSpinner for multi-threaded use case
   if (multi_threaded_)
   {
@@ -110,6 +115,7 @@ void WMListener::setConfigSpeedLimit(double config_lim) const
 {
   worker_->setConfigSpeedLimit(config_lim);
 }
+
 
 
 // @SONAR_START@

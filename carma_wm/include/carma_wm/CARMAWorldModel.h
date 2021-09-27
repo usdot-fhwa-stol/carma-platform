@@ -19,6 +19,7 @@
 
 #include "carma_wm/WorldModel.h"
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 #include <lanelet2_core/primitives/LineString.h>
 #include "IndexedDistanceMap.h"
 #include <cav_msgs/ExternalObject.h>
@@ -119,6 +120,10 @@ public:
 *
 */
   void setConfigSpeedLimit(double config_lim);
+
+  /*! \brief Set vehicle participation type
+   */
+  void setVehicleParticipationType(const std::string& participant);
   
   /*! \brief Set endpoint of the route
    */
@@ -176,9 +181,12 @@ public:
   TrackPos getRouteEndTrackPos() const override;
 
   LaneletRoutingGraphConstPtr getMapRoutingGraph() const override;
+  
+  lanelet::Optional<TrafficRulesConstPtr>
+  getTrafficRules(const std::string& participant) const override;
 
   lanelet::Optional<TrafficRulesConstPtr>
-  getTrafficRules(const std::string& participant = lanelet::Participants::Vehicle) const override;
+  getTrafficRules() const override;
 
   std::vector<cav_msgs::RoadwayObstacle> getRoadwayObjects() const override;
 
@@ -203,12 +211,16 @@ public:
   std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n = 10) const override;
 
   std::vector<lanelet::CarmaTrafficLightPtr> getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
+
+  std::vector<std::shared_ptr<lanelet::AllWayStop>> getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
   
   std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 
 private:
 
   double config_speed_limit_;
+
+  std::string participant_type_ = lanelet::Participants::Vehicle;
   
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
    *         This function should generally only be called from inside the setRoute function as it uses member variables

@@ -83,7 +83,7 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   ROS_INFO_STREAM("Building routing graph for base map");
 
   lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
-  lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::VehicleCar);
+  lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant_);
   current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
 
   ROS_INFO_STREAM("Done building routing graph for base map");
@@ -1084,6 +1084,16 @@ void WMBroadcaster::setConfigSpeedLimit(double cL)
   config_limit = lanelet::Velocity(cL * lanelet::units::MPH());
 }
 
+void WMBroadcaster::setVehicleParticipationType(std::string participant)
+{
+  participant_ = participant;
+}
+
+std::string WMBroadcaster::getVehicleParticipationType()
+{
+  return participant_;
+}
+
 uint32_t WMBroadcaster::generate32BitId(const std::string& label)
 {
   auto pos1 = label.find("INT_ID:") + 7;
@@ -1468,7 +1478,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
     ROS_INFO_STREAM("Rebuilding routing graph after is was invalidated by geofence");
 
     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
-    lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::VehicleCar);
+    lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant_);
     current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
 
     ROS_INFO_STREAM("Done rebuilding routing graph after is was invalidated by geofence");
