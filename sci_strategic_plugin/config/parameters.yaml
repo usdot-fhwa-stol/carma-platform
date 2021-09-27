@@ -4,7 +4,7 @@ vehicle_decel_limit_multiplier : 0.50
 # Double: multiplier to apply to the maximum allowable vehicle acceleration limit so we plan under our capabilities
 vehicle_accel_limit_multiplier : 0.50
 
-# Double: A buffer infront of the stopping location which will still be considered a valid stop. Units in meters
+# Double: A buffer before of the stopping location which will still be considered a valid stop. Units in meters
 stop_line_buffer : 2.0
 
 # Double: Update time interval of carma streets. Units in s
@@ -20,4 +20,4 @@ lane_following_plugin_name : StopControlledIntersectionTacticalPlugin
 stop_and_wait_plugin_name : StopAndWaitPlugin
 
 # String: The name of the plugin to use for intersection transit trajectory planning
-intersection_transit_plugin_name : StopControlledIntersectionTacticalPlugin
+intersection_transit_plugin_name : IntersectionTransitPlugin

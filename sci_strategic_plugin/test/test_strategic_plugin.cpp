@@ -53,7 +53,8 @@ TEST(SCIStrategicPluginTest, composeLaneFollowingManeuverMessage)
 
   ASSERT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, result.type);
   ASSERT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, result.lane_following_maneuver.parameters.negotiation_type);
-  ASSERT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN,
+  ASSERT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN | cav_msgs::ManeuverParameters::HAS_INT_META_DATA | 
+  cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA | cav_msgs::ManeuverParameters::HAS_STRING_META_DATA,
             result.lane_following_maneuver.parameters.presence_vector);
   ASSERT_TRUE(config.lane_following_plugin_name.compare(
                   result.lane_following_maneuver.parameters.planning_tactical_plugin) == 0);
@@ -71,6 +72,62 @@ TEST(SCIStrategicPluginTest, composeLaneFollowingManeuverMessage)
   ASSERT_TRUE(result.lane_following_maneuver.lane_ids[1].compare("1201") == 0);
   ASSERT_TRUE(result.lane_following_maneuver.parameters.int_valued_meta_data[0] == 1);
 }
+
+TEST(SCIStrategicPluginTest, composeIntersectionTransitMessage)
+{
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm;
+  SCIStrategicPluginConfig config;
+  SCIStrategicPlugin sci(wm, config);
+
+  auto result = sci.composeIntersectionTransitMessage(10.2, 20.4, 5, 10, ros::Time(1.2), ros::Time(2.2), 1200, 1201);
+
+  ASSERT_EQ(cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT, result.type);
+  ASSERT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION,
+            result.intersection_transit_straight_maneuver.parameters.negotiation_type);
+  ASSERT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN,
+            result.intersection_transit_straight_maneuver.parameters.presence_vector);
+  ASSERT_TRUE(config.intersection_transit_plugin_name.compare(
+                  result.intersection_transit_straight_maneuver.parameters.planning_tactical_plugin) == 0);
+  ASSERT_TRUE(config.strategic_plugin_name.compare(
+                  result.intersection_transit_straight_maneuver.parameters.planning_strategic_plugin) == 0);
+
+  ASSERT_EQ(10.2, result.intersection_transit_straight_maneuver.start_dist);
+  ASSERT_EQ(20.4, result.intersection_transit_straight_maneuver.end_dist);
+  ASSERT_EQ(5, result.intersection_transit_straight_maneuver.start_speed);
+  ASSERT_EQ(10, result.intersection_transit_straight_maneuver.end_speed);
+  ASSERT_EQ(ros::Time(1.2), result.intersection_transit_straight_maneuver.start_time);
+  ASSERT_EQ(ros::Time(2.2), result.intersection_transit_straight_maneuver.end_time);
+  ASSERT_TRUE(result.intersection_transit_straight_maneuver.starting_lane_id.compare("1200") == 0);
+  ASSERT_TRUE(result.intersection_transit_straight_maneuver.ending_lane_id.compare("1201") == 0);
+}
+
+TEST(SCIStrategicPluginTest, composeStopAndWaitManeuverMessage)
+{
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm;
+  SCIStrategicPluginConfig config;
+  SCIStrategicPlugin sci(wm, config);
+
+  auto result = sci.composeStopAndWaitManeuverMessage(10.2, 20.4, 5, 1200, 1201, ros::Time(1.2), ros::Time(2.2));
+
+  ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result.type);
+  ASSERT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, result.stop_and_wait_maneuver.parameters.negotiation_type);
+  ASSERT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN | cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA,
+            result.stop_and_wait_maneuver.parameters.presence_vector);
+  ASSERT_TRUE(config.stop_and_wait_plugin_name.compare(
+                  result.stop_and_wait_maneuver.parameters.planning_tactical_plugin) == 0);
+  ASSERT_TRUE(
+      config.strategic_plugin_name.compare(result.stop_and_wait_maneuver.parameters.planning_strategic_plugin) == 0);
+
+  ASSERT_EQ(10.2, result.stop_and_wait_maneuver.start_dist);
+  ASSERT_EQ(20.4, result.stop_and_wait_maneuver.end_dist);
+  ASSERT_EQ(5, result.stop_and_wait_maneuver.start_speed);
+  ASSERT_EQ(ros::Time(1.2), result.stop_and_wait_maneuver.start_time);
+  ASSERT_EQ(ros::Time(2.2), result.stop_and_wait_maneuver.end_time);
+  ASSERT_TRUE(result.stop_and_wait_maneuver.starting_lane_id.compare("1200") == 0);
+  ASSERT_TRUE(result.stop_and_wait_maneuver.ending_lane_id.compare("1201") == 0);
+}
+
+
 
 TEST(SCIStrategicPluginTest, findSpeedLimit)
 {
@@ -215,6 +272,19 @@ TEST(SCIStrategicPluginTest, caseTwoSpeedProfiletest)
   EXPECT_NEAR(12, metadata[4], 0.01);
 }
 
+TEST(SCIStrategicPluginTest, mob_op_cb_test)
+{
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  SCIStrategicPluginConfig config;
+  SCIStrategicPlugin sci(wm, config);
+  sci.approaching_stop_controlled_interction_ = false;
+  cav_msgs::MobilityOperation incoming_msg;
+  incoming_msg.strategy = "Carma/stop_controlled_intersection";
+  auto msg = boost::make_shared<const cav_msgs::MobilityOperation>(incoming_msg);
+  sci.mobilityOperationCb(msg);
+  EXPECT_EQ(true, sci.approaching_stop_controlled_interction_);
+}
+
 
 TEST(SCIStrategicPluginTest, caseThreeSpeedProfiletest)
 {
@@ -236,20 +306,29 @@ TEST(SCIStrategicPluginTest, maneuvercbtest)
   lanelet::Id int_id{1};
   lanelet::Point3d p1, p2, p3, p4, p5, p6;
   lanelet::LineString3d ls1, ls2, ls3, ls4, ls5, ls6;
-  lanelet::Lanelet ll1, ll2, ll3;
+  lanelet::Lanelet ll1, ll2, ll3, ll4;
 
-  p1 = lanelet::Point3d(++id, 0., 10., 10.);
-  p2 = lanelet::Point3d(++id, 10., 10., 10.);
-  p3 = lanelet::Point3d(++id, 0., 0., 0.);
-  p4 = lanelet::Point3d(++id, 10., 0., 0.);
+  p1 = lanelet::Point3d(++id, 0., 10., 0.);
+  p2 = lanelet::Point3d(++id, 10., 10., 0.);
+  p3 = lanelet::Point3d(++id, 10., 10., 0.);
+  p4 = lanelet::Point3d(++id, 60., 10., 0.);
+  p5 = lanelet::Point3d(++id, 60., 60., 0.);
+  p6 = lanelet::Point3d(++id, 60., 60., 0.);
 
   ls1 = lanelet::LineString3d(++id, lanelet::Points3d{p1, p2});
-  ls2 = lanelet::LineString3d(++id, lanelet::Points3d{p3, p4});
-  ls3 = lanelet::LineString3d(++id, lanelet::Points3d{p3, p1});
+  ls2 = lanelet::LineString3d(++id, lanelet::Points3d{p2, p3});
+  ls3 = lanelet::LineString3d(++id, lanelet::Points3d{p3, p4});
+  ls4 = lanelet::LineString3d(++id, lanelet::Points3d{p4, p5});
+  ls5 = lanelet::LineString3d(++id, lanelet::Points3d{p5, p6});
 
 
   ll1 = lanelet::Lanelet(++id, ls1, ls2);
+  std::cout << "ll1.id()  " << ll1.id() << std::endl;
   ll2 = lanelet::Lanelet(++id, ls2, ls3);
+  std::cout << "ll2.id()  " << ll2.id() << std::endl;
+  ll3 = lanelet::Lanelet(++id, ls3, ls4);
+  std::cout << "ll3.id()  " << ll3.id() << std::endl;
+  ll4 = lanelet::Lanelet(++id, ls4, ls5);
 
   carma_wm::CARMAWorldModel cmw;
   lanelet::LaneletMapPtr map;
@@ -257,21 +336,31 @@ TEST(SCIStrategicPluginTest, maneuvercbtest)
   carma_wm::test::MapOptions mp(1,1);
   auto cmw_ptr = carma_wm::test::getGuidanceTestMap(mp);
 
-  std::shared_ptr<lanelet::AllWayStop> row = lanelet::AllWayStop::make(int_id, lanelet::AttributeMap(), {{ll1, ls1}});
+  std::shared_ptr<lanelet::AllWayStop> row = lanelet::AllWayStop::make(int_id, lanelet::AttributeMap(), {{ll1, ls1}, {ll3, ls4}});
   cmw_ptr->getMutableMap()->update(cmw_ptr->getMutableMap()->laneletLayer.get(1200), row);
 
-  carma_wm::test::setRouteByIds({ 1200, 1201, 1202}, cmw_ptr);
+  carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, cmw_ptr);
 
 
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   SCIStrategicPluginConfig config;
   SCIStrategicPlugin sci(cmw_ptr, config);
 
+  // pose callback test
+  geometry_msgs::PoseStamped pose_msg;
+  pose_msg.pose.position.x = 1.0;
+  pose_msg.pose.position.y = 1.0;
+  auto msg = boost::make_shared<const geometry_msgs::PoseStamped>(pose_msg);
+  sci.currentPoseCb(msg);
+  ASSERT_NEAR(1.0, sci.current_downtrack_, 0.1);
+
+
   sci.approaching_stop_controlled_interction_ = true;
 
   cav_srvs::PlanManeuversRequest req;
   cav_srvs::PlanManeuversResponse resp;
 
+  // approaching intersection
   req = cav_srvs::PlanManeuversRequest();
   req.veh_x = 1.85;
   req.veh_y = 1.0; 
@@ -289,5 +378,25 @@ TEST(SCIStrategicPluginTest, maneuvercbtest)
   ASSERT_NEAR(0.0, resp.new_plan.maneuvers[0].lane_following_maneuver.end_speed, 0.00001);
   // case 3
   ASSERT_EQ(3, resp.new_plan.maneuvers[0].lane_following_maneuver.parameters.int_valued_meta_data[0]);
+
+  // at the stop line
+  cav_srvs::PlanManeuversRequest req1;
+  cav_srvs::PlanManeuversResponse resp1;
+
+  sci.current_downtrack_ = 9;
+  req1 = cav_srvs::PlanManeuversRequest();
+  req1.veh_x = 9.85;
+  req1.veh_y = 2.0; 
+  req1.veh_downtrack = req.veh_y;
+  req1.veh_logitudinal_velocity = 0.0;
+  req1.veh_lane_id = "1209";
+
+  sci.scheduled_enter_time_ = 7000;
+
+  sci.planManeuverCb(req1, resp1);
+  ASSERT_EQ(1, resp1.new_plan.maneuvers.size());
+  ASSERT_EQ(resp1.new_plan.maneuvers[0].stop_and_wait_maneuver.starting_lane_id, "1212");
+  ASSERT_EQ(resp1.new_plan.maneuvers[0].stop_and_wait_maneuver.ending_lane_id, "1212");
+
 
 }
