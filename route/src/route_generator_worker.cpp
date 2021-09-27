@@ -485,7 +485,7 @@ namespace route {
             }
 
             // Return if world model has not yet been updated with the current active route
-            if (this->world_model_->getRouteName() != route_msg_.route_name) {
+            if ((this->world_model_->getRouteName()).compare(route_msg_.route_name) != 0) {
                 ROS_WARN_STREAM("Current active route name is " << route_msg_.route_name << ", WorldModel is using " << this->world_model_->getRouteName());
                 return;
             }
