@@ -86,8 +86,6 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
 {
   if (msg->strategy == stop_controlled_intersection_strategy_)
   {
-    // TODO: Add Samir's code here to detect approaching an intersection and publish status and intent
-
     approaching_stop_controlled_interction_ = true;
     if (msg->strategy_params != previous_strategy_params_)
     {
