@@ -73,6 +73,9 @@ add_library(
   ${PROJECT_NAME} 
   src/basic_autonomy.cpp
   src/smoothing/BSpline.cpp
+  src/smoothing/filters.cpp
+  src/log/log.cpp
+  src/helper_functions.cpp
 )
 
 add_dependencies(${PROJECT_NAME}
