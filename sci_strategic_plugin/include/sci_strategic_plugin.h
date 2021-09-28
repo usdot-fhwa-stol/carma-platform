@@ -29,6 +29,7 @@
 #include <gtest/gtest_prod.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <cav_msgs/BSM.h>
 
 #include "sci_strategic_plugin_config.h"
 
@@ -261,6 +262,16 @@ public:
    *
    */
   void caseThreeSpeedProfile(double stop_dist, double current_speed, double stop_time, std::vector<double>* float_metadata_list) const;
+
+  /**
+   * \brief Generates Mobility Operation messages
+   */
+  void generateMobilityOperation();
+
+  /**
+   * \brief BSM callback function
+   */
+  void BSMCb(const cav_msgs::BSMConstPtr& msg);
   
   ////////// VARIABLES ///////////
 
@@ -286,10 +297,11 @@ public:
 
   bool approaching_stop_controlled_interction_ = false;
 
+  ros::Publisher mobility_operation_pub;
+
+  std::vector<uint8_t> bsm_id;
 
   private:
-
-
   //! World Model pointer
   carma_wm::WorldModelConstPtr wm_;
 
@@ -305,8 +317,7 @@ public:
 
   // strategy for stop controlled intersection
   std::string stop_controlled_intersection_strategy_ = "Carma/stop_controlled_intersection";
-  std::string previous_strategy_params_ = "";
-  
+  std::string previous_strategy_params_ = "";  
   
 
 };

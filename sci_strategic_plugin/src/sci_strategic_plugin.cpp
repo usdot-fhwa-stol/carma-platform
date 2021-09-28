@@ -92,8 +92,15 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
       parseStrategyParams(msg->strategy_params); 
     }
     previous_strategy_params_ = msg->strategy_params;
+
+    generateMobilityOperation();
   }
   
+}
+
+void SCIStrategicPlugin::BSMCb(const cav_msgs::BSMConstPtr& msg)
+{
+  bsm_id = msg->core_data.id;
 }
 
 void SCIStrategicPlugin::currentPoseCb(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -307,7 +314,7 @@ void SCIStrategicPlugin::caseOneSpeedProfile(double speed_before_decel, double c
                                             std::vector<double>* float_metadata_list) const
 {
   double desired_acceleration = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
-  double desired_deceleration = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+  double desired_deceleration = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;  
 
   // Equations obtained from TSMO UC 1 Algorithm draft doc
   double a_acc = ((1 - desired_acceleration/desired_deceleration)*speed_before_decel - current_speed)/stop_time;
@@ -424,6 +431,24 @@ double SCIStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt) cons
   {
     throw std::invalid_argument("Valid traffic rules object could not be built");
   }
+}
+
+void SCIStrategicPlugin::generateMobilityOperation()
+{
+    cav_msgs::MobilityOperation mo_;
+    mo_.header.timestamp = ros::Time::now().toNSec() * 1000000;
+
+    std::string id(bsm_id.begin(), bsm_id.end());
+    mo_.header.sender_bsm_id = id;
+
+    int flag = (approaching_stop_controlled_interction_ ? 1 : 0);
+
+    double vehicle_acceleration_limit_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
+    double vehicle_deceleration_limit_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+
+    mo_.strategy_params = "intersection_box_flag, acceleration_limit, deceleration_limit," + std::to_string(flag) + "," + std::to_string(vehicle_acceleration_limit_) + "," + std::to_string(vehicle_deceleration_limit_);
+
+    mobility_operation_pub.publish(mo_);
 }
 
 cav_msgs::Maneuver SCIStrategicPlugin::composeStopAndWaitManeuverMessage(double current_dist, double end_dist,
