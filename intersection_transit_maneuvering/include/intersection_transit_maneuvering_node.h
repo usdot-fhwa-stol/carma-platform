@@ -19,10 +19,7 @@
 #include <cav_msgs/Plugin.h>
 #include <carma_utils/CARMAUtils.h>
 #include <cav_srvs/PlanTrajectory.h>
-#include <carma_wm/WMListener.h>
 #include <functional>
-#include <autoware_msgs/Lane.h>
-#include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
 #include "intersection_transit_maneuvering.h"
 #include "itm_service.h"
 
@@ -47,23 +44,21 @@ class IntersectionTransitManeuveringNode
             ros::Publisher plugin_discovery_pub_;
             ros::Timer discovery_pub_timer_;
 
-            // Current vehicle pose in map
-            geometry_msgs::PoseStamped pose_msg_;
-
             //Plugin discovery message
             cav_msgs::Plugin plugin_discovery_msg_;
 
             plugin_discovery_pub_ = nh_.advertise<cav_msgs::Plugin>("plugin_discovery",1);
-            carma_wm::WMListener wml_;
-            
-            carma_wm::WorldModelConstPtr wm_ = wml_.getWorldModel();
-            
+                        
             std::shared_ptr<intersection_transit_maneuvering::Servicer> srv = std::make_shared<intersection_transit_maneuvering::Servicer>();
-            ros::ServiceClient trajectory_client = nh_.serviceClient<cav_srvs::PlanTrajectory>("plugin/InlaneCruisingPlugin/plan_trajectory");
+            ros::ServiceClient trajectory_client = nh_.serviceClient<cav_srvs::PlanTrajectory>("plugins/InLaneCruisingPlugin/plan_trajectory", true);
             srv->set_client(trajectory_client);
-            IntersectionTransitManeuvering worker(wm_,[&plugin_discovery_pub_](const auto& msg) {plugin_discovery_pub_.publish(msg);}, srv);
-            trajectory_srv_ = nh_.advertiseService("plan_trajectory",&IntersectionTransitManeuvering::plan_trajectory_cb, &worker);           
+            IntersectionTransitManeuvering worker([&plugin_discovery_pub_](const auto& msg) {plugin_discovery_pub_.publish(msg);}, srv);
+            trajectory_srv_ = nh_.advertiseService("plugins/IntersectionTransitPlugin/plan_trajectory",&IntersectionTransitManeuvering::plan_trajectory_cb, &worker);           
             
+            if (!trajectory_client.waitForExistence(ros::Duration(20.0))) {
+                throw std::invalid_argument("Required service is not available: " + trajectory_client.getService());
+            }
+
             discovery_pub_timer_ = nh_.createTimer(
                     ros::Duration(ros::Rate(10.0)),
                     [&worker](const auto&) {worker.onSpin();});

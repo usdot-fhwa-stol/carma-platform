@@ -393,25 +393,35 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
   }
 
   // Use fast lookup to identify the points before and after the provided downtrack on the route
-  size_t ls_i = shortest_path_distance_map_.getElementIndexByDistance(downtrack); // Get the linestring matching the provided downtrack
-  double ls_length = shortest_path_distance_map_.elementLength(ls_i);
-  double ls_downtrack = shortest_path_distance_map_.distanceToElement(ls_i);
+  auto indices = shortest_path_distance_map_.getElementIndexByDistance(downtrack, true); // Get the linestring matching the provided downtrack
+  size_t ls_i = std::get<0>(indices);
+  size_t pt_i = std::get<1>(indices);
+  
   auto linestring = shortest_path_centerlines_[ls_i];
 
-  // Use the percentage traveled along this linestring to index into the cenertline
+  if (pt_i >= linestring.size()) {
+    throw std::invalid_argument("Impossible index: pt: " + std::to_string(pt_i) + " linestring: " + std::to_string(ls_i));
+  }
+
+
+  double ls_downtrack = shortest_path_distance_map_.distanceToElement(ls_i);
+  
   double relative_downtrack = downtrack - ls_downtrack;
-  double lanelet_percentage = relative_downtrack / ls_length;
-  int centerline_size = linestring.size();
-  int index = lanelet_percentage * centerline_size;
-  int prior_idx = std::min(index, centerline_size - 1);
-  int next_idx = std::min(index + 1, centerline_size - 1);
+
+  size_t centerline_size = linestring.size();
+
+  size_t prior_idx = std::min(pt_i, centerline_size - 1);
+
+  size_t next_idx = std::min(pt_i + 1, centerline_size - 1);
 
   // This if block handles the edge case where the downtrack distance has landed exactly on an existing point
   if (prior_idx == next_idx)
   {  // If both indexes are the same we are on the point
+    
     if (crosstrack == 0)
     {  // Crosstrack not provided so we can return the point directly
       auto prior_point = linestring[prior_idx];
+
       return lanelet::BasicPoint2d(prior_point.x(), prior_point.y());
     }
 
@@ -423,6 +433,7 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
       next_point = linestring[prior_idx + 1].basicPoint2d(); // No need to check bounds as this class will reject routes with fewer than 2 points in a centerline
       x = prior_point.x();
       y = prior_point.y();
+
     }
     else
     {  // If this is the end point compute the crosstrack based on previous point
@@ -430,6 +441,7 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
       next_point = linestring[prior_idx].basicPoint2d();
       x = next_point.x();
       y = next_point.y();
+
     }
 
     // Compute the crosstrack
@@ -438,6 +450,7 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
                                     // to the target point
     double delta_x = cos(theta) * crosstrack;
     double delta_y = sin(theta) * crosstrack;
+
     return lanelet::BasicPoint2d(x + delta_x, y + delta_y);
   }
 
@@ -447,6 +460,8 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
   double prior_to_next_dist = next_downtrack - prior_downtrack;
   double prior_to_target_dist = relative_downtrack - prior_downtrack;
   double interpolation_percentage = 0;
+  
+
   if (prior_to_next_dist < 0.000001)
   {
     interpolation_percentage = 0;
@@ -455,9 +470,11 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
   {
     interpolation_percentage = prior_to_target_dist / prior_to_next_dist; // Use the percentage progress between both points to compute the downtrack point
   }
+
   auto prior_point = linestring[prior_idx].basicPoint2d();
   auto next_point = linestring[next_idx].basicPoint2d();
   auto delta_vec = next_point - prior_point;
+
   double x = prior_point.x() + interpolation_percentage * delta_vec.x();
   double y = prior_point.y() + interpolation_percentage * delta_vec.y();
 
@@ -468,8 +485,10 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
                                     // to the target point
     double delta_x = cos(theta) * crosstrack;
     double delta_y = sin(theta) * crosstrack;
+
     x += delta_x;  // Adjust x and y of target point to account for crosstrack
     y += delta_y;
+    
   }
 
   return lanelet::BasicPoint2d(x, y);

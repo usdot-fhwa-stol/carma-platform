@@ -93,6 +93,7 @@ namespace mobilitypath_visualizer {
 
         if (!map_projector_) {
             ROS_DEBUG_STREAM("Cannot visualize mobility path as map projection not yet available");
+            return;
         }
 
         MarkerColor cav_color;

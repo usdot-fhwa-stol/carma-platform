@@ -28,7 +28,6 @@
   <depend>std_msgs</depend>
   <depend>cav_srvs</depend>
   <depend>cav_msgs</depend>
-  <depend>carma_wm</depend>
   <depend>carma_utils</depend>
   <depend>trajectory_utils</depend>   
 </package>

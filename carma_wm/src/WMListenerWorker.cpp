@@ -129,12 +129,18 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   } else if (current_map_version_ > geofence_msg->map_version) { // If this update is for an older map
     ROS_WARN_STREAM("Dropping old map update as newer map is already available.");
     return;
+  } else if (most_recent_update_msg_seq_ + 1 < geofence_msg->header.seq) {
+    ROS_INFO_STREAM("Queuing map update as we are waiting on an earlier update to be applied. most_recent_update_msg_seq_: " << most_recent_update_msg_seq_ << "geofence_msg->header.seq: " << geofence_msg->header.seq);
+    map_update_queue_.push(geofence_msg);
+    return;
   }
+
 
   if(geofence_msg->invalidates_route==true && world_model_->getRoute())
   {  
     rerouting_flag_=true;
     recompute_route_flag_ = true;
+
     ROS_DEBUG_STREAM("Received notice that route has been invalidated in mapUpdateCallback");
 
     if(route_node_flag_!=true)
@@ -236,11 +242,13 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   
   // set the Map to trigger a new route graph construction if rerouting was required by the updates. 
   world_model_->setMap(world_model_->getMutableMap(), current_map_version_, recompute_route_flag_);
+
   
   // no need to reroute again unless received invalidated msg again
   if (recompute_route_flag_)
     recompute_route_flag_ = false;
   
+
   ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_); 
 
   // Call user defined map callback
@@ -349,7 +357,9 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     return;
   }
 
+
   if(rerouting_flag_==true && route_msg->is_rerouted )
+
   {
 
     // After setting map evaluate the current update queue to apply any updates that arrived before the map
@@ -376,6 +386,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     }
 
   }
+
   recompute_route_flag_ = false;
   rerouting_flag_ = false;
 

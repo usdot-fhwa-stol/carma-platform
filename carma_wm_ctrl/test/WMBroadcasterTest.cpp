@@ -2797,6 +2797,4 @@ ASSERT_EQ(value, p1);
 
 }
 
-
-
 }  // namespace carma_wm_ctrl

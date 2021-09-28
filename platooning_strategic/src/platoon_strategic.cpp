@@ -140,6 +140,11 @@ namespace platoon_strategic
                 lane_id =  stoi(maneuver.lane_following_maneuver.lane_ids[0]);
             }
         }
+        else
+        {
+            ROS_WARN_STREAM("Detected a maneuver other than LANE_FOLLOWING, which is currently not supported. Using 0 index...");
+            lane_id = 0;
+        }
     }
 
     
@@ -191,6 +196,11 @@ namespace platoon_strategic
             time_progress = req.prior_plan.planning_completion_time;
             int end_lanelet =0;
             updateCurrentStatus(req.prior_plan.maneuvers.back(),speed_progress,current_progress,end_lanelet);
+            if (end_lanelet == 0)
+            {
+                ROS_WARN_STREAM("Was not able to extract valid info from prior maneuver, returning...");
+                return true;
+            }
             last_lanelet_index = findLaneletIndexFromPath(end_lanelet,shortest_path);
         }
         bool approaching_route_end = false;
