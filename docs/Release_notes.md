@@ -19,7 +19,7 @@ Fixes in this release:
 -	Issue 1461: Fixed basic autonomy introduces errors in in lane-cruising
 -	Issue 1420: Fixed Platform and UI need to process/display the SPAT correctly and distinguish which SPAT is from the approaching traffic signal controller for the SV as traffic signal intersection ID and group ID that are not available.
 
-Version 3.7.1, released Sep 1st, 2021
+Version 3.7.2, released Sep 1st, 2021
 ----------------------------------------
 
 **Summary:** 
