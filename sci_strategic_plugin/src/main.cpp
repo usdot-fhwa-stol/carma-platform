@@ -66,10 +66,15 @@ int main(int argc, char** argv)
   ros::Subscriber current_pose_sub = nh.subscribe("current_pose", 1, &sci_strategic_plugin::SCIStrategicPlugin::currentPoseCb, &plugin);
 
 
+  ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &sci_strategic_plugin::SCIStrategicPlugin::BSMCb, &plugin);
+
   ros::Timer discovery_pub_timer =
       nh.createTimer(ros::Duration(ros::Rate(10.0)), [&plugin, &plugin_discovery_pub](const auto&) {
         plugin_discovery_pub.publish(plugin.getDiscoveryMsg());
       });
+  
+
+  plugin.mobility_operation_pub = nh.advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
 
   // Start
   ros::CARMANodeHandle::spin();

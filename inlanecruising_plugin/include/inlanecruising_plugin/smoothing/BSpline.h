@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,10 +18,10 @@
 
 #include <vector>
 #include <carma_wm/Geometry.h>
-#include <basic_autonomy/smoothing/SplineI.h>
+#include <inlanecruising_plugin/smoothing/SplineI.h>
 #include <unsupported/Eigen/Splines>
 
-namespace basic_autonomy
+namespace inlanecruising_plugin
 {
 namespace smoothing
 {
@@ -42,4 +42,4 @@ private:
   Spline2d spline_;
 };
 };  // namespace smoothing
-};  // namespace basic_autonomy
+};  // namespace inlanecruising_plugin

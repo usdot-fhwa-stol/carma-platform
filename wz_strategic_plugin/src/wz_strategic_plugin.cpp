@@ -261,18 +261,12 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
   ROS_DEBUG_STREAM("early_arrival_time_at_freeflow: " << std::to_string(early_arrival_time_at_freeflow.toSec()));
   ROS_DEBUG_STREAM("late_arrival_time_at_freeflow: " << std::to_string(late_arrival_time_at_freeflow.toSec()));
 
-  ROS_ERROR_STREAM("light_arrival_time_at_freeflow: " << std::to_string(light_arrival_time_at_freeflow.toSec()));
-  ROS_ERROR_STREAM("early_arrival_time_at_freeflow: " << std::to_string(early_arrival_time_at_freeflow.toSec()));
-  ROS_ERROR_STREAM("late_arrival_time_at_freeflow: " << std::to_string(late_arrival_time_at_freeflow.toSec()));
-
   auto early_arrival_state_at_freeflow_optional = nearest_traffic_light->predictState(early_arrival_time_at_freeflow);
 
   if (!validLightState(early_arrival_state_at_freeflow_optional, early_arrival_time_at_freeflow))
     return;
 
   ROS_DEBUG_STREAM("early_arrival_state_at_freeflow: " << early_arrival_state_at_freeflow_optional.get());
-  ROS_ERROR_STREAM("early_arrival_state_at_freeflow: " << early_arrival_state_at_freeflow_optional.get());
-
 
   auto late_arrival_state_at_freeflow_optional = nearest_traffic_light->predictState(late_arrival_time_at_freeflow);
 
@@ -416,6 +410,19 @@ bool WzStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_
 
     prev_state = transition_table_.getState();  // Cache previous state to check if state has changed after 1 iteration
 
+    /* NOTE: Leaving this commented out code is intentional to provide an easy way to monitor light state at runtime. If a better way is implemented then this can be removed
+    if (!traffic_list.empty()) { 
+      auto nearest_traffic_light = traffic_list.front();
+      ROS_ERROR_STREAM("\n\nCurrent Light State: " << nearest_traffic_light->getState().get() 
+      << std::endl <<  "                      1: " << nearest_traffic_light->predictState(ros::Time::now() + ros::Duration(1.0)).get()
+      << std::endl <<  "                      2: " << nearest_traffic_light->predictState(ros::Time::now() + ros::Duration(2.0)).get()
+      << std::endl <<  "                      3: " << nearest_traffic_light->predictState(ros::Time::now() + ros::Duration(3.0)).get()
+      << std::endl <<  "                      4: " << nearest_traffic_light->predictState(ros::Time::now() + ros::Duration(4.0)).get()
+      << std::endl <<  "                      5: " << nearest_traffic_light->predictState(ros::Time::now() + ros::Duration(5.0)).get()
+      << std::endl);
+    }
+    */
+    ROS_INFO_STREAM("Planning in state: " << transition_table_.getState());
     switch (transition_table_.getState())
     {
       case TransitState::UNAVAILABLE:
