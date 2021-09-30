@@ -573,6 +573,16 @@ void CARMAWorldModel::setRouteEndPoint(const lanelet::BasicPoint3d& end_point)
                                                                                   // consideration for endpoint
 }
 
+void CARMAWorldModel::setRouteName(const std::string& route_name)
+{
+  route_name_ = route_name;
+}
+
+std::string CARMAWorldModel::getRouteName() const 
+{
+  return route_name_;
+}
+
 lanelet::LineString3d CARMAWorldModel::copyConstructLineString(const lanelet::ConstLineString3d& line) const
 {
   std::vector<lanelet::Point3d> coppied_points;

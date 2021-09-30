@@ -128,6 +128,10 @@ public:
   /*! \brief Set endpoint of the route
    */
   void setRouteEndPoint(const lanelet::BasicPoint3d& end_point);
+
+  /*! \brief Set the name of the route
+   */
+  void setRouteName(const std::string& route_name);
  
   /*! \brief helper for traffic light Id
    */
@@ -177,6 +181,8 @@ public:
   lanelet::LaneletMapConstPtr getMap() const override;
 
   LaneletRouteConstPtr getRoute() const override;
+
+  std::string getRouteName() const override;
 
   TrackPos getRouteEndTrackPos() const override;
 
@@ -255,6 +261,8 @@ private:
   std::vector<cav_msgs::RoadwayObstacle> roadway_objects_; // 
 
   size_t map_version_ = 0; // The current map version. This is cached from calls to setMap();
+
+  std::string route_name_; // The current route name. This is set from calls to setRouteName();
   
   // The following constants are default timining plans for recieved traffic lights. 
   // The light is assumed to use these values until otherwise known

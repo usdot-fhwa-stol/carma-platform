@@ -186,6 +186,12 @@ public:
    */
   virtual LaneletRouteConstPtr getRoute() const = 0;
 
+  /*! \brief Get the current route name. 
+   *
+   * \return A string that matches the name of the current route.
+   */
+  virtual std::string getRouteName() const = 0;
+
   /*! \brief Get trackpos of the end of route point relative to the route
    *
    * \return Trackpos

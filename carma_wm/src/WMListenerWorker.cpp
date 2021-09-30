@@ -411,6 +411,8 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 
   world_model_->setRouteEndPoint({route_msg->end_point.x,route_msg->end_point.y,route_msg->end_point.z});
 
+  world_model_->setRouteName(route_msg->route_name);
+
   // Call route_callback_
   if (route_callback_)
   {
