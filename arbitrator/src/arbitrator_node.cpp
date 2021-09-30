@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,8 @@
 #include <memory>
 #include <map>
 #include <string>
+#include <carma_wm/WorldModel.h>
+#include <carma_wm/WMListener.h>
 #include "arbitrator.hpp"
 #include "arbitrator_state_machine.hpp"
 #include "cost_system_cost_function.hpp"
@@ -65,6 +67,10 @@ int main(int argc, char** argv)
 
     double planning_frequency;
     pnh.param("planning_frequency", planning_frequency, 1.0);
+
+    carma_wm::WMListener wml;
+    auto wm = wml.getWorldModel();
+
     arbitrator::Arbitrator arbitrator{
         &nh, 
         &pnh, 
@@ -72,7 +78,11 @@ int main(int argc, char** argv)
         &ci, 
         tp, 
         ros::Duration(min_plan_duration),
-        ros::Rate(planning_frequency)};
+        ros::Rate(planning_frequency),
+        wm };
+
+    ros::Subscriber pose_sub = nh.subscribe("current_pose", 1, &arbitrator::Arbitrator::pose_cb, &arbitrator);
+    ros::Subscriber twist_sub = nh.subscribe("current_velocity", 1, &arbitrator::Arbitrator::twist_cb, &arbitrator);
 
     arbitrator.run();
 

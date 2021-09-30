@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 #include "fixed_priority_cost_function.hpp"
 #include "arbitrator_utils.hpp"
 #include "cav_msgs/ManeuverParameters.h"
+#include <ros/ros.h>
 #include <limits>
 
 namespace arbitrator
@@ -37,6 +38,7 @@ namespace arbitrator
         for (auto it = plugin_priorities.begin(); it != plugin_priorities.end(); it++)
         {
             plugin_costs_[it->first] = 1.0 - (it->second / max_priority);
+            ROS_INFO_STREAM("FixedPriorityCostFunction: " << "Plugin: " << it->first << " Normalized Cost: " << plugin_costs_[it->first]);
         }
     }
 

@@ -20,7 +20,11 @@
 #include <cav_msgs/MobilityOperation.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <std_msgs/String.h>
+#include <cav_srvs/SetActiveRoute.h>
 #include <boost/optional.hpp>
+
 
 #include "port_drayage_plugin/port_drayage_state_machine.h"
 
@@ -32,16 +36,24 @@ namespace port_drayage_plugin
      */
     struct PortDrayageMobilityOperationMsg
     {
-        std::string cargo_id;
+        boost::optional<std::string> cargo_id;
         std::string operation;
         PortDrayageEvent port_drayage_event_type; // PortDrayageEvent associated with this message
         bool has_cargo; // Flag to indicate whether vehicle has cargo during this action
-        std::string current_action_id;
-        std::string next_action_id;
-        boost::optional<double> dest_longitude;
-        boost::optional<double> dest_latitude;
+        boost::optional<std::string> current_action_id; // Identifier for the action this message is related to
+        boost::optional<double> dest_longitude;  // Destination longitude for the carma vehicle
+        boost::optional<double> dest_latitude;   // Destination latitude for the carma vehicle
         boost::optional<double> start_longitude; // Starting longitude of the carma vehicle
-        boost::optional<double> start_latitude; // Starting latitude of the carma vehicle
+        boost::optional<double> start_latitude;  // Starting latitude of the carma vehicle
+    };
+
+    /**
+     * Convenience struct for storing the vehicle's current latitude/longitude coordinates
+     */
+    struct LatLonCoordinate
+    {
+        double latitude = 0.0;
+        double longitude = 0.0;
     };
 
     /**
@@ -61,15 +73,18 @@ namespace port_drayage_plugin
             PortDrayageStateMachine _pdsm;
             std::string _host_id;
             std::string _host_bsm_id;
-            std::string _cmv_id;
+            unsigned long _cmv_id;
             std::string _cargo_id;
             std::function<void(cav_msgs::MobilityOperation)> _publish_mobility_operation;
+            std::function<bool(cav_srvs::SetActiveRoute)> _set_active_route;
+            bool _has_cargo;
+            std::shared_ptr<lanelet::projection::LocalFrameProjector> _map_projector = nullptr;
 
             // Data member for storing the strategy_params field of the last processed port drayage MobilityOperation message intended for this vehicle's cmv_id
             std::string _previous_strategy_params;
 
             // Constants
-            const std::string PORT_DRAYAGE_PLUGIN_ID = "Port Drayage Plugin";
+            const std::string PORT_DRAYAGE_PLUGIN_ID = "PortDrayagePlugin";
             const std::string PORT_DRAYAGE_STRATEGY_ID = "carma/port_drayage";
             const std::string PORT_DRAYAGE_ARRIVAL_OPERATION_ID = "ARRIVED_AT_DESTINATION";
 
@@ -78,7 +93,7 @@ namespace port_drayage_plugin
             /**
              * \brief Standard constructor for the PortDrayageWorker
              * 
-             * \param cmv_id The Carrier Motor Vehicle ID string for the host
+             * \param cmv_id The Carrier Motor Vehicle ID (an unsigned long) for the host
              * vehicle
              * 
              * \param cargo_id The identification string for the cargo carried
@@ -96,16 +111,21 @@ namespace port_drayage_plugin
              * comparing the current vehicle's speed to 0.0
              */
             PortDrayageWorker(
-                std::string cmv_id,
+                unsigned long cmv_id,
                 std::string cargo_id,
                 std::string host_id,
-                std::function<void(cav_msgs::MobilityOperation)> mobility_operations_publisher, 
+                std::function<void(cav_msgs::MobilityOperation)> mobility_operations_publisher,
+                std::function<bool(cav_srvs::SetActiveRoute)> call_set_active_route_client, 
                 double stop_speed_epsilon) :
                 _cmv_id(cmv_id),
                 _cargo_id(cargo_id),
                 _host_id(host_id),
                 _publish_mobility_operation(mobility_operations_publisher),
-                _stop_speed_epsilon(stop_speed_epsilon) {};
+                _set_active_route(call_set_active_route_client),
+                _stop_speed_epsilon(stop_speed_epsilon) {
+                    initialize();
+                    _has_cargo = (_cargo_id == "") ? false : true;
+                };
 
 
             /**
@@ -115,9 +135,23 @@ namespace port_drayage_plugin
             void initialize();
 
             /**
-             * \brief Callback for usage by the PortDrayageStateMachine
+             * \brief Callback for usage by the PortDrayageStateMachine when the vehicle has arrived at a destination
              */
             void on_arrived_at_destination();
+
+            /**
+             * \brief Callback for usage by the PortDrayageStateMachine when the vehicle has received a new destination
+             */
+            void on_received_new_destination();
+
+            /**
+             * \brief Create a SetActiveRoute service request to set a new active route for the system based on
+             *        the destination points contained in the most recently-received Port Drayage MobilityOperation message
+             *        intended for this vehicle.
+             * \param dest_latitude The destination point's latitude
+             * \param dest_longitude The destination point's longitude
+             */
+            cav_srvs::SetActiveRoute compose_set_active_route_request(boost::optional<double> dest_latitude, boost::optional<double> dest_longitude) const;
 
             /**
              * \brief Assemble the current dataset into a MobilityOperations
@@ -134,6 +168,18 @@ namespace port_drayage_plugin
              * \brief Set the current speed as measured by the vehicle's sensors
              */
             void set_current_speed(const geometry_msgs::TwistStampedConstPtr& speed);
+
+            /**
+            * \brief Callback for map projection string to define lat/lon <--> map conversion
+            * \param msg The proj string defining the projection.
+             */
+            void on_new_georeference(const std_msgs::StringConstPtr& msg);   
+
+            /**
+             * \brief Callback for the pose subscriber. The pose will be converted into lat/lon and stored locally.
+             * \param msg Latest pose message
+             */
+            void on_new_pose(const geometry_msgs::PoseStampedConstPtr& msg);          
 
             /**
              * \brief Callback to process a received MobilityOperation message
@@ -167,6 +213,9 @@ namespace port_drayage_plugin
 
             // PortDrayageMobilityOperationMsg object for storing strategy_params data of a received port drayage MobilityOperation message intended for this vehicle's cmv_id
             PortDrayageMobilityOperationMsg _latest_mobility_operation_msg;
+
+            // LatLonCoordinate object for storing the vehicle's current gps latitude/longitude coordinates
+            LatLonCoordinate _current_gps_position;
 
     };
 } // namespace port_drayage_plugin
