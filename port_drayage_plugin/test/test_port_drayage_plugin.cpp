@@ -28,7 +28,6 @@
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_wm/WMTestLibForGuidance.h>
 #include <lanelet2_extension/regulatory_elements/StopRule.h>
-#include <novatel_gps_msgs/Inspva.h>
 
 TEST(PortDrayageTest, testComposeArrivalMessage)
 {
