@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2018-2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -94,4 +94,10 @@ install(DIRECTORY launch config
 catkin_add_gmock(${PROJECT_NAME}-test
 test/test_route_following_plugin.cpp
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+
+catkin_add_gmock(${PROJECT_NAME}-stopping-test
+test/test_stop_at_end_of_route.cpp
+ WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+ 
 target_link_libraries(${PROJECT_NAME}-test route_following_plugin_lib ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}-stopping-test route_following_plugin_lib ${catkin_LIBRARIES})

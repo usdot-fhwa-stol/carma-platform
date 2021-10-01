@@ -1,6 +1,35 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 3.8.0, released Sep 24th, 2021
+----------------------------------------
+
+**Summary:**
+Carma-platform release version 3.8.0 is comprised of two major enhancements. First, Cooperative Traffic Signaling (CTS), fixed signal transit for Work Zones using a SPaT message a vehicle plans a maneuver to proceed through the intersection as efficiently as possible, or come to a safe stop if needed. Second lane geometry updates affected by a geofence to split and stitch lanelets together to match the geofence requirements. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
+
+Enhancements in this release:
+-	Issue 1366: Added Work Zone use case node that can process intersection transit maneuvering messages sent from Carma Cloud.
+-	Issue 1363: Updated Work zone use case related map modification in Geofence, Developed logic to identify which lanelets are affected by a Geofence which involves a geometry change and how to split stitch lanelets together to match the work zone Geofence requirements.
+-	Issue 1377: Updated Strategic plugin to use Plan Maneuvers service call to include the initial vehicle state at the start of planning and removed duplicated code to get the current position/lane/velocity information in order to begin maneuver planning.
+
+Fixes in this release:
+-	Issue 1172: Updated Stop and Wait plugin to use a constant acceleration for planning stopping maneuvers at the end of a route and also updated In lane cruising to prevent overlapping points on lanelet transitions
+-	Issue 1371: Fixed both carma-platform and carma-msg’s Maneuver Parameters message value “negotiation type” is incorrectly spelled as "neogition_type" in multiple files.
+-	Issue 1383: Fixed Ci failing due to package of pure pursuit jerk wrapper in SonarQube.
+-	Issue 1461: Fixed basic autonomy introduces errors in in lane-cruising
+-	Issue 1420: Fixed Platform and UI need to process/display the SPAT correctly and distinguish which SPAT is from the approaching traffic signal controller for the SV as traffic signal intersection ID and group ID that are not available.
+
+Version 3.7.2, released Sep 1st, 2021
+----------------------------------------
+
+**Summary:** 
+Carma-platform release version 3.7.2 is a hotfix release for 3.7.0.
+
+Fixes in this release:
+-	Issue 1426: Route Following Plugin can seg fault in the presence of a lane change after a reroute.
+-	Issue 1427: Rerouting triggered multiple time from TIM geofence.
+-	Issue 1428: Excessive steering during lane change along curve at ACM 
+
 Version 3.7.0, released Aug 10th, 2021
 ----------------------------------------
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 #include "capabilities_interface.hpp"
 #include <cav_srvs/PlanManeuvers.h>
 #include <exception>
+#include <sstream>
 
 namespace arbitrator
 {
@@ -32,7 +33,15 @@ namespace arbitrator
         if (query_string == STRATEGIC_PLAN_CAPABILITY && sc_s.call(srv))
         {
             topics = srv.response.plan_service;
-            ROS_INFO_STREAM("Received Topic: " << topics.front());
+            
+            // Log the topics
+            std::ostringstream stream;
+            stream << "Received Topics: ";
+            for (const auto& topic : topics) {
+                stream << topic << ", ";
+            }
+            stream << std::endl;
+            ROS_INFO(stream.str().c_str());
         }
 
         return topics;

@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2020-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/uuid_generators.hpp>
+#include <cav_msgs/TrafficControlMessageV01.h>
 
 
 namespace carma_wm_ctrl
@@ -49,14 +50,24 @@ public:
 
   std::string type_;
   
+  lanelet::Points3d gf_pts;
 
+  // lanelets additions needed or broadcasting to the rest of map users
+  std::vector<lanelet::Lanelet> lanelet_additions_;
+  
   // TODO Add rest of the attributes provided by geofences in the future
 /* following regulatory element pointer is a placeholder created with rule name 'basic_regulatory_element' to later point to 
 specific type of regulatory element (such as digital speed limit, passing control line)*/
 
   lanelet::RegulatoryElementPtr regulatory_element_ = lanelet::RegulatoryElementFactory::create("regulatory_element", lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_mph, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
-                                                     
+  
+  // traffic light id lookup
+  std::vector<std::pair<uint32_t, lanelet::Id>> traffic_light_id_lookup_;
+  // used in workzone geofence creation. it stores SIG_WZ TCM's label.
+  // used for storing intersection and signal group id for trafficlight, for example: "TYPE:SIG_WZ,INT_ID:<intersection id>,SG_ID:<signal group id>""
+  std::string label_;
+
   // elements needed for broadcasting to the rest of map users
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;
@@ -64,6 +75,9 @@ specific type of regulatory element (such as digital speed limit, passing contro
   // we need mutable elements saved here as they will be added back through update function which only accepts mutable objects
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> prev_regems_;
   lanelet::ConstLaneletOrAreas affected_parts_;
+
+  // original message for this geofence
+  cav_msgs::TrafficControlMessageV01 msg_;
   
   // Helper member for PassingControlLine type regulatory geofence
   bool pcl_affects_left_ = false;

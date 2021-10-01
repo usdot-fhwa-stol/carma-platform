@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2020-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -406,57 +406,101 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
 
 TEST(RouteGeneratorTest, test_set_active_route_cb)
 {
-    carma_wm::WorldModelConstPtr wm;
+    ros::Time::init(); // Initializing ros time so that ros::Time::now() can be used
+
+    ////////////
+    // Conduct tests for set_active_route_cb() using a route .csv file
+    ////////////
+    std::shared_ptr<carma_wm::CARMAWorldModel> cmw=std::make_shared<carma_wm::CARMAWorldModel>();    
     route::RouteGeneratorWorker worker;
     worker.set_route_file_path("../resource/route/");
-    cav_srvs::GetAvailableRoutesRequest req;
-    cav_srvs::GetAvailableRoutesResponse resp;
-    ASSERT_TRUE(worker.get_available_route_cb(req, resp));
-
-    std::string proj = "+proj=tmerc +lat_0=38.95197911150576 +lon_0=-77.14835128349988 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+    worker.setWorldModelPtr(cmw);
     
+    // Set projection
+    int projector_type = 0;
+    std::string target_frame;
+    lanelet::ErrorMessages load_errors;
+
+    // Load map file and parameters
+    std::string file = "../resource/map/town01_vector_map_1.osm";
+    lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+    lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+    lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+    // Set map
+    cmw->carma_wm::CARMAWorldModel::setMap(map);
+
+    // Set georeference
+    std::string proj = "+proj=tmerc +lat_0=4.9000000000000000e+1 +lon_0=8.0000000000000000e+0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs";
     std_msgs::String str_msg;
     str_msg.data = proj;
     std_msgs::StringConstPtr msg_ptr(new std_msgs::String(str_msg));
-    worker.georeference_cb(msg_ptr);  // Set projection
+    worker.georeference_cb(msg_ptr);  
 
-    std::cout << "Available Route : " << resp.availableRoutes.size() << "\n";
-    ASSERT_EQ(4, resp.availableRoutes.size());
+    // Conduct tests for get_available_route_cb()
+    cav_srvs::GetAvailableRoutesRequest req;
+    cav_srvs::GetAvailableRoutesResponse resp;
+    ASSERT_TRUE(worker.get_available_route_cb(req, resp));
+    ASSERT_EQ(5, resp.availableRoutes.size());
+
     for(auto i = 0; i < resp.availableRoutes.size();i++)    
     {
-        if(resp.availableRoutes[i].route_id  == "tfhrc_test_route")
+        if(resp.availableRoutes[i].route_id  == "Test_town01_route_1")
         {
-            std::cout <<"C-HUB : " << resp.availableRoutes[i].route_name << "\n";
-            auto points = worker.load_route_destinations_in_map_frame("tfhrc_test_route");
-            std::cout << "Point Size : " << points.size()<<"\n";
-            ASSERT_EQ(5, points.size());
-            ASSERT_NEAR(-170.21389078, points[0].x(), 0.001);
-            ASSERT_NEAR(498.11200005, points[0].y(), 0.001);  
-            ASSERT_NEAR(72, points[0].z(), 0.001);
+            ASSERT_EQ("DEST3", resp.availableRoutes[i].route_name);
+            auto gps_points = worker.load_route_destination_gps_points_from_route_id("Test_town01_route_1");
+            auto map_points = worker.load_route_destinations_in_map_frame(gps_points);
+
+            ASSERT_EQ(3, map_points.size());
+            ASSERT_NEAR(-9.45542, map_points[0].x(), 0.001);
+            ASSERT_NEAR(-182.324, map_points[0].y(), 0.001);  
+            ASSERT_NEAR(72, map_points[0].z(), 0.001);
         }
     }
-    cav_srvs::SetActiveRouteRequest req2;
-    cav_srvs::SetActiveRouteResponse resp2;
-    geometry_msgs::PoseStamped msg;
 
     //Assign vehicle position
-    msg.pose.position.x = 1106580;
-    msg.pose.position.y = 894697;
+    geometry_msgs::PoseStamped msg;
+    msg.pose.position.x = -9.45542;
+    msg.pose.position.y = -182.324;
     geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
     worker.pose_cb(mpt);
 
-    resp2.errorStatus = 0;
-
+    cav_srvs::SetActiveRouteRequest req2;
+    cav_srvs::SetActiveRouteResponse resp2;
     for(auto i: resp.availableRoutes)
     {
-        if(i.route_id  == "tfhrc_test_route")
+        if(i.route_id  == "Test_town01_route_1")
         {
             req2.routeID = i.route_id;
-
+            req2.choice = cav_srvs::SetActiveRouteRequest::ROUTE_ID;
             ASSERT_EQ(worker.set_active_route_cb(req2, resp2), true);
+            ASSERT_EQ(resp2.errorStatus, cav_srvs::SetActiveRouteResponse::NO_ERROR);
         }
+    }
 
-   }
+    ////////////
+    // Conduct tests for set_active_route_cb() using an array of destination points in the service request
+    ////////////
+    route::RouteGeneratorWorker worker2;
+    worker2.georeference_cb(msg_ptr); 
+    worker2.setWorldModelPtr(cmw);
+    worker2.set_route_file_path("../resource/route/");
+    worker2.pose_cb(mpt);
+
+    // Create array of destination points for the SetActiveRoute request
+    cav_msgs::Position3D destination;
+    destination.latitude = -10440.3912269;
+    destination.longitude = -541.755427;
+    destination.elevation_exists = false;
+
+    // Create SetActiveRoute request and response, and set necessary fields in the request
+    cav_srvs::SetActiveRouteRequest req4;
+    cav_srvs::SetActiveRouteResponse resp4;
+    req4.destination_points.push_back(destination);
+    req4.choice = req4.choice = cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY;
+
+    ASSERT_EQ(worker2.set_active_route_cb(req4, resp4), true);
+    ASSERT_EQ(resp4.errorStatus, cav_srvs::SetActiveRouteResponse::NO_ERROR);
 }
 
 TEST(RouteGeneratorTest, test_duplicate_lanelets_in_shortest_path)

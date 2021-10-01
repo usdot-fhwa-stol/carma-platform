@@ -32,6 +32,7 @@ namespace waypoint_generation
      */
     int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
                                                  const cav_msgs::VehicleState& state);
+
     /**
      * \brief Returns the nearest point (in terms of cartesian 2d distance) to the provided vehicle pose in the provided list
      * 
@@ -42,6 +43,7 @@ namespace waypoint_generation
      */
     int get_nearest_point_index(const std::vector<PointSpeedPair>& points,
                                                  const cav_msgs::VehicleState& state);
+
     /**
      * \brief Returns the nearest "less than" point to the provided vehicle pose in the provided list by utilizing the downtrack measured along the route
      * NOTE: This function compares the downtrack, provided by routeTrackPos, of each points in the list to get the closest one to the given point's downtrack.
@@ -64,6 +66,7 @@ namespace waypoint_generation
     void split_point_speed_pairs(const std::vector<PointSpeedPair>& points,
                                                 std::vector<lanelet::BasicPoint2d>* basic_points,
                                                 std::vector<double>* speeds);
+
     /**
      * \brief Overload: Returns the nearest point to the provided vehicle pose in the provided list by utilizing the downtrack measured along the route
      * NOTE: This function compares the downtrack, provided by routeTrackPos, of each points in the list to get the closest one to the given point's downtrack.
@@ -92,7 +95,8 @@ namespace waypoint_generation
      * \return index of nearest point in points
      */
     int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm,
-                                      const cav_msgs::VehicleState& state);
+                                      const cav_msgs::VehicleState& state);                                                                                                                               
+
 
 }
 }
