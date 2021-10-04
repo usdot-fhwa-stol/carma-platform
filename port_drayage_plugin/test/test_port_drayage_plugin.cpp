@@ -637,13 +637,11 @@ TEST(PortDrayageTest, testComposeUIInstructions)
         [](cav_srvs::SetActiveRoute){return true;} 
     };
 
-    // First received MobilityOperation message is for a 'PICKUP' operation. Verify the created UI Instructions message:
-    port_drayage_plugin::PortDrayageMobilityOperationMsg mob_op_msg;
-    mob_op_msg.operation = "PICKUP";
-
+    // First 'operation' is for 'PICKUP'. Verify the created UI Instructions message:
+    std::string current_operation = "PICKUP";
     std::string previous_operation = "";
 
-    cav_msgs::UIInstructions ui_instructions_msg = pdw.compose_ui_instructions(mob_op_msg, previous_operation);
+    cav_msgs::UIInstructions ui_instructions_msg = pdw.compose_ui_instructions(current_operation, previous_operation);
 
     ASSERT_EQ(ui_instructions_msg.msg, "A new Port Drayage route with operation type 'PICKUP' has been received. "
                                   "Select YES to engage the system on the route, or select NO to remain "
@@ -652,10 +650,10 @@ TEST(PortDrayageTest, testComposeUIInstructions)
     ASSERT_EQ(ui_instructions_msg.response_service, "/guidance/set_guidance_active");
 
     // Second received MobilityOperation message is for a 'DROPOFF' operation. The previous 'PICKUP' operation has been completed.
-    mob_op_msg.operation = "DROPOFF";
+    current_operation = "DROPOFF";
     previous_operation = "PICKUP";
 
-    ui_instructions_msg = pdw.compose_ui_instructions(mob_op_msg, previous_operation);
+    ui_instructions_msg = pdw.compose_ui_instructions(current_operation, previous_operation);
 
     ASSERT_EQ(ui_instructions_msg.msg, "The pickup action was completed successfully. A new Port Drayage route with operation type 'DROPOFF' has been received. "
                                   "Select YES to engage the system on the route, or select NO to remain "
@@ -664,10 +662,10 @@ TEST(PortDrayageTest, testComposeUIInstructions)
     ASSERT_EQ(ui_instructions_msg.response_service, "/guidance/set_guidance_active");
 
     // Third received MobilityOperation message is for a 'PICKUP' operation. The previous 'DROPOFF' operation has been completed.
-    mob_op_msg.operation = "PICKUP";
+    current_operation = "PICKUP";
     previous_operation = "DROPOFF";
 
-    ui_instructions_msg = pdw.compose_ui_instructions(mob_op_msg, previous_operation);
+    ui_instructions_msg = pdw.compose_ui_instructions(current_operation, previous_operation);
 
     ASSERT_EQ(ui_instructions_msg.msg, "The dropoff action was completed successfully. A new Port Drayage route with operation type 'PICKUP' has been received. "
                                   "Select YES to engage the system on the route, or select NO to remain "

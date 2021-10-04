@@ -77,7 +77,7 @@ namespace port_drayage_plugin
 
         if (is_route_generation_successful) {
             // Publish UI Instructions to trigger a pop-up on the Web UI for the user to engage on the newly received route if desired
-            cav_msgs::UIInstructions ui_instructions_msg = compose_ui_instructions(_latest_mobility_operation_msg, _previously_completed_operation);
+            cav_msgs::UIInstructions ui_instructions_msg = compose_ui_instructions(_latest_mobility_operation_msg.operation, _previously_completed_operation);
             _publish_ui_instructions(ui_instructions_msg);
         }
         else {
@@ -107,7 +107,7 @@ namespace port_drayage_plugin
         return route_req;
     }
 
-    cav_msgs::UIInstructions PortDrayageWorker::compose_ui_instructions(const PortDrayageMobilityOperationMsg& msg, const std::string& previous_operation) {
+    cav_msgs::UIInstructions PortDrayageWorker::compose_ui_instructions(const std::string& current_operation, const std::string& previous_operation) {
         // Create the text that will be displayed in the Web UI popup
         std::string popup_text = "";
 
@@ -120,9 +120,9 @@ namespace port_drayage_plugin
         }
 
         // Add text to notify the user that the system can be engaged on the newly received route
-        popup_text += "A new Port Drayage route with operation type '" + msg.operation + "' has been received. "
+        popup_text += "A new Port Drayage route with operation type '" + current_operation + "' has been received. "
                       "Select YES to engage the system on the route, or select NO to remain "
-                       "disengaged.";
+                      "disengaged.";
 
         // Create and populate the UI Instructions message
         cav_msgs::UIInstructions ui_instructions_msg;
