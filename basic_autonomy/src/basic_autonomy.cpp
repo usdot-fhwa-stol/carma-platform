@@ -39,12 +39,12 @@ namespace basic_autonomy
 
                 if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING){
                     ROS_DEBUG_STREAM("Creating Lane Follow Geometry");
-                    std::vector<PointSpeedPair> lane_follow_points = create_lanefollow_geometry(maneuver, max_starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config);
+                    std::vector<PointSpeedPair> lane_follow_points = create_lanefollow_geometry(maneuver, starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config);
                     points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
                 }
                 else if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE){
                     ROS_DEBUG_STREAM("Creating Lane Change Geometry");
-                    std::vector<PointSpeedPair> lane_change_points = create_lanechange_geometry(maneuver, max_starting_downtrack, wm, ending_state_before_buffer, state, detailed_config);
+                    std::vector<PointSpeedPair> lane_change_points = create_lanechange_geometry(maneuver, starting_downtrack, wm, ending_state_before_buffer, state, detailed_config);
                     points_and_target_speeds.insert(points_and_target_speeds.end(), lane_change_points.begin(), lane_change_points.end());
                 }
                 else{
