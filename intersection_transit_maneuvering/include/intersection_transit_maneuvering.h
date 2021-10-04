@@ -27,7 +27,6 @@
 #include <cav_msgs/IntersectionTransitRightTurnManeuver.h>
 #include <cav_msgs/IntersectionTransitStraightManeuver.h>
 #include <cav_srvs/PlanTrajectory.h>
-#include <carma_wm/WMListener.h>
 #include <functional>
 #include <unordered_set>
 #include <ros/ros.h>
@@ -45,11 +44,10 @@ namespace intersection_transit_maneuvering
         /**
         * \brief Constructor
         * 
-        * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
         * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
         * \param obj Interface object to initialize ros::Service::call
         */ 
-        IntersectionTransitManeuvering(carma_wm::WorldModelConstPtr wm, PublishPluginDiscoveryCB plugin_discovery_publisher, std::shared_ptr<CallInterface> obj);
+        IntersectionTransitManeuvering(PublishPluginDiscoveryCB plugin_discovery_publisher, std::shared_ptr<CallInterface> obj);
                        
         /**
          * \brief Service callback for trajectory planning

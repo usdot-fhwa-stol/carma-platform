@@ -16,24 +16,20 @@
 
 #include <gmock/gmock.h>
 #include <ros/ros.h>
-#include <carma_wm/CARMAWorldModel.h>
 #include <cav_msgs/Maneuver.h>
 #include <intersection_transit_maneuvering.h>
 #include <chrono>
 #include <ctime>
 #include <cav_srvs/PlanTrajectory.h>
 #include <math.h>
-#include <tf/LinearMath/Vector3.h>
 #include <string>
 #include <algorithm>
 #include <memory>
-#include <lanelet2_core/geometry/Point.h>
 #include <trajectory_utils/trajectory_utils.h>
 #include <trajectory_utils/conversions/conversions.h>
 #include <sstream>
 #include <carma_utils/containers/containers.h>
 #include <ros/console.h>
-#include <carma_wm/WMTestLibForGuidance.h>
 #include "call_test.h"
 
 namespace intersection_transit_maneuvering
@@ -42,16 +38,11 @@ namespace intersection_transit_maneuvering
 /*Test Callback Operation*/
 TEST(Intersection_Transit_Maneuvering_Test, Planning_Callback_Test)
 {
-    /*Create World Model Pointer and Set the Map */
-    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-    auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10);
-    wm->setMap(map);
 
-    carma_wm::WorldModelConstPtr wm_ = wm;
     std::shared_ptr<call_test::CallTest> object = std::make_shared<call_test::CallTest>();
     std::shared_ptr<CallInterface> obj = object;
     
-    IntersectionTransitManeuvering itm_node(wm_, [&](auto msg) {}, obj);
+    IntersectionTransitManeuvering itm_node([&](auto msg) {}, obj);
 
     cav_msgs::Maneuver man0, man1;
     std::vector<cav_msgs::TrajectoryPlanPoint> points; 
@@ -145,14 +136,8 @@ TEST(Intersection_Transit_Maneuvering_Test, Planning_Callback_Test)
 
 TEST(Intersection_Transit_Maneuvering_Test, Convert_Maneuvers_Test)
 {
-    /*Create World Model Pointer and Set the Map */
-    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-    auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10);
-    wm->setMap(map);
-
-    carma_wm::WorldModelConstPtr wm_ = wm;
     std::shared_ptr<CallInterface> obj;
-    IntersectionTransitManeuvering itm_node(wm_, [&](auto msg) {}, obj);
+    IntersectionTransitManeuvering itm_node([&](auto msg) {}, obj);
 
     std::vector<cav_msgs::Maneuver> maneuvers;
 

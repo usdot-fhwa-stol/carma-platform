@@ -32,6 +32,7 @@
 #include <cav_msgs/ExternalObject.h>
 #include <cav_msgs/ExternalObjectList.h>
 #include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 #include "TrackPos.h"
 
 namespace carma_wm
@@ -185,6 +186,12 @@ public:
    */
   virtual LaneletRouteConstPtr getRoute() const = 0;
 
+  /*! \brief Get the current route name. 
+   *
+   * \return A string that matches the name of the current route.
+   */
+  virtual std::string getRouteName() const = 0;
+
   /*! \brief Get trackpos of the end of route point relative to the route
    *
    * \return Trackpos
@@ -214,7 +221,15 @@ public:
    * no rule set is available for the requested participant.
    */
   virtual lanelet::Optional<TrafficRulesConstPtr>
-  getTrafficRules(const std::string& participant = lanelet::Participants::Vehicle) const = 0;
+  getTrafficRules(const std::string& participant) const = 0;
+
+  /**
+   * @brief Get the Traffic Rules object 
+   * @return  Optional Shared pointer to an intialized traffic rules object which is used by carma. A default participant value will be used
+   * in case setVehicleParticipationType is not called. Acceptable participants are Vehicle, VehicleCar, and VehicleTruck
+   */
+  virtual lanelet::Optional<TrafficRulesConstPtr>
+  getTrafficRules() const = 0;
 
   /**
    * \brief Converts an ExternalObject in a RoadwayObstacle by mapping its position onto the semantic map. Can also be
@@ -352,6 +367,18 @@ public:
    * \return list of traffic lights along the current route
    */
   virtual std::vector<lanelet::CarmaTrafficLightPtr> getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const = 0;
+
+  /**
+   * \brief  Return a list of all way stop intersections along the current route.  
+   * The tall way stop intersections along a route and the next all way stop intersections ahead of us on the route specifically, 
+   * so a sorted list (by downtrack distance) of all way stop intersections on the route ahead of us thus eliminating those behind the vehicle.
+   *
+   * \param loc location
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or route is not set
+   *
+   * \return list of all way stop intersections along the current route
+   */
+  virtual std::vector<std::shared_ptr<lanelet::AllWayStop>> getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const = 0;
 
   /**
    * \brief Given the cartesian point on the map, tries to get the opposite direction lanelet on the left
