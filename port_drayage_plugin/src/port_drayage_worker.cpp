@@ -86,6 +86,7 @@ namespace port_drayage_plugin
         cav_srvs::SetActiveRoute route_req;
         if (dest_latitude && dest_longitude) {
             route_req.request.choice = cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY;
+            route_req.request.routeID = _latest_mobility_operation_msg.operation;
 
             cav_msgs::Position3D destination_point;
             destination_point.latitude = *_latest_mobility_operation_msg.dest_latitude;

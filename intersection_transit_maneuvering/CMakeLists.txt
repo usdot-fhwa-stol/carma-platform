@@ -27,7 +27,6 @@ set( CATKIN_DEPS
   std_msgs
   cav_msgs
   cav_srvs
-  carma_wm
   carma_utils
   trajectory_utils
 )

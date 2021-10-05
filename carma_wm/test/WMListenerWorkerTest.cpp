@@ -276,6 +276,24 @@ TEST(WMListenerWorkerTest, setConfigSpeedLimitTest)
 
 }
 
+TEST(WMListenerWorkerTest, getVehicleParticipationTypeTest)
+{
+  WMListenerWorker wmlw;
+
+  bool flag = false;
+  std::string pt = lanelet::Participants::VehicleTruck;
+  ///// Test without user defined config limit
+  wmlw.setVehicleParticipationType(pt);
+
+  std::string current_pt;
+
+  current_pt = wmlw.getVehicleParticipationType();
+
+  ASSERT_EQ(pt, current_pt);
+  ROS_INFO_STREAM("Participant = "<< current_pt);
+
+}
+
 TEST(WMListenerWorkerTest, checkIfReRoutingNeeded1)
 {
   WMListenerWorker wmlw;

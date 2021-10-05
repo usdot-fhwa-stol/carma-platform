@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -63,7 +63,6 @@ public:
                      config.speed_moving_average_window_size);
     pnh.param<int>("curvature_moving_average_window_size", config.curvature_moving_average_window_size,
                      config.curvature_moving_average_window_size);
-    pnh.param<double>("buffer_ending_downtrack", config.buffer_ending_downtrack, config.buffer_ending_downtrack);
     pnh.param<double>("/vehicle_acceleration_limit", config.max_accel, config.max_accel);
     pnh.param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
     pnh.param<bool>("enable_object_avoidance", config.enable_object_avoidance, config.enable_object_avoidance);

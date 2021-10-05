@@ -54,6 +54,8 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <cav_msgs/TrafficControlRequestPolygon.h>
 #include <carma_wm/WorldModelUtils.h>
+#include <std_msgs/Int32MultiArray.h>
+
 
 namespace carma_wm_ctrl
 {
@@ -168,15 +170,28 @@ public:
    * \brief Sets the configured speed limit. 
    */
   void setConfigSpeedLimit(double cL);
-  
+
+/**
+ * @brief Set the Vehicle Participation Type 
+ * 
+ * @param participant vehicle participation type
+ */
+  void setVehicleParticipationType(std::string participant);
+
+  /**
+   * @brief Get the Vehicle Participation Type object
+   * 
+   * @return Current Vehicle Participation Type being used in this World Model Instance
+   */
+  std::string getVehicleParticipationType();
+
   /*!
-   * \brief Returns geofence object from TrafficControlMessageV01 ROS Msg
+   * \brief Fills geofence object from TrafficControlMessageV01 ROS Msg
+   * \param Geofence object to fill with information extracted from this msg and previously cached msgs that are relevant
    * \param geofence_msg The ROS msg that contains geofence information
    * \throw InvalidObjectStateError if base_map is not set or the base_map's georeference is empty
-   * \return list of geofences extracted from this geofence and previously cached msgs that are relevant
-   * NOTE: Currently only work_zone related msgs return multiple geofences upon receiving all necessary msgs in work_zone_geofence_cache_
    */
-  std::vector<std::shared_ptr<Geofence>> geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& geofence_msg);
+  void geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& geofence_msg);
 
   /*!
    * \brief Returns the route distance (downtrack or crosstrack in meters) to the nearest active geofence lanelet
@@ -238,9 +253,6 @@ public:
    */ 
   void newUpdateSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const;
 
-  visualization_msgs::MarkerArray tcm_marker_array_;
-  cav_msgs::TrafficControlRequestPolygon tcr_polygon_;
-  
   /*!
    * \brief Returns the most recently recieved route message.
    * 
@@ -257,9 +269,9 @@ public:
    * \param work_zone_geofence_cache Geofence map with size of 4 corresponding to CLOSED, TAPERRIGHT, OPENRIGHT, REVERSE TrafficControlMessages.
                                      Each should have gf_pts, affected_parts, schedule, and id filled. TAPERRIGHT's id and schedule is used as all should have same schedule.
      \throw InvalidObjectStateError if no map is available
-     \return vector with one geofence housing all necessary workzone elements
+     \return geofence housing all necessary workzone elements
    */
-  std::vector<std::shared_ptr<Geofence>> createWorkzoneGeofence(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache);
+  std::shared_ptr<Geofence> createWorkzoneGeofence(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache);
 
   /*!
    * \brief Preprocess for workzone area. Parallel_llts will have front_parallel and back_parallel lanelets that were created from splitting (if necessary)
@@ -284,8 +296,7 @@ public:
                                      Each should have gf_pts, affected_parts.
    * \param parallel_llt_front A lanelet whose end should connect to front diagonal lanelet
    * \param parallel_llt_back A lanelet whose start should connect to back diagonal lanelet
-   * \param middle_opposite_lanelets A lanelet list whose front() connects to front diagonal, 
-   *                                 back() connects to back diagonal (their directions are expected to be opposite of parallel ones)
+   * \param middle_opposite_lanelets A getInterGroupIdsByLightReg() connects to back diagonal (their directions are expected to be opposite of parallel ones)
    * \throw InvalidObjectStateError if no map is available
    */
   std::shared_ptr<Geofence> createWorkzoneGeometry(std::unordered_map<uint8_t, std::shared_ptr<Geofence>> work_zone_geofence_cache, lanelet::Lanelet parallel_llt_front,  lanelet::Lanelet parallel_llt_back, 
@@ -341,7 +352,23 @@ public:
    */
   uint32_t generate32BitId(const std::string& label);
 
+   /*! \brief helper for generating intersection and group Id of a traffic light from lanelet id
+       \param[in] traffic lanelet_id 
+       \param[out] intersection_id and group_id
+       \return return true if conversion was successful
+   */
+  bool convertLightIdToInterGroupId(unsigned& intersection_id, unsigned& group_id, const lanelet::Id& lanelet_id);
+
   void setErrorDistance (double error_distance);
+  
+  /*! \brief helps to populate upcoming_intersection_ids_ from local traffic lanelet ids
+   */
+  void publishLightId();
+
+  visualization_msgs::MarkerArray tcm_marker_array_;
+  cav_msgs::TrafficControlRequestPolygon tcr_polygon_;
+  std_msgs::Int32MultiArray upcoming_intersection_ids_;
+
 private:
   double error_distance_ = 5; //meters
   lanelet::ConstLanelets route_path_;
@@ -355,14 +382,17 @@ private:
   bool shouldChangeControlLine(const lanelet::ConstLaneletOrArea& el,const lanelet::RegulatoryElementConstPtr& regem, std::shared_ptr<Geofence> gf_ptr) const;
   void addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const; 
   void addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01);
+  void scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr_list);
   lanelet::LineString3d createLinearInterpolatingLinestring(const lanelet::Point3d& front_pt, const lanelet::Point3d& back_pt, double increment_distance = 0.25);
   lanelet::Lanelet  createLinearInterpolatingLanelet(const lanelet::Point3d& left_front_pt, const lanelet::Point3d& right_front_pt, 
                                                       const lanelet::Point3d& left_back_pt, const lanelet::Point3d& right_back_pt, double increment_distance = 0.25);
   std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets);
+  
   lanelet::LaneletMapPtr base_map_;
   lanelet::LaneletMapPtr current_map_;
   lanelet::routing::RoutingGraphUPtr current_routing_graph_; // Current map routing graph
   lanelet::Velocity config_limit;
+  std::string participant_ = lanelet::Participants::VehicleCar;//Default participant type
   std::unordered_set<std::string>  checked_geofence_ids_;
   std::unordered_set<std::string>  generated_geofence_reqids_;
   std::vector<lanelet::LaneletMapPtr> cached_maps_;
@@ -374,6 +404,8 @@ private:
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
+  std::vector<cav_msgs::TrafficControlMessageV01> workzone_remaining_msgs_;
+  bool workzone_geometry_published_ = false;
   /* Version ID of the current_map_ variable. Monotonically increasing value
    * NOTE: This parameter needs to be incremented any time a new map is ready to be published. 
    * It should not be incremented for updates that do not require a full map publication.

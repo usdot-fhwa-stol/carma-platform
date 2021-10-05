@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -611,7 +611,7 @@ TEST(InLaneCruisingPluginTest, attach_back_points)
 
   int nearest_pt_index = 2;
 
-  auto result = plugin.attach_past_points(points, future_points, nearest_pt_index, 1.5);
+  auto result = plugin.attach_back_points(points, nearest_pt_index, future_points, 1.5);
 
   ASSERT_EQ(points.size()  -1, result.size());
   ASSERT_NEAR(1.0, result[0].point.x(), 0.0000001);

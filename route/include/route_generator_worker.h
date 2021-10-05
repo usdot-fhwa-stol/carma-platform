@@ -291,6 +291,7 @@ namespace route {
         int cte_count_ = 0;
 
         int cte_count_max_;
+
         // destination points in map
         std::vector<lanelet::BasicPoint2d> destination_points_in_map_;
 

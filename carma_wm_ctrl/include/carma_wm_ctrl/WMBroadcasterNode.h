@@ -22,6 +22,7 @@
 #include <carma_utils/CARMAUtils.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <carma_wm_ctrl/WMBroadcaster.h>
+#include <std_msgs/Int32MultiArray.h>
 #include <ros/ros.h>
 
 namespace carma_wm_ctrl
@@ -88,6 +89,7 @@ private:
   ros::Publisher control_msg_pub_;
   ros::Publisher tcm_visualizer_pub_;
   ros::Publisher tcr_visualizer_pub_;
+  ros::Publisher upcoming_intersection_ids_pub_;
 
   ros::Publisher active_pub_;
 
@@ -101,6 +103,7 @@ private:
   ros::Subscriber curr_location_sub_;
   ros::Subscriber route_cache_sub_;
   ros::Timer timer;
+  ros::Timer timer1;
 
   WMBroadcaster wmb_;
 };
