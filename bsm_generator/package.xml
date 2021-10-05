@@ -35,4 +35,5 @@
   <depend>novatel_gps_msgs</depend>
   <depend>wgs84_utils</depend>
   <depend>lanelet2_extension</depend>
+  <depend>carma_cmake_common</depend>
 </package>

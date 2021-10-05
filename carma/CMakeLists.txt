@@ -21,6 +21,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(carma)
 
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
+
 ##############################################################################
 # Catkin
 ##############################################################################

@@ -37,4 +37,5 @@
   <depend>trajectory_utils</depend>   
   <depend>roslib</depend>
   <depend>carma_debug_msgs</depend> 
+  <depend>carma_cmake_common</depend>
 </package>

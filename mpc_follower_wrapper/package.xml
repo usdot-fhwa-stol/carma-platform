@@ -28,6 +28,7 @@
   <depend>autoware_config_msgs</depend>
   <depend>carma_wm</depend>
   <depend>tf</depend>
+  <depend>carma_cmake_common</depend>
 
 <!--   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cav_msgs</build_depend>

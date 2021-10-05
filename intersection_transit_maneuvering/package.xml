@@ -30,5 +30,6 @@
   <depend>cav_msgs</depend>
   <depend>carma_utils</depend>
   <depend>trajectory_utils</depend>   
+  <depend>carma_cmake_common</depend>
 </package>
 

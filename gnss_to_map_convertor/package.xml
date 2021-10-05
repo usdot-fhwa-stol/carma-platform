@@ -38,5 +38,6 @@
   <depend>tf2_geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
   <depend>lanelet2_core</depend>
+  <depend>carma_cmake_common</depend>
   
 </package>
