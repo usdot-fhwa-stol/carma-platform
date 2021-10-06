@@ -52,6 +52,8 @@ protected:
   boost::optional<rclcpp::Time> start_time_;
 
   SystemState state_ = SystemState::STARTING_UP;
+
+  SystemControllerStateTransitionTable state_transition_table_;
 };
 
 }  // namespace system_controller

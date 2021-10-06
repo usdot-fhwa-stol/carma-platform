@@ -24,7 +24,6 @@ namespace system_controller
     switch (s)
     { // clang-format off
     case SystemState::STARTING_UP   : os << "STARTING_UP"; break;
-    case SystemState::INACTIVE: os << "INACTIVE"; break;
     case SystemState::ACTIVE : os << "ACTIVE"; break;
     case SystemState::FINALIZED  : os << "FINALIZED"; break;
     default: os.setstate(std::ios_base::failbit);

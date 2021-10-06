@@ -27,6 +27,10 @@ namespace system_controller
     lifecycle_interface_.set_managed_nodes(required_subsystem_nodes_);
   }
 
+  void startup_timeout() {
+    state_transition_table_.signal(SystemEvent::STARTUP_DELAY_EXCEEDED);
+  }
+
   void SystemController::change_state(const SystemState& new_state) {
     
     RCLCPP_INFO_STREAM(get_logger(), "Transitioning from state: " << state_ << " to state: " << new_state); // TODO add stream operator

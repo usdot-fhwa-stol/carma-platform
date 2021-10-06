@@ -24,8 +24,9 @@ namespace system_controller
 enum class SystemState
 {
     STARTING_UP,
-    INACTIVE,
     ACTIVE,
+    ERROR_PROCESSING,
+    SHUTTING_DOWN,
     FINALIZED
 };
 /**
@@ -40,7 +41,9 @@ enum class SystemEvent
   STARTUP_DELAY_EXCEEDED,
   INTERNAL_FAULT,
   SUBSYSTEM_FAULT,
-  EXTERNAL_SHUTDOWN
+  EXTERNAL_SHUTDOWN,
+  SHUTDOWN_COMPLETED,
+  SHUTDOWN_ERROR
 };
 
 /**

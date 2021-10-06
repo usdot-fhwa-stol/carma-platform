@@ -58,12 +58,16 @@ void SystemControllerStateTransitionTable::signal(SystemEvent signal)
       signalWhenSTARTINGUP(signal);
       break;
 
-    case SystemState::INACTIVE:
-      signalWhenINACTIVE(signal);
-      break;
-
     case SystemState::ACTIVE:
       signalWhenACTIVE(signal);
+      break;
+
+    case SystemState::ERROR_PROCESSING:
+      signalWhenERROR_PROCESSING(signal);
+      break;
+
+    case SystemState::SHUTTING_DOWN:
+      signalWhenSHUTTING_DOWN(signal);
       break;
 
     case SystemState::FINALIZED:
@@ -84,7 +88,7 @@ void SystemControllerStateTransitionTable::signalWhenSTARTINGUP(SystemEvent sign
 {
   if (signal == SystemEvent::STARTUP_DELAY_EXCEEDED)
   {
-    setAndLogState(SystemState::INACTIVE, signal);
+    setAndLogState(SystemState::ACTIVE, signal);
   }
   else
   {
@@ -92,29 +96,38 @@ void SystemControllerStateTransitionTable::signalWhenSTARTINGUP(SystemEvent sign
   }
 }
 
-void SystemControllerStateTransitionTable::signalWhenINACTIVE(SystemEvent signal)
+void SystemControllerStateTransitionTable::signalWhenACTIVE(SystemEvent signal)
 {
-  switch (signal)
+  if ( signal == SystemEvent::INTERNAL_FAULT || signal == SystemEvent::SUBSYSTEM_FAULT )
   {
-    case SystemEvent::STOPPED:
-      setAndLogState(SystemState::WAITING, signal);
-      break;
-
-    case SystemEvent::CROSSED_STOP_BAR:
-      setAndLogState(SystemState::DEPARTING, signal);
-      break;
-
-    default:
-      logDebugSignal(signal);
-      break;
+    setAndLogState(SystemState::ERROR_PROCESSING, signal);
+  }
+  else if(signal == SystemEvent::EXTERNAL_SHUTDOWN) {
+    setAndLogState(SystemState::SHUTTING_DOWN, signal);
+  }
+  else
+  {
+    logDebugSignal(signal);
   }
 }
 
-void SystemControllerStateTransitionTable::signalWhenACTIVE(SystemEvent signal)
+void SystemControllerStateTransitionTable::signalWhenERROR_PROCESSING(SystemEvent signal)
 {
-  if (signal == SystemEvent::RED_TO_GREEN_LIGHT)
+  if ( signal == SystemEvent::INTERNAL_FAULT || signal == SystemEvent::SUBSYSTEM_FAULT )
   {
-    setAndLogState(SystemState::DEPARTING, signal);
+    setAndLogState(SystemState::FINALIZED, signal);
+  }
+  else
+  {
+    logDebugSignal(signal);
+  }
+}
+
+void SystemControllerStateTransitionTable::signalWhenSHUTTING_DOWN(SystemEvent signal)
+{
+  if ( signal == SystemEvent::SHUTDOWN_COMPLETED || signal == SystemEvent::SHUTDOWN_ERROR )
+  {
+    setAndLogState(SystemState::FINALIZED, signal);
   }
   else
   {
@@ -124,14 +137,7 @@ void SystemControllerStateTransitionTable::signalWhenACTIVE(SystemEvent signal)
 
 void SystemControllerStateTransitionTable::signalWhenFINALIZED(SystemEvent signal)
 {
-  if (signal == SystemEvent::INTERSECTION_EXIT)
-  {
-    setAndLogState(SystemState::UNAVAILABLE, signal);
-  }
-  else
-  {
-    logDebugSignal(signal);
-  }
+  logDebugSignal(signal);
 }
 
 void SystemControllerStateTransitionTable::logDebugSignal(SystemEvent signal) const
