@@ -91,57 +91,69 @@ namespace ros2_lifecycle_manager
 
   // TODO cleanup timeout usage in API
   // If ordered is true then the calls will execute in sequence as defined by set_managed_nodes. If false then no ordering is enforced (though it still may be)
-  bool Ros2LifecycleManager::configure(const std::chrono::milliseconds &timeout, bool ordered = true)
+  bool Ros2LifecycleManager::configure(const std::chrono::nanoseconds &timeout, bool ordered = true)
   {
-    transition_multiplex(lifecycle_msgs::msg::Transition::TRANSITION_CONFIGURE, ordered, service_timeout_, call_timeout_);
+    transition_multiplex(lifecycle_msgs::msg::Transition::TRANSITION_CONFIGURE, ordered, timeout);
   }
 
-  bool Ros2LifecycleManager::cleanup(const std::chrono::milliseconds &timeout, bool ordered = true)
+  bool Ros2LifecycleManager::cleanup(const std::chrono::nanoseconds &timeout, bool ordered = true)
   {
-    transition_multiplex(lifecycle_msgs::msg::Transition::TRANSITION_CLEANUP, ordered, service_timeout_, call_timeout_);
+    transition_multiplex(lifecycle_msgs::msg::Transition::TRANSITION_CLEANUP, ordered, timeout);
   }
 
-  bool Ros2LifecycleManager::activate(const std::chrono::milliseconds &timeout, bool ordered = true)
+  bool Ros2LifecycleManager::activate(const std::chrono::nanoseconds &timeout, bool ordered = true)
   {
-    transition_multiplex(lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, ordered, service_timeout_, call_timeout_);
+    transition_multiplex(lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE, ordered, timeout);
   }
 
-  bool Ros2LifecycleManager::deactivate(const std::chrono::milliseconds &timeout, bool ordered = true)
+  bool Ros2LifecycleManager::deactivate(const std::chrono::nanoseconds &timeout, bool ordered = true)
   {
-    transition_multiplex(lifecycle_msgs::msg::Transition::TRANSITION_DEACTIVATE, ordered, service_timeout_, call_timeout_);
+    transition_multiplex(lifecycle_msgs::msg::Transition::TRANSITION_DEACTIVATE, ordered, timeout);
   }
 
-  bool Ros2LifecycleManager::shutdown(const std::chrono::milliseconds &timeout, bool ordered = true)
+  bool Ros2LifecycleManager::shutdown(const std::chrono::nanoseconds &timeout, bool ordered = true)
   {
     // To avoid having to track all the node sates and pick the appropriate shutdown we will simply shut down in order of most dangeorus
     // Active is shutdown first to avoid more data being published, this is followed by inactive and finally unconfigured
-    transition_multiplex(lifecycle_msgs::msg::Transition::TRANSITION_ACTIVE_SHUTDOWN, ordered, service_timeout_, call_timeout_);
-    transition_multiplex(lifecycle_msgs::msg::Transition::TRANSITION_INACTIVE_SHUTDOWN, ordered, service_timeout_, call_timeout_);
-    transition_multiplex(lifecycle_msgs::msg::Transition::TRANSITION_UNCONFIGURED_SHUTDOWN, ordered, service_timeout_, call_timeout_);
+    transition_multiplex(lifecycle_msgs::msg::Transition::TRANSITION_ACTIVE_SHUTDOWN, ordered, timeout);
+    transition_multiplex(lifecycle_msgs::msg::Transition::TRANSITION_INACTIVE_SHUTDOWN, ordered, timeout);
+    transition_multiplex(lifecycle_msgs::msg::Transition::TRANSITION_UNCONFIGURED_SHUTDOWN, ordered, timeout);
     // transition_multiplex(lifecycle_msgs::msg::Transition::TRANSITION_DESTROY, ordered, service_timeout_, call_timeout_); // TODO not clear if this is needed yet
   }
 
-  bool transition_multiplex(uint8_t transition, bool ordered, const std::chrono::milliseconds &service_timeout, const std::chrono::milliseconds &call_timeout)
+  bool transition_multiplex(uint8_t transition, bool ordered, const std::chrono::nanoseconds &timeout)
   {
     lifecycle_msgs::srv::ChangeState request;
     request.transition = transition;
-
+    bool clean_result = true;
+    rclcpp::Duration allowed_duration(timeout);
+    auto start_time = rclcpp::Time::now();
     if (ordered)
     {
       // When operating
       for (auto node : managed_nodes_)
       {
+        // Check if the timeout has expired
+        auto elapsed_time = rclcpp::Time::now() - start_time;
+        if (elapsed_time >= allowed_duration)
+        {
+          clean_result = false;
+          break;
+        }
 
         // Wait for service
-        if (!waitForService<lifecycle_msgs::srv::ChangeState>(node.change_state_client, service_timeout))
+        if (!waitForService<lifecycle_msgs::srv::ChangeState>(node.change_state_client, (allowed_duration - elapsed_time).nanoseconds())
         {
-          continue; // TODO any extra error handling??
+          clean_result = false;
+          continue; 
         }
         // Call service
         auto future_result = node.change_state_client->async_send_request(request);
 
         // Wait for response
-        wait_on_change_state_future(future_result, call_timeout); // TODO should we do anything extra in the error case?
+        elapsed_time = rclcpp::Time::now() - start_time;
+        if (!wait_on_change_state_future(future_result, (allowed_duration - elapsed_time).nanoseconds())) { 
+        }
       }
     }
     else
@@ -151,10 +163,19 @@ namespace ros2_lifecycle_manager
 
       for (auto node : managed_nodes_)
       {
-        // Wait for service
-        if (!waitForService<lifecycle_msgs::srv::ChangeState>(node.change_state_client, service_timeout))
+        // Check if the timeout has expired
+        auto elapsed_time = rclcpp::Time::now() - start_time;
+        if (elapsed_time >= allowed_duration)
         {
-          continue; // TODO extra error handling?
+          clean_result = false;
+          break;
+        }
+
+        // Wait for service
+        if (!waitForService<lifecycle_msgs::srv::ChangeState>(node.change_state_client, (allowed_duration - elapsed_time).nanoseconds()))
+        {
+          clean_result = false;
+          continue;
         }
 
         // Call service
@@ -162,15 +183,29 @@ namespace ros2_lifecycle_manager
       }
       for (auto future : futures)
       {
-        wait_on_change_state_future(future, call_timeout); // TODO should we do anything extra in the error case?
+        // Check if the timeout has expired
+        auto elapsed_time = rclcpp::Time::now() - start_time;
+        if (elapsed_time >= allowed_duration)
+        {
+          clean_result = false;
+          break;
+        }
+
+        if (!wait_on_change_state_future(future, (allowed_duration - elapsed_time).nanoseconds()))
+        {
+          clean_result = false;
+          break;
+        }
       }
     }
+
+    return clean_result;
   }
 
   template <class T>
-  bool waitForService(const rclcpp::Client<T> &client, const std::chrono::milliseconds &timeout)
+  bool waitForService(const rclcpp::Client<T> &client, const std::chrono::nanoseconds &timeout)
   {
-    if (!client->wait_for_service(service_time_out))
+    if (!client->wait_for_service(timeout))
     {
       RCLCPP_ERROR(
           get_logger(),
