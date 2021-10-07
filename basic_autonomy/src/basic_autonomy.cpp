@@ -27,10 +27,13 @@ namespace basic_autonomy
             std::vector<PointSpeedPair> points_and_target_speeds;
             
             bool first = true;
+            std::unordered_set<lanelet::Id> visited_lanelets;
+
             ROS_DEBUG_STREAM("VehDowntrack:"<<max_starting_downtrack);
             for(const auto &maneuver : maneuvers)
             {
                 double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
+                
                 if(first){
                     starting_downtrack = std::min(starting_downtrack, max_starting_downtrack);
                     first = false;
@@ -39,7 +42,7 @@ namespace basic_autonomy
 
                 if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING){
                     ROS_DEBUG_STREAM("Creating Lane Follow Geometry");
-                    std::vector<PointSpeedPair> lane_follow_points = create_lanefollow_geometry(maneuver, starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config);
+                    std::vector<PointSpeedPair> lane_follow_points = create_lanefollow_geometry(maneuver, starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config, visited_lanelets);
                     points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
                 }
                 else if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE){
@@ -64,13 +67,13 @@ namespace basic_autonomy
 
         std::vector<PointSpeedPair> create_lanefollow_geometry(const cav_msgs::Maneuver &maneuver, double starting_downtrack,
                                                                    const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
-                                                                    const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config)
+                                                                    const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config, std::unordered_set<lanelet::Id> &visited_lanelets)
         {
             if(maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING){
                 throw std::invalid_argument("Create_lanefollow called on a maneuver type which is not LANE_FOLLOW");
             }
             std::vector<PointSpeedPair> points_and_target_speeds;
-            std::unordered_set<lanelet::Id> visited_lanelets;
+            // std::unordered_set<lanelet::Id> visited_lanelets;
 
             cav_msgs::LaneFollowingManeuver lane_following_maneuver = maneuver.lane_following_maneuver;
             
