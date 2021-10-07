@@ -42,7 +42,6 @@ namespace port_drayage_plugin
         boost::optional<std::string> cargo_id;
         std::string operation = "";
         PortDrayageEvent port_drayage_event_type; // PortDrayageEvent associated with this message
-        bool has_cargo = false; // Flag to indicate whether vehicle has cargo during this action
         boost::optional<std::string> current_action_id; // Identifier for the action this message is related to
         boost::optional<double> dest_longitude;  // Destination longitude for the carma vehicle
         boost::optional<double> dest_latitude;   // Destination latitude for the carma vehicle
@@ -79,13 +78,11 @@ namespace port_drayage_plugin
             std::string _host_bsm_id;
             std::string _previously_completed_operation;
             unsigned long _cmv_id;
-            std::string _cargo_id;
+            std::string _cargo_id; // Empty if CMV is not currently carrying cargo
             std::function<void(cav_msgs::MobilityOperation)> _publish_mobility_operation;
             std::function<void(cav_msgs::UIInstructions)> _publish_ui_instructions;
             std::function<bool(cav_srvs::SetActiveRoute)> _set_active_route;
             std::shared_ptr<lanelet::projection::LocalFrameProjector> _map_projector = nullptr;
-            bool _has_cargo; // Flag for whether CMV is currently carrying cargo
-            bool _has_received_first_mobility_operation_msg = false; // Flag for whether CMV has received its first Port Drayage mobility operation message
             bool _enable_port_drayage; // Flag to enable to port drayage operations. If false, state machine will remain in 'INACTIVE' state
 
             // Data member for storing the strategy_params field of the last processed port drayage MobilityOperation message intended for this vehicle's cmv_id
@@ -147,7 +144,6 @@ namespace port_drayage_plugin
                 _set_active_route(call_set_active_route_client),
                 _stop_speed_epsilon(stop_speed_epsilon),
                 _enable_port_drayage(enable_port_drayage) {
-                    _has_cargo = (_cargo_id == "") ? false : true;
                     initialize();
                 };
 

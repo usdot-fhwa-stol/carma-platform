@@ -158,14 +158,14 @@ namespace port_drayage_plugin
         pt.put_child("location", location);
 
         // Add flag to indicate whether CMV is carring cargo
-        pt.put("cargo", _has_cargo);
+        pt.put("cargo", _cargo_id != "");
 
-        // If CMV has not received any port drayage messages yet, assign 'operation' field for its initial arrival message
-        if (!_has_received_first_mobility_operation_msg) {
+        // If CMV has arrived at its initial destination, assign 'operation' field for its initial arrival message
+        if (_pdsm.get_state() == PortDrayageState::EN_ROUTE_TO_INITIAL_DESTINATION) {
             pt.put("operation", PORT_DRAYAGE_INITIAL_ARRIVAL_OPERATION_ID);
         }
-        // If CMV has already received at least one port drayage message, add necessary fields based on the destination type that it has arrived at
-        else{
+        // If CMV has arrived at a received destination, add necessary fields based on the destination type that it has arrived at
+        else if (_pdsm.get_state() == PortDrayageState::EN_ROUTE_TO_RECEIVED_DESTINATION) {
             // Assign the 'operation' using the 'operation' from the last received port drayage message
             pt.put("operation", _latest_mobility_operation_msg.operation);
 
@@ -174,8 +174,7 @@ namespace port_drayage_plugin
                 pt.put("action_id", *_latest_mobility_operation_msg.current_action_id);
             }
             else {
-                ROS_DEBUG_STREAM("CMV has arrived at a received destination, but does not have an action_id to broadcast.");
-                throw std::invalid_argument("CMV has arrived at a received destination, but does not have an action_id to broadcast.");
+                ROS_WARN_STREAM("CMV has arrived at a received destination, but does not have an action_id to broadcast.");
             } 
 
             // Assign 'cargo_id' field and conduct cargo-related checks if CMV is arriving at a Pickup location
@@ -185,14 +184,11 @@ namespace port_drayage_plugin
                     pt.put("cargo_id", *_latest_mobility_operation_msg.cargo_id);
                 }
                 else {
-                    ROS_DEBUG_STREAM("CMV has arrived at loading area, but does not have a cargo_id to broadcast.");
-                    throw std::invalid_argument("CMV has arrived at loading area, but does not have a cargo_id to broadcast.");
+                    ROS_WARN_STREAM("CMV has arrived at loading area, but does not have a cargo_id to broadcast.");
                 }
 
-                // Throw exception if CMV is arriving at a Pickup location but is already carrying cargo
-                if (_has_cargo) {
-                    ROS_DEBUG_STREAM("CMV has arrived at a loading area, but it is already carrying cargo.");
-                    throw std::invalid_argument("CMV has arrived at a loading area, but it is already carrying cargo.");
+                if (_cargo_id != "") {
+                    ROS_WARN_STREAM("CMV has arrived at a loading area, but it is already carrying cargo.");
                 }
             }
         }
@@ -218,21 +214,14 @@ namespace port_drayage_plugin
 
             // Check if the received MobilityOperation message is intended for this vehicle's cmv_id   
             if(mobility_operation_cmv_id == _cmv_id) {
-                _has_received_first_mobility_operation_msg = true;
-
                 // Since a new message indicates the previous action was completed, update all cargo-related data members based on the previous action that was completed
                 update_cargo_information_after_action_completion(_latest_mobility_operation_msg);
-
-                if (_latest_mobility_operation_msg.operation != "") {
-                    _previously_completed_operation = _latest_mobility_operation_msg.operation;
-                }
 
                 ROS_DEBUG_STREAM("Processing new port drayage MobilityOperation message for cmv_id " << mobility_operation_cmv_id);
                 mobility_operation_message_parser(msg->strategy_params);  
                 _previous_strategy_params = msg->strategy_params;
                 
                 // Process event based on the PortDrayageEvent associated with the received MobilityOperation message
-                // TODO: Update this object's '_has_cargo' flag and '_cargo_id' based on the received status message from a loading/unloading device
                 switch(_latest_mobility_operation_msg.port_drayage_event_type) {
                     case PortDrayageEvent::RECEIVED_NEW_DESTINATION:
                         ROS_DEBUG_STREAM("Processing RECEIVED_NEW_DESTINATION event for operation type " << _latest_mobility_operation_msg.operation);
@@ -250,23 +239,20 @@ namespace port_drayage_plugin
     }
 
     void PortDrayageWorker::update_cargo_information_after_action_completion(const PortDrayageMobilityOperationMsg& previous_port_drayage_msg) {
-        // If the previously received message was for 'Pickup' or 'Dropoff', update this object's _has_cargo flag and _cargo_id members accordingly
+        // If the previously received message was for 'Pickup' or 'Dropoff', update this object's _cargo_id member accordingly
         // Note: This assumes the previous 'Pickup' or 'Dropoff' action was successful
         if (previous_port_drayage_msg.operation == PORT_DRAYAGE_PICKUP_OPERATION_ID) {
-            _has_cargo = true;
 
             if (previous_port_drayage_msg.cargo_id) {
                 _cargo_id = *previous_port_drayage_msg.cargo_id;
-                ROS_DEBUG_STREAM("CMV completed pickup action. CMV is now carrying cargo " << _cargo_id);
+                ROS_DEBUG_STREAM("CMV completed pickup action. CMV is now carrying cargo ID " << _cargo_id);
             }
             else {
-                ROS_DEBUG_STREAM("CMV has completed pickup, but there is no Cargo ID associated with the picked up cargo.");
-                throw std::invalid_argument("CMV has completed pickup, but there is no Cargo ID associated with the picked up cargo.");
+                ROS_WARN_STREAM("CMV has completed pickup, but there is no Cargo ID associated with the picked up cargo.");
             }
         }
         else if (previous_port_drayage_msg.operation == PORT_DRAYAGE_DROPOFF_OPERATION_ID) {
-            ROS_DEBUG_STREAM("CMV completed dropoff action. CMV is no longer carrying cargo " << _cargo_id);
-            _has_cargo = false;
+            ROS_DEBUG_STREAM("CMV completed dropoff action. CMV is no longer carrying cargo ID " << _cargo_id);
             _cargo_id = ""; // Empty string is used when no cargo is being carried
         }
     }
@@ -283,9 +269,8 @@ namespace port_drayage_plugin
         ROS_DEBUG_STREAM("operation: " << _latest_mobility_operation_msg.operation);
         if (_latest_mobility_operation_msg.operation == PORT_DRAYAGE_PICKUP_OPERATION_ID) {
             _latest_mobility_operation_msg.port_drayage_event_type = PortDrayageEvent::RECEIVED_NEW_DESTINATION;
-            if (_has_cargo) {
-                ROS_DEBUG_STREAM("Received 'PICKUP' operation, but CMV is already carrying cargo.");
-                throw std::invalid_argument("Received 'PICKUP' operation, but CMV is already carrying cargo.");
+            if (_cargo_id != "") {
+                ROS_WARN_STREAM("Received 'PICKUP' operation, but CMV is already carrying cargo.");
             }
         }
 
@@ -297,8 +282,7 @@ namespace port_drayage_plugin
         else{
             // If this message is for 'PICKUP', then the 'cargo_id' field is required
             if(_latest_mobility_operation_msg.operation == PORT_DRAYAGE_PICKUP_OPERATION_ID) {
-                ROS_DEBUG_STREAM("Received 'PICKUP' operation, but no cargo_id was included.");
-                throw std::invalid_argument("Received 'PICKUP' operation, but no cargo_id was included.");
+                ROS_WARN_STREAM("Received 'PICKUP' operation, but no cargo_id was included.");
             }
 
             _latest_mobility_operation_msg.cargo_id = boost::optional<std::string>();
@@ -350,7 +334,7 @@ namespace port_drayage_plugin
         // CMV has officially arrived at its destination if the previous route was completed and is no longer active
         if (_latest_route_event != nullptr) {
             if (_latest_route_event->event == cav_msgs::RouteEvent::ROUTE_COMPLETED && msg->event == cav_msgs::RouteEvent::ROUTE_LOADED) {
-                if (_pdsm.get_state() == PortDrayageState::EN_ROUTE) {
+                if (_pdsm.get_state() == PortDrayageState::EN_ROUTE_TO_INITIAL_DESTINATION || _pdsm.get_state() == PortDrayageState::EN_ROUTE_TO_RECEIVED_DESTINATION) {
                     ROS_DEBUG_STREAM("CMV completed its previous route, and the previous route is no longer active.");
                     ROS_DEBUG_STREAM("Processing ARRIVED_AT_DESTINATION event.");
                     _pdsm.process_event(PortDrayageEvent::ARRIVED_AT_DESTINATION);
