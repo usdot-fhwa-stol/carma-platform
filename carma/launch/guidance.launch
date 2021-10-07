@@ -214,6 +214,7 @@
   <group>
     <remap from="outgoing_mobility_operation" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_operation"/>
     <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
+    <remap from="route_event" to="$(optenv CARMA_GUIDE_NS)/route_event"/>
     <include file="$(find port_drayage_plugin)/launch/port_drayage_plugin.launch" />
   </group>
 

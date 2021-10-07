@@ -25,23 +25,28 @@ namespace port_drayage_plugin
         {
             case PortDrayageState::INACTIVE:
                 if (event == PortDrayageEvent::DRAYAGE_START) {
-                    _state = PortDrayageState::EN_ROUTE;
-                    if (_on_arrived_at_destination) {
-                        _on_arrived_at_destination();
-                    }
+                    _state = PortDrayageState::EN_ROUTE_TO_INITIAL_DESTINATION;
                 }
                 break;
-            case PortDrayageState::EN_ROUTE:
+            case PortDrayageState::EN_ROUTE_TO_INITIAL_DESTINATION:
                 if (event == PortDrayageEvent::ARRIVED_AT_DESTINATION) {
-                    _state = PortDrayageState::AWAITING_DIRECTION;
                     if (_on_arrived_at_destination) {
                         _on_arrived_at_destination();
                     }
+                    _state = PortDrayageState::AWAITING_DIRECTION;
+                }
+                break;
+            case PortDrayageState::EN_ROUTE_TO_RECEIVED_DESTINATION:
+                if (event == PortDrayageEvent::ARRIVED_AT_DESTINATION) {
+                    if (_on_arrived_at_destination) {
+                        _on_arrived_at_destination();
+                    }
+                    _state = PortDrayageState::AWAITING_DIRECTION;
                 }
                 break;
             case PortDrayageState::AWAITING_DIRECTION:
                 if (event == PortDrayageEvent::RECEIVED_NEW_DESTINATION) {
-                    _state = PortDrayageState::EN_ROUTE;
+                    _state = PortDrayageState::EN_ROUTE_TO_RECEIVED_DESTINATION;
                     if (_on_received_new_destination) {
                         _on_received_new_destination();
                     }
@@ -53,7 +58,7 @@ namespace port_drayage_plugin
         }
     }
 
-    const PortDrayageState PortDrayageStateMachine::get_state() {
+    PortDrayageState PortDrayageStateMachine::get_state() const {
         return _state;
     }
 
