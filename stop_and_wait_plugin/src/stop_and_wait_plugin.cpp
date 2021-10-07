@@ -86,7 +86,7 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
 
   lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
 
-  ROS_DEBUG_STREAM("planning state x:" << req.vehicle_state.X_pos_global << ", y: " << req.vehicle_state.Y_pos_global);
+  ROS_DEBUG_STREAM("planning state x:" << req.vehicle_state.X_pos_global << ", y: " << req.vehicle_state.Y_pos_global << ", speed: " << req.vehicle_state.longitudinal_vel);
 
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
@@ -97,12 +97,12 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
     throw std::invalid_argument("StopAndWait plugin asked to plan maneuver that ends earlier than the current state.");
   }
 
-  resp.related_maneuvers.push_back(cav_msgs::Maneuver::STOP_AND_WAIT);
+  resp.related_maneuvers.push_back(req.maneuver_index_to_plan);
   resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
   std::string maneuver_id = req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].stop_and_wait_maneuver.parameters.maneuver_id;
 
-  ROS_INFO_STREAM("Maneuver not yet planned planning new trajectory");
+  ROS_INFO_STREAM("Maneuver not yet planned, planning new trajectory");
 
   // Maneuver input is valid so continue with execution
   std::vector<cav_msgs::Maneuver> maneuver_plan = { req.maneuver_plan.maneuvers[req.maneuver_index_to_plan] };
@@ -219,7 +219,8 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
   std::vector<PointSpeedPair> final_points;
 
-  double remaining_distance = stop_location - starting_downtrack;  
+  double half_stopping_buffer = stop_location_buffer * 0.5;
+  double remaining_distance = stop_location - half_stopping_buffer - starting_downtrack; // Target to stop in the middle of the buffer
   double target_accel = config_.accel_limit_multiplier * config_.accel_limit;
   double req_dist = (starting_speed * starting_speed) /
                     (2.0 * target_accel);  // Distance needed to go from current speed to 0 at target accel
@@ -233,18 +234,34 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
     ROS_DEBUG_STREAM("Target Accel Update To: " << target_accel);
   }
 
+  std::vector<double> inverse_downtracks; // Store downtracks in reverse
+  inverse_downtracks.reserve(points.size());
   final_points.reserve(points.size());
 
   PointSpeedPair prev_pair = points.back();
   prev_pair.speed = 0.0;
   final_points.push_back(prev_pair);  // Store the points in reverse
+  inverse_downtracks.push_back(0);
 
   bool reached_end = false;
   for (int i = points.size() - 2; i >= 0; i--)
   {  // NOTE: Do not use size_t for i type here as -- with > 0 will result in overflow
 
-    double v_i = prev_pair.speed;
 
+
+    double v_i = prev_pair.speed;
+    double dx = lanelet::geometry::distance2d(prev_pair.point, points[i].point);
+    double new_downtrack = inverse_downtracks.back() + dx;
+
+    if (new_downtrack < half_stopping_buffer) { // Points after (when viewed not in reverse) the midpoint of the buffer should be 0 speed
+      PointSpeedPair pair = points[i];
+      pair.speed = 0;
+      final_points.push_back(pair);  // Store the points in reverse
+      inverse_downtracks.push_back(new_downtrack);
+      prev_pair = pair;
+      continue;
+    }
+    
     if (reached_end || v_i >= starting_speed)
     {  // We are walking backward, so if the prev speed is greater than or equal to the starting speed then we are done
        // backtracking
@@ -252,17 +269,18 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
       PointSpeedPair pair = points[i];
       pair.speed = starting_speed;
       final_points.push_back(pair);  // Store the points in reverse
+      inverse_downtracks.push_back(new_downtrack);
       prev_pair = pair;
       continue;  // continue until loop end
     }
 
-    double dx = lanelet::geometry::distance2d(prev_pair.point, points[i].point);
-
+    
     double v_f = sqrt(v_i * v_i + 2 * target_accel * dx);
 
     PointSpeedPair pair = points[i];
     pair.speed = std::min(v_f, starting_speed);
     final_points.push_back(pair);  // Store the points in reverse
+    inverse_downtracks.push_back(new_downtrack);
 
     prev_pair = pair;
   }
@@ -275,31 +293,34 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   std::vector<lanelet::BasicPoint2d> raw_points;
   splitPointSpeedPairs(final_points, &raw_points, &speeds);
 
-  std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(raw_points);
+  // Convert the inverted downtracks back to regular downtracks
+  double max_downtrack = inverse_downtracks.back();
+  std::vector<double> downtracks = lanelet::utils::transform(inverse_downtracks, [max_downtrack](const auto& d) { return max_downtrack - d; });
+  std::reverse(downtracks.begin(),
+               downtracks.end()); 
 
   bool in_range = false;
   double stopped_downtrack = 0;
   lanelet::BasicPoint2d stopped_point;
-  int stopped_point_num = 0;
+
+  bool vehicle_in_buffer = downtracks.back() < stop_location_buffer;
+
   for (size_t i = 0; i < speeds.size(); i++)
   {  // Apply minimum speed constraint
     double downtrack = downtracks[i];
 
-    constexpr double half_a_mph_in_mps = 0.22352;
+    constexpr double one_mph_in_mps = 0.44704;
 
-    if (downtrack > downtracks.back() - stop_location_buffer && speeds[i] < config_.crawl_speed + half_a_mph_in_mps)
+    if (downtracks.back() - downtrack < stop_location_buffer && speeds[i] < config_.crawl_speed + one_mph_in_mps)
     {  // if we are within the stopping buffer and going at near crawl speed then command stop
-      speeds[i] = 0.0;
-
-      if (!in_range)
-      {
-        stopped_downtrack = downtracks[i];
-        stopped_point = raw_points[i];
-        in_range = true;
+      
+      // To avoid any issues in control plugin behavior we only command 0 if the vehicle is inside the buffer
+      if (vehicle_in_buffer || (i == speeds.size() - 1)) { // Vehicle is in the buffer
+        speeds[i] = 0.0;
+      } else { // Vehicle is not in the buffer so fill buffer with crawl speed
+        speeds[i] = std::max(speeds[i], config_.crawl_speed);
       }
-      downtracks[i] = stopped_downtrack;
-      raw_points[i] = stopped_point;
-      stopped_point_num++;
+
     }
     else
     {
@@ -314,19 +335,13 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   {
     if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
     {  // If the time
+      ROS_WARN_STREAM("Detected non-normal (nan, inf, etc.) time.");
       times[i] = times[i - 1] + config_.stop_timestep;
     }
   }
 
   std::vector<double> yaws = carma_wm::geometry::compute_tangent_orientations(raw_points);
 
-  // preserve last valid yaw over stopped points
-  stopped_point_num --;  // there is 1 fewer invalid yaw for total number of stopped points
-  while (stopped_point_num > 0) 
-  {
-    yaws[yaws.size() - stopped_point_num] = yaws[yaws.size() - stopped_point_num - 1];
-    stopped_point_num--;
-  }
 
   for (size_t i = 0; i < points.size(); i++)
   {
