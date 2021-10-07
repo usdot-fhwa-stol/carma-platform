@@ -20,7 +20,7 @@
 #include <memory>
 
 #include "carma_msgs/msg/system_alert.hpp"
-#include "ros2_lifecycle_manager/lifecycle_manager.hpp"
+#include "ros2_lifecycle_manager/ros2_lifecycle_manager.hpp"
 #include "system_controller_config.hpp"
 #include "rclcpp/rclcpp.hpp"
 
@@ -36,8 +36,21 @@ namespace system_controller
      * \brief Constructor. Set explicitly to support node composition.
      * 
      * \param options The node options to use for configuring this node
+     * \param auto_init If true this node will automatically call its initialize method. If false the call will wait for the user. 
      */
-    explicit SystemControllerNode(const rclcpp::NodeOptions &options);
+    explicit SystemControllerNode(const rclcpp::NodeOptions &options, bool auto_init = true);
+
+    /**
+     * \brief Initialize this node by loading parameters from the ROS Network. 
+     */
+    void initialize();
+
+    /**
+     * \brief Reset the configurations of this node. This is mean to support testing or other non-standard launch mechanisms
+     * 
+     * \param config The config to set
+     */
+    void set_config(SystemControllerConfig config);
 
   protected:
     /**
@@ -47,6 +60,16 @@ namespace system_controller
      */
     void on_system_alert(const carma_msgs::msg::SystemAlert::UniquePtr msg);
 
+    /**
+     * \brief Callback to be triggered when the startup delay has passed
+     */ 
+    void startup_delay_callback();
+
+    /**
+     * \brief Exception handling method for processing all internal exceptions;
+     */ 
+    void on_error(const std::exception &e);
+
     //! The default topic name for the system alert topic
     const std::string system_alert_topic_{"/system_alert"};
 
@@ -54,7 +77,10 @@ namespace system_controller
     rclcpp::Subscription<carma_msgs::msg::SystemAlert>::SharedPtr system_alert_sub_;
 
     //! Lifecycle Manager which will track the managed nodes and call their lifecycle services on request
-    ros2_lifecycle_manager::LifecycleManager lifecycle_mgr_;
+    ros2_lifecycle_manager::Ros2LifecycleManager lifecycle_mgr_;
+
+    //! Timer which triggers when the startup delay has passed
+    rclcpp::TimerBase::SharedPtr startup_timer_;
 
     //! The configuration of this node
     SystemControllerConfig config_;

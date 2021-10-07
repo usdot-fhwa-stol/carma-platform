@@ -6,18 +6,13 @@ find_package(carma_cmake_common REQUIRED)
 carma_check_ros_version(2)
 carma_package()
 
-find_package(ros2_lifecycle_manager REQUIRED)
 find_package(ament_cmake REQUIRED)
-find_package(carma_common REQUIRED)
-find_package(carma_utils REQUIRED)
+find_package(carma_cmake_common REQUIRED)
+find_package(carma_ros2_utils REQUIRED)
 find_package(carma_msgs REQUIRED)
 find_package(lifecycle_msgs REQUIRED)
-find_package(rclcpp_action REQUIRED)
-find_package(rclcpp_lifecycle REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(ros2_lifecycle_manager_msgs REQUIRED)
-find_package(ros2_utils REQUIRED)
-find_package(std_srvs REQUIRED)
+find_package(ros2_lifecycle_manager REQUIRED)
 
 include_directories(
   include
@@ -27,16 +22,15 @@ set(executable_name ${PROJECT_NAME})
 set(library_name ${executable_name}_core)
 
 set(dependencies
-  carma_common
-  carma_utils
+  carma_cmake_common
+  carma_ros2_utils
   rclcpp
-  rclcpp_lifecycle
   ros2_lifecycle_manager
-  ros2_lifecycle_manager_msgs
+  lifecycle_msgs
 )
 
 add_library(${library_name} SHARED
-  src/system_controller.cpp
+  src/system_controller_node.cpp
 )
 
 ament_target_dependencies(${library_name}

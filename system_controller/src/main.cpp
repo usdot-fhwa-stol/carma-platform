@@ -14,13 +14,13 @@
 
 #include <memory>
 
-#include "system_controller/system_controller.hpp"
+#include "system_controller/system_controller_node.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<system_controller::SystemController>(rclcpp::NodeOptions());
+  auto node = std::make_shared<system_controller::SystemControllerNode>(rclcpp::NodeOptions());
   rclcpp::spin(node);
   rclcpp::shutdown();
 

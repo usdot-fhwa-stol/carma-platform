@@ -12,11 +12,9 @@ find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rcutils REQUIRED)
-find_package(action_msgs REQUIRED)
 find_package(carma_msgs REQUIRED)
 
 set(dependencies
-    action_msgs
     carma_msgs
     lifecycle_msgs
     rclcpp
@@ -37,9 +35,17 @@ ament_target_dependencies(${PROJECT_NAME}
 )
 
 
-install(DIRECTORY include/
+install(
+  DIRECTORY include/
   DESTINATION include/
 )
+install(
+  TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
 
 # if(BUILD_TESTING)
 #   find_package(ament_lint_auto REQUIRED)

@@ -15,58 +15,68 @@
  */
 
 #include "system_controller/system_controller_node.hpp"
-#include "system_controller/system_controller.hpp"
-
-#include <memory>
 
 namespace system_controller
 {
-
-  SystemControllerNode::SystemControllerNode(const rclcpp::NodeOptions &options)
-      : rclcpp::Node(options)
+  using std_msec = std::chrono::milliseconds;
+  SystemControllerNode::SystemControllerNode(const rclcpp::NodeOptions &options, bool auto_init)
+      : rclcpp::Node("system_controller", options), lifecycle_mgr_(std::shared_ptr<SystemControllerNode>(this))
   {
-
-    // Create subscriptions. History size of 100 is used here to ensure no missed alerts
-    system_alert_sub_ = create_subscription<carma_msgs::msg::SystemAlert>(
-        system_alert_topic_, 100,
-        std::bind(&SystemControllerNode::on_system_alert, this, std::placeholders::_1));
+    if (auto_init)
+    {
+      initialize();
+    }
   }
 
-  void on_error(const std::exception &e)
-  {
-    std::string reason = "Uncaught exception: " + e.what();
-    RCLCPP_ERROR_STREAM(
-        get_logger(), reason);
-
-    lifecycle_mgr_.shutdown(); // Trigger shutdown when internal error occurs
-
-    rclcpp::shutdown(nullptr, reason); // Fully shutdown this node
-  }
-
-  void timer_callback(const ros::TimerEvent &)
+  void SystemControllerNode::initialize()
   {
     try
     {
-      // Walk the managed nodes through their lifecycle
-      // First we configure the nodes
-      if (!lifecycle_mgr_.configure())
-      {
-        // If some nodes failed to configure then we will shutdown the system
-        RCLCPP_ERROR_STREAM(
-            get_logger(), "System could not be configured on startup. Shutting down.");
 
-        lifecycle_mgr_.shutdown();
-        return;
-      }
+      RCLCPP_INFO(get_logger(), "Initializing SystemControllerNode");
 
-      // Second we activate the nodes
-      if (!lifecycle_mgr_.activate())
-      {
-        RCLCPP_ERROR_STREAM(
-            get_logger(), "System could not be activated. Shutting down.");
-        lifecycle_mgr_.shutdown();
-        return;
-      }
+      // Create subscriptions. History size of 100 is used here to ensure no missed alerts
+      system_alert_sub_ = create_subscription<carma_msgs::msg::SystemAlert>(
+          system_alert_topic_, 100,
+          std::bind(&SystemControllerNode::on_system_alert, this, std::placeholders::_1));
+
+      // Create startup timer
+      startup_timer_ = rclcpp::create_timer(
+          this,
+          get_clock(),
+          std::chrono::milliseconds(static_cast<long>(config_.signal_configure_delay * 1000)),
+          std::bind(&SystemControllerNode::startup_delay_callback, this));
+
+      this->declare_parameter<double>("signal_configure_delay", config_.signal_configure_delay);
+      this->declare_parameter<int64_t>("my_parameter", config_.service_timeout_ms);
+      this->declare_parameter<int64_t>("my_parameter", config_.call_timeout_ms);
+      //this->declare_parameter<std::string>("my_parameter", config_.required_subsystem_nodes); TODO
+
+      /*
+std::vector<std::string> required_subsystem_nodes;
+
+  double signal_configure_delay = 20.0;   // Time in seconds to wait before telling all nodes to configure
+
+  uint64_t service_timeout_ms = 1000;
+  
+  uint64_t call_timeout_ms = 1000;
+
+  friend std::ostream& operator<<(std::ostream& output, const SystemControllerConfig& c)
+  {
+    output << "SystemControllerConfig { " << std::endl
+           << "signal_configure_delay: " << c.signal_configure_delay << std::endl
+           << "service_timeout_ms: " << c.service_timeout_ms << std::endl
+           << "call_timeout_ms: " << c.call_timeout_ms << std::endl
+           << "required_subsystem_nodes: [ ";
+    
+    for (auto node : c.required_subsystem_nodes)
+        output << node << " ";
+    
+
+    output << "] " << std::endl << "}" << std::endl;
+    return output;
+  }
+      */
     }
     catch (const std::exception &e)
     {
@@ -74,7 +84,56 @@ namespace system_controller
     }
   }
 
-  void on_system_alert(const carma_msgs::msg::SystemAlert::UniquePtr msg)
+  void SystemControllerNode::set_config(SystemControllerConfig config)
+  {
+    config_ = config;
+  }
+
+  void SystemControllerNode::on_error(const std::exception &e)
+  {
+    std::string reason = "Uncaught exception: " + std::string(e.what());
+    RCLCPP_ERROR_STREAM(
+        get_logger(), reason);
+
+    lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false); // Trigger shutdown when internal error occurs
+
+    rclcpp::shutdown(nullptr, reason); // Fully shutdown this node
+  }
+
+  void SystemControllerNode::startup_delay_callback()
+  {
+    try
+    {
+      // Walk the managed nodes through their lifecycle
+      // First we configure the nodes
+      if (!lifecycle_mgr_.configure(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms)))
+      {
+        // If some nodes failed to configure then we will shutdown the system
+        RCLCPP_ERROR_STREAM(
+            get_logger(), "System could not be configured on startup. Shutting down.");
+
+        lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
+        return;
+      }
+
+      // Second we activate the nodes
+      if (!lifecycle_mgr_.activate(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms)))
+      {
+        RCLCPP_ERROR_STREAM(
+            get_logger(), "System could not be activated. Shutting down.");
+        lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
+        return;
+      }
+
+      startup_timer_->cancel();
+    }
+    catch (const std::exception &e)
+    {
+      on_error(e);
+    }
+  }
+
+  void SystemControllerNode::on_system_alert(const carma_msgs::msg::SystemAlert::UniquePtr msg)
   {
 
     try
@@ -84,9 +143,9 @@ namespace system_controller
           get_logger(), "Received SystemAlert message of type: %u, msg: %s",
           msg->type, msg->description.c_str());
 
-      if ((managed_nodes_.find(msg.source_node) != managed_nodes_.end() && msg.type == FATAL) || msg.type == SHUTDOWN)
+      if ((std::find(config_.required_subsystem_nodes.begin(), config_.required_subsystem_nodes.end(), msg->source_node) != config_.required_subsystem_nodes.end() && msg->type == carma_msgs::msg::SystemAlert::FATAL) || msg->type == carma_msgs::msg::SystemAlert::SHUTDOWN)
       { // TODO might make more sense for external shutdown to be a service call
-        lifecycle_mgr_.shutdown();
+        lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
       }
     }
     catch (const std::exception &e)
@@ -96,3 +155,8 @@ namespace system_controller
   }
 
 } // namespace system_controller
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+// Register the component with class_loader
+RCLCPP_COMPONENTS_REGISTER_NODE(system_controller::SystemControllerNode)
