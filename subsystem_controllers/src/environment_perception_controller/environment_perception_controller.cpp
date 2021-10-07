@@ -28,6 +28,10 @@ namespace subsystem_controller
       : BaseSubsystemController(options)
   {
   }
-};
 
 } // namespace subsystem_controller
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+// Register the component with class_loader
+RCLCPP_COMPONENTS_REGISTER_NODE(system_controller::EnvironmentPerceptionControllerNode)
