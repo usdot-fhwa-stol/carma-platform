@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>subsystem_controllers</name>
+  <version>0.1.0</version>
+  <description>TODO</description>
+  <author email="Michael.McConnell-2@leidos.com">Michael McConnell</author>
+  <maintainer email="carma@dot.gov">CARMA</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>carma_cmake_common</depend>
+  <depend>carma_ros2_utils</depend>
+  <depend>carma_msgs</depend>
+  <depend>lifecycle_msgs</depend>
+  <depend>rclcpp</depend>
+  <depend>ros2_lifecycle_manager</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

@@ -32,6 +32,8 @@ namespace system_controller
   public:
     SystemControllerNode() = delete;
 
+    ~SystemControllerNode() = default;
+
     /**
      * \brief Constructor. Set explicitly to support node composition.
      * 

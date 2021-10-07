@@ -1,0 +1,23 @@
+# Double: Delay period in seconds to wait before trying to configure system nodes
+# Units: seconds
+signal_configure_delay : 20.0
+
+# Long: Timeout for each service to be detected as available in milliseconds
+# Units: milliseconds
+service_timeout_ms : 1000
+
+# Long: Timeout for each service call in milliseconds
+# Units: milliseconds
+call_timeout_ms : 1000
+
+# Required subsystem controller nodes for the overall system to be functional
+required_subsystem_nodes:
+  - /localization/localization_controller
+  - /message/v2x_controller
+  - /guidance/guidance_controller
+  - /guidance/plugins/guidance_plugins_controller
+  - /environment/environment_perception_controller
+  - /hardware_interface/drivers_controller
+
+
+  # TODO still need to create launch file

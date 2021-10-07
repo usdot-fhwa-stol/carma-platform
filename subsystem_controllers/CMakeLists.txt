@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(system_controller)
+project(subsystem_controllers)
 
 
 find_package(carma_cmake_common REQUIRED)
@@ -30,7 +30,7 @@ set(dependencies
 )
 
 add_library(${library_name} SHARED
-  src/system_controller_node.cpp
+  src/subsystem_controllers_node.cpp
 )
 
 ament_target_dependencies(${library_name}
@@ -59,10 +59,6 @@ install(TARGETS ${executable_name}
 
 install(DIRECTORY include/
   DESTINATION include/
-)
-
-install(DIRECTORY config/
-  DESTINATION config/
 )
 
 if(BUILD_TESTING)
