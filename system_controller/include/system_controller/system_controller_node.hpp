@@ -1,16 +1,18 @@
-// Copyright (c) 2019 Intel Corporation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright (C) 2021 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 
 #ifndef SYSTEM_CONTROLLER__SYSTEM_CONTROLLER_NODE_HPP_
 #define SYSTEM_CONTROLLER__SYSTEM_CONTROLLER_NODE_HPP_
@@ -19,27 +21,45 @@
 
 #include "carma_msgs/msg/system_alert.hpp"
 #include "ros2_lifecycle_manager/lifecycle_manager.hpp"
+#include "system_controller_config.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 namespace system_controller
 {
 
-class SystemControllerNode : public rclcpp::Node
-{
-public:
-  SystemControllerNode() = delete;
-  explicit SystemControllerNode(const rclcpp::NodeOptions & options);
+  class SystemControllerNode : public rclcpp::Node
+  {
+  public:
+    SystemControllerNode() = delete;
 
-protected:
-  void on_system_alert(const carma_msgs::msg::SystemAlert::SharedPtr msg) override;
+    /**
+     * \brief Constructor. Set explicitly to support node composition.
+     * 
+     * \param options The node options to use for configuring this node
+     */
+    explicit SystemControllerNode(const rclcpp::NodeOptions &options);
 
-  const std::string system_alert_topic_{"/system_alert"};
-  rclcpp::Subscription<carma_msgs::msg::SystemAlert>::SharedPtr system_alert_sub_;
-  std::shared_ptr<rclcpp::Publisher<carma_msgs::msg::SystemAlert>> system_alert_pub_;
+  protected:
+    /**
+     * \brief Callback for system alert messages used to evaluate system fault handling.
+     * 
+     * \param msg The message which was received 
+     */
+    void on_system_alert(const carma_msgs::msg::SystemAlert::UniquePtr msg);
 
-  std::shared_ptr<ros2_lifecycle_manager::LifecycleManager> lifecycle_mgr_;
-};
+    //! The default topic name for the system alert topic
+    const std::string system_alert_topic_{"/system_alert"};
 
-}  // namespace system_controller
+    //! The subscriber for the system alert topic
+    rclcpp::Subscription<carma_msgs::msg::SystemAlert>::SharedPtr system_alert_sub_;
 
-#endif  // SYSTEM_CONTROLLER__SYSTEM_CONTROLLER_NODE_HPP_
+    //! Lifecycle Manager which will track the managed nodes and call their lifecycle services on request
+    ros2_lifecycle_manager::LifecycleManager lifecycle_mgr_;
+
+    //! The configuration of this node
+    SystemControllerConfig config_;
+  };
+
+} // namespace system_controller
+
+#endif // SYSTEM_CONTROLLER__SYSTEM_CONTROLLER_NODE_HPP_

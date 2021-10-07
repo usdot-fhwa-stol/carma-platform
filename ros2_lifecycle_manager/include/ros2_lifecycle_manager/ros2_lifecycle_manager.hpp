@@ -19,52 +19,130 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 #include "rclcpp/rclcpp.hpp"
-#include "ros2_lifecycle_manager_msgs/srv/manage_lifecycle_nodes.hpp"
-#include "ros2_utils/service_client.hpp"
 #include "lifecycle_manager_interface.hpp"
+#include "lifecycle_msgs/srv/get_state.hpp"
+#include "lifecycle_msgs/srv/change_state.hpp"
 
 namespace ros2_lifecycle_manager
 {
   using ChangeStateClient = rclcpp::Client<lifecycle_msgs::srv::ChangeState>;
   using GetStateClient = rclcpp::Client<lifecycle_msgs::srv::GetState>;
 
-  // Struct combining the node name and relevant clients together
+  // Struct combining the node name and relevant service clients together
   struct ManagedNode
   {
 
-    ManagedNode(const std::string &node_name, const ChangeStateClient &change_state_client, const GetStateClient &get_state_client) : node_name(node_name), change_state_client(change_state_client), get_state_client(get_state_client){};
+    /**
+     * \brief Constructor
+     * \param node_name The fully qualified node name
+     * \param change_state_client The service client to use for accessing the change state service
+     * \param get_state_client The service client to use for accessing the get state service
+     */ 
+    ManagedNode(const std::string &node_name, std::shared_ptr<ChangeStateClient> change_state_client, std::shared_ptr<GetStateClient> get_state_client) : node_name(node_name), change_state_client(change_state_client), get_state_client(get_state_client){};
 
+    //! The fully qualified name of this node
     std::string node_name;
-    ChangeStateClient change_state_client;
-    GetStateClient get_state_client;
+    //! The service client to use for the change_state service
+    std::shared_ptr<ChangeStateClient> change_state_client;
+    //! The service client to use for the get_state service
+    std::shared_ptr<GetStateClient> get_state_client;
 
-  }
-  // TODO this interface defines the interface to be used for lifecycle manages to call the relevent services for their nodes
+  };
+
+  /**
+   * \brief Implementation of the LifecycleManagerInterface using ROS2 service calls
+   */
   class Ros2LifecycleManager : public LifecycleManagerInterface
   {
 
   public:
+    using ChangeStateSharedFutureWithRequest = rclcpp::Client<lifecycle_msgs::srv::ChangeState>::SharedFutureWithRequest;
+
+    /**
+     * \brief Constructor
+     * 
+     * \param node The node handle which will provide a connection to the ROS network
+     */ 
+    Ros2LifecycleManager(std::shared_ptr<rclcpp::Node> base_node);
+
+    ~Ros2LifecycleManager() = default;
+
+    ////
+    // Overrides
+    ////
     void set_managed_nodes(const std::vector<std::string> &nodes) override;
-    std::vector<ManagedNode> get_managed_nodes() override;
-
+    std::vector<std::string> get_managed_nodes() override;
     uint8_t get_managed_node_state(const std::string &node) override;
-
-    // If ordered is true then the calls will execute in sequence as defined by set_managed_nodes. If false then no ordering is enforced (though it still may be)
-    bool configure(const std::chrono::nanoseconds &timeout, bool ordered = true) override;
-    bool cleanup(const std::chrono::nanoseconds &timeout, bool ordered = true) override;
-    bool activate(const std::chrono::nanoseconds &timeout, bool ordered = true) override;
-    bool deactivate(const std::chrono::nanoseconds &timeout, bool ordered = true) override;
-    bool shutdown(const std::chrono::nanoseconds &timeout, bool ordered = true) override;
+    bool configure(const std_nanosec &connection_timeout, const std_nanosec &call_timeout, bool ordered = true) override;
+    bool cleanup(const std_nanosec &connection_timeout, const std_nanosec &call_timeout, bool ordered = true) override;
+    bool activate(const std_nanosec &connection_timeout, const std_nanosec &call_timeout, bool ordered = true) override;
+    bool deactivate(const std_nanosec &connection_timeout, const std_nanosec &call_timeout, bool ordered = true) override;
+    bool shutdown(const std_nanosec &connection_timeout, const std_nanosec &call_timeout, bool ordered = true) override;
 
   protected:
-    bool transition_multiplex(uint8_t transition, bool ordered, const std::chrono::nanoseconds &timeout);
+    /**
+     * \brief Method to call the relevant services for all managed nodes to execute the provided transition.
+     * 
+     * \param connection_timeout The length of time in nanoseconds to wait for connection to be established with EACH node. 
+     * \param call_timeout The length of time in nanoseconds to wait for successfull transition execution for EACH node. 
+     * \param ordered If true then the nodes will be transitioned in order of the list provided by set_managed_nodes. 
+     *                If false the nodes will all be triggered at once.
+     * 
+     * \return True if all nodes successfully transitioned. False otherwise. 
+     */
+    bool transition_multiplex(uint8_t transition, bool ordered, const std_nanosec &connection_timeout, const std_nanosec &call_timeout);
 
+    /**
+     * \brief Helper function to wait on the provided service client for the provided period of time.
+     *        Log a warning if not available.
+     * 
+     * \tparam T The message type of the client
+     * \param client The client to wait on
+     * \param timeout The timeout in nanoseconds to wait on the client
+     * 
+     * \return True if the service is available within the provided timeout. False otherwise.
+     */ 
+    template <class T>
+    bool waitForService(std::shared_ptr<rclcpp::Client<T>> client, const std_nanosec &timeout)
+    {
+      if (!client->wait_for_service(timeout))
+      {
+        RCLCPP_ERROR(
+            base_node_->get_logger(),
+            "Service %s is not available.",
+            client->get_service_name());
+        return false;
+      }
+
+      return true;
+    }
+
+    /**
+     * \brief Helper function to wait for the provided future and return true if the future has the indicator for successful transition.
+     * 
+     * \param futrue The future to wait on
+     * \param timeout The timeout in nanoseconds to wait
+     * 
+     * \return True if the future returned and had the correct value. False otherwise.
+     */ 
+    bool wait_on_change_state_future(const ChangeStateSharedFutureWithRequest &future,
+                                   const std_nanosec &timeout);
+
+    //! The service base name used for ROS2 Lifecycle Node's change state operation
     const std::string change_state_topic_ = "/change_state";
+    //! The service base name used for ROS2 Lifecycle Node's get state operation
     const std::string get_state_topic_ = "/get_state";
+    //! The list of managed nodes
     std::vector<ManagedNode> managed_nodes_;
+    //! The list of managed node fully qualified names
     std::vector<std::string> managed_node_names_;
+    //! HashMap of node names with index for fast access
+    std::unordered_map<std::string, size_t> node_map_;
+    //! The node which provides access to the ROS network
+    std::shared_ptr<rclcpp::Node> base_node_;
   };
 
 } // namespace ros2_lifecycle_manager

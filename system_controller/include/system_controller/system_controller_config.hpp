@@ -27,10 +27,16 @@ struct SystemControllerConfig
 
   double signal_configure_delay = 20.0;   // Time in seconds to wait before telling all nodes to configure
 
+  uint64_t service_timeout_ms = 1000;
+  
+  uint64_t call_timeout_ms = 1000;
+
   friend std::ostream& operator<<(std::ostream& output, const SystemControllerConfig& c)
   {
     output << "SystemControllerConfig { " << std::endl
            << "signal_configure_delay: " << c.signal_configure_delay << std::endl
+           << "service_timeout_ms: " << c.service_timeout_ms << std::endl
+           << "call_timeout_ms: " << c.call_timeout_ms << std::endl
            << "required_subsystem_nodes: [ ";
     
     for (auto node : c.required_subsystem_nodes)
