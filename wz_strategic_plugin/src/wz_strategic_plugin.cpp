@@ -175,7 +175,7 @@ void WzStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversRequest
 
   ROS_DEBUG("traffic_light_down_track %f", traffic_light_down_track);
 
-  double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack;
+  double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack - config_.length;
 
   ROS_DEBUG("distance_remaining_to_traffic_light %f", distance_remaining_to_traffic_light);
 
