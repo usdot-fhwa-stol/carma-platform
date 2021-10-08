@@ -66,14 +66,13 @@ namespace basic_autonomy
         }
 
         std::vector<PointSpeedPair> create_lanefollow_geometry(const cav_msgs::Maneuver &maneuver, double starting_downtrack,
-                                                                   const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
-                                                                    const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config, std::unordered_set<lanelet::Id> &visited_lanelets)
+                                                                const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
+                                                                const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config, std::unordered_set<lanelet::Id> &visited_lanelets)
         {
             if(maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING){
                 throw std::invalid_argument("Create_lanefollow called on a maneuver type which is not LANE_FOLLOW");
             }
             std::vector<PointSpeedPair> points_and_target_speeds;
-            // std::unordered_set<lanelet::Id> visited_lanelets;
 
             cav_msgs::LaneFollowingManeuver lane_following_maneuver = maneuver.lane_following_maneuver;
             
