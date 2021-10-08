@@ -508,10 +508,10 @@ TEST(PortDrayageTest, testComposeSetActiveRouteRequest)
 
 TEST(PortDrayageTest, testInboundMobilityOperation)
 {
-    // Create PortDrayageWorker object with _cmv_id of 123 that is carrying cargo
+    // Create PortDrayageWorker object with cmv_id of 123 that is not carrying cargo
     port_drayage_plugin::PortDrayageWorker pdw{
         123, // CMV ID 
-        "", // Cargo ID
+        "", // Cargo ID; empty string indicates the CMV is not carrying cargo
         "TEST_CARMA_HOST_ID", 
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){},
@@ -545,7 +545,8 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
         : \"38.9550038\", \"longitude\": \"-77.1481983\" }, \"operation\": \"PICKUP\", \"action_id\"\
         : \"32\" }";
     cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr(new cav_msgs::MobilityOperation(mobility_operation_msg));
-    
+    pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr);
+
     // Check that the received message was parsed and stored correctly
     ASSERT_EQ("321", *pdw._latest_mobility_operation_msg.cargo_id);
     ASSERT_EQ("PICKUP", pdw._latest_mobility_operation_msg.operation);
