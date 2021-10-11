@@ -411,6 +411,8 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 
   world_model_->setRouteEndPoint({route_msg->end_point.x,route_msg->end_point.y,route_msg->end_point.z});
 
+  world_model_->setRouteName(route_msg->route_name);
+
   // Call route_callback_
   if (route_callback_)
   {
@@ -440,6 +442,11 @@ double WMListenerWorker::getConfigSpeedLimit() const
   return config_speed_limit_;
 }
 
+void WMListenerWorker::setVehicleParticipationType(std::string participant)
+{  
+  //Function to load participation type into CarmaWorldModel
+  world_model_->setVehicleParticipationType(participant);
+}
 
 
 }  // namespace carma_wm

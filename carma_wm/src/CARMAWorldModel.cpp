@@ -528,7 +528,8 @@ void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map, size_t map_version, boo
 
     ROS_INFO_STREAM("Building routing graph");
 
-    TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
+    TrafficRulesConstPtr traffic_rules = *(getTrafficRules(participant_type_ ));
+
     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
     map_routing_graph_ = std::move(map_graph);
 
@@ -572,6 +573,16 @@ void CARMAWorldModel::setRouteEndPoint(const lanelet::BasicPoint3d& end_point)
                                                                                   // consideration for endpoint
 }
 
+void CARMAWorldModel::setRouteName(const std::string& route_name)
+{
+  route_name_ = route_name;
+}
+
+std::string CARMAWorldModel::getRouteName() const 
+{
+  return route_name_;
+}
+
 lanelet::LineString3d CARMAWorldModel::copyConstructLineString(const lanelet::ConstLineString3d& line) const
 {
   std::vector<lanelet::Point3d> coppied_points;
@@ -591,7 +602,8 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
 
   lanelet::routing::LaneletPath shortest_path = route_->shortestPath();
   // Build shortest path routing graph
-  TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
+  TrafficRulesConstPtr traffic_rules = *(getTrafficRules(participant_type_ ));
+
 
   lanelet::routing::RoutingGraphUPtr shortest_path_graph =
       lanelet::routing::RoutingGraph::build(*shortest_path_view_, *traffic_rules);
@@ -695,6 +707,13 @@ lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules(const s
   }
 
   return optional_ptr;
+}
+
+lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules() const
+{
+  
+  return getTrafficRules(participant_type_);
+
 }
 
 lanelet::Optional<cav_msgs::RoadwayObstacle>
@@ -1092,6 +1111,11 @@ void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
   config_speed_limit_ = config_lim;
 }
 
+void CARMAWorldModel::setVehicleParticipationType(const std::string& participant)
+{
+    participant_type_ = participant;
+}
+
 std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n)
 {
   return carma_wm::query::getLaneletsFromPoint(semantic_map_, point, n);
@@ -1147,6 +1171,43 @@ std::vector<lanelet::CarmaTrafficLightPtr> CARMAWorldModel::getLightsAlongRoute(
     }
   }
   return light_list;
+}
+
+std::vector<std::shared_ptr<lanelet::AllWayStop>> CARMAWorldModel::getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const
+{
+  // Check if the map is loaded yet
+  if (!semantic_map_ || semantic_map_->laneletLayer.empty())
+  {
+    ROS_ERROR_STREAM("Map is not set or does not contain lanelets");
+    return {};
+  }
+  // Check if the route was loaded yet
+  if (!route_)
+  {
+    ROS_ERROR_STREAM("Route has not yet been loaded");
+    return {};
+  }
+  std::vector<std::shared_ptr<lanelet::AllWayStop>> intersection_list;
+  auto curr_downtrack = routeTrackPos(loc).downtrack;
+  // shortpath is already sorted by distance
+  for(const auto& ll : route_->shortestPath())
+  {
+    auto intersections = semantic_map_->laneletLayer.get(ll.id()).regulatoryElementsAs<lanelet::AllWayStop>();
+    if (intersections.empty())
+    {
+      continue;
+    }
+    for (auto intersection : intersections)
+    {
+      double intersection_downtrack = routeTrackPos(intersection->stopLines().front().front().basicPoint2d()).downtrack;
+      if (intersection_downtrack < curr_downtrack)
+      {
+        continue;
+      }
+      intersection_list.push_back(intersection);
+    }
+  }
+  return intersection_list;
 }
 
 void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
