@@ -94,6 +94,11 @@ namespace port_drayage_plugin
             const std::string PORT_DRAYAGE_INITIAL_ARRIVAL_OPERATION_ID = "ENTER_STAGING_AREA";
             const std::string PORT_DRAYAGE_PICKUP_OPERATION_ID = "PICKUP";
             const std::string PORT_DRAYAGE_DROPOFF_OPERATION_ID = "DROPOFF";
+            const std::string PORT_DRAYAGE_EXIT_STAGING_OPERATION_ID = "EXIT_STAGING_AREA";
+            const std::string PORT_DRAYAGE_ENTER_PORT_OPERATION_ID = "ENTER_PORT";
+            const std::string PORT_DRAYAGE_PORT_CHECKPOINT_OPERATION_ID = "PORT_CHECKPOINT";
+            const std::string PORT_DRAYAGE_HOLDING_AREA_OPERATION_ID = "HOLDING_AREA";
+            const std::string PORT_DRAYAGE_EXIT_PORT_OPERATION_ID = "EXIT_PORT";
             const std::string SET_GUIDANCE_ACTIVE_SERVICE_ID = "/guidance/set_guidance_active";
 
         public:
