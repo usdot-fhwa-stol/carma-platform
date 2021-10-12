@@ -26,7 +26,7 @@
   <arg name="simulation_mode" default="true" doc="True if CARMA Platform is launched with CARLA Simulator"/>
 
   <arg name="cuda" default="true" doc="cuda flag for vision_darknet_detect (true if cuda is available)"/>
-  <arg name="velodyne_frame" default="velodyne" doc="Frame of the lidar"/>
+  <arg name="combined_lidar_frame" default="velodyne" doc="Frame of the lidar(s)"/>
 
   <remap from="route" to="$(optenv CARMA_GUIDE_NS)/route"/>
   
@@ -82,7 +82,7 @@
   <arg name="register_lidar2camera_tf" value="true" />
   <arg name="publish_extrinsic_mat" value="true"/>
   <arg name="publish_camera_info" value="true"/>  
-  <arg name="target_frame" value="$(arg velodyne_frame)"/>
+  <arg name="target_frame" value="$(arg combined_lidar_frame)"/>
   <arg name="camera_frame" value="left_optical" />
   <arg name="image_topic_src" value="$(optenv CARMA_INTR_NS)/camera/image_raw"/>
   <arg name="camera_info_topic" value="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
