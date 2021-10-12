@@ -124,7 +124,7 @@
       <arg name="use_odom" value="true" />
       <arg name="use_gnss" value="0"/>
       <arg name="gnss_reinit_fitness" value="10000.0" /> <!-- Set to unreasonably high value to ensure no reinitialization occurs as it rarely works -->
-      <arg name="output_tf_frame_id" value="base_link"/>
+      <arg name="base_frame" value="base_link"/>
     </include>
   </group>
 
