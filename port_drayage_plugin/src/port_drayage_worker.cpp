@@ -241,6 +241,9 @@ namespace port_drayage_plugin
                 // Since a new message indicates the previous action was completed, update all cargo-related data members based on the previous action that was completed
                 update_cargo_information_after_action_completion(_latest_mobility_operation_msg);
 
+                // Store the previously received operation
+                _previously_completed_operation = _latest_mobility_operation_msg.operation;
+
                 ROS_DEBUG_STREAM("Processing new port drayage MobilityOperation message for cmv_id " << mobility_operation_cmv_id);
                 mobility_operation_message_parser(msg->strategy_params);  
                 _previous_strategy_params = msg->strategy_params;
