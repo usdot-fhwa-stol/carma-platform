@@ -16,32 +16,34 @@
  * the License.
  */
 
+
+
 #include <memory>
 
 #include "carma_msgs/msg/system_alert.hpp"
 #include "ros2_lifecycle_manager/ros2_lifecycle_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "base_subsystem_controller/base_subsystem_controller.hpp"
+#include "subsystem_controllers/base_subsystem_controller/base_subsystem_controller.hpp"
 
-namespace subsystem_controller
+namespace subsystem_controllers
 {
 
-  class LocalizationControllerNode : public BaseSubsystemController
+  class EnvironmentPerceptionControllerNode : public BaseSubsystemController
   {
   public:
-    LocalizationControllerNode() = delete;
+    
+    EnvironmentPerceptionControllerNode() = delete;
 
-    ~LocalizationControllerNode() = default;
+    ~EnvironmentPerceptionControllerNode() = default;
 
     /**
      * \brief Constructor. Set explicitly to support node composition.
      * 
      * \param options The node options to use for configuring this node
      */
-    explicit LocalizationControllerNode(const rclcpp::NodeOptions &options);
-
-    // TODO we should add a callback for the localization state and if the we have fallen back to GNSS something should happen
+    explicit EnvironmentPerceptionControllerNode(const rclcpp::NodeOptions &options);
 
   };
 
 } // namespace v2x_controller
+

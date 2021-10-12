@@ -47,6 +47,8 @@ ament_target_dependencies(${executable_name}
   ${dependencies}
 )
 
+rclcpp_components_register_nodes(${library_name} "system_controller::SystemControllerNode")
+
 install(TARGETS ${library_name}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib

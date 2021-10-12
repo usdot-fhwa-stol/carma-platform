@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (C) 2021 LEIDOS.
  *
@@ -16,18 +14,17 @@
  * the License.
  */
 
-#include <memory>
 #include <unordered_set>
+#include "subsystem_controllers/base_subsystem_controller/base_subsystem_controller.hpp"
+#include "subsystem_controllers/base_subsystem_controller/base_subsystem_controller_config.hpp"
 
-#include "carma_msgs/msg/system_alert.hpp"
-#include "ros2_lifecycle_manager/ros2_lifecycle_manager.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "carma_ros2_utils/carma_lifecycle_node.hpp"
+using std_msec = std::chrono::milliseconds;
 
-namespace base_subsystem_controller
+namespace subsystem_controllers
 {
   BaseSubsystemController::BaseSubsystemController(const rclcpp::NodeOptions &options)
-      : CarmaLifecycleNode(options), lifecycle_mgr_(std::shared_ptr<BaseSubsystemController>(this))
+      : CarmaLifecycleNode(options), 
+      lifecycle_mgr_(get_node_base_interface(), get_node_graph_interface(), get_node_logging_interface(), get_node_services_interface())
   {
     system_alert_sub_ = create_subscription<carma_msgs::msg::SystemAlert>(
         system_alert_topic_, 100,
@@ -35,14 +32,14 @@ namespace base_subsystem_controller
 
     // TODO add validation that all required nodes are in namespace
     // TODO set the config here by loading parameters
-    auto nodes_in_namespace = get_nodes_in_namespace(config_.subsystem_namespace);
+    auto nodes_in_namespace = get_nodes_in_namespace(base_config_.subsystem_namespace);
 
     lifecycle_mgr_.set_managed_nodes(nodes_in_namespace);
   }
 
-  void set_config(BaseSubSystemControllerConfig config)
+  void BaseSubsystemController::set_config(BaseSubSystemControllerConfig config)
   {
-    config_ = config;
+    base_config_ = config;
   }
 
   void BaseSubsystemController::on_system_alert(const carma_msgs::msg::SystemAlert::UniquePtr msg)
@@ -57,9 +54,9 @@ namespace base_subsystem_controller
     {
 
       // Required node has failed
-      if (std::find(config_.required_subsystem_nodes.begin(), config_.required_subsystem_nodes.end(), msg->source_node) != config_.required_subsystem_nodes.end())
+      if (std::find(base_config_.required_subsystem_nodes.begin(), base_config_.required_subsystem_nodes.end(), msg->source_node) != base_config_.required_subsystem_nodes.end())
       {
-        lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
+        lifecycle_mgr_.shutdown(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms), false);
         // TODO publish new FATAL system alert describing that the subsystem has failed
       }
       else
@@ -69,11 +66,11 @@ namespace base_subsystem_controller
     }
   }
 
-  carma_ros2_utils::CallbackReturn BaseSubsystemController::handle_on_configure(const rclcpp_lifecycle::State &prev_state)
+  carma_ros2_utils::CallbackReturn BaseSubsystemController::handle_on_configure(const rclcpp_lifecycle::State &)
   {
     RCLCPP_INFO_STREAM(get_logger(), "Subsystem trying to configure");
 
-    bool success = lifecycle_mgr_.configure(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms));
+    bool success = lifecycle_mgr_.configure(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
 
     if (success)
     {
@@ -89,11 +86,11 @@ namespace base_subsystem_controller
     }
   }
 
-  carma_ros2_utils::CallbackReturn BaseSubsystemController::handle_on_activate(const rclcpp_lifecycle::State &prev_state)
+  carma_ros2_utils::CallbackReturn BaseSubsystemController::handle_on_activate(const rclcpp_lifecycle::State &)
   {
     RCLCPP_INFO_STREAM(get_logger(), "Subsystem trying to activate");
 
-    bool success = lifecycle_mgr_.activate(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms));
+    bool success = lifecycle_mgr_.activate(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
 
     if (success)
     {
@@ -109,11 +106,11 @@ namespace base_subsystem_controller
     }
   }
 
-  carma_ros2_utils::CallbackReturn BaseSubsystemController::handle_on_deactivate(const rclcpp_lifecycle::State &prev_state)
+  carma_ros2_utils::CallbackReturn BaseSubsystemController::handle_on_deactivate(const rclcpp_lifecycle::State &)
   {
     RCLCPP_INFO_STREAM(get_logger(), "Subsystem trying to deactivate");
 
-    bool success = lifecycle_mgr_.deactivate(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms));
+    bool success = lifecycle_mgr_.deactivate(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
 
     if (success)
     {
@@ -129,11 +126,11 @@ namespace base_subsystem_controller
     }
   }
 
-  carma_ros2_utils::CallbackReturn BaseSubsystemController::handle_on_cleanup(const rclcpp_lifecycle::State &prev_state)
+  carma_ros2_utils::CallbackReturn BaseSubsystemController::handle_on_cleanup(const rclcpp_lifecycle::State &)
   {
     RCLCPP_INFO_STREAM(get_logger(), "Subsystem trying to cleanup");
 
-    bool success = lifecycle_mgr_.cleanup(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms));
+    bool success = lifecycle_mgr_.cleanup(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
 
     if (success)
     {
@@ -149,11 +146,11 @@ namespace base_subsystem_controller
     }
   }
 
-  carma_ros2_utils::CallbackReturn BaseSubsystemController::handle_on_error(const rclcpp_lifecycle::State &prev_state, const std::string &exception_string)
+  carma_ros2_utils::CallbackReturn BaseSubsystemController::handle_on_error(const rclcpp_lifecycle::State &, const std::string &)
   {
     RCLCPP_INFO_STREAM(get_logger(), "Subsystem trying to shutdown due to error");
 
-    bool success = lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms));
+    bool success = lifecycle_mgr_.shutdown(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
 
     if (success)
     {
@@ -169,11 +166,11 @@ namespace base_subsystem_controller
     }
   }
 
-  carma_ros2_utils::CallbackReturn BaseSubsystemController::handle_on_shutdown(const rclcpp_lifecycle::State &prev_state)
+  carma_ros2_utils::CallbackReturn BaseSubsystemController::handle_on_shutdown(const rclcpp_lifecycle::State &)
   {
     RCLCPP_INFO_STREAM(get_logger(), "Subsystem trying to shutdown");
 
-    bool success = lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
+    bool success = lifecycle_mgr_.shutdown(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms), false);
 
     if (success)
     {
@@ -189,7 +186,7 @@ namespace base_subsystem_controller
     }
   }
 
-  std::vector<std::string> get_nodes_in_namespace(const std::string &namespace) const
+  std::vector<std::string> BaseSubsystemController::get_nodes_in_namespace(const std::string &node_namespace) const
   {
 
     auto all_nodes = this->get_node_names();
@@ -199,7 +196,7 @@ namespace base_subsystem_controller
 
     for (const auto &node : all_nodes)
     {
-      if (node.find(namespace) == 0)
+      if (node.find(node_namespace) == 0)
       { // The node is in the provided namespace
         nodes_in_namspace.emplace_back(node);
       }
@@ -208,7 +205,7 @@ namespace base_subsystem_controller
     return nodes_in_namspace;
   }
 
-  std::vector<std::string> get_non_intersecting_set(const std::vector<std::string> &superset, const std::vector<std::string> &subset) const
+  std::vector<std::string> BaseSubsystemController::get_non_intersecting_set(const std::vector<std::string> &superset, const std::vector<std::string> &subset) const
   {
     // Super set is out namespace
     // Subset is our managed nodes
@@ -230,6 +227,5 @@ namespace base_subsystem_controller
 
     return non_intersecting_set;
   }
-};
 
-} // namespace base_subsystem_controller
+} // namespace subsystem_controllers

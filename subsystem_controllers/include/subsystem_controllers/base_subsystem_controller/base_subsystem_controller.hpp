@@ -24,8 +24,9 @@
 #include "ros2_lifecycle_manager/ros2_lifecycle_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "carma_ros2_utils/carma_lifecycle_node.hpp"
+#include "subsystem_controllers/base_subsystem_controller/base_subsystem_controller_config.hpp"
 
-namespace subsystem_controller
+namespace subsystem_controllers
 {
 
   class BaseSubsystemController : public carma_ros2_utils::CarmaLifecycleNode
@@ -59,12 +60,18 @@ namespace subsystem_controller
 
   protected:
 
-    std::vector<std::string> get_nodes_in_namespace(const std::string& namespace) const;
+    std::vector<std::string> get_nodes_in_namespace(const std::string& node_namespace) const;
     std::vector<std::string> get_non_intersecting_set(const std::vector<std::string>& superset, const std::vector<std::string>& subset) const;
 
     //! Lifecycle Manager which will track the managed nodes and call their lifecycle services on request
     ros2_lifecycle_manager::Ros2LifecycleManager lifecycle_mgr_;
+
+    //! The subscriber for the system alert topic
+    rclcpp::Subscription<carma_msgs::msg::SystemAlert>::SharedPtr system_alert_sub_;
+
+    //! The configuration struct
+    BaseSubSystemControllerConfig base_config_;
   };
 
-} // namespace subsystem_controller
+} // namespace subsystem_controllers
 

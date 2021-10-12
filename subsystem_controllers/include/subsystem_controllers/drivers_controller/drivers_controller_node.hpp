@@ -23,25 +23,25 @@
 #include "carma_msgs/msg/system_alert.hpp"
 #include "ros2_lifecycle_manager/ros2_lifecycle_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "base_subsystem_controller/base_subsystem_controller.hpp"
+#include "subsystem_controllers/base_subsystem_controller/base_subsystem_controller.hpp"
 
-namespace subsystem_controller
+namespace subsystem_controllers
 {
 
-  class GuidanceControllerNode : public BaseSubsystemController
+  class DriversControllerNode : public BaseSubsystemController
   {
   public:
     
-    GuidanceControllerNode() = delete;
+    DriversControllerNode() = delete;
 
-    ~GuidanceControllerNode() = default;
+    ~DriversControllerNode() = default;
 
     /**
      * \brief Constructor. Set explicitly to support node composition.
      * 
      * \param options The node options to use for configuring this node
      */
-    explicit GuidanceControllerNode(const rclcpp::NodeOptions &options);
+    explicit DriversControllerNode(const rclcpp::NodeOptions &options);
 
   };
 

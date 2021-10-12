@@ -1,4 +1,3 @@
-#pragma once
 
 /*
  * Copyright (C) 2021 LEIDOS.
@@ -16,34 +15,17 @@
  * the License.
  */
 
-
-
 #include <memory>
 
-#include "carma_msgs/msg/system_alert.hpp"
-#include "ros2_lifecycle_manager/ros2_lifecycle_manager.hpp"
+#include "subsystem_controllers/environment_perception_controller/environment_perception_controller.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "base_subsystem_controller/base_subsystem_controller.hpp"
 
-namespace subsystem_controller
+int main(int argc, char ** argv)
 {
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<subsystem_controllers::EnvironmentPerceptionControllerNode>(rclcpp::NodeOptions());
+  rclcpp::spin(node->get_node_base_interface());
+  rclcpp::shutdown();
 
-  class V2XControllerNode : public BaseSubsystemController
-  {
-  public:
-    
-    V2XControllerNode() = delete;
-
-    ~V2XControllerNode() = default;
-
-    /**
-     * \brief Constructor. Set explicitly to support node composition.
-     * 
-     * \param options The node options to use for configuring this node
-     */
-    explicit V2XControllerNode(const rclcpp::NodeOptions &options);
-
-  };
-
-} // namespace v2x_controller
-
+  return 0;
+}

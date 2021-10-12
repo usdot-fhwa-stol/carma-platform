@@ -19,7 +19,12 @@
 namespace ros2_lifecycle_manager
 {
 
-  Ros2LifecycleManager::Ros2LifecycleManager(std::shared_ptr<rclcpp::Node> base_node) : base_node_(base_node) {}
+  Ros2LifecycleManager::Ros2LifecycleManager(
+      rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base,
+      rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph,
+      rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging,
+      rclcpp::node_interfaces::NodeServicesInterface::SharedPtr node_services
+    ) : node_base_(node_base), node_graph_(node_graph), node_logging_(node_logging), node_services_(node_services) {}
 
   void Ros2LifecycleManager::set_managed_nodes(const std::vector<std::string> &nodes)
   {
@@ -37,8 +42,8 @@ namespace ros2_lifecycle_manager
     {
 
       ManagedNode managed_node(node,
-                               base_node_->create_client<lifecycle_msgs::srv::ChangeState>(node + change_state_topic_),
-                               base_node_->create_client<lifecycle_msgs::srv::GetState>(node + get_state_topic_));
+                               create_client<lifecycle_msgs::srv::ChangeState>(node + change_state_topic_),
+                               create_client<lifecycle_msgs::srv::GetState>(node + get_state_topic_));
 
       managed_nodes_.push_back(managed_node);
       node_map_.emplace(node, i);
@@ -58,7 +63,7 @@ namespace ros2_lifecycle_manager
     {
 
       RCLCPP_ERROR_STREAM(
-          base_node_->get_logger(), "State for node: " << node_name << " could not be provided as that node was not being managed. ");
+          node_logging_->get_logger(), "State for node: " << node_name << " could not be provided as that node was not being managed. ");
 
       return lifecycle_msgs::msg::State::PRIMARY_STATE_UNKNOWN;
     }
@@ -81,7 +86,7 @@ namespace ros2_lifecycle_manager
     if (future_status != std::future_status::ready)
     {
       RCLCPP_ERROR(
-          base_node_->get_logger(), "Server time out while getting current state for node %s", node_name);
+          node_logging_->get_logger(), "Server time out while getting current state for node %s", node_name);
       return false;
     }
 
@@ -143,7 +148,7 @@ namespace ros2_lifecycle_manager
         }
 
         RCLCPP_INFO_STREAM(
-          base_node_->get_logger(), "Calling node: " << node.node_name);
+          node_logging_->get_logger(), "Calling node: " << node.node_name);
 
         // Call service
         ChangeStateSharedFutureWithRequest future_result = node.change_state_client->async_send_request(request, [](ChangeStateSharedFutureWithRequest) {});
@@ -170,7 +175,7 @@ namespace ros2_lifecycle_manager
         }
 
         RCLCPP_INFO_STREAM(
-          base_node_->get_logger(), "Calling node: " << node.node_name);
+          node_logging_->get_logger(), "Calling node: " << node.node_name);
 
         // Call service
         futures.emplace_back(node.change_state_client->async_send_request(request, [](ChangeStateSharedFutureWithRequest) {}));
@@ -197,7 +202,7 @@ namespace ros2_lifecycle_manager
     if (future_status != std::future_status::ready)
     {
       RCLCPP_ERROR(
-          base_node_->get_logger(), "Server time out while getting current state for node");
+          node_logging_->get_logger(), "Server time out while getting current state for node");
       return false;
     }
 
@@ -205,13 +210,13 @@ namespace ros2_lifecycle_manager
     if (future.get().second->success)
     {
       RCLCPP_INFO(
-          base_node_->get_logger(), "Transition %d successfully triggered.", static_cast<int>(future.get().first->transition.id));
+          node_logging_->get_logger(), "Transition %d successfully triggered.", static_cast<int>(future.get().first->transition.id));
       return true;
     }
     else
     {
       RCLCPP_WARN(
-          base_node_->get_logger(), "Failed to trigger transition %u", static_cast<unsigned int>(future.get().first->transition.id));
+          node_logging_->get_logger(), "Failed to trigger transition %u", static_cast<unsigned int>(future.get().first->transition.id));
       return false;
     }
 

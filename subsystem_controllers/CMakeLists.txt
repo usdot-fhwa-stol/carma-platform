@@ -16,12 +16,14 @@ find_package(ros2_lifecycle_manager REQUIRED)
 
 include_directories(
   include
+  ${carma_ros2_utils_INCLUDE_DIRS}
+  ${carma_msgs_INCLUDE_DIRS}
+  ${lifecycle_msgs_INCLUDE_DIRS}
+  ${rclcpp_INCLUDE_DIRS}
+  ${ros2_lifecycle_manager_INCLUDE_DIRS}
 )
 
-set(executable_name ${PROJECT_NAME})
-set(library_name ${executable_name}_core)
-
-set(dependencies
+set(base_dependencies
   carma_cmake_common
   carma_ros2_utils
   rclcpp
@@ -29,44 +31,53 @@ set(dependencies
   lifecycle_msgs
 )
 
-add_library(${library_name} SHARED
-  src/subsystem_controllers_node.cpp
+add_library(base_subsystem_controller SHARED
+  src/base_subsystem_controller/base_subsystem_controller.cpp
+)
+ament_target_dependencies(base_subsystem_controller
+  ${base_dependencies}
 )
 
-ament_target_dependencies(${library_name}
-  ${dependencies}
+set(dependency_libs
+  ${carma_cmake_common_LIBRARIES}
+  ${carma_ros2_utils_LIBRARIES}
+  ${rclcpp_LIBRARIES}
+  ${ros2_lifecycle_manager_LIBRARIES}
+  ${lifecycle_msgs_LIBRARIES}
+  base_subsystem_controller
 )
 
-add_executable(${executable_name}
-  src/main.cpp
-)
+add_subdirectory(src/v2x_controller)
+add_subdirectory(src/localization_controller)
+add_subdirectory(src/guidance_controller)
+add_subdirectory(src/environment_perception_controller)
+add_subdirectory(src/drivers_controller)
 
-target_link_libraries(${executable_name} ${library_name})
 
-ament_target_dependencies(${executable_name}
-  ${dependencies}
-)
-
-install(TARGETS ${library_name}
+install(TARGETS base_subsystem_controller
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
 
-install(TARGETS ${executable_name}
-  RUNTIME DESTINATION lib/${PROJECT_NAME}
-)
 
 install(DIRECTORY include/
   DESTINATION include/
 )
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-endif()
+# if(BUILD_TESTING)
+#   find_package(ament_lint_auto REQUIRED)
+#   ament_lint_auto_find_test_dependencies()
+# endif()
 
 ament_export_include_directories(include)
-ament_export_libraries(${library_name})
-ament_export_dependencies(${dependencies})
+ament_export_libraries( # TODO can we put this export line in each subdirectory?
+  base_subsystem_controller 
+  v2x_controller
+  localization_controller
+  guidance_controller
+  environment_perception_controller
+  drivers_controller
+)
+ament_export_dependencies(${base_dependencies})
 ament_package()

@@ -23,25 +23,25 @@
 #include "carma_msgs/msg/system_alert.hpp"
 #include "ros2_lifecycle_manager/ros2_lifecycle_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "base_subsystem_controller/base_subsystem_controller.hpp"
+#include "subsystem_controllers/base_subsystem_controller/base_subsystem_controller.hpp"
 
-namespace subsystem_controller
+namespace subsystem_controllers
 {
 
-  class EnvironmentPerceptionControllerNode : public BaseSubsystemController
+  class GuidanceControllerNode : public BaseSubsystemController
   {
   public:
     
-    EnvironmentPerceptionControllerNode() = delete;
+    GuidanceControllerNode() = delete;
 
-    ~EnvironmentPerceptionControllerNode() = default;
+    ~GuidanceControllerNode() = default;
 
     /**
      * \brief Constructor. Set explicitly to support node composition.
      * 
      * \param options The node options to use for configuring this node
      */
-    explicit EnvironmentPerceptionControllerNode(const rclcpp::NodeOptions &options);
+    explicit GuidanceControllerNode(const rclcpp::NodeOptions &options);
 
   };
 

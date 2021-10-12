@@ -20,8 +20,10 @@ namespace system_controller
 {
   using std_msec = std::chrono::milliseconds;
   SystemControllerNode::SystemControllerNode(const rclcpp::NodeOptions &options, bool auto_init)
-      : rclcpp::Node("system_controller", options), lifecycle_mgr_(std::shared_ptr<SystemControllerNode>(this))
+      : rclcpp::Node("system_controller", options), 
+      lifecycle_mgr_(get_node_base_interface(), get_node_graph_interface(), get_node_logging_interface(), get_node_services_interface())
   {
+
     if (auto_init)
     {
       initialize();
@@ -52,31 +54,7 @@ namespace system_controller
       this->declare_parameter<int64_t>("my_parameter", config_.call_timeout_ms);
       //this->declare_parameter<std::string>("my_parameter", config_.required_subsystem_nodes); TODO
 
-      /*
-std::vector<std::string> required_subsystem_nodes;
 
-  double signal_configure_delay = 20.0;   // Time in seconds to wait before telling all nodes to configure
-
-  uint64_t service_timeout_ms = 1000;
-  
-  uint64_t call_timeout_ms = 1000;
-
-  friend std::ostream& operator<<(std::ostream& output, const SystemControllerConfig& c)
-  {
-    output << "SystemControllerConfig { " << std::endl
-           << "signal_configure_delay: " << c.signal_configure_delay << std::endl
-           << "service_timeout_ms: " << c.service_timeout_ms << std::endl
-           << "call_timeout_ms: " << c.call_timeout_ms << std::endl
-           << "required_subsystem_nodes: [ ";
-    
-    for (auto node : c.required_subsystem_nodes)
-        output << node << " ";
-    
-
-    output << "] " << std::endl << "}" << std::endl;
-    return output;
-  }
-      */
     }
     catch (const std::exception &e)
     {

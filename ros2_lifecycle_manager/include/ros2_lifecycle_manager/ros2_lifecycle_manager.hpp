@@ -64,9 +64,15 @@ namespace ros2_lifecycle_manager
     /**
      * \brief Constructor
      * 
-     * \param node The node handle which will provide a connection to the ROS network
+     * \param node_logging The base logging interface
+     * \param node_services The base service providing interface
      */ 
-    Ros2LifecycleManager(std::shared_ptr<rclcpp::Node> base_node);
+    Ros2LifecycleManager(
+      rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base,
+      rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph,
+      rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging,
+      rclcpp::node_interfaces::NodeServicesInterface::SharedPtr node_services
+    );
 
     ~Ros2LifecycleManager() = default;
 
@@ -111,13 +117,25 @@ namespace ros2_lifecycle_manager
       if (!client->wait_for_service(timeout))
       {
         RCLCPP_ERROR(
-            base_node_->get_logger(),
+            node_logging_->get_logger(),
             "Service %s is not available.",
             client->get_service_name());
         return false;
       }
 
       return true;
+    }
+
+    template <class ServiceT>
+    typename rclcpp::Client<ServiceT>::SharedPtr
+    create_client(const std::string service_name) {
+      return rclcpp::create_client<ServiceT>(
+        node_base_,
+        node_graph_,
+        node_services_,
+        service_name,
+        rmw_qos_profile_services_default,
+        nullptr);
     }
 
     /**
@@ -141,8 +159,11 @@ namespace ros2_lifecycle_manager
     std::vector<std::string> managed_node_names_;
     //! HashMap of node names with index for fast access
     std::unordered_map<std::string, size_t> node_map_;
-    //! The node which provides access to the ROS network
-    std::shared_ptr<rclcpp::Node> base_node_;
+    //! The required node interfaces
+    rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_;
+    rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph_;
+    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging_;
+    rclcpp::node_interfaces::NodeServicesInterface::SharedPtr node_services_;
   };
 
 } // namespace ros2_lifecycle_manager

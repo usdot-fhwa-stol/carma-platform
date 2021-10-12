@@ -15,23 +15,18 @@
  * the License.
  */
 
-#include <memory>
+#include "subsystem_controllers/localization_controller/localization_controller.hpp"
 
-#include "carma_msgs/msg/system_alert.hpp"
-#include "ros2_lifecycle_manager/ros2_lifecycle_manager.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "carma_ros2_utils/carma_lifecycle_node.hpp"
-
-namespace subsystem_controller
+namespace subsystem_controllers
 {
   LocalizationControllerNode::LocalizationControllerNode(const rclcpp::NodeOptions &options)
       : BaseSubsystemController(options)
   {
   }
 
-} // namespace subsystem_controller
+} // namespace subsystem_controllers
 
 #include "rclcpp_components/register_node_macro.hpp"
 
 // Register the component with class_loader
-RCLCPP_COMPONENTS_REGISTER_NODE(system_controller::LocalizationControllerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(subsystem_controllers::LocalizationControllerNode)

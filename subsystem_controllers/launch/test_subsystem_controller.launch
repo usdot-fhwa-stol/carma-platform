@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- Nodes in the Localization Subsystem TODO make an actual launch test file -->
+  <node pkg="system_controller" name="system_controller" namespace="$(var namespace)" exec="dead_reckoner"  />
+  <node pkg="ekf_localizer" name="ekf_localizer" namespace="$(var namespace)" exec="ekf_localizer"  />
+
+  <!-- Static transform publisher -->
+  <node pkg="tf2_ros" name="static_transform_publisher" namespace="$(var namespace)" exec="static_transform_publisher" args="0 0 0 0 0 0 odom camera"  />
+
+  <node pkg="localization_health_monitor" name="localization_health_monitor" namespace="$(var namespace)" exec="localization_health_monitor" >
+    <param name="auto_initialization_timeout" value="3000" />
+    <param name="fitness_score_degraded_threshold" value="20.0" />
+    <param name="fitness_score_fault_threshold" value="100000.0" />
+    <param name="gnss_only_operation_timeout" value="20000" />
+    <param name="ndt_frequency_degraded_threshold" value="8.0" />
+    <param name="ndt_frequency_fault_threshold" value="0.01" />
+  </node>
+
+  <!-- The System Controller manages all of the lifecycle nodes -->
+  <node pkg="system_controller" name="system_controller" exec="system_controller" >
+    <param name="use_sim_time" value="$(var use_sim_time)" />
+    <param name="autostart" value="$(var autostart)" />
+    <param name="node_names" value="['camera_driver', 'camera_driver_client', 'carma_delphi_srr2_driver', 'carma_velodyne_lidar_driver', 'dead_reckoner', 'ekf_localizer', 'localization_health_monitor']" />
+  </node>
+
+</launch>

@@ -15,18 +15,17 @@
  * the License.
  */
 
-#include "subsystem_controllers/drivers_controller/drivers_controller_node.hpp"
+#include <memory>
 
-namespace subsystem_controllers
+#include "subsystem_controllers/v2x_controller/v2x_controller_node.hpp"
+#include "rclcpp/rclcpp.hpp"
+
+int main(int argc, char ** argv)
 {
-  DriversControllerNode::DriversControllerNode(const rclcpp::NodeOptions &options)
-      : BaseSubsystemController(options)
-  {
-  }
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<subsystem_controllers::V2XControllerNode>(rclcpp::NodeOptions());
+  rclcpp::spin(node->get_node_base_interface());
+  rclcpp::shutdown();
 
-} // namespace subsystem_controllers
-
-#include "rclcpp_components/register_node_macro.hpp"
-
-// Register the component with class_loader
-RCLCPP_COMPONENTS_REGISTER_NODE(subsystem_controllers::DriversControllerNode)
+  return 0;
+}
