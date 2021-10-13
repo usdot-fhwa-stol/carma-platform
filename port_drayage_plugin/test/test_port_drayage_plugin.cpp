@@ -37,6 +37,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
         123, // CMV ID 
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", // Host ID
+        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){},
         1.0, 
@@ -93,6 +94,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
         123, // CMV ID 
         "", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
+        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){},
         1.0, 
@@ -135,6 +137,7 @@ TEST(PortDrayageTest, testCheckStop1)
         123, // CMV ID
         "321", // Cargo ID
         "TEST_CARMA_HOST_ID", 
+        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){},
         1.0, 
@@ -167,6 +170,7 @@ TEST(PortDrayageTest, testCheckStop2)
         123, // CMV ID 
         "321", // Cargo ID
         "TEST_CARMA_HOST_ID", 
+        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){},
         1.0, 
@@ -199,6 +203,7 @@ TEST(PortDrayageTest, testCheckStop3)
         123, // CMV ID
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
+        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){}, 
         1.0, 
@@ -232,6 +237,7 @@ TEST(PortDrayageTest, testCheckStop4)
         123, // CMV ID
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
+        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){}, 
         1.0, 
@@ -291,6 +297,7 @@ TEST(PortDrayageTest, testPortDrayageStateMachine2)
         123, // CMV ID 
         "", // Cargo ID; empty string indicates CMV begins without no cargo
         "TEST_CARMA_HOST_ID", 
+        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){}, 
         1.0, 
@@ -478,6 +485,7 @@ TEST(PortDrayageTest, testComposeSetActiveRouteRequest)
         123, 
         "TEST_CARGO_ID", 
         "TEST_CARMA_HOST_ID", 
+        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){},
         1.0, 
@@ -514,6 +522,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
         123, // CMV ID 
         "", // Cargo ID; empty string indicates the CMV is not carrying cargo
         "TEST_CARMA_HOST_ID", 
+        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){},
         1.0, 
@@ -959,6 +968,54 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ASSERT_EQ("41", action_id);
     ASSERT_NEAR(38.6639993, vehicle_latitude, 0.001);
     ASSERT_NEAR(-77.8395583, vehicle_longitude, 0.001);
+
+   // Create an "ENTER_STAGING_AREA" MobilityOperationConstPtr for pdw
+    cav_msgs::MobilityOperation mobility_operation_msg10;
+    mobility_operation_msg10.strategy = "carma/port_drayage";
+    mobility_operation_msg10.strategy_params = "{ \"cmv_id\": \"123\", \"destination\": { \"latitude\"\
+        : \"38.6889993\", \"longitude\": \"-77.8124583\" }, \"operation\": \"ENTER_STAGING_AREA\", \"action_id\"\
+        : \"42\" }";
+    cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr10(new cav_msgs::MobilityOperation(mobility_operation_msg10));
+    pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr10);
+
+    // Test composeArrivalMessage for when CMV has arrived at the Staging Area Entrance
+    // Set the pdw's map projector and its current pose
+    base_proj = "+proj=tmerc +lat_0=38.6889993 +lon_0=-77.8124583 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m "
+                             "+no_defs";
+    georeference_msg.data = base_proj;
+    std_msgs::StringConstPtr georeference_msg_ptr9(new std_msgs::String(georeference_msg));
+    pdw.on_new_georeference(georeference_msg_ptr9);
+
+    pose_msg.pose.position.x = 0.0;
+    pose_msg.pose.position.y = 0.0;
+    geometry_msgs::PoseStampedConstPtr pose_msg_ptr9(new geometry_msgs::PoseStamped(pose_msg));
+    pdw.on_new_pose(pose_msg_ptr9); // Sets the host vehicle's current gps lat/lon position
+
+    // Obtain the contents of the broadcasted message when the CMV arrives at the Port Entrance
+    cav_msgs::MobilityOperation msg9 = pdw.compose_arrival_message();
+    std::istringstream strstream9(msg9.strategy_params);
+    ptree pt9;
+    boost::property_tree::json_parser::read_json(strstream9, pt9);
+
+    cmv_id = pt9.get<unsigned long>("cmv_id");
+    cargo_id = pt9.get<std::string>("cargo_id");
+    has_cargo = pt9.get<bool>("cargo");
+    action_id = pt9.get<std::string>("action_id");
+    operation = pt9.get<std::string>("operation");
+    vehicle_longitude = pt9.get<double>("location.longitude");
+    vehicle_latitude = pt9.get<double>("location.latitude");
+
+    // Verify the contents of the broadcasted message
+    ASSERT_EQ("carma/port_drayage", msg9.strategy);
+    ASSERT_EQ("TEST_CARMA_HOST_ID", msg9.header.sender_id);
+    ASSERT_FALSE(msg9.strategy_params.empty());
+    ASSERT_EQ(123, cmv_id);
+    ASSERT_TRUE(has_cargo);
+    ASSERT_EQ("422", cargo_id);
+    ASSERT_EQ("ENTER_STAGING_AREA", operation);
+    ASSERT_EQ("42", action_id);
+    ASSERT_NEAR(38.6889993, vehicle_latitude, 0.001);
+    ASSERT_NEAR(-77.8124583, vehicle_longitude, 0.001);
 }
 
 TEST(PortDrayageTest, testComposeUIInstructions)
@@ -968,6 +1025,7 @@ TEST(PortDrayageTest, testComposeUIInstructions)
         123, 
         "", // Empty string indicates CMV is not carrying cargo 
         "TEST_CARMA_HOST_ID", 
+        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){},
         1.0, 

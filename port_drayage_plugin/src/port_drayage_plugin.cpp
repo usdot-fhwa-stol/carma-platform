@@ -27,12 +27,15 @@ namespace port_drayage_plugin
             return -1;
         }
 
+        // Read in configuration parameters
         double speed_epsilon = _pnh->param("stop_speed_epsilon", 1.0);
         declaration = _pnh->param("declaration", 1.0);
         std::string cargo_id;
         _pnh->param<std::string>("cargo_id", cargo_id, "UNDEFINED-CARGO-ID"); 
         std::string host_id;
         _pnh->param<std::string>("host_id", host_id, "UNDEFINED-HOST-ID");
+        std::string initial_arrival_operation_id;
+        _pnh->param<std::string>("initial_arrival_operation_id", initial_arrival_operation_id, "UNDEFINED-INITIAL-ARRIVAL-OPERATION-ID");
         bool enable_port_drayage;
         _pnh->param<bool>("enable_port_drayage", enable_port_drayage, false);
 
@@ -54,6 +57,7 @@ namespace port_drayage_plugin
             cmv_id,
             cargo_id,
             host_id,
+            initial_arrival_operation_id,
             [this](cav_msgs::MobilityOperation msg) {
                _outbound_mobility_operations_publisher->publish<cav_msgs::MobilityOperation>(msg);
             },

@@ -75,6 +75,7 @@ namespace port_drayage_plugin
             double _stop_speed_epsilon;
             PortDrayageStateMachine _pdsm;
             std::string _host_id;
+            std::string _initial_arrival_operation_id;
             std::string _host_bsm_id;
             std::string _previously_completed_operation;
             unsigned long _cmv_id;
@@ -91,14 +92,14 @@ namespace port_drayage_plugin
             // Constants
             const std::string PORT_DRAYAGE_PLUGIN_ID = "port_drayage_plugin";
             const std::string PORT_DRAYAGE_STRATEGY_ID = "carma/port_drayage";
-            const std::string PORT_DRAYAGE_INITIAL_ARRIVAL_OPERATION_ID = "ENTER_STAGING_AREA";
             const std::string PORT_DRAYAGE_PICKUP_OPERATION_ID = "PICKUP";
             const std::string PORT_DRAYAGE_DROPOFF_OPERATION_ID = "DROPOFF";
+            const std::string PORT_DRAYAGE_ENTER_STAGING_OPERATION_ID = "ENTER_STAGING_AREA";
             const std::string PORT_DRAYAGE_EXIT_STAGING_OPERATION_ID = "EXIT_STAGING_AREA";
             const std::string PORT_DRAYAGE_ENTER_PORT_OPERATION_ID = "ENTER_PORT";
+            const std::string PORT_DRAYAGE_EXIT_PORT_OPERATION_ID = "EXIT_PORT";
             const std::string PORT_DRAYAGE_PORT_CHECKPOINT_OPERATION_ID = "PORT_CHECKPOINT";
             const std::string PORT_DRAYAGE_HOLDING_AREA_OPERATION_ID = "HOLDING_AREA";
-            const std::string PORT_DRAYAGE_EXIT_PORT_OPERATION_ID = "EXIT_PORT";
             const std::string SET_GUIDANCE_ACTIVE_SERVICE_ID = "/guidance/set_guidance_active";
 
         public:
@@ -136,6 +137,7 @@ namespace port_drayage_plugin
                 unsigned long cmv_id,
                 std::string cargo_id,
                 std::string host_id,
+                std::string initial_arrival_operation_id,
                 std::function<void(cav_msgs::MobilityOperation)> mobility_operations_publisher, 
                 std::function<void(cav_msgs::UIInstructions)> ui_instructions_publisher,
                 double stop_speed_epsilon,
@@ -144,6 +146,7 @@ namespace port_drayage_plugin
                 _cmv_id(cmv_id),
                 _cargo_id(cargo_id),
                 _host_id(host_id),
+                _initial_arrival_operation_id(initial_arrival_operation_id),
                 _publish_mobility_operation(mobility_operations_publisher),
                 _publish_ui_instructions(ui_instructions_publisher),
                 _set_active_route(call_set_active_route_client),

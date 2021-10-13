@@ -165,7 +165,7 @@ namespace port_drayage_plugin
 
         // If CMV has arrived at its initial destination, assign 'operation' field for its initial arrival message
         if (_pdsm.get_state() == PortDrayageState::EN_ROUTE_TO_INITIAL_DESTINATION) {
-            pt.put("operation", PORT_DRAYAGE_INITIAL_ARRIVAL_OPERATION_ID);
+            pt.put("operation", _initial_arrival_operation_id);
 
             // Add cargo_id if CMV is carrying cargo
             if (_cargo_id != "") {
@@ -296,6 +296,7 @@ namespace port_drayage_plugin
         ROS_DEBUG_STREAM("operation: " << _latest_mobility_operation_msg.operation);
         if (_latest_mobility_operation_msg.operation == PORT_DRAYAGE_PICKUP_OPERATION_ID ||
             _latest_mobility_operation_msg.operation == PORT_DRAYAGE_DROPOFF_OPERATION_ID ||
+            _latest_mobility_operation_msg.operation == PORT_DRAYAGE_ENTER_STAGING_OPERATION_ID ||
             _latest_mobility_operation_msg.operation == PORT_DRAYAGE_EXIT_STAGING_OPERATION_ID ||
             _latest_mobility_operation_msg.operation == PORT_DRAYAGE_ENTER_PORT_OPERATION_ID ||
             _latest_mobility_operation_msg.operation == PORT_DRAYAGE_PORT_CHECKPOINT_OPERATION_ID ||
