@@ -39,6 +39,7 @@
   <arg name="strategic_plugins_to_validate" default="[]" doc="List of String: Guidance Strategic Plugins that will be validated by the Guidance Plugin Validator Node if enabled"/>
   <arg name="tactical_plugins_to_validate" default="[]" doc="List of String: Guidance Tactical Plugins that will be validated by the Guidance Plugin Validator Node if enabled"/>
   <arg name="control_plugins_to_validate" default="[]" doc="List of String: Guidance Control Plugins that will be validated by the Guidance Plugin Validator Node if enabled"/>
+  <arg name="combined_lidar_frame" default="velodyne" doc="Frame of the lidar(s)"/>
 
 	<!-- Startup Drivers With Main CARMA System -->
   <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
@@ -111,6 +112,7 @@
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
       <arg name="yolo_dir" value="$(arg yolo_dir)"/>
       <arg name="simulation_mode" value="$(arg simulation_mode)" />
+      <arg name="combined_lidar_frame" value="$(arg combined_lidar_frame)"/>
     </include>
   </group>
 
