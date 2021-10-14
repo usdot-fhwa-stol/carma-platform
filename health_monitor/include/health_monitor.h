@@ -69,6 +69,7 @@ namespace health_monitor
             ros::ServiceServer get_strategic_plugin_by_capability_server_;
             ros::ServiceServer get_tactical_plugin_by_capability_server_;
 
+
             // topic subscribers
             ros::Subscriber plugin_discovery_subscriber_;
             ros::Subscriber driver_discovery_subscriber_;

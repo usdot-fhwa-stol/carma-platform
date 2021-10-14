@@ -159,7 +159,33 @@ namespace health_monitor
     {
         bool answer = plugin_manager_.activate_plugin(req.pluginName, req.activated);
         if(answer) {
+
             res.newState = req.activated;
+
+            // Service call to individual plugins to activate or deactivate them
+
+            cav_srvs::PluginActivation srv_to_plugin;
+            srv_to_plugin.request = req;
+
+            std::string plugin_activation_service = "plugins/" + req.pluginName + "/activate_plugin";
+
+            // service clients
+            ros::ServiceClient target_activated_client_ = nh_->serviceClient<cav_srvs::PluginActivation>(plugin_activation_service);
+
+            if (target_activated_client_.call(srv_to_plugin))
+            {
+                ROS_DEBUG_STREAM("Activation service call to " << req.pluginName << "was successful");
+                if (srv_to_plugin.response.newState == req.activated)
+                {
+                    ROS_DEBUG_STREAM("state transition was successful");
+                }
+                else ROS_DEBUG_STREAM("state transition was NOT successful");
+            }
+            else
+            {
+                ROS_DEBUG_STREAM("Activation service call to " << req.pluginName << "was NOT successful");
+            }
+            
         }
         return answer;
     }
