@@ -671,6 +671,47 @@ namespace basic_autonomy
         ASSERT_NEAR(lc_start_point.x(), lc_geom.front().x(), 0.000001);
     } 
 
+    TEST(BasicAutonomyTest, lanefollow_geometry_visited_lanelets)
+    {
+
+        double starting_downtrack = 0;
+        cav_msgs::VehicleState ending_state;
+        std::string trajectory_type = "lane_follow";
+        waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 0, 0);
+        waypoint_generation::DetailedTrajConfig detailed_config = waypoint_generation::compose_detailed_trajectory_config(0, 0, 0, 0, 0, 5, 0, 0, 20);
+
+        lanelet::Id id1 = 1100;
+        std::unordered_set<lanelet::Id> visited_lanelets;
+        visited_lanelets.insert(id1);
+        std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+        auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10);
+        wm->setMap(map);
+        carma_wm::test::setSpeedLimit(15_mph, wm);
+
+        carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
+
+        cav_msgs::Maneuver maneuver;
+        maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+        maneuver.lane_following_maneuver.lane_ids.push_back(std::to_string(1200));
+        maneuver.lane_following_maneuver.start_dist = 5.0;
+        maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
+        maneuver.lane_following_maneuver.start_speed = 0.0;
+
+        maneuver.lane_following_maneuver.end_dist = 14.98835712;
+        maneuver.lane_following_maneuver.end_speed = 6.7056;
+        maneuver.lane_following_maneuver.end_time = ros::Time(4.4704);
+
+        
+
+        std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, 
+                                                                                    starting_downtrack, wm, ending_state, general_config, detailed_config, visited_lanelets);
+
+        EXPECT_EQ(visited_lanelets.size(), 5);
+
+        EXPECT_TRUE(visited_lanelets.find(id1) != visited_lanelets.end()); // the lanelet previously in the visited lanelet set
+        EXPECT_TRUE(visited_lanelets.find(1200) != visited_lanelets.end()); // new lanelets added to the set with the new maneuver
+    }
+
 } //basic_autonomy namespace
 
 // Run all the tests
