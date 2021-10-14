@@ -123,6 +123,8 @@ private:
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
   
   cav_msgs::Plugin plugin_discovery_msg_;
+
+  double stopping_accel_;
   
 };
 }  // namespace stop_and_wait_plugin
