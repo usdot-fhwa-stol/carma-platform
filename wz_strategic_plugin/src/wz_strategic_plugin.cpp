@@ -290,7 +290,7 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
 
     // TODO do we need to check for anything before pushing onto the plan?
     resp.new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(
-        current_state.downtrack, traffic_light_down_track, current_state.speed, intersection_speed_.get(),
+        current_state.downtrack, traffic_light_down_track - config_.vehicle_length, current_state.speed, intersection_speed_.get(),
         current_state.stamp, light_arrival_time_at_freeflow,
         lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); })));
 
@@ -300,7 +300,7 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
         light_arrival_time_at_freeflow + ros::Duration(intersection_length / intersection_speed_.get());
 
     resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
-        traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
+        traffic_light_down_track - config_.vehicle_length, intersection_end_downtrack_.get(), intersection_speed_.get(),
         intersection_speed_.get(), light_arrival_time_at_freeflow, intersection_exit_time, crossed_lanelets.back().id(),
         nearest_traffic_light->getControlledLanelets().back().id()));
   }
