@@ -59,13 +59,13 @@ namespace port_drayage_plugin
      * \brief Helper class containing an enum for valid port drayage MobilityOperation message operation IDs and
      * a function that converts each operation enum value to a human-readable string.
      */
-    class operationID
+    class OperationID
     {
         public:
             /**
              * \brief Enum containing possible operation IDs used to define destinations for port drayage.
              */
-            enum operation {
+            enum Operation {
                 PICKUP,
                 DROPOFF,
                 ENTER_STAGING_AREA,
@@ -73,15 +73,32 @@ namespace port_drayage_plugin
                 ENTER_PORT,
                 EXIT_PORT,
                 PORT_CHECKPOINT,
-                HOLDING_AREA
+                HOLDING_AREA,
+                DEFAULT_OPERATION
             };
 
+            // Data member containing this object's Operation enum value
+            Operation _operation_enum = Operation::DEFAULT_OPERATION; 
+
             /**
-             * \brief Function to convert an operation enum used for port drayage to a human-readable string
-             * \param op An operation enum
-             * \return A human-readable string representing the the operation enum passed to this function.
+             * \brief Function to convert this object's '_operation_enum' to a human-readable string.
+             * \return A human-readable string representing this object's '_operation_enum'.
              */
-            std::string operation_to_string(const operation& op) const;
+            std::string operation_to_string() const;
+
+            /**
+             * \brief Stream operator for this object.
+             */
+            friend std::ostream& operator<<(std::ostream& output, const OperationID& oid){
+                return output << oid.operation_to_string();
+            }
+
+            /**
+             * \brief Overloaded == operator for comparision with String objects.
+             */
+            friend bool operator==(const std::string& lhs, const OperationID& rhs) {
+                return lhs == rhs.operation_to_string();
+            }
     };
 
     /**
@@ -103,7 +120,11 @@ namespace port_drayage_plugin
             std::string _host_id;
             std::string _host_bsm_id;
             std::string _previously_completed_operation;
-            operationID _operation; // Object used to to obtain string values of valid port drayage operation IDs
+            OperationID _pickup_operation;
+            OperationID _dropoff_operation;
+            OperationID _enter_staging_area_operation;
+            OperationID _enter_port_operation;
+            OperationID _holding_area_operation;
             unsigned long _cmv_id;
             std::string _cargo_id; // Empty if CMV is not currently carrying cargo
             std::function<void(cav_msgs::MobilityOperation)> _publish_mobility_operation;
@@ -134,6 +155,10 @@ namespace port_drayage_plugin
              * empty.
              * 
              * \param host_id The CARMA ID string for the host vehicle
+             * 
+             * \param starting_at_staging_area Flag indicating whether CMV's first 
+             * destination is the Staging Area Entrance. If 'false, CMV's first destination
+             * is the Port Entrance.
              * 
              * \param mobility_operations_publisher A lambda containing the logic
              * necessary to publish a MobilityOperations message. This lambda should
@@ -172,6 +197,11 @@ namespace port_drayage_plugin
                 _stop_speed_epsilon(stop_speed_epsilon),
                 _enable_port_drayage(enable_port_drayage) {
                     initialize();
+                    _pickup_operation._operation_enum = OperationID::PICKUP;
+                    _dropoff_operation._operation_enum = OperationID::DROPOFF;
+                    _enter_staging_area_operation._operation_enum = OperationID::ENTER_STAGING_AREA;
+                    _enter_port_operation._operation_enum = OperationID::ENTER_PORT;     
+                    _holding_area_operation._operation_enum = OperationID::HOLDING_AREA;        
                 };
 
             /**
