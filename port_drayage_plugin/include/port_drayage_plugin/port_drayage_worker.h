@@ -56,8 +56,8 @@ namespace port_drayage_plugin
     };
 
     /**
-     * \brief Class containing an enum for valid port drayage MobilityOperation message operation IDs and
-     * a helper function that converts each operation enum value to a human-readable string.
+     * \brief Helper class containing an enum for valid port drayage MobilityOperation message operation IDs and
+     * a function that converts each operation enum value to a human-readable string.
      */
     class operationID
     {
@@ -77,7 +77,7 @@ namespace port_drayage_plugin
             };
 
             /**
-             * \brief Helper function to convert an operation enum used for port drayage to a human-readable string
+             * \brief Function to convert an operation enum used for port drayage to a human-readable string
              * \param op An operation enum
              * \return A human-readable string representing the the operation enum passed to this function.
              */
