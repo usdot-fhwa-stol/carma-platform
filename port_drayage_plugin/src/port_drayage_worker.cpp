@@ -33,7 +33,6 @@ namespace port_drayage_plugin
             case Operation::EXIT_PORT:          return "EXIT_PORT";
             case Operation::PORT_CHECKPOINT:    return "PORT_CHECKPOINT";
             case Operation::HOLDING_AREA:       return "HOLDING_AREA";
-            case Operation::DEFAULT_OPERATION:  return "DEFAULT_OPERATION";
             default:
                 ROS_WARN_STREAM("Conversion of an unsupported operation enum value to a string.");
                 return "UNSUPPORTED_OPERATION_ID";
