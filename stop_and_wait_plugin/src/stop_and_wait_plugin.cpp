@@ -126,6 +126,7 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
     stopping_accel_ = maneuver_plan[0].stop_and_wait_maneuver.parameters.float_valued_meta_data[1];
 
     ROS_DEBUG_STREAM("Using stop buffer from meta data: " << stop_location_buffer);
+    ROS_DEBUG_STREAM("Using stopping acceleration from meta data: "<< stopping_accel_);
   }
 
   trajectory.trajectory_points = compose_trajectory_from_centerline(
@@ -223,7 +224,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   double half_stopping_buffer = stop_location_buffer * 0.5;
   double remaining_distance = stop_location - half_stopping_buffer - starting_downtrack; // Target to stop in the middle of the buffer
   //double target_accel = config_.accel_limit_multiplier * config_.accel_limit;
-  double target_accel = stopping_accel_;
+  double target_accel = stopping_accel_ * accel_limit_multiplier;
   double req_dist = (starting_speed * starting_speed) /
                     (2.0 * target_accel);  // Distance needed to go from current speed to 0 at target accel
 

@@ -163,7 +163,7 @@ private:
   cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double end_dist, double start_speed,
                                                        const lanelet::Id& starting_lane_id,
                                                        const lanelet::Id& ending_lane_id, ros::Time start_time,
-                                                       ros::Time end_time) const;
+                                                       ros::Time end_time, double stopping_accel) const;
 
   /**
    * \brief Compose a intersection transit maneuver message based on input params
