@@ -31,13 +31,13 @@
 
 TEST(PortDrayageTest, testComposeArrivalMessage)
 {
-    // Test initial arrival message for pdw initialized with cargo
+    // Test initial arrival message for pdw initialized with cargo with the Staging Area Entrance as its first destination
     ros::Time::init();
     port_drayage_plugin::PortDrayageWorker pdw{
         123, // CMV ID 
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", // Host ID
-        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
+        true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){},
         1.0, 
@@ -89,12 +89,12 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
     ASSERT_NEAR(38.95622708, vehicle_latitude, 0.00000001);
     ASSERT_NEAR(-77.15066142, vehicle_longitude, 0.00000001);
 
-    // Test initial arrival message for pdw initialized without cargo
+    // Test initial arrival message for pdw initialized without cargo with the Port Entrance as its first destination
     port_drayage_plugin::PortDrayageWorker pdw2{
         123, // CMV ID 
         "", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
-        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
+        false, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){},
         1.0, 
@@ -124,7 +124,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
 
     ASSERT_EQ(123, cmv_id2);
     ASSERT_EQ(0, pt2.count("cargo_id")); // Broadcasted arrival message should not include cargo_id since vehicle is not carrying cargo
-    ASSERT_EQ("ENTER_STAGING_AREA", operation2);
+    ASSERT_EQ("ENTER_PORT", operation2);
     ASSERT_FALSE(has_cargo2); // False since vehicle is not currently carrying cargo
     ASSERT_NEAR(38.95622708, vehicle_latitude2, 0.00000001);
     ASSERT_NEAR(-77.15066142, vehicle_longitude2, 0.00000001);
@@ -137,7 +137,7 @@ TEST(PortDrayageTest, testCheckStop1)
         123, // CMV ID
         "321", // Cargo ID
         "TEST_CARMA_HOST_ID", 
-        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
+        true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){},
         1.0, 
@@ -170,7 +170,7 @@ TEST(PortDrayageTest, testCheckStop2)
         123, // CMV ID 
         "321", // Cargo ID
         "TEST_CARMA_HOST_ID", 
-        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
+        true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){},
         1.0, 
@@ -203,7 +203,7 @@ TEST(PortDrayageTest, testCheckStop3)
         123, // CMV ID
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
-        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
+        true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){}, 
         1.0, 
@@ -237,7 +237,7 @@ TEST(PortDrayageTest, testCheckStop4)
         123, // CMV ID
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
-        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
+        true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){}, 
         1.0, 
@@ -297,7 +297,7 @@ TEST(PortDrayageTest, testPortDrayageStateMachine2)
         123, // CMV ID 
         "", // Cargo ID; empty string indicates CMV begins without no cargo
         "TEST_CARMA_HOST_ID", 
-        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
+        true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){}, 
         1.0, 
@@ -485,7 +485,7 @@ TEST(PortDrayageTest, testComposeSetActiveRouteRequest)
         123, 
         "TEST_CARGO_ID", 
         "TEST_CARMA_HOST_ID", 
-        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
+        true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){},
         1.0, 
@@ -522,7 +522,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
         123, // CMV ID 
         "", // Cargo ID; empty string indicates the CMV is not carrying cargo
         "TEST_CARMA_HOST_ID", 
-        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
+        true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){},
         1.0, 
@@ -560,7 +560,6 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     // Check that the received message was parsed and stored correctly
     ASSERT_EQ("321", *pdw._latest_mobility_operation_msg.cargo_id);
     ASSERT_EQ("PICKUP", pdw._latest_mobility_operation_msg.operation);
-    ASSERT_EQ(port_drayage_plugin::PortDrayageEvent::RECEIVED_NEW_DESTINATION, pdw._latest_mobility_operation_msg.port_drayage_event_type);
     ASSERT_NEAR(-77.1503421, *pdw._latest_mobility_operation_msg.start_longitude, 0.00000001);
     ASSERT_NEAR(38.9554377, *pdw._latest_mobility_operation_msg.start_latitude, 0.00000001);
     ASSERT_NEAR(-77.1481983, *pdw._latest_mobility_operation_msg.dest_longitude, 0.00000001);
@@ -580,7 +579,6 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     // Check that the contents of the received message was not parsed and stored since it was not intended for this CMV
     ASSERT_EQ("321", *pdw._latest_mobility_operation_msg.cargo_id);
     ASSERT_EQ("PICKUP", pdw._latest_mobility_operation_msg.operation);
-    ASSERT_EQ(port_drayage_plugin::PortDrayageEvent::RECEIVED_NEW_DESTINATION, pdw._latest_mobility_operation_msg.port_drayage_event_type);
     ASSERT_NEAR(-77.1503421, *pdw._latest_mobility_operation_msg.start_longitude, 0.00000001);
     ASSERT_NEAR(38.9554377, *pdw._latest_mobility_operation_msg.start_latitude, 0.00000001);
     ASSERT_NEAR(-77.1481983, *pdw._latest_mobility_operation_msg.dest_longitude, 0.00000001);
@@ -1025,7 +1023,7 @@ TEST(PortDrayageTest, testComposeUIInstructions)
         123, 
         "", // Empty string indicates CMV is not carrying cargo 
         "TEST_CARMA_HOST_ID", 
-        "ENTER_STAGING_AREA", // Initial Arrival Operation ID
+        true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
         [](cav_msgs::MobilityOperation){}, 
         [](cav_msgs::UIInstructions){},
         1.0, 

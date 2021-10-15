@@ -27,21 +27,18 @@
 #include <std_msgs/String.h>
 #include <cav_srvs/SetActiveRoute.h>
 #include <boost/optional.hpp>
-
-
 #include "port_drayage_plugin/port_drayage_state_machine.h"
 
 namespace port_drayage_plugin
 {    
     /**
-     * Convenience struct for storing all data contained in a received MobilityOperation message's
+     * \brief Convenience struct for storing all data contained in a received MobilityOperation message's
      * strategy_params field with strategy "carma/port_drayage"
      */
     struct PortDrayageMobilityOperationMsg
     {
         boost::optional<std::string> cargo_id;
         std::string operation = "";
-        PortDrayageEvent port_drayage_event_type; // PortDrayageEvent associated with this message
         boost::optional<std::string> current_action_id; // Identifier for the action this message is related to
         boost::optional<double> dest_longitude;  // Destination longitude for the carma vehicle
         boost::optional<double> dest_latitude;   // Destination latitude for the carma vehicle
@@ -50,12 +47,41 @@ namespace port_drayage_plugin
     };
 
     /**
-     * Convenience struct for storing the vehicle's current latitude/longitude coordinates
+     * \brief Convenience struct for storing the vehicle's current latitude/longitude coordinates
      */
     struct LatLonCoordinate
     {
         double latitude = 0.0;
         double longitude = 0.0;
+    };
+
+    /**
+     * \brief Class containing an enum for valid port drayage MobilityOperation message operation IDs and
+     * a helper function that converts each operation enum value to a human-readable string.
+     */
+    class operationID
+    {
+        public:
+            /**
+             * \brief Enum containing possible operation IDs used to define destinations for port drayage.
+             */
+            enum operation {
+                PICKUP,
+                DROPOFF,
+                ENTER_STAGING_AREA,
+                EXIT_STAGING_AREA,
+                ENTER_PORT,
+                EXIT_PORT,
+                PORT_CHECKPOINT,
+                HOLDING_AREA
+            };
+
+            /**
+             * \brief Helper function to convert an operation enum used for port drayage to a human-readable string
+             * \param op An operation enum
+             * \return A human-readable string representing the the operation enum passed to this function.
+             */
+            std::string operation_to_string(const operation& op) const;
     };
 
     /**
@@ -75,15 +101,16 @@ namespace port_drayage_plugin
             double _stop_speed_epsilon;
             PortDrayageStateMachine _pdsm;
             std::string _host_id;
-            std::string _initial_arrival_operation_id;
             std::string _host_bsm_id;
             std::string _previously_completed_operation;
+            operationID _operation; // Object used to to obtain string values of valid port drayage operation IDs
             unsigned long _cmv_id;
             std::string _cargo_id; // Empty if CMV is not currently carrying cargo
             std::function<void(cav_msgs::MobilityOperation)> _publish_mobility_operation;
             std::function<void(cav_msgs::UIInstructions)> _publish_ui_instructions;
             std::function<bool(cav_srvs::SetActiveRoute)> _set_active_route;
             std::shared_ptr<lanelet::projection::LocalFrameProjector> _map_projector = nullptr;
+            bool _starting_at_staging_area; // Flag indicating CMV's first destination; 'true' indicates Staging Area Entrance; 'false' indicates Port Entrance.
             bool _enable_port_drayage; // Flag to enable to port drayage operations. If false, state machine will remain in 'INACTIVE' state
 
             // Data member for storing the strategy_params field of the last processed port drayage MobilityOperation message intended for this vehicle's cmv_id
@@ -92,14 +119,6 @@ namespace port_drayage_plugin
             // Constants
             const std::string PORT_DRAYAGE_PLUGIN_ID = "port_drayage_plugin";
             const std::string PORT_DRAYAGE_STRATEGY_ID = "carma/port_drayage";
-            const std::string PORT_DRAYAGE_PICKUP_OPERATION_ID = "PICKUP";
-            const std::string PORT_DRAYAGE_DROPOFF_OPERATION_ID = "DROPOFF";
-            const std::string PORT_DRAYAGE_ENTER_STAGING_OPERATION_ID = "ENTER_STAGING_AREA";
-            const std::string PORT_DRAYAGE_EXIT_STAGING_OPERATION_ID = "EXIT_STAGING_AREA";
-            const std::string PORT_DRAYAGE_ENTER_PORT_OPERATION_ID = "ENTER_PORT";
-            const std::string PORT_DRAYAGE_EXIT_PORT_OPERATION_ID = "EXIT_PORT";
-            const std::string PORT_DRAYAGE_PORT_CHECKPOINT_OPERATION_ID = "PORT_CHECKPOINT";
-            const std::string PORT_DRAYAGE_HOLDING_AREA_OPERATION_ID = "HOLDING_AREA";
             const std::string SET_GUIDANCE_ACTIVE_SERVICE_ID = "/guidance/set_guidance_active";
 
         public:
@@ -137,7 +156,7 @@ namespace port_drayage_plugin
                 unsigned long cmv_id,
                 std::string cargo_id,
                 std::string host_id,
-                std::string initial_arrival_operation_id,
+                bool starting_at_staging_area,
                 std::function<void(cav_msgs::MobilityOperation)> mobility_operations_publisher, 
                 std::function<void(cav_msgs::UIInstructions)> ui_instructions_publisher,
                 double stop_speed_epsilon,
@@ -146,7 +165,7 @@ namespace port_drayage_plugin
                 _cmv_id(cmv_id),
                 _cargo_id(cargo_id),
                 _host_id(host_id),
-                _initial_arrival_operation_id(initial_arrival_operation_id),
+                _starting_at_staging_area(starting_at_staging_area),
                 _publish_mobility_operation(mobility_operations_publisher),
                 _publish_ui_instructions(ui_instructions_publisher),
                 _set_active_route(call_set_active_route_client),
@@ -154,7 +173,6 @@ namespace port_drayage_plugin
                 _enable_port_drayage(enable_port_drayage) {
                     initialize();
                 };
-
 
             /**
              * \brief Initialize the PortDrayageWorker, setting up it's relation

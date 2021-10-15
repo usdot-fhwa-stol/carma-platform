@@ -34,8 +34,8 @@ namespace port_drayage_plugin
         _pnh->param<std::string>("cargo_id", cargo_id, "UNDEFINED-CARGO-ID"); 
         std::string host_id;
         _pnh->param<std::string>("host_id", host_id, "UNDEFINED-HOST-ID");
-        std::string initial_arrival_operation_id;
-        _pnh->param<std::string>("initial_arrival_operation_id", initial_arrival_operation_id, "UNDEFINED-INITIAL-ARRIVAL-OPERATION-ID");
+        bool starting_at_staging_area;
+        _pnh->param<bool>("starting_at_staging_area", starting_at_staging_area, true);
         bool enable_port_drayage;
         _pnh->param<bool>("enable_port_drayage", enable_port_drayage, false);
 
@@ -57,7 +57,7 @@ namespace port_drayage_plugin
             cmv_id,
             cargo_id,
             host_id,
-            initial_arrival_operation_id,
+            starting_at_staging_area,
             [this](cav_msgs::MobilityOperation msg) {
                _outbound_mobility_operations_publisher->publish<cav_msgs::MobilityOperation>(msg);
             },
