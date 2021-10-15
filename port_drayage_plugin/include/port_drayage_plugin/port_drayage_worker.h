@@ -77,8 +77,18 @@ namespace port_drayage_plugin
                 DEFAULT_OPERATION
             };
 
-            // Data member containing this object's Operation enum value
-            Operation _operation_enum = Operation::DEFAULT_OPERATION; 
+            /**
+             * \brief Standard constructor for OperationID
+             * \param op Operation enum associated with this object.
+             */
+            OperationID(enum Operation op) :
+                _operation_enum(op) {};
+
+            /**
+             * \brief Getter function to obtain the Operation enum associated with this object.
+             * \return Operation enum associated with this object.
+             */
+            OperationID::Operation get_operation_ID() const;
 
             /**
              * \brief Function to convert this object's '_operation_enum' to a human-readable string.
@@ -99,6 +109,10 @@ namespace port_drayage_plugin
             friend bool operator==(const std::string& lhs, const OperationID& rhs) {
                 return lhs == rhs.operation_to_string();
             }
+
+        private:
+            // Data member containing this object's Operation enum value
+            const Operation _operation_enum = Operation::DEFAULT_OPERATION; 
     };
 
     /**
@@ -120,11 +134,11 @@ namespace port_drayage_plugin
             std::string _host_id;
             std::string _host_bsm_id;
             std::string _previously_completed_operation;
-            OperationID _pickup_operation;
-            OperationID _dropoff_operation;
-            OperationID _enter_staging_area_operation;
-            OperationID _enter_port_operation;
-            OperationID _holding_area_operation;
+            OperationID _pickup_operation{OperationID::PICKUP}; 
+            OperationID _dropoff_operation{OperationID::DROPOFF};
+            OperationID _enter_staging_area_operation{OperationID::ENTER_STAGING_AREA};
+            OperationID _enter_port_operation{OperationID::ENTER_PORT};
+            OperationID _holding_area_operation{OperationID::HOLDING_AREA};
             unsigned long _cmv_id;
             std::string _cargo_id; // Empty if CMV is not currently carrying cargo
             std::function<void(cav_msgs::MobilityOperation)> _publish_mobility_operation;
@@ -196,12 +210,7 @@ namespace port_drayage_plugin
                 _set_active_route(call_set_active_route_client),
                 _stop_speed_epsilon(stop_speed_epsilon),
                 _enable_port_drayage(enable_port_drayage) {
-                    initialize();
-                    _pickup_operation._operation_enum = OperationID::PICKUP;
-                    _dropoff_operation._operation_enum = OperationID::DROPOFF;
-                    _enter_staging_area_operation._operation_enum = OperationID::ENTER_STAGING_AREA;
-                    _enter_port_operation._operation_enum = OperationID::ENTER_PORT;     
-                    _holding_area_operation._operation_enum = OperationID::HOLDING_AREA;        
+                    initialize();       
                 };
 
             /**

@@ -21,6 +21,10 @@
 
 namespace port_drayage_plugin
 {
+    OperationID::Operation OperationID::get_operation_ID() const {
+        return _operation_enum;
+    }
+
     std::string OperationID::operation_to_string() const {
 
         // Convert operation enum into a human-readable string
@@ -37,7 +41,7 @@ namespace port_drayage_plugin
                 ROS_WARN_STREAM("Conversion of an unsupported operation enum value to a string.");
                 return "UNSUPPORTED_OPERATION_ID";
         }
-    };
+    }
 
     bool PortDrayageWorker::check_for_stop(const cav_msgs::ManeuverPlanConstPtr& plan, const geometry_msgs::TwistStampedConstPtr& speed) const {
         if (plan == nullptr || speed == nullptr) {
