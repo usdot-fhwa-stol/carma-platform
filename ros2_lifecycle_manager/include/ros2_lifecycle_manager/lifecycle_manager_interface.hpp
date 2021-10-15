@@ -62,7 +62,6 @@ namespace ros2_lifecycle_manager
      */ 
     virtual uint8_t get_managed_node_state(const std::string &node) = 0;
 
-    // If ordered is true then the calls will execute in sequence as defined by set_managed_nodes. If false then no ordering is enforced (though it still may be)
     /**
      * \brief Send the Configure transition to all managed nodes. Returns true if all nodes transitioned successfully.
      * 

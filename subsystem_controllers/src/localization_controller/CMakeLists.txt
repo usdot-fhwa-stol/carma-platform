@@ -22,7 +22,5 @@ target_link_libraries(${executable_name}
 rclcpp_components_register_nodes(${library_name} "subsystem_controllers::LocalizationControllerNode")
 
 install(TARGETS ${library_name} ${executable_name}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
+DESTINATION lib/${PROJECT_NAME}
 )

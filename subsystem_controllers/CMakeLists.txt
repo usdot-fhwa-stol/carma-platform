@@ -55,9 +55,7 @@ add_subdirectory(src/drivers_controller)
 
 
 install(TARGETS base_subsystem_controller
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
+DESTINATION lib/${PROJECT_NAME}
 )
 
 

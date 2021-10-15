@@ -22,18 +22,20 @@ from launch.actions import ExecuteProcess
 from launch_ros.actions import Node
 from launch_testing.legacy import LaunchTestService
 
-
 def generate_launch_description():
     return LaunchDescription([
         Node(
-            package='nav2_lifecycle_manager',
-            executable='lifecycle_manager',
-            name='lifecycle_manager_test',
+            package='ros2_lifecycle_manager',
+            executable='test_lifecycle_node',
+            name='test_lifecycle_node_1',
             output='screen',
-            parameters=[{'use_sim_time': False},
-                        {'autostart': False},
-                        {'bond_timeout': 0.0},
-                        {'node_names': ['lifecycle_node_test']}]),
+            ),
+        Node(
+            package='ros2_lifecycle_manager',
+            executable='test_lifecycle_node',
+            name='test_lifecycle_node_2',
+            output='screen',
+            ),
     ])
 
 

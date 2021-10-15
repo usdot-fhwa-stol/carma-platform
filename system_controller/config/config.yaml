@@ -15,7 +15,6 @@ required_subsystem_nodes:
   - /localization/localization_controller
   - /message/v2x_controller
   - /guidance/guidance_controller
-  - /guidance/plugins/guidance_plugins_controller
   - /environment/environment_perception_controller
   - /hardware_interface/drivers_controller
 

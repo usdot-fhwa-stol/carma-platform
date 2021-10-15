@@ -126,6 +126,12 @@ namespace ros2_lifecycle_manager
       return true;
     }
 
+    /**
+     * \brief Helper function to create a service client of the provided type using the node interfaces provided in the constructor
+     * 
+     * \param service_name The name of the service
+     * \return A pointer to the initialized service
+     */ 
     template <class ServiceT>
     typename rclcpp::Client<ServiceT>::SharedPtr
     create_client(const std::string service_name) {

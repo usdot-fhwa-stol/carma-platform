@@ -28,11 +28,11 @@ enum class TransitState
   WAITING, // State representing that the vehicle is stopped and waiting at a light
   DEPARTING // State representing that the vehicle is traversing the intersection
 };
+
 /**
  * \brief Stream operator for TransitStates enum.
  */
 std::ostream& operator<<(std::ostream& os, TransitState s);
-
 
 //! @brief Enum describing the possible signals to change the current TransitState
 enum class TransitEvent

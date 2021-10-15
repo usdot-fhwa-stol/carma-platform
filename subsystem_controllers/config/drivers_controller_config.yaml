@@ -16,7 +16,7 @@ required_subsystem_nodes:
   - /hardware_interface/ssc_interface_wrapper
   - /hardware_interface/velodyne_lidar_driver_wrapper
   - /hardware_interface/novatel_gps_nodelet_wrapper
-  - /hardware_interface/camera
+  - /hardware_interface/camera # TODO get actual name
 
 
 

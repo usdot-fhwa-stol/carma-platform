@@ -41,20 +41,19 @@ install(
 )
 install(
   TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
+DESTINATION lib/${PROJECT_NAME}
 )
 
 
-# if(BUILD_TESTING)
-#   find_package(ament_lint_auto REQUIRED)
-#   find_package(ament_cmake_pytest REQUIRED)
-#   find_package(launch_testing_ament_cmake REQUIRED)
-#   ament_lint_auto_find_test_dependencies()
+if(BUILD_TESTING)
+  #find_package(ament_lint_auto REQUIRED)
+  #ament_lint_auto_find_test_dependencies()
 
-#   find_package(ament_cmake_gtest REQUIRED)
-# endif()
+  find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_cmake_pytest REQUIRED)
+
+  add_subdirectory(test)
+endif()
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})

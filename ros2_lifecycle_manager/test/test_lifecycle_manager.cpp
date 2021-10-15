@@ -17,99 +17,76 @@
 #include <chrono>
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
-#include "ros2_utils/node_thread.hpp"
-#include "ros2_lifecycle_manager/lifecycle_manager_client.hpp"
+#include "ros2_lifecycle_manager/ros2_lifecycle_manager.hpp"
+#include "boost/core/ignore_unused.hpp"
 
-using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
-class LifecycleNodeTest : public rclcpp_lifecycle::LifecycleNode
+using std_msec = std::chrono::milliseconds;
+
+TEST(LifecycleManagerTest, BasicTest)
 {
-public:
-  LifecycleNodeTest()
-  : rclcpp_lifecycle::LifecycleNode("lifecycle_node_test") {}
+  // Test constructor
+  auto node = std::make_shared<rclcpp::Node>("lifecycle_manager_test_node");
 
-  CallbackReturn on_configure(const rclcpp_lifecycle::State & /*state*/) override
-  {
-    RCLCPP_INFO(get_logger(), "Lifecycle Test node is Configured!");
-    return CallbackReturn::SUCCESS;
-  }
+  auto ret = rcutils_logging_set_logger_level(
+        node->get_logger().get_name(), RCUTILS_LOG_SEVERITY_DEBUG);
+  boost::ignore_unused(ret);
 
-  CallbackReturn on_activate(const rclcpp_lifecycle::State & /*state*/) override
-  {
-    RCLCPP_INFO(get_logger(), "Lifecycle Test node is Activated!");
-    return CallbackReturn::SUCCESS;
-  }
+  ros2_lifecycle_manager::Ros2LifecycleManager lifecycle_mgr_(
+    node->get_node_base_interface(), 
+    node->get_node_graph_interface(), 
+    node->get_node_logging_interface(), 
+    node->get_node_services_interface()
+  );
 
-  CallbackReturn on_deactivate(const rclcpp_lifecycle::State & /*state*/) override
-  {
-    RCLCPP_INFO(get_logger(), "Lifecycle Test node is Deactivated!");
-    return CallbackReturn::SUCCESS;
-  }
+  // Test set_managed_nodes
+  lifecycle_mgr_.set_managed_nodes( { "test_lifecycle_node_1", "test_lifecycle_node_2" } );
+  
+  std::this_thread::sleep_for(std_msec(2000));
 
-  CallbackReturn on_cleanup(const rclcpp_lifecycle::State & /*state*/) override
-  {
-    RCLCPP_INFO(get_logger(), "Lifecycle Test node is Cleanup!");
-    return CallbackReturn::SUCCESS;
-  }
+  // Test get_managed_nodes
+  auto managed_nodes = lifecycle_mgr_.get_managed_nodes();
+  
+  ASSERT_EQ((uint8_t)2, managed_nodes.size());
+  ASSERT_EQ((uint8_t)0, managed_nodes[0].compare("test_lifecycle_node_1"));
+  ASSERT_EQ((uint8_t)0, managed_nodes[1].compare("test_lifecycle_node_2"));
+  
+  // Test get managed node states
+  //ASSERT_EQ(lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED, lifecycle_mgr_.get_managed_node_state("test_lifecycle_node_1"));
+  //ASSERT_EQ(lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED, lifecycle_mgr_.get_managed_node_state("test_lifecycle_node_2"));
+  //ASSERT_EQ(lifecycle_msgs::msg::State::PRIMARY_STATE_UNKNOWN, lifecycle_mgr_.get_managed_node_state("unknown_node"));
 
-  CallbackReturn on_shutdown(const rclcpp_lifecycle::State & /*state*/) override
-  {
-    RCLCPP_INFO(get_logger(), "Lifecycle Test node is Shutdown!");
-    return CallbackReturn::SUCCESS;
-  }
+  // Test Configure
+  ASSERT_TRUE(lifecycle_mgr_.configure(std_msec(2000), std_msec(2000)));
+  ASSERT_EQ(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, lifecycle_mgr_.get_managed_node_state("test_lifecycle_node_1"));
+  ASSERT_EQ(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, lifecycle_mgr_.get_managed_node_state("test_lifecycle_node_2"));
 
-  CallbackReturn on_error(const rclcpp_lifecycle::State & /*state*/) override
-  {
-    RCLCPP_INFO(get_logger(), "Lifecycle Test node is encountered an error!");
-    return CallbackReturn::SUCCESS;
-  }
-};
+  // Test Activate
+  ASSERT_TRUE(lifecycle_mgr_.activate(std_msec(2000), std_msec(2000)));
+  ASSERT_EQ(lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE , lifecycle_mgr_.get_managed_node_state("test_lifecycle_node_1"));
+  ASSERT_EQ(lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE , lifecycle_mgr_.get_managed_node_state("test_lifecycle_node_2"));
 
-class LifecycleClientTestFixture
-{
-public:
-  LifecycleClientTestFixture()
-  {
-    lf_node_ = std::make_shared<LifecycleNodeTest>();
-    lf_thread_ = std::make_unique<ros2_utils::NodeThread>(lf_node_->get_node_base_interface());
-  }
+  // Test Deactivate
+  ASSERT_TRUE(lifecycle_mgr_.deactivate(std_msec(2000), std_msec(2000)));
+  ASSERT_EQ(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, lifecycle_mgr_.get_managed_node_state("test_lifecycle_node_1"));
+  ASSERT_EQ(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, lifecycle_mgr_.get_managed_node_state("test_lifecycle_node_2"));
 
-private:
-  std::shared_ptr<LifecycleNodeTest> lf_node_;
-  std::unique_ptr<ros2_utils::NodeThread> lf_thread_;
-};
+  // Test cleanup
+  ASSERT_TRUE(lifecycle_mgr_.cleanup(std_msec(2000), std_msec(2000)));
+  ASSERT_EQ(lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED , lifecycle_mgr_.get_managed_node_state("test_lifecycle_node_1"));
+  ASSERT_EQ(lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED , lifecycle_mgr_.get_managed_node_state("test_lifecycle_node_2"));
 
-TEST(LifecycleClientTest, BasicTest)
-{
-  LifecycleClientTestFixture fix;
-  auto node = std::make_shared<rclcpp::Node>("lifecycle_manager_test_service_client");
-  ros2_lifecycle_manager::LifecycleManagerClient client("lifecycle_manager_test", node);
-  EXPECT_EQ(
-    ros2_lifecycle_manager::SystemStatus::TIMEOUT,
-    client.is_active(std::chrono::nanoseconds(1000)));
-  EXPECT_TRUE(client.startup());
-  EXPECT_EQ(
-    ros2_lifecycle_manager::SystemStatus::ACTIVE,
-    client.is_active(std::chrono::nanoseconds(1000000000)));
-  EXPECT_EQ(
-    ros2_lifecycle_manager::SystemStatus::ACTIVE,
-    client.is_active());
-  EXPECT_TRUE(client.pause());
-  EXPECT_EQ(
-    ros2_lifecycle_manager::SystemStatus::INACTIVE,
-    client.is_active(std::chrono::nanoseconds(1000000000)));
-  EXPECT_TRUE(client.resume());
-  EXPECT_TRUE(client.reset());
-  EXPECT_TRUE(client.shutdown());
-}
+  // Bring back to active then shutdown
+  ASSERT_TRUE(lifecycle_mgr_.configure(std_msec(2000), std_msec(2000)));
+  ASSERT_TRUE(lifecycle_mgr_.activate(std_msec(2000), std_msec(2000)));
+  ASSERT_EQ(lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE , lifecycle_mgr_.get_managed_node_state("test_lifecycle_node_1"));
+  ASSERT_EQ(lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE , lifecycle_mgr_.get_managed_node_state("test_lifecycle_node_2"));
 
-TEST(LifecycleClientTest, WithoutFixture)
-{
-  auto node = std::make_shared<rclcpp::Node>("lifecycle_manager_test_service_client");
-  ros2_lifecycle_manager::LifecycleManagerClient client("lifecycle_manager_test", node);
-  EXPECT_EQ(
-    ros2_lifecycle_manager::SystemStatus::TIMEOUT,
-    client.is_active(std::chrono::nanoseconds(1000)));
+  ASSERT_TRUE(lifecycle_mgr_.shutdown(std_msec(2000), std_msec(2000)));
+  ASSERT_TRUE(lifecycle_msgs::msg::State::PRIMARY_STATE_FINALIZED  == lifecycle_mgr_.get_managed_node_state("test_lifecycle_node_1")
+              || lifecycle_msgs::msg::State::PRIMARY_STATE_UNKNOWN  == lifecycle_mgr_.get_managed_node_state("test_lifecycle_node_1"));
+  ASSERT_TRUE(lifecycle_msgs::msg::State::PRIMARY_STATE_FINALIZED  == lifecycle_mgr_.get_managed_node_state("test_lifecycle_node_2")
+              || lifecycle_msgs::msg::State::PRIMARY_STATE_UNKNOWN  == lifecycle_mgr_.get_managed_node_state("test_lifecycle_node_2"));
 }
 
 int main(int argc, char ** argv)

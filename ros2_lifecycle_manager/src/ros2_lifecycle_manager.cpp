@@ -73,6 +73,8 @@ namespace ros2_lifecycle_manager
     // Check for service. If not read return unknown
     if (!node.get_state_client->service_is_ready()) 
     {
+      RCLCPP_ERROR_STREAM(
+          node_logging_->get_logger(), "State for node: " << node_name << " could not be provided as that node's service is not ready ");
       return lifecycle_msgs::msg::State::PRIMARY_STATE_UNKNOWN;
     }
 
@@ -81,12 +83,12 @@ namespace ros2_lifecycle_manager
     auto future_result = node.get_state_client->async_send_request(request);
 
     // Wait for response
-    auto future_status = future_result.wait_for(std_nanosec(500000000L)); // 5 millisecond delay
+    auto future_status = future_result.wait_for(std_nanosec(5000000000L)); // 5000 millisecond delay
 
     if (future_status != std::future_status::ready)
     {
-      RCLCPP_ERROR(
-          node_logging_->get_logger(), "Server time out while getting current state for node %s", node_name);
+      RCLCPP_ERROR_STREAM(
+          node_logging_->get_logger(), "Server time out while getting current state for node with name: " << node_name);
       return false;
     }
 
@@ -175,7 +177,7 @@ namespace ros2_lifecycle_manager
         }
 
         RCLCPP_INFO_STREAM(
-          node_logging_->get_logger(), "Calling node: " << node.node_name);
+          node_logging_->get_logger(), "Calling node a-sync: " << node.node_name);
 
         // Call service
         futures.emplace_back(node.change_state_client->async_send_request(request, [](ChangeStateSharedFutureWithRequest) {}));
@@ -197,6 +199,8 @@ namespace ros2_lifecycle_manager
   {
     // Let's wait until we have the answer from the node.
     // If the request times out, we return an unknown state.
+    RCLCPP_ERROR(
+          node_logging_->get_logger(), "Waiting for future");
     auto future_status = future.wait_for(timeout);
 
     if (future_status != std::future_status::ready)

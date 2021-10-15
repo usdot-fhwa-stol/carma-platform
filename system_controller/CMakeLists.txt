@@ -50,13 +50,11 @@ ament_target_dependencies(${executable_name}
 rclcpp_components_register_nodes(${library_name} "system_controller::SystemControllerNode")
 
 install(TARGETS ${library_name}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
+DESTINATION lib/${PROJECT_NAME}
 )
 
 install(TARGETS ${executable_name}
-  RUNTIME DESTINATION lib/${PROJECT_NAME}
+  RUNTIME DESTINATION lib/${PROJECT_NAME}/${PROJECT_NAME}
 )
 
 install(DIRECTORY include/
