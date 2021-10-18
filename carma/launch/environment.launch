@@ -130,30 +130,30 @@
   <remap to="$(optenv CARMA_ENV_NS)/detection/lidar_detector/objects_markers" from="/detection/lidar_detector/objects_markers"/>
 
   <include file="$(find lidar_euclidean_cluster_detect)/launch/lidar_euclidean_cluster_detect.launch">
-  <arg name="points_node" value="ray_ground_filter/points_no_ground" />
+    <arg name="points_node" value="points_no_ground" />
 
-  <arg name="remove_ground" value="false" />
-  <arg name="downsample_cloud" value="false" /> <!-- Apply VoxelGrid Filter with the value given by "leaf_size"-->
-  <arg name="leaf_size" value="0.1" /><!-- Voxel Grid Filter leaf size-->
-  <arg name="cluster_size_min" value="20" /><!-- Minimum number of points to consider a cluster as valid-->
-  <arg name="cluster_size_max" value="100000" /><!-- Maximum number of points to allow inside a cluster-->
-  <arg name="sync" value="false" />
-  <arg name="use_diffnormals" value="false" />
-  <arg name="pose_estimation" value="true" />
-  <arg name="calibration_params_file" value="$(arg vehicle_calibration_dir)/lidar_euclidean_cluster_detect/calibration.yaml"/> <!-- clip_max_height,clip_min_height and output_frame-->
-  <arg name="keep_lanes" value="false" />
-  <arg name="keep_lane_left_distance" value="5" />
-  <arg name="keep_lane_right_distance" value="5" />
-  <arg name="cluster_merge_threshold" value="1.5" />
-  <arg name="clustering_distance" value="0.75" />
-  <arg name="use_vector_map" value="false" />
-  <arg name="wayarea_gridmap_layer" value="wayarea" />
-  <arg name="remove_points_upto" value="0.0" />
-  <arg name="use_gpu" value="$(arg cuda)" />
-  <arg name="use_multiple_thres" value="false"/>
-  <arg name="clustering_ranges" value="[15,30,45,60]"/><!-- Distances to segment pointcloud -->
-  <arg name="clustering_distances"
-       value="[0.5,1.1,1.6,2.1,2.6]"/><!-- Euclidean Clustering threshold distance for each segment -->
+    <arg name="remove_ground" value="false" />
+    <arg name="downsample_cloud" value="false" /> <!-- Apply VoxelGrid Filter with the value given by "leaf_size"-->
+    <arg name="leaf_size" value="0.1" /><!-- Voxel Grid Filter leaf size-->
+    <arg name="cluster_size_min" value="20" /><!-- Minimum number of points to consider a cluster as valid-->
+    <arg name="cluster_size_max" value="100000" /><!-- Maximum number of points to allow inside a cluster-->
+    <arg name="sync" value="false" />
+    <arg name="use_diffnormals" value="false" />
+    <arg name="pose_estimation" value="true" />
+    <arg name="calibration_params_file" value="$(arg vehicle_calibration_dir)/lidar_euclidean_cluster_detect/calibration.yaml"/> <!-- clip_max_height,clip_min_height and output_frame-->
+    <arg name="keep_lanes" value="false" />
+    <arg name="keep_lane_left_distance" value="5" />
+    <arg name="keep_lane_right_distance" value="5" />
+    <arg name="cluster_merge_threshold" value="1.5" />
+    <arg name="clustering_distance" value="0.75" />
+    <arg name="use_vector_map" value="false" />
+    <arg name="wayarea_gridmap_layer" value="wayarea" />
+    <arg name="remove_points_upto" value="0.0" />
+    <arg name="use_gpu" value="$(arg cuda)" />
+    <arg name="use_multiple_thres" value="false"/>
+    <arg name="clustering_ranges" value="[15,30,45,60]"/><!-- Distances to segment pointcloud -->
+    <arg name="clustering_distances"
+        value="[0.5,1.1,1.6,2.1,2.6]"/><!-- Euclidean Clustering threshold distance for each segment -->
 
   </include>
   </group>
@@ -226,7 +226,7 @@
   
   <!-- Ray Ground Filter -->
   <group>
-    <remap from="/points_raw" to="$(optenv CARMA_INTR_NS)/lidar/points_raw"/>
+    <remap from="points_raw" to="$(optenv CARMA_INTR_NS)/lidar/points_raw"/>
     <include file="$(find points_preprocessor)/launch/ray_ground_filter.launch">
       <arg name="no_ground_point_topic" value="points_no_ground" />
       <arg name="ground_point_topic" value="points_ground" />
