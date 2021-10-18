@@ -52,7 +52,7 @@ namespace platoon_strategic
 
         if (!platooning_enabled_)
         {
-            pm_.current_platoon_state == PlatoonState::STANDBY;
+            pm_.current_platoon_state = PlatoonState::STANDBY;
             return true;
         }
         

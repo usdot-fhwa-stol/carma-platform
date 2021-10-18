@@ -120,6 +120,13 @@ namespace platoon_strategic
             */
             bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
 
+            /**
+            * \brief Callback function to the plugin activation service request
+            * 
+            * \param req plugin activation service request
+            * \param resp plugin activation service response
+            *
+            */
             bool plugin_activation_cb(cav_srvs::PluginActivationRequest &req, cav_srvs::PluginActivationResponse &resp);
 
             /**
@@ -225,6 +232,7 @@ namespace platoon_strategic
             // ECEF position of the host vehicle
             cav_msgs::LocationECEF pose_ecef_point_;
 
+            // Flag to enable/disable platooning plugin
             bool platooning_enabled_ = false;
 
         
