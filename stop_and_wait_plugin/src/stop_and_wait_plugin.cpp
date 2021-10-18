@@ -224,7 +224,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   double half_stopping_buffer = stop_location_buffer * 0.5;
   double remaining_distance = stop_location - half_stopping_buffer - starting_downtrack; // Target to stop in the middle of the buffer
   //double target_accel = config_.accel_limit_multiplier * config_.accel_limit;
-  double target_accel = stopping_accel_ * accel_limit_multiplier;
+  double target_accel = stopping_accel_ * config_.accel_limit_multiplier;
   double req_dist = (starting_speed * starting_speed) /
                     (2.0 * target_accel);  // Distance needed to go from current speed to 0 at target accel
 

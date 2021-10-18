@@ -12,7 +12,7 @@ trajectory_step_size : 1.0
 
 # Double: Downtrack distance between trajectory points
 # Units: percentage
-accel_limit_multiplier : 0.8
+accel_limit_multiplier : 0.95
 
 # Double: Minimum speed the vehicle can command before being ready to stop
 # Units: m/s
