@@ -34,7 +34,8 @@ namespace port_drayage_plugin
     enum PortDrayageState
     {
         INACTIVE,
-        EN_ROUTE,
+        EN_ROUTE_TO_INITIAL_DESTINATION,
+        EN_ROUTE_TO_RECEIVED_DESTINATION,
         AWAITING_DIRECTION
     };
 
@@ -94,7 +95,7 @@ namespace port_drayage_plugin
              * \brief Get the current state of the state machine
              * \return The current state value
              */
-            const PortDrayageState get_state();
+            PortDrayageState get_state() const;
 
             /**
              * \brief Set the callback to be invoked upon transitioning out of the

@@ -23,6 +23,9 @@
 #include <cav_srvs/SetActiveRoute.h>
 #include <cav_msgs/ManeuverPlan.h>
 #include <cav_msgs/MobilityOperation.h>
+#include <cav_msgs/GuidanceState.h>
+#include <cav_msgs/RouteEvent.h>
+#include <cav_msgs/UIInstructions.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <carma_wm/WorldModel.h>
 #include <carma_wm/WMListener.h>
@@ -49,8 +52,11 @@ namespace port_drayage_plugin
             std::shared_ptr<ros::Subscriber> _pose_subscriber = nullptr;
             std::shared_ptr<ros::Subscriber> _cur_speed_subscriber = nullptr;
             std::shared_ptr<ros::Subscriber> _inbound_mobility_operation_subscriber = nullptr;
+            std::shared_ptr<ros::Subscriber> _guidance_state_subscriber = nullptr;
+            std::shared_ptr<ros::Subscriber> _route_event_subscriber = nullptr;
             std::shared_ptr<ros::Subscriber> _georeference_subscriber = nullptr;
             std::shared_ptr<ros::Publisher> _outbound_mobility_operations_publisher = nullptr;
+            std::shared_ptr<ros::Publisher> _ui_instructions_publisher = nullptr;
             
             // ROS service servers
             ros::ServiceServer plan_maneuver_srv_;  

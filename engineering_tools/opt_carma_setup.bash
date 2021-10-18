@@ -36,7 +36,7 @@ FILE_EXT=$RANDOM
 mkdir ~/carma_temp_$FILE_EXT
 cd ~/carma_temp_$FILE_EXT
 
-git clone --branch carma-develop --depth 1 git@github.com:usdot-fhwa-stol/autoware.ai.git
+git clone --branch carma-develop --depth 1 https://github.com/usdot-fhwa-stol/autoware.ai.git
 cp -R autoware.ai/core_perception/vision_darknet_detect/darknet/cfg/ /opt/carma/yolo/darknet/cfg/
 curl -o /opt/carma/yolo/darknet/data/yolov3.weights -L https://pjreddie.com/media/files/yolov3.weights
 chmod 775 /opt/carma/yolo/darknet/data/yolov3.weights
