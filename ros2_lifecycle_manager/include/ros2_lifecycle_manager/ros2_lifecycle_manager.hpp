@@ -141,7 +141,7 @@ namespace ros2_lifecycle_manager
         node_services_,
         service_name,
         rmw_qos_profile_services_default,
-        nullptr);
+        service_callback_group_); // Use the interface specific callbackgroup
     }
 
     /**
@@ -170,6 +170,8 @@ namespace ros2_lifecycle_manager
     rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph_;
     rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging_;
     rclcpp::node_interfaces::NodeServicesInterface::SharedPtr node_services_;
+    // TODO
+    rclcpp::CallbackGroup::SharedPtr service_callback_group_;
   };
 
 } // namespace ros2_lifecycle_manager

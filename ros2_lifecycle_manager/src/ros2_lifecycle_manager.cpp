@@ -24,7 +24,9 @@ namespace ros2_lifecycle_manager
       rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph,
       rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging,
       rclcpp::node_interfaces::NodeServicesInterface::SharedPtr node_services
-    ) : node_base_(node_base), node_graph_(node_graph), node_logging_(node_logging), node_services_(node_services) {}
+    ) : node_base_(node_base), node_graph_(node_graph), node_logging_(node_logging), node_services_(node_services) {
+      service_callback_group_ = node_base_->create_callback_group(rclcpp::callback_group::CallbackGroupType::Reentrant);
+    }
 
   void Ros2LifecycleManager::set_managed_nodes(const std::vector<std::string> &nodes)
   {
@@ -83,7 +85,10 @@ namespace ros2_lifecycle_manager
     auto future_result = node.get_state_client->async_send_request(request);
 
     // Wait for response
-    auto future_status = future_result.wait_for(std_nanosec(5000000000L)); // 5000 millisecond delay
+    // TODO
+    // The issue here is that calling wait_for results in blocking the thread. Since this is the same thread used for spinning callbacks you can never process the response
+    // This makes it very difficult to actually make service calls in a synchronous manner
+    auto future_status = future_result.wait_for(std_nanosec(10000000L)); // 10 millisecond delay
 
     if (future_status != std::future_status::ready)
     {
