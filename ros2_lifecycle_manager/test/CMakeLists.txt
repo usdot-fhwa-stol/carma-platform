@@ -32,6 +32,6 @@ ament_add_test(test_lifecycle
 
 install(
   TARGETS test_lifecycle_node
-DESTINATION lib/${PROJECT_NAME}
+  DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -54,6 +54,8 @@ namespace ros2_lifecycle_manager
 
   /**
    * \brief Implementation of the LifecycleManagerInterface using ROS2 service calls
+   * NOTE: This class will use a separate Reentrant service client for service calls. 
+   *       Therefore for the logic to execute correctly a MultiThreadedExecutor may be required. 
    */
   class Ros2LifecycleManager : public LifecycleManagerInterface
   {
@@ -170,7 +172,8 @@ namespace ros2_lifecycle_manager
     rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph_;
     rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging_;
     rclcpp::node_interfaces::NodeServicesInterface::SharedPtr node_services_;
-    // TODO
+    //! Reentrant callback group to use with service calls. Setup this way so that this classes functions 
+    //  can be called from topic callbacks
     rclcpp::CallbackGroup::SharedPtr service_callback_group_;
   };
 

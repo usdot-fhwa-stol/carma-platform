@@ -24,39 +24,19 @@ set(dependencies
     rclcpp_components
 )
 
-include_directories(include)
-
-add_library(${PROJECT_NAME} SHARED
+set(cpp_files
   src/ros2_lifecycle_manager.cpp
 )
 
-ament_target_dependencies(${PROJECT_NAME}
-  ${dependencies}
-)
-
-
-install(
-  DIRECTORY include/
-  DESTINATION include/
-)
-install(
-  TARGETS ${PROJECT_NAME}
-DESTINATION lib/${PROJECT_NAME}
-)
+carma_define_ament_library(${PROJECT_NAME} "${dependencies}" "${cpp_files}")
 
 
 if(BUILD_TESTING)
-  #find_package(ament_lint_auto REQUIRED)
-  #ament_lint_auto_find_test_dependencies()
 
   find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_cmake_pytest REQUIRED)
 
   add_subdirectory(test)
 endif()
-
-ament_export_include_directories(include)
-ament_export_libraries(${PROJECT_NAME})
-ament_export_dependencies(${dependencies})
 
 ament_package()

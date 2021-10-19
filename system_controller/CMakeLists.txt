@@ -14,10 +14,6 @@ find_package(lifecycle_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(ros2_lifecycle_manager REQUIRED)
 
-include_directories(
-  include
-)
-
 set(executable_name ${PROJECT_NAME})
 set(library_name ${executable_name}_core)
 
@@ -29,37 +25,18 @@ set(dependencies
   lifecycle_msgs
 )
 
-add_library(${library_name} SHARED
-  src/system_controller_node.cpp
-)
-
-ament_target_dependencies(${library_name}
-  ${dependencies}
-)
-
-add_executable(${executable_name}
-  src/main.cpp
-)
-
-target_link_libraries(${executable_name} ${library_name})
-
-ament_target_dependencies(${executable_name}
-  ${dependencies}
-)
+set(lib_cpp src/system_controller_node.cpp)
+carma_define_ament_library(${library_name} "${dependencies}" "${lib_cpp}")
 
 rclcpp_components_register_nodes(${library_name} "system_controller::SystemControllerNode")
 
-install(TARGETS ${library_name}
-DESTINATION lib/${PROJECT_NAME}
-)
 
-install(TARGETS ${executable_name}
-  RUNTIME DESTINATION lib/${PROJECT_NAME}/${PROJECT_NAME}
+set(exec_cpp src/main.cpp)
+set(exec_deps
+  ${dependencies}
+  ${library_name}
 )
-
-install(DIRECTORY include/
-  DESTINATION include/
-)
+carma_define_ament_executable(${executable_name} "${exec_deps}" "${exec_cpp}")
 
 install(DIRECTORY config/
   DESTINATION config/
@@ -70,7 +47,4 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-ament_export_include_directories(include)
-ament_export_libraries(${library_name})
-ament_export_dependencies(${dependencies})
 ament_package()

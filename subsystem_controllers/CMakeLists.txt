@@ -14,15 +14,6 @@ find_package(lifecycle_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(ros2_lifecycle_manager REQUIRED)
 
-include_directories(
-  include
-  ${carma_ros2_utils_INCLUDE_DIRS}
-  ${carma_msgs_INCLUDE_DIRS}
-  ${lifecycle_msgs_INCLUDE_DIRS}
-  ${rclcpp_INCLUDE_DIRS}
-  ${ros2_lifecycle_manager_INCLUDE_DIRS}
-)
-
 set(base_dependencies
   carma_cmake_common
   carma_ros2_utils
@@ -31,51 +22,37 @@ set(base_dependencies
   lifecycle_msgs
 )
 
-add_library(base_subsystem_controller SHARED
-  src/base_subsystem_controller/base_subsystem_controller.cpp
-)
-ament_target_dependencies(base_subsystem_controller
-  ${base_dependencies}
-)
+set(base_lib_cpp src/base_subsystem_controller/base_subsystem_controller.cpp)
+carma_define_ament_library(base_subsystem_controller "${base_dependencies}" "${base_lib_cpp}")
 
 set(dependency_libs
-  ${carma_cmake_common_LIBRARIES}
-  ${carma_ros2_utils_LIBRARIES}
-  ${rclcpp_LIBRARIES}
-  ${ros2_lifecycle_manager_LIBRARIES}
-  ${lifecycle_msgs_LIBRARIES}
+  ${base_dependencies}
   base_subsystem_controller
 )
 
-add_subdirectory(src/v2x_controller)
-add_subdirectory(src/localization_controller)
-add_subdirectory(src/guidance_controller)
-add_subdirectory(src/environment_perception_controller)
-add_subdirectory(src/drivers_controller)
+# V2X Subsystem
+carma_define_ament_library(v2x_controller_core "${dependency_libs}" src/v2x_controller/v2x_controller_node.cpp)
+carma_define_ament_executable(v2x_controller "${dependency_libs}" src/v2x_controller/main.cpp)
+rclcpp_components_register_nodes(v2x_controller_core "subsystem_controllers::V2XControllerNode")
 
+# Localization Subsystem
+carma_define_ament_library(localization_controller_core "${dependency_libs}" src/localization_controller/localization_controller.cpp)
+carma_define_ament_executable(localization_controller "${dependency_libs}" src/localization_controller/main.cpp)
+rclcpp_components_register_nodes(localization_controller_core "subsystem_controllers::LocalizationControllerNode")
 
-install(TARGETS base_subsystem_controller
-DESTINATION lib/${PROJECT_NAME}
-)
+# Guidance Subsystem
+carma_define_ament_library(guidance_controller_core "${dependency_libs}" src/guidance_controller/guidance_controller.cpp)
+carma_define_ament_executable(guidance_controller "${dependency_libs}" src/guidance_controller/main.cpp)
+rclcpp_components_register_nodes(guidance_controller_core "subsystem_controllers::GuidanceControllerNode")
 
+# Environment Subsystem
+carma_define_ament_library(environment_perception_controller_core "${dependency_libs}" src/environment_perception_controller/environment_perception_controller.cpp)
+carma_define_ament_executable(environment_perception_controller "${dependency_libs}" src/environment_perception_controller/main.cpp)
+rclcpp_components_register_nodes(environment_perception_controller_core "subsystem_controllers::EnvironmentPerceptionControllerNode")
 
-install(DIRECTORY include/
-  DESTINATION include/
-)
+# Driver Subsystem
+carma_define_ament_library(drivers_controller_core "${dependency_libs}" src/drivers_controller/drivers_controller_node.cpp)
+carma_define_ament_executable(drivers_controller "${dependency_libs}" src/drivers_controller/main.cpp)
+rclcpp_components_register_nodes(drivers_controller_core "subsystem_controllers::DriversControllerNode")
 
-# if(BUILD_TESTING)
-#   find_package(ament_lint_auto REQUIRED)
-#   ament_lint_auto_find_test_dependencies()
-# endif()
-
-ament_export_include_directories(include)
-ament_export_libraries( # TODO can we put this export line in each subdirectory?
-  base_subsystem_controller 
-  v2x_controller
-  localization_controller
-  guidance_controller
-  environment_perception_controller
-  drivers_controller
-)
-ament_export_dependencies(${base_dependencies})
 ament_package()
