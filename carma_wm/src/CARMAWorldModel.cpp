@@ -393,25 +393,35 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
   }
 
   // Use fast lookup to identify the points before and after the provided downtrack on the route
-  size_t ls_i = shortest_path_distance_map_.getElementIndexByDistance(downtrack); // Get the linestring matching the provided downtrack
-  double ls_length = shortest_path_distance_map_.elementLength(ls_i);
-  double ls_downtrack = shortest_path_distance_map_.distanceToElement(ls_i);
+  auto indices = shortest_path_distance_map_.getElementIndexByDistance(downtrack, true); // Get the linestring matching the provided downtrack
+  size_t ls_i = std::get<0>(indices);
+  size_t pt_i = std::get<1>(indices);
+  
   auto linestring = shortest_path_centerlines_[ls_i];
 
-  // Use the percentage traveled along this linestring to index into the cenertline
+  if (pt_i >= linestring.size()) {
+    throw std::invalid_argument("Impossible index: pt: " + std::to_string(pt_i) + " linestring: " + std::to_string(ls_i));
+  }
+
+
+  double ls_downtrack = shortest_path_distance_map_.distanceToElement(ls_i);
+  
   double relative_downtrack = downtrack - ls_downtrack;
-  double lanelet_percentage = relative_downtrack / ls_length;
-  int centerline_size = linestring.size();
-  int index = lanelet_percentage * centerline_size;
-  int prior_idx = std::min(index, centerline_size - 1);
-  int next_idx = std::min(index + 1, centerline_size - 1);
+
+  size_t centerline_size = linestring.size();
+
+  size_t prior_idx = std::min(pt_i, centerline_size - 1);
+
+  size_t next_idx = std::min(pt_i + 1, centerline_size - 1);
 
   // This if block handles the edge case where the downtrack distance has landed exactly on an existing point
   if (prior_idx == next_idx)
   {  // If both indexes are the same we are on the point
+    
     if (crosstrack == 0)
     {  // Crosstrack not provided so we can return the point directly
       auto prior_point = linestring[prior_idx];
+
       return lanelet::BasicPoint2d(prior_point.x(), prior_point.y());
     }
 
@@ -423,6 +433,7 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
       next_point = linestring[prior_idx + 1].basicPoint2d(); // No need to check bounds as this class will reject routes with fewer than 2 points in a centerline
       x = prior_point.x();
       y = prior_point.y();
+
     }
     else
     {  // If this is the end point compute the crosstrack based on previous point
@@ -430,6 +441,7 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
       next_point = linestring[prior_idx].basicPoint2d();
       x = next_point.x();
       y = next_point.y();
+
     }
 
     // Compute the crosstrack
@@ -438,6 +450,7 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
                                     // to the target point
     double delta_x = cos(theta) * crosstrack;
     double delta_y = sin(theta) * crosstrack;
+
     return lanelet::BasicPoint2d(x + delta_x, y + delta_y);
   }
 
@@ -447,6 +460,8 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
   double prior_to_next_dist = next_downtrack - prior_downtrack;
   double prior_to_target_dist = relative_downtrack - prior_downtrack;
   double interpolation_percentage = 0;
+  
+
   if (prior_to_next_dist < 0.000001)
   {
     interpolation_percentage = 0;
@@ -455,9 +470,11 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
   {
     interpolation_percentage = prior_to_target_dist / prior_to_next_dist; // Use the percentage progress between both points to compute the downtrack point
   }
+
   auto prior_point = linestring[prior_idx].basicPoint2d();
   auto next_point = linestring[next_idx].basicPoint2d();
   auto delta_vec = next_point - prior_point;
+
   double x = prior_point.x() + interpolation_percentage * delta_vec.x();
   double y = prior_point.y() + interpolation_percentage * delta_vec.y();
 
@@ -468,8 +485,10 @@ boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(c
                                     // to the target point
     double delta_x = cos(theta) * crosstrack;
     double delta_y = sin(theta) * crosstrack;
+
     x += delta_x;  // Adjust x and y of target point to account for crosstrack
     y += delta_y;
+    
   }
 
   return lanelet::BasicPoint2d(x, y);
@@ -509,7 +528,8 @@ void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map, size_t map_version, boo
 
     ROS_INFO_STREAM("Building routing graph");
 
-    TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
+    TrafficRulesConstPtr traffic_rules = *(getTrafficRules(participant_type_ ));
+
     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
     map_routing_graph_ = std::move(map_graph);
 
@@ -553,6 +573,16 @@ void CARMAWorldModel::setRouteEndPoint(const lanelet::BasicPoint3d& end_point)
                                                                                   // consideration for endpoint
 }
 
+void CARMAWorldModel::setRouteName(const std::string& route_name)
+{
+  route_name_ = route_name;
+}
+
+std::string CARMAWorldModel::getRouteName() const 
+{
+  return route_name_;
+}
+
 lanelet::LineString3d CARMAWorldModel::copyConstructLineString(const lanelet::ConstLineString3d& line) const
 {
   std::vector<lanelet::Point3d> coppied_points;
@@ -572,7 +602,8 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
 
   lanelet::routing::LaneletPath shortest_path = route_->shortestPath();
   // Build shortest path routing graph
-  TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
+  TrafficRulesConstPtr traffic_rules = *(getTrafficRules(participant_type_ ));
+
 
   lanelet::routing::RoutingGraphUPtr shortest_path_graph =
       lanelet::routing::RoutingGraph::build(*shortest_path_view_, *traffic_rules);
@@ -676,6 +707,13 @@ lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules(const s
   }
 
   return optional_ptr;
+}
+
+lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules() const
+{
+  
+  return getTrafficRules(participant_type_);
+
 }
 
 lanelet::Optional<cav_msgs::RoadwayObstacle>
@@ -1073,6 +1111,11 @@ void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
   config_speed_limit_ = config_lim;
 }
 
+void CARMAWorldModel::setVehicleParticipationType(const std::string& participant)
+{
+    participant_type_ = participant;
+}
+
 std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n)
 {
   return carma_wm::query::getLaneletsFromPoint(semantic_map_, point, n);
@@ -1128,6 +1171,43 @@ std::vector<lanelet::CarmaTrafficLightPtr> CARMAWorldModel::getLightsAlongRoute(
     }
   }
   return light_list;
+}
+
+std::vector<std::shared_ptr<lanelet::AllWayStop>> CARMAWorldModel::getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const
+{
+  // Check if the map is loaded yet
+  if (!semantic_map_ || semantic_map_->laneletLayer.empty())
+  {
+    ROS_ERROR_STREAM("Map is not set or does not contain lanelets");
+    return {};
+  }
+  // Check if the route was loaded yet
+  if (!route_)
+  {
+    ROS_ERROR_STREAM("Route has not yet been loaded");
+    return {};
+  }
+  std::vector<std::shared_ptr<lanelet::AllWayStop>> intersection_list;
+  auto curr_downtrack = routeTrackPos(loc).downtrack;
+  // shortpath is already sorted by distance
+  for(const auto& ll : route_->shortestPath())
+  {
+    auto intersections = semantic_map_->laneletLayer.get(ll.id()).regulatoryElementsAs<lanelet::AllWayStop>();
+    if (intersections.empty())
+    {
+      continue;
+    }
+    for (auto intersection : intersections)
+    {
+      double intersection_downtrack = routeTrackPos(intersection->stopLines().front().front().basicPoint2d()).downtrack;
+      if (intersection_downtrack < curr_downtrack)
+      {
+        continue;
+      }
+      intersection_list.push_back(intersection);
+    }
+  }
+  return intersection_list;
 }
 
 void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)

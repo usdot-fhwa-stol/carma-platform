@@ -202,13 +202,14 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             {
                 ROS_DEBUG_STREAM("LaneChangeNeeded");
     
-                maneuvers.push_back(composeLaneChangeManeuverMessage(start_dist, end_dist, start_speed, target_speed_in_lanelet, route_shortest_path[shortest_path_index].id(), route_shortest_path[shortest_path_index + 1].id()));
-                ++shortest_path_index; //Since lane change covers 2 lanelets - skip planning for the next lanelet
-
-                //Determine the Lane Change Status
+                // Determine the Lane Change Status
                 ROS_DEBUG_STREAM("Recording lanechange start_dist <<" << start_dist  << ", from llt id:" << route_shortest_path[shortest_path_index].id() << " to llt id: " << 
                     route_shortest_path[shortest_path_index+ 1].id());
                 upcoming_lane_change_status_msg_map_.push({start_dist, ComposeLaneChangeStatus(route_shortest_path[shortest_path_index],route_shortest_path[shortest_path_index + 1])});
+
+                maneuvers.push_back(composeLaneChangeManeuverMessage(start_dist, end_dist, start_speed, target_speed_in_lanelet, route_shortest_path[shortest_path_index].id(), route_shortest_path[shortest_path_index + 1].id()));
+                ++shortest_path_index; //Since lane change covers 2 lanelets - skip planning for the next lanelet
+
             }
             else
             {

@@ -95,14 +95,18 @@ namespace platoon_control
 
     void  PlatoonControlPlugin::trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
         
-        cav_msgs::TrajectoryPlanPoint first_trajectory_point = tp->trajectory_points[1];
+        if (tp->trajectory_points.size() < 2) {
+            ROS_WARN_STREAM("PlatoonControlPlugin cannot execute trajectory as only 1 point was provided");
+            return;
+        }
+        cav_msgs::TrajectoryPlanPoint first_trajectory_point = tp->trajectory_points[1]; // TODO this variable appears to be misnamed. It is the second trajectory point
         cav_msgs::TrajectoryPlanPoint lookahead_point = getLookaheadTrajectoryPoint(*tp);
 
         trajectory_speed_ = getTrajectorySpeed(tp->trajectory_points);
 
     	
         
-        generateControlSignals(first_trajectory_point, lookahead_point);
+        generateControlSignals(first_trajectory_point, lookahead_point); // TODO this should really be called on a timer against that last trajectory so 30Hz control loop can be achieved
 
 
     }

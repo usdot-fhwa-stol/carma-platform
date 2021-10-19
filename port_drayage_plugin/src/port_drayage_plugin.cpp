@@ -27,12 +27,17 @@ namespace port_drayage_plugin
             return -1;
         }
 
+        // Read in configuration parameters
         double speed_epsilon = _pnh->param("stop_speed_epsilon", 1.0);
         declaration = _pnh->param("declaration", 1.0);
         std::string cargo_id;
         _pnh->param<std::string>("cargo_id", cargo_id, "UNDEFINED-CARGO-ID"); 
         std::string host_id;
         _pnh->param<std::string>("host_id", host_id, "UNDEFINED-HOST-ID");
+        bool starting_at_staging_area;
+        _pnh->param<bool>("starting_at_staging_area", starting_at_staging_area, true);
+        bool enable_port_drayage;
+        _pnh->param<bool>("enable_port_drayage", enable_port_drayage, false);
 
         // Read in 'cmv_id' parameter as a string, then convert to an unsigned long before initializing the PortDrayageWorker object
         std::string cmv_id_string;
@@ -43,17 +48,25 @@ namespace port_drayage_plugin
         ros::Publisher outbound_mob_op = _nh->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
         _outbound_mobility_operations_publisher = std::make_shared<ros::Publisher>(outbound_mob_op);
 
+        ros::Publisher ui_instructions_pub = _nh->advertise<cav_msgs::UIInstructions>("ui_instructions", 5);
+        _ui_instructions_publisher = std::make_shared<ros::Publisher>(ui_instructions_pub);
+
         _set_active_route_client = _nh->serviceClient<cav_srvs::SetActiveRoute>("/guidance/set_active_route");
 
         PortDrayageWorker pdw{
             cmv_id,
             cargo_id,
             host_id,
+            starting_at_staging_area,
             [this](cav_msgs::MobilityOperation msg) {
                _outbound_mobility_operations_publisher->publish<cav_msgs::MobilityOperation>(msg);
             },
-            std::bind(&PortDrayagePlugin::call_set_active_route_client, this, std::placeholders::_1),
-            speed_epsilon
+            [this](cav_msgs::UIInstructions msg) {
+               _ui_instructions_publisher->publish<cav_msgs::UIInstructions>(msg);
+            },
+            speed_epsilon,
+            enable_port_drayage,
+            std::bind(&PortDrayagePlugin::call_set_active_route_client, this, std::placeholders::_1)
         };
         
         ros::Subscriber maneuver_sub = _nh->subscribe<cav_msgs::ManeuverPlan>("final_maneuver_plan", 5, 
@@ -62,7 +75,7 @@ namespace port_drayage_plugin
         });
         _maneuver_plan_subscriber = std::make_shared<ros::Subscriber>(maneuver_sub);
 
-        ros::Subscriber twist_sub = _nh->subscribe<geometry_msgs::TwistStamped>("/localization/ekf_twist", 5, 
+        ros::Subscriber twist_sub = _nh->subscribe<geometry_msgs::TwistStamped>("current_velocity", 5, 
             [&](const geometry_msgs::TwistStampedConstPtr& speed) {
                 pdw.set_current_speed(speed);
                 _cur_speed = speed->twist;
@@ -92,6 +105,20 @@ namespace port_drayage_plugin
         });
 
         _georeference_subscriber = std::make_shared<ros::Subscriber>(georeference_sub);
+        
+        ros::Subscriber guidance_state_sub = _nh->subscribe<cav_msgs::GuidanceState>("guidance_state", 5,
+            [&](const cav_msgs::GuidanceStateConstPtr& guidance_state) {
+            pdw.on_guidance_state(guidance_state);
+        });
+
+        _guidance_state_subscriber = std::make_shared<ros::Subscriber>(guidance_state_sub);
+
+        ros::Subscriber route_event_sub = _nh->subscribe<cav_msgs::RouteEvent>("route_event", 5,
+            [&](const cav_msgs::RouteEventConstPtr& route_event) {
+            pdw.on_route_event(route_event);
+        });
+
+        _route_event_subscriber = std::make_shared<ros::Subscriber>(route_event_sub);
         
         ros::Timer discovery_pub_timer_ = _nh->createTimer(
             ros::Duration(ros::Rate(10.0)),

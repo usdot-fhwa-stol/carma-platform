@@ -16,6 +16,5 @@
 -->
 
 <launch>
-    <node name="intersection_transit_maneuvering" pkg="intersection_transit_maneuvering" type="intersection_transit_maneuvering">
-    </node>
+    <node name="intersection_transit_maneuvering" pkg="intersection_transit_maneuvering" type="intersection_transit_maneuvering"/>
 </launch>

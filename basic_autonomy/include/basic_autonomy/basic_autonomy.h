@@ -213,7 +213,7 @@ namespace basic_autonomy
      */
           std::vector<PointSpeedPair> create_lanefollow_geometry(const cav_msgs::Maneuver &maneuver, double max_starting_downtrack,
                                                                    const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
-                                                                   const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config);
+                                                                   const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config, std::unordered_set<lanelet::Id>& visited_lanelets);
 
      /**
       * \brief Adds extra centerline points beyond required message length to lane follow maneuver points so that there's always enough points to calculate trajectory
