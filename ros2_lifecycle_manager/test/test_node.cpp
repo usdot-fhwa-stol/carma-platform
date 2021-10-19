@@ -17,6 +17,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 
+// This is a test node to support unit tests for the ros2_lifecycle_manager
 class LifecycleNodeTest : public rclcpp_lifecycle::LifecycleNode
 {
 public:

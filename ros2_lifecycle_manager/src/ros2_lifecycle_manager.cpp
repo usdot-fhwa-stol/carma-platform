@@ -84,10 +84,6 @@ namespace ros2_lifecycle_manager
     // Send request
     auto future_result = node.get_state_client->async_send_request(request);
 
-    // Wait for response
-    // TODO
-    // The issue here is that calling wait_for results in blocking the thread. Since this is the same thread used for spinning callbacks you can never process the response
-    // This makes it very difficult to actually make service calls in a synchronous manner
     auto future_status = future_result.wait_for(std_nanosec(10000000L)); // 10 millisecond delay
 
     if (future_status != std::future_status::ready)
