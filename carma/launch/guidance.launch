@@ -231,6 +231,12 @@
    <include file = "$(find intersection_transit_maneuvering)/launch/intersection_transit_maneuvering.launch"/>
   </group>
 
+  <!-- Stop Controlled Intersection Strategic Plugin -->
+  <include file="$(find sci_strategic_plugin)/launch/sci_strategic_plugin.launch" />
+
+  <!-- Stop Controlled Intersection Tactical Plugin -->
+  <include file="$(find stop_controlled_intersection_tactical_plugin)/launch/stop_controlled_intersection_tactical_plugin.launch" />
+
   <!-- Guidance Plugin Validator -->
   <group>
     <remap from="plugin_discovery" to="$(optenv CARMA_GUIDE_NS)/plugin_discovery"/>

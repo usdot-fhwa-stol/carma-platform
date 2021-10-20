@@ -35,6 +35,7 @@
 #include <cav_msgs/MobilityResponse.h>
 #include <cav_msgs/PlatooningInfo.h>
 #include <cav_msgs/PlanType.h>
+#include <cav_srvs/PluginActivation.h>
 #include <cav_msgs/BSM.h>
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
@@ -118,6 +119,15 @@ namespace platoon_strategic
             * \return Mobility response message
             */
             bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
+
+            /**
+            * \brief Callback function to the plugin activation service request
+            * 
+            * \param req plugin activation service request
+            * \param resp plugin activation service response
+            *
+            */
+            bool plugin_activation_cb(cav_srvs::PluginActivationRequest &req, cav_srvs::PluginActivationResponse &resp);
 
             /**
             * \brief Find lanelet index from path
@@ -221,6 +231,9 @@ namespace platoon_strategic
             
             // ECEF position of the host vehicle
             cav_msgs::LocationECEF pose_ecef_point_;
+
+            // Flag to enable/disable platooning plugin
+            bool platooning_enabled_ = false;
 
         
         private:
