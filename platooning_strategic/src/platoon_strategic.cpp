@@ -49,6 +49,8 @@ namespace platoon_strategic
     bool PlatoonStrategicPlugin::onSpin() 
     {
         plugin_discovery_publisher_(plugin_discovery_msg_);
+        cav_msgs::PlatooningInfo platoon_status = composePlatoonInfoMsg();
+        platooning_info_publisher_(platoon_status);
 
         if (!platooning_enabled_)
         {
@@ -72,9 +74,6 @@ namespace platoon_strategic
         {
             run_leader_waiting();
         }
-
-        cav_msgs::PlatooningInfo platoon_status = composePlatoonInfoMsg();
-        platooning_info_publisher_(platoon_status);
 
         return true;
     }
