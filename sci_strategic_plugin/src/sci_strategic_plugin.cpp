@@ -86,7 +86,10 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
 {
   if (msg->strategy == stop_controlled_intersection_strategy_)
   {
+    ROS_DEBUG_STREAM("Received Schedule message with id: " << msg->header.plan_id);
     approaching_stop_controlled_interction_ = true;
+    ROS_DEBUG_STREAM("Approaching Stop Controlled Intersection: " << approaching_stop_controlled_interction_);
+
     if (msg->strategy_params != previous_strategy_params_)
     {
       parseStrategyParams(msg->strategy_params); 
@@ -106,8 +109,13 @@ void SCIStrategicPlugin::BSMCb(const cav_msgs::BSMConstPtr& msg)
 void SCIStrategicPlugin::currentPoseCb(const geometry_msgs::PoseStampedConstPtr& msg)
 {
   geometry_msgs::PoseStamped pose_msg = geometry_msgs::PoseStamped(*msg.get());
-  lanelet::BasicPoint2d current_loc(pose_msg.pose.position.x, pose_msg.pose.position.y);
-  current_downtrack_ = wm_->routeTrackPos(current_loc).downtrack;
+  // TODO have a better solution
+  if (approaching_stop_controlled_interction_)
+  {
+    lanelet::BasicPoint2d current_loc(pose_msg.pose.position.x, pose_msg.pose.position.y);
+    current_downtrack_ = wm_->routeTrackPos(current_loc).downtrack;
+  }
+  
   ROS_DEBUG_STREAM("Downtrack from current pose: " << current_downtrack_);
 }
 
@@ -226,7 +234,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   if (!approaching_stop_controlled_interction_)
   {
     resp.new_plan.maneuvers = {};
-    ROS_WARN_STREAM("Not approaching stop-controlled itnersection so no maneuvers");
+    ROS_WARN_STREAM("Not approaching stop-controlled intersection so no maneuvers");
     return true;
   }
 
@@ -235,7 +243,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   VehicleState current_state = extractInitialState(req);
 
   // Get current traffic light information
-  ROS_DEBUG("\n\nFinding intersecction information");
+  ROS_DEBUG("\n\nFinding intersection information");
 
   auto stop_intersection_list = wm_->getIntersectionsAlongRoute({ req.veh_x, req.veh_y });
   auto nearest_stop_intersection = stop_intersection_list.front();
