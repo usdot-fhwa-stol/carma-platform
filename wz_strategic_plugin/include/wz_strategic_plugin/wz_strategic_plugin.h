@@ -157,6 +157,7 @@ private:
    * \param ending_lane_id The ending lanelet id of this maneuver
    * \param start_time The starting time of the maneuver
    * \param end_time The ending time of the maneuver
+   * \param stopping_accel Acceleration used for calculating the stopping distance
    *
    * \return A stop and wait maneuver message which is ready to be published
    */
