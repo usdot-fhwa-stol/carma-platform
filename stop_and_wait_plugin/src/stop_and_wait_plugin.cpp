@@ -132,6 +132,9 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
     ROS_DEBUG_STREAM("Using stop buffer from meta data: " << stop_location_buffer);
     ROS_DEBUG_STREAM("Using stopping acceleration from meta data: "<< stopping_accel);
   }
+  else{
+    throw std::invalid_argument("stop and wait maneuver message missing required float meta data");
+  }
 
   trajectory.trajectory_points = compose_trajectory_from_centerline(
       points_and_target_speeds, current_downtrack, req.vehicle_state.longitudinal_vel,
