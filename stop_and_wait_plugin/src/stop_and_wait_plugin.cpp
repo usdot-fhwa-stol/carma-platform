@@ -119,7 +119,7 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
   // Extract the stopping buffer used to consider a stopping behavior complete
   double stop_location_buffer = config_.default_stopping_buffer;  // If no maneuver meta data is provided we will use the default buffer
   
-  double stopping_accel;
+  double stopping_accel = 0.0;
   if (maneuver_plan[0].stop_and_wait_maneuver.parameters.presence_vector &
       cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA)
   {
