@@ -299,7 +299,7 @@ public:
 
   ros::Publisher mobility_operation_pub;
 
-  std::vector<uint8_t> bsm_id;
+  std::string bsm_id_ = "default_bsm_id";
 
   private:
   //! World Model pointer

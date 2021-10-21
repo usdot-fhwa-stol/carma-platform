@@ -103,7 +103,15 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
 
 void SCIStrategicPlugin::BSMCb(const cav_msgs::BSMConstPtr& msg)
 {
-  bsm_id = msg->core_data.id;
+  std::vector<uint8_t> bsm_id_vec = msg->core_data.id;
+
+  std::string id = "";
+  for (size_t i=0; i< bsm_id_vec.size(); i++)
+  {
+    id += std::to_string(bsm_id_vec[i]);
+  }
+
+  bsm_id_ = id;
 }
 
 void SCIStrategicPlugin::currentPoseCb(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -445,19 +453,19 @@ void SCIStrategicPlugin::generateMobilityOperation()
 {
     cav_msgs::MobilityOperation mo_;
     mo_.header.timestamp = ros::Time::now().toNSec() * 1000000;
-
-    std::string id(bsm_id.begin(), bsm_id.end());
-    mo_.header.sender_bsm_id = id;
+    mo_.header.sender_id = config_.vehicle_id;
+    mo_.header.sender_bsm_id = bsm_id_;
 
     int flag = (approaching_stop_controlled_interction_ ? 1 : 0);
 
     double vehicle_acceleration_limit_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
     double vehicle_deceleration_limit_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
 
-    mo_.strategy_params = "intersection_box_flag, acceleration_limit, deceleration_limit," + std::to_string(flag) + "," + std::to_string(vehicle_acceleration_limit_) + "," + std::to_string(vehicle_deceleration_limit_);
+    mo_.strategy_params = "intersection_box_flag," +  std::to_string(flag) + ",acceleration_limit," + std::to_string(vehicle_acceleration_limit_) + ",deceleration_limit," + std::to_string(vehicle_deceleration_limit_);
 
     mobility_operation_pub.publish(mo_);
 }
+
 
 cav_msgs::Maneuver SCIStrategicPlugin::composeStopAndWaitManeuverMessage(double current_dist, double end_dist,
                                                                         double start_speed,
