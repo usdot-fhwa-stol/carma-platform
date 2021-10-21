@@ -118,6 +118,7 @@ namespace bsm_generator
     void BSMGenerator::headingCallback(const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& msg)
     {
         bsm_.core_data.heading = worker.getHeadingInRange(msg->heading);
+        ROS_DEBUG_STREAM("BSM Heading: " << bsm_.core_data.heading);
     }
 
     void BSMGenerator::generateBSM(const ros::TimerEvent& event)
