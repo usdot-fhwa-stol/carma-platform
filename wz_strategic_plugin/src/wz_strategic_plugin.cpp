@@ -179,8 +179,8 @@ void WzStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversRequest
 
   ROS_DEBUG("distance_remaining_to_traffic_light %f", distance_remaining_to_traffic_light);
 
-  double stopping_dist = estimate_distance_to_stop(current_state.speed, config_.vehicle_accel_limit_multiplier *
-                                                                            config_.accel_limit);
+  double stopping_dist = estimate_distance_to_stop(current_state.speed, config_.vehicle_decel_limit_multiplier  *
+                                                                            config_.vehicle_decel_limit);
 
   ROS_DEBUG_STREAM("Stopping distance: " << stopping_dist);
 
@@ -306,7 +306,7 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
   }
   else  // Red or Yellow light
   {
-    double stopping_accel = config_.vehicle_accel_limit_multiplier * config_.accel_limit;
+    double stopping_accel = config_.vehicle_decel_limit_multiplier * config_.vehicle_decel_limit;
 
     ROS_DEBUG_STREAM("Planning stop and wait maneuver");
     resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
@@ -349,7 +349,7 @@ void WzStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& re
   constexpr double stop_maneuver_buffer = 10.0;
 
   // If the light is not green then continue waiting by creating a stop and wait maneuver ontop of the vehicle
-  double stopping_accel = config_.vehicle_accel_limit_multiplier * config_.accel_limit;
+  double stopping_accel = config_.vehicle_decel_limit_multiplier * config_.vehicle_decel_limit;
 
   resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
       current_state.downtrack - stop_maneuver_buffer, traffic_light_down_track, current_state.speed,

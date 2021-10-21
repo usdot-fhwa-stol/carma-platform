@@ -40,8 +40,8 @@ int main(int argc, char** argv)
   wz_strategic_plugin::WzStrategicPluginConfig config;
 
   // clang-format off
-  pnh.param<double>("/vehicle_acceleration_limit",      config.accel_limit, config.accel_limit);
-  pnh.param<double>("vehicle_accel_limit_multiplier",   config.vehicle_accel_limit_multiplier, config.vehicle_accel_limit_multiplier);
+  pnh.param<double>("/vehicle_acceleration_limit",      config.vehicle_decel_limit, config.vehicle_decel_limit);
+  pnh.param<double>("vehicle_decel_limit_multiplier",   config.vehicle_decel_limit_multiplier, config.vehicle_decel_limit_multiplier);
   pnh.param<double>("min_approach_distance",            config.min_approach_distance, config.min_approach_distance);
   pnh.param<double>("stopping_location_buffer",         config.stopping_location_buffer, config.stopping_location_buffer);
   pnh.param<double>("green_light_time_buffer",          config.green_light_time_buffer, config.green_light_time_buffer);
