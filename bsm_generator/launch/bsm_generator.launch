@@ -15,5 +15,7 @@
 -->
 <launch>
     <rosparam command="load" file="$(find bsm_generator)/config/parameters.yaml"/>
-    <node name="bsm_generator" pkg="bsm_generator" type="bsm_generator"/>
+    <node name="bsm_generator" pkg="bsm_generator" type="bsm_generator">
+    <remap from="dual_antenna_heading" to="$(optenv CARMA_INTR_NS)/dual_antenna_heading"/>
+    </node>
 </launch>
