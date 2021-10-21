@@ -22,11 +22,11 @@ namespace wz_strategic_plugin
 //! @brief Struct to store the configuration settings for the WzStrategicPlugin class
 struct WzStrategicPluginConfig
 {
-  //! The maximum allowable vehicle deceleration limit in m/s
-  double vehicle_decel_limit = 2.0;
+  //! The maximum allowable vehicle acceleration limit in m/s
+  double accel_limit = 2.0;
 
-  //! A multiplier to apply to the maximum allowable vehicle deceleration limit so we plan under our capabilities
-  double vehicle_decel_limit_multiplier = 0.75;
+  //! A multiplier to apply to the maximum allowable vehicle acceleration limit so we plan under our capabilities
+  double vehicle_accel_limit_multiplier = 0.75;
 
   //! The length parameter of the participant vehicle used to help calculate the distance before stopping at a red traffic signal
   double vehicle_length = 5.0;
