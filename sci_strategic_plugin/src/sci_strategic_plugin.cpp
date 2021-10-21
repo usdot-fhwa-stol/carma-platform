@@ -462,7 +462,10 @@ void SCIStrategicPlugin::generateMobilityOperation()
     double vehicle_deceleration_limit_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
 
     mo_.strategy_params = "intersection_box_flag," +  std::to_string(flag) + ",acceleration_limit," + std::to_string(vehicle_acceleration_limit_) + ",deceleration_limit," + std::to_string(vehicle_deceleration_limit_);
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8a78ce198e334c997abdee2f1e78df9796c443ea
     mobility_operation_pub.publish(mo_);
 }
 
