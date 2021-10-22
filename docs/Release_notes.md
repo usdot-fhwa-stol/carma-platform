@@ -12,6 +12,7 @@ Fixes in this release:
 -	Issue 147: Updated the IP Addresses listed in the drivers. Launch file for the forward-facing left and right cameras on two of the trucks (10004 and 80550).
 -	Issue 75: Fixed two LiDAR’s which were not calibrated on the carma white truck during verification testing.
 
+
 Version 3.8.1, released Oct 15th, 2021
 ----------------------------------------
 
@@ -41,11 +42,11 @@ Fixes in this release:
 -	Issue 1461: Fixed basic autonomy introduces errors in in lane-cruising
 -	Issue 1420: Fixed Platform and UI need to process/display the SPAT correctly and distinguish which SPAT is from the approaching traffic signal controller for the SV as traffic signal intersection ID and group ID that are not available.
 
-Version 3.7.1, released Sep 1st, 2021
+Version 3.7.2, released Sep 1st, 2021
 ----------------------------------------
 
 **Summary:** 
-Carma-platform release version 3.7.1 is a hotfix release for 3.7.0.
+Carma-platform release version 3.7.2 is a hotfix release for 3.7.0.
 
 Fixes in this release:
 -	Issue 1426: Route Following Plugin can seg fault in the presence of a lane change after a reroute.

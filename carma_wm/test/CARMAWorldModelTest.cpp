@@ -909,6 +909,37 @@ TEST(CARMAWorldModelTest, getTrafficRules)
   ASSERT_FALSE(!!default_participant);
 }
 
+TEST(CARMAWorldModelTest, getTrafficRules2)
+{
+  CARMAWorldModel cmw;
+
+  ///// Test straight route
+  addStraightRoute(cmw);
+
+  auto default_participant = cmw.getTrafficRules();
+  ASSERT_TRUE(!!default_participant);  // Verify traffic rules object was returned
+  ASSERT_EQ(lanelet::Participants::Vehicle, (*default_participant)->participant());
+
+  default_participant = cmw.getTrafficRules(lanelet::Participants::VehicleCar);
+  ASSERT_TRUE(!!default_participant);
+  ASSERT_EQ(lanelet::Participants::VehicleCar, (*default_participant)->participant());
+
+  default_participant = cmw.getTrafficRules(lanelet::Participants::VehicleTruck);
+  ASSERT_TRUE(!!default_participant);
+  ASSERT_EQ(lanelet::Participants::VehicleTruck, (*default_participant)->participant());
+
+  default_participant = cmw.getTrafficRules(lanelet::Participants::Pedestrian);
+  ASSERT_TRUE(!!default_participant);
+  ASSERT_EQ(lanelet::Participants::Pedestrian, (*default_participant)->participant());
+
+  default_participant = cmw.getTrafficRules(lanelet::Participants::Bicycle);
+  ASSERT_TRUE(!!default_participant);
+  ASSERT_EQ(lanelet::Participants::Bicycle, (*default_participant)->participant());
+
+  default_participant = cmw.getTrafficRules("fake_person");
+  ASSERT_FALSE(!!default_participant);
+}
+
 TEST(CARMAWorldModelTest, toRoadwayObstacle)
 {
   CARMAWorldModel cmw;
@@ -1039,10 +1070,13 @@ TEST(CARMAWorldModelTest, setConfigSpeedLimitTest)
   double cL = 24.0;
   ///// Test without user defined config limit
   cmw.setConfigSpeedLimit(cL);
+  cmw.setVehicleParticipationType("vehicle:car");
 
   ASSERT_FALSE(flag);
 
 }
+
+
 
 TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
 {
@@ -1405,6 +1439,47 @@ TEST(CARMAWorldModelTest, getLightsAlongRoute)
   EXPECT_EQ(lights.size(), 2);
   EXPECT_EQ(lights[0]->id(), traffic_light_id1);
   EXPECT_EQ(lights[1]->id(), traffic_light_id2);
+
+}
+
+TEST(CARMAWorldModelTest, getIntersectionAlongRoute)
+{
+  lanelet::Id id{1200};
+  // intersection id
+  lanelet::Id int_id{1};
+  lanelet::Point3d p1, p2, p3, p4, p5, p6;
+  lanelet::LineString3d ls1, ls2, ls3, ls4, ls5, ls6;
+  lanelet::Lanelet ll1, ll2, ll3;
+
+  p1 = lanelet::Point3d(++id, 0., 1., 1.);
+  p2 = lanelet::Point3d(++id, 1., 1., 1.);
+  p3 = lanelet::Point3d(++id, 0., 0., 0.);
+  p4 = lanelet::Point3d(++id, 1., 0., 0.);
+
+  ls1 = lanelet::LineString3d(++id, lanelet::Points3d{p1, p2});
+  ls2 = lanelet::LineString3d(++id, lanelet::Points3d{p3, p4});
+  ls3 = lanelet::LineString3d(++id, lanelet::Points3d{p3, p1});
+
+
+  ll1 = lanelet::Lanelet(++id, ls1, ls2);
+  ll2 = lanelet::Lanelet(++id, ls2, ls3);
+
+  
+  carma_wm::CARMAWorldModel cmw;
+  lanelet::LaneletMapPtr map;
+  // Create a complete map
+  test::MapOptions mp(1,1);
+  auto cmw_ptr = test::getGuidanceTestMap(mp);
+
+  std::shared_ptr<lanelet::AllWayStop> row = lanelet::AllWayStop::make(int_id, lanelet::AttributeMap(), {{ll1, ls1}});
+  cmw_ptr->getMutableMap()->update(cmw_ptr->getMutableMap()->laneletLayer.get(1200), row);
+
+  carma_wm::test::setRouteByIds({ 1200, 1201, 1202}, cmw_ptr);
+
+  auto ints = cmw_ptr->getIntersectionsAlongRoute({0.5, 0});
+  
+  EXPECT_EQ(ints.size(), 1);
+  EXPECT_EQ(ints[0]->id(), int_id);
 
 }
 
