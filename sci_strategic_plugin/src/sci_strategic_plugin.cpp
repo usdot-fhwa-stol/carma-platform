@@ -126,9 +126,10 @@ void SCIStrategicPlugin::currentPoseCb(const geometry_msgs::PoseStampedConstPtr&
   {
     lanelet::BasicPoint2d current_loc(pose_msg.pose.position.x, pose_msg.pose.position.y);
     current_downtrack_ = wm_->routeTrackPos(current_loc).downtrack;
+    ROS_DEBUG_STREAM("Downtrack from current pose: " << current_downtrack_);
   }
   
-  ROS_DEBUG_STREAM("Downtrack from current pose: " << current_downtrack_);
+  
 }
 
 void SCIStrategicPlugin::parseStrategyParams(const std::string& strategy_params)
@@ -273,6 +274,8 @@ std::vector<lanelet::ConstLanelet> SCIStrategicPlugin::getLaneletsBetweenWithExc
 
 bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp)
 {
+  ROS_DEBUG("In Maneuver callback...");
+
   if (!wm_->getRoute())
   {
     ROS_ERROR_STREAM("Could not plan maneuvers as route was not available");
@@ -285,6 +288,8 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     ROS_WARN_STREAM("Not approaching stop-controlled intersection so no maneuvers");
     return true;
   }
+
+  ROS_DEBUG("Planning for intersection...");
 
   ROS_DEBUG("Finding car information");
   // Extract vehicle data from request
@@ -492,7 +497,7 @@ double SCIStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt) cons
 void SCIStrategicPlugin::generateMobilityOperation()
 {
     cav_msgs::MobilityOperation mo_;
-    mo_.header.timestamp = ros::Time::now().toNSec() * 1000000;
+    mo_.header.timestamp = ros::Time::now().toNSec()/1000000;
     mo_.header.sender_id = config_.vehicle_id;
     mo_.header.sender_bsm_id = bsm_id_;
     mo_.strategy = stop_controlled_intersection_strategy_;
@@ -501,9 +506,6 @@ void SCIStrategicPlugin::generateMobilityOperation()
 
     double vehicle_acceleration_limit_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
     double vehicle_deceleration_limit_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
-
-    // double reaction_time = 4.5;
-    // double min_gap = 5.0;
 
 
     mo_.strategy_params = "access: " +  std::to_string(flag) + ", max_accel: " + std::to_string(vehicle_acceleration_limit_) + 
