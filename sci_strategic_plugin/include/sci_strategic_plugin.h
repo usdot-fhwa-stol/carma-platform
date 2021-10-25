@@ -30,6 +30,8 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <cav_msgs/BSM.h>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 
 #include "sci_strategic_plugin_config.h"
 
@@ -277,15 +279,15 @@ public:
 
   // CARMA Streets Variakes
   // timestamp for msg received from carma streets
-  uint32_t street_msg_timestamp_ = 0.0;
+  uint32_t street_msg_timestamp_ = 0;
   // scheduled stop time
-  uint32_t scheduled_stop_time_ = 0.0;
+  uint32_t scheduled_stop_time_ = 0;
   // scheduled enter time
-  uint32_t scheduled_enter_time_ = 0.0;
+  uint32_t scheduled_enter_time_ = 0;
   // scheduled depart time
-  uint32_t scheduled_depart_time_ = 0.0;
-  // scheduled latest depart time
-  uint32_t scheduled_latest_depart_time_ = 0.0;
+  uint32_t scheduled_depart_time_ = 0;
+  // scheduled latest depart position
+  uint32_t scheduled_departure_position_ = 9999;
   // flag to show if the vehicle is allowed in intersection
   bool is_allowed_int_ = false;
 

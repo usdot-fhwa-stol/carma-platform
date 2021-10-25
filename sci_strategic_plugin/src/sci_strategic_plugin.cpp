@@ -92,7 +92,11 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
 
     if (msg->strategy_params != previous_strategy_params_)
     {
+      street_msg_timestamp_ = msg->header.timestamp;
+      ROS_DEBUG_STREAM("street_msg_timestamp_: " << street_msg_timestamp_);
+
       parseStrategyParams(msg->strategy_params); 
+
     }
     previous_strategy_params_ = msg->strategy_params;
 
@@ -129,36 +133,72 @@ void SCIStrategicPlugin::currentPoseCb(const geometry_msgs::PoseStampedConstPtr&
 
 void SCIStrategicPlugin::parseStrategyParams(const std::string& strategy_params)
 {
-  std::istringstream strategy_params_ss(strategy_params);
-  boost::property_tree::ptree parser;
-  boost::property_tree::ptree child;
-  boost::property_tree::json_parser::read_json(strategy_params_ss, parser);
-  child = parser.get_child("schedule_plan");
-  for(const auto& p : child)
-  {
-    if (p.first == "metadata")
-    {
-      street_msg_timestamp_ = p.second.get<uint32_t>("timestamp");
-    }
-    if (p.first == "payload" && p.second.get<std::string>("veh_id") == config_.vehicle_id)
-    {        
-      // parse stop time in ms
-      scheduled_stop_time_ = p.second.get<uint32_t>("est_stop_t");
-      ROS_DEBUG_STREAM("scheduled_stop_time_: " << scheduled_stop_time_);
+  // sample strategy_params: "st:1634067044,et:1634067059, dt:1634067062.3256602,dp:2,,access: 0"
+  std::string params = strategy_params;
+  std::vector<std::string> inputsParams;
+  boost::algorithm::split(inputsParams, params, boost::is_any_of(","));
 
-      scheduled_enter_time_ = p.second.get<uint32_t>("est_enter_t");
-      ROS_DEBUG_STREAM("scheduled_enter_time_: " << scheduled_enter_time_);
+  std::vector<std::string> st_parsed;
+  boost::algorithm::split(st_parsed, inputsParams[0], boost::is_any_of(":"));
+  uint32_t st = std::stoi(st_parsed[1]);
+  scheduled_stop_time_ = st;
+  ROS_DEBUG_STREAM("scheduled_stop_time_: " << scheduled_stop_time_);
+            
+  std::vector<std::string> et_parsed;
+  boost::algorithm::split(et_parsed, inputsParams[1], boost::is_any_of(":"));
+  uint32_t et = std::stoi(et_parsed[1]);
+  scheduled_enter_time_ = et;
+  ROS_DEBUG_STREAM("scheduled_enter_time_: " << scheduled_enter_time_);
+
+  std::vector<std::string> dt_parsed;
+  boost::algorithm::split(dt_parsed, inputsParams[2], boost::is_any_of(":"));
+  uint32_t dt = std::stoi(dt_parsed[1]);
+  scheduled_depart_time_ = et;
+  ROS_DEBUG_STREAM("scheduled_depart_time_: " << scheduled_depart_time_);
+
+  std::vector<std::string> dp_parsed;
+  boost::algorithm::split(dp_parsed, inputsParams[3], boost::is_any_of(":"));
+  int dp = std::stoi(dp_parsed[1]);
+  scheduled_departure_position_ = dp;
+  ROS_DEBUG_STREAM("scheduled_departure_position_: " << scheduled_departure_position_);
+
+  std::vector<std::string> access_parsed;
+  boost::algorithm::split(access_parsed, inputsParams[4], boost::is_any_of(":"));
+  int access = std::stoi(access_parsed[1]);
+  is_allowed_int_ = (access == 1);
+  ROS_DEBUG_STREAM("is_allowed_int_: " << is_allowed_int_);
+
+
+  // std::istringstream strategy_params_ss(strategy_params);
+  // boost::property_tree::ptree parser;
+  // boost::property_tree::ptree child;
+  // boost::property_tree::json_parser::read_json(strategy_params_ss, parser);
+  // child = parser.get_child("schedule_plan");
+  // for(const auto& p : child)
+  // {
+  //   if (p.first == "metadata")
+  //   {
+  //     street_msg_timestamp_ = p.second.get<uint32_t>("timestamp");
+  //   }
+  //   if (p.first == "payload" && p.second.get<std::string>("veh_id") == config_.vehicle_id)
+  //   {        
+  //     // parse stop time in ms
+  //     scheduled_stop_time_ = p.second.get<uint32_t>("est_stop_t");
+  //     ROS_DEBUG_STREAM("scheduled_stop_time_: " << scheduled_stop_time_);
+
+  //     scheduled_enter_time_ = p.second.get<uint32_t>("est_enter_t");
+  //     ROS_DEBUG_STREAM("scheduled_enter_time_: " << scheduled_enter_time_);
       
-      scheduled_depart_time_ = p.second.get<uint32_t>("est_depart_t");
-      ROS_DEBUG_STREAM("scheduled_depart_time_: " << scheduled_depart_time_);
+  //     scheduled_depart_time_ = p.second.get<uint32_t>("est_depart_t");
+  //     ROS_DEBUG_STREAM("scheduled_depart_time_: " << scheduled_depart_time_);
 
-      scheduled_latest_depart_time_ = p.second.get<uint32_t>("latest_depart_p");
-      ROS_DEBUG_STREAM("scheduled_latest_depart_time_: " << scheduled_latest_depart_time_);
+  //     scheduled_departure_position_ = p.second.get<uint32_t>("latest_depart_p");
+  //     ROS_DEBUG_STREAM("scheduled_departure_position_: " << scheduled_departure_position_);
 
-      is_allowed_int_ = p.second.get<bool>("is_allowed_int");
-      ROS_DEBUG_STREAM("is_allowed_int: " << is_allowed_int_);
-    }
-  }
+  //     is_allowed_int_ = p.second.get<bool>("is_allowed_int");
+  //     ROS_DEBUG_STREAM("is_allowed_int: " << is_allowed_int_);
+  //   }
+  // }
 }
 
 int SCIStrategicPlugin::determineSpeedProfileCase(double stop_dist, double current_speed, double schedule_stop_time, double speed_limit)
@@ -455,13 +495,21 @@ void SCIStrategicPlugin::generateMobilityOperation()
     mo_.header.timestamp = ros::Time::now().toNSec() * 1000000;
     mo_.header.sender_id = config_.vehicle_id;
     mo_.header.sender_bsm_id = bsm_id_;
+    mo_.strategy = stop_controlled_intersection_strategy_;
 
-    int flag = (approaching_stop_controlled_interction_ ? 1 : 0);
+    int flag = (is_allowed_int_ ? 1 : 0);
 
     double vehicle_acceleration_limit_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
     double vehicle_deceleration_limit_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
 
-    mo_.strategy_params = "intersection_box_flag," +  std::to_string(flag) + ",acceleration_limit," + std::to_string(vehicle_acceleration_limit_) + ",deceleration_limit," + std::to_string(vehicle_deceleration_limit_);
+    // double reaction_time = 4.5;
+    // double min_gap = 5.0;
+
+
+    mo_.strategy_params = "access: " +  std::to_string(flag) + ", max_accel: " + std::to_string(vehicle_acceleration_limit_) + 
+                        ", max_decel: " + std::to_string(vehicle_deceleration_limit_) + ", react_time: " + std::to_string(config_.reaction_time) +
+                        ", min_gap: " + std::to_string(config_.min_gap) + ", depart_pos: " + std::to_string(scheduled_departure_position_);
+    
 
     mobility_operation_pub.publish(mo_);
 }
