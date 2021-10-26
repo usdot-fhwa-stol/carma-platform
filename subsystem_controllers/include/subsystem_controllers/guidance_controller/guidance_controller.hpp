@@ -43,6 +43,9 @@ namespace subsystem_controllers
      */
     explicit GuidanceControllerNode(const rclcpp::NodeOptions &options);
 
+    // TODO The ROS1 plugin manager functionality should be updated to properly interact with or exist in this node or a guidance_plugin_controller node
+    // https://github.com/usdot-fhwa-stol/carma-platform/issues/1499
+
   };
 
 } // namespace v2x_controller

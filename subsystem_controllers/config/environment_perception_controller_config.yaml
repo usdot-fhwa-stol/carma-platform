@@ -1,22 +1,20 @@
 # Long: Timeout for each service to be detected as available in milliseconds
 # Units: milliseconds
-service_timeout_ms : 1000
+service_timeout_ms : 200
 
 # Long: Timeout for each service call in milliseconds
 # Units: milliseconds
-call_timeout_ms : 1000
+call_timeout_ms : 200
 
 # String: The namespace for nodes in this subsystem
 subsystem_namespace: /environment
 
 # Required subsystem controller nodes for the overall system to be functional
 # Since CARMA assumes connected vehicles in most cases the current minimum node set is from motion prediction up
-# TODO ADS detection really ought to be included for safety
 required_subsystem_nodes:
   - /environment/carma_wm_broadcaster
   - /environment/roadway_objects 
   - /environment/motion_prediction # TODO check names
 
-
-
-  # TODO still need to create launch file
+# Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
+full_subsystem_required: true

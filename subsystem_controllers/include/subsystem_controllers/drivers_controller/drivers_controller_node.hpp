@@ -43,6 +43,9 @@ namespace subsystem_controllers
      */
     explicit DriversControllerNode(const rclcpp::NodeOptions &options);
 
+    // TODO integrate driver_discovery/health_monitor behavior into this node
+    // https://github.com/usdot-fhwa-stol/carma-platform/issues/1500
+
   };
 
 } // namespace v2x_controller

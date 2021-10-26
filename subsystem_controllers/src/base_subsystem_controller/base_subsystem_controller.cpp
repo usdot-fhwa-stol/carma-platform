@@ -26,15 +26,7 @@ namespace subsystem_controllers
       : CarmaLifecycleNode(options), 
       lifecycle_mgr_(get_node_base_interface(), get_node_graph_interface(), get_node_logging_interface(), get_node_services_interface())
   {
-    system_alert_sub_ = create_subscription<carma_msgs::msg::SystemAlert>(
-        system_alert_topic_, 100,
-        std::bind(&BaseSubsystemController::on_system_alert, this, std::placeholders::_1));
-
-    // TODO add validation that all required nodes are in namespace
-    // TODO set the config here by loading parameters
-    auto nodes_in_namespace = get_nodes_in_namespace(base_config_.subsystem_namespace);
-
-    lifecycle_mgr_.set_managed_nodes(nodes_in_namespace);
+    
   }
 
   void BaseSubsystemController::set_config(BaseSubSystemControllerConfig config)
@@ -49,19 +41,30 @@ namespace subsystem_controllers
         get_logger(), "Received SystemAlert message of type: %u, msg: %s",
         msg->type, msg->description.c_str());
 
-    // NOTE: Here we check the required nodes not the full node set
+    // NOTE: Here we check the required nodes not the full managed node set
     if (msg->type == carma_msgs::msg::SystemAlert::FATAL)
     {
 
       // Required node has failed
       if (std::find(base_config_.required_subsystem_nodes.begin(), base_config_.required_subsystem_nodes.end(), msg->source_node) != base_config_.required_subsystem_nodes.end())
       {
-        lifecycle_mgr_.shutdown(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms), false);
-        // TODO publish new FATAL system alert describing that the subsystem has failed
+        // Our subsystem has failed so notify the overall system controller
+
+        RCLCPP_ERROR_STREAM(
+          get_logger(), "Failure in required node: " << msg->source_node);
+
+        carma_msgs::msg::SystemAlert alert;
+        alert.type = carma_msgs::msg::SystemAlert::FATAL;
+        alert.description = base_config_.subsystem_namespace + " subsytem has failed with error: " + msg->description;
+        publish_system_alert(alert);
+
+        // TODO: It might be worth trying to deactivate or shutdown after alerting the larger system, 
+        //       but not clear on if that will increase instability of shutdown process
       }
       else
       { // Optional node has failed
-        // TODO publish a WARNING message
+        RCLCPP_WARN_STREAM(
+          get_logger(), "Failure in optional node: " << msg->source_node);
       }
     }
   }
@@ -70,6 +73,44 @@ namespace subsystem_controllers
   {
     RCLCPP_INFO_STREAM(get_logger(), "Subsystem trying to configure");
 
+    // Load Parameters
+    base_config_.service_timeout_ms = this->declare_parameter<int64_t>("service_timeout_ms", base_config_.service_timeout_ms);
+    base_config_.call_timeout_ms = this->declare_parameter<int64_t>("call_timeout_ms", base_config_.call_timeout_ms);
+    base_config_.required_subsystem_nodes = this->declare_parameter<std::vector<std::string>>("required_subsystem_nodes", base_config_.required_subsystem_nodes);
+    base_config_.subsystem_namespace = this->declare_parameter<std::string>("subsystem_namespace", base_config_.subsystem_namespace);
+    base_config_.full_subsystem_required = this->declare_parameter<bool>("full_subsystem_required", base_config_.full_subsystem_required);
+
+    RCLCPP_INFO_STREAM(get_logger(), "Loaded config: " << base_config_);
+
+    // Create subscriptions
+    system_alert_sub_ = create_subscription<carma_msgs::msg::SystemAlert>(
+        system_alert_topic_, 100,
+        std::bind(&BaseSubsystemController::on_system_alert, this, std::placeholders::_1));
+
+    // Initialize lifecycle manager
+    auto nodes_in_namespace = get_nodes_in_namespace(base_config_.subsystem_namespace);
+
+    std::vector<std::string> managed_nodes = nodes_in_namespace;
+    managed_nodes.reserve(nodes_in_namespace.size() + base_config_.required_subsystem_nodes.size());
+
+    // Collect non-namespace nodes if any and add them to our set of managed nodes
+    auto additional_nodes = get_non_intersecting_set(base_config_.required_subsystem_nodes, nodes_in_namespace);
+
+    managed_nodes.insert(managed_nodes.end(), additional_nodes.begin(), additional_nodes.end());
+
+    lifecycle_mgr_.set_managed_nodes(managed_nodes);
+
+    // Check if all nodes are required
+    if (base_config_.full_subsystem_required) {
+      RCLCPP_INFO_STREAM(get_logger(), "full_subsystem_required is True. Setting all namespace nodes as required");
+
+      base_config_.required_subsystem_nodes = managed_nodes;
+
+      RCLCPP_INFO_STREAM(get_logger(), "New config: " << base_config_);
+    }
+    
+
+    // With all of our managed nodes now being tracked we can execute their configure operations
     bool success = lifecycle_mgr_.configure(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
 
     if (success)
@@ -205,21 +246,20 @@ namespace subsystem_controllers
     return nodes_in_namspace;
   }
 
-  std::vector<std::string> BaseSubsystemController::get_non_intersecting_set(const std::vector<std::string> &superset, const std::vector<std::string> &subset) const
+  std::vector<std::string> BaseSubsystemController::get_non_intersecting_set(const std::vector<std::string> &set_a, const std::vector<std::string> &set_b) const
   {
-    // Super set is out namespace
-    // Subset is our managed nodes
-    std::vector<std::string> non_intersecting_set;
-    non_intersecting_set.reserve(superset.size());
 
-    std::unordered_set<std::string> subset_lookup;
-    subset_lookup.reserve(subset.size());
+    std::vector<std::string> non_intersecting_set; // Returned set
+    non_intersecting_set.reserve(set_a.size());
 
-    subset_lookup.insert(subset.begin(), subset.end());
+    std::unordered_set<std::string> set_b_lookup; // Quick lookup map of set_b
+    set_b_lookup.reserve(set_b.size());
 
-    for (const auto &string : superset)
+    set_b_lookup.insert(set_b.begin(), set_b.end());
+
+    for (const auto &string : set_a)
     {
-      if (subset_lookup.find(string) == subset_lookup.end())
+      if (set_b_lookup.find(string) == set_b_lookup.end())
       { // No intersection so store
         non_intersecting_set.emplace_back(string);
       }

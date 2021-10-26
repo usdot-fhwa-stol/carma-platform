@@ -19,6 +19,7 @@
 namespace system_controller
 {
   using std_msec = std::chrono::milliseconds;
+
   SystemControllerNode::SystemControllerNode(const rclcpp::NodeOptions &options, bool auto_init)
       : rclcpp::Node("system_controller", options), 
       lifecycle_mgr_(get_node_base_interface(), get_node_graph_interface(), get_node_logging_interface(), get_node_services_interface())
@@ -42,17 +43,17 @@ namespace system_controller
           system_alert_topic_, 100,
           std::bind(&SystemControllerNode::on_system_alert, this, std::placeholders::_1));
 
+      config_.signal_configure_delay = this->declare_parameter<double>("signal_configure_delay", config_.signal_configure_delay);
+      config_.service_timeout_ms = this->declare_parameter<int64_t>("service_timeout_ms", config_.service_timeout_ms);
+      config_.call_timeout_ms = this->declare_parameter<int64_t>("call_timeout_ms", config_.call_timeout_ms);
+      config_.required_subsystem_nodes = this->declare_parameter<std::vector<std::string>>("required_subsystem_nodes", config_.required_subsystem_nodes);
+
       // Create startup timer
       startup_timer_ = rclcpp::create_timer(
           this,
           get_clock(),
           std::chrono::milliseconds(static_cast<long>(config_.signal_configure_delay * 1000)),
           std::bind(&SystemControllerNode::startup_delay_callback, this));
-
-      this->declare_parameter<double>("signal_configure_delay", config_.signal_configure_delay);
-      this->declare_parameter<int64_t>("my_parameter", config_.service_timeout_ms);
-      this->declare_parameter<int64_t>("my_parameter", config_.call_timeout_ms);
-      //this->declare_parameter<std::string>("my_parameter", config_.required_subsystem_nodes); TODO
 
 
     }
@@ -69,9 +70,14 @@ namespace system_controller
 
   void SystemControllerNode::on_error(const std::exception &e)
   {
+
+    if (startup_timer_)
+        startup_timer_->cancel(); // Cancel the timer to ensure we are not interrupted 
+    
     std::string reason = "Uncaught exception: " + std::string(e.what());
+
     RCLCPP_ERROR_STREAM(
-        get_logger(), reason);
+        get_logger(), reason); // Log error
 
     lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false); // Trigger shutdown when internal error occurs
 
@@ -97,13 +103,15 @@ namespace system_controller
       // Second we activate the nodes
       if (!lifecycle_mgr_.activate(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms)))
       {
+
         RCLCPP_ERROR_STREAM(
             get_logger(), "System could not be activated. Shutting down.");
+
         lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
         return;
       }
-
-      startup_timer_->cancel();
+      if (startup_timer_)
+        startup_timer_->cancel(); // If this callback completes then we can cancel the timer
     }
     catch (const std::exception &e)
     {
@@ -121,8 +129,12 @@ namespace system_controller
           get_logger(), "Received SystemAlert message of type: %u, msg: %s",
           msg->type, msg->description.c_str());
 
-      if ((std::find(config_.required_subsystem_nodes.begin(), config_.required_subsystem_nodes.end(), msg->source_node) != config_.required_subsystem_nodes.end() && msg->type == carma_msgs::msg::SystemAlert::FATAL) || msg->type == carma_msgs::msg::SystemAlert::SHUTDOWN)
-      { // TODO might make more sense for external shutdown to be a service call
+      
+      if ((std::find(config_.required_subsystem_nodes.begin(), config_.required_subsystem_nodes.end(), msg->source_node)
+           != config_.required_subsystem_nodes.end() && msg->type == carma_msgs::msg::SystemAlert::FATAL) // If a required node notified FATAL
+          || msg->type == carma_msgs::msg::SystemAlert::SHUTDOWN) // OR If a SHUTDOWN signal was received
+      { 
+        // TODO might make more sense for external shutdown to be a service call and remove SHUTDOWN from system alert entirely
         lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
       }
     }

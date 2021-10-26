@@ -24,7 +24,12 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<subsystem_controllers::DriversControllerNode>(rclcpp::NodeOptions());
-  rclcpp::spin(node->get_node_base_interface());
+  
+  // We use the multi threaded executor here to support the rentrent callbacks of the ros2_lifecycle_manager
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
+
   rclcpp::shutdown();
 
   return 0;

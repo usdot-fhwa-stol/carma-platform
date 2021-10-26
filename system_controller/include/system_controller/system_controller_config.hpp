@@ -23,14 +23,20 @@
  */
 struct SystemControllerConfig
 {
+  //! List of nodes to consider required and who's failure shall result in system shutdown
+  //  This is also the total set of nodes which will be managed by this controller
   std::vector<std::string> required_subsystem_nodes;
 
-  double signal_configure_delay = 20.0;   // Time in seconds to wait before telling all nodes to configure
+  //! Time in seconds to wait before telling all nodes to configure
+  double signal_configure_delay = 20.0;
 
+  //! Timeout in ms for service availability
   uint64_t service_timeout_ms = 1000;
   
+  //! Timeout in ms for service calls
   uint64_t call_timeout_ms = 1000;
 
+  // Stream operator for this config
   friend std::ostream& operator<<(std::ostream& output, const SystemControllerConfig& c)
   {
     output << "SystemControllerConfig { " << std::endl

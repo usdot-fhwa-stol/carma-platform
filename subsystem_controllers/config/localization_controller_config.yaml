@@ -1,10 +1,10 @@
 # Long: Timeout for each service to be detected as available in milliseconds
 # Units: milliseconds
-service_timeout_ms : 1000
+service_timeout_ms : 200
 
 # Long: Timeout for each service call in milliseconds
 # Units: milliseconds
-call_timeout_ms : 1000
+call_timeout_ms : 200
 
 # String: The namespace for nodes in this subsystem
 subsystem_namespace: /localization
@@ -16,5 +16,5 @@ required_subsystem_nodes:
   - /localization/gnss_to_map_convertor
   - /localization/localization_manager
 
-
-  # TODO still need to create launch file
+# Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
+full_subsystem_required: true

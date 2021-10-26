@@ -40,7 +40,8 @@ namespace subsystem_controllers
      */
     explicit LocalizationControllerNode(const rclcpp::NodeOptions &options);
 
-    // TODO we should add a callback for the localization state and if the we have fallen back to GNSS something should happen
+    // TODO The ROS1 localization manager functionality should be updated to properly interact with or exist in this node
+    // https://github.com/usdot-fhwa-stol/carma-platform/issues/1498 
 
   };
 

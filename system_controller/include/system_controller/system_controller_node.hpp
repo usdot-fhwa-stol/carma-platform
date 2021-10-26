@@ -39,6 +39,7 @@ namespace system_controller
      * 
      * \param options The node options to use for configuring this node
      * \param auto_init If true this node will automatically call its initialize method. If false the call will wait for the user. 
+     *                  This is meant to support unit testing
      */
     explicit SystemControllerNode(const rclcpp::NodeOptions &options, bool auto_init = true);
 

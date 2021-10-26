@@ -28,7 +28,14 @@
 
 namespace subsystem_controllers
 {
-
+  /**
+   * \brief A base class for all subsystem_controllers which provides default lifecycle behavior for subsystems
+   * 
+   * The default behavior which is provided is as follows
+   *  - Takes in a list of required nodes and a namespace
+   *  - Manages the lifecycle of all nodes which are the union of the required nodes and the namespace
+   *  - Monitors the system_alert topic and if a node within its subsystem crashes then      
+   */ 
   class BaseSubsystemController : public carma_ros2_utils::CarmaLifecycleNode
   {
   public:
@@ -60,8 +67,24 @@ namespace subsystem_controllers
 
   protected:
 
+    /**
+     * \brief Returns the list of fully qualified node names for all ROS2 nodes in the provided namespace
+     * 
+     * \param node_namespace The ros namespace to get all nodes within. For example /guidance
+     * 
+     * \return The list of node names
+     */ 
     std::vector<std::string> get_nodes_in_namespace(const std::string& node_namespace) const;
-    std::vector<std::string> get_non_intersecting_set(const std::vector<std::string>& superset, const std::vector<std::string>& subset) const;
+
+    /**
+     * \brief Returns all elements of the provided set_a which are NOT contained in the provided set_b
+     * 
+     * \brief set_a The set of strings which will have its intersection checked against
+     * \brief set_b The set of strings which will NOT be in the returned set
+     * 
+     * \return A set of not intersecting strings which are in set_a but not set_b
+     */ 
+    std::vector<std::string> get_non_intersecting_set(const std::vector<std::string>& set_a, const std::vector<std::string>& set_b) const;
 
     //! Lifecycle Manager which will track the managed nodes and call their lifecycle services on request
     ros2_lifecycle_manager::Ros2LifecycleManager lifecycle_mgr_;
