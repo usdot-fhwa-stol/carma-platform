@@ -163,7 +163,7 @@ std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_
         
         int case_num = GET_MANEUVER_PROPERTY(maneuver,parameters.int_valued_meta_data[0]);
         if(case_num == 1){
-            points_and_target_speeds = create_case_one_speed_profile(wm, maneuver, route_points, starting_speed);
+            points_and_target_speeds = create_case_one_speed_profile(wm, maneuver, route_points, starting_speed, state);
         }
         else if(case_num == 2){
             points_and_target_speeds = create_case_two_speed_profile(wm, maneuver, route_points, starting_speed);
@@ -183,7 +183,7 @@ std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_
 }
 
 std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::create_case_one_speed_profile(const carma_wm::WorldModelConstPtr& wm,
-const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed){
+const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed, const cav_msgs::VehicleState& state){
 
     ROS_DEBUG_STREAM("Planning for Case One");
     //Derive meta data values from maneuver message - Using order in sci_strategic_plugin
@@ -199,8 +199,9 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
 
     ROS_DEBUG_STREAM("Maneuver starting downtrack: "<< start_dist);
     ROS_DEBUG_STREAM("Maneuver ending downtrack: "<< end_dist);
-    //Checking route geometry start against start_dist and adjust profile
-    double route_starting_downtrack = wm->routeTrackPos(route_geometry_points[0]).downtrack;  //Starting downtrack based on geometry points
+    //Checking state against start_dist and adjust profile
+    lanelet::BasicPoint2d state_point(state.X_pos_global, state.Y_pos_global);
+    double route_starting_downtrack = wm->routeTrackPos(state_point).downtrack;  //Starting downtrack based on geometry points
     double dist_acc;        //Distance for which acceleration lasts
 
     if(route_starting_downtrack < start_dist){
@@ -219,11 +220,11 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
 
     std::vector<PointSpeedPair> points_and_target_speeds;
     PointSpeedPair first_point;
-    first_point.point = route_geometry_points[0];
+    first_point.point = state_point;
     first_point.speed = starting_speed;
     points_and_target_speeds.push_back(first_point);
 
-    lanelet::BasicPoint2d prev_point = route_geometry_points[0];
+    lanelet::BasicPoint2d prev_point = state_point;
     double total_dist_covered = 0;                  //Starting dist for maneuver treated as 0.0
 
     for(size_t i = 1; i < route_geometry_points.size(); i++){
@@ -412,8 +413,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlu
                         << " speed: " << state.longitudinal_vel);
     
     int nearest_pt_index = basic_autonomy::waypoint_generation::get_nearest_point_index(points, state);
-
+    ROS_DEBUG_STREAM("Nearest pt index: "<<nearest_pt_index);
     std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); //Points in front of current vehicle position
+    ROS_DEBUG_STREAM("Future points size: "<<future_points.size());
     auto time_bound_points = basic_autonomy::waypoint_generation::constrain_to_time_boundary(future_points, config_.trajectory_time_length);
 
     ROS_DEBUG_STREAM("Got time bound points with size:" << time_bound_points.size());
