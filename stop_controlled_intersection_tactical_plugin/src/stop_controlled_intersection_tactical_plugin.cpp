@@ -426,8 +426,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlu
     ROS_DEBUG_STREAM("Nearest pt index: "<<nearest_pt_index);
     std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); //Points in front of current vehicle position
     ROS_DEBUG_STREAM("Future points size: "<<future_points.size());
-    auto time_bound_points = basic_autonomy::waypoint_generation::constrain_to_time_boundary(future_points, config_.trajectory_time_length);
-
+    //TO DO - fix time bound points 
+    //auto time_bound_points = basic_autonomy::waypoint_generation::constrain_to_time_boundary(future_points, config_.trajectory_time_length);
+    auto time_bound_points = future_points;
     ROS_DEBUG_STREAM("Got time bound points with size:" << time_bound_points.size());
 
     //Attach past points
