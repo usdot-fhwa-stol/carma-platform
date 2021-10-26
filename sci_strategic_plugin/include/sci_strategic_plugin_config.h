@@ -53,7 +53,7 @@ struct SCIStrategicPluginConfig
   std::string strategic_plugin_name = "SCIStrategicPlugin";
 
   //! The name of the tactical plugin to use for Lane Following trajectory planning
-  std::string lane_following_plugin_name = "SCITacticalPlugin";
+  std::string lane_following_plugin_name = "StopControlledIntersectionTacticalPlugin";
 
   //! The name of the plugin to use for stop and wait trajectory planning
   std::string stop_and_wait_plugin_name = "StopAndWaitPlugin";
