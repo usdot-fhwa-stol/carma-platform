@@ -262,11 +262,17 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
         }
 
         PointSpeedPair p;
-        p.point = route_geometry_points[i];
-        p.speed = speed_i;
+        if(speed_i < epsilon_){
+            p.point = prev_point;
+            p.speed = 0.0;
+        }
+        else{
+            p.point = route_geometry_points[i];
+            p.speed = speed_i;
+            prev_point = current_point; //Advance prev point if speed changes
+        }
         points_and_target_speeds.push_back(p);
 
-        prev_point = route_geometry_points[i];
     }
 
     return points_and_target_speeds;
@@ -356,11 +362,17 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
         }
         
         PointSpeedPair p;
-        p.point = route_point;
-        p.speed = std::min(speed_i,speed_before_decel);
+        if(speed_i < epsilon_){
+            p.point = prev_point;
+            p.speed = 0.0;
+        }
+        else{
+            p.point = route_point;
+            p.speed = std::min(speed_i,speed_before_decel);
+            prev_point = current_point; //Advance prev point if speed changes
+        }
         points_and_target_speeds.push_back(p);
 
-        prev_point = route_point;
         prev_speed = speed_i;
     }
 
@@ -405,16 +417,21 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
         //Find speed at dist covered
         double speed_i = sqrt(std::max(pow(starting_speed,2) + 2 * a_dec * total_dist_covered, 0.0)); //std::max to ensure negative value is not sqrt
         
-        if(speed_i < epsilon_){
-            speed_i = 0.0;
-        }
-    
         PointSpeedPair p;
-        p.point = route_geometry_points[i];
-        p.speed = speed_i;
+        
+        if(speed_i < epsilon_){
+            p.point = prev_point;
+            p.speed = 0.0;
+        }
+        else{
+            p.point = route_geometry_points[i];
+            p.speed = speed_i;
+            prev_point = current_point; //Advance prev point if speed changes
+        }
+        
         points_and_target_speeds.push_back(p);
 
-        prev_point = current_point;
+        
     }
 
     return points_and_target_speeds;
