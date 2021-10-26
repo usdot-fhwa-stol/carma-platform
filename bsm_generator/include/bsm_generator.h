@@ -28,6 +28,7 @@
 #include <novatel_gps_msgs/NovatelDualAntennaHeading.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <std_msgs/String.h>
+#include <gps_common/GPSFix.h>
 #include "bsm_generator_worker.h"
 
 namespace bsm_generator
@@ -93,7 +94,7 @@ namespace bsm_generator
         void speedCallback(const std_msgs::Float64ConstPtr& msg);
         void steerWheelAngleCallback(const std_msgs::Float64ConstPtr& msg);
         void brakeCallback(const std_msgs::Float64ConstPtr& msg);
-        void headingCallback(const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& msg);
+        void headingCallback(const gps_common::GPSFixConstPtr& msg);
 
         /**
          * \brief Callback for map projection string to define lat/lon -> map conversion
