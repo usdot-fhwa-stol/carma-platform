@@ -321,13 +321,14 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       speed_limit_ = findSpeedLimit(crossed_lanelets.front());
 
       // lane following to intersection
-      double time_to_schedule_stop = (scheduled_stop_time_ - street_msg_timestamp_)*1000.0;
+      double time_to_schedule_stop = (scheduled_stop_time_ - street_msg_timestamp_);
+      ROS_DEBUG_STREAM("time_to_schedule_stop  " << time_to_schedule_stop);
       int case_num = determineSpeedProfileCase(stop_intersection_down_track, current_state.speed, time_to_schedule_stop, speed_limit_);
       ROS_DEBUG_STREAM("case_num:  " << case_num);
 
       resp.new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(
         case_num, current_downtrack_, stop_intersection_down_track, current_state.speed, 0.0,
-        current_state.stamp, time_to_schedule_stop,
+        current_state.stamp, time_to_schedule_stop/1000,
         lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); })));
     }
     else
@@ -338,12 +339,12 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       std::vector<lanelet::ConstLanelet> crossed_lanelets =
           getLaneletsBetweenWithException(current_downtrack_, stop_intersection_down_track, true, true);
       auto stop_line_lanelet = stop_intersection_down_track;//nearest_stop_intersection->lanelets().front();
-      double stop_duration = (scheduled_enter_time_ - scheduled_stop_time_)*1000.0;
+      double stop_duration = (scheduled_enter_time_ - scheduled_stop_time_);
       ROS_DEBUG_STREAM("Planning stop and wait maneuver");
       resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
         current_downtrack_, stop_intersection_down_track, current_state.speed, crossed_lanelets[0].id(),
         crossed_lanelets[0].id(), current_state.stamp,
-        current_state.stamp + ros::Duration(stop_duration)));
+        current_state.stamp + ros::Duration(stop_duration/1000)));
 
     }
 
@@ -355,7 +356,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
     
     // Compose intersection transit maneuver
-    double intersection_transit_time = (scheduled_depart_time_ - scheduled_enter_time_)*1000.0;
+    double intersection_transit_time = (scheduled_depart_time_ - scheduled_enter_time_);
 
     double intersection_end_downtrack = stop_intersection_down_track + 20;
       // wm_->routeTrackPos(nearest_stop_intersection->lanelets().back().centerline2d().back()).downtrack;
@@ -368,7 +369,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
     resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
       current_downtrack_, intersection_end_downtrack, current_state.speed, intersection_speed_limit,
-      current_state.stamp, req.header.stamp + ros::Duration(intersection_transit_time), crossed_lanelets.front().id(), crossed_lanelets.back().id()));
+      current_state.stamp, req.header.stamp + ros::Duration(intersection_transit_time/1000), crossed_lanelets.front().id(), crossed_lanelets.back().id()));
     // when passing intersection, set the flag to false
     // TODO: Another option, check the time on mobilityoperation
     approaching_stop_controlled_interction_ = false;

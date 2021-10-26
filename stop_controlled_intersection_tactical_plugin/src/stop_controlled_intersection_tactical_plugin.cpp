@@ -115,6 +115,12 @@ bool StopControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Plan
     trajectory.trajectory_points = compose_trajectory_from_centerline(points_and_target_speeds, req.vehicle_state, req.header.stamp);
     trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
 
+    // Set the planning plugin field name
+    for (auto& p : trajectory.trajectory_points) {
+        p.planner_plugin_name = plugin_discovery_msg_.name;
+        // p.controller_plugin_name = "PurePursuit";
+    }
+
     resp.trajectory_plan = trajectory;
     
     resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
