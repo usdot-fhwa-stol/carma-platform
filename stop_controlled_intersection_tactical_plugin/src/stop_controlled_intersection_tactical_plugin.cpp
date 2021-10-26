@@ -101,6 +101,10 @@ bool StopControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Plan
 
     std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points( maneuver_plan, wm_, req.vehicle_state);
     ROS_DEBUG_STREAM("Maneuver to points size:"<< points_and_target_speeds.size());
+    ROS_DEBUG_STREAM("Printing points: ");
+    for(size_t i = 0;i<points_and_target_speeds.size();i++){
+        std::cout<<"Point "<<i<<", Speed: "<<points_and_target_speeds[i].speed<<std::endl;
+    }
     //Trajectory Plan
     cav_msgs::TrajectoryPlan trajectory;
     trajectory.header.frame_id = "map";
@@ -192,6 +196,11 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     double t_acc = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[2]);
     double t_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[3]);
     double speed_before_decel = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[4]);
+    ROS_DEBUG_STREAM("a_acc received: "<< a_acc);
+    ROS_DEBUG_STREAM("a_dec received: "<< a_dec);
+    ROS_DEBUG_STREAM("t_acc received: "<< t_acc);
+    ROS_DEBUG_STREAM("t_dec received: "<< t_dec);
+    ROS_DEBUG_STREAM("speed before decel received: "<< speed_before_decel);
     
     //Derive start and end dist from maneuver
     double start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
@@ -212,6 +221,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
 
         dist_acc = end_dist - dist_decel;
         a_acc = (pow(speed_before_decel, 2) - pow(starting_speed,2))/(2*dist_acc);
+        ROS_DEBUG_STREAM("Updated a_acc: "<< a_acc);
     }
     else{
         //Use parameters from maneuver message
