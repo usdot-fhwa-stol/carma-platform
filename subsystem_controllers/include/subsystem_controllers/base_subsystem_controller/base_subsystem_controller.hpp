@@ -34,7 +34,7 @@ namespace subsystem_controllers
    * The default behavior which is provided is as follows
    *  - Takes in a list of required nodes and a namespace
    *  - Manages the lifecycle of all nodes which are the union of the required nodes and the namespace
-   *  - Monitors the system_alert topic and if a node within its subsystem crashes then      
+   *  - Monitors the system_alert topic and if a node within its required node set crashes it notifies the larger system that the subsystem has failed  
    */ 
   class BaseSubsystemController : public carma_ros2_utils::CarmaLifecycleNode
   {
