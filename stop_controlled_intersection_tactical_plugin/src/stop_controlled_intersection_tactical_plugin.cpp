@@ -100,7 +100,7 @@ bool StopControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Plan
     ROS_DEBUG_STREAM("Current_downtrack"<< current_downtrack);
 
     std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points( maneuver_plan, wm_, req.vehicle_state);
-
+    ROS_DEBUG_STREAM("Maneuver to points size:"<< points_and_target_speeds.size());
     //Trajectory Plan
     cav_msgs::TrajectoryPlan trajectory;
     trajectory.header.frame_id = "map";
@@ -155,7 +155,7 @@ std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_
             GET_MANEUVER_PROPERTY(maneuver, end_dist), config_.centerline_sampling_spacing);
         
         route_points.insert(route_points.begin(), veh_pos);
-
+        ROS_DEBUG_STREAM("Route geometery points size: "<<route_points.size());
         //get case num from maneuver parameters
         if(GET_MANEUVER_PROPERTY(maneuver,parameters.int_valued_meta_data).empty()){
             throw std::invalid_argument("No case number specified for stop controlled intersection maneuver");
@@ -184,6 +184,8 @@ std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_
 
 std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::create_case_one_speed_profile(const carma_wm::WorldModelConstPtr& wm,
 const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed){
+
+    ROS_DEBUG_STREAM("Planning for Case One");
     //Derive meta data values from maneuver message - Using order in sci_strategic_plugin
     double a_acc = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);
     double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[1]); //a_dec is a -ve value
@@ -195,6 +197,8 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     double start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
     double end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
 
+    ROS_DEBUG_STREAM("Maneuver starting downtrack: "<< start_dist);
+    ROS_DEBUG_STREAM("Maneuver ending downtrack: "<< end_dist);
     //Checking route geometry start against start_dist and adjust profile
     double route_starting_downtrack = wm->routeTrackPos(route_geometry_points[0]).downtrack;  //Starting downtrack based on geometry points
     double dist_acc;        //Distance for which acceleration lasts
@@ -202,6 +206,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     if(route_starting_downtrack < start_dist){
         //Update parameters
         //Keeping the deceleration part the same
+        ROS_DEBUG_STREAM("Starting distance is less than maneuver start, updating parameters");
         double dist_decel = pow(speed_before_decel, 2)/(2*std::abs(a_dec));
 
         dist_acc = end_dist - dist_decel;
@@ -253,7 +258,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
 
 std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::create_case_two_speed_profile(const carma_wm::WorldModelConstPtr& wm,
 const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed){
-    
+    ROS_DEBUG_STREAM("Planning for Case Two");
     //Derive meta data values from maneuver message - Using order in sci_strategic_plugin
     double a_acc = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);
     double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[1]); //a_dec is a -ve value
@@ -265,6 +270,8 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     //Derive start and end dist from maneuver
     double start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
     double end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
+    ROS_DEBUG_STREAM("Maneuver starting downtrack: "<< start_dist);
+    ROS_DEBUG_STREAM("Maneuver ending downtrack: "<< end_dist);
 
     //Checking route geometry start against start_dist and adjust profile
     double route_starting_downtrack = wm->routeTrackPos(route_geometry_points[0]).downtrack;  //Starting downtrack based on geometry points
@@ -275,6 +282,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     if(route_starting_downtrack < start_dist){
         //update parameters
         //Keeping acceleration and deceleration part same as planned in strategic plugin
+        ROS_DEBUG_STREAM("Starting distance is less than maneuver start, updating parameters");
         dist_acc = starting_speed*t_acc + 0.5 * a_acc * pow(t_acc,2);
         dist_decel = speed_before_decel*t_dec + 0.5 * a_dec * pow(t_dec,2);
         dist_cruise = end_dist - route_starting_downtrack - (dist_acc + dist_decel);
@@ -291,6 +299,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     if(total_distance_needed - (end_dist - start_dist) > epsilon_ ){
         //Requested maneuver needs to be modified to meet start and end dist req
         //Sacrifice on cruising and then acceleration if needed
+        ROS_DEBUG_STREAM("Updating maneuver to meet start and end dist req.");
         double delta_total_dist = total_distance_needed - (end_dist - start_dist);
         dist_cruise -= delta_total_dist;
         if(dist_cruise < 0){
@@ -344,18 +353,22 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
 
 std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::create_case_three_speed_profile(const carma_wm::WorldModelConstPtr& wm,
 const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed){
+    ROS_DEBUG_STREAM("Planning for Case three");
     //Derive meta data values from maneuver message - Using order in sci_strategic_plugin
     double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);
 
     //Derive start and end dist from maneuver
     double start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
     double end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
+    ROS_DEBUG_STREAM("Maneuver starting downtrack: "<< start_dist);
+    ROS_DEBUG_STREAM("Maneuver ending downtrack: "<< end_dist);
 
     //Checking route geometry start against start_dist and adjust profile
     double route_starting_downtrack = wm->routeTrackPos(route_geometry_points[0]).downtrack;  //Starting downtrack based on geometry points
 
     if(route_starting_downtrack < start_dist){
         //update parameter
+        ROS_DEBUG_STREAM("Starting distance is less than maneuver start, updating parameters");
         a_dec = pow(starting_speed, 2)/(2*(end_dist - route_starting_downtrack));
     }
 
