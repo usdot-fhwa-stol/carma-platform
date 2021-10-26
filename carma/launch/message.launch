@@ -35,6 +35,7 @@
     <remap from="vehicle_speed" to="$(optenv CARMA_INTR_NS)/pacmod/as_tx/vehicle_speed"/>
     <remap from="dual_antenna_heading" to="$(optenv CARMA_INTR_NS)/gnss/dual_antenna_heading"/>
     <remap from="steering_wheel_angle" to="$(optenv CARMA_INTR_NS)/can/steering_wheel_angle"/>
+    <remap from="gnss_fixed_fused" to="$(optenv CARMA_INTR_NS)/gnss_fixed_fused"/>
 
   <!-- j2735 Convertor Node -->
   <node pkg="j2735_convertor" type="j2735_convertor_node" name="j2735_convertor">
