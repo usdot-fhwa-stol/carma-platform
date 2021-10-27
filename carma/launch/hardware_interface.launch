@@ -53,7 +53,4 @@
     <arg name="turn_signal_topic_name" value= "$(optenv CARMA_INTR_NS)/turn_signal_command"/>
   </include>
 
-  <remap from="gnss_fixed_fused" to="$(optenv CARMA_INTR_NS)/gnss_fixed_fused"/>
-
-
 </launch>
