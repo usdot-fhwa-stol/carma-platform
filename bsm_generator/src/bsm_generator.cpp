@@ -37,7 +37,7 @@ namespace bsm_generator
         yaw_sub_ = nh_->subscribe("yaw_rate_rpt", 1, &BSMGenerator::yawCallback, this);
         brake_sub_ = nh_->subscribe("brake_position", 1, &BSMGenerator::brakeCallback, this);
         pose_sub_ = nh_->subscribe("pose", 1, &BSMGenerator::poseCallback, this);
-        heading_sub_ = nh_->subscribe("gnss_fixed_fused", 1, &BSMGenerator::headingCallback, this);
+        heading_sub_ = nh_->subscribe("gnss_fix_fused", 1, &BSMGenerator::headingCallback, this);
         georeference_sub_ = nh_->subscribe("georeference", 1, &BSMGenerator::georeferenceCallback, this);
     }
 
