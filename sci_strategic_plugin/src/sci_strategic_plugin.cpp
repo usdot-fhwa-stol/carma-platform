@@ -233,7 +233,7 @@ double SCIStrategicPlugin::calcEstimatedStopTime(double stop_dist, double curren
   
   double t_stop = 0;
   // TODO: temp solution for when current speed is zero
-  t_stop = 2*stop_dist/std::max(current_speed, speed_limit_/100);
+  t_stop = 2*stop_dist/current_speed;//std::max(current_speed, speed_limit_/100);
   return t_stop;
 }
 
