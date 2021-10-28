@@ -154,7 +154,7 @@ void SCIStrategicPlugin::parseStrategyParams(const std::string& strategy_params)
   std::vector<std::string> dt_parsed;
   boost::algorithm::split(dt_parsed, inputsParams[2], boost::is_any_of(":"));
   uint32_t dt = std::stoi(dt_parsed[1]);
-  scheduled_depart_time_ = et;
+  scheduled_depart_time_ = dt;
   ROS_DEBUG_STREAM("scheduled_depart_time_: " << scheduled_depart_time_);
 
   std::vector<std::string> dp_parsed;
@@ -169,37 +169,6 @@ void SCIStrategicPlugin::parseStrategyParams(const std::string& strategy_params)
   is_allowed_int_ = (access == 1);
   ROS_DEBUG_STREAM("is_allowed_int_: " << is_allowed_int_);
 
-
-  // std::istringstream strategy_params_ss(strategy_params);
-  // boost::property_tree::ptree parser;
-  // boost::property_tree::ptree child;
-  // boost::property_tree::json_parser::read_json(strategy_params_ss, parser);
-  // child = parser.get_child("schedule_plan");
-  // for(const auto& p : child)
-  // {
-  //   if (p.first == "metadata")
-  //   {
-  //     street_msg_timestamp_ = p.second.get<uint32_t>("timestamp");
-  //   }
-  //   if (p.first == "payload" && p.second.get<std::string>("veh_id") == config_.vehicle_id)
-  //   {        
-  //     // parse stop time in ms
-  //     scheduled_stop_time_ = p.second.get<uint32_t>("est_stop_t");
-  //     ROS_DEBUG_STREAM("scheduled_stop_time_: " << scheduled_stop_time_);
-
-  //     scheduled_enter_time_ = p.second.get<uint32_t>("est_enter_t");
-  //     ROS_DEBUG_STREAM("scheduled_enter_time_: " << scheduled_enter_time_);
-      
-  //     scheduled_depart_time_ = p.second.get<uint32_t>("est_depart_t");
-  //     ROS_DEBUG_STREAM("scheduled_depart_time_: " << scheduled_depart_time_);
-
-  //     scheduled_departure_position_ = p.second.get<uint32_t>("latest_depart_p");
-  //     ROS_DEBUG_STREAM("scheduled_departure_position_: " << scheduled_departure_position_);
-
-  //     is_allowed_int_ = p.second.get<bool>("is_allowed_int");
-  //     ROS_DEBUG_STREAM("is_allowed_int: " << is_allowed_int_);
-  //   }
-  // }
 }
 
 int SCIStrategicPlugin::determineSpeedProfileCase(double stop_dist, double current_speed, double schedule_stop_time, double speed_limit)
@@ -208,7 +177,7 @@ int SCIStrategicPlugin::determineSpeedProfileCase(double stop_dist, double curre
   double estimated_stop_time = calcEstimatedStopTime(stop_dist, current_speed);
   
   ROS_DEBUG_STREAM("estimated_stop_time: " << estimated_stop_time);
-  if (estimated_stop_time < schedule_stop_time/1000)
+  if (estimated_stop_time < schedule_stop_time)
   {
     case_num = 3;
   }
@@ -233,8 +202,7 @@ double SCIStrategicPlugin::calcEstimatedStopTime(double stop_dist, double curren
 {
   
   double t_stop = 0;
-  // TODO: temp solution for when current speed is zero
-  t_stop = 2*stop_dist/current_speed;//std::max(current_speed, speed_limit_/100);
+  t_stop = 2*stop_dist/current_speed;
   return t_stop;
 }
 
@@ -312,8 +280,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
   if (distance_to_stopline >= 0)
   {
-    if (distance_to_stopline > config_.stop_line_buffer)
-    {
+    
       // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
       std::vector<lanelet::ConstLanelet> crossed_lanelets =
           getLaneletsBetweenWithException(current_downtrack_, stop_intersection_down_track, true, true);
@@ -327,35 +294,54 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       int case_num = determineSpeedProfileCase(stop_intersection_down_track, current_state.speed, time_to_schedule_stop, speed_limit_);
       ROS_DEBUG_STREAM("case_num:  " << case_num);
 
-      resp.new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(
-        case_num, current_downtrack_, stop_intersection_down_track, current_state.speed, 0.0,
-        current_state.stamp, time_to_schedule_stop,
-        lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); })));
-    }
-    else
-    {
-      // at the stop line
-      // stop and wait maneuver
-      // auto stop_line_lanelet = nearest_stop_intersection->lanelets().front();
-      std::vector<lanelet::ConstLanelet> crossed_lanelets =
-          getLaneletsBetweenWithException(current_downtrack_, stop_intersection_down_track, true, true);
-      auto stop_line_lanelet = stop_intersection_down_track;//nearest_stop_intersection->lanelets().front();
-      double stop_duration = (scheduled_enter_time_ - scheduled_stop_time_)/1000;
-      ROS_DEBUG_STREAM("stop_duration:  " << stop_duration);
-      ROS_DEBUG_STREAM("Planning stop and wait maneuver");
-      resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-        current_downtrack_, stop_intersection_down_track, current_state.speed, crossed_lanelets[0].id(),
-        crossed_lanelets[0].id(), current_state.stamp,
-        current_state.stamp + ros::Duration(stop_duration)));
+      if (case_num < 3)
+      {
+        resp.new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(
+          case_num, current_downtrack_, stop_intersection_down_track, current_state.speed, 0.0,
+          current_state.stamp, time_to_schedule_stop,
+          lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); })));
 
-    }
+      }
+      else
+      {
+        ROS_DEBUG_STREAM("Decelerating to stop at the intersection");
+
+        // at the stop line or decelerating to stop line
+        // stop and wait maneuver
+        // auto stop_line_lanelet = nearest_stop_intersection->lanelets().front();
+        std::vector<lanelet::ConstLanelet> crossed_lanelets =
+            getLaneletsBetweenWithException(current_downtrack_, stop_intersection_down_track, true, true);
+        auto stop_line_lanelet = stop_intersection_down_track;//nearest_stop_intersection->lanelets().front();
+        double stop_duration = (scheduled_enter_time_ - scheduled_stop_time_)/1000;
+        ROS_DEBUG_STREAM("stop_duration:  " << stop_duration);
+        ROS_DEBUG_STREAM("Planning stop and wait maneuver");
+
+        double stopping_accel = caseThreeSpeedProfile(stop_intersection_down_track, current_state.speed, time_to_schedule_stop);
+
+        resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
+          current_downtrack_, stop_intersection_down_track, current_state.speed, crossed_lanelets[0].id(),
+          crossed_lanelets[0].id(), stopping_accel, current_state.stamp,
+          current_state.stamp + ros::Duration(stop_duration + time_to_schedule_stop)));
+      }
+  }
+  else if (!is_allowed_int_)
+  {
+    ROS_DEBUG_STREAM("Vehicle at stop line, waiting for access to intersection");
+    // vehicle is at the intersection but it is not allowed access, so it must wait
+    // arbitrary parameters
+    double stop_acc = 0.5;
+    double stop_duration = 99999;
+
+    resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
+          current_state.downtrack, current_state.downtrack + config_.stop_line_buffer, current_state.speed, current_state.lane_id,
+          current_state.lane_id, stop_acc, current_state.stamp,
+          current_state.stamp + ros::Duration(stop_duration)));
 
   }
   else
   {
-    // Passed the stop line
-    // Intersection transit maneuver
-
+    ROS_DEBUG_STREAM("Vehicle is crossing the intersection");
+    // Passing the stop line
     
     // Compose intersection transit maneuver
     double intersection_transit_time = (scheduled_depart_time_ - scheduled_enter_time_)/1000;
@@ -372,9 +358,15 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
       current_downtrack_, intersection_end_downtrack, current_state.speed, intersection_speed_limit,
       current_state.stamp, req.header.stamp + ros::Duration(intersection_transit_time), crossed_lanelets.front().id(), crossed_lanelets.back().id()));
+    
     // when passing intersection, set the flag to false
-    // TODO: Another option, check the time on mobilityoperation
-    approaching_stop_controlled_interction_ = false;
+    // TODO: Another option, check the time on mobilityoperation to see if it passes intersection
+    if (distance_to_stopline < -10.0)
+    {
+      ROS_DEBUG_STREAM("Vehicle is out of intersection, stop planning...");
+      // once the vehicle crosses the intersection, flip the flag to stop planning and publishing status/intent
+      approaching_stop_controlled_interction_ = false;
+    }
 
   }
   
@@ -441,12 +433,11 @@ void SCIStrategicPlugin::caseTwoSpeedProfile(double stop_dist, double speed_befo
 
 }
 
-void SCIStrategicPlugin::caseThreeSpeedProfile(double stop_dist, double current_speed, double stop_time, 
-                                                std::vector<double>* float_metadata_list) const
+double SCIStrategicPlugin::caseThreeSpeedProfile(double stop_dist, double current_speed, double stop_time) const
 {
   double a_dec = (2*stop_dist - current_speed*(stop_time + config_.delta_t))/(stop_time * config_.delta_t);
   ROS_DEBUG_STREAM("Case three a_dec: " << a_dec);
-  float_metadata_list->push_back(a_dec);
+  return a_dec;
 }
 
 cav_msgs::Maneuver SCIStrategicPlugin::composeLaneFollowingManeuverMessage(int case_num, double start_dist, double end_dist,
@@ -486,9 +477,9 @@ cav_msgs::Maneuver SCIStrategicPlugin::composeLaneFollowingManeuverMessage(int c
     case 2:
       caseTwoSpeedProfile(end_dist, speed_before_decel, start_speed, time_to_stop, speed_limit_, &float_metadata_list);
       break;
-    case 3:
-      caseThreeSpeedProfile(end_dist, start_speed, time_to_stop, &float_metadata_list);
-      break;
+    // case 3:
+    //   caseThreeSpeedProfile(end_dist, start_speed, time_to_stop, &float_metadata_list);
+    // break;
     default:
       return empty_msg;
   }
@@ -522,6 +513,8 @@ void SCIStrategicPlugin::generateMobilityOperation()
     mo_.header.sender_id = config_.vehicle_id;
     mo_.header.sender_bsm_id = bsm_id_;
     mo_.strategy = stop_controlled_intersection_strategy_;
+    // TODO temporary hard coded
+    std::string turn_direction = "straight";
 
     int flag = (is_allowed_int_ ? 1 : 0);
 
@@ -531,7 +524,8 @@ void SCIStrategicPlugin::generateMobilityOperation()
 
     mo_.strategy_params = "access: " +  std::to_string(flag) + ", max_accel: " + std::to_string(vehicle_acceleration_limit_) + 
                         ", max_decel: " + std::to_string(vehicle_deceleration_limit_) + ", react_time: " + std::to_string(config_.reaction_time) +
-                        ", min_gap: " + std::to_string(config_.min_gap) + ", depart_pos: " + std::to_string(scheduled_departure_position_);
+                        ", min_gap: " + std::to_string(config_.min_gap) + ", depart_pos: " + std::to_string(scheduled_departure_position_) + 
+                        ", turn_direction: " + turn_direction;
     
 
     mobility_operation_pub.publish(mo_);
@@ -541,7 +535,7 @@ void SCIStrategicPlugin::generateMobilityOperation()
 cav_msgs::Maneuver SCIStrategicPlugin::composeStopAndWaitManeuverMessage(double current_dist, double end_dist,
                                                                         double start_speed,
                                                                         const lanelet::Id& starting_lane_id,
-                                                                        const lanelet::Id& ending_lane_id,
+                                                                        const lanelet::Id& ending_lane_id, double stopping_accel,
                                                                         ros::Time start_time, ros::Time end_time) const
 {
   cav_msgs::Maneuver maneuver_msg;
@@ -560,6 +554,7 @@ cav_msgs::Maneuver SCIStrategicPlugin::composeStopAndWaitManeuverMessage(double 
   maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(ending_lane_id);
   // Set the meta data for the stop location buffer
   maneuver_msg.stop_and_wait_maneuver.parameters.float_valued_meta_data.push_back(config_.stop_line_buffer);
+  maneuver_msg.stop_and_wait_maneuver.parameters.float_valued_meta_data.push_back(stopping_accel);
   return maneuver_msg;
 }
 

@@ -136,8 +136,8 @@ public:
                                                          std::vector<lanelet::Id> lane_ids);
 
   cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double end_dist, double start_speed,
-                                                      const lanelet::Id& starting_lane_id, const lanelet::Id& ending_lane_id,
-                                                      ros::Time start_time, ros::Time end_time) const;
+                                                      const lanelet::Id& starting_lane_id, const lanelet::Id& ending_lane_id, 
+                                                      double stopping_accel, ros::Time start_time, ros::Time end_time) const;
 
   cav_msgs::Maneuver composeIntersectionTransitMessage(double start_dist, double end_dist, double start_speed, 
                                                       double target_speed, ros::Time start_time, ros::Time end_time,
@@ -260,10 +260,10 @@ public:
    * 
    * \param stop_time time duration to stop in s
    *
-   * \param float_metadata_list metadata vector for storing speed profile parameters
+   * \return deceleration value for case three
    *
    */
-  void caseThreeSpeedProfile(double stop_dist, double current_speed, double stop_time, std::vector<double>* float_metadata_list) const;
+  double caseThreeSpeedProfile(double stop_dist, double current_speed, double stop_time) const;
 
   /**
    * \brief Generates Mobility Operation messages
