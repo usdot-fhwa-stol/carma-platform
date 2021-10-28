@@ -199,7 +199,7 @@ namespace basic_autonomy
 
             
 
-            for (size_t i = 0; i < points_and_target_speeds.size(); ++i)
+            for (size_t i = 0; i < points_and_target_speeds.size(); ++i) {
                 auto current_point = points_and_target_speeds[i].point;
                 
                 if (i == 0) {
@@ -228,7 +228,14 @@ namespace basic_autonomy
                 // If there are no more points to add but we haven't reached the ending downtrack then get the following lanelet and keep iterating
                 if (i == points_and_target_speeds.size() - 1 && dist_accumulator < ending_downtrack)
                 {
-                    auto current_lanelet = wm->getMap()->laneletLayer.get(maneuvers.back().lane_following_maneuver.lanelet_ids.back());
+                    auto lane_ids = wm->getMap()->laneletLayer.get(maneuvers.back().lane_following_maneuver.lane_ids;
+
+                    if (lane_ids.empty()) {
+                        ROS_ERROR_STREAM("Lane following lanelet list is not populated");
+                        break;
+                    }
+
+                    auto current_lanelet = wm->getMap()->laneletLayer.get(lane_ids.back());
 
                     // Since we should only be in this case if we are adding buffer points the choice of following lanelet is irrelevant 
                     // so we just accept the first one
@@ -238,7 +245,7 @@ namespace basic_autonomy
                     {
                         // add centerline of following lanelet to points_and_target_speeds
                         auto centerline_points_and_speeds = lanelet::utils::transform(following_lanelets[0].centerline2d(), 
-                            [](const auto& p) 
+                            [&points_and_target_speeds](const auto& p) 
                             { 
                                 PointSpeedPair pair;
                                 pair.point = p.basicPoint2d();
