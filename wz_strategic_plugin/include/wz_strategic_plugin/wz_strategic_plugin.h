@@ -157,13 +157,14 @@ private:
    * \param ending_lane_id The ending lanelet id of this maneuver
    * \param start_time The starting time of the maneuver
    * \param end_time The ending time of the maneuver
+   * \param stopping_accel Acceleration used for calculating the stopping distance
    *
    * \return A stop and wait maneuver message which is ready to be published
    */
   cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double end_dist, double start_speed,
                                                        const lanelet::Id& starting_lane_id,
                                                        const lanelet::Id& ending_lane_id, ros::Time start_time,
-                                                       ros::Time end_time) const;
+                                                       ros::Time end_time, double stopping_accel) const;
 
   /**
    * \brief Compose a intersection transit maneuver message based on input params
