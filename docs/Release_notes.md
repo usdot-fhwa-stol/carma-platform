@@ -1,6 +1,17 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 3.8.1, released Oct 15th, 2021
+----------------------------------------
+
+**Summary:** 
+Carma-platform release version 3.8.1 is a hotfix release for 3.8.0.
+
+Fixes in this release:
+- Issue 1461: Fixed basic autonomy errors in inlane cruising to prevent planning maneuvers on top of themselves, by fixing broken maneuvers_to_points method that didn't properly track the processed lanelets.
+- Issue 1446: Fixed the work zone plugin by updating vehicle length parameter and modifying traffic light downtrack calculations to ensure that the target stopping location would be shifted backward by vehicle length.
+- Issue 1475 & 139: Fixed carma-platform and carma-config by carma-docker.launch file for each freightliner to pass in the correct LiDAR frame and fixed IP address of the front left camera in the blue truck.
+
 Version 3.8.0, released Sep 24th, 2021
 ----------------------------------------
 
