@@ -251,13 +251,12 @@ namespace basic_autonomy
 
                     }
                     else {
-                        ROS_WARN_STREAM("No following lanelets found for lanelet: " << lanelets[0].id());
+                        ROS_WARN_STREAM("No following lanelets found for lanelet: " << current_lanelet.id());
                     }
                 }
 
 
                 prev_point = current_point;
-                i++;
             }
 
             ending_state_before_buffer.X_pos_global = points_and_target_speeds[unbuffered_idx].point.x();
