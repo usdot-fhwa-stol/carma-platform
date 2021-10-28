@@ -278,7 +278,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   double distance_to_stopline = stop_intersection_down_track - current_downtrack_;
   ROS_DEBUG_STREAM("distance_to_stopline  " << distance_to_stopline);
 
-  if (distance_to_stopline >= 0)
+  if (distance_to_stopline >= config_.stop_line_buffer)
   {
     
       // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
