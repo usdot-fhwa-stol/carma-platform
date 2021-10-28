@@ -27,8 +27,6 @@
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/primitives/Traits.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
-#include <lanelet2_extension/projection/local_frame_projector.h>
-#include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <carma_wm/MapConformer.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <ros/console.h>

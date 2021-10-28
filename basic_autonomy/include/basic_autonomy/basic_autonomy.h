@@ -61,6 +61,7 @@ namespace basic_autonomy
         {
             lanelet::BasicPoint2d point;
             double speed = 0;
+            lanelet::Id lanelet_id = 0;
         };
 
         struct GeneralTrajConfig

@@ -197,8 +197,11 @@ namespace basic_autonomy
             double dist_accumulator = starting_route_downtrack;
             lanelet::BasicPoint2d prev_point;
 
-            for (int i = 0; i < points_and_target_speeds.size(); i ++) {
+            
+
+            for (size_t i = 0; i < points_and_target_speeds.size(); ++i)
                 auto current_point = points_and_target_speeds[i].point;
+                
                 if (i == 0) {
                     prev_point = current_point;
                     continue;
@@ -221,7 +224,40 @@ namespace basic_autonomy
                     ROS_DEBUG_STREAM("Max_i breaking at: i: " << i << ", max_i: " << max_i);
                     break;
                 }
+
+                // If there are no more points to add but we haven't reached the ending downtrack then get the following lanelet and keep iterating
+                if (i == points_and_target_speeds.size() - 1 && dist_accumulator < ending_downtrack)
+                {
+                    auto current_lanelet = wm->getMap()->laneletLayer.get(maneuvers.back().lane_following_maneuver.lanelet_ids.back());
+
+                    // Since we should only be in this case if we are adding buffer points the choice of following lanelet is irrelevant 
+                    // so we just accept the first one
+                    auto following_lanelets = wm->getMapRoutingGraph()->following(current_lanelet, false);
+
+                    if (!following_lanelets.empty())
+                    {
+                        // add centerline of following lanelet to points_and_target_speeds
+                        auto centerline_points_and_speeds = lanelet::utils::transform(following_lanelets[0].centerline2d(), 
+                            [](const auto& p) 
+                            { 
+                                PointSpeedPair pair;
+                                pair.point = p.basicPoint2d();
+                                pair.speed = points_and_target_speeds.back().speed;
+                                return pair; 
+                            });
+                        
+                        points_and_target_speeds.insert(points_and_target_speeds.end(), centerline_points_and_speeds.begin(), centerline_points_and_speeds.end());
+                    
+
+                    }
+                    else {
+                        ROS_WARN_STREAM("No following lanelets found for lanelet: " << lanelets[0].id());
+                    }
+                }
+
+
                 prev_point = current_point;
+                i++;
             }
 
             ending_state_before_buffer.X_pos_global = points_and_target_speeds[unbuffered_idx].point.x();
