@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,6 +48,7 @@ using oss = std::ostringstream;
 
 namespace light_controlled_intersection_transit_plugin
 {
+
 LightControlledIntersectionTacticalPlugin::LightControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm,const LightControlledIntersectionTacticalPluginConfig& config,
                                     const PublishPluginDiscoveryCB& plugin_discovery_publisher)
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
@@ -60,10 +61,9 @@ LightControlledIntersectionTacticalPlugin::LightControlledIntersectionTacticalPl
     plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
   }
 
-bool LightControlledIntersectionTacticalPlugin::onSpin()
+void LightControlledIntersectionTacticalPlugin::onSpin()
 {
     plugin_discovery_publisher_(plugin_discovery_msg_);
-    return true;
 }
 
 bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
@@ -79,26 +79,49 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
     std::vector<cav_msgs::Maneuver> maneuver_plan;
     for(size_t i = req.maneuver_index_to_plan; i < req.maneuver_plan.maneuvers.size(); i++){
         
-        if((req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_FOLLOWING || req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT
-        || req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN || req.maneuver_plan.maneuvers[i].type ==cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN) 
-        && GET_MANEUVER_PROPERTY(req.maneuver_plan.maneuvers[i], parameters.string_valued_meta_data.front()) == light_controlled_intersection_strategy_)
+        if(req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT
+        || req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN || req.maneuver_plan.maneuvers[i].type ==cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN)
         {
             maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
             resp.related_maneuvers.push_back(req.maneuver_plan.maneuvers[i].type);
         }
         else
         {
-            break;
+            throw std::invalid_argument("Light Control Intersection Plugin asked to plan unsupported maneuver");
         }
     }
 
     lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
     ROS_DEBUG_STREAM("Planning state x:"<<req.vehicle_state.X_pos_global <<" , y: " << req.vehicle_state.Y_pos_global);
 
-    double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
-    ROS_DEBUG_STREAM("Current_downtrack"<< current_downtrack);
+    current_downtrack_ = wm_->routeTrackPos(veh_pos).downtrack;
+    ROS_DEBUG_STREAM("Current_downtrack"<< current_downtrack_);
 
-    std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points( maneuver_plan, wm_, req.vehicle_state);
+    DetailedTrajConfig wpg_detail_config;
+    GeneralTrajConfig wpg_general_config;
+
+    wpg_general_config = basic_autonomy:: waypoint_generation::compose_general_trajectory_config("intersection_transit",
+                                                                                config_.default_downsample_ratio,
+                                                                                config_.turn_downsample_ratio);
+
+    wpg_detail_config = basic_autonomy:: waypoint_generation::compose_detailed_trajectory_config(config_.trajectory_time_length, 
+                                                                              config_.curve_resample_step_size, config_.minimum_speed, 
+                                                                              config_.vehicle_accel_limit,
+                                                                              config_.lateral_accel_limit, 
+                                                                              config_.speed_moving_average_window_size, 
+                                                                              config_.curvature_moving_average_window_size, config_.back_distance,
+                                                                              config_.buffer_ending_downtrack);
+
+    // Create curve-fitting compatible trajectories (with extra back and front attached points) with raw speed limits from maneuver 
+    auto points_and_target_speeds = basic_autonomy::waypoint_generation::create_geometry_profile(maneuver_plan, std::max((double)0, current_downtrack_ - config_.back_distance),
+                                                                            wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config);
+
+    // Change raw speed limit values to target speeds specified by the algorithm
+    apply_optimized_target_speed_profile(maneuver_plan.front(), req.vehicle_state.longitudinal_vel, points_and_target_speeds);
+
+    ROS_DEBUG_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
+
+    ROS_DEBUG_STREAM("PlanTrajectory");
 
     //Trajectory Plan
     cav_msgs::TrajectoryPlan trajectory;
@@ -106,8 +129,10 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
     trajectory.header.stamp = req.header.stamp;
     trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-    //Add compose trajectory from centerline
-    trajectory.trajectory_points = compose_trajectory_from_centerline(points_and_target_speeds, req.vehicle_state, req.header.stamp);
+    // Compose smooth trajectory/speed by resampling
+    trajectory.trajectory_points = basic_autonomy:: waypoint_generation::compose_lanefollow_trajectory_from_path(points_and_target_speeds, 
+                                                                                req.vehicle_state, req.header.stamp, wm_, ending_state_before_buffer_, debug_msg_, 
+                                                                                wpg_detail_config); // Compute the trajectory
     trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
 
     resp.trajectory_plan = trajectory;
@@ -117,16 +142,9 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
     return true;
 }
 
-double LightControlledIntersectionTacticalPlugin::calcEstimatedEntryTimeLeft(double entry_dist, double current_speed, double speed_limit) const
+SpeedProfileCase LightControlledIntersectionTacticalPlugin::determineSpeedProfileCase(double entry_dist, double current_speed, double schedule_entry_time, double speed_limit)
 {
-  double t_entry = 0;
-  t_entry = 2*entry_dist/(current_speed + speed_limit);
-  return t_entry;
-}
-
-int LightControlledIntersectionTacticalPlugin::determineSpeedProfileCase(double entry_dist, double current_speed, double schedule_entry_time, double speed_limit)
-{
-  int case_num = 0;
+  SpeedProfileCase case_num;
   double estimated_entry_time = calcEstimatedEntryTimeLeft(entry_dist, current_speed, speed_limit );
   double speed_before_decel = calcSpeedBeforeDecel(estimated_entry_time, entry_dist, current_speed, speed_limit);
   double speed_before_accel = calcSpeedBeforeAccel(estimated_entry_time, entry_dist, current_speed, speed_limit);
@@ -136,117 +154,107 @@ int LightControlledIntersectionTacticalPlugin::determineSpeedProfileCase(double 
   {
     ROS_DEBUG_STREAM("speed_before_accel: " << speed_before_accel << ", and speed_limit: " << speed_limit);
 
-    if (speed_before_accel < speed_limit)
+    if (speed_before_accel < config_.minimum_speed)
     {
-      case_num = 4;
+      case_num = DECEL_CRUISE_ACCEL;
     }
     else
     {
-      case_num = 3;
+      case_num = DECEL_ACCEL;
     }
   }
   else
   {
     ROS_DEBUG_STREAM("speed_before_decel: " << speed_before_decel << ", and speed_limit: " << speed_limit);
 
-    if (speed_before_decel <= speed_limit)
+    if (speed_before_decel > speed_limit)
     {
-      case_num = 2;
+      case_num = ACCEL_CRUISE_DECEL;
     }
     else
     {
-      case_num = 1;
+      case_num = ACCEL_DECEL;
     }
   }
   
   return case_num;
 }
 
-
-std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
-                                                            const carma_wm::WorldModelConstPtr& wm, const cav_msgs::VehicleState& state)
+void LightControlledIntersectionTacticalPlugin::apply_optimized_target_speed_profile(const cav_msgs::Maneuver& maneuver, const double starting_speed, std::vector<PointSpeedPair>& points_and_target_speeds)
 {
-    std::vector<PointSpeedPair> points_and_target_speeds;
-    std::unordered_set<lanelet::Id> visited_lanelets;
+  // lane following to intersection
+  double time_to_schedule_entry = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);
+  double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
+  SpeedProfileCase case_num = determineSpeedProfileCase(GET_MANEUVER_PROPERTY(maneuver,end_dist) - starting_downtrack, starting_speed, time_to_schedule_entry, speed_limit_);
 
-    lanelet::BasicPoint2d veh_pos(state.X_pos_global, state.Y_pos_global);
-    double max_starting_downtrack = wm_->routeTrackPos(veh_pos).downtrack; //The vehicle position
-    double starting_speed = state.longitudinal_vel;
+  // change speed profile depending on algorithm case starting from maneuver start_dist
+  // NOTE: when applying the speed profile, each cases should ignore config_.back_distance worth of points' speed in front
+  if(case_num == ACCEL_DECEL){
+      // acceleration then deceleration to reach desired intersection entry speed/time according to algorithm doc
+      apply_case_one_speed_profile(points_and_target_speeds);
+  }
+  else if(case_num == ACCEL_CRUISE_DECEL){
+      // acceleration, cruising, deceleration to reach desired intersection entry speed/time according to algorithm doc
+      apply_case_two_speed_profile(points_and_target_speeds);
+  }
+  else if(case_num == DECEL_ACCEL)
+  {
+      // deceleration then acceleration to reach desired intersection entry speed/time according to algorithm doc
+      apply_case_three_speed_profile(points_and_target_speeds);
+  }
+  else if(case_num == DECEL_CRUISE_ACCEL)
+  {
+      // deceleration, cruising, acceleration to reach desired intersection entry speed/time according to algorithm doc
+      apply_case_four_speed_profile(points_and_target_speeds);
+  }
+  else{
+      throw std::invalid_argument("The light controlled intersection tactical plugin doesn't handle the case number requested");
+  }
+}
+std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::create_geometry_profile(const std::vector<cav_msgs::Maneuver> &maneuvers, double max_starting_downtrack,const carma_wm::WorldModelConstPtr &wm,
+                                                                   cav_msgs::VehicleState &ending_state_before_buffer,const cav_msgs::VehicleState& state,
+                                                                   const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config)
+{
+  std::vector<PointSpeedPair> points_and_target_speeds;
+  
+  bool first = true;
+  std::unordered_set<lanelet::Id> visited_lanelets;
 
-    bool first = true;    
-    double starting_downtrack;
+  ROS_DEBUG_STREAM("VehDowntrack:"<<max_starting_downtrack);
+  for(const auto &maneuver : maneuvers)
+  {
+      double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
+      
+      starting_downtrack = std::min(starting_downtrack, max_starting_downtrack);
 
-    if (maneuvers.size() > 1)
-    {
-        ROS_WARN_STREAM("maneuvers_to_points received more than 1 maneuver, and only last one will be planned");
-    }
-    
-    for (const auto& maneuver : maneuvers)
-    {
-        if(maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING ){ //detect special case for light controlled. 
-            throw std::invalid_argument("Light Controlled Intersection Tactical Plugin does not support this maneuver type");
-        }
-        // assume they are all correct
-        if(first)
-        {
-            starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist); 
-            if (starting_downtrack > max_starting_downtrack)
-            {
-                starting_downtrack = max_starting_downtrack;
-            }
-            first = false;
-        }
+      ROS_DEBUG_STREAM("Used downtrack: " << starting_downtrack);
 
-        // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
-        std::vector<lanelet::ConstLanelet> crossed_lanelets =
-            getLaneletsBetweenWithException(starting_downtrack, GET_MANEUVER_PROPERTY(maneuver,end_dist), true, true);
+      // check if required parameter from strategic planner is present
+      if(GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data).empty())
+      {
+        throw std::invalid_argument("No time_to_schedule_entry is provided in float_valued_meta_data");
+      }
 
-        // approaching stop line speed
-        speed_limit_ = findSpeedLimit(crossed_lanelets.back());
+      //overwrite maneuver type to use lane follow library function
+      cav_msgs::Maneuver temp_maneuver = maneuver;
+      temp_maneuver.type =cav_msgs::Maneuver::LANE_FOLLOWING;
+      ROS_DEBUG_STREAM("Creating Lane Follow Geometry");
+      std::vector<PointSpeedPair> lane_follow_points = create_lanefollow_geometry(maneuver, starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config, visited_lanelets);
+      points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
+      
+      break; // expected to receive only one maneuver to plan
+  }
 
-        // check error
-        if(GET_MANEUVER_PROPERTY(maneuver,parameters.float_valued_meta_data).empty()){
-            throw std::invalid_argument("No time_to_schedule_entry is provided in float_valued_meta_data");
-        }
-
-        // lane following to intersection
-        double time_to_schedule_entry = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);
-        int case_num = determineSpeedProfileCase(GET_MANEUVER_PROPERTY(maneuver,end_dist) - starting_downtrack,starting_speed , time_to_schedule_entry, speed_limit_);
-
-        // currently assumed to receive just 1 maneuver
-        if(case_num == 1){
-            points_and_target_speeds = create_case_one_speed_profile();
-        }
-        else if(case_num == 2){
-            points_and_target_speeds = create_case_two_speed_profile();
-        }
-        else if(case_num == 3)
-        {
-            points_and_target_speeds = create_case_three_speed_profile();
-        }
-        else if(case_num == 4)
-        {
-            points_and_target_speeds = create_case_four_speed_profile();
-        }
-        else{
-            throw std::invalid_argument("The light controlled intersection tactical plugin doesn't handle the case number requested");
-        }
-    }
-
-    return points_and_target_speeds;
+  return points_and_target_speeds;
 }
 
-double LightControlledIntersectionTacticalPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt) const
+double LightControlledIntersectionTacticalPlugin::calcEstimatedEntryTimeLeft(double entry_dist, double current_speed, double speed_limit) const
 {
-  lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
-  if (traffic_rules)
-  {
-    return (*traffic_rules)->speedLimit(llt).speedLimit.value();
-  }
-  else
-  {
-    throw std::invalid_argument("Valid traffic rules object could not be built");
-  }
+  double t_entry = 0;
+  // t = 2 * d / (v_i + v_f)
+  // from TSMO USE CASE 2 Algorithm Doc - Figure 4. Equation: Estimation of t*_nt
+  t_entry = 2*entry_dist/(current_speed + speed_limit);
+  return t_entry;
 }
 
 double LightControlledIntersectionTacticalPlugin::calcSpeedBeforeDecel(double entry_time, double entry_dist, double current_speed, double speed_limit) const
@@ -255,12 +263,17 @@ double LightControlledIntersectionTacticalPlugin::calcSpeedBeforeDecel(double en
 
   double desired_acceleration = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
   double desired_deceleration = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
-  double acc_dec_ratio = desired_acceleration/desired_deceleration;
-  double required_speed = entry_dist / entry_time;
+  
+  // from TSMO USE CASE 2 Algorithm Doc - Figure 7. Equation: Trajectory Smoothing Solution (Case 2)
 
+  // a_r = a_acc / a_dec
+  double acc_dec_ratio = desired_acceleration/desired_deceleration;
+  // v_r = d / t
+  double required_speed = entry_dist / entry_time;
+  // sqrt_term  = sqrt((1-a_r)^2*v_r^2 - (1-a_r)(a_r*v_f*(v_f-2*v_r) + v_i*(2*v_r - v_i)))
   double sqr_term = sqrt(pow(1 - (acc_dec_ratio), 2) * pow(required_speed, 2) - (1 -acc_dec_ratio) *
                         (acc_dec_ratio * speed_limit * (speed_limit - 2 * required_speed) + current_speed * (2* required_speed - current_speed)));
-
+  // v_e = v_r + sqrt_term/(1 - a_r)
   speed_before_decel = required_speed + sqr_term/(1 - acc_dec_ratio);
 
   return speed_before_decel;
@@ -272,58 +285,33 @@ double LightControlledIntersectionTacticalPlugin::calcSpeedBeforeAccel(double en
 
   double desired_acceleration = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
   double desired_deceleration = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
-  double acc_dec_ratio = desired_acceleration/desired_deceleration;
-  double required_speed = entry_dist / entry_time;
 
+  // from TSMO USE CASE 2 Algorithm Doc - Figure 11. Equation: Trajectory Smoothing Solution (Case 3)
+  
+  // a_r = a_acc / a_dec
+  double acc_dec_ratio = desired_acceleration/desired_deceleration;
+  // v_r = d / t
+  double required_speed = entry_dist / entry_time;
+  // sqrt_term  = sqrt((a_r - 1)^2*v_r^2 - (a_r-1)(v_f*(v_f-2*v_r) + a_r*v_i*(2*v_r - v_i)))
   double sqr_term = sqrt(pow((acc_dec_ratio - 1), 2) * pow(required_speed, 2) - (acc_dec_ratio - 1) *
                         (speed_limit * (speed_limit - 2 * required_speed) + acc_dec_ratio * current_speed * (2* required_speed - current_speed)));
-
+  // v_e = v_r + sqrt_term / (a_r - 1)
   speed_before_accel = required_speed + sqr_term/(acc_dec_ratio - 1);
 
   return speed_before_accel;
 }
 
-std::vector<lanelet::ConstLanelet> LightControlledIntersectionTacticalPlugin::getLaneletsBetweenWithException(double start_downtrack,
-                                                                                      double end_downtrack,
-                                                                                      bool shortest_path_only,
-                                                                                      bool bounds_inclusive) const
-{
-  std::vector<lanelet::ConstLanelet> crossed_lanelets =
-      wm_->getLaneletsBetween(start_downtrack, end_downtrack, shortest_path_only, bounds_inclusive);
-
-  if (crossed_lanelets.empty())
-  {
-    throw std::invalid_argument("getLaneletsBetweenWithException called but inputs do not cross any lanelets going "
-                                "from: " +
-                                std::to_string(start_downtrack) + " to: " + std::to_string(end_downtrack));
-  }
-
-  return crossed_lanelets;
-}
-
-std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::create_case_one_speed_profile(){
-    std::vector<PointSpeedPair> points_and_target_speeds;
-    return points_and_target_speeds;
-}
-std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::create_case_two_speed_profile(){
-    std::vector<PointSpeedPair> points_and_target_speeds;
-    return points_and_target_speeds;
-}
-std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::create_case_three_speed_profile(){
-    std::vector<PointSpeedPair> points_and_target_speeds;
-    return points_and_target_speeds;
-}
-std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::create_case_four_speed_profile(){
-    std::vector<PointSpeedPair> points_and_target_speeds;
-    return points_and_target_speeds;
-}
-
-std::vector<cav_msgs::TrajectoryPlanPoint> LightControlledIntersectionTacticalPlugin::compose_trajectory_from_centerline(
-    const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time){
+void LightControlledIntersectionTacticalPlugin::apply_case_one_speed_profile(std::vector<PointSpeedPair>& points_and_target_speeds){
     
-    std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;
+}
+void LightControlledIntersectionTacticalPlugin::apply_case_two_speed_profile(std::vector<PointSpeedPair>& points_and_target_speeds){
     
-    return trajectory;
+}
+void LightControlledIntersectionTacticalPlugin::apply_case_three_speed_profile(std::vector<PointSpeedPair>& points_and_target_speeds){
+    
+}
+void LightControlledIntersectionTacticalPlugin::apply_case_four_speed_profile(std::vector<PointSpeedPair>& points_and_target_speeds){
+    
 }
 
 

@@ -18,7 +18,7 @@
 
 <package format="3">
   <name>light_controlled_intersection_tactical_plugin</name>
-  <version>3.2.0</version>
+  <version>1.0.0</version>
   <description>Creates trajectory plan for light controlled intersections</description>
   <maintainer email="CARMA@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>

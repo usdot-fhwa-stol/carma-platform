@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,6 +55,15 @@ namespace light_controlled_intersection_transit_plugin
 {
 using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
 using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
+using GeneralTrajConfig = basic_autonomy::waypoint_generation::GeneralTrajConfig;
+using DetailedTrajConfig = basic_autonomy::waypoint_generation::DetailedTrajConfig;
+
+enum SpeedProfileCase {
+    ACCEL_CRUISE_DECEL = 1,
+    ACCEL_DECEL = 2,
+    DECEL_ACCEL = 3,
+    DECEL_CRUISE_ACCEL = 4,
+};
 
 /**
  * \brief Class containing primary business logic for the Light Controlled Intersection Tactical Plugin
@@ -84,82 +93,71 @@ public:
    * \return True if success. False otherwise
    */ 
   bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
- 
- /**
-   * \brief Converts a set of requested light controlled intersection maneuvers to point speed limit pairs. 
-   * 
-   * \param maneuvers The list of maneuvers to convert
-   * 
-   * \param wm Pointer to intialized world model for semantic map access
-   * * \param state The current state of the vehicle
-   * 
-   * \return List of centerline points paired with target speeds TODO: to be implemented later
-   */
-  std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
-                                                             const carma_wm::WorldModelConstPtr& wm,
-                                                             const cav_msgs::VehicleState& state);
   
    /**
    * \brief Creates a speed profile according to case one of the light controlled intersection, where the vehicle accelerates and then decelerates into the intersection. 
-   * \param wm Pointer to intialized world model for semantic map access
-   * 
-   * \return List of centerline points paired with target speeds: TODO: to be implemented later
+   * \param List of centerline points paired with speed limits whose speeds are to be modified: TODO: to be implemented later
+   * NOTE: when applying the speed profile, each cases should ignore config_.back_distance worth of points' speed in front
    */
-  std::vector<PointSpeedPair> create_case_one_speed_profile();
+  void apply_case_one_speed_profile(std::vector<PointSpeedPair>& points_and_target_speeds /*more params to follow*/);
   
      /**
    * \brief Creates a speed profile according to case two of the light controlled intersection, 
    * where the vehicle first accelerates then cruises and finally decelerates into the intersection. 
-   * 
-   * \return List of centerline points paired with speed limits TODO: to be implemented later
+   * \param List of centerline points paired with speed limits whose speeds are to be modified TODO: to be implemented later
+   * NOTE: when applying the speed profile, each cases should ignore config_.back_distance worth of points' speed in front
    */
-  std::vector<PointSpeedPair> create_case_two_speed_profile();
+  void apply_case_two_speed_profile(std::vector<PointSpeedPair>& points_and_target_speeds /*more params to follow*/);
 
   /**
    * \brief Creates a speed profile according to case three of the light controlled intersection, 
    * where the vehicle decelerates and then accelerates into the intersection. 
-   * 
-   * \return List of centerline points paired with speed limits TODO: to be implemented later
+   * \param List of centerline points paired with speed limits whose speeds are to be modified TODO: to be implemented later
+   * NOTE: when applying the speed profile, each cases should ignore config_.back_distance worth of points' speed in front
    */
-  std::vector<PointSpeedPair> create_case_three_speed_profile();
+  void apply_case_three_speed_profile(std::vector<PointSpeedPair>& points_and_target_speeds /*more params to follow*/);
 
     /**
    * \brief Creates a speed profile according to case four of the light controlled intersection, 
    * where the vehicle first decelerates then cruises and finally accelerates into the intersection. 
-   * 
-   * \return List of centerline points paired with speed limits TODO: to be implemented later
+   * \param List of centerline points paired with speed limits whose speeds are to be modified TODO: to be implemented later
+   * NOTE: when applying the speed profile, each cases should ignore config_.back_distance worth of points' speed in front
    */
-  std::vector<PointSpeedPair> create_case_four_speed_profile();
+  void apply_case_four_speed_profile(std::vector<PointSpeedPair>& points_and_target_speeds /*more params to follow*/);
 
-   /**
-   * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning
-   * 
-   * \param points The set of points that define the current lane the vehicle is in and are defined based on the request planning maneuvers. 
+  /**
+   * \brief Apply optimized target speeds to the trajectory determined for fixed-time and actuated signals.
+   *        Based on TSMO USE CASE 2. Chapter 2. Trajectory Smoothing
+   * \param maneuver Maneuver associated that has starting downtrack and desired entry time
+   * \param starting_speed Starting speed of the vehicle
+   * \param points The set of points with raw speed limits whose speed profile to be changed.
    *               These points must be in the same lane as the vehicle and must extend in front of it though it is fine if they also extend behind it. 
-   * \param state The current state of the vehicle
-   * \param state_time The abosolute time which the provided vehicle state corresponds to
-   * 
-   * \return A list of trajectory points to send to the carma planning stack TODO: to be implemented later
-   */ 
-  std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_centerline(
-    const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time); 
-  
-    
+   *              
+   */
+  void apply_optimized_target_speed_profile(const cav_msgs::Maneuver& maneuver, const double starting_speed, std::vector<PointSpeedPair>& points_and_target_speeds);
+
+  /**
+  * \brief Creates geometry profile to return a point speed pair struct for INTERSECTION_TRANSIT maneuver types (by converting it to LANE_FOLLOW)
+  * \param maneuvers The list of maneuvers to convert to geometry points and calculate associated raw speed limits
+  *  \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to the vehicle position or earlier.
+  *                               If the first maneuver exceeds this then it's downtrack will be shifted to this value. 
+  * \param wm Pointer to intialized world model for semantic map access
+  * \param ending_state_before_buffer reference to Vehicle state, which is state before applying extra points for curvature calculation that are removed later
+  * \param state The vehicle state at the time the function is called
+  * \param general_config Basic autonomy struct defined to load general config parameters from tactical plugins
+  * \param detailed_config Basic autonomy struct defined to load detailed config parameters from tactical plugins
+  * \return A vector of point speed pair struct which contains geometry points as basicpoint::lanelet2d and speed as a double for the maneuver
+  * NOTE: This function is a slightly modified version of the same function in basic_autonomy library and currently only plans for the first maneuver
+  */
+  std::vector<PointSpeedPair> create_geometry_profile(const std::vector<cav_msgs::Maneuver> &maneuvers, double max_starting_downtrack,const carma_wm::WorldModelConstPtr &wm,
+                                                                   cav_msgs::VehicleState &ending_state_before_buffer,const cav_msgs::VehicleState& state,
+                                                                   const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config);
+
     /**
    * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
-   * 
-   * \return True if the node should continue running. False otherwise
    */ 
-  bool onSpin();
 
-      /**
-    * \brief Function to find speed limit of a lanelet
-    *
-    * \param llt inout lanelet
-    *
-    * \return speed limit value
-    */
-  double findSpeedLimit(const lanelet::ConstLanelet& llt) const;
+  void onSpin();
 
     /**
    * \brief calculate the speed, right before the car starts to decelerate for timed entry into the intersection
@@ -204,7 +202,7 @@ public:
    *
    * \return integer case number
    */
-  int determineSpeedProfileCase(double entry_dist, double current_speed, double schedule_entry_time, double speed_limit);
+  SpeedProfileCase determineSpeedProfileCase(double entry_dist, double current_speed, double schedule_entry_time, double speed_limit);
 
   /**
    * \brief calculate the time vehicle will enter to intersection with optimal deceleration
@@ -218,15 +216,6 @@ public:
    * \return the time vehicle will stop with optimal decelarion
    */
   double calcEstimatedEntryTimeLeft(double entry_dist, double current_speed, double speed_limit) const;
-
-   /**
-   * \brief Helper method which calls carma_wm::WorldModel::getLaneletsBetween(start_downtrack, end_downtrack, shortest_path_only,
-   * bounds_inclusive) and throws and exception if the returned list of lanelets is empty. See the referenced method for additional
-   * details on parameters.
-   */
-  std::vector<lanelet::ConstLanelet> getLaneletsBetweenWithException(double start_downtrack, double end_downtrack,
-                                                                     bool shortest_path_only = false,
-                                                                     bool bounds_inclusive = true) const;
 
   ////////// VARIABLES ///////////
   // CARMA Streets Variables
@@ -245,6 +234,8 @@ public:
 
   // approximate speed limit 
   double speed_limit_ = 100.0;
+
+  cav_msgs::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
 
   // downtrack of host vehicle
   double current_downtrack_ = 0.0;

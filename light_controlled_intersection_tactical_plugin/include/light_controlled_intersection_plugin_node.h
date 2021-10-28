@@ -75,17 +75,36 @@ public:
 
     LightControlledIntersectionTacticalPluginConfig config;
 
+    pnh.param<double>("trajectory_time_length", config.trajectory_time_length, config.trajectory_time_length);
+    pnh.param<double>("curve_resample_step_size", config.curve_resample_step_size, config.curve_resample_step_size);
+    pnh.param<int>("default_downsample_ratio", config.default_downsample_ratio, config.default_downsample_ratio);
+    pnh.param<int>("turn_downsample_ratio", config.turn_downsample_ratio, config.turn_downsample_ratio);
+    pnh.param<double>("vehicle_decel_limit_multiplier", config.vehicle_decel_limit_multiplier, config.vehicle_decel_limit_multiplier);
+    pnh.param<double>("vehicle_accel_limit_multiplier", config.vehicle_accel_limit_multiplier, config.vehicle_accel_limit_multiplier);
+    pnh.param<double>("lat_accel_multiplier", config.lat_accel_multiplier, config.lat_accel_multiplier);
+    pnh.param<double>("back_distance", config.back_distance, config.back_distance);
+    pnh.param<int>("speed_moving_average_window_size", config.speed_moving_average_window_size,
+                     config.speed_moving_average_window_size);
+    pnh.param<int>("curvature_moving_average_window_size", config.curvature_moving_average_window_size,
+                     config.curvature_moving_average_window_size);
+    pnh.param<double>("buffer_ending_downtrack", config.buffer_ending_downtrack, config.buffer_ending_downtrack);
+    pnh.param<double>("/vehicle_deceleration_limit", config.vehicle_decel_limit, config.vehicle_decel_limit);
+    pnh.param<double>("/vehicle_acceleration_limit", config.vehicle_accel_limit, config.vehicle_accel_limit);
+    pnh.param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
+    pnh.param<double>("stop_line_buffer", config.stop_line_buffer, config.stop_line_buffer);
+    pnh.param<double>("minimum_speed", config.minimum_speed, config.minimum_speed);
+    
+    ROS_INFO_STREAM("LightControlledIntersectionTacticalPlugin Params" << config);
+    
+    config.lateral_accel_limit = config.lateral_accel_limit * config.lat_accel_multiplier;
+    config.vehicle_accel_limit = config.vehicle_accel_limit *  config.vehicle_accel_limit_multiplier;
+    config.vehicle_decel_limit = config.vehicle_decel_limit *  config.vehicle_decel_limit_multiplier;
+
     ros::Publisher discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
 
-    // // Determine if we will enable debug publishing by checking the current log level of the node
-    // std::map<std::string, ros::console::levels::Level> logger;
-    // ros::console::get_loggers(logger);
-    // config.publish_debug = logger[ROSCONSOLE_DEFAULT_NAME] == ros::console::levels::Debug;
-
     LightControlledIntersectionTacticalPlugin worker(wm_, config, [&discovery_pub](auto& msg) { discovery_pub.publish(msg); });
-                                            // [trajectory_debug_pub](const auto& msg) { trajectory_debug_pub.publish(msg); });
 
-    ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/LightControllledIntersectionTacticalPlugin/plan_trajectory",
+    ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/LightControlledIntersectionTacticalPlugin/plan_trajectory",
                                             &LightControlledIntersectionTacticalPlugin::plan_trajectory_cb, &worker);
 
     ros::Timer discovery_pub_timer_ = 

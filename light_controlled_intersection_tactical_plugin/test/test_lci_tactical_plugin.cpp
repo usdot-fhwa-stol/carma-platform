@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,19 +37,19 @@ TEST(LCIStrategicPluginTest, determineSpeedProfileCasetest)
   
   LightControlledIntersectionTacticalPlugin lci(wm, config, [&](auto msg) {});
 
-  int case_num1 = lci.determineSpeedProfileCase(10, 3, 9, 1.4);
+  auto case_num1 = lci.determineSpeedProfileCase(10, 3, 9, 2.5);
 
   EXPECT_EQ(3, case_num1);
 
-  int case_num2 = lci.determineSpeedProfileCase(10, 5, 4, 1.4);
+  auto case_num2 = lci.determineSpeedProfileCase(10, 5, 4, 1.4);
 
   EXPECT_EQ(4, case_num2);
 
-  int case_num3 = lci.determineSpeedProfileCase(2, 1, 1, 2);
+  auto case_num3 = lci.determineSpeedProfileCase(2, 1, 1, 2);
 
   EXPECT_EQ(2, case_num3);
 
-  int case_num4 = lci.determineSpeedProfileCase(5, 5, 1, 1.4);
+  auto case_num4 = lci.determineSpeedProfileCase(5, 5, 1, 1.4);
 
   EXPECT_EQ(1, case_num4);
 }
