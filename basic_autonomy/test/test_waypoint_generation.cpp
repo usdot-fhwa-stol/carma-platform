@@ -27,6 +27,8 @@
 #include <lanelet2_io/io_handlers/Factory.h>
 #include <lanelet2_io/io_handlers/Writer.h>
 #include <lanelet2_core/geometry/LineString.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <string>
 #include <sstream>
 #include <ros/package.h>

@@ -228,14 +228,14 @@ namespace basic_autonomy
                 // If there are no more points to add but we haven't reached the ending downtrack then get the following lanelet and keep iterating
                 if (i == points_and_target_speeds.size() - 1 && dist_accumulator < ending_downtrack)
                 {
-                    auto lane_ids = wm->getMap()->laneletLayer.get(maneuvers.back().lane_following_maneuver.lane_ids;
+                    auto lane_ids = maneuvers.back().lane_following_maneuver.lane_ids;
 
                     if (lane_ids.empty()) {
                         ROS_ERROR_STREAM("Lane following lanelet list is not populated");
                         break;
                     }
 
-                    auto current_lanelet = wm->getMap()->laneletLayer.get(lane_ids.back());
+                    auto current_lanelet = wm->getMap()->laneletLayer.get(stoi(lane_ids.back()));
 
                     // Since we should only be in this case if we are adding buffer points the choice of following lanelet is irrelevant 
                     // so we just accept the first one
