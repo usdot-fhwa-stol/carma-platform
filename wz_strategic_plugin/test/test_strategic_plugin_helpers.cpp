@@ -162,7 +162,8 @@ TEST_F(WorkZoneTestFixture, composeStopAndWaitManeuverMessage)
   WzStrategicPluginConfig config;
   WzStrategicPlugin wzp(cmw_, config);
 
-  auto result = wzp.composeStopAndWaitManeuverMessage(10.2, 20.4, 5, 1200, 1201, ros::Time(1.2), ros::Time(2.2));
+  double stopping_acceleration = 1.0;
+  auto result = wzp.composeStopAndWaitManeuverMessage(10.2, 20.4, 5, 1200, 1201, ros::Time(1.2), ros::Time(2.2), stopping_acceleration);
 
   ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result.type);
   ASSERT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, result.stop_and_wait_maneuver.parameters.negotiation_type);
