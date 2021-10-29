@@ -238,7 +238,7 @@ namespace basic_autonomy
                     }
 
                     // Create an extrapolated new point 
-                    auto new_point = current_point + delta_point;
+                    auto new_point = current_point + delta_point.get();
 
                     PointSpeedPair new_pair;
                     new_pair.point = new_point;
