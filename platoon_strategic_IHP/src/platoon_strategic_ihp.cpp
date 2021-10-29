@@ -1099,10 +1099,6 @@ namespace platoon_strategic_ihp
             4. when two single vehicle meet, only allow backjoin.
         */
         cav_msgs::PlanType plan_type = msg.plan_type;
-        
-        // determine joining type 
-        isRearJoin_ = (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR);
-        isFrontalJoin_ = (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT);
 
         // rear join; platoon leader --> leader waiting
         if (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR)
@@ -1438,6 +1434,13 @@ namespace platoon_strategic_ihp
     // UCLA: Switch existing follower to "candidate follower" state to update platoonID to the new leader (i.e., the front joiner)
     void PlatoonStrategicIHPPlugin::mob_resp_cb_follower(const cav_msgs::MobilityResponse& msg)
     {   
+        // UCLA: read plan type 
+        cav_msgs::PlanType plan_type = msg.plan_type;
+        
+        // UCLA: determine joining type 
+        // isRearJoin_ = (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR);
+        isFrontalJoin_ = (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT);
+
         // UCLA: add response so follower can change to candidate follower, then change leader
         if (isFrontalJoin_ && msg.is_accepted)
         {   
@@ -1463,6 +1466,14 @@ namespace platoon_strategic_ihp
             Hence, the host vehicle is the joiner vehicle (frontal join: candidate leader; back join: candidate follower).
             The response sender is the existing platoon leader (front join: aborting leader, back join: waiting leader). 
         */
+
+        // UCLA: read plan type 
+        cav_msgs::PlanType plan_type = msg.plan_type;
+        
+        // UCLA: determine joining type 
+        isRearJoin_ = (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR);
+        isFrontalJoin_ = (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT);
+
         if (pm_.current_plan.valid)
         {
             // if (pm_.current_plan.planId == msg.header.plan_id && pm_.current_plan.peerId == msg.header.sender_id) //TODO this check not needed here, 
@@ -1572,12 +1583,19 @@ namespace platoon_strategic_ihp
     // ACK --> yes,accept host as member; NACK --> no, cannot accept host as member
     void PlatoonStrategicIHPPlugin::mob_req_cb(const cav_msgs::MobilityRequest& msg)
     {
+        // UCLA: read current request plan 
+        cav_msgs::PlanType req_plan_type = msg.plan_type; 
+
         cav_msgs::MobilityResponse response;
         response.header.sender_id = config_.vehicleID;
         response.header.recipient_id = msg.header.sender_id;
         response.header.plan_id = pm_.currentPlatoonID;
         response.header.sender_bsm_id = host_bsm_id_;
         response.header.timestamp = ros::Time::now().toNSec() / 1000000;
+
+        // UCLA: add plantype in response 
+        response.plan_type.type = req_plan_type.type;
+        
         MobilityRequestResponse req_response = handle_mob_req(msg);
         if (req_response == MobilityRequestResponse::ACK)
         {
