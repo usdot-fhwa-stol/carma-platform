@@ -198,7 +198,7 @@ namespace basic_autonomy
             lanelet::BasicPoint2d prev_point;
 
             
-
+            boost::optional<lanelet::BasicPoint2d> delta_point;
             for (size_t i = 0; i < points_and_target_speeds.size(); ++i) {
                 auto current_point = points_and_target_speeds[i].point;
                 
@@ -233,8 +233,12 @@ namespace basic_autonomy
 
                     ROS_DEBUG_STREAM("Extending trajectory using buffer beyond end of target lanelet");
 
-                    auto delta_point = (current_point - prev_point) * 0.25; // Use a smaller step size then default to help ensure enough points are generated
-                    auto new_point(current_point.x() + delta_point.x(), current_point.y() + delta_point.y());
+                    if (!delta_point) { // Set the step size based on last two points
+                        delta_point = (current_point - prev_point) * 0.25; // Use a smaller step size then default to help ensure enough points are generated;
+                    }
+
+                    // Create an extrapolated new point 
+                    auto new_point = current_point + delta_point;
 
                     PointSpeedPair new_pair;
                     new_pair.point = new_point;
