@@ -34,7 +34,7 @@ namespace bsm_generator
         speed_sub_ = nh_->subscribe("vehicle_speed_cov", 1, &BSMGenerator::speedCallback, this);
         steer_wheel_angle_sub_ = nh_->subscribe("steering_wheel_angle", 1, &BSMGenerator::steerWheelAngleCallback, this);
         accel_sub_ = nh_->subscribe("velocity_accel_cov", 1, &BSMGenerator::accelCallback, this);
-        yaw_sub_ = nh_->subscribe("yaw_rate_rpt", 1, &BSMGenerator::yawCallback, this);
+        yaw_sub_ = nh_->subscribe("imu_raw", 1, &BSMGenerator::yawCallback, this);
         brake_sub_ = nh_->subscribe("brake_position", 1, &BSMGenerator::brakeCallback, this);
         pose_sub_ = nh_->subscribe("pose", 1, &BSMGenerator::poseCallback, this);
         heading_sub_ = nh_->subscribe("gnss_fix_fused", 1, &BSMGenerator::headingCallback, this);
@@ -85,9 +85,9 @@ namespace bsm_generator
         bsm_.core_data.accelSet.presence_vector = bsm_.core_data.accelSet.presence_vector | bsm_.core_data.accelSet.ACCELERATION_AVAILABLE;
     }
 
-    void BSMGenerator::yawCallback(const pacmod_msgs::YawRateRptConstPtr& msg)
+    void BSMGenerator::yawCallback(const sensor_msgs::ImuConstPtr& msg)
     {
-        bsm_.core_data.accelSet.yaw_rate = worker.getYawRateInRange(msg->yaw_rate);
+        bsm_.core_data.accelSet.yaw_rate = worker.getYawRateInRange(static_cast<float>(msg->angular_velocity.z));
         bsm_.core_data.accelSet.presence_vector = bsm_.core_data.accelSet.presence_vector | bsm_.core_data.accelSet.YAWRATE_AVAILABLE;
     }
 
@@ -117,7 +117,7 @@ namespace bsm_generator
 
     void BSMGenerator::headingCallback(const gps_common::GPSFixConstPtr& msg)
     {
-        bsm_.core_data.heading = worker.getHeadingInRange(msg->track);
+        bsm_.core_data.heading = worker.getHeadingInRange(static_cast<float>(msg->track));
     }
 
     void BSMGenerator::generateBSM(const ros::TimerEvent& event)

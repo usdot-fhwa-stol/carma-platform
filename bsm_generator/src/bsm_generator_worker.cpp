@@ -87,6 +87,6 @@ namespace bsm_generator
 
     float BSMGeneratorWorker::getHeadingInRange(const float heading)
     {
-        return std::max(std::min(heading, 359.9875f), 0.0f);;
+        return std::max(std::min(heading, 359.9875f), 0.0f);
     }
 }
