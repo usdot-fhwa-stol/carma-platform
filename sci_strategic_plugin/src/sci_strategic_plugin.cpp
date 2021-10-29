@@ -116,6 +116,8 @@ void SCIStrategicPlugin::BSMCb(const cav_msgs::BSMConstPtr& msg)
   }
 
   bsm_id_ = id;
+  bsm_msg_count_ = msg->core_data.msg_count;
+  bsm_sec_mark_ = msg->core_data.sec_mark;
 }
 
 void SCIStrategicPlugin::currentPoseCb(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -525,7 +527,7 @@ void SCIStrategicPlugin::generateMobilityOperation()
     mo_.strategy_params = "access: " +  std::to_string(flag) + ", max_accel: " + std::to_string(vehicle_acceleration_limit_) + 
                         ", max_decel: " + std::to_string(vehicle_deceleration_limit_) + ", react_time: " + std::to_string(config_.reaction_time) +
                         ", min_gap: " + std::to_string(config_.min_gap) + ", depart_pos: " + std::to_string(scheduled_departure_position_) + 
-                        ", turn_direction: " + turn_direction;
+                        ", turn_direction: " + turn_direction, "msg_count: " + bsm_msg_count_, "sec_mark: ", bsm_sec_mark_;
     
 
     mobility_operation_pub.publish(mo_);
