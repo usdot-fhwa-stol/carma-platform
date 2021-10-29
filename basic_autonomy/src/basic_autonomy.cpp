@@ -237,10 +237,10 @@ namespace basic_autonomy
                     auto new_point(current_point.x() + delta_point.x(), current_point.y() + delta_point.y());
 
                     PointSpeedPair new_pair;
-                    pair.point = new_point;
-                    pair.speed = points_and_target_speeds.back().speed;
+                    new_pair.point = new_point;
+                    new_pair.speed = points_and_target_speeds.back().speed;
 
-                    points_and_target_speeds.push_back(pair);
+                    points_and_target_speeds.push_back(new_pair);
                 }
 
 
