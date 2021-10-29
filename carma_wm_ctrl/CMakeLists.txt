@@ -33,6 +33,7 @@ set ( PKG_CATKIN_DEPS
   carma_wm
   cav_msgs
   roscpp
+  autoware_lanelet2_ros_interface
 )
 
 ## Find required catkin packages

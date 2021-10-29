@@ -89,7 +89,7 @@ namespace guidance
         if (current_guidance_state_ == State::ENTER_PARK)
         {
             // '3' indicates vehicle gearshift is currently set to PARK
-            if(msg->gearshift == 3)
+            if(msg->current_gear.gear== autoware_msgs::Gear::PARK)
             {
                 onGuidanceSignal(Signal::OVERRIDE); // Required for ENTER_PARK -> INACTIVE
 

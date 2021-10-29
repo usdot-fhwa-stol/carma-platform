@@ -15,22 +15,21 @@
   <name>rosbag_mock_drivers</name>
   <version>1.0.0</version>
   <description>The rosbag_mock_drivers package</description>
-
-  <author email="Pcguglielmino@leidos.com">Peter Guglielmino</author>
   <maintainer email="carma@dot.gov">carma</maintainer>
-
   <license>Apache 2.0</license>
-
+  <author email="Pcguglielmino@leidos.com">Peter Guglielmino</author>
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>carma_utils</depend>
+  <depend>autoware_msgs</depend>
   <depend>cav_msgs</depend>
   <depend>cav_srvs</depend>
+  <depend>radar_msgs</depend>
+  <depend>derived_object_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
-
   </export>
 </package>

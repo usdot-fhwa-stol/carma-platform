@@ -3,9 +3,9 @@
   <name>lightbar_manager</name>
   <version>3.3.0</version>
   <description>LightBar Manager</description>
-  <author>Misheel Bayartsengel</author>
   <maintainer email="carma@dot.gov">carma</maintainer>
   <license>Apache 2.0 License</license>
+  <author>Misheel Bayartsengel</author>
   <buildtool_depend>catkin</buildtool_depend>
   <depend>carma_utils</depend>
   <depend>cav_msgs</depend>
