@@ -34,7 +34,8 @@
 #include <carma_utils/containers/containers.h>
 #include <tf/LinearMath/Vector3.h>
 
-
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <ros/ros.h>
 #include <string>
 #include <algorithm>

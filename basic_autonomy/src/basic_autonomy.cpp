@@ -226,8 +226,11 @@ namespace basic_autonomy
                 }
 
                 // If there are no more points to add but we haven't reached the ending downtrack then get the following lanelet and keep iterating
-                if (i == points_and_target_speeds.size() - 1 && dist_accumulator < ending_downtrack)
+                if (i == points_and_target_speeds.size() - 1) // dist_accumulator < ending_downtrack is guaranteed by earlier conditional
                 {
+
+                    ROS_DEBUG_STREAM("Extending trajectory using buffer beyond end of target lanelet");
+
                     auto lane_ids = maneuvers.back().lane_following_maneuver.lane_ids;
 
                     if (lane_ids.empty()) {
@@ -529,7 +532,7 @@ namespace basic_autonomy
             back_and_future.reserve(points_set.size());
             double total_dist = 0;
             int min_i = 0;
-            for (int i = nearest_pt_index; i > 0; --i)
+            for (int i = nearest_pt_index; i >= 0; --i) // int must be used here to avoid overflow when i = 0
             {
                 min_i = i;
                 total_dist += lanelet::geometry::distance2d(points_set[i].point, points_set[i - 1].point);
