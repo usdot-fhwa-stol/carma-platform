@@ -144,9 +144,9 @@ namespace basic_autonomy
                     lanelet::BasicLineString2d centerline = l.centerline2d().basicLineString();
                     lanelet::BasicLineString2d downsampled_points;
                     if (is_turn) {
-                    downsampled_points = carma_utils::containers::downsample_vector(centerline, general_config.turn_downsample_ratio);
+                        downsampled_points = carma_utils::containers::downsample_vector(centerline, general_config.turn_downsample_ratio);
                     } else {
-                    downsampled_points = carma_utils::containers::downsample_vector(centerline, general_config.default_downsample_ratio);
+                        downsampled_points = carma_utils::containers::downsample_vector(centerline, general_config.default_downsample_ratio);
                     }
                     
                     if(downsampled_centerline.size() != 0 && downsampled_points.size() != 0 // If this is not the first lanelet and the points are closer than 1m drop the first point to prevent overlap
@@ -220,49 +220,27 @@ namespace basic_autonomy
                 }
                 
                 if (dist_accumulator > ending_downtrack) {
-                    max_i = i - 1;
+                    max_i = i;
                     ROS_DEBUG_STREAM("Max_i breaking at: i: " << i << ", max_i: " << max_i);
                     break;
                 }
 
-                // If there are no more points to add but we haven't reached the ending downtrack then get the following lanelet and keep iterating
+                // If there are no more points to add but we haven't reached the ending downtrack then
+                // construct an extrapolated straight line from the final point and keep adding to this line until the downtrack is met
+                // Since this is purely needed to allow for a spline fit edge case, it should have minimal impact on the actual steering behavior of the vehicle
                 if (i == points_and_target_speeds.size() - 1) // dist_accumulator < ending_downtrack is guaranteed by earlier conditional
                 {
 
                     ROS_DEBUG_STREAM("Extending trajectory using buffer beyond end of target lanelet");
 
-                    auto lane_ids = maneuvers.back().lane_following_maneuver.lane_ids;
+                    auto delta_point = (current_point - prev_point) * 0.25; // Use a smaller step size then default to help ensure enough points are generated
+                    auto new_point(current_point.x() + delta_point.x(), current_point.y() + delta_point.y());
 
-                    if (lane_ids.empty()) {
-                        ROS_ERROR_STREAM("Lane following lanelet list is not populated");
-                        break;
-                    }
+                    PointSpeedPair new_pair;
+                    pair.point = new_point;
+                    pair.speed = points_and_target_speeds.back().speed;
 
-                    auto current_lanelet = wm->getMap()->laneletLayer.get(stoi(lane_ids.back()));
-
-                    // Since we should only be in this case if we are adding buffer points the choice of following lanelet is irrelevant 
-                    // so we just accept the first one
-                    auto following_lanelets = wm->getMapRoutingGraph()->following(current_lanelet, false);
-
-                    if (!following_lanelets.empty())
-                    {
-                        // add centerline of following lanelet to points_and_target_speeds
-                        auto centerline_points_and_speeds = lanelet::utils::transform(following_lanelets[0].centerline2d(), 
-                            [&points_and_target_speeds](const auto& p) 
-                            { 
-                                PointSpeedPair pair;
-                                pair.point = p.basicPoint2d();
-                                pair.speed = points_and_target_speeds.back().speed;
-                                return pair; 
-                            });
-                        
-                        points_and_target_speeds.insert(points_and_target_speeds.end(), centerline_points_and_speeds.begin(), centerline_points_and_speeds.end());
-                    
-
-                    }
-                    else {
-                        ROS_WARN_STREAM("No following lanelets found for lanelet: " << current_lanelet.id());
-                    }
+                    points_and_target_speeds.push_back(pair);
                 }
 
 
