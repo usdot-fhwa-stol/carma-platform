@@ -16,6 +16,13 @@
 
 ------------------------------------------------------------------------------*/
 
+/*
+ * Developed by the UCLA Mobility Lab, 10/20/2021. 
+ *
+ * Creator: Xu Han
+ * Author: Xu Han, Xin Xia, Jiaqi Ma
+ */
+
 #include "platoon_manager_ihp.h"
 #include "platoon_strategic_ihp.h"
 #include "platoon_config_ihp.h"
@@ -25,11 +32,13 @@
 #include <carma_wm/WorldModel.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_utils/CARMAUtils.h>
+#include <string>
+#include <array>
 // #include "TestHelpers.h"
 
 using namespace platoon_strategic_ihp;
 
-TEST(PlatoonManagerTest, test_construct)
+TEST(PlatoonManagerTestFrontJoin, test_construct_front)
 {
     PlatoonPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -39,7 +48,8 @@ TEST(PlatoonManagerTest, test_construct)
 
 }
 
-TEST(PlatoonManagerTest, test_ecef_encode)
+// UCLA: use "run_candidate_leader" to test ecef encoding
+TEST(PlatoonManagerTestFrontJoin, test_ecef_encode_front)
 {
     ros::Time::init();
 
@@ -52,12 +62,12 @@ TEST(PlatoonManagerTest, test_ecef_encode)
     ecef_point_test.ecef_y = 2.0;
     ecef_point_test.ecef_z = 3.0;
     plugin.pose_ecef_point_ = ecef_point_test;
-    plugin.run_leader_waiting();
+    plugin.run_candidate_leader();
 
 }
 
 
-TEST(PlatoonManagerTest, test_split)
+TEST(PlatoonManagerTestFrontJoin, test_split_front)
 {
     cav_msgs::MobilityOperation msg;
     std::string strategyParams("INFO|REAR:1,LENGTH:2,SPEED:3,SIZE:4");
@@ -75,27 +85,7 @@ TEST(PlatoonManagerTest, test_split)
 }
 
 
-// TEST(PlatoonManagerTest, test_states)
-// {
-//     ros::Time::init();
-
-//     PlatoonPluginConfig config;
-//     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-
-//     PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
-//     plugin.pm_.current_platoon_state = PlatoonState::LEADER;
-//     plugin.pm_.current_downtrack_distance_ = 20;
-
-//     cav_msgs::MobilityRequest request;
-//     request.plan_type.type = 3;
-//     request.strategy_params = "SIZE:1,SPEED:0,DTD:11.5599";
-
-//     plugin.mob_req_cb(request);
-
-//     EXPECT_EQ(plugin.pm_.current_platoon_state, PlatoonState::LEADERWAITING);
-// }
-
-TEST(PlatoonManagerTest, test_compose)
+TEST(PlatoonManagerTestFrontJoin, test_compose_front)
 {
     std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,DTD:%2%,SPEED:%3%";
     double cmdSpeed = 1;
@@ -111,7 +101,7 @@ TEST(PlatoonManagerTest, test_compose)
 }
 
 
-TEST(PlatoonStrategicIHPPlugin, mob_resp_cb)
+TEST(PlatoonStrategicIHPPlugin, mob_resp_cb_front)
 {
     PlatoonPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -123,7 +113,7 @@ TEST(PlatoonStrategicIHPPlugin, mob_resp_cb)
    
 }
 
-TEST(PlatoonStrategicIHPPlugin, platoon_info_pub)
+TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
 {
     PlatoonPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -147,13 +137,14 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub)
    
 }
 
-TEST(PlatoonStrategicIHPPlugin, test_follower)
+// UCLA: Use the transition "leader_aborting --> follower" to test follower functions
+TEST(PlatoonStrategicIHPPlugin, test_follower_front)
 {
     PlatoonPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
     PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
-    plugin.pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
+    plugin.pm_.current_platoon_state = PlatoonState::LEADERABORTING;
     plugin.pm_.current_plan.valid = true;
     EXPECT_EQ(plugin.pm_.isFollower, false);
 
@@ -165,7 +156,8 @@ TEST(PlatoonStrategicIHPPlugin, test_follower)
     EXPECT_EQ(plugin.pm_.isFollower, true);
 }
 
-TEST(PlatoonStrategicIHPPlugin, test_get_leader)
+// test get leader function  
+TEST(PlatoonStrategicIHPPlugin, test_get_leader_front)
 {
     PlatoonPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -192,8 +184,8 @@ TEST(PlatoonStrategicIHPPlugin, test_get_leader)
    
 }
 
-
-TEST(PlatoonManagerTest, test2)
+// test platoon size and get leader platoon ID   
+TEST(PlatoonManagerTestFrontJoin, test2_front)
 {
     platoon_strategic_ihp::PlatoonMember* member = new platoon_strategic_ihp::PlatoonMember("1", "1", 1.0, 1.1, 0.1, 100);
     std::vector<platoon_strategic_ihp::PlatoonMember> cur_pl;
@@ -219,8 +211,8 @@ TEST(PlatoonManagerTest, test2)
 
 }
 
-
-TEST(PlatoonManagerTest, test3)
+// add 2 member to platoon, test size 
+TEST(PlatoonManagerTestFrontJoin, test3_front)
 {
     platoon_strategic_ihp::PlatoonMember* member1 = new platoon_strategic_ihp::PlatoonMember("1", "1", 1.0, 1.1, 0.1, 100);
     platoon_strategic_ihp::PlatoonMember* member2 = new platoon_strategic_ihp::PlatoonMember("2", "2", 2.0, 2.1, 0.2, 200);
@@ -245,7 +237,8 @@ TEST(PlatoonManagerTest, test3)
 
 }
 
-TEST(PlatoonManagerTest, test4)
+// test APF for 3 vehicles
+TEST(PlatoonManagerTestFrontJoin, test4_front)
 {
     platoon_strategic_ihp::PlatoonMember* member1 = new platoon_strategic_ihp::PlatoonMember("1", "1", 1.0, 1.1, 0.1, 100);
     platoon_strategic_ihp::PlatoonMember* member2 = new platoon_strategic_ihp::PlatoonMember("2", "2", 2.0, 2.1, 0.2, 200);
@@ -270,5 +263,6 @@ TEST(PlatoonManagerTest, test4)
     EXPECT_EQ(0, res);
 
 }
+
 
 

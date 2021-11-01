@@ -31,6 +31,8 @@ class MobilityMessages{
         cav_msgs::MobilityRequest req1;
         cav_msgs::MobilityRequest req2;
         cav_msgs::MobilityRequest req3;
+        // UCLA add req4 to test added PlanType
+        cav_msgs::MobilityRequest req4;
         cav_msgs::MobilityResponse res1;
         cav_msgs::MobilityResponse res2;
         cav_msgs::MobilityResponse res3;
@@ -155,7 +157,43 @@ class MobilityMessages{
             req3.trajectory = traject;
             req3.expiration = 15132;
             
+            // UCLA: set up req4 to test platoon_front_join
+
+            //set up location
+            location.ecef_x = 1223232;
+            location.ecef_y = 2323488;
+            location.ecef_z = 2323223;
+            location.timestamp = 66666666;
             
+            
+            //set up trajectory
+            traject.location = location;
+            offset.offset_x = 232;
+            offset.offset_y = 23232334;
+            offset.offset_z = 23;
+            offsets.push_back(offset);
+            traject.offsets = offsets;
+
+            //set up plan
+            plan.type = 4;
+            
+            //set up header
+            header.sender_id = "23";
+            header.sender_bsm_id = "sender_bsm_id2";
+            header.recipient_id = "recipient_id2";
+            header.plan_id = "plan_id2";
+            header.timestamp = 2222222222222;
+            
+            //set up mobility request
+            req4.header = header;
+            req4.strategy = "CARMA/platooning";
+            req4.plan_type.type = cav_msgs::PlanType::PLATOON_FRONT_JOIN;
+            req4.urgency = 1300;
+            req4.location = location;
+            req4.strategy_params = "param1 param2 param3 param4";
+            req4.trajectory = traject;
+            req4.expiration = 9823232323;
+
             
             //mobility response messages
 

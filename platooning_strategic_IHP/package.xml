@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>platoon_strategic</name>
+  <name>platoon_strategic_ihp</name>
   <version>3.3.0</version>
   <description>The node is to plan a platooning maneuver</description>
   <maintainer email="CARMA@dot.gov">carma</maintainer>

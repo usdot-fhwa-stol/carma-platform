@@ -16,6 +16,13 @@
  * the License.
  */
 
+/*
+ * Developed by the UCLA Mobility Lab, 10/20/2021. 
+ *
+ * Creator: Xu Han
+ * Author: Xu Han, Xin Xia, Jiaqi Ma
+ */
+
 #include <ros/ros.h>
 #include <cav_msgs/MobilityOperation.h>
 #include <cav_msgs/MobilityRequest.h>
@@ -32,12 +39,13 @@
 
 
 
-namespace platoon_strategic
+namespace platoon_strategic_ihp
 {
     /**
     * \brief Struct for a platoon plan
     */ 
-    struct PlatoonPlan {
+    struct PlatoonPlan 
+    {
         
         bool valid;
         long planStartTime;
@@ -54,7 +62,8 @@ namespace platoon_strategic
     * NACK - indicates that the plugin rejects the MobilityRequest and would suggest the other vehicle replan
     * NO_RESPONSE - indicates that the plugin is indifferent but sees no conflict
     */
-    enum MobilityRequestResponse {
+    enum MobilityRequestResponse 
+    {
             ACK,
             NACK,
             NO_RESPONSE
@@ -63,18 +72,24 @@ namespace platoon_strategic
     /**
     * \brief Platoon States
     */
-    enum PlatoonState{
+    enum PlatoonState
+    {
         STANDBY,
         LEADERWAITING,
         LEADER,
         CANDIDATEFOLLOWER,
-        FOLLOWER
+        FOLLOWER,
+        //UCLA: FRONTAL JOIN
+        LEADERABORTING,
+        //UCLA: FRONTAL JOIN
+        CANDIDATELEADER
     };
 
     /**
     * \brief Platoon States
     */
-    struct PlatoonMember{
+    struct PlatoonMember
+    {
         // Static ID is permanent ID for each vehicle
         std::string staticId;
         // Current BSM Id for each CAV
@@ -90,7 +105,7 @@ namespace platoon_strategic
         PlatoonMember(): staticId(""), bsmId(""), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), timestamp(0) {} 
         PlatoonMember(std::string staticId, std::string bsmId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
             bsmId(bsmId), commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), vehiclePosition(vehiclePosition), timestamp(timestamp) {}
-        };
+    };
         
 
 
@@ -105,8 +120,6 @@ namespace platoon_strategic
 
         // Platoon List (initialized empty)
         std::vector<PlatoonMember> platoon{};
-
-        
 
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
@@ -216,6 +229,17 @@ namespace platoon_strategic
         */
         double getCurrentDowntrackDistance() const;
 
+        /**
+         * UCLA: \brief Return the platoon leader downtrack distance
+         */
+        double getPlatoonFrontDowntrackDistance();
+
+        /**
+        UCLA: \brief Return follower's desired position
+        based on IHP gap regulation (trajectory based)
+        */
+        double getIHPDesPosFollower(double dt);
+
         // Member variables
         int platoonSize = 2;
         std::string leaderID = "default_leader_id";
@@ -234,16 +258,15 @@ namespace platoon_strategic
         std::string targetLeaderId = "default_target_leader_id";
 
         std::string HostMobilityId = "default_host_id";
-
-
     private:
 
         std::string targetPlatoonId;
         std::string OPERATION_INFO_TYPE = "INFO";
         std::string OPERATION_STATUS_TYPE = "STATUS";
         std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
+        // UCLA: add params for frontal join
+        std::string JOIN_FROM_FRONT_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
         std::string  MOBILITY_STRATEGY = "Carma/Platooning";
-    
 
         double minGap_ = 22.0;
         double maxGap_ = 32.0;
@@ -256,11 +279,25 @@ namespace platoon_strategic
         double upperBoundary_ = 1.7 ;
 
         double vehicleLength_ = 5.0;  // m
-
         double gapWithFront_ = 0.0;
-
         double downtrack_progress_ = 0;
 
+        // ---------------------- UCLA: parameters for IHP gap regulation ----------------
+        // UCLA: buffer_size
+        int buffer_size = 5;
+        // UCLA: stand still theta for IHP 
+        double ss_theta = 4.0;
+        // UCLA: stand still for IHP 
+        double standstill = 2.0;
+        //UCLA 
+        double INTER_TAU = 1.5;
+        //UCLA
+        double INTRA_TAU = 0.6;
+        // UCLA
+        double gap_weight = 0.9;
+        // UCLA: IHP 
+        // double time_headway_leader = 1.16 //leader control may need this param
+        //--------------------------------------------------------------------------------
 
         std::string algorithmType_ = "APF_ALGORITHM";
 
@@ -276,10 +313,6 @@ namespace platoon_strategic
         int findMaximumSpacingViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const;
 
         std::vector<double> getTimeHeadwayFromIndex(std::vector<double> timeHeadways, int start) const;
-
-
-    
-
     
 
     };

@@ -13,7 +13,7 @@
 # the License.
 
 cmake_minimum_required(VERSION 2.8.3)
-project(platoon_strategic)
+project(platoon_strategic_ihp)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
@@ -64,18 +64,18 @@ file(GLOB_RECURSE headers */*.hpp */*.h)
 
 add_executable( ${PROJECT_NAME}
   ${headers}
-  src/platoon_strategic.cpp
-  src/platoon_manager.cpp
-  src/main.cpp)
+  src/platoon_strategic_ihp.cpp
+  src/platoon_manager_ihp.cpp
+  src/main_ihp.cpp)
 
 
-add_library(platoon_strategic_plugin_lib
- src/platoon_strategic.cpp
- src/platoon_manager.cpp)
+add_library(platoon_strategic_ihp_plugin_lib
+ src/platoon_strategic_ihp.cpp
+ src/platoon_manager_ihp.cpp)
 
-add_dependencies(platoon_strategic_plugin_lib ${catkin_EXPORTED_TARGETS})
+add_dependencies(platoon_strategic_ihp_plugin_lib ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME} platoon_strategic_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} platoon_strategic_ihp_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 
 #############
@@ -108,10 +108,11 @@ install(DIRECTORY
 #############
 
 catkin_add_gmock(${PROJECT_NAME}-test
+  test/test_platoon_manager_front_join.cpp
   test/test_platoon_manager.cpp
   test/mobility_messages.cpp
   test/main_test.cpp)
 
 if(TARGET ${PROJECT_NAME}-test)
-  target_link_libraries(${PROJECT_NAME}-test platoon_strategic_plugin_lib ${catkin_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME}-test platoon_strategic_ihp_plugin_lib ${catkin_LIBRARIES})
 endif()

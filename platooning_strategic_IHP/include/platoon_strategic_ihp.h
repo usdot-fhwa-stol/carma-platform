@@ -14,6 +14,13 @@
  * the License.
  */
 
+/*
+ * Developed by the UCLA Mobility Lab, 10/20/2021. 
+ *
+ * Creator: Xu Han
+ * Author: Xu Han, Xin Xia, Jiaqi Ma
+ */
+
 #pragma once
 
 #include <vector>
@@ -41,15 +48,15 @@
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
-#include "platoon_config.h"
-#include <platoon_manager.h>
+#include "platoon_config_ihp.h"
+#include <platoon_manager_ihp.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <std_msgs/String.h>
 
-namespace platoon_strategic
+namespace platoon_strategic_ihp
 {
     using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
     using MobilityResponseCB = std::function<void(const cav_msgs::MobilityResponse&)>;
@@ -57,14 +64,14 @@ namespace platoon_strategic
     using MobilityOperationCB = std::function<void(const cav_msgs::MobilityOperation&)>;
     using PlatooningInfoCB = std::function<void(const cav_msgs::PlatooningInfo&)>;
 
-    class PlatoonStrategicPlugin
+    class PlatoonStrategicIHPPlugin
     {
         public:
             
             /**
-            * \brief Default constructor for PlatoonStrategicPlugin class
+            * \brief Default constructor for PlatoonStrategicIHPPlugin class
             */ 
-            PlatoonStrategicPlugin();
+            PlatoonStrategicIHPPlugin();
 
             /**
             * \brief Constructor
@@ -73,7 +80,7 @@ namespace platoon_strategic
             * \param config The configuration to be used for this object
             * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
             */ 
-            PlatoonStrategicPlugin(carma_wm::WorldModelConstPtr wm, PlatoonPluginConfig config,
+            PlatoonStrategicIHPPlugin(carma_wm::WorldModelConstPtr wm, PlatoonPluginConfig config,
                                 PublishPluginDiscoveryCB plugin_discovery_publisher, MobilityResponseCB mobility_response_publisher,
                                 MobilityRequestCB mobility_request_publisher, MobilityOperationCB mobility_operation_publisher,
                                 PlatooningInfoCB platooning_info_publisher);
@@ -218,9 +225,28 @@ namespace platoon_strategic
             * \brief Run Follower State
             */
             void run_follower();
-            
+
             // ECEF position of the host vehicle
             cav_msgs::LocationECEF pose_ecef_point_;
+
+            // -------------- UCLA: front join functions ------------------
+            // UCLA: add two states for frontal join
+            /**
+            * \brief Run Leader Aborting State
+            */
+            void run_leader_aborting();
+
+            /**
+            * UCLA: \brief Run Candidate Leader State
+            */
+            void run_candidate_leader();
+
+            /**
+             * UCLA: \breif find platoon leader bsmID
+             */
+            void front_bsm_cb(const cav_msgs::BSMConstPtr& msg);
+
+                        
 
         
         private:
@@ -259,6 +285,10 @@ namespace platoon_strategic
             long candidatestateStartTime = 0;
             // potential new platood id 
             std::string potentialNewPlatoonId = "";
+
+            // UCLA: potential new platoon id for front join
+            std::string potentialNewPlatoonId_front  = "";
+
             // target platood id 
             std::string targetPlatoonId = "";
             // Host Mobility ID
@@ -266,11 +296,15 @@ namespace platoon_strategic
             // Host BSM ID
             std::string host_bsm_id_ = "";
 
-            // leader_waiting applicant id
+            // UCLA: add front BSM ID for frontal join
+            std::string front_bsm_id_ = "";
+            // UCLAleader_waiting applicant id
             std::string lw_applicantId_ = "";
+            // UCLA: add new joiner ID front for frontal join
+            std::string fj_new_joiner_Id_ = "";
 
             // ROS Publishers
-            ros::Publisher platoon_strategic_plugin_discovery_pub_;
+            ros::Publisher platoon_strategic_ihp_plugin_discovery_pub_;
             ros::Publisher mob_op_pub_;
             ros::Publisher mob_req_pub_;
 
@@ -464,12 +498,94 @@ namespace platoon_strategic
             */
             lanelet::BasicPoint2d ecef_to_map_point(cav_msgs::LocationECEF ecef_point);
 
+            // -------------- UCLA: front join function headers -----------------------
+            
+            // ----- 0. Extract data -------
+            /**
+            * \brief Function to determine if the frontal candidate is located closely in front 
+            *
+            * \param type boolean
+            *
+            * \return if target vehicle in front
+            */
+            bool isVehicleRightBehind(std::string frontVehicleBsmId, double downtrack);
+            
+            // ----- 1. compose message ---------
+            /**
+            * \brief Function to compose mobility operation in LeaderAborting state
+            *
+            * \param type type of mobility operation (info or status)
+            *
+            * \return mobility operation msg
+            */
+            cav_msgs::MobilityOperation composeMobilityOperationLeaderAborting();
+            /**
+            * \brief Function to compose mobility operation in CandidateLeader
+            *
+            * \param type type of mobility operation (info or status)
+            *
+            * \return mobility operation msg
+            */
+            cav_msgs::MobilityOperation composeMobilityOperationCandidateLeader();
+
+            // --------- 2. Mobility operation callback -----------
+            /**
+            * \brief Function to process mobility operation in leaderaborting state
+            *
+            * \param msg incoming mobility operation
+            */
+            void mob_op_cb_leaderaborting(const cav_msgs::MobilityOperation& msg);
+            /**
+            * \brief Function to process mobility operation in candidateleader state
+            *
+            * \param msg incoming mobility operation
+            */
+            void mob_op_cb_candidateleader(const cav_msgs::MobilityOperation& msg);
+
+            //------- 3. Mobility request callback -----------
+            /**
+            * \brief Function to process mobility request in leaderaborting state
+            *
+            * \param msg incoming mobility request
+            *
+            * \return ACK, NACK, or No response
+            */
+            MobilityRequestResponse mob_req_cb_leaderaborting(const cav_msgs::MobilityRequest& msg);
+            /**
+            * \brief Function to process mobility request in candidateleader state
+            *
+            * \param msg incoming mobility request
+            *
+            * \return ACK, NACK, or No response
+            */
+            MobilityRequestResponse mob_req_cb_candidateleader(const cav_msgs::MobilityRequest& msg);
+
+            // ------ 4. Mobility response callback ------
+            /**
+            * \brief Function to process mobility response in leaderaborting state
+            *
+            * \param msg incoming mobility response
+            */
+            void mob_resp_cb_leaderaborting(const cav_msgs::MobilityResponse& msg);
+            /**
+            * \brief Function to process mobility response in candidateleader state
+            *
+            * \param msg incoming mobility response
+            */
+            void mob_resp_cb_candidateleader(const cav_msgs::MobilityResponse& msg);
+
+
+
 
             // Pointer for map projector
             std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
             // flag to check if map is loaded
             bool map_loaded_ = false;
+
+            // UCLA: flag to indicate the join type 
+            bool isRearJoin_ = false;
+            bool isFrontalJoin_ = false;
 
      
 
@@ -483,9 +599,9 @@ namespace platoon_strategic
             double maxAllowedJoinGap_ = 90;
             int maxPlatoonSize_ = 10;
             double vehicleLength_ = 5.0;
-            int infoMessageInterval_ = 200; //ms
+            int infoMessageInterval_ = 200; // ms
             long lastHeartBeatTime = 0.0;
-            int statusMessageInterval_ = 100; //ms
+            int statusMessageInterval_ = 100; // ms
             int NEGOTIATION_TIMEOUT = 5000;  // ms
             int noLeaderUpdatesCounter = 0;
             int LEADER_TIMEOUT_COUNTER_LIMIT = 5;
@@ -498,14 +614,16 @@ namespace platoon_strategic
             const std::string MOBILITY_STRATEGY = "Carma/Platooning";
             const std::string OPERATION_INFO_TYPE = "INFO";
             const std::string OPERATION_STATUS_TYPE = "STATUS";
-            const std::string OPERATION_INFO_PARAMS   = "INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d,DTD:%.2f,ECEFX:%.2f,ECEFY:%.2f,ECEFZ:%.2f";
+            
+            // UCLA: edit INFO params to store platoon front info --> pick one for testing (front join needs 10 info params)
+            // const std::string OPERATION_INFO_PARAMS   = "INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d,DTD:%.2f,ECEFX:%.2f,ECEFY:%.2f,ECEFZ:%.2f";
+            const std::string OPERATION_INFO_PARAMS   = "INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d,DTD:%.2f,ECEFX:%.2f,ECEFY:%.2f,ECEFZ:%.2f, FRONT:%s,FRONTDTD:%.2f";
             const std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,DTD:%2%,SPEED:%3%,ECEFX:%4%,ECEFY:%5%,ECEFZ:%6%";
             const std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%,ECEFX:%4%,ECEFY:%5%,ECEFZ:%6%";
-            
+            // UCLA: add for frontal join
+            const std::string JOIN_FROM_FRONT_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%,ECEFX:%4%,ECEFY:%5%,ECEFZ:%6%";
 
-
-            
-
+            // find BSM IDs
             std::string bsmIDtoString(cav_msgs::BSMCoreData bsm_core)
             {
                 std::string res = "";
@@ -516,8 +634,13 @@ namespace platoon_strategic
                 return res;
             }
             
-
-
+            // UCLA: get leader bsm ID 
+            std::string frontbsmIDtoString(cav_msgs::BSMCoreData bsm_core)
+            {
+                std::string res = "";
+                res = std::to_string(bsm_core.id[0]);
+                return res;
+            }
 
     };
 }
