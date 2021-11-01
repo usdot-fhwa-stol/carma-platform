@@ -897,6 +897,15 @@ namespace basic_autonomy
             lanelet::BasicLineString2d new_points = create_lanechange_path(lanelets_in_path[lane_change_iteration],lanelets_in_path[lane_change_iteration + 1]);
             centerline_points.insert(centerline_points.end(), new_points.begin(), new_points.end());
 
+            //Add points from following lanelet to provide sufficient distance for adding buffer
+            auto following_lanelets = wm->getMapRoutingGraph()->following(lanelets_in_path[lane_change_iteration + 1], false);
+            if(!following_lanelets.empty()){
+                //Arbitrarily choosing first following lanelet for buffer since points are only being used to fit spline
+                auto following_lanelet_centerline = following_lanelets.front().centerline2d().basicLineString();
+                centerline_points.insert(centerline_points.end(), following_lanelet_centerline.begin(), 
+                                                                            following_lanelet_centerline.end());
+            }
+
             std::vector<lanelet::BasicPoint2d> centerline_as_vector(centerline_points.begin(), centerline_points.end());
 
             return centerline_as_vector;
