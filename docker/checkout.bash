@@ -24,7 +24,7 @@ while [[ $# -gt 0 ]]; do
       arg="$1"
       case $arg in
             -d|--develop)
-                  BRANCH=noetic/develop
+                  BRANCH=develop
                   shift
             ;;
             -r|--root)
@@ -40,16 +40,16 @@ cd ${dir}/src
 
 # clone carma repos
 
-if [[ "$BRANCH" = "noetic/develop" ]]; then
+if [[ "$BRANCH" = "develop" ]]; then
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch $BRANCH
 else
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch release/elise
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch release/elise
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch release/elise
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch release/elise
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
 fi
 
 # add astuff messages
