@@ -875,8 +875,8 @@ namespace basic_autonomy
             if(!following_lanelets.empty()){
                 //Arbitrarily choosing first following lanelet for buffer since points are only being used to fit spline
                 auto following_lanelet_centerline = following_lanelets.front().centerline2d().basicLineString();
-                centerline_points.insert(centerline_points.end(), following_lanelets.front().centerline2d().basicLineString().begin(), 
-                                                                            following_lanelets[0].centerline2d().basicLineString().end());
+                centerline_points.insert(centerline_points.end(), following_lanelet_centerline.begin(), 
+                                                                            following_lanelet_centerline.end());
             }
 
             std::vector<lanelet::BasicPoint2d> centerline_as_vector(centerline_points.begin(), centerline_points.end());
