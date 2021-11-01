@@ -32,7 +32,6 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   pacmod_msgs
   j2735_msgs
-  novatel_gps_msgs
   wgs84_utils
   lanelet2_extension
 )
@@ -46,7 +45,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
   CATKIN_DEPENDS roscpp std_msgs cav_msgs carma_utils automotive_platform_msgs
-                 geometry_msgs pacmod_msgs j2735_msgs novatel_gps_msgs wgs84_utils lanelet2_extension
+                 geometry_msgs pacmod_msgs j2735_msgs wgs84_utils lanelet2_extension
 )
 
 ###########

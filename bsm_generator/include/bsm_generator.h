@@ -26,7 +26,6 @@
 #include <j2735_msgs/TransmissionState.h>
 #include <std_msgs/Float64.h>
 #include <wgs84_utils/wgs84_utils.h>
-#include <novatel_gps_msgs/NovatelDualAntennaHeading.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <std_msgs/String.h>
 #include <gps_common/GPSFix.h>
