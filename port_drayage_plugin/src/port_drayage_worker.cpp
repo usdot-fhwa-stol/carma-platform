@@ -45,7 +45,7 @@ namespace port_drayage_plugin
 
     bool PortDrayageWorker::check_for_stop(const cav_msgs::ManeuverPlanConstPtr& plan, const geometry_msgs::TwistStampedConstPtr& speed) const {
         if (plan == nullptr || speed == nullptr) {
-            ROS_WARN("Checking for stop when PortDrayagePlugin not properly initialized. Speed or plan is null");
+            ROS_DEBUG("Checking for stop when PortDrayagePlugin not properly initialized. Speed or plan is null");
             return false;
         }
 
