@@ -12,7 +12,6 @@ Fixes in this release:
 -	Issue 147: Updated the IP Addresses listed in the drivers. Launch file for the forward-facing left and right cameras on two of the trucks (10004 and 80550).
 -	Issue 75: Fixed two LiDAR’s which were not calibrated on the carma white truck during verification testing.
 
-
 Version 3.8.1, released Oct 15th, 2021
 ----------------------------------------
 

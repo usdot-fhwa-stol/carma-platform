@@ -14,7 +14,7 @@
  * the License.
  */
 
-#include <lanelet2_extension/utility/message_conversion.h>
+#include <autoware_lanelet2_ros_interface/utility/message_conversion.h>
 #include <lanelet2_extension/regulatory_elements/DirectionOfTravel.h>
 #include <lanelet2_extension/regulatory_elements/StopRule.h>
 #include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>

@@ -16,7 +16,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(motion_computation)
 
-## Compile as C++14
+## Compile as C++14, supported in ROS Noetic and newer
 add_compile_options(-std=c++14)
 
 ## Find catkin macros and libraries

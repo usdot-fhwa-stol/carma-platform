@@ -261,14 +261,14 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
   ROS_DEBUG_STREAM("early_arrival_time_at_freeflow: " << std::to_string(early_arrival_time_at_freeflow.toSec()));
   ROS_DEBUG_STREAM("late_arrival_time_at_freeflow: " << std::to_string(late_arrival_time_at_freeflow.toSec()));
 
-  auto early_arrival_state_at_freeflow_optional = nearest_traffic_light->predictState(early_arrival_time_at_freeflow);
+  auto early_arrival_state_at_freeflow_optional = nearest_traffic_light->predictState(lanelet::time::timeFromSec(early_arrival_time_at_freeflow.toSec()));
 
   if (!validLightState(early_arrival_state_at_freeflow_optional, early_arrival_time_at_freeflow))
     return;
 
   ROS_DEBUG_STREAM("early_arrival_state_at_freeflow: " << early_arrival_state_at_freeflow_optional.get());
 
-  auto late_arrival_state_at_freeflow_optional = nearest_traffic_light->predictState(late_arrival_time_at_freeflow);
+  auto late_arrival_state_at_freeflow_optional = nearest_traffic_light->predictState(lanelet::time::timeFromSec(late_arrival_time_at_freeflow.toSec()));
 
   if (!validLightState(late_arrival_state_at_freeflow_optional, late_arrival_time_at_freeflow))
     return;
@@ -332,7 +332,7 @@ void WzStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& re
 
   ROS_DEBUG("traffic_light_down_track %f", traffic_light_down_track);
 
-  auto current_light_state_optional = nearest_traffic_light->predictState(req.header.stamp);
+  auto current_light_state_optional = nearest_traffic_light->predictState(lanelet::time::timeFromSec(req.header.stamp.toSec()));
 
   if (!validLightState(current_light_state_optional, req.header.stamp))
     return;
@@ -418,11 +418,11 @@ bool WzStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_
     if (!traffic_list.empty()) { 
       auto nearest_traffic_light = traffic_list.front();
       ROS_ERROR_STREAM("\n\nCurrent Light State: " << nearest_traffic_light->getState().get() 
-      << std::endl <<  "                      1: " << nearest_traffic_light->predictState(ros::Time::now() + ros::Duration(1.0)).get()
-      << std::endl <<  "                      2: " << nearest_traffic_light->predictState(ros::Time::now() + ros::Duration(2.0)).get()
-      << std::endl <<  "                      3: " << nearest_traffic_light->predictState(ros::Time::now() + ros::Duration(3.0)).get()
-      << std::endl <<  "                      4: " << nearest_traffic_light->predictState(ros::Time::now() + ros::Duration(4.0)).get()
-      << std::endl <<  "                      5: " << nearest_traffic_light->predictState(ros::Time::now() + ros::Duration(5.0)).get()
+      << std::endl <<  "                      1: " << nearest_traffic_light->predictState(lanelet::time::timeFromSec((ros::Time::now() + ros::Duration(1.0)).toSec())).get()
+      << std::endl <<  "                      2: " << nearest_traffic_light->predictState(lanelet::time::timeFromSec((ros::Time::now() + ros::Duration(2.0)).toSec())).get()
+      << std::endl <<  "                      3: " << nearest_traffic_light->predictState(lanelet::time::timeFromSec((ros::Time::now() + ros::Duration(3.0)).toSec())).get()
+      << std::endl <<  "                      4: " << nearest_traffic_light->predictState(lanelet::time::timeFromSec((ros::Time::now() + ros::Duration(4.0)).toSec())).get()
+      << std::endl <<  "                      5: " << nearest_traffic_light->predictState(lanelet::time::timeFromSec((ros::Time::now() + ros::Duration(5.0)).toSec())).get()
       << std::endl);
     }
     */
