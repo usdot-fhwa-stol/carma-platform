@@ -24,14 +24,12 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 set(CATKIN_DEPS
   roscpp
-  std_msgs
   cav_msgs
   cav_srvs
   carma_utils
   trajectory_utils
   carma_wm
   basic_autonomy
-  carma_debug_msgs
 )
 
 ## Find catkin macros and libraries

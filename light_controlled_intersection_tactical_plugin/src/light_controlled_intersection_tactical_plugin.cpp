@@ -77,6 +77,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
         " for plan of size: " + std::to_string(req.maneuver_plan.maneuvers.size()));
     }
     std::vector<cav_msgs::Maneuver> maneuver_plan;
+    // expecting only one maneuver for an intersection
     for(size_t i = req.maneuver_index_to_plan; i < req.maneuver_plan.maneuvers.size(); i++){
         
         if(req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT
@@ -84,6 +85,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
         {
             maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
             resp.related_maneuvers.push_back(req.maneuver_plan.maneuvers[i].type);
+            break;
         }
         else
         {
@@ -113,7 +115,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
                                                                               config_.buffer_ending_downtrack);
 
     // Create curve-fitting compatible trajectories (with extra back and front attached points) with raw speed limits from maneuver 
-    auto points_and_target_speeds = basic_autonomy::waypoint_generation::create_geometry_profile(maneuver_plan, std::max((double)0, current_downtrack_ - config_.back_distance),
+    auto points_and_target_speeds = create_geometry_profile(maneuver_plan, std::max((double)0, current_downtrack_ - config_.back_distance),
                                                                             wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config);
 
     // Change raw speed limit values to target speeds specified by the algorithm
@@ -182,7 +184,10 @@ SpeedProfileCase LightControlledIntersectionTacticalPlugin::determineSpeedProfil
 
 void LightControlledIntersectionTacticalPlugin::apply_optimized_target_speed_profile(const cav_msgs::Maneuver& maneuver, const double starting_speed, std::vector<PointSpeedPair>& points_and_target_speeds)
 {
-  // lane following to intersection
+  if(GET_MANEUVER_PROPERTY(maneuver,parameters.float_valued_meta_data).empty()){
+    throw std::invalid_argument("Desired entry time into the signalized intersection is not provided in the meta data.");
+  }
+
   double time_to_schedule_entry = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);
   double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
   SpeedProfileCase case_num = determineSpeedProfileCase(GET_MANEUVER_PROPERTY(maneuver,end_dist) - starting_downtrack, starting_speed, time_to_schedule_entry, speed_limit_);
@@ -239,7 +244,7 @@ std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::create_ge
       cav_msgs::Maneuver temp_maneuver = maneuver;
       temp_maneuver.type =cav_msgs::Maneuver::LANE_FOLLOWING;
       ROS_DEBUG_STREAM("Creating Lane Follow Geometry");
-      std::vector<PointSpeedPair> lane_follow_points = create_lanefollow_geometry(maneuver, starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config, visited_lanelets);
+      std::vector<PointSpeedPair> lane_follow_points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config, visited_lanelets);
       points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
       
       break; // expected to receive only one maneuver to plan
