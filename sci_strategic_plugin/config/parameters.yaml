@@ -16,6 +16,9 @@ min_gap : 10.0
 # Double: Minimum vehicle reaction time. Units in s
 reaction_time : 5.0
 
+# Double: The distance vehicle drives to be considered out of intersections
+intersection_transit_length : 15.0
+
 # String: The name to use for this plugin during comminications with the arbitrator
 strategic_plugin_name : SCIStrategicPlugin
 

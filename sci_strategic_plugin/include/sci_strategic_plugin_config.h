@@ -49,6 +49,9 @@ struct SCIStrategicPluginConfig
   // Double: Vehicle reaction time in seconds
   double reaction_time = 5.0;
 
+  // Double: The distance vehicle drives to be considered out of intersections
+  double intersection_transit_length = 15.0;
+
   //! The name to use for this plugin during comminications with the arbitrator
   std::string strategic_plugin_name = "SCIStrategicPlugin";
 
