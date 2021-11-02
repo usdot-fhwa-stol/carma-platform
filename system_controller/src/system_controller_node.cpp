@@ -142,7 +142,9 @@ namespace system_controller
                 != config_.required_subsystem_nodes.end() ) )
       { 
         // TODO might make more sense for external shutdown to be a service call and remove SHUTDOWN from system alert entirely
-        lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
+       RCLCPP_INFO_STREAM( get_logger(), "Shutting down");
+
+       lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
       }
     }
     catch (const std::exception &e)

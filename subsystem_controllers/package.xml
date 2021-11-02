@@ -31,6 +31,9 @@
   <depend>lifecycle_msgs</depend>
   <depend>rclcpp</depend>
   <depend>ros2_lifecycle_manager</depend>
+  <test_depend>launch_testing</test_depend>
+  <test_depend>launch</test_depend>
+  <test_depend>system_controller</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

@@ -34,12 +34,12 @@ namespace subsystem_controllers
     base_config_ = config;
   }
 
-  void BaseSubsystemController::on_system_alert(const carma_msgs::msg::SystemAlert::UniquePtr msg)
+  void BaseSubsystemController::on_system_alert(carma_msgs::msg::SystemAlert::UniquePtr msg)
   {
 
-    RCLCPP_INFO(
-        get_logger(), "Received SystemAlert message of type: %u, msg: %s",
-        msg->type, msg->description.c_str());
+
+    RCLCPP_INFO_STREAM(
+          get_logger(), "Received SystemAlert message of type: " << static_cast<int>(msg->type) << " with message: " << msg->description);
 
     // NOTE: Here we check the required nodes not the full managed node set
     if (msg->type == carma_msgs::msg::SystemAlert::FATAL)
@@ -56,6 +56,7 @@ namespace subsystem_controllers
         carma_msgs::msg::SystemAlert alert;
         alert.type = carma_msgs::msg::SystemAlert::FATAL;
         alert.description = base_config_.subsystem_namespace + " subsytem has failed with error: " + msg->description;
+        alert.source_node =  get_node_base_interface()->get_fully_qualified_name();
         publish_system_alert(alert);
 
         // TODO: It might be worth trying to deactivate or shutdown after alerting the larger system, 

@@ -43,10 +43,10 @@ class TestPublisher(Node):
         self.service_ = self.create_client(GetState, '/test_carma_lifecycle_node_2/get_state')
 
     # Helper method waits until subscribers are available
-    def wait_for_subscribers(self, timeout_sec=10.0):
+    def wait_for_subscribers(self, count, timeout_sec=10.0):
         print('Waiting for subscribers to: ' + self.publisher_.topic_name)
         timeout = time.time() + timeout_sec   # Timeout time
-        while self.publisher_.get_subscription_count() == 0 and time.time() < timeout:
+        while self.publisher_.get_subscription_count() != count and time.time() < timeout:
             time.sleep(0.5)
 
         print('Subscribers found for: ' + self.publisher_.topic_name)
@@ -65,12 +65,26 @@ def generate_test_description():
             executable='test_carma_lifecycle_node',
             name='test_carma_lifecycle_node_1',
             exec_name='test_carma_lifecycle_node_1', # Process name used for testing
+            namespace='/message', # This node is in the message namespace
             ),
-        launch_ros.actions.Node( # Managed node 2
+        launch_ros.actions.Node( # Managed node 2 This node is not in the message namespace but will still be managed by that subsystem
             package='system_controller',
             executable='test_carma_lifecycle_node',
             name='test_carma_lifecycle_node_2',
             exec_name='test_carma_lifecycle_node_2', # Process name used for testing
+            ),
+        launch_ros.actions.Node( # Subsystem controller node
+            package='subsystem_controllers',
+            executable='v2x_controller',
+            name='v2x_controller',
+            exec_name='v2x_controller', # Process name used for testing
+            parameters=[{
+                'subsystem_namespace': "/message", 
+                'service_timeout_ms': 500,
+                'call_timeout_ms': 500,
+                'required_subsystem_nodes': ['/test_carma_lifecycle_node_2'],
+                'full_subsystem_required': True
+            }],
             ),
         launch_ros.actions.Node( # System Controller to test
             package='system_controller',
@@ -81,7 +95,7 @@ def generate_test_description():
                 'signal_configure_delay': 5.0, 
                 'service_timeout_ms': 500,
                 'call_timeout_ms': 500,
-                'required_subsystem_nodes': ['/test_carma_lifecycle_node_1', '/test_carma_lifecycle_node_2']}],
+                'required_subsystem_nodes': ['/v2x_controller']}],
             ),
 
         # We can start this test right away as there is nothing else to wait on
@@ -95,7 +109,7 @@ def generate_test_description():
 # All tests in this class will run  in parallel
 class TestRuntime(unittest.TestCase):
 
-    def test_fatal_lifecycle(self, proc_output):
+    def test_node_crash_lifecycle(self, proc_output):
         rclpy.init()
         
         # Check that the system controller is starting up
@@ -105,17 +119,21 @@ class TestRuntime(unittest.TestCase):
         # Check that the system controller has driven the lifecycle of the nodes to active state
         proc_output.assertWaitFor('test_carma_lifecycle_node_1 node is Configured!', process='test_carma_lifecycle_node_1', strict_proc_matching=True, timeout=10)
         proc_output.assertWaitFor('test_carma_lifecycle_node_2 node is Configured!', process='test_carma_lifecycle_node_2', strict_proc_matching=True, timeout=10)
+        proc_output.assertWaitFor('Subsystem able to configure', process='v2x_controller', strict_proc_matching=True, timeout=10)
+
         proc_output.assertWaitFor('test_carma_lifecycle_node_1 node is Activated!', process='test_carma_lifecycle_node_1', strict_proc_matching=True, timeout=5)
         proc_output.assertWaitFor('test_carma_lifecycle_node_2 node is Activated!', process='test_carma_lifecycle_node_2', strict_proc_matching=True, timeout=5)
+        proc_output.assertWaitFor('Subsystem able to activate', process='v2x_controller', strict_proc_matching=True, timeout=5)
 
         # Check that the system controller has driven the lifecycle of the nodes to shutdown state
         alert_node = TestPublisher()
 
-        alert_node.wait_for_subscribers(5.0) # Wait for subscriptions to connect since we just created the node
+        alert_node.wait_for_subscribers(2, 5.0) # Wait for subscriptions to connect since we just created the node
 
         shutdown_alert = SystemAlert()
         shutdown_alert.type = SystemAlert.FATAL
         shutdown_alert.source_node = '/test_carma_lifecycle_node_2' # Pretend this is the node that caused the fatal
+
         alert_node.publish_alert(shutdown_alert)
 
         print("count_subscribers " + str(alert_node.count_subscribers("/system_alert")))
@@ -124,7 +142,7 @@ class TestRuntime(unittest.TestCase):
         proc_output.assertWaitFor('Received SystemAlert message of type:', process='test_system_controller', strict_proc_matching=True, timeout=10)
         proc_output.assertWaitFor('test_carma_lifecycle_node_1 node is Shutdown!', process='test_carma_lifecycle_node_1', strict_proc_matching=True, timeout=5)
         proc_output.assertWaitFor('test_carma_lifecycle_node_2 node is Shutdown!', process='test_carma_lifecycle_node_2', strict_proc_matching=True, timeout=5)
-
+        proc_output.assertWaitFor('Subsystem able to shutdown', process='v2x_controller', strict_proc_matching=True, timeout=5)
 
 
 # All tests in this class will run on shutdown

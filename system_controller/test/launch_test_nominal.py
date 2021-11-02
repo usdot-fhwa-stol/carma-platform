@@ -48,7 +48,7 @@ class TestPublisher(Node):
         timeout = time.time() + timeout_sec   # Timeout time
         while self.publisher_.get_subscription_count() == 0 and time.time() < timeout:
             time.sleep(0.5)
-            #rclpy.spin_once(self)
+
         print('Subscribers found for: ' + self.publisher_.topic_name)
 
     # Publish a system alert
