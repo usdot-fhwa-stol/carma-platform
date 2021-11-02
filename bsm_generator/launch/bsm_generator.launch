@@ -15,5 +15,9 @@
 -->
 <launch>
     <rosparam command="load" file="$(find bsm_generator)/config/parameters.yaml"/>
-    <node name="bsm_generator" pkg="bsm_generator" type="bsm_generator"/>
+    <node name="bsm_generator" pkg="bsm_generator" type="bsm_generator">
+      <remap from="gnss_fix_fused" to="$(optenv CARMA_INTR_NS)/gnss_fix_fused"/>
+      <remap from="imu_raw" to="$(optenv CARMA_INTR_NS)/imu_raw"/>
+      <remap from="velocity_accel_cov" to="$(optenv CARMA_INTR_NS)/velocity_accel_cov"/>
+    </node>
 </launch>

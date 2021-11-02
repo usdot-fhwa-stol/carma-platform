@@ -175,11 +175,11 @@ void WzStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversRequest
 
   ROS_DEBUG("traffic_light_down_track %f", traffic_light_down_track);
 
-  double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack;
+  double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack - config_.vehicle_length;
 
   ROS_DEBUG("distance_remaining_to_traffic_light %f", distance_remaining_to_traffic_light);
 
-  double stopping_dist = estimate_distance_to_stop(current_state.speed, config_.vehicle_decel_limit_multiplier *
+  double stopping_dist = estimate_distance_to_stop(current_state.speed, config_.vehicle_decel_limit_multiplier  *
                                                                             config_.vehicle_decel_limit);
 
   ROS_DEBUG_STREAM("Stopping distance: " << stopping_dist);
@@ -244,7 +244,7 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
   // In the case of higher accel limits this calculation should always overestimate the arrival time which should be
   // fine as that would hit the following red phase.
   double time_remaining_to_traffic_light =
-      (2.0 * distance_remaining_to_traffic_light) /
+      (2.0 * (distance_remaining_to_traffic_light - config_.vehicle_length)) /
       (intersection_speed_.get() + current_state.speed);  // Kinematic Equation: 2*d / (vf + vi) = t
 
   ROS_DEBUG_STREAM("time_remaining_to_traffic_light: " << time_remaining_to_traffic_light);
@@ -290,7 +290,7 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
 
     // TODO do we need to check for anything before pushing onto the plan?
     resp.new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(
-        current_state.downtrack, traffic_light_down_track, current_state.speed, intersection_speed_.get(),
+        current_state.downtrack, traffic_light_down_track - config_.vehicle_length, current_state.speed, intersection_speed_.get(),
         current_state.stamp, light_arrival_time_at_freeflow,
         lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); })));
 
@@ -300,17 +300,19 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
         light_arrival_time_at_freeflow + ros::Duration(intersection_length / intersection_speed_.get());
 
     resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
-        traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
+        traffic_light_down_track - config_.vehicle_length, intersection_end_downtrack_.get(), intersection_speed_.get(),
         intersection_speed_.get(), light_arrival_time_at_freeflow, intersection_exit_time, crossed_lanelets.back().id(),
         nearest_traffic_light->getControlledLanelets().back().id()));
   }
   else  // Red or Yellow light
   {
+    double stopping_accel = config_.vehicle_decel_limit_multiplier * config_.vehicle_decel_limit;
+
     ROS_DEBUG_STREAM("Planning stop and wait maneuver");
     resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-        current_state.downtrack, traffic_light_down_track, current_state.speed, crossed_lanelets.front().id(),
+        current_state.downtrack, traffic_light_down_track - config_.vehicle_length, current_state.speed, crossed_lanelets.front().id(),
         crossed_lanelets.back().id(), current_state.stamp,
-        req.header.stamp + ros::Duration(config_.min_maneuver_planning_period)));
+        req.header.stamp + ros::Duration(config_.min_maneuver_planning_period), stopping_accel));
   }
 }
 
@@ -347,10 +349,12 @@ void WzStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& re
   constexpr double stop_maneuver_buffer = 10.0;
 
   // If the light is not green then continue waiting by creating a stop and wait maneuver ontop of the vehicle
+  double stopping_accel = config_.vehicle_decel_limit_multiplier * config_.vehicle_decel_limit;
+
   resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
       current_state.downtrack - stop_maneuver_buffer, traffic_light_down_track, current_state.speed,
       current_state.lane_id, current_state.lane_id, current_state.stamp,
-      current_state.stamp + ros::Duration(config_.min_maneuver_planning_period)));
+      current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), stopping_accel));
 }
 
 void WzStrategicPlugin::planWhenDEPARTING(const cav_srvs::PlanManeuversRequest& req,
@@ -486,7 +490,7 @@ cav_msgs::Maneuver WzStrategicPlugin::composeStopAndWaitManeuverMessage(double c
                                                                         double start_speed,
                                                                         const lanelet::Id& starting_lane_id,
                                                                         const lanelet::Id& ending_lane_id,
-                                                                        ros::Time start_time, ros::Time end_time) const
+                                                                        ros::Time start_time, ros::Time end_time, double stopping_accel) const
 {
   cav_msgs::Maneuver maneuver_msg;
   maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
@@ -505,6 +509,7 @@ cav_msgs::Maneuver WzStrategicPlugin::composeStopAndWaitManeuverMessage(double c
 
   // Set the meta data for the stop location buffer
   maneuver_msg.stop_and_wait_maneuver.parameters.float_valued_meta_data.push_back(config_.stopping_location_buffer);
+  maneuver_msg.stop_and_wait_maneuver.parameters.float_valued_meta_data.push_back(stopping_accel);
 
   ROS_INFO_STREAM("Creating stop and wait start dist: " << current_dist << " end dist: " << end_dist);
 
