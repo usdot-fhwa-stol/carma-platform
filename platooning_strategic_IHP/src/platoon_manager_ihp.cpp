@@ -36,8 +36,6 @@ namespace platoon_strategic_ihp
     {}
     // ------------------------------------- vehicle level getters (read vehicle info for platoon manager) ------------------------------------------//
     
-    // UCLA: init two buffers (dtd and speed) as vector, len == buffer length, init_val = -1, location: platoon_manager.h 
-    
     // UCLA: get current speed and push to speed buffer 
     double PlatoonManager::getCurrentSpeed() const {
         // * not using host vehcile trajectory history
