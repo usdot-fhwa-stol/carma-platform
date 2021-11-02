@@ -14,7 +14,7 @@ subsystem_namespace: /environment
 required_subsystem_nodes:
   - /environment/carma_wm_broadcaster
   - /environment/roadway_objects 
-  - /environment/motion_prediction # TODO check names
+  - /environment/motion_computation
 
 # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
 full_subsystem_required: true

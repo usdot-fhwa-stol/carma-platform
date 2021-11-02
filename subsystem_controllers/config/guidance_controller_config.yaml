@@ -10,10 +10,9 @@ call_timeout_ms : 200
 subsystem_namespace: /guidance
 
 # Required subsystem controller nodes for the overall system to be functional
-# TODO Yield really should be included here for safety as well
 required_subsystem_nodes:
   - /guidance/arbitrator
-  - /guidance/guidance_main # TODO double check name
+  - /guidance/guidance_node
   - /guidance/plan_delegator
   - /guidance/trajectory_executor
   - /guidance/twist_filter
@@ -22,6 +21,7 @@ required_subsystem_nodes:
   - /guidance/inlanecruising_plugin
   - /guidance/pure_pursuit_wrapper
   - /guidance/pure_pursuit
+  - /guidance/yield_plugin
 
 # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
 full_subsystem_required: true

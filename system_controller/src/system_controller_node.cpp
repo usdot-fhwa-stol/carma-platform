@@ -48,6 +48,8 @@ namespace system_controller
       config_.call_timeout_ms = this->declare_parameter<int64_t>("call_timeout_ms", config_.call_timeout_ms);
       config_.required_subsystem_nodes = this->declare_parameter<std::vector<std::string>>("required_subsystem_nodes", config_.required_subsystem_nodes);
 
+      lifecycle_mgr_.set_managed_nodes(config_.required_subsystem_nodes);
+
       // Create startup timer
       startup_timer_ = rclcpp::create_timer(
           this,
@@ -88,6 +90,11 @@ namespace system_controller
   {
     try
     {
+      RCLCPP_INFO(get_logger(), "Attempting to configure system...");
+      
+      if (startup_timer_)
+        startup_timer_->cancel(); // Cancel the timer as this callback should only trigger once
+
       // Walk the managed nodes through their lifecycle
       // First we configure the nodes
       if (!lifecycle_mgr_.configure(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms)))
@@ -110,8 +117,8 @@ namespace system_controller
         lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
         return;
       }
-      if (startup_timer_)
-        startup_timer_->cancel(); // If this callback completes then we can cancel the timer
+
+      RCLCPP_INFO(get_logger(), "System configured successfully");
     }
     catch (const std::exception &e)
     {
@@ -125,14 +132,14 @@ namespace system_controller
     try
     {
 
-      RCLCPP_INFO(
-          get_logger(), "Received SystemAlert message of type: %u, msg: %s",
-          msg->type, msg->description.c_str());
+      RCLCPP_INFO_STREAM(
+          get_logger(), "Received SystemAlert message of type: " << static_cast<int>(msg->type) << " with message: " << msg->description);
 
       
-      if ((std::find(config_.required_subsystem_nodes.begin(), config_.required_subsystem_nodes.end(), msg->source_node)
-           != config_.required_subsystem_nodes.end() && msg->type == carma_msgs::msg::SystemAlert::FATAL) // If a required node notified FATAL
-          || msg->type == carma_msgs::msg::SystemAlert::SHUTDOWN) // OR If a SHUTDOWN signal was received
+      if (msg->type == carma_msgs::msg::SystemAlert::SHUTDOWN // If a SHUTDOWN signal was received
+          || ( msg->type == carma_msgs::msg::SystemAlert::FATAL // OR if a required node notified FATAL
+              && std::find(config_.required_subsystem_nodes.begin(), config_.required_subsystem_nodes.end(), msg->source_node)
+                != config_.required_subsystem_nodes.end() ) )
       { 
         // TODO might make more sense for external shutdown to be a service call and remove SHUTDOWN from system alert entirely
         lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
@@ -143,7 +150,7 @@ namespace system_controller
       on_error(e);
     }
   }
-
+  
 } // namespace system_controller
 
 #include "rclcpp_components/register_node_macro.hpp"
