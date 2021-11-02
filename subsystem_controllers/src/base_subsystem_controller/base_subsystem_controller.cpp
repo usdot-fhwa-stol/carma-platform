@@ -112,7 +112,7 @@ namespace subsystem_controllers
     
 
     // With all of our managed nodes now being tracked we can execute their configure operations
-    bool success = lifecycle_mgr_.configure(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
+    bool success = lifecycle_mgr_.configure(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms)).empty();
 
     if (success)
     {
@@ -132,7 +132,7 @@ namespace subsystem_controllers
   {
     RCLCPP_INFO_STREAM(get_logger(), "Subsystem trying to activate");
 
-    bool success = lifecycle_mgr_.activate(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
+    bool success = lifecycle_mgr_.activate(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms)).empty();
 
     if (success)
     {
@@ -152,7 +152,7 @@ namespace subsystem_controllers
   {
     RCLCPP_INFO_STREAM(get_logger(), "Subsystem trying to deactivate");
 
-    bool success = lifecycle_mgr_.deactivate(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
+    bool success = lifecycle_mgr_.deactivate(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms)).empty();
 
     if (success)
     {
@@ -172,7 +172,7 @@ namespace subsystem_controllers
   {
     RCLCPP_INFO_STREAM(get_logger(), "Subsystem trying to cleanup");
 
-    bool success = lifecycle_mgr_.cleanup(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
+    bool success = lifecycle_mgr_.cleanup(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms)).empty();
 
     if (success)
     {
@@ -192,7 +192,7 @@ namespace subsystem_controllers
   {
     RCLCPP_INFO_STREAM(get_logger(), "Subsystem trying to shutdown due to error");
 
-    bool success = lifecycle_mgr_.shutdown(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
+    bool success = lifecycle_mgr_.shutdown(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms)).empty();
 
     if (success)
     {
@@ -212,7 +212,7 @@ namespace subsystem_controllers
   {
     RCLCPP_INFO_STREAM(get_logger(), "Subsystem trying to shutdown");
 
-    bool success = lifecycle_mgr_.shutdown(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms), false);
+    bool success = lifecycle_mgr_.shutdown(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms), false).empty();
 
     if (success)
     {

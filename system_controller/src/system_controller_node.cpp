@@ -97,7 +97,7 @@ namespace system_controller
 
       // Walk the managed nodes through their lifecycle
       // First we configure the nodes
-      if (!lifecycle_mgr_.configure(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms)))
+      if (!lifecycle_mgr_.configure(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms)).empty())
       {
         // If some nodes failed to configure then we will shutdown the system
         RCLCPP_ERROR_STREAM(
@@ -108,7 +108,7 @@ namespace system_controller
       }
 
       // Second we activate the nodes
-      if (!lifecycle_mgr_.activate(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms)))
+      if (!lifecycle_mgr_.activate(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms)).empty())
       {
 
         RCLCPP_ERROR_STREAM(
