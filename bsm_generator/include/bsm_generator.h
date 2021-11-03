@@ -70,6 +70,9 @@ namespace bsm_generator
         // frequency for bsm generation
         double bsm_generation_frequency_;
 
+        //Enable/disable rotation of BSM ID during vehicle operations
+        bool bsm_id_rotation_enabled_;
+
         // size of the vehicle
         double vehicle_length_, vehicle_width_;
 

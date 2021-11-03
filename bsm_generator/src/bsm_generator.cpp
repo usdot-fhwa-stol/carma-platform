@@ -26,6 +26,7 @@ namespace bsm_generator
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
         pnh_->param<double>("bsm_generation_frequency", bsm_generation_frequency_, 10.0);
+        pnh_->param<bool>("bsm_id_rotation_enabled", bsm_id_rotation_enabled_, true);
         nh_->param<double>("vehicle_length", vehicle_length_, 5.0);
         nh_->param<double>("vehicle_width", vehicle_width_, 2.0);
         bsm_pub_ = nh_->advertise<cav_msgs::BSM>("bsm_outbound", 5);
@@ -124,7 +125,11 @@ namespace bsm_generator
     {
         bsm_.header.stamp = ros::Time::now();
         bsm_.core_data.msg_count = worker.getNextMsgCount();
-        bsm_.core_data.id = worker.getMsgId(ros::Time::now());
+        
+        if(bsm_id_rotation_enabled_)
+        {
+            bsm_.core_data.id = worker.getMsgId(ros::Time::now());
+        }
         bsm_.core_data.sec_mark = worker.getSecMark(ros::Time::now());
         bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.SEC_MARK_AVAILABLE;
         // currently the accuracy is not available because ndt_matching does not provide accuracy measurement
