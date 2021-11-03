@@ -902,7 +902,7 @@ namespace basic_autonomy
             if(!following_lanelets.empty()){
                 //Arbitrarily choosing first following lanelet for buffer since points are only being used to fit spline
                 auto following_lanelet_centerline = following_lanelets.front().centerline2d().basicLineString();
-                centerline_points.insert(centerline_points.end(), following_lanelet_centerline.begin(), 
+                centerline_points.insert(centerline_points.end(), following_lanelet_centerline.begin() + 1, 
                                                                             following_lanelet_centerline.end());
             }
 
