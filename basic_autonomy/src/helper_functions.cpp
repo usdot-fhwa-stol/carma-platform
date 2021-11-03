@@ -112,5 +112,28 @@ namespace waypoint_generation
         double ending_downtrack = wm->routeTrackPos(state_pos).downtrack;
         return get_nearest_index_by_downtrack(points, wm, ending_downtrack);
     }
+
+    cav_msgs::VehicleState get_nearest_state_to_downtrack(const std::vector<lanelet::BasicPoint2d>& points, double target_downtrack, const carma_wm::WorldModelConstPtr &wm)
+    {
+        cav_msgs::VehicleState state;
+        for(auto p : points){
+            double downtrack;
+            if(wm->routeTrackPos(p).downtrack){
+                downtrack = wm->routeTrackPos(p).downtrack;
+
+                if(std::fabs(target_downtrack - downtrack ) < 0.001){
+                    state.X_pos_global = p.x();
+                    state.Y_pos_global = p.y();
+                    break;
+                }
+            }
+            else{
+                throw std::invalid_argument("Point not found on route");
+            }
+                
+        }
+
+        return state;
+    }
 }
 }

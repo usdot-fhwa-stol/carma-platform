@@ -263,7 +263,12 @@ namespace basic_autonomy
      std::vector<PointSpeedPair> create_lanechange_geometry(const cav_msgs::Maneuver &maneuver, double max_starting_downtrack,
                                                                    const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
                                                                    const cav_msgs::VehicleState &state, const DetailedTrajConfig &detailed_config);
+     
+     std::vector<lanelet::BasicPoint2d> create_lanechange_route(int ending_lane_id, double starting_downtrack, double ending_downtrack,
+                                                            const carma_wm::WorldModelConstPtr &wm,const cav_msgs::VehicleState &state);
 
+     cav_msgs::VehicleState get_nearest_state_to_downtrack(const std::vector<lanelet::BasicPoint2d>& points, double target_downtrack, 
+                                                            const carma_wm::WorldModelConstPtr &wm);                                                          
         /**
    * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning for a Lane following maneuver.
    * 
