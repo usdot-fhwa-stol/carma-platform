@@ -48,7 +48,7 @@
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>carma_utils</depend>
-  <depend>carma_cmake_common</depend>
+  <build_depend>carma_cmake_common</build_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

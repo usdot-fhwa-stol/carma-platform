@@ -36,6 +36,6 @@
   <depend>trajectory_utils</depend>
   <depend>route</depend>
   <depend>roslib</depend> 
-  <depend>carma_cmake_common</depend>
+  <build_depend>carma_cmake_common</build_depend>
 
 </package>

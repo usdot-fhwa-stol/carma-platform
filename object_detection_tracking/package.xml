@@ -36,7 +36,7 @@
 
   <depend>autoware_msgs</depend>
   <depend>motion_predict</depend>
-  <depend>carma_cmake_common</depend>
+  <build_depend>carma_cmake_common</build_depend>
 
   <export>
   

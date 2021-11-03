@@ -34,5 +34,5 @@
   <depend>j2735_msgs</depend>
   <depend>wgs84_utils</depend>
   <depend>lanelet2_extension</depend>
-  <depend>carma_cmake_common</depend>
+  <build_depend>carma_cmake_common</build_depend>
 </package>
