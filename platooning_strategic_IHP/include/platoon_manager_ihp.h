@@ -283,8 +283,6 @@ namespace platoon_strategic_ihp
         double downtrack_progress_ = 0;
 
         // ---------------------- UCLA: parameters for IHP gap regulation ----------------
-        // UCLA: buffer_size
-        int buffer_size = 5;
         // UCLA: stand still theta for IHP 
         double ss_theta = 4.0;
         // UCLA: stand still for IHP 
@@ -295,8 +293,6 @@ namespace platoon_strategic_ihp
         double INTRA_TAU = 0.6;
         // UCLA
         double gap_weight = 0.9;
-        // UCLA: IHP 
-        // double time_headway_leader = 1.16 //leader control may need this param
         //--------------------------------------------------------------------------------
 
         std::string algorithmType_ = "APF_ALGORITHM";

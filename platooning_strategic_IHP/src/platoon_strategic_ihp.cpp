@@ -218,7 +218,9 @@ namespace platoon_strategic_ihp
         map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str()); 
     }
 
-    // ---------------------------------- 1. compose messages -----------------------------------------------//
+    //-------------------------------- Mobility Communication --------------------------------------//
+
+    // ------ 1. compose messages ------
     cav_msgs::PlatooningInfo PlatoonStrategicIHPPlugin::composePlatoonInfoMsg()
     {
         cav_msgs::PlatooningInfo status_msg;
@@ -308,7 +310,7 @@ namespace platoon_strategic_ihp
         msg.header.timestamp = ros::Time::now().toNSec() / 1000000;;
         msg.strategy = MOBILITY_STRATEGY;
 
-        // info params, constant mob_op type
+        // info params
         if (type == OPERATION_INFO_TYPE) {
             // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d,DTD:%.2f,FRONTBSM:%s, FRONTDTD:%0.2f
 
@@ -345,7 +347,7 @@ namespace platoon_strategic_ihp
             msg.strategy_params = infoParams;
         }
 
-        // status patams, the leader is not leading platoon
+        // status patams
         else if (type == OPERATION_STATUS_TYPE) {
             // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
             double cmdSpeed = cmd_speed_;
@@ -1010,7 +1012,7 @@ namespace platoon_strategic_ihp
     }
 
 
-    //------- 3. Request Callback -----------------------------------//
+    //------- 3. Mobility Request Callback //-------
     MobilityRequestResponse PlatoonStrategicIHPPlugin::handle_mob_req(const cav_msgs::MobilityRequest& msg)
     {
         MobilityRequestResponse mobility_response;
@@ -1621,7 +1623,7 @@ namespace platoon_strategic_ihp
     }
     
     
-   //----------------------------------- FSM states -----------------------------------//
+   //------------------------------------------ FSM states --------------------------------------------------//
 
    /*
    ------- Additional IHP FSM here -------
@@ -1912,7 +1914,8 @@ namespace platoon_strategic_ihp
         ros::Duration(sleepDuration / 1000).sleep();
     }
 
-    //----------------------------------- main functions for platoon plugin -----------------------------------//
+    //------------------------------------------- main functions for platoon plugin --------------------------------------------//
+    
     // Platoon on spin
     bool PlatoonStrategicIHPPlugin::onSpin() 
     {
@@ -1951,7 +1954,7 @@ namespace platoon_strategic_ihp
         return true;
     }
 
-    // -------------------- Generate manuver plan (Service Callback) ------------------------//
+    // ------- Generate manuver plan (Service Callback) ------- //
     
     // compose manuver message 
     cav_msgs::Maneuver PlatoonStrategicIHPPlugin::composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time& current_time)
