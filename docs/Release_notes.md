@@ -1,6 +1,29 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 3.8.2, released Oct 22nd, 2021
+----------------------------------------
+
+**Summary:** 
+Carma-platform release version 3.8.2 is a hotfix release for 3.8.0.
+
+Fixes in this release:
+-	Issue 1489: Fixed stop and wait tactical plugin which uses constant vehicle acceleration specified through config parameters to bring the vehicle to a stop by sending acceleration value to the tactical plugin as a meta data in the maneuver message.
+-	Issue 147: Updated the IP Addresses listed in the drivers. Launch file for the forward-facing left and right cameras on two of the trucks (10004 and 80550).
+-	Issue 75: Fixed two LiDAR’s which were not calibrated on the carma white truck during verification testing.
+
+
+Version 3.8.1, released Oct 15th, 2021
+----------------------------------------
+
+**Summary:** 
+Carma-platform release version 3.8.1 is a hotfix release for 3.8.0.
+
+Fixes in this release:
+- Issue 1461: Fixed basic autonomy errors in inlane cruising to prevent planning maneuvers on top of themselves, by fixing broken maneuvers_to_points method that didn't properly track the processed lanelets.
+- Issue 1446: Fixed the work zone plugin by updating vehicle length parameter and modifying traffic light downtrack calculations to ensure that the target stopping location would be shifted backward by vehicle length.
+- Issue 1475 & 139: Fixed carma-platform and carma-config by carma-docker.launch file for each freightliner to pass in the correct LiDAR frame and fixed IP address of the front left camera in the blue truck.
+
 Version 3.8.0, released Sep 24th, 2021
 ----------------------------------------
 

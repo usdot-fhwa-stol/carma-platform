@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,8 +27,6 @@
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/primitives/Traits.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
-#include <lanelet2_extension/projection/local_frame_projector.h>
-#include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <carma_wm/MapConformer.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <ros/console.h>
@@ -36,7 +34,8 @@
 #include <carma_utils/containers/containers.h>
 #include <tf/LinearMath/Vector3.h>
 
-
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <ros/ros.h>
 #include <string>
 #include <algorithm>
@@ -50,13 +49,9 @@
 #include <carma_utils/containers/containers.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+
 #include <Eigen/LU>
 #include <Eigen/SVD>
-#include <inlanecruising_plugin/smoothing/SplineI.h>
-#include <inlanecruising_plugin/smoothing/BSpline.h>
-#include <inlanecruising_plugin/inlanecruising_plugin.h>
-#include <inlanecruising_plugin/log/log.h>
-#include <inlanecruising_plugin/smoothing/filters.h>
 #include <unordered_set>
 
 
@@ -276,7 +271,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
     // ROS_INFO_STREAM("Original point: x: " << route_geometry[i].x() << "y: " << route_geometry[i].y());
   }
 
-  std::unique_ptr<smoothing::SplineI> fit_curve = inlc.compute_fit(downsampled_points);
+  std::unique_ptr<basic_autonomy::smoothing::SplineI> fit_curve = basic_autonomy:: waypoint_generation::compute_fit(downsampled_points);
   
   std::vector<lanelet::BasicPoint2d> spline_points;
 

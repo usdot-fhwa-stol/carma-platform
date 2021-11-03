@@ -103,7 +103,7 @@ public:
    */
   std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_centerline(
       const std::vector<PointSpeedPair>& points, double starting_downtrack, double starting_speed, double stop_location,
-      double stop_location_buffer, ros::Time start_time);
+      double stop_location_buffer, ros::Time start_time, double stopping_acceleration);
 
   /**
    * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists

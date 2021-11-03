@@ -11,5 +11,6 @@
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>carma_cmake_common</depend>
+  <depend>autoware_msgs</depend>
   
 </package>
