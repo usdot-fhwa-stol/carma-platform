@@ -527,7 +527,7 @@ namespace route {
                 }
 
             // check if we reached our destination be remaining down track distance            
-            double route_length_2d = world_model_->getRouteEndTrackPos();
+            double route_length_2d = world_model_->getRouteEndTrackPos().downtrack;
             if((current_downtrack_distance_ > route_length_2d - down_track_target_range_ && current_speed_ < epsilon_) || (current_downtrack_distance_ > route_length_2d))
             {
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_COMPLETED);
