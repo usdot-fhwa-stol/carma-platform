@@ -297,7 +297,8 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
       // lane following to intersection
       base_time = std::max(scheduled_stop_time_, street_msg_timestamp_);
-      double time_to_schedule_stop = (scheduled_stop_time_ - base_time)/1000;
+      // double time_to_schedule_stop = (scheduled_stop_time_ - base_time)/1000;
+      double time_to_schedule_stop = (scheduled_stop_time_ - street_msg_timestamp_)/1000;
       ROS_DEBUG_STREAM("time_to_schedule_stop  " << time_to_schedule_stop);
       int case_num = determineSpeedProfileCase(stop_intersection_down_track, current_state.speed, time_to_schedule_stop, speed_limit_);
       ROS_DEBUG_STREAM("case_num:  " << case_num);
