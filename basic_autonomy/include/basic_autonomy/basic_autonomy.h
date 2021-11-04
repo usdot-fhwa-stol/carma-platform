@@ -268,7 +268,10 @@ namespace basic_autonomy
                                                             const carma_wm::WorldModelConstPtr &wm,const cav_msgs::VehicleState &state);
 
      cav_msgs::VehicleState get_nearest_state_to_downtrack(const std::vector<lanelet::BasicPoint2d>& points, double target_downtrack, 
-                                                            const carma_wm::WorldModelConstPtr &wm);                                                          
+                                                            const carma_wm::WorldModelConstPtr &wm);   
+
+     std::vector<std::vector<lanelet::BasicPoint2d>> resample_linestrings_to_same_length(std::vector<lanelet::BasicPoint2d> line_1, std::vector<lanelet::BasicPoint2d> line_2);
+
         /**
    * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning for a Lane following maneuver.
    * 

@@ -319,23 +319,42 @@ namespace basic_autonomy
             lanelet::BasicLineString2d starting_centerline(reference_centerline.begin() + reference_line_start_index, reference_centerline.end());
             lanelet::BasicLineString2d ending_centerline(ending_lane_centerline.begin(), ending_lane_centerline.begin() + ending_line_end_index);
 
-            //If points are not the same size - ensure same size along both centerlines
+            //Convert to vector of BasicPoint2d
 
-            if(starting_centerline.size() > ending_centerline.size()){
-                starting_centerline.resize(ending_centerline.size());
+                //Downsample centerlines
+            lanelet::BasicLineString2d downsampled_start_centerline;
+            downsampled_start_centerline.reserve(400);
+            downsampled_start_centerline = carma_utils::containers::downsample_vector(starting_centerline, 5);
+            std::vector<lanelet::BasicPoint2d> start_centerline;
+            for(int i = 0;i<starting_centerline.size();++i){
+                start_centerline.push_back(starting_centerline[i]);
             }
-            else if(ending_centerline.size() > starting_centerline.size()){
-                ending_centerline.erase(ending_centerline.begin() + ending_centerline.size() - starting_centerline.size());
+
+            lanelet::BasicLineString2d downsampled_end_centerline;
+            downsampled_end_centerline.reserve(400);
+            downsampled_end_centerline = carma_utils::containers::downsample_vector(ending_centerline, 5);
+            std::vector<lanelet::BasicPoint2d> end_centerline;
+            for(int i = 0; i<ending_centerline.size();++i){
+                end_centerline.push_back(ending_centerline[i]);
+            }
+            //If points are not the same size - ensure same size along both centerlines
+            if(start_centerline.size() != end_centerline.size())
+            {
+                //Resample centerlines to same length
+                auto centerlines = resample_linestrings_to_same_length(start_centerline, end_centerline);
+                start_centerline = centerlines.front();
+                end_centerline = centerlines.back();
+
             }
 
             //Create Trajectory geometry
-            double delta_step = 1.0 / starting_centerline.size();
+            double delta_step = 1.0 / start_centerline.size();
 
-            for (int i = 0; i < starting_centerline.size(); i++)
+            for (int i = 0; i < start_centerline.size(); i++)
             {
                 lanelet::BasicPoint2d current_position;
-                lanelet::BasicPoint2d start_lane_pt = starting_centerline[i];
-                lanelet::BasicPoint2d end_lane_pt = ending_centerline[i];
+                lanelet::BasicPoint2d start_lane_pt = start_centerline[i];
+                lanelet::BasicPoint2d end_lane_pt = end_centerline[i];
                 double delta = delta_step * i;
                 current_position.x() = end_lane_pt.x() * delta + (1 - delta) * start_lane_pt.x();
                 current_position.y() = end_lane_pt.y() * delta + (1 - delta) * start_lane_pt.y();
@@ -355,6 +374,58 @@ namespace basic_autonomy
             return centerline_points;
         }
 
+        std::vector<std::vector<lanelet::BasicPoint2d>> resample_linestrings_to_same_length(std::vector<lanelet::BasicPoint2d> line_1, std::vector<lanelet::BasicPoint2d> line_2){
+            std::vector<std::vector<lanelet::BasicPoint2d>> output;
+            
+            //Fit centerlines to a spline
+            std::unique_ptr<smoothing::SplineI> fit_curve_1 = compute_fit(line_1); // Compute splines based on curve points
+            if (!fit_curve_1)
+            {
+                throw std::invalid_argument("Could not fit a spline curve along the starting_lane centerline points!");
+            }
+
+            std::unique_ptr<smoothing::SplineI> fit_curve_2 = compute_fit(line_2); // Compute splines based on curve points
+            if (!fit_curve_2)
+            {
+                throw std::invalid_argument("Could not fit a spline curve along the ending_lane centerline points!");
+            }
+
+            //Sample spline to get centerlines of equal size
+            std::vector<lanelet::BasicPoint2d> all_sampling_points_line1;
+            std::vector<lanelet::BasicPoint2d> all_sampling_points_line2;
+
+            size_t total_point_size = std::min(line_1.size(), line_2.size());
+
+            all_sampling_points_line1.reserve(1 + total_point_size * 2);
+            std::vector<double> downtracks_raw_line1 = carma_wm::geometry::compute_arc_lengths(line_1);
+            int total_step_along_curve1 = static_cast<int>(downtracks_raw_line1.back() / 2.0);
+            double step_threshold_line1 = (double)total_step_along_curve1 / (double)total_point_size;
+            
+            all_sampling_points_line2.reserve(1 + total_point_size * 2);
+            std::vector<double> downtracks_raw_line2 = carma_wm::geometry::compute_arc_lengths(line_2);
+            int total_step_along_curve2 = static_cast<int>(downtracks_raw_line2.back() / 2.0);
+            double step_threshold_line2 = (double)total_step_along_curve2 / (double)total_point_size;
+
+            double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
+            
+            
+            all_sampling_points_line2.reserve(1 + total_point_size * 2);
+            
+            for(int i = 0;i<total_point_size; ++i){
+                lanelet::BasicPoint2d p1 = (*fit_curve_1)(scaled_steps_along_curve);
+                lanelet::BasicPoint2d p2 = (*fit_curve_2)(scaled_steps_along_curve);
+                all_sampling_points_line1.push_back(p1);
+                all_sampling_points_line2.push_back(p2);
+
+                scaled_steps_along_curve += 1.0 / total_point_size;  //adding steps_along_curve_step_size
+            }
+
+            output.push_back(all_sampling_points_line1);
+            output.push_back(all_sampling_points_line2);
+
+            return output;
+        }
+        
         std::vector<PointSpeedPair> create_lanechange_geometry(const cav_msgs::Maneuver &maneuver, double starting_downtrack,
                                                                    const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
                                                                     const cav_msgs::VehicleState &state, const DetailedTrajConfig &detailed_config)

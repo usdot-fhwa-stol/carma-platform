@@ -664,6 +664,20 @@ namespace basic_autonomy
                                                                                     starting_downtrack, cwm, ending_state, state, general_config, config);
         
         EXPECT_TRUE(points.size() > 4);
+
+        //Test resample linestring
+        lanelet::BasicLineString2d line_one = shortest_path.front().centerline2d().basicLineString();
+        std::vector<lanelet::BasicPoint2d> line_1;
+        for(int i = 0;i<line_one.size();i++){
+            line_1.push_back(line_one[i]);
+        }
+        lanelet::BasicLineString2d line_two = shortest_path.back().centerline2d().basicLineString();
+        std::vector<lanelet::BasicPoint2d> line_2;
+        for(int i = 0;i<line_two.size();i++){
+            line_2.push_back(line_two[i]);
+        }
+        std::vector<std::vector<lanelet::BasicPoint2d>> linestrings = basic_autonomy::waypoint_generation::resample_linestrings_to_same_length(line_1, line_2);
+
     }
 
     TEST(BasicAutonomyTest, maneuvers_to_lanechange_points)
