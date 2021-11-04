@@ -20,7 +20,6 @@
 #include <tf2/LinearMath/Transform.h>
 #include <wgs84_utils/wgs84_utils.h>
 #include <sensor_msgs/NavSatFix.h>
-#include <novatel_gps_msgs/NovatelDualAntennaHeading.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>

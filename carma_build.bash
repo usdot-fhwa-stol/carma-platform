@@ -97,7 +97,12 @@ fi
 ###
 # Build CARMA 
 ###
+
+source /opt/autoware.ai/ros/install/setup.bash
+echo "Autoware built successfuly. Binaries sourced from $(realpath ./install/setup.bash)"
+
 echo "Building CARMA"
 cd ${carma_workspace}
+
 colcon build --cmake-args ${carma_build_args}
-echo echo "CARMA built successfuly. Binaries sourced from $(realpath ./install/setup.bash)"
+echo "CARMA built successfuly. Binaries sourced from $(realpath ./install/setup.bash)"

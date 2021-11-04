@@ -18,7 +18,7 @@ cmake_minimum_required(VERSION 2.8.3)
 
 project(gnss_to_map_convertor)
 
-## Compile as C++14
+## Compile as C++14, supported in ROS Noetic and newer
 add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
@@ -37,7 +37,6 @@ find_package(catkin REQUIRED COMPONENTS
   cav_msgs
   cav_srvs
   message_filters
-  novatel_gps_msgs
   carma_utils
   lanelet2_extension
   lanelet2_core
@@ -55,7 +54,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES gnss_to_map_convertor
-  CATKIN_DEPENDS geometry_msgs roscpp rospy std_msgs tf2_msgs wgs84_utils message_filters novatel_gps_msgs carma_utils tf2_geometry_msgs lanelet2_extension
+  CATKIN_DEPENDS geometry_msgs roscpp rospy std_msgs tf2_msgs wgs84_utils message_filters carma_utils tf2_geometry_msgs lanelet2_extension
 )
 
 ###########
