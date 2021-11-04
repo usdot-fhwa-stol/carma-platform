@@ -363,11 +363,30 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     std::vector<lanelet::ConstLanelet> crossed_lanelets =
           getLaneletsBetweenWithException(current_downtrack_, intersection_end_downtrack, true, true);
 
+    std::string turn_direction = "";
+    // find the turn direction at intersection:
+    for (auto l:crossed_lanelets)
+    {
+      if(l.hasAttribute("turn_direction")) {
+        std::string turn_direction = l.attribute("turn_direction").value();
+        ROS_DEBUG_STREAM("intersection crossed lanelet direction is: " << turn_direction);
+        if (turn_direction != "straight") break;
+      }
+      else
+      {
+        turn_direction = "straight";
+      }
+
+    }
+
+    turn_direction_ = turn_direction;
+    ROS_DEBUG_STREAM("turn direction at the intersection is: " << turn_direction_);
+
     double intersection_speed_limit = 15;//findSpeedLimit(nearest_stop_intersection->lanelets().front());
 
     resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
       current_downtrack_, intersection_end_downtrack, current_state.speed, intersection_speed_limit,
-      current_state.stamp, req.header.stamp + ros::Duration(intersection_transit_time), crossed_lanelets.front().id(), crossed_lanelets.back().id()));
+      current_state.stamp, req.header.stamp + ros::Duration(intersection_transit_time), turn_direction_, crossed_lanelets.front().id(), crossed_lanelets.back().id()));
     
     // when passing intersection, set the flag to false
     // TODO: Another option, check the time on mobilityoperation to see if it passes intersection
@@ -574,6 +593,7 @@ cav_msgs::Maneuver SCIStrategicPlugin::composeStopAndWaitManeuverMessage(double 
 cav_msgs::Maneuver SCIStrategicPlugin::composeIntersectionTransitMessage(double start_dist, double end_dist,
                                                                         double start_speed, double target_speed,
                                                                         ros::Time start_time, ros::Time end_time,
+                                                                        std::string turn_direction,
                                                                         const lanelet::Id& starting_lane_id,
                                                                         const lanelet::Id& ending_lane_id) const
 {

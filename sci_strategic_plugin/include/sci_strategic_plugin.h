@@ -140,7 +140,7 @@ public:
                                                       double stopping_accel, ros::Time start_time, ros::Time end_time) const;
 
   cav_msgs::Maneuver composeIntersectionTransitMessage(double start_dist, double end_dist, double start_speed, 
-                                                      double target_speed, ros::Time start_time, ros::Time end_time,
+                                                      double target_speed, ros::Time start_time, ros::Time end_time, std::string turn_direction,
                                                       const lanelet::Id& starting_lane_id, const lanelet::Id& ending_lane_id) const;
 
   /**
@@ -290,6 +290,8 @@ public:
   uint32_t scheduled_departure_position_ = 9999;
   // flag to show if the vehicle is allowed in intersection
   bool is_allowed_int_ = false;
+
+  std::string turn_direction_ = "straight";
 
   // approximate speed limit 
   double speed_limit_ = 100.0;
