@@ -1,5 +1,5 @@
 <!--
-  Copyright (C) 2018-2021 LEIDOS.
+  Copyright (C) 2021 LEIDOS.
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
@@ -11,13 +11,10 @@
   the License.
 -->
 <!--
-  This file is used to launch a ros wrapper of Autoware planner as a CARMA strategic plugin.
+  This file is used to launch the light_controlled_intersection_tactical_plugin.
 -->
 <launch>
-    <rosparam command="load" file="$(find bsm_generator)/config/parameters.yaml"/>
-    <node name="bsm_generator" pkg="bsm_generator" type="bsm_generator">
-      <remap from="gnss_fix_fused" to="$(optenv CARMA_INTR_NS)/gnss_fix_fused"/>
-      <remap from="imu_raw" to="$(optenv CARMA_INTR_NS)/imu_raw"/>
-      <remap from="velocity_accel_cov" to="$(optenv CARMA_INTR_NS)/velocity_accel_cov"/>
+    <node name="light_controlled_intersection_tactical_plugin" pkg="light_controlled_intersection_tactical_plugin" type="light_controlled_intersection_tactical_plugin">
+      <rosparam command="load" file="$(find light_controlled_intersection_tactical_plugin)/config/parameters.yaml"/>
     </node>
 </launch>
