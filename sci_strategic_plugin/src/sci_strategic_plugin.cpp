@@ -363,30 +363,18 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     std::vector<lanelet::ConstLanelet> crossed_lanelets =
           getLaneletsBetweenWithException(current_downtrack_, intersection_end_downtrack, true, true);
 
-    std::string turn_direction = "";
+    
     // find the turn direction at intersection:
-    for (auto l:crossed_lanelets)
-    {
-      if(l.hasAttribute("turn_direction")) {
-        std::string turn_direction = l.attribute("turn_direction").value();
-        ROS_DEBUG_STREAM("intersection crossed lanelet direction is: " << turn_direction);
-        if (turn_direction != "straight") break;
-      }
-      else
-      {
-        turn_direction = "straight";
-      }
 
-    }
-
-    turn_direction_ = turn_direction;
-    ROS_DEBUG_STREAM("turn direction at the intersection is: " << turn_direction_);
+    intersection_turn_direction_ = getTurnDirectionatIntersection(crossed_lanelets);
+    
+    ROS_DEBUG_STREAM("turn direction at the intersection is: " << intersection_turn_direction_);
 
     double intersection_speed_limit = 15;//findSpeedLimit(nearest_stop_intersection->lanelets().front());
 
     resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
       current_downtrack_, intersection_end_downtrack, current_state.speed, intersection_speed_limit,
-      current_state.stamp, req.header.stamp + ros::Duration(intersection_transit_time), turn_direction_, crossed_lanelets.front().id(), crossed_lanelets.back().id()));
+      current_state.stamp, req.header.stamp + ros::Duration(intersection_transit_time), intersection_turn_direction_, crossed_lanelets.front().id(), crossed_lanelets.back().id()));
     
     // when passing intersection, set the flag to false
     // TODO: Another option, check the time on mobilityoperation to see if it passes intersection
@@ -396,13 +384,35 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     if (distance_to_stopline < -end_of_intersection)
     {
       ROS_DEBUG_STREAM("Vehicle is out of intersection, stop planning...");
-      // once the vehicle crosses the intersection, flip the flag to stop planning and publishing status/intent
+      // once the vehicle crosses the intersection, reset the flag to stop planning and publishing status/intent
       approaching_stop_controlled_interction_ = false;
+      // once the intersection is crossed, reset turn direction
+      intersection_turn_direction_ = "straight";
     }
 
   }
   
   return true;
+}
+
+std::string SCIStrategicPlugin::getTurnDirectionatIntersection(std::vector<lanelet::ConstLanelet> lanelets_list)
+{
+  std::string turn_direction = "";
+  for (auto l:lanelets_list)
+  {
+    if(l.hasAttribute("turn_direction")) {
+      std::string turn_direction = l.attribute("turn_direction").value();
+      ROS_DEBUG_STREAM("intersection crossed lanelet direction is: " << turn_direction);
+      if (turn_direction != "straight") break;
+    }
+    else
+    {
+      // if there is no attribute, assumption is straight
+      turn_direction = "straight";
+    }
+
+  }
+  return turn_direction;
 }
 
 void SCIStrategicPlugin::caseOneSpeedProfile(double speed_before_decel, double current_speed, double stop_time, 
@@ -557,7 +567,7 @@ void SCIStrategicPlugin::generateMobilityOperation()
     mo_.strategy_params = "access: " +  std::to_string(flag) + ", max_accel: " + std::to_string(vehicle_acceleration_limit_) + 
                         ", max_decel: " + std::to_string(vehicle_deceleration_limit_) + ", react_time: " + std::to_string(config_.reaction_time) +
                         ", min_gap: " + std::to_string(config_.min_gap) + ", depart_pos: " + std::to_string(scheduled_departure_position_) + 
-                        ", turn_direction: " + turn_direction, "msg_count: " + bsm_msg_count_, "sec_mark: ", bsm_sec_mark_;
+                        ", turn_direction: " + intersection_turn_direction_, "msg_count: " + bsm_msg_count_, "sec_mark: ", bsm_sec_mark_;
     
 
     mobility_operation_pub.publish(mo_);
@@ -598,23 +608,71 @@ cav_msgs::Maneuver SCIStrategicPlugin::composeIntersectionTransitMessage(double 
                                                                         const lanelet::Id& ending_lane_id) const
 {
   cav_msgs::Maneuver maneuver_msg;
-  maneuver_msg.type = cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT;
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.planning_strategic_plugin =
-      config_.strategic_plugin_name;
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.planning_tactical_plugin =
-      config_.intersection_transit_plugin_name;
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.presence_vector =
-      cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.negotiation_type =
-      cav_msgs::ManeuverParameters::NO_NEGOTIATION;
-  maneuver_msg.intersection_transit_straight_maneuver.start_dist = start_dist;
-  maneuver_msg.intersection_transit_straight_maneuver.end_dist = end_dist;
-  maneuver_msg.intersection_transit_straight_maneuver.start_speed = start_speed;
-  maneuver_msg.intersection_transit_straight_maneuver.end_speed = target_speed;
-  maneuver_msg.intersection_transit_straight_maneuver.start_time = start_time;
-  maneuver_msg.intersection_transit_straight_maneuver.end_time = end_time;
-  maneuver_msg.intersection_transit_straight_maneuver.starting_lane_id = std::to_string(starting_lane_id);
-  maneuver_msg.intersection_transit_straight_maneuver.ending_lane_id = std::to_string(ending_lane_id);
+  if (turn_direction == "left")
+  {
+    maneuver_msg.type = cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN;
+    maneuver_msg.intersection_transit_left_turn_maneuver.parameters.planning_strategic_plugin =
+        config_.strategic_plugin_name;
+    maneuver_msg.intersection_transit_left_turn_maneuver.parameters.planning_tactical_plugin =
+        config_.intersection_transit_plugin_name;
+    maneuver_msg.intersection_transit_left_turn_maneuver.parameters.presence_vector =
+        cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
+    maneuver_msg.intersection_transit_left_turn_maneuver.parameters.negotiation_type =
+        cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+    maneuver_msg.intersection_transit_left_turn_maneuver.start_dist = start_dist;
+    maneuver_msg.intersection_transit_left_turn_maneuver.end_dist = end_dist;
+    maneuver_msg.intersection_transit_left_turn_maneuver.start_speed = start_speed;
+    maneuver_msg.intersection_transit_left_turn_maneuver.end_speed = target_speed;
+    maneuver_msg.intersection_transit_left_turn_maneuver.start_time = start_time;
+    maneuver_msg.intersection_transit_left_turn_maneuver.end_time = end_time;
+    maneuver_msg.intersection_transit_left_turn_maneuver.starting_lane_id = std::to_string(starting_lane_id);
+    maneuver_msg.intersection_transit_left_turn_maneuver.ending_lane_id = std::to_string(ending_lane_id);
+
+  }
+  else if (turn_direction == "right")
+  {
+    maneuver_msg.type = cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN;
+    maneuver_msg.intersection_transit_right_turn_maneuver.parameters.planning_strategic_plugin =
+        config_.strategic_plugin_name;
+    maneuver_msg.intersection_transit_right_turn_maneuver.parameters.planning_tactical_plugin =
+        config_.intersection_transit_plugin_name;
+    maneuver_msg.intersection_transit_right_turn_maneuver.parameters.presence_vector =
+        cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
+    maneuver_msg.intersection_transit_right_turn_maneuver.parameters.negotiation_type =
+        cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+    maneuver_msg.intersection_transit_right_turn_maneuver.start_dist = start_dist;
+    maneuver_msg.intersection_transit_right_turn_maneuver.end_dist = end_dist;
+    maneuver_msg.intersection_transit_right_turn_maneuver.start_speed = start_speed;
+    maneuver_msg.intersection_transit_right_turn_maneuver.end_speed = target_speed;
+    maneuver_msg.intersection_transit_right_turn_maneuver.start_time = start_time;
+    maneuver_msg.intersection_transit_right_turn_maneuver.end_time = end_time;
+    maneuver_msg.intersection_transit_right_turn_maneuver.starting_lane_id = std::to_string(starting_lane_id);
+    maneuver_msg.intersection_transit_right_turn_maneuver.ending_lane_id = std::to_string(ending_lane_id);
+
+  }
+  else
+  {
+    maneuver_msg.type = cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT;
+    maneuver_msg.intersection_transit_straight_maneuver.parameters.planning_strategic_plugin =
+        config_.strategic_plugin_name;
+    maneuver_msg.intersection_transit_straight_maneuver.parameters.planning_tactical_plugin =
+        config_.intersection_transit_plugin_name;
+    maneuver_msg.intersection_transit_straight_maneuver.parameters.presence_vector =
+        cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
+    maneuver_msg.intersection_transit_straight_maneuver.parameters.negotiation_type =
+        cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+    maneuver_msg.intersection_transit_straight_maneuver.start_dist = start_dist;
+    maneuver_msg.intersection_transit_straight_maneuver.end_dist = end_dist;
+    maneuver_msg.intersection_transit_straight_maneuver.start_speed = start_speed;
+    maneuver_msg.intersection_transit_straight_maneuver.end_speed = target_speed;
+    maneuver_msg.intersection_transit_straight_maneuver.start_time = start_time;
+    maneuver_msg.intersection_transit_straight_maneuver.end_time = end_time;
+    maneuver_msg.intersection_transit_straight_maneuver.starting_lane_id = std::to_string(starting_lane_id);
+    maneuver_msg.intersection_transit_straight_maneuver.ending_lane_id = std::to_string(ending_lane_id);
+
+  }
+  
+  
 
   // Start time and end time for maneuver are assigned in updateTimeProgress
 

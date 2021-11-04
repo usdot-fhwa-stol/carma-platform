@@ -274,6 +274,16 @@ public:
    * \brief BSM callback function
    */
   void BSMCb(const cav_msgs::BSMConstPtr& msg);
+
+  /**
+   * \brief Determine the turn direction at intersection
+   *
+   * \param lanelets_list List of lanelets crossed around the intersection area
+   *
+   * \return turn direction in format of straight, left, right
+   *
+   */
+  std::string getTurnDirectionatIntersection(std::vector<lanelet::ConstLanelet> lanelets_list);
   
   ////////// VARIABLES ///////////
 
@@ -291,7 +301,7 @@ public:
   // flag to show if the vehicle is allowed in intersection
   bool is_allowed_int_ = false;
 
-  std::string turn_direction_ = "straight";
+  std::string intersection_turn_direction_ = "straight";
 
   // approximate speed limit 
   double speed_limit_ = 100.0;

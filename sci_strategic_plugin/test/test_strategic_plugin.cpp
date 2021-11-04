@@ -78,8 +78,9 @@ TEST(SCIStrategicPluginTest, composeIntersectionTransitMessage)
   std::shared_ptr<carma_wm::CARMAWorldModel> wm;
   SCIStrategicPluginConfig config;
   SCIStrategicPlugin sci(wm, config);
+  std::string intersection_turn_direction = "straight";
 
-  auto result = sci.composeIntersectionTransitMessage(10.2, 20.4, 5, 10, ros::Time(1.2), ros::Time(2.2), 1200, 1201);
+  auto result = sci.composeIntersectionTransitMessage(10.2, 20.4, 5, 10, ros::Time(1.2), ros::Time(2.2), intersection_turn_direction, 1200, 1201);
 
   ASSERT_EQ(cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT, result.type);
   ASSERT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION,
@@ -248,6 +249,17 @@ TEST(SCIStrategicPluginTest, caseTwoSpeedProfiletest)
 }
 
 TEST(SCIStrategicPluginTest, caseThreeSpeedProfiletest)
+{
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  SCIStrategicPluginConfig config;
+  SCIStrategicPlugin sci(wm, config);
+
+  double dec_val = sci.caseThreeSpeedProfile(50, 5, 30);
+
+  EXPECT_NEAR(-1.83, dec_val, 0.01);
+}
+
+TEST(SCIStrategicPluginTest, testIntersectionturndirection)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   SCIStrategicPluginConfig config;
