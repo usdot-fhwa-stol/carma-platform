@@ -237,33 +237,47 @@ namespace basic_autonomy
         std::vector<lanelet::BasicPoint2d> create_lanechange_route(int ending_lane_id, double starting_downtrack, double ending_downtrack,
                                                                    const carma_wm::WorldModelConstPtr &wm,const cav_msgs::VehicleState &state)
         {
-            std::vector<lanelet::BasicPoint2d> centerline_points = {};
+        /*Assumptions for Lane Change
+            1.The two lane boundaries have the same number of points
+            2. The distance between lanelet centerlines is constant
+            3. Contiguous lanelets maintain constant distance between their centerlines
+        */
 
-            //Get starting lanelet and ending lanelets
-            auto lanelets = wm->getLaneletsBetween(starting_downtrack, ending_downtrack,true);
-            lanelet::ConstLanelet starting_lanelet =lanelets.front();
-            lanelet::ConstLanelet ending_lanelet = wm->getMap()->laneletLayer.get(ending_lane_id);
-            
+            //get starting and ending lanelets
+            auto lanelets_in_path = wm->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
+            lanelet::ConstLanelet starting_lanelet = lanelets_in_path.front();
+            lanelet::ConstLanelet ending_lanelet = lanelets_in_path.back();
+
             lanelet::ConstLanelet current_lanelet = starting_lanelet;
             lanelet::ConstLanelets starting_lane;
-            starting_lane.push_back(starting_lanelet);
-
-            std::vector<lanelet::BasicPoint2d> reference_centerline;
+            
+            lanelet::BasicLineString2d reference_line_1;
+            lanelet::BasicLineString2d reference_line_2;
             bool shared_boundary_found = false;
             bool is_lanechange_left = false;
-            
-            lanelet::BasicLineString2d current_lanelet_centerline = starting_lanelet.centerline2d().basicLineString();
-            reference_centerline.insert(reference_centerline.end(), current_lanelet_centerline.begin(), current_lanelet_centerline.end());
 
             while(!shared_boundary_found){
-
-                if(current_lanelet.leftBound() == ending_lanelet.rightBound()){   
+            
+                starting_lane.push_back(current_lanelet);
+                if(current_lanelet.leftBound() == ending_lanelet.rightBound()){
+                    ROS_DEBUG_STREAM("Lane change is LEFT");
                     is_lanechange_left = true;
                     shared_boundary_found = true;
+                    //Get reference lines
+                    lanelet::BasicLineString2d line_1 = current_lanelet.leftBound2d().basicLineString();
+                    lanelet::BasicLineString2d line_2 = current_lanelet.rightBound2d().basicLineString();
+                    reference_line_1.insert(reference_line_1.end(), line_1.begin(), line_1.end());
+                    reference_line_2.insert(reference_line_2.end(), line_2.begin(), line_2.end());
                 }
 
                 else if(current_lanelet.rightBound() == ending_lanelet.leftBound()){
+                    ROS_DEBUG_STREAM("Lane change is RIGHT");
                     shared_boundary_found = true;
+                    //Get reference lines
+                    lanelet::BasicLineString2d line_1 = current_lanelet.rightBound2d().basicLineString();
+                    lanelet::BasicLineString2d line_2 = current_lanelet.leftBound2d().basicLineString();
+                    reference_line_1.insert(reference_line_1.end(), line_1.begin(), line_1.end());
+                    reference_line_2.insert(reference_line_2.end(), line_2.begin(), line_2.end());
                 }
 
                 else{
@@ -273,86 +287,87 @@ namespace basic_autonomy
                         throw(std::invalid_argument("No following lanelets from current lanelet reachable without a lane change, incorrectly chosen end lanelet"));
                     }
 
-                    current_lanelet = wm->getMapRoutingGraph()->following(current_lanelet, false).front(); 
-                    auto current_lanelet_linestring = current_lanelet.centerline2d().basicLineString();    
-                    reference_centerline.insert(reference_centerline.end(), current_lanelet_linestring.begin(), current_lanelet_linestring.end());
-                    starting_lane.push_back(current_lanelet);
+                    current_lanelet =  wm->getMapRoutingGraph()->following(current_lanelet, false).front(); 
                 }
             }
 
-            //Find crosstrack distance between starting lane and ending lane
-            std::vector<lanelet::BasicPoint2d> ending_lane_centerline;
-            for(size_t i = 0;i<starting_lane.size();++i){
-                lanelet::ConstLanelet curr_end_lanelet;
-                
-                if(is_lanechange_left){
-                    
-                    //get left lanelet
-                    if(wm->getMapRoutingGraph()->left(starting_lane[0])){
-                        curr_end_lanelet = wm->getMapRoutingGraph()->left(starting_lane[0]).get();
-                    }
-                    else{
-                        curr_end_lanelet = wm->getMapRoutingGraph()->adjacentLeft(starting_lane[0]).get();
-                    }
+
+            //Crosstrack distances are calculated with respect to the centerline of a lanelet
+            double crosstrack_to_end_lane = carma_wm::geometry::trackPos(starting_lane.back(), ending_lanelet.centerline2d().front()).crosstrack;
+            double crosstrack_to_ref_1 = 0.0;
+            double crosstrack_to_ref_2 = 0.0;
+            //Assuming lane width remains constant throughout lane change path
+            if(is_lanechange_left){
+                lanelet::BasicPoint2d left_point (starting_lane.front().leftBound().basicLineString().front().x(), starting_lane.front().leftBound().basicLineString().front().y());
+                crosstrack_to_ref_1 = carma_wm::geometry::trackPos(starting_lane.front(), left_point).crosstrack;
+                lanelet::BasicPoint2d right_point(starting_lane.front().rightBound().basicLineString().front().x(), starting_lane.front().rightBound().basicLineString().front().y());
+                crosstrack_to_ref_2 = carma_wm::geometry::trackPos(starting_lane.front(), right_point).crosstrack;
+            }
+            else{
+                lanelet::BasicPoint2d right_point(starting_lane.front().rightBound().basicLineString().front().x(), starting_lane.front().rightBound().basicLineString().front().y());
+                crosstrack_to_ref_1 = carma_wm::geometry::trackPos(starting_lane.front(), right_point).crosstrack;
+                lanelet::BasicPoint2d left_point(starting_lane.front().leftBound().basicLineString().front().x(), starting_lane.front().leftBound().basicLineString().front().y());
+                crosstrack_to_ref_2 = carma_wm::geometry::trackPos(starting_lane.front(), left_point).crosstrack;
+            }
+
+            //Constrain lines to starting and ending downtrack 
+            cav_msgs::VehicleState start_state = state; 
+            int ref_line_start_index = waypoint_generation::get_nearest_point_index(reference_line_1, start_state);
+            reference_line_1.erase(reference_line_1.begin(), reference_line_1.begin() + ref_line_start_index);
+            reference_line_2.erase(reference_line_2.begin(), reference_line_2.begin() + ref_line_start_index);
+            
+            int ref_line_end_index;
+
+            double dist_checked = 0.0;
+            for(size_t i = 1; i<reference_line_1.size();++i){
+                dist_checked += lanelet::geometry::distance2d(reference_line_1[i], reference_line_1[i-1]);
+                if(dist_checked >= ending_downtrack)
+                {
+                    ref_line_end_index = i;
+                    break;
                 }
-                else{
-
-                    //get right lanelet
-                    if(wm->getMapRoutingGraph()->right(starting_lane[0])){
-                        curr_end_lanelet = wm->getMapRoutingGraph()->right(starting_lane[0]).get();
-                    }
-                    else{
-                        curr_end_lanelet = wm->getMapRoutingGraph()->adjacentRight(starting_lane[0]).get();
-                    }
-                }
-                
-                auto ending_lane_linestring = curr_end_lanelet.centerline2d().basicLineString();
-                ending_lane_centerline.insert(ending_lane_centerline.end(), ending_lane_linestring.begin(), ending_lane_linestring.end());
-                
             }
 
-            cav_msgs::VehicleState ending_state = waypoint_generation::get_nearest_state_to_downtrack(ending_lane_centerline, ending_downtrack, wm);
-
-            int reference_line_start_index = waypoint_generation::get_nearest_point_index(reference_centerline, state);
-            int ending_line_end_index = waypoint_generation::get_nearest_point_index(ending_lane_centerline, ending_state);
-
-            lanelet::BasicLineString2d starting_centerline(reference_centerline.begin() + reference_line_start_index, reference_centerline.end());
-            lanelet::BasicLineString2d ending_centerline(ending_lane_centerline.begin(), ending_lane_centerline.begin() + ending_line_end_index);
-
-            //If points are not the same size - ensure same size along both centerlines
-
-            if(starting_centerline.size() > ending_centerline.size()){
-                starting_centerline.resize(ending_centerline.size());
-            }
-            else if(ending_centerline.size() > starting_centerline.size()){
-                ending_centerline.erase(ending_centerline.begin() + ending_centerline.size() - starting_centerline.size());
-            }
+            reference_line_1.resize(ref_line_end_index + 1);
+            reference_line_2.resize(ref_line_end_index + 1);
 
             //Create Trajectory geometry
-            double delta_step = 1.0 / starting_centerline.size();
+            std::vector<lanelet::BasicPoint2d> lc_route_geometry_points = {};
 
-            for (int i = 0; i < starting_centerline.size(); i++)
-            {
+            double dist_between_refs = std::fabs(crosstrack_to_ref_1) + std::fabs(crosstrack_to_ref_2);
+            double delta_step = 1.0/(double)reference_line_1.size();
+             
+            for(int i = 0;i<reference_line_1.size();++i){
+                //Lane boundaries are used as references for get lane change points
+                //Step should range from -1 to 1, to allow points to be chosen from one side of ref1 to other side
+                double step = 2 * i * delta_step - 1;; 
+                double dist_ref1_to_point = crosstrack_to_end_lane * step - crosstrack_to_ref_1;
+                double delta = dist_ref1_to_point/dist_between_refs;
                 lanelet::BasicPoint2d current_position;
-                lanelet::BasicPoint2d start_lane_pt = starting_centerline[i];
-                lanelet::BasicPoint2d end_lane_pt = ending_centerline[i];
-                double delta = delta_step * i;
-                current_position.x() = end_lane_pt.x() * delta + (1 - delta) * start_lane_pt.x();
-                current_position.y() = end_lane_pt.y() * delta + (1 - delta) * start_lane_pt.y();
-
-                centerline_points.push_back(current_position);
+                
+                current_position.x() = reference_line_2[i].x() * delta + (1 - delta)* reference_line_1[i].x();
+                current_position.y() = reference_line_2[i].y() * delta + (1 - delta)* reference_line_1[i].y();
+                
+                lc_route_geometry_points.push_back(current_position);
             }
 
-            //Add points from following lanelet to provide sufficient distance for adding buffer
-            auto following_lanelets = wm->getMapRoutingGraph()->following(ending_lanelet, false);
-            if(!following_lanelets.empty()){
-            //Arbitrarily choosing first following lanelet for buffer since points are only being used to fit spline
-            auto following_lanelet_centerline = following_lanelets.front().centerline2d().basicLineString();
-            centerline_points.insert(centerline_points.end(), following_lanelet_centerline.begin(), 
-                                                                        following_lanelet_centerline.end());
+            std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(lc_route_geometry_points);
+            if (!fit_curve)
+            {
+                throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
             }
 
-            return centerline_points;
+            std::vector<lanelet::BasicPoint2d> lc_route;
+
+            double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
+            for (int i = 0; i < lc_route_geometry_points.size(); i++)
+            {
+                lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
+                lc_route.push_back(p);
+                scaled_steps_along_curve += 1.0 / lc_route_geometry_points.size();
+            }
+            
+            return lc_route;
         }
 
         std::vector<PointSpeedPair> create_lanechange_geometry(const cav_msgs::Maneuver &maneuver, double starting_downtrack,

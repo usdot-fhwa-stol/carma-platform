@@ -21,6 +21,27 @@ namespace basic_autonomy
 {
 namespace waypoint_generation
 {
+    int get_nearest_point_index(lanelet::BasicLineString2d& points,
+                                                  cav_msgs::VehicleState& state)
+    {
+        lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
+        ROS_DEBUG_STREAM("veh_point: " << veh_point.x() << ", " << veh_point.y());
+        double min_distance = std::numeric_limits<double>::max();
+        int i = 0;
+        int best_index = 0;
+        for (const auto& p : points)
+        {
+            double distance = lanelet::geometry::distance2d(p, veh_point);
+            if (distance < min_distance)
+            {
+            best_index = i;
+            min_distance = distance;
+            }
+            i++;
+        }
+        return best_index;
+    }
+
     int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
                                                  const cav_msgs::VehicleState& state)
     {

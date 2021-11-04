@@ -57,6 +57,7 @@ namespace waypoint_generation
      */
     int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm, double target_downtrack);
 
+    int get_nearest_point_index(lanelet::BasicLineString2d& points, cav_msgs::VehicleState& state);
     /**
      * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
      * \param points Point Speed pair to split
