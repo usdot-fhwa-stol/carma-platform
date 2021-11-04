@@ -28,6 +28,12 @@
 #include <novatel_gps_msgs/NovatelDualAntennaHeading.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <std_msgs/String.h>
+#include <vector>
+#include <ros/ros.h>
+#include <stdint.h>
+#include <algorithm>
+#include <stdlib.h>
+#include <random>
 #include "bsm_generator_worker.h"
 
 namespace bsm_generator
@@ -72,6 +78,9 @@ namespace bsm_generator
 
         //Enable/disable rotation of BSM ID during vehicle operations
         bool bsm_id_rotation_enabled_;
+
+        std::vector<uint8_t> bsm_message_id_;
+        
 
         // size of the vehicle
         double vehicle_length_, vehicle_width_;
