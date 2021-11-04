@@ -302,8 +302,8 @@ public:
   ros::Publisher mobility_operation_pub;
 
   std::string bsm_id_ = "default_bsm_id";
-  uint8 bsm_msg_count_ = 0;
-  uint16 bsm_sec_mark_ = 0;
+  uint8_t bsm_msg_count_ = 0;
+  uint16_t bsm_sec_mark_ = 0;
 
   private:
   //! World Model pointer

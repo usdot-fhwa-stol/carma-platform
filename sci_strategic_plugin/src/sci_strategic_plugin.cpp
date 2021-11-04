@@ -84,7 +84,7 @@ SCIStrategicPlugin::VehicleState SCIStrategicPlugin::extractInitialState(const c
 
 void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationConstPtr& msg)
 {
-  if (msg->strategy == stop_controlled_intersection_strategy_ && msg->header.recipient_id == config_.vehicle_id)
+  if (msg->strategy == stop_controlled_intersection_strategy_)
   {
     ROS_DEBUG_STREAM("Received Schedule message with id: " << msg->header.plan_id);
     approaching_stop_controlled_interction_ = true;
@@ -92,10 +92,13 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
 
     if (msg->strategy_params != previous_strategy_params_)
     {
-      street_msg_timestamp_ = msg->header.timestamp;
-      ROS_DEBUG_STREAM("street_msg_timestamp_: " << street_msg_timestamp_);
-
-      parseStrategyParams(msg->strategy_params); 
+      if (msg->header.recipient_id == config_.vehicle_id)
+      {
+        street_msg_timestamp_ = msg->header.timestamp;
+        ROS_DEBUG_STREAM("street_msg_timestamp_: " << street_msg_timestamp_);
+        parseStrategyParams(msg->strategy_params);
+      }
+       
 
     }
     previous_strategy_params_ = msg->strategy_params;
