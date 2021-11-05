@@ -75,6 +75,9 @@ namespace route {
         ros::ServiceServer set_active_route_srv_;
         ros::ServiceServer abort_active_route_srv_;
 
+        ros::ServiceServer reroute_srv_;
+        ros::ServiceClient rerout_client_;
+
         // initialize this node before running
         void initialize();
 

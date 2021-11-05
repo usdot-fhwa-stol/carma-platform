@@ -44,6 +44,7 @@
 #include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <functional>
 #include <std_msgs/String.h>
+#include <cav_srvs/ReRoute.h>
 
 
 #include "route_state_worker.h"
@@ -227,6 +228,8 @@ namespace route {
         */
         lanelet::Optional<lanelet::routing::Route> reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map);
 
+        bool re_route_cb(cav_srvs::ReRouteRequest &req, cav_srvs::ReRouteResponse &resp);//add by xin xia for ucla unit test, delete it later when submit it to carma team
+
     private:
 
         const double DEG_TO_RAD = 0.0174533;
@@ -274,6 +277,8 @@ namespace route {
         static constexpr double epsilon_ = 0.001;
         // local copy of Route publihsers
         ros::Publisher route_event_pub_, route_state_pub_, route_pub_,route_marker_pub_;
+
+        ros::ServiceClient rerout_client_;
 
         // a bool flag indicates a new route has been generated such that a local copy of Route message should be published again
         bool new_route_msg_generated_ = false;

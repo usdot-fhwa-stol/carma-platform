@@ -39,6 +39,9 @@ namespace route {
         get_available_route_srv_ = nh_->advertiseService("get_available_routes", &RouteGeneratorWorker::get_available_route_cb, &rg_worker_);
         set_active_route_srv_ = nh_->advertiseService("set_active_route", &RouteGeneratorWorker::set_active_route_cb, &rg_worker_);
         abort_active_route_srv_ = nh_->advertiseService("abort_active_route", &RouteGeneratorWorker::abort_active_route_cb, &rg_worker_);
+        
+        rerout_client_ = nh_->serviceClient<cav_srvs::ReRoute>("reroute_service");
+
         // set world model point form wm listener
         wm_ = wml_.getWorldModel();
         wml_.enableUpdatesWithoutRouteWL();

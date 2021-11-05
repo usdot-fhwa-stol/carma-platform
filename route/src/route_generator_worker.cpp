@@ -117,6 +117,90 @@ namespace route {
         return true;
     }
 
+    bool RouteGeneratorWorker::re_route_cb(cav_srvs::ReRouteRequest &req, cav_srvs::ReRouteResponse &resp)
+    {
+        
+        std::cout<<"the xx's client has been called"<<std::endl;
+
+        if (req.choice==0)
+        {
+           destination_points_in_map_[0].x()=170.589416504;
+           destination_points_in_map_[0].y()=160.860671997;
+        }else
+        {
+           destination_points_in_map_[0].x()=168.679229736;
+           destination_points_in_map_[0].y()=163.435379028;
+        }
+
+       this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
+       publish_route_event(cav_msgs::RouteEvent::ROUTE_INVALIDATION);
+       auto route = reroute_after_route_invalidation(destination_points_in_map_);
+
+       // check if route successed
+       if(!route)
+        {
+            ROS_ERROR_STREAM("Cannot find a route passing all destinations.");
+            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+            publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
+            return true;
+        }
+        else if(check_for_duplicate_lanelets_in_shortest_path(route.get()))
+        {
+            ROS_ERROR_STREAM("At least one duplicate Lanelet ID occurs in the shortest path. Routing cannot be completed.");
+            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+            publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
+            return true;
+        }
+        else
+        {
+            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_STARTED);
+            publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);  
+        }  
+
+        std::cout<<"ReRoute by XX is succeeded."<<std::endl;
+        std::string original_route_name = route_msg_.route_name;
+        route_msg_=compose_route_msg(route);
+        route_msg_.route_name = original_route_name;
+        route_msg_.is_rerouted = true;
+        route_msg_.map_version = world_model_->getMapVersion();
+        route_marker_msg_=compose_route_marker_msg(route);
+        new_route_msg_generated_=true;
+        new_route_marker_generated_=true;
+        
+        
+        // publish new route and set new route flag back to false
+        if(new_route_msg_generated_ && new_route_marker_generated_)
+        {
+            route_pub_.publish(route_msg_);
+            route_marker_pub_.publish(route_marker_msg_);
+            new_route_msg_generated_ = false;
+            new_route_marker_generated_ = false;
+            route_msg_.is_rerouted = false;
+        }
+        // publish route state messsage if a route is selected
+        if(route_msg_.route_name != "")
+        {
+            cav_msgs::RouteState state_msg;
+            state_msg.header.stamp = ros::Time::now();
+            state_msg.routeID = route_msg_.route_name;
+            state_msg.cross_track = current_crosstrack_distance_;
+            state_msg.down_track = current_downtrack_distance_;
+            state_msg.lanelet_downtrack = ll_downtrack_distance_;            
+            state_msg.state = this->rs_worker_.get_route_state();
+            state_msg.lanelet_id = ll_id_;
+            state_msg.speed_limit = speed_limit_;
+            route_state_pub_.publish(state_msg);
+        }
+        // publish route event in order if any
+        while(!route_event_queue.empty())
+        {
+            route_event_msg_.event = route_event_queue.front();
+            route_event_pub_.publish(route_event_msg_);
+            route_event_queue.pop();
+        }
+        return true; 
+    }
+
     void RouteGeneratorWorker::set_route_file_path(const std::string& path)
     {
         this->route_file_path_ = path;
