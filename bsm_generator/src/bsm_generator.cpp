@@ -28,10 +28,10 @@ namespace bsm_generator
         pnh_.reset(new ros::CARMANodeHandle("~"));
         pnh_->param<double>("bsm_generation_frequency", bsm_generation_frequency_, 10.0);
         pnh_->param<bool>("bsm_id_rotation_enabled", bsm_id_rotation_enabled_, true);
-        pnh_->param<int>("bsm_message_id", bsmid);
-        for(size_t i = 0; i < 4; ++i )
+        pnh_->param<int>("bsm_message_id", bsmid, 0);
+        for(size_t i = 0; i < 4; ++i ) //As the BSM Messsage ID is a four-element vector, the loop should iterate four times.
         {
-            bsm_message_id_[i] = bsmid >> (8 * i);
+            bsm_message_id_.emplace_back( bsmid >> (8 * i) );
         }
 
         nh_->param<double>("vehicle_length", vehicle_length_, 5.0);
