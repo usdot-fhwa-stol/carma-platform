@@ -216,7 +216,7 @@ public:
 
   std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n = 10) const override;
 
-  std::vector<lanelet::CarmaTrafficSignalPtr> getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
+  std::vector<lanelet::CarmaTrafficSignalPtr> getSignalsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
 
   std::vector<std::shared_ptr<lanelet::AllWayStop>> getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
   

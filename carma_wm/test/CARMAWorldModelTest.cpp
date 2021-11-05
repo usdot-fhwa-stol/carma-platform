@@ -1410,7 +1410,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   EXPECT_EQ(lanelet::time::durationFromSec(46), lights1[0]->fixed_cycle_duration);
 }
 
-TEST(CARMAWorldModelTest, getLightsAlongRoute)
+TEST(CARMAWorldModelTest, getSignalsAlongRoute)
 {
   carma_wm::CARMAWorldModel cmw;
   lanelet::LaneletMapPtr map;
@@ -1434,7 +1434,7 @@ TEST(CARMAWorldModelTest, getLightsAlongRoute)
   cmw_ptr->getMutableMap()->update(cmw_ptr->getMutableMap()->laneletLayer.get(1201), traffic_light2);
   carma_wm::test::setRouteByIds({ 1200, 1201, 1202}, cmw_ptr);
 
-  auto lights = cmw_ptr->getLightsAlongRoute({0.5, 0});
+  auto lights = cmw_ptr->getSignalsAlongRoute({0.5, 0});
   
   EXPECT_EQ(lights.size(), 2);
   EXPECT_EQ(lights[0]->id(), traffic_light_id1);

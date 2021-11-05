@@ -402,7 +402,7 @@ bool WzStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_
   // Get current traffic light information
   ROS_DEBUG("\n\nFinding traffic_light information");
 
-  auto traffic_list = wm_->getLightsAlongRoute({ req.veh_x, req.veh_y });
+  auto traffic_list = wm_->getSignalsAlongRoute({ req.veh_x, req.veh_y });
 
   TransitState prev_state;
 

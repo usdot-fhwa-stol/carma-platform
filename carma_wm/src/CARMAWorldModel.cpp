@@ -1136,7 +1136,7 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::nonConnectedAdjacentLeft(con
   return carma_wm::query::getLaneletsFromPoint(getMap(), input_point, n);
 }
 
-std::vector<lanelet::CarmaTrafficSignalPtr> CARMAWorldModel::getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const
+std::vector<lanelet::CarmaTrafficSignalPtr> CARMAWorldModel::getSignalsAlongRoute(const lanelet::BasicPoint2d& loc) const
 {
   // Check if the map is loaded yet
   if (!semantic_map_ || semantic_map_->laneletLayer.empty())
