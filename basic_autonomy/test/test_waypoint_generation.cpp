@@ -676,7 +676,7 @@ namespace basic_autonomy
         for(int i = 0;i<line_two.size();i++){
             line_2.push_back(line_two[i]);
         }
-        std::vector<std::vector<lanelet::BasicPoint2d>> linestrings = basic_autonomy::waypoint_generation::resample_linestrings_to_same_length(line_1, line_2);
+        std::vector<std::vector<lanelet::BasicPoint2d>> linestrings = basic_autonomy::waypoint_generation::resample_linestring_pair_to_same_size(line_1, line_2);
 
     }
 
@@ -746,7 +746,7 @@ namespace basic_autonomy
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_path(points,
                                                                                                                                                           state, state_time, cmw, ending_state, config);
         EXPECT_TRUE(trajectory_points.size() > 2);
-        basic_autonomy::waypoint_generation::create_lanechange_route(end_id,starting_downtrack, ending_downtrack, cmw, state);
+        basic_autonomy::waypoint_generation::create_lanechange_geometry(start_id, end_id,starting_downtrack, ending_downtrack, cmw, state);
     } 
 
     TEST(BasicAutonomyTest, lanefollow_geometry_visited_lanelets)

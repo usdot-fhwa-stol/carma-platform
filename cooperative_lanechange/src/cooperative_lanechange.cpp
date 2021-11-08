@@ -295,6 +295,21 @@ namespace cooperative_lanechange
 
         //plan lanechange without filling in response
         ROS_DEBUG_STREAM("Planning lane change trajectory");
+        //get constant starting downtrack for lane change
+        if(!is_lanechange_in_progress){
+            if(current_lanelet_id == stoi(maneuver_plan[0].lane_change_maneuver.starting_lane_id)){
+                is_lanechange_in_progress = true;
+                lc_starting_downtrack_ = maneuver_plan[0].lane_change_maneuver.start_dist;
+            }
+            else if(current_lanelet_id == stoi(maneuver_plan[0].lane_change_maneuver.ending_lane_id) && current_downtrack >= maneuver_plan[0].lane_change_maneuver.end_dist){
+                is_lanechange_in_progress = false;
+            }
+
+        }
+        else{
+            //Update maneuver start dist, so that its always constant for a maneuver
+            maneuver_plan[0].lane_change_maneuver.start_dist = lc_starting_downtrack_;
+        }
         std::vector<cav_msgs::TrajectoryPlanPoint> planned_trajectory_points = plan_lanechange(req);
         
         if(negotiate){
