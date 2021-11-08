@@ -643,7 +643,7 @@ namespace basic_autonomy
         state.longitudinal_vel = 8.0;
 
         std::string trajectory_type = "cooperative_lanechange";
-        waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 1, 0);
+        waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 1, 1);
         const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0, 0, 0, 0, 0, 5, 0, 0, 20);
         double maneuver_fraction_completed;
         cav_msgs::VehicleState ending_state;
@@ -734,7 +734,7 @@ namespace basic_autonomy
 
         std::string trajectory_type = "cooperative_lanechange";
         waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 1, 1);
-        const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0, 0, 0, 0, 0, 5, 0, 0, 20);
+        const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0, 1, 0, 0, 0, 5, 0, 0, 20);
         double maneuver_fraction_completed;
         cav_msgs::VehicleState ending_state;
         
