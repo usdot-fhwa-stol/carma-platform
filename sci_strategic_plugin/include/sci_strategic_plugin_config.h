@@ -35,7 +35,7 @@ struct SCIStrategicPluginConfig
   double vehicle_accel_limit_multiplier = 0.75;
 
   //! A buffer infront of the stopping location which will still be considered a valid stop
-  double stop_line_buffer = 2.0;
+  double stop_line_buffer = 12.0;
 
   //! The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
   double min_maneuver_planning_period = 15.1;

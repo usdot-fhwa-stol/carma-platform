@@ -276,11 +276,15 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   auto stop_intersection_list = wm_->getIntersectionsAlongRoute({ req.veh_x, req.veh_y });
   auto nearest_stop_intersection = stop_intersection_list.front();
   double stop_intersection_down_track =
+  wm_->routeTrackPos(nearest_stop_intersection->stopLines().back().front().basicPoint2d()).downtrack;
+
+  double another_stop_intersection_down_track =
   wm_->routeTrackPos(nearest_stop_intersection->stopLines().front().front().basicPoint2d()).downtrack;
+  ROS_DEBUG_STREAM("another_stop_intersection_down_track  " << another_stop_intersection_down_track);
+
 
   ROS_DEBUG_STREAM("stop_intersection_down_track  " << stop_intersection_down_track);
-  // TODO: temp
-  // double stop_intersection_down_track = 100 - current_downtrack_;
+  
   double distance_to_stopline = stop_intersection_down_track - current_downtrack_;
   ROS_DEBUG_STREAM("distance_to_stopline  " << distance_to_stopline);
 
@@ -305,7 +309,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       if (case_num < 3)
       {
         resp.new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(
-          case_num, current_downtrack_, stop_intersection_down_track, current_state.speed, 0.0,
+          case_num, current_downtrack_, stop_intersection_down_track-config_.stop_line_buffer, current_state.speed, 0.0,
           current_state.stamp, time_to_schedule_stop,
           lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); })));
 
@@ -327,7 +331,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
         double stopping_accel = caseThreeSpeedProfile(stop_intersection_down_track, current_state.speed, time_to_schedule_stop);
 
         resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-          current_downtrack_, stop_intersection_down_track, current_state.speed, crossed_lanelets[0].id(),
+          current_downtrack_, stop_intersection_down_track-config_.stop_line_buffer, current_state.speed, crossed_lanelets[0].id(),
           stop_line_lanelet.id(), -stopping_accel, current_state.stamp,
           current_state.stamp + ros::Duration(stop_duration + time_to_schedule_stop)));
       }
@@ -341,13 +345,27 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     double stop_duration = 99999;
 
     resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-          current_state.downtrack, current_state.downtrack + config_.stop_line_buffer, current_state.speed, current_state.lane_id,
+          current_state.downtrack, stop_intersection_down_track + config_.stop_line_buffer, current_state.speed, current_state.lane_id,
           current_state.lane_id, stop_acc, current_state.stamp,
           current_state.stamp + ros::Duration(stop_duration)));
 
   }
   else
   {
+    ROS_DEBUG_STREAM("Invalid schedule message");
+  }
+
+  bool time_for_crossing = (float(street_msg_timestamp_) - float(scheduled_enter_time_) >= 0);
+  // time to cross intersection
+
+  ROS_DEBUG_STREAM("time for crossing? " << time_for_crossing);
+  ROS_DEBUG_STREAM("result time for crossing? " << int(street_msg_timestamp_ - scheduled_enter_time_));
+
+  if (time_for_crossing)
+  {
+    ROS_DEBUG_STREAM("street_msg_timestamp_ - scheduled_enter_time_ = " << street_msg_timestamp_ - scheduled_enter_time_);
+
+
     ROS_DEBUG_STREAM("Vehicle is crossing the intersection");
     // Passing the stop line
     
@@ -355,7 +373,6 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     base_time = std::max(scheduled_enter_time_, street_msg_timestamp_);
     double intersection_transit_time = (scheduled_depart_time_ - base_time)/1000;
 
-    // double intersection_end_downtrack = stop_intersection_down_track + 20;
     double intersection_end_downtrack = wm_->routeTrackPos(nearest_stop_intersection->lanelets().back().centerline2d().back()).downtrack;
 
     // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
@@ -396,11 +413,11 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
 std::string SCIStrategicPlugin::getTurnDirectionatIntersection(std::vector<lanelet::ConstLanelet> lanelets_list)
 {
-  std::string turn_direction = "";
+  std::string turn_direction = "straight";
   for (auto l:lanelets_list)
   {
     if(l.hasAttribute("turn_direction")) {
-      std::string turn_direction = l.attribute("turn_direction").value();
+      turn_direction = l.attribute("turn_direction").value();
       ROS_DEBUG_STREAM("intersection crossed lanelet direction is: " << turn_direction);
       if (turn_direction != "straight") break;
     }
