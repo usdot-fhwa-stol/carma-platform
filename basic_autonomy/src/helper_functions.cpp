@@ -113,22 +113,5 @@ namespace waypoint_generation
         return get_nearest_index_by_downtrack(points, wm, ending_downtrack);
     }
 
-    std::vector<lanelet::BasicPoint2d> downsample_basicpoint2d_vector(const std::vector<lanelet::BasicPoint2d>& input, unsigned int n)
-    {
-        std::vector<lanelet::BasicPoint2d> output;
-
-        if (n == 0 || input.empty()) {
-            return output;
-        }
-
-        output.reserve((input.size() / n) + 1);
-
-        for (int i = 0; i < input.size(); i += n)
-        {
-            output.push_back(input[i]);
-        }
-
-        return output;
-    }
 }
 }

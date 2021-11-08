@@ -47,7 +47,7 @@ namespace basic_autonomy
                 }
                 else if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE){
                     ROS_DEBUG_STREAM("Creating Lane Change Geometry");
-                    std::vector<PointSpeedPair> lane_change_points = get_lanechange_points_from_maneuver(maneuver, starting_downtrack, wm, ending_state_before_buffer, state, detailed_config);
+                    std::vector<PointSpeedPair> lane_change_points = get_lanechange_points_from_maneuver(maneuver, starting_downtrack, wm, ending_state_before_buffer, state, general_config, detailed_config);
                     points_and_target_speeds.insert(points_and_target_speeds.end(), lane_change_points.begin(), lane_change_points.end());
                 }
                 else{
@@ -235,7 +235,7 @@ namespace basic_autonomy
         }
 
         std::vector<lanelet::BasicPoint2d> create_lanechange_geometry(lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, double starting_downtrack, double ending_downtrack,
-                                                                   const carma_wm::WorldModelConstPtr &wm,const cav_msgs::VehicleState &state)
+                                                                   const carma_wm::WorldModelConstPtr &wm,const cav_msgs::VehicleState &state, int downsample_ratio)
         {
             std::vector<lanelet::BasicPoint2d> centerline_points;
 
@@ -258,7 +258,7 @@ namespace basic_autonomy
             reference_centerline.insert(reference_centerline.end(), current_lanelet_centerline.begin(), current_lanelet_centerline.end());
 
             while(!shared_boundary_found){
-                //Assumption here is for lane change to happen between two adjacent lanelets, they must share a lane boundary (linestring)
+                //Assumption- Adjacent lanelets share lane boundary
                 if(current_lanelet.leftBound() == ending_lanelet.rightBound()){   
                     is_lanechange_left = true;
                     shared_boundary_found = true;
@@ -328,11 +328,11 @@ namespace basic_autonomy
 
             std::vector<lanelet::BasicPoint2d> downsampled_starting_centerline;
             downsampled_starting_centerline.reserve(400);
-            downsampled_starting_centerline = waypoint_generation::downsample_basicpoint2d_vector(reference_centerline, 5);
+            downsampled_starting_centerline = carma_utils::containers::downsample_vector(reference_centerline, downsample_ratio);
 
             std::vector<lanelet::BasicPoint2d> downsampled_target_centerline;
             downsampled_target_centerline.reserve(400);
-            downsampled_target_centerline = waypoint_generation::downsample_basicpoint2d_vector(target_lane_centerline, 5);
+            downsampled_target_centerline = carma_utils::containers::downsample_vector(target_lane_centerline, downsample_ratio);
 
             //If points are not the same size - resample to ensure same size along both centerlines
             if(downsampled_starting_centerline.size() != downsampled_target_centerline.size())
@@ -342,13 +342,23 @@ namespace basic_autonomy
                 downsampled_target_centerline = centerlines.back();
 
             }
-            
-            int start_index = waypoint_generation::get_nearest_index_by_downtrack(downsampled_starting_centerline, wm, starting_downtrack);
-            int end_index = waypoint_generation::get_nearest_index_by_downtrack(downsampled_target_centerline, wm, ending_downtrack);
 
-            std::vector<lanelet::BasicPoint2d> constrained_start_centerline(downsampled_starting_centerline.begin() + start_index, downsampled_starting_centerline.begin() + end_index);
-            std::vector<lanelet::BasicPoint2d> constrained_target_centerline(downsampled_target_centerline.begin() + start_index, downsampled_target_centerline.begin() + end_index);
-            
+            //Constrain to starting and ending downtrack
+            int start_index_starting_centerline = waypoint_generation::get_nearest_index_by_downtrack(downsampled_starting_centerline, wm, starting_downtrack);
+            cav_msgs::VehicleState start_state;
+            start_state.X_pos_global = downsampled_starting_centerline[start_index_starting_centerline].x();
+            start_state.Y_pos_global = downsampled_starting_centerline[start_index_starting_centerline].y();
+            int start_index_target_centerline = waypoint_generation::get_nearest_point_index(downsampled_target_centerline, start_state);
+
+            int end_index_target_centerline = waypoint_generation::get_nearest_index_by_downtrack(downsampled_target_centerline, wm, ending_downtrack);
+            cav_msgs::VehicleState end_state;
+            end_state.X_pos_global = downsampled_target_centerline[end_index_target_centerline].x();
+            end_state.Y_pos_global = downsampled_target_centerline[end_index_target_centerline].y();
+            int end_index_starting_centerline = waypoint_generation::get_nearest_point_index(downsampled_starting_centerline, end_state);
+
+            std::vector<lanelet::BasicPoint2d> constrained_start_centerline(downsampled_starting_centerline.begin() + start_index_starting_centerline, downsampled_starting_centerline.begin() + end_index_starting_centerline);
+            std::vector<lanelet::BasicPoint2d> constrained_target_centerline(downsampled_target_centerline.begin() + start_index_target_centerline, downsampled_target_centerline.begin() + end_index_target_centerline);
+
             //Create Trajectory geometry
             double delta_step = 1.0 / constrained_start_centerline.size();
 
@@ -437,7 +447,7 @@ namespace basic_autonomy
         
         std::vector<PointSpeedPair> get_lanechange_points_from_maneuver(const cav_msgs::Maneuver &maneuver, double starting_downtrack,
                                                                    const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
-                                                                    const cav_msgs::VehicleState &state, const DetailedTrajConfig &detailed_config)
+                                                                    const cav_msgs::VehicleState &state, const GeneralTrajConfig &general_config,const DetailedTrajConfig &detailed_config)
         {
             if(maneuver.type != cav_msgs::Maneuver::LANE_CHANGE){
                 throw std::invalid_argument("Create_lanechange called on a maneuver type which is not LANE_CHANGE");
@@ -455,7 +465,8 @@ namespace basic_autonomy
 
             //get route between starting and ending downtracks - downtracks should be constant for complete length of maneuver
             double lanechange_starting_downtrack;
-            std::vector<lanelet::BasicPoint2d> route_geometry = create_lanechange_geometry(std::stoi(lane_change_maneuver.starting_lane_id),std::stoi(lane_change_maneuver.ending_lane_id),starting_downtrack, ending_downtrack, wm, state);
+            std::vector<lanelet::BasicPoint2d> route_geometry = create_lanechange_geometry(std::stoi(lane_change_maneuver.starting_lane_id),std::stoi(lane_change_maneuver.ending_lane_id),
+                                                                                        starting_downtrack, ending_downtrack, wm, state, general_config.default_downsample_ratio);
             ROS_DEBUG_STREAM("Route geometry size:"<<route_geometry.size());
 
             lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);

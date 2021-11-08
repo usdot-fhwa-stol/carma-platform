@@ -97,17 +97,5 @@ namespace waypoint_generation
     int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm,
                                       const cav_msgs::VehicleState& state);    
 
-    /**
-     * \brief Downsamples an input lanelet::BasicPoint2d vector by saving only each nth element.
-     * For example, given an input vector of { 0, 1, 2, 3, 4, 5 } and n = 2
-     * The output vector will be {0, 2, 4}
-     * 
-     * \param input The input lanelet::BasicPoint2d vector to downsample
-     * \param n The count of the elements to save
-     * \return The downsampled vector
-     */ 
-    std::vector<lanelet::BasicPoint2d> downsample_basicpoint2d_vector(const std::vector<lanelet::BasicPoint2d>& input, unsigned int n);                                                                                                                           
-
-
 }
 }

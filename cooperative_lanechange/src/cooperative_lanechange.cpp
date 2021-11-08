@@ -296,20 +296,18 @@ namespace cooperative_lanechange
         //plan lanechange without filling in response
         ROS_DEBUG_STREAM("Planning lane change trajectory");
         //get constant starting downtrack for lane change
-        if(!is_lanechange_in_progress){
+        if(!is_lanechange_in_progress_){
             if(current_lanelet_id == stoi(maneuver_plan[0].lane_change_maneuver.starting_lane_id)){
-                is_lanechange_in_progress = true;
+                is_lanechange_in_progress_ = true;
                 lc_starting_downtrack_ = maneuver_plan[0].lane_change_maneuver.start_dist;
+                ROS_DEBUG_STREAM("Planning lane change from starting downtrack: "<<lc_starting_downtrack_);
             }
             else if(current_lanelet_id == stoi(maneuver_plan[0].lane_change_maneuver.ending_lane_id) && current_downtrack >= maneuver_plan[0].lane_change_maneuver.end_dist){
-                is_lanechange_in_progress = false;
+                is_lanechange_in_progress_ = false;
             }
+            
+        }
 
-        }
-        else{
-            //Update maneuver start dist, so that its always constant for a maneuver
-            maneuver_plan[0].lane_change_maneuver.start_dist = lc_starting_downtrack_;
-        }
         std::vector<cav_msgs::TrajectoryPlanPoint> planned_trajectory_points = plan_lanechange(req);
         
         if(negotiate){
@@ -520,8 +518,8 @@ namespace cooperative_lanechange
                                                                             buffer_ending_downtrack_);
 
         ROS_DEBUG_STREAM("Current downtrack:"<<current_downtrack);
-        
-        auto points_and_target_speeds = basic_autonomy::waypoint_generation::create_geometry_profile(maneuver_plan, current_downtrack,wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config);
+        double starting_downtrack = std::min(current_downtrack, lc_starting_downtrack_);
+        auto points_and_target_speeds = basic_autonomy::waypoint_generation::create_geometry_profile(maneuver_plan, starting_downtrack ,wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config);
 
         //Calculate maneuver fraction completed (current_downtrack/(ending_downtrack-starting_downtrack)
         auto maneuver_end_dist = maneuver_plan.back().lane_change_maneuver.end_dist;

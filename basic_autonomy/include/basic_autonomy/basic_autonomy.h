@@ -262,7 +262,7 @@ namespace basic_autonomy
       */
      std::vector<PointSpeedPair> get_lanechange_points_from_maneuver(const cav_msgs::Maneuver &maneuver, double max_starting_downtrack,
                                                                    const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
-                                                                   const cav_msgs::VehicleState &state, const DetailedTrajConfig &detailed_config);
+                                                                   const cav_msgs::VehicleState &state, const GeneralTrajConfig &general_config,const DetailedTrajConfig &detailed_config);
      
      /**
       * \brief Creates a vector of lane change points using parameters defined. 
@@ -277,7 +277,7 @@ namespace basic_autonomy
       * \return A vector of geometry points as lanelet::basicpoint2d
       */
      std::vector<lanelet::BasicPoint2d> create_lanechange_geometry(lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, double starting_downtrack, double ending_downtrack,
-                                                            const carma_wm::WorldModelConstPtr &wm,const cav_msgs::VehicleState &state);
+                                                            const carma_wm::WorldModelConstPtr &wm,const cav_msgs::VehicleState &state, int downsample_ratio);
    
      
      /**
@@ -287,6 +287,7 @@ namespace basic_autonomy
       * \param line_2 a vector of points to be resampled
       * 
       * \return A 2d vector with input lines resampled at same rate. The first iteration is the resampled line_1 and the resampled line_2 is the second iteration
+      * Assumption here is for lane change to happen between two adjacent lanelets, they must share a lane boundary (linestring)
       */
      std::vector<std::vector<lanelet::BasicPoint2d>> resample_linestring_pair_to_same_size(std::vector<lanelet::BasicPoint2d>& line_1, std::vector<lanelet::BasicPoint2d>& line_2);
 
