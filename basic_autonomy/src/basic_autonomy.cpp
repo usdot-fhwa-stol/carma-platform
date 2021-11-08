@@ -985,10 +985,34 @@ namespace basic_autonomy
             std::vector<lanelet::BasicPoint2d> future_geom_points;
             std::vector<double> final_actual_speeds;
             split_point_speed_pairs(future_points, &future_geom_points, &final_actual_speeds);
-            std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(future_geom_points);
 
+            std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(future_geom_points);
+            if(!fit_curve){
+                throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
+            }
+            ROS_DEBUG("Got fit");
+            std::vector<lanelet::BasicPoint2d> all_sampling_points;
+            all_sampling_points.reserve(1 + future_geom_points.size() * 2);
+
+        
             //Compute points to local downtracks
             std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(future_geom_points);
+
+            auto total_step_along_curve = static_cast<int>(downtracks.back() /detailed_config.curve_resample_step_size);
+            size_t total_point_size = future_geom_points.size();
+
+            double scaled_steps_along_curve = 0.0; //from 0 (start) to 1 (end) for the whole trajectory
+
+            for(size_t steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++){
+                lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
+
+                all_sampling_points.push_back(p);
+
+                scaled_steps_along_curve += 1.0 / total_step_along_curve; 
+            }
+            ROS_DEBUG_STREAM("Got sampled points with size:" << all_sampling_points.size());
+
+            std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(future_geom_points);
             final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, detailed_config.speed_moving_average_window_size);
 
             //Convert speeds to time
