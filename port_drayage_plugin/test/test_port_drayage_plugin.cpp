@@ -34,7 +34,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
     // Test initial arrival message for pdw initialized with cargo with the Staging Area Entrance as its first destination
     ros::Time::init();
     port_drayage_plugin::PortDrayageWorker pdw{
-        123, // CMV ID 
+        "DOT-11111", // CMV ID 
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", // Host ID
         true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
@@ -76,13 +76,13 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
     ptree pt;
     boost::property_tree::json_parser::read_json(strstream, pt);
 
-    unsigned long cmv_id = pt.get<unsigned long>("cmv_id");
+    std::string cmv_id = pt.get<std::string>("cmv_id");
     std::string operation = pt.get<std::string>("operation");
     bool has_cargo = pt.get<bool>("cargo");
     double vehicle_longitude = pt.get<double>("location.longitude");
     double vehicle_latitude = pt.get<double>("location.latitude");
 
-    ASSERT_EQ(123, cmv_id);
+    ASSERT_EQ("DOT-11111", cmv_id);
     ASSERT_EQ("ENTER_STAGING_AREA", operation);
     ASSERT_EQ(pt.count("action_id"), 0);
     ASSERT_TRUE(has_cargo);
@@ -91,7 +91,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
 
     // Test initial arrival message for pdw initialized without cargo with the Port Entrance as its first destination
     port_drayage_plugin::PortDrayageWorker pdw2{
-        123, // CMV ID 
+        "123", // CMV ID 
         "", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         false, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
@@ -116,13 +116,13 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
     ptree pt2;
     boost::property_tree::json_parser::read_json(strstream2, pt2);
 
-    unsigned long cmv_id2 = pt2.get<unsigned long>("cmv_id");
+    std::string cmv_id2 = pt2.get<std::string>("cmv_id");
     std::string operation2 = pt2.get<std::string>("operation");
     bool has_cargo2 = pt2.get<bool>("cargo");
     double vehicle_longitude2 = pt2.get<double>("location.longitude");
     double vehicle_latitude2 = pt2.get<double>("location.latitude");
 
-    ASSERT_EQ(123, cmv_id2);
+    ASSERT_EQ("123", cmv_id2);
     ASSERT_EQ(0, pt2.count("cargo_id")); // Broadcasted arrival message should not include cargo_id since vehicle is not carrying cargo
     ASSERT_EQ("ENTER_PORT", operation2);
     ASSERT_FALSE(has_cargo2); // False since vehicle is not currently carrying cargo
@@ -134,7 +134,7 @@ TEST(PortDrayageTest, testCheckStop1)
 {
     ros::Time::init();
     port_drayage_plugin::PortDrayageWorker pdw{
-        123, // CMV ID
+        "123", // CMV ID
         "321", // Cargo ID
         "TEST_CARMA_HOST_ID", 
         true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
@@ -167,7 +167,7 @@ TEST(PortDrayageTest, testCheckStop2)
 {
     ros::Time::init();
     port_drayage_plugin::PortDrayageWorker pdw{
-        123, // CMV ID 
+        "123", // CMV ID 
         "321", // Cargo ID
         "TEST_CARMA_HOST_ID", 
         true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
@@ -200,7 +200,7 @@ TEST(PortDrayageTest, testCheckStop3)
 {
     ros::Time::init();
     port_drayage_plugin::PortDrayageWorker pdw{
-        123, // CMV ID
+        "123", // CMV ID
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
@@ -234,7 +234,7 @@ TEST(PortDrayageTest, testCheckStop4)
 {
     ros::Time::init();
     port_drayage_plugin::PortDrayageWorker pdw{
-        123, // CMV ID
+        "123", // CMV ID
         "321", // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
@@ -291,10 +291,10 @@ TEST(PortDrayageTest, testStateMachine1)
 // Test communication between PortDrayageWorker and PortDrayageStateMachine for State Machine flow
 TEST(PortDrayageTest, testPortDrayageStateMachine2)
 {
-    // Create PortDrayageWorker object with _cmv_id of 123 and no cargo
+    // Create PortDrayageWorker object with _cmv_id of "123" and no cargo
     //std::function<void(cav_msgs::MobilityOperation)> fun = [](cav_msgs::MobilityOperation){return;};
     port_drayage_plugin::PortDrayageWorker pdw{
-        123, // CMV ID 
+        "123", // CMV ID 
         "", // Cargo ID; empty string indicates CMV begins without no cargo
         "TEST_CARMA_HOST_ID", 
         true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
@@ -482,7 +482,7 @@ TEST(PortDrayageTest, testComposeSetActiveRouteRequest)
 {
     // Create PortDrayageWorker object with _cmv_id of "123"
     port_drayage_plugin::PortDrayageWorker pdw{
-        123, 
+        "123", 
         "TEST_CARGO_ID", 
         "TEST_CARMA_HOST_ID", 
         true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
@@ -517,9 +517,9 @@ TEST(PortDrayageTest, testComposeSetActiveRouteRequest)
 // Test Case for testing all potential inbound Port Drayage MobilityOperation messages
 TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
 {
-    // Create PortDrayageWorker object with cmv_id of 123 that is not carrying cargo
+    // Create PortDrayageWorker object with cmv_id of "123" that is not carrying cargo
     port_drayage_plugin::PortDrayageWorker pdw{
-        123, // CMV ID 
+        "123", // CMV ID 
         "", // Cargo ID; empty string indicates the CMV is not carrying cargo
         "TEST_CARMA_HOST_ID", 
         true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
@@ -608,7 +608,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ptree pt;
     boost::property_tree::json_parser::read_json(strstream, pt);
 
-    unsigned long cmv_id = pt.get<unsigned long>("cmv_id");
+    std::string cmv_id = pt.get<std::string>("cmv_id");
     std::string cargo_id = pt.get<std::string>("cargo_id");
     bool has_cargo = pt.get<bool>("cargo");
     std::string action_id = pt.get<std::string>("action_id");
@@ -620,7 +620,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ASSERT_EQ("carma/port_drayage", msg.strategy);
     ASSERT_EQ("TEST_CARMA_HOST_ID", msg.header.sender_id);
     ASSERT_FALSE(msg.strategy_params.empty());
-    ASSERT_EQ(123, cmv_id);
+    ASSERT_EQ("123", cmv_id);
     ASSERT_FALSE(has_cargo);
     ASSERT_EQ("321", cargo_id); 
     ASSERT_EQ("PICKUP", operation);
@@ -657,7 +657,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ptree pt2;
     boost::property_tree::json_parser::read_json(strstream2, pt2);
 
-    cmv_id = pt2.get<unsigned long>("cmv_id");
+    cmv_id = pt2.get<std::string>("cmv_id");
     cargo_id = pt2.get<std::string>("cargo_id");
     has_cargo = pt2.get<bool>("cargo");
     action_id = pt2.get<std::string>("action_id");
@@ -669,7 +669,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ASSERT_EQ("carma/port_drayage", msg2.strategy);
     ASSERT_EQ("TEST_CARMA_HOST_ID", msg2.header.sender_id);
     ASSERT_FALSE(msg2.strategy_params.empty());
-    ASSERT_EQ(123, cmv_id);
+    ASSERT_EQ("123", cmv_id);
     ASSERT_TRUE(has_cargo);
     ASSERT_EQ("321", cargo_id);
     ASSERT_EQ("EXIT_STAGING_AREA", operation);
@@ -706,7 +706,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ptree pt3;
     boost::property_tree::json_parser::read_json(strstream3, pt3);
 
-    cmv_id = pt3.get<unsigned long>("cmv_id");
+    cmv_id = pt3.get<std::string>("cmv_id");
     has_cargo = pt3.get<bool>("cargo");
     cargo_id = pt3.get<std::string>("cargo_id");
     action_id = pt3.get<std::string>("action_id");
@@ -718,7 +718,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ASSERT_EQ("carma/port_drayage", msg3.strategy);
     ASSERT_EQ("TEST_CARMA_HOST_ID", msg3.header.sender_id);
     ASSERT_FALSE(msg3.strategy_params.empty());
-    ASSERT_EQ(123, cmv_id);
+    ASSERT_EQ("123", cmv_id);
     ASSERT_TRUE(has_cargo);
     ASSERT_EQ("321", cargo_id);
     ASSERT_EQ("ENTER_PORT", operation);
@@ -755,7 +755,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ptree pt4;
     boost::property_tree::json_parser::read_json(strstream4, pt4);
 
-    cmv_id = pt4.get<unsigned long>("cmv_id");
+    cmv_id = pt4.get<std::string>("cmv_id");
     cargo_id = pt4.get<std::string>("cargo_id");
     has_cargo = pt4.get<bool>("cargo");
     action_id = pt4.get<std::string>("action_id");
@@ -767,7 +767,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ASSERT_EQ("carma/port_drayage", msg4.strategy);
     ASSERT_EQ("TEST_CARMA_HOST_ID", msg4.header.sender_id);
     ASSERT_FALSE(msg4.strategy_params.empty());
-    ASSERT_EQ(123, cmv_id);
+    ASSERT_EQ("123", cmv_id);
     ASSERT_TRUE(has_cargo);
     ASSERT_EQ("321", cargo_id);
     ASSERT_EQ("DROPOFF", operation);
@@ -803,7 +803,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ptree pt5;
     boost::property_tree::json_parser::read_json(strstream5, pt5);
 
-    cmv_id = pt5.get<unsigned long>("cmv_id");
+    cmv_id = pt5.get<std::string>("cmv_id");
     cargo_id = pt5.get<std::string>("cargo_id");
     has_cargo = pt5.get<bool>("cargo");
     action_id = pt5.get<std::string>("action_id");
@@ -815,7 +815,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ASSERT_EQ("carma/port_drayage", msg5.strategy);
     ASSERT_EQ("TEST_CARMA_HOST_ID", msg5.header.sender_id);
     ASSERT_FALSE(msg5.strategy_params.empty());
-    ASSERT_EQ(123, cmv_id);
+    ASSERT_EQ("123", cmv_id);
     ASSERT_FALSE(has_cargo);
     ASSERT_EQ("422", cargo_id);
     ASSERT_EQ("PICKUP", operation);
@@ -851,7 +851,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ptree pt6;
     boost::property_tree::json_parser::read_json(strstream6, pt6);
 
-    cmv_id = pt6.get<unsigned long>("cmv_id");
+    cmv_id = pt6.get<std::string>("cmv_id");
     cargo_id = pt6.get<std::string>("cargo_id");
     has_cargo = pt6.get<bool>("cargo");
     action_id = pt6.get<std::string>("action_id");
@@ -863,7 +863,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ASSERT_EQ("carma/port_drayage", msg6.strategy);
     ASSERT_EQ("TEST_CARMA_HOST_ID", msg6.header.sender_id);
     ASSERT_FALSE(msg6.strategy_params.empty());
-    ASSERT_EQ(123, cmv_id);
+    ASSERT_EQ("123", cmv_id);
     ASSERT_TRUE(has_cargo);
     ASSERT_EQ("422", cargo_id);
     ASSERT_EQ("PORT_CHECKPOINT", operation);
@@ -899,7 +899,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ptree pt7;
     boost::property_tree::json_parser::read_json(strstream7, pt7);
 
-    cmv_id = pt7.get<unsigned long>("cmv_id");
+    cmv_id = pt7.get<std::string>("cmv_id");
     cargo_id = pt7.get<std::string>("cargo_id");
     has_cargo = pt7.get<bool>("cargo");
     action_id = pt7.get<std::string>("action_id");
@@ -911,7 +911,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ASSERT_EQ("carma/port_drayage", msg7.strategy);
     ASSERT_EQ("TEST_CARMA_HOST_ID", msg7.header.sender_id);
     ASSERT_FALSE(msg7.strategy_params.empty());
-    ASSERT_EQ(123, cmv_id);
+    ASSERT_EQ("123", cmv_id);
     ASSERT_TRUE(has_cargo);
     ASSERT_EQ("422", cargo_id);
     ASSERT_EQ("HOLDING_AREA", operation);
@@ -947,7 +947,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ptree pt8;
     boost::property_tree::json_parser::read_json(strstream8, pt8);
 
-    cmv_id = pt8.get<unsigned long>("cmv_id");
+    cmv_id = pt8.get<std::string>("cmv_id");
     cargo_id = pt8.get<std::string>("cargo_id");
     has_cargo = pt8.get<bool>("cargo");
     action_id = pt8.get<std::string>("action_id");
@@ -959,7 +959,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ASSERT_EQ("carma/port_drayage", msg8.strategy);
     ASSERT_EQ("TEST_CARMA_HOST_ID", msg8.header.sender_id);
     ASSERT_FALSE(msg8.strategy_params.empty());
-    ASSERT_EQ(123, cmv_id);
+    ASSERT_EQ("123", cmv_id);
     ASSERT_TRUE(has_cargo);
     ASSERT_EQ("422", cargo_id);
     ASSERT_EQ("EXIT_PORT", operation);
@@ -995,7 +995,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ptree pt9;
     boost::property_tree::json_parser::read_json(strstream9, pt9);
 
-    cmv_id = pt9.get<unsigned long>("cmv_id");
+    cmv_id = pt9.get<std::string>("cmv_id");
     cargo_id = pt9.get<std::string>("cargo_id");
     has_cargo = pt9.get<bool>("cargo");
     action_id = pt9.get<std::string>("action_id");
@@ -1007,7 +1007,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
     ASSERT_EQ("carma/port_drayage", msg9.strategy);
     ASSERT_EQ("TEST_CARMA_HOST_ID", msg9.header.sender_id);
     ASSERT_FALSE(msg9.strategy_params.empty());
-    ASSERT_EQ(123, cmv_id);
+    ASSERT_EQ("123", cmv_id);
     ASSERT_TRUE(has_cargo);
     ASSERT_EQ("422", cargo_id);
     ASSERT_EQ("ENTER_STAGING_AREA", operation);
@@ -1020,7 +1020,7 @@ TEST(PortDrayageTest, testComposeUIInstructions)
 {
     // Create PortDrayageWorker object with _cmv_id of "123"
     port_drayage_plugin::PortDrayageWorker pdw{
-        123, 
+        "123", 
         "", // Empty string indicates CMV is not carrying cargo 
         "TEST_CARMA_HOST_ID", 
         true, // Flag indicating CMV's first destination; 'true' is Staging Area Entrance, 'false' is Port Entrance
