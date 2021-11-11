@@ -84,8 +84,7 @@ namespace platoon_strategic_ihp
                                 PublishPluginDiscoveryCB plugin_discovery_publisher, MobilityResponseCB mobility_response_publisher,
                                 MobilityRequestCB mobility_request_publisher, MobilityOperationCB mobility_operation_publisher,
                                 PlatooningInfoCB platooning_info_publisher);
-
-
+            
             /**
             * \brief Callback function for Mobility Operation Message
             * 
@@ -139,8 +138,8 @@ namespace platoon_strategic_ihp
             /**
             * \brief Find lanelet index from path
             * 
-            * \param current_dist current downtrack distance
-            * \param end_dist ending downtrack distance
+            * \param current_dist current downtrack distance (m)
+            * \param end_dist ending downtrack distance (m)
             * \param current_speed current speed
             * \param target_speed target speed
             * \param lane_id lanelet id
@@ -187,12 +186,6 @@ namespace platoon_strategic_ihp
             void cmd_cb(const geometry_msgs::TwistStampedConstPtr& msg);
 
             /**
-            * \brief Callback for the BSM
-            * \param msg Latest BSM message
-            */
-            void bsm_cb(const cav_msgs::BSMConstPtr& msg);
-
-            /**
             * \brief Callback for the georeference
             * \param msg Latest georeference
             */
@@ -229,24 +222,16 @@ namespace platoon_strategic_ihp
             // ECEF position of the host vehicle
             cav_msgs::LocationECEF pose_ecef_point_;
 
-            // -------------- UCLA: front join functions ------------------
-            // UCLA: add two states for frontal join
+            // -------------- UCLA: add two states for frontal join ------------------
             /**
             * \brief Run Leader Aborting State
             */
             void run_leader_aborting();
 
             /**
-            * UCLA: \brief Run Candidate Leader State
+            * \brief Run Candidate Leader State
             */
             void run_candidate_leader();
-
-            /**
-             * UCLA: \breif find platoon leader bsmID
-             */
-            void front_bsm_cb(const cav_msgs::BSMConstPtr& msg);
-
-                        
 
         
         private:
@@ -271,17 +256,17 @@ namespace platoon_strategic_ihp
             geometry_msgs::PoseStamped pose_msg_;
             
             //Internal Variables used in unit tests
-            // Current vehicle command speed
+            // Current vehicle command speed, m/s
             double cmd_speed_ = 0;
-            // Current vehicle measured speed
+            // Current vehicle measured speed, m/s
             double current_speed_ = 0;
-            // Current vehicle downtrack distance in route
+            // Current vehicle downtrack distance in route, m
             double current_downtrack_ = 0;
-            // Current vehicle crosstrack distance in route
+            // Current vehicle crosstrack distance in route, m
             double current_crosstrack_ = 0;
-            // start time of leaderwaiting state
+            // start time of leaderwaiting state, s
             long waitingStartTime = 0;
-            // start time of candidate follower state
+            // start time of candidate follower state, s
             long candidatestateStartTime = 0;
             // potential new platood id 
             std::string potentialNewPlatoonId = "";
@@ -293,11 +278,7 @@ namespace platoon_strategic_ihp
             std::string targetPlatoonId = "";
             // Host Mobility ID
             std::string HostMobilityId = "hostid";
-            // Host BSM ID
-            std::string host_bsm_id_ = "";
-
-            // UCLA: add front BSM ID for frontal join
-            std::string front_bsm_id_ = "";
+            
             // UCLAleader_waiting applicant id
             std::string lw_applicantId_ = "";
             // UCLA: add new joiner ID front for frontal join
@@ -318,12 +299,11 @@ namespace platoon_strategic_ihp
             /**
             * \brief Function to determin if a vehicle is in the front of hose vehicle
             *
-            * \param rearVehicleBsmId rear vehicle bsm id
             * \param downtrack vehicle downtrack
             *
             * \return true or false
             */
-            bool isVehicleRightInFront(std::string rearVehicleBsmId, double downtrack);
+            bool isVehicleRightInFront(double downtrack);
             
             /**
             * \brief Function to find speed limit of a lanelet
@@ -501,80 +481,112 @@ namespace platoon_strategic_ihp
             // -------------- UCLA: front join function headers -----------------------
             
             // ----- 0. Extract data -------
+            
             /**
-            * \brief Function to determine if the frontal candidate is located closely in front 
+            * \brief Function to determine if the given downtrack distance (m) is behind the host vehicle.
             *
-            * \param type boolean
+            * \param downtrack: The downtrack distance (m) of the target vehicle to compare with the host.
             *
-            * \return if target vehicle in front
+            * \return if target vehicle is behind the host vehicle.
             */
-            bool isVehicleRightBehind(std::string frontVehicleBsmId, double downtrack);
+            bool isVehicleRightBehind(double downtrack);
             
             // ----- 1. compose message ---------
+            
             /**
-            * \brief Function to compose mobility operation in LeaderAborting state
+            * \brief Function to compose mobility operation message with STATUS params.
             *
-            * \param type type of mobility operation (info or status)
+            * \return mobility operation msg.
+            */
+            cav_msgs::MobilityOperation composeMobilityOperationSTATUS();
+            
+            /**
+            * \brief Function to compose mobility operation message with INFO params.
             *
-            * \return mobility operation msg
+            * \return mobility operation msg.
+            */
+            cav_msgs::MobilityOperation composeMobilityOperationINFO();
+            
+            /**
+            * \brief Function to compose mobility operation in LeaderAborting state.
+            *
+            * \return mobility operation msg.
             */
             cav_msgs::MobilityOperation composeMobilityOperationLeaderAborting();
+            
             /**
-            * \brief Function to compose mobility operation in CandidateLeader
+            * \brief Function to compose mobility operation in CandidateLeader.
             *
-            * \param type type of mobility operation (info or status)
-            *
-            * \return mobility operation msg
+            * \return mobility operation msg.
             */
             cav_msgs::MobilityOperation composeMobilityOperationCandidateLeader();
 
             // --------- 2. Mobility operation callback -----------
+            
             /**
-            * \brief Function to process mobility operation in leaderaborting state
+            * \brief Function to process mobility operation message with STATUS params, 
+            *        read ecef location and update platoon member info.
             *
-            * \param msg incoming mobility operation
+            * \param msg incoming mobility operation message.
+            */
+            void mob_op_cb_STATUS(const cav_msgs::MobilityOperation& msg);
+            
+            /**
+            * \brief Function to process mobility operation in leaderaborting state.
+            *
+            * \param strategyParams The parsed strategy params, used to find ecef locaton.
+            *   
+            * \return ecef location of the sender.
+            */
+            cav_msgs::LocationECEF mob_op_find_ecef_from_INFO_params(std::string strategyParams);
+            
+            /**
+            * \brief Function to process mobility operation in leaderaborting state.
+            *
+            * \param msg incoming mobility operation message.
             */
             void mob_op_cb_leaderaborting(const cav_msgs::MobilityOperation& msg);
+            
             /**
-            * \brief Function to process mobility operation in candidateleader state
+            * \brief Function to process mobility operation in candidateleader state.
             *
-            * \param msg incoming mobility operation
+            * \param msg incoming mobility operation message.
             */
             void mob_op_cb_candidateleader(const cav_msgs::MobilityOperation& msg);
 
             //------- 3. Mobility request callback -----------
+            
             /**
-            * \brief Function to process mobility request in leaderaborting state
+            * \brief Function to process mobility request in leaderaborting state.
             *
-            * \param msg incoming mobility request
+            * \param msg incoming mobility request.
             *
-            * \return ACK, NACK, or No response
+            * \return ACK, NACK, or No response.
             */
             MobilityRequestResponse mob_req_cb_leaderaborting(const cav_msgs::MobilityRequest& msg);
+            
             /**
-            * \brief Function to process mobility request in candidateleader state
+            * \brief Function to process mobility request in candidateleader state.
             *
-            * \param msg incoming mobility request
+            * \param msg incoming mobility request.
             *
-            * \return ACK, NACK, or No response
+            * \return ACK, NACK, or No response.
             */
             MobilityRequestResponse mob_req_cb_candidateleader(const cav_msgs::MobilityRequest& msg);
 
             // ------ 4. Mobility response callback ------
             /**
-            * \brief Function to process mobility response in leaderaborting state
+            * \brief Function to process mobility response in leaderaborting state.
             *
-            * \param msg incoming mobility response
+            * \param msg incoming mobility response.
             */
             void mob_resp_cb_leaderaborting(const cav_msgs::MobilityResponse& msg);
             /**
-            * \brief Function to process mobility response in candidateleader state
+            * \brief Function to process mobility response in candidateleader state.
             *
-            * \param msg incoming mobility response
+            * \param msg incoming mobility response.
             */
             void mob_resp_cb_candidateleader(const cav_msgs::MobilityResponse& msg);
-
-
 
 
             // Pointer for map projector
@@ -582,12 +594,6 @@ namespace platoon_strategic_ihp
 
             // flag to check if map is loaded
             bool map_loaded_ = false;
-
-            // UCLA: flag to indicate the join type 
-            bool isRearJoin_ = false;
-            bool isFrontalJoin_ = false;
-
-     
 
             // ros service servers
             ros::ServiceServer maneuver_srv_;
@@ -615,32 +621,12 @@ namespace platoon_strategic_ihp
             const std::string OPERATION_INFO_TYPE = "INFO";
             const std::string OPERATION_STATUS_TYPE = "STATUS";
             
-            // UCLA: edit INFO params to store platoon front info --> pick one for testing (front join needs 10 info params)
-            // const std::string OPERATION_INFO_PARAMS   = "INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d,DTD:%.2f,ECEFX:%.2f,ECEFY:%.2f,ECEFZ:%.2f";
-            const std::string OPERATION_INFO_PARAMS   = "INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d,DTD:%.2f,ECEFX:%.2f,ECEFY:%.2f,ECEFZ:%.2f, FRONT:%s,FRONTDTD:%.2f";
-            const std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,DTD:%2%,SPEED:%3%,ECEFX:%4%,ECEFY:%5%,ECEFZ:%6%";
-            const std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%,ECEFX:%4%,ECEFY:%5%,ECEFZ:%6%";
-            // UCLA: add for frontal join
-            const std::string JOIN_FROM_FRONT_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%,ECEFX:%4%,ECEFY:%5%,ECEFZ:%6%";
-
-            // find BSM IDs
-            std::string bsmIDtoString(cav_msgs::BSMCoreData bsm_core)
-            {
-                std::string res = "";
-                for (size_t i=0; i<bsm_core.id.size(); i++)
-                {
-                res+=std::to_string(bsm_core.id[i]);
-                }
-                return res;
-            }
+            // UCLA: edit INFO params to store platoon front info (front join needs 10 info params)
+            const std::string OPERATION_INFO_PARAMS   = "INFO|LENGTH:%.2f,SPEED:%.2f,SIZE:%d,ECEFX:%.2f,ECEFY:%.2f,ECEFZ:%.2f";
+            const std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%";
             
-            // UCLA: get leader bsm ID 
-            std::string frontbsmIDtoString(cav_msgs::BSMCoreData bsm_core)
-            {
-                std::string res = "";
-                res = std::to_string(bsm_core.id[0]);
-                return res;
-            }
+            // Merge front join and rear join to use sasme params for sending request. 
+            const std::string SAME_LANE_JOIN_PARAMS = "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%"; 
 
     };
 }

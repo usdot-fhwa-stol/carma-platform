@@ -29,8 +29,9 @@ struct PlatoonPluginConfig
   int    algorithmType         = 0;    // N/A
   int    statusMessageInterval = 100;  // ms
   int    infoMessageInterval   = 200;  // ms
-  double mvr_duration          = 15;   // s
-  double epislon              = 0.001; // m/s
+  // following parameters are for IHP gap regulation algorithm
+  double time_step             = 15;   // s
+  double epislon               = 0.001; // m/s
   
   // following parameters are for platoon forming and operation
   double timeHeadway           = 2.0;  // s

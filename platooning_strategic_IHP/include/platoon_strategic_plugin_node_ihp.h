@@ -100,7 +100,8 @@ public:
     ros::Subscriber mob_operation_sub = nh.subscribe("incoming_mobility_operation", 1, &PlatoonStrategicIHPPlugin::mob_op_cb,  &worker);
     ros::Subscriber current_pose_sub = nh.subscribe("current_pose", 1, &PlatoonStrategicIHPPlugin::pose_cb,  &worker);
     ros::Subscriber current_twist_sub = nh.subscribe("current_velocity", 1, &PlatoonStrategicIHPPlugin::twist_cb,  &worker);
-    ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &PlatoonStrategicIHPPlugin::bsm_cb,  &worker);
+    // not use BSMID, consider delete
+    // ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &PlatoonStrategicIHPPlugin::bsm_cb,  &worker);
     ros::Subscriber cmd_sub = nh.subscribe("twist_raw", 1, &PlatoonStrategicIHPPlugin::cmd_cb,  &worker);
     ros::Subscriber georeference_sub = nh.subscribe("georeference", 1, &PlatoonStrategicIHPPlugin::georeference_cb, &worker);
 
@@ -113,4 +114,4 @@ public:
   }
 };
 
-}  // namespace platoon_strategicIHP
+}  // namespace platoon_strategic_ihp
