@@ -200,6 +200,7 @@ namespace basic_autonomy
             boost::optional<lanelet::BasicPoint2d> delta_point;
             for (size_t i = 0; i < points_and_target_speeds.size(); ++i) {
                 auto current_point = points_and_target_speeds[i].point;
+                
                 if (i == 0) {
                     prev_point = current_point;
                     continue;
@@ -811,11 +812,6 @@ namespace basic_autonomy
             times.resize(end_dist_pt_index + 1);
             final_yaw_values.resize(end_dist_pt_index + 1);
             ROS_DEBUG_STREAM("After removing extra buffer points, future_geom_points.size():"<< future_geom_points.size());
-
-            // Debug for final 5 points in lane change trajectory:
-            //for(int i = times.size()-10; i < times.size(); ++i) {
-            //    ROS_DEBUG_STREAM("Point " << i << " target time: " << times[i]);
-            //}
 
             std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
                 trajectory_from_points_times_orientations(future_geom_points, times, final_yaw_values, state_time);
