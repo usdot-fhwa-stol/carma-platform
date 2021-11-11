@@ -80,7 +80,6 @@ namespace port_drayage_plugin
     }
 
     void PortDrayageWorker::initialize() {
-        ROS_WARN_STREAM("cmv_id is " << _cmv_id);
         _pdsm.set_on_arrived_at_destination_callback(std::bind(&PortDrayageWorker::on_arrived_at_destination, this));
         _pdsm.set_on_received_new_destination_callback(std::bind(&PortDrayageWorker::on_received_new_destination, this));
     }
