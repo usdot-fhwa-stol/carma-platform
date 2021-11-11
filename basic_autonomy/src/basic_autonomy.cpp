@@ -510,6 +510,8 @@ namespace basic_autonomy
             back_and_future.reserve(points_set.size());
             double total_dist = 0;
             int min_i = 0;
+
+            // int must be used here to avoid overflow when i = 0
             for (int i = nearest_pt_index; i >= 0; --i)
             {
                 min_i = i;
