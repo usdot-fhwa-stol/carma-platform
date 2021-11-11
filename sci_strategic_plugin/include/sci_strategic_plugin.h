@@ -302,6 +302,7 @@ public:
   bool is_allowed_int_ = false;
 
   std::string intersection_turn_direction_ = "straight";
+  bool vehicle_engaged_ = false;
 
   // approximate speed limit 
   double speed_limit_ = 100.0;
