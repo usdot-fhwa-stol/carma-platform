@@ -39,7 +39,7 @@ namespace port_drayage_plugin
         bool enable_port_drayage;
         _pnh->param<bool>("enable_port_drayage", enable_port_drayage, false);
         std::string cmv_id;
-        _pnh->getParam("vehicle_id", cmv_id);
+        _pnh->getParam("/vehicle_id", cmv_id);
 
         ros::Publisher outbound_mob_op = _nh->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
         _outbound_mobility_operations_publisher = std::make_shared<ros::Publisher>(outbound_mob_op);
