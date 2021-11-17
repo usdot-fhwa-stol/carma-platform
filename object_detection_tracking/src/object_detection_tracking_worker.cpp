@@ -14,8 +14,6 @@
  * the License.
  */
 #include "object_detection_tracking_worker.h"
-#include <motion_predict/motion_predict.h>
-#include <motion_predict/predict_ctrv.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2/LinearMath/Quaternion.h>
