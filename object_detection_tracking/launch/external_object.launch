@@ -11,11 +11,12 @@
   the License.
 -->
 <!--
-  This file is used to launch the CARMA3 object_detection_tracking_node
+  This file is can be used to launch the CARMA3 object_detection_tracking_node.
+  Though in carma-platform is may be loaded as a component instead of a seperate node
 -->
 
 <launch>
-  <node name="external_object" pkg="object_detection_tracking" type="object_detection_tracking_node">
-    <rosparam command="load" file="$(find object_detection_tracking)/config/parameters.yaml"/>
+  <node name="external_object" pkg="object_detection_tracking" exec="object_detection_tracking_node">
+    <param from="$(find-pkg-share object_detection_tracking)/config/parameters.yaml"/>
   </node>
 </launch>

@@ -18,10 +18,9 @@
 #define EXTERNAL_OBJECT_WORKER_H
 
 #include <ros/ros.h>
-#include <cav_msgs/ExternalObject.h>
-#include <cav_msgs/ExternalObjectList.h>
-#include <autoware_msgs/DetectedObject.h>
-#include <autoware_msgs/DetectedObjectArray.h>
+#include <carma_perception_msgs/msg/external_object.hpp>
+#include <carma_perception_msgs/msg/external_object_list.hpp>
+#include <autoware_auto_msgs/msg/tracked_objects.hpp>
 #include <functional>
 #include <tf2_ros/transform_listener.h>
 #include <geometry_msgs/TransformStamped.h>
@@ -40,7 +39,7 @@ class ObjectDetectionTrackingWorker
 
  public:
 
-  using PublishObjectCallback = std::function<void(const cav_msgs::ExternalObjectList&)>;
+  using PublishObjectCallback = std::function<void(const carma_perception_msgs::msg::ExternalObjectList&)>;
 
   /*!
    * \brief Constructor
@@ -55,15 +54,7 @@ class ObjectDetectionTrackingWorker
 
   void detectedObjectCallback(const autoware_msgs::DetectedObjectArray &msg);
 
-  // Setters for the prediction parameters
-  void setPredictionTimeStep(double time_step);
-  void setPredictionPeriod(double period);
-  void setXAccelerationNoise(double noise);
-  void setYAccelerationNoise(double noise);
-  void setProcessNoiseMax(double noise_max);
-  void setConfidenceDropRate(double drop_rate);
-
-  void setVelodyneFrame(std::string velodyne_frame);
+  // Setters for the parameters
   void setMapFrame(std::string map_frame);
 
  
@@ -73,18 +64,12 @@ class ObjectDetectionTrackingWorker
 
   PublishObjectCallback obj_pub_;
 
-  // Prediction parameters
-  double prediction_time_step_ = 0.1;
-  double prediction_period_ = 2.0;
-  double cv_x_accel_noise_ = 9.0;
-  double cv_y_accel_noise_ = 9.0;
-  double prediction_process_noise_max_ = 1000.0;
-  double prediction_confidence_drop_rate_ = 0.9;
-  std::string velodyne_frame_;
+  // Parameters
   std::string map_frame_;
 
   // Buffer which holds the tree of transforms
   tf2_ros::Buffer tfBuffer_;
+  
   // tf2 listeners. Subscribes to the /tf and /tf_static topics
   tf2_ros::TransformListener tfListener_ {tfBuffer_};
   

@@ -19,52 +19,45 @@ namespace object{
 
   using std::placeholders::_1;
 
-  ObjectDetectionTrackingNode::ObjectDetectionTrackingNode(): pnh_("~"), object_worker_(std::bind(&ObjectDetectionTrackingNode::publishObject, this, _1)){}
+  ObjectDetectionTrackingNode::ObjectDetectionTrackingNode(const rclcpp::NodeOptions&): pnh_("~"), object_worker_(std::bind(&ObjectDetectionTrackingNode::publishObject, this, _1)){}
 
-  void ObjectDetectionTrackingNode::initialize()
-  {
+  carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &) {
+
     // Load parameters
-    double step = 0.1;
-    double period = 2.0;
-    double ax = 9.0;
-    double ay = 9.0;
-    double process_noise_max = 1000.0;
-    double drop_rate = 0.9;
-    std::string velodyne_frame_ = "velodyne";
     std::string map_frame_ = "map";
 
-    pnh_.param<double>("prediction_time_step", step, step);
-    pnh_.param<double>("prediction_period", period, period);
-    pnh_.param<double>("cv_x_accel_noise", ax, ax);
-    pnh_.param<double>("cv_y_accel_noise", ay, ay);
-    pnh_.param<double>("prediction_process_noise_max", process_noise_max, process_noise_max);
-    pnh_.param<double>("prediction_confidence_drop_rate", drop_rate, drop_rate);
-    pnh_.param<std::string>("velodyne_frame", velodyne_frame_, velodyne_frame_);
-    pnh_.param<std::string>("map_frame", map_frame_, map_frame_);
+    map_frame_ = this->declare_parameter<std::string>("map_frame", map_frame_);
 
-    object_worker_.setPredictionTimeStep(step);
-    object_worker_.setPredictionPeriod(period);
-    object_worker_.setXAccelerationNoise(ax);
-    object_worker_.setYAccelerationNoise(ay);
-    object_worker_.setProcessNoiseMax(process_noise_max);
-    object_worker_.setConfidenceDropRate(drop_rate);
-    object_worker_.setVelodyneFrame(velodyne_frame_);
-    object_worker_.setMapFrame(map_frame_);
+    this->add_on_set_parameters_callback(
+        [this](auto param_vec) {
+          
+          auto error = update_params<std::string>({ {"map_frame", map_frame_} }, param_vec);
+
+          rcl_interfaces::msg::SetParametersResult result;
+
+          result.successful = !!error;
+
+          if (error) {
+            result.reason = error.get();
+          } else {
+            object_worker_.setMapFrame(map_frame_);
+          }
+
+          return result;
+        }
+      );
+    
 
     // Setup pub/sub
-    autoware_obj_sub_=nh_.subscribe("detected_objects",10,&ObjectDetectionTrackingWorker::detectedObjectCallback,&object_worker_);
-    carma_obj_pub_=nh_.advertise<cav_msgs::ExternalObjectList>("external_objects", 10);
+    autoware_obj_sub_= create_subscriber("detected_objects",10,&ObjectDetectionTrackingWorker::detectedObjectCallback,&object_worker_);
+    carma_obj_pub_= create_publisher<carma_perception_msgs::msg::ExternalObjectList>("external_objects", 10);
+
+    return CallbackReturn::SUCCESS;
   }
 
-  void ObjectDetectionTrackingNode::publishObject(const cav_msgs::ExternalObjectList& obj_msg)
+  void ObjectDetectionTrackingNode::publishObject(const carma_perception_msgs::msg::ExternalObjectList& obj_msg)
   {
-  carma_obj_pub_.publish(obj_msg);
-  }
-
-  void ObjectDetectionTrackingNode::run()
-  {
-    initialize();
-    nh_.spin();
+    carma_obj_pub_.publish(obj_msg);
   }
 
 }//object

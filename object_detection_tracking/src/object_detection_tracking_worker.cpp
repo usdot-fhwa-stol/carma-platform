@@ -26,24 +26,37 @@ namespace object
 {
 ObjectDetectionTrackingWorker::ObjectDetectionTrackingWorker(PublishObjectCallback obj_pub) : obj_pub_(obj_pub){};
 
+bool isClass(const autoware_auto_msgs::msg::TrackedObject& obj, uint8_t class_id) {
+
+  return obj.classification.end() != std::find_if(obj.classification.begin(), obj.classification.end(), 
+    [&class](auto o){ return o.classification == class_id; }
+  );
+
+}
+
 void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::DetectedObjectArray& obj_array)
 {
 
-  cav_msgs::ExternalObjectList msg;
+  carma_perception_msgs::msg::ExternalObjectList msg;
   msg.header = obj_array.header;
   msg.header.frame_id = map_frame_;
 
-  geometry_msgs::TransformStamped velodyne_transform; 
+
+  geometry_msgs::TransformStamped object_frame_tf; 
 
   try {
-      velodyne_transform = tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_, obj_array.header.stamp);
-    } catch (tf2::TransformException &ex) {
-      ROS_WARN_STREAM("Ignoring fix message: Could not locate static transforms with exception " << ex.what());
-      return;
-    }
+
+    object_frame_tf = tfBuffer_.lookupTransform(map_frame_ ,obj_array.header.frame_id, obj_array.header.stamp);
+
+  } catch (tf2::TransformException &ex) {
+
+    ROS_WARN_STREAM("Ignoring fix message: Could not locate static transforms with exception " << ex.what());
+    return;
+  }
+
   for (int i = 0; i < obj_array.objects.size(); i++)
   {
-    cav_msgs::ExternalObject obj;
+    carma_perception_msgs::msg::ExternalObject obj;
 
     // Header contains the frame rest of the fields will use
     obj.header = obj_array.objects[i].header;
@@ -58,50 +71,98 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
     obj.presence_vector = obj.presence_vector | obj.SIZE_PRESENCE_VECTOR;
     obj.presence_vector = obj.presence_vector | obj.OBJECT_TYPE_PRESENCE_VECTOR;
     obj.presence_vector = obj.presence_vector | obj.DYNAMIC_OBJ_PRESENCE;
-    
+    obj.presence_vector = obj.presence_vector | obj.CONFIDENCE_PRESENCE_VECTOR;
+     
     // Object id. Matching ids on a topic should refer to the same object within some time period, expanded
-    obj.id = obj_array.objects[i].id;
+    obj.id = obj_array.objects[i].object_id;
 
     // Pose of the object within the frame specified in header
-    tf2::doTransform(obj_array.objects[i].pose, obj.pose.pose, velodyne_transform);
+    geometry_msgs::msg::Pose input_object_pose;
+    input_object_pose.position = obj_array.objects[i].kinematics.centroid_position;
+    input_object_pose.orientation = obj_array.objects[i].kinematics.orientation;
+
+    tf2::doTransform(input_object_pose, obj.pose.pose, object_frame_tf);
 
 
-    obj.pose.covariance[0] = obj_array.objects[i].variance.x;
-    obj.pose.covariance[7] = obj_array.objects[i].variance.y;
-    obj.pose.covariance[17] = obj_array.objects[i].variance.z;
+    obj.confidence = obj_array.objects[i].existence_probability;
+
+    // Map the 3x3 matrix from autoware to the upper 3x3 matrix in geometry_msgs 
+    // TODO need to investigate the impact of the coordinate transformation on the covariance matrix
+    obj.pose.covariance[0] = obj_array.objects[i].position_covariance[0]
+    obj.pose.covariance[1] = obj_array.objects[i].position_covariance[1]
+    obj.pose.covariance[2] = obj_array.objects[i].position_covariance[2]
+    obj.pose.covariance[6] = obj_array.objects[i].position_covariance[3]
+    obj.pose.covariance[7] = obj_array.objects[i].position_covariance[4]
+    obj.pose.covariance[8] = obj_array.objects[i].position_covariance[5]
+    obj.pose.covariance[12] = obj_array.objects[i].position_covariance[6]
+    obj.pose.covariance[13] = obj_array.objects[i].position_covariance[7]
+    obj.pose.covariance[14] = obj_array.objects[i].position_covariance[8]
 
     
 
     // Average velocity of the object within the frame specified in header
-    obj.velocity.twist = obj_array.objects[i].velocity;
+    obj.velocity.twist = obj_array.objects[i].kinematics.twist;
 
     // The size of the object aligned along the axis of the object described by the orientation in pose
     // Dimensions are specified in meters
-    obj.size = obj_array.objects[i].dimensions;
+    // Autoware provides a set of 2d bounding boxes and supports articulated shapes.
+    // The loop below finds the overall bounding box to ensure information is not lost
+
+    double minX = std::numeric_limits<double>::max();
+    double maxX = std::numeric_limits<double>::lowest();
+    double minY = std::numeric_limits<double>::max();
+    double maxY = std::numeric_limits<double>::lowest();
+
+    for(auto polygon : obj_array.objects[i].shape) {
+      for (auto point :  polygon) {
+        
+        if (point.x > maxX)
+          maxX = point.x;
+
+        if (point.x < minX)
+          minX = point.x;
+
+        if (point.y > maxY)
+          maxY = point.y;
+
+        if (point.y < minY)
+          minY = point.y;
+      }
+    }
+
+    double dX = maxX - minX;
+    double dY = maxY - minY;
+
+    obj.size.x = dX / 2.0; // Shape in carma is defined by the half delta from the centroid
+    obj.size.y = dY / 2.0;
+
+    // Height provided by autoware is overall height divide by 2 for delta from centroid
+    obj.size.z = obj_array.objects[i].shape.height / 2.0; 
 
     // Update the object type and generate predictions using CV or CTRV vehicle models.
 		// If the object is a bicycle or motor vehicle use CTRV otherwise use CV.
-    if (obj_array.objects[i].label.compare("bicycle") == 0)
-    {
-      obj.object_type = obj.UNKNOWN;
-    }
-    else if (obj_array.objects[i].label.compare("motorbike") == 0)
+
+    if (isClass(obj_array.objects[i], autoware_auto_msgs::msg::ObjectClassification::MOTORCYCLE))
     {
       obj.object_type = obj.MOTORCYCLE;
     }
-    else if (obj_array.objects[i].label.compare("car") == 0)
+    else if (isClass(obj_array.objects[i], autoware_auto_msgs::msg::ObjectClassification::BICYCLE))
+    {
+      obj.object_type = obj.MOTORCYCLE; // Currently external object cannot represent bicycles
+    }
+    else if (isClass(obj_array.objects[i], autoware_auto_msgs::msg::ObjectClassification::CAR))
     {
       obj.object_type = obj.SMALL_VEHICLE;
     }
-    else if (obj_array.objects[i].label.compare("bus") == 0)
+    else if (isClass(obj_array.objects[i], autoware_auto_msgs::msg::ObjectClassification::TRUCK))
     {
       obj.object_type = obj.LARGE_VEHICLE;
     }
-    else if (obj_array.objects[i].label.compare("truck") == 0)
+    else if (isClass(obj_array.objects[i], autoware_auto_msgs::msg::ObjectClassification::TRAILER))
     {
-      obj.object_type = obj.LARGE_VEHICLE;
+      obj.object_type = obj.LARGE_VEHICLE; // Currently external object cannot represent trailers
     }
-    else if (obj_array.objects[i].label.compare("person") == 0)
+    else if (isClass(obj_array.objects[i], autoware_auto_msgs::msg::ObjectClassification::PEDESTRIAN))
     {
       obj.object_type = obj.PEDESTRIAN;
     }
@@ -129,44 +190,10 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
   obj_pub_(msg);
 }
 
-void ObjectDetectionTrackingWorker::setPredictionTimeStep(double time_step)
+void ObjectDetectionTrackingWorker::setMapFrame(std::string map_frame)
 {
-  prediction_time_step_ = time_step;
+  map_frame_ = map_frame;
 }
-
-void ObjectDetectionTrackingWorker::setPredictionPeriod(double period)
-{
-  prediction_period_ = period;
-}
-
-void ObjectDetectionTrackingWorker::setXAccelerationNoise(double noise)
-{
-  cv_x_accel_noise_ = noise;
-}
-
-void ObjectDetectionTrackingWorker::setYAccelerationNoise(double noise)
-{
-  cv_y_accel_noise_ = noise;
-}
-
-void ObjectDetectionTrackingWorker::setProcessNoiseMax(double noise_max)
-{
-  prediction_process_noise_max_ = noise_max;
-}
-
-void ObjectDetectionTrackingWorker::setConfidenceDropRate(double drop_rate)
-{
-  prediction_confidence_drop_rate_ = drop_rate;
-}
-
-  void ObjectDetectionTrackingWorker::setVelodyneFrame(std::string velodyne_frame)
-  {
-    velodyne_frame_ = velodyne_frame;
-  }
-  void ObjectDetectionTrackingWorker::setMapFrame(std::string map_frame)
-  {
-    map_frame_ = map_frame;
-  }
 
 
 }  // namespace object

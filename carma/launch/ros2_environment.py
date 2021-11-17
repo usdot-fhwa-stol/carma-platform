@@ -39,12 +39,15 @@ def generate_launch_description():
 
     ray_ground_classifier_param_file = os.path.join(
         autoware_auto_launch_pkg_prefix, 'param/component_style/ray_ground_classifier.param.yaml')
+    
+    tracking_nodes_param_file = os.path.join(
+        autoware_auto_launch_pkg_prefix, 'param/component_style/tracking_nodes.param.yaml')
 
     # Nodes
-    perception_container = ComposableNodeContainer(
-        package='carma_ros2_utils',
+    lidar_perception_container = ComposableNodeContainer(
+        package='carma_ros2_utils', # rclcpp_components
         name='perception_points_filter_container',
-        executable='lifecycle_component_wrapper_st',
+        executable='lifecycle_component_wrapper_st', # component_manager_mt
         namespace="/environment",
         composable_node_descriptions=[
             ComposableNode(
@@ -69,10 +72,43 @@ def generate_launch_description():
                     ("points_in", "points_no_ground"),
                 ],
                 parameters=[ euclidean_cluster_param_file ]
-            )
+            ),
+ 
         ]
     )
 
+    tracking_perception_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='perception_points_filter_container',
+        executable='lifecycle_component_wrapper_st',
+        namespace="/environment",
+        composable_node_descriptions=[
+ 
+            ComposableNode(
+                    package='tracking_nodes',
+                    plugin='autoware::tracking_nodes::TrackingNodesNode',
+                    name='tracking_nodes_node',
+                    namespace="/environment",
+                    extra_arguments=[{'use_intra_process_comms': True}],
+                    remappings=[
+                        ("ego_state", "current_pose_with_cov"), # TODO we will need a pose with covariance topic
+                        # TODO note classified_rois1 is the default single camera input topic 
+                    ],
+                    parameters=[ tracking_nodes_param_file ]
+            ),
+        ]
+    )
+
+    subsystem_controller = Node(
+        package='subsystem_controllers',
+        name='environment_perception_controller',
+        namespace='/environment',
+        executable='environment_perception_controller',
+        on_exit=launch.actions.Shutdown() # Mark the subsystem controller as required
+    )
+
     return LaunchDescription([
-        perception_container
+        lidar_perception_container,
+        tracking_perception_container,
+        subsystem_controller
     ])
