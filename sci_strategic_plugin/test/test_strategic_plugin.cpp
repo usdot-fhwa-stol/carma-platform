@@ -152,6 +152,23 @@ TEST(SCIStrategicPluginTest, findSpeedLimit)
   ASSERT_NEAR(11.176, sci.findSpeedLimit(*ll_iterator), 0.00001);
 }
 
+TEST(SCIStrategicPluginTest, moboperationcbtest)
+{
+  cav_msgs::MobilityOperation msg;
+  msg.strategy = "Carma/stop_controlled_intersection";
+
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  SCIStrategicPluginConfig config;
+  SCIStrategicPlugin sci(wm, config);
+
+  ASSERT_EQ(sci.approaching_stop_controlled_interction_, false);
+  auto msg_ptr = boost::make_shared<const cav_msgs::MobilityOperation>(msg);
+  sci.mobilityOperationCb(msg_ptr);
+
+  ASSERT_EQ(sci.approaching_stop_controlled_interction_, true);
+
+}
+
 TEST(SCIStrategicPluginTest, parseStrategyParamstest)
 {
   
@@ -170,6 +187,11 @@ TEST(SCIStrategicPluginTest, parseStrategyParamstest)
   EXPECT_EQ(48000, sci.scheduled_depart_time_);
   EXPECT_EQ(1, sci.scheduled_departure_position_);
   EXPECT_EQ(false, sci.is_allowed_int_);
+
+  cav_msgs::MobilityOperation outgoing_msg = sci.generateMobilityOperation();
+  EXPECT_EQ(outgoing_msg.strategy, "Carma/stop_controlled_intersection");
+  EXPECT_EQ(outgoing_msg.header.sender_id, config.vehicle_id);
+  std::cout << "strategy_param: " << outgoing_msg.strategy_params << std::endl;
 }
 
 TEST(SCIStrategicPluginTest, calcEstimatedStopTimetest)
