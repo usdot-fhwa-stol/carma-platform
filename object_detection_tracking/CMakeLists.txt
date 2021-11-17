@@ -27,14 +27,12 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   tf2
   tf2_geometry_msgs
-  tf2_msgs
   autoware_msgs
   cav_msgs
   roscpp
   carma_utils
   motion_predict
   tf
-  tf2_msgs
   tf2_ros
   tf2_geometry_msgs
   tf2 
@@ -53,7 +51,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES object_detection_tracking
- CATKIN_DEPENDS autoware_msgs cav_msgs roscpp carma_utils motion_predict geometry_msgs roscpp rospy std_msgs tf2_msgs wgs84_utils message_filters carma_utils tf2_geometry_msgs
+ CATKIN_DEPENDS autoware_msgs cav_msgs roscpp carma_utils motion_predict geometry_msgs roscpp carma_utils tf2_geometry_msgs
 #  DEPENDS system_lib
 )
 

@@ -24,13 +24,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>geometry_msgs</depend>
   <depend>roscpp</depend>
-  <depend>rospy</depend>
-  <depend>std_msgs</depend>
-  <depend>tf2_msgs</depend>
   <depend>cav_msgs</depend>
-  <depend>cav_srvs</depend>
-  <depend>wgs84_utils</depend>
-  <depend>message_filters</depend>
   <depend>carma_utils</depend>
   <depend>tf2_geometry_msgs</depend>
 
