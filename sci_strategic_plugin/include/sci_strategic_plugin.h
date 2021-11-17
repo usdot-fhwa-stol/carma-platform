@@ -103,6 +103,14 @@ public:
    * \return cav_msgs::Plugin The plugin discovery message
    */
   cav_msgs::Plugin getDiscoveryMsg() const;
+  
+  /**
+   * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery and mobility operation msgs.
+   * 
+   * \return True if the node should continue running. False otherwise
+   */ 
+  bool onSpin();
+
 
   /**
    * \brief callback function for mobility operation
@@ -267,8 +275,10 @@ public:
 
   /**
    * \brief Generates Mobility Operation messages
+   *
+   * \return mobility operation msg for status and intent
    */
-  void generateMobilityOperation();
+  cav_msgs::MobilityOperation generateMobilityOperation();
 
   /**
    * \brief BSM callback function
@@ -313,6 +323,7 @@ public:
   bool approaching_stop_controlled_interction_ = false;
 
   ros::Publisher mobility_operation_pub;
+  ros::Publisher plugin_discovery_pub;
 
   std::string bsm_id_ = "default_bsm_id";
   uint8_t bsm_msg_count_ = 0;

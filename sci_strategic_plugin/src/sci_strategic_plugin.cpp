@@ -99,11 +99,8 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
         parseStrategyParams(msg->strategy_params);
       }
        
-
     }
     previous_strategy_params_ = msg->strategy_params;
-
-    generateMobilityOperation();
   }
   
 }
@@ -275,17 +272,16 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
   auto stop_intersection_list = wm_->getIntersectionsAlongRoute({ req.veh_x, req.veh_y });
   auto nearest_stop_intersection = stop_intersection_list.front();
-  //TODO tmp
-  double veh_length = 4.0;
+  
   std::vector<double> stop_lines;
 
   for (auto l:nearest_stop_intersection->stopLines())
   {
-    double stop_bar_dtd = wm_->routeTrackPos(l.front().basicPoint2d()).downtrack - veh_length;
+    //TODO: temp use veh_length here until planning stack is updated with front bumper pos
+    double stop_bar_dtd = wm_->routeTrackPos(l.front().basicPoint2d()).downtrack - config_.veh_length;
     stop_lines.push_back(stop_bar_dtd);
   }
   std::sort(stop_lines.begin(), stop_lines.end());
-  
   
   double stop_intersection_down_track = stop_lines.front();
 
@@ -294,6 +290,16 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   
   double distance_to_stopline = stop_intersection_down_track - current_downtrack_ - config_.stop_line_buffer;
   ROS_DEBUG_STREAM("distance_to_stopline  " << distance_to_stopline);
+
+
+  double intersection_end_downtrack = stop_lines.back();
+  // Identify the lanelets of the intersection
+  std::vector<lanelet::ConstLanelet> intersection_lanelets =
+          getLaneletsBetweenWithException(stop_intersection_down_track, intersection_end_downtrack, true, true);
+
+  // find the turn direction at intersection:
+
+  intersection_turn_direction_ = getTurnDirectionatIntersection(intersection_lanelets);
 
   uint32_t base_time = street_msg_timestamp_;
   
@@ -406,9 +412,6 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     // Compose intersection transit maneuver
     base_time = std::max(scheduled_enter_time_, street_msg_timestamp_);
     double intersection_transit_time = (scheduled_depart_time_ - base_time)/1000;
-
-    double intersection_end_downtrack = stop_lines.back();
-    //  = wm_->routeTrackPos(nearest_stop_intersection->lanelets().front().centerline2d().back()).downtrack;
 
     // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
     std::vector<lanelet::ConstLanelet> crossed_lanelets =
@@ -599,15 +602,13 @@ double SCIStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt) cons
   }
 }
 
-void SCIStrategicPlugin::generateMobilityOperation()
+cav_msgs::MobilityOperation SCIStrategicPlugin::generateMobilityOperation()
 {
     cav_msgs::MobilityOperation mo_;
     mo_.header.timestamp = ros::Time::now().toNSec()/1000000;
     mo_.header.sender_id = config_.vehicle_id;
     mo_.header.sender_bsm_id = bsm_id_;
     mo_.strategy = stop_controlled_intersection_strategy_;
-    // TODO temporary hard coded
-    std::string turn_direction = "straight";
 
     int flag = (is_allowed_int_ ? 1 : 0);
 
@@ -618,10 +619,21 @@ void SCIStrategicPlugin::generateMobilityOperation()
     mo_.strategy_params = "access: " +  std::to_string(flag) + ", max_accel: " + std::to_string(vehicle_acceleration_limit_) + 
                         ", max_decel: " + std::to_string(vehicle_deceleration_limit_) + ", react_time: " + std::to_string(config_.reaction_time) +
                         ", min_gap: " + std::to_string(config_.min_gap) + ", depart_pos: " + std::to_string(scheduled_departure_position_) + 
-                        ", turn_direction: " + intersection_turn_direction_, "msg_count: " + bsm_msg_count_, "sec_mark: ", bsm_sec_mark_;
+                        ", turn_direction: " + intersection_turn_direction_ + ", msg_count: " + std::to_string(bsm_msg_count_) + ", sec_mark: " + std::to_string(bsm_sec_mark_);
     
 
-    mobility_operation_pub.publish(mo_);
+    return mo_;
+}
+
+bool SCIStrategicPlugin::onSpin()
+{
+  plugin_discovery_pub.publish(plugin_discovery_msg_);
+  if (approaching_stop_controlled_interction_)
+  {
+    cav_msgs::MobilityOperation status_msg = generateMobilityOperation();
+    mobility_operation_pub.publish(status_msg);
+  }
+  return true;
 }
 
 
