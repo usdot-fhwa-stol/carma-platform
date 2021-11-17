@@ -46,6 +46,9 @@ struct SCIStrategicPluginConfig
   // Double: Minimum inter-vehicle gap
   double min_gap = 10.0;
 
+  // Double: Length od the vehicle
+  double veh_length = 4.0;
+
   // Double: Vehicle reaction time in seconds
   double reaction_time = 5.0;
 
