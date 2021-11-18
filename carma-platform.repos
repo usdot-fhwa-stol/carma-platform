@@ -6,7 +6,7 @@ repositories:
   src/autoware.ai:
     type: git
     url: git@github.com:usdot-fhwa-stol/autoware.ai.git
-    version: develop
+    version: carma-develop
   src/avt_vimba_camera:
     type: git
     url: git@github.com:usdot-fhwa-stol/avt_vimba_camera.git
