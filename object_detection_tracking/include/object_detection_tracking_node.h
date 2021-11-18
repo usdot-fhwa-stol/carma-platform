@@ -17,11 +17,11 @@
 #ifndef EXTERNAL_OBJECT_H
 #define EXTERNAL_OBJECT_H
 
-#include <ros/ros.h>
-#include <carma_utils/CARMAUtils.h>
+#include <rclcpp/rclcpp.hpp>
 #include <functional>
 #include <autoware_auto_msgs/msg/tracked_objects.hpp>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
+#include <boost/optional.hpp>
 
 #include "object_detection_tracking_worker.h"
 #include "carma_ros2_utils/carma_lifecycle_node.hpp"
@@ -34,7 +34,7 @@ class ObjectDetectionTrackingNode : public carma_ros2_utils::CarmaLifecycleNode
  private:
   
   //subscriber
-  carma_ros2_uitls::SubPtr<autoware_auto_msgs::msg::TrackedObjects> autoware_obj_sub_;
+  carma_ros2_utils::SubPtr<autoware_auto_msgs::msg::TrackedObjects> autoware_obj_sub_;
 
   //publisher
   carma_ros2_utils::PubPtr<carma_perception_msgs::msg::ExternalObjectList> carma_obj_pub_;
@@ -42,6 +42,14 @@ class ObjectDetectionTrackingNode : public carma_ros2_utils::CarmaLifecycleNode
   //ObjectDetectionTrackingWorker class object
   ObjectDetectionTrackingWorker object_worker_;
   
+  // Buffer which holds the tree of transforms
+  tf2_ros::Buffer tfBuffer_;
+  
+  // tf2 listeners. Subscribes to the /tf and /tf_static topics
+  tf2_ros::TransformListener tfListener_ {tfBuffer_};
+
+  // Output frame id
+  std::string map_frame_;
 
  public:
   
@@ -54,6 +62,16 @@ class ObjectDetectionTrackingNode : public carma_ros2_utils::CarmaLifecycleNode
     \brief Callback to publish ObjectList
    */
   void publishObject(const carma_perception_msgs::msg::ExternalObjectList& obj_msg);
+
+  /*!
+  * \brief Callback to lookup a transform between two frames
+  * \param parent The parent frame
+  * \param child The child frame
+  * \param stamp The time stamp of the transform
+  * 
+  * \return boost::optional<geometry_msgs::TransformStamped> The transform between the two frames or boost::none if the transform does not exist or cannot be computed
+  */
+  boost::optional<geometry_msgs::msg::TransformStamped> lookupTransform(const std::string& parent, const std::string& child, const rclcpp::Time& stamp);
 
   ////
   // Overrides

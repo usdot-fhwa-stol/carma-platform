@@ -18,14 +18,23 @@
 namespace object{
 
   using std::placeholders::_1;
+  using std::placeholders::_2;
+  using std::placeholders::_3;
 
-  ObjectDetectionTrackingNode::ObjectDetectionTrackingNode(const rclcpp::NodeOptions&): pnh_("~"), object_worker_(std::bind(&ObjectDetectionTrackingNode::publishObject, this, _1)){}
+  ObjectDetectionTrackingNode::ObjectDetectionTrackingNode(const rclcpp::NodeOptions& options)
+  : carma_ros2_utils::CarmaLifecycleNode(options),
+    object_worker_( 
+      std::bind(&ObjectDetectionTrackingNode::publishObject, this, _1), 
+      std::bind(&ObjectDetectionTrackingNode::lookupTransform, this, _1, _2, _3),
+      get_node_logging_interface()
+    ),
+    tfBuffer_(get_clock()),
+    tfListener_(tfBuffer_)
+    {}
 
-  carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &) {
+  carma_ros2_utils::CallbackReturn ObjectDetectionTrackingNode::handle_on_configure(const rclcpp_lifecycle::State &) {
 
     // Load parameters
-    std::string map_frame_ = "map";
-
     map_frame_ = this->declare_parameter<std::string>("map_frame", map_frame_);
 
     this->add_on_set_parameters_callback(
@@ -40,7 +49,7 @@ namespace object{
           if (error) {
             result.reason = error.get();
           } else {
-            object_worker_.setMapFrame(map_frame_);
+            this->object_worker_.setMapFrame(map_frame_);
           }
 
           return result;
@@ -49,7 +58,10 @@ namespace object{
     
 
     // Setup pub/sub
-    autoware_obj_sub_= create_subscriber("detected_objects",10,&ObjectDetectionTrackingWorker::detectedObjectCallback,&object_worker_);
+    autoware_obj_sub_= create_subscription<autoware_auto_msgs::msg::TrackedObjects>("detected_objects",10,
+      std::bind(&ObjectDetectionTrackingWorker::detectedObjectCallback,&object_worker_, _1)
+    );
+
     carma_obj_pub_= create_publisher<carma_perception_msgs::msg::ExternalObjectList>("external_objects", 10);
 
     return CallbackReturn::SUCCESS;
@@ -57,7 +69,22 @@ namespace object{
 
   void ObjectDetectionTrackingNode::publishObject(const carma_perception_msgs::msg::ExternalObjectList& obj_msg)
   {
-    carma_obj_pub_.publish(obj_msg);
+    carma_obj_pub_->publish(obj_msg);
   }
+
+  boost::optional<geometry_msgs::msg::TransformStamped> 
+  ObjectDetectionTrackingNode::lookupTransform(const std::string& parent, const std::string& child, const rclcpp::Time& stamp) {
+    try {
+
+      return tfBuffer_.lookupTransform(parent ,child, stamp);
+
+    } catch (tf2::TransformException &ex) {
+
+      RCLCPP_WARN_STREAM(get_logger(), "Failed to find transform with exception " << ex.what());
+      return boost::none;
+    }
+  }
+
+    
 
 }//object
