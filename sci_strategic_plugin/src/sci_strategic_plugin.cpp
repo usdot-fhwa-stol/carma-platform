@@ -261,6 +261,14 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     return true;
   }
 
+  bool is_empty_schedule_msg = (scheduled_depart_time_ == 0 && scheduled_enter_time_ == 0 && scheduled_enter_time_ == 0);
+  if (is_empty_schedule_msg)
+  {
+    resp.new_plan.maneuvers = {};
+    ROS_WARN_STREAM("Receiving empty schedule message");
+    return true;
+  }
+
   ROS_DEBUG("Planning for intersection...");
 
   ROS_DEBUG("Finding car information");
@@ -273,6 +281,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   auto stop_intersection_list = wm_->getIntersectionsAlongRoute({ req.veh_x, req.veh_y });
   auto nearest_stop_intersection = stop_intersection_list.front();
   
+  // extract the intersection stop line information
   std::vector<double> stop_lines;
 
   for (auto l:nearest_stop_intersection->stopLines())
@@ -303,8 +312,6 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
   uint32_t base_time = street_msg_timestamp_;
   
-  
-
   bool time_to_approach_int = (int(scheduled_stop_time_) - int(street_msg_timestamp_))>0;
   ROS_DEBUG_STREAM("time_to_approach_int  " << time_to_approach_int);
   
@@ -348,6 +355,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
         
 
         double stopping_accel = caseThreeSpeedProfile(stop_intersection_down_track-current_state.downtrack, current_state.speed, time_to_schedule_stop);
+        // TODO: temp val for acc- remove when carma streets is running
         stopping_accel = 1.5;
         resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
           current_state.downtrack, stop_intersection_down_track-config_.stop_line_buffer, current_state.speed, crossed_lanelets[0].id(),
