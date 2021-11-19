@@ -114,7 +114,6 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(autoware_auto_msgs::m
     tf2::fromMsg(object_frame_tf.transform, covariance_transform);
     obj.pose.covariance = covariance_helper::transformCovariance(input_covariance, covariance_transform);
 
-
     // Store the object ovarall confidence
     obj.confidence = obj_array->objects[i].existence_probability;
 

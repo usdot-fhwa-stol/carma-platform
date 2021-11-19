@@ -44,7 +44,7 @@ namespace object{
 
           rcl_interfaces::msg::SetParametersResult result;
 
-          result.successful = !!error;
+          result.successful = !error;
 
           if (error) {
             result.reason = error.get();
@@ -88,3 +88,8 @@ namespace object{
     
 
 }//object
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+// Register the component with class_loader
+RCLCPP_COMPONENTS_REGISTER_NODE(object::ObjectDetectionTrackingNode)

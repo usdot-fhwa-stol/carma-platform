@@ -34,5 +34,10 @@
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>autoware_auto_msgs</depend> 
+  <depend>rclcpp_components</depend>
 
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

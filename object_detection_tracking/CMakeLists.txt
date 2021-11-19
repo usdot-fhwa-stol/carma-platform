@@ -28,6 +28,7 @@ ament_auto_find_build_dependencies()
 # Name build targets
 set(worker_lib object_detection_tracking_worker_lib)
 set(node_exec object_detection_tracking_node)
+set(node_lib object_detection_tracking_node_lib)
 
 # Includes
 include_directories(
@@ -39,13 +40,23 @@ ament_auto_add_library(${worker_lib} SHARED
         src/object_detection_tracking_worker.cpp
 )
 
+ament_auto_add_library(${node_lib} SHARED
+        src/object_detection_tracking_node.cpp
+)
+
 ament_auto_add_executable(${node_exec} 
         src/main.cpp 
-        src/object_detection_tracking_node.cpp
+)
+
+rclcpp_components_register_nodes(${node_lib} "object::ObjectDetectionTrackingNode")
+
+target_link_libraries(${node_lib}
+        ${worker_lib}
 )
 
 target_link_libraries(${node_exec}
         ${worker_lib}
+        ${node_lib}
 )
 
 # Install
