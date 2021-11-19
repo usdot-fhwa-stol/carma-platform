@@ -12,9 +12,7 @@ subsystem_namespace: /environment
 # Required subsystem controller nodes for the overall system to be functional
 # Since CARMA assumes connected vehicles in most cases the current minimum node set is from motion prediction up
 required_subsystem_nodes:
-  - /environment/carma_wm_broadcaster
-  - /environment/roadway_objects 
-  - /environment/motion_computation
+  - /environment/external_object
 
 # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
 full_subsystem_required: true

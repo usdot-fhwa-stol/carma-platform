@@ -1,4 +1,4 @@
-# Copyright 2021 the Autoware Foundation
+# Copyright (C) 2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
 # limitations under the License.
 
 from ament_index_python import get_package_share_directory
+from launch.actions import Shutdown
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.actions import ComposableNodeContainer
@@ -27,10 +27,13 @@ import os
 def generate_launch_description():
     """
     Launch perception nodes.
-
-     * euclidean_cluster
-     * ray_ground_classifier
     """
+
+    ns = LaunchConfiguration('namespace')
+
+    declare_namespace_cmd = DeclareLaunchArgument(
+        name ='namespace', default_value='/environment') # TODO this default value appears to have no effect
+
     autoware_auto_launch_pkg_prefix = get_package_share_directory(
         'autoware_auto_launch')
 
@@ -43,18 +46,21 @@ def generate_launch_description():
     tracking_nodes_param_file = os.path.join(
         autoware_auto_launch_pkg_prefix, 'param/component_style/tracking_nodes.param.yaml')
 
+    object_detection_tracking_param_file = os.path.join(
+        get_package_share_directory('object_detection_tracking'), 'config/parameters.yaml')
+
     # Nodes
     lidar_perception_container = ComposableNodeContainer(
         package='carma_ros2_utils', # rclcpp_components
         name='perception_points_filter_container',
         executable='lifecycle_component_wrapper_st', # component_manager_mt
-        namespace="/environment",
+        namespace=ns,
         composable_node_descriptions=[
             ComposableNode(
                 package='ray_ground_classifier_nodes',
                 name='ray_ground_filter',
                 plugin='autoware::perception::filters::ray_ground_classifier_nodes::RayGroundClassifierCloudNode',
-                namespace="/environment",
+                namespace=ns,
                 extra_arguments=[{'use_intra_process_comms': True}],
                 remappings=[
                     ("points_in", "/hardware_interface/lidar/points_raw"),
@@ -66,35 +72,46 @@ def generate_launch_description():
                 package='euclidean_cluster_nodes',
                 name='euclidean_cluster',
                 plugin='autoware::perception::segmentation::euclidean_cluster_nodes::EuclideanClusterNode',
-                namespace="/environment",
+                namespace=ns,
                 extra_arguments=[{'use_intra_process_comms': True}],
                 remappings=[
                     ("points_in", "points_no_ground"),
                 ],
                 parameters=[ euclidean_cluster_param_file ]
             ),
- 
-        ]
-    )
-
-    tracking_perception_container = ComposableNodeContainer(
-        package='carma_ros2_utils',
-        name='perception_points_filter_container',
-        executable='lifecycle_component_wrapper_st',
-        namespace="/environment",
-        composable_node_descriptions=[
- 
+            
             ComposableNode(
                     package='tracking_nodes',
                     plugin='autoware::tracking_nodes::TrackingNodesNode',
                     name='tracking_nodes_node',
-                    namespace="/environment",
+                    namespace=ns,
                     extra_arguments=[{'use_intra_process_comms': True}],
                     remappings=[
                         ("ego_state", "current_pose_with_cov"), # TODO we will need a pose with covariance topic
                         # TODO note classified_rois1 is the default single camera input topic 
+                        # TODO when camera detection is added, we will wan to separate this node into a different component to preserve fault tolerance 
                     ],
                     parameters=[ tracking_nodes_param_file ]
+            ),
+ 
+        ]
+    )
+
+    
+    carma_external_objects_container = ComposableNodeContainer(
+        package='rclcpp_components',
+        name='external_objects_container',
+        namespace=ns,
+        executable='component_container_mt',
+        composable_node_descriptions=[
+ 
+            ComposableNode(
+                    package='object_detection_tracking',
+                    plugin='object::ObjectDetectionTrackingNode',
+                    name='external_object',
+                    namespace=ns,
+                    extra_arguments=[{'use_intra_process_comms': True}],
+                    parameters=[ object_detection_tracking_param_file ]
             ),
         ]
     )
@@ -102,13 +119,14 @@ def generate_launch_description():
     subsystem_controller = Node(
         package='subsystem_controllers',
         name='environment_perception_controller',
-        namespace='/environment',
+        namespace=ns,
         executable='environment_perception_controller',
-        on_exit=launch.actions.Shutdown() # Mark the subsystem controller as required
+        on_exit= Shutdown() # Mark the subsystem controller as required
     )
 
     return LaunchDescription([
         lidar_perception_container,
-        tracking_perception_container,
-        subsystem_controller
+        carma_external_objects_container,
+        subsystem_controller,
+        declare_namespace_cmd
     ])
