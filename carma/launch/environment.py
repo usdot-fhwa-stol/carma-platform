@@ -49,6 +49,9 @@ def generate_launch_description():
     object_detection_tracking_param_file = os.path.join(
         get_package_share_directory('object_detection_tracking'), 'config/parameters.yaml')
 
+    subsystem_controller_param_file = os.path.join(
+        get_package_share_directory('subsystem_controllers'), 'config/environment_perception_controller_config.yaml')
+
     # Nodes
     lidar_perception_container = ComposableNodeContainer(
         package='carma_ros2_utils', # rclcpp_components
@@ -82,7 +85,7 @@ def generate_launch_description():
             
             ComposableNode(
                     package='tracking_nodes',
-                    plugin='autoware::tracking_nodes::TrackingNodesNode',
+                    plugin='autoware::tracking_nodes::MultiObjectTrackerNode',
                     name='tracking_nodes_node',
                     namespace=ns,
                     extra_arguments=[{'use_intra_process_comms': True}],
@@ -121,6 +124,7 @@ def generate_launch_description():
         name='environment_perception_controller',
         namespace=ns,
         executable='environment_perception_controller',
+        parameters=[ subsystem_controller_param_file ],
         on_exit= Shutdown() # Mark the subsystem controller as required
     )
 
