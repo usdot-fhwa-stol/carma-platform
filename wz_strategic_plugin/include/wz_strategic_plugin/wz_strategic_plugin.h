@@ -27,7 +27,7 @@
 #include <lanelet2_core/Forward.h>
 #include <gtest/gtest_prod.h>
 
-#include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
+#include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
 #include "wz_strategic_plugin/wz_state_transition_table.h"
 #include "wz_strategic_plugin/wz_strategic_plugin_config.h"
 #include "wz_strategic_plugin/wz_states.h"
@@ -84,7 +84,7 @@ private:
    */
   void planWhenUNAVAILABLE(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
                            const VehicleState& current_state,
-                           const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights);
+                           const std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_lights);
 
   /**
    * \brief Method for performing maneuver planning when the current plugin state is TransitState::APPROACHING
@@ -98,7 +98,7 @@ private:
    */
   void planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
                            const VehicleState& current_state,
-                           const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights);
+                           const std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_lights);
 
   /**
    * \brief Method for performing maneuver planning when the current plugin state is TransitState::WAITING
@@ -112,7 +112,7 @@ private:
    */
   void planWhenWAITING(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
                        const VehicleState& current_state,
-                       const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights);
+                       const std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_lights);
 
   /**
    * \brief Method for performing maneuver planning when the current plugin state is TransitState::DEPARTING
@@ -157,13 +157,14 @@ private:
    * \param ending_lane_id The ending lanelet id of this maneuver
    * \param start_time The starting time of the maneuver
    * \param end_time The ending time of the maneuver
+   * \param stopping_accel Acceleration used for calculating the stopping distance
    *
    * \return A stop and wait maneuver message which is ready to be published
    */
   cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double end_dist, double start_speed,
                                                        const lanelet::Id& starting_lane_id,
                                                        const lanelet::Id& ending_lane_id, ros::Time start_time,
-                                                       ros::Time end_time) const;
+                                                       ros::Time end_time, double stopping_accel) const;
 
   /**
    * \brief Compose a intersection transit maneuver message based on input params
@@ -191,7 +192,7 @@ private:
    *
    * \return true if the state is supported, flase otherwise
    */
-  bool supportedLightState(lanelet::CarmaTrafficLightState state) const;
+  bool supportedLightState(lanelet::CarmaTrafficSignalState state) const;
 
   /**
    * \brief Helper method that checks both if the input optional light state is set and if the state it contains is
@@ -202,7 +203,7 @@ private:
    *
    * \return True if the optional is set and the contained state is supported. False otherwise
    */
-  bool validLightState(const boost::optional<lanelet::CarmaTrafficLightState>& optional_state,
+  bool validLightState(const boost::optional<lanelet::CarmaTrafficSignalState>& optional_state,
                        const ros::Time& source_time) const;
 
   /**

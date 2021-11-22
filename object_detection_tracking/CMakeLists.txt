@@ -16,8 +16,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(object_detection_tracking)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+## Compile as C++14, supported in ROS Noetic and newer
+add_compile_options(-std=c++14)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -52,7 +52,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES object_detection_tracking
- CATKIN_DEPENDS autoware_msgs cav_msgs roscpp carma_utils motion_predict geometry_msgs roscpp rospy std_msgs tf2_msgs wgs84_utils message_filters novatel_gps_msgs carma_utils tf2_geometry_msgs
+ CATKIN_DEPENDS autoware_msgs cav_msgs roscpp carma_utils motion_predict geometry_msgs roscpp rospy std_msgs tf2_msgs wgs84_utils message_filters carma_utils tf2_geometry_msgs
 #  DEPENDS system_lib
 )
 

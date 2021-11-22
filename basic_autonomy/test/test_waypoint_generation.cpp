@@ -22,13 +22,13 @@
 #include <math.h>
 #include <tf/LinearMath/Vector3.h>
 #include <carma_wm/WMTestLibForGuidance.h>
-#include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>
 #include <lanelet2_io/io_handlers/Writer.h>
-#include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/geometry/LineString.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <string>
 #include <sstream>
 #include <ros/package.h>

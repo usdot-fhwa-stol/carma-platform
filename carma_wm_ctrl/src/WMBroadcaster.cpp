@@ -19,7 +19,7 @@
 #include <carma_wm_ctrl/WMBroadcaster.h>
 #include <carma_wm/Geometry.h>
 #include <carma_wm/MapConformer.h>
-#include <lanelet2_extension/utility/message_conversion.h>
+#include <autoware_lanelet2_ros_interface/utility/message_conversion.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/geometry/Lanelet.h>
@@ -32,7 +32,7 @@
 #include <lanelet2_io/Projection.h>
 #include <lanelet2_core/utility/Units.h>
 #include <lanelet2_core/Forward.h>
-#include <lanelet2_extension/utility/utilities.h>
+#include <autoware_lanelet2_ros_interface/utility/utilities.h>
 #include <algorithm>
 #include <limits>
 #include <carma_wm/Geometry.h>
@@ -413,7 +413,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
 
   controlled_taper_right.push_back(back_llt_diag);
 
-  lanelet::CarmaTrafficLightPtr tfl_parallel = std::make_shared<lanelet::CarmaTrafficLight>(lanelet::CarmaTrafficLight::buildData(lanelet::utils::getId(), {parallel_stop_ls}, controlled_taper_right)); 
+  lanelet::CarmaTrafficSignalPtr tfl_parallel = std::make_shared<lanelet::CarmaTrafficSignal>(lanelet::CarmaTrafficSignal::buildData(lanelet::utils::getId(), {parallel_stop_ls}, controlled_taper_right)); 
 
   gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->label_),tfl_parallel->id()});
 
@@ -439,7 +439,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
     controlled_open_right.push_back(current_map_->laneletLayer.get(llt.lanelet().get().id()));
   }
 
-  lanelet::CarmaTrafficLightPtr tfl_opposite = std::make_shared<lanelet::CarmaTrafficLight>(lanelet::CarmaTrafficLight::buildData(lanelet::utils::getId(), {opposite_stop_ls}, controlled_open_right));
+  lanelet::CarmaTrafficSignalPtr tfl_opposite = std::make_shared<lanelet::CarmaTrafficSignal>(lanelet::CarmaTrafficSignal::buildData(lanelet::utils::getId(), {opposite_stop_ls}, controlled_open_right));
   
   gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->label_), tfl_opposite->id()});
   
@@ -1880,7 +1880,7 @@ void WMBroadcaster::publishLightId()
     unsigned intersection_id = 0;
     unsigned group_id = 0;
     auto route_lanelet= current_map_->laneletLayer.get(id);
-    auto traffic_lights = route_lanelet.regulatoryElementsAs<lanelet::CarmaTrafficLight>();
+    auto traffic_lights = route_lanelet.regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
     
     if (!traffic_lights.empty())
     {
