@@ -145,6 +145,8 @@ namespace system_controller
        RCLCPP_INFO_STREAM( get_logger(), "Shutting down");
 
        lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
+
+       rclcpp::shutdown(nullptr, "System Alert requested shutdown"); // Fully shutdown this node
       }
     }
     catch (const std::exception &e)
