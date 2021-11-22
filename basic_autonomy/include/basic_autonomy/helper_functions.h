@@ -95,8 +95,7 @@ namespace waypoint_generation
      * \return index of nearest point in points
      */
     int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm,
-                                      const cav_msgs::VehicleState& state);                                                                                                                               
-
+                                      const cav_msgs::VehicleState& state);    
 
 }
 }

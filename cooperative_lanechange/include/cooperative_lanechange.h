@@ -182,6 +182,9 @@ namespace cooperative_lanechange
             double maneuver_fraction_completed_ = 0;
             // flag to check if CLC plugin is called
             bool clc_called_ = false;
+            //flag to check if lane change is in progress
+            bool is_lanechange_in_progress_ = false;
+            double lc_starting_downtrack_ = 0.0;
             // Mobility request id
             std::string clc_request_id_ = "default_request_id";
             // ROS params

@@ -112,5 +112,6 @@ namespace waypoint_generation
         double ending_downtrack = wm->routeTrackPos(state_pos).downtrack;
         return get_nearest_index_by_downtrack(points, wm, ending_downtrack);
     }
+
 }
 }
