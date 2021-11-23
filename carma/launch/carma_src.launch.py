@@ -24,7 +24,7 @@ import os
 
 def generate_launch_description():
     """
-    Launch perception nodes.
+    Launch CARMA System.
     """
 
     system_controller_param_file = os.path.join(
