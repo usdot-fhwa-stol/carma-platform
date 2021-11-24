@@ -19,6 +19,7 @@ from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import ThisLaunchFileDir
+from launch.substitutions import EnvironmentVariable
 
 import os
 
@@ -26,6 +27,14 @@ def generate_launch_description():
     """
     Launch CARMA System.
     """
+
+    import sys
+    path = os.path.abspath(get_package_share_directory('carma') + '/launch')
+    print('')
+    print('path: ' + str(path))
+    print('')
+    sys.path.append(os.path.abspath(get_package_share_directory('carma') + '/launch'))
+    from get_log_level import GetLogLevel
 
     system_controller_param_file = os.path.join(
         get_package_share_directory('system_controller'), 'config/config.yaml')
@@ -37,7 +46,8 @@ def generate_launch_description():
         name='system_controller',
         executable='system_controller',
         parameters=[ system_controller_param_file ],
-        on_exit = Shutdown() # Mark the subsystem controller as required for segfaults
+        on_exit = Shutdown(), # Mark the subsystem controller as required for segfaults
+        arguments=['--ros-args', '--log-level', GetLogLevel('system_controller', EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG'))]
     )
 
     environment_launch = IncludeLaunchDescription(
