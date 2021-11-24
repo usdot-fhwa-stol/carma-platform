@@ -40,7 +40,7 @@ namespace plan_delegator
             [this](const geometry_msgs::PoseStampedConstPtr& pose) {this->latest_pose_ = *pose;});
         guidance_state_sub_ = nh_.subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &PlanDelegator::guidanceStateCallback, this);
 
-
+        lookupFrontBumperTransform();
         
         traj_timer_ = pnh_.createTimer(
             ros::Duration(ros::Rate(trajectory_planning_rate_)),
@@ -233,15 +233,64 @@ namespace plan_delegator
     void PlanDelegator::onTrajPlanTick(const ros::TimerEvent& te)
     {
         cav_msgs::TrajectoryPlan trajectory_plan = planTrajectory();
+        
         // Check if planned trajectory is valid before send out
         if(isTrajectoryValid(trajectory_plan))
         {
-            trajectory_plan.header.stamp = ros::Time::now();
-            traj_pub_.publish(trajectory_plan);
+            cav_msgs::TrajectoryPlan shifted_trajectory_plan = shift_back_trajectoryplan(trajectory_plan, bumper_transform_);
+            shifted_trajectory_plan.header.stamp = ros::Time::now();
+            traj_pub_.publish(shifted_trajectory_plan);
         }
         else
         {
             ROS_WARN_STREAM("Planned trajectory is empty. It will not be published!");
         }
+    }
+
+    void PlanDelegator::lookupFrontBumperTransform() 
+    {
+        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+        tf2_buffer_.setUsingDedicatedThread(true);
+        try
+        {
+            geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("vehicle_front", "base_link", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+            // tf2::Stamped<tf2::Transform> bumper_transform;
+            tf2::fromMsg(tf, bumper_transform_);
+            // back_axle_transform_ = bumper_transform.inverse();
+        }
+        catch (const tf2::TransformException &ex)
+        {
+            ROS_WARN("%s", ex.what());
+        }
+    }
+
+    cav_msgs::TrajectoryPlan PlanDelegator::shift_back_trajectoryplan(cav_msgs::TrajectoryPlan traj_plan, const tf2::Transform& transform)
+    {
+        
+
+        cav_msgs::TrajectoryPlan shifted_trajectory_plan = traj_plan;
+        for (size_t i=0; i < traj_plan.trajectory_points.size(); i++)
+        {
+            shifted_trajectory_plan.trajectory_points[i] = shift_back_trajectorypoint(traj_plan.trajectory_points[i],transform);
+        }
+        return shifted_trajectory_plan;
+    }
+
+    cav_msgs::TrajectoryPlanPoint PlanDelegator::shift_back_trajectorypoint(cav_msgs::TrajectoryPlanPoint traj_point, const tf2::Transform& transform)
+    {
+        cav_msgs::TrajectoryPlanPoint shifted_point = traj_point;
+
+        // convert to front bumper
+        tf2::Transform front_bumper_traj_point;
+        tf2::Quaternion no_rotation(0, 0, 0, 1);
+        tf2::Vector3 input_point {traj_point.x, traj_point.y, 0.0};
+        front_bumper_traj_point.setOrigin(input_point);
+        front_bumper_traj_point.setRotation(no_rotation);
+        // convert to back axle by (T_e_m)^(-1) * T_e_p
+        auto back_axle_traj_point = transform.inverse() * front_bumper_traj_point;
+        shifted_point.x = back_axle_traj_point.getOrigin().getX();
+        shifted_point.y = back_axle_traj_point.getOrigin().getY();
+
+        return shifted_point;
     }
 }

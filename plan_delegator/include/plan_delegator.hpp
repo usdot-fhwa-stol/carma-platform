@@ -26,6 +26,9 @@
 #include <carma_utils/CARMAUtils.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 // TODO Replace this Macro if possible
 /**
@@ -93,6 +96,12 @@ namespace plan_delegator
              */
             cav_srvs::PlanTrajectory composePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const;
 
+            void lookupFrontBumperTransform();
+
+            cav_msgs::TrajectoryPlanPoint shift_back_trajectorypoint(cav_msgs::TrajectoryPlanPoint traj_point, const tf2::Transform& transform);
+
+            cav_msgs::TrajectoryPlan shift_back_trajectoryplan(cav_msgs::TrajectoryPlan traj_plan, const tf2::Transform& transform);
+    
         protected:
         
             // ROS params
@@ -124,6 +133,12 @@ namespace plan_delegator
             ros::Timer traj_timer_;
 
             bool guidance_engaged = false;
+
+            geometry_msgs::TransformStamped tf_;
+            tf2::Stamped<tf2::Transform> bumper_transform_;
+            // TF listenser
+            tf2_ros::Buffer tf2_buffer_;
+            std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
 
             /**
              * \brief Callback function for triggering trajectory planning
