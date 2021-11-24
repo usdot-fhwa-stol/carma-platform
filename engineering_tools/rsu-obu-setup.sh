@@ -26,7 +26,7 @@ WSMFwdRx_PSID1="0x20"       #BSM
 WSMFwdRx_PSID2="0x8003"     #TIM
 WSMFwdRx_PSID3="0x8002"     #MAP/SPAT
 WSMFwdRx_PSID4="0xBFEE"   #MOBILITY
-#WSMFwdRx_PSID5="0x8003" #Traffic
+WSMFwdRx_PSID5="0x8003" #Traffic
 
 #Switch on/off WSM Forwarding
 WSMFwdRx_ENABLE1="1"
