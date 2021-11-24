@@ -445,16 +445,33 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         return upcoming_lanechange_status_msg;
     }
 
+    geometry_msgs::Pose RouteFollowingPlugin::shift_to_frontbumper(const geometry_msgs::Pose& pose, const tf2::Transform& transform) const{
+        geometry_msgs::Pose bumper_pose;    
+        
+        auto pose_point_vec = tf2::Vector3(pose.position.x, pose.position.y, pose.position.z);
+        tf2::Vector3 front_bumper_point_vec = transform * pose_point_vec;
+        bumper_pose.position.x = front_bumper_point_vec.x();
+        bumper_pose.position.y = front_bumper_point_vec.y();
+        bumper_pose.position.z = front_bumper_point_vec.z();
+
+        return bumper_pose;
+    } 
+
     void RouteFollowingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
+        // convert to front bumper
+        tf2::Stamped<tf2::Transform> bumper_transform;
+        tf2::fromMsg(tf_, bumper_transform);
+
+        geometry_msgs::Pose front_bumper_pose = shift_to_frontbumper(msg->pose, bumper_transform);
 
         ROS_DEBUG_STREAM("Entering pose_cb");
-        pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
+        // pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
 
         if (!wm_->getRoute())
             return;
 
-        lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
+        lanelet::BasicPoint2d current_loc(front_bumper_pose.position.x, front_bumper_pose.position.y);
         current_loc_ = current_loc;
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         
