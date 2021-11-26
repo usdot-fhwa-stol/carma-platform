@@ -78,7 +78,7 @@ TEST(SCIStrategicPluginTest, composeIntersectionTransitMessage)
   std::shared_ptr<carma_wm::CARMAWorldModel> wm;
   SCIStrategicPluginConfig config;
   SCIStrategicPlugin sci(wm, config);
-  std::string intersection_turn_direction = "straight";
+  TurnDirection intersection_turn_direction = TurnDirection::Straight;
 
   auto result = sci.composeIntersectionTransitMessage(10.2, 20.4, 5, 10, ros::Time(1.2), ros::Time(2.2), intersection_turn_direction, 1200, 1201);
 

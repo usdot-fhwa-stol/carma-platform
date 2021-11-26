@@ -37,6 +37,11 @@
 
 namespace sci_strategic_plugin
 {
+  enum TurnDirection {
+            Straight,
+            Right,
+            Left
+    };
 
   /**
   * \brief Anonymous function to extract maneuver end speed which can not be optained with GET_MANEUVER_PROPERY calls due to it missing in stop and wait plugin
@@ -148,7 +153,7 @@ public:
                                                       double stopping_accel, ros::Time start_time, ros::Time end_time) const;
 
   cav_msgs::Maneuver composeIntersectionTransitMessage(double start_dist, double end_dist, double start_speed, 
-                                                      double target_speed, ros::Time start_time, ros::Time end_time, std::string turn_direction,
+                                                      double target_speed, ros::Time start_time, ros::Time end_time, TurnDirection turn_direction,
                                                       const lanelet::Id& starting_lane_id, const lanelet::Id& ending_lane_id) const;
 
   /**
@@ -293,7 +298,7 @@ public:
    * \return turn direction in format of straight, left, right
    *
    */
-  std::string getTurnDirectionatIntersection(std::vector<lanelet::ConstLanelet> lanelets_list);
+  TurnDirection getTurnDirectionAtIntersection(std::vector<lanelet::ConstLanelet> lanelets_list);
   
   ////////// VARIABLES ///////////
 
@@ -307,11 +312,11 @@ public:
   // scheduled depart time
   uint32_t scheduled_depart_time_ = 0;
   // scheduled latest depart position
-  uint32_t scheduled_departure_position_ = 9999;
+  uint32_t scheduled_departure_position_ = std::numeric_limits<uint32_t>::max();
   // flag to show if the vehicle is allowed in intersection
   bool is_allowed_int_ = false;
 
-  std::string intersection_turn_direction_ = "straight";
+  TurnDirection intersection_turn_direction_ = TurnDirection::Straight;
   bool vehicle_engaged_ = false;
 
   // approximate speed limit 

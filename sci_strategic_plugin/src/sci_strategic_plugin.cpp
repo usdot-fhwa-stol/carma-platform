@@ -142,26 +142,22 @@ void SCIStrategicPlugin::parseStrategyParams(const std::string& strategy_params)
 
   std::vector<std::string> st_parsed;
   boost::algorithm::split(st_parsed, inputsParams[0], boost::is_any_of(":"));
-  uint32_t st = std::stoi(st_parsed[1]);
-  scheduled_stop_time_ = st;
+  scheduled_stop_time_ = std::stoi(st_parsed[1]);
   ROS_DEBUG_STREAM("scheduled_stop_time_: " << scheduled_stop_time_);
             
   std::vector<std::string> et_parsed;
   boost::algorithm::split(et_parsed, inputsParams[1], boost::is_any_of(":"));
-  uint32_t et = std::stoi(et_parsed[1]);
-  scheduled_enter_time_ = et;
+  scheduled_enter_time_ = std::stoi(et_parsed[1]);
   ROS_DEBUG_STREAM("scheduled_enter_time_: " << scheduled_enter_time_);
 
   std::vector<std::string> dt_parsed;
   boost::algorithm::split(dt_parsed, inputsParams[2], boost::is_any_of(":"));
-  uint32_t dt = std::stoi(dt_parsed[1]);
-  scheduled_depart_time_ = dt;
+  scheduled_depart_time_ = std::stoi(dt_parsed[1]);
   ROS_DEBUG_STREAM("scheduled_depart_time_: " << scheduled_depart_time_);
 
   std::vector<std::string> dp_parsed;
   boost::algorithm::split(dp_parsed, inputsParams[3], boost::is_any_of(":"));
-  int dp = std::stoi(dp_parsed[1]);
-  scheduled_departure_position_ = dp;
+  scheduled_departure_position_ = std::stoi(dp_parsed[1]);
   ROS_DEBUG_STREAM("scheduled_departure_position_: " << scheduled_departure_position_);
 
   std::vector<std::string> access_parsed;
@@ -279,12 +275,28 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   ROS_DEBUG("\n\nFinding intersection information");
 
   auto stop_intersection_list = wm_->getIntersectionsAlongRoute({ req.veh_x, req.veh_y });
+  bool no_intersections = stop_intersection_list.empty();
+  if (no_intersections)
+  {
+    resp.new_plan.maneuvers = {};
+    ROS_WARN_STREAM("There are no stop controlled intersections in the map");
+    return true;
+  }
+
   auto nearest_stop_intersection = stop_intersection_list.front();
+
+  bool no_stop_lines = nearest_stop_intersection->stopLines().empty();
+  if (no_stop_lines)
+  {
+    resp.new_plan.maneuvers = {};
+    ROS_WARN_STREAM("There are no stop lines on the closest stop-controlled intersections in the map");
+    return true;
+  }
   
+
   // extract the intersection stop line information
   std::vector<double> stop_lines;
-
-  for (auto l:nearest_stop_intersection->stopLines())
+  for (auto l : nearest_stop_intersection->stopLines())
   {
     //TODO: temp use veh_length here until planning stack is updated with front bumper pos
     double stop_bar_dtd = wm_->routeTrackPos(l.front().basicPoint2d()).downtrack - config_.veh_length;
@@ -308,7 +320,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
   // find the turn direction at intersection:
 
-  intersection_turn_direction_ = getTurnDirectionatIntersection(intersection_lanelets);
+  intersection_turn_direction_ = getTurnDirectionAtIntersection(intersection_lanelets);
 
   uint32_t base_time = street_msg_timestamp_;
   
@@ -366,9 +378,9 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       }
   }
 
-  bool cond1 = (int(street_msg_timestamp_) - int(scheduled_stop_time_)) > 0;
-  bool cond2 = (int(street_msg_timestamp_) - int(scheduled_enter_time_)) < 0;
-  bool time_to_stop_at_stopline = (cond1 && cond2);
+  bool time_to_reach_stopline = (int(street_msg_timestamp_) - int(scheduled_stop_time_)) > 0;
+  bool not_time_to_intersection_traverse = (int(street_msg_timestamp_) - int(scheduled_enter_time_)) < 0;
+  bool time_to_stop_at_stopline = (time_to_reach_stopline && not_time_to_intersection_traverse);
   ROS_DEBUG_STREAM("time_to_stop_at_stopline: " << time_to_stop_at_stopline);
 
   if (time_to_stop_at_stopline)
@@ -377,7 +389,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     double stop_duration = (scheduled_enter_time_ - base_time)/1000;
     ROS_DEBUG_STREAM("stop_duration:  " << stop_duration);
     ROS_DEBUG_STREAM("Planning stop and wait maneuver");
-    double stopping_accel = 1.5;
+    double stopping_accel = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
     auto stop_line_lanelet = nearest_stop_intersection->lanelets().front();
     resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
             current_state.downtrack, stop_intersection_down_track, current_state.speed, stop_line_lanelet.id(),
@@ -390,8 +402,8 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     ROS_DEBUG_STREAM("Vehicle at stop line, waiting for access to intersection");
     // vehicle is at the intersection but it is not allowed access, so it must wait
     // arbitrary parameters
-    double stop_acc = 1.5;
-    double stop_duration = 99999;
+    double stop_acc = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+    double stop_duration = std::numeric_limits<double>::max();
 
     ROS_DEBUG_STREAM("current_downtrack_: " << current_downtrack_);
     ROS_DEBUG_STREAM("current state dtd: " << current_state.downtrack);
@@ -428,7 +440,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     
     // find the turn direction at intersection:
 
-    intersection_turn_direction_ = getTurnDirectionatIntersection(crossed_lanelets);
+    intersection_turn_direction_ = getTurnDirectionAtIntersection(crossed_lanelets);
     
     ROS_DEBUG_STREAM("turn direction at the intersection is: " << intersection_turn_direction_);
 
@@ -439,8 +451,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       current_state.stamp, req.header.stamp + ros::Duration(intersection_transit_time), intersection_turn_direction_, crossed_lanelets.front().id(), crossed_lanelets.back().id()));
     
     // when passing intersection, set the flag to false
-    // TODO: Another option, check the time on mobilityoperation to see if it passes intersection
-    double end_of_intersection = std::max(config_.intersection_transit_length, intersection_end_downtrack - stop_intersection_down_track);
+    double end_of_intersection = std::max(config_.intersection_exit_zone_length, intersection_end_downtrack - stop_intersection_down_track);
     ROS_DEBUG_STREAM("Actual length of intersection: " << intersection_end_downtrack - stop_intersection_down_track);
     ROS_DEBUG_STREAM("Used length of intersection: " << end_of_intersection);
     if (distance_to_stopline < -end_of_intersection)
@@ -449,7 +460,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       // once the vehicle crosses the intersection, reset the flag to stop planning and publishing status/intent
       approaching_stop_controlled_interction_ = false;
       // once the intersection is crossed, reset turn direction
-      intersection_turn_direction_ = "straight";
+      intersection_turn_direction_ = TurnDirection::Straight;
     }
 
   }
@@ -457,20 +468,30 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   return true;
 }
 
-std::string SCIStrategicPlugin::getTurnDirectionatIntersection(std::vector<lanelet::ConstLanelet> lanelets_list)
+TurnDirection SCIStrategicPlugin::getTurnDirectionAtIntersection(std::vector<lanelet::ConstLanelet> lanelets_list)
 {
-  std::string turn_direction = "straight";
+  TurnDirection turn_direction = TurnDirection::Straight;
   for (auto l:lanelets_list)
   {
     if(l.hasAttribute("turn_direction")) {
-      turn_direction = l.attribute("turn_direction").value();
+      std::string direction_attribute = l.attribute("turn_direction").value();
+      if (direction_attribute == "right")
+      {
+        turn_direction = TurnDirection::Right;
+        break;
+      }
+      else if (direction_attribute == "left")
+      {
+        turn_direction = TurnDirection::Left;
+        break;
+      }
+      else turn_direction = TurnDirection::Straight;
       ROS_DEBUG_STREAM("intersection crossed lanelet direction is: " << turn_direction);
-      if (turn_direction != "straight") break;
     }
     else
     {
       // if there is no attribute, assumption is straight
-      turn_direction = "straight";
+      turn_direction = TurnDirection::Straight;
     }
 
   }
@@ -581,9 +602,6 @@ cav_msgs::Maneuver SCIStrategicPlugin::composeLaneFollowingManeuverMessage(int c
     case 2:
       caseTwoSpeedProfile(end_dist-start_dist, speed_before_decel, start_speed, time_to_stop, speed_limit_, &float_metadata_list);
       break;
-    // case 3:
-    //   caseThreeSpeedProfile(end_dist, start_speed, time_to_stop, &float_metadata_list);
-    // break;
     default:
       return empty_msg;
   }
@@ -618,16 +636,18 @@ cav_msgs::MobilityOperation SCIStrategicPlugin::generateMobilityOperation()
     mo_.header.sender_bsm_id = bsm_id_;
     mo_.strategy = stop_controlled_intersection_strategy_;
 
-    int flag = (is_allowed_int_ ? 1 : 0);
-
     double vehicle_acceleration_limit_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
     double vehicle_deceleration_limit_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
 
+    std::string intersection_turn_direction = "straight";
+    if (intersection_turn_direction_ = TurnDirection::Right) intersection_turn_direction = "right";
+    if (intersection_turn_direction_ = TurnDirection::Left) intersection_turn_direction = "left";
 
-    mo_.strategy_params = "access: " +  std::to_string(flag) + ", max_accel: " + std::to_string(vehicle_acceleration_limit_) + 
+
+    mo_.strategy_params = "access: " +  std::to_string(is_allowed_int_) + ", max_accel: " + std::to_string(vehicle_acceleration_limit_) + 
                         ", max_decel: " + std::to_string(vehicle_deceleration_limit_) + ", react_time: " + std::to_string(config_.reaction_time) +
                         ", min_gap: " + std::to_string(config_.min_gap) + ", depart_pos: " + std::to_string(scheduled_departure_position_) + 
-                        ", turn_direction: " + intersection_turn_direction_ + ", msg_count: " + std::to_string(bsm_msg_count_) + ", sec_mark: " + std::to_string(bsm_sec_mark_);
+                        ", turn_direction: " + intersection_turn_direction + ", msg_count: " + std::to_string(bsm_msg_count_) + ", sec_mark: " + std::to_string(bsm_sec_mark_);
     
 
     return mo_;
@@ -674,12 +694,12 @@ cav_msgs::Maneuver SCIStrategicPlugin::composeStopAndWaitManeuverMessage(double 
 cav_msgs::Maneuver SCIStrategicPlugin::composeIntersectionTransitMessage(double start_dist, double end_dist,
                                                                         double start_speed, double target_speed,
                                                                         ros::Time start_time, ros::Time end_time,
-                                                                        std::string turn_direction,
+                                                                        TurnDirection turn_direction,
                                                                         const lanelet::Id& starting_lane_id,
                                                                         const lanelet::Id& ending_lane_id) const
 {
   cav_msgs::Maneuver maneuver_msg;
-  if (turn_direction == "left")
+  if (turn_direction == TurnDirection::Left)
   {
     maneuver_msg.type = cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN;
     maneuver_msg.intersection_transit_left_turn_maneuver.parameters.planning_strategic_plugin =
@@ -700,7 +720,7 @@ cav_msgs::Maneuver SCIStrategicPlugin::composeIntersectionTransitMessage(double 
     maneuver_msg.intersection_transit_left_turn_maneuver.ending_lane_id = std::to_string(ending_lane_id);
 
   }
-  else if (turn_direction == "right")
+  else if (turn_direction == TurnDirection::Right)
   {
     maneuver_msg.type = cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN;
     maneuver_msg.intersection_transit_right_turn_maneuver.parameters.planning_strategic_plugin =
