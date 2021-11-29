@@ -49,7 +49,7 @@ struct SCIStrategicPluginConfig
   // Double: Length od the vehicle
   double veh_length = 4.0;
 
-  // Double: Vehicle reaction time in seconds
+  // Double: Vehicle reaction time to a received schedule in seconds (approximate value, only used for communication with the schedule)
   double reaction_time = 5.0;
 
   // Double: The distance vehicle drives to be considered out of intersections
