@@ -42,7 +42,6 @@
 #include <cav_msgs/TrajectoryPlan.h>
 #include <math.h>
 #include <std_msgs/Float64.h>
-
 #include <cav_msgs/Plugin.h>
 #include <carma_utils/CARMAUtils.h>
 #include <cav_srvs/PlanTrajectory.h>
