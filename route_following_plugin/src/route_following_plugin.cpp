@@ -130,6 +130,8 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             }
         });
 
+        lookupFrontBumperTransform();
+
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
             [this](const auto &) { plugin_discovery_pub_.publish(plugin_discovery_msg_); });
@@ -723,6 +725,20 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         else
         {
             throw std::invalid_argument("Valid traffic rules object could not be built");
+        }
+    }
+
+    void RouteFollowingPlugin::lookupFrontBumperTransform() 
+    {
+        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+        tf2_buffer_.setUsingDedicatedThread(true);
+        try
+        {
+            tf_ = tf2_buffer_.lookupTransform("vehicle_front", "base_link", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+        }
+        catch (const tf2::TransformException &ex)
+        {
+            ROS_WARN("%s", ex.what());
         }
     }
 }
