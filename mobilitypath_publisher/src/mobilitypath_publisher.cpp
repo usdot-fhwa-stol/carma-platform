@@ -94,7 +94,7 @@ namespace mobilitypath_publisher
         cav_msgs::MobilityHeader header;
         header.sender_id = sender_id;
         header.recipient_id = recipient_id;
-        header.sender_bsm_id = bsmIDtoString(bsm_core_);
+        header.sender_bsm_id = ros::BSMHelper::bsmIDtoString(bsm_core_.id);
         // random GUID that identifies this particular plan for future reference
         header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
         header.timestamp = time; //time in millisecond

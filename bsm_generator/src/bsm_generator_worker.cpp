@@ -36,6 +36,7 @@ namespace bsm_generator
 
     std::vector<uint8_t> BSMGeneratorWorker::getMsgId(const ros::Time now)
     {
+        //Sender BSM ID is meant to be read as a hex string
         std::vector<uint8_t> id(4);
         // need to change ID every 5 mins
         ros::Duration id_timeout(60 * 5);
