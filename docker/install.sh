@@ -32,8 +32,9 @@ sudo chown carma /opt/carma # Set owner to expose permissions for build
 sudo chgrp carma /opt/carma # Set group to expose permissions for build
 
 echo "Building ROS1 CARMA Components"
+
 # --packages-up-to traffic_incident_parser platoon_strategic
-colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release
+colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-up-to inlanecruising_plugin
 
 echo "Build of ROS1 CARMA Components Complete"
 

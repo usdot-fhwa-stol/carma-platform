@@ -38,7 +38,6 @@ if(${ROS_VERSION} EQUAL 1) # ROS 1
                 cav_msgs
                 j2735_msgs
                 autoware_msgs
-                derived_object_msgs
         )
 
         catkin_package()
