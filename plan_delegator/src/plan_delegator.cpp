@@ -253,7 +253,7 @@ namespace plan_delegator
         tf2_buffer_.setUsingDedicatedThread(true);
         try
         {
-            geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("vehicle_front", "map", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+            geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
             // tf2::Stamped<tf2::Transform> bumper_transform;
             tf2::fromMsg(tf, bumper_transform_);
             // back_axle_transform_ = bumper_transform.inverse();
@@ -280,16 +280,25 @@ namespace plan_delegator
     {
         cav_msgs::TrajectoryPlanPoint shifted_point = traj_point;
 
-        // convert to front bumper
-        tf2::Transform front_bumper_traj_point;
-        tf2::Quaternion no_rotation(0, 0, 0, 1);
-        tf2::Vector3 input_point {traj_point.x, traj_point.y, 0.0};
-        front_bumper_traj_point.setOrigin(input_point);
-        front_bumper_traj_point.setRotation(no_rotation);
-        // convert to back axle by (T_e_m)^(-1) * T_e_p
-        auto back_axle_traj_point = transform.inverse() * front_bumper_traj_point;
-        shifted_point.x = back_axle_traj_point.getOrigin().getX();
-        shifted_point.y = back_axle_traj_point.getOrigin().getY();
+        auto pose_point_vec = tf2::Vector3(traj_point.x, traj_point.y, 0.0);
+        tf2::Vector3 back_axle_point_vec = transform * pose_point_vec;
+        shifted_point.x = back_axle_point_vec.x();
+        ROS_DEBUG_STREAM("traj point x: " << traj_point.x);
+        ROS_DEBUG_STREAM("shifted point x: " << shifted_point.x);
+        shifted_point.y = back_axle_point_vec.y();
+        ROS_DEBUG_STREAM("traj point y: " << traj_point.y);
+        ROS_DEBUG_STREAM("shifted point y: " << shifted_point.y);
+
+        // // convert to front bumper
+        // tf2::Transform front_bumper_traj_point;
+        // tf2::Quaternion no_rotation(0, 0, 0, 1);
+        // tf2::Vector3 input_point {traj_point.x, traj_point.y, 0.0};
+        // front_bumper_traj_point.setOrigin(input_point);
+        // front_bumper_traj_point.setRotation(no_rotation);
+        // // convert to back axle by (T_e_m)^(-1) * T_e_p
+        // auto back_axle_traj_point = transform.inverse() * front_bumper_traj_point;
+        // shifted_point.x = back_axle_traj_point.getOrigin().getX();
+        // shifted_point.y = back_axle_traj_point.getOrigin().getY();
 
         return shifted_point;
     }

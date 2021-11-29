@@ -220,7 +220,7 @@ namespace arbitrator
         tf2_buffer_.setUsingDedicatedThread(true);
         try
         {
-            tf_ = tf2_buffer_.lookupTransform("vehicle_front", "base_link", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+            tf_ = tf2_buffer_.lookupTransform("vehicle_front", "map", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
         }
         catch (const tf2::TransformException &ex)
         {
