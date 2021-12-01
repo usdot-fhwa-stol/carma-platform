@@ -81,6 +81,12 @@ add_library(plugin_driver_manager_library
 target_link_libraries(${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
+  plugin_driver_manager_library
+)
+
+target_link_libraries(plugin_driver_manager_library
+  ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
 )
 
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})

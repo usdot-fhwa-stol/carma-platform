@@ -28,5 +28,6 @@
   <depend>cav_msgs</depend>
   <depend>carma_utils</depend>
   <depend>lanelet2_extension</depend>
+  <depend>lanelet2_io</depend>
   <build_depend>carma_cmake_common</build_depend>
 </package>

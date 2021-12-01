@@ -18,12 +18,12 @@
 # Build the software and its dependencies
 
 set -ex
-
+ 
 ###
 # ROS1 installation
 ###
 # Source the autoware installation
-source /opt/autoware.ai/ros/install/setup.bash --extend
+source /opt/autoware.ai/ros/install/setup.bash
 
 cd ~/carma_ws
 
@@ -33,8 +33,7 @@ sudo chgrp carma /opt/carma # Set group to expose permissions for build
 
 echo "Building ROS1 CARMA Components"
 
-# --packages-up-to traffic_incident_parser platoon_strategic
-colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-up-to inlanecruising_plugin
+colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-up-to mobilitypath_publisher
 
 echo "Build of ROS1 CARMA Components Complete"
 

@@ -28,6 +28,7 @@ find_package(catkin REQUIRED COMPONENTS
   cav_msgs
   carma_utils
   lanelet2_extension
+  lanelet2_io
 )
 
 ## System dependencies are found with CMake's conventions
@@ -38,7 +39,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_msgs carma_utils lanelet2_extension
+  CATKIN_DEPENDS roscpp std_msgs cav_msgs carma_utils lanelet2_extension lanelet2_io
 )
 
 ###########
@@ -46,9 +47,10 @@ catkin_package(
 ###########
 
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
-  include
+  ${lanelet2_io_INCLUDE_DIRS}
 )
 
 add_executable( ${PROJECT_NAME}
