@@ -182,14 +182,12 @@ namespace basic_autonomy
             
 
             double starting_route_downtrack = wm->routeTrackPos(points_and_target_speeds.front().point).downtrack;
-            double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist;
 
-            if(ending_downtrack + detailed_config.buffer_ending_downtrack < wm->getRouteEndTrackPos().downtrack){
-                ending_downtrack = ending_downtrack + detailed_config.buffer_ending_downtrack;
-            }
-            else{
-                ending_downtrack = wm->getRouteEndTrackPos().downtrack;
-            }
+            // Always try to add the maximum buffer. Even if the route ends it may still be possible to add buffered points.
+            // This does mean that downstream components might not be able to assume the buffer points are on the route 
+            // though this is not likely to be an issue as they are buffer only
+            double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack;
+
 
             size_t max_i = points_and_target_speeds.size() - 1;
             size_t unbuffered_idx = points_and_target_speeds.size() - 1;
