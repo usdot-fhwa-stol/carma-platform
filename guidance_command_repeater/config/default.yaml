@@ -1,8 +1,0 @@
-speedAccel_publisher_topic: /republish/cmd_speed
-wrenchEffort_publisher_topic: /republish/cmd_longitudinal_effort
-lateralControl_publisher_topic: /republish/cmd_lateral
-
-# Runs publish at a desired frequency
-publish_rate: 10
-# Timeout Treshold
-timeout_thresh: 0.5
