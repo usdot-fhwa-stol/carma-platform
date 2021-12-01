@@ -21,7 +21,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
-#include <BSMHelper.h>
+#include <bsm_helper.h>
 #include <cav_msgs/TrajectoryPlan.h>
 #include <cav_msgs/MobilityPath.h>
 #include <cav_msgs/BSM.h>
