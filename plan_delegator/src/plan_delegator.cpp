@@ -253,7 +253,7 @@ namespace plan_delegator
         tf2_buffer_.setUsingDedicatedThread(true);
         try
         {
-            geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+            geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("vehicle_front", "map", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
             // tf2::Stamped<tf2::Transform> bumper_transform;
             tf2::fromMsg(tf, back_axle_transform_);
             ROS_DEBUG_STREAM("transform x: " << tf.transform.translation.x);
@@ -283,7 +283,7 @@ namespace plan_delegator
         cav_msgs::TrajectoryPlanPoint shifted_point = traj_point;
 
         auto pose_point_vec = tf2::Vector3(traj_point.x, traj_point.y, 0.0);
-        tf2::Vector3 back_axle_point_vec = transform * pose_point_vec;
+        tf2::Vector3 back_axle_point_vec = transform.inverse() * pose_point_vec;
         shifted_point.x = back_axle_point_vec.x();
         ROS_DEBUG_STREAM("traj point x: " << traj_point.x);
         ROS_DEBUG_STREAM("shifted point x: " << shifted_point.x);

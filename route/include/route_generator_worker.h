@@ -44,6 +44,9 @@
 #include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <functional>
 #include <std_msgs/String.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 
 #include "route_state_worker.h"
@@ -227,6 +230,7 @@ namespace route {
         */
         lanelet::Optional<lanelet::routing::Route> reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map);
 
+        void lookupFrontBumperTransform();
     private:
 
         const double DEG_TO_RAD = 0.0174533;
@@ -300,6 +304,11 @@ namespace route {
 
         // The current map projection for lat/lon to map frame conversion
         boost::optional<std::string> map_proj_;
+
+        geometry_msgs::TransformStamped tf_;
+        // TF listenser
+        tf2_ros::Buffer tf2_buffer_;
+        std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
 
     };
 

@@ -453,8 +453,13 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         auto pose_point_vec = tf2::Vector3(pose.position.x, pose.position.y, pose.position.z);
         tf2::Vector3 front_bumper_point_vec = transform * pose_point_vec;
         bumper_pose.position.x = front_bumper_point_vec.x();
+        ROS_DEBUG_STREAM("pose x: " << pose.position.x);
+        ROS_DEBUG_STREAM("shift x: " << bumper_pose.position.x);
         bumper_pose.position.y = front_bumper_point_vec.y();
+        ROS_DEBUG_STREAM("pose y: " << pose.position.y);
+        ROS_DEBUG_STREAM("shift y: " << bumper_pose.position.y);
         bumper_pose.position.z = front_bumper_point_vec.z();
+        
 
         return bumper_pose;
     } 

@@ -469,9 +469,38 @@ namespace route {
         return true;
     }
 
+    void RouteGeneratorWorker::lookupFrontBumperTransform() 
+    {
+        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+        tf2_buffer_.setUsingDedicatedThread(true);
+        try
+        {
+            tf_ = tf2_buffer_.lookupTransform("vehicle_front", "map", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+        }
+        catch (const tf2::TransformException &ex)
+        {
+            ROS_WARN("%s", ex.what());
+        }
+    }
+
+    boost::optional<geometry_msgs::PoseStamped> RouteGeneratorWorker::shift_to_frontbumper(const geometry_msgs::Pose& pose, const tf2::Transform& transform) const{
+        boost::optional<geometry_msgs::PoseStamped> output;
+        geometry_msgs::Pose bumper_pose;    
+        
+        auto pose_point_vec = tf2::Vector3(pose.position.x, pose.position.y, pose.position.z);
+        tf2::Vector3 front_bumper_point_vec = transform * pose_point_vec;
+        bumper_pose.position.x = front_bumper_point_vec.x();
+        bumper_pose.position.y = front_bumper_point_vec.y();
+        bumper_pose.position.z = front_bumper_point_vec.z();
+
+        return bumper_pose;
+    } 
+
     void RouteGeneratorWorker::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
-        vehicle_pose_ = *msg; 
+        boost::optional<geometry_msgs::PoseStamped> backaxle_pose_ = *msg; 
+        vehicle_pose_ = shift_to_front_bumper(backaxle_pose, tf_);
+
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
             current_loc_ = lanelet::BasicPoint2d(msg->pose.position.x, msg->pose.position.y);
