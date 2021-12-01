@@ -237,7 +237,7 @@ namespace plan_delegator
         // Check if planned trajectory is valid before send out
         if(isTrajectoryValid(trajectory_plan))
         {
-            cav_msgs::TrajectoryPlan shifted_trajectory_plan = shift_back_trajectoryplan(trajectory_plan, bumper_transform_);
+            cav_msgs::TrajectoryPlan shifted_trajectory_plan = shift_back_trajectoryplan(trajectory_plan, back_axle_transform_);
             shifted_trajectory_plan.header.stamp = ros::Time::now();
             traj_pub_.publish(shifted_trajectory_plan);
         }
@@ -255,8 +255,10 @@ namespace plan_delegator
         {
             geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
             // tf2::Stamped<tf2::Transform> bumper_transform;
-            tf2::fromMsg(tf, bumper_transform_);
-            // back_axle_transform_ = bumper_transform.inverse();
+            tf2::fromMsg(tf, back_axle_transform_);
+            ROS_DEBUG_STREAM("transform x: " << back_axle_transform_.translation.x);
+            ROS_DEBUG_STREAM("transform y: " << back_axle_transform_.translation.y);
+            
         }
         catch (const tf2::TransformException &ex)
         {

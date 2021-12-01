@@ -135,7 +135,7 @@ namespace plan_delegator
             bool guidance_engaged = false;
 
             geometry_msgs::TransformStamped tf_;
-            tf2::Stamped<tf2::Transform> bumper_transform_;
+            tf2::Stamped<tf2::Transform> back_axle_transform_;
             // TF listenser
             tf2_ros::Buffer tf2_buffer_;
             std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
