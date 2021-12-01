@@ -1109,7 +1109,7 @@ namespace platoon_strategic_ihp
                 }
                 else 
                 {
-                    ROS_DEBUG_STREAM("The applicant is too far away from us. NACK.");
+                    ROS_DEBUG_STREAM("The joining gap (" << currentGap << " m) is too far away from us or the target platoon size (" << pm_.getTotalPlatooningSize() << ") is one. NACK.");
                     return MobilityRequestResponse::NACK;
                 }
             }
