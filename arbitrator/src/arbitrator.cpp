@@ -185,6 +185,9 @@ namespace arbitrator
         // convert to front bumper
         tf2::Stamped<tf2::Transform> bumper_transform;
         tf2::fromMsg(tf_, bumper_transform);
+        
+        ROS_DEBUG_STREAM("transform x: " << bumper_transform.transform.translation.x);
+        ROS_DEBUG_STREAM("transform y: " << bumper_transform.transform.translation.y);
 
         geometry_msgs::Pose front_bumper_pose = shift_to_frontbumper(msg->pose, bumper_transform);
 
