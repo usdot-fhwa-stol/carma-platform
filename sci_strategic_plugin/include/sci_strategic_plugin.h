@@ -23,7 +23,7 @@
 #include <cav_msgs/MobilityOperation.h>
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
-#include <BSMHelper.h>
+#include <bsm_helper/bsm_helper.h>
 #include <carma_utils/CARMAUtils.h>
 #include <carma_wm/Geometry.h>
 #include <lanelet2_core/Forward.h>
