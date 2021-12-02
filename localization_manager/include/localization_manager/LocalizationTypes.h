@@ -69,6 +69,7 @@ enum class LocalizationSignal
   TIMEOUT,
   LIDAR_SENSOR_FAILURE,
   LIDAR_INITIALIZED_SWITCH_TO_GPS,
+  GNSS_DATA_TIMEOUT
 };
 /**
  * \brief Stream operator for LocalizationSignal enum.
