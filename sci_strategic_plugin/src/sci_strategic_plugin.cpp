@@ -439,7 +439,7 @@ void SCIStrategicPlugin::generateMobilityOperation()
     mo_.header.timestamp = ros::Time::now().toNSec() * 1000000;
 
     //std::string id(bsm_id.begin(), bsm_id.end());
-    std::string id = ros::BSMHelper::bsmIDtoString(bsm_id);
+    std::string id = BSMHelper::BSMHelper::bsmIDtoString(bsm_id);
     mo_.header.sender_bsm_id = id;
 
     int flag = (approaching_stop_controlled_interction_ ? 1 : 0);
