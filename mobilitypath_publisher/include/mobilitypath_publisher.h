@@ -27,7 +27,6 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <lanelet2_io/lanelet2_io/Projection.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <std_msgs/String.h>
 

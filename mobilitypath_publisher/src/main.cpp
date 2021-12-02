@@ -24,5 +24,5 @@ int main(int argc, char** argv)
     mobilitypath_publisher::MobilityPathPublication mp;
     mp.run();
     return 0;
-};
+}
 // @SONAR_START@
