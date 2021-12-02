@@ -33,7 +33,7 @@ sudo chgrp carma /opt/carma # Set group to expose permissions for build
 
 echo "Building ROS1 CARMA Components"
 
-colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-up-to mobilitypath_publisher
+colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 echo "Build of ROS1 CARMA Components Complete"
 
@@ -46,7 +46,7 @@ source /opt/autoware.ai/ros/install_ros2/setup.bash
 cd ~/carma_ws
 
 echo "Building ROS1 CARMA Components"
-# --packages-up-to traffic_incident_parser platoon_strategic
+
 colcon build --install-base /opt/carma/install_ros2 --build-base build_ros2 --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 echo "Build of ROS1 CARMA Components Complete"
