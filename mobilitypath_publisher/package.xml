@@ -27,5 +27,6 @@
   <depend>std_msgs</depend>
   <depend>cav_msgs</depend>
   <depend>carma_utils</depend>
+  <depend>bsm_helper</depend>
   <depend>lanelet2_extension</depend>
 </package>

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>port_drayage_plugin</name>
   <version>1.0.0</version>
   <description>CARMA plugin to support port drayage applications for CARMA Freight</description>

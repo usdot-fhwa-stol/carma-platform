@@ -347,7 +347,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         lanelet::Id end_lane = crossed_lanelets.back().id();
 
         // Build stop and wait maneuver
-        maneuvers.push_back(composeStopAndWaitManeuverMessage(last_maneuver_end_downtrack, route_end_downtrack, stopping_entry_speed, start_lane, end_lane));
+        maneuvers.push_back(composeStopAndWaitManeuverMessage(last_maneuver_end_downtrack, route_end_downtrack, stopping_entry_speed, start_lane, end_lane,stopping_logitudinal_accel));
 
         return maneuvers;
 
@@ -654,7 +654,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         return boost::lexical_cast<std::string>(gen()); // generate uuid and convert to string
     }
 
-    cav_msgs::Maneuver RouteFollowingPlugin::composeStopAndWaitManeuverMessage(double start_dist, double end_dist, double start_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id) const
+    cav_msgs::Maneuver RouteFollowingPlugin::composeStopAndWaitManeuverMessage(double start_dist, double end_dist, double start_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, double stopping_accel) const
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
@@ -672,7 +672,8 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
 
         // Set the meta-data for the StopAndWait Maneuver to define the buffer in the route end point stopping location
         maneuver_msg.stop_and_wait_maneuver.parameters.float_valued_meta_data.push_back(route_end_point_buffer_);
-
+        maneuver_msg.stop_and_wait_maneuver.parameters.float_valued_meta_data.push_back(stopping_accel);
+        
         // NOTE: The maneuver id is set here because maneuvers are regenerated once per route, so it is acceptable to regenerate them on route updates.
         //       If maneuvers were not generated only on route updates we would want to preserve the ids across plans
         maneuver_msg.stop_and_wait_maneuver.parameters.maneuver_id = getNewManeuverId();

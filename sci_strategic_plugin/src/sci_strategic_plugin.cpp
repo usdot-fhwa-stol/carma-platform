@@ -631,10 +631,13 @@ double SCIStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt) cons
 cav_msgs::MobilityOperation SCIStrategicPlugin::generateMobilityOperation()
 {
     cav_msgs::MobilityOperation mo_;
-    mo_.header.timestamp = ros::Time::now().toNSec()/1000000;
-    mo_.header.sender_id = config_.vehicle_id;
-    mo_.header.sender_bsm_id = bsm_id_;
-    mo_.strategy = stop_controlled_intersection_strategy_;
+    mo_.header.timestamp = ros::Time::now().toNSec() * 1000000;
+
+    //std::string id(bsm_id.begin(), bsm_id.end());
+    std::string id = BSMHelper::BSMHelper::bsmIDtoString(bsm_id);
+    mo_.header.sender_bsm_id = id;
+
+    int flag = (approaching_stop_controlled_interction_ ? 1 : 0);
 
     double vehicle_acceleration_limit_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
     double vehicle_deceleration_limit_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
