@@ -29,10 +29,6 @@ def generate_launch_description():
     """
 
     import sys
-    path = os.path.abspath(get_package_share_directory('carma') + '/launch')
-    print('')
-    print('path: ' + str(path))
-    print('')
     sys.path.append(os.path.abspath(get_package_share_directory('carma') + '/launch'))
     from get_log_level import GetLogLevel
 

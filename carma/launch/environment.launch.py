@@ -20,6 +20,7 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
+from launch.substitutions import EnvironmentVariable
 
 import os
 
@@ -28,6 +29,10 @@ def generate_launch_description():
     """
     Launch perception nodes.
     """
+
+    import sys
+    sys.path.append(os.path.abspath(get_package_share_directory('carma') + '/launch'))
+    from get_log_level import GetLogLevel
 
     ns = LaunchConfiguration('namespace')
 
@@ -64,7 +69,10 @@ def generate_launch_description():
                 name='ray_ground_filter',
                 plugin='autoware::perception::filters::ray_ground_classifier_nodes::RayGroundClassifierCloudNode',
                 namespace=ns,
-                extra_arguments=[{'use_intra_process_comms': True}],
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('ray_ground_classifier_nodes', EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG')) }
+                ],
                 remappings=[
                     ("points_in", "/hardware_interface/lidar/points_raw"),
                     ("points_nonground", "points_no_ground")
@@ -76,7 +84,10 @@ def generate_launch_description():
                 name='euclidean_cluster',
                 plugin='autoware::perception::segmentation::euclidean_cluster_nodes::EuclideanClusterNode',
                 namespace=ns,
-                extra_arguments=[{'use_intra_process_comms': True}],
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('euclidean_cluster_nodes', EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG')) }
+                ],
                 remappings=[
                     ("points_in", "points_no_ground"),
                 ],
@@ -88,7 +99,10 @@ def generate_launch_description():
                     plugin='autoware::tracking_nodes::MultiObjectTrackerNode',
                     name='tracking_nodes_node',
                     namespace=ns,
-                    extra_arguments=[{'use_intra_process_comms': True}],
+                    extra_arguments=[
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('tracking_nodes', EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG')) }
+                    ],
                     remappings=[
                         ("ego_state", "current_pose_with_cov"), # TODO we will need a pose with covariance topic
                         # TODO note classified_rois1 is the default single camera input topic 
@@ -113,7 +127,10 @@ def generate_launch_description():
                     plugin='object::ObjectDetectionTrackingNode',
                     name='external_object',
                     namespace=ns,
-                    extra_arguments=[{'use_intra_process_comms': True}],
+                    extra_arguments=[
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('object_detection_tracking', EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG')) }
+                    ],
                     parameters=[ object_detection_tracking_param_file ]
             ),
         ]
@@ -125,7 +142,8 @@ def generate_launch_description():
         namespace=ns,
         executable='environment_perception_controller',
         parameters=[ subsystem_controller_param_file ],
-        on_exit= Shutdown() # Mark the subsystem controller as required
+        on_exit= Shutdown(), # Mark the subsystem controller as required
+        arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG'))]
     )
 
     return LaunchDescription([
