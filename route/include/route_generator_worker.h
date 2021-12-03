@@ -231,6 +231,8 @@ namespace route {
         lanelet::Optional<lanelet::routing::Route> reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map);
 
         void lookupFrontBumperTransform();
+
+        geometry_msgs::Pose shift_to_frontbumper(const geometry_msgs::Pose& pose, const tf2::Transform& transform) const;
     private:
 
         const double DEG_TO_RAD = 0.0174533;
@@ -306,6 +308,7 @@ namespace route {
         boost::optional<std::string> map_proj_;
 
         geometry_msgs::TransformStamped tf_;
+        tf2::Stamped<tf2::Transform> frontbumper_transform_;
         // TF listenser
         tf2_ros::Buffer tf2_buffer_;
         std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;

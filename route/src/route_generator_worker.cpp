@@ -198,7 +198,8 @@ namespace route {
             // Add vehicle as first destination point
             auto destination_points_in_map_with_vehicle = destination_points_in_map_;
             
-            lanelet::BasicPoint2d vehicle_position(vehicle_pose_->pose.position.x, vehicle_pose_->pose.position.y);
+            geometry_msgs::Pose bumper_pose = shift_to_frontbumper(vehicle_pose_->pose, frontbumper_transform_);
+            lanelet::BasicPoint2d vehicle_position(bumper_pose.position.x, bumper_pose.position.y);
             destination_points_in_map_with_vehicle.insert(destination_points_in_map_with_vehicle.begin(), vehicle_position);
 
             int idx = 0;
@@ -476,6 +477,7 @@ namespace route {
         try
         {
             tf_ = tf2_buffer_.lookupTransform("vehicle_front", "map", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+            tf2::fromMsg(tf_, frontbumper_transform_);
         }
         catch (const tf2::TransformException &ex)
         {
@@ -483,8 +485,7 @@ namespace route {
         }
     }
 
-    boost::optional<geometry_msgs::PoseStamped> RouteGeneratorWorker::shift_to_frontbumper(const geometry_msgs::Pose& pose, const tf2::Transform& transform) const{
-        boost::optional<geometry_msgs::PoseStamped> output;
+    geometry_msgs::Pose RouteGeneratorWorker::shift_to_frontbumper(const geometry_msgs::Pose& pose, const tf2::Transform& transform) const{
         geometry_msgs::Pose bumper_pose;    
         
         auto pose_point_vec = tf2::Vector3(pose.position.x, pose.position.y, pose.position.z);
@@ -498,12 +499,13 @@ namespace route {
 
     void RouteGeneratorWorker::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
-        boost::optional<geometry_msgs::PoseStamped> backaxle_pose_ = *msg; 
-        vehicle_pose_ = shift_to_front_bumper(backaxle_pose, tf_);
+        vehicle_pose_ = *msg; 
+         
+        geometry_msgs::Pose bumper_pose = shift_to_frontbumper(vehicle_pose_->pose, frontbumper_transform_);
 
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
-            current_loc_ = lanelet::BasicPoint2d(msg->pose.position.x, msg->pose.position.y);
+            current_loc_ = lanelet::BasicPoint2d(bumper_pose.position.x, bumper_pose.position.y);
             // get dt ct from world model
             carma_wm::TrackPos track(0.0, 0.0);
             try {

@@ -291,17 +291,6 @@ namespace plan_delegator
         ROS_DEBUG_STREAM("traj point y: " << traj_point.y);
         ROS_DEBUG_STREAM("shifted point y: " << shifted_point.y);
 
-        // // convert to front bumper
-        // tf2::Transform front_bumper_traj_point;
-        // tf2::Quaternion no_rotation(0, 0, 0, 1);
-        // tf2::Vector3 input_point {traj_point.x, traj_point.y, 0.0};
-        // front_bumper_traj_point.setOrigin(input_point);
-        // front_bumper_traj_point.setRotation(no_rotation);
-        // // convert to back axle by (T_e_m)^(-1) * T_e_p
-        // auto back_axle_traj_point = transform.inverse() * front_bumper_traj_point;
-        // shifted_point.x = back_axle_traj_point.getOrigin().getX();
-        // shifted_point.y = back_axle_traj_point.getOrigin().getY();
-
         return shifted_point;
     }
 }
