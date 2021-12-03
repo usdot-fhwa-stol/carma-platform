@@ -22,7 +22,8 @@
 
 namespace carma_wm
 {
-enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, REGION_ACCESS_RULE, DIGITAL_MINIMUM_GAP, DIRECTION_OF_TRAVEL, STOP_RULE, CARMA_TRAFFIC_LIGHT/* ... others */ };
+enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, REGION_ACCESS_RULE, DIGITAL_MINIMUM_GAP, 
+                          DIRECTION_OF_TRAVEL, STOP_RULE, CARMA_TRAFFIC_LIGHT, SIGNALIZED_INTERSECTION/* ... others */ };
 // helper function that return geofence type as an enum, which makes it cleaner by allowing switch statement
 GeofenceType resolveGeofenceType(const std::string& rule_name)
 {
@@ -33,6 +34,7 @@ GeofenceType resolveGeofenceType(const std::string& rule_name)
   if (rule_name.compare(lanelet::DirectionOfTravel::RuleName) == 0) return GeofenceType::DIRECTION_OF_TRAVEL;
   if (rule_name.compare(lanelet::StopRule::RuleName) == 0) return GeofenceType::STOP_RULE;
   if (rule_name.compare(lanelet::CarmaTrafficSignal::RuleName) == 0) return GeofenceType::CARMA_TRAFFIC_LIGHT;
+  if (rule_name.compare(lanelet::SignalizedIntersection::RuleName) == 0) return GeofenceType::SIGNALIZED_INTERSECTION;
 
   return GeofenceType::INVALID;
 }
