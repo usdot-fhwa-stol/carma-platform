@@ -41,14 +41,25 @@ cd ${dir}/src
 # clone carma repos
 
 if [[ "$BRANCH" = "develop" ]]; then
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch fix/add_plugin_activation_back_for_ros1
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch feature/helper_methods_for_parameters
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch $BRANCH
 else
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch fix/add_plugin_activation_back_for_ros1
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch foxy/develop
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch feature/helper_methods_for_parameters
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch foxy/develop
 fi
 
 # add astuff messages
-git clone https://github.com/astuff/astuff_sensor_msgs -b melodic
+# NOTE: The ibeo_msgs package is ignored because on build a the cmake files in that package run a sed command 
+#       which can make them incompatible with a new ros version after a source switch
+git clone https://github.com/astuff/astuff_sensor_msgs 
+
+cd astuff_sensor_msgs
+git checkout 41d5ef0c33fb27eb3c9ba808b51332bcce186a83
+
+# Disable ibeo_msgs
+cd ibeo_msgs
+echo "" > COLCON_IGNORE
+cd ../astuff_sensor_msgs
+echo "" > COLCON_IGNORE

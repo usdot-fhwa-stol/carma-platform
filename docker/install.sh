@@ -42,6 +42,7 @@ echo "Build of ROS1 CARMA Components Complete"
 ###
 # Source the ROS2 autoware installation
 source /opt/autoware.ai/ros/install_ros2/setup.bash
+source /home/carma/catkin/setup.bash
 
 cd ~/carma_ws
 
