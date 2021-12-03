@@ -170,9 +170,9 @@ namespace arbitrator
         
         auto pose_point_vec = tf2::Vector3(pose.position.x, pose.position.y, pose.position.z);
         tf2::Vector3 front_bumper_point_vec = transform * pose_point_vec;
-        bumper_pose.position.x = front_bumper_point_vec.x();
-        bumper_pose.position.y = front_bumper_point_vec.y();
-        bumper_pose.position.z = front_bumper_point_vec.z();
+        bumper_pose.position.x = transform.getOrigin().getX();//front_bumper_point_vec.x();
+        bumper_pose.position.y = transform.getOrigin().getY();//front_bumper_point_vec.y();
+        bumper_pose.position.z = transform.getOrigin().getZ();//front_bumper_point_vec.z();
 
         return bumper_pose;
     } 
@@ -223,7 +223,7 @@ namespace arbitrator
         tf2_buffer_.setUsingDedicatedThread(true);
         try
         {
-            tf_ = tf2_buffer_.lookupTransform("vehicle_front", "map", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
         }
         catch (const tf2::TransformException &ex)
         {
