@@ -21,6 +21,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
+#include <bsm_helper/bsm_helper.h>
 #include <cav_msgs/TrajectoryPlan.h>
 #include <cav_msgs/MobilityPath.h>
 #include <cav_msgs/BSM.h>
@@ -113,13 +114,7 @@ namespace mobilitypath_publisher
         // sender's dynamic ID which is its BSM id in hex string
         std::string sender_bsm_id = "FFFF";
 
-        std::string bsmIDtoString(cav_msgs::BSMCoreData bsm_core){
-            std::string res = "";
-            for (size_t i=0; i<bsm_core.id.size(); i++){
-                res+=std::to_string(bsm_core.id[i]);
-            }
-            return res;
-        }
+        
 
         
     };
