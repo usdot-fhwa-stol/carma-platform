@@ -30,7 +30,7 @@
 #include "TrackPos.h"
 #include <carma_wm/WorldModelUtils.h>
 #include "boost/date_time/posix_time/posix_time.hpp"
-
+#include <carma_wm/SignalizedIntersectionManager.h>
 
 namespace carma_wm
 {
@@ -263,6 +263,8 @@ private:
   size_t map_version_ = 0; // The current map version. This is cached from calls to setMap();
 
   std::string route_name_; // The current route name. This is set from calls to setRouteName();
+
+  carma_wm::SignalizedIntersectionManager sim_;
   
   // The following constants are default timining plans for recieved traffic lights. 
   // The light is assumed to use these values until otherwise known

@@ -78,7 +78,11 @@ namespace carma_wm
       auto first_llts = carma_wm::query::getLaneletsFromPoint(map, node_list.front());
       auto second_llts = carma_wm::query::getLaneletsFromPoint(map, node_list.back());
 
-      if (first_llts.empty() || second_llts.empty())
+      ROS_DEBUG_STREAM("first size:" << first_llts.size());
+      ROS_DEBUG_STREAM("second size:" << second_llts.size());
+
+
+      if (first_llts.empty() && second_llts.empty())
       {
         throw std::invalid_argument("Given offset points are not inside the map...");
       }
