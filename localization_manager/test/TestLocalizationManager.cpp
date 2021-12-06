@@ -36,6 +36,7 @@ LocalizationManagerConfig getDefaultConfigForTest() {
   config.ndt_frequency_fault_threshold = 5;
   config.auto_initialization_timeout = 30000;
   config.gnss_only_operation_timeout = 6000;
+  config.gnss_data_timeout = 500;
   config.localization_mode = LocalizerMode::NDT;
 
   return config;
@@ -66,6 +67,52 @@ TEST(LocalizationManager, testSpin)
 
   ASSERT_EQ(cav_msgs::LocalizationStatusReport::UNINITIALIZED, status_msg.get().status);
   ASSERT_EQ(ros::Time::now().toSec(), status_msg.get().header.stamp.toSec());
+}
+
+TEST(LocalizationManager, testGNSSTimeout)
+{
+  LocalizationManagerConfig config = getDefaultConfigForTest();
+  config.localization_mode = LocalizerMode::GNSS;
+
+  boost::optional<cav_msgs::LocalizationStatusReport> status_msg;
+  LocalizationManager manager([](auto pose) {}, [&](auto status) { status_msg = status; }, [](auto pose_with_cov) {}, config,
+                              std::make_unique<carma_utils::timers::testing::TestTimerFactory>());
+
+  ASSERT_FALSE(!!status_msg);
+
+  ros::Time::setNow(ros::Time(1.0));
+
+  geometry_msgs::PoseWithCovarianceStamped msg;
+  msg.header.seq = 1;
+  msg.header.stamp = ros::Time::now();
+  geometry_msgs::PoseWithCovarianceStampedConstPtr msg_ptr(new geometry_msgs::PoseWithCovarianceStamped(msg));
+  manager.initialPoseCallback(msg_ptr);
+
+  geometry_msgs::PoseStamped msg_2;
+  msg_2.header.seq = 1;
+  msg_2.header.stamp = ros::Time::now();
+  geometry_msgs::PoseStampedConstPtr msg_ptr_2(new geometry_msgs::PoseStamped(msg_2));
+  manager.gnssPoseCallback(msg_ptr_2);
+
+
+  ros::TimerEvent e;
+  manager.posePubTick(e);
+  ASSERT_TRUE(!!status_msg);
+
+  ASSERT_EQ(cav_msgs::LocalizationStatusReport::DEGRADED_NO_LIDAR_FIX, status_msg.get().status);
+  ASSERT_EQ(ros::Time::now().toSec(), status_msg.get().header.stamp.toSec());
+
+  ros::Time::setNow(ros::Time(1.1)); // Still no timeout
+  
+  manager.posePubTick(e);
+  ASSERT_TRUE(!!status_msg);
+
+  ASSERT_EQ(cav_msgs::LocalizationStatusReport::DEGRADED_NO_LIDAR_FIX, status_msg.get().status);
+  ASSERT_EQ(ros::Time::now().toSec(), status_msg.get().header.stamp.toSec());
+
+  ros::Time::setNow(ros::Time(1.6)); // timout
+
+  ASSERT_THROW(manager.posePubTick(e), std::runtime_error);
 }
 
 TEST(LocalizationManager, testSignals)
@@ -197,6 +244,7 @@ TEST(LocalizationManager, testSignals)
   manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
 
   ASSERT_EQ(LocalizationState::DEGRADED_NO_LIDAR_FIX, manager.getState());
+  manager.gnssPoseCallback(pose_msg_ptr);
 
   ros::Time::setNow(ros::Time(5.9));
 
@@ -251,6 +299,7 @@ TEST(LocalizationManager, testSignals)
 
   ros::Time::setNow(ros::Time(6.6));
   
+  manager.gnssPoseCallback(pose_msg_ptr);
   manager.posePubTick(e);
 
   ASSERT_EQ(LocalizationState::DEGRADED_NO_LIDAR_FIX, manager.getState());

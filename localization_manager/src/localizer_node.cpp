@@ -73,6 +73,8 @@ void Localizer::run()
                   config.gnss_only_operation_timeout);
   pnh_.param<int>("sequential_timesteps_until_gps_operation", config.sequential_timesteps_until_gps_operation,
                   config.sequential_timesteps_until_gps_operation);
+  pnh_.param<int>("gnss_data_timeout", config.gnss_data_timeout,
+                  config.gnss_data_timeout);
 
   int localization_mode;
   pnh_.param<int>("localization_mode", localization_mode, 0);
