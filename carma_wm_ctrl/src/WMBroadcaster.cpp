@@ -199,6 +199,42 @@ void WMBroadcaster::addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const c
   }
 }
 
+
+std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::MapData& map_msg)
+{
+  std::vector<std::shared_ptr<Geofence>> updates_to_send;
+  std::vector<std::shared_ptr<lanelet::SignalizedIntersection>> intersections;
+  std::vector<std::shared_ptr<lanelet::CarmaTrafficSignal>> traffic_signals;
+
+  sim_.createIntersectionFromMapMsg(intersections, traffic_signals, map_msg, current_map_);
+
+  for (auto intersection : intersections)
+  {
+    auto update = std::make_shared<Geofence>();
+    update->id_ = boost::uuids::random_generator()();
+    update->label_ = "MAP_MSG_INTERSECTION";
+    update->regulatory_element_ = intersection;
+    for (auto llt : intersection->getEntryLanelets())
+    {
+      update->affected_parts_.push_back(llt);
+    }
+  }
+
+  for (auto signal : traffic_signals)
+  {
+    auto update = std::make_shared<Geofence>();
+    update->id_ = boost::uuids::random_generator()();
+    update->label_ = "MAP_MSG_TF_SIGNAL";
+    update->regulatory_element_ = signal;
+    for (auto llt : signal->getControlStartLanelets())
+    {
+      update->affected_parts_.push_back(llt);
+    }
+  }
+  
+  return updates_to_send;
+}
+
 void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01)
 {
   bool detected_workzone_signal = msg_v01.package.label_exists && msg_v01.package.label.find("SIG_WZ") != std::string::npos;
@@ -413,7 +449,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
 
   controlled_taper_right.push_back(back_llt_diag);
 
-  lanelet::CarmaTrafficSignalPtr tfl_parallel = std::make_shared<lanelet::CarmaTrafficSignal>(lanelet::CarmaTrafficSignal::buildData(lanelet::utils::getId(), {parallel_stop_ls}, controlled_taper_right)); 
+  lanelet::CarmaTrafficSignalPtr tfl_parallel = std::make_shared<lanelet::CarmaTrafficSignal>(lanelet::CarmaTrafficSignal::buildData(lanelet::utils::getId(), {parallel_stop_ls}, {controlled_taper_right.front()}, {controlled_taper_right.back()})); 
 
   gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->label_),tfl_parallel->id()});
 
@@ -439,7 +475,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
     controlled_open_right.push_back(current_map_->laneletLayer.get(llt.lanelet().get().id()));
   }
 
-  lanelet::CarmaTrafficSignalPtr tfl_opposite = std::make_shared<lanelet::CarmaTrafficSignal>(lanelet::CarmaTrafficSignal::buildData(lanelet::utils::getId(), {opposite_stop_ls}, controlled_open_right));
+  lanelet::CarmaTrafficSignalPtr tfl_opposite = std::make_shared<lanelet::CarmaTrafficSignal>(lanelet::CarmaTrafficSignal::buildData(lanelet::utils::getId(), {opposite_stop_ls}, {controlled_open_right.front()}, {controlled_open_right.back()}));
   
   gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->label_), tfl_opposite->id()});
   
@@ -963,6 +999,42 @@ ros::V_string WMBroadcaster::combineParticipantsToVehicle(const ros::V_string& i
   return participants;
 }
 
+void WMBroadcaster::mapMsgCallback(const cav_msgs::MapData& map_msg)
+{
+  auto gf_ptr = std::make_shared<Geofence>();
+
+  // check if we have seen this message already
+  bool up_to_date = false;
+  if (sim_.intersection_id_to_regem_id_.size() == map_msg.intersections.size())
+  {
+    up_to_date = true;
+    // check id of the intersection only
+    for (auto intersection : map_msg.intersections)
+    {
+      if (sim_.intersection_id_to_regem_id_.find(intersection.id.id) == sim_.intersection_id_to_regem_id_.end())
+      {
+        up_to_date = false;
+      }
+    }
+  }
+
+  if(up_to_date)
+    return;
+
+  gf_ptr->map_msg_ = map_msg;
+  gf_ptr->msg_.package.label_exists = true;
+  gf_ptr->msg_.package.label = "MAP_MSG";
+
+  // create dummy traffic Control message to add instant activation schedule
+  cav_msgs::TrafficControlMessageV01 traffic_control_msg;
+
+  // process schedule from message
+  addScheduleFromMsg(gf_ptr, traffic_control_msg);
+  
+  scheduleGeofence(gf_ptr);
+
+}
+
 // currently only supports geofence message version 1: TrafficControlMessageV01 
 void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geofence_msg)
 {
@@ -1449,53 +1521,65 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   ROS_INFO_STREAM("Adding active geofence to the map with geofence id: " << gf_ptr->id_);
   
   // if applying workzone geometry geofence, utilize workzone chache to create one 
+  // also multiple map updates can be sent from one geofence object
+  std::vector<std::shared_ptr<Geofence>> updates_to_send;
+
   bool detected_workzone_signal = gf_ptr->msg_.package.label_exists && gf_ptr->msg_.package.label.find("SIG_WZ") != std::string::npos;
+  bool detected_map_msg_signal = gf_ptr->msg_.package.label_exists && gf_ptr->msg_.package.label.find("MAP_MSG") != std::string::npos;
   if (detected_workzone_signal && gf_ptr->msg_.params.detail.choice != cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE)
   {
     for (auto gf_cache_ptr : work_zone_geofence_cache_)
     {
       geofenceFromMsg(gf_cache_ptr.second, gf_cache_ptr.second->msg_);
     }
-    gf_ptr = createWorkzoneGeofence(work_zone_geofence_cache_);
+    updates_to_send.push_back(createWorkzoneGeofence(work_zone_geofence_cache_));
+  }
+  else if (detected_map_msg_signal)
+  {
+    updates_to_send = geofenceFromMapMsg(gf_ptr, gf_ptr->map_msg_);
   }
   else
   {
     geofenceFromMsg(gf_ptr, gf_ptr->msg_);
+    updates_to_send.push_back(gf_ptr);
+  }
+
+  for (auto update : updates_to_send)
+  {
+    // add marker to rviz
+    tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(update->gf_pts)); // create visualizer in rviz
+
+    // Process the geofence object to populate update remove lists
+    addGeofenceHelper(update);
+    
+    for (auto pair : update->update_list_) active_geofence_llt_ids_.insert(pair.first);
+
+    // If the geofence invalidates the route graph then recompute the routing graph now that the map has been updated
+    if (update->invalidate_route_) {
+
+      ROS_INFO_STREAM("Rebuilding routing graph after is was invalidated by geofence");
+
+      lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
+      lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant_);
+      current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
+
+      ROS_INFO_STREAM("Done rebuilding routing graph after is was invalidated by geofence");
+    }
+    
+
+    // Publish
+    autoware_lanelet2_msgs::MapBin gf_msg;
+    auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(update->id_, update->update_list_, update->remove_list_, update->lanelet_additions_));
+    send_data->traffic_light_id_lookup_ = update->traffic_light_id_lookup_;
+    carma_wm::toBinMsg(send_data, &gf_msg);
+    update_count_++; // Update the sequence count for the geofence messages
+    gf_msg.header.seq = update_count_;
+    gf_msg.invalidates_route=update->invalidate_route_; 
+    gf_msg.map_version = current_map_version_;
+    map_update_message_queue_.push_back(gf_msg); // Add diff to current map update queue
+    map_update_pub_(gf_msg);
   }
   
-
-  // add marker to rviz
-  tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(gf_ptr->gf_pts)); // create visualizer in rviz
-
-  // Process the geofence object to populate update remove lists
-  addGeofenceHelper(gf_ptr);
-  
-  for (auto pair : gf_ptr->update_list_) active_geofence_llt_ids_.insert(pair.first);
-
-  // If the geofence invalidates the route graph then recompute the routing graph now that the map has been updated
-  if (gf_ptr->invalidate_route_) {
-
-    ROS_INFO_STREAM("Rebuilding routing graph after is was invalidated by geofence");
-
-    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
-    lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant_);
-    current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
-
-    ROS_INFO_STREAM("Done rebuilding routing graph after is was invalidated by geofence");
-  }
-  
-
-  // Publish
-  autoware_lanelet2_msgs::MapBin gf_msg;
-  auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, gf_ptr->lanelet_additions_));
-  send_data->traffic_light_id_lookup_ = gf_ptr->traffic_light_id_lookup_;
-  carma_wm::toBinMsg(send_data, &gf_msg);
-  update_count_++; // Update the sequence count for the geofence messages
-  gf_msg.header.seq = update_count_;
-  gf_msg.invalidates_route=gf_ptr->invalidate_route_; 
-  gf_msg.map_version = current_map_version_;
-  map_update_message_queue_.push_back(gf_msg); // Add diff to current map update queue
-  map_update_pub_(gf_msg);
 }
 
 void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)

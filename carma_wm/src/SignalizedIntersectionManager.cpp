@@ -27,7 +27,6 @@ namespace carma_wm
 
   void SignalizedIntersectionManager::convertLaneToLaneletId(std::unordered_map<uint8_t, lanelet::Id>& entry, std::unordered_map<uint8_t, lanelet::Id>& exit, const cav_msgs::IntersectionGeometry& intersection, const std::shared_ptr<lanelet::LaneletMap>& map)
   {
-    //std::unordered_map<uint8_t, lanelet::Id> lane_id_to_lanelet_id;
     std::unordered_map<uint8_t, std::unordered_set<uint16_t>> signal_group_to_exit_lanes;
     std::unordered_map<uint8_t, std::unordered_set<uint16_t>> signal_group_to_entry_lanes;
 
