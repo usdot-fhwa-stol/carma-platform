@@ -45,14 +45,14 @@ namespace carma_wm
 
     auto ref_node  = local_projector.forward(gps_point);
 
-    ROS_DEBUG_STREAM("Reference node x: " << ref_node.x() << ", y: " << ref_node.y());
+    ROS_DEBUG_STREAM("Reference node in map frame x: " << ref_node.x() << ", y: " << ref_node.y());
     
     std::vector<lanelet::BasicPoint2d> node_list;
 
     for (auto lane : intersection.lane_list)
     {
       lanelet::BasicPoint2d curr_node = {ref_node.x(), ref_node.y()};
-      ROS_DEBUG_STREAM("Lane id: " << (int)lane.lane_id);
+      ROS_DEBUG_STREAM("Processing Lane id: " << (int)lane.lane_id);
       
       size_t min_number_of_points = 2; // only two points are sufficient to get corresponding lanelets
 
@@ -78,10 +78,6 @@ namespace carma_wm
       auto first_llts = carma_wm::query::getLaneletsFromPoint(map, node_list.front());
       auto second_llts = carma_wm::query::getLaneletsFromPoint(map, node_list.back());
 
-      ROS_DEBUG_STREAM("first size:" << first_llts.size());
-      ROS_DEBUG_STREAM("second size:" << second_llts.size());
-
-
       if (first_llts.empty() && second_llts.empty())
       {
         throw std::invalid_argument("Given offset points are not inside the map...");
@@ -96,7 +92,7 @@ namespace carma_wm
           if (i.id() == j.id())
           {
             corresponding_lanelet_id = i.id();
-            ROS_DEBUG_STREAM("Lanelet id:" << corresponding_lanelet_id);
+            ROS_DEBUG_STREAM("Found existing Lanelet id:" << corresponding_lanelet_id);
             
             break;
           }
@@ -105,12 +101,12 @@ namespace carma_wm
 
       if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::INGRESS)
       {
-        ROS_DEBUG_STREAM("INGRESS, " << (int)lane.lane_id);
+        ROS_DEBUG_STREAM("Detected INGRESS, " << (int)lane.lane_id);
         entry[lane.lane_id] = corresponding_lanelet_id;
       }
       else if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::EGRESS)
       {
-        ROS_DEBUG_STREAM("EGRESS, " << (int)lane.lane_id);
+        ROS_DEBUG_STREAM("Detected EGRESS, " << (int)lane.lane_id);
         exit[lane.lane_id] = corresponding_lanelet_id;
       }
       // ignoring types that are neither ingress nor egress 
@@ -125,7 +121,7 @@ namespace carma_wm
       {
         if (exit.find(exit_lane) != exit.end())
         {
-          ROS_DEBUG_STREAM("exit_lane id: " << exit_lane);
+          ROS_DEBUG_STREAM("Adding exit_lane id: " << exit_lane);
           signal_group_to_exit_lanelet_ids_[iter->first].insert(exit[exit_lane]);
         }
         else
@@ -140,7 +136,7 @@ namespace carma_wm
     {
       for (auto entry_lane : iter->second)
       {
-        ROS_DEBUG_STREAM("entry_lane id: " << entry_lane);
+        ROS_DEBUG_STREAM("Adding  entry_lane id: " << entry_lane);
         if (entry.find(entry_lane) != entry.end())
         {
           signal_group_to_entry_lanelet_ids_[iter->first].insert(entry[entry_lane]);
@@ -262,13 +258,14 @@ namespace carma_wm
 
       if (intersection_id == lanelet::InvalId)
       {
-        ROS_DEBUG_STREAM("Invalid detected");
+        ROS_DEBUG_STREAM("No existing intersection found. Creating a new one...");
         intersection_id = lanelet::utils::getId();
 
         std::vector<lanelet::Lanelet> interior_llts = identifyInteriorLanelets(entry_llts, map);
         
         std::shared_ptr<lanelet::SignalizedIntersection> sig_inter(new lanelet::SignalizedIntersection
                                                           (lanelet::SignalizedIntersection::buildData(intersection_id, entry_llts, exit_llts, interior_llts)));
+        intersection_id_to_regem_id_[intersection.id.id] = intersection_id;
         sig_intersections.push_back(sig_inter);
       }
     }
