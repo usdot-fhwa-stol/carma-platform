@@ -122,6 +122,7 @@ namespace mobilitypath_publisher
                 offset.offset_z = (int16_t)(new_point.ecef_z - prev_point.ecef_z);
                 prev_point = new_point;
                 traj.offsets.push_back(offset);
+                if( i >= 60 ){ break;}; 
             }
         }
 
