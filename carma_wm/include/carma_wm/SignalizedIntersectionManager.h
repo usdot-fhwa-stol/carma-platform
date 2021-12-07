@@ -69,6 +69,7 @@ public:
   *  \param intersection MAP.msg that consists all static data portion of the intersection
   *  \param map lanelet_map to check 
   *  \throw invalid_argument if given coordinates in the msg doesn't exist in the map
+  *         TODO: Need to think about error buffer in the future. Map msgs are made from google maps or open streets maps normally so this function might run into some errors from that.
   */
   void convertLaneToLaneletId(std::unordered_map<uint8_t, lanelet::Id>& entry, std::unordered_map<uint8_t, lanelet::Id>& exit, const cav_msgs::IntersectionGeometry& intersection, const std::shared_ptr<lanelet::LaneletMap>& map);
 
