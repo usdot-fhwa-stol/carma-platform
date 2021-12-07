@@ -35,6 +35,12 @@
 namespace carma_wm_ctrl
 {
 using namespace lanelet::units::literals;
+
+// Map Update Geofence Common Labels
+const std::string MAP_MSG_INTERSECTION = "MAP_MSG_INTERSECTION"; 
+const std::string MAP_MSG_TF_SIGNAL = "MAP_MSG_TF_SIGNAL";
+
+
 /**
  * @brief An object representing a geofence use for communications with CARMA Cloud
  *

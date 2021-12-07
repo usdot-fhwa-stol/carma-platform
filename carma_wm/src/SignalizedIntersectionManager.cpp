@@ -55,6 +55,12 @@ namespace carma_wm
       
       size_t min_number_of_points = 2; // only two points are sufficient to get corresponding lanelets
 
+      if (lane.node_list.nodes.node_set_xy.size() < min_number_of_points)
+      {
+        ROS_WARN_STREAM("Not enough points are provided to match a lane. Skipping... ");
+        continue;
+      }
+
       for (size_t i = 0; i < min_number_of_points; i ++ )
       {
         curr_node.x() = lane.node_list.nodes.node_set_xy[i].delta.x + curr_node.x();
@@ -73,20 +79,20 @@ namespace carma_wm
           signal_group_to_entry_lanes[connection.signal_group].emplace(lane.lane_id);
       }
       
-      // query corresonding lanelet lane from local map
-      auto first_llts = carma_wm::query::getLaneletsFromPoint(map, node_list.front());
-      auto second_llts = carma_wm::query::getLaneletsFromPoint(map, node_list.back());
+      // query corresponding lanelet lane from local map
+      auto starting_lanelets = carma_wm::query::getLaneletsFromPoint(map, node_list.front());
+      auto ending_lanelets = carma_wm::query::getLaneletsFromPoint(map, node_list.back());
 
-      if (first_llts.empty() && second_llts.empty())
+      if (starting_lanelets.empty() && ending_lanelets.empty())
       {
         throw std::invalid_argument("Given offset points are not inside the map...");
       }
 
-      lanelet::Id corresponding_lanelet_id = second_llts.front().id(); // by default second point's lanelet as first
+      lanelet::Id corresponding_lanelet_id = ending_lanelets.front().id(); // by default second point's lanelet as first
                                                                         // point may fall exactly on boundaries of two llts.
-      for (auto i : second_llts)
+      for (auto i : ending_lanelets)
       {
-        for (auto j : first_llts)
+        for (auto j : starting_lanelets)
         {
           if (i.id() == j.id())
           {
@@ -275,6 +281,7 @@ namespace carma_wm
     {
       ROS_DEBUG_STREAM("Creating signal for: " << (int)sig_grp_pair.first);
       // ignore the traffic signals already inside
+      // this check might not be valid as bracket access may be returning 0: TODO
       if (map->regulatoryElementLayer.exists(signal_group_to_traffic_light_id_[sig_grp_pair.first]))
       {
         continue;
@@ -299,7 +306,7 @@ namespace carma_wm
   {
     lanelet::BasicLineString2d polygon_corners;
     
-    if (entry_llts.size() < 3) //at least three lanes needed to form intersection
+    if (entry_llts.size() < 2) //at least two lanes (1 ingress and 1 egress) needed to form intersection
     {
       return {};
     }

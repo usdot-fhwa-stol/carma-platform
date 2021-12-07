@@ -115,7 +115,7 @@ public:
    *
    * \param map_msg The ROS msg of the MAP.msg to process
    */
-  void mapMsgCallback(const cav_msgs::MapData& map_msg);
+  void externalMapMsgCallback(const cav_msgs::MapData& map_msg);
 
   /*!
    * \brief Adds a geofence to the current map and publishes the ROS msg

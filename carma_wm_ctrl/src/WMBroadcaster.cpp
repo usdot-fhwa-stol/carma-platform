@@ -212,7 +212,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
   {
     auto update = std::make_shared<Geofence>();
     update->id_ = boost::uuids::random_generator()();
-    update->label_ = "MAP_MSG_INTERSECTION";
+    update->label_ = carma_wm_ctrl::MAP_MSG_INTERSECTION;
     update->regulatory_element_ = intersection;
     for (auto llt : intersection->getEntryLanelets())
     {
@@ -224,7 +224,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
   {
     auto update = std::make_shared<Geofence>();
     update->id_ = boost::uuids::random_generator()();
-    update->label_ = "MAP_MSG_TF_SIGNAL";
+    update->label_ = carma_wm_ctrl::MAP_MSG_TF_SIGNAL;
     update->regulatory_element_ = signal;
     for (auto llt : signal->getControlStartLanelets())
     {
@@ -999,7 +999,7 @@ ros::V_string WMBroadcaster::combineParticipantsToVehicle(const ros::V_string& i
   return participants;
 }
 
-void WMBroadcaster::mapMsgCallback(const cav_msgs::MapData& map_msg)
+void WMBroadcaster::externalMapMsgCallback(const cav_msgs::MapData& map_msg)
 {
   auto gf_ptr = std::make_shared<Geofence>();
 
@@ -1552,7 +1552,10 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
     // Process the geofence object to populate update remove lists
     addGeofenceHelper(update);
     
-    for (auto pair : update->update_list_) active_geofence_llt_ids_.insert(pair.first);
+    if (!detected_map_msg_signal)
+    {
+      for (auto pair : update->update_list_) active_geofence_llt_ids_.insert(pair.first);
+    }
 
     // If the geofence invalidates the route graph then recompute the routing graph now that the map has been updated
     if (update->invalidate_route_) {
