@@ -108,14 +108,7 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
 void SCIStrategicPlugin::BSMCb(const cav_msgs::BSMConstPtr& msg)
 {
   std::vector<uint8_t> bsm_id_vec = msg->core_data.id;
-
-  std::string id = "";
-  for (size_t i=0; i< bsm_id_vec.size(); i++)
-  {
-    id += std::to_string(bsm_id_vec[i]);
-  }
-
-  bsm_id_ = id;
+  bsm_id_ = BSMHelper::BSMHelper::bsmIDtoString(bsm_id_vec);
   bsm_msg_count_ = msg->core_data.msg_count;
   bsm_sec_mark_ = msg->core_data.sec_mark;
 }
