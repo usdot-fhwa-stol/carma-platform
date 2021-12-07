@@ -130,7 +130,6 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             }
         });
 
-        lookupFrontBumperTransform();
 
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
@@ -452,26 +451,20 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         
         auto pose_point_vec = tf2::Vector3(pose.position.x, pose.position.y, pose.position.z);
         tf2::Vector3 front_bumper_point_vec = transform * pose_point_vec;
-        bumper_pose.position.x = front_bumper_point_vec.x();
-        ROS_DEBUG_STREAM("pose x: " << pose.position.x);
-        ROS_DEBUG_STREAM("shift x: " << bumper_pose.position.x);
-        bumper_pose.position.y = front_bumper_point_vec.y();
-        ROS_DEBUG_STREAM("pose y: " << pose.position.y);
-        ROS_DEBUG_STREAM("shift y: " << bumper_pose.position.y);
-        bumper_pose.position.z = front_bumper_point_vec.z();
-        
+        bumper_pose.position.x = transform.getOrigin().getX();//front_bumper_point_vec.x();
+        bumper_pose.position.y = transform.getOrigin().getY();//front_bumper_point_vec.y();
+        bumper_pose.position.z = transform.getOrigin().getZ();//front_bumper_point_vec.z();
 
         return bumper_pose;
+        
     } 
 
     void RouteFollowingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
+        lookupFrontBumperTransform();
         // convert to front bumper
         tf2::Stamped<tf2::Transform> bumper_transform;
         tf2::fromMsg(tf_, bumper_transform);
-
-        ROS_DEBUG_STREAM("transform x: " << tf_.transform.translation.x);
-        ROS_DEBUG_STREAM("transform y: " << tf_.transform.translation.y);
 
         geometry_msgs::Pose front_bumper_pose = shift_to_frontbumper(msg->pose, bumper_transform);
 

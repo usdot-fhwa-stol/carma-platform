@@ -199,7 +199,7 @@ namespace route {
             auto destination_points_in_map_with_vehicle = destination_points_in_map_;
             
             geometry_msgs::Pose bumper_pose = shift_to_frontbumper(vehicle_pose_->pose, frontbumper_transform_);
-            lanelet::BasicPoint2d vehicle_position(bumper_pose.position.x, bumper_pose.position.y);
+            lanelet::BasicPoint2d vehicle_position(frontbumper_transform_.getOrigin().getX(), frontbumper_transform_.getOrigin().getY());
             destination_points_in_map_with_vehicle.insert(destination_points_in_map_with_vehicle.begin(), vehicle_position);
 
             int idx = 0;
@@ -476,7 +476,7 @@ namespace route {
         tf2_buffer_.setUsingDedicatedThread(true);
         try
         {
-            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(0.10)); //save to local copy of transform 20 sec timeout
             tf2::fromMsg(tf_, frontbumper_transform_);
         }
         catch (const tf2::TransformException &ex)
@@ -489,8 +489,8 @@ namespace route {
         geometry_msgs::Pose bumper_pose;    
         
         auto pose_point_vec = tf2::Vector3(pose.position.x, pose.position.y, pose.position.z);
-        tf2::Vector3 front_bumper_point_vec1 = transform* pose_point_vec;
-        tf2::Vector3 front_bumper_point_vec = transform.inverse() * front_bumper_point_vec1;
+        // tf2::Vector3 front_bumper_point_vec1 = transform* pose_point_vec;
+        // tf2::Vector3 front_bumper_point_vec = transform.inverse() * front_bumper_point_vec1;
         bumper_pose.position.x = transform.getOrigin().getX();//front_bumper_point_vec.x();
         ROS_DEBUG_STREAM("pose.position.x: " << pose.position.x);
         ROS_DEBUG_STREAM("bumper_pose.position.x: " << bumper_pose.position.x);
@@ -505,6 +505,7 @@ namespace route {
     void RouteGeneratorWorker::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
         vehicle_pose_ = *msg; 
+        lookupFrontBumperTransform();
          
         geometry_msgs::Pose bumper_pose = shift_to_frontbumper(vehicle_pose_->pose, frontbumper_transform_);
 
@@ -709,8 +710,8 @@ namespace route {
     {
        lanelet::BasicPoint2d position;
 
-        position.x()= msg->pose.position.x;
-        position.y()= msg->pose.position.y;
+        position.x()= frontbumper_transform_.getOrigin().getX();//msg->pose.position.x;
+        position.y()= frontbumper_transform_.getOrigin().getY();//msg->pose.position.y;
 
         if(boost::geometry::within(position, current.polygon2d())) //If vehicle is inside current_lanelet, there is no crosstrack error
         {

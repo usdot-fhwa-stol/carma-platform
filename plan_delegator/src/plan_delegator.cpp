@@ -256,8 +256,6 @@ namespace plan_delegator
             geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("vehicle_front", "base_link", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
             // tf2::Stamped<tf2::Transform> bumper_transform;
             tf2::fromMsg(tf, back_axle_transform_);
-            ROS_DEBUG_STREAM("transform x: " << tf.transform.translation.x);
-            ROS_DEBUG_STREAM("transform y: " << tf.transform.translation.y);
             
         }
         catch (const tf2::TransformException &ex)

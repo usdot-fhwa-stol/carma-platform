@@ -180,14 +180,13 @@ namespace arbitrator
     void Arbitrator::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg) 
     {
         vehicle_state_.stamp = msg->header.stamp;
+        lookupFrontBumperTransform();   
         
         
         // convert to front bumper
         tf2::Stamped<tf2::Transform> bumper_transform;
         tf2::fromMsg(tf_, bumper_transform);
-        
-        ROS_DEBUG_STREAM("transform x: " << tf_.transform.translation.x);
-        ROS_DEBUG_STREAM("transform y: " << tf_.transform.translation.y);
+
 
         geometry_msgs::Pose front_bumper_pose = shift_to_frontbumper(msg->pose, bumper_transform);
 
@@ -223,7 +222,7 @@ namespace arbitrator
         tf2_buffer_.setUsingDedicatedThread(true);
         try
         {
-            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(1.0)); //save to local copy of transform 20 sec timeout
         }
         catch (const tf2::TransformException &ex)
         {
