@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2020-2021 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,6 +44,7 @@ using namespace lanelet::units::literals;
 
 /*! \brief This class manages and keeps track of all signalized intersections in the map.
            All of the SPAT and MAP standard's lane ids to lanelet id mapping is recorded here.
+           NOTE: This class functions do not update the map given.
  */
 class SignalizedIntersectionManager
 {
@@ -52,8 +53,9 @@ public:
 
   /*! 
   *  \brief Create relevant signalized intersection and carma traffic signals based on the MAP.msg and the lanelet_map
-  *  \param intersections to return
-  *  \param traffic_signals to return
+            NOTE: The function does not update the map with new elements
+  *  \param[out] intersections to return
+  *  \param[out] traffic_signals to return
   *  \param map_msg MAP.msg that consists all static data portion of the intersection
   *  \param map lanelet_map to check 
   */
@@ -62,8 +64,8 @@ public:
   /*! 
   *  \brief Returns mapping of MAP lane id to lanelet id for the given map and intersection.msg in the MAP.msg.
             This function also records signal_group_id_to its own lanelet id, and also signal group to entry and exit lanelets id mappings
-  *  \param entry lane id to lanelet id mappings to return
-  *  \param exit  lane id to lanelet id mappings to return
+  *  \param[out] entry lane id to lanelet id mappings to return
+  *  \param[out] exit  lane id to lanelet id mappings to return
   *  \param intersection MAP.msg that consists all static data portion of the intersection
   *  \param map lanelet_map to check 
   *  \throw invalid_argument if given coordinates in the msg doesn't exist in the map
