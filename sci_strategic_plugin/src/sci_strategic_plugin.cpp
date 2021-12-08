@@ -633,8 +633,8 @@ cav_msgs::MobilityOperation SCIStrategicPlugin::generateMobilityOperation()
     double vehicle_deceleration_limit_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
 
     std::string intersection_turn_direction = "straight";
-    if (intersection_turn_direction_ = TurnDirection::Right) intersection_turn_direction = "right";
-    if (intersection_turn_direction_ = TurnDirection::Left) intersection_turn_direction = "left";
+    if (intersection_turn_direction_ == TurnDirection::Right) intersection_turn_direction = "right";
+    if (intersection_turn_direction_ == TurnDirection::Left) intersection_turn_direction = "left";
 
 
     mo_.strategy_params = "access: " +  std::to_string(is_allowed_int_) + ", max_accel: " + std::to_string(vehicle_acceleration_limit_) + 
