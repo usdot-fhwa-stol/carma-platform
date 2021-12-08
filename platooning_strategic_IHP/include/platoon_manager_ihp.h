@@ -93,13 +93,13 @@ namespace platoon_strategic_ihp
     {
         // Static ID is permanent ID for each vehicle
         std::string staticId;
-        // Vehicle real time command speed in m/s
+        // Vehicle real time command speed in m/s.
         double commandSpeed;
-        // Actual vehicle speed in m/s
+        // Actual vehicle speed in m/s.
         double vehicleSpeed;
-        // Vehicle current down track distance on the current route in m
+        // Vehicle current down track distance on the current route in m.
         double vehiclePosition;
-        // The local time stamp when the host vehicle update any informations of this member
+        // The local time stamp when the host vehicle update any informations of this member.
         long   timestamp;
         PlatoonMember(): staticId(""), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), timestamp(0) {} 
         PlatoonMember(std::string staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
@@ -149,13 +149,15 @@ namespace platoon_strategic_ihp
         void updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double curSpeed);
         
         /**
-        * \brief Returns total size of the platoon.
+        * \brief Returns total size of the platoon , in number of vehicles.
         */
         int getTotalPlatooningSize();
 
 
         /**
         * \brief Returns dynamic leader of the host vehicle.
+        * 
+        * \return The current dynamic leader as a vehcile object. 
         */
         PlatoonMember getDynamicLeader();
 
@@ -189,47 +191,47 @@ namespace platoon_strategic_ihp
         void changeFromLeaderToFollower(std::string newPlatoonId);
         
         /**
-        * \brief Get number of vehicles in front of host vehicle in platoon
+        * \brief Get number of vehicles in front of host vehicle inside platoon
         */
         int getNumberOfVehicleInFront();
         
         /**
-        * \brief Returns Length of the platoon
+        * \brief Returns overall length of the platoon. in m.
         */
         double getCurrentPlatoonLength();
 
         /**
-        * \brief Returns downtrack distance of the rear vehicle in platoon
+        * \brief Returns downtrack distance of the rear vehicle in platoon, in m.
         */
         double getPlatoonRearDowntrackDistance();
         
         /**
-        * \brief Returns distance (m) to the predessecor vehicle
+        * \brief Returns distance to the predessecor vehicle, in m.
         */
         double getDistanceToPredVehicle();
         
         /**
-        * \brief Returns current speed
+        * \brief Returns current speed, in m/s.
         */
         double getCurrentSpeed() const;
         
         /**
-        * \brief Returns command speed
+        * \brief Returns command speed. in m/s.
         */
         double getCommandSpeed();
 
         /**
-        * \brief Returns current downtrack distance
+        * \brief Returns current downtrack distance, in m.
         */
         double getCurrentDowntrackDistance() const;
 
         /**
-        * \brief Returns current host static ID 
+        * \brief Returns current host static ID as a string.
         */
         std::string getHostStaticID() const;
 
         /**
-         * \brief UCLA: Return the platoon leader downtrack distance in m.
+         * \brief UCLA: Return the platoon leader downtrack distance, in m.
          */
         double getPlatoonFrontDowntrackDistance();
 
@@ -276,36 +278,20 @@ namespace platoon_strategic_ihp
         std::string JOIN_FROM_FRONT_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
         std::string  MOBILITY_STRATEGY = "Carma/Platooning";
 
-        double minGap_ = 22.0; // m
-        double maxGap_ = 32.0; // m
+        double minGap_ = 22.0;                                  // m
+        double maxGap_ = 32.0;                                  // m
         std::string previousFunctionalDynamicLeaderID_ = "";
         int previousFunctionalDynamicLeaderIndex_ = -1;
 
-        // Thresholds to determine violation.
-        // double maxAllowableHeadaway_ = 4.0; // s
-        // double minAllowableHeadaway_ = 1.6; // s
+        // note: APF related parameters are moved to config.h.
 
-        // Thresholds to determine gap stable (i.e., Determines whether to switch dynamic leader for APF).
-        // double headawayStableUpperBond_ = 3.9; // s
-        // double headawayStableLowerBond_ = 1.7 ; // s
+        double vehicleLength_ = 5.0;                            // the length of the vehicle, in m.
+        double gapWithPred_ = 0.0;                              // time headway with predecessor, in s.
+        double downtrack_progress_ = 0;                         // current downtrack distance, in m.
 
-        double vehicleLength_ = 5.0;  // m
-        double gapWithPred_ = 0.0; // time headway with predecessor, in s.
-        double downtrack_progress_ = 0; // m
+        // Note: Parameters for IHP platoon trajectory regulation are moved to config.h. 
 
-        // ---------------------- UCLA: parameters for IHP platoon trajectory regulation ----------------
-        /**
-        * \brief Parameter sets for IHP platoon trajectory regulation algorithm. 
-        * Please refer to the updated design doc for detailed parameter description.
-        */
-        // double ss_theta = 4.0; // Stanstill determining threshold, in m/s.
-        // double standstill = 2.0; // Stanstill reaction time adjuster, in s.
-        // double inter_tau = 1.5; // Inter-platoon time gap, in s.
-        // double intra_tau = 0.6; // Intra-platoon time gao, in s.
-        // double gap_weight = 0.9; // Weighted ratio for time-gap based calculation, unitless.
-        //--------------------------------------------------------------------------------
-
-        std::string algorithmType_ = "APF_ALGORITHM";
+        std::string algorithmType_ = "APF_ALGORITHM";           // a string that defines the current algorithm to determine the dynamic leader.
 
         /**
         * \brief Check the gap with the predecessor vehicle. 
@@ -322,7 +308,7 @@ namespace platoon_strategic_ihp
         * \param downtrackDistance: a vector containing the downtrack distances of all members.
         * \param speed: a vector containing the speeds of all members.
         * 
-        * \return A vector containing the time headaway of all platoon members.
+        * \return A vector containing the time headaway of all platoon members, each headway is in s.
         */
         std::vector<double> calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed) const;
 
