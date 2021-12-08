@@ -35,6 +35,7 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <autoware_msgs/ControlCommandStamped.h>
+#include "platoon_config_ihp.h"
 
 
 
@@ -264,6 +265,9 @@ namespace platoon_strategic_ihp
     
     private:
 
+        // local copy of configuration file
+        PlatoonPluginConfig config_;
+
         std::string targetPlatoonId;
         std::string OPERATION_INFO_TYPE = "INFO";
         std::string OPERATION_STATUS_TYPE = "STATUS";
@@ -278,12 +282,12 @@ namespace platoon_strategic_ihp
         int previousFunctionalDynamicLeaderIndex_ = -1;
 
         // Thresholds to determine violation.
-        double maxAllowableHeadaway_ = 4.0; // s
-        double minAllowableHeadaway_ = 1.6; // s
+        // double maxAllowableHeadaway_ = 4.0; // s
+        // double minAllowableHeadaway_ = 1.6; // s
 
         // Thresholds to determine gap stable (i.e., Determines whether to switch dynamic leader for APF).
-        double headawayStableUpperBond_ = 3.9; // s
-        double headawayStableLowerBond_ = 1.7 ; // s
+        // double headawayStableUpperBond_ = 3.9; // s
+        // double headawayStableLowerBond_ = 1.7 ; // s
 
         double vehicleLength_ = 5.0;  // m
         double gapWithPred_ = 0.0; // time headway with predecessor, in s.
@@ -294,11 +298,11 @@ namespace platoon_strategic_ihp
         * \brief Parameter sets for IHP platoon trajectory regulation algorithm. 
         * Please refer to the updated design doc for detailed parameter description.
         */
-        double ss_theta = 4.0; // Stanstill determining threshold, in m/s.
-        double standstill = 2.0; // Stanstill reaction time adjuster, in s.
-        double inter_tau = 1.5; // Inter-platoon time gap, in s.
-        double intra_tau = 0.6; // Intra-platoon time gao, in s.
-        double gap_weight = 0.9; // Weighted ratio for time-gap based calculation, unitless.
+        // double ss_theta = 4.0; // Stanstill determining threshold, in m/s.
+        // double standstill = 2.0; // Stanstill reaction time adjuster, in s.
+        // double inter_tau = 1.5; // Inter-platoon time gap, in s.
+        // double intra_tau = 0.6; // Intra-platoon time gao, in s.
+        // double gap_weight = 0.9; // Weighted ratio for time-gap based calculation, unitless.
         //--------------------------------------------------------------------------------
 
         std::string algorithmType_ = "APF_ALGORITHM";

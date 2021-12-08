@@ -248,7 +248,7 @@ namespace platoon_strategic_ihp
             std::shared_ptr<carma_wm::WMListener> wml_;
             carma_wm::WorldModelConstPtr wm_;
 
-            // local copy of pose
+            // local copy of configuration file
             PlatoonPluginConfig config_;
 
             // local copy of pose

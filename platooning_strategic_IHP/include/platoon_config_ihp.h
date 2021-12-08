@@ -44,15 +44,29 @@ struct PlatoonPluginConfig
   double cmdSpeedMaxAdjustment = 10.0; // m/s
     
   // following parameters are mainly for APF leader selection
-  double lowerBoundary         = 1.6;  // s
-  double upperBoundary         = 1.7;  // s
-  double maxSpacing            = 4.0;  // s
-  double minSpacing            = 3.9;  // s
-  double minGap                = 22.0; // m
-  double maxGap                = 32.0; // m
-  double maxCrosstrackError    = 2.0;  // m
+  // UCLA: Rename the next four variables for better explainability.
+  double minAllowableHeadaway    = 1.6;  // s
+  double headawayStableLowerBond = 1.7;  // s
+  double maxAllowableHeadaway    = 4.0;  // s
+  double headawayStableUpperBond = 3.9;  // s
+  
+  double minGap                  = 22.0; // m
+  double maxGap                  = 32.0; // m
+  double maxCrosstrackError      = 2.0;  // m
 
   std::string vehicleID       = "default_id";
+
+  // ---------------------- UCLA: parameters for IHP platoon trajectory regulation ----------------
+  /**
+  * \brief Parameter sets for IHP platoon trajectory regulation algorithm. 
+  * Please refer to the updated design doc for detailed parameter description.
+  */
+  double ss_theta = 4.0; // Stanstill determining threshold, in m/s.
+  double standstill = 2.0; // Stanstill reaction time adjuster, in s.
+  double inter_tau = 1.5; // Inter-platoon time gap, refer to bumper to bumper gap time, in s.
+  double intra_tau = 0.6; // Intra-platoon time gao, refer to bumper to bumper gap time, in s.
+  double gap_weight = 0.9; // Weighted ratio for time-gap based calculation, unitless.
+  //------------------------------------------------------------------------------------------------
 
 
   friend std::ostream& operator<<(std::ostream& output, const PlatoonPluginConfig& c)
@@ -68,11 +82,11 @@ struct PlatoonPluginConfig
           << "desiredJoinTimeGap: " << c.desiredJoinTimeGap << std::endl
           << "desiredJoinGap: " << c.desiredJoinGap << std::endl
           << "waitingStateTimeout: " << c.waitingStateTimeout << std::endl
-          << "cmdSpeedMaxAdjustment: " << c.cmdSpeedMaxAdjustment << std::endl
-          << "lowerBoundary: " << c.lowerBoundary << std::endl
-          << "upperBoundary: " << c.upperBoundary << std::endl
-          << "maxSpacing: " << c.maxSpacing << std::endl
-          << "minSpacing: " << c.minSpacing << std::endl
+          << "cmdSpeedMaxAdjustment: " << c.cmdSpeedMaxAdjustment << std::endl 
+          << "minAllowableHeadaway: " << c.minAllowableHeadaway << std::endl
+          << "maxAllowableHeadaway: " << c.maxAllowableHeadaway << std::endl
+          << "headawayStableLowerBond: " << c.headawayStableLowerBond << std::endl
+          << "headawayStableUpperBond: " << c.headawayStableUpperBond << std::endl
           << "kpminGapPID: " << c.minGap << std::endl
           << "maxGap: " << c.maxGap << std::endl
           << "maxCrosstrackError: " << c.maxCrosstrackError << std::endl
