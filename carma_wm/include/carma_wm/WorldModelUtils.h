@@ -30,6 +30,10 @@
 #include <boost/geometry/geometries/polygon.hpp>
 #include <ros/ros.h>
 #include <carma_wm/Geometry.h>
+#include <unordered_set>
+#include <unordered_map>
+#include <lanelet2_routing/RoutingGraph.h>
+
 
 namespace carma_wm
 {
@@ -102,6 +106,21 @@ std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::Lanel
  */
 std::vector<lanelet::Lanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& input_point,
                                                           const unsigned int n = 10);
+
+
+/*!
+  * \brief Gets the affected lanelet or areas based on the points in the given map's frame
+  * \param geofence_msg lanelet::Points3d in local frame
+  * \param semantic_map Lanelet Map Ptr
+  * NOTE:Currently this function only checks lanelets and will be expanded 
+  * //TODO
+  * to areas in the future.
+  */
+lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& gf_pts, const lanelet::LaneletMapPtr& lanelet_map, const lanelet::routing::RoutingGraphUPtr& routing_graph, double max_lane_width);
+
+// TODO
+std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets,
+                                                              const lanelet::LaneletMapPtr& lanelet_map, const lanelet::routing::RoutingGraphUPtr& routing_graph);
 
 } // namespace query
 

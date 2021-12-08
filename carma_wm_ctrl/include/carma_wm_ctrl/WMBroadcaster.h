@@ -160,14 +160,6 @@ public:
    * \return lanelet::Points3d in local frame
    */
   lanelet::Points3d getPointsInLocalFrame(const cav_msgs::TrafficControlMessageV01& geofence_msg);
-  
-  /*!
-   * \brief Gets the affected lanelet or areas based on the points in local frame
-   * \param geofence_msg lanelet::Points3d in local frame
-   * NOTE:Currently this function only checks lanelets and will be expanded 
-   * to areas in the future.
-   */
-  lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& gf_pts);
 
   /*!
    * \brief Sets the max lane width in meters. Geofence points are associated to a lanelet if they are 
@@ -403,7 +395,7 @@ private:
   lanelet::LineString3d createLinearInterpolatingLinestring(const lanelet::Point3d& front_pt, const lanelet::Point3d& back_pt, double increment_distance = 0.25);
   lanelet::Lanelet  createLinearInterpolatingLanelet(const lanelet::Point3d& left_front_pt, const lanelet::Point3d& right_front_pt, 
                                                       const lanelet::Point3d& left_back_pt, const lanelet::Point3d& right_back_pt, double increment_distance = 0.25);
-  std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets);
+  //std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets);
   
   lanelet::LaneletMapPtr base_map_;
   lanelet::LaneletMapPtr current_map_;
