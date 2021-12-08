@@ -111,14 +111,23 @@ std::vector<lanelet::Lanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMap
 /*!
   * \brief Gets the affected lanelet or areas based on the points in the given map's frame
   * \param geofence_msg lanelet::Points3d in local frame
-  * \param semantic_map Lanelet Map Ptr
-  * NOTE:Currently this function only checks lanelets and will be expanded 
-  * //TODO
-  * to areas in the future.
+  * \param lanelet_map Lanelet Map Ptr
+  * \param routing_graph Routing graph of the lanelet map
+  * \param max_lane_width max lane width of the lanes in the map
+  * 
+  * NOTE:Currently this function only checks lanelets and will be expanded to areas in the future.
   */
 lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& gf_pts, const lanelet::LaneletMapPtr& lanelet_map, std::shared_ptr<const lanelet::routing::RoutingGraph> routing_graph, double max_lane_width);
 
-// TODO
+/*!
+  * \brief A function that filters successor lanelets of root_lanelets from possible_lanelets
+  * \param possible_lanelets all possible lanelets to check
+  * \param root_lanelets lanelets to filter from
+  * \param lanelet_map Lanelet Map Ptr
+  * \param routing_graph Routing graph of the lanelet map
+  * 
+  * NOTE:Mainly used as a helper function for getAffectedLaneletOrAreas
+  */
 std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets,
                                                               const lanelet::LaneletMapPtr& lanelet_map, std::shared_ptr<const lanelet::routing::RoutingGraph> routing_graph);
 

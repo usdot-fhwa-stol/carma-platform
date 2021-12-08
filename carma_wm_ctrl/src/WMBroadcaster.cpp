@@ -1264,32 +1264,6 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const lane
   return carma_wm::query::getAffectedLaneletOrAreas(gf_pts, current_map_, current_routing_graph_, max_lane_width_);
 }
 
-// helper function that filters successor lanelets of root_lanelets from possible_lanelets
-std::unordered_set<lanelet::Lanelet> WMBroadcaster::filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets)
-{
-  if (!current_routing_graph_) {
-    throw std::invalid_argument("No routing graph available");
-  }
-  
-  std::unordered_set<lanelet::Lanelet> filtered_lanelets;
-  // we utilize routes to filter llts that are overlapping but not connected
-  // as this is the last lanelet 
-  // we have to filter the llts that are only geometrically overlapping yet not connected to prev llts
-  for (auto recorded_llt: root_lanelets)
-  {
-    for (auto following_llt: current_routing_graph_->following(recorded_llt, false))
-    {
-      auto mutable_llt = current_map_->laneletLayer.get(following_llt.id());
-      auto it = possible_lanelets.find(mutable_llt);
-      if (it != possible_lanelets.end())
-      {
-        filtered_lanelets.insert(mutable_llt);
-      }
-    }
-  }
-  return filtered_lanelets;
-}
-
 /*!
   * \brief This is a helper function that returns true if the provided regem is marked to be changed by the geofence as there are
   *  usually multiple passing control lines are in the lanelet.

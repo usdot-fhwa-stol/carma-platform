@@ -284,8 +284,8 @@ namespace carma_wm
     {
       ROS_DEBUG_STREAM("Creating signal for: " << (int)sig_grp_pair.first);
       // ignore the traffic signals already inside
-      // this check might not be valid as bracket access may be returning 0: TODO
-      if (map->regulatoryElementLayer.exists(signal_group_to_traffic_light_id_[sig_grp_pair.first]))
+      if (signal_group_to_traffic_light_id_.find(sig_grp_pair.first) != signal_group_to_entry_lanelet_ids_.end() &&
+           map->regulatoryElementLayer.exists(signal_group_to_traffic_light_id_[sig_grp_pair.first]))
       {
         continue;
       }
