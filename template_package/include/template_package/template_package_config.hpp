@@ -22,23 +22,23 @@
 namespace <SUB><package_name>
 {
 
-    /**
-     * \brief Stuct containing the algorithm configuration values for <SUB><package_name>
-     */
-    struct Config
-    {
-        //! Example parameter 
-        std::string example_param = "My example param";
+  /**
+   * \brief Stuct containing the algorithm configuration values for <SUB><package_name>
+   */
+  struct Config
+  {
+    //! Example parameter
+    std::string example_param = "My example param";
 
-        // Stream operator for this config
-        // TODO for USER: Update prints for the added parameters
-        friend std::ostream &operator<<(std::ostream &output, const Config &c)
-        {
-            output << "<SUB><package_name>::Config { " << std::endl
-                   << "example_param: " << c.example_param << std::endl
-                   << "}" << std::endl;
-            return output;
-        }
-    };
+    // Stream operator for this config
+    // TODO for USER: Update prints for the added parameters
+    friend std::ostream &operator<<(std::ostream &output, const Config &c)
+    {
+      output << "<SUB><package_name>::Config { " << std::endl
+           << "example_param: " << c.example_param << std::endl
+           << "}" << std::endl;
+      return output;
+    }
+  };
 
 } // <SUB><package_name>

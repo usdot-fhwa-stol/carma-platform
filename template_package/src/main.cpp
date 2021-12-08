@@ -15,7 +15,7 @@
  */
 
 #include <rclcpp/rclcpp.hpp>
-#include "<SUB><package_name>/<SUB><package_name>_node.h"
+#include "<SUB><package_name>/<SUB><package_name>_node.hpp"
 
 int main(int argc, char **argv) 
 {

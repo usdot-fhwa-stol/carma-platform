@@ -28,11 +28,6 @@ This file is can be used to launch the CARMA <SUB><package_name>_node.
 '''
 
 def generate_launch_description():
-    # Import log level substitution
-    # Must be done at top of generate_launch_description
-    import sys
-    sys.path.append(os.path.abspath(get_package_share_directory('carma') + '/launch'))
-    from get_log_level import GetLogLevel
 
     # Declare the log_level launch argument
     log_level = LaunchConfiguration('log_level')
@@ -49,7 +44,7 @@ def generate_launch_description():
         package='carma_ros2_utils',
         name='<SUB><package_name>_container',
         namespace='/',
-        executable='component_container_mt',
+        executable='carma_component_container_mt',
         composable_node_descriptions=[
             
             # Launch the core node(s)
@@ -60,7 +55,7 @@ def generate_launch_description():
                     namespace="/",
                     extra_arguments=[
                         {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('<SUB><package_name>', log_level) }
+                        {'--log-level' : log_level }
                     ],
                     parameters=[ param_file_path ]
             ),
