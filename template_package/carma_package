@@ -2,6 +2,11 @@
 
 set -e
 
+# This script is used to build a package for the CARMA platform.
+# The script will create a new folder in the parent folder with the name of the package.
+# After calling the script the new package should be immeadiatly buildable
+# Usage: ./carma_package <this template_package path> <package name> <path to new package parent folder>
+
 if [[ -z $BASH_VERSION  ]]; then
     echo "Bash version could not be checked. Please run this script using bash"
     exit 2
@@ -47,6 +52,7 @@ fi
 
 target_path=$(realpath ${package_parent_path}/${package_name})
 
+# Copy the template_package to the new package
 cp -r ${template_package_path} ${target_path}
 
 cd ${target_path}
@@ -58,9 +64,11 @@ if [[ $PWD != $(realpath ${target_path}) ]]; then
     exit 2
 fi
 
+# Perform substitutions
 find . -type f -exec sed -i "s/<SUB><package_name>/${package_name}/g" {} \;
 find . -type f -exec sed -i "s/<SUB><year>/${current_year}/g" {} \;
 
+# Update file names for new package
 shopt -s globstar
 for f in ./**; do
 
@@ -79,6 +87,7 @@ for f in ./**; do
     fi
 done
 
+# Remove unused files
 for d in ./**; do
 
     if [[ -f $d ]]; then
@@ -97,5 +106,6 @@ rm README.md
 rm carma_package
 mv ${package_name}_README.md README.md
 
+# Notify user of success
 echo "${package_name} created at ${target_path}"
 
