@@ -57,7 +57,6 @@ namespace route {
         pnh_->getParam("route_file_path", route_file_location);
         rg_worker_.set_route_file_path(route_file_location);
         rg_worker_.set_publishers(route_event_pub_, route_state_pub_, route_pub_,route_marker_pub_);
-        rg_worker_.lookupFrontBumperTransform();
     }
 
     void Route::run()

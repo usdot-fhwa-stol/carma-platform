@@ -144,6 +144,16 @@ namespace plan_delegator
         return time_diff.toSec() >= max_trajectory_duration_;
     }
 
+    void PlanDelegator::updateManeuverDistances(cav_msgs::Maneuver& maneuver)
+    {
+        double original_start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
+        double original_end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
+        double adjusted_start_dist = original_start_dist - length_to_front_bumper_;
+        double adjusted_end_dist = original_end_dist - length_to_front_bumper_;
+        SET_MANEUVER_PROPERTY(maneuver, start_dist, adjusted_start_dist);
+        SET_MANEUVER_PROPERTY(maneuver, end_dist, adjusted_end_dist);
+    }
+
     cav_msgs::TrajectoryPlan PlanDelegator::planTrajectory()
     {
         cav_msgs::TrajectoryPlan latest_trajectory_plan;
@@ -162,7 +172,8 @@ namespace plan_delegator
         // Loop through maneuver list to make service call to applicable Tactical Plugin
         while(current_maneuver_index < latest_maneuver_plan_.maneuvers.size())
         {
-            const auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
+            // const auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
+            auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
 
             // ignore expired maneuvers
             if(isManeuverExpired(maneuver))
@@ -172,6 +183,8 @@ namespace plan_delegator
                 ++current_maneuver_index;
                 continue;
             }
+
+            updateManeuverDistances(maneuver);
             // get corresponding ros service client for plan trajectory
             auto maneuver_planner = GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin);
             auto client = getPlannerClientByName(maneuver_planner);
@@ -237,9 +250,8 @@ namespace plan_delegator
         // Check if planned trajectory is valid before send out
         if(isTrajectoryValid(trajectory_plan))
         {
-            cav_msgs::TrajectoryPlan shifted_trajectory_plan = shift_back_trajectoryplan(trajectory_plan, back_axle_transform_);
-            shifted_trajectory_plan.header.stamp = ros::Time::now();
-            traj_pub_.publish(shifted_trajectory_plan);
+            trajectory_plan.header.stamp = ros::Time::now();
+            traj_pub_.publish(trajectory_plan);
         }
         else
         {
@@ -254,8 +266,8 @@ namespace plan_delegator
         try
         {
             geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("vehicle_front", "base_link", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
-            // tf2::Stamped<tf2::Transform> bumper_transform;
             tf2::fromMsg(tf, back_axle_transform_);
+            length_to_front_bumper_ = tf_.transform.translation.x;
             
         }
         catch (const tf2::TransformException &ex)
@@ -264,31 +276,4 @@ namespace plan_delegator
         }
     }
 
-    cav_msgs::TrajectoryPlan PlanDelegator::shift_back_trajectoryplan(cav_msgs::TrajectoryPlan traj_plan, const tf2::Transform& transform)
-    {
-        
-
-        cav_msgs::TrajectoryPlan shifted_trajectory_plan = traj_plan;
-        for (size_t i=0; i < traj_plan.trajectory_points.size(); i++)
-        {
-            shifted_trajectory_plan.trajectory_points[i] = shift_back_trajectorypoint(traj_plan.trajectory_points[i],transform);
-        }
-        return shifted_trajectory_plan;
-    }
-
-    cav_msgs::TrajectoryPlanPoint PlanDelegator::shift_back_trajectorypoint(cav_msgs::TrajectoryPlanPoint traj_point, const tf2::Transform& transform)
-    {
-        cav_msgs::TrajectoryPlanPoint shifted_point = traj_point;
-
-        auto pose_point_vec = tf2::Vector3(traj_point.x, traj_point.y, 0.0);
-        tf2::Vector3 back_axle_point_vec = transform.inverse() * pose_point_vec;
-        shifted_point.x = back_axle_point_vec.x();
-        ROS_DEBUG_STREAM("traj point x: " << traj_point.x);
-        ROS_DEBUG_STREAM("shifted point x: " << shifted_point.x);
-        shifted_point.y = back_axle_point_vec.y();
-        ROS_DEBUG_STREAM("traj point y: " << traj_point.y);
-        ROS_DEBUG_STREAM("shifted point y: " << shifted_point.y);
-
-        return traj_point;
-    }
 }

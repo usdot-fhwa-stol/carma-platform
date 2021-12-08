@@ -46,6 +46,17 @@
                         ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
                             throw new std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))))
 
+
+#define SET_MANEUVER_PROPERTY(mvr, property, value)\
+        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property = (value) :\
+            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property = (value) :\
+                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property = (value) :\
+                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property = (value) :\
+                        ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property = (value) :\
+                            ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property = (value) :\
+                                throw std::invalid_argument("ADJUST_MANEUVER_PROPERTY (property) called on maneuver with invalid type id " + std::to_string((mvr).type)))))))))
+
+
 namespace plan_delegator
 {
     class PlanDelegator
@@ -97,11 +108,8 @@ namespace plan_delegator
             cav_srvs::PlanTrajectory composePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const;
 
             void lookupFrontBumperTransform();
-
-            cav_msgs::TrajectoryPlanPoint shift_back_trajectorypoint(cav_msgs::TrajectoryPlanPoint traj_point, const tf2::Transform& transform);
-
-            cav_msgs::TrajectoryPlan shift_back_trajectoryplan(cav_msgs::TrajectoryPlan traj_plan, const tf2::Transform& transform);
-    
+            
+            void updateManeuverDistances(cav_msgs::Maneuver& maneuver);
         protected:
         
             // ROS params
@@ -136,6 +144,9 @@ namespace plan_delegator
 
             geometry_msgs::TransformStamped tf_;
             tf2::Stamped<tf2::Transform> back_axle_transform_;
+
+            double length_to_front_bumper_ = 3.0;
+
             // TF listenser
             tf2_ros::Buffer tf2_buffer_;
             std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
