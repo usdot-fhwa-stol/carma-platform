@@ -25,7 +25,13 @@ namespace carma_wm
     target_frame_ = target_frame;
   }
 
-  void SignalizedIntersectionManager::convertLaneToLaneletId(std::unordered_map<uint8_t, lanelet::Id>& entry, std::unordered_map<uint8_t, lanelet::Id>& exit, const cav_msgs::IntersectionGeometry& intersection, const std::shared_ptr<lanelet::LaneletMap>& map)
+  void SignalizedIntersectionManager::setMaxLaneWidth(double max_lane_width)
+  {
+    max_lane_width_ = max_lane_width;
+  }
+
+  void SignalizedIntersectionManager::convertLaneToLaneletId(std::unordered_map<uint8_t, lanelet::Id>& entry, std::unordered_map<uint8_t, lanelet::Id>& exit, const cav_msgs::IntersectionGeometry& intersection, 
+                                                              const std::shared_ptr<lanelet::LaneletMap>& map, std::shared_ptr<const lanelet::routing::RoutingGraph> current_routing_graph) 
   {
     std::unordered_map<uint8_t, std::unordered_set<uint16_t>> signal_group_to_exit_lanes;
     std::unordered_map<uint8_t, std::unordered_set<uint16_t>> signal_group_to_entry_lanes;
@@ -46,11 +52,13 @@ namespace carma_wm
 
     ROS_DEBUG_STREAM("Reference node in map frame x: " << ref_node.x() << ", y: " << ref_node.y());
     
-    std::vector<lanelet::BasicPoint2d> node_list;
+    std::vector<lanelet::Point3d> node_list;
 
     for (auto lane : intersection.lane_list)
     {
-      lanelet::BasicPoint2d curr_node = {ref_node.x(), ref_node.y()};
+      double curr_x = ref_node.x();
+      double curr_y = ref_node.y();
+
       ROS_DEBUG_STREAM("Processing Lane id: " << (int)lane.lane_id);
       
       size_t min_number_of_points = 2; // only two points are sufficient to get corresponding lanelets
@@ -63,11 +71,18 @@ namespace carma_wm
 
       for (size_t i = 0; i < min_number_of_points; i ++ )
       {
-        curr_node.x() = lane.node_list.nodes.node_set_xy[i].delta.x + curr_node.x();
-        curr_node.y() = lane.node_list.nodes.node_set_xy[i].delta.y + curr_node.y();
-        ROS_DEBUG_STREAM("Current node x: " << curr_node.x() << ", y: " << curr_node.y());
+        curr_x = lane.node_list.nodes.node_set_xy[i].delta.x + curr_x;
+        curr_y = lane.node_list.nodes.node_set_xy[i].delta.y + curr_y;
+        lanelet::Point3d curr_node{map->pointLayer.uniqueId(), curr_x, curr_y, 0};
+
+        ROS_DEBUG_STREAM("Current node x: " << curr_x << ", y: " << curr_y);
 
         node_list.push_back(curr_node);
+      }
+      
+      for (auto node : node_list)
+      {
+        ROS_ERROR_STREAM("x: " << node.x() << ", y: " << node.y());
       }
 
       // save which signal group connect to which exit lanes
@@ -80,29 +95,16 @@ namespace carma_wm
       }
       
       // query corresponding lanelet lane from local map
-      auto starting_lanelets = carma_wm::query::getLaneletsFromPoint(map, node_list.front());
-      auto ending_lanelets = carma_wm::query::getLaneletsFromPoint(map, node_list.back());
+      auto affected_llts = carma_wm::query::getAffectedLaneletOrAreas(node_list, map, current_routing_graph, max_lane_width_);
 
-      if (starting_lanelets.empty() && ending_lanelets.empty())
+      if (affected_llts.empty())
       {
         throw std::invalid_argument("Given offset points are not inside the map...");
       }
 
-      lanelet::Id corresponding_lanelet_id = ending_lanelets.front().id(); // by default second point's lanelet as first
-                                                                        // point may fall exactly on boundaries of two llts.
-      for (auto i : ending_lanelets)
-      {
-        for (auto j : starting_lanelets)
-        {
-          if (i.id() == j.id())
-          {
-            corresponding_lanelet_id = i.id();
-            ROS_DEBUG_STREAM("Found existing Lanelet id:" << corresponding_lanelet_id);
-            
-            break;
-          }
-        }
-      }
+      lanelet::Id corresponding_lanelet_id = affected_llts.front().id(); 
+
+      ROS_DEBUG_STREAM("Found existing lanelet id: " << corresponding_lanelet_id);
 
       if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::INGRESS)
       {
@@ -237,7 +239,8 @@ namespace carma_wm
     return traffic_light;
   }
 
-  void SignalizedIntersectionManager::createIntersectionFromMapMsg(std::vector<lanelet::SignalizedIntersectionPtr>& sig_intersections, std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_signals, const cav_msgs::MapData& map_msg, const std::shared_ptr<lanelet::LaneletMap>& map)
+  void SignalizedIntersectionManager::createIntersectionFromMapMsg(std::vector<lanelet::SignalizedIntersectionPtr>& sig_intersections, std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_signals, const cav_msgs::MapData& map_msg, 
+                                                                      const std::shared_ptr<lanelet::LaneletMap>& map, std::shared_ptr<const lanelet::routing::RoutingGraph> routing_graph)
   { 
     
     for (auto const& intersection : map_msg.intersections)
@@ -245,7 +248,7 @@ namespace carma_wm
       std::unordered_map<uint8_t, lanelet::Id> entry;
       std::unordered_map<uint8_t, lanelet::Id> exit;
 
-      convertLaneToLaneletId(entry, exit, intersection, map);
+      convertLaneToLaneletId(entry, exit, intersection, map, routing_graph);
 
       std::vector<lanelet::Lanelet> entry_llts;
       std::vector<lanelet::Lanelet> exit_llts;

@@ -114,7 +114,7 @@ std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::Lanel
 }
 
 
-lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& gf_pts, const lanelet::LaneletMapPtr& lanelet_map, const lanelet::routing::RoutingGraphUPtr& routing_graph, double max_lane_width)
+lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& gf_pts, const lanelet::LaneletMapPtr& lanelet_map, std::shared_ptr<const lanelet::routing::RoutingGraph> routing_graph, double max_lane_width)
 {
   // Logic to detect which part is affected
   ROS_DEBUG_STREAM("Get affected lanelets loop");
@@ -216,6 +216,10 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
 
         if (interior_angle < M_PI_2 && interior_angle >= 0) affected_lanelets.insert(llt); 
       }
+      else
+      {
+        ROS_DEBUG_STREAM("------ Did not record anything...");
+      }
 
     }
   
@@ -243,7 +247,7 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
 
 // helper function that filters successor lanelets of root_lanelets from possible_lanelets
 std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets,
-                                                              const lanelet::LaneletMapPtr& lanelet_map, const lanelet::routing::RoutingGraphUPtr& routing_graph)
+                                                              const lanelet::LaneletMapPtr& lanelet_map, std::shared_ptr<const lanelet::routing::RoutingGraph> routing_graph)
 {
   if (!routing_graph) {
     throw std::invalid_argument("No routing graph available");

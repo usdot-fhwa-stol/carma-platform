@@ -59,7 +59,8 @@ public:
   *  \param map_msg MAP.msg that consists all static data portion of the intersection
   *  \param map lanelet_map to check 
   */
-  void createIntersectionFromMapMsg(std::vector<lanelet::SignalizedIntersectionPtr>& intersections, std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_signals, const cav_msgs::MapData& map_msg, const std::shared_ptr<lanelet::LaneletMap>& map);
+  void createIntersectionFromMapMsg(std::vector<lanelet::SignalizedIntersectionPtr>& intersections, std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_signals, const cav_msgs::MapData& map_msg, 
+                                    const std::shared_ptr<lanelet::LaneletMap>& map, std::shared_ptr<const lanelet::routing::RoutingGraph> routing_graph);
 
   /*! 
   *  \brief Returns mapping of MAP lane id to lanelet id for the given map and intersection.msg in the MAP.msg.
@@ -71,7 +72,14 @@ public:
   *  \throw invalid_argument if given coordinates in the msg doesn't exist in the map
   *         TODO: Need to think about error buffer in the future. Map msgs are made from google maps or open streets maps normally so this function might run into some errors from that.
   */
-  void convertLaneToLaneletId(std::unordered_map<uint8_t, lanelet::Id>& entry, std::unordered_map<uint8_t, lanelet::Id>& exit, const cav_msgs::IntersectionGeometry& intersection, const std::shared_ptr<lanelet::LaneletMap>& map);
+  void convertLaneToLaneletId(std::unordered_map<uint8_t, lanelet::Id>& entry, std::unordered_map<uint8_t, lanelet::Id>& exit, const cav_msgs::IntersectionGeometry& intersection, 
+                              const std::shared_ptr<lanelet::LaneletMap>& map, std::shared_ptr<const lanelet::routing::RoutingGraph> current_routing_graph);
+
+  /*!
+   * \brief STODO: ets the max lane width in meters. Geofence points are associated to a lanelet if they are 
+   *        within this distance to a lanelet as geofence points are guaranteed to apply to a single lane
+   */
+  void setMaxLaneWidth(double max_lane_width);
 
   /*! 
   *  \brief Returns existing signalized intersection with same entry and exit llts if exists.
@@ -125,6 +133,9 @@ private:
 
   // PROJ string of current map
   std::string target_frame_ = "";
+
+  // Max width of lane in meters
+  double max_lane_width_ = 4;
 };
 
 }  // namespace carma_wm

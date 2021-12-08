@@ -206,7 +206,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
   std::vector<std::shared_ptr<lanelet::SignalizedIntersection>> intersections;
   std::vector<std::shared_ptr<lanelet::CarmaTrafficSignal>> traffic_signals;
 
-  sim_.createIntersectionFromMapMsg(intersections, traffic_signals, map_msg, current_map_);
+  sim_.createIntersectionFromMapMsg(intersections, traffic_signals, map_msg, current_map_, current_routing_graph_);
 
   for (auto intersection : intersections)
   {
@@ -245,7 +245,7 @@ void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_
   
   gf_ptr->gf_pts = getPointsInLocalFrame(msg_v01);
 
-  gf_ptr->affected_parts_ = carma_wm::query::getAffectedLaneletOrAreas(gf_ptr->gf_pts, current_map_, current_routing_graph_, max_lane_width_);
+  gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(gf_ptr->gf_pts);
 
   if (gf_ptr->affected_parts_.size() == 0) {
     ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
@@ -999,7 +999,7 @@ ros::V_string WMBroadcaster::combineParticipantsToVehicle(const ros::V_string& i
   return participants;
 }
 
-void WMBroadcaster::mapMsgCallback(const cav_msgs::MapData& map_msg)
+void WMBroadcaster::externalMapMsgCallback(const cav_msgs::MapData& map_msg)
 {
   auto gf_ptr = std::make_shared<Geofence>();
 
@@ -1148,6 +1148,7 @@ void WMBroadcaster::geoReferenceCallback(const std_msgs::String& geo_ref)
 void WMBroadcaster::setMaxLaneWidth(double max_lane_width)
 {
   max_lane_width_ = max_lane_width;
+  sim_.setMaxLaneWidth(max_lane_width_);
 }
 
 void WMBroadcaster::setConfigSpeedLimit(double cL)
@@ -1256,6 +1257,37 @@ lanelet::Points3d WMBroadcaster::getPointsInLocalFrame(const cav_msgs::TrafficCo
   
   // save the points converted to local map frame
   return gf_pts;
+}
+
+lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const lanelet::Points3d& gf_pts)
+{
+  return carma_wm::query::getAffectedLaneletOrAreas(gf_pts, current_map_, current_routing_graph_, max_lane_width_);
+}
+
+// helper function that filters successor lanelets of root_lanelets from possible_lanelets
+std::unordered_set<lanelet::Lanelet> WMBroadcaster::filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets)
+{
+  if (!current_routing_graph_) {
+    throw std::invalid_argument("No routing graph available");
+  }
+  
+  std::unordered_set<lanelet::Lanelet> filtered_lanelets;
+  // we utilize routes to filter llts that are overlapping but not connected
+  // as this is the last lanelet 
+  // we have to filter the llts that are only geometrically overlapping yet not connected to prev llts
+  for (auto recorded_llt: root_lanelets)
+  {
+    for (auto following_llt: current_routing_graph_->following(recorded_llt, false))
+    {
+      auto mutable_llt = current_map_->laneletLayer.get(following_llt.id());
+      auto it = possible_lanelets.find(mutable_llt);
+      if (it != possible_lanelets.end())
+      {
+        filtered_lanelets.insert(mutable_llt);
+      }
+    }
+  }
+  return filtered_lanelets;
 }
 
 /*!
