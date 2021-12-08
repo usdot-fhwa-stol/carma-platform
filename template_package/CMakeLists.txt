@@ -52,6 +52,20 @@ target_link_libraries(${node_exec}
         ${node_lib}
 )
 
+# Testing
+if(BUILD_TESTING)  
+
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+
+  ament_add_gtest(test_<SUB><package_name> test/node_test.cpp)
+
+  ament_target_dependencies(test_<SUB><package_name> ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+
+  target_link_libraries(test_<SUB><package_name> ${node_lib})
+
+endif()
+
 # Install
 ament_auto_package(
         INSTALL_TO_SHARE config launch
