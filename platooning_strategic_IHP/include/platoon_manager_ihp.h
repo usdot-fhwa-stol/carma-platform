@@ -35,7 +35,6 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <autoware_msgs/ControlCommandStamped.h>
-#include "platoon_config_ihp.h"
 
 
 
@@ -71,19 +70,26 @@ namespace platoon_strategic_ihp
     };
 
     /**
-    * \brief Platoon States. UCLA: Added two additional states 
+    * \brief Platoon States. UCLA: Added additional states 
     * (i.e., LEADERABORTING and CANDIDATELEADER) for same-lane front join.
+    * (i.e., LEADWITHOPERATION and PREPARETOJOIN) for cut-in front join.
     *  
     */
     enum PlatoonState
     {
-        STANDBY,
-        LEADERWAITING,
-        LEADER,
-        CANDIDATEFOLLOWER,
-        FOLLOWER,
-        LEADERABORTING,
-        CANDIDATELEADER
+        STANDBY,                    // 0;
+        LEADERWAITING,              // 1;
+        LEADER,                     // 2;
+        CANDIDATEFOLLOWER,          // 3;
+        FOLLOWER,                   // 4;
+        //UCLA: FRONTAL JOIN STATE
+        LEADERABORTING,             // 5;
+        //UCLA: FRONTAL JOIN STATE
+        CANDIDATELEADER,            // 6;
+        //UCLA: CUT-IN JOIN STATE
+        LEADWITHOPERATION,          // 7;
+        //UCLA: CUT-IN JOIN STATE
+        PREPARETOJOIN               // 8;
     };
 
     /**
@@ -93,6 +99,8 @@ namespace platoon_strategic_ihp
     {
         // Static ID is permanent ID for each vehicle
         std::string staticId;
+        // Current BSM Id for each CAV
+        std::string bsmId;
         // Vehicle real time command speed in m/s
         double commandSpeed;
         // Actual vehicle speed in m/s
@@ -131,6 +139,7 @@ namespace platoon_strategic_ihp
         * 
         * \param senderId static id of the broadcasting vehicle
         * \param platoonId platoon id
+        * \param senderBsmId bsm id of the broadcasting vehicle
         * \param params strategy parameters
         * \param Dtd downtrack distance
         */
@@ -158,6 +167,7 @@ namespace platoon_strategic_ihp
         * \brief Returns dynamic leader of the host vehicle.
         */
         PlatoonMember getDynamicLeader();
+
 
         /**
          * \brief This is the implementation of all predecessor following (APF) algorithm for leader
@@ -243,6 +253,18 @@ namespace platoon_strategic_ihp
         */
         double getIHPDesPosFollower(double dt);
 
+        /**
+        \brief UCLA: Return joiner's desired position
+        to cut into the platoon 
+        */
+        int getClosestIndex(double joinerDtD);
+
+        /**
+        \brief UCLA: Return the desired gap size
+        for cut-in join 
+        */
+        double getCutInGap(int gap_leading_index, double joinerDtD);
+
         // Member variables
         int platoonSize = 2;
         std::string leaderID = "default_leader_id";
@@ -262,11 +284,13 @@ namespace platoon_strategic_ihp
 
         // host vehicle's static ID 
         std::string HostMobilityId = "default_host_id";
-    
-    private:
 
-        // local copy of configuration file
-        PlatoonPluginConfig config_;
+        // UCLA: add indicator of creating gap
+        bool isCreateGap = false;
+        // UCLA: add indicator of lane change 
+        bool safeToLaneChange = false;
+        
+    private:
 
         std::string targetPlatoonId;
         std::string OPERATION_INFO_TYPE = "INFO";
@@ -282,12 +306,12 @@ namespace platoon_strategic_ihp
         int previousFunctionalDynamicLeaderIndex_ = -1;
 
         // Thresholds to determine violation.
-        // double maxAllowableHeadaway_ = 4.0; // s
-        // double minAllowableHeadaway_ = 1.6; // s
+        double maxAllowableHeadaway_ = 4.0; // s
+        double minAllowableHeadaway_ = 1.6; // s
 
         // Thresholds to determine gap stable (i.e., Determines whether to switch dynamic leader for APF).
-        // double headawayStableUpperBond_ = 3.9; // s
-        // double headawayStableLowerBond_ = 1.7 ; // s
+        double headawayStableUpperBond_ = 3.9; // s
+        double headawayStableLowerBond_ = 1.7 ; // s
 
         double vehicleLength_ = 5.0;  // m
         double gapWithPred_ = 0.0; // time headway with predecessor, in s.
@@ -298,11 +322,11 @@ namespace platoon_strategic_ihp
         * \brief Parameter sets for IHP platoon trajectory regulation algorithm. 
         * Please refer to the updated design doc for detailed parameter description.
         */
-        // double ss_theta = 4.0; // Stanstill determining threshold, in m/s.
-        // double standstill = 2.0; // Stanstill reaction time adjuster, in s.
-        // double inter_tau = 1.5; // Inter-platoon time gap, in s.
-        // double intra_tau = 0.6; // Intra-platoon time gao, in s.
-        // double gap_weight = 0.9; // Weighted ratio for time-gap based calculation, unitless.
+        double ss_theta = 4.0; // Stanstill determining threshold, in m/s.
+        double standstill = 2.0; // Stanstill reaction time adjuster, in s.
+        double inter_tau = 1.5; // Inter-platoon time gap, in s.
+        double intra_tau = 0.6; // Intra-platoon time gao, in s.
+        double gap_weight = 0.9; // Weighted ratio for time-gap based calculation, unitless.
         //--------------------------------------------------------------------------------
 
         std::string algorithmType_ = "APF_ALGORITHM";
@@ -315,7 +339,7 @@ namespace platoon_strategic_ihp
         * \return (bool) if the predecessor is to close.
         */
         bool insufficientGapWithPredecessor(double distanceToPredVehicle);
-        
+                
         /**
         * \brief Calculate the time headaway of each platoon member and save as a vector.
         * 
@@ -325,7 +349,7 @@ namespace platoon_strategic_ihp
         * \return A vector containing the time headaway of all platoon members.
         */
         std::vector<double> calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed) const;
-
+        
         /**
         * \brief Determine the proper vehicle to follow based the time headway of each member. 
         * Note that the host will always choose the closest violator (i.e. time headaway too small or too large) to follow.
@@ -343,7 +367,7 @@ namespace platoon_strategic_ihp
         * 
         * \return An index indicating the closest violating vehicle. If no violator, return -1.
         */
-        int findLowerBoundaryViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const;
+       int findLowerBoundaryViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const;
 
         /**
         * \brief Find the closest vehicle to the host vehicle that violates the (time headaway) maximum spacing condition. 

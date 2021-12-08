@@ -77,10 +77,10 @@ public:
     pnh.param<double>("desiredJoinGap", config.desiredJoinGap, config.desiredJoinGap);
     pnh.param<double>("waitingStateTimeout", config.waitingStateTimeout, config.waitingStateTimeout);
     pnh.param<double>("cmdSpeedMaxAdjustment", config.cmdSpeedMaxAdjustment, config.cmdSpeedMaxAdjustment);
-    pnh.param<double>("minAllowableHeadaway", config.minAllowableHeadaway, config.minAllowableHeadaway);
-    pnh.param<double>("maxAllowableHeadaway", config.maxAllowableHeadaway, config.maxAllowableHeadaway);
-    pnh.param<double>("headawayStableLowerBond", config.headawayStableLowerBond, config.headawayStableLowerBond);
-    pnh.param<double>("headawayStableUpperBond", config.headawayStableUpperBond, config.headawayStableUpperBond);
+    pnh.param<double>("lowerBoundary", config.lowerBoundary, config.lowerBoundary);
+    pnh.param<double>("upperBoundary", config.upperBoundary, config.upperBoundary);
+    pnh.param<double>("maxSpacing", config.maxSpacing, config.maxSpacing);
+    pnh.param<double>("minSpacing", config.minSpacing, config.minSpacing);
     pnh.param<double>("minGap", config.minGap, config.minGap);
     pnh.param<double>("maxGap", config.maxGap, config.maxGap);
     pnh.param<double>("maxCrosstrackError", config.maxCrosstrackError, config.maxCrosstrackError);
@@ -114,4 +114,4 @@ public:
   }
 };
 
-}
+}  // namespace platoon_strategicIHP
