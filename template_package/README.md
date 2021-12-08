@@ -12,3 +12,18 @@ To make the process easier a script is provided to create the new package with t
 ```bash
 ./carma_package <this template_package path> <package name> <path to new package parent folder>
 ```
+
+For example, if you have a standard carma source checkout:
+
+```bash
+cd src/carma-platform/template_package
+./carma_package . my_package ../
+```
+
+If successful you should see the new location printed.
+
+```bash
+my_package created at /workspaces/carma_ws/src/carma-platform/my_package
+```
+
+This new package can now be built like any other carma package.
