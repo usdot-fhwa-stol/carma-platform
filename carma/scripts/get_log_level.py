@@ -98,8 +98,20 @@ class GetLogLevel(Substitution):
     def log_level_from_dict(self, package, levels_json):
         """Helper method to get the log level from the json dictionary."""
 
+        try:
+            levels_json = levels_json.strip()
+        except json.JSONDecodeError:
+            print("The input to GetLogLevel was not a valid json string. Setting default log level WARN")
+            return 'WARN'
+
         levels_dict = json.loads(levels_json)
+        
         if (package in levels_dict.keys()):
             return levels_dict[package]
-        else:
+
+        elif ('default_level' in levels_dict):
             return levels_dict['default_level']
+
+        else:
+            print('The specified package was not found and not default_level set. Setting to WARN')
+            return 'WARN'

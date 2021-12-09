@@ -29,7 +29,7 @@ def generate_launch_description():
     """
 
     import sys
-    sys.path.append(os.path.abspath(get_package_share_directory('carma') + '/launch'))
+    sys.path.append(os.path.abspath(get_package_share_directory('carma') + '/scripts'))
     from get_log_level import GetLogLevel
 
     system_controller_param_file = os.path.join(
