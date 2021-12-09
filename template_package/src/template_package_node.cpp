@@ -1,5 +1,5 @@
 /*
- * Copyright (C) <SUB><package_name> LEIDOS.
+ * Copyright (C) <SUB><year> LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
