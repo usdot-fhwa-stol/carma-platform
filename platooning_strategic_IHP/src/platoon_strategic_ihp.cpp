@@ -301,6 +301,13 @@ namespace platoon_strategic_ihp
     // compose platoon info msg for all states
     cav_msgs::PlatooningInfo PlatoonStrategicIHPPlugin::composePlatoonInfoMsg()
     {
+        /**
+         * Note: There is a difference between the "platoon info status" versus the the "platoon strategic plugin states".
+         *       The "platooning info status" reflect the overall operating status. 
+         *       The "platoon strategic plugin states" manage the negotiation strategies and vehicle communication in a more refined manner. 
+         * A more detailed note can be found in the corresponding function declaration in "platoon_strategic_ihp.h" file.
+         */
+
         cav_msgs::PlatooningInfo status_msg;
 
         if (pm_.current_platoon_state == PlatoonState::STANDBY)

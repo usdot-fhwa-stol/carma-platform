@@ -545,6 +545,10 @@ namespace platoon_strategic_ihp
     {
         /**
          * Calculate desired position based on previous vehicle's trajectory for followers.
+         * 
+         * Note: The platoon trajectory regulation is derived with the assumtion that all vehicle 
+         *       have identical length (i.e., 5m). Future development is needed to include variable 
+         *       vehicle length into consideration.
          */
 
         // 1. read dtd vector 
