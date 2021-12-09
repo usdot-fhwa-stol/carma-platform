@@ -312,7 +312,7 @@ namespace platoon_strategic_ihp
 
         if (pm_.current_platoon_state == PlatoonState::STANDBY)
         {
-            status_msg.state = cav_msgs::PlatooningInfo::DISABLED;
+            status_msg.state = cav_msgs::PlatooningInfo::SEARCHING;
         }
         else if (pm_.current_platoon_state == PlatoonState::LEADER)
         {
@@ -351,7 +351,7 @@ namespace platoon_strategic_ihp
             if (pm_.current_platoon_state == PlatoonState::FOLLOWER)
             {
                 ROS_DEBUG_STREAM("isFollower: " << pm_.isFollower);
-                ROS_DEBUG_STREAM("pm platoonsize: " << pm_.platoon.size());
+                ROS_DEBUG_STREAM("pm platoonsize: " << pm_.getTotalPlatooningSize());
 
                 pm_.isFollower = true;
 
@@ -665,7 +665,7 @@ namespace platoon_strategic_ihp
             double frontVehicleDtd = wm_->routeTrackPos(incoming_pose).downtrack;
             
             // Use pm_ to find platoon end vehicle and its downtrack in m.
-            int rearVehicleIndex = pm_.platoon.size() - 1;
+            int rearVehicleIndex = pm_.getTotalPlatooningSize()- 1;
             double rearVehicleDtd = pm_.platoon[rearVehicleIndex].vehiclePosition; 
             
             // downtrack of the platoon leader --> used for frontal join
