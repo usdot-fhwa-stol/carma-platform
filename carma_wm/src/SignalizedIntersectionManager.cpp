@@ -219,13 +219,18 @@ namespace carma_wm
 
   std::shared_ptr<lanelet::CarmaTrafficSignal> SignalizedIntersectionManager::createTrafficSignalUsingSGID(uint8_t signal_group_id, const lanelet::Lanelets& entry_lanelets, const lanelet::Lanelets& exit_lanelets)
   {
-    std::vector<lanelet::Point3d> points;
-    points.push_back(lanelet::Point3d(lanelet::utils::getId(), entry_lanelets.front().leftBound2d().back().x(), entry_lanelets.front().leftBound2d().back().y(), 0));
-    points.push_back(lanelet::Point3d(lanelet::utils::getId(), entry_lanelets.front().rightBound().back().x(), entry_lanelets.front().rightBound().back().y(), 0));
-
-    lanelet::LineString3d stop_line(lanelet::utils::getId(), points);
+    std::vector<lanelet::LineString3d> stop_lines;
+    for (auto llt : entry_lanelets)
+    {
+      std::vector<lanelet::Point3d> points;
+      points.push_back(lanelet::Point3d(lanelet::utils::getId(), llt.leftBound2d().back().x(), llt.leftBound2d().back().y(), 0));
+      points.push_back(lanelet::Point3d(lanelet::utils::getId(), llt.rightBound().back().x(), llt.rightBound().back().y(), 0));
+      lanelet::LineString3d stop_line(lanelet::utils::getId(), points);
+      stop_lines.push_back(stop_line);
+    }    
+    
     lanelet::Id traffic_light_id = lanelet::utils::getId();
-    std::shared_ptr<lanelet::CarmaTrafficSignal> traffic_light(new lanelet::CarmaTrafficSignal(lanelet::CarmaTrafficSignal::buildData(traffic_light_id, stop_line, entry_lanelets, exit_lanelets)));
+    std::shared_ptr<lanelet::CarmaTrafficSignal> traffic_light(new lanelet::CarmaTrafficSignal(lanelet::CarmaTrafficSignal::buildData(traffic_light_id, stop_lines, entry_lanelets, exit_lanelets)));
     signal_group_to_traffic_light_id_[signal_group_id] =  traffic_light_id;
     
     for (auto llt : exit_lanelets)
@@ -240,7 +245,7 @@ namespace carma_wm
   }
 
   void SignalizedIntersectionManager::createIntersectionFromMapMsg(std::vector<lanelet::SignalizedIntersectionPtr>& sig_intersections, std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_signals, const cav_msgs::MapData& map_msg, 
-                                                                      const std::shared_ptr<lanelet::LaneletMap>& map, std::shared_ptr<const lanelet::routing::RoutingGraph> routing_graph)
+                                                                      const std::shared_ptr<lanelet::LaneletMap>& map, std::shared_ptr<lanelet::routing::RoutingGraph> routing_graph)
   { 
     
     for (auto const& intersection : map_msg.intersections)

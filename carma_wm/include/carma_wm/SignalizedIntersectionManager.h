@@ -61,7 +61,7 @@ public:
   *  \param routing_graph of the lanelet map to accurately detect lanes
   */
   void createIntersectionFromMapMsg(std::vector<lanelet::SignalizedIntersectionPtr>& intersections, std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_signals, const cav_msgs::MapData& map_msg, 
-                                    const std::shared_ptr<lanelet::LaneletMap>& map, std::shared_ptr<const lanelet::routing::RoutingGraph> routing_graph);
+                                    const std::shared_ptr<lanelet::LaneletMap>& map, std::shared_ptr<lanelet::routing::RoutingGraph> routing_graph);
 
   /*! 
   *  \brief Returns mapping of MAP lane id to lanelet id for the given map and intersection.msg in the MAP.msg.

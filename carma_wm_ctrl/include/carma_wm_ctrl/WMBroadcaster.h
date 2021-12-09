@@ -407,7 +407,7 @@ private:
   
   lanelet::LaneletMapPtr base_map_;
   lanelet::LaneletMapPtr current_map_;
-  lanelet::routing::RoutingGraphUPtr current_routing_graph_; // Current map routing graph
+  lanelet::routing::RoutingGraphPtr current_routing_graph_; // Current map routing graph
   lanelet::Velocity config_limit;
   std::string participant_ = lanelet::Participants::VehicleCar;//Default participant type
   std::unordered_set<std::string>  checked_geofence_ids_;
