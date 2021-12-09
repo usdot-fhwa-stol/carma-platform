@@ -305,13 +305,13 @@ public:
 
   // CARMA Streets Variakes
   // timestamp for msg received from carma streets
-  uint32_t street_msg_timestamp_ = 0;
+  unsigned long long street_msg_timestamp_ = 0;
   // scheduled stop time
-  uint32_t scheduled_stop_time_ = 0;
+  unsigned long long scheduled_stop_time_ = 0;
   // scheduled enter time
-  uint32_t scheduled_enter_time_ = 0;
+  unsigned long long scheduled_enter_time_ = 0;
   // scheduled depart time
-  uint32_t scheduled_depart_time_ = 0;
+  unsigned long long scheduled_depart_time_ = 0;
   // scheduled latest depart position
   uint32_t scheduled_departure_position_ = std::numeric_limits<uint32_t>::max();
   // flag to show if the vehicle is allowed in intersection

@@ -135,17 +135,17 @@ void SCIStrategicPlugin::parseStrategyParams(const std::string& strategy_params)
 
   std::vector<std::string> st_parsed;
   boost::algorithm::split(st_parsed, inputsParams[0], boost::is_any_of(":"));
-  scheduled_stop_time_ = std::stoi(st_parsed[1]);
+  scheduled_stop_time_ = std::stoull(st_parsed[1]);
   ROS_DEBUG_STREAM("scheduled_stop_time_: " << scheduled_stop_time_);
             
   std::vector<std::string> et_parsed;
   boost::algorithm::split(et_parsed, inputsParams[1], boost::is_any_of(":"));
-  scheduled_enter_time_ = std::stoi(et_parsed[1]);
+  scheduled_enter_time_ = std::stoull(et_parsed[1]);
   ROS_DEBUG_STREAM("scheduled_enter_time_: " << scheduled_enter_time_);
 
   std::vector<std::string> dt_parsed;
   boost::algorithm::split(dt_parsed, inputsParams[2], boost::is_any_of(":"));
-  scheduled_depart_time_ = std::stoi(dt_parsed[1]);
+  scheduled_depart_time_ = std::stoull(dt_parsed[1]);
   ROS_DEBUG_STREAM("scheduled_depart_time_: " << scheduled_depart_time_);
 
   std::vector<std::string> dp_parsed;
