@@ -16,6 +16,13 @@
  * the License.
  */
 
+/*
+ * Developed by the UCLA Mobility Lab, 10/20/2021. 
+ *
+ * Creator: Xu Han
+ * Author: Xu Han, Xin Xia, Jiaqi Ma
+ */
+
 #include <ros/ros.h>
 #include <cav_msgs/MobilityOperation.h>
 #include <cav_msgs/MobilityRequest.h>
@@ -28,16 +35,18 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <autoware_msgs/ControlCommandStamped.h>
+#include "platoon_config_ihp.h"
 
 
 
 
-namespace platoon_strategic
+namespace platoon_strategic_ihp
 {
     /**
     * \brief Struct for a platoon plan
     */ 
-    struct PlatoonPlan {
+    struct PlatoonPlan 
+    {
         
         bool valid;
         long planStartTime;
@@ -54,43 +63,48 @@ namespace platoon_strategic
     * NACK - indicates that the plugin rejects the MobilityRequest and would suggest the other vehicle replan
     * NO_RESPONSE - indicates that the plugin is indifferent but sees no conflict
     */
-    enum MobilityRequestResponse {
+    enum MobilityRequestResponse 
+    {
             ACK,
             NACK,
             NO_RESPONSE
     };
 
     /**
-    * \brief Platoon States
+    * \brief Platoon States. UCLA: Added two additional states 
+    * (i.e., LEADERABORTING and CANDIDATELEADER) for same-lane front join.
+    *  
     */
-    enum PlatoonState{
+    enum PlatoonState
+    {
         STANDBY,
         LEADERWAITING,
         LEADER,
         CANDIDATEFOLLOWER,
-        FOLLOWER
+        FOLLOWER,
+        LEADERABORTING,
+        CANDIDATELEADER
     };
 
     /**
     * \brief Platoon States
     */
-    struct PlatoonMember{
+    struct PlatoonMember
+    {
         // Static ID is permanent ID for each vehicle
         std::string staticId;
-        // Current BSM Id for each CAV
-        std::string bsmId;
-        // Vehicle real time command speed in m/s
+        // Vehicle real time command speed in m/s.
         double commandSpeed;
-        // Actual vehicle speed in m/s
+        // Actual vehicle speed in m/s.
         double vehicleSpeed;
-        // Vehicle current down track distance on the current route in m
+        // Vehicle current down track distance on the current route in m.
         double vehiclePosition;
-        // The local time stamp when the host vehicle update any informations of this member
+        // The local time stamp when the host vehicle update any informations of this member.
         long   timestamp;
-        PlatoonMember(): staticId(""), bsmId(""), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), timestamp(0) {} 
-        PlatoonMember(std::string staticId, std::string bsmId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
-            bsmId(bsmId), commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), vehiclePosition(vehiclePosition), timestamp(timestamp) {}
-        };
+        PlatoonMember(): staticId(""), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), timestamp(0) {} 
+        PlatoonMember(std::string staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
+            commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), vehiclePosition(vehiclePosition), timestamp(timestamp) {}
+    };
         
 
 
@@ -106,8 +120,6 @@ namespace platoon_strategic
         // Platoon List (initialized empty)
         std::vector<PlatoonMember> platoon{};
 
-        
-
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
 
@@ -119,37 +131,38 @@ namespace platoon_strategic
         * 
         * \param senderId static id of the broadcasting vehicle
         * \param platoonId platoon id
-        * \param senderBsmId bsm id of the broadcasting vehicle
         * \param params strategy parameters
         * \param Dtd downtrack distance
         */
-        void memberUpdates(const std::string& senderId,const std::string& platoonId,const std::string& senderBsmId,const std::string& params, const double& DtD);
+        void memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, const double& DtD);
 
         /**
-         * Given any valid platooning mobility STATUS operation parameters and sender staticId,
+         * \brief Given any valid platooning mobility STATUS operation parameters and sender staticId,
          * in leader state this method will add/updates the information of platoon member if it is using
          * the same platoon ID, in follower state this method will updates the vehicle information who
          * is in front of the subject vehicle or update platoon id if the leader is join another platoon
+         * 
          * \param senderId sender ID for the current info
          * \param platoonId sender platoon id
-         * \param senderBsmId sender BSM ID
          * \param params strategy params from STATUS message in the format of "CMDSPEED:xx,DOWNTRACK:xx,SPEED:xx"
          **/
-        void updatesOrAddMemberInfo(std::string senderId, std::string senderBsmId, double cmdSpeed, double dtDistance, double curSpeed);
+        void updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double curSpeed);
         
         /**
-        * \brief Returns total size of the platoon
+        * \brief Returns total size of the platoon , in number of vehicles.
         */
-        int getTotalPlatooningSize() const;
+        int getTotalPlatooningSize();
 
 
         /**
-        * \brief Returns leader of the platoon
+        * \brief Returns dynamic leader of the host vehicle.
+        * 
+        * \return The current dynamic leader as a vehcile object. 
         */
-        PlatoonMember getLeader();
+        PlatoonMember getDynamicLeader();
 
         /**
-         * This is the implementation of all predecessor following (APF) algorithm for leader
+         * \brief This is the implementation of all predecessor following (APF) algorithm for leader
          * selection in a platoon. This function will recognize who is acting as the current leader
          * of the subject vehicle. The current leader of the subject vehicle will be any ONE of
          * the vehicles in front of it. Having a vehicle further downstream function as the leader
@@ -159,7 +172,8 @@ namespace platoon_strategic
          * to the leader. If the time headways are within some safe thresholds then vehicles further
          * downstream may function as the leader. Otherwise, for the sake of safety, vehicles closer
          * to the subject vehicle, potentially even the predecessor, will function as the leader.
-         * @return the index of the leader in the platoon list
+         * 
+         * \return the index of the leader in the platoon list.
          */
 
         int allPredecessorFollowing();
@@ -177,44 +191,59 @@ namespace platoon_strategic
         void changeFromLeaderToFollower(std::string newPlatoonId);
         
         /**
-        * \brief Get number of vehicles in front of host vehicle in platoon
+        * \brief Get number of vehicles in front of host vehicle inside platoon
         */
         int getNumberOfVehicleInFront();
         
         /**
-        * \brief Returns Length of the platoon
+        * \brief Returns overall length of the platoon. in m.
         */
         double getCurrentPlatoonLength();
 
         /**
-        * \brief Returns downtrack distance of the rear vehicle in platoon
+        * \brief Returns downtrack distance of the rear vehicle in platoon, in m.
         */
         double getPlatoonRearDowntrackDistance();
         
         /**
-        * \brief Returns distance from start of the route
+        * \brief Returns distance to the predessecor vehicle, in m.
         */
-        double getDistanceFromRouteStart() const;
+        double getDistanceToPredVehicle();
         
         /**
-        * \brief Returns distance to the front vehicle
-        */
-        double getDistanceToFrontVehicle();
-        
-        /**
-        * \brief Returns current speed
+        * \brief Returns current speed, in m/s.
         */
         double getCurrentSpeed() const;
         
         /**
-        * \brief Returns command speed
+        * \brief Returns command speed. in m/s.
         */
         double getCommandSpeed();
 
         /**
-        * \brief Returns current downtrack distance
+        * \brief Returns current downtrack distance, in m.
         */
         double getCurrentDowntrackDistance() const;
+
+        /**
+        * \brief Returns current host static ID as a string.
+        */
+        std::string getHostStaticID() const;
+
+        /**
+         * \brief UCLA: Return the platoon leader downtrack distance, in m.
+         */
+        double getPlatoonFrontDowntrackDistance();
+
+        /**
+        * \brief UCLA: Return follower's desired position (i.e., downtrack, in m) that maintains the desired 
+        * intra-platoon time gap, based on IHP platoon trajectory regulation algorithm.
+        * 
+        * \params dt: The planning time step, in s.
+        * 
+        * \return: Host vehicle's desired position as downtrack distance, in m.
+        */
+        double getIHPDesPosFollower(double dt);
 
         // Member variables
         int platoonSize = 2;
@@ -222,8 +251,8 @@ namespace platoon_strategic
         std::string currentPlatoonID = "default_test_id";
         bool isFollower = false;
 
-        double current_speed_ = 0;
-        double command_speed_ = 0;
+        double current_speed_ = 0; // m/s
+        double command_speed_ = 0; // m/s
 
         // Platoon State
         PlatoonState current_platoon_state = PlatoonState::STANDBY;
@@ -233,53 +262,93 @@ namespace platoon_strategic
 
         std::string targetLeaderId = "default_target_leader_id";
 
+        // host vehicle's static ID 
         std::string HostMobilityId = "default_host_id";
-
-
+    
     private:
+
+        // local copy of configuration file
+        PlatoonPluginConfig config_;
 
         std::string targetPlatoonId;
         std::string OPERATION_INFO_TYPE = "INFO";
         std::string OPERATION_STATUS_TYPE = "STATUS";
         std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
+        // UCLA: add params for frontal join
+        std::string JOIN_FROM_FRONT_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
         std::string  MOBILITY_STRATEGY = "Carma/Platooning";
-    
 
-        double minGap_ = 22.0;
-        double maxGap_ = 32.0;
-        std::string previousFunctionalLeaderID_ = "";
-        int previousFunctionalLeaderIndex_ = -1;
+        double minGap_ = 22.0;                                  // m
+        double maxGap_ = 32.0;                                  // m
+        std::string previousFunctionalDynamicLeaderID_ = "";
+        int previousFunctionalDynamicLeaderIndex_ = -1;
 
-        double maxSpacing_ = 4.0;
-        double minSpacing_ = 3.9;
-        double lowerBoundary_ = 1.6;
-        double upperBoundary_ = 1.7 ;
+        // note: APF related parameters are moved to config.h.
 
-        double vehicleLength_ = 5.0;  // m
+        double vehicleLength_ = 5.0;                            // the length of the vehicle, in m.
+        double gapWithPred_ = 0.0;                              // time headway with predecessor, in s.
+        double downtrack_progress_ = 0;                         // current downtrack distance, in m.
 
-        double gapWithFront_ = 0.0;
+        // Note: Parameters for IHP platoon trajectory regulation are moved to config.h. 
 
-        double downtrack_progress_ = 0;
+        std::string algorithmType_ = "APF_ALGORITHM";           // a string that defines the current algorithm to determine the dynamic leader.
 
-
-        std::string algorithmType_ = "APF_ALGORITHM";
-
-        bool insufficientGapWithPredecessor(double distanceToFrontVehicle);
+        /**
+        * \brief Check the gap with the predecessor vehicle. 
+        * 
+        * \param distanceToPredVehicle: The distance between the host to the predecessor vehicle. 
+        * 
+        * \return (bool) if the predecessor is to close.
+        */
+        bool insufficientGapWithPredecessor(double distanceToPredVehicle);
         
+        /**
+        * \brief Calculate the time headaway of each platoon member and save as a vector.
+        * 
+        * \param downtrackDistance: a vector containing the downtrack distances of all members.
+        * \param speed: a vector containing the speeds of all members.
+        * 
+        * \return A vector containing the time headaway of all platoon members, each headway is in s.
+        */
         std::vector<double> calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed) const;
-        int determineLeaderBasedOnViolation(std::vector<double> timeHeadways);
 
-        // helper method for APF algorithm
+        /**
+        * \brief Determine the proper vehicle to follow based the time headway of each member. 
+        * Note that the host will always choose the closest violator (i.e. time headaway too small or too large) to follow.
+        * 
+        * \param timeHeadways: A vector containing the time headaway of all platoon members.
+        * 
+        * \return An index indicating the proper vehicle to follow (i.e., leader). If choose to follow platoon leader, return 0.
+        */
+        int determineDynamicLeaderBasedOnViolation(std::vector<double> timeHeadways);
+        
+        /**
+        * \brief Find the closest vehicle to the host vehicle that violates the (time headaway) lower boundary condition. 
+        * 
+        * \param timeHeadways: A vector containing the time headaway of all platoon members.
+        * 
+        * \return An index indicating the closest violating vehicle. If no violator, return -1.
+        */
         int findLowerBoundaryViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const;
 
-        // helper method for APF algorithm
+        /**
+        * \brief Find the closest vehicle to the host vehicle that violates the (time headaway) maximum spacing condition. 
+        * 
+        * \param timeHeadways: A vector containing the time headaway of all platoon members.
+        * 
+        * \return An index indicating the closest violating vehicle. If no violator, return -1.
+        */
         int findMaximumSpacingViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const;
 
+        /**
+        * \brief Return a sub-vector of the platoon-wise time headaways vector that start with a given index.  
+        * 
+        * \param timeHeadways: A vector containing the time headaway of all platoon members.
+        *        start: An integer indicates the starting position.
+        * 
+        * \return An sub-vector start with given index.
+        */
         std::vector<double> getTimeHeadwayFromIndex(std::vector<double> timeHeadways, int start) const;
-
-
-    
-
     
 
     };

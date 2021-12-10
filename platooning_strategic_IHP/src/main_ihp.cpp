@@ -14,13 +14,20 @@
  * the License.
  */
 
+/*
+ * Developed by the UCLA Mobility Lab, 10/20/2021. 
+ *
+ * Creator: Xu Han
+ * Author: Xu Han, Xin Xia, Jiaqi Ma
+ */
+
 #include <ros/ros.h>
-#include "platoon_strategic_plugin_node.h"
+#include "platoon_strategic_plugin_node_ihp.h"
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "platoon_strategic");
-    platoon_strategic::PlatoonStrategicPluginNode node;
+    ros::init(argc, argv, "platoon_strategic_ihp");
+    platoon_strategic_ihp::PlatoonStrategicIHPPluginNode node;
     node.run();
     return 0;
 };

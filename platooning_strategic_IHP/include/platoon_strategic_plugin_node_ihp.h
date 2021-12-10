@@ -16,6 +16,13 @@
  * the License.
  */
 
+/*
+ * Developed by the UCLA Mobility Lab, 10/20/2021. 
+ *
+ * Creator: Xu Han
+ * Author: Xu Han, Xin Xia, Jiaqi Ma
+ */
+
 #include <cav_msgs/Plugin.h>
 #include <carma_utils/CARMAUtils.h>
 #include <cav_srvs/PlanTrajectory.h>
@@ -26,15 +33,15 @@
 #include <cav_msgs/BSM.h>
 #include <carma_wm/WMListener.h>
 #include <functional>
-#include "platoon_strategic.h"
-#include "platoon_config.h"
+#include "platoon_strategic_ihp.h"
+#include "platoon_config_ihp.h"
 
-namespace platoon_strategic
+namespace platoon_strategic_ihp
 {
 /**
  * \brief ROS node for the YieldPlugin
  */ 
-class PlatoonStrategicPluginNode
+class PlatoonStrategicIHPPluginNode
 {
 public:
 
@@ -70,10 +77,10 @@ public:
     pnh.param<double>("desiredJoinGap", config.desiredJoinGap, config.desiredJoinGap);
     pnh.param<double>("waitingStateTimeout", config.waitingStateTimeout, config.waitingStateTimeout);
     pnh.param<double>("cmdSpeedMaxAdjustment", config.cmdSpeedMaxAdjustment, config.cmdSpeedMaxAdjustment);
-    pnh.param<double>("lowerBoundary", config.lowerBoundary, config.lowerBoundary);
-    pnh.param<double>("upperBoundary", config.upperBoundary, config.upperBoundary);
-    pnh.param<double>("maxSpacing", config.maxSpacing, config.maxSpacing);
-    pnh.param<double>("minSpacing", config.minSpacing, config.minSpacing);
+    pnh.param<double>("minAllowableHeadaway", config.minAllowableHeadaway, config.minAllowableHeadaway);
+    pnh.param<double>("maxAllowableHeadaway", config.maxAllowableHeadaway, config.maxAllowableHeadaway);
+    pnh.param<double>("headawayStableLowerBond", config.headawayStableLowerBond, config.headawayStableLowerBond);
+    pnh.param<double>("headawayStableUpperBond", config.headawayStableUpperBond, config.headawayStableUpperBond);
     pnh.param<double>("minGap", config.minGap, config.minGap);
     pnh.param<double>("maxGap", config.maxGap, config.maxGap);
     pnh.param<double>("maxCrosstrackError", config.maxCrosstrackError, config.maxCrosstrackError);
@@ -82,20 +89,21 @@ public:
     
     ROS_INFO_STREAM("PlatoonPluginConfig Params" << config);
 
-    PlatoonStrategicPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); }, [&mob_response_pub](auto msg) { mob_response_pub.publish(msg); },
+    PlatoonStrategicIHPPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); }, [&mob_response_pub](auto msg) { mob_response_pub.publish(msg); },
                                     [&mob_request_pub](auto msg) { mob_request_pub.publish(msg); }, [&mob_operation_pub](auto msg) { mob_operation_pub.publish(msg); },
                                     [&platoon_info_pub](auto msg) { platoon_info_pub.publish(msg); } );
   
-    ros::ServiceServer maneuver_srv_ = nh.advertiseService("plugins/PlatooningStrategicPlugin/plan_maneuvers",
-                                            &PlatoonStrategicPlugin::plan_maneuver_cb, &worker);
-    ros::Subscriber mob_request_sub = nh.subscribe("incoming_mobility_request", 1, &PlatoonStrategicPlugin::mob_req_cb,  &worker);
-    ros::Subscriber mob_response_sub = nh.subscribe("incoming_mobility_response", 1, &PlatoonStrategicPlugin::mob_resp_cb,  &worker);
-    ros::Subscriber mob_operation_sub = nh.subscribe("incoming_mobility_operation", 1, &PlatoonStrategicPlugin::mob_op_cb,  &worker);
-    ros::Subscriber current_pose_sub = nh.subscribe("current_pose", 1, &PlatoonStrategicPlugin::pose_cb,  &worker);
-    ros::Subscriber current_twist_sub = nh.subscribe("current_velocity", 1, &PlatoonStrategicPlugin::twist_cb,  &worker);
-    ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &PlatoonStrategicPlugin::bsm_cb,  &worker);
-    ros::Subscriber cmd_sub = nh.subscribe("twist_raw", 1, &PlatoonStrategicPlugin::cmd_cb,  &worker);
-    ros::Subscriber georeference_sub = nh.subscribe("georeference", 1, &PlatoonStrategicPlugin::georeference_cb, &worker);
+    ros::ServiceServer maneuver_srv_ = nh.advertiseService("plugins/PlatooningStrategicIHPPlugin/plan_maneuvers",
+                                            &PlatoonStrategicIHPPlugin::plan_maneuver_cb, &worker);
+    ros::Subscriber mob_request_sub = nh.subscribe("incoming_mobility_request", 1, &PlatoonStrategicIHPPlugin::mob_req_cb,  &worker);
+    ros::Subscriber mob_response_sub = nh.subscribe("incoming_mobility_response", 1, &PlatoonStrategicIHPPlugin::mob_resp_cb,  &worker);
+    ros::Subscriber mob_operation_sub = nh.subscribe("incoming_mobility_operation", 1, &PlatoonStrategicIHPPlugin::mob_op_cb,  &worker);
+    ros::Subscriber current_pose_sub = nh.subscribe("current_pose", 1, &PlatoonStrategicIHPPlugin::pose_cb,  &worker);
+    ros::Subscriber current_twist_sub = nh.subscribe("current_velocity", 1, &PlatoonStrategicIHPPlugin::twist_cb,  &worker);
+    // not use BSMID, consider delete
+    // ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &PlatoonStrategicIHPPlugin::bsm_cb,  &worker);
+    ros::Subscriber cmd_sub = nh.subscribe("twist_raw", 1, &PlatoonStrategicIHPPlugin::cmd_cb,  &worker);
+    ros::Subscriber georeference_sub = nh.subscribe("georeference", 1, &PlatoonStrategicIHPPlugin::georeference_cb, &worker);
 
     
     ros::Timer discovery_pub_timer_ = nh.createTimer(
@@ -106,4 +114,4 @@ public:
   }
 };
 
-}  // namespace platoon_strategic
+}
