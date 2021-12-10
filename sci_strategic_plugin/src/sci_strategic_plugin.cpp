@@ -396,7 +396,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     // vehicle is at the intersection but it is not allowed access, so it must wait
     // arbitrary parameters
     double stop_acc = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
-    double stop_duration = std::numeric_limits<double>::max();
+    double stop_duration = 999;//std::numeric_limits<double>::max();
 
     ROS_DEBUG_STREAM("current_downtrack_: " << current_downtrack_);
     ROS_DEBUG_STREAM("current state dtd: " << current_state.downtrack);
