@@ -29,6 +29,7 @@
 #include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
 #include <lanelet2_extension/regulatory_elements/DigitalMinimumGap.h>
+#include <carma_wm/SignalizedIntersectionManager.h>
 #include <lanelet2_core/primitives/LaneletOrArea.h>
 
 
@@ -59,6 +60,9 @@ public:
 
   // traffic light id lookup
   std::vector<std::pair<uint32_t, lanelet::Id>> traffic_light_id_lookup_;
+
+  // signalized intersection manager
+  carma_wm::SignalizedIntersectionManager sim_;
 };
 
 /**
@@ -115,6 +119,9 @@ inline void save(Archive& ar, const carma_wm::TrafficControl& gf, unsigned int /
   size_t traffic_light_id_lookup_size = gf.traffic_light_id_lookup_.size();
   ar << traffic_light_id_lookup_size;
   for (auto pair : gf.traffic_light_id_lookup_) ar << pair;
+
+  // convert signalized intersection manager
+  ar << gf.sim_;
 }
 
 template <class Archive>
@@ -165,10 +172,133 @@ inline void load(Archive& ar, carma_wm::TrafficControl& gf, unsigned int /*versi
     ar >> traffic_light_id_pair;
     gf.traffic_light_id_lookup_.push_back(traffic_light_id_pair);
   }
+
+  // save signalized intersection manager
+  ar >> gf.sim_;
+}
+
+
+template <class Archive>
+// NOLINTNEXTLINE
+inline void save(Archive& ar, const carma_wm::SignalizedIntersectionManager& sim, unsigned int /*version*/) 
+{
+  // convert traffic light id lookup
+  size_t intersection_id_to_regem_id_size = sim.intersection_id_to_regem_id_.size();
+  ar << intersection_id_to_regem_id_size;
+  for (auto pair : sim.intersection_id_to_regem_id_)
+  {
+    ar << pair;
+  } 
+
+  // convert traffic light id lookup
+  size_t signal_group_to_traffic_light_id_size = sim.signal_group_to_traffic_light_id_.size();
+  ar << signal_group_to_traffic_light_id_size;
+  for (auto pair : sim.signal_group_to_traffic_light_id_)
+  {
+    ar << pair;
+  } 
+
+  size_t signal_group_to_exit_lanelet_ids_size = sim.signal_group_to_exit_lanelet_ids_.size();
+  ar << signal_group_to_exit_lanelet_ids_size;
+  for (auto pair : sim.signal_group_to_exit_lanelet_ids_)
+  {
+    size_t set_size = pair.second.size();
+    ar << set_size;
+    ar << pair.first;
+    for (auto iter = pair.second.begin(); iter != pair.second.end(); iter++)
+    {
+      ar << *iter;
+    } 
+  }
+
+  size_t signal_group_to_entry_lanelet_ids_size = sim.signal_group_to_entry_lanelet_ids_.size();
+  ar << signal_group_to_entry_lanelet_ids_size;
+  for (auto pair : sim.signal_group_to_entry_lanelet_ids_)
+  {
+    size_t set_size = pair.second.size();
+    ar << set_size;
+    ar << pair.first;
+    for (auto iter = pair.second.begin(); iter != pair.second.end(); iter++)
+    {
+      ar << *iter;
+    } 
+  }
+}
+
+template <class Archive>
+// NOLINTNEXTLINE
+inline void load(Archive& ar, carma_wm::SignalizedIntersectionManager& sim, unsigned int /*version*/) 
+{
+  // save traffic light id lookup
+  size_t intersection_id_to_regem_id_size;
+  ar >> intersection_id_to_regem_id_size;
+  for (size_t i = 0; i < intersection_id_to_regem_id_size; i ++)
+  {
+    std::pair<uint16_t, lanelet::Id> pair;
+    ar >> pair;
+    sim.intersection_id_to_regem_id_.emplace(pair);
+  } 
+
+  // save traffic light id lookup
+  size_t signal_group_to_traffic_light_id_size;
+  ar >> signal_group_to_traffic_light_id_size;
+  for (size_t i = 0; i < signal_group_to_traffic_light_id_size; i ++)
+  {
+    std::pair<uint8_t, lanelet::Id> pair;
+    ar >> pair;
+    sim.signal_group_to_traffic_light_id_.emplace(pair);
+  }
+
+  size_t signal_group_to_exit_lanelet_ids_size;
+  ar >> signal_group_to_exit_lanelet_ids_size;
+  for (size_t i = 0; i < signal_group_to_exit_lanelet_ids_size; i ++)
+  {
+    size_t set_size;
+    ar >> set_size;
+    uint8_t signal_grp;
+    ar >> signal_grp;
+    for (size_t j = 0; j <set_size; j++)
+    {
+      lanelet::Id id;
+      ar >>id;
+      sim.signal_group_to_exit_lanelet_ids_[signal_grp].insert(id);
+    }
+  }
+
+  size_t signal_group_to_entry_lanelet_ids_size;
+  ar >> signal_group_to_entry_lanelet_ids_size;
+  for (size_t i = 0; i < signal_group_to_entry_lanelet_ids_size; i ++)
+  {
+    size_t set_size;
+    ar >> set_size;
+    uint8_t signal_grp;
+    ar >> signal_grp;
+    for (size_t j = 0; j <set_size; j++)
+    {
+      lanelet::Id id;
+      ar >>id;
+      sim.signal_group_to_entry_lanelet_ids_[signal_grp].insert(id);
+    }
+  }
+
 }
 
 template <typename Archive>
 void serialize(Archive& ar, std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>& p, unsigned int /*version*/) 
+{
+  ar& p.first;
+  ar& p.second;
+}
+
+template <typename Archive>
+void serialize(Archive& ar, std::pair<uint8_t, lanelet::Id>& p, unsigned int /*version*/) 
+{
+  ar& p.first;
+  ar& p.second;
+}
+
+template <typename Archive>
+void serialize(Archive& ar, std::pair<uint16_t, lanelet::Id>& p, unsigned int /*version*/) 
 {
   ar& p.first;
   ar& p.second;
@@ -185,3 +315,4 @@ void serialize(Archive& ar, std::pair<uint32_t, lanelet::Id>& p, unsigned int /*
 } // namespace boost
 
 BOOST_SERIALIZATION_SPLIT_FREE(carma_wm::TrafficControl);
+BOOST_SERIALIZATION_SPLIT_FREE(carma_wm::SignalizedIntersectionManager);

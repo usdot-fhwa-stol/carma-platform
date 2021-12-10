@@ -231,12 +231,12 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
   // At this point we know the vehicle is within the activation distance and we know the current and next light phases
   // All we need to now determine is if we should stop or if we should continue
 
-  intersection_speed_ = findSpeedLimit(nearest_traffic_light->getControlledLanelets().front());
+  intersection_speed_ = findSpeedLimit(nearest_traffic_light->getControlStartLanelets().front());
 
   ROS_DEBUG_STREAM("intersection_speed_: " << intersection_speed_.get());
 
   intersection_end_downtrack_ =
-      wm_->routeTrackPos(nearest_traffic_light->getControlledLanelets().back().centerline2d().back()).downtrack;
+      wm_->routeTrackPos(nearest_traffic_light->getControlEndLanelets().back().centerline2d().back()).downtrack;
 
   ROS_DEBUG_STREAM("intersection_end_downtrack_: " << intersection_end_downtrack_.get());
 
@@ -302,7 +302,7 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
     resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
         traffic_light_down_track - config_.vehicle_length, intersection_end_downtrack_.get(), intersection_speed_.get(),
         intersection_speed_.get(), light_arrival_time_at_freeflow, intersection_exit_time, crossed_lanelets.back().id(),
-        nearest_traffic_light->getControlledLanelets().back().id()));
+        nearest_traffic_light->getControlEndLanelets().back().id()));
   }
   else  // Red or Yellow light
   {
