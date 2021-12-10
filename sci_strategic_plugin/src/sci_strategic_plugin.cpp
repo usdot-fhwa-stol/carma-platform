@@ -39,7 +39,7 @@ SCIStrategicPlugin::SCIStrategicPlugin(carma_wm::WorldModelConstPtr wm, SCIStrat
   : wm_(wm), config_(config)
 {
   plugin_discovery_msg_.name = config_.strategic_plugin_name;
-  plugin_discovery_msg_.versionId = "v1.0";
+  plugin_discovery_msg_.version_id = "v1.0";
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = true;
   plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
@@ -436,10 +436,10 @@ double SCIStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt) cons
 void SCIStrategicPlugin::generateMobilityOperation()
 {
     cav_msgs::MobilityOperation mo_;
-    mo_.header.timestamp = ros::Time::now().toNSec() * 1000000;
+    mo_.m_header.timestamp = ros::Time::now().toNSec() * 1000000;
 
     std::string id(bsm_id.begin(), bsm_id.end());
-    mo_.header.sender_bsm_id = id;
+    mo_.m_header.sender_bsm_id = id;
 
     int flag = (approaching_stop_controlled_interction_ ? 1 : 0);
 

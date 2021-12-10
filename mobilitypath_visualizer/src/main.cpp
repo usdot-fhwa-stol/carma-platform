@@ -25,4 +25,4 @@ int main(int argc, char** argv)
     mobilitypath_visualizer_node.run();
     return 0;
 
-};
+}

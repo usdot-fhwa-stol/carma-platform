@@ -32,9 +32,9 @@ TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
     
     // INPUT MSG
     cav_msgs::MobilityPath input_msg;
-    input_msg.header.plan_id = "";
-    input_msg.header.sender_id = ""; //host
-    input_msg.header.timestamp = 10000; // 10sec
+    input_msg.m_header.plan_id = "";
+    input_msg.m_header.sender_id = ""; //host
+    input_msg.m_header.timestamp = 10000; // 10sec
     
     input_msg.trajectory.location.ecef_x = 0;
     input_msg.trajectory.location.ecef_y = 0;

@@ -158,7 +158,7 @@ TEST(PlatoonStrategicPlugin, test_follower)
     EXPECT_EQ(plugin.pm_.isFollower, false);
 
     cav_msgs::MobilityResponse resp;
-    resp.header.plan_id = "resp";
+    resp.m_header.plan_id = "resp";
     resp.is_accepted = true;
     plugin.mob_resp_cb(resp);
     EXPECT_EQ(plugin.pm_.current_platoon_state, PlatoonState::FOLLOWER);

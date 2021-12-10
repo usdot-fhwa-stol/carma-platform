@@ -51,7 +51,7 @@ else
 fi
 
 # add astuff messages
-# NOTE: The ibeo_msgs package is ignored because on build a the cmake files in that package run a sed command 
+# NOTE: The ibeo_msgs package is ignored because on build the cmake files in that package run a sed command 
 #       which can make them incompatible with a new ros version after a source switch
 git clone https://github.com/astuff/astuff_sensor_msgs 
 

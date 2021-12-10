@@ -39,7 +39,7 @@ WzStrategicPlugin::WzStrategicPlugin(carma_wm::WorldModelConstPtr wm, WzStrategi
   : wm_(wm), config_(config)
 {
   plugin_discovery_msg_.name = config_.strategic_plugin_name;
-  plugin_discovery_msg_.versionId = "v1.0";
+  plugin_discovery_msg_.version_id = "v1.0";
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = true;
   plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;

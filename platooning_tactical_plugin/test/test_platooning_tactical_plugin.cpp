@@ -192,8 +192,8 @@ TEST(PlatooningTacticalPluginTest, getNearestPointIndex)
   points.push_back(p);
 
   cav_msgs::VehicleState state;
-  state.X_pos_global = 3.3;
-  state.Y_pos_global = 3.3;
+  state.x_pos_global = 3.3;
+  state.y_pos_global = 3.3;
 
   ASSERT_EQ(3, plugin.getNearestPointIndex(points, state));
 }
