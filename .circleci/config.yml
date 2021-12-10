@@ -60,13 +60,13 @@ jobs:
           name: Build CARMA
           command: |
             source ${INIT_ENV}
-            export ROS_PARALLEL_JOBS='-j4 -l4' # Try to reduce memory consumption on build
+            export ROS_PARALLEL_JOBS='-j3 -l3' # Try to reduce memory consumption on build
             build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output bash make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
       - run:
           name: Run C++ Tests
           command: |
             source ${INIT_ENV}
-            export ROS_PARALLEL_JOBS='-j4 -l4' # Try to reduce memory consumption on build
+            export ROS_PARALLEL_JOBS='-j3 -l3' # Try to reduce memory consumption on build
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
           
       # Run SonarCloud analysis
