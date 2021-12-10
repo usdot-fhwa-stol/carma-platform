@@ -524,7 +524,7 @@ std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState
   lanelet::LineString3d virtual_stop_line(lanelet::utils::getId(), { owning_lanelet.leftBound().back(), owning_lanelet.rightBound().back() });
 
   // Build traffic light
-  std::shared_ptr<lanelet::CarmaTrafficSignal> traffic_light(new lanelet::CarmaTrafficSignal(lanelet::CarmaTrafficSignal::buildData(light_id, { virtual_stop_line }, controlled_lanelets )));
+  std::shared_ptr<lanelet::CarmaTrafficSignal> traffic_light(new lanelet::CarmaTrafficSignal(lanelet::CarmaTrafficSignal::buildData(light_id, { virtual_stop_line }, {controlled_lanelets.front()}, {controlled_lanelets.back()} )));
   
   // Set the timing plan
   traffic_light->setStates(timing_plan,0);
