@@ -245,7 +245,7 @@ namespace carma_wm
   }
 
   void SignalizedIntersectionManager::createIntersectionFromMapMsg(std::vector<lanelet::SignalizedIntersectionPtr>& sig_intersections, std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_signals, const cav_msgs::MapData& map_msg, 
-                                                                      const std::shared_ptr<lanelet::LaneletMap>& map, std::shared_ptr<lanelet::routing::RoutingGraph> routing_graph)
+                                                                      const std::shared_ptr<lanelet::LaneletMap>& map, std::shared_ptr<const lanelet::routing::RoutingGraph> routing_graph)
   { 
     
     for (auto const& intersection : map_msg.intersections)
