@@ -198,7 +198,25 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
 
   ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " sends record of intersections size: " << gf_ptr->sim_.intersection_id_to_regem_id_.size());
   if (gf_ptr->sim_.intersection_id_to_regem_id_.size() > 0)
+  {
     world_model_->sim_ = gf_ptr->sim_;
+    for (auto pair : world_model_->sim_.intersection_id_to_regem_id_)
+    {
+      ROS_DEBUG_STREAM("inter id: " << (int)pair.first << ", regem id: " << pair.second);
+    }
+    for (auto pair : world_model_->sim_.signal_group_to_entry_lanelet_ids_)
+    {
+      ROS_DEBUG_STREAM("signal id: " << (int)pair.first << ", regem id: " << *pair.second.begin());
+    }
+    for (auto pair : world_model_->sim_.signal_group_to_exit_lanelet_ids_)
+    {
+      ROS_DEBUG_STREAM("signal id: " << (int)pair.first << ", regem id: " << *pair.second.begin());
+    }
+    for (auto pair : world_model_->sim_.signal_group_to_traffic_light_id_)
+    {
+      ROS_DEBUG_STREAM("signal id: " << (int)pair.first << ", regem id: " << pair.second);
+    }
+  }
 
   ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " requests removal of size: " << gf_ptr->remove_list_.size());
   for (auto pair : gf_ptr->remove_list_)

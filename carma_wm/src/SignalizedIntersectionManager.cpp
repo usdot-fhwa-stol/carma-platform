@@ -17,6 +17,7 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <carma_wm/SignalizedIntersectionManager.h>
+#include <algorithm>
 
 namespace carma_wm
 {
@@ -50,7 +51,7 @@ namespace carma_wm
 
     auto ref_node  = local_projector.forward(gps_point);
 
-    ROS_DEBUG_STREAM("Reference node in map frame x: " << ref_node.x() << ", y: " << ref_node.y());
+    ROS_ERROR_STREAM("Reference node in map frame x: " << ref_node.x() << ", y: " << ref_node.y());
     
     std::vector<lanelet::Point3d> node_list;
 
@@ -59,7 +60,7 @@ namespace carma_wm
       double curr_x = ref_node.x();
       double curr_y = ref_node.y();
 
-      ROS_DEBUG_STREAM("Processing Lane id: " << (int)lane.lane_id);
+      ROS_ERROR_STREAM("Processing Lane id: " << (int)lane.lane_id);
       
       size_t min_number_of_points = 2; // only two points are sufficient to get corresponding lanelets
 
@@ -75,9 +76,18 @@ namespace carma_wm
         curr_y = lane.node_list.nodes.node_set_xy[i].delta.y + curr_y;
         lanelet::Point3d curr_node{map->pointLayer.uniqueId(), curr_x, curr_y, 0};
 
-        ROS_DEBUG_STREAM("Current node x: " << curr_x << ", y: " << curr_y);
+        ROS_ERROR_STREAM("Current node x: " << curr_x << ", y: " << curr_y);
 
         node_list.push_back(curr_node);
+      }
+
+      ROS_ERROR_STREAM("Lane directions: " << (int)lane.lane_attributes.directional_use.lane_direction); 
+      
+      if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::INGRESS)
+      {
+        // flip direction if ingress to pick up correct lanelets
+        ROS_ERROR_STREAM("Reversed the node list!");
+        std::reverse(node_list.begin(), node_list.end());
       }
       
       for (auto node : node_list)
@@ -104,16 +114,16 @@ namespace carma_wm
 
       lanelet::Id corresponding_lanelet_id = affected_llts.front().id(); 
 
-      ROS_DEBUG_STREAM("Found existing lanelet id: " << corresponding_lanelet_id);
+      ROS_ERROR_STREAM("Found existing lanelet id: " << corresponding_lanelet_id);
 
       if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::INGRESS)
       {
-        ROS_DEBUG_STREAM("Detected INGRESS, " << (int)lane.lane_id);
+        ROS_ERROR_STREAM("Detected INGRESS, " << (int)lane.lane_id);
         entry[lane.lane_id] = corresponding_lanelet_id;
       }
       else if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::EGRESS)
       {
-        ROS_DEBUG_STREAM("Detected EGRESS, " << (int)lane.lane_id);
+        ROS_ERROR_STREAM("Detected EGRESS, " << (int)lane.lane_id);
         exit[lane.lane_id] = corresponding_lanelet_id;
       }
       // ignoring types that are neither ingress nor egress 
@@ -128,7 +138,7 @@ namespace carma_wm
       {
         if (exit.find(exit_lane) != exit.end())
         {
-          ROS_DEBUG_STREAM("Adding exit_lane id: " << exit_lane);
+          ROS_ERROR_STREAM("Adding exit_lane id: " << exit_lane);
           signal_group_to_exit_lanelet_ids_[iter->first].insert(exit[exit_lane]);
         }
         else
@@ -143,7 +153,7 @@ namespace carma_wm
     {
       for (auto entry_lane : iter->second)
       {
-        ROS_DEBUG_STREAM("Adding  entry_lane id: " << entry_lane);
+        ROS_ERROR_STREAM("Adding entry_lane id: " << entry_lane);
         if (entry.find(entry_lane) != entry.end())
         {
           signal_group_to_entry_lanelet_ids_[iter->first].insert(entry[entry_lane]);
@@ -271,7 +281,7 @@ namespace carma_wm
 
       if (intersection_id == lanelet::InvalId)
       {
-        ROS_DEBUG_STREAM("No existing intersection found. Creating a new one...");
+        ROS_ERROR_STREAM("No existing intersection found. Creating a new one...");
         intersection_id = lanelet::utils::getId();
 
         std::vector<lanelet::Lanelet> interior_llts = identifyInteriorLanelets(entry_llts, map);
@@ -287,7 +297,7 @@ namespace carma_wm
     // check if it already exists
     for (auto sig_grp_pair : signal_group_to_exit_lanelet_ids_)
     {
-      ROS_DEBUG_STREAM("Creating signal for: " << (int)sig_grp_pair.first);
+      ROS_ERROR_STREAM("Creating signal for: " << (int)sig_grp_pair.first);
       // ignore the traffic signals already inside
       if (signal_group_to_traffic_light_id_.find(sig_grp_pair.first) != signal_group_to_traffic_light_id_.end() &&
            map->regulatoryElementLayer.exists(signal_group_to_traffic_light_id_[sig_grp_pair.first]))
