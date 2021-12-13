@@ -342,36 +342,55 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       // lane following to intersection
       
       ROS_DEBUG_STREAM("time_to_schedule_stop  " << time_to_schedule_stop);
-      int case_num = determineSpeedProfileCase(distance_to_stopline-config_.stop_line_buffer , current_state.speed, time_to_schedule_stop + 30.0, speed_limit_);
-      ROS_DEBUG_STREAM("case_num:  " << case_num);
 
-      if (case_num < 3)
+      double desired_deceleration = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+
+
+      double safe_distance = pow(current_state.speed, 2)/(2*desired_deceleration);
+       ROS_DEBUG_STREAM("safe_distance:  " << safe_distance);
+
+      if (distance_to_stopline > safe_distance)
       {
-        resp.new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(
-          case_num, current_downtrack_, stop_intersection_down_track, current_state.speed, 0.0,
-          current_state.stamp, time_to_schedule_stop,
-          lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); })));
+        int case_num = determineSpeedProfileCase(distance_to_stopline , current_state.speed, time_to_schedule_stop, speed_limit_);
+        ROS_DEBUG_STREAM("case_num:  " << case_num);
 
+        if (case_num < 3)
+        {
+          resp.new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(
+            case_num, current_state.downtrack, stop_intersection_down_track-config_.stop_line_buffer, current_state.speed, 0.0,
+            current_state.stamp, time_to_schedule_stop,
+            lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); })));
+
+        }
+        else
+        {
+          ROS_DEBUG_STREAM("Decelerating to stop at the intersection");
+
+          // at the stop line or decelerating to stop line
+          // stop and wait maneuver
+        
+          std::vector<lanelet::ConstLanelet> crossed_lanelets =
+              getLaneletsBetweenWithException(current_downtrack_, stop_intersection_down_track, true, true);
+          
+
+          double stopping_accel = caseThreeSpeedProfile(distance_to_stopline, current_state.speed, time_to_schedule_stop);
+          // TODO: temp val for acc- remove when carma streets is running
+          stopping_accel = std::max(-stopping_accel, desired_deceleration);
+          ROS_DEBUG_STREAM("used deceleration for case three: " << stopping_accel);
+          resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
+            current_state.downtrack, stop_intersection_down_track-config_.stop_line_buffer, current_state.speed, crossed_lanelets[0].id(),
+            crossed_lanelets[0].id(), stopping_accel, current_state.stamp,
+            current_state.stamp + ros::Duration(time_to_schedule_stop)));
+
+        }
       }
       else
       {
-        ROS_DEBUG_STREAM("Decelerating to stop at the intersection");
-
-        // at the stop line or decelerating to stop line
-        // stop and wait maneuver
-       
-        std::vector<lanelet::ConstLanelet> crossed_lanelets =
-            getLaneletsBetweenWithException(current_downtrack_, stop_intersection_down_track, true, true);
-        
-
-        double stopping_accel = caseThreeSpeedProfile(distance_to_stopline-config_.stop_line_buffer-current_state.downtrack, current_state.speed, time_to_schedule_stop);
-        // TODO: temp val for acc- remove when carma streets is running
-        stopping_accel = std::max(-stopping_accel, 1.5);
+        ROS_DEBUG_STREAM("Too close to the intersection, constant deceleration to stop");
         resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-          current_state.downtrack, stop_intersection_down_track-config_.stop_line_buffer, current_state.speed, crossed_lanelets[0].id(),
-          crossed_lanelets[0].id(), stopping_accel, current_state.stamp,
-          current_state.stamp + ros::Duration(time_to_schedule_stop)));
-
+            current_state.downtrack, stop_intersection_down_track-config_.stop_line_buffer, current_state.speed, crossed_lanelets[0].id(),
+            crossed_lanelets[0].id(), desired_deceleration, current_state.stamp,
+            current_state.stamp + ros::Duration(time_to_schedule_stop)));
       }
   }
 
