@@ -300,7 +300,9 @@ namespace platoon_strategic_ihp
         // UCLA: add params for frontal join
         std::string JOIN_FROM_FRONT_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
         std::string  MOBILITY_STRATEGY = "Carma/Platooning";
-        
+
+        double minGap_ = 22.0;                                  // m
+        double maxGap_ = 32.0;                                  // m
         std::string previousFunctionalDynamicLeaderID_ = "";
         int previousFunctionalDynamicLeaderIndex_ = -1;
 
