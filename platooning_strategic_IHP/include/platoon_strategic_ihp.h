@@ -186,6 +186,25 @@ namespace platoon_strategic_ihp
             * \brief Compose Platoon information message
             * 
             * \return PlatooningInfo msg
+
+            * Note: There is a difference between the "platoon info status" versus the the "platoon strategic plugin states".
+            *       
+            *       [platooning info status]
+            *       The "platooning info status" reflect the overall operating status. The status can 
+            *       include vehicles in different "platoon strategic plugin states" as long as the current state is relavent 
+            *       to the genral status.
+            *       
+            *       [platoon strategic plugin states]
+            *       The "platoon strategic plugin states" manage the negotiation strategies and 
+            *       vehicle communication in a more refined manner that can achieve the "platooning info status'" objective. Hence, 
+            *       vehicles in different states will behave differently based on the corresponding roles and predefined rules. 
+            *       However, they can belong to the same "platooning info statu" for the same operation purpose. 
+            *       
+            *       [Example]  
+            *       Multiple strategic states, such as "leader aborting" and "candidate follower", can both be mapped to 
+            *       "connecting to new leader" platooning info status, as both states are serving the same purpose of connecting 
+            *       to the leader. 
+            * 
             */
             cav_msgs::PlatooningInfo composePlatoonInfoMsg();
 

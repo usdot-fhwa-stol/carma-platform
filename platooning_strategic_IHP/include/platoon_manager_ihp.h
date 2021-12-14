@@ -156,13 +156,15 @@ namespace platoon_strategic_ihp
         void updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double curSpeed);
         
         /**
-        * \brief Returns total size of the platoon.
+        * \brief Returns total size of the platoon , in number of vehicles.
         */
         int getTotalPlatooningSize();
 
 
         /**
         * \brief Returns dynamic leader of the host vehicle.
+        * 
+        * \return The current dynamic leader as a vehcile object. 
         */
         PlatoonMember getDynamicLeader();
 
@@ -197,47 +199,47 @@ namespace platoon_strategic_ihp
         void changeFromLeaderToFollower(std::string newPlatoonId);
         
         /**
-        * \brief Get number of vehicles in front of host vehicle in platoon
+        * \brief Get number of vehicles in front of host vehicle inside platoon
         */
         int getNumberOfVehicleInFront();
         
         /**
-        * \brief Returns Length of the platoon
+        * \brief Returns overall length of the platoon. in m.
         */
         double getCurrentPlatoonLength();
 
         /**
-        * \brief Returns downtrack distance of the rear vehicle in platoon
+        * \brief Returns downtrack distance of the rear vehicle in platoon, in m.
         */
         double getPlatoonRearDowntrackDistance();
         
         /**
-        * \brief Returns distance (m) to the predessecor vehicle
+        * \brief Returns distance to the predessecor vehicle, in m.
         */
         double getDistanceToPredVehicle();
         
         /**
-        * \brief Returns current speed
+        * \brief Returns current speed, in m/s.
         */
         double getCurrentSpeed() const;
         
         /**
-        * \brief Returns command speed
+        * \brief Returns command speed. in m/s.
         */
         double getCommandSpeed();
 
         /**
-        * \brief Returns current downtrack distance
+        * \brief Returns current downtrack distance, in m.
         */
         double getCurrentDowntrackDistance() const;
 
         /**
-        * \brief Returns current host static ID 
+        * \brief Returns current host static ID as a string.
         */
         std::string getHostStaticID() const;
 
         /**
-         * \brief UCLA: Return the platoon leader downtrack distance in m.
+         * \brief UCLA: Return the platoon leader downtrack distance, in m.
          */
         double getPlatoonFrontDowntrackDistance();
 
@@ -331,7 +333,7 @@ namespace platoon_strategic_ihp
         * \param downtrackDistance: a vector containing the downtrack distances of all members.
         * \param speed: a vector containing the speeds of all members.
         * 
-        * \return A vector containing the time headaway of all platoon members.
+        * \return A vector containing the time headaway of all platoon members, each headway is in s.
         */
         std::vector<double> calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed) const;
         

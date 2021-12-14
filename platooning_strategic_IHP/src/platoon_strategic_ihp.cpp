@@ -404,11 +404,18 @@ namespace platoon_strategic_ihp
     // Compose platoon info msg for all states.
     cav_msgs::PlatooningInfo PlatoonStrategicIHPPlugin::composePlatoonInfoMsg()
     {
+        /**
+         * Note: There is a difference between the "platoon info status" versus the the "platoon strategic plugin states".
+         *       The "platooning info status" reflect the overall operating status. 
+         *       The "platoon strategic plugin states" manage the negotiation strategies and vehicle communication in a more refined manner. 
+         * A more detailed note can be found in the corresponding function declaration in "platoon_strategic_ihp.h" file.
+         */
+
         cav_msgs::PlatooningInfo status_msg;
 
         if (pm_.current_platoon_state == PlatoonState::STANDBY)
         {
-            status_msg.state = cav_msgs::PlatooningInfo::DISABLED;
+            status_msg.state = cav_msgs::PlatooningInfo::SEARCHING;
         }
         else if (pm_.current_platoon_state == PlatoonState::LEADER)
         {
@@ -457,7 +464,7 @@ namespace platoon_strategic_ihp
             if (pm_.current_platoon_state == PlatoonState::FOLLOWER)
             {
                 ROS_DEBUG_STREAM("isFollower: " << pm_.isFollower);
-                ROS_DEBUG_STREAM("pm platoonsize: " << pm_.platoon.size());
+                ROS_DEBUG_STREAM("pm platoonsize: " << pm_.getTotalPlatooningSize());
 
                 pm_.isFollower = true;
 
@@ -827,7 +834,7 @@ namespace platoon_strategic_ihp
             double frontVehicleCtd = wm_->routeTrackPos(incoming_pose).crosstrack;
 
             // Use pm_ to find platoon end vehicle and its downtrack in m.
-            int rearVehicleIndex = pm_.platoon.size() - 1;
+            int rearVehicleIndex = pm_.getTotalPlatooningSize()- 1;
             double rearVehicleDtd = pm_.platoon[rearVehicleIndex].vehiclePosition; 
             
             // downtrack of the platoon leader --> used for frontal join
