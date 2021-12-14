@@ -470,7 +470,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     double end_of_intersection = std::max(config_.intersection_exit_zone_length, intersection_end_downtrack - stop_intersection_down_track);
     ROS_DEBUG_STREAM("Actual length of intersection: " << intersection_end_downtrack - stop_intersection_down_track);
     ROS_DEBUG_STREAM("Used length of intersection: " << end_of_intersection);
-    if (distance_to_stopline < -end_of_intersection)
+    if (distance_to_stopline < -(end_of_intersection+config_.intersection_exit_zone_length))
     {
       ROS_DEBUG_STREAM("Vehicle is out of intersection, stop planning...");
       // once the vehicle crosses the intersection, reset the flag to stop planning and publishing status/intent
