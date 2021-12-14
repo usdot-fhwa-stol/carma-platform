@@ -99,8 +99,6 @@ namespace platoon_strategic_ihp
     {
         // Static ID is permanent ID for each vehicle
         std::string staticId;
-        // Current BSM Id for each CAV
-        std::string bsmId;
         // Vehicle real time command speed in m/s
         double commandSpeed;
         // Actual vehicle speed in m/s
@@ -305,29 +303,9 @@ namespace platoon_strategic_ihp
         std::string previousFunctionalDynamicLeaderID_ = "";
         int previousFunctionalDynamicLeaderIndex_ = -1;
 
-        // Thresholds to determine violation.
-        double maxAllowableHeadaway_ = 4.0; // s
-        double minAllowableHeadaway_ = 1.6; // s
-
-        // Thresholds to determine gap stable (i.e., Determines whether to switch dynamic leader for APF).
-        double headawayStableUpperBond_ = 3.9; // s
-        double headawayStableLowerBond_ = 1.7 ; // s
-
         double vehicleLength_ = 5.0;  // m
         double gapWithPred_ = 0.0; // time headway with predecessor, in s.
         double downtrack_progress_ = 0; // m
-
-        // ---------------------- UCLA: parameters for IHP platoon trajectory regulation ----------------
-        /**
-        * \brief Parameter sets for IHP platoon trajectory regulation algorithm. 
-        * Please refer to the updated design doc for detailed parameter description.
-        */
-        double ss_theta = 4.0; // Stanstill determining threshold, in m/s.
-        double standstill = 2.0; // Stanstill reaction time adjuster, in s.
-        double inter_tau = 1.5; // Inter-platoon time gap, in s.
-        double intra_tau = 0.6; // Intra-platoon time gao, in s.
-        double gap_weight = 0.9; // Weighted ratio for time-gap based calculation, unitless.
-        //--------------------------------------------------------------------------------
 
         std::string algorithmType_ = "APF_ALGORITHM";
 
