@@ -138,18 +138,16 @@ void SCIStrategicPlugin::parseStrategyParams(const std::string& strategy_params)
   scheduled_stop_time_ = std::stoull(st_parsed[1]);
   ROS_DEBUG_STREAM("scheduled_stop_time_: " << scheduled_stop_time_);
 
-  // TODO temp order of et and dt
-  std::vector<std::string> dt_parsed;
-  boost::algorithm::split(dt_parsed, inputsParams[1], boost::is_any_of(":"));
-  scheduled_depart_time_ = std::stoull(dt_parsed[1]);
-  ROS_DEBUG_STREAM("scheduled_depart_time_: " << scheduled_depart_time_);
-            
   std::vector<std::string> et_parsed;
-  boost::algorithm::split(et_parsed, inputsParams[2], boost::is_any_of(":"));
+  boost::algorithm::split(et_parsed, inputsParams[1], boost::is_any_of(":"));
   scheduled_enter_time_ = std::stoull(et_parsed[1]);
   ROS_DEBUG_STREAM("scheduled_enter_time_: " << scheduled_enter_time_);
 
-  
+  std::vector<std::string> dt_parsed;
+  boost::algorithm::split(dt_parsed, inputsParams[2], boost::is_any_of(":"));
+  scheduled_depart_time_ = std::stoull(dt_parsed[1]);
+  ROS_DEBUG_STREAM("scheduled_depart_time_: " << scheduled_depart_time_);
+
 
   std::vector<std::string> dp_parsed;
   boost::algorithm::split(dp_parsed, inputsParams[3], boost::is_any_of(":"));
@@ -320,7 +318,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
   uint32_t base_time = street_msg_timestamp_;
   
-  bool time_to_approach_int = (int(scheduled_stop_time_) - int(street_msg_timestamp_))>0;
+  bool time_to_approach_int = int((scheduled_stop_time_) - (street_msg_timestamp_))>0;
   ROS_DEBUG_STREAM("time_to_approach_int  " << time_to_approach_int);
   
 
@@ -394,15 +392,17 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       }
   }
 
-  bool time_to_reach_stopline = (int(street_msg_timestamp_) - int(scheduled_stop_time_)) > 0;
-  bool not_time_to_intersection_traverse = (int(street_msg_timestamp_) - int(scheduled_enter_time_)) < 0;
+  bool time_to_reach_stopline = int((street_msg_timestamp_) - (scheduled_stop_time_)) >= 0;
+  ROS_DEBUG_STREAM("time_to_reach_stopline: " << time_to_reach_stopline);
+  bool not_time_to_intersection_traverse = int((street_msg_timestamp_) - (scheduled_enter_time_)) < 0;
+  ROS_DEBUG_STREAM("not_time_to_intersection_traverse: " << not_time_to_intersection_traverse);
   bool time_to_stop_at_stopline = (time_to_reach_stopline && not_time_to_intersection_traverse);
   ROS_DEBUG_STREAM("time_to_stop_at_stopline: " << time_to_stop_at_stopline);
 
   if (time_to_stop_at_stopline)
   {
     base_time = std::max(scheduled_stop_time_, street_msg_timestamp_);
-    double stop_duration = (scheduled_enter_time_ - base_time)/1000;
+    double stop_duration = int(scheduled_enter_time_ - base_time)/1000;
     ROS_DEBUG_STREAM("stop_duration:  " << stop_duration);
     ROS_DEBUG_STREAM("Planning stop and wait maneuver");
     double stopping_accel = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
@@ -432,7 +432,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
   }
 
-  bool time_for_crossing = (int(street_msg_timestamp_) - int(scheduled_enter_time_)) >= 0;
+  bool time_for_crossing = int((street_msg_timestamp_) - (scheduled_enter_time_)) >= 0;
   // time to cross intersection
 
   ROS_DEBUG_STREAM("time for crossing? " << time_for_crossing);
@@ -463,7 +463,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     double intersection_speed_limit = findSpeedLimit(nearest_stop_intersection->lanelets().front());
 
     resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
-      current_state.downtrack, intersection_end_downtrack+20, current_state.speed, intersection_speed_limit,
+      current_state.downtrack, intersection_end_downtrack+config_.intersection_exit_zone_length, current_state.speed, intersection_speed_limit,
       current_state.stamp, req.header.stamp + ros::Duration(intersection_transit_time), intersection_turn_direction_, crossed_lanelets.front().id(), crossed_lanelets.back().id()));
     
     // when passing intersection, set the flag to false
