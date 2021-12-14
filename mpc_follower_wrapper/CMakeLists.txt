@@ -133,8 +133,6 @@ target_link_libraries( mpc_follower_wrapper_worker_library
 
 target_link_libraries(${PROJECT_NAME}_node
   mpc_follower_wrapper_worker_library
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
 )
 
 #############

@@ -84,7 +84,6 @@ target_link_libraries(${PROJECT_NAME}_lib
 )
 target_link_libraries(${PROJECT_NAME}_node
   ${PROJECT_NAME}_lib
-  ${catkin_LIBRARIES}
 )
 
 #############

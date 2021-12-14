@@ -61,7 +61,7 @@ add_library(${PROJECT_NAME}_lib
 
 target_link_libraries(${PROJECT_NAME}_lib ${catkin_LIBRARIES})
 
-target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib)
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 add_dependencies(${PROJECT_NAME}_lib ${catkin_EXPORTED_TARGETS})
 

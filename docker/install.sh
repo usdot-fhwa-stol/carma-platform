@@ -46,8 +46,8 @@ source /home/carma/catkin/setup.bash
 
 cd ~/carma_ws
 
-echo "Building ROS1 CARMA Components"
+echo "Building ROS2 CARMA Components"
 
 colcon build --install-base /opt/carma/install_ros2 --build-base build_ros2 --cmake-args -DCMAKE_BUILD_TYPE=Release
 
-echo "Build of ROS1 CARMA Components Complete"
+echo "Build of ROS2 CARMA Components Complete"

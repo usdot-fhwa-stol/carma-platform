@@ -62,7 +62,7 @@ add_dependencies(route_following_plugin_lib ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(route_following_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
-target_link_libraries(${PROJECT_NAME} route_following_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} route_following_plugin_lib)
 
 #############
 ## Install ##

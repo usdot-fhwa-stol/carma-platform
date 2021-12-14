@@ -78,15 +78,14 @@ add_library(plugin_driver_manager_library
   src/entry.cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}
-  ${Boost_LIBRARIES}
-  ${catkin_LIBRARIES}
-  plugin_driver_manager_library
-)
 
 target_link_libraries(plugin_driver_manager_library
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
+)
+
+target_link_libraries(${PROJECT_NAME}
+  plugin_driver_manager_library
 )
 
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})

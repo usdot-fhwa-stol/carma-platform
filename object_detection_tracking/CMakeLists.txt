@@ -55,7 +55,6 @@ target_link_libraries(${node_lib}
 )
 
 target_link_libraries(${node_exec}
-        ${worker_lib}
         ${node_lib}
 )
 

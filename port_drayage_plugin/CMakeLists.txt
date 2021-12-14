@@ -98,8 +98,6 @@ target_link_libraries(port_drayage_plugin_library
 
 target_link_libraries(${PROJECT_NAME}
   port_drayage_plugin_library
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
 )
 
 #############

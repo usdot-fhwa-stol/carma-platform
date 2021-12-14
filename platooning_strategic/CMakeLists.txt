@@ -73,7 +73,7 @@ add_library(platoon_strategic_plugin_lib
 add_dependencies(platoon_strategic_plugin_lib ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(platoon_strategic_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} platoon_strategic_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} platoon_strategic_plugin_lib)
 
 
 #############

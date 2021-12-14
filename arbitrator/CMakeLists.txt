@@ -97,7 +97,6 @@ target_link_libraries(arbitrator_library ${catkin_LIBRARIES})
 
 target_link_libraries(${PROJECT_NAME}_node
   arbitrator_library
-  ${catkin_LIBRARIES}
 )
 
 #############

@@ -94,7 +94,6 @@ target_link_libraries(cost_plugin_system_library
 )
 target_link_libraries(${PROJECT_NAME}_node
 cost_plugin_system_library
-  ${catkin_LIBRARIES}
 )
 
 #############

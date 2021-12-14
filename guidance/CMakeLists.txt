@@ -80,7 +80,6 @@ target_link_libraries(guidance_state_machine_library
 )
 target_link_libraries(${PROJECT_NAME}_node
   guidance_state_machine_library
-  ${catkin_LIBRARIES}
 )
 
 #############
