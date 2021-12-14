@@ -290,6 +290,9 @@ namespace platoon_strategic_ihp
         
     private:
 
+        // local copy of configuration file
+        PlatoonPluginConfig config_;
+
         std::string targetPlatoonId;
         std::string OPERATION_INFO_TYPE = "INFO";
         std::string OPERATION_STATUS_TYPE = "STATUS";
