@@ -91,10 +91,13 @@ set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME port_drayage_plugin
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}
-  port_drayage_plugin_library
+target_link_libraries(port_drayage_plugin_library
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+)
+
+target_link_libraries(${PROJECT_NAME}
+  port_drayage_plugin_library
 )
 
 #############

@@ -75,9 +75,11 @@ add_library(guidance_state_machine_library src/guidance/guidance_state_machine.c
 add_dependencies(guidance_state_machine_library ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
+target_link_libraries(guidance_state_machine_library
+  ${catkin_LIBRARIES}
+)
 target_link_libraries(${PROJECT_NAME}_node
   guidance_state_machine_library
-  ${catkin_LIBRARIES}
 )
 
 #############

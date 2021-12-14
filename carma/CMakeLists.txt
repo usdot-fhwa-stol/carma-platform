@@ -18,37 +18,54 @@
 # CMake
 ##############################################################################
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(carma)
 
 find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
 carma_package()
 
-##############################################################################
-# Catkin
-##############################################################################
+find_package(ros_environment REQUIRED)
 
-find_package(catkin REQUIRED
-        cav_msgs
-        j2735_msgs
-        autoware_msgs
-        derived_object_msgs
-)
+set(ROS_VERSION $ENV{ROS_VERSION})
 
-catkin_package()
+if(${ROS_VERSION} EQUAL 1) # ROS 1
 
-##############################################################################
-# Installation
-##############################################################################
+        ##############################################################################
+        # Catkin
+        ##############################################################################
 
-# Instal Binaries
-install(DIRECTORY
-        launch
-        routes
-        scripts
-        rviz
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-install(DIRECTORY
-        ui/config
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/ui)
+        find_package(catkin REQUIRED
+                cav_msgs
+                j2735_msgs
+                autoware_msgs
+        )
+
+        catkin_package()
+
+        ##############################################################################
+        # Installation
+        ##############################################################################
+
+        # Instal Binaries
+        install(DIRECTORY
+                launch
+                routes
+                scripts
+                rviz
+                DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+        install(DIRECTORY
+                ui/config
+                DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/ui)
+
+else() # ROS2
+
+        find_package(ament_cmake_auto REQUIRED)
+        ament_auto_find_build_dependencies()
+
+
+        ament_auto_package(
+                INSTALL_TO_SHARE config launch routes scripts rviz
+        )
+endif()
+
+

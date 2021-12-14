@@ -81,8 +81,8 @@ TEST(StopandWait, TestStopandWaitPlanning)
   carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
 
   cav_srvs::PlanTrajectoryRequest req;
-  req.vehicle_state.X_pos_global = 1.5;
-  req.vehicle_state.Y_pos_global = 5;
+  req.vehicle_state.x_pos_global = 1.5;
+  req.vehicle_state.y_pos_global = 5;
   req.vehicle_state.orientation = 3.14/2;
   req.vehicle_state.longitudinal_vel = 8.9408; // 20 mph
   req.header.stamp = ros::Time(0.0);

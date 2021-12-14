@@ -52,18 +52,17 @@ include_directories(
   include
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
 
 add_executable( ${PROJECT_NAME}
-  ${headers}
   src/route_following_plugin.cpp
   src/main.cpp)
 
-#add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 add_library(route_following_plugin_lib src/route_following_plugin.cpp)
 add_dependencies(route_following_plugin_lib ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME} route_following_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(route_following_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+target_link_libraries(${PROJECT_NAME} route_following_plugin_lib)
 
 #############
 ## Install ##

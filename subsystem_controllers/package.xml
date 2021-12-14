@@ -24,6 +24,7 @@
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <build_depend>ament_auto_cmake</build_depend>
 
   <build_depend>carma_cmake_common</build_depend>
   <depend>carma_ros2_utils</depend>
@@ -31,6 +32,7 @@
   <depend>lifecycle_msgs</depend>
   <depend>rclcpp</depend>
   <depend>ros2_lifecycle_manager</depend>
+  <depend>Boost</depend>
   <test_depend>launch_testing</test_depend>
   <test_depend>launch</test_depend>
   <test_depend>system_controller</test_depend>

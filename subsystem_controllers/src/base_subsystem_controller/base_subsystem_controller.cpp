@@ -17,6 +17,8 @@
 #include <unordered_set>
 #include "subsystem_controllers/base_subsystem_controller/base_subsystem_controller.hpp"
 #include "subsystem_controllers/base_subsystem_controller/base_subsystem_controller_config.hpp"
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 using std_msec = std::chrono::milliseconds;
 
@@ -231,16 +233,74 @@ namespace subsystem_controllers
   std::vector<std::string> BaseSubsystemController::get_nodes_in_namespace(const std::string &node_namespace) const
   {
 
+    // These two services are exposed by lifecycle nodes. 
+    static const std::string CHANGE_STATE_SRV = "/change_state";
+    static const std::string GET_STATE_SRV = "/get_state";
+
+    static const std::string CHANGE_STATE_TYPE = "lifecycle_msgs/srv/ChangeState";
+    static const std::string GET_STATE_TYPE = "lifecycle_msgs/srv/GetState";
+
+    static const std::string this_full_name =  std::string(get_namespace()) + "/" + std::string(get_name());
+
+
     auto all_nodes = this->get_node_names();
 
     std::vector<std::string> nodes_in_namspace;
     nodes_in_namspace.reserve(all_nodes.size());
 
+
     for (const auto &node : all_nodes)
     {
+
+      if (node == this_full_name)
+        continue; // no need for this node to try managing itself
+
       if (node.find(node_namespace) == 0)
       { // The node is in the provided namespace
-        nodes_in_namspace.emplace_back(node);
+
+
+        ////
+        // In the following section of code we check if the current node in the target namespace is actually a lifecycle node
+        // This check is done by evaluating if that nodes exposes the change_state and get_state lifecycle services. 
+        // If the node does not expose these services then it cannot be managed by this component. 
+        // However, this does not result in an error as the node could be wrapped by a lifecycle component wrapper
+        ////
+
+        // First extract the service names and types for the current node. This requires seperating the node base name and namespace
+        std::vector<std::string> result;
+        boost::split(result, node, boost::is_any_of("/"));
+
+        if (result.empty()) {
+          throw std::runtime_error("Fully specified node name does not contain '/' seems to suggest internal ROS error.");
+        }
+
+        std::string base_name = result.back();
+        result.pop_back();
+        std::string namespace_joined = boost::algorithm::join(result, "/");
+
+        auto services_and_types = get_service_names_and_types_by_node(base_name, namespace_joined);
+
+
+        // Next we check if both services are available with the correct type
+        // Short variable names used here to make conditional more readable
+        const std::string cs_srv = node + CHANGE_STATE_SRV;
+        const std::string gs_srv = node + GET_STATE_SRV;
+
+        if (services_and_types.find(cs_srv) != services_and_types.end() 
+          && services_and_types.find(gs_srv) != services_and_types.end()
+          && std::find(services_and_types.at(cs_srv).begin(), services_and_types.at(cs_srv).end(), CHANGE_STATE_TYPE) != services_and_types.at(cs_srv).end()
+          && std::find(services_and_types.at(gs_srv).begin(), services_and_types.at(gs_srv).end(), GET_STATE_TYPE) != services_and_types.at(gs_srv).end())
+        {
+
+          nodes_in_namspace.emplace_back(node);
+
+        } else {
+          // Current node is not a lifecycle node so log a warning
+          RCLCPP_WARN_STREAM(get_logger(), "Failed to find lifecycle services for node: " << node << " this node will not be managed. NOTE: If this node is wrapped by a lifecycle component that is managed then this is not an issue.");
+          
+          continue;
+
+        }
       }
     }
 

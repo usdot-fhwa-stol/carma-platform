@@ -77,7 +77,7 @@ namespace mobilitypath_publisher
     {
         cav_msgs::MobilityPath mobility_path_msg;
         uint64_t millisecs =trajectory_plan.header.stamp.toNSec()/1000000;
-        mobility_path_msg.header = composeMobilityHeader(millisecs);
+        mobility_path_msg.m_header = composeMobilityHeader(millisecs);
         
         if (!map_projector_) {
             ROS_ERROR_STREAM("MobilityPath cannot be populated as map projection is not available");

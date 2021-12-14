@@ -74,22 +74,22 @@ namespace mobilitypath_visualizer {
     
     void MobilityPathVisualizer::callbackMobilityPath(const cav_msgs::MobilityPath& msg)
     {
-        if (msg.header.timestamp == 0) //if empty
+        if (msg.m_header.timestamp == 0) //if empty
         {
             host_marker_received_ = false;
             return;
         } 
-        ROS_DEBUG_STREAM("Received a msg from sender: " << msg.header.sender_id << ", and plan id:" << msg.header.plan_id << ", for receiver:" 
-                            << msg.header.recipient_id << ", time:" << msg.header.timestamp << ", at now: " << std::to_string(ros::Time::now().toSec()));
+        ROS_DEBUG_STREAM("Received a msg from sender: " << msg.m_header.sender_id << ", and plan id:" << msg.m_header.plan_id << ", for receiver:" 
+                            << msg.m_header.recipient_id << ", time:" << msg.m_header.timestamp << ", at now: " << std::to_string(ros::Time::now().toSec()));
 
-        if (latest_cav_mob_path_msg_.find(msg.header.sender_id) != latest_cav_mob_path_msg_.end() &&
-            msg.header.plan_id.compare(latest_cav_mob_path_msg_[msg.header.sender_id].header.plan_id) == 0 &&
-            msg.header.timestamp == latest_cav_mob_path_msg_[msg.header.sender_id].header.timestamp)
+        if (latest_cav_mob_path_msg_.find(msg.m_header.sender_id) != latest_cav_mob_path_msg_.end() &&
+            msg.m_header.plan_id.compare(latest_cav_mob_path_msg_[msg.m_header.sender_id].m_header.plan_id) == 0 &&
+            msg.m_header.timestamp == latest_cav_mob_path_msg_[msg.m_header.sender_id].m_header.timestamp)
         {
-            ROS_DEBUG_STREAM("Already received this plan id:" << msg.header.plan_id << "from sender_id: " << msg.header.sender_id);
+            ROS_DEBUG_STREAM("Already received this plan id:" << msg.m_header.plan_id << "from sender_id: " << msg.m_header.sender_id);
             return;
         }
-        latest_cav_mob_path_msg_[msg.header.sender_id] = msg;
+        latest_cav_mob_path_msg_[msg.m_header.sender_id] = msg;
 
         if (!map_projector_) {
             ROS_DEBUG_STREAM("Cannot visualize mobility path as map projection not yet available");
@@ -97,7 +97,7 @@ namespace mobilitypath_visualizer {
         }
 
         MarkerColor cav_color;
-        if (msg.header.sender_id.compare(host_id_) ==0)
+        if (msg.m_header.sender_id.compare(host_id_) ==0)
         {
             cav_color.green = 1.0;
             host_marker_ = composeVisualizationMarker(msg,cav_color);
@@ -108,7 +108,7 @@ namespace mobilitypath_visualizer {
         {
             cav_color.blue = 1.0;
             cav_markers_.push_back(composeVisualizationMarker(msg,cav_color));
-            ROS_DEBUG_STREAM("Composed cav marker successfuly! with sender_id: " << msg.header.sender_id);
+            ROS_DEBUG_STREAM("Composed cav marker successfuly! with sender_id: " << msg.m_header.sender_id);
         }
 
     }
@@ -119,7 +119,7 @@ namespace mobilitypath_visualizer {
         
         visualization_msgs::Marker marker;
         marker.header.frame_id = "map";
-        marker.header.stamp = ros::Time((double)msg.header.timestamp/1000.0);
+        marker.header.stamp = ros::Time((double)msg.m_header.timestamp/1000.0);
         marker.type = visualization_msgs::Marker::ARROW;
         marker.action = visualization_msgs::Marker::ADD;
         marker.ns = "mobilitypath_visualizer";
@@ -134,7 +134,7 @@ namespace mobilitypath_visualizer {
         marker.color.b = (float)color.blue;
         marker.color.a = 1.0f;
         
-        size_t count = std::max(prev_marker_list_size_[msg.header.sender_id], msg.trajectory.offsets.size());
+        size_t count = std::max(prev_marker_list_size_[msg.m_header.sender_id], msg.trajectory.offsets.size());
 
         auto curr_location_msg = msg; //variable to update on each iteration as offsets are measured since last traj point
         
@@ -181,7 +181,7 @@ namespace mobilitypath_visualizer {
         }
         ROS_DEBUG_STREAM("Last ECEF Point- DEBUG x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
         ROS_DEBUG_STREAM("Last Map Point- DEBUG x: " << arrow_end.x << ", y:" << arrow_end.y);
-        prev_marker_list_size_[msg.header.sender_id] = msg.trajectory.offsets.size();
+        prev_marker_list_size_[msg.m_header.sender_id] = msg.trajectory.offsets.size();
         
         return output;
     }

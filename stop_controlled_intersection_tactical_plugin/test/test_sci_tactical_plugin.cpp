@@ -59,14 +59,14 @@ namespace stop_controlled_intersection_transit_plugin
     //In order to be case 1 - estimated_stop_time > scheduled_stop_time and speed_before_stop < speed_limit
     //speed_before_stop
      cav_srvs::PlanTrajectoryRequest req;
-     req.vehicle_state.X_pos_global = 1.5;
-     req.vehicle_state.Y_pos_global = 5.0;
+     req.vehicle_state.x_pos_global = 1.5;
+     req.vehicle_state.y_pos_global = 5.0;
      req.vehicle_state.orientation = 0;
      req.vehicle_state.longitudinal_vel = 11.176;
 
      cav_msgs::Maneuver maneuver;
      maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-     maneuver.lane_following_maneuver.start_dist = req.vehicle_state.Y_pos_global;
+     maneuver.lane_following_maneuver.start_dist = req.vehicle_state.y_pos_global;
      maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
      maneuver.lane_following_maneuver.start_speed = 11.176;  //25 mph in mps
 
@@ -181,14 +181,14 @@ namespace stop_controlled_intersection_transit_plugin
     //Create a request and maneuver that meets case 2 criteria
     //speed_before_stop
      cav_srvs::PlanTrajectoryRequest req;
-     req.vehicle_state.X_pos_global = 1.5;
-     req.vehicle_state.Y_pos_global = 5.0;
+     req.vehicle_state.x_pos_global = 1.5;
+     req.vehicle_state.y_pos_global = 5.0;
      req.vehicle_state.orientation = 0;
      req.vehicle_state.longitudinal_vel = 11.176;
 
      cav_msgs::Maneuver maneuver;
      maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-     maneuver.lane_following_maneuver.start_dist = req.vehicle_state.Y_pos_global;
+     maneuver.lane_following_maneuver.start_dist = req.vehicle_state.y_pos_global;
      maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
      maneuver.lane_following_maneuver.start_speed = 11.176;  //25 mph in mps
 
@@ -289,14 +289,14 @@ namespace stop_controlled_intersection_transit_plugin
     //In order to be case 2 - estimated_stop_time > scheduled_stop_time and speed_before_decel =  speed_limit
     //speed_before_stop
      cav_srvs::PlanTrajectoryRequest req;
-     req.vehicle_state.X_pos_global = 1.5;
-     req.vehicle_state.Y_pos_global = 5.0;
+     req.vehicle_state.x_pos_global = 1.5;
+     req.vehicle_state.y_pos_global = 5.0;
      req.vehicle_state.orientation = 0;
      req.vehicle_state.longitudinal_vel = 11.176;
 
      cav_msgs::Maneuver maneuver;
      maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-     maneuver.lane_following_maneuver.start_dist = req.vehicle_state.Y_pos_global;
+     maneuver.lane_following_maneuver.start_dist = req.vehicle_state.y_pos_global;
      maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
      maneuver.lane_following_maneuver.start_speed = 11.176;  //25 mph in mps
 

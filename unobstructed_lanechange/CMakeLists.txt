@@ -79,7 +79,9 @@ src/unobstructed_lanechange.cpp
 
 add_dependencies(unobstructed_lanechange_plugin_lib ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME} unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+target_link_libraries(${PROJECT_NAME} unobstructed_lanechange_plugin_lib)
 
 add_library(lc_helper test/helper.cpp)
 target_link_libraries(lc_helper

@@ -59,10 +59,8 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
 
 add_executable( ${PROJECT_NAME}
-  ${headers}
   src/platoon_strategic.cpp
   src/platoon_manager.cpp
   src/main.cpp)
@@ -74,7 +72,8 @@ add_library(platoon_strategic_plugin_lib
 
 add_dependencies(platoon_strategic_plugin_lib ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME} platoon_strategic_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(platoon_strategic_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} platoon_strategic_plugin_lib)
 
 
 #############

@@ -74,7 +74,8 @@ add_library(stop_controlled_intersection_tactical_library
             src/stop_controlled_intersection_tactical_plugin.cpp)
 
 add_dependencies(stop_controlled_intersection_tactical_library ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME} stop_controlled_intersection_tactical_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(stop_controlled_intersection_tactical_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} stop_controlled_intersection_tactical_library)
 
 #############
 ## Install ##

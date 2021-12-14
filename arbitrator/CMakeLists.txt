@@ -92,9 +92,11 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 add_dependencies(arbitrator_library ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
+
+target_link_libraries(arbitrator_library ${catkin_LIBRARIES})
+
 target_link_libraries(${PROJECT_NAME}_node
   arbitrator_library
-  ${catkin_LIBRARIES}
 )
 
 #############

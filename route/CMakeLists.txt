@@ -53,16 +53,15 @@ include_directories(
   include
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
 
 add_executable( ${PROJECT_NAME}
-  ${headers}
   src/main.cpp
   src/route.cpp
   src/route_generator_worker.cpp
   src/route_state_worker.cpp)
 add_library(route_library src/route_generator_worker.cpp src/route_state_worker.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} route_library)
+target_link_libraries(route_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 add_dependencies(route_library ${catkin_EXPORTED_TARGETS})
 

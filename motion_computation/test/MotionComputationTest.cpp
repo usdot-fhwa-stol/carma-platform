@@ -124,8 +124,8 @@ namespace object
         cav_msgs::MobilityPath input_path;
 
         // INPUT PATH
-        input_path.header.sender_bsm_id = "FFFFFFFF";
-        input_path.header.timestamp = 1000;
+        input_path.m_header.sender_bsm_id = "FFFFFFFF";
+        input_path.m_header.timestamp = 1000;
         input_path.trajectory.location.ecef_x = 0; //local map 0,0,0
         input_path.trajectory.location.ecef_y = 0; 
         input_path.trajectory.location.ecef_z = 0; 
@@ -212,8 +212,8 @@ namespace object
         ASSERT_EQ(output.header.stamp, expected.header.stamp); //empty object returned
 
         // INPUT
-        input.header.sender_bsm_id = "FFFFFFFF";
-        input.header.timestamp = 1000;
+        input.m_header.sender_bsm_id = "FFFFFFFF";
+        input.m_header.timestamp = 1000;
         input.trajectory.location.ecef_x = 0; //local map 0,0,0
         input.trajectory.location.ecef_y = 0; 
         input.trajectory.location.ecef_z = 0; 

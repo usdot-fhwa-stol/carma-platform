@@ -81,19 +81,19 @@ namespace bsm_generator
 
     void BSMGenerator::accelCallback(const automotive_platform_msgs::VelocityAccelCovConstPtr& msg)
     {
-        bsm_.core_data.accelSet.longitudinal = worker.getLongAccelInRange(msg->accleration);
-        bsm_.core_data.accelSet.presence_vector = bsm_.core_data.accelSet.presence_vector | bsm_.core_data.accelSet.ACCELERATION_AVAILABLE;
+        bsm_.core_data.accel_set.longitudinal = worker.getLongAccelInRange(msg->accleration);
+        bsm_.core_data.accel_set.presence_vector = bsm_.core_data.accel_set.presence_vector | bsm_.core_data.accel_set.ACCELERATION_AVAILABLE;
     }
 
     void BSMGenerator::yawCallback(const sensor_msgs::ImuConstPtr& msg)
     {
-        bsm_.core_data.accelSet.yaw_rate = worker.getYawRateInRange(static_cast<float>(msg->angular_velocity.z));
-        bsm_.core_data.accelSet.presence_vector = bsm_.core_data.accelSet.presence_vector | bsm_.core_data.accelSet.YAWRATE_AVAILABLE;
+        bsm_.core_data.accel_set.yaw_rate = worker.getYawRateInRange(static_cast<float>(msg->angular_velocity.z));
+        bsm_.core_data.accel_set.presence_vector = bsm_.core_data.accel_set.presence_vector | bsm_.core_data.accel_set.YAWRATE_AVAILABLE;
     }
 
     void BSMGenerator::brakeCallback(const std_msgs::Float64ConstPtr& msg)
     {
-        bsm_.core_data.brakes.wheelBrakes.brake_applied_status = worker.getBrakeAppliedStatus(msg->data);
+        bsm_.core_data.brakes.wheel_brakes.brake_applied_status = worker.getBrakeAppliedStatus(msg->data);
     }
 
     void BSMGenerator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)

@@ -70,7 +70,8 @@ add_library(motion_computation_worker_lib
 add_dependencies(motion_computation_worker_lib ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(motion_computation_node motion_computation_worker_lib ${catkin_LIBRARIES})
+target_link_libraries(motion_computation_worker_lib ${catkin_LIBRARIES})
+target_link_libraries(motion_computation_node motion_computation_worker_lib)
 #############
 ## Install ##
 #############

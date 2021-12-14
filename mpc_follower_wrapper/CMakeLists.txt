@@ -126,10 +126,13 @@ add_executable(${PROJECT_NAME}_node src/mpc_follower_wrapper_node.cpp src/mpc_fo
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_node
-  mpc_follower_wrapper_worker_library
+target_link_libraries( mpc_follower_wrapper_worker_library
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+)
+
+target_link_libraries(${PROJECT_NAME}_node
+  mpc_follower_wrapper_worker_library
 )
 
 #############

@@ -14,7 +14,7 @@
 # the License.
 #
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5.1)
 project(mobilitypath_publisher)
 
 find_package(carma_cmake_common REQUIRED)
@@ -46,9 +46,9 @@ catkin_package(
 ###########
 
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
-  include
 )
 
 add_executable( ${PROJECT_NAME}
@@ -58,6 +58,8 @@ add_executable( ${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} mobilitypath_publisher_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_library(mobilitypath_publisher_lib src/mobilitypath_publisher.cpp)
+
+target_link_libraries(mobilitypath_publisher_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_dependencies(mobilitypath_publisher_lib ${catkin_EXPORTED_TARGETS})
 

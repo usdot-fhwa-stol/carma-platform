@@ -82,7 +82,8 @@ src/cooperative_lanechange.cpp
 
 add_dependencies(cooperative_lanechange_plugin_lib ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME} cooperative_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(cooperative_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} cooperative_lanechange_plugin_lib)
 
 
 #############

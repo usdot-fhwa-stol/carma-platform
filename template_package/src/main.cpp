@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) <SUB><year> LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,28 +14,20 @@
  * the License.
  */
 
-#include <sstream>
-#include <cav_msgs/SpeedAccel.h>
+#include <rclcpp/rclcpp.hpp>
+#include "<SUB><package_name>/<SUB><package_name>_node.hpp"
 
-#include <ros/ros.h>
-#include "guidance_command_repeater/GuidanceCommandRepeater.hpp"
-
-int main(int argc, char** argv)
+int main(int argc, char **argv) 
 {
+  rclcpp::init(argc, argv);
 
-  ros::init(argc, argv, "guidance_command_repeater");
-  ros::NodeHandle nodeHandle("~");
-  guidance_command_repeater::GuidanceCommandRepeater GuidanceCommandRepeater(nodeHandle);
+  auto node = std::make_shared<<SUB><package_name>::Node>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
 
-  ros::Rate rate(GuidanceCommandRepeater.rate);
-
-  while (ros::ok())
-  {
-    GuidanceCommandRepeater.publisher();
-    rate.sleep();
-    ros::spinOnce();
-  }
+  rclcpp::shutdown();
 
   return 0;
 }
-

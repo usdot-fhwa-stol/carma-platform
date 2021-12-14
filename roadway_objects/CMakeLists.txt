@@ -71,7 +71,8 @@ add_library(roadway_objects_worker src/RoadwayObjectsWorker.cpp)
 add_dependencies(roadway_objects_worker ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(roadway_objects_node roadway_objects_worker ${catkin_LIBRARIES})
+target_link_libraries(roadway_objects_worker ${catkin_LIBRARIES})
+target_link_libraries(roadway_objects_node roadway_objects_worker)
 
 
 #############

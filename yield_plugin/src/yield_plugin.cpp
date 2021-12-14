@@ -45,7 +45,7 @@ namespace yield_plugin
       mobility_response_publisher_(mobility_response_publisher), lc_status_publisher_(lc_status_publisher)
   {
     plugin_discovery_msg_.name = "YieldPlugin";
-    plugin_discovery_msg_.versionId = "v1.0";
+    plugin_discovery_msg_.version_id = "v1.0";
     plugin_discovery_msg_.available = true;
     plugin_discovery_msg_.activated = false;
     plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
@@ -121,11 +121,11 @@ namespace yield_plugin
   cav_msgs::MobilityResponse YieldPlugin::compose_mobility_response(const std::string& resp_recipient_id, const std::string& req_plan_id, bool response) const
   {
     cav_msgs::MobilityResponse out_mobility_response;
-    out_mobility_response.header.sender_id = config_.vehicle_id;
-    out_mobility_response.header.recipient_id = resp_recipient_id;
-    out_mobility_response.header.sender_bsm_id = host_bsm_id_;
-    out_mobility_response.header.plan_id = req_plan_id;
-    out_mobility_response.header.timestamp = ros::Time::now().toSec()*1000;
+    out_mobility_response.m_header.sender_id = config_.vehicle_id;
+    out_mobility_response.m_header.recipient_id = resp_recipient_id;
+    out_mobility_response.m_header.sender_bsm_id = host_bsm_id_;
+    out_mobility_response.m_header.plan_id = req_plan_id;
+    out_mobility_response.m_header.timestamp = ros::Time::now().toSec()*1000;
 
 
     if (config_.always_accept_mobility_request && response)
@@ -153,13 +153,13 @@ namespace yield_plugin
         ROS_DEBUG_STREAM("Cooperative Lane Change Request Received");
         lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_RECEIVED;
         lc_status_msg.description = "Received lane merge request";
-        if (incoming_request.header.recipient_id == config_.vehicle_id)
+        if (incoming_request.m_header.recipient_id == config_.vehicle_id)
         {
           ROS_DEBUG_STREAM("CLC Request correctly received");
         }
         // extract mobility header
-        std::string req_sender_id = incoming_request.header.sender_id;
-        std::string req_plan_id = incoming_request.header.plan_id;
+        std::string req_sender_id = incoming_request.m_header.sender_id;
+        std::string req_plan_id = incoming_request.m_header.plan_id;
         // extract mobility request
         cav_msgs::LocationECEF ecef_location = incoming_request.location;
         cav_msgs::Trajectory incoming_trajectory = incoming_request.trajectory;
@@ -191,7 +191,7 @@ namespace yield_plugin
         bool response_to_clc_req = false;
         // ensure there is enough time for the yield
         double req_plan_time = req_expiration_sec - current_time_sec;
-        double req_timestamp = (double)incoming_request.header.timestamp / 1000.0 - current_time_sec;
+        double req_timestamp = (double)incoming_request.m_header.timestamp / 1000.0 - current_time_sec;
         set_incoming_request_info(req_traj_plan, req_traj_speed, req_plan_time, req_timestamp);
 
         

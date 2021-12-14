@@ -1,0 +1,3 @@
+# String: Example Parameter
+# TODO for USER: Add your own parameters
+example_param : "My example value"
