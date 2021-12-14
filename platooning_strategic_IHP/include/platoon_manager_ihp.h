@@ -298,16 +298,20 @@ namespace platoon_strategic_ihp
         std::string JOIN_FROM_FRONT_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
         std::string  MOBILITY_STRATEGY = "Carma/Platooning";
 
-        double minGap_ = 22.0; // m
-        double maxGap_ = 32.0; // m
+        double minGap_ = 22.0;                                  // m
+        double maxGap_ = 32.0;                                  // m
         std::string previousFunctionalDynamicLeaderID_ = "";
         int previousFunctionalDynamicLeaderIndex_ = -1;
 
-        double vehicleLength_ = 5.0;  // m
-        double gapWithPred_ = 0.0; // time headway with predecessor, in s.
-        double downtrack_progress_ = 0; // m
+        // note: APF related parameters are moved to config.h.
 
-        std::string algorithmType_ = "APF_ALGORITHM";
+        double vehicleLength_ = 5.0;                            // the length of the vehicle, in m.
+        double gapWithPred_ = 0.0;                              // time headway with predecessor, in s.
+        double downtrack_progress_ = 0;                         // current downtrack distance, in m.
+
+        // Note: Parameters for IHP platoon trajectory regulation are moved to config.h. 
+
+        std::string algorithmType_ = "APF_ALGORITHM";           // a string that defines the current algorithm to determine the dynamic leader.
 
         /**
         * \brief Check the gap with the predecessor vehicle. 
