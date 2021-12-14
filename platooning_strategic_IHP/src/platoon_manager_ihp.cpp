@@ -301,8 +301,8 @@ namespace platoon_strategic_ihp
                     // the "lower_boundary" threshold; second the leading vehicle and its predecessor must have
                     // a time headway less than "min_spacing" second. Just as with "upper_boundary", "min_spacing" exists to
                     // introduce a hysteresis where dynamic leaders are continually being switched.
-                    bool condition1 = timeHeadways[previousFunctionalDynamicLeaderIndex_] > headawayStableLowerBond_; 
-                    bool condition2 = timeHeadways[previousFunctionalDynamicLeaderIndex_ - 1] < headawayStableUpperBond_; 
+                    bool condition1 = timeHeadways[previousFunctionalDynamicLeaderIndex_] > config_.headawayStableLowerBond; 
+                    bool condition2 = timeHeadways[previousFunctionalDynamicLeaderIndex_ - 1] < config_.headawayStableUpperBond; 
                     
                     ///***** Case Four *****///
                     //we may switch dynamic leader further downstream
@@ -361,13 +361,13 @@ namespace platoon_strategic_ihp
     bool PlatoonManager::insufficientGapWithPredecessor(double distanceToPredVehicle) {
         
         // For normal operation, gap > minGap is necessary. 
-        bool frontGapIsTooSmall = distanceToPredVehicle < minGap_; 
+        bool frontGapIsTooSmall = distanceToPredVehicle < config_.minGap; 
         
         // Host vehicle was following predecessor vehicle. --> The predecessor vehicel was violating gap threshold.
         bool previousLeaderIsPredecessor = (previousFunctionalDynamicLeaderID_ == platoon[platoon.size() - 1].staticId); 
         
         // Gap greater than maxGap_ is necessary for host to stop choosing predecessor as dynamic leader. 
-        bool frontGapIsNotLargeEnough = (distanceToPredVehicle < maxGap_ && previousLeaderIsPredecessor);
+        bool frontGapIsNotLargeEnough = (distanceToPredVehicle < config_.maxGap && previousLeaderIsPredecessor);
 
         return (frontGapIsTooSmall || frontGapIsNotLargeEnough);
     }
@@ -378,7 +378,7 @@ namespace platoon_strategic_ihp
         // Due to downtrack descending order, the platoon member with smaller index has larger downtrack, hence closer to the front of the platoon.
         for (int i=0; i<timeHeadways.size(); i++){
             // Calculate time headaway between the vehicle behind. 
-            if (speed[i+1] >= ss_theta) // speed is in m/s
+            if (speed[i+1] >= config_.ss_theta) // speed is in m/s
             {
                 timeHeadways[i] = (downtrackDistance[i] - downtrackDistance[i+1]) / speed[i+1]; // downtrack is in m, speed is in m/s.
             }
@@ -430,7 +430,7 @@ namespace platoon_strategic_ihp
     int PlatoonManager::findLowerBoundaryViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const{
         // Due to descending downtrack order, the search starts from the platoon rear, which corresponds to last in list.
         for(int i = timeHeadways.size()-1; i >= 0; i--) {
-            if(timeHeadways[i] < minAllowableHeadaway_)  // in s
+            if(timeHeadways[i] < config_.minAllowableHeadaway)  // in s
             {
                 return i;
             }
@@ -442,7 +442,7 @@ namespace platoon_strategic_ihp
     int PlatoonManager::findMaximumSpacingViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const {
         //  Due to descending downtrack order, the search starts from the platoon rear, which corresponds to last in list.
         for(int i = timeHeadways.size()-1; i >= 0 ; i--) {
-            if(timeHeadways[i] > maxAllowableHeadaway_) // in s
+            if(timeHeadways[i] > config_.maxAllowableHeadaway) // in s
             {
                 return i;
             }
@@ -531,9 +531,9 @@ namespace platoon_strategic_ihp
     // Return the pysical length from platoon front vehicle (front bumper) to platoon rear vehicle (rear bumper) in m.
     double PlatoonManager::getCurrentPlatoonLength() {
         if(platoon.size() == 0) {
-            return vehicleLength_;
+            return config_.vehicleLength;
         } else {
-            return platoon[0].vehiclePosition - platoon[platoon.size() - 1].vehiclePosition + vehicleLength_; 
+            return platoon[0].vehiclePosition - platoon[platoon.size() - 1].vehiclePosition + config_.vehicleLength; 
         }
     }
 
@@ -550,7 +550,6 @@ namespace platoon_strategic_ihp
          *       have identical length (i.e., 5m). Future development is needed to include variable 
          *       vehicle length into consideration.
          */
-
 
         // 1. read dtd vector 
         // dtd vector 
@@ -575,7 +574,7 @@ namespace platoon_strategic_ihp
             if (cur_dtd > current_downtrack_distance_)
             {
                 // greater dtd ==> in front of host veh 
-                tmp_time_hdw += vehicleLength_ / (speed[index] + 0.00001);
+                tmp_time_hdw += config_.vehicleLength / (speed[index] + 0.00001);
 
             }
         }
@@ -592,7 +591,7 @@ namespace platoon_strategic_ihp
         // platoon position index
         int pos_idx = getNumberOfVehicleInFront();
 
-        double desirePlatoonGap = intra_tau; //s
+        double desirePlatoonGap = config_.intra_tau; //s
         
         // IHP desired position calculation methods
         double pos_g; // desired downtrack position calculated with time-gap, in m.
@@ -600,36 +599,33 @@ namespace platoon_strategic_ihp
 
         // 4. IHP gap regualtion 
         
-        // temp variables 
-        double timeGapAndStepRatio = desirePlatoonGap/time_step;
-        double NumberOfTimeGaps = desirePlatoonGap*pos_idx;
+        // intermediate variables 
+        double timeGapAndStepRatio = desirePlatoonGap/time_step;      // The ratio between desired platoon time gap and the current time_step.
+        double totalTimeGap = desirePlatoonGap*pos_idx;               // The overall time gap from host vehicle to the platoon leader, in s.
 
-        // ---> 4.1 pos_g 
-        if ((pred_spd <= ego_spd) && (ego_spd <= ss_theta))
+        // calcilate pos_gap and pos_headway
+        if ((pred_spd <= ego_spd) && (ego_spd <= config_.ss_theta))
         {
-            pos_g = (pred_pos - vehicleLength_ - standstill + ego_pos*timeGapAndStepRatio) / (1 + timeGapAndStepRatio);
-        }
-        else
-        {
-            pos_g = (pred_pos - vehicleLength_ + ego_pos*(timeGapAndStepRatio)) / (1 + timeGapAndStepRatio);
-        }
-
-        // ---> 4.2 pos_h
-        if ((pred_spd <= ego_spd) && (ego_spd <= ss_theta))
-        {
-            double pos_h_nom = (pred_pos - standstill + ego_pos*(NumberOfTimeGaps + tmp_time_hdw)/time_step);
-            double pos_h_denom = (1 + ((NumberOfTimeGaps + tmp_time_hdw)/time_step));
+            // ---> 4.1 pos_g 
+            pos_g = (pred_pos - config_.vehicleLength - config_.standstill + ego_pos*timeGapAndStepRatio) / (1 + timeGapAndStepRatio);
+            // ---> 4.2 pos_h
+            double pos_h_nom = (pred_pos - config_.standstill + ego_pos*(totalTimeGap + tmp_time_hdw)/time_step);
+            double pos_h_denom = (1 + ((totalTimeGap + tmp_time_hdw)/time_step));
             pos_h = pos_h_nom/pos_h_denom;
+
         }
         else
-        {
-            double pos_h_nom = (pred_pos + ego_pos*(NumberOfTimeGaps + tmp_time_hdw)/time_step);
-            double pos_h_denom = (1 + ((NumberOfTimeGaps + tmp_time_hdw)/time_step));
+        {   
+            // ---> 4.1 pos_g 
+            pos_g = (pred_pos - config_.vehicleLength + ego_pos*(timeGapAndStepRatio)) / (1 + timeGapAndStepRatio);
+            // ---> 4.2 pos_h
+            double pos_h_nom = (pred_pos + ego_pos*(totalTimeGap + tmp_time_hdw)/time_step);
+            double pos_h_denom = (1 + ((totalTimeGap + tmp_time_hdw)/time_step));
             pos_h = pos_h_nom/pos_h_denom;
         }
 
         // ---> 4.3 desire speed and desire location 
-        double pos_des = gap_weight*pos_g + (1.0 - gap_weight)*pos_h;
+        double pos_des = config_.gap_weight*pos_g + (1.0 - config_.gap_weight)*pos_h;
         // double des_spd = (pos_des - ego_pos) / time_step;
 
         // ---> 4.4 return IHP calculated desired speed
@@ -689,7 +685,7 @@ namespace platoon_strategic_ihp
        {
             double gap_leading_dtd = platoon[gap_leading_index].vehiclePosition;
             double gap_rear_dtd = platoon[gap_leading_index + 1].vehiclePosition;
-            double gap_size = gap_leading_dtd - gap_rear_dtd - vehicleLength_;
+            double gap_size = gap_leading_dtd - gap_rear_dtd - config_.vehicleLength;
             return gap_size;
        }
 
