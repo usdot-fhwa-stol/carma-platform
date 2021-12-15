@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 LEIDOS.
+# Copyright (C) 2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -14,34 +14,41 @@
 # the License.
 #
 
-cmake_minimum_required(VERSION 2.8.3)
-project(route)
+cmake_minimum_required(VERSION 3.0.2)
+project(light_controlled_intersection_tactical_plugin)
 
-## Compile as C++14, supported in ROS Noetic and newer
+## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
+set(CATKIN_DEPS
   roscpp
-  std_msgs
+  cav_msgs
   cav_srvs
   carma_utils
-  autoware_msgs
-  wgs84_utils
+  trajectory_utils
   carma_wm
+  basic_autonomy
+)
+
+## Find catkin macros and libraries
+find_package(catkin REQUIRED COMPONENTS
+ ${CATKIN_DEPS}
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost)
+find_package(Eigen3 REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils autoware_msgs wgs84_utils carma_wm
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS ${CATKIN_DEPS}
+  DEPENDS Boost EIGEN3
 )
 
 ###########
@@ -49,23 +56,20 @@ catkin_package(
 ###########
 
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
-  include
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
-
 add_executable( ${PROJECT_NAME}
-  ${headers}
-  src/main.cpp
-  src/route.cpp
-  src/route_generator_worker.cpp
-  src/route_state_worker.cpp)
-add_library(route_library src/route_generator_worker.cpp src/route_state_worker.cpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} route_library)
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_dependencies(route_library ${catkin_EXPORTED_TARGETS})
+  src/main.cpp)
+
+add_library(light_controlled_intersection_tactical_library 
+            src/light_controlled_intersection_tactical_plugin.cpp)
+
+add_dependencies(light_controlled_intersection_tactical_library ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME} light_controlled_intersection_tactical_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 #############
 ## Install ##
@@ -73,20 +77,17 @@ add_dependencies(route_library ${catkin_EXPORTED_TARGETS})
 
 install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} light_controlled_intersection_tactical_library
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Install Other Resources
-install(DIRECTORY launch
-config
+install(DIRECTORY launch config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
@@ -94,8 +95,6 @@ config
 ## Testing ##
 #############
 catkin_add_gmock(${PROJECT_NAME}-test 
-  test/test_route_generator.cpp
-  test/test_route_state.cpp
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
-)
-target_link_libraries(${PROJECT_NAME}-test route_library ${catkin_LIBRARIES})
+ test/test_lci_tactical_plugin.cpp
+ WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+target_link_libraries(${PROJECT_NAME}-test light_controlled_intersection_tactical_library ${catkin_LIBRARIES})

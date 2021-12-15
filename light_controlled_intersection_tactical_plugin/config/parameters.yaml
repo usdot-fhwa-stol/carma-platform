@@ -1,0 +1,42 @@
+# Double: The gap in meters between points sampled from the lanelet centerlines for planning trajectory positions
+# Units: m
+centerline_sampling_spacing: 1.0
+
+# Trajectory length in seconds
+trajectory_time_length: 6.0 
+
+# Amount to downsample input lanelet centerline data. Value corresponds to saving each nth point.
+default_downsample_ratio: 36 
+
+# Amount to downsample input lanelet centerline data on turns. Value corresponds to saving each nth point.
+turn_downsample_ratio: 20 
+
+# Curve re-sampling step size in m
+curve_resample_step_size: 1.0 
+
+# Size of the window used in the moving average filter to smooth the computed curvature
+curvature_moving_average_window_size: 9      
+
+# Size of the window used in the moving average filter to smooth the output speeds
+speed_moving_average_window_size: 5 
+
+# Number of meters behind the first maneuver that need to be included in points for curvature calculation
+back_distance: 20.0 
+
+# Additional distance beyond ending downtrack to ensure sufficient points
+buffer_ending_downtrack: 20.0 
+
+# Double: multiplier to apply to the maximum allowable vehicle deceleration limit so we plan under our capabilities
+vehicle_decel_limit_multiplier : 0.50 
+
+# Double: multiplier to apply to the maximum allowable vehicle acceleration limit so we plan under our capabilities
+vehicle_accel_limit_multiplier : 0.50
+
+# Multiplier of lat_accel to bring the value under lat_accel
+lat_accel_multiplier: 0.50
+
+# Double: A buffer before of the stopping location which will still be considered a valid stop. Units in meters
+stop_line_buffer : 2.0
+
+# Double: Minimum allowable speed in m/s
+minimum_speed : 2.2352
