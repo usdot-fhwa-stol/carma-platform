@@ -16,7 +16,7 @@
 
 #include <gmock/gmock.h>
 #include <carma_wm/TrafficControl.h>
-#include <lanelet2_extension/utility/message_conversion.h>
+#include <autoware_lanelet2_ros_interface/utility/message_conversion.h>
 #include <memory>
 #include <chrono>
 #include <ctime>

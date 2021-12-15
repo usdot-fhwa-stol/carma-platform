@@ -14,10 +14,10 @@
  * the License.
  */
 
-#include <lanelet2_extension/utility/message_conversion.h>
+#include <autoware_lanelet2_ros_interface/utility/message_conversion.h>
 #include <lanelet2_extension/regulatory_elements/DirectionOfTravel.h>
 #include <lanelet2_extension/regulatory_elements/StopRule.h>
-#include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
+#include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
 #include "WMListenerWorker.h"
 
 namespace carma_wm
@@ -332,7 +332,7 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
     case GeofenceType::CARMA_TRAFFIC_LIGHT:
     {
 
-      lanelet::CarmaTrafficLightPtr ctl = std::dynamic_pointer_cast<lanelet::CarmaTrafficLight>(factory_pcl);
+      lanelet::CarmaTrafficSignalPtr ctl = std::dynamic_pointer_cast<lanelet::CarmaTrafficSignal>(factory_pcl);
       world_model_->getMutableMap()->update(parent_llt, ctl);
 
       break;
