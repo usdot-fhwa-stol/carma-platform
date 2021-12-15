@@ -22,7 +22,8 @@
 
 namespace carma_wm
 {
-enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, REGION_ACCESS_RULE, DIGITAL_MINIMUM_GAP, DIRECTION_OF_TRAVEL, STOP_RULE, CARMA_TRAFFIC_LIGHT/* ... others */ };
+enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, REGION_ACCESS_RULE, DIGITAL_MINIMUM_GAP, 
+                          DIRECTION_OF_TRAVEL, STOP_RULE, CARMA_TRAFFIC_LIGHT, SIGNALIZED_INTERSECTION/* ... others */ };
 // helper function that return geofence type as an enum, which makes it cleaner by allowing switch statement
 GeofenceType resolveGeofenceType(const std::string& rule_name)
 {
@@ -32,7 +33,8 @@ GeofenceType resolveGeofenceType(const std::string& rule_name)
   if (rule_name.compare(lanelet::DigitalMinimumGap::RuleName) == 0) return GeofenceType::DIGITAL_MINIMUM_GAP;
   if (rule_name.compare(lanelet::DirectionOfTravel::RuleName) == 0) return GeofenceType::DIRECTION_OF_TRAVEL;
   if (rule_name.compare(lanelet::StopRule::RuleName) == 0) return GeofenceType::STOP_RULE;
-  if (rule_name.compare(lanelet::CarmaTrafficLight::RuleName) == 0) return GeofenceType::CARMA_TRAFFIC_LIGHT;
+  if (rule_name.compare(lanelet::CarmaTrafficSignal::RuleName) == 0) return GeofenceType::CARMA_TRAFFIC_LIGHT;
+  if (rule_name.compare(lanelet::SignalizedIntersection::RuleName) == 0) return GeofenceType::SIGNALIZED_INTERSECTION;
 
   return GeofenceType::INVALID;
 }
@@ -193,6 +195,10 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     ROS_DEBUG_STREAM("Adding new pair for traffic light ids: " << pair.first << ", and lanelet::Id: " << pair.second);
     world_model_->setTrafficLightIds(pair.first, pair.second);
   }
+
+  ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " sends record of intersections size: " << gf_ptr->sim_.intersection_id_to_regem_id_.size());
+  if (gf_ptr->sim_.intersection_id_to_regem_id_.size() > 0)
+    world_model_->sim_ = gf_ptr->sim_;
 
   ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " requests removal of size: " << gf_ptr->remove_list_.size());
   for (auto pair : gf_ptr->remove_list_)

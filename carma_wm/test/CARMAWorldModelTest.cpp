@@ -1312,7 +1312,11 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   lanelet::Id traffic_light_id = lanelet::utils::getId();
   lanelet::LineString3d virtual_stop_line(lanelet::utils::getId(), {pl2, pr2});
   // Creat passing control line for solid dashed line
+<<<<<<< HEAD
   std::shared_ptr<lanelet::CarmaTrafficLight> traffic_light(new lanelet::CarmaTrafficLight(lanelet::CarmaTrafficLight::buildData(traffic_light_id, { virtual_stop_line }, { ll_1 })));
+=======
+  std::shared_ptr<lanelet::CarmaTrafficSignal> traffic_light(new lanelet::CarmaTrafficSignal(lanelet::CarmaTrafficSignal::buildData(traffic_light_id, { virtual_stop_line }, { ll_1 }, { ll_1 })));
+>>>>>>> origin/develop
   traffic_light->revision_ = 0;
   ll_1.addRegulatoryElement(traffic_light);
   auto map = lanelet::utils::createMap({ ll_1 }, {});
@@ -1426,9 +1430,15 @@ TEST(CARMAWorldModelTest, getLightsAlongRoute)
   lanelet::Id traffic_light_id1 = lanelet::utils::getId();
   lanelet::Id traffic_light_id2 = lanelet::utils::getId();
   lanelet::LineString3d virtual_stop_line1(lanelet::utils::getId(), {pl2, pr2});
+<<<<<<< HEAD
   std::shared_ptr<lanelet::CarmaTrafficLight> traffic_light1(new lanelet::CarmaTrafficLight(lanelet::CarmaTrafficLight::buildData(traffic_light_id1, { virtual_stop_line1 }, { cmw_ptr->getMutableMap()->laneletLayer.get(1200) })));
   lanelet::LineString3d virtual_stop_line2(lanelet::utils::getId(), {pl3, pr3});
   std::shared_ptr<lanelet::CarmaTrafficLight> traffic_light2(new lanelet::CarmaTrafficLight(lanelet::CarmaTrafficLight::buildData(traffic_light_id2, { virtual_stop_line2 }, { cmw_ptr->getMutableMap()->laneletLayer.get(1201) })));
+=======
+  std::shared_ptr<lanelet::CarmaTrafficSignal> traffic_light1(new lanelet::CarmaTrafficSignal(lanelet::CarmaTrafficSignal::buildData(traffic_light_id1, { virtual_stop_line1 }, { cmw_ptr->getMutableMap()->laneletLayer.get(1200) },  { cmw_ptr->getMutableMap()->laneletLayer.get(1200) })));
+  lanelet::LineString3d virtual_stop_line2(lanelet::utils::getId(), {pl3, pr3});
+  std::shared_ptr<lanelet::CarmaTrafficSignal> traffic_light2(new lanelet::CarmaTrafficSignal(lanelet::CarmaTrafficSignal::buildData(traffic_light_id2, { virtual_stop_line2 }, { cmw_ptr->getMutableMap()->laneletLayer.get(1201) },  { cmw_ptr->getMutableMap()->laneletLayer.get(1201) })));
+>>>>>>> origin/develop
 
   cmw_ptr->getMutableMap()->update(cmw_ptr->getMutableMap()->laneletLayer.get(1200), traffic_light1);
   cmw_ptr->getMutableMap()->update(cmw_ptr->getMutableMap()->laneletLayer.get(1201), traffic_light2);
