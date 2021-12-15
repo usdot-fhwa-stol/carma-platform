@@ -346,5 +346,13 @@ namespace carma_wm
     return interior_llts;
   }
   
+  SignalizedIntersectionManager& SignalizedIntersectionManager::operator=(SignalizedIntersectionManager other)
+  {
+    this->signal_group_to_entry_lanelet_ids_ = other.signal_group_to_entry_lanelet_ids_;
+    this->signal_group_to_exit_lanelet_ids_ = other.signal_group_to_exit_lanelet_ids_;
+    this->intersection_id_to_regem_id_ = other.intersection_id_to_regem_id_;
+    this->signal_group_to_traffic_light_id_ = other.signal_group_to_traffic_light_id_;
 
+    return *this;
+  }
 }  // namespace carma_wm

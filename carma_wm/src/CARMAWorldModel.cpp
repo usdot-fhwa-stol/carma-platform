@@ -82,7 +82,9 @@ std::pair<TrackPos, TrackPos> CARMAWorldModel::routeTrackPos(const lanelet::Cons
 
 lanelet::Id CARMAWorldModel::getTrafficLightId(uint16_t intersection_id, uint8_t signal_group_id)
 {
-  
+  /*
+
+  TODO: Old logic that needs be removed
   uint32_t temp = 0;
   temp |= intersection_id;
   temp = temp << 8;
@@ -96,7 +98,22 @@ lanelet::Id CARMAWorldModel::getTrafficLightId(uint16_t intersection_id, uint8_t
   {
     return lanelet::InvalId;
   }
+  */
+  
+  lanelet::Id inter_id = lanelet::InvalId;
+  lanelet::Id signal_id = lanelet::InvalId;
 
+  if (sim_.intersection_id_to_regem_id_.find(intersection_id) != sim_.intersection_id_to_regem_id_.end())
+  {
+    inter_id = sim_.intersection_id_to_regem_id_[intersection_id];
+  }
+
+  if (inter_id != lanelet::InvalId && sim_.signal_group_to_traffic_light_id_.find(signal_group_id) != sim_.signal_group_to_traffic_light_id_.end())
+  {
+    signal_id = sim_.signal_group_to_traffic_light_id_[signal_group_id];
+  }
+  
+  return signal_id;
 }
 
 TrackPos CARMAWorldModel::routeTrackPos(const lanelet::ConstLanelet& lanelet) const
@@ -1259,12 +1276,12 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
       {
         ROS_INFO_STREAM("Received a new intersection geometry. intersection_id: " << (int)curr_intersection.id.id << 
                            ", and signal_group_id: " << (int)current_movement_state.signal_group);
-        traffic_light_states_[curr_intersection.id.id].clear();
+        sim_.traffic_signal_states_[curr_intersection.id.id].clear();
       }
 
       // if full cycle is already set 
       // checking >4 because 3 unique states and 1 more state to complete full cycle
-      if (traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() > 4)
+      if (sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].size() > 4)
       {
         continue;
       }
@@ -1306,22 +1323,22 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
 
       //if same data as last time:
       //where state is same and timestamp is equal or less, skip
-      if (traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() > 0 && traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second ==
+      if (sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].size() > 0 && sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second ==
           static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state) &&
-          traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first >= min_end_time) 
+          sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first >= min_end_time) 
       {
         continue;
       }
 
       // if received same state as last time, but with updated time, just update the time of last state
       // skip setting state until received a new state that is different from last recorded one
-      if (traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() > 0 && traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second ==
+      if (sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].size() > 0 && sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second ==
           static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state) &&
-          traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first < min_end_time)
+          sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first < min_end_time)
       {
         ROS_DEBUG_STREAM("Updated time for state: " << static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state)  << ", with time: " 
                           << std::to_string(lanelet::time::toSec(min_end_time)));
-        traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first = min_end_time;
+        sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first = min_end_time;
         continue;
       }
 
@@ -1330,13 +1347,13 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
                         ", time: " << ros::Time::fromBoost(min_end_time));
 
 
-      if (traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 2 
-          && traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].front().second == 
-             traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second)
+      if (sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 2 
+          && sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].front().second == 
+             sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second)
         {
-          ROS_DEBUG_STREAM("Setting last recorded state for light: " << curr_light_id << ", with state: " << traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second <<
-                        ", time: " << traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first);
-          curr_light->setStates(traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group], curr_intersection.revision);
+          ROS_DEBUG_STREAM("Setting last recorded state for light: " << curr_light_id << ", with state: " << sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second <<
+                        ", time: " << sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first);
+          curr_light->setStates(sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group], curr_intersection.revision);
           ROS_DEBUG_STREAM("Set new cycle of total seconds: " << lanelet::time::toSec(curr_light->fixed_cycle_duration));                  
         }
       else if (curr_light->recorded_time_stamps.empty()) // if it was never initialized, do its best to plan with the current state until the future state is also received.
@@ -1351,7 +1368,7 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
         ROS_DEBUG_STREAM("Set default cycle of total seconds: " << lanelet::time::toSec(curr_light->fixed_cycle_duration));                  
 
       }
-      else if (traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 2 )
+      else if (sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 2 )
       {
         auto green_light_duration = lanelet::time::durationFromSec(GREEN_LIGHT_DURATION);
         auto yellow_light_duration = lanelet::time::durationFromSec(YELLOW_LIGHT_DURATION);
@@ -1359,20 +1376,20 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
 
         std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>> partial_states;
         // set the partial cycle.
-        ROS_DEBUG_STREAM("Setting last recorded state for light: " << curr_light_id << ", with state: " << traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second <<
-              ", time: " << traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first);
-        for (size_t i = 0; i < traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].size() - 1; i ++)
+        ROS_DEBUG_STREAM("Setting last recorded state for light: " << curr_light_id << ", with state: " << sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second <<
+              ", time: " << sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first);
+        for (size_t i = 0; i < sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].size() - 1; i ++)
         {
-          auto light_state = traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].second;
+          auto light_state = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].second;
 
           if (light_state == lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN || light_state == lanelet::CarmaTrafficSignalState::STOP_THEN_PROCEED)
-            red_light_duration = traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
+            red_light_duration = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
           
           else if (light_state == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED || light_state == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
-            green_light_duration = traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
+            green_light_duration = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
           
           else if (light_state == lanelet::CarmaTrafficSignalState::PERMISSIVE_CLEARANCE || light_state == lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE)
-            yellow_light_duration = traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
+            yellow_light_duration = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
         }
 
         partial_states.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(boost::posix_time::from_time_t(0), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
@@ -1386,7 +1403,7 @@ void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT& spat_msg)
       }
 
       // record the new state received
-      traffic_light_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time, 
+      sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time, 
                               static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state)));
     }
   }
