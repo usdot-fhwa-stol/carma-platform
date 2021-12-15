@@ -20,7 +20,9 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import ThisLaunchFileDir
 from launch.substitutions import EnvironmentVariable
-
+from launch.actions import GroupAction
+from launch_ros.actions import PushRosNamespace
+from carma_ros2_utils.launch.get_log_level import GetLogLevel
 import os
 
 def generate_launch_description():
@@ -28,14 +30,21 @@ def generate_launch_description():
     Launch CARMA System.
     """
 
-    import sys
-    sys.path.append(os.path.abspath(get_package_share_directory('carma') + '/scripts'))
-    from get_log_level import GetLogLevel
-
     system_controller_param_file = os.path.join(
         get_package_share_directory('system_controller'), 'config/config.yaml')
 
+    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
+
     # Nodes
+
+    environment_group = GroupAction(
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_ENV_NS', default_value='environment')),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/environment.launch.py'])
+            ),
+        ]
+    )
 
     system_controller = Node(
         package='system_controller',
@@ -43,15 +52,10 @@ def generate_launch_description():
         executable='system_controller',
         parameters=[ system_controller_param_file ],
         on_exit = Shutdown(), # Mark the subsystem controller as required for segfaults
-        arguments=['--ros-args', '--log-level', GetLogLevel('system_controller', EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG'))]
-    )
-
-    environment_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/environment.launch.py']),
-        launch_arguments = {'namespace': '/environment'}.items(),
+        arguments=['--ros-args', '--log-level', GetLogLevel('system_controller', env_log_levels)]
     )
 
     return LaunchDescription([
-        system_controller,
-        environment_launch
+        environment_group,
+        system_controller
     ])

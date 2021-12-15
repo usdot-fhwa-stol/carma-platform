@@ -61,10 +61,6 @@ if(BUILD_TESTING)
 
 endif()
 
-install(DIRECTORY config/
-  DESTINATION config/
-)
-
 # Install
 ament_auto_package(
         INSTALL_TO_SHARE config
