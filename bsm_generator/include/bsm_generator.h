@@ -22,12 +22,19 @@
 #include <cav_msgs/BSM.h>
 #include <automotive_platform_msgs/VelocityAccelCov.h>
 #include <pacmod_msgs/YawRateRpt.h>
+#include <sensor_msgs/Imu.h>
 #include <j2735_msgs/TransmissionState.h>
 #include <std_msgs/Float64.h>
 #include <wgs84_utils/wgs84_utils.h>
-#include <novatel_gps_msgs/NovatelDualAntennaHeading.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <std_msgs/String.h>
+#include <vector>
+#include <ros/ros.h>
+#include <stdint.h>
+#include <algorithm>
+#include <stdlib.h>
+#include <random>
+#include <gps_common/GPSFix.h>
 #include "bsm_generator_worker.h"
 
 namespace bsm_generator
@@ -70,6 +77,12 @@ namespace bsm_generator
         // frequency for bsm generation
         double bsm_generation_frequency_;
 
+        //Enable/disable rotation of BSM ID during vehicle operations
+        bool bsm_id_rotation_enabled_;
+
+        std::vector<uint8_t> bsm_message_id_;
+        
+
         // size of the vehicle
         double vehicle_length_, vehicle_width_;
 
@@ -88,12 +101,12 @@ namespace bsm_generator
         // callbacks for the subscribers
         void poseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
         void accelCallback(const automotive_platform_msgs::VelocityAccelCovConstPtr& msg);
-        void yawCallback(const pacmod_msgs::YawRateRptConstPtr& msg);
+        void yawCallback(const sensor_msgs::ImuConstPtr& msg);
         void gearCallback(const j2735_msgs::TransmissionStateConstPtr& msg);
         void speedCallback(const std_msgs::Float64ConstPtr& msg);
         void steerWheelAngleCallback(const std_msgs::Float64ConstPtr& msg);
         void brakeCallback(const std_msgs::Float64ConstPtr& msg);
-        void headingCallback(const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& msg);
+        void headingCallback(const gps_common::GPSFixConstPtr& msg);
 
         /**
          * \brief Callback for map projection string to define lat/lon -> map conversion
