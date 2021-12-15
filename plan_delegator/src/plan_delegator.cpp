@@ -149,7 +149,11 @@ namespace plan_delegator
         double original_start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
         double original_end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
         double adjusted_start_dist = original_start_dist - length_to_front_bumper_;
+        ROS_DEBUG_STREAM("original_start_dist:" << original_start_dist);
+        ROS_DEBUG_STREAM("adjusted_start_dist:" << adjusted_start_dist);
         double adjusted_end_dist = original_end_dist - length_to_front_bumper_;
+        ROS_DEBUG_STREAM("original_end_dist:" << original_end_dist);
+        ROS_DEBUG_STREAM("adjusted_end_dist:" << adjusted_end_dist);
         SET_MANEUVER_PROPERTY(maneuver, start_dist, adjusted_start_dist);
         SET_MANEUVER_PROPERTY(maneuver, end_dist, adjusted_end_dist);
     }
@@ -265,9 +269,9 @@ namespace plan_delegator
         tf2_buffer_.setUsingDedicatedThread(true);
         try
         {
-            geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("vehicle_front", "base_link", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
-            tf2::fromMsg(tf, back_axle_transform_);
-            length_to_front_bumper_ = tf_.transform.translation.x;
+            geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("base_link", "vehicle_front", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+            length_to_front_bumper_ = tf.transform.translation.x;
+            ROS_DEBUG_STREAM("length_to_front_bumper_: " << length_to_front_bumper_);
             
         }
         catch (const tf2::TransformException &ex)

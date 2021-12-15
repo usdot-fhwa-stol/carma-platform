@@ -198,8 +198,7 @@ namespace route {
             // Add vehicle as first destination point
             auto destination_points_in_map_with_vehicle = destination_points_in_map_;
             
-            geometry_msgs::Pose bumper_pose = shift_to_frontbumper(vehicle_pose_->pose, frontbumper_transform_);
-            lanelet::BasicPoint2d vehicle_position(frontbumper_transform_.getOrigin().getX(), frontbumper_transform_.getOrigin().getY());
+            lanelet::BasicPoint2d vehicle_position(vehicle_pose_->pose.position.x, vehicle_pose_->pose.position.y);
             destination_points_in_map_with_vehicle.insert(destination_points_in_map_with_vehicle.begin(), vehicle_position);
 
             int idx = 0;
@@ -485,33 +484,21 @@ namespace route {
         }
     }
 
-    geometry_msgs::Pose RouteGeneratorWorker::shift_to_frontbumper(const geometry_msgs::Pose& pose, const tf2::Transform& transform) const{
-        geometry_msgs::Pose bumper_pose;    
-        
-        auto pose_point_vec = tf2::Vector3(pose.position.x, pose.position.y, pose.position.z);
-        // tf2::Vector3 front_bumper_point_vec1 = transform* pose_point_vec;
-        // tf2::Vector3 front_bumper_point_vec = transform.inverse() * front_bumper_point_vec1;
-        bumper_pose.position.x = transform.getOrigin().getX();//front_bumper_point_vec.x();
-        ROS_DEBUG_STREAM("pose.position.x: " << pose.position.x);
-        ROS_DEBUG_STREAM("bumper_pose.position.x: " << bumper_pose.position.x);
-        bumper_pose.position.y = transform.getOrigin().getY();
-        ROS_DEBUG_STREAM("pose.position.y: " << pose.position.y);
-        ROS_DEBUG_STREAM("bumper_pose.position.y: " << bumper_pose.position.y);
-        bumper_pose.position.z = transform.getOrigin().getZ();
-
-        return bumper_pose;
-    } 
-
     void RouteGeneratorWorker::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
-        vehicle_pose_ = *msg; 
-        lookupFrontBumperTransform();
-         
-        geometry_msgs::Pose bumper_pose = shift_to_frontbumper(vehicle_pose_->pose, frontbumper_transform_);
+        lookupFrontBumperTransform(); 
+        vehicle_pose_ = *msg;
+        if (vehicle_pose_)
+        {
+            vehicle_pose_->pose.position.x = frontbumper_transform_.getOrigin().getX();
+            vehicle_pose_->pose.position.y = frontbumper_transform_.getOrigin().getY();
+            vehicle_pose_->pose.position.z = frontbumper_transform_.getOrigin().getZ();
+            
+        }
 
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
-            current_loc_ = lanelet::BasicPoint2d(bumper_pose.position.x, bumper_pose.position.y);
+            current_loc_ = lanelet::BasicPoint2d(vehicle_pose_->pose.position.x, vehicle_pose_->pose.position.y);
             // get dt ct from world model
             carma_wm::TrackPos track(0.0, 0.0);
             try {
@@ -556,7 +543,7 @@ namespace route {
                 ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built.");
             }
             // check if we left the seleted route by cross track error
-            bool departed = crosstrack_error_check(msg, current_lanelet);
+            bool departed = crosstrack_error_check(bumper_pose_, current_lanelet);
             if (departed)
                 {
                     this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_DEPARTED);

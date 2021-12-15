@@ -107,6 +107,9 @@ namespace plan_delegator
              */
             cav_srvs::PlanTrajectory composePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const;
 
+            /**
+             * \brief Lookup transfrom from front bumper to base link
+             */
             void lookupFrontBumperTransform();
             
             void updateManeuverDistances(cav_msgs::Maneuver& maneuver);
@@ -141,9 +144,6 @@ namespace plan_delegator
             ros::Timer traj_timer_;
 
             bool guidance_engaged = false;
-
-            geometry_msgs::TransformStamped tf_;
-            tf2::Stamped<tf2::Transform> back_axle_transform_;
 
             double length_to_front_bumper_ = 3.0;
 

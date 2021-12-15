@@ -230,9 +230,11 @@ namespace route {
         */
         lanelet::Optional<lanelet::routing::Route> reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map);
 
+        /**
+         * \brief Lookup transfrom from front bumper to the map
+         */
         void lookupFrontBumperTransform();
 
-        geometry_msgs::Pose shift_to_frontbumper(const geometry_msgs::Pose& pose, const tf2::Transform& transform) const;
     private:
 
         const double DEG_TO_RAD = 0.0174533;
@@ -303,6 +305,8 @@ namespace route {
 
         // Current vehicle pose if it has been recieved
         boost::optional<geometry_msgs::PoseStamped> vehicle_pose_;
+        // Vehicle front bumper pose
+        geometry_msgs::PoseStampedPtr bumper_pose_;
 
         // The current map projection for lat/lon to map frame conversion
         boost::optional<std::string> map_proj_;
