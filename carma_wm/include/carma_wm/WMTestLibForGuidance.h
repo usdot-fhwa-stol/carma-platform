@@ -492,12 +492,12 @@ inline void setRouteByIds (std::vector<lanelet::Id> lanelet_ids, std::shared_ptr
  *                     The default timing plan is 4sec yewllow, 20sec red, 20sec green
  */ 
 inline void addTrafficLight(std::shared_ptr<carma_wm::CARMAWorldModel> cmw, lanelet::Id light_id, lanelet::Id owning_lanelet_id, std::vector<lanelet::Id> controlled_lanelet_ids, 
-std::vector<std::pair<ros::Time, lanelet::CarmaTrafficLightState>> timing_plan =
+std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficLightState>> timing_plan =
 {
-  std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(0), lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED), // Just ended green
-  std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(4.0), lanelet::CarmaTrafficLightState::PROTECTED_CLEARANCE), // 4 sec yellow
-  std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(24.0), lanelet::CarmaTrafficLightState::STOP_AND_REMAIN), // 20 sec red
-  std::make_pair<ros::Time, lanelet::CarmaTrafficLightState>(ros::Time(44.0), lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED) // 20 sec green
+  std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficLightState>(lanelet::time::timeFromSec(0), lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED), // Just ended green
+  std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficLightState>(lanelet::time::timeFromSec(4.0), lanelet::CarmaTrafficLightState::PROTECTED_CLEARANCE), // 4 sec yellow
+  std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficLightState>(lanelet::time::timeFromSec(24.0), lanelet::CarmaTrafficLightState::STOP_AND_REMAIN), // 20 sec red
+  std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficLightState>(lanelet::time::timeFromSec(44.0), lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED) // 20 sec green
 }) {
   
   std::vector<lanelet::Lanelet> controlled_lanelets;

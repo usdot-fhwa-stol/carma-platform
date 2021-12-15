@@ -15,7 +15,6 @@
  */
 
 #include "driver_manager.h"
-
 namespace health_monitor
 {
 
@@ -138,7 +137,7 @@ namespace health_monitor
                 evaluate_sensor(ssc,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
             if(em_.is_lidar_gps_entry_required(i->name_)==0) //Lidar
-            {
+            {   
                 evaluate_sensor(lidar,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
             else if(em_.is_lidar_gps_entry_required(i->name_)==1) //GPS

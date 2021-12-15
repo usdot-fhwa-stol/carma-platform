@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>platoon_control</name>
   <version>3.3.0</version>
   <description>The node is to control a platooning maneuver</description>
@@ -10,5 +10,6 @@
   <depend>cav_msgs</depend>
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
+  <depend>autoware_msgs</depend>
   
 </package>

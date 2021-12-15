@@ -222,8 +222,10 @@ namespace basic_autonomy
                     break;
                 }
 
-                // If there are no more points to add but we haven't reached the ending downtrack then get the following lanelet and keep iterating
-                if (i == points_and_target_speeds.size() - 1)
+                // If there are no more points to add but we haven't reached the ending downtrack then
+                // construct an extrapolated straight line from the final point and keep adding to this line until the downtrack is met
+                // Since this is purely needed to allow for a spline fit edge case, it should have minimal impact on the actual steering behavior of the vehicle
+                if (i == points_and_target_speeds.size() - 1) // dist_accumulator < ending_downtrack is guaranteed by earlier conditional
                 {
 
                     ROS_DEBUG_STREAM("Extending trajectory using buffer beyond end of target lanelet");

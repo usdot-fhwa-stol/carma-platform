@@ -81,7 +81,7 @@ TEST(GuidanceStateMachineTest, testStates)
     // test ENTER_PARK state at end of route
     EXPECT_EQ(6, static_cast<int>(gsm.getCurrentState()));
     autoware_msgs::VehicleStatus vehicle_status;
-    vehicle_status.gearshift = 3; // '3' indicates gearshift is set to Park
+    vehicle_status.current_gear.gear = autoware_msgs::Gear::PARK; // '3' indicates gearshift is set to Park
     autoware_msgs::VehicleStatusConstPtr vehicle_status_pointer(new autoware_msgs::VehicleStatus(vehicle_status));
     gsm.onVehicleStatus(vehicle_status_pointer);
     // test DRIVERS_READY state

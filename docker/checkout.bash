@@ -37,14 +37,20 @@ done
 
 cd ${dir}/src
 
+
+# clone carma repos
+
 if [[ "$BRANCH" = "develop" ]]; then
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch carma-system-3.9.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch carma-system-3.9.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch carma-system-3.9.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch carma-system-3.9.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch $BRANCH
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch $BRANCH
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch $BRANCH
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch $BRANCH
 else
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch carma-system-3.9.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch carma-system-3.9.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch carma-system-3.9.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch carma-system-3.9.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch carma-system-3.10.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch carma-system-3.10.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch carma-system-3.10.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch carma-system-3.10.0
 fi
+
+# add astuff messages
+git clone https://github.com/astuff/astuff_sensor_msgs -b melodic

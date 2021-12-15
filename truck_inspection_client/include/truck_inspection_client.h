@@ -23,7 +23,7 @@
 #include <cav_msgs/MobilityRequest.h>
 #include <cav_msgs/BSM.h>
 #include <std_msgs/String.h>
-#include "boost/format.hpp"
+#include <boost/format.hpp>
 #include <boost/chrono.hpp>
 #include <boost/thread/thread.hpp>
 

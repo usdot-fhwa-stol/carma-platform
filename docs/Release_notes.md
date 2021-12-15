@@ -1,6 +1,61 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 3.10.0, released Dec 17th, 2021
+----------------------------------------
+
+**Summary:**
+Carma-platform release version 3.10.0 is comprised of two major enhancements. First, ROS1 Noetic (Updating the underlying ROS version from ROS Kinetic to ROS Noetic). Second updating the underlying OS from Ubuntu 16.04 to Ubuntu 20.04 to support the ROS2 migration which will use Ubuntu 20.04. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
+
+Enhancements in this release:
+-	The following changes have been made to the CARMA code bases. 
+1.	Docker base images updated to Ubuntu 20.04 and CUDA 11
+2.	ROS version changed to ROS Noetic
+3.	All python code updated from Python 2 to Python 3
+4.	All ROS package manifest files updated from version 2 to 3
+5.	Autoware.ai version updated from 1.13 to 1.14 except for the critical NDT node which remains on version 1.13 due to instability in the 1.14 version encountered during testing.
+6.	Lanelet2 HD maps library updated from v0.9 to v1.1.1
+7.	AVT Vimba Camera driver SDK version updated from v3.1 to v5.0
+8.	Default C++ version increased from C++ 11 to C++ 14
+9.	Handful of small code smells and compile warnings resolved.
+10.	Default ROS workspace structure changed so autoware.ai and carma-platform exist in the same source directory
+
+Fixes in this release:
+-	Issue 1507: Fixed Input vectors empty exception from cooperative lane change
+-	Issue 1506: Fixed Insufficient spline points exception from inlane-cruising before lane change
+-	Issue 1496: Fixed No objects reported from lidar detection anomaly
+-	Issue 1490: Fixed platooning control package is missing autoware_msgs dependency
+-	Issue 1486: Fixed localization in release/elise is less stable then in 3.8
+-	Issue 1485: Fixed avt_vimba_camera driver is highly unstable in release/elise anomaly
+-	Issue 1484: Fixed Cuda version mismatch in Elise
+-	Issue 1477: Fixed Noetic version of carma-ssc-interface-wrapper-driver does not contain pacmod3 and kvaser_interface
+-	Issue 1436: Fixed Mock Controller Driver Dropping Connection Due to Message md5sum Mismatch.
+
+Version 3.9.0, released Dec 5th, 2021
+----------------------------------------
+
+**Summary:**
+Carma-platform release version 3.9.0 is comprised of one major enhancements. First, Updated Carma Freight Port Drayage plugin web service integration. Along with the above enhancement, several bug fixes and CI related enhancements are included in this release.
+
+Enhancements in this release:
+-	Issue 1438: Updated Port Drayage Plugin to publish UI Instructions to the Web UI when a route to a newly received destination has been generated.
+-	Issue 1416: Update Port Drayage plugin to receive PICKUP actions and to broadcast an arrival message when arriving at a 'PICKUP' location.
+-	Issue 1321: Added capability for CARMA Platform to generate a new active route based off a received destination point for Port Drayage.
+-	Issue 1252: Added incoming Mobility Operation message processing to Port Drayage Plugin when new Mobility Operation message with strategy carma/port drayage received by a carma vehicle and contents of the Mobility Operation message's strategy params field are stored in Port Drayage Worker.
+
+Fixes in this release:
+-	Issue 1534: Updated Port Drayage plugin to set its cmv_id using the vehicle_id global parameter, which includes the vehicle's license plate information and updated cmv_id to a string value.
+-	Issue 1479: Added combined_lidar_frame arg name in the launch files to have default frame for passenger vehicles and freightliners.
+-	Issue 1438: Updated Port Drayage Plugin to publish UI Instructions to the Web UI when a route to a newly received destination has been generated.
+-	Issue 1281: 
+-	Issue 1520:  Fixed Potential ILC 32-bit range exception for correlation to lane change geometry creation in CLC where it is creating extra lane follow geometry behind the lane change to avoid running out of points that is creating duplicate points when attaching lanelets.
+-	Issue 1507: Fixed Input vectors empty exception sometimes at the end of the lane change from cooperative lane change plugin.
+-	Issue 1506: Fixed Insufficient spline points exception from inlane-cruising when executing a lane change.
+-	Issue 1524: Fixed route node’s logic using non-down track calculation for route completion check. Which is using a different down track frame compliant calculation for its end of route check.
+-	Issue 125: Updated route event popup text from Restart to "Start A New Route" in web UI.
+-	Issue 91: Fixed strategy params parsing issues in carma-platform with replacing encoded quotation marks in received Mobility Operation message's strategy params field.
+
+
 Version 3.8.2, released Oct 22nd, 2021
 ----------------------------------------
 

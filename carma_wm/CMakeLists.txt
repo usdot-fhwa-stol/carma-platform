@@ -13,11 +13,11 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(carma_wm)
 
 ## Compile as C++14, as it is required by lanelet2
-add_compile_options(-std=c++14)
+add_compile_options(-std=c++17)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
@@ -35,6 +35,7 @@ set ( PKG_CATKIN_DEPS
   roscpp
   tf2
   tf2_geometry_msgs
+  autoware_lanelet2_ros_interface
 )
 
 ## Find required catkin packages
@@ -117,7 +118,7 @@ add_dependencies(
 
 # Mark libraries for installation
 # See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-install(TARGETS ${PROJECT_NAME} map_update_logger_node
+install(TARGETS ${PROJECT_NAME} #map_update_logger_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
