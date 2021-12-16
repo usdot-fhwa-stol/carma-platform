@@ -39,7 +39,7 @@ namespace platoon_strategic
         plugin_discovery_msg_.name = "PlatooningStrategicPlugin";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
-        plugin_discovery_msg_.activated = true;
+        plugin_discovery_msg_.activated = false;
         plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
         plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";  
     }
@@ -49,14 +49,6 @@ namespace platoon_strategic
     bool PlatoonStrategicPlugin::onSpin() 
     {
         plugin_discovery_publisher_(plugin_discovery_msg_);
-        cav_msgs::PlatooningInfo platoon_status = composePlatoonInfoMsg();
-        platooning_info_publisher_(platoon_status);
-
-        if (!platooning_enabled_)
-        {
-            pm_.current_platoon_state = PlatoonState::STANDBY;
-            return true;
-        }
         
         if (pm_.current_platoon_state == PlatoonState::LEADER)
         {
@@ -74,6 +66,9 @@ namespace platoon_strategic
         {
             run_leader_waiting();
         }
+
+        cav_msgs::PlatooningInfo platoon_status = composePlatoonInfoMsg();
+        platooning_info_publisher_(platoon_status);
 
         return true;
     }
@@ -152,14 +147,6 @@ namespace platoon_strategic
         }
     }
 
-    bool PlatoonStrategicPlugin::plugin_activation_cb(cav_srvs::PluginActivationRequest &req, cav_srvs::PluginActivationResponse &resp)
-    {
-        ROS_DEBUG_STREAM("Activation service received");
-        platooning_enabled_ = req.activated;
-        ROS_DEBUG_STREAM("New status: " << platooning_enabled_);
-        resp.newState = platooning_enabled_;
-        return true;
-    }
     
 
     bool PlatoonStrategicPlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp)
@@ -263,7 +250,7 @@ namespace platoon_strategic
             ROS_WARN_STREAM("Platoon size 1 so Empty maneuver sent");
         }
 
-        if (pm_.current_platoon_state == PlatoonState::STANDBY && platooning_enabled_)
+        if (pm_.current_platoon_state == PlatoonState::STANDBY)
         {
             pm_.current_platoon_state = PlatoonState::LEADER;
             pm_.currentPlatoonID = boost::uuids::to_string(boost::uuids::random_generator()());
