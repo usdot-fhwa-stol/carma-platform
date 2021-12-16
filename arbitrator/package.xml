@@ -22,6 +22,9 @@
   <depend>roscpp</depend>
   <depend>lanelet2_core</depend>
   <depend>carma_wm</depend>
+  <depend>tf</depend>
+  <depend>tf2</depend>
+  <depend>tf2_geometry_msgs</depend> 
 
 
   <!-- The export tag contains other, unspecified, tags -->

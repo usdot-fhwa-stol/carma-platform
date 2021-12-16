@@ -27,6 +27,9 @@
 #include <carma_wm/WorldModel.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace arbitrator 
 {
@@ -87,6 +90,11 @@ namespace arbitrator
              * \param msg Latest twist message
              */
             void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+
+            /**
+             * \brief Lookup transform from front bumper to map
+             */
+            void lookupFrontBumperTransform();
             
         protected:
             /**
@@ -138,6 +146,13 @@ namespace arbitrator
             PlanningStrategy &planning_strategy_;
             bool initialized_;
             carma_wm::WorldModelConstPtr wm_;
+
+            geometry_msgs::TransformStamped tf_;
+            // TF listenser
+            tf2_ros::Buffer tf2_buffer_;
+            std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
+            // transform from front bumper to map
+            tf2::Stamped<tf2::Transform> bumper_transform_;
 
     };
 };
