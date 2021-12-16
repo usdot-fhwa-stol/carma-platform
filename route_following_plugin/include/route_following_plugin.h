@@ -26,6 +26,9 @@
 #include <cav_srvs/PlanManeuvers.h>
 #include <cav_msgs/UpcomingLaneChangeStatus.h>
 #include <gtest/gtest_prod.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 /**
  * \brief Macro definition to enable easier access to fields shared across the maneuver types
@@ -295,6 +298,20 @@ namespace route_following_plugin
          * Throws exception if sum of start and target speed of maneuver is below limit defined by parameter epsilon
          */
         ros::Duration getManeuverDuration(cav_msgs::Maneuver &maneuver, double epsilon) const;
+
+        /**
+         * \brief Lookup Transform from front bumper to map
+         */
+        void lookupFrontBumperTransform();
+
+        geometry_msgs::TransformStamped tf_;
+        
+        // front bumper transform
+        tf2::Stamped<tf2::Transform> frontbumper_transform_;
+        
+        // TF listenser
+        tf2_ros::Buffer tf2_buffer_;
+        std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
 
         //Unit Tests
         FRIEND_TEST(RouteFollowingPluginTest, testComposeManeuverMessage);
