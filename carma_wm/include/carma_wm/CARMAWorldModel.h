@@ -30,7 +30,7 @@
 #include "TrackPos.h"
 #include <carma_wm/WorldModelUtils.h>
 #include "boost/date_time/posix_time/posix_time.hpp"
-
+#include <carma_wm/SignalizedIntersectionManager.h>
 
 namespace carma_wm
 {
@@ -221,6 +221,8 @@ public:
   std::vector<std::shared_ptr<lanelet::AllWayStop>> getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
   
   std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
+
+  carma_wm::SignalizedIntersectionManager sim_; // records SPAT/MAP lane ids to lanelet ids
 
 private:
 
