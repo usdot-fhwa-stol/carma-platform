@@ -25,6 +25,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/format.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
@@ -35,7 +36,6 @@
 #include <cav_msgs/MobilityResponse.h>
 #include <cav_msgs/PlatooningInfo.h>
 #include <cav_msgs/PlanType.h>
-#include <cav_srvs/PluginActivation.h>
 #include <cav_msgs/BSM.h>
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
@@ -119,15 +119,6 @@ namespace platoon_strategic
             * \return Mobility response message
             */
             bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
-
-            /**
-            * \brief Callback function to the plugin activation service request
-            * 
-            * \param req plugin activation service request
-            * \param resp plugin activation service response
-            *
-            */
-            bool plugin_activation_cb(cav_srvs::PluginActivationRequest &req, cav_srvs::PluginActivationResponse &resp);
 
             /**
             * \brief Find lanelet index from path

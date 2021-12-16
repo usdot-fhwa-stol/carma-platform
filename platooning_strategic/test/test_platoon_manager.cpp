@@ -52,6 +52,7 @@ TEST(PlatoonManagerTest, test_enable_platooning)
 
 }
 
+
 TEST(PlatoonManagerTest, test_ecef_encode)
 {
     ros::Time::init();
