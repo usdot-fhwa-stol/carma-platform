@@ -91,9 +91,10 @@ namespace arbitrator
              */
             void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
 
+            /**
+             * \brief Lookup transform from front bumper to map
+             */
             void lookupFrontBumperTransform();
-
-            geometry_msgs::Pose shift_to_frontbumper(const geometry_msgs::Pose& pose, const tf2::Transform& transform) const;
             
         protected:
             /**
@@ -150,6 +151,8 @@ namespace arbitrator
             // TF listenser
             tf2_ros::Buffer tf2_buffer_;
             std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
+            // transform from front bumper to map
+            tf2::Stamped<tf2::Transform> bumper_transform_;
 
     };
 };

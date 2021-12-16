@@ -299,11 +299,16 @@ namespace route_following_plugin
          */
         ros::Duration getManeuverDuration(cav_msgs::Maneuver &maneuver, double epsilon) const;
 
+        /**
+         * \brief Lookup Transform from front bumper to map
+         */
         void lookupFrontBumperTransform();
 
-        geometry_msgs::Pose shift_to_frontbumper(const geometry_msgs::Pose& pose, const tf2::Transform& transform) const;
-
         geometry_msgs::TransformStamped tf_;
+        
+        // front bumper transform
+        tf2::Stamped<tf2::Transform> frontbumper_transform_;
+        
         // TF listenser
         tf2_ros::Buffer tf2_buffer_;
         std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;

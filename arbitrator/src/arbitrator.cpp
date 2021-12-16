@@ -165,33 +165,15 @@ namespace arbitrator
         ros::shutdown(); // Will stop upper level spin and shutdown node
     }
 
-    geometry_msgs::Pose Arbitrator::shift_to_frontbumper(const geometry_msgs::Pose& pose, const tf2::Transform& transform) const{
-        geometry_msgs::Pose bumper_pose;    
-        
-        auto pose_point_vec = tf2::Vector3(pose.position.x, pose.position.y, pose.position.z);
-        tf2::Vector3 front_bumper_point_vec = transform * pose_point_vec;
-        bumper_pose.position.x = transform.getOrigin().getX();//front_bumper_point_vec.x();
-        bumper_pose.position.y = transform.getOrigin().getY();//front_bumper_point_vec.y();
-        bumper_pose.position.z = transform.getOrigin().getZ();//front_bumper_point_vec.z();
-
-        return bumper_pose;
-    } 
-
     void Arbitrator::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg) 
     {
         vehicle_state_.stamp = msg->header.stamp;
         lookupFrontBumperTransform();   
         
         
-        // convert to front bumper
-        tf2::Stamped<tf2::Transform> bumper_transform;
-        tf2::fromMsg(tf_, bumper_transform);
 
-
-        geometry_msgs::Pose front_bumper_pose = shift_to_frontbumper(msg->pose, bumper_transform);
-
-        vehicle_state_.x = front_bumper_pose.position.x;
-        vehicle_state_.y = front_bumper_pose.position.y;
+        vehicle_state_.x = bumper_transform_.getOrigin().getX();
+        vehicle_state_.y = bumper_transform_.getOrigin().getY();
         // If the route is available then set the downtrack and lane id
         if (wm_->getRoute()) {
 
@@ -223,6 +205,7 @@ namespace arbitrator
         try
         {
             tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(1.0)); //save to local copy of transform 20 sec timeout
+            tf2::fromMsg(tf_, bumper_transform_);
         }
         catch (const tf2::TransformException &ex)
         {

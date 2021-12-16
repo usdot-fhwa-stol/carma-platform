@@ -84,7 +84,6 @@ int main(int argc, char** argv)
     ros::Subscriber pose_sub = nh.subscribe("current_pose", 1, &arbitrator::Arbitrator::pose_cb, &arbitrator);
     ros::Subscriber twist_sub = nh.subscribe("current_velocity", 1, &arbitrator::Arbitrator::twist_cb, &arbitrator);
 
-    arbitrator.lookupFrontBumperTransform();
     arbitrator.run();
 
     return 0;

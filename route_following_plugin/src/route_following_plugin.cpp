@@ -446,31 +446,19 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         return upcoming_lanechange_status_msg;
     }
 
-    geometry_msgs::Pose RouteFollowingPlugin::shift_to_frontbumper(const geometry_msgs::Pose& pose, const tf2::Transform& transform) const{
-        geometry_msgs::Pose bumper_pose;    
-        
-        auto pose_point_vec = tf2::Vector3(pose.position.x, pose.position.y, pose.position.z);
-        tf2::Vector3 front_bumper_point_vec = transform * pose_point_vec;
-        bumper_pose.position.x = transform.getOrigin().getX();//front_bumper_point_vec.x();
-        bumper_pose.position.y = transform.getOrigin().getY();//front_bumper_point_vec.y();
-        bumper_pose.position.z = transform.getOrigin().getZ();//front_bumper_point_vec.z();
-
-        return bumper_pose;
-        
-    } 
 
     void RouteFollowingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
-        lookupFrontBumperTransform();
-        // convert to front bumper
-        tf2::Stamped<tf2::Transform> bumper_transform;
-        tf2::fromMsg(tf_, bumper_transform);
-
-        geometry_msgs::Pose front_bumper_pose = shift_to_frontbumper(msg->pose, bumper_transform);
-
         ROS_DEBUG_STREAM("Entering pose_cb");
-        // pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
 
+        ROS_DEBUG_STREAM("Looking up front bumper pose...");
+        lookupFrontBumperTransform();
+        
+
+        geometry_msgs::Pose front_bumper_pose;
+        front_bumper_pose.position.x = frontbumper_transform_.getOrigin().getX();
+        front_bumper_pose.position.y = frontbumper_transform_.getOrigin().getY();
+        
         if (!wm_->getRoute())
             return;
 
@@ -736,6 +724,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         try
         {
             tf_ = tf2_buffer_.lookupTransform("vehicle_front", "map", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+            tf2::fromMsg(tf_, frontbumper_transform_);
         }
         catch (const tf2::TransformException &ex)
         {
