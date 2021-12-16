@@ -88,6 +88,8 @@ public:
   
     ros::ServiceServer maneuver_srv_ = nh.advertiseService("plugins/PlatooningStrategicPlugin/plan_maneuvers",
                                             &PlatoonStrategicPlugin::plan_maneuver_cb, &worker);
+    ros::ServiceServer plugin_activation_srv_ = nh.advertiseService("plugins/PlatooningStrategicPlugin/activate_plugin",
+                                            &PlatoonStrategicPlugin::plugin_activation_cb, &worker);                                        
     ros::Subscriber mob_request_sub = nh.subscribe("incoming_mobility_request", 1, &PlatoonStrategicPlugin::mob_req_cb,  &worker);
     ros::Subscriber mob_response_sub = nh.subscribe("incoming_mobility_response", 1, &PlatoonStrategicPlugin::mob_resp_cb,  &worker);
     ros::Subscriber mob_operation_sub = nh.subscribe("incoming_mobility_operation", 1, &PlatoonStrategicPlugin::mob_op_cb,  &worker);
