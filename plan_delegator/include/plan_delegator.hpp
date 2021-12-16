@@ -26,6 +26,9 @@
 #include <carma_utils/CARMAUtils.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 // TODO Replace this Macro if possible
 /**
@@ -42,6 +45,17 @@
                         ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
                         ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
                             throw new std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))))
+
+
+#define SET_MANEUVER_PROPERTY(mvr, property, value)\
+        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property = (value) :\
+            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property = (value) :\
+                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property = (value) :\
+                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property = (value) :\
+                        ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property = (value) :\
+                            ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property = (value) :\
+                                throw std::invalid_argument("ADJUST_MANEUVER_PROPERTY (property) called on maneuver with invalid type id " + std::to_string((mvr).type)))))))))
+
 
 namespace plan_delegator
 {
@@ -93,6 +107,12 @@ namespace plan_delegator
              */
             cav_srvs::PlanTrajectory composePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const;
 
+            /**
+             * \brief Lookup transfrom from front bumper to base link
+             */
+            void lookupFrontBumperTransform();
+            
+            void updateManeuverDistances(cav_msgs::Maneuver& maneuver);
         protected:
         
             // ROS params
@@ -124,6 +144,12 @@ namespace plan_delegator
             ros::Timer traj_timer_;
 
             bool guidance_engaged = false;
+
+            double length_to_front_bumper_ = 3.0;
+
+            // TF listenser
+            tf2_ros::Buffer tf2_buffer_;
+            std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
 
             /**
              * \brief Callback function for triggering trajectory planning

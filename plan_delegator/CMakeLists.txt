@@ -30,6 +30,9 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   carma_utils
   carma_wm
+  tf
+  tf2
+  tf2_geometry_msgs
 )
 
 ###################################
@@ -44,7 +47,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES plan_delegator
-   CATKIN_DEPENDS cav_msgs cav_srvs roscpp std_msgs carma_utils carma_wm
+   CATKIN_DEPENDS cav_msgs cav_srvs roscpp std_msgs carma_utils carma_wm tf tf2 tf2_geometry_msgs
 #  DEPENDS system_lib
 )
 
