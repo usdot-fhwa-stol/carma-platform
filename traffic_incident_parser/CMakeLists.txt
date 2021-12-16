@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(traffic_incident_parser)
 
-## Compile as C++14, supported in ROS Kinetic and newer
+## Compile as C++14, supported in ROS Noetic and newer
 add_compile_options(-std=c++14)
 
 ## Find catkin macros and libraries
@@ -14,8 +14,11 @@ find_package(catkin REQUIRED COMPONENTS
   lanelet2_extension
   carma_wm 
   lanelet2_core
+  autoware_lanelet2_ros_interface
 )
 
+## System dependencies are found with CMake's conventions
+find_package(Boost REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -29,7 +32,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES traffic_incident_parser
-  CATKIN_DEPENDS carma_utils cav_msgs roscpp lanelet2_extension carma_wm lanelet2_core
+  CATKIN_DEPENDS carma_utils cav_msgs roscpp lanelet2_extension carma_wm lanelet2_core autoware_lanelet2_ros_interface
 #  DEPENDS system_lib
 )
 
@@ -42,6 +45,7 @@ catkin_package(
 include_directories(
  include
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
 )
 
 add_executable(traffic_incident_parser_node src/main.cpp src/traffic_incident_parser_node.cpp)
@@ -50,7 +54,7 @@ add_library(traffic_incident_parser_worker_lib src/traffic_incident_parser_worke
 add_dependencies(traffic_incident_parser_worker_lib ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(traffic_incident_parser_node traffic_incident_parser_worker_lib ${catkin_LIBRARIES})
+target_link_libraries(traffic_incident_parser_node traffic_incident_parser_worker_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 #############
 ## Install ##
@@ -84,4 +88,4 @@ catkin_add_gmock(${PROJECT_NAME}-test
   test/test_traffic_parser.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
-target_link_libraries(${PROJECT_NAME}-test traffic_incident_parser_worker_lib ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}-test traffic_incident_parser_worker_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
