@@ -543,7 +543,7 @@ namespace route {
                 ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built.");
             }
             // check if we left the seleted route by cross track error
-            bool departed = crosstrack_error_check(bumper_pose_, current_lanelet);
+            bool departed = crosstrack_error_check(msg, current_lanelet);
             if (departed)
                 {
                     this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_DEPARTED);
@@ -697,8 +697,8 @@ namespace route {
     {
        lanelet::BasicPoint2d position;
 
-        position.x()= frontbumper_transform_.getOrigin().getX();//msg->pose.position.x;
-        position.y()= frontbumper_transform_.getOrigin().getY();//msg->pose.position.y;
+        position.x()= msg->pose.position.x;
+        position.y()= msg->pose.position.y;
 
         if(boost::geometry::within(position, current.polygon2d())) //If vehicle is inside current_lanelet, there is no crosstrack error
         {
