@@ -70,9 +70,9 @@ namespace bsm_generator
         map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());  // Build projector from proj string
     }
 
-    void BSMGenerator::speedCallback(const std_msgs::Float64ConstPtr& msg)
+    void BSMGenerator::speedCallback(const geometry_msgs::TwistStampedPtr& msg)
     {
-        bsm_.core_data.speed = worker.getSpeedInRange(msg->data);
+        bsm_.core_data.speed = worker.getSpeedInRange(msg->twist.linear.x * 2.23694);
         bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.SPEED_AVAILABLE;
     }
 
