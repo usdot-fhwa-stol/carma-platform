@@ -1341,6 +1341,7 @@ namespace carma_wm
         }
 
         boost::posix_time::time_duration time_difference = curr_light->predictState(min_end_time).get().first - min_end_time;
+        boost::posix_time::time_duration::total_seconds()
         if (time_difference.abs() < boost::posix_time::seconds(0.1))
         {
           ROS_DEBUG_STREAM("YEAH");
