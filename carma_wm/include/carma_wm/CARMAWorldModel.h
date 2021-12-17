@@ -137,6 +137,11 @@ public:
    */
   lanelet::Id getTrafficLightId(uint16_t intersection_id,uint8_t signal_id);
 
+  /*! \brief helper for traffic light Id
+   */
+  lanelet::Id getTrafficLightIdNew(uint16_t intersection_id, uint8_t signal_group_id);
+
+
   /**
    * \brief (non-const version) Gets the underlying lanelet, given the cartesian point on the map 
    *

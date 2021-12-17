@@ -139,9 +139,13 @@ public:
   // Traffic signal states and their end_time mappings.
   std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>>> traffic_signal_states_; //[intersection_id][signal_group_id]
 
+  // Last received signal state from SPAT
+  std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>> last_seen_state_; //[intersection_id][signal_group_id]
+
+  // traffic signal state counter
+  std::unordered_map<uint16_t, std::unordered_map<uint8_t,int>> signal_state_counter_; //[intersection_id][signal_group_id]
+
 private:
-
-
   // PROJ string of current map
   std::string target_frame_ = "";
 
