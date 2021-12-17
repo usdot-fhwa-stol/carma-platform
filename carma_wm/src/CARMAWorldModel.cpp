@@ -1340,9 +1340,17 @@ namespace carma_wm
           continue;
         }
 
-        // TODO same cycle info while signal already has full cycle, then skip
-        if (curr_light->predictState(min_end_time).get().second == received_state)
+        boost::posix_time::time_duration time_difference = curr_light->predictState(min_end_time).get().first - min_end_time;
+        if (time_difference.abs() < boost::posix_time::seconds(0.1))
         {
+          ROS_DEBUG_STREAM("YEAH");
+        }
+        // Received same cycle info while signal already has full cycle, then skip
+        if (curr_light->predictState(min_end_time).get().second == received_state &&
+            /*time_difference.abs() &&*/
+            sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] > 4 )
+        {
+          continue;
         }
 
         // TODO start new cycle while keeping the last and individually update the states
