@@ -102,6 +102,7 @@ namespace platoon_strategic
         if (pm_.current_platoon_state != PlatoonState::STANDBY)
         {
             lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
+        
             carma_wm::TrackPos tc = wm_->routeTrackPos(current_loc);
             current_downtrack_ = tc.downtrack;
             ROS_DEBUG_STREAM("current_downtrack_ = " << current_downtrack_);
@@ -109,10 +110,11 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("current_crosstrack_ = " << current_crosstrack_);
 
             pose_ecef_point_ = pose_to_ecef(pose_msg_);
+
+            checkForRightMostLane(current_loc);
+
         }
         
-        
-
     }
 
     void PlatoonStrategicPlugin::cmd_cb(const geometry_msgs::TwistStampedConstPtr& msg)
@@ -126,6 +128,37 @@ namespace platoon_strategic
         if (current_speed_ < 0.01)
         {
             current_speed_ = 0.0;
+        }
+    }
+
+    void PlatoonStrategicPlugin::checkForRightMostLane(const lanelet::BasicPoint2d& current_location)
+    {
+        auto current_lanelet = wm_->getLaneletsFromPoint(current_location, 1);
+        ROS_DEBUG_STREAM("current_lanelet" << current_lanelet[0].id());
+
+        auto routing_graph = wm_->getMapRoutingGraph();
+        auto right_lanelet = routing_graph->right(current_lanelet[0]);
+        if (!right_lanelet)
+        {
+            in_rightmost_lane_ = true;
+            ROS_DEBUG_STREAM("Vehicle is in the rightmost lane");
+        }
+        else
+        {
+            in_rightmost_lane_ = false;
+            ROS_DEBUG_STREAM("Vehicle is NOT in the rightmost lane");
+        }
+
+        auto left_lanelet = routing_graph->left(current_lanelet[0]);
+        if (!left_lanelet && in_rightmost_lane_)
+        {
+            single_lane_road_ = true;
+            ROS_DEBUG_STREAM("Vehicle is in a single-lane road");
+        }
+        else
+        {
+            single_lane_road_ = false;
+            ROS_DEBUG_STREAM("Vehicle is NOT in a single-lane road");
         }
     }
 

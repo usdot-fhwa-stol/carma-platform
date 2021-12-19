@@ -49,6 +49,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <std_msgs/String.h>
+#include <lanelet2_routing/RoutingGraph.h>
 
 namespace platoon_strategic
 {
@@ -220,8 +221,19 @@ namespace platoon_strategic
             */
             void run_follower();
             
+            /**
+            * \brief Checks if the current location is on the rightmost lane
+            * \param current_location 2d point of current location x and y
+            */
+            void checkForRightMostLane(const lanelet::BasicPoint2d& current_location);
+            
             // ECEF position of the host vehicle
             cav_msgs::LocationECEF pose_ecef_point_;
+
+            // variable to show if the vehicle is on the rightmost lane
+            bool in_rightmost_lane_ = true;
+            // variable to show if the vehicle is on a single-lane lane
+            bool single_lane_road_ = false;
 
         
         private:
