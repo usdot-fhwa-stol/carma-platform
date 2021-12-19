@@ -29,6 +29,9 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <carma_wm/WMListener.h>
+#include <carma_wm/WorldModel.h>
+#include <carma_wm/Geometry.h>
 
 // TODO Replace this Macro if possible
 /**
@@ -128,6 +131,9 @@ namespace plan_delegator
             cav_msgs::ManeuverPlan latest_maneuver_plan_;
             geometry_msgs::PoseStamped latest_pose_;
             geometry_msgs::TwistStamped latest_twist_;
+
+            //! World Model pointer
+            carma_wm::WorldModelConstPtr wm_;
 
         private:
 

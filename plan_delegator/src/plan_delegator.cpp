@@ -26,6 +26,10 @@ namespace plan_delegator
         nh_ = ros::CARMANodeHandle();
         pnh_ = ros::CARMANodeHandle("~");
 
+        // Initialize world model
+        carma_wm::WMListener wml;
+        this->wm_ = wml.getWorldModel();
+
         pnh_.param<std::string>("planning_topic_prefix", planning_topic_prefix_, "/plugins/");        
         pnh_.param<std::string>("planning_topic_suffix", planning_topic_suffix_, "/plan_trajectory");
         pnh_.param<double>("trajectory_planning_rate", trajectory_planning_rate_, 10.0);
@@ -189,6 +193,23 @@ namespace plan_delegator
             }
 
             updateManeuverDistances(maneuver);
+            
+            lanelet::BasicPoint2d current_loc(latest_pose_.pose.position.x, latest_pose_.pose.position.y);
+            double current_downtrack = wm_->routeTrackPos(current_loc).downtrack;
+            ROS_DEBUG_STREAM("current_downtrack" << current_downtrack);
+            double maneuver_end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
+            ROS_DEBUG_STREAM("maneuver_end_dist" << maneuver_end_dist);
+
+            // ignore maneuver that is passed.
+            if (current_downtrack > maneuver_end_dist)
+            {
+                ROS_INFO_STREAM("Dropping passed maneuver: " << GET_MANEUVER_PROPERTY(maneuver, parameters.maneuver_id));
+                // Update the maneuver plan index for the next loop
+                ++current_maneuver_index;
+                continue;
+            }
+            
+
             // get corresponding ros service client for plan trajectory
             auto maneuver_planner = GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin);
             auto client = getPlannerClientByName(maneuver_planner);
