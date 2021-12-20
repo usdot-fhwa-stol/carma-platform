@@ -542,8 +542,9 @@ namespace route {
             {
                 ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built.");
             }
+            geometry_msgs::PoseStampedPtr pose_ptr(new geometry_msgs::PoseStamped(*vehicle_pose_));
             // check if we left the seleted route by cross track error
-            bool departed = crosstrack_error_check(msg, current_lanelet);
+            bool departed = crosstrack_error_check(pose_ptr, current_lanelet);
             if (departed)
                 {
                     this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_DEPARTED);

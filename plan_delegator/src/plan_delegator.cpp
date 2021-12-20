@@ -27,8 +27,9 @@ namespace plan_delegator
         pnh_ = ros::CARMANodeHandle("~");
 
         // Initialize world model
-        carma_wm::WMListener wml;
-        this->wm_ = wml.getWorldModel();
+        wml_.reset(new carma_wm::WMListener());
+
+        
 
         pnh_.param<std::string>("planning_topic_prefix", planning_topic_prefix_, "/plugins/");        
         pnh_.param<std::string>("planning_topic_suffix", planning_topic_suffix_, "/plan_trajectory");
@@ -45,6 +46,7 @@ namespace plan_delegator
         guidance_state_sub_ = nh_.subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &PlanDelegator::guidanceStateCallback, this);
 
         lookupFrontBumperTransform();
+        wm_ = wml_->getWorldModel();
         
         traj_timer_ = pnh_.createTimer(
             ros::Duration(ros::Rate(trajectory_planning_rate_)),

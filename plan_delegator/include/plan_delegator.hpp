@@ -132,7 +132,8 @@ namespace plan_delegator
             geometry_msgs::PoseStamped latest_pose_;
             geometry_msgs::TwistStamped latest_twist_;
 
-            //! World Model pointer
+            // wm listener pointer and pointer to the actual wm object
+            std::shared_ptr<carma_wm::WMListener> wml_;
             carma_wm::WorldModelConstPtr wm_;
 
         private:
