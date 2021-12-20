@@ -72,7 +72,7 @@ namespace bsm_generator
 
     void BSMGenerator::speedCallback(const geometry_msgs::TwistStampedPtr& msg)
     {
-        bsm_.core_data.speed = worker.getSpeedInRange(msg->twist.linear.x * 2.23694);
+        bsm_.core_data.speed = worker.getSpeedInRange(msg->twist.linear.x);
         bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.SPEED_AVAILABLE;
     }
 
