@@ -312,7 +312,7 @@ namespace platoon_strategic_ihp
 
         if (pm_.current_platoon_state == PlatoonState::STANDBY)
         {
-            status_msg.state = cav_msgs::PlatooningInfo::SEARCHING;
+            status_msg.state = cav_msgs::PlatooningInfo::DISABLED;
         }
         else if (pm_.current_platoon_state == PlatoonState::LEADER)
         {
