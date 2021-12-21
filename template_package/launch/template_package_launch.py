@@ -18,6 +18,7 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
+from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 
 import os
 
@@ -43,7 +44,7 @@ def generate_launch_description():
     container = ComposableNodeContainer(
         package='carma_ros2_utils',
         name='<SUB><package_name>_container',
-        namespace='/',
+        namespace=GetCurrentNamespace(),
         executable='carma_component_container_mt',
         composable_node_descriptions=[
             
@@ -52,7 +53,6 @@ def generate_launch_description():
                     package='<SUB><package_name>',
                     plugin='<SUB><package_name>::Node',
                     name='<SUB><package_name>_node',
-                    namespace="/",
                     extra_arguments=[
                         {'use_intra_process_comms': True},
                         {'--log-level' : log_level }

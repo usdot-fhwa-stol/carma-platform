@@ -21,7 +21,8 @@ from launch_ros.actions import Node
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch.substitutions import EnvironmentVariable
-
+from carma_ros2_utils.launch.get_log_level import GetLogLevel
+from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 import os
 
 
@@ -29,15 +30,6 @@ def generate_launch_description():
     """
     Launch perception nodes.
     """
-
-    import sys
-    sys.path.append(os.path.abspath(get_package_share_directory('carma') + '/scripts'))
-    from get_log_level import GetLogLevel
-
-    ns = LaunchConfiguration('namespace')
-
-    declare_namespace_cmd = DeclareLaunchArgument(
-        name ='namespace', default_value='/environment') # TODO this default value appears to have no effect
 
     autoware_auto_launch_pkg_prefix = get_package_share_directory(
         'autoware_auto_launch')
@@ -57,24 +49,25 @@ def generate_launch_description():
     subsystem_controller_param_file = os.path.join(
         get_package_share_directory('subsystem_controllers'), 'config/environment_perception_controller_config.yaml')
 
+    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
+
     # Nodes
     lidar_perception_container = ComposableNodeContainer(
         package='carma_ros2_utils', # rclcpp_components
         name='perception_points_filter_container',
         executable='lifecycle_component_wrapper_st', # component_manager_mt
-        namespace=ns,
+        namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
             ComposableNode(
                 package='ray_ground_classifier_nodes',
                 name='ray_ground_filter',
                 plugin='autoware::perception::filters::ray_ground_classifier_nodes::RayGroundClassifierCloudNode',
-                namespace=ns,
                 extra_arguments=[
                     {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('ray_ground_classifier_nodes', EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG')) }
+                    {'--log-level' : GetLogLevel('ray_ground_classifier_nodes', env_log_levels) }
                 ],
                 remappings=[
-                    ("points_in", "/hardware_interface/lidar/points_raw"),
+                    ("points_in", "/hardware_interface/lidar/points_raw"), # TODO use environment variable here
                     ("points_nonground", "points_no_ground")
                 ],
                 parameters=[ ray_ground_classifier_param_file]
@@ -83,10 +76,9 @@ def generate_launch_description():
                 package='euclidean_cluster_nodes',
                 name='euclidean_cluster',
                 plugin='autoware::perception::segmentation::euclidean_cluster_nodes::EuclideanClusterNode',
-                namespace=ns,
                 extra_arguments=[
                     {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('euclidean_cluster_nodes', EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG')) }
+                    {'--log-level' : GetLogLevel('euclidean_cluster_nodes', env_log_levels) }
                 ],
                 remappings=[
                     ("points_in", "points_no_ground"),
@@ -98,10 +90,9 @@ def generate_launch_description():
                     package='tracking_nodes',
                     plugin='autoware::tracking_nodes::MultiObjectTrackerNode',
                     name='tracking_nodes_node',
-                    namespace=ns,
                     extra_arguments=[
                         {'use_intra_process_comms': True}, 
-                        {'--log-level' : GetLogLevel('tracking_nodes', EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG')) }
+                        {'--log-level' : GetLogLevel('tracking_nodes', env_log_levels) }
                     ],
                     remappings=[
                         ("ego_state", "current_pose_with_cov"), # TODO we will need a pose with covariance topic
@@ -116,20 +107,19 @@ def generate_launch_description():
 
     
     carma_external_objects_container = ComposableNodeContainer(
-        package='rclcpp_components',
+        package='carma_ros2_utils',
         name='external_objects_container',
-        namespace=ns,
-        executable='component_container_mt',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
  
             ComposableNode(
                     package='object_detection_tracking',
                     plugin='object::ObjectDetectionTrackingNode',
                     name='external_object',
-                    namespace=ns,
                     extra_arguments=[
                         {'use_intra_process_comms': True}, 
-                        {'--log-level' : GetLogLevel('object_detection_tracking', EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG')) }
+                        {'--log-level' : GetLogLevel('object_detection_tracking', env_log_levels) }
                     ],
                     parameters=[ object_detection_tracking_param_file ]
             ),
@@ -139,16 +129,14 @@ def generate_launch_description():
     subsystem_controller = Node(
         package='subsystem_controllers',
         name='environment_perception_controller',
-        namespace=ns,
         executable='environment_perception_controller',
         parameters=[ subsystem_controller_param_file ],
         on_exit= Shutdown(), # Mark the subsystem controller as required
-        arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG'))]
+        arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
 
     return LaunchDescription([
         lidar_perception_container,
         carma_external_objects_container,
-        subsystem_controller,
-        declare_namespace_cmd
+        subsystem_controller
     ])

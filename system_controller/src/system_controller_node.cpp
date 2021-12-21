@@ -104,6 +104,7 @@ namespace system_controller
             get_logger(), "System could not be configured on startup. Shutting down.");
 
         lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
+        rclcpp::shutdown(nullptr, "System could not be configured on startup. Shutting down.");
         return;
       }
 
@@ -115,6 +116,7 @@ namespace system_controller
             get_logger(), "System could not be activated. Shutting down.");
 
         lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
+        rclcpp::shutdown(nullptr, "System could not be activated. Shutting down.");
         return;
       }
 

@@ -29,6 +29,9 @@
   <build_depend>carma_cmake_common</build_depend>
 
   <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>carma_ros2_utils</exec_depend>
 
   <export>
     <build_type condition="$ROS_VERSION == 1">catkin</build_type>
