@@ -666,13 +666,15 @@ namespace platoon_strategic_ihp
             
             // Use pm_ to find platoon end vehicle and its downtrack in m.
             int rearVehicleIndex = pm_.getTotalPlatooningSize()- 1;
+            ROS_DEBUG_STREAM("rearVehicleIndexf: " << rearVehicleIndex);
             double rearVehicleDtd = pm_.platoon[rearVehicleIndex].vehiclePosition; 
             
             // downtrack of the platoon leader --> used for frontal join
             ROS_DEBUG_STREAM("rearVehicleDtd from ecef: " << rearVehicleDtd);
+            ROS_DEBUG_STREAM("frontVehicleDtd from ecef: " << frontVehicleDtd);
             
             // Condition passed the check for rear join
-            if(isVehicleRightInFront(rearVehicleDtd))
+            if(isVehicleRightInFront(frontVehicleDtd))
             {   
                 /**
                  *    1. isVehicleRightInFront(rearVehicleDtd) is compare platoon and host vehicle downtrack.
@@ -714,7 +716,7 @@ namespace platoon_strategic_ihp
             }
             
             // UCLA: Condition passed the check for frontal join
-            else if (isVehicleRightBehind(frontVehicleDtd))
+            else if (isVehicleRightBehind(rearVehicleDtd))
             {   
                 
                 /**

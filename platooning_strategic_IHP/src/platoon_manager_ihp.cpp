@@ -154,6 +154,7 @@ namespace platoon_strategic_ihp
     int PlatoonManager::getTotalPlatooningSize() {
         // update the varaible "platoonSize".
         platoonSize = platoon.size();
+        ROS_DEBUG_STREAM("platoonSize: " << platoonSize);
         return platoon.size();
     }
         
