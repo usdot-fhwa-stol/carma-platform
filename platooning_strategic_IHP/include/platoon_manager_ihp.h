@@ -35,7 +35,7 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <autoware_msgs/ControlCommandStamped.h>
-
+#include "platoon_config_ihp.h"
 
 
 
@@ -137,7 +137,6 @@ namespace platoon_strategic_ihp
         * 
         * \param senderId static id of the broadcasting vehicle
         * \param platoonId platoon id
-        * \param senderBsmId bsm id of the broadcasting vehicle
         * \param params strategy parameters
         * \param Dtd downtrack distance
         */
@@ -254,15 +253,22 @@ namespace platoon_strategic_ihp
         double getIHPDesPosFollower(double dt);
 
         /**
-        \brief UCLA: Return joiner's desired position
-        to cut into the platoon 
-        */
+         * \brief UCLA: Return joiner's desired position in terms of platoon index to cut into the platoon. 
+         * 
+         * \params joinerDtD: The current downtrack distance (with regards to host vehicle) of the joiner vehicle.
+         * 
+         * \return: cut-in index: The index of the gap-leading vehicle within the platoon. If front join, return -1.
+         */
         int getClosestIndex(double joinerDtD);
 
         /**
-        \brief UCLA: Return the desired gap size
-        for cut-in join 
-        */
+         * \brief UCLA: Return the desired gap size for cut-in join, in m.
+         * 
+         * \params gap_leading_index: The platoon index of the  gap-leading vehicle. 
+         *         joinerDtD: The current downtrack distance (with regards to host vehicle) of the joiner vehicle.
+         * 
+         * \return: cut-in gap: The desired gap size for cut-in join, in m.
+         */
         double getCutInGap(int gap_leading_index, double joinerDtD);
 
         // Member variables

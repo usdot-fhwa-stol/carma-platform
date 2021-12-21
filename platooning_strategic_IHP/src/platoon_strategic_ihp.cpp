@@ -103,6 +103,43 @@ namespace platoon_strategic_ihp
         return location;
     }
 
+    // Function to assign host pose_ecef_point_
+    void PlatoonStrategicIHPPlugin::setHostECEF(cav_msgs::LocationECEF pose_ecef_point)
+    {
+        pose_ecef_point_ = pose_ecef_point;
+    }
+
+    // Function to get pm_ object 
+    PlatoonManager PlatoonStrategicIHPPlugin::getHostPM()
+    {
+        return pm_;
+    }
+
+    // Function to set platoon manager state
+    void PlatoonStrategicIHPPlugin::setPMState(PlatoonState desiredState)
+    {
+        pm_.current_platoon_state = desiredState;
+    }
+
+    // Set validation info for current plan in PM
+    void PlatoonStrategicIHPPlugin::setPMValid(bool isPlanValid)
+    {
+        pm_.current_plan.valid = isPlanValid;
+    }
+    
+    // Update platoon list (Unit Test function)
+    void PlatoonStrategicIHPPlugin::updatePlatoonList(std::vector<PlatoonMember> platoon_list)
+    {
+        pm_.platoon = platoon_list;
+    }
+
+    // Set PM to follower state (Unit Test function)
+    void PlatoonStrategicIHPPlugin::setToFollower()
+    {
+        pm_.isFollower = true;
+    }
+
+
     // Callback to calculate downtrack based on pose message.
     void PlatoonStrategicIHPPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
@@ -117,7 +154,9 @@ namespace platoon_strategic_ihp
             current_crosstrack_ = tc.crosstrack;
             ROS_DEBUG_STREAM("current_crosstrack_ = " << current_crosstrack_);
 
-            pose_ecef_point_ = pose_to_ecef(pose_msg_);
+            // pose_ecef_point_ = pose_to_ecef(pose_msg_);
+            cav_msgs::LocationECEF pose_ecef_point = pose_to_ecef(pose_msg_);
+            setHostECEF(pose_ecef_point);
         } 
     }
    
@@ -581,8 +620,9 @@ namespace platoon_strategic_ihp
     {
         /*
             UCLA Implementation note: 
-            This is the joiner which will later become the new leader,
-            host vehicle publish status msgs and waiting to lead the rear platoon*/
+            This is the joiner that is preapring for cut-in join.
+            host vehicle publish status msgs and waiting to lead the rear platoon.
+        */
         cav_msgs::MobilityOperation msg;
         msg = composeMobilityOperationSTATUS();
         ROS_DEBUG_STREAM("Composed Mobility Operation message in PrepareToJoin state.");
@@ -610,7 +650,7 @@ namespace platoon_strategic_ihp
             ROS_ERROR("UNKNOW strategy param string!!!");
             msg.strategy_params = "";
         }
-         ROS_DEBUG_STREAM("Composed Mobility Operation message in Lead With Operation state.");
+        ROS_DEBUG_STREAM("Composed Mobility Operation message in Lead With Operation state.");
         return msg;
     }
 
@@ -1118,7 +1158,7 @@ namespace platoon_strategic_ihp
                 }
                 else
                 {
-                    request.plan_type.type = cav_msgs::PlanType::CUT_IN_MID_DONE;
+                    request.plan_type.type = cav_msgs::PlanType::CUT_IN_MID_OR_REAR_DONE;
                 }
                 request.strategy = MOBILITY_STRATEGY;
                 request.strategy_params = "";
@@ -1706,9 +1746,9 @@ namespace platoon_strategic_ihp
         // Firstly, check eligibility of the received message. 
         bool isCurrPlanValid = pm_.current_plan.valid;                          // Check if current plan is still valid (i.e., not timed out).
         bool isForCurrentPlan = msg.header.plan_id == pm_.current_plan.planId;  // Check if plan Id matches.
-        bool isFromTargetVehicle = msg.header.sender_id == pm_.targetLeaderId;  // Check of target leader ID and sender ID matches.
+        // bool isFromTargetVehicle = msg.header.sender_id == pm_.targetLeaderId;  // Check of target leader ID and sender ID matches.
         
-        if (!(isCurrPlanValid && isForCurrentPlan && isFromTargetVehicle)) 
+        if (!(isCurrPlanValid && isForCurrentPlan)) 
         {
             /**
              * If any of the three condition (i.e., isCurrPlanValid, isForCurrentPlan and isFromTargetVehicle) 
@@ -1877,10 +1917,10 @@ namespace platoon_strategic_ihp
         cav_msgs::PlanType plan_type = msg.plan_type;
         
         // UCLA: determine joining type 
+        bool isCutInJoin = (plan_type.type == cav_msgs::PlanType::CUT_IN_FROM_SIDE);
         bool isRearJoin = (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR);
         bool isFrontJoin = (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT);
-        bool isCutInJoin = (plan_type.type == cav_msgs::PlanType::CUT_IN_FROM_SIDE);
-
+        
         
         // Check if current plan is still valid (i.e., not timed out).
         if (pm_.current_plan.valid)

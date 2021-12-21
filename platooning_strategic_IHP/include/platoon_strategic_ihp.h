@@ -139,12 +139,12 @@ namespace platoon_strategic_ihp
             /**
             * \brief Find lanelet index from path
             * 
-            * \param current_dist current downtrack distance (m)
-            * \param end_dist ending downtrack distance (m)
-            * \param current_speed current speed
-            * \param target_speed target speed
-            * \param lane_id lanelet id
-            * \param current_time current time in seconds
+            * \param current_dist: current downtrack distance (m)
+            * \param end_dist: ending downtrack distance (m)
+            * \param current_speed: current speed (m/s)
+            * \param target_speed: target speed (m/s)
+            * \param lane_id: lanelet id 
+            * \param current_time: current time (s)
             *
             * \return Maneuver message
             */
@@ -153,13 +153,13 @@ namespace platoon_strategic_ihp
             /**
             * \brief Find start(current) and target(end) lanelet index from path to generate lane change maneuver message.
             * 
-            * \param current_dist current downtrack distance
-            * \param end_dist ending downtrack distance
-            * \param current_speed current speed
-            * \param target_speed target speed
-            * \param starting_lane_id current lanelet id which serves as the starting lanlet id
-            * \param ending_lane_id target lanelet id which is also the ending lanelet id that is in another lane
-            * \param current_time current time in seconds
+            * \param current_dist: current downtrack distance
+            * \param end_dist: ending downtrack distance
+            * \param current_speed: current speed
+            * \param target_speed: target speed
+            * \param starting_lane_id: current lanelet id which serves as the starting lanlet id
+            * \param ending_lane_id: target lanelet id which is also the ending lanelet id that is in another lane
+            * \param current_time: current time in seconds
             *
             * \return Maneuver message
             */
@@ -236,9 +236,6 @@ namespace platoon_strategic_ihp
             * \brief Spin callback function
             */
             bool onSpin();
-
-            // Platoon Manager Object
-            PlatoonManager pm_;
             
             /**
             * \brief Run Leader State
@@ -259,9 +256,6 @@ namespace platoon_strategic_ihp
             * \brief Run Follower State
             */
             void run_follower();
-
-            // ECEF position of the host vehicle
-            cav_msgs::LocationECEF pose_ecef_point_;
 
             // -------------- UCLA: add two states for frontal join ------------------
             /**
@@ -286,9 +280,34 @@ namespace platoon_strategic_ihp
             void run_prepare_to_join();
 
             /**
-             * \brief UCLA find platoon leader bsmID
+             * \brief UCLA Update the private variable pose_ecef_point_
              */
-            void front_bsm_cb(const cav_msgs::BSMConstPtr& msg);
+            void setHostECEF(cav_msgs::LocationECEF pose_ecef_point);
+
+            /**
+             * \brief UCLA Getter: for PlatoonManager class
+             */
+            PlatoonManager getHostPM();
+
+            /**
+             * \brief UCLA Setter: function to set pm_.platoon_state
+             */
+            void setPMState(PlatoonState desiredState);
+
+            /**
+             * \brief UCLA Setter: function to set pm_.current_plan.valid. (This is only used for UniteTst).
+             */
+            void setPMValid(bool isPlanValid);
+
+            /**
+             * \brief UCLA Setter: Update platoon list (Unit Test).
+             */
+            void updatePlatoonList(std::vector<PlatoonMember> platoon_list);
+           
+            /**
+             * \brief UCLA Setter: Set the host to follower state (Unit Test).
+             */
+            void setToFollower();
 
         private:
 
@@ -299,12 +318,17 @@ namespace platoon_strategic_ihp
             MobilityOperationCB mobility_operation_publisher_;
             PlatooningInfoCB platooning_info_publisher_;
 
+            // Platoon Manager Object
+            PlatoonManager pm_;
+
+            // ECEF position of the host vehicle
+            cav_msgs::LocationECEF pose_ecef_point_;
 
             // wm listener pointer and pointer to the actual wm object
             std::shared_ptr<carma_wm::WMListener> wml_;
             carma_wm::WorldModelConstPtr wm_;
 
-            // local copy of pose
+            // local copy of configuration file
             PlatoonPluginConfig config_;
 
             // local copy of pose
@@ -543,27 +567,33 @@ namespace platoon_strategic_ihp
             *
             * \param downtrack: The downtrack distance (m) of the target vehicle to compare with the host.
             *
-            * \return if target vehicle is behind the host vehicle.
+            * \return (boolean): if target vehicle is behind the host vehicle.
             */
             bool isVehicleRightBehind(double downtrack);
             
             /**
-            * \brief Function to determine if the target platoon leader is in an adjacent lane (used for cut-in from front) 
+            * \brief Function to determine if the target platoon leader is in an adjacent lane (used for cut-in join scenarios). 
+            *  
             *
-            * \param type boolean
+            * \param frontVehicleDtd: The downtrack distance of the platoon front (i.e., platoon leader) vehicle.
+            *        rearVehicleDtd:  The downtrack distance of the platoon rear (i.e., last platoon member) vehicle.
+            *        frontVehicleCtD: The cross track distance of the platoon front (i.e., platoon leader) vehicle.
             *
-            * \return if target vehicle in front
+            * \return (boolean): if target vehicle is in the adjacent lane.
             */
             bool isVehicleNextLane(double frontVehicleDtd, double rearVehicleDtd, double frontVehicleCtD);
 
             /**
-            * \brief Function to find the starting and ending lanelet ID for lane change in a two-lane scenario (used for cut-in from front) 
+            * \brief Function to find the starting and ending lanelet ID for lane change in a two-lane scenario (used for cut-in join scenarios).
             * 
-            * Note: This is a temporary function for internal test only. The scenario is not genrealized and further development is needed.
+            * Note: This is a temporary function for internal test only. The scenario is not genrealized. Can only find adjacebt lanletID based on predefiend direction (left, right).
+            *       
+            * \TODO: This function should be replaced by the complete arbitarty lane change module. 
             *
-            * \param type boolean
+            * \param start_downtrack: The downtrack distance (m) of the starting point.
+            *        end_downtrack: The downtrack distance (m) of the target (end) point.
             *
-            * \return if target vehicle in front
+            * \return (int): The adjacent laneletID based on the provided dontrack distance range. 
             */
             int find_target_lanelet_id(double start_downtrack, double end_downtrack);
             
@@ -589,26 +619,31 @@ namespace platoon_strategic_ihp
             * \return mobility operation msg.
             */
             cav_msgs::MobilityOperation composeMobilityOperationLeaderAborting();
+            
             /**
             * \brief Function to compose mobility operation in CandidateLeader.
             *
             * \return mobility operation msg.
             */
             cav_msgs::MobilityOperation composeMobilityOperationCandidateLeader();
+            
             /**
             * \brief Function to compose mobility operation in LeadWithOperation (cut-in join)
             *
             * \param type type of mobility operation (info or status)
             *
-            * \return mobility operation msg
+            * \return msg: mobility operation msg 
+            *         Return null ("") if the incoming message is trashed/unrecognized. 
             */
             cav_msgs::MobilityOperation composeMobilityOperationLeadWithOperation(const std::string& type);
+            
             /**
             * \brief Function to compose mobility operation in PrepareToJoin (cut-in join)
             *
             * \param type type of mobility operation (info or status)
             *
-            * \return mobility operation msg
+            * \return msg: mobility operation msg
+            *         Return null ("") if the incoming message is trashed/unrecognized. 
             */
             cav_msgs::MobilityOperation composeMobilityOperationPrepareToJoin();
 
@@ -644,12 +679,14 @@ namespace platoon_strategic_ihp
             * \param msg incoming mobility operation message.
             */
             void mob_op_cb_candidateleader(const cav_msgs::MobilityOperation& msg);
+            
             /**
             * \brief Function to process mobility operation in LeadWithOperation state (cut-in join)
             *
             * \param msg incoming mobility operation
             */
             void mob_op_cb_leadwithoperation(const cav_msgs::MobilityOperation& msg);
+            
             /**
             * \brief Function to process mobility operation in PrepareToJoin state (cut-in join)
             *
@@ -676,6 +713,7 @@ namespace platoon_strategic_ihp
             * \return ACK, NACK, or No response.
             */
             MobilityRequestResponse mob_req_cb_candidateleader(const cav_msgs::MobilityRequest& msg);
+            
             /**
             * \brief Function to process mobility request in leadwithoperation state (cut-in join)
             *
@@ -684,6 +722,7 @@ namespace platoon_strategic_ihp
             * \return ACK, NACK, or No response
             */
             MobilityRequestResponse mob_req_cb_leadwithoperation(const cav_msgs::MobilityRequest& msg);
+            
             /**
             * \brief Function to process mobility request in preparetojoin state (cut-in join)
             *
@@ -700,26 +739,27 @@ namespace platoon_strategic_ihp
             * \param msg incoming mobility response.
             */
             void mob_resp_cb_leaderaborting(const cav_msgs::MobilityResponse& msg);
+            
             /**
             * \brief Function to process mobility response in candidateleader state.
             *
             * \param msg incoming mobility response.
             */
             void mob_resp_cb_candidateleader(const cav_msgs::MobilityResponse& msg);
+            
             /**
             * \brief Function to process mobility response in leadwithoperation state (cut-in join)
             *
             * \param msg incoming mobility response
             */
             void mob_resp_cb_leadwithoperation(const cav_msgs::MobilityResponse& msg);
+            
             /**
             * \brief Function to process mobility response in preparetojoin state 
             *
             * \param msg incoming mobility response
             */
             void mob_resp_cb_preparetojoin(const cav_msgs::MobilityResponse& msg);
-
-
 
 
             // Pointer for map projector
