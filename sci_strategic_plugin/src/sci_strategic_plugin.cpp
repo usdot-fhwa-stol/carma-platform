@@ -90,7 +90,7 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
     approaching_stop_controlled_interction_ = true;
     ROS_DEBUG_STREAM("Approaching Stop Controlled Intersection: " << approaching_stop_controlled_interction_);
 
-    if (msg->strategy_params != previous_strategy_params_)
+    if (true)//(msg->strategy_params != previous_strategy_params_)
     {
       if (msg->header.recipient_id == config_.vehicle_id)
       {
@@ -376,7 +376,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
           stopping_accel = std::max(-stopping_accel, desired_deceleration);
           ROS_DEBUG_STREAM("used deceleration for case three: " << stopping_accel);
           resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-            current_state.downtrack, stop_intersection_down_track+config_.stop_line_buffer, current_state.speed, crossed_lanelets[0].id(),
+            current_state.downtrack, stop_intersection_down_track, current_state.speed, crossed_lanelets[0].id(),
             crossed_lanelets[0].id(), stopping_accel, current_state.stamp,
             current_state.stamp + ros::Duration(time_to_schedule_stop)));
 
