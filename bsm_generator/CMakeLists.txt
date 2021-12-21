@@ -17,7 +17,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(bsm_generator)
 
-## Compile as C++11, supported in ROS Kinetic and newer
+## Compile as C++14, supported in ROS Noetic and newer
 add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
@@ -32,7 +32,6 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   pacmod_msgs
   j2735_msgs
-  novatel_gps_msgs
   wgs84_utils
   lanelet2_extension
 )
@@ -46,7 +45,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
   CATKIN_DEPENDS roscpp std_msgs cav_msgs carma_utils automotive_platform_msgs
-                 geometry_msgs pacmod_msgs j2735_msgs novatel_gps_msgs wgs84_utils lanelet2_extension
+                 geometry_msgs pacmod_msgs j2735_msgs wgs84_utils lanelet2_extension
 )
 
 ###########
