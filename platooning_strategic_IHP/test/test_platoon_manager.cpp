@@ -184,7 +184,7 @@ TEST(PlatoonStrategicIHPPlugin, test_get_leader)
     PlatoonMember member1 = plugin.pm_.platoon[0];
 
     plugin.pm_.isFollower = true;
-    PlatoonMember platoon_leader = plugin.pm_.getLeader();
+    PlatoonMember platoon_leader = plugin.pm_.getDynamicLeader();
 
     EXPECT_EQ(member1.staticId, "1");
 
@@ -222,8 +222,8 @@ TEST(PlatoonManagerTest, test2)
 
 TEST(PlatoonManagerTest, test3)
 {
-    platoon_strategic_ihp::PlatoonMember* member1 = new platoon_strategic_ihp::PlatoonMember("1", "1", 1.0, 1.1, 0.1, 100);
-    platoon_strategic_ihp::PlatoonMember* member2 = new platoon_strategic_ihp::PlatoonMember("2", "2", 2.0, 2.1, 0.2, 200);
+    platoon_strategic_ihp::PlatoonMember* member1 = new platoon_strategic_ihp::PlatoonMember("1", 1.0, 1.1, 0.1, 100);
+    platoon_strategic_ihp::PlatoonMember* member2 = new platoon_strategic_ihp::PlatoonMember("2", 2.0, 2.1, 0.2, 200);
     std::vector<platoon_strategic_ihp::PlatoonMember> cur_pl;
 
     cur_pl.push_back(*member1);

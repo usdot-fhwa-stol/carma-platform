@@ -107,12 +107,12 @@ install(DIRECTORY
 ## Testing ##
 #############
 
-catkin_add_gmock(${PROJECT_NAME}-test
-  test/test_platoon_manager_front_join.cpp
-  test/test_platoon_manager.cpp
-  test/mobility_messages.cpp
-  test/main_test.cpp)
+# catkin_add_gmock(${PROJECT_NAME}-test
+#   test/test_platoon_manager_front_join.cpp
+#   test/test_platoon_manager.cpp
+#   test/mobility_messages.cpp
+#   test/main_test.cpp)
 
-if(TARGET ${PROJECT_NAME}-test)
-  target_link_libraries(${PROJECT_NAME}-test platoon_strategic_ihp_plugin_lib ${catkin_LIBRARIES})
-endif()
+# if(TARGET ${PROJECT_NAME}-test)
+#   target_link_libraries(${PROJECT_NAME}-test platoon_strategic_ihp_plugin_lib ${catkin_LIBRARIES})
+# endif()
