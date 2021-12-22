@@ -664,6 +664,10 @@ namespace platoon_strategic_ihp
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc);
             double frontVehicleDtd = wm_->routeTrackPos(incoming_pose).downtrack;
             
+            // Get applicant size
+            std::vector<std::string> inputsParams;
+            boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+
             // get the other platoon's size from strategy params
             std::vector<std::string> applicantSize_parsed;
             boost::algorithm::split(applicantSize_parsed, inputsParams[0], boost::is_any_of(":"));
