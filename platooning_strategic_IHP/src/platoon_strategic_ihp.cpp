@@ -664,6 +664,12 @@ namespace platoon_strategic_ihp
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc);
             double frontVehicleDtd = wm_->routeTrackPos(incoming_pose).downtrack;
             
+            // get the other platoon's size from strategy params
+            std::vector<std::string> applicantSize_parsed;
+            boost::algorithm::split(applicantSize_parsed, inputsParams[0], boost::is_any_of(":"));
+            int applicantSize = std::stoi(applicantSize_parsed[1]);
+            ROS_DEBUG_STREAM("applicantSize: " << applicantSize);
+
             // Use pm_ to find platoon end vehicle and its downtrack in m.
             int rearVehicleIndex = pm_.getTotalPlatooningSize()- 1;
             ROS_DEBUG_STREAM("rearVehicleIndexf: " << rearVehicleIndex);
@@ -715,8 +721,8 @@ namespace platoon_strategic_ihp
                 potentialNewPlatoonId = platoonId;
             }
             
-            // UCLA: Condition passed the check for frontal join
-            else if (isVehicleRightBehind(rearVehicleDtd))
+            // UCLA: Condition passed the check for frontal join if the neighbor is a real platoon
+            else if (applicantSize > 1  &&  isVehicleRightBehind(rearVehicleDtd))
             {   
                 
                 /**
@@ -1181,6 +1187,9 @@ namespace platoon_strategic_ihp
         bool isCurrPlanValid = pm_.current_plan.valid;                          // Check if current plan is still valid (i.e., not timed out).
         bool isForCurrentPlan = msg.header.plan_id == pm_.current_plan.planId;  // Check if plan Id matches.
         bool isFromTargetVehicle = msg.header.sender_id == pm_.targetLeaderId;  // Check of target leader ID and sender ID matches.
+        ROS_DEBUG_STREAM("mob_resp_cb: isCurrPlanValid = " << isCurrPlanValid << ", isForCurrentPlan = " << 
+                        isForCurrentPlan << ", isFromTargetVehicle = " << isFromTargetVehicle);
+        ROS_DEBUG_STREAM("current plan ID = " << pm_.current_plan.planId << ", target leader ID = " << pm_.targetLeaderId);
         
         if (!(isCurrPlanValid && isForCurrentPlan && isFromTargetVehicle)) 
         {
