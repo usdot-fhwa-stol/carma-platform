@@ -129,7 +129,7 @@ namespace platoon_strategic_ihp
                 pm.vehiclePosition = dtDistance; // m 
                 pm.vehicleSpeed = curSpeed; // m/s
                 pm.timestamp = ros::Time::now().toNSec()/1000000;
-                ROS_DEBUG_STREAM("Receive and update platooning info on vehicel " << pm.staticId);
+                ROS_DEBUG_STREAM("Receive and update platooning info on vehicle " << pm.staticId);
                 ROS_DEBUG_STREAM("    Speed = "                                   << pm.vehicleSpeed);
                 ROS_DEBUG_STREAM("    Location = "                                << pm.vehiclePosition);
                 ROS_DEBUG_STREAM("    CommandSpeed = "                            << pm.commandSpeed);
