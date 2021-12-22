@@ -670,7 +670,7 @@ namespace platoon_strategic_ihp
 
             // get the other platoon's size from strategy params
             std::vector<std::string> applicantSize_parsed;
-            boost::algorithm::split(applicantSize_parsed, inputsParams[0], boost::is_any_of(":"));
+            boost::algorithm::split(applicantSize_parsed, inputsParams[2], boost::is_any_of(":"));
             int applicantSize = std::stoi(applicantSize_parsed[1]);
             ROS_DEBUG_STREAM("applicantSize: " << applicantSize);
 
