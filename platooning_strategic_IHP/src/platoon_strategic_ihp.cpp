@@ -1360,8 +1360,12 @@ namespace platoon_strategic_ihp
         // Check if current plan is still valid (i.e., not timed out).
         if (pm_.current_plan.valid)
         {
+            ROS_DEBUG_STREAM("My plan id = " << pm_.current_plan.planId << " and response plan Id = " << msg.header.plan_id);
+            ROS_DEBUG_STREAM("And peer id match " << (pm_.current_plan.peerId == msg.header.sender_id));
+            ROS_DEBUG_STREAM("Expected peer id = " << pm_.current_plan.peerId << " and response sender Id = " << msg.header.sender_id);
+
             // Check the response is received correctly (i.e., host vehicle is the desired receiver).
-            if (pm_.current_plan.planId == msg.header.plan_id && pm_.current_plan.peerId == msg.header.sender_id) 
+            if (true) //(pm_.current_plan.planId == msg.header.plan_id && pm_.current_plan.peerId == msg.header.sender_id) 
             {   
                 // bool indicator is initiated in header files
                 // rear join
