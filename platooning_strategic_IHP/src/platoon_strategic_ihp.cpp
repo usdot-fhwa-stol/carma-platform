@@ -276,7 +276,7 @@ namespace platoon_strategic_ihp
         msg.header.timestamp = ros::Time::now().toNSec() / 1000000;;
         msg.strategy = MOBILITY_STRATEGY;
 
-        int CurrentPlatoonLength = pm_.getCurrentPlatoonLength();
+        double CurrentPlatoonLength = pm_.getCurrentPlatoonLength();
         double current_speed = current_speed_;
         int PlatoonSize = pm_.getTotalPlatooningSize();
         double PlatoonRearDowntrackDistance = pm_.getPlatoonRearDowntrackDistance();
@@ -285,9 +285,9 @@ namespace platoon_strategic_ihp
 
         boost::format fmter(OPERATION_INFO_PARAMS);
         //  Note: need to update "OPERATION_INFO_PARAMS" in header file --> strategic_platoon_ihp.h  
-        fmter% CurrentPlatoonLength;            // index = 0, in m/s.
+        fmter% CurrentPlatoonLength;            // index = 0, physical length of platoon,in m
         fmter% current_speed;                   // index = 1, in m/s.
-        fmter% PlatoonSize;                     // index = 2 
+        fmter% PlatoonSize;                     // index = 2, number of members
         fmter% pose_ecef_point_.ecef_x;         // index = 3
         fmter% pose_ecef_point_.ecef_y;         // index = 4
         fmter% pose_ecef_point_.ecef_z;         // index = 5
@@ -952,7 +952,7 @@ namespace platoon_strategic_ihp
                 return MobilityRequestResponse::NO_RESPONSE;
             }
             
-            // The inmcoming message is "mobility Request", which has a location category.
+            // The incoming message is "mobility Request", which has a location category.
             std::vector<std::string> inputsParams;
             boost::algorithm::split(inputsParams, params, boost::is_any_of(","));
 
@@ -1484,7 +1484,7 @@ namespace platoon_strategic_ihp
         cav_msgs::MobilityResponse response;
         response.header.sender_id = config_.vehicleID;
         response.header.recipient_id = msg.header.sender_id;
-        response.header.plan_id = pm_.currentPlatoonID;
+        response.header.plan_id = msg.header.plan_id;
         response.header.timestamp = ros::Time::now().toNSec() / 1000000;
 
         // UCLA: add plantype in response 

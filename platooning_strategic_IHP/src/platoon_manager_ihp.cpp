@@ -146,7 +146,8 @@ namespace platoon_strategic_ihp
             // sort the platoon member based on dowtrack distance (m) in an descending order.
             std::sort(std::begin(platoon), std::end(platoon), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition > b.vehiclePosition;});
 
-            ROS_DEBUG_STREAM("Add a new vehicle into our platoon list " << newMember.staticId);
+            ROS_DEBUG_STREAM("Add a new vehicle into our platoon list " << newMember.staticId <<
+                            " platoon.size now = " << platoon.size());
         }
     }
 
