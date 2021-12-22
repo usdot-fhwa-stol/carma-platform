@@ -90,7 +90,7 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
     approaching_stop_controlled_interction_ = true;
     ROS_DEBUG_STREAM("Approaching Stop Controlled Intersection: " << approaching_stop_controlled_interction_);
 
-    if (msg->strategy_params != previous_strategy_params_)
+    if (true)//(msg->strategy_params != previous_strategy_params_)
     {
       if (msg->header.recipient_id == config_.vehicle_id)
       {
@@ -376,7 +376,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
           stopping_accel = std::max(-stopping_accel, desired_deceleration);
           ROS_DEBUG_STREAM("used deceleration for case three: " << stopping_accel);
           resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-            current_state.downtrack, stop_intersection_down_track+config_.stop_line_buffer, current_state.speed, crossed_lanelets[0].id(),
+            current_state.downtrack, stop_intersection_down_track, current_state.speed, crossed_lanelets[0].id(),
             crossed_lanelets[0].id(), stopping_accel, current_state.stamp,
             current_state.stamp + ros::Duration(time_to_schedule_stop)));
 
@@ -448,7 +448,10 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     // Compose intersection transit maneuver
     base_time = std::max(scheduled_enter_time_, street_msg_timestamp_);
     double intersection_transit_time = (scheduled_depart_time_ - base_time)/1000;
-
+    ROS_DEBUG_STREAM("intersection_transit_time: " << intersection_transit_time);
+    
+    intersection_transit_time = std::max(intersection_transit_time, config_.min_maneuver_planning_period);
+    ROS_DEBUG_STREAM("used intersection_transit_time: " << intersection_transit_time);
     // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
     std::vector<lanelet::ConstLanelet> crossed_lanelets =
           getLaneletsBetweenWithException(current_downtrack_, intersection_end_downtrack, true, true);
@@ -523,8 +526,14 @@ void SCIStrategicPlugin::caseOneSpeedProfile(double speed_before_decel, double c
   // Equations obtained from TSMO UC 1 Algorithm draft doc
   double a_acc = ((1 - desired_acceleration/desired_deceleration)*speed_before_decel - current_speed)/stop_time;
   ROS_DEBUG_STREAM("Case one a_acc: " << a_acc);
+  a_acc = std::min(a_acc, desired_acceleration);
+  ROS_DEBUG_STREAM("Used Case one a_acc: " << a_acc);
+  
   double a_dec = ((desired_deceleration - desired_acceleration)*speed_before_decel - desired_deceleration * current_speed)/(desired_acceleration * stop_time);
   ROS_DEBUG_STREAM("Case one a_dec: " << a_dec);
+  a_dec = std::max(a_dec, desired_deceleration);
+  ROS_DEBUG_STREAM("Used Case one a_dec: " << a_dec);
+
   double t_acc = (speed_before_decel - current_speed)/a_acc;
   ROS_DEBUG_STREAM("Case one t_acc: " << t_acc);
   double t_dec = -speed_before_decel/a_dec; // a_dec is negative so a - is used to make the t_dec positive. 
@@ -558,8 +567,14 @@ void SCIStrategicPlugin::caseTwoSpeedProfile(double stop_dist, double speed_befo
   // Equations obtained from TSMO UC 1 Algorithm draft doc
   double a_acc = ((1 - desired_acceleration/desired_deceleration)*speed_limit - current_speed)/(stop_time - t_cruise);
   ROS_DEBUG_STREAM("Case two a_acc: " << a_acc);
+  a_acc = std::min(a_acc, desired_acceleration);
+  ROS_DEBUG_STREAM("Used Case two a_acc: " << a_acc);
+
   double a_dec = ((desired_deceleration - desired_acceleration)*speed_limit - desired_deceleration * current_speed)/(desired_acceleration*(stop_time - t_cruise));
   ROS_DEBUG_STREAM("Case two a_dec: " << a_dec);
+  a_dec = std::max(a_dec, desired_deceleration);
+  ROS_DEBUG_STREAM("Used Case two a_dec: " << a_dec);
+
   double t_acc = (speed_limit - current_speed)/a_acc;
   ROS_DEBUG_STREAM("Case two t_acc: " << t_acc);
   double t_dec = -speed_limit/a_dec; // a_dec is negative so a - is used to make the t_dec positive. 

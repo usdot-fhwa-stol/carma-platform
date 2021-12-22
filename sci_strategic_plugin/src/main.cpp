@@ -37,19 +37,20 @@ int main(int argc, char** argv)
   sci_strategic_plugin::SCIStrategicPluginConfig config;
 
   // clang-format off
-  pnh.param<double>("/vehicle_deceleration_limit",      config.vehicle_decel_limit, config.vehicle_decel_limit);
+  
   pnh.param<double>("vehicle_decel_limit_multiplier",   config.vehicle_decel_limit_multiplier, config.vehicle_decel_limit_multiplier);
-  pnh.param<double>("/vehicle_acceleration_limit",      config.vehicle_decel_limit, config.vehicle_accel_limit);
-  pnh.param<double>("vehicle_accel_limit_multiplier",   config.vehicle_decel_limit_multiplier, config.vehicle_accel_limit_multiplier);
+  pnh.param<double>("vehicle_accel_limit_multiplier",   config.vehicle_accel_limit_multiplier, config.vehicle_accel_limit_multiplier);
   pnh.param<double>("stop_line_buffer",   config.stop_line_buffer, config.stop_line_buffer);
   pnh.param<double>("delta_t",   config.delta_t, config.delta_t);
   pnh.param<double>("min_gap",   config.min_gap, config.min_gap);
-  pnh.param<double>("veh_length",   config.veh_length, config.veh_length);
   pnh.param<double>("reaction_time",   config.reaction_time, config.reaction_time);
   pnh.param<std::string>("strategic_plugin_name",            config.strategic_plugin_name, config.strategic_plugin_name);
   pnh.param<std::string>("lane_following_plugin_name",       config.lane_following_plugin_name, config.lane_following_plugin_name);
   pnh.param<std::string>("intersection_transit_plugin_name", config.intersection_transit_plugin_name, config.intersection_transit_plugin_name);
   pnh.getParam("/vehicle_id", config.vehicle_id);
+  pnh.getParam("/vehicle_length", config.veh_length);
+  pnh.getParam("/vehicle_deceleration_limit", config.vehicle_decel_limit);
+  pnh.getParam("/vehicle_deceleration_limit", config.vehicle_accel_limit);
   // clang-format on
 
   // Construct plugin
