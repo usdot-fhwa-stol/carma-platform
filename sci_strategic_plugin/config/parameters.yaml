@@ -14,7 +14,7 @@ delta_t : 1.0
 min_gap : 10.0
 
 # Double: Length od the vehicle
-veh_length : 1.5
+veh_length : 4.5
 
 # Double: Minimum vehicle reaction time. Units in s
 reaction_time : 5.0
