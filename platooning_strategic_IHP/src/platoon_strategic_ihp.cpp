@@ -1195,7 +1195,7 @@ namespace platoon_strategic_ihp
                         isForCurrentPlan << ", isFromTargetVehicle = " << isFromTargetVehicle);
         ROS_DEBUG_STREAM("current plan ID = " << pm_.current_plan.planId << ", target leader ID = " << pm_.targetLeaderId);
         
-        if (true)//(!(isCurrPlanValid && isForCurrentPlan && isFromTargetVehicle)) 
+        if (false)//(!(isCurrPlanValid && isForCurrentPlan && isFromTargetVehicle)) 
         {
             /**
              * If any of the three condition (i.e., isCurrPlanValid, isForCurrentPlan and isFromTargetVehicle) 
