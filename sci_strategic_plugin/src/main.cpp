@@ -50,7 +50,7 @@ int main(int argc, char** argv)
   pnh.getParam("/vehicle_id", config.vehicle_id);
   pnh.getParam("/vehicle_length", config.veh_length);
   pnh.getParam("/vehicle_deceleration_limit", config.vehicle_decel_limit);
-  pnh.getParam("/vehicle_deceleration_limit", config.vehicle_accel_limit);
+  pnh.getParam("/vehicle_acceleration_limit", config.vehicle_accel_limit);
   // clang-format on
 
   // Construct plugin
