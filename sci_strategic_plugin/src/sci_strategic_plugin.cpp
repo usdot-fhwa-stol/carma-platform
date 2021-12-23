@@ -306,7 +306,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   double distance_to_stopline = stop_intersection_down_track - current_downtrack_ - config_.stop_line_buffer;
   ROS_DEBUG_STREAM("distance_to_stopline  " << distance_to_stopline);
 
-  if (distance_to_stopline < 0)
+  if (distance_to_stopline < -2*config_.intersection_exit_zone_length)
   {
     resp.new_plan.maneuvers = {};
     ROS_WARN_STREAM("Already passed intersection, sending empty maneuvers");
