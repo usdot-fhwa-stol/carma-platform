@@ -76,7 +76,7 @@ namespace mobilitypath_publisher
     cav_msgs::MobilityPath MobilityPathPublication::mobilityPathMessageGenerator(const cav_msgs::TrajectoryPlan& trajectory_plan)
     {
         cav_msgs::MobilityPath mobility_path_msg;
-        uint64_t millisecs = ros::Time::now().toNSec() * 1000000;//trajectory_plan.header.stamp.toNSec()/1000000;
+        uint64_t millisecs = ros::Time::now().toNSec()/1000000;//trajectory_plan.header.stamp.toNSec()/1000000;
         mobility_path_msg.header = composeMobilityHeader(millisecs);
         
         if (!map_projector_) {
