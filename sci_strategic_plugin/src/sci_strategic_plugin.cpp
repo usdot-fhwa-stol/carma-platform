@@ -465,14 +465,16 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
     double intersection_speed_limit = findSpeedLimit(nearest_stop_intersection->lanelets().front());
 
-    resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
-      current_state.downtrack, intersection_end_downtrack+config_.intersection_exit_zone_length, current_state.speed, intersection_speed_limit,
-      current_state.stamp, req.header.stamp + ros::Duration(intersection_transit_time), intersection_turn_direction_, crossed_lanelets.front().id(), crossed_lanelets.back().id()));
-    
     // when passing intersection, set the flag to false
     double end_of_intersection = std::max(config_.intersection_exit_zone_length, intersection_end_downtrack - stop_intersection_down_track);
     ROS_DEBUG_STREAM("Actual length of intersection: " << intersection_end_downtrack - stop_intersection_down_track);
     ROS_DEBUG_STREAM("Used length of intersection: " << end_of_intersection);
+
+    resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
+      current_state.downtrack, current_state.downtrack + end_of_intersection, current_state.speed, intersection_speed_limit,
+      current_state.stamp, req.header.stamp + ros::Duration(intersection_transit_time), intersection_turn_direction_, crossed_lanelets.front().id(), crossed_lanelets.back().id()));
+    
+    
     if (distance_to_stopline < -(end_of_intersection+config_.intersection_exit_zone_length))
     {
       ROS_DEBUG_STREAM("Vehicle is out of intersection, stop planning...");
