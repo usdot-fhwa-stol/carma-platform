@@ -99,6 +99,24 @@ namespace carma_wm
   }
   lanelet::Id CARMAWorldModel::getTrafficLightIdNew(uint16_t intersection_id, uint8_t signal_group_id)
   {
+    if (!traffic_light_ids_.empty())
+    {
+      // TODO: Old logic that needs be removed when workzone is connected
+      uint32_t temp = 0;
+      temp |= intersection_id;
+      temp = temp << 8;
+      temp |= signal_group_id;
+
+      if (traffic_light_ids_.find(temp) != traffic_light_ids_.end())
+      {
+        return traffic_light_ids_[temp];
+      }
+      else
+      {
+        return lanelet::InvalId;
+      }
+    }
+    
     lanelet::Id inter_id = lanelet::InvalId;
     lanelet::Id signal_id = lanelet::InvalId;
 
@@ -1340,33 +1358,34 @@ namespace carma_wm
           continue;
         }
 
-        boost::posix_time::time_duration time_difference = curr_light->predictState(min_end_time).get().first - min_end_time;
-        
-        // if |time difference| is less than 0.1 sec
-        bool same_time_stamp_as_last = time_difference.total_milliseconds() > -100 && time_difference.total_milliseconds() < 100;
-       
-        // Received same cycle info while signal already has full cycle, then skip
-        if (curr_light->predictState(min_end_time).get().second == received_state &&
-            same_time_stamp_as_last &&
-            sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] > 4 )  // checking >4 because: 3 unique + 1 more state to 
-                                                                                                            // complete cycle. And last state (e.g. 4th) is updated on next (e.g 5th)
+        if (!curr_light->recorded_time_stamps.empty())
         {
-          continue;
-        }
-
-        // TODO what if new cycle is received after full cycle: debug
-        else if(sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] > 4)
-        {
-          for ( auto pair : sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group])
-          {
-            pair.first = pair.first - time_difference;
-          }
-
-          sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] = 0;
+          boost::posix_time::time_duration time_difference = curr_light->predictState(min_end_time).get().first - min_end_time;
           
-          continue;
-        }
+          // if |time difference| is less than 0.1 sec
+          bool same_time_stamp_as_last = time_difference.total_milliseconds() > -100 && time_difference.total_milliseconds() < 100;
+        
+          // Received same cycle info while signal already has full cycle, then skip
+          if (curr_light->predictState(min_end_time).get().second == received_state &&
+              same_time_stamp_as_last &&
+              sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] > 4 )  // checking >4 because: 3 unique + 1 more state to 
+                                                                                                              // complete cycle. And last state (e.g. 4th) is updated on next (e.g 5th)
+          {
+            continue;
+          }
+          // TODO what if new cycle is received after full cycle: debug
+          else if(sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] > 4)
+          {
+            for ( auto pair : sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group])
+            {
+              pair.first = pair.first - time_difference;
+            }
 
+            sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] = 0;
+            
+            continue;
+          }
+        }
         // detected that new state received; therefore, set the last recorded state (not new one received)
         ROS_DEBUG_STREAM("Received new state for light: " << curr_light_id << ", with state: " << static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state) << ", time: " << ros::Time::fromBoost(min_end_time));
 
