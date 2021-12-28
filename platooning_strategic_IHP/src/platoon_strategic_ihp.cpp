@@ -130,7 +130,7 @@ namespace platoon_strategic_ihp
     void PlatoonStrategicIHPPlugin::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg)
     {
         current_speed_ = msg->twist.linear.x;
-        if (current_speed_ < 0.05)
+        if (current_speed_ < STOPPED_SPEED)
         {
             current_speed_ = 0.0;
         }
@@ -553,8 +553,15 @@ namespace platoon_strategic_ihp
     void PlatoonStrategicIHPPlugin::mob_op_cb(const cav_msgs::MobilityOperation& msg)
     {
         ROS_DEBUG_STREAM("mob_op_cb received msg with sender ID " << msg.header.sender_id
-                        >> ", plan ID " << msg.header.plan_id);
+                        << ", plan ID " << msg.header.plan_id);
         ROS_DEBUG_STREAM("...strategy params: " << msg.strategy_params);
+
+        // Ignore messages as long as host vehicle is stopped
+        if (current_speed_ < STOPPED_SPEED)
+        {
+            ROS_DEBUG_STREAM("Ignoring message since host is stopped.");
+            return;
+        }
 
         if (pm_.current_platoon_state == PlatoonState::LEADER)
         {
@@ -644,13 +651,6 @@ namespace platoon_strategic_ihp
     // UCLA: Handle both STATUS and INFO operation message. Front join and rear join are all handled if incoming operation message have INFO param. 
     void PlatoonStrategicIHPPlugin::mob_op_cb_leader(const cav_msgs::MobilityOperation& msg)
     {
-        // Ignore messages as long as host vehicle is stopped
-        if (current_speed_ < 0.05)
-        {
-            ROS_DEBUG_STREAM("Ignoring message since host is stopped.");
-            return;
-        }
-
         // Read incoming message info
         std::string strategyParams = msg.strategy_params;
         std::string senderId = msg.header.sender_id;
@@ -890,7 +890,7 @@ namespace platoon_strategic_ihp
     {
         // This state does not handle any mobility request for now
         // TODO Maybe it should handle some ABORT request from a waiting leader
-        ROS_DEBUG_STREAM("Recived mobility request with type " << msg.plan_type.type << " but ignored.");
+        ROS_DEBUG_STREAM("Received mobility request with type " << msg.plan_type.type << " but ignored.");
         return MobilityRequestResponse::NO_RESPONSE;
     }
 
@@ -1495,6 +1495,13 @@ namespace platoon_strategic_ihp
     // ACK --> yes,accept host as member; NACK --> no, cannot accept host as member
     void PlatoonStrategicIHPPlugin::mob_req_cb(const cav_msgs::MobilityRequest& msg)
     {
+        // Ignore messages as long as host vehicle is stopped
+        if (current_speed_ < STOPPED_SPEED)
+        {
+            ROS_DEBUG_STREAM("Ignoring message since host is stopped.");
+            return;
+        }
+
         // UCLA: read current request plan 
         cav_msgs::PlanType req_plan_type = msg.plan_type; 
 
@@ -1569,7 +1576,7 @@ namespace platoon_strategic_ihp
         long tsStart = ros::Time::now().toNSec() / 1000000;
 
         // Task 1: heart beat timeout: send INFO mob_op when vehicle is rolling
-        if (current_speed_ > 0.0)
+        if (current_speed_ > STOPPED_SPEED)
         {
             bool isTimeForHeartBeat = tsStart - prevHeartBeatTime_ >= infoMessageInterval_;
             ROS_DEBUG_STREAM("time since last heart beat: " << tsStart - prevHeartBeatTime_);

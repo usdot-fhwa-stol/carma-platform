@@ -635,6 +635,8 @@ namespace platoon_strategic_ihp
             double desiredJoinGap = 30.0; // m
             double desiredJoinTimeGap = 4.0; // s
 
+            // Threshold for determining if vehicle is stopped; non-zero allows for measurement noise
+            const double STOPPED_SPEED = 0.05 // m/s
 
             // Strategy types
             const std::string MOBILITY_STRATEGY = "Carma/Platooning";
