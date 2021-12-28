@@ -317,9 +317,9 @@ namespace platoon_strategic_ihp
 
 
             /**
-            * \brief Function to determin if a vehicle is in the front of hose vehicle
+            * \brief Function to determine if a target vehicle is in the front of host vehicle
             *
-            * \param downtrack vehicle downtrack
+            * \param downtrack target vehicle downtrack distance relative to host's route (m)
             *
             * \return true or false
             */
@@ -330,7 +330,7 @@ namespace platoon_strategic_ihp
             *
             * \param llt inout lanelet
             *
-            * \return speed limit value
+            * \return speed limit value (m/s)
             */
             double findSpeedLimit(const lanelet::ConstLanelet& llt);
             
@@ -626,7 +626,7 @@ namespace platoon_strategic_ihp
             int maxPlatoonSize_ = 10;
             double vehicleLength_ = 5.0;
             int infoMessageInterval_ = 200; // ms
-            long lastHeartBeatTime = 0.0;
+            long prevHeartBeatTime_ = 0.0;
             int statusMessageInterval_ = 100; // ms
             int NEGOTIATION_TIMEOUT = 5000;  // ms
             int noLeaderUpdatesCounter = 0;
