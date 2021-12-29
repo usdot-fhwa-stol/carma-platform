@@ -328,7 +328,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   bool time_to_approach_int = int((scheduled_stop_time_) - (street_msg_timestamp_))>0;
   ROS_DEBUG_STREAM("time_to_approach_int  " << time_to_approach_int);
   
-  cav_msgs::Maneuver maneuver_to_plan;
+  cav_msgs::Maneuver maneuver_planned;
 
   
   if (time_to_approach_int)
@@ -361,8 +361,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
         if (case_num < 3)
         {
-          // resp.new_plan.maneuvers.push_back()
-          maneuver_to_plan = composeLaneFollowingManeuverMessage(
+          maneuver_planned = composeLaneFollowingManeuverMessage(
           case_num, current_state.downtrack, stop_intersection_down_track, current_state.speed, 0.0,
           current_state.stamp, time_to_schedule_stop,
           lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); }));
@@ -383,8 +382,8 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
           // TODO: temp val for acc- remove when carma streets is running
           stopping_accel = std::max(-stopping_accel, desired_deceleration);
           ROS_DEBUG_STREAM("used deceleration for case three: " << stopping_accel);
-          // resp.new_plan.maneuvers.push_back()
-          maneuver_to_plan = composeStopAndWaitManeuverMessage(
+
+          maneuver_planned = composeStopAndWaitManeuverMessage(
           current_state.downtrack, stop_intersection_down_track, current_state.speed, crossed_lanelets[0].id(),
           crossed_lanelets[0].id(), stopping_accel, current_state.stamp,
           current_state.stamp + ros::Duration(time_to_schedule_stop));
@@ -394,8 +393,8 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       else
       {
         ROS_DEBUG_STREAM("Too close to the intersection, constant deceleration to stop");
-        // resp.new_plan.maneuvers.push_back()
-        maneuver_to_plan = composeStopAndWaitManeuverMessage(
+
+        maneuver_planned = composeStopAndWaitManeuverMessage(
           current_state.downtrack, stop_intersection_down_track, current_state.speed, crossed_lanelets[0].id(),
           crossed_lanelets[0].id(), desired_deceleration, current_state.stamp,
           current_state.stamp + ros::Duration(time_to_schedule_stop));
@@ -417,8 +416,8 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     ROS_DEBUG_STREAM("Planning stop and wait maneuver");
     double stopping_accel = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
     auto stop_line_lanelet = nearest_stop_intersection->lanelets().front();
-    // resp.new_plan.maneuvers.push_back()
-    maneuver_to_plan = composeStopAndWaitManeuverMessage(
+
+    maneuver_planned = composeStopAndWaitManeuverMessage(
           current_state.downtrack, stop_intersection_down_track, current_state.speed, stop_line_lanelet.id(),
           stop_line_lanelet.id(), stopping_accel, current_state.stamp,
           current_state.stamp + ros::Duration(stop_duration));
@@ -436,8 +435,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     ROS_DEBUG_STREAM("current state dtd: " << current_state.downtrack);
     ROS_DEBUG_STREAM("stop_intersection_down_track dtd: " << stop_intersection_down_track);
 
-    // resp.new_plan.maneuvers.push_back()
-      maneuver_to_plan = composeStopAndWaitManeuverMessage(
+      maneuver_planned = composeStopAndWaitManeuverMessage(
           current_state.downtrack, stop_intersection_down_track, current_state.speed, current_state.lane_id,
           current_state.lane_id, stop_acc, current_state.stamp,
           current_state.stamp + ros::Duration(stop_duration));
@@ -482,8 +480,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     ROS_DEBUG_STREAM("Actual length of intersection: " << intersection_end_downtrack - stop_intersection_down_track);
     ROS_DEBUG_STREAM("Used length of intersection: " << end_of_intersection);
 
-    // resp.new_plan.maneuvers.push_back()
-      maneuver_to_plan = composeIntersectionTransitMessage(
+      maneuver_planned = composeIntersectionTransitMessage(
       current_state.downtrack, current_state.downtrack + end_of_intersection, current_state.speed, intersection_speed_limit,
       current_state.stamp, req.header.stamp + ros::Duration(intersection_transit_time), intersection_turn_direction_, crossed_lanelets.front().id(), crossed_lanelets.back().id());
     
@@ -498,7 +495,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     }
 
   }
-  resp.new_plan.maneuvers.push_back(maneuver_to_plan);
+  resp.new_plan.maneuvers.push_back(maneuver_planned);
   
   return true;
 }
