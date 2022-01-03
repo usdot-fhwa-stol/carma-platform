@@ -116,7 +116,10 @@ void WMListener::setConfigSpeedLimit(double config_lim) const
   worker_->setConfigSpeedLimit(config_lim);
 }
 
-
+void WMListener::setWorldModelUserName(const std::string& name)
+{
+  worker_->setWorldModelUserName(name);
+}
 
 // @SONAR_START@
 

@@ -18,6 +18,7 @@
 #include <lanelet2_extension/regulatory_elements/DirectionOfTravel.h>
 #include <lanelet2_extension/regulatory_elements/StopRule.h>
 #include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
+#include <lanelet2_extension/regulatory_elements/SignalizedIntersection.h>
 #include "WMListenerWorker.h"
 
 namespace carma_wm
@@ -42,6 +43,11 @@ GeofenceType resolveGeofenceType(const std::string& rule_name)
 WMListenerWorker::WMListenerWorker()
 {
   world_model_.reset(new CARMAWorldModel);
+}
+
+void WMListenerWorker::setWorldModelUserName(const std::string& name)
+{
+  world_model_->wm_user_name = name;
 }
 
 WorldModelConstPtr WMListenerWorker::getWorldModel() const
@@ -349,10 +355,16 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
     }
     case GeofenceType::CARMA_TRAFFIC_LIGHT:
     {
-
       lanelet::CarmaTrafficSignalPtr ctl = std::dynamic_pointer_cast<lanelet::CarmaTrafficSignal>(factory_pcl);
       world_model_->getMutableMap()->update(parent_llt, ctl);
-
+      ROS_ERROR_STREAM(world_model_->wm_user_name << ">>Updated llt id:" << parent_llt.id() << ", with ctl id: " << ctl->id ());
+      break;
+    }
+    case GeofenceType::SIGNALIZED_INTERSECTION:
+    {
+      lanelet::SignalizedIntersectionPtr si = std::dynamic_pointer_cast<lanelet::SignalizedIntersection>(factory_pcl);
+      world_model_->getMutableMap()->update(parent_llt, si);
+      ROS_ERROR_STREAM(world_model_->wm_user_name << ">>Updated llt id:" << parent_llt.id() << ", with si id: " << si->id ());
       break;
     }
     default:

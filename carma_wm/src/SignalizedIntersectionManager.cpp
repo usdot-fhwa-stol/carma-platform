@@ -109,7 +109,9 @@ namespace carma_wm
 
       if (affected_llts.empty())
       {
-        throw std::invalid_argument("Given offset points are not inside the map...");
+        //throw std::invalid_argument("Given offset points are not inside the map...");
+        ROS_ERROR_STREAM("Given offset points are not inside the map...");
+        continue;
       }
 
       lanelet::Id corresponding_lanelet_id = affected_llts.front().id(); 
@@ -143,7 +145,8 @@ namespace carma_wm
         }
         else
         {
-          throw std::invalid_argument(std::string("Unable to convert exit lane Id: " + std::to_string((int)exit_lane) + ", to lanelet id using the given MAP.msg!").c_str());
+          //throw std::invalid_argument(std::string("Unable to convert exit lane Id: " + std::to_string((int)exit_lane) + ", to lanelet id using the given MAP.msg!").c_str());
+          ROS_ERROR_STREAM("Unable to convert exit lane Id: "  + std::to_string((int)exit_lane) + ", to lanelet id using the given MAP.msg!");
         }
       }
     }
@@ -160,7 +163,8 @@ namespace carma_wm
         }
         else
         {
-          throw std::invalid_argument(std::string("Unable to convert entry lane Id: " + std::to_string((int)entry_lane) + ", to lanelet id using the given MAP.msg!").c_str());
+          //throw std::invalid_argument(std::string("Unable to convert entry lane Id: " + std::to_string((int)entry_lane) + ", to lanelet id using the given MAP.msg!").c_str());
+          ROS_ERROR_STREAM("Unable to convert entry lane Id: "  + std::to_string((int)entry_lane) + ", to lanelet id using the given MAP.msg!");
         }
       }
     }

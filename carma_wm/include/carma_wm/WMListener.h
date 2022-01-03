@@ -95,7 +95,7 @@ public:
    */
   std::unique_lock<std::mutex> getLock(bool pre_locked = true);
 
-
+  void setWorldModelUserName(const std::string& name);
 
   /*!
    * \brief Allows user to set a callback to be triggered when a route update is received

@@ -1344,6 +1344,7 @@ namespace carma_wm
         if (sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].second == received_state &&
             sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first >= min_end_time)
         {
+          ROS_DEBUG_STREAM("Duplicate as last time! : " << std::to_string(lanelet::time::toSec(min_end_time)));
           continue;
         }
 
@@ -1358,9 +1359,29 @@ namespace carma_wm
           continue;
         }
 
+         // detected that new state received; therefore, set the last recorded state (not new one received)
+        ROS_DEBUG_STREAM("Received new state for light: " << curr_light_id << ", with state: " << received_state << ", time: " << ros::Time::fromBoost(min_end_time));
+
+         // update last seen signal state
+        sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group] = {min_end_time, received_state};
+        if (just_shifted)
+        {
+          just_shifted = false;
+          sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time, received_state));
+          continue;
+        }
         if (!curr_light->recorded_time_stamps.empty())
         {
           boost::posix_time::time_duration time_difference = curr_light->predictState(min_end_time).get().first - min_end_time;
+          ROS_DEBUG_STREAM("time_difference: " << time_difference.total_milliseconds() / 1000.0);
+          if (curr_light->predictState(min_end_time).get().second !=  received_state)
+          {
+            //TODO: shift to same state's end
+            boost::posix_time::time_duration shift_to_match_state = curr_light->fixed_cycle_duration - curr_light->signal_durations[received_state];
+            time_difference += shift_to_match_state;
+            ROS_DEBUG_STREAM("time_difference new: " << time_difference.total_milliseconds() / 1000.0);
+
+          }
           
           // if |time difference| is less than 0.1 sec
           bool same_time_stamp_as_last = time_difference.total_milliseconds() > -100 && time_difference.total_milliseconds() < 100;
@@ -1371,6 +1392,7 @@ namespace carma_wm
               sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] > 4 )  // checking >4 because: 3 unique + 1 more state to 
                                                                                                               // complete cycle. And last state (e.g. 4th) is updated on next (e.g 5th)
           {
+            ROS_DEBUG_STREAM("Received same cycle info!! : " << std::to_string(lanelet::time::toSec(min_end_time)));
             continue;
           }
           // TODO what if new cycle is received after full cycle: debug
@@ -1380,18 +1402,17 @@ namespace carma_wm
             {
               pair.first = pair.first - time_difference;
             }
-
-            sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] = 0;
             
+            sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group] = {};
+            sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time, received_state));
+            sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] = 0;
+            ROS_DEBUG_STREAM("Shifted everything! : " << std::to_string(lanelet::time::toSec(min_end_time)) << ", time_difference sec:" << time_difference.total_seconds());
+            ROS_ERROR_STREAM("counter: " << sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group]);
+            just_shifted = true;
             continue;
           }
         }
-        // detected that new state received; therefore, set the last recorded state (not new one received)
-        ROS_DEBUG_STREAM("Received new state for light: " << curr_light_id << ", with state: " << static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state) << ", time: " << ros::Time::fromBoost(min_end_time));
-
-        // update last seen signal state
-        sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group] = {min_end_time, static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state)};
-
+       
         if (sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 2 && sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].front().second ==
                                                                                                                           sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second)
         {
@@ -1410,7 +1431,7 @@ namespace carma_wm
           curr_light->setStates(default_state, curr_intersection.revision);
           ROS_DEBUG_STREAM("Set default cycle of total seconds: " << lanelet::time::toSec(curr_light->fixed_cycle_duration));
         }
-        else if (sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 2)
+        else if (sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 1)
         {
           auto green_light_duration = lanelet::time::durationFromSec(GREEN_LIGHT_DURATION);
           auto yellow_light_duration = lanelet::time::durationFromSec(YELLOW_LIGHT_DURATION);
@@ -1443,9 +1464,9 @@ namespace carma_wm
         }
 
         // record the new state received
-        sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time,
-                                                                                                                            static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state)));
+        sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time, received_state));
         sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group]++;
+        ROS_ERROR_STREAM("Counter now: " << sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group]);
       }
     }
   }

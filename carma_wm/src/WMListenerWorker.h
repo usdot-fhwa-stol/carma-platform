@@ -89,7 +89,8 @@ public:
    */
   void setConfigSpeedLimit(double config_lim);
 
-
+  void setWorldModelUserName(const std::string& name);
+  
 /**
  *  \brief Returns the current configured speed limit value
  * 

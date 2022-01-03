@@ -69,6 +69,7 @@ int main(int argc, char** argv)
     pnh.param("planning_frequency", planning_frequency, 1.0);
 
     carma_wm::WMListener wml;
+    wml.setWorldModelUserName("arbitrator");
     auto wm = wml.getWorldModel();
 
     arbitrator::Arbitrator arbitrator{
