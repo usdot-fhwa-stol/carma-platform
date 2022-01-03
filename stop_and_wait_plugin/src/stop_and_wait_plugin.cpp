@@ -237,7 +237,10 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
   if (req_dist > remaining_distance)
   {
+    // In cases where the vehicle is not able to stop before the half_stopping_buffer the remaining distance becomes negative
+    // which will cause the target accel in this loop to be negative and make the vehicle to speed up
     while (remaining_distance <= 0.0 && remaining_distance <= (stop_location - starting_downtrack)){
+      //Add additional distance to remaining to allow vehicle to stop within buffer
       remaining_distance += 0.2;
     }
 
