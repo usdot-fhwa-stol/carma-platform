@@ -237,6 +237,10 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
   if (req_dist > remaining_distance)
   {
+    while (remaining_distance <= 0.0 && remaining_distance <= (stop_location - starting_downtrack)){
+      remaining_distance += 0.2;
+    }
+
     ROS_DEBUG_STREAM("Target Accel Update From: " << target_accel);
     target_accel =
         (starting_speed * starting_speed) / (2.0 * remaining_distance);  // If we cannot reach the end point it the
