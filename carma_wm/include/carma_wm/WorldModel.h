@@ -31,7 +31,7 @@
 #include <cav_msgs/RoadwayObstacleList.h>
 #include <cav_msgs/ExternalObject.h>
 #include <cav_msgs/ExternalObjectList.h>
-#include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
+#include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 #include "TrackPos.h"
 
@@ -366,7 +366,7 @@ public:
    *
    * \return list of traffic lights along the current route
    */
-  virtual std::vector<lanelet::CarmaTrafficLightPtr> getLightsAlongRoute(const lanelet::BasicPoint2d& loc) const = 0;
+  virtual std::vector<lanelet::CarmaTrafficSignalPtr> getSignalsAlongRoute(const lanelet::BasicPoint2d& loc) const = 0;
 
   /**
    * \brief  Return a list of all way stop intersections along the current route.  

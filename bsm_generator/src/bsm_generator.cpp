@@ -23,15 +23,23 @@ namespace bsm_generator
 
     void BSMGenerator::initialize()
     {
+        int bsmid;
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
         pnh_->param<double>("bsm_generation_frequency", bsm_generation_frequency_, 10.0);
+        pnh_->param<bool>("/bsm_id_rotation_enabled", bsm_id_rotation_enabled_, true);
+        pnh_->param<int>("/bsm_message_id", bsmid, 0);
+        for(size_t i = 0; i < 4; ++i ) //As the BSM Messsage ID is a four-element vector, the loop should iterate four times.
+        {
+            bsm_message_id_.emplace_back( bsmid >> (8 * i) );
+        }
+
         nh_->param<double>("vehicle_length", vehicle_length_, 5.0);
         nh_->param<double>("vehicle_width", vehicle_width_, 2.0);
         bsm_pub_ = nh_->advertise<cav_msgs::BSM>("bsm_outbound", 5);
         timer_ = nh_->createTimer(ros::Duration(1.0 / bsm_generation_frequency_), &BSMGenerator::generateBSM, this);
         gear_sub_ = nh_->subscribe("transmission_state", 1, &BSMGenerator::gearCallback, this);
-        speed_sub_ = nh_->subscribe("vehicle_speed_cov", 1, &BSMGenerator::speedCallback, this);
+        speed_sub_ = nh_->subscribe("vehicle_speed", 1, &BSMGenerator::speedCallback, this);
         steer_wheel_angle_sub_ = nh_->subscribe("steering_wheel_angle", 1, &BSMGenerator::steerWheelAngleCallback, this);
         accel_sub_ = nh_->subscribe("velocity_accel_cov", 1, &BSMGenerator::accelCallback, this);
         yaw_sub_ = nh_->subscribe("imu_raw", 1, &BSMGenerator::yawCallback, this);
@@ -118,13 +126,22 @@ namespace bsm_generator
     void BSMGenerator::headingCallback(const gps_common::GPSFixConstPtr& msg)
     {
         bsm_.core_data.heading = worker.getHeadingInRange(static_cast<float>(msg->track));
+        bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.HEADING_AVAILABLE;
     }
 
     void BSMGenerator::generateBSM(const ros::TimerEvent& event)
     {
         bsm_.header.stamp = ros::Time::now();
         bsm_.core_data.msg_count = worker.getNextMsgCount();
-        bsm_.core_data.id = worker.getMsgId(ros::Time::now());
+        
+        if(bsm_id_rotation_enabled_)
+        {
+            bsm_.core_data.id = worker.getMsgId(ros::Time::now());
+        }
+        else
+        {
+            bsm_.core_data.id = bsm_message_id_;
+        }
         bsm_.core_data.sec_mark = worker.getSecMark(ros::Time::now());
         bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.SEC_MARK_AVAILABLE;
         // currently the accuracy is not available because ndt_matching does not provide accuracy measurement
