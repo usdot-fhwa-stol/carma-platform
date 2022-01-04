@@ -1,5 +1,3 @@
-#!/bin/bash
-
 #  Copyright (C) 2018-2019 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -14,8 +12,18 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
-# CARMA packages checkout script
+# Docker Compose Spec Version
+version: '2'
 
-set -ex
-cd ~/src
-git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch CARMAPlatform_2.9.0
+services:
+  web-ui:
+    image: usdotfhwastol/carma-web-ui:2.9.0
+    network_mode: host
+    container_name: web-ui
+    environment:
+      - ROS_IP=192.168.88.10
+    volumes_from: 
+      - container:carma-config:ro
+    volumes: 
+      - /var/run/docker.sock:/var/run/docker.sock 
+    restart: always

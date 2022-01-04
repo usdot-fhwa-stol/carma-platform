@@ -1,0 +1,129 @@
+#  Copyright (C) 2018-2019 LEIDOS.
+# 
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#  use this file except in compliance with the License. You may obtain a copy of
+#  the License at
+# 
+#  http://www.apache.org/licenses/LICENSE-2.0
+# 
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#  License for the specific language governing permissions and limitations under
+#  the License.
+
+# Docker Compose Spec Version
+version: '2'
+
+services:
+  roscore:
+    image: usdotfhwastol/carma-base:2.9.0
+    network_mode: host
+    container_name: roscore
+    volumes_from: 
+      - container:carma-config:ro
+    environment:
+      - ROS_IP=192.168.88.10
+    volumes:
+      - /opt/carma/.ros:/home/carma/.ros
+    restart: always
+    command: roscore
+  
+  platform:
+    image: usdotfhwastol/carma:trb
+    network_mode: host
+    container_name: platform
+    volumes_from: 
+      - container:carma-config:ro
+    environment:
+      - ROS_IP=192.168.88.10
+    volumes:
+      - /opt/carma/logs:/opt/carma/logs
+      - /opt/carma/.ros:/home/carma/.ros
+
+    command: wait-for-it.sh localhost:11311 -- roslaunch carma saxton_cav_docker.launch
+  
+  mock-lateral-control-driver:
+    image: usdotfhwastol/carma:trb
+    network_mode: host
+    container_name: carma-mock-lateral-control-driver
+    volumes_from: 
+      - container:carma-config:ro
+    environment:
+      - ROS_IP=192.168.88.10
+    volumes:
+      - /opt/carma/logs:/opt/carma/logs
+      - /opt/carma/.ros:/home/carma/.ros
+
+    command: wait-for-it.sh localhost:11311 --  rosrun carma lateral_control_driver gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver
+  
+  cohda_dsrc_driver:
+    image: usdotfhwastol/carma-cohda-dsrc-driver:carma-system-3.8.3
+    container_name: carma-cohda-dsrc-driver
+    network_mode: host
+    volumes_from: 
+      - container:carma-config:ro
+    environment:
+      - ROS_IP=192.168.88.10
+    volumes:
+      - /opt/carma/logs:/opt/carma/logs
+      - /opt/carma/.ros:/home/carma/.ros
+
+    command: wait-for-it.sh localhost:11311 -- roslaunch dsrc_driver dsrc_node.launch remap_ns:=/saxton_cav/drivers
+
+  mock-can-driver:
+    image: usdotfhwastol/carma:trb
+    network_mode: host
+    container_name: carma-mock-can-driver
+    volumes_from: 
+      - container:carma-config:ro
+    volumes:
+      - /opt/carma/logs:/opt/carma/logs
+      - /opt/carma/.ros:/home/carma/.ros
+
+    environment:
+      - ROS_IP=127.0.0.1
+    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=can data_file:=/opt/carma/app/mock_data/can.csv remap_ns:=/ node_name:=srx_can_driver
+
+  mock-srx-controller-driver:
+    image: usdotfhwastol/carma:trb
+    network_mode: host
+    container_name: carma-mock-srx-controller-driver
+    volumes_from: 
+      - container:carma-config:ro
+    volumes:
+      - /opt/carma/logs:/opt/carma/logs
+      - /opt/carma/.ros:/home/carma/.ros
+
+    environment:
+      - ROS_IP=127.0.0.1
+    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=srx_controller data_file:=/opt/carma/app/mock_data/srx_controller.csv remap_ns:=/ node_name:=srx_controller
+  
+  mock-radar-driver:
+    image: usdotfhwastol/carma:trb
+    network_mode: host
+    container_name: carma-mock-radar-driver
+    volumes_from: 
+      - container:carma-config:ro
+    volumes:
+      - /opt/carma/logs:/opt/carma/logs
+      - /opt/carma/.ros:/home/carma/.ros
+
+    environment:
+      - ROS_IP=127.0.0.1
+    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=radar data_file:=/opt/carma/app/mock_data/radar.csv remap_ns:=/ node_name:=srx_objects
+  
+  mock-pinpoint-driver:
+    image: usdotfhwastol/carma:trb
+    network_mode: host
+    container_name: carma-mock-pinpoint-driver
+    volumes_from: 
+      - container:carma-config:ro
+    volumes:
+      - /opt/carma/logs:/opt/carma/logs
+      - /opt/carma/.ros:/home/carma/.ros
+
+    environment:
+      - ROS_IP=127.0.0.1
+    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=pinpoint data_file:=/opt/carma/app/mock_data/pinpoint_stationary.csv remap_ns:=/ node_name:=pinpoint_driver
+  
