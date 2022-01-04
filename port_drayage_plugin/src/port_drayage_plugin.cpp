@@ -38,12 +38,8 @@ namespace port_drayage_plugin
         _pnh->param<bool>("starting_at_staging_area", starting_at_staging_area, true);
         bool enable_port_drayage;
         _pnh->param<bool>("enable_port_drayage", enable_port_drayage, false);
-
-        // Read in 'cmv_id' parameter as a string, then convert to an unsigned long before initializing the PortDrayageWorker object
-        std::string cmv_id_string;
-        _pnh->param<std::string>("cmv_id", cmv_id_string, "0");
-        unsigned long cmv_id = std::stoul(cmv_id_string);
-
+        std::string cmv_id;
+        _pnh->getParam("/vehicle_id", cmv_id);
 
         ros::Publisher outbound_mob_op = _nh->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
         _outbound_mobility_operations_publisher = std::make_shared<ros::Publisher>(outbound_mob_op);
