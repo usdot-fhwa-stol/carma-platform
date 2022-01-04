@@ -69,7 +69,7 @@ services:
       - /opt/carma/logs:/opt/carma/logs
       - /opt/carma/.ros:/home/carma/.ros
 
-    command: wait-for-it.sh localhost:11311 -- roslaunch dsrc_driver dsrc_node.launch remap_ns:=/saxton_cav/drivers
+    command: bash -c 'export ROS_NAMESPACE=/saxton_cav/drivers && wait-for-it.sh localhost:11311 -- roslaunch dsrc_driver dsrc_node.launch'
 
   mock-can-driver:
     image: usdotfhwastol/carma:trb
