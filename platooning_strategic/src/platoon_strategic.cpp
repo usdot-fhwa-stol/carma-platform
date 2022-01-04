@@ -679,16 +679,19 @@ namespace platoon_strategic
                 }
                 // Check if the applicant can join based on max timeGap/gap
                 bool isDistanceCloseEnough = (currentGap <= maxAllowedJoinGap_) || (currentTimeGap <= maxAllowedJoinTimeGap_);
-                if(isDistanceCloseEnough) {
+                bool laneConditionsSatisfied = in_rightmost_lane_ || single_lane_road_;
+
+                if(isDistanceCloseEnough && laneConditionsSatisfied) {
                     ROS_DEBUG_STREAM("The applicant is close enough and we will allow it to try to join");
                     ROS_DEBUG_STREAM("Change to LeaderWaitingState and waiting for " << msg.header.sender_id << " to join");
                     pm_.current_platoon_state = PlatoonState::LEADERWAITING;
                     waitingStartTime = ros::Time::now().toNSec()/1000000;
                     lw_applicantId_ = msg.header.sender_id;
-                    // plugin.setState(new LeaderWaitingState(plugin, log, pluginServiceLocator, applicantId));
                     return MobilityRequestResponse::ACK;
                 } else {
-                    ROS_DEBUG_STREAM("The applicant is too far away from us. NACK.");
+                    ROS_DEBUG_STREAM("The applicant is too far away from us or not in corret lane. NACK.");
+                    ROS_DEBUG_STREAM("isDistanceCloseEnough" << isDistanceCloseEnough);
+                    ROS_DEBUG_STREAM("laneConditionsSatisfied" << laneConditionsSatisfied);
                     return MobilityRequestResponse::NACK;
                 }
             }
