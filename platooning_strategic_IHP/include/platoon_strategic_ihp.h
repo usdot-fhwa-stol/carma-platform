@@ -227,12 +227,6 @@ namespace platoon_strategic_ihp
             void georeference_cb(const std_msgs::StringConstPtr& msg);
 
             /**
-            * \brief Generate a new maneuver ID for the new maneuver other than lane following
-            * \return The newly genrated uuid as a string
-            */
-            std::string getNewManeuverId() const;
-
-            /**
             * \brief Spin callback function
             */
             bool onSpin();
@@ -352,7 +346,7 @@ namespace platoon_strategic_ihp
             std::string potentialNewPlatoonId = "";
 
             // UCLA: potential new platoon id for front join
-            std::string potentialNewPlatoonId_front  = "";
+            std::string potentialNewPlatoonId_front_  = "";
 
             // target platood id 
             std::string targetPlatoonId = "";
@@ -378,12 +372,14 @@ namespace platoon_strategic_ihp
 
             /**
             * \brief Function to determin if a vehicle is in the front of hose vehicle
+            *        note: This is only applicable for same lane application, so it will check cross track distance.
             *
-            * \param downtrack vehicle downtrack
+            * \param downtrack: vehicle downtrack
+            *        crosstrack: vehicle crosstrack
             *
             * \return true or false
             */
-            bool isVehicleRightInFront(double downtrack);
+            bool isVehicleRightInFront(double downtrack, double crosstrack);
             
             /**
             * \brief Function to find speed limit of a lanelet
@@ -564,24 +560,27 @@ namespace platoon_strategic_ihp
             
             /**
             * \brief Function to determine if the given downtrack distance (m) is behind the host vehicle.
+            * 
+            * note: This is only applicable for same lane application, so it will check cross track distance.
             *
             * \param downtrack: The downtrack distance (m) of the target vehicle to compare with the host.
+            *        crosstrack: The crosstrack distance (m) of the target vehicle to compart with the host.
             *
             * \return (boolean): if target vehicle is behind the host vehicle.
             */
-            bool isVehicleRightBehind(double downtrack);
+            bool isVehicleRightBehind(double downtrack, double crosstrack);
             
             /**
-            * \brief Function to determine if the target platoon leader is in an adjacent lane (used for cut-in join scenarios). 
+            * \brief Function to determine if the host vehicle is close to the target platoon (used for cut-in join scenarios). 
             *  
             *
-            * \param frontVehicleDtd: The downtrack distance of the platoon front (i.e., platoon leader) vehicle.
-            *        rearVehicleDtd:  The downtrack distance of the platoon rear (i.e., last platoon member) vehicle.
-            *        frontVehicleCtD: The cross track distance of the platoon front (i.e., platoon leader) vehicle.
+            * \param current_downtrack: The downtrack distance of the host vehicle.
+            *        current_crosstrack:  The crosstrack distance of the host vehicle.
+            *        
             *
-            * \return (boolean): if target vehicle is in the adjacent lane.
+            * \return (boolean): if the host vehicle is close to the target platoon.
             */
-            bool isVehicleNextLane(double frontVehicleDtd, double rearVehicleDtd, double frontVehicleCtD);
+            bool isVehicleNearPlatoon(double current_downtrack, double current_crosstrack);
 
             /**
             * \brief Function to find the starting and ending lanelet ID for lane change in a two-lane scenario (used for cut-in join scenarios).
@@ -768,31 +767,22 @@ namespace platoon_strategic_ihp
             // flag to check if map is loaded
             bool map_loaded_ = false;
 
-            // UCLA: flag to indicate the join type 
-            bool isRearJoin_ = false;
-            bool isFrontalJoin_ = false;
-            bool isCutInJoin_ = false;
-
             // ros service servers
             ros::ServiceServer maneuver_srv_;
 
             // Plugin discovery message
             cav_msgs::Plugin plugin_discovery_msg_;
 
-            double maxAllowedJoinTimeGap_ = 15.0;
-            double maxAllowedJoinGap_ = 90;
-            int maxPlatoonSize_ = 10;
-            double vehicleLength_ = 5.0;
-            int infoMessageInterval_ = 200; // ms
-            long lastHeartBeatTime = 0.0;
-            int statusMessageInterval_ = 100; // ms
-            int NEGOTIATION_TIMEOUT = 5000;  // ms
-            int noLeaderUpdatesCounter = 0;
-            int LEADER_TIMEOUT_COUNTER_LIMIT = 5;
-            double waitingStateTimeout = 25.0; // s
-            double desiredJoinGap = 30.0; // m
-            double desiredJoinTimeGap = 4.0; // s
-            // UCLA: add global variable for state prepare to join
+            int infoMessageInterval_ = 200;             // ms
+            long lastHeartBeatTime = 0.0;               // ms
+            int statusMessageInterval_ = 100;           // ms
+            int NEGOTIATION_TIMEOUT = 5000;             // ms
+            int LANE_CHANGE_TIMEOUT = 300000;           // ms (5 min)
+            int noLeaderUpdatesCounter = 0;             // counter 
+            int LEADER_TIMEOUT_COUNTER_LIMIT = 5;       // counter 
+            double waitingStateTimeout = 25.0;          // s
+            
+            // UCLA: add member variable for state prepare to join
             int target_join_index_;
 
 

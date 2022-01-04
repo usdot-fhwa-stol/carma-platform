@@ -52,7 +52,7 @@ namespace platoon_strategic_ihp
     {}
 
     // Update/add one member's information from STATUS messages, update platoon ID if needed. Ignore if message is from other platoons. 
-    void PlatoonManager::memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, const double& DtD){
+    void PlatoonManager::memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, const double& DtD, const double& CtD){
 
         // parase params, read member data
         std::vector<std::string> inputsParams;
@@ -64,7 +64,10 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("Command Speed: " << cmdSpeed);
         // get DtD directly instead of parsing message, m
         double dtDistance = DtD;
+        // get CtD directly 
+        double ctDistance = CtD;
         ROS_DEBUG_STREAM("Downtrack Distance ecef: " << dtDistance);
+        ROS_DEBUG_STREAM("CrossTrack Distance ecef: " <<ctDistance);
         // read current speed, m/s
         std::vector<std::string> cur_parsed;
         boost::algorithm::split(cur_parsed, inputsParams[2], boost::is_any_of(":"));
@@ -86,12 +89,12 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("It seems that the current leader is joining another platoon.");
                 ROS_DEBUG_STREAM("So the platoon ID is changed from " << currentPlatoonID << " to " << platoonId);
                 currentPlatoonID = platoonId;
-                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, curSpeed);
+                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
             } 
             else if((currentPlatoonID == platoonId) && isVehicleInFrontOf) 
             {
                 ROS_DEBUG_STREAM("This STATUS messages is from our platoon in front of us. Updating the info...");
-                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, curSpeed);
+                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
                 leaderID = (platoon.size()==0) ? HostMobilityId : platoon[0].staticId;
                 ROS_DEBUG_STREAM("The first vehicle in our list is now " << leaderID);
             } 
@@ -106,7 +109,7 @@ namespace platoon_strategic_ihp
             if (currentPlatoonID == platoonId)
             {
                 ROS_DEBUG_STREAM("This STATUS messages is from our platoon. Updating the info...");
-                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, curSpeed);
+                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
             }
         }
         
@@ -114,24 +117,28 @@ namespace platoon_strategic_ihp
         std::string hostStaticId = getHostStaticID();
         double hostcmdSpeed = getCommandSpeed();
         double hostDtD = getCurrentDowntrackDistance();
+        double hostCtD = getCurrentCrosstrackDistace();
         double hostCurSpeed = getCurrentSpeed();
-        updatesOrAddMemberInfo(hostStaticId, hostcmdSpeed, hostDtD, hostCurSpeed);
+        updatesOrAddMemberInfo(hostStaticId, hostcmdSpeed, hostDtD, hostCtD, hostCurSpeed);
     }
     
     // Check a new vehicle's existence; add its info to the platoon if not in list, update info if already existed. 
-    void PlatoonManager::updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double curSpeed) {
+    void PlatoonManager::updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double ctDistance, double curSpeed) {
 
         bool isExisted = false;
         // update/add this info into the list
         for (PlatoonMember& pm : platoon){
             if(pm.staticId == senderId) {
-                pm.commandSpeed = cmdSpeed; // m/s
-                pm.vehiclePosition = dtDistance; // m 
-                pm.vehicleSpeed = curSpeed; // m/s
+                pm.commandSpeed = cmdSpeed;             // m/s
+                pm.vehiclePosition = dtDistance;        // m 
+                // added cross track 
+                pm.vehicleCrossTrack = ctDistance;      // m 
+                pm.vehicleSpeed = curSpeed;             // m/s
                 pm.timestamp = ros::Time::now().toNSec()/1000000;
                 ROS_DEBUG_STREAM("Receive and update platooning info on vehicel " << pm.staticId);
                 ROS_DEBUG_STREAM("    Speed = "                                   << pm.vehicleSpeed);
                 ROS_DEBUG_STREAM("    Location = "                                << pm.vehiclePosition);
+                ROS_DEBUG_STREAM("    CrossTrack = "                              << pm.vehicleCrossTrack);
                 ROS_DEBUG_STREAM("    CommandSpeed = "                            << pm.commandSpeed);
                 isExisted = true;
                 break;
@@ -141,7 +148,7 @@ namespace platoon_strategic_ihp
         if(!isExisted) {
             long cur_t = ros::Time::now().toNSec()/1000000; // time in millisecond
 
-            PlatoonMember newMember = PlatoonMember(senderId, cmdSpeed, curSpeed, dtDistance, cur_t);
+            PlatoonMember newMember = PlatoonMember(senderId, cmdSpeed, curSpeed, dtDistance, ctDistance, cur_t);
             platoon.push_back(newMember);
             // sort the platoon member based on dowtrack distance (m) in an descending order.
             std::sort(std::begin(platoon), std::end(platoon), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition > b.vehiclePosition;});
@@ -518,8 +525,13 @@ namespace platoon_strategic_ihp
     // Return the current downtrack distance in m.
     double PlatoonManager::getCurrentDowntrackDistance() const
     {
-        double current_progress = current_downtrack_distance_;
-        return current_progress;
+        return current_downtrack_distance_;
+    }
+
+    // Return the current crosstrack distance, in m.
+    double PlatoonManager::getCurrentCrosstrackDistace() const
+    {
+        return current_crosstrack_distance_;
     }
 
     // UCLA: return the host vehicle static ID.
@@ -632,14 +644,14 @@ namespace platoon_strategic_ihp
         return pos_des;
     }
 
-    // UCLA: find the clsest index to the cut-in joining vehicle.
-    // Note: The index pointing to the gap-leading vehicle's index.
+    // UCLA: find the index of the closest vehicle that is in front of the host vehicle (cut-in joiner).
+    // Note: The joiner will cut-in at the back of this vehcile, which make this index points to the vehicle that is leading the cut-in gap.
     int PlatoonManager::getClosestIndex(double joinerDtD)
     {   
         /*
-            A naive way to find the closest member to the jioning vehicle.
+            A naive way to find the closest member that is in front of the host that point to the gap to join the platoon.
             Note: The potential gap leading vehicle should be in front of the joiner (i.e., gap leading vehicle's dtd > joiner's dtd).
-                  If the joiner is already in front of leader --> all loop result will be negative --> return -1 (i.e., cut-in front) 
+                  If the joiner is already in front of the platoon leader, this function will return -1 (i.e., cut-in front).
         */
 
         double min_diff = 99999.000;
@@ -660,7 +672,7 @@ namespace platoon_strategic_ihp
         return cut_in_index;
     }
 
-    // UCLA: find the cut-in join target gap size in downtrack distance (m).
+    // UCLA: find the cut-in join target gap size in downtrack distance (m). The origin of the vehicle when calculating DtD is locate at the rear axle. 
     double PlatoonManager::getCutInGap(int gap_leading_index, double joinerDtD)
     {
         /*
@@ -670,14 +682,14 @@ namespace platoon_strategic_ihp
        if (gap_leading_index == -1)
        {
             double gap_rear_dtd = platoon[0].vehiclePosition;
-            double gap_size = joinerDtD - gap_rear_dtd;
+            double gap_size = joinerDtD - gap_rear_dtd - config_.vehicleLength;
             return gap_size;
        }
        // cut-in from behind 
-       else if (gap_leading_index == platoon.size() + 1)
+       else if (gap_leading_index == platoon.size() - 1)
        {    
             double gap_leading_dtd = platoon[gap_leading_index].vehiclePosition;
-            double gap_size = gap_leading_dtd - joinerDtD;
+            double gap_size = gap_leading_dtd - joinerDtD - config_.vehicleLength;;
             return gap_size;
        }
        // cut-in in the middle

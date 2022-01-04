@@ -90,10 +90,11 @@ namespace platoon_strategic_ihp
         LEADWITHOPERATION,          // 7;
         //UCLA: CUT-IN JOIN STATE
         PREPARETOJOIN               // 8;
-    };
+    };z
 
     /**
-    * \brief Platoon States
+    * \brief Platoon States 
+    * Note: Include cross track as one of the class variables.
     */
     struct PlatoonMember
     {
@@ -103,13 +104,15 @@ namespace platoon_strategic_ihp
         double commandSpeed;
         // Actual vehicle speed in m/s.
         double vehicleSpeed;
-        // Vehicle current down track distance on the current route in m.
+        // Vehicle current downtrack distance on the current route in m.
         double vehiclePosition;
+        // Vehicle current crosstrack distance on the current route in m.
+        double vehicleCrossTrack;
         // The local time stamp when the host vehicle update any informations of this member.
         long   timestamp;
-        PlatoonMember(): staticId(""), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), timestamp(0) {} 
-        PlatoonMember(std::string staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
-            commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), vehiclePosition(vehiclePosition), timestamp(timestamp) {}
+        PlatoonMember(): staticId(""), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), vehicleCrossTrack(0.0), timestamp(0) {} 
+        PlatoonMember(std::string staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, double vehicleCrossTrack, long timestamp): staticId(staticId),
+            commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), vehiclePosition(vehiclePosition), vehicleCrossTrack(vehicleCrossTrack), timestamp(timestamp) {}
     };
         
 
@@ -129,8 +132,11 @@ namespace platoon_strategic_ihp
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
 
-        // Current vehicle downtrack
+        // Current vehicle downtrack, in m.
         double current_downtrack_distance_ = 0;
+
+        // Current vehcile crosstrack, in m.
+        double current_crosstrack_distance_ = 0;
 
         /**
         * \brief Update platoon members information
@@ -140,7 +146,7 @@ namespace platoon_strategic_ihp
         * \param params strategy parameters
         * \param Dtd downtrack distance
         */
-        void memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, const double& DtD);
+        void memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, const double& DtD, const double& CtD);
 
         /**
          * \brief Given any valid platooning mobility STATUS operation parameters and sender staticId,
@@ -152,7 +158,7 @@ namespace platoon_strategic_ihp
          * \param platoonId sender platoon id
          * \param params strategy params from STATUS message in the format of "CMDSPEED:xx,DOWNTRACK:xx,SPEED:xx"
          **/
-        void updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double curSpeed);
+        void updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double ctDistance, double curSpeed);
         
         /**
         * \brief Returns total size of the platoon , in number of vehicles.
@@ -233,6 +239,11 @@ namespace platoon_strategic_ihp
         double getCurrentDowntrackDistance() const;
 
         /**
+        * \brief Returns current crosstrack distance, in m.
+        */
+        double getCurrentCrosstrackDistace() const;
+
+        /**
         * \brief Returns current host static ID as a string.
         */
         std::string getHostStaticID() const;
@@ -263,6 +274,7 @@ namespace platoon_strategic_ihp
 
         /**
          * \brief UCLA: Return the desired gap size for cut-in join, in m.
+         *        Note: The origin of the vehicle (for downtrack distance calculation) is located at the rear axle. 
          * 
          * \params gap_leading_index: The platoon index of the  gap-leading vehicle. 
          *         joinerDtD: The current downtrack distance (with regards to host vehicle) of the joiner vehicle.
