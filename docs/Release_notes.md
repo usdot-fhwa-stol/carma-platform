@@ -21,8 +21,6 @@ Enhancements in this release:
 10.	Default ROS workspace structure changed so autoware.ai and carma-platform exist in the same source directory
 
 Fixes in this release:
--	Issue 1507: Fixed Input vectors empty exception from cooperative lane change
--	Issue 1506: Fixed Insufficient spline points exception from inlane-cruising before lane change
 -	Issue 1496: Fixed No objects reported from lidar detection anomaly
 -	Issue 1490: Fixed platooning control package is missing autoware_msgs dependency
 -	Issue 1486: Fixed localization in release/elise is less stable then in 3.8
@@ -46,9 +44,7 @@ Enhancements in this release:
 Fixes in this release:
 -	Issue 1534: Updated Port Drayage plugin to set its cmv_id using the vehicle_id global parameter, which includes the vehicle's license plate information and updated cmv_id to a string value.
 -	Issue 1479: Added combined_lidar_frame arg name in the launch files to have default frame for passenger vehicles and freightliners.
--	Issue 1438: Updated Port Drayage Plugin to publish UI Instructions to the Web UI when a route to a newly received destination has been generated.
--	Issue 1281: 
--	Issue 1520:  Fixed Potential ILC 32-bit range exception for correlation to lane change geometry creation in CLC where it is creating extra lane follow geometry behind the lane change to avoid running out of points that is creating duplicate points when attaching lanelets.
+-	Issue 1520&1515&1521:  Fixed a small bug in CLC “duration is out of 32-bit range" (from vehicle state having a speed of -nan in ILC logs) ~1-2 seconds after starting the lane change.
 -	Issue 1507: Fixed Input vectors empty exception sometimes at the end of the lane change from cooperative lane change plugin.
 -	Issue 1506: Fixed Insufficient spline points exception from inlane-cruising when executing a lane change.
 -	Issue 1524: Fixed route node’s logic using non-down track calculation for route completion check. Which is using a different down track frame compliant calculation for its end of route check.
