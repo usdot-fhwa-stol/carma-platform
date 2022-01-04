@@ -792,6 +792,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         Vector3 transInECEF = earthToHostVehicle.getTranslation();
         Point3D hostVehicleInECEF = new Point3D(transInECEF.getX(), transInECEF.getY(), transInECEF.getZ());
         gov.dot.fhwa.saxton.carma.geometry.geodesic.Location carmaLocation = gcc.cartesian2Geodesic(hostVehicleInECEF, Transform.identity());
+        log.debug("LOC",carmaLocation.toString());
         curPos.set(new Location(carmaLocation.getLatitude(), carmaLocation.getLongitude()));
 
         if (checkIntersectionMaps()) {
