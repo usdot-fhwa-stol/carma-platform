@@ -1427,11 +1427,11 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  ROS_DEBUG_STREAM("Input: New cycle, but cycle duration is same due to shifting");
+  ROS_DEBUG_STREAM("Input: New partial cycle, yellow reduced");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
-  EXPECT_EQ(lanelet::time::durationFromSec(45), lights1[0]->fixed_cycle_duration);
+  EXPECT_EQ(lanelet::time::durationFromSec(43), lights1[0]->fixed_cycle_duration);
 
   // call the processSpatFromMsg with that msg 8
   event.event_state.movement_phase_state = 3;

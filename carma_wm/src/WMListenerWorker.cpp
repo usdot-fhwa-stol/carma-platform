@@ -208,19 +208,19 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     world_model_->sim_ = gf_ptr->sim_;
     for (auto pair : world_model_->sim_.intersection_id_to_regem_id_)
     {
-      ROS_DEBUG_STREAM("inter id: " << (int)pair.first << ", regem id: " << pair.second);
+      ROS_DEBUG_STREAM(world_model_->wm_user_name << ": inter id: " << (int)pair.first << ", regem id: " << pair.second);
     }
     for (auto pair : world_model_->sim_.signal_group_to_entry_lanelet_ids_)
     {
-      ROS_DEBUG_STREAM("signal id: " << (int)pair.first << ", regem id: " << *pair.second.begin());
+      ROS_DEBUG_STREAM(world_model_->wm_user_name << ": signal id: " << (int)pair.first << ", regem id: " << *pair.second.begin());
     }
     for (auto pair : world_model_->sim_.signal_group_to_exit_lanelet_ids_)
     {
-      ROS_DEBUG_STREAM("signal id: " << (int)pair.first << ", regem id: " << *pair.second.begin());
+      ROS_DEBUG_STREAM(world_model_->wm_user_name << ": signal id: " << (int)pair.first << ", regem id: " << *pair.second.begin());
     }
     for (auto pair : world_model_->sim_.signal_group_to_traffic_light_id_)
     {
-      ROS_DEBUG_STREAM("signal id: " << (int)pair.first << ", regem id: " << pair.second);
+      ROS_DEBUG_STREAM(world_model_->wm_user_name << ": signal id: " << (int)pair.first << ", regem id: " << pair.second);
     }
   }
 
