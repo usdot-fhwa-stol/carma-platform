@@ -679,7 +679,7 @@ namespace platoon_strategic
                 }
                 // Check if the applicant can join based on max timeGap/gap
                 bool isDistanceCloseEnough = (currentGap <= maxAllowedJoinGap_) || (currentTimeGap <= maxAllowedJoinTimeGap_);
-                bool laneConditionsSatisfied = in_rightmost_lane_ || single_lane_road_;
+                bool laneConditionsSatisfied = !in_rightmost_lane_ || single_lane_road_;
 
                 if(isDistanceCloseEnough && laneConditionsSatisfied) {
                     ROS_DEBUG_STREAM("The applicant is close enough and we will allow it to try to join");
