@@ -16,7 +16,6 @@
 #include <cav_srvs/SendMessage.h>
 
 #include <dynamic_reconfigure/server.h>
-#include <dsrc_driver/DSRCConfig.h>
 
 #include <ros/ros.h>
 
@@ -27,7 +26,7 @@
  * @class NS3Adapter
  * @brief Is the class responsible for the NS-3 Adapter driver
  */
-class NS3Adapter 
+class NS3Adapter : public cav::DriverApplication
 {
 
 public:
@@ -93,6 +92,32 @@ private:
      */
     void onOutboundMessage(const cav_msgs::ByteArray::ConstPtr& message);
 
+ /**
+     * @brief Message sending service
+     * @param req
+     * @param res
+     *
+     */
+    bool sendMessageSrv(cav_srvs::SendMessage::Request& req, cav_srvs::SendMessage::Response& res);
+
+    /**
+     * @brief Sends a message from the queue of outbound messages
+     */
+    void sendMessageFromQueue();
+
+    /**
+     * @brief Callback for dynamic reconfig service
+     * @param cfg
+     * @param level
+     */
+    void dynReconfigCB(dsrc::DSRCConfig & cfg, uint32_t level);
+
+
+    /**
+     * @brief Loads the wave file with the given name for configuring WAVE message ids with channel and PSID
+     * @param fileName
+     */
+    void loadWaveConfig(const std::string& fileName);
 
     /**
      * @brief converts a uint8_t vector to an ascii representation
@@ -100,5 +125,4 @@ private:
      * @return
      */
     std::string uint8_vector_to_hex_string(const std::vector<uint8_t>& v);
-    
 };
