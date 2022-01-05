@@ -43,6 +43,11 @@ namespace arbitrator
             stream << std::endl;
             ROS_INFO(stream.str().c_str());
         }
+        else
+        {
+            ROS_DEBUG_STREAM("servicd call failed...");
+            ROS_DEBUG_STREAM("client: " << sc_s);
+        }
 
         return topics;
 
