@@ -1369,6 +1369,17 @@ namespace carma_wm
          // detected that new state received; therefore, set the last recorded state (not new one received)
         ROS_DEBUG_STREAM(wm_user_name << ": Received new state for light: " << curr_light_id << ", with state: " << received_state << ", time: " << ros::Time::fromBoost(min_end_time));
 
+        // DEBUG
+        for (auto llt : curr_light->getControlStartLanelets())
+        {
+          ROS_DEBUG_STREAM("Light id:" << curr_light_id << ", and entry: " << llt.id());
+        }
+        for (auto llt : curr_light->getControlEndLanelets())
+        {
+          ROS_DEBUG_STREAM("Light id:" << curr_light_id << ", and exit: " << llt.id());
+        }
+        // END
+
          // update last seen signal state
         sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group] = {min_end_time, received_state};
         

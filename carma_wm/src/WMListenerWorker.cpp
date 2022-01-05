@@ -212,11 +212,11 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     }
     for (auto pair : world_model_->sim_.signal_group_to_entry_lanelet_ids_)
     {
-      ROS_DEBUG_STREAM(world_model_->wm_user_name << ": signal id: " << (int)pair.first << ", regem id: " << *pair.second.begin());
+      ROS_DEBUG_STREAM(world_model_->wm_user_name << ": signal id: " << (int)pair.first << ", entry llt id: " << *pair.second.begin());
     }
     for (auto pair : world_model_->sim_.signal_group_to_exit_lanelet_ids_)
     {
-      ROS_DEBUG_STREAM(world_model_->wm_user_name << ": signal id: " << (int)pair.first << ", regem id: " << *pair.second.begin());
+      ROS_DEBUG_STREAM(world_model_->wm_user_name << ": signal id: " << (int)pair.first << ", exit llt id: " << *pair.second.begin());
     }
     for (auto pair : world_model_->sim_.signal_group_to_traffic_light_id_)
     {
