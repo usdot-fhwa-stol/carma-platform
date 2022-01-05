@@ -365,7 +365,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
           case_num, current_state.downtrack, stop_intersection_down_track, current_state.speed, 0.0,
           current_state.stamp, time_to_schedule_stop,
           lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); }));
-
+          resp.new_plan.maneuvers.push_back(maneuver_planned);
         }
         else
         {
