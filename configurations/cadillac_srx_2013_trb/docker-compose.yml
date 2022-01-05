@@ -58,7 +58,7 @@ services:
     command: wait-for-it.sh localhost:11311 --  rosrun carma lateral_control_driver gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver
   
   cohda_dsrc_driver:
-    image: usdotfhwastol/carma-cohda-dsrc-driver:carma-system-3.8.3
+    image: usdotfhwastol/carma-cohda-dsrc-driver:trb
     container_name: carma-cohda-dsrc-driver
     network_mode: host
     volumes_from: 
