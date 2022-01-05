@@ -1386,7 +1386,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   
   // call the processSpatFromMsg with that msg 4.b
   event.event_state.movement_phase_state = 5;
-  event.timing.min_end_time = 65;
+  event.timing.min_end_time = 65.001;
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
@@ -1435,7 +1435,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
 
   // call the processSpatFromMsg with that msg 8
   event.event_state.movement_phase_state = 3;
-  event.timing.min_end_time = 69;
+  event.timing.min_end_time = 69.000;
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
