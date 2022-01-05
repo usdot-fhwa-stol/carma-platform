@@ -402,6 +402,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     case j2735_msgs.MovementPhaseState.STOP_AND_REMAIN: // Red light
                         m.setCurrentState(0x00000004);
                         break;
+                    case j2735_msgs.MovementPhaseState.STOP_THEN_PROCEED: // Red light (Modified for TRB)
+                        m.setCurrentState(0x00000004);
+                        break;
                     default:
                         //log.warn("Unsupported signal phase: " + phase);
                         break;
