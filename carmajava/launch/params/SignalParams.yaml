@@ -114,7 +114,8 @@ asd/maxpacketsize: 1472
 #comma-separated list of (decimal) intersections IDs that will be used; other intersections ignored
 # TFHRC West Int: 9709
 # TFHRC East Int: 9945
-asd/intersections: "9709,9945"
+# TRB: 1001
+asd/intersections: "9709,9945,1001"
 
 # number of time steps after first seeing data from a new intersection before we start calculating spat reliability
 asd/minSamplesForReliability: 4
