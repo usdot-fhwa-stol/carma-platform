@@ -235,6 +235,10 @@ namespace platoon_strategic
             // variable to show if the vehicle is on a single-lane lane
             bool single_lane_road_ = false;
 
+            
+
+
+
         
         private:
 
@@ -478,13 +482,13 @@ namespace platoon_strategic
             lanelet::BasicPoint2d ecef_to_map_point(cav_msgs::LocationECEF ecef_point);
 
 
-            // Pointer for map projector
-            std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
-
+            
             // flag to check if map is loaded
             bool map_loaded_ = false;
 
-     
+            // Pointer for map projector
+            std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
+
 
             // ros service servers
             ros::ServiceServer maneuver_srv_;

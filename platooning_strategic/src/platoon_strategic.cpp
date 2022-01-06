@@ -135,7 +135,6 @@ namespace platoon_strategic
     {
         auto current_lanelet = wm_->getLaneletsFromPoint(current_location, 1);
         ROS_DEBUG_STREAM("current_lanelet" << current_lanelet[0].id());
-
         auto routing_graph = wm_->getMapRoutingGraph();
         auto right_lanelet = routing_graph->right(current_lanelet[0]);
         if (!right_lanelet)
@@ -400,7 +399,6 @@ namespace platoon_strategic
             if(hasFollower) {
                 cav_msgs::MobilityOperation statusOperation;
                 statusOperation = composeMobilityOperationLeader(OPERATION_STATUS_TYPE);
-                // mob_op_pub_.publish(statusOperation);
                 mobility_operation_publisher_(statusOperation);
                 ROS_DEBUG_STREAM("Published platoon STATUS operation message");
             }
@@ -1095,19 +1093,16 @@ namespace platoon_strategic
             boost::algorithm::split(ecef_x_parsed, inputsParams[5], boost::is_any_of(":"));
             double ecef_x = std::stod(ecef_x_parsed[1]);
             ROS_DEBUG_STREAM("ecef_x_parsed: " << ecef_x);
-            std::cerr << "ecef_x_parsed: " << ecef_x << std::endl;
 
             std::vector<std::string> ecef_y_parsed;
             boost::algorithm::split(ecef_y_parsed, inputsParams[6], boost::is_any_of(":"));
             double ecef_y = std::stod(ecef_y_parsed[1]);
             ROS_DEBUG_STREAM("ecef_y_parsed: " << ecef_y);
-            std::cerr << "ecef_y_parsed: " << ecef_y << std::endl;
 
             std::vector<std::string> ecef_z_parsed;
             boost::algorithm::split(ecef_z_parsed, inputsParams[7], boost::is_any_of(":"));
             double ecef_z = std::stod(ecef_z_parsed[1]);
             ROS_DEBUG_STREAM("ecef_z_parsed: " << ecef_z);
-            std::cerr << "ecef_z_parsed: " << ecef_z << std::endl;
             
             cav_msgs::LocationECEF ecef_loc;
             ecef_loc.ecef_x = ecef_x;
