@@ -49,9 +49,36 @@ def generate_launch_description():
     subsystem_controller_param_file = os.path.join(
         get_package_share_directory('subsystem_controllers'), 'config/environment_perception_controller_config.yaml')
 
+    frame_transformer_param_file = os.path.join(
+        get_package_share_directory('frame_transformer'), 'config/parameters.yaml')
+
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     # Nodes
+    frame_transformer_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='frame_transformer_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+ 
+            ComposableNode(
+                package='frame_transformer',
+                plugin='frame_transformer::Node',
+                name='lidar_frame_transformer',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('frame_transformer', env_log_levels) }
+                ],
+                remappings=[
+                    ("input", "/hardware_interface/lidar/points_raw"),  # TODO use environment variable here   
+                    ("output", "points_in_base_link"),           
+                ],
+                parameters=[ frame_transformer_param_file ]
+            ),
+        ]
+    )
+
     lidar_perception_container = ComposableNodeContainer(
         package='carma_ros2_utils', # rclcpp_components
         name='perception_points_filter_container',
@@ -67,7 +94,7 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('ray_ground_classifier_nodes', env_log_levels) }
                 ],
                 remappings=[
-                    ("points_in", "/hardware_interface/lidar/points_raw"), # TODO use environment variable here
+                    ("points_in", "points_in_base_link"), 
                     ("points_nonground", "points_no_ground")
                 ],
                 parameters=[ ray_ground_classifier_param_file]
@@ -81,7 +108,7 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('euclidean_cluster_nodes', env_log_levels) }
                 ],
                 remappings=[
-                    ("points_in", "points_no_ground"),
+                    ("points_in", "points_no_ground")
                 ],
                 parameters=[ euclidean_cluster_param_file ]
             ),
@@ -95,6 +122,7 @@ def generate_launch_description():
                         {'--log-level' : GetLogLevel('tracking_nodes', env_log_levels) }
                     ],
                     remappings=[
+                        ("detected_objects", "lidar_detected_objects"),
                         ("ego_state", "current_pose_with_cov"), # TODO we will need a pose with covariance topic
                         # TODO note classified_rois1 is the default single camera input topic 
                         # TODO when camera detection is added, we will wan to separate this node into a different component to preserve fault tolerance 
@@ -121,6 +149,9 @@ def generate_launch_description():
                         {'use_intra_process_comms': True}, 
                         {'--log-level' : GetLogLevel('object_detection_tracking', env_log_levels) }
                     ],
+                    remappings=[
+                        ("detected_objects", "tracked_objects"),
+                    ],
                     parameters=[ object_detection_tracking_param_file ]
             ),
         ]
@@ -136,6 +167,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        frame_transformer_container,
         lidar_perception_container,
         carma_external_objects_container,
         subsystem_controller
