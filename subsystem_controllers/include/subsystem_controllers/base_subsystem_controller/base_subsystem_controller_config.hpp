@@ -33,10 +33,10 @@ namespace subsystem_controllers
     std::string subsystem_namespace = "/false_namespace";
 
     //! Timeout in ms for service availability
-    uint64_t service_timeout_ms = 1000;
+    int service_timeout_ms = 1000;
 
     //! Timeout in ms for service calls
-    uint64_t call_timeout_ms = 1000;
+    int call_timeout_ms = 1000;
 
     //! If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
     bool full_subsystem_required = false;

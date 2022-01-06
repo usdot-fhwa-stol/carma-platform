@@ -29,8 +29,8 @@ namespace subsystem_controllers
       lifecycle_mgr_(get_node_base_interface(), get_node_graph_interface(), get_node_logging_interface(), get_node_services_interface())
   {
     // Declare parameters
-    base_config_.service_timeout_ms = this->declare_parameter<int64_t>("service_timeout_ms", base_config_.service_timeout_ms);
-    base_config_.call_timeout_ms = this->declare_parameter<int64_t>("call_timeout_ms", base_config_.call_timeout_ms);
+    base_config_.service_timeout_ms = this->declare_parameter<int>("service_timeout_ms", base_config_.service_timeout_ms);
+    base_config_.call_timeout_ms = this->declare_parameter<int>("call_timeout_ms", base_config_.call_timeout_ms);
     base_config_.required_subsystem_nodes = this->declare_parameter<std::vector<std::string>>("required_subsystem_nodes", base_config_.required_subsystem_nodes);
     base_config_.subsystem_namespace = this->declare_parameter<std::string>("subsystem_namespace", base_config_.subsystem_namespace);
     base_config_.full_subsystem_required = this->declare_parameter<bool>("full_subsystem_required", base_config_.full_subsystem_required);
@@ -85,11 +85,11 @@ namespace subsystem_controllers
     base_config_ = BaseSubSystemControllerConfig();
 
     // Load Parameters
-    this->get_parameter<int64_t>("service_timeout_ms", base_config_.service_timeout_ms);
-    this->get_parameter<int64_t>("call_timeout_ms", base_config_.call_timeout_ms);
-    this->get_parameter<std::vector<std::string>>("required_subsystem_nodes", base_config_.required_subsystem_nodes);
-    this->get_parameter<std::string>("subsystem_namespace", base_config_.subsystem_namespace);
-    this->get_parameter<bool>("full_subsystem_required", base_config_.full_subsystem_required);
+    get_parameter<int>("service_timeout_ms", base_config_.service_timeout_ms);
+    get_parameter<int>("call_timeout_ms", base_config_.call_timeout_ms);
+    get_parameter<std::vector<std::string>>("required_subsystem_nodes", base_config_.required_subsystem_nodes);
+    get_parameter<std::string>("subsystem_namespace", base_config_.subsystem_namespace);
+    get_parameter<bool>("full_subsystem_required", base_config_.full_subsystem_required);
 
     RCLCPP_INFO_STREAM(get_logger(), "Loaded config: " << base_config_);
 
