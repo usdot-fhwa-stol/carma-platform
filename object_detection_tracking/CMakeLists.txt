@@ -36,7 +36,7 @@ include_directories(
 )
 
 # Build
-ament_auto_add_library(${worker_lib} SHARED
+ament_auto_add_library(${worker_lib}
         src/object_detection_tracking_worker.cpp
 )
 
