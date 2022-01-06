@@ -22,6 +22,11 @@ namespace <SUB><package_name>
   Node::Node(const rclcpp::NodeOptions &options)
       : carma_ros2_utils::CarmaLifecycleNode(options)
   {
+    // Create initial config
+    config_ = Config();
+
+    // Declare parameters
+    config_.example_param = declare_parameter<std::string>("example_param", config_.example_param);
   }
 
   rcl_interfaces::msg::SetParametersResult Node::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
@@ -42,7 +47,7 @@ namespace <SUB><package_name>
     config_ = Config();
 
     // Load parameters
-    config_.example_param = declare_parameter<std::string>("example_param", config_.example_param);
+    get_parameter<std::string>("example_param", config_.example_param);
 
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));

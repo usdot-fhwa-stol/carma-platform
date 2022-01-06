@@ -30,12 +30,14 @@ namespace object{
     ),
     tfBuffer_(get_clock()),
     tfListener_(tfBuffer_)
-    {}
+    {
+      map_frame_ = this->declare_parameter<std::string>("map_frame", map_frame_);
+    }
 
   carma_ros2_utils::CallbackReturn ObjectDetectionTrackingNode::handle_on_configure(const rclcpp_lifecycle::State &) {
 
     // Load parameters
-    map_frame_ = this->declare_parameter<std::string>("map_frame", map_frame_);
+    this->get_parameter<std::string>("map_frame", map_frame_);
     this->object_worker_.setMapFrame(map_frame_);
 
     this->add_on_set_parameters_callback(
