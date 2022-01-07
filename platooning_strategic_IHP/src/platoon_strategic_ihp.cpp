@@ -1483,6 +1483,8 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("The current applicant size: " << applicantSize << ".");
                 ROS_DEBUG_STREAM("The applicant downtrack is: " << current_downtrack_ << ".");
                 ROS_DEBUG_STREAM("The applicant crosstrack is: " << current_crosstrack_ << ".");
+                ROS_DEBUG_STREAM("The join request was rejected, reset the member variable joiningID_.");
+                joiningID_ = "";
                 return MobilityRequestResponse::NACK;
             }
 
