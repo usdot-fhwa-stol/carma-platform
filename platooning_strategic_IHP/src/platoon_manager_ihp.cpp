@@ -117,7 +117,7 @@ namespace platoon_strategic_ihp
         std::string hostStaticId = getHostStaticID();
         double hostcmdSpeed = getCommandSpeed();
         double hostDtD = getCurrentDowntrackDistance();
-        double hostCtD = getCurrentCrosstrackDistace();
+        double hostCtD = getCurrentCrosstrackDistance();
         double hostCurSpeed = getCurrentSpeed();
         updatesOrAddMemberInfo(hostStaticId, hostcmdSpeed, hostDtD, hostCtD, hostCurSpeed);
     }
@@ -529,7 +529,7 @@ namespace platoon_strategic_ihp
     }
 
     // Return the current crosstrack distance, in m.
-    double PlatoonManager::getCurrentCrosstrackDistace() const
+    double PlatoonManager::getCurrentCrosstrackDistance() const
     {
         return current_crosstrack_distance_;
     }

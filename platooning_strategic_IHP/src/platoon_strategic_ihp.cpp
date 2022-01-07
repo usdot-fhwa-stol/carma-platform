@@ -26,6 +26,7 @@
 #include <string>
 #include "platoon_strategic_ihp.h"
 #include <array>
+#include <stdlib.h> 
 
 
 namespace platoon_strategic_ihp
@@ -50,11 +51,12 @@ namespace platoon_strategic_ihp
         std::string hostStaticId = pm_.getHostStaticID();
         double hostcmdSpeed = pm_.getCommandSpeed();
         double hostDtD = pm_.getCurrentDowntrackDistance();
+        double hostCtD = pm_.getCurrentCrosstrackDistance();
         double hostCurSpeed = pm_.getCurrentSpeed();
         long cur_t = ros::Time::now().toNSec()/1000000; // time in millisecond
 
         // construct platoon member for host vehicle
-        PlatoonMember hostVehicleMember = PlatoonMember(hostStaticId, hostcmdSpeed, hostCurSpeed, hostDtD, cur_t); 
+        PlatoonMember hostVehicleMember = PlatoonMember(hostStaticId, hostcmdSpeed, hostCurSpeed, hostDtD, hostCtD, cur_t); 
         pm_.platoon.push_back(hostVehicleMember);
 
         plugin_discovery_msg_.name = "PlatooningStrategicIHPPlugin";
@@ -211,8 +213,9 @@ namespace platoon_strategic_ihp
     {
         double currentDtd = current_downtrack_;
         double currentCtd = current_crosstrack_;
+        bool samelane = abs(currentCtd-crosstrack) <= config_.laneWidth;
 
-        if(downtrack > currentDtd) && (abs(currentCtd-crosstrack) <= config_.laneWidth)
+        if (downtrack > currentDtd && samelane)
         {
             ROS_DEBUG_STREAM("Found a platoon in front. We are able to join");
             return true;
@@ -230,8 +233,9 @@ namespace platoon_strategic_ihp
     {   
         double currentDtd = current_downtrack_;
         double currentCtd = current_crosstrack_;
+        bool samelane = abs(currentCtd-crosstrack) <= config_.laneWidth;
 
-        if (downtrack < currentDtd) && (abs(currentCtd-crosstrack) <= config_.laneWidth) 
+        if (downtrack < currentDtd && samelane) 
         {
             ROS_DEBUG_STREAM("Found a platoon at behind. We are able to join");
             return true;
@@ -364,7 +368,8 @@ namespace platoon_strategic_ihp
          */
 
         // platoon leader and rear positions
-        double rearVehicleDtd = pm_.platoon[platoon.size()-1].vehiclePosition;
+        int lastVehicleIndex = pm_.platoon.size()-1;
+        double rearVehicleDtd = pm_.platoon[lastVehicleIndex].vehiclePosition;
         double frontVehicleDtd = pm_.platoon[0].vehiclePosition;
         double frontVehicleCtd = pm_.platoon[0].vehiclePosition;
 
@@ -606,19 +611,15 @@ namespace platoon_strategic_ihp
 
     // ------ 2. Mobility operation callback ------ //
     
-    // UCLA: Handle STATUS operation messages
-    void PlatoonStrategicIHPPlugin::mob_op_cb_STATUS(const cav_msgs::MobilityOperation& msg)
+    // read ecef pose from STATUS
+    cav_msgs::LocationECEF PlatoonStrategicIHPPlugin::mob_op_find_ecef_from_STATUS_params(std::string strategyParams)
     {
-        /**
+        /*
+         * Helper function that extract ecef location from STATUS msg.
          * Note: STATUS params format:
          *       STATUS | --> "CMDSPEED:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%"
          *              |----------0----------1---------2---------3---------4------|
          */
-
-        std::string strategyParams = msg.strategy_params;
-        std::string vehicleID = msg.header.sender_id;
-        std::string platoonId = msg.header.plan_id;
-        std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
 
         std::vector<std::string> inputsParams;
         boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
@@ -642,6 +643,27 @@ namespace platoon_strategic_ihp
         ecef_loc.ecef_x = ecef_x;
         ecef_loc.ecef_y = ecef_y;
         ecef_loc.ecef_z = ecef_z;
+
+        return ecef_loc;
+    }
+
+
+    // UCLA: Handle STATUS operation messages
+    void PlatoonStrategicIHPPlugin::mob_op_cb_STATUS(const cav_msgs::MobilityOperation& msg)
+    {
+        /**
+         * Note: STATUS params format:
+         *       STATUS | --> "CMDSPEED:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%"
+         *              |----------0----------1---------2---------3---------4------|
+         */
+
+        std::string strategyParams = msg.strategy_params;
+        std::string vehicleID = msg.header.sender_id;
+        std::string platoonId = msg.header.plan_id;
+        std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
+
+        // read ecef from STATUS
+        cav_msgs::LocationECEF ecef_loc = mob_op_find_ecef_from_STATUS_params(strategyParams);
 
         // read Downtrack 
         lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc);
@@ -871,7 +893,7 @@ namespace platoon_strategic_ihp
                  */
 
                 ROS_DEBUG_STREAM("Found a platoon with id = " << platoonId << " in front of us.");
-                request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_AT_REAR
+                request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_AT_REAR;
 
                 /*
                  * SAME_LANE_JOIN_PARAMS format: 
@@ -1028,6 +1050,8 @@ namespace platoon_strategic_ihp
     {
         std::string strategyParams = msg.strategy_params;
         bool isPlatoonStatusMsg = (strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0);
+        std::string senderId = msg.header.sender_id; 
+
         if(isPlatoonStatusMsg) 
         {
             mob_op_cb_STATUS(msg);
@@ -1311,6 +1335,9 @@ namespace platoon_strategic_ihp
         int currentPlatoonSize = pm_.getTotalPlatooningSize();
         bool hasEnoughRoomInPlatoon = applicantSize + currentPlatoonSize <= config_.maxPlatoonSize;
 
+        // check if the current request is from the first joining vehicle 
+        bool isFirstRequest = (applicantId==joiningID_ or joiningID_ =="" );
+
         // rear join; platoon leader --> leader waiting
         if (isRearJoin)
         {
@@ -1425,13 +1452,20 @@ namespace platoon_strategic_ihp
         }
         
         // UCLA: conditions for cut-in join; platoon leader --> leading with operation
-        else if (isCutinJoin)
+        // Use joningID_ to make sure only the leader only interact with the first requesting joining vehicle
+        else if (isCutinJoin && isFirstRequest)
         {
-            // -- core condition to decided accept joiner or not
-            if (hasEnoughRoomInPlatoon) && isVehicleNearPlatoon(current_downtrack_, current_crosstrack_)
+            
+            // -- core condition to decided accept joiner or not. It is necessary leader only process the first cut-in joining reqeust.
+            if (hasEnoughRoomInPlatoon && isVehicleNearPlatoon(current_downtrack_, current_crosstrack_) )
             {
                 ROS_DEBUG_STREAM("The current platoon has enough room for the applicant with size " << applicantSize);
                 ROS_DEBUG_STREAM("The applicant is close enough for cut-in join, send acceptance response");
+                ROS_DEBUG_STREAM("The leader will keep track of the joining vehicle's ID untill the end of the current cut-in maneuver.");
+                
+                // update the joiningID_ if the current joining request is the first request
+                joiningID_ = (joiningID_=="") ? applicantId : joiningID_;
+                
                 ROS_DEBUG_STREAM("Change to Leading with operation state and waiting for " << msg.header.sender_id << " to change lane");
                 // change state to lead with operation
                 pm_.current_platoon_state = PlatoonState::LEADWITHOPERATION;
@@ -1443,7 +1477,7 @@ namespace platoon_strategic_ihp
                 return MobilityRequestResponse::ACK;
             }
             
-            else if ()
+            else
             {   
                 ROS_DEBUG_STREAM("The current platoon does not have enough room or the applicant is too far away from us. NACK the request.");
                 ROS_DEBUG_STREAM("The current applicant size: " << applicantSize << ".");
@@ -1507,9 +1541,6 @@ namespace platoon_strategic_ihp
 
         // Check request plan type  
         cav_msgs::PlanType plan_type = msg.plan_type;
-        // The inmcoming message is "mobility Request", which has a location category.
-        std::vector<std::string> inputsParams;
-        boost::algorithm::split(inputsParams, params, boost::is_any_of(","));
 
         // Calculate downtrack (m) bsaed on ecef. 
         lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location);
@@ -1576,7 +1607,8 @@ namespace platoon_strategic_ihp
         // task 3.1 cut-in front: After creating gap, revert back to same-lane operation 
         if (plan_type.type == cav_msgs::PlanType::CUT_IN_FRONT_DONE)
         {
-            ROS_DEBUG_STREAM("Cut-in from front lane change finished, leader revert to same-lane maneuver.");
+            ROS_DEBUG_STREAM("Cut-in from front lane change finished, leader revert to same-lane maneuver, leader reset member variable joiningID_.");
+            joiningID_ = "";
             pm_.current_platoon_state = PlatoonState::LEADERABORTING;
             return MobilityRequestResponse::ACK;
         }
@@ -1945,9 +1977,7 @@ namespace platoon_strategic_ihp
                 cut_in_gap = pm_.getCutInGap(target_join_index_, joinerDtD);  
 
                 // Sleep period equals statusMessageInterval_ 
-                long tsEnd =  ros::Time::now().toNSec()/1000000; 
-                long sleepDuration = std::max((int32_t)(statusMessageInterval_ - (tsEnd - tsStart)), 0);
-                ros::Duration(sleepDuration/1000).sleep();
+                ros::Duration(statusMessageInterval_/1000).sleep();
 
                 // Use LANE_CHANGE_TIMEOUT to bond the "creat gap"
                 bool isCurrentPlanTimeout = ((ros::Time::now().toNSec()/1000000  - pm_.current_plan.planStartTime) > LANE_CHANGE_TIMEOUT);
@@ -2186,7 +2216,7 @@ namespace platoon_strategic_ihp
         double maxJoinGap = std::max(config_.desiredJoinGap, desiredJoinGap2);
         double currentGap = pm_.getDistanceToPredVehicle();
         ROS_DEBUG_STREAM("Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " ms");
-        ROS_DEBUG_STREAM("Since we have max allowed gap as " << desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
+        ROS_DEBUG_STREAM("Since we have max allowed gap as " << config_.desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
         ROS_DEBUG_STREAM("The current gap from radar is " << currentGap << " m");
         if (currentGap <= maxJoinGap && pm_.current_plan.valid == false)
         {
@@ -2269,7 +2299,7 @@ namespace platoon_strategic_ihp
         // check if compatible for front join --> return front gap, no veh type check, is compatible
         double currentGap = pm_.getDistanceToPredVehicle();
         ROS_DEBUG_STREAM("Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " ms");
-        ROS_DEBUG_STREAM("Since we have max allowed gap as " << desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
+        ROS_DEBUG_STREAM("Since we have max allowed gap as " << config_.desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
         ROS_DEBUG_STREAM("The current gap from radar is " << currentGap << " m");
         
         // Check if gap is big enough and if current plan is timeout.
@@ -2407,7 +2437,8 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("waitingStateTimeout: " << waitingStateTimeout * 1000);
         if (isCurrentStateTimeout) 
         {
-            ROS_DEBUG_STREAM("The current prepare to join state is timeout. Change back to leader state.");
+            ROS_DEBUG_STREAM("The current prepare to join state is timeout. Change back to leader state. The member variable joiningID_ is reset.");
+            joiningID_ = "";
             pm_.current_platoon_state = PlatoonState::LEADER;
         }
 
@@ -2421,7 +2452,8 @@ namespace platoon_strategic_ihp
             if (isPlanTimeout) 
             {
                 pm_.current_plan.valid = false;
-                ROS_DEBUG_STREAM("The current plan did not receive any response. Abort and change to leader state.");
+                joiningID_ = "";
+                ROS_DEBUG_STREAM("The current plan did not receive any response. Abort and change to leader state. The member variable joiningID_ is reset");
                 pm_.current_platoon_state = PlatoonState::LEADER;
                 ROS_DEBUG_STREAM("Changed the state back to Leader");
             }
@@ -2689,8 +2721,8 @@ namespace platoon_strategic_ihp
         {   
             // for testing purpose only, check lane change status
             double start_crosstrack = 0.5*config_.laneWidth; // Assume vehicle start at left lane when testing.
-            double crosstrackDiff = current_crosstrack_ - start_crosstrack* 0.85; // Use 85% of lane width to account for noise.
-            bool isLaneChangeFinished = crosstrackDiff >= config_.laneWidth; 
+            double crosstrackDiff = current_crosstrack_ - start_crosstrack; 
+            bool isLaneChangeFinished = crosstrackDiff >= config_.laneWidth*0.85; // Use 85% of lane width to account for noise.
              
             /**  
              * Note: The function "find_target_lanelet_id" was used to test the IHP platooning logic and is only a pre-written scenario. 
