@@ -90,7 +90,7 @@ namespace platoon_strategic_ihp
         LEADWITHOPERATION,          // 7;
         //UCLA: CUT-IN JOIN STATE
         PREPARETOJOIN               // 8;
-    };z
+    };
 
     /**
     * \brief Platoon States 
@@ -241,7 +241,7 @@ namespace platoon_strategic_ihp
         /**
         * \brief Returns current crosstrack distance, in m.
         */
-        double getCurrentCrosstrackDistace() const;
+        double getCurrentCrosstrackDistance() const;
 
         /**
         * \brief Returns current host static ID as a string.

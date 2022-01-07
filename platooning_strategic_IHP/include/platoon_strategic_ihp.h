@@ -357,6 +357,8 @@ namespace platoon_strategic_ihp
             std::string lw_applicantId_ = "";
             // UCLA: add new joiner ID front for frontal join
             std::string fj_new_joiner_Id_ = "";
+            // The current joining vehicle's static ID. (This value will be reset once the leader exit lead_with_operation state)
+            std::string joiningID_ = "";
 
             // ROS Publishers
             ros::Publisher platoon_strategic_ihp_plugin_discovery_pub_;
@@ -657,7 +659,7 @@ namespace platoon_strategic_ihp
             void mob_op_cb_STATUS(const cav_msgs::MobilityOperation& msg);
             
             /**
-            * \brief Function to process mobility operation in leaderaborting state.
+            * \brief Function to process mobility operation for INFO params.
             *
             * \param strategyParams The parsed strategy params, used to find ecef locaton.
             *   
@@ -665,6 +667,15 @@ namespace platoon_strategic_ihp
             */
             cav_msgs::LocationECEF mob_op_find_ecef_from_INFO_params(std::string strategyParams);
             
+            /**
+            * \brief Function to process mobility operation for STATUS params.
+            *
+            * \param strategyParams The parsed strategy params, used to find ecef locaton.
+            *   
+            * \return ecef location of the sender.
+            */
+            cav_msgs::LocationECEF mob_op_find_ecef_from_STATUS_params(std::string strategyParams);
+
             /**
             * \brief Function to process mobility operation in leaderaborting state.
             *
