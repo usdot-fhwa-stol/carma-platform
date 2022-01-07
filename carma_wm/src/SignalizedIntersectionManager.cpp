@@ -239,6 +239,9 @@ namespace carma_wm
       std::vector<lanelet::Point3d> points;
       points.push_back(lanelet::Point3d(lanelet::utils::getId(), llt.leftBound2d().back().x(), llt.leftBound2d().back().y(), 0));
       points.push_back(lanelet::Point3d(lanelet::utils::getId(), llt.rightBound().back().x(), llt.rightBound().back().y(), 0));
+      ROS_ERROR_STREAM("SignalizedManager Creating for id: " << llt.id() <<", signal with Left: x:" << llt.leftBound2d().back().x() << ", y: " << llt.leftBound2d().back().y());
+      ROS_ERROR_STREAM("SignalizedManager Creating for id: " << llt.id() <<", signal with Right: x:" << llt.rightBound().back().x() << ", y: " << llt.rightBound().back().y());
+
       lanelet::LineString3d stop_line(lanelet::utils::getId(), points);
       stop_lines.push_back(stop_line);
     }    
@@ -249,12 +252,28 @@ namespace carma_wm
     
     for (auto llt : exit_lanelets)
     {
+      ROS_ERROR_STREAM("SignalizedManager signal: " << signal_group_id << ", exit llt: " << llt.id());
       signal_group_to_exit_lanelet_ids_[signal_group_id].insert(llt.id());
     }
     for (auto llt : entry_lanelets)
     {
+      ROS_ERROR_STREAM("SignalizedManager signal: " << signal_group_id << ", entry llt: " << llt.id());
       signal_group_to_entry_lanelet_ids_[signal_group_id].insert(llt.id());
     }
+
+    ROS_ERROR_STREAM("Checking the ENTRY traffic light itself for the ids:");
+    for (auto llt: traffic_light->getControlStartLanelets())
+    {
+      ROS_ERROR_STREAM("entry: llt: " << llt.id());
+    }
+
+     ROS_ERROR_STREAM("Checking the EXIT traffic light itself for the ids:");
+    for (auto llt: traffic_light->getControlEndLanelets())
+    {
+      ROS_ERROR_STREAM("exit: llt: " << llt.id());
+    }
+
+    
     return traffic_light;
   }
 

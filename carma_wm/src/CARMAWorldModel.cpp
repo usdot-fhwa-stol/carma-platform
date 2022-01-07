@@ -1183,16 +1183,29 @@ namespace carma_wm
     std::vector<lanelet::CarmaTrafficSignalPtr> light_list;
     auto curr_downtrack = routeTrackPos(loc).downtrack;
     // shortpath is already sorted by distance
+    ROS_ERROR_STREAM("entered here");
     for (const auto &ll : route_->shortestPath())
     {
+      ROS_ERROR_STREAM("ROUTE PACKAGE: checking llt: " << ll.id());
       auto lights = semantic_map_->laneletLayer.get(ll.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
       if (lights.empty())
       {
         continue;
       }
+      ROS_ERROR_STREAM("entered here 1");
       for (auto light : lights)
       {
-        double light_downtrack = routeTrackPos(light->stopLine().front().front().basicPoint2d()).downtrack;
+        ROS_ERROR_STREAM("ROUTE PACKAGE: checking llt: " << ll.id() << ", with id: " << light->id());
+        auto stop_line = light->getStopLine(ll).get();
+        ROS_ERROR_STREAM("ROUTE PACKAGE: checking stopline id: " << stop_line.id());
+        if (stop_line.empty())
+        {
+          ROS_ERROR_STREAM("Empty stopline!" );
+          continue;
+        }
+
+        double light_downtrack = routeTrackPos(stop_line.front().basicPoint2d()).downtrack;
+        ROS_ERROR_STREAM("ROUTE PACKAGE: checking llt: " << ll.id() << ", with id: " << light->id() << ", downtrack of " << light_downtrack);
         if (light_downtrack < curr_downtrack)
         {
           continue;

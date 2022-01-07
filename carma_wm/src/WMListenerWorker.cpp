@@ -212,11 +212,17 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     }
     for (auto pair : world_model_->sim_.signal_group_to_entry_lanelet_ids_)
     {
-      ROS_DEBUG_STREAM(world_model_->wm_user_name << ": signal id: " << (int)pair.first << ", entry llt id: " << *pair.second.begin());
+      for (auto iter = pair.second.begin(); iter != pair.second.end(); iter++)
+      {
+        ROS_DEBUG_STREAM(world_model_->wm_user_name << ": signal id: " << (int)pair.first << ", entry llt id: " << *iter);
+      }
     }
     for (auto pair : world_model_->sim_.signal_group_to_exit_lanelet_ids_)
     {
-      ROS_DEBUG_STREAM(world_model_->wm_user_name << ": signal id: " << (int)pair.first << ", exit llt id: " << *pair.second.begin());
+      for (auto iter = pair.second.begin(); iter != pair.second.end(); iter++)
+      {
+        ROS_DEBUG_STREAM(world_model_->wm_user_name << ": signal id: " << (int)pair.first << ", exit llt id: " << *iter);
+      }
     }
     for (auto pair : world_model_->sim_.signal_group_to_traffic_light_id_)
     {
@@ -298,8 +304,75 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   */
 void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const
 {
+  ROS_DEBUG_STREAM("UPDATE: Check if we are losing it here:");
+  if (regem->empty())
+  {
+    ROS_DEBUG_STREAM("It was already empty!");
+  }
+  else
+  {
+    auto entry_llts = regem->getParameters<lanelet::ConstLanelet>("control_start");
+    for (auto entry : entry_llts)
+    {
+      ROS_DEBUG_STREAM("Received it!" << entry.id());
+    }
+  }
 
-  auto factory_pcl = lanelet::RegulatoryElementFactory::create(regem->attribute(lanelet::AttributeName::Subtype).value(),
+  auto it = regem->constData()->parameters.find("control_start");
+  if (it == regem->constData()->parameters.end()) {
+    ROS_DEBUG_STREAM("We couldn't find it???????");
+  }
+  else
+  {
+    ROS_DEBUG_STREAM("We at least found ! size of the parameter here: " << it->second.size());
+    for (auto iter = it->second.begin(); iter != it->second.end(); iter++)
+    {
+      if (iter->empty())
+      {
+        ROS_DEBUG_STREAM("OMG it is EMPTYU!!!!");
+      }
+      else{
+        ROS_DEBUG_STREAM("OMG IT IS NOOOOOOOOOOOT EMPOTY");
+
+      }
+    }
+    
+  }
+
+  ROS_DEBUG_STREAM("UPDATE: Check if the constData has a problem!:");
+  for (auto params : regem->constData()->parameters)
+  {
+    ROS_DEBUG_STREAM("param: " << params.first);
+
+    for (auto& param : params.second)
+    {
+      //auto l = boost::get<lanelet::ConstLanelet>(&param);
+      //if (l != nullptr)
+      //{
+      //  ROS_ERROR_STREAM("llt: id " << l->id());
+      //}
+      auto weak = boost::get<lanelet::WeakLanelet>(&param);
+      if (weak == nullptr)
+      {
+        ROS_ERROR_STREAM("Not working");
+      }
+      else
+      {
+        if (weak->expired())
+        {
+          ROS_ERROR_STREAM("Sadly expired...");
+        }
+        //auto llt = weak->lock();
+        //ROS_ERROR_STREAM("WOW IT WORKED FOR THIS???? llt " << llt.id());
+        std::vector<lanelet::WeakLanelet> weak_list;
+        weak_list.push_back(*weak);
+        auto strong_list = lanelet::utils::strong(weak_list);
+        ROS_ERROR_STREAM("size: " << strong_list.size());
+      }
+    }
+  }
+
+  auto factory_regem = lanelet::RegulatoryElementFactory::create(regem->attribute(lanelet::AttributeName::Subtype).value(),
                                                             std::const_pointer_cast<lanelet::RegulatoryElementData>(regem->constData()));
 
   // we should extract general regem to specific type of regem the geofence specifies
@@ -308,7 +381,7 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
     case GeofenceType::PASSING_CONTROL_LINE:
     {
 
-      lanelet::PassingControlLinePtr control_line = std::dynamic_pointer_cast<lanelet::PassingControlLine>(factory_pcl);
+      lanelet::PassingControlLinePtr control_line = std::dynamic_pointer_cast<lanelet::PassingControlLine>(factory_regem);
       world_model_->getMutableMap()->update(parent_llt, control_line);
 
       break;
@@ -316,15 +389,15 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
     case GeofenceType::DIGITAL_SPEED_LIMIT:
     {
 
-      lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_pcl);
+      lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_regem);
       world_model_->getMutableMap()->update(parent_llt, speed);
-      ROS_DEBUG_STREAM("updateed llt id:" << parent_llt.id() << ", with digital speed limit of: " << speed->speed_limit_.value()<<"in ms");
+      ROS_DEBUG_STREAM("speed !! updateed llt id:" << parent_llt.id() << ", with digital speed limit of: " << speed->speed_limit_.value()<<"in ms");
       break;
     }
     case GeofenceType::REGION_ACCESS_RULE:
     {
 
-      lanelet::RegionAccessRulePtr rar = std::dynamic_pointer_cast<lanelet::RegionAccessRule>(factory_pcl);
+      lanelet::RegionAccessRulePtr rar = std::dynamic_pointer_cast<lanelet::RegionAccessRule>(factory_regem);
       world_model_->getMutableMap()->update(parent_llt, rar);
 
       break;
@@ -332,7 +405,7 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
     case GeofenceType::DIGITAL_MINIMUM_GAP:
     {
 
-      lanelet::DigitalMinimumGapPtr min_gap = std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>(factory_pcl);
+      lanelet::DigitalMinimumGapPtr min_gap = std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>(factory_regem);
       world_model_->getMutableMap()->update(parent_llt, min_gap);
 
       break;
@@ -340,7 +413,7 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
     case GeofenceType::DIRECTION_OF_TRAVEL:
     {
 
-      lanelet::DirectionOfTravelPtr dot = std::dynamic_pointer_cast<lanelet::DirectionOfTravel>(factory_pcl);
+      lanelet::DirectionOfTravelPtr dot = std::dynamic_pointer_cast<lanelet::DirectionOfTravel>(factory_regem);
       world_model_->getMutableMap()->update(parent_llt, dot);
 
       break;
@@ -348,23 +421,53 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
     case GeofenceType::STOP_RULE:
     {
 
-      lanelet::StopRulePtr sr = std::dynamic_pointer_cast<lanelet::StopRule>(factory_pcl);
+      lanelet::StopRulePtr sr = std::dynamic_pointer_cast<lanelet::StopRule>(factory_regem);
       world_model_->getMutableMap()->update(parent_llt, sr);
 
       break;
     }
     case GeofenceType::CARMA_TRAFFIC_LIGHT:
     {
-      lanelet::CarmaTrafficSignalPtr ctl = std::dynamic_pointer_cast<lanelet::CarmaTrafficSignal>(factory_pcl);
+      lanelet::CarmaTrafficSignalPtr ctl = std::dynamic_pointer_cast<lanelet::CarmaTrafficSignal>(factory_regem);
       world_model_->getMutableMap()->update(parent_llt, ctl);
-      ROS_ERROR_STREAM(world_model_->wm_user_name << ">>Updated llt id:" << parent_llt.id() << ", with ctl id: " << ctl->id ());
+      
+      
+      ROS_ERROR_STREAM("UPDATING TRAFFIC LIGHT in worker id :" << ctl->id());
+      if (ctl->empty())
+      {
+        ROS_ERROR_STREAM("This one is empty!");
+      }
+      
+      for (auto params : ctl->getParameters())
+      {
+        ROS_DEBUG_STREAM("param: " << params.first);
+
+        for (auto& param : params.second)
+        {
+          
+          auto weak = boost::get<lanelet::ConstWeakLanelet>(&param);
+          if (weak == nullptr)
+          {
+            ROS_ERROR_STREAM("Not working");
+          }
+          else
+          {
+            std::vector<lanelet::ConstWeakLanelet> weak_list;
+            weak_list.push_back(*weak);
+            auto strong_list = lanelet::utils::strong(weak_list);
+            ROS_ERROR_STREAM("size: " << strong_list.size());
+          }
+        }
+      }
+
+      ROS_DEBUG_STREAM(world_model_->wm_user_name << ">>Updated llt id:" << parent_llt.id() << ", with ctl id: " << ctl->id ());
       break;
     }
     case GeofenceType::SIGNALIZED_INTERSECTION:
     {
-      lanelet::SignalizedIntersectionPtr si = std::dynamic_pointer_cast<lanelet::SignalizedIntersection>(factory_pcl);
+      lanelet::SignalizedIntersectionPtr si = std::dynamic_pointer_cast<lanelet::SignalizedIntersection>(factory_regem);
       world_model_->getMutableMap()->update(parent_llt, si);
-      ROS_ERROR_STREAM(world_model_->wm_user_name << ">>Updated llt id:" << parent_llt.id() << ", with si id: " << si->id ());
+      ROS_DEBUG_STREAM(world_model_->wm_user_name << ">>Updated llt id:" << parent_llt.id() << ", with si id: " << si->id ());
       break;
     }
     default:

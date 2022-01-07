@@ -33,7 +33,7 @@ namespace arbitrator
             switch (sm_->get_state()) 
             {
                 case INITIAL:
-                    ROS_INFO("Aribtrator spinning in INITIAL state.");
+                    //ROS_INFO("Aribtrator spinning in INITIAL state.");
                     initial_state();
                     break;
                 case PLANNING:
