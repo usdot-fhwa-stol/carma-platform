@@ -71,10 +71,12 @@ For administrative information on CARMA2, including vehicle and developer PC con
 ## Other CARMA Packages
 CARMA Platform<sup>SM</sup> is a downloadable, open source software (OSS) platform architected to be extensible and reusable for a wide variety of research purposes to advance innovation for cooperative driving automation. It enables communication between vehicles, road users such as pedestrians, bicyclists, and scooters, and infrastructure devices capable of communication. It promotes collaboration between a community of engineers and researchers to accelerate the development, testing, and evaluation of cooperative driving automation while advancing the safety, security, data, and use of artificial intelligence in automated driving technology.  
 
-The CARMA Platform is distributed as a set of multiple independent packages hosted in separate Github repositories. These packages facilitate operation of the CARMA Platform with different hardware configurations or allow it to support different modes of operation. To include one of these packages in your build of the CARMA Platform system please clone the Github repository into the same Catkin workspace `src/` folder as this repository. The Catkin build system will verify that dependencies are resolved appropriately and build the newly included package when you next run `catkin_make`. An incomplete listing of available packages for CARMA2 includes:
+The CARMA Platform is distributed as a set of multiple independent packages hosted in separate Github repositories. These packages facilitate operation of the CARMA Platform with different hardware configurations or allow it to support different modes of operation. To include one of these packages in your build of the CARMA Platform system please clone the Github repository into the same Catkin workspace `src/` folder as this repository. The Catkin build system will verify that dependencies are resolved appropriately and build the newly included package when you next run `catkin_make`. An incomplete listing of available packages for CARMA3 includes:
 
 ### Vehicle Controller Interface Drivers
 * [carma-ssc-interface-wrapper](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper)
+* [dataspeed_controller_driver](https://github.com/VT-ASIM-LAB/dataspeed_controller_driver) (Externally managed)
+* [dataspeed_can_driver](https://github.com/VT-ASIM-LAB/dataspeed_can_driver) (Externally managed)
 
 ### Sensor Drivers
 * [carma-cohda-dsrc-driver](https://github.com/usdot-fhwa-stol/carma-cohda-dsrc-driver)
@@ -82,6 +84,9 @@ The CARMA Platform is distributed as a set of multiple independent packages host
 * [avt_vimba_camera](https://github.com/usdot-fhwa-stol/avt_vimba_camera)
 * [carma-delphi-srr2-driver](https://github.com/usdot-fhwa-stol/carma-delphi-srr2-driver)
 * [novatel_gps_driver](https://github.com/usdot-fhwa-stol/novatel_gps_driver)
+* [gstreamer_camera_driver](https://github.com/VT-ASIM-LAB/gstreamer_camera_driver) (Externally managed)
+* [ouster_lidar_driver](https://github.com/VT-ASIM-LAB/ouster_lidar_driver) (Externally managed)
+* [inertiallabs_gnss_driver](https://github.com/VT-ASIM-LAB/inertiallabs_gnss_driver) (Externally managed)
 
 ### General System Utilites
 * [carma-web-ui](https://github.com/usdot-fhwa-stol/carma-web-ui)
