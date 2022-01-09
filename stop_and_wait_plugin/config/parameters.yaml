@@ -16,7 +16,7 @@ accel_limit_multiplier : 0.95
 
 # Double: Minimum speed the vehicle can command before being ready to stop
 # Units: m/s
-crawl_speed : 2.2352
+crawl_speed : 0.91
 
 # Double: The gap in meters between points sampled from the lanelet centerlines for planning trajectory positions
 # Units: m
