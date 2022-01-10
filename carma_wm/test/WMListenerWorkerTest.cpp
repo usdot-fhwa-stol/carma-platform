@@ -52,7 +52,7 @@ TEST(WMListenerWorkerTest, DISABLED_constructor)
   ASSERT_TRUE((bool)wmlw.getWorldModel());
 }
 
-TEST(WMListenerWorkerTest, DISABLED_mapCallback)
+TEST(WMListenerWorkerTest, mapCallback)
 {
   CARMAWorldModel cwm;
 
@@ -64,6 +64,22 @@ TEST(WMListenerWorkerTest, DISABLED_mapCallback)
 
   auto map_ptr = lanelet::utils::removeConst(cwm.getMap());
 
+  lanelet::DigitalSpeedLimitPtr speed_limit_old = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(9000, 5_mph, {*map_ptr->laneletLayer.begin()}, {},
+                                                     { lanelet::Participants::VehicleCar }));
+
+  ROS_ERROR_STREAM("original ll id" << map_ptr->laneletLayer.begin()->id());
+  map_ptr->update(*map_ptr->laneletLayer.begin(), speed_limit_old);
+  auto speed = map_ptr->regulatoryElementLayer.get(9000);
+  auto params = speed->getParameters();
+  auto weak = boost::get<lanelet::ConstWeakLanelet>(*(params.begin()->second.begin()));
+  if (weak.expired())
+  {
+    ROS_ERROR_STREAM("Not working");
+  }
+  else
+  {
+    ROS_ERROR_STREAM("working!");
+  }
   autoware_lanelet2_msgs::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map_ptr, &msg);
 
@@ -85,6 +101,20 @@ TEST(WMListenerWorkerTest, DISABLED_mapCallback)
   wmlw.setMapCallback([&flag]() { flag = true; });
 
   wmlw.mapCallback(map_msg_ptr);
+
+  
+  auto speed1 = wmlw.getWorldModel()->getMap()->regulatoryElementLayer.get(9000);
+  auto params1 = speed->getParameters();
+  auto weak1 = boost::get<lanelet::ConstWeakLanelet>(*(params1.begin()->second.begin()));
+  if (weak1.expired())
+  {
+    ROS_ERROR_STREAM("Not working");
+  }
+  else
+  {
+    ROS_ERROR_STREAM("working!" << weak1.lock().id());
+    
+  }
 
   ASSERT_TRUE(flag);
 }
@@ -164,6 +194,16 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
                          lanelet::AttributeValueString::Dashed);
   // add regems
 
+   // create a listener
+  WMListenerWorker wmlw; 
+  // create basic map
+  //ll_1.addRegulatoryElement(speed_limit_old);
+  lanelet::LaneletMapPtr map = lanelet::utils::createMap({ ll_1 }, { });
+  autoware_lanelet2_msgs::MapBin map_msg;
+  lanelet::utils::conversion::toBinMsg(map, &map_msg);
+  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(map_msg));
+  wmlw.mapCallback(map_msg_ptr);
+
   lanelet::DigitalSpeedLimitPtr speed_limit_old = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(9000, 5_mph, {ll_1}, {},
                                                      { lanelet::Participants::VehicleCar }));
   //lanelet::DigitalSpeedLimitPtr speed_limit_new = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(9001, 5_mph, {ll_1}, {},
@@ -175,21 +215,13 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   gf_ptr->id_ = boost::uuids::random_generator()();
   //gf_ptr->remove_list_.push_back(std::make_pair(ll_1.id(), speed_limit_old));
   gf_ptr->update_list_.push_back(std::make_pair(ll_1.id(), speed_limit_old));
-
+  ROS_ERROR_STREAM("looking for: " << ll_1.id());
   // from broadcaster
   autoware_lanelet2_msgs::MapBin gf_obj_msg;
   auto received_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, {}, {}));
   carma_wm::toBinMsg(received_data, &gf_obj_msg);
 
-  // create a listener
-  WMListenerWorker wmlw; 
-  // create basic map
-  //ll_1.addRegulatoryElement(speed_limit_old);
-  lanelet::LaneletMapPtr map = lanelet::utils::createMap({ ll_1 }, { });
-  autoware_lanelet2_msgs::MapBin map_msg;
-  lanelet::utils::conversion::toBinMsg(map, &map_msg);
-  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(map_msg));
-  wmlw.mapCallback(map_msg_ptr);
+ 
 
   // make sure it had old speed limit before
   auto regems = wmlw.getWorldModel()->getMap()->laneletLayer.get(ll_1.id()).regulatoryElements();
@@ -200,6 +232,7 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
 
   // test the MapUpdateCallback
   auto gf_msg_ptr =  boost::make_shared<autoware_lanelet2_msgs::MapBin>(gf_obj_msg);
+  ROS_ERROR_STREAM("Okay ");
   wmlw.mapUpdateCallback(gf_msg_ptr);
 
 

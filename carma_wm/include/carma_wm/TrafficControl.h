@@ -83,7 +83,7 @@ void toBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet
  * NOTE: When converting the geofence object, the converter only fills its relevant map update
  * fields (update_list, remove_list) as the ROS msg doesn't hold any other data field in the object.
  */
-void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl> gf_ptr);
+void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl>& gf_ptr);
 
 
 }  // namespace carma_wm
@@ -156,11 +156,50 @@ inline void load(Archive& ar, carma_wm::TrafficControl& gf, unsigned int /*versi
   // save parts that need to be updated
   size_t update_list_size;
   ar >> update_list_size;
+  //lanelet::WeakLanelet reserved;
   for (auto i = 0u; i < update_list_size; ++i) 
   {
     std::pair<lanelet::Id, lanelet::RegulatoryElementPtr> update_item;
-    ar >> update_item;
+    ar & update_item;
     gf.update_list_.push_back(update_item);
+
+    ROS_DEBUG_STREAM("control serialzaiont: Check if the constData has a problem!:");
+    for (auto params : update_item.second->constData()->parameters)
+    {
+      ROS_DEBUG_STREAM("param: " << params.first);
+
+      for (auto& param : params.second)
+      {
+        //auto l = boost::get<lanelet::ConstLanelet>(&param);
+        //if (l != nullptr)
+        //{
+        //ROS_ERROR_STREAM("llt: id " << l->id());
+        //}
+        auto weak = boost::get<lanelet::WeakLanelet>(&param);
+        if (weak == nullptr)
+        {
+          ROS_ERROR_STREAM("Not working");
+        }
+        else
+        {
+          if (weak->expired())
+          {
+            ROS_ERROR_STREAM("TF GF Sadly expired...");
+          }
+          //auto llt = weak->lock();
+          //ROS_ERROR_STREAM("WOW IT WORKED FOR THIS???? llt " << llt.id());
+          std::vector<lanelet::WeakLanelet> weak_list;
+          //reserved = *weak;
+          weak_list.push_back(*weak);
+          ROS_ERROR_STREAM("Count of weak pointer: " << weak_list.front().laneletData_.use_count());
+
+          auto strong_list = lanelet::utils::strong(weak_list);
+          ROS_ERROR_STREAM("TF GF size: " << strong_list.size());
+        }
+      }
+    }
+    //ROS_ERROR_STREAM("Reserved : Count of weak pointer: " << reserved.laneletData_.use_count());
+
   }
 
   // save ids 

@@ -1196,21 +1196,35 @@ namespace carma_wm
       for (auto light : lights)
       {
         ROS_ERROR_STREAM("ROUTE PACKAGE: checking llt: " << ll.id() << ", with id: " << light->id());
-        auto stop_line = light->getStopLine(ll).get();
-        ROS_ERROR_STREAM("ROUTE PACKAGE: checking stopline id: " << stop_line.id());
-        if (stop_line.empty())
+        auto stop_lines = light->stopLine();
+
+        // TODO this is hefty logic, that needs to be replaced once mapupdate is fixed
+        
+        if (stop_lines.empty())
         {
           ROS_ERROR_STREAM("Empty stopline!" );
           continue;
         }
-
-        double light_downtrack = routeTrackPos(stop_line.front().basicPoint2d()).downtrack;
-        ROS_ERROR_STREAM("ROUTE PACKAGE: checking llt: " << ll.id() << ", with id: " << light->id() << ", downtrack of " << light_downtrack);
-        if (light_downtrack < curr_downtrack)
+        else
         {
-          continue;
+          double light_downtrack = routeTrackPos(stop_lines.front().front().basicPoint2d()).downtrack;
+          // get the minimum!
+          for (auto stop_line : stop_lines)
+          {
+            ROS_ERROR_STREAM("ROUTE PACKAGE: checking stopline id: " << stop_line.id());
+            light_downtrack = std::min(light_downtrack, routeTrackPos(stop_line.front().basicPoint2d()).downtrack);
+          }
+          if (light_downtrack < curr_downtrack)
+          {
+            continue;
+          }
+          ROS_ERROR_STREAM("ROUTE PACKAGE: checking llt: " << ll.id() << ", with signal id: " << light->id() << ", downtrack of " << light_downtrack);
+          ROS_ERROR_STREAM("current_downtrack: " << curr_downtrack);
+          double distance_remaining_to_traffic_light = light_downtrack - curr_downtrack;
+          ROS_ERROR_STREAM("distance_remaining_to_traffic_light: " << distance_remaining_to_traffic_light);
+          light_list.push_back(light);
         }
-        light_list.push_back(light);
+        
       }
     }
     return light_list;
@@ -1445,7 +1459,7 @@ namespace carma_wm
           ROS_ERROR_STREAM(wm_user_name << ":1 partial: " << ", id: "<< curr_light_id << ", " << sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].front().second << ", " << sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second);
           
           curr_light->setStates(sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group], curr_intersection.revision);
-          ROS_DEBUG_STREAM(wm_user_name << ": Set new cycle of total seconds: " << lanelet::time::toSec(curr_light->fixed_cycle_duration));
+          ROS_DEBUG_STREAM(wm_user_name << "SUCCESS!: Set new cycle of total seconds: " << lanelet::time::toSec(curr_light->fixed_cycle_duration));
         }
         else if (curr_light->recorded_time_stamps.empty()) // if it was never initialized, do its best to plan with the current state until the future state is also received.
         {

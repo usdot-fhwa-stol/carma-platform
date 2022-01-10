@@ -637,18 +637,15 @@ namespace route {
         }
         
         auto signal_list = world_model_->getSignalsAlongRoute(current_loc_);
-        ROS_ERROR_STREAM("entered here 3");
+        //ROS_ERROR_STREAM("entered here 3");
         if (!signal_list.empty())
         {
-            auto nearest_traffic_light = signal_list.front();
+            //auto nearest_traffic_light = signal_list.front();
 
             //double traffic_light_down_track =
-             //   world_model_->routeTrackPos(nearest_traffic_light->getStopLine(ll).get().front().basicPoint2d()).downtrack;
-            double current_downtrack = world_model_->routeTrackPos(current_loc_).downtrack;
-            ROS_ERROR_STREAM("current_downtrack: " << current_downtrack);
-            //ROS_ERROR("traffic_light_down_track %f", traffic_light_down_track);
-
-            //double distance_remaining_to_traffic_light = traffic_light_down_track - current_downtrack;
+            //    world_model_->routeTrackPos(nearest_traffic_light->getStopLine(ll).get().front().basicPoint2d()).downtrack;
+            //double current_downtrack = world_model_->routeTrackPos(current_loc_).downtrack;
+            
 
             //ROS_ERROR_STREAM("distance_remaining_to_traffic_light: " << distance_remaining_to_traffic_light);
         }

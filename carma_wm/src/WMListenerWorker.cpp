@@ -163,10 +163,16 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
 
   // convert ros msg to geofence object
   auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
-  carma_wm::fromBinMsg(*geofence_msg, gf_ptr);
+  auto gf_ptr1 = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
+  
+  autoware_lanelet2_msgs::MapBin copy_content = *geofence_msg;
+  carma_wm::fromBinMsg(copy_content, gf_ptr);
+  ROS_DEBUG_STREAM("OUTSIDE GF_PTR USE COUNT" << gf_ptr.use_count());
+
+  carma_wm::fromBinMsg(copy_content, gf_ptr1); // extra call just to see if anything changes
 
   ROS_INFO_STREAM("Processing Map Update with Geofence Id:" << gf_ptr->id_);
-
+  
   ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " requests addition of lanelets size: " << gf_ptr->lanelet_additions_.size());
   for (auto llt : gf_ptr->lanelet_additions_)
   {
@@ -246,11 +252,11 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     ROS_DEBUG_STREAM("Regems left in lanelet after removal: " << parent_llt.regulatoryElements().size());
 
   }
-
+  
   ROS_INFO_STREAM("Geofence id" << gf_ptr->id_ << " requests update of size: " << gf_ptr->update_list_.size());
 
   // we should extract general regem to specific type of regem the geofence specifies
-  
+  carma_wm::fromBinMsg(copy_content, gf_ptr); // extra call just to see if anything changes
   for (auto pair : gf_ptr->update_list_)
   {
 
@@ -271,15 +277,47 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     {
 
       ROS_DEBUG_STREAM("New regulatory element " << pair.second->id());
+
+
+      ROS_DEBUG_STREAM("UPDATE: Check if the constData has a problem!:");
+      for (auto params : pair.second->constData()->parameters)
+      {
+        ROS_DEBUG_STREAM("param: " << params.first);
+
+        for (auto& param : params.second)
+        {
+          auto weak = boost::get<lanelet::WeakLanelet>(&param);
+          if (weak == nullptr)
+          {
+            ROS_DEBUG_STREAM("Not working");
+          }
+          else
+          {
+            if (weak->expired())
+            {
+              ROS_DEBUG_STREAM("WORKER Sadly expired...");
+            }
+            //auto llt = weak->lock();
+            //ROS_DEBUG_STREAM("WOW IT WORKED FOR THIS???? llt " << llt.id());
+            std::vector<lanelet::WeakLanelet> weak_list;
+            weak_list.push_back(*weak);
+            auto strong_list = lanelet::utils::strong(weak_list);
+            ROS_DEBUG_STREAM("WORKER size: " << strong_list.size());
+          }
+        }
+      }
+
       newRegemUpdateHelper(parent_llt, pair.second.get());
 
     }
   }
-  
+  ROS_DEBUG_STREAM("before actuall last");
+
   // set the Map to trigger a new route graph construction if rerouting was required by the updates. 
   world_model_->setMap(world_model_->getMutableMap(), current_map_version_, recompute_route_flag_);
+  ROS_DEBUG_STREAM("THis is actual last");
 
-  
+
   // no need to reroute again unless received invalidated msg again
   if (recompute_route_flag_)
     recompute_route_flag_ = false;
@@ -304,35 +342,35 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   */
 void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const
 {
-  ROS_DEBUG_STREAM("UPDATE: Check if we are losing it here:");
+  //ROS_DEBUG_STREAM("UPDATE: Check if we are losing it here:");
   if (regem->empty())
   {
-    ROS_DEBUG_STREAM("It was already empty!");
+    //ROS_DEBUG_STREAM("It was already empty!");
   }
   else
   {
-    auto entry_llts = regem->getParameters<lanelet::ConstLanelet>("control_start");
+    auto entry_llts = regem->getParameters<lanelet::ConstLanelet>("refers");
     for (auto entry : entry_llts)
     {
-      ROS_DEBUG_STREAM("Received it!" << entry.id());
+      //ROS_DEBUG_STREAM("Received it!" << entry.id());
     }
   }
 
   auto it = regem->constData()->parameters.find("control_start");
   if (it == regem->constData()->parameters.end()) {
-    ROS_DEBUG_STREAM("We couldn't find it???????");
+    //ROS_DEBUG_STREAM("We couldn't find it???????");
   }
   else
   {
-    ROS_DEBUG_STREAM("We at least found ! size of the parameter here: " << it->second.size());
+    //ROS_DEBUG_STREAM("We at least found ! size of the parameter here: " << it->second.size());
     for (auto iter = it->second.begin(); iter != it->second.end(); iter++)
     {
       if (iter->empty())
       {
-        ROS_DEBUG_STREAM("OMG it is EMPTYU!!!!");
+        //ROS_DEBUG_STREAM("OMG it is EMPTYU!!!!");
       }
       else{
-        ROS_DEBUG_STREAM("OMG IT IS NOOOOOOOOOOOT EMPOTY");
+        //ROS_DEBUG_STREAM("OMG IT IS NOOOOOOOOOOOT EMPOTY");
 
       }
     }
@@ -349,25 +387,25 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
       //auto l = boost::get<lanelet::ConstLanelet>(&param);
       //if (l != nullptr)
       //{
-      //  ROS_ERROR_STREAM("llt: id " << l->id());
+      //  ROS_DEBUG_STREAM("llt: id " << l->id());
       //}
       auto weak = boost::get<lanelet::WeakLanelet>(&param);
       if (weak == nullptr)
       {
-        ROS_ERROR_STREAM("Not working");
+        ROS_DEBUG_STREAM("Not working");
       }
       else
       {
         if (weak->expired())
         {
-          ROS_ERROR_STREAM("Sadly expired...");
+          ROS_DEBUG_STREAM("NEW REG Sadly expired...");
         }
         //auto llt = weak->lock();
-        //ROS_ERROR_STREAM("WOW IT WORKED FOR THIS???? llt " << llt.id());
+        //ROS_DEBUG_STREAM("WOW IT WORKED FOR THIS???? llt " << llt.id());
         std::vector<lanelet::WeakLanelet> weak_list;
         weak_list.push_back(*weak);
         auto strong_list = lanelet::utils::strong(weak_list);
-        ROS_ERROR_STREAM("size: " << strong_list.size());
+        ROS_DEBUG_STREAM("NEW REG size: " << strong_list.size());
       }
     }
   }
@@ -432,10 +470,10 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
       world_model_->getMutableMap()->update(parent_llt, ctl);
       
       
-      ROS_ERROR_STREAM("UPDATING TRAFFIC LIGHT in worker id :" << ctl->id());
+      ROS_DEBUG_STREAM("UPDATING TRAFFIC LIGHT in worker id :" << ctl->id());
       if (ctl->empty())
       {
-        ROS_ERROR_STREAM("This one is empty!");
+        ROS_DEBUG_STREAM("This one is empty!");
       }
       
       for (auto params : ctl->getParameters())
@@ -448,14 +486,14 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
           auto weak = boost::get<lanelet::ConstWeakLanelet>(&param);
           if (weak == nullptr)
           {
-            ROS_ERROR_STREAM("Not working");
+            ROS_DEBUG_STREAM("Not working");
           }
           else
           {
             std::vector<lanelet::ConstWeakLanelet> weak_list;
             weak_list.push_back(*weak);
             auto strong_list = lanelet::utils::strong(weak_list);
-            ROS_ERROR_STREAM("size: " << strong_list.size());
+            ROS_DEBUG_STREAM("TF LIGHT SPECFIC size: " << strong_list.size());
           }
         }
       }
@@ -530,7 +568,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
   rerouting_flag_ = false;
 
   if (!world_model_->getMap()) { // This check is a bit redundant but still useful from a debugging perspective as the alternative is a segfault
-    ROS_ERROR_STREAM("WMListener received a route before a map was available. Dropping route message.");
+    ROS_DEBUG_STREAM("WMListener received a route before a map was available. Dropping route message.");
     return;
   }
 
