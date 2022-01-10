@@ -69,12 +69,16 @@ int main(int argc, char** argv)
   ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &sci_strategic_plugin::SCIStrategicPlugin::BSMCb, &plugin);
 
   // Create publishers
-  plugin.plugin_discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+  ros::Publisher plugin_discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
   plugin.mobility_operation_pub = nh.advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 1);
 
   ros::Timer pub_timer_ = nh.createTimer(
             ros::Duration(ros::Rate(10.0)),
-            [&plugin](const auto&) {plugin.onSpin();});
+            [&plugin, &plugin_discovery_pub](const auto&) {
+                                    plugin_discovery_pub.publish(plugin.getDiscoveryMsg());
+                                    plugin.onSpin();
+                                    });
+            
  
 
   // Start
