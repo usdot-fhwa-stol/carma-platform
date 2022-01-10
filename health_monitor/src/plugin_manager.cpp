@@ -111,6 +111,7 @@ namespace health_monitor
             if(plugin.type_ == cav_msgs::Plugin::STRATEGIC && 
                 (req.capability.size() == 0 || (plugin.capability_.compare(0, req.capability.size(), req.capability) == 0 && plugin.active_ && plugin.available_)))
             {
+                ROS_DEBUG_STREAM("discovered strategic plugin: " << plugin.name_);
                 res.plan_service.push_back(service_prefix_ + plugin.name_ + strategic_service_suffix_);
             }
         }
