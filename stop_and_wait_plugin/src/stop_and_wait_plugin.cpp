@@ -244,8 +244,11 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
     //Add additional distance to remaining to allow vehicle to stop within buffer
       remaining_distance += 0.2;
     }
+    else{
+     break;
+   }
   }
-
+  
   if (req_dist > remaining_distance)
   {
 
@@ -255,6 +258,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
                                                                          // required distance update the accel target
     ROS_DEBUG_STREAM("Target Accel Update To: " << target_accel);
   }
+
 
   std::vector<double> inverse_downtracks; // Store downtracks in reverse
   inverse_downtracks.reserve(points.size());
@@ -327,7 +331,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
   bool vehicle_in_buffer = downtracks.back() < stop_location_buffer;
 
-  double moving_average_window_size = 5.0;
+  double moving_average_window_size = 11.0;
   std::vector<double> filtered_speeds = basic_autonomy::smoothing::moving_average_filter(speeds, moving_average_window_size, false);
 
   for (size_t i = 0; i < filtered_speeds.size(); i++)
