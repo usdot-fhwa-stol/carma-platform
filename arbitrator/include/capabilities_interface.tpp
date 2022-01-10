@@ -33,7 +33,7 @@ namespace arbitrator
         for (auto i = topics.begin(); i != topics.end(); i++) 
         {
             ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PlanManeuvers>(*i);
-            ROS_DEBUG_STREAM("found client: " << sc);
+            ROS_DEBUG_STREAM("found client: " << *i);
             if (sc.call(msg)) {
                 responses.emplace(*i, msg);
             }
