@@ -15,8 +15,6 @@
 from ament_index_python import get_package_share_directory
 from launch.actions import Shutdown
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
@@ -71,7 +69,7 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('frame_transformer', env_log_levels) }
                 ],
                 remappings=[
-                    ("input", "/hardware_interface/lidar/points_raw"),  # TODO use environment variable here   
+                    ("input", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/lidar/points_raw" ] ),
                     ("output", "points_in_base_link"),           
                 ],
                 parameters=[ frame_transformer_param_file ]
@@ -123,7 +121,7 @@ def generate_launch_description():
                     ],
                     remappings=[
                         ("detected_objects", "lidar_detected_objects"),
-                        ("ego_state", "current_pose_with_cov"), # TODO we will need a pose with covariance topic
+                        ("ego_state", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose_with_covariance" ] ),
                         # TODO note classified_rois1 is the default single camera input topic 
                         # TODO when camera detection is added, we will wan to separate this node into a different component to preserve fault tolerance 
                     ],
