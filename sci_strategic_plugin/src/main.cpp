@@ -80,7 +80,7 @@ int main(int argc, char** argv)
                                     });
             
  
-
+  ROS_INFO("Successfully launched node.");
   // Start
   ros::CARMANodeHandle::spin();
 

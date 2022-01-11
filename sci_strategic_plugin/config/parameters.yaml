@@ -20,7 +20,7 @@ veh_length : 4.5
 reaction_time : 5.0
 
 # Double: The distance vehicle drives to be considered out of intersections
-intersection_exit_zone_length : 10.0
+intersection_exit_zone_length : 6.0
 
 # String: The name to use for this plugin during comminications with the arbitrator
 strategic_plugin_name : SCIStrategicPlugin
