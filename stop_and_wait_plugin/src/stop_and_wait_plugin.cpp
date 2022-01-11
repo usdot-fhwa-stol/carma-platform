@@ -331,8 +331,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
   bool vehicle_in_buffer = downtracks.back() < stop_location_buffer;
 
-  double moving_average_window_size = 11.0;
-  std::vector<double> filtered_speeds = basic_autonomy::smoothing::moving_average_filter(speeds, moving_average_window_size, false);
+  std::vector<double> filtered_speeds = basic_autonomy::smoothing::moving_average_filter(speeds, config_.moving_average_window_size);
 
   for (size_t i = 0; i < filtered_speeds.size(); i++)
   {  // Apply minimum speed constraint
