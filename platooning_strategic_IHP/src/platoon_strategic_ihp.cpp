@@ -1380,11 +1380,13 @@ namespace platoon_strategic_ihp
 
         // UCLA: read plan type 
         cav_msgs::PlanType plan_type = msg.plan_type;
+        ROS_DEBUG_STREAM("plan_type = " << plan_type);
         
         // UCLA: determine joining type 
         bool isRearJoin = (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR);
+        ROS_DEBUG_STREAM("isRearJoin = " << isRearJoin);
         bool isFrontJoin = (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT);
-
+        ROS_DEBUG_STREAM("isFrontJoin = " << isFrontJoin);
 
         // Check if current plan is still valid (i.e., not timed out).
         if (pm_.current_plan.valid)
@@ -1529,7 +1531,8 @@ namespace platoon_strategic_ihp
         response.header.timestamp = ros::Time::now().toNSec() / 1000000;
 
         // UCLA: add plantype in response 
-        response.plan_type.type = req_plan_type.type;
+        // response.plan_type.type = req_plan_type.type;
+        response.plan_type = req_plan_type;
         
         MobilityRequestResponse req_response = handle_mob_req(msg);
         if (req_response == MobilityRequestResponse::ACK)
