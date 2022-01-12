@@ -74,6 +74,26 @@ def generate_launch_description():
                 ],
                 parameters=[ frame_transformer_param_file ]
             ),
+
+            ComposableNode(
+                package='frame_transformer',
+                plugin='frame_transformer::Node',
+                name='detected_objects_frame_transformer',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('frame_transformer', env_log_levels) }
+                ],
+                remappings=[
+                    ("input", "lidar_detected_objects"),
+                    ("output", "map_frame_lidar_detected_objects"),           
+                ],
+                parameters=[ 
+                    { "target_frame" : "map"},
+                    { "message_type" : "autoware_auto_msgs/DetectedObjects"},
+                    { "queue_size" : 1 },
+                    { "timeout" : 0 }
+                 ]
+            ),
         ]
     )
 
@@ -120,7 +140,7 @@ def generate_launch_description():
                         {'--log-level' : GetLogLevel('tracking_nodes', env_log_levels) }
                     ],
                     remappings=[
-                        ("detected_objects", "lidar_detected_objects"),
+                        ("detected_objects", "map_frame_lidar_detected_objects"),
                         ("ego_state", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose_with_covariance" ] ),
                         # TODO note classified_rois1 is the default single camera input topic 
                         # TODO when camera detection is added, we will wan to separate this node into a different component to preserve fault tolerance 
