@@ -972,7 +972,7 @@ namespace platoon_strategic_ihp
             cav_msgs::MobilityHeader msgHeader = msg.header;
             std::string params = msg.strategy_params;
             std::string applicantId = msgHeader.sender_id;
-            ROS_DEBUG_STREAM("Receive mobility JOIN request from " << applicantId << " and PlanId = " << msgHeader.plan_id);
+            ROS_DEBUG_STREAM("Receive mobility REAR JOIN request from " << applicantId << " and PlanId = " << msgHeader.plan_id);
             ROS_DEBUG_STREAM("The strategy parameters are " << params);
             if (params == "")
             {
@@ -1061,7 +1061,7 @@ namespace platoon_strategic_ihp
             cav_msgs::MobilityHeader msgHeader = msg.header;
             std::string params = msg.strategy_params;
             std::string applicantId = msgHeader.sender_id;
-            ROS_DEBUG_STREAM("Receive mobility JOIN request from " << applicantId << " and PlanId = " << msgHeader.plan_id);
+            ROS_DEBUG_STREAM("Receive mobility FRONT JOIN request from " << applicantId << " and PlanId = " << msgHeader.plan_id);
             ROS_DEBUG_STREAM("The strategy parameters are " << params);
             if (params == "")
             {
