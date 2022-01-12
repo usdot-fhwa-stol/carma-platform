@@ -1284,6 +1284,7 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("isFromTargetVehicle " << isFromTargetVehicle);
 
             // Check the response is received correctly (i.e., host vehicle is the desired receiver).
+            // TODO: temporary
             if (true)//(isForCurrentPlan && isFromTargetVehicle)
             {
                 if (msg.is_accepted)
@@ -1383,7 +1384,9 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("plan_type = " << plan_type);
         ROS_DEBUG_STREAM("plan_type = " << plan_type.type);
         
+
         // UCLA: determine joining type 
+        // TODO temporary disable this check
         bool isRearJoin = true;//(plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR);
         ROS_DEBUG_STREAM("isRearJoin = " << isRearJoin);
         bool isFrontJoin = (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT);
