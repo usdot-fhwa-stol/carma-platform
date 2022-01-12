@@ -1532,7 +1532,7 @@ namespace platoon_strategic_ihp
 
         // UCLA: add plantype in response 
         // response.plan_type.type = req_plan_type.type;
-        response.plan_type = req_plan_type;
+        response.plan_type = msg.plan_type;
         
         MobilityRequestResponse req_response = handle_mob_req(msg);
         if (req_response == MobilityRequestResponse::ACK)
