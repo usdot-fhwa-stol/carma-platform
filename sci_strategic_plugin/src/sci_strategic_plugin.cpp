@@ -90,16 +90,12 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
     approaching_stop_controlled_interction_ = true;
     ROS_DEBUG_STREAM("Approaching Stop Controlled Intersection: " << approaching_stop_controlled_interction_);
 
-    if (true)//(msg->strategy_params != previous_strategy_params_)
-    {
-      if (msg->header.recipient_id == config_.vehicle_id)
+    if (msg->header.recipient_id == config_.vehicle_id)
       {
         street_msg_timestamp_ = msg->header.timestamp;
         ROS_DEBUG_STREAM("street_msg_timestamp_: " << street_msg_timestamp_);
         parseStrategyParams(msg->strategy_params);
       }
-       
-    }
     previous_strategy_params_ = msg->strategy_params;
   }
   
@@ -699,7 +695,6 @@ cav_msgs::MobilityOperation SCIStrategicPlugin::generateMobilityOperation()
 
 bool SCIStrategicPlugin::onSpin()
 {
-  // plugin_discovery_pub.publish(plugin_discovery_msg_);
   if (approaching_stop_controlled_interction_)
   {
     cav_msgs::MobilityOperation status_msg = generateMobilityOperation();
