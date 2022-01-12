@@ -90,16 +90,12 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
     approaching_stop_controlled_interction_ = true;
     ROS_DEBUG_STREAM("Approaching Stop Controlled Intersection: " << approaching_stop_controlled_interction_);
 
-    if (true)//(msg->strategy_params != previous_strategy_params_)
-    {
-      if (msg->header.recipient_id == config_.vehicle_id)
+    if (msg->header.recipient_id == config_.vehicle_id)
       {
         street_msg_timestamp_ = msg->header.timestamp;
         ROS_DEBUG_STREAM("street_msg_timestamp_: " << street_msg_timestamp_);
         parseStrategyParams(msg->strategy_params);
       }
-       
-    }
     previous_strategy_params_ = msg->strategy_params;
   }
   
@@ -306,7 +302,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   double distance_to_stopline = stop_intersection_down_track - current_downtrack_ - config_.stop_line_buffer;
   ROS_DEBUG_STREAM("distance_to_stopline  " << distance_to_stopline);
 
-  if (distance_to_stopline < -2*config_.intersection_exit_zone_length)
+  if (distance_to_stopline < -config_.intersection_exit_zone_length)
   {
     resp.new_plan.maneuvers = {};
     ROS_WARN_STREAM("Already passed intersection, sending empty maneuvers");
@@ -485,7 +481,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       current_state.stamp, req.header.stamp + ros::Duration(intersection_transit_time), intersection_turn_direction_, crossed_lanelets.front().id(), crossed_lanelets.back().id());
     
     
-    if (distance_to_stopline < -(end_of_intersection+config_.intersection_exit_zone_length))
+    if (distance_to_stopline < -end_of_intersection)
     {
       ROS_DEBUG_STREAM("Vehicle is out of intersection, stop planning...");
       // once the vehicle crosses the intersection, reset the flag to stop planning and publishing status/intent
@@ -699,7 +695,6 @@ cav_msgs::MobilityOperation SCIStrategicPlugin::generateMobilityOperation()
 
 bool SCIStrategicPlugin::onSpin()
 {
-  plugin_discovery_pub.publish(plugin_discovery_msg_);
   if (approaching_stop_controlled_interction_)
   {
     cav_msgs::MobilityOperation status_msg = generateMobilityOperation();
