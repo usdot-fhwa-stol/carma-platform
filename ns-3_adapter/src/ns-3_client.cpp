@@ -7,7 +7,7 @@ NS3Client::NS3Client() :
 {}
 
 
-NS3OBUClient::~NS3Client() {
+NS3Client::~NS3Client() {
     try{
         close();
     }catch(...){}
