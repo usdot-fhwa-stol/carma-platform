@@ -64,18 +64,6 @@ namespace frame_transformer
     else if (type == "autoware_auto_msgs/BoundingBoxArray")
       return std::make_unique<Transformer<autoware_auto_msgs::msg::BoundingBoxArray>>(config_, buffer_, shared_from_this());
 
-    else if (type == "autoware_auto_msgs/BoundingBox")
-      return std::make_unique<Transformer<autoware_auto_msgs::msg::BoundingBox>>(config_, buffer_, shared_from_this());
-    
-    else if (type == "autoware_auto_msgs/Quaternion32")
-      return std::make_unique<Transformer<autoware_auto_msgs::msg::Quaternion32>>(config_, buffer_, shared_from_this());
-
-    else if (type == "autoware_auto_msgs/Polygon")
-      return std::make_unique<Transformer<autoware_auto_msgs::msg::Polygon>>(config_, buffer_, shared_from_this());
-
-    else if (type == "autoware_auto_msgs/Point32")
-      return std::make_unique<Transformer<autoware_auto_msgs::msg::Point32>>(config_, buffer_, shared_from_this());
-
     else if (type == "autoware_auto_msgs/DetectedObjects")
       return std::make_unique<Transformer<autoware_auto_msgs::msg::DetectedObjects>>(config_, buffer_, shared_from_this());
 
