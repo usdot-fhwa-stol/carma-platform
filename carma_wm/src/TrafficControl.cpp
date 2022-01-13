@@ -37,9 +37,9 @@ void toBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet
   msg->data.assign(data_str.begin(), data_str.end());
 }
 
-void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl>& gf_ptr)
+void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl>& gf_ptr, lanelet::LaneletMapPtr lanelet_map)
 {
-  auto gf_copy = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
+  //auto gf_copy = std::shared_ptr<carma_wm::TrafficControl>(new carma_wm::TrafficControl());
   
   if (!gf_ptr)
   {
@@ -54,45 +54,19 @@ void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma
   ss << data_str;
   boost::archive::binary_iarchive oa(ss);
 
-  oa >> *gf_copy;
-  gf_ptr = gf_copy;
-  ROS_ERROR_STREAM("GFCOPY USE COUNT" << gf_copy.use_count());
+  oa >> *gf_ptr;
 
-  ROS_DEBUG_STREAM("This is the last one UPDATE: Check if the constData has a problem!:");
-  for (auto params : gf_ptr->update_list_.front().second->constData()->parameters)
-  {
-    ROS_DEBUG_STREAM("param: " << params.first);
+  //gf_ptr = gf_copy;
+  ROS_ERROR_STREAM("GFCOPY USE COUNT" << gf_ptr.use_count());
 
-    for (auto& param : params.second)
-    {
-      //auto l = boost::get<lanelet::ConstLanelet>(&param);
-      //if (l != nullptr)
-      //{
-      //ROS_ERROR_STREAM("llt: id " << l->id());
-      //}
-      auto weak = boost::get<lanelet::WeakLanelet>(&param);
-      if (weak == nullptr)
-      {
-        ROS_ERROR_STREAM("Not working");
-      }
-      else
-      {
-        if (weak->expired())
-        {
-          ROS_ERROR_STREAM("FROM BIN Sadly expired...");
-        }
-        //auto llt = weak->lock();
-        //ROS_ERROR_STREAM("WOW IT WORKED FOR THIS???? llt " << llt.id());
-        std::vector<lanelet::WeakLanelet> weak_list;
-        weak_list.push_back(*weak);
-        ROS_ERROR_STREAM("Count of weak pointer: " << weak_list.front().laneletData_.use_count());
-        auto strong_list = lanelet::utils::strong(weak_list);
-        ROS_ERROR_STREAM("FROM BIN size: " << strong_list.size());
-      }
-    }
-  }
-
+  if (!lanelet_map)
+    return;
   
+  ROS_DEBUG_STREAM("This is the last one UPDATE: Check if the constData has a problem!:");
+ 
+  lanelet::utils::ResolveMemoryVisitor memory_visitor(lanelet_map);
+  gf_ptr->update_list_.front().second->applyVisitor(memory_visitor);
+  ROS_DEBUG_STREAM("TDone Applying !");
 }
 
 }  // namespace carma_wm

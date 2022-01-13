@@ -235,8 +235,24 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   ROS_ERROR_STREAM("Okay ");
   wmlw.mapUpdateCallback(gf_msg_ptr);
 
-
-
+  
+  auto param = *(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.get(9000)->getParameters().find("refers")->second.begin());
+  auto weak = boost::get<lanelet::ConstWeakLanelet>(&param);
+  if (weak->expired())
+  {
+    ROS_ERROR_STREAM("Outside: expired...");
+  }
+  if (weak == nullptr)
+  {
+    ROS_DEBUG_STREAM("Not working");
+  }
+  else
+  {
+    std::vector<lanelet::ConstWeakLanelet> weak_list;
+    weak_list.push_back(*weak);
+    auto strong_list = lanelet::utils::strong(weak_list);
+    ROS_DEBUG_STREAM("Outside Calling size: " << strong_list.size());
+  }
   
   /*
   // check if the map has the new speed limit now

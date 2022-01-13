@@ -31,7 +31,9 @@
 #include <lanelet2_extension/regulatory_elements/DigitalMinimumGap.h>
 #include <carma_wm/SignalizedIntersectionManager.h>
 #include <lanelet2_core/primitives/LaneletOrArea.h>
-
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <autoware_lanelet2_ros_interface/utility/query.h>
 
 namespace carma_wm
 {
@@ -83,8 +85,7 @@ void toBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet
  * NOTE: When converting the geofence object, the converter only fills its relevant map update
  * fields (update_list, remove_list) as the ROS msg doesn't hold any other data field in the object.
  */
-void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl>& gf_ptr);
-
+void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl>& gf_ptr, lanelet::LaneletMapPtr lanelet_map = nullptr);
 
 }  // namespace carma_wm
 

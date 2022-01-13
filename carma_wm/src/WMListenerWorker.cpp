@@ -162,14 +162,13 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   most_recent_update_msg_seq_ = geofence_msg->header.seq; // Update current sequence count
 
   // convert ros msg to geofence object
-  auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
-  auto gf_ptr1 = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
-  
-  autoware_lanelet2_msgs::MapBin copy_content = *geofence_msg;
-  carma_wm::fromBinMsg(copy_content, gf_ptr);
-  ROS_DEBUG_STREAM("OUTSIDE GF_PTR USE COUNT" << gf_ptr.use_count());
+  std::shared_ptr<carma_wm::TrafficControl> gf_ptr1 (new carma_wm::TrafficControl);
+  auto gf_ptr = std::shared_ptr<carma_wm::TrafficControl>(new carma_wm::TrafficControl());
+  //lanelet::LaneletMapPtr new_map(new lanelet::LaneletMap);
 
-  carma_wm::fromBinMsg(copy_content, gf_ptr1); // extra call just to see if anything changes
+  autoware_lanelet2_msgs::MapBin copy_content = *geofence_msg;
+
+  carma_wm::fromBinMsg(copy_content, gf_ptr, world_model_->getMutableMap());
 
   ROS_INFO_STREAM("Processing Map Update with Geofence Id:" << gf_ptr->id_);
   
@@ -256,7 +255,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   ROS_INFO_STREAM("Geofence id" << gf_ptr->id_ << " requests update of size: " << gf_ptr->update_list_.size());
 
   // we should extract general regem to specific type of regem the geofence specifies
-  carma_wm::fromBinMsg(copy_content, gf_ptr); // extra call just to see if anything changes
+  
   for (auto pair : gf_ptr->update_list_)
   {
 
@@ -430,6 +429,7 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
       lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_regem);
       world_model_->getMutableMap()->update(parent_llt, speed);
       ROS_DEBUG_STREAM("speed !! updateed llt id:" << parent_llt.id() << ", with digital speed limit of: " << speed->speed_limit_.value()<<"in ms");
+      ROS_DEBUG_STREAM("UPDATING SPEED LIMIT in worker id :" << speed->id());
       break;
     }
     case GeofenceType::REGION_ACCESS_RULE:
