@@ -37,10 +37,8 @@ void toBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet
   msg->data.assign(data_str.begin(), data_str.end());
 }
 
-void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl>& gf_ptr, lanelet::LaneletMapPtr lanelet_map)
+void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl> gf_ptr, lanelet::LaneletMapPtr lanelet_map)
 {
-  //auto gf_copy = std::shared_ptr<carma_wm::TrafficControl>(new carma_wm::TrafficControl());
-  
   if (!gf_ptr)
   {
     ROS_ERROR_STREAM(__FUNCTION__ << ": gf_ptr is null pointer!");
@@ -56,17 +54,19 @@ void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma
 
   oa >> *gf_ptr;
 
-  //gf_ptr = gf_copy;
-  ROS_ERROR_STREAM("GFCOPY USE COUNT" << gf_ptr.use_count());
-
   if (!lanelet_map)
     return;
   
-  ROS_DEBUG_STREAM("This is the last one UPDATE: Check if the constData has a problem!:");
+  ROS_DEBUG_STREAM("Lanelet Map is provided to match memory addresses of received binary map update");
  
   lanelet::utils::ResolveMemoryVisitor memory_visitor(lanelet_map);
-  gf_ptr->update_list_.front().second->applyVisitor(memory_visitor);
-  ROS_DEBUG_STREAM("TDone Applying !");
+  // It is sufficient to check single regem as carma_wm_ctrl sends only one type of regem in each list
+  if (!gf_ptr->update_list_.empty())
+    gf_ptr->update_list_.front().second->applyVisitor(memory_visitor);
+  if (!gf_ptr->remove_list_.empty())
+    gf_ptr->remove_list_.front().second->applyVisitor(memory_visitor);
+  
+  ROS_DEBUG_STREAM("Done resolving memory addresses of received regulatory elements!");
 }
 
 }  // namespace carma_wm

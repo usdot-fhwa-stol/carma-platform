@@ -85,7 +85,7 @@ void toBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet
  * NOTE: When converting the geofence object, the converter only fills its relevant map update
  * fields (update_list, remove_list) as the ROS msg doesn't hold any other data field in the object.
  */
-void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl>& gf_ptr, lanelet::LaneletMapPtr lanelet_map = nullptr);
+void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl> gf_ptr, lanelet::LaneletMapPtr lanelet_map = nullptr);
 
 }  // namespace carma_wm
 
@@ -157,7 +157,7 @@ inline void load(Archive& ar, carma_wm::TrafficControl& gf, unsigned int /*versi
   // save parts that need to be updated
   size_t update_list_size;
   ar >> update_list_size;
-  //lanelet::WeakLanelet reserved;
+  
   for (auto i = 0u; i < update_list_size; ++i) 
   {
     std::pair<lanelet::Id, lanelet::RegulatoryElementPtr> update_item;
