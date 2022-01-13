@@ -188,6 +188,8 @@ void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSi
         setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
       }
       break;
+    case LocalizationSignal::GNSS_DATA_TIMEOUT:
+      throw std::runtime_error("GNSS_DATA_TIMEOUT occurred while in DEGRADED_NO_LIDAR_FIX state. Localization cannot recover");
     default:
       logDebugSignal(signal);
       break;

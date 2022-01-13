@@ -58,6 +58,7 @@ std::ostream& operator<<(std::ostream& os, LocalizationSignal s)
     case LocalizationSignal::TIMEOUT  : os << "TIMEOUT"; break;
     case LocalizationSignal::LIDAR_SENSOR_FAILURE  : os << "LIDAR_SENSOR_FAILURE"; break;
     case LocalizationSignal::LIDAR_INITIALIZED_SWITCH_TO_GPS  : os << "LIDAR_INITIALIZED_SWITCH_TO_GPS"; break;
+    case LocalizationSignal::GNSS_DATA_TIMEOUT  : os << "GNSS_DATA_TIMEOUT"; break;
     default: os.setstate(std::ios_base::failbit);
   }  // clang-format on
   return os;
