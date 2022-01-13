@@ -135,7 +135,7 @@ namespace platoon_strategic_ihp
                 pm.vehicleCrossTrack = ctDistance;      // m 
                 pm.vehicleSpeed = curSpeed;             // m/s
                 pm.timestamp = ros::Time::now().toNSec()/1000000;
-                ROS_DEBUG_STREAM("Receive and update platooning info on vehicel " << pm.staticId);
+                ROS_DEBUG_STREAM("Receive and update platooning info on vehicle " << pm.staticId);
                 ROS_DEBUG_STREAM("    Speed = "                                   << pm.vehicleSpeed);
                 ROS_DEBUG_STREAM("    Location = "                                << pm.vehiclePosition);
                 ROS_DEBUG_STREAM("    CrossTrack = "                              << pm.vehicleCrossTrack);
@@ -153,7 +153,8 @@ namespace platoon_strategic_ihp
             // sort the platoon member based on dowtrack distance (m) in an descending order.
             std::sort(std::begin(platoon), std::end(platoon), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition > b.vehiclePosition;});
 
-            ROS_DEBUG_STREAM("Add a new vehicle into our platoon list " << newMember.staticId);
+            ROS_DEBUG_STREAM("Add a new vehicle into our platoon list " << newMember.staticId <<
+                            " platoon.size now = " << platoon.size());
         }
     }
 
@@ -161,6 +162,7 @@ namespace platoon_strategic_ihp
     int PlatoonManager::getTotalPlatooningSize() {
         // update the varaible "platoonSize".
         platoonSize = platoon.size();
+        ROS_DEBUG_STREAM("platoonSize: " << platoonSize);
         return platoon.size();
     }
         

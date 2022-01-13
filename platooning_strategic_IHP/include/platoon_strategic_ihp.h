@@ -32,6 +32,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/format.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
@@ -373,7 +374,7 @@ namespace platoon_strategic_ihp
 
 
             /**
-            * \brief Function to determin if a vehicle is in the front of hose vehicle
+            * \brief Function to determine if a target vehicle is in the front of host vehicle
             *        note: This is only applicable for same lane application, so it will check cross track distance.
             *
             * \param downtrack: vehicle downtrack
@@ -388,7 +389,7 @@ namespace platoon_strategic_ihp
             *
             * \param llt inout lanelet
             *
-            * \return speed limit value
+            * \return speed limit value (m/s)
             */
             double findSpeedLimit(const lanelet::ConstLanelet& llt);
             
@@ -785,7 +786,7 @@ namespace platoon_strategic_ihp
             cav_msgs::Plugin plugin_discovery_msg_;
 
             int infoMessageInterval_ = 200;             // ms
-            long lastHeartBeatTime = 0.0;               // ms
+            long prevHeartBeatTime_ = 0.0;               // ms
             int statusMessageInterval_ = 100;           // ms
             int NEGOTIATION_TIMEOUT = 5000;             // ms
             int LANE_CHANGE_TIMEOUT = 300000;           // ms (5 min)
@@ -793,12 +794,14 @@ namespace platoon_strategic_ihp
             int LEADER_TIMEOUT_COUNTER_LIMIT = 5;       // counter 
             double waitingStateTimeout = 25.0;          // s
             
+            // Threshold for determining if vehicle is stopped; non-zero allows for measurement noise
+            const double STOPPED_SPEED = 0.05; // m/s
+
             // UCLA: add member variable for state prepare to join
             int target_join_index_;
 
-
             // Strategy types
-            const std::string MOBILITY_STRATEGY = "Carma/Platooning";
+            const std::string PLATOONING_STRATEGY = "Carma/Platooning";
             const std::string OPERATION_INFO_TYPE = "INFO";
             const std::string OPERATION_STATUS_TYPE = "STATUS";
             
