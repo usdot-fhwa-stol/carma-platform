@@ -1286,7 +1286,7 @@ TEST(CARMAWorldModelTest, sampleRoutePoints)
   }
 }
 
-TEST(CARMAWorldModelTest, getTrafficLightId)
+TEST(CARMAWorldModelTest, getTrafficSignalId)
 {
   CARMAWorldModel cmw;
   uint32_t id_bit = 257;
@@ -1294,7 +1294,7 @@ TEST(CARMAWorldModelTest, getTrafficLightId)
   uint16_t intersection_id=1;
   uint8_t signal_group_id=1;
 
-  EXPECT_EQ(cmw.getTrafficLightId(intersection_id, signal_group_id), 1000); 
+  EXPECT_EQ(cmw.getTrafficSignalId(intersection_id, signal_group_id), 1000); 
 }
 
 TEST(CARMAWorldModelTest, processSpatFromMsg)

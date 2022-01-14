@@ -126,6 +126,10 @@ public:
    */
   void setVehicleParticipationType(const std::string& participant);
   
+  /*! \brief Get vehicle participation type
+   */
+  std::string getVehicleParticipationType();
+
   /*! \brief Set endpoint of the route
    */
   void setRouteEndPoint(const lanelet::BasicPoint3d& end_point);

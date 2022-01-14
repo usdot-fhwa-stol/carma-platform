@@ -367,6 +367,11 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
   }
 }
 
+std::string WMListenerWorker::getVehicleParticipationType() const
+{
+  return world_model_->getVehicleParticipationType();
+}
+
 void WMListenerWorker::roadwayObjectListCallback(const cav_msgs::RoadwayObstacleList& msg)
 {
   // this topic publishes only the objects that are on the road
