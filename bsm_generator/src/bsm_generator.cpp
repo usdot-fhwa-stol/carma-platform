@@ -39,7 +39,7 @@ namespace bsm_generator
         bsm_pub_ = nh_->advertise<cav_msgs::BSM>("bsm_outbound", 5);
         timer_ = nh_->createTimer(ros::Duration(1.0 / bsm_generation_frequency_), &BSMGenerator::generateBSM, this);
         gear_sub_ = nh_->subscribe("transmission_state", 1, &BSMGenerator::gearCallback, this);
-        speed_sub_ = nh_->subscribe("ekf_twist", 1, &BSMGenerator::speedCallback, this);
+        speed_sub_ = nh_->subscribe("vehicle_speed", 1, &BSMGenerator::speedCallback, this);
         steer_wheel_angle_sub_ = nh_->subscribe("steering_wheel_angle", 1, &BSMGenerator::steerWheelAngleCallback, this);
         accel_sub_ = nh_->subscribe("velocity_accel_cov", 1, &BSMGenerator::accelCallback, this);
         yaw_sub_ = nh_->subscribe("imu_raw", 1, &BSMGenerator::yawCallback, this);
@@ -70,9 +70,9 @@ namespace bsm_generator
         map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());  // Build projector from proj string
     }
 
-    void BSMGenerator::speedCallback(const geometry_msgs::TwistStampedPtr& msg)
+    void BSMGenerator::speedCallback(const std_msgs::Float64ConstPtr& msg)
     {
-        bsm_.core_data.speed = worker.getSpeedInRange(msg->twist.linear.x);
+        bsm_.core_data.speed = worker.getSpeedInRange(msg->data);
         bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.SPEED_AVAILABLE;
     }
 
