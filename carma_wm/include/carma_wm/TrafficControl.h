@@ -161,7 +161,7 @@ inline void load(Archive& ar, carma_wm::TrafficControl& gf, unsigned int /*versi
   for (auto i = 0u; i < update_list_size; ++i) 
   {
     std::pair<lanelet::Id, lanelet::RegulatoryElementPtr> update_item;
-    ar & update_item;
+    ar >> update_item;
     gf.update_list_.push_back(update_item);
   }
 
