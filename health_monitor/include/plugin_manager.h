@@ -21,6 +21,9 @@
 #include <cav_srvs/PluginListResponse.h>
 #include <cav_srvs/GetPluginApi.h>
 #include "entry_manager.h"
+#include <ros/console.h>
+#include <sstream>
+
 
 namespace health_monitor
 {
