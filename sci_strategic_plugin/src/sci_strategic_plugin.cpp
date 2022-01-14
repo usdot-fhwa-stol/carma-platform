@@ -247,7 +247,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     return true;
   }
 
-  bool is_empty_schedule_msg = (scheduled_depart_time_ == 0 && scheduled_enter_time_ == 0 && scheduled_enter_time_ == 0);
+  bool is_empty_schedule_msg = (scheduled_depart_time_ == 0 && scheduled_stop_time_ == 0 && scheduled_enter_time_ == 0);
   if (is_empty_schedule_msg)
   {
     resp.new_plan.maneuvers = {};

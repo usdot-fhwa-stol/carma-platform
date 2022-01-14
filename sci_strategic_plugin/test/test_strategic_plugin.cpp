@@ -263,10 +263,10 @@ TEST(SCIStrategicPluginTest, caseTwoSpeedProfiletest)
 
   sci.caseTwoSpeedProfile(250, 21.2, 10, 20, 15, &metadata);
 
-  EXPECT_NEAR(2.5, metadata[0], 0.01);
-  EXPECT_NEAR(-2.5, metadata[1], 0.01);
-  EXPECT_NEAR(2, metadata[2], 0.01);
-  EXPECT_NEAR(6, metadata[3], 0.01);
+  EXPECT_NEAR(1, metadata[0], 0.01);
+  EXPECT_NEAR(1, metadata[1], 0.01);
+  EXPECT_NEAR(5, metadata[2], 0.01);
+  EXPECT_NEAR(-15, metadata[3], 0.01);
   EXPECT_NEAR(12, metadata[4], 0.01);
 }
 
@@ -292,7 +292,7 @@ TEST(SCIStrategicPluginTest, testIntersectionturndirection)
   EXPECT_NEAR(-1.83, dec_val, 0.01);
 }
 
-TEST(SCIStrategicPluginTest, DISABLED_maneuvercbtest)
+TEST(SCIStrategicPluginTest, maneuvercbtest)
 {
   lanelet::Id id{1200};
   // intersection id
@@ -350,6 +350,11 @@ TEST(SCIStrategicPluginTest, DISABLED_maneuvercbtest)
 
 
   sci.approaching_stop_controlled_interction_ = true;
+  sci.street_msg_timestamp_ = 2000;
+  sci.scheduled_stop_time_ = 2500;
+  sci.scheduled_enter_time_ = 5000;
+  sci.scheduled_depart_time_ = 7000;
+  
 
   cav_srvs::PlanManeuversRequest req;
   cav_srvs::PlanManeuversResponse resp;
@@ -362,8 +367,7 @@ TEST(SCIStrategicPluginTest, DISABLED_maneuvercbtest)
   req.veh_logitudinal_velocity = 11.176;
   req.veh_lane_id = "1200";
 
-  sci.scheduled_stop_time_ = 5000;
-  sci.street_msg_timestamp_ = 2000;
+  
 
   sci.planManeuverCb(req, resp);
 
