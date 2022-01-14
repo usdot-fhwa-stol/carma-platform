@@ -163,44 +163,6 @@ inline void load(Archive& ar, carma_wm::TrafficControl& gf, unsigned int /*versi
     std::pair<lanelet::Id, lanelet::RegulatoryElementPtr> update_item;
     ar & update_item;
     gf.update_list_.push_back(update_item);
-
-    ROS_DEBUG_STREAM("control serialzaiont: Check if the constData has a problem!:");
-    for (auto params : update_item.second->constData()->parameters)
-    {
-      ROS_DEBUG_STREAM("param: " << params.first);
-
-      for (auto& param : params.second)
-      {
-        //auto l = boost::get<lanelet::ConstLanelet>(&param);
-        //if (l != nullptr)
-        //{
-        //ROS_ERROR_STREAM("llt: id " << l->id());
-        //}
-        auto weak = boost::get<lanelet::WeakLanelet>(&param);
-        if (weak == nullptr)
-        {
-          ROS_ERROR_STREAM("Not working");
-        }
-        else
-        {
-          if (weak->expired())
-          {
-            ROS_ERROR_STREAM("TF GF Sadly expired...");
-          }
-          //auto llt = weak->lock();
-          //ROS_ERROR_STREAM("WOW IT WORKED FOR THIS???? llt " << llt.id());
-          std::vector<lanelet::WeakLanelet> weak_list;
-          //reserved = *weak;
-          weak_list.push_back(*weak);
-          ROS_ERROR_STREAM("Count of weak pointer: " << weak_list.front().laneletData_.use_count());
-
-          auto strong_list = lanelet::utils::strong(weak_list);
-          ROS_ERROR_STREAM("TF GF size: " << strong_list.size());
-        }
-      }
-    }
-    //ROS_ERROR_STREAM("Reserved : Count of weak pointer: " << reserved.laneletData_.use_count());
-
   }
 
   // save ids 

@@ -1197,7 +1197,6 @@ namespace carma_wm
         auto stop_line = light->getStopLine(ll);
         if (!stop_line)
         {
-          ROS_ERROR_STREAM("Empty stopline!");
           continue;
         }
         else

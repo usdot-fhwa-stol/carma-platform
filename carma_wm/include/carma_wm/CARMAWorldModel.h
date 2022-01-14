@@ -232,8 +232,6 @@ public:
 
   carma_wm::SignalizedIntersectionManager sim_; // records SPAT/MAP lane ids to lanelet ids
 
-  std::string wm_user_name = "Anonymous user";
-
 private:
 
   double config_speed_limit_;
