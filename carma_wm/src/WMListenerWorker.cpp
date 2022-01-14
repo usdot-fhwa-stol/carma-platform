@@ -313,8 +313,6 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
     {
       lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_regem);
       world_model_->getMutableMap()->update(parent_llt, speed);
-      ROS_DEBUG_STREAM("speed !! updateed llt id:" << parent_llt.id() << ", with digital speed limit of: " << speed->speed_limit_.value()<<"in ms");
-      ROS_DEBUG_STREAM("UPDATING SPEED LIMIT in worker id :" << speed->id());
       break;
     }
     case GeofenceType::REGION_ACCESS_RULE:
@@ -426,7 +424,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
   rerouting_flag_ = false;
 
   if (!world_model_->getMap()) { // This check is a bit redundant but still useful from a debugging perspective as the alternative is a segfault
-    ROS_DEBUG_STREAM("WMListener received a route before a map was available. Dropping route message.");
+    ROS_ERROR_STREAM("WMListener received a route before a map was available. Dropping route message.");
     return;
   }
 
