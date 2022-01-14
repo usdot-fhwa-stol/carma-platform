@@ -35,7 +35,6 @@ int main(int argc, char** argv)
 
   // Initialize world model
   carma_wm::WMListener wml;
-  wml.setWorldModelUserName("wz_strategic_plugin");
 
   // Load Parameters
   wz_strategic_plugin::WzStrategicPluginConfig config;

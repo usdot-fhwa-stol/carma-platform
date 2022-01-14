@@ -45,11 +45,6 @@ WMListenerWorker::WMListenerWorker()
   world_model_.reset(new CARMAWorldModel);
 }
 
-void WMListenerWorker::setWorldModelUserName(const std::string& name)
-{
-  world_model_->wm_user_name = name;
-}
-
 WorldModelConstPtr WMListenerWorker::getWorldModel() const
 {
   return std::static_pointer_cast<const WorldModel>(world_model_);  // Cast pointer to const variant
@@ -209,25 +204,25 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     world_model_->sim_ = gf_ptr->sim_;
     for (auto pair : world_model_->sim_.intersection_id_to_regem_id_)
     {
-      ROS_DEBUG_STREAM(world_model_->wm_user_name << ": inter id: " << (int)pair.first << ", regem id: " << pair.second);
+      ROS_DEBUG_STREAM("inter id: " << (int)pair.first << ", regem id: " << pair.second);
     }
     for (auto pair : world_model_->sim_.signal_group_to_entry_lanelet_ids_)
     {
       for (auto iter = pair.second.begin(); iter != pair.second.end(); iter++)
       {
-        ROS_DEBUG_STREAM(world_model_->wm_user_name << ": signal id: " << (int)pair.first << ", entry llt id: " << *iter);
+        ROS_DEBUG_STREAM("signal id: " << (int)pair.first << ", entry llt id: " << *iter);
       }
     }
     for (auto pair : world_model_->sim_.signal_group_to_exit_lanelet_ids_)
     {
       for (auto iter = pair.second.begin(); iter != pair.second.end(); iter++)
       {
-        ROS_DEBUG_STREAM(world_model_->wm_user_name << ": signal id: " << (int)pair.first << ", exit llt id: " << *iter);
+        ROS_DEBUG_STREAM("signal id: " << (int)pair.first << ", exit llt id: " << *iter);
       }
     }
     for (auto pair : world_model_->sim_.signal_group_to_traffic_light_id_)
     {
-      ROS_DEBUG_STREAM(world_model_->wm_user_name << ": signal id: " << (int)pair.first << ", regem id: " << pair.second);
+      ROS_DEBUG_STREAM("signal id: " << (int)pair.first << ", regem id: " << pair.second);
     }
   }
 
@@ -358,43 +353,12 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
     {
       lanelet::CarmaTrafficSignalPtr ctl = std::dynamic_pointer_cast<lanelet::CarmaTrafficSignal>(factory_regem);
       world_model_->getMutableMap()->update(parent_llt, ctl);
-      
-      ROS_DEBUG_STREAM("UPDATING TRAFFIC LIGHT in worker id :" << ctl->id());
-      if (ctl->empty())
-      {
-        ROS_DEBUG_STREAM("This one is empty!");
-      }
-      
-      for (auto params : ctl->getParameters())
-      {
-        ROS_DEBUG_STREAM("param: " << params.first);
-
-        for (auto& param : params.second)
-        {
-          
-          auto weak = boost::get<lanelet::ConstWeakLanelet>(&param);
-          if (weak == nullptr)
-          {
-            ROS_DEBUG_STREAM("Not working");
-          }
-          else
-          {
-            std::vector<lanelet::ConstWeakLanelet> weak_list;
-            weak_list.push_back(*weak);
-            auto strong_list = lanelet::utils::strong(weak_list);
-            ROS_DEBUG_STREAM("TF LIGHT SPECFIC size: " << strong_list.size());
-          }
-        }
-      }
-
-      ROS_DEBUG_STREAM(world_model_->wm_user_name << ">>Updated llt id:" << parent_llt.id() << ", with ctl id: " << ctl->id ());
       break;
     }
     case GeofenceType::SIGNALIZED_INTERSECTION:
     {
       lanelet::SignalizedIntersectionPtr si = std::dynamic_pointer_cast<lanelet::SignalizedIntersection>(factory_regem);
       world_model_->getMutableMap()->update(parent_llt, si);
-      ROS_DEBUG_STREAM(world_model_->wm_user_name << ">>Updated llt id:" << parent_llt.id() << ", with si id: " << si->id ());
       break;
     }
     default:
