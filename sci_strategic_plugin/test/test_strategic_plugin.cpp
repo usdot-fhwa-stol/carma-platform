@@ -292,7 +292,7 @@ TEST(SCIStrategicPluginTest, testIntersectionturndirection)
   EXPECT_NEAR(-1.83, dec_val, 0.01);
 }
 
-TEST(SCIStrategicPluginTest, maneuvercbtest)
+TEST(SCIStrategicPluginTest, DISABLE_maneuvercbtest)
 {
   lanelet::Id id{1200};
   // intersection id
