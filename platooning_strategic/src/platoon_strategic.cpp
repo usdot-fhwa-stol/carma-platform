@@ -136,7 +136,7 @@ namespace platoon_strategic
         auto current_lanelet = wm_->getLaneletsFromPoint(current_location, 1);
         if (current_lanelet.size()<1)
         {
-            std::invalid_argument("There are no lanelets in the current location.");
+            throw std::invalid_argument("There are no lanelets in the current location.");
         }
         ROS_DEBUG_STREAM("current_lanelet" << current_lanelet[0].id());
         auto routing_graph = wm_->getMapRoutingGraph();
