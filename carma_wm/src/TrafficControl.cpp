@@ -59,7 +59,7 @@ void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma
   
   ROS_DEBUG_STREAM("Lanelet Map is provided to match memory addresses of received binary map update");
  
-  lanelet::utils::ResolveMemoryVisitor memory_visitor(lanelet_map);
+  lanelet::utils::OverwriteParameterVisitor memory_visitor(lanelet_map);
   // It is sufficient to check single regem as carma_wm_ctrl sends only one type of regem in each list
   if (!gf_ptr->update_list_.empty())
     gf_ptr->update_list_.front().second->applyVisitor(memory_visitor);
