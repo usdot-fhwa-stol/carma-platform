@@ -226,6 +226,8 @@ public:
 
   std::vector<std::shared_ptr<lanelet::AllWayStop>> getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
 
+  std::vector<lanelet::SignalizedIntersectionPtr> getSignalizedIntersectionsAlongRoute(const lanelet::BasicPoint2d &loc) const;
+
   std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 
   carma_wm::SignalizedIntersectionManager sim_; // records SPAT/MAP lane ids to lanelet ids
@@ -268,7 +270,6 @@ private:
   lanelet::LaneletMapUPtr shortest_path_filtered_centerline_view_;  // Lanelet map view of shortest path center lines
                                                                     // only
   std::vector<cav_msgs::RoadwayObstacle> roadway_objects_; // 
-  bool just_shifted = false;
 
   size_t map_version_ = 0; // The current map version. This is cached from calls to setMap();
 

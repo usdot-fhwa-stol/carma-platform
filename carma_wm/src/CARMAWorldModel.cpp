@@ -1183,48 +1183,31 @@ namespace carma_wm
     std::vector<lanelet::CarmaTrafficSignalPtr> light_list;
     auto curr_downtrack = routeTrackPos(loc).downtrack;
     // shortpath is already sorted by distance
-    ROS_ERROR_STREAM("entered here");
+    
     for (const auto &ll : route_->shortestPath())
     {
-      ROS_ERROR_STREAM("ROUTE PACKAGE: checking llt: " << ll.id());
       auto lights = semantic_map_->laneletLayer.get(ll.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
       if (lights.empty())
       {
         continue;
       }
-      ROS_ERROR_STREAM("entered here 1");
+      
       for (auto light : lights)
       {
-        ROS_ERROR_STREAM("ROUTE PACKAGE: checking llt: " << ll.id() << ", with id: " << light->id());
-        auto stop_lines = light->stopLine();
-
-        // TODO this is hefty logic, that needs to be replaced once mapupdate is fixed
-        
-        if (stop_lines.empty())
+        auto stop_line = light->getStopLine(ll);
+        if (!stop_line)
         {
-          ROS_ERROR_STREAM("Empty stopline!" );
+          ROS_ERROR_STREAM("Empty stopline!");
           continue;
         }
         else
         {
-          double light_downtrack = routeTrackPos(stop_lines.front().front().basicPoint2d()).downtrack;
-          // get the minimum!
-          for (auto stop_line : stop_lines)
-          {
-            ROS_ERROR_STREAM("ROUTE PACKAGE: checking stopline id: " << stop_line.id());
-            light_downtrack = std::min(light_downtrack, routeTrackPos(stop_line.front().basicPoint2d()).downtrack);
-          }
-          if (light_downtrack < curr_downtrack)
-          {
-            continue;
-          }
-          ROS_ERROR_STREAM("ROUTE PACKAGE: checking llt: " << ll.id() << ", with signal id: " << light->id() << ", downtrack of " << light_downtrack);
-          ROS_ERROR_STREAM("current_downtrack: " << curr_downtrack);
+          double light_downtrack = routeTrackPos(stop_line.get().front().basicPoint2d()).downtrack;
           double distance_remaining_to_traffic_light = light_downtrack - curr_downtrack;
-          ROS_ERROR_STREAM("distance_remaining_to_traffic_light: " << distance_remaining_to_traffic_light);
+          if (distance_remaining_to_traffic_light < 0)
+            continue;
           light_list.push_back(light);
         }
-        
       }
     }
     return light_list;
@@ -1266,6 +1249,44 @@ namespace carma_wm
     }
     return intersection_list;
   }
+
+  std::vector<lanelet::SignalizedIntersectionPtr> CARMAWorldModel::getSignalizedIntersectionsAlongRoute(const lanelet::BasicPoint2d &loc) const
+  {
+    // Check if the map is loaded yet
+    if (!semantic_map_ || semantic_map_->laneletLayer.empty())
+    {
+      ROS_DEBUG_STREAM("Map is not set or does not contain lanelets");
+      return {};
+    }
+    // Check if the route was loaded yet
+    if (!route_)
+    {
+      ROS_DEBUG_STREAM("Route has not yet been loaded");
+      return {};
+    }
+    std::vector<lanelet::SignalizedIntersectionPtr> intersection_list;
+    auto curr_downtrack = routeTrackPos(loc).downtrack;
+    // shortpath is already sorted by distance
+    for (const auto &ll : route_->shortestPath())
+    {
+      auto intersections = semantic_map_->laneletLayer.get(ll.id()).regulatoryElementsAs<lanelet::SignalizedIntersection>();
+      if (intersections.empty())
+      {
+        continue;
+      }
+      for (auto intersection : intersections)
+      {
+        double intersection_downtrack = routeTrackPos(ll.centerline().back().basicPoint2d()).downtrack;
+        if (intersection_downtrack < curr_downtrack)
+        {
+          continue;
+        }
+        intersection_list.push_back(intersection);
+      }
+    }
+    return intersection_list;
+  }
+
 
   void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT &spat_msg)
   {
