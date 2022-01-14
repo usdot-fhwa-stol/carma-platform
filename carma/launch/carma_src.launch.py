@@ -37,6 +37,15 @@ def generate_launch_description():
 
     # Nodes
 
+    transform_group = GroupAction(
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_TF_NS', default_value='/')),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/transforms.launch.py'])
+            ),
+        ]
+    )
+
     environment_group = GroupAction(
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_ENV_NS', default_value='environment')),
@@ -56,6 +65,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        transform_group,
         environment_group,
         system_controller
     ])
