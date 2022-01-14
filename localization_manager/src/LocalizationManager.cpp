@@ -243,6 +243,12 @@ void LocalizationManager::posePubTick(const ros::TimerEvent& te)
     }
   }
 
+  // check if last gnss time stamp is older than threshold and send the corresponding signal
+  if (last_raw_gnss_value_ && ros::Time::now() - last_raw_gnss_value_->header.stamp > ros::Duration(config_.gnss_data_timeout / 1000.0))
+  {
+    transition_table_.signal(LocalizationSignal::GNSS_DATA_TIMEOUT);
+  }
+
   // Used in LocalizerMode::GNSS_WITH_NDT_INIT 
   // If the state is not Operational with good NDT, or already using GPS only, we reset the counter
   if (transition_table_.getState() != LocalizationState::OPERATIONAL && 
