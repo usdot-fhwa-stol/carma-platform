@@ -43,7 +43,6 @@ public:
     ros::CARMANodeHandle pnh("~");
 
     carma_wm::WMListener wml;
-    wml.setWorldModelUserName("platoon_tactical_plugin");
     auto wm_ = wml.getWorldModel();
 
     ros::Publisher discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);

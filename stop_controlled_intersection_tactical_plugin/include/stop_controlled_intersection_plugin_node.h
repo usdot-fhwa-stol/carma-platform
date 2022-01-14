@@ -71,7 +71,6 @@ public:
     ros::CARMANodeHandle pnh("~");
     
     carma_wm::WMListener wml;
-    wml.setWorldModelUserName("stop_controlled_intersection_plugin");
     auto wm_ = wml.getWorldModel();
 
     StopControlledIntersectionTacticalPluginConfig config;

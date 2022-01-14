@@ -14,7 +14,7 @@
   This file is used to launch the CARMA3 Arbitrator node
 -->
 <launch>
-    <node name="arbitrator" pkg="arbitrator" type="arbitrator_node" output="screen">
+    <node name="arbitrator" pkg="arbitrator" type="arbitrator_node">
         <rosparam command="load" file="$(find arbitrator)/config/arbitrator_params.yaml"/>
     </node>
 </launch>

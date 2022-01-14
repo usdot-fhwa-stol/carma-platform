@@ -61,7 +61,6 @@ public:
     ros::CARMANodeHandle pnh("~");
 
     carma_wm::WMListener wml;
-    wml.setWorldModelUserName("stop_and_wait_plugin");
     auto wm = wml.getWorldModel();
 
     StopandWaitConfig config;
