@@ -1,0 +1,24 @@
+# This file contains explicit topic mappings between ROS1 and ROS2 portions of CARMA Platform while the 
+# ROS2 migration is underway.
+topics:
+  -
+    topic: /localization/current_pose_with_covariance
+    type: geometry_msgs/msg/PoseWithCovarianceStamped
+    queue_size: 1
+  -
+    topic: /hardware_interface/lidar/points_raw
+    type: sensor_msgs/msg/PointCloud2
+    queue_size: 1
+  -
+    topic: /environment/external_objects
+    type: carma_perception_msgs/msg/ExternalObjectList
+    queue_size: 1
+  -
+    topic: /tf
+    type: tf2_msgs/msg/TFMessage
+    queue_size: 100
+  -
+    topic: /tf_static
+    type: tf2_msgs/msg/TFMessage
+    queue_size: 10
+services_1_to_2: []
