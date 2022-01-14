@@ -134,14 +134,13 @@ public:
    */
   void setRouteName(const std::string& route_name);
  
-  /*! \brief helper for traffic light Id
+  /*! \brief helper for traffic signal Id
    */
-  lanelet::Id getTrafficLightId(uint16_t intersection_id,uint8_t signal_id);
+  lanelet::Id getTrafficSignalId(uint16_t intersection_id,uint8_t signal_id);
 
-  /*! \brief helper for traffic light Id
+  /*! \brief helper for getting traffic signal with given lanelet::Id
    */
-  lanelet::Id getTrafficLightIdNew(uint16_t intersection_id, uint8_t signal_group_id);
-
+  lanelet::CarmaTrafficSignalPtr getTrafficSignal(const lanelet::Id& id) const;
 
   /**
    * \brief (non-const version) Gets the underlying lanelet, given the cartesian point on the map 

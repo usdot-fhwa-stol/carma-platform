@@ -80,24 +80,7 @@ namespace carma_wm
     return std::make_pair(minPos, maxPos);
   }
 
-  lanelet::Id CARMAWorldModel::getTrafficLightId(uint16_t intersection_id, uint8_t signal_group_id)
-  {
-    // TODO: Old logic that needs be removed when workzone is connected
-    uint32_t temp = 0;
-    temp |= intersection_id;
-    temp = temp << 8;
-    temp |= signal_group_id;
-
-    if (traffic_light_ids_.find(temp) != traffic_light_ids_.end())
-    {
-      return traffic_light_ids_[temp];
-    }
-    else
-    {
-      return lanelet::InvalId;
-    }
-  }
-  lanelet::Id CARMAWorldModel::getTrafficLightIdNew(uint16_t intersection_id, uint8_t signal_group_id)
+  lanelet::Id CARMAWorldModel::getTrafficSignalId(uint16_t intersection_id, uint8_t signal_group_id)
   {
     if (!traffic_light_ids_.empty())
     {
@@ -1286,6 +1269,43 @@ namespace carma_wm
     return intersection_list;
   }
 
+  lanelet::CarmaTrafficSignalPtr CARMAWorldModel::getTrafficSignal(const lanelet::Id& id) const
+  {
+    auto general_regem = semantic_map_->regulatoryElementLayer.get(id);
+
+    auto lanelets_general = semantic_map_->laneletLayer.findUsages(general_regem);
+    if (lanelets_general.empty())
+    {
+      ROS_DEBUG_STREAM("There was an error querying traffic light with id: " << id);
+    }
+
+    auto curr_light_list = lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
+
+    if (curr_light_list.empty())
+    {
+      ROS_DEBUG_STREAM("There was an error querying traffic light with id: " << id);
+      return nullptr;
+    }
+
+    lanelet::CarmaTrafficSignalPtr curr_light;
+
+    for (auto signal : lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>())
+    {
+      if (signal->id() == id)
+      {
+        curr_light = signal;
+        break;
+      }
+    }
+
+    if (!curr_light)
+    {
+      ROS_DEBUG_STREAM("Was not able to find traffic signal with id: " << id << ", ignoring...");
+      return nullptr;
+    }
+
+    return curr_light;
+  }
 
   void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT &spat_msg)
   {
@@ -1305,44 +1325,19 @@ namespace carma_wm
     {
       for (const auto &current_movement_state : curr_intersection.movement_list)
       {
-        // TODO: switch this getTrafficLightIdNew when workzone conversion is implemented
-        // lanelet::Id curr_light_id = getTrafficLightId(curr_intersection.id.id, current_movement_state.signal_group);
+        lanelet::Id curr_light_id = getTrafficSignalId(curr_intersection.id.id, current_movement_state.signal_group);
 
-        lanelet::Id curr_light_id = getTrafficLightIdNew(curr_intersection.id.id, current_movement_state.signal_group);
-
-        // TODO below all functions can be just a method START
         if (curr_light_id == lanelet::InvalId)
         {
           continue;
         }
 
-        auto general_regem = semantic_map_->regulatoryElementLayer.get(curr_light_id);
-
-        auto lanelets_general = semantic_map_->laneletLayer.findUsages(general_regem);
-        if (lanelets_general.empty())
+        lanelet::CarmaTrafficSignalPtr curr_light = getTrafficSignal(curr_light_id);
+        
+        if (curr_light == nullptr)
         {
-          ROS_DEBUG_STREAM("Received a SPAT message for traffic light that is not owned by any lanelet with intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
           continue;
         }
-
-        auto curr_light_list = lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-
-        if (curr_light_list.empty())
-        {
-          ROS_DEBUG_STREAM("There was an error querying traffic light with intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
-          continue;
-        }
-
-        lanelet::CarmaTrafficSignalPtr curr_light;
-        for (auto signal : lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>())
-        {
-          if (signal->id() == curr_light_id)
-          {
-            curr_light = signal;
-            break;
-          }
-        }
-        // END
 
         // reset states if the intersection's geometry changed
         if (curr_light->revision_ != curr_intersection.revision)
@@ -1415,18 +1410,7 @@ namespace carma_wm
          // detected that new state received; therefore, set the last recorded state (not new one received)
         ROS_DEBUG_STREAM("Received new state for light: " << curr_light_id << ", with state: " << received_state << ", time: " << ros::Time::fromBoost(min_end_time));
 
-        // DEBUG
-        for (auto llt : curr_light->getControlStartLanelets())
-        {
-          ROS_DEBUG_STREAM("Light id:" << curr_light_id << ", and entry: " << llt.id());
-        }
-        for (auto llt : curr_light->getControlEndLanelets())
-        {
-          ROS_DEBUG_STREAM("Light id:" << curr_light_id << ", and exit: " << llt.id());
-        }
-        // END
-
-         // update last seen signal state
+        // update last seen signal state
         sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group] = {min_end_time, received_state};
         
         if (!curr_light->recorded_time_stamps.empty())
