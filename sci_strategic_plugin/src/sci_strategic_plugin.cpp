@@ -375,7 +375,6 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
           
 
           double stopping_accel = caseThreeSpeedProfile(distance_to_stopline, current_state.speed, time_to_schedule_stop);
-          // TODO: temp val for acc- remove when carma streets is running
           stopping_accel = std::max(-stopping_accel, desired_deceleration);
           ROS_DEBUG_STREAM("used deceleration for case three: " << stopping_accel);
 

@@ -292,6 +292,9 @@ TEST(SCIStrategicPluginTest, testIntersectionturndirection)
   EXPECT_NEAR(-1.83, dec_val, 0.01);
 }
 
+// The map in this unit test does not support turn direction and therefore it is disabled. 
+// The test can be run if the turn direction detection logic (lines 461-467) is commented.
+
 TEST(SCIStrategicPluginTest, DISABLE_maneuvercbtest)
 {
   lanelet::Id id{1200};
