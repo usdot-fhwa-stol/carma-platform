@@ -101,11 +101,8 @@ bool StopControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Plan
 
     std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points( maneuver_plan, wm_, req.vehicle_state);
     ROS_DEBUG_STREAM("Maneuver to points size:"<< points_and_target_speeds.size());
-    ROS_DEBUG_STREAM("Printing points: ");
-    for(size_t i = 0;i<points_and_target_speeds.size();i++){
-        std::cout<<"Point "<<i<<", Speed: "<<points_and_target_speeds[i].speed<<std::endl;
-    }
-    //Trajectory Plan
+    // ROS_DEBUG_STREAM("Printing points: ");
+    // TODO: add print logic
     cav_msgs::TrajectoryPlan trajectory;
     trajectory.header.frame_id = "map";
     trajectory.header.stamp = req.header.stamp;
@@ -449,9 +446,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlu
     ROS_DEBUG_STREAM("Nearest pt index: "<<nearest_pt_index);
     std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); //Points in front of current vehicle position
     ROS_DEBUG_STREAM("Future points size: "<<future_points.size());
-    //TO DO - fix time bound points 
-    //auto time_bound_points = basic_autonomy::waypoint_generation::constrain_to_time_boundary(future_points, config_.trajectory_time_length);
-    auto time_bound_points = future_points;
+    auto time_bound_points = basic_autonomy::waypoint_generation::constrain_to_time_boundary(future_points, config_.trajectory_time_length);
     ROS_DEBUG_STREAM("Got time bound points with size:" << time_bound_points.size());
 
     //Attach past points

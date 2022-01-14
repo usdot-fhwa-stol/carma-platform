@@ -36,6 +36,7 @@
 #include <cav_msgs/Maneuver.h>
 #include <basic_autonomy/basic_autonomy.h>
 #include <basic_autonomy/helper_functions.h>
+#include <basic_autonomy/log/log.h>
 
 
 /**
