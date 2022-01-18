@@ -20,6 +20,8 @@
 #include <functional>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
 #include <carma_perception_msgs/msg/roadway_obstacle_list.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include "object_visualizer/object_visualizer_config.hpp"
@@ -46,6 +48,22 @@ namespace object_visualizer
     // Node configuration
     Config config_;
 
+    // Previous object report sizes for clearing visualization on deleted objects
+    size_t prev_external_objects_size_ = 0;
+    size_t prev_roadway_obstacles_size_ = 0;
+
+    /**
+     * \brief Adds a marker deletion for a number of markers which is the delta
+     *        between the new marker count and the previously published count
+     * 
+     * ASSUMPTION: The marker array's ids are already recomputed starting from zero, such that tracking ids is not needed.
+     * 
+     * \param[in/out] viz_msg The marker array to add deletion markers to
+     * \param[in/out] old_size The size of the previous published marker array. 
+     *                The positive delta between this and the size of the viz_msg determines the number of deletions added
+     */ 
+    void clear_and_update_old_objects(visualization_msgs::msg::MarkerArray &viz_msg, size_t &old_size);
+
   public:
     /**
      * \brief Node constructor 
@@ -63,14 +81,14 @@ namespace object_visualizer
      * 
      * \param msg The received message
      */
-    void external_objects_callback(std_msgs::msg::String::UniquePtr msg);
+    void external_objects_callback(carma_perception_msgs::msg::ExternalObjectList::UniquePtr msg);
 
     /**
      * \brief Roadway obstacles callback. Converts the message to a visualization message to republish
      * 
      * \param msg The received message
      */
-    void roadway_obstacles_callback(std_msgs::msg::String::UniquePtr msg);
+    void roadway_obstacles_callback(carma_perception_msgs::msg::RoadwayObstacleList::UniquePtr msg);
 
 
     ////

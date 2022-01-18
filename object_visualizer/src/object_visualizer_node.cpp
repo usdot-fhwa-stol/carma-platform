@@ -28,6 +28,8 @@ namespace object_visualizer
     // Declare parameters
     config_.enable_external_objects_viz = declare_parameter<bool>("enable_external_objects_viz", config_.enable_external_objects_viz);
     config_.enable_roadway_objects_viz = declare_parameter<bool>("enable_roadway_objects_viz", config_.enable_roadway_objects_viz);
+    config_.external_objects_viz_ns = declare_parameter<std::string>("external_objects_viz_ns", config_.external_objects_viz_ns);
+    config_.roadway_obstacles_viz_ns = declare_parameter<std::string>("roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns);
   }
 
   rcl_interfaces::msg::SetParametersResult Node::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
@@ -39,9 +41,15 @@ namespace object_visualizer
         {"enable_roadway_objects_viz", config_.enable_roadway_objects_viz}
       }, parameters);
 
+    auto error2 = update_params<std::string>(
+      {
+        {"external_objects_viz_ns", config_.external_objects_viz_ns},
+        {"roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns}
+      }, parameters);
+
     rcl_interfaces::msg::SetParametersResult result;
 
-    result.successful = !error;
+    result.successful = !error && !error2;
 
     return result;
   }
@@ -54,6 +62,8 @@ namespace object_visualizer
     // Load parameters
     get_parameter<bool>("enable_external_objects_viz", config_.enable_external_objects_viz);
     get_parameter<bool>("enable_roadway_objects_viz", config_.enable_roadway_objects_viz);
+    get_parameter<std::string>("external_objects_viz_ns", config_.external_objects_viz_ns);
+    get_parameter<std::string>("roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns);
 
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
@@ -73,7 +83,7 @@ namespace object_visualizer
     return CallbackReturn::SUCCESS;
   }
 
-  void Node::external_objects_callback(std_msgs::msg::String::UniquePtr msg)
+  void Node::external_objects_callback(carma_perception_msgs::msg::ExternalObjectList::UniquePtr msg)
   {
     RCLCPP_DEBUG_STREAM(  get_logger(), "external_objects_callback called");
 
@@ -82,11 +92,75 @@ namespace object_visualizer
       return;
     }
 
-    // TODO add logic for visualization
+    visualization_msgs::msg::MarkerArray viz_msg;
+    viz_msg.markers.resize(msg->objects.size());
+
+    
+    size_t id = 0; // We always count the id from zero so we can delete markers later in a consistent manner
+
+    for (auto obj : msg->objects) {
+      visualization_msgs::msg::Marker marker;
+      
+      marker.header = msg->header;
+
+      marker.ns = "external_objects"; // TODO make parameter
+
+      // Pedestrian's will be represented as red box
+      if (obj.object_type == carma_perception_msgs::msg::ExternalObject::PEDESTRIAN) {
+
+        marker.color.r = 1.0;
+        marker.color.g = 0.0;
+        marker.color.b = 0.0;
+        marker.color.a = 1.0;
+
+      } // All other detected objects will be blue 
+      else {
+
+        marker.color.r = 0.0;
+        marker.color.g = 0.0;
+        marker.color.b = 1.0;
+        marker.color.a = 1.0;
+      }
+
+      marker.id = id;
+      marker.type = visualization_msgs::msg::Marker::CUBE;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      marker.pose = obj.pose.pose;
+      marker.scale.x = obj.size.x * 2.0; // Size in carma is half the length/width/height 
+      marker.scale.y = obj.size.y * 2.0;
+      marker.scale.z = obj.size.z * 2.0;
+
+
+
+      id++;
+    }
+
+    clear_and_update_old_objects(viz_msg, prev_external_objects_size_);
+
+    external_objects_viz_pub_->publish(viz_msg);
 
   }
 
-  void Node::roadway_obstacles_callback(std_msgs::msg::String::UniquePtr msg)
+  void Node::clear_and_update_old_objects(visualization_msgs::msg::MarkerArray &viz_msg, size_t &old_size)
+  {
+    size_t size_swap = viz_msg.markers.size();
+
+    // Delete any markers from the previous message that are no longer in the current message
+    if (viz_msg.markers.size() < old_size) {
+
+      for (size_t i = viz_msg.markers.size(); i < old_size; ++i) {
+        visualization_msgs::msg::Marker marker;
+        marker.id = i;
+        marker.action = visualization_msgs::msg::Marker::DELETE;
+        viz_msg.markers.push_back(marker);
+      }
+
+    }
+
+    old_size = size_swap; // Assign the new size of added objects to the old size
+  }
+
+  void Node::roadway_obstacles_callback(carma_perception_msgs::msg::RoadwayObstacleList::UniquePtr msg)
   {
     RCLCPP_DEBUG_STREAM(  get_logger(), "roadway_obstacles_callback called");
 
@@ -95,7 +169,55 @@ namespace object_visualizer
       return;
     }
 
-    // TODO add logic for visualization
+    visualization_msgs::msg::MarkerArray viz_msg;
+
+    viz_msg.markers.resize(msg->roadway_obstacles.size());
+
+    size_t id = 0; // We always count the id from zero so we can delete markers later in a consistent manner
+    for (auto obj : msg->roadway_obstacles) {
+      visualization_msgs::msg::Marker marker;
+      
+      marker.header = obj.object.header;
+
+      marker.ns = "roadway_obstacles"; // TODO make parameter
+
+      // Pedestrian's will be represented as a red box
+      if (obj.object.object_type == carma_perception_msgs::msg::ExternalObject::PEDESTRIAN) {
+
+        marker.color.r = 1.0;
+        marker.color.g = 0.0;
+        marker.color.b = 0.0;
+        marker.color.a = 1.0;
+
+      } // Connected vehicles will be green
+      else if (obj.connected_vehicle_type.type != carma_perception_msgs::msg::ConnectedVehicleType::NOT_CONNECTED){
+        marker.color.r = 0.0;
+        marker.color.g = 1.0;
+        marker.color.b = 0.0;
+        marker.color.a = 1.0;
+      } // All other detected objects will be blue
+      else {
+
+        marker.color.r = 0.0;
+        marker.color.g = 0.0;
+        marker.color.b = 1.0;
+        marker.color.a = 1.0;
+      }
+
+      marker.id = id;
+      marker.type = visualization_msgs::msg::Marker::CUBE;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      marker.pose = obj.object.pose.pose;
+      marker.scale.x = obj.object.size.x * 2.0; // Size in carma is half the length/width/height 
+      marker.scale.y = obj.object.size.y * 2.0;
+      marker.scale.z = obj.object.size.z * 2.0;
+
+      id++;
+    }
+
+    clear_and_update_old_objects(viz_msg, prev_roadway_obstacles_size_);
+
+    roadway_obstacles_viz_pub_->publish(viz_msg);
 
   }
 
