@@ -55,6 +55,20 @@ TEST(PlatoonManagerTest, test_construct)
 
 }
 
+TEST(PlatoonManagerTest, test_enable_platooning)
+{
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::LEADER;
+    plugin.platooning_enabled_ = false;
+    plugin.onSpin();
+    EXPECT_EQ(plugin.pm_.current_platoon_state, PlatoonState::STANDBY);
+
+}
+
+
 TEST(PlatoonManagerTest, test_ecef_encode)
 {
     ros::Time::init();

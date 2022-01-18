@@ -234,11 +234,8 @@ namespace platoon_strategic
             bool in_rightmost_lane_ = true;
             // variable to show if the vehicle is on a single-lane lane
             bool single_lane_road_ = false;
-
-            
-
-
-
+            // Flag to enable/disable platooning plugin
+            bool platooning_enabled_ = false;
         
         private:
 

@@ -70,6 +70,12 @@ namespace platoon_strategic
         cav_msgs::PlatooningInfo platoon_status = composePlatoonInfoMsg();
         platooning_info_publisher_(platoon_status);
 
+        if (!platooning_enabled_)
+        {
+            pm_.current_platoon_state = PlatoonState::STANDBY;
+            return true;
+        }
+
         return true;
     }
 
@@ -286,7 +292,7 @@ namespace platoon_strategic
             ROS_WARN_STREAM("Platoon size 1 so Empty maneuver sent");
         }
 
-        if (pm_.current_platoon_state == PlatoonState::STANDBY)
+        if (pm_.current_platoon_state == PlatoonState::STANDBY && platooning_enabled_)
         {
             pm_.current_platoon_state = PlatoonState::LEADER;
             pm_.currentPlatoonID = boost::uuids::to_string(boost::uuids::random_generator()());
