@@ -50,6 +50,9 @@ def generate_launch_description():
     frame_transformer_param_file = os.path.join(
         get_package_share_directory('frame_transformer'), 'config/parameters.yaml')
 
+    object_visualizer_param_file = os.path.join(
+        get_package_share_directory('object_visualizer'), 'config/parameters.yaml')
+
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     # lidar_perception_container contains all nodes for lidar based object perception
@@ -148,6 +151,16 @@ def generate_launch_description():
                         ("detected_objects", "tracked_objects"),
                     ],
                     parameters=[ object_detection_tracking_param_file ]
+            ),
+            ComposableNode(
+                    package='object_visualizer',
+                    plugin='object_visualizer::Node',
+                    name='object_visualizer_node',
+                    extra_arguments=[
+                        {'use_intra_process_comms': True},
+                        {'--log-level' : GetLogLevel('object_visualizer', env_log_levels) }
+                    ],
+                    parameters=[ object_visualizer_param_file ]
             ),
         ]
     )
