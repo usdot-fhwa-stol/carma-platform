@@ -1,3 +1,3 @@
 # object_visualizer
 
-TODO for USER: Add description of package and link to confluence documentation.
+This package provides a node for visualization of carma_perception_msgs/ExternalObjectList and carma_perception_msgs/RoadwayObstacleList msgs.

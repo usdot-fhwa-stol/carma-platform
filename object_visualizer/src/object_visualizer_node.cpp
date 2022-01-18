@@ -93,7 +93,7 @@ namespace object_visualizer
     }
 
     visualization_msgs::msg::MarkerArray viz_msg;
-    viz_msg.markers.resize(msg->objects.size());
+    viz_msg.markers.reserve(msg->objects.size());
 
     
     size_t id = 0; // We always count the id from zero so we can delete markers later in a consistent manner
@@ -130,7 +130,7 @@ namespace object_visualizer
       marker.scale.y = obj.size.y * 2.0;
       marker.scale.z = obj.size.z * 2.0;
 
-
+      viz_msg.markers.push_back(marker);
 
       id++;
     }
@@ -171,7 +171,7 @@ namespace object_visualizer
 
     visualization_msgs::msg::MarkerArray viz_msg;
 
-    viz_msg.markers.resize(msg->roadway_obstacles.size());
+    viz_msg.markers.reserve(msg->roadway_obstacles.size());
 
     size_t id = 0; // We always count the id from zero so we can delete markers later in a consistent manner
     for (auto obj : msg->roadway_obstacles) {
@@ -211,6 +211,8 @@ namespace object_visualizer
       marker.scale.x = obj.object.size.x * 2.0; // Size in carma is half the length/width/height 
       marker.scale.y = obj.object.size.y * 2.0;
       marker.scale.z = obj.object.size.z * 2.0;
+
+      viz_msg.markers.push_back(marker);
 
       id++;
     }

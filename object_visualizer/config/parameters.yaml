@@ -5,7 +5,7 @@ enable_external_objects_viz : True
 enable_roadway_objects_viz : False
 
 # String: External Objects marker rviz namespace
-external_objects_viz_ns : "external_objects";
+external_objects_viz_ns : "external_objects"
 
 # String: Roadway Obstacles marker rviz namespace
-roadway_obstacles_viz_ns : "roadway_obstacles";
+roadway_obstacles_viz_ns : "roadway_obstacles"

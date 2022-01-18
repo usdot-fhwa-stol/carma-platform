@@ -31,7 +31,7 @@ namespace object_visualizer
     bool enable_external_objects_viz = true;
 
     //! If true then RViz markers will be forwarded for received carma_perception_msgs/RoadwayObstacleList messages
-    bool enable_roadway_objects_viz = false;
+    bool enable_roadway_objects_viz = true;
 
     //! External Objects marker rviz namespace
     std::string external_objects_viz_ns = "external_objects";
