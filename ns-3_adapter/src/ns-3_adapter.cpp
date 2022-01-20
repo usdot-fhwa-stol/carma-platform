@@ -199,7 +199,7 @@ void NS3Adapter::sendMessageFromQueue() {
 bool NS3Adapter::sendMessageSrv(cav_srvs::SendMessage::Request& req, cav_srvs::SendMessage::Response& res) {
     if(!ns3_client_.connected())
     {
-        ROS_WARN_STREAM("Outbound message received but node is not connected to DSRC Radio");
+        ROS_WARN_STREAM("Outbound message received but node is not connected to NS-3 Radio");
         res.errorStatus = 1;
         return true;
     }
@@ -388,4 +388,14 @@ void NS3Adapter::shutdown()
     ROS_INFO("Closing connection to radio");
     ns3_client_.close();
 
+}
+
+cav_msgs::DriverStatus NS3Adapter::getDriverStatus()
+{
+    return getStatus();
+}
+
+std::deque<std::shared_ptr<std::vector<uint8_t>>> NS3Adapter::getMsgQueue()
+{
+    return send_msg_queue_;
 }

@@ -31,6 +31,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>cav_driver_utils</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
   <run_depend>cav_driver_utils</run_depend>
   <run_depend>roscpp</run_depend>
 	<run_depend>dynamic_reconfigure</run_depend>

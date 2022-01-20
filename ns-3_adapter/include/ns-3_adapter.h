@@ -47,7 +47,6 @@ class NS3Adapter : public cav::DriverApplication
 
     public:
 
-
         /**
         * @brief constructor
         * @param argc - command line argument count
@@ -116,6 +115,7 @@ class NS3Adapter : public cav::DriverApplication
         inline virtual std::vector<std::string>& get_api() override  { return api_; }
 
 
+    public: 
         /**
         * @brief Handles the NS-3 onConnect Event
         *
@@ -182,6 +182,10 @@ class NS3Adapter : public cav::DriverApplication
         * @param fileName
         */
         void loadWaveConfig(const std::string& fileName);
+
+        cav_msgs::DriverStatus getDriverStatus();
+
+        std::deque<std::shared_ptr<std::vector<uint8_t>>> getMsgQueue();
 
         /**
         * @brief converts a uint8_t vector to an ascii representation
