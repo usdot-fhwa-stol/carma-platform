@@ -350,7 +350,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       double safe_distance = pow(current_state.speed, 2)/(2*desired_deceleration);
        ROS_DEBUG_STREAM("safe_distance:  " << safe_distance);
 
-      if (distance_to_stopline - safe_distance > config_.min_gap)
+      if (distance_to_stopline - safe_distance > config_.stop_line_buffer)
       {
         int case_num = determineSpeedProfileCase(distance_to_stopline , current_state.speed, time_to_schedule_stop, speed_limit_);
         ROS_DEBUG_STREAM("case_num:  " << case_num);

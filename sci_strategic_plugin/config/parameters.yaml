@@ -11,7 +11,7 @@ stop_line_buffer : 3.0
 delta_t : 1.0
 
 # Double: Update min_gap. Units in m
-min_gap : -3.0
+min_gap : 3.0
 
 # Double: Minimum vehicle reaction time. Units in s
 reaction_time : 5.0
