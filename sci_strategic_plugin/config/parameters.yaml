@@ -1,8 +1,8 @@
 # Double: multiplier to apply to the maximum allowable vehicle deceleration limit so we plan under our capabilities
-vehicle_decel_limit_multiplier : 0.25
+vehicle_decel_limit_multiplier : 0.35
 
 # Double: multiplier to apply to the maximum allowable vehicle acceleration limit so we plan under our capabilities
-vehicle_accel_limit_multiplier : 0.85
+vehicle_accel_limit_multiplier : 0.45
 
 # Double: A buffer before of the stopping location which will still be considered a valid stop. Units in meters
 stop_line_buffer : 3.0
