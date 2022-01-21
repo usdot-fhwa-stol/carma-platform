@@ -44,7 +44,7 @@ TEST(NS3AdapterTest, testOnMsgReceivedHandler)
 
 TEST(NS3AdapterTest, testpackMessage)
 {
-
+    
 }
 
 TEST(NS3AdapterTest, testonOutboundMessage)
@@ -70,15 +70,20 @@ TEST(NS3AdapterTest, testonOutboundMessage)
 
 TEST(NS3AdapterTest, testSendMessageSrv)
 {
-    
-}
+    /*int argc = 1;
+    char c[2][2] = {{'a','b'}, {'c','d'}};
+    char* argv[] {c[0], c[1]};
+    NS3Adapter worker(argc,argv);
 
-TEST(NS3AdapterTest, testSendMessageFromQueue)
-{
-    
-}
+    cav_srvs::SendMessage::Request req;
+    cav_srvs::SendMessage::Response resp;
 
-TEST(NS3AdapterTest, testloadWaveConfig)
-{
-    
+    uint8_t msg = 8;
+    req.message_to_send.content.push_back(msg);
+
+   bool result = worker.sendMessageSrv(req, resp);
+
+   EXPECT_EQ(result, true);
+   EXPECT_EQ(resp.errorStatus, 0);*/
+
 }
