@@ -680,28 +680,31 @@ namespace platoon_strategic_ihp
         /*
             Locate the target cut-in join gap size based on the index.   
         */
-       // cut-in from front 
-       if (gap_leading_index == -1)
-       {
+        // Initiate variables 
+        double gap_size;
+
+        // cut-in from front 
+        if (gap_leading_index == -1)
+        {
             double gap_rear_dtd = platoon[0].vehiclePosition;
             double gap_size = joinerDtD - gap_rear_dtd - config_.vehicleLength;
-            return gap_size;
-       }
-       // cut-in from behind 
-       else if (gap_leading_index == platoon.size() - 1)
-       {    
+        }
+        // cut-in from behind 
+        else if (gap_leading_index == platoon.size() - 1)
+        {    
             double gap_leading_dtd = platoon[gap_leading_index].vehiclePosition;
             double gap_size = gap_leading_dtd - joinerDtD - config_.vehicleLength;;
-            return gap_size;
-       }
-       // cut-in in the middle
-       else
-       {
+        }
+        // cut-in in the middle
+        else
+        {
             double gap_leading_dtd = platoon[gap_leading_index].vehiclePosition;
             double gap_rear_dtd = platoon[gap_leading_index + 1].vehiclePosition;
             double gap_size = gap_leading_dtd - gap_rear_dtd - config_.vehicleLength;
-            return gap_size;
-       }
+        }
+
+        // return gap_size value
+        return gap_size;
 
     }
 }

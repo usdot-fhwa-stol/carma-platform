@@ -785,8 +785,12 @@ namespace platoon_strategic_ihp
             // Plugin discovery message
             cav_msgs::Plugin plugin_discovery_msg_;
 
+            // Add condition for leader aborting state, to prevent sending repeated requests 
+            bool isFirstLeaderAbortRequest_ = true;
+
+            // Internal FSM parameters 
             int infoMessageInterval_ = 200;             // ms
-            long prevHeartBeatTime_ = 0.0;               // ms
+            long prevHeartBeatTime_ = 0.0;              // ms
             int statusMessageInterval_ = 100;           // ms
             int NEGOTIATION_TIMEOUT = 5000;             // ms
             int LANE_CHANGE_TIMEOUT = 300000;           // ms (5 min)
@@ -795,7 +799,7 @@ namespace platoon_strategic_ihp
             double waitingStateTimeout = 25.0;          // s
             
             // Threshold for determining if vehicle is stopped; non-zero allows for measurement noise
-            const double STOPPED_SPEED = 0.05; // m/s
+            const double STOPPED_SPEED = 0.05;          // m/s
 
             // UCLA: add member variable for state prepare to join
             int target_join_index_;
@@ -806,13 +810,43 @@ namespace platoon_strategic_ihp
             const std::string OPERATION_STATUS_TYPE = "STATUS";
             
             // UCLA: edit INFO params to store platoon front info (front join needs 10 info params)
+            /**
+             * index = 0, LENGTH, physical length of the platoon, in m.
+             * index = 1, SPEED, in m/s.
+             * index = 2, SIZE, number of members.
+             * index = 3, ECEFX, in cm.
+             * index = 4, ECEFY, in cm.
+             * index = 5, ECEFZ, in cm.
+             */
             const std::string OPERATION_INFO_PARAMS   = "INFO|LENGTH:%.2f,SPEED:%.2f,SIZE:%d,ECEFX:%.2f,ECEFY:%.2f,ECEFZ:%.2f";
+            
+            /**
+             * index = 0, CMDSPEED, in m/s.
+             * index = 1, SPEED, in m/s.
+             * index = 2, ECEFX, in cm.
+             * index = 3, ECEFY, in cm.
+             * index = 4, ECEFZ, in cm.
+             */
             const std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%";
             
+            /**
+             * index = 0, SIZE, number of members.
+             * index = 1, SPEED, in m/s.
+             * index = 2, ECEFX, in cm.
+             * index = 3, ECEFY, in cm.
+             * index = 4, ECEFZ, in cm.
+             */
             // Merge front join and rear join to use sasme params for sending request. 
             const std::string SAME_LANE_JOIN_PARAMS = "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%"; 
             
             // UCLA: add for cut-in join
+            /**
+             * index = 0, SIZE, number of members.
+             * index = 1, SPEED, in m/s.
+             * index = 2, ECEFX, in cm.
+             * index = 3, ECEFY, in cm.
+             * index = 4, ECEFZ, in cm.
+             */
             const std::string JOIN_CUT_IN_PARAMS = "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%";
 
     };
