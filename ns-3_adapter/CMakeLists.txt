@@ -10,10 +10,11 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  cav_driver_utils
+  ##cav_driver_utils
   cav_msgs
   cav_srvs
   roscpp
+  bondcpp
   dynamic_reconfigure
 )
 
@@ -21,14 +22,16 @@ add_executable( ${PROJECT_NAME}
   ${headers}
   src/ns-3_client.cpp
   src/ns-3_adapter.cpp
+  src/driver_application/driver_application.cpp
+  src/driver_wrapper/driver_wrapper.cpp
   src/main.cpp)
-add_library(ns-3_adapter_library src/ns-3_adapter.cpp src/ns-3_client.cpp src/main.cpp)
+add_library(ns-3_adapter_library src/ns-3_adapter.cpp src/ns-3_client.cpp src/main.cpp src/driver_application/driver_application.cpp src/driver_wrapper/driver_wrapper.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 add_dependencies(ns-3_adapter_library ${catkin_EXPORTED_TARGETS})
 
 catkin_package(
-  CATKIN_DEPENDS roscpp cav_driver_utils dynamic_reconfigure
+  CATKIN_DEPENDS roscpp dynamic_reconfigure bondcpp
 )
 
 ###########
@@ -92,7 +95,9 @@ file(GLOB_RECURSE headers */*.hpp */*.h)
 #############
 
 ## Add gtest based cpp test target and link libraries
-catkin_add_gmock(${PROJECT_NAME}-test test/test_ns-3_adapter.cpp)
+catkin_add_gtest(${PROJECT_NAME}-test 
+test/test_ns-3_adapter.cpp
+test/test_main.cpp)
 target_link_libraries(${PROJECT_NAME}-test ns-3_adapter_library ${catkin_LIBRARIES})
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)

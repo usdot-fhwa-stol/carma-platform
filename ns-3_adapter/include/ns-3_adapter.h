@@ -4,7 +4,7 @@
 #include <boost/asio.hpp>
 #include <boost/signals2/signal.hpp>
 #include <boost/lambda/lambda.hpp>
-#include <cav_driver_utils/driver_application/driver_application.h>
+#include <driver_application/driver_application.h>
 #include <memory>
 #include <mutex>
 #include <condition_variable>

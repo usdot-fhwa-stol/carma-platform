@@ -4,7 +4,7 @@
 
 TEST(NS3AdapterTest, testOnConnectHandler)
 {
-    /*int argc = 1;
+    int argc = 1;
     char c[2][2] = {{'a','b'}, {'c','d'}};
     //char* argv[] {c[0], c[1]};
     char **argv;
@@ -12,33 +12,37 @@ TEST(NS3AdapterTest, testOnConnectHandler)
 
     ROS_ERROR_STREAM("Pre-Connection NS-3 Status: " << worker.getDriverStatus().status);
     worker.onConnectHandler();
-    EXPECT_EQ(worker.getDriverStatus().status, cav_msgs::DriverStatus::OPERATIONAL);*/
+    EXPECT_EQ(worker.getDriverStatus().status, cav_msgs::DriverStatus::OPERATIONAL);
 }
 
 TEST(NS3AdapterTest, testOnDisconnectHandler)
 {
-   /* int argc = 1;
+    int argc = 1;
     char c[2][2] = {{'a','b'}, {'c','d'}};
     char* argv[] {c[0], c[1]};
     NS3Adapter worker(argc,argv);
 
     ROS_ERROR_STREAM("Pre-Connection NS-3 Status: " << worker.getDriverStatus().status);
     worker.onDisconnectHandler();
-    EXPECT_EQ(worker.getDriverStatus().status, cav_msgs::DriverStatus::OFF);*/
+    EXPECT_EQ(worker.getDriverStatus().status, cav_msgs::DriverStatus::OFF);
 
 }
 
 TEST(NS3AdapterTest, testOnMsgReceivedHandler)
 {
-/*    int argc = 1;
+   int argc = 1;
     char c[2][2] = {{'a','b'}, {'c','d'}};
     char* argv[] {c[0], c[1]};
     NS3Adapter worker(argc,argv);
+    uint16_t id = 123;
+    std::vector<uint8_t> content;
+    content.push_back(1);
 
     ROS_ERROR_STREAM("Pre-Connection NS-3 Status: " << worker.getDriverStatus().status);
-    worker.onMessageReceivedHandler();
+    EXPECT_THROW(worker.onMessageReceivedHandler(content, id), ros::TimeNotInitializedException);
+    
     EXPECT_EQ(worker.getDriverStatus().status, cav_msgs::DriverStatus::OFF);
-*/
+
 
 }
 
@@ -70,7 +74,7 @@ TEST(NS3AdapterTest, testonOutboundMessage)
 
 TEST(NS3AdapterTest, testSendMessageSrv)
 {
-    /*int argc = 1;
+    int argc = 1;
     char c[2][2] = {{'a','b'}, {'c','d'}};
     char* argv[] {c[0], c[1]};
     NS3Adapter worker(argc,argv);
@@ -84,6 +88,6 @@ TEST(NS3AdapterTest, testSendMessageSrv)
    bool result = worker.sendMessageSrv(req, resp);
 
    EXPECT_EQ(result, true);
-   EXPECT_EQ(resp.errorStatus, 0);*/
+   EXPECT_EQ(resp.errorStatus, 1);
 
 }
