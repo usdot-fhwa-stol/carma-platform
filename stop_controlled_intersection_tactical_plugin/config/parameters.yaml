@@ -5,5 +5,5 @@ trajectory_time_length: 6.0 # Trajectory length in seconds
 curve_resample_step_size: 1.0 # Curve re-sampling step size in m
 curvature_moving_average_window_size: 9 # Size of the window used in the moving average filter to smooth the computed curvature
 lateral_accel_limit: 2.5        #Maximum allowable lateral acceleration m/s^2
-speed_moving_average_window_size: 5 # Size of the window used in the moving average filter to smooth the output speeds
+speed_moving_average_window_size: 19 # Size of the window used in the moving average filter to smooth the output speeds
 back_distance: 20.0 # Number of meters behind the first maneuver that need to be included in points for curvature calculation
