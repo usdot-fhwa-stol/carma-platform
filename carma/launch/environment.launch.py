@@ -110,6 +110,19 @@ def generate_launch_description():
                 parameters=[ euclidean_cluster_param_file ]
             ),
             ComposableNode(
+                package='object_detection_tracking',
+                plugin='bounding_box_to_detected_object::Node',
+                name='bounding_box_converter',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('object_detection_tracking', env_log_levels) }
+                ],
+                remappings=[
+                    ("bounding_boxes", "lidar_bounding_boxes"),
+                    ("lidar_detected_objects", "detected_objects"),
+                ]
+            ),
+            ComposableNode(
                     package='tracking_nodes',
                     plugin='autoware::tracking_nodes::MultiObjectTrackerNode',
                     name='tracking_nodes_node',
@@ -118,7 +131,6 @@ def generate_launch_description():
                         {'--log-level' : GetLogLevel('tracking_nodes', env_log_levels) }
                     ],
                     remappings=[
-                        ("detected_objects", "lidar_detected_objects"),
                         ("ego_state", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose_with_covariance" ] ),
                         # TODO note classified_rois1 is the default single camera input topic 
                         # TODO when camera detection is added, we will wan to separate this node into a different component to preserve fault tolerance 
