@@ -51,6 +51,7 @@ namespace bounding_box_to_detected_object {
     obj.kinematics.orientation.y = box.orientation.y;
     obj.kinematics.orientation.z = box.orientation.z;
     obj.kinematics.orientation.w = box.orientation.w;
+    obj.kinematics.orientation_availability = autoware_auto_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN;
 
     return obj;
 

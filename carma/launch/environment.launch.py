@@ -115,7 +115,8 @@ def generate_launch_description():
                 name='bounding_box_converter',
                 extra_arguments=[
                     {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('object_detection_tracking', env_log_levels) }
+                    {'--log-level' : GetLogLevel('object_detection_tracking', env_log_levels) },
+                    {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[
                     ("bounding_boxes", "lidar_bounding_boxes"),
