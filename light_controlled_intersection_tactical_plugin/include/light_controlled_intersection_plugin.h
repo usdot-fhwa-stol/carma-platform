@@ -118,13 +118,13 @@ public:
    * \param end_dist ending downtrack of the maneuver to be planned (excluding buffer points)
    * \param remaining_time time interval left for scheduled entry into the intersection
    * \param starting_speed starting speed at the start of the maneuver
-   * \param speed_before_decel highest speed desired between deceleration and acceleration
+   * \param speed_before_accel highest speed desired between deceleration and acceleration
    * \param departure_speed ending speed of the maneuver a.k.a entry speed into the intersection
    * NOTE: Cruising speed profile is applied (case 4) if speed before acceleration is lower than minimum speed allowed. Otherwise Case 3.
    * NOTE: when applying the speed profile, the function ignores buffer points beyond start_dist and end_dist. Internally uses: config_.back_distance and min_speed_allowed_
    */
   void apply_decel_cruise_accel_speed_profile(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double end_dist, 
-                                    double remaining_time, double starting_speed, double speed_before_decel, double departure_speed); //TODO
+                                    double remaining_time, double starting_speed, double speed_before_accel, double departure_speed);
 
   /**
    * \brief Apply optimized target speeds to the trajectory determined for fixed-time and actuated signals.

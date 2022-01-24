@@ -33,6 +33,8 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <boost/optional.hpp>
 #include "stop_and_wait_config.h"
+#include <basic_autonomy/basic_autonomy.h>
+#include <basic_autonomy/helper_functions.h>
 
 namespace stop_and_wait_plugin
 {
