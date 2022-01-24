@@ -47,10 +47,7 @@
   </group>
 
   <!-- Message Encoder/Decoder Node -->
-  <group>
-    <remap from="incoming_j2375_map" to="incoming_j2735_map"/>
-    <include file="$(find cpp_message)/launch/cpp_message.launch"/>
-  </group>
+  <include file="$(find cpp_message)/launch/cpp_message.launch"/>
   
 
 </launch>
