@@ -28,6 +28,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   cav_msgs
   carma_utils
+  bsm_helper
   lanelet2_extension
 )
 

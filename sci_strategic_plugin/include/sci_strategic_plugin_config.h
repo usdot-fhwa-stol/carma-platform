@@ -26,16 +26,16 @@ struct SCIStrategicPluginConfig
   double vehicle_decel_limit = 2.0;
 
   //! A multiplier to apply to the maximum allowable vehicle deceleration limit so we plan under our capabilities
-  double vehicle_decel_limit_multiplier = 0.75;
+  double vehicle_decel_limit_multiplier = 0.5;
 
   //! The maximum allowable vehicle acceleration limit in m/s
   double vehicle_accel_limit = 2.0;
 
   //! A multiplier to apply to the maximum allowable vehicle acceleration limit so we plan under our capabilities
-  double vehicle_accel_limit_multiplier = 0.75;
+  double vehicle_accel_limit_multiplier = 0.5;
 
   //! A buffer infront of the stopping location which will still be considered a valid stop
-  double stop_line_buffer = 2.0;
+  double stop_line_buffer = 3.0;
 
   //! The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
   double min_maneuver_planning_period = 15.1;
@@ -43,11 +43,23 @@ struct SCIStrategicPluginConfig
   // Double: Approximate update time interval of carma streets
   double delta_t = 1.0;
 
+  // Double: Minimum inter-vehicle gap
+  double min_gap = 10.0;
+
+  // Double: Length od the vehicle
+  double veh_length = 4.0;
+
+  // Double: Vehicle reaction time to a received schedule in seconds (approximate value, only used for communication with the schedule)
+  double reaction_time = 5.0;
+
+  // Double: The distance vehicle drives to be considered out of intersections
+  double intersection_exit_zone_length = 15.0;
+
   //! The name to use for this plugin during comminications with the arbitrator
   std::string strategic_plugin_name = "SCIStrategicPlugin";
 
   //! The name of the tactical plugin to use for Lane Following trajectory planning
-  std::string lane_following_plugin_name = "SCITacticalPlugin";
+  std::string lane_following_plugin_name = "StopControlledIntersectionTacticalPlugin";
 
   //! The name of the plugin to use for stop and wait trajectory planning
   std::string stop_and_wait_plugin_name = "StopAndWaitPlugin";

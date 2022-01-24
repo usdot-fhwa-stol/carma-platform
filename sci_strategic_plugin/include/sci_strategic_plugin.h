@@ -24,17 +24,25 @@
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
 #include <carma_utils/CARMAUtils.h>
+#include <bsm_helper/bsm_helper.h>
 #include <carma_wm/Geometry.h>
 #include <lanelet2_core/Forward.h>
 #include <gtest/gtest_prod.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <cav_msgs/BSM.h>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 
 #include "sci_strategic_plugin_config.h"
 
 namespace sci_strategic_plugin
 {
+  enum TurnDirection {
+            Straight,
+            Right,
+            Left
+    };
 
   /**
   * \brief Anonymous function to extract maneuver end speed which can not be optained with GET_MANEUVER_PROPERY calls due to it missing in stop and wait plugin
@@ -101,6 +109,14 @@ public:
    * \return cav_msgs::Plugin The plugin discovery message
    */
   cav_msgs::Plugin getDiscoveryMsg() const;
+  
+  /**
+   * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery and mobility operation msgs.
+   * 
+   * \return True if the node should continue running. False otherwise
+   */ 
+  bool onSpin();
+
 
   /**
    * \brief callback function for mobility operation
@@ -134,11 +150,11 @@ public:
                                                          std::vector<lanelet::Id> lane_ids);
 
   cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double end_dist, double start_speed,
-                                                      const lanelet::Id& starting_lane_id, const lanelet::Id& ending_lane_id,
-                                                      ros::Time start_time, ros::Time end_time) const;
+                                                      const lanelet::Id& starting_lane_id, const lanelet::Id& ending_lane_id, 
+                                                      double stopping_accel, ros::Time start_time, ros::Time end_time) const;
 
   cav_msgs::Maneuver composeIntersectionTransitMessage(double start_dist, double end_dist, double start_speed, 
-                                                      double target_speed, ros::Time start_time, ros::Time end_time,
+                                                      double target_speed, ros::Time start_time, ros::Time end_time, TurnDirection turn_direction,
                                                       const lanelet::Id& starting_lane_id, const lanelet::Id& ending_lane_id) const;
 
   /**
@@ -258,36 +274,51 @@ public:
    * 
    * \param stop_time time duration to stop in s
    *
-   * \param float_metadata_list metadata vector for storing speed profile parameters
+   * \return deceleration value for case three
    *
    */
-  void caseThreeSpeedProfile(double stop_dist, double current_speed, double stop_time, std::vector<double>* float_metadata_list) const;
+  double caseThreeSpeedProfile(double stop_dist, double current_speed, double stop_time) const;
 
   /**
    * \brief Generates Mobility Operation messages
+   *
+   * \return mobility operation msg for status and intent
    */
-  void generateMobilityOperation();
+  cav_msgs::MobilityOperation generateMobilityOperation();
 
   /**
    * \brief BSM callback function
    */
   void BSMCb(const cav_msgs::BSMConstPtr& msg);
+
+  /**
+   * \brief Determine the turn direction at intersection
+   *
+   * \param lanelets_list List of lanelets crossed around the intersection area
+   *
+   * \return turn direction in format of straight, left, right
+   *
+   */
+  TurnDirection getTurnDirectionAtIntersection(std::vector<lanelet::ConstLanelet> lanelets_list);
   
   ////////// VARIABLES ///////////
 
   // CARMA Streets Variakes
   // timestamp for msg received from carma streets
-  uint32_t street_msg_timestamp_ = 0.0;
+  unsigned long long street_msg_timestamp_ = 0;
   // scheduled stop time
-  uint32_t scheduled_stop_time_ = 0.0;
+  unsigned long long scheduled_stop_time_ = 0;
   // scheduled enter time
-  uint32_t scheduled_enter_time_ = 0.0;
+  unsigned long long scheduled_enter_time_ = 0;
   // scheduled depart time
-  uint32_t scheduled_depart_time_ = 0.0;
-  // scheduled latest depart time
-  uint32_t scheduled_latest_depart_time_ = 0.0;
+  unsigned long long scheduled_depart_time_ = 0;
+  // scheduled latest depart position
+  uint32_t scheduled_departure_position_ = std::numeric_limits<uint32_t>::max();
   // flag to show if the vehicle is allowed in intersection
   bool is_allowed_int_ = false;
+
+  TurnDirection intersection_turn_direction_ = TurnDirection::Straight;
+  bool vehicle_engaged_ = false;
 
   // approximate speed limit 
   double speed_limit_ = 100.0;
@@ -298,8 +329,11 @@ public:
   bool approaching_stop_controlled_interction_ = false;
 
   ros::Publisher mobility_operation_pub;
+  ros::Publisher plugin_discovery_pub;
 
-  std::vector<uint8_t> bsm_id;
+  std::string bsm_id_ = "default_bsm_id";
+  uint8_t bsm_msg_count_ = 0;
+  uint16_t bsm_sec_mark_ = 0;
 
   private:
   //! World Model pointer
