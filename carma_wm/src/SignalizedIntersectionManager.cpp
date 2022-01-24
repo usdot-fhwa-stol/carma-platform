@@ -57,6 +57,12 @@ namespace carma_wm
 
     for (auto lane : intersection.lane_list)
     {
+      if (lane.lane_attributes.laneType.choice != j2735_msgs::LaneTypeAttributes::VEHICLE)
+      {
+        ROS_DEBUG_STREAM("Lane id: " << (int)lane.lane_id << ", is not a lane for vehicle. Only vehicle road is currently supported. Skipping..." );
+        continue;
+      }
+      
       double curr_x = ref_node.x();
       double curr_y = ref_node.y();
 
@@ -114,6 +120,18 @@ namespace carma_wm
       }
 
       lanelet::Id corresponding_lanelet_id = affected_llts.front().id(); 
+
+      for (auto llt : affected_llts) // filter out intersection lanelets
+      {
+        if (llt.lanelet().get().hasAttribute("turn_direction"))
+        {
+          ROS_DEBUG_STREAM("lanelet " << llt.id() << " is actually part of the intersection. Skipping...");
+          continue;
+        }
+        corresponding_lanelet_id = llt.id();
+
+        break;
+      }
 
       ROS_DEBUG_STREAM("Found existing lanelet id: " << corresponding_lanelet_id);
 
