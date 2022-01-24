@@ -153,7 +153,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     ROS_DEBUG_STREAM("Dropping map update which has already been processed. Received seq: " << geofence_msg->header.seq << " prev seq: " << most_recent_update_msg_seq_);
     return;
   } else if(!world_model_->getMap() || current_map_version_ < geofence_msg->map_version) { // If our current map version is older than the version target by this update
-    ROS_DEBUG_STREAM("Update recieved for newer map version than available. Queueing update until map is available.");
+    ROS_DEBUG_STREAM("Update received for newer map version than available. Queueing update until map is available.");
     map_update_queue_.push(geofence_msg);
     return;
   } else if (current_map_version_ > geofence_msg->map_version) { // If this update is for an older map
