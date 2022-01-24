@@ -36,7 +36,7 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
   map_sub_ = nh_.subscribe("semantic_map", 2, &WMListenerWorker::mapCallback, worker_.get());
   route_sub_ = nh_.subscribe("route", 1, &WMListenerWorker::routeCallback, worker_.get());
   roadway_objects_sub_ = nh_.subscribe("roadway_objects", 1, &WMListenerWorker::roadwayObjectListCallback, worker_.get());
-  traffic_spat_sub_ = nh_.subscribe("incoming_spat", 10, &WMListenerWorker::incomingSpatCallback, worker_.get());
+  traffic_spat_sub_ = nh_.subscribe("incoming_spat", 20, &WMListenerWorker::incomingSpatCallback, worker_.get());
 
   double cL;
   nh2_.getParam("/config_speed_limit", cL);
@@ -115,8 +115,6 @@ void WMListener::setConfigSpeedLimit(double config_lim) const
 {
   worker_->setConfigSpeedLimit(config_lim);
 }
-
-
 
 // @SONAR_START@
 
