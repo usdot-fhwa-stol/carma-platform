@@ -85,6 +85,7 @@ namespace carma_wm
     if (!traffic_light_ids_.empty())
     {
       // TODO: Old logic that needs be removed when workzone is connected
+      // open issue: https://github.com/usdot-fhwa-stol/carma-platform/issues/1553
       uint32_t temp = 0;
       temp |= intersection_id;
       temp = temp << 8;

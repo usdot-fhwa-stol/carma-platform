@@ -301,6 +301,7 @@ namespace carma_wm
 
       if (intersection_id == lanelet::InvalId)
       {
+        ROS_DEBUG_STREAM("No existing intersection found. Creating a new one...");
         intersection_id = lanelet::utils::getId();
 
         std::vector<lanelet::Lanelet> interior_llts = identifyInteriorLanelets(entry_llts, map);
@@ -316,6 +317,7 @@ namespace carma_wm
     // check if it already exists
     for (auto sig_grp_pair : signal_group_to_exit_lanelet_ids_)
     {
+      ROS_DEBUG_STREAM("Creating signal for: " << (int)sig_grp_pair.first);
       // ignore the traffic signals already inside
       if (signal_group_to_traffic_light_id_.find(sig_grp_pair.first) != signal_group_to_traffic_light_id_.end() &&
            map->regulatoryElementLayer.exists(signal_group_to_traffic_light_id_[sig_grp_pair.first]))
