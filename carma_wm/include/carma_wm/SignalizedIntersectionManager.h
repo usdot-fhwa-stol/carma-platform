@@ -36,7 +36,7 @@ namespace carma_wm
 
 struct LANE_DIRECTION
 {
-  // Integration testing found reverse of j2735_msgs as below.
+  // NOTE: Integration testing found reverse of j2735_msgs as below.
   static const uint8_t INGRESS = 2;
   static const uint8_t EGRESS = 1;
 };
