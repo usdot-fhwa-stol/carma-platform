@@ -80,10 +80,14 @@ void toBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet
 /**
  * [Converts Geofence binary ROS message to carma_wm::TrafficControl object. Similar implementation to 
  * lanelet2_extension::utility::message_conversion::fromBinMsg]
- * @param msg [ROS message for geofence]
- * @param gf_ptr [Ptr to converted Geofence object]
+ * @param msg         [ROS message for geofence]
+ * @param gf_ptr      [Ptr to converted Geofence object]
+ * @param lanelet_map [Ptr to lanelet map to match incoming objects' memory address with that of 
+ *                    existing objects' with same lanelet id]
  * NOTE: When converting the geofence object, the converter only fills its relevant map update
  * fields (update_list, remove_list) as the ROS msg doesn't hold any other data field in the object.
+ * NOTE: While main map update function needs to use lanelet_map, other utility use cases such as 
+ *       unit test or map update logger does not currently use lanelet_map and can use nullptr as input
  */
 void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl> gf_ptr, lanelet::LaneletMapPtr lanelet_map = nullptr);
 

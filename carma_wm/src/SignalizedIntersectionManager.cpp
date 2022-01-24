@@ -115,6 +115,8 @@ namespace carma_wm
 
       if (affected_llts.empty())
       {
+        // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593 
+        // Open issue TODO on how this error is handled
         ROS_WARN_STREAM("Given offset points are not inside the map...");
         continue;
       }
@@ -162,6 +164,8 @@ namespace carma_wm
         }
         else
         {
+          // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593 
+          // Open issue TODO on how this error is handled
           ROS_WARN_STREAM("Unable to convert exit lane Id: "  + std::to_string((int)exit_lane) + ", to lanelet id using the given MAP.msg!");
         }
       }
@@ -179,6 +183,8 @@ namespace carma_wm
         }
         else
         {
+          // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593 
+          // Open issue TODO on how this error is handled
           ROS_WARN_STREAM("Unable to convert entry lane Id: "  + std::to_string((int)entry_lane) + ", to lanelet id using the given MAP.msg!");
         }
       }
