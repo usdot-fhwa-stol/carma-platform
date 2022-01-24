@@ -48,7 +48,7 @@ def generate_launch_description():
 
     v2x_group = GroupAction(
         actions=[
-            PushRosNamespace(EnvironmentVariable('CARMA_MSG_NS', default_value='/')),
+            PushRosNamespace(EnvironmentVariable('CARMA_MSG_NS', default_value='message')),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/message.launch.py'])
             ),
