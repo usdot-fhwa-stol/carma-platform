@@ -36,9 +36,8 @@ namespace carma_wm
 
 struct LANE_DIRECTION
 {
-  // NOTE: Integration testing found reverse of j2735_msgs as below.
-  static const uint8_t INGRESS = 2;
-  static const uint8_t EGRESS = 1;
+  static const uint8_t INGRESS = 1;
+  static const uint8_t EGRESS = 2;
 };
 
 using namespace lanelet::units::literals;

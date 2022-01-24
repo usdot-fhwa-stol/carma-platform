@@ -1392,7 +1392,7 @@ namespace carma_wm
         }
 
         auto last_time_difference = sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first - min_end_time;  
-        bool is_duplicate = last_time_difference.total_milliseconds() >= -100 && last_time_difference.total_milliseconds() <= 100;
+        bool is_duplicate = last_time_difference.total_milliseconds() >= -30 && last_time_difference.total_milliseconds() <= 30;
 
         //if same data as last time (duplicate or outdated message):
         //where state is same and timestamp is equal or less, skip
@@ -1436,7 +1436,7 @@ namespace carma_wm
           }
           
           // if |time difference| is less than 0.1 sec
-          bool same_time_stamp_as_last = time_difference.total_milliseconds() >= -100 && time_difference.total_milliseconds() <= 100;
+          bool same_time_stamp_as_last = time_difference.total_milliseconds() >= -30 && time_difference.total_milliseconds() <= 30;
         
           // Received same cycle info while signal already has full cycle, then skip
           if (curr_light->predictState(min_end_time).get().second == received_state &&
