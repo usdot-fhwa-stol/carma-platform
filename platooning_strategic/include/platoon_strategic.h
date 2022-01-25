@@ -498,9 +498,12 @@ namespace platoon_strategic
             // Pointer for map projector
             std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
-            // Flag to indicate that Leader must change lanes into a suitable platooning lane before forming an initial platoon
+            // Flag to indicate that Leader must perform a left lane change into a suitable platooning lane before forming an initial platoon
             // Note: Leader must be on a single-lane road or in a non-rightmost-lane (of a given travel direction) before forming an initial platoon
             bool leader_lane_change_required_ = false;
+
+            // Flag to indicate that CandidateFollower must change lanes into another lane (provided by the target Leader) to join target Leader's platoon
+            bool cf_lane_change_required_ = false;
 
             // ros service servers
             ros::ServiceServer maneuver_srv_;

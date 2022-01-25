@@ -556,6 +556,15 @@ namespace platoon_strategic
         plugin_rear.mob_op_cb(join_requirements);
         EXPECT_EQ(plugin_rear.has_received_join_requirements_, true);
         EXPECT_EQ(plugin_rear.cf_target_lane_index_, 1);
+        EXPECT_EQ(plugin_rear.cf_lane_change_required_, true);
+
+        // Rear vehicle enters target_lane_index and is no longer required to change lanes
+        msg.pose.position.x = 4;
+        msg.pose.position.y = 10;
+        geometry_msgs::PoseStampedPtr mpt6(new geometry_msgs::PoseStamped(msg));
+        plugin_rear.pose_cb(mpt6);
+        plugin_rear.onSpin(); // Trigger state transition
+        EXPECT_EQ(plugin_rear.cf_lane_change_required_, false);
     }
 }
 

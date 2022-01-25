@@ -547,6 +547,9 @@ namespace platoon_strategic
                     PlatoonPlan* new_plan = new PlatoonPlan(true, currentTime, planId, pm_.targetLeaderId);
 
                     pm_.current_plan = *new_plan;
+
+                    // CandidateFollower is in the target platooning lane; a lane change is not required
+                    cf_lane_change_required_ = false;
                 }
         
                 //Task 4
@@ -1040,6 +1043,11 @@ namespace platoon_strategic
 
             // Store the target CandidateFollower platoon lane index provided by the target Leader
             cf_target_lane_index_ = target_lane_index;
+
+            // Set flag to indicate CandidateFollower must change lanes if it is not currently in the target lane platoon lane index
+            if (current_lane_index_ != cf_target_lane_index_) {
+                cf_lane_change_required_ = true;
+            }
         }
         else {
             ROS_DEBUG_STREAM("Received a mobility operation message with params " << msg.strategy_params << " but ignored.");
