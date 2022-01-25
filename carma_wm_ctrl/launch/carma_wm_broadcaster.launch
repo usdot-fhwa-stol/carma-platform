@@ -16,6 +16,7 @@
   <node name="carma_wm_broadcaster" pkg="carma_wm_ctrl" type="carma_wm_ctrl_node">
     <remap from="georeference" to="$(optenv CARMA_LOCZ_NS)/map_param_loader/georeference"/>
     <remap from="$(optenv CARMA_ENV_NS)/geofence" to="$(optenv CARMA_MSG_NS)/incoming_geofence_control"/>
+    <remap from="$(optenv CARMA_ENV_NS)/incoming_map" to="$(optenv CARMA_MSG_NS)/incoming_map"/>
     <remap from="current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>
     <param name="max_lane_width" value = "$(arg max_lane_width)" />
   </node>
