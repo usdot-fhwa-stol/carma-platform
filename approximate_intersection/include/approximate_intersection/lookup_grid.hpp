@@ -45,29 +45,31 @@ namespace approximate_intersection
 
     std::unordered_set<HashIndex> occupied_cells_;
 
-    float32_t compute_side_length(Config config) const {
-      float32_t dx = config.max_x - config.min_x;
-      float32_t dy = config.max_y - config.min_y;
-
-      if (dx >= dy) {
-        return dx / (float32_t) config.resolution;
-      } else {
-        return dy / (float32_t) config.resolution;
-      }
-    }
-
     static constexpr size_t PLACE_HOLDER_CAPACITY = 1;
 
   public:
+
+    LookupGrid():LookupGrid(Config()) {};
+    
     /**
      * \brief Grid constructor 
      */
     LookupGrid(Config config):
       config_(config),
-      hasher_(config.min_x, config.max_x, config.min_y, config.max_y, compute_side_length(config), PLACE_HOLDER_CAPACITY)
+      hasher_(config.min_x, config.max_x, config.min_y, config.max_y, config.cell_side_length, PLACE_HOLDER_CAPACITY)
     {
-      occupied_cells_.reserve(config.resolution * config.resolution);
-      std::cerr << "Side Length " << compute_side_length(config) << std::endl;
+      double dx = config.max_x - config.min_x;
+      double dy = config.max_y - config.min_y;
+      
+      double rough_cell_side_count = 0;
+      
+      if (dx > dy) {
+        rough_cell_side_count = dx / config.cell_side_length;
+      } else {
+        rough_cell_side_count = dy / config.cell_side_length;
+      }
+
+      occupied_cells_.reserve(rough_cell_side_count * rough_cell_side_count);
     }
 
     bool intersects(PointT point) {

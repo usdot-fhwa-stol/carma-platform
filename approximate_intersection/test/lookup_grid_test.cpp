@@ -37,7 +37,7 @@ TEST(approximate_intersection, test){
     config.max_x = 10;
     config.min_y = -10;
     config.max_y = 10;
-    config.resolution = 20;
+    config.cell_side_length = 1;
 
     LookupGrid<TestPoint> grid(config);
 

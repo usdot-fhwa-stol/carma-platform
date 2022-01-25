@@ -40,18 +40,18 @@ namespace approximate_intersection
     //! Maximum y dimension
     float32_t max_y = 1000;
 
-    //! Resolution which describes the number of cells perside of the lookup grid
-    size_t resolution = 100;
+    //! Cell size length
+    size_t cell_side_length = 100;
 
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)
     {
       output << "approximate_intersection::Config { " << std::endl
            << "min_x: " << c.min_x << std::endl
-           << "max_x: " << c.min_x << std::endl
-           << "min_y: " << c.min_x << std::endl
-           << "max_y: " << c.min_x << std::endl
-           << "resolution: " << c.min_x << std::endl
+           << "max_x: " << c.max_x << std::endl
+           << "min_y: " << c.min_y << std::endl
+           << "max_y: " << c.max_y << std::endl
+           << "cell_side_length: " << c.cell_side_length << std::endl
            << "}" << std::endl;
       return output;
     }
