@@ -1,0 +1,3 @@
+# Double: The side length of the 2d cells which are used to discretize the filter space
+# Units: meters
+cell_side_length : 3.0
