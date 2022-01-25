@@ -224,8 +224,7 @@ namespace platoon_strategic
             
             /**
             * \brief Checks if the current location is on the rightmost lane. This function also
-            * sets current local lane index for this object (0 is rightmost lane of the given travel direction,
-            * 1 is second rightmost lane, etc.).
+            * sets the current local lane index for this object
             * \param current_location 2d point of current location x and y
             */
             void checkForRightMostLane(const lanelet::BasicPoint2d& current_location);
@@ -238,6 +237,8 @@ namespace platoon_strategic
             // variable to show if the vehicle is on a single-lane lane
             bool single_lane_road_ = false;
 
+            // Flag to enable/disable platooning plugin
+            bool platooning_enabled_ = false;
         
         private:
 
@@ -490,11 +491,12 @@ namespace platoon_strategic
             lanelet::BasicPoint2d ecef_to_map_point(cav_msgs::LocationECEF ecef_point);
 
 
-            // Pointer for map projector
-            std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
-
+            
             // flag to check if map is loaded
             bool map_loaded_ = false;
+            
+            // Pointer for map projector
+            std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
             // Flag to indicate that Leader must change lanes into a suitable platooning lane before forming an initial platoon
             // Note: Leader must be on a single-lane road or in a non-rightmost-lane (of a given travel direction) before forming an initial platoon

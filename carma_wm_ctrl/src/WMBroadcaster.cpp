@@ -218,6 +218,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
     {
       update->affected_parts_.push_back(llt);
     }
+    updates_to_send.push_back(update);
   }
 
   for (auto signal : traffic_signals)
@@ -230,6 +231,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
     {
       update->affected_parts_.push_back(llt);
     }
+    updates_to_send.push_back(update);
   }
   
   return updates_to_send;
@@ -1042,14 +1044,14 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   std::lock_guard<std::mutex> guard(map_mutex_);
   // quickly check if the id has been added
   if (geofence_msg.choice != cav_msgs::TrafficControlMessage::TCMV01) {
-    ROS_WARN_STREAM("Dropping recieved geofence for unsupported TrafficControl version: " << geofence_msg.choice);
+    ROS_WARN_STREAM("Dropping received geofence for unsupported TrafficControl version: " << geofence_msg.choice);
     return;
   }
 
   boost::uuids::uuid id;
   std::copy(geofence_msg.tcmV01.id.id.begin(), geofence_msg.tcmV01.id.id.end(), id.begin());
   if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end()) { 
-    ROS_DEBUG_STREAM("Dropping recieved TrafficControl message with already handled id: " <<  boost::uuids::to_string(id));
+    ROS_DEBUG_STREAM("Dropping received TrafficControl message with already handled id: " <<  boost::uuids::to_string(id));
     return;
   }
 
@@ -1142,6 +1144,7 @@ void WMBroadcaster::scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf
 void WMBroadcaster::geoReferenceCallback(const std_msgs::String& geo_ref)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
+  sim_.setTargetFrame(geo_ref.data);
   base_map_georef_ = geo_ref.data;
 }
 
@@ -1409,7 +1412,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
     {
       for (auto pair : update->update_list_) active_geofence_llt_ids_.insert(pair.first);
     }
-
+    
     // If the geofence invalidates the route graph then recompute the routing graph now that the map has been updated
     if (update->invalidate_route_) {
 
@@ -1427,6 +1430,12 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
     autoware_lanelet2_msgs::MapBin gf_msg;
     auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(update->id_, update->update_list_, update->remove_list_, update->lanelet_additions_));
     send_data->traffic_light_id_lookup_ = update->traffic_light_id_lookup_;
+
+    if (detected_map_msg_signal && updates_to_send.back() == update) // if last update
+    {
+      send_data->sim_ = sim_;
+    }
+
     carma_wm::toBinMsg(send_data, &gf_msg);
     update_count_++; // Update the sequence count for the geofence messages
     gf_msg.header.seq = update_count_;

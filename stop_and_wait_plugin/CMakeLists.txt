@@ -35,6 +35,7 @@ set( CATKIN_DEPS
   tf2_geometry_msgs
   roslib
   route
+  basic_autonomy
 )
 
 ## Find catkin macros and libraries

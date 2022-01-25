@@ -117,7 +117,7 @@ WzStrategicPlugin::VehicleState WzStrategicPlugin::extractInitialState(const cav
   return state;
 }
 
-bool WzStrategicPlugin::validLightState(const boost::optional<lanelet::CarmaTrafficSignalState>& optional_state,
+bool WzStrategicPlugin::validLightState(const boost::optional<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>& optional_state,
                                         const ros::Time& source_time) const
 {
   if (!optional_state)
@@ -126,7 +126,7 @@ bool WzStrategicPlugin::validLightState(const boost::optional<lanelet::CarmaTraf
     return false;
   }
 
-  lanelet::CarmaTrafficSignalState light_state = optional_state.get();
+  lanelet::CarmaTrafficSignalState light_state = optional_state.get().second;
 
   if (!supportedLightState(light_state))
   {
@@ -266,22 +266,22 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
   if (!validLightState(early_arrival_state_at_freeflow_optional, early_arrival_time_at_freeflow))
     return;
 
-  ROS_DEBUG_STREAM("early_arrival_state_at_freeflow: " << early_arrival_state_at_freeflow_optional.get());
+  ROS_DEBUG_STREAM("early_arrival_state_at_freeflow: " << early_arrival_state_at_freeflow_optional.get().second);
 
   auto late_arrival_state_at_freeflow_optional = nearest_traffic_light->predictState(lanelet::time::timeFromSec(late_arrival_time_at_freeflow.toSec()));
 
   if (!validLightState(late_arrival_state_at_freeflow_optional, late_arrival_time_at_freeflow))
     return;
 
-  ROS_DEBUG_STREAM("late_arrival_state_at_freeflow: " << late_arrival_state_at_freeflow_optional.get());
+  ROS_DEBUG_STREAM("late_arrival_state_at_freeflow: " << late_arrival_state_at_freeflow_optional.get().second);
 
   // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
       getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
 
   // We will cross the light on the green phase even if we arrive early or late
-  if (early_arrival_state_at_freeflow_optional.get() == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
-      late_arrival_state_at_freeflow_optional.get() ==
+  if (early_arrival_state_at_freeflow_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
+      late_arrival_state_at_freeflow_optional.get().second ==
           lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)  // Green light
   {
 
@@ -337,7 +337,7 @@ void WzStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& re
   if (!validLightState(current_light_state_optional, req.header.stamp))
     return;
 
-  if (current_light_state_optional.get() == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+  if (current_light_state_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
   {
     transition_table_.signal(TransitEvent::RED_TO_GREEN_LIGHT);  // If the light is green send the light transition
                                                                  // signal

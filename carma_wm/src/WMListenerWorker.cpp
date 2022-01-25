@@ -18,6 +18,7 @@
 #include <lanelet2_extension/regulatory_elements/DirectionOfTravel.h>
 #include <lanelet2_extension/regulatory_elements/StopRule.h>
 #include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
+#include <lanelet2_extension/regulatory_elements/SignalizedIntersection.h>
 #include "WMListenerWorker.h"
 
 namespace carma_wm
@@ -112,6 +113,33 @@ void WMListenerWorker::enableUpdatesWithoutRoute()
   route_node_flag_=true;
 }
 
+// helper function to log SignalizedIntersectionManager content
+void logSignalizedIntersectionManager(const carma_wm::SignalizedIntersectionManager& sim)
+{
+  for (auto pair : sim.intersection_id_to_regem_id_)
+  {
+    ROS_DEBUG_STREAM("inter id: " << (int)pair.first << ", regem id: " << pair.second);
+  }
+  for (auto pair : sim.signal_group_to_entry_lanelet_ids_)
+  {
+    for (auto iter = pair.second.begin(); iter != pair.second.end(); iter++)
+    {
+      ROS_DEBUG_STREAM("signal id: " << (int)pair.first << ", entry llt id: " << *iter);
+    }
+  }
+  for (auto pair : sim.signal_group_to_exit_lanelet_ids_)
+  {
+    for (auto iter = pair.second.begin(); iter != pair.second.end(); iter++)
+    {
+      ROS_DEBUG_STREAM("signal id: " << (int)pair.first << ", exit llt id: " << *iter);
+    }
+  }
+  for (auto pair : sim.signal_group_to_traffic_light_id_)
+  {
+    ROS_DEBUG_STREAM("signal id: " << (int)pair.first << ", regem id: " << pair.second);
+  }
+}
+
 void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg)
 {
   ROS_INFO_STREAM("Map Update Being Evaluated. SeqNum: " << geofence_msg->header.seq);
@@ -125,7 +153,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     ROS_DEBUG_STREAM("Dropping map update which has already been processed. Received seq: " << geofence_msg->header.seq << " prev seq: " << most_recent_update_msg_seq_);
     return;
   } else if(!world_model_->getMap() || current_map_version_ < geofence_msg->map_version) { // If our current map version is older than the version target by this update
-    ROS_DEBUG_STREAM("Update recieved for newer map version than available. Queueing update until map is available.");
+    ROS_DEBUG_STREAM("Update received for newer map version than available. Queueing update until map is available.");
     map_update_queue_.push(geofence_msg);
     return;
   } else if (current_map_version_ > geofence_msg->map_version) { // If this update is for an older map
@@ -155,12 +183,13 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
 
   most_recent_update_msg_seq_ = geofence_msg->header.seq; // Update current sequence count
 
+  auto gf_ptr = std::shared_ptr<carma_wm::TrafficControl>(new carma_wm::TrafficControl);
+  
   // convert ros msg to geofence object
-  auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
-  carma_wm::fromBinMsg(*geofence_msg, gf_ptr);
+  carma_wm::fromBinMsg(*geofence_msg, gf_ptr, world_model_->getMutableMap());
 
   ROS_INFO_STREAM("Processing Map Update with Geofence Id:" << gf_ptr->id_);
-
+  
   ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " requests addition of lanelets size: " << gf_ptr->lanelet_additions_.size());
   for (auto llt : gf_ptr->lanelet_additions_)
   {
@@ -198,7 +227,10 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
 
   ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " sends record of intersections size: " << gf_ptr->sim_.intersection_id_to_regem_id_.size());
   if (gf_ptr->sim_.intersection_id_to_regem_id_.size() > 0)
+  {
     world_model_->sim_ = gf_ptr->sim_;
+    logSignalizedIntersectionManager(world_model_->sim_);
+  }
 
   ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " requests removal of size: " << gf_ptr->remove_list_.size());
   for (auto pair : gf_ptr->remove_list_)
@@ -216,11 +248,10 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     ROS_DEBUG_STREAM("Regems left in lanelet after removal: " << parent_llt.regulatoryElements().size());
 
   }
-
+  
   ROS_INFO_STREAM("Geofence id" << gf_ptr->id_ << " requests update of size: " << gf_ptr->update_list_.size());
 
   // we should extract general regem to specific type of regem the geofence specifies
-  
   for (auto pair : gf_ptr->update_list_)
   {
 
@@ -239,17 +270,14 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     }
     else // Updates are treated as new regulations after the old value was removed. In both cases we enter this block. 
     {
-
       ROS_DEBUG_STREAM("New regulatory element " << pair.second->id());
       newRegemUpdateHelper(parent_llt, pair.second.get());
-
     }
   }
   
   // set the Map to trigger a new route graph construction if rerouting was required by the updates. 
   world_model_->setMap(world_model_->getMutableMap(), current_map_version_, recompute_route_flag_);
 
-  
   // no need to reroute again unless received invalidated msg again
   if (recompute_route_flag_)
     recompute_route_flag_ = false;
@@ -265,6 +293,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   }
 }
 
+
 /*!
   * \brief This is a helper function updates the parent_llt with specified regem. This function is needed
   *        as we need to dynamic_cast from general regem to specific type of regem based on the geofence
@@ -274,8 +303,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   */
 void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const
 {
-
-  auto factory_pcl = lanelet::RegulatoryElementFactory::create(regem->attribute(lanelet::AttributeName::Subtype).value(),
+  auto factory_regem = lanelet::RegulatoryElementFactory::create(regem->attribute(lanelet::AttributeName::Subtype).value(),
                                                             std::const_pointer_cast<lanelet::RegulatoryElementData>(regem->constData()));
 
   // we should extract general regem to specific type of regem the geofence specifies
@@ -283,64 +311,126 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
   {
     case GeofenceType::PASSING_CONTROL_LINE:
     {
-
-      lanelet::PassingControlLinePtr control_line = std::dynamic_pointer_cast<lanelet::PassingControlLine>(factory_pcl);
-      world_model_->getMutableMap()->update(parent_llt, control_line);
+      lanelet::PassingControlLinePtr control_line = std::dynamic_pointer_cast<lanelet::PassingControlLine>(factory_regem);
+      if (control_line)
+      {
+        world_model_->getMutableMap()->update(parent_llt, control_line);
+      }
+      else
+      {
+        std::invalid_argument("Dynamic Pointer cast failed on getting valid control line");
+      }
 
       break;
     }
     case GeofenceType::DIGITAL_SPEED_LIMIT:
     {
-
-      lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_pcl);
-      world_model_->getMutableMap()->update(parent_llt, speed);
-      ROS_DEBUG_STREAM("updateed llt id:" << parent_llt.id() << ", with digital speed limit of: " << speed->speed_limit_.value()<<"in ms");
+      lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_regem);
+      if (speed)
+      {
+        world_model_->getMutableMap()->update(parent_llt, speed);
+      }
+      else
+      {
+        std::invalid_argument("Dynamic Pointer cast failed on getting valid speed limit");
+      }
       break;
     }
     case GeofenceType::REGION_ACCESS_RULE:
     {
 
-      lanelet::RegionAccessRulePtr rar = std::dynamic_pointer_cast<lanelet::RegionAccessRule>(factory_pcl);
-      world_model_->getMutableMap()->update(parent_llt, rar);
-
+      lanelet::RegionAccessRulePtr rar = std::dynamic_pointer_cast<lanelet::RegionAccessRule>(factory_regem);
+      if (rar)
+      {
+        world_model_->getMutableMap()->update(parent_llt, rar);
+      }
+      else
+      {
+        std::invalid_argument("Dynamic Pointer cast failed on getting valid region access rule");
+      }
+      
       break;
     }
     case GeofenceType::DIGITAL_MINIMUM_GAP:
     {
 
-      lanelet::DigitalMinimumGapPtr min_gap = std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>(factory_pcl);
-      world_model_->getMutableMap()->update(parent_llt, min_gap);
-
+      lanelet::DigitalMinimumGapPtr min_gap = std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>(factory_regem);
+      if (min_gap)
+      {
+        world_model_->getMutableMap()->update(parent_llt, min_gap);
+      }
+      else
+      {
+        std::invalid_argument("Dynamic Pointer cast failed on getting valid minimum gap rule");
+      }
+      
       break;
     }
     case GeofenceType::DIRECTION_OF_TRAVEL:
     {
 
-      lanelet::DirectionOfTravelPtr dot = std::dynamic_pointer_cast<lanelet::DirectionOfTravel>(factory_pcl);
-      world_model_->getMutableMap()->update(parent_llt, dot);
-
+      lanelet::DirectionOfTravelPtr dot = std::dynamic_pointer_cast<lanelet::DirectionOfTravel>(factory_regem);
+      if (dot)
+      {
+        world_model_->getMutableMap()->update(parent_llt, dot);
+      }
+      else
+      {
+        std::invalid_argument("Dynamic Pointer cast failed on getting valid direction of travel");
+      }
+      
       break;
     }
     case GeofenceType::STOP_RULE:
     {
 
-      lanelet::StopRulePtr sr = std::dynamic_pointer_cast<lanelet::StopRule>(factory_pcl);
-      world_model_->getMutableMap()->update(parent_llt, sr);
-
+      lanelet::StopRulePtr sr = std::dynamic_pointer_cast<lanelet::StopRule>(factory_regem);
+      if (sr)
+      {
+        world_model_->getMutableMap()->update(parent_llt, sr);
+      }
+      else
+      {
+        std::invalid_argument("Dynamic Pointer cast failed on getting valid stop rule");
+      }
       break;
     }
     case GeofenceType::CARMA_TRAFFIC_LIGHT:
     {
-
-      lanelet::CarmaTrafficSignalPtr ctl = std::dynamic_pointer_cast<lanelet::CarmaTrafficSignal>(factory_pcl);
-      world_model_->getMutableMap()->update(parent_llt, ctl);
-
+      lanelet::CarmaTrafficSignalPtr ctl = std::dynamic_pointer_cast<lanelet::CarmaTrafficSignal>(factory_regem);
+      if (ctl)
+      {
+        world_model_->getMutableMap()->update(parent_llt, ctl);
+      }
+      else
+      {
+        std::invalid_argument("Dynamic Pointer cast failed on getting valid carma traffic signal");
+      }
+      break;
+    }
+    case GeofenceType::SIGNALIZED_INTERSECTION:
+    {
+      lanelet::SignalizedIntersectionPtr si = std::dynamic_pointer_cast<lanelet::SignalizedIntersection>(factory_regem);
+      if (si)
+      {
+        world_model_->getMutableMap()->update(parent_llt, si);
+      }
+      else
+      {
+        std::invalid_argument("Dynamic Pointer cast failed on getting valid signalized intersection");
+      }
+      
       break;
     }
     default:
       ROS_WARN_STREAM("World Model instance received an unsupported geofence type in its map update callback!");
       break;
   }
+}
+
+std::string WMListenerWorker::getVehicleParticipationType() const
+{
+  return world_model_->getVehicleParticipationType();
 }
 
 void WMListenerWorker::roadwayObjectListCallback(const cav_msgs::RoadwayObstacleList& msg)
