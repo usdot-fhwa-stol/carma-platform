@@ -160,6 +160,9 @@ namespace platoon_strategic
             single_lane_road_ = false;
             ROS_DEBUG_STREAM("Vehicle is NOT in a single-lane road");
         }
+
+        // Store the current local lane index of the host vehicle (0 is rightmost lane, 1 is second rightmost, etc.); considers only the current travel direction
+        current_lane_index_ = (routing_graph->rights(current_lanelet[0])).size();
     }
 
     void PlatoonStrategicPlugin::updateCurrentStatus(cav_msgs::Maneuver maneuver, double& speed, double& current_progress, int& lane_id){
@@ -350,21 +353,29 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::run_leader_waiting(){
         ROS_DEBUG_STREAM("Run LeaderWaiting State ");
         long tsStart = ros::Time::now().toNSec()/1000000;
-            // Task 1
-                if(tsStart - waitingStartTime > waitingStateTimeout * 1000) 
-                {
-                    //TODO if the current state timeouts, we need to have a kind of ABORT message to inform the applicant
-                    ROS_DEBUG_STREAM("LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
-                    pm_.current_platoon_state = PlatoonState::LEADER;
-                }
-                // Task 2
-                cav_msgs::MobilityOperation status;
-                status = composeMobilityOperationLeaderWaiting();
-                mobility_operation_publisher_(status);
-                ROS_DEBUG_STREAM("publish status message");
-                long tsEnd = ros::Time::now().toNSec()/1000000; 
-                long sleepDuration = std::max((int32_t)(statusMessageInterval_ - (tsEnd - tsStart)), 0);
-                ros::Duration(sleepDuration/1000).sleep();
+        // Task 1
+        if(tsStart - waitingStartTime > waitingStateTimeout * 1000) 
+        {
+            //TODO if the current state timeouts, we need to have a kind of ABORT message to inform the applicant
+            ROS_DEBUG_STREAM("LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
+            pm_.current_platoon_state = PlatoonState::LEADER;
+        }
+        // Task 2
+        cav_msgs::MobilityOperation status;
+        status = composeMobilityOperationLeaderWaiting(OPERATION_STATUS_TYPE);
+        mobility_operation_publisher_(status);
+        ROS_DEBUG_STREAM("publish status message");
+
+        // Task 3: Publish JOIN_REQUIREMENTS MobilityOperation message to applicant 
+        cav_msgs::MobilityOperation join_requirements;
+        join_requirements = composeMobilityOperationLeaderWaiting(JOIN_REQUIREMENTS_TYPE);
+
+        mobility_operation_publisher_(join_requirements);
+        ROS_DEBUG_STREAM("Composed a JOIN_REQUIREMENTS MobilityOperation message with params " << join_requirements.strategy_params);
+
+        long tsEnd = ros::Time::now().toNSec()/1000000; 
+        long sleepDuration = std::max((int32_t)(statusMessageInterval_ - (tsEnd - tsStart)), 0);
+        ros::Duration(sleepDuration/1000).sleep();
     }
 
     void PlatoonStrategicPlugin::run_leader(){
@@ -404,6 +415,34 @@ namespace platoon_strategic
                 mobility_operation_publisher_(statusOperation);
                 ROS_DEBUG_STREAM("Published platoon STATUS operation message");
             }
+            else {
+                // Check if Leader must change lanes into a suitable platooning lane prior before responding ACK to a JOIN_PLATOON_AT_REAR request
+                if (leader_lane_change_required_) {
+
+                    // If the lane change was required, check if Leader is now in a suitable platooning lane
+                    if (!in_rightmost_lane_ || single_lane_road_) {
+
+                        // Leader is either on a single-lane road or not in the rightmost lane of a multi-lane road; it can now respond ACK to applicant's JOIN_PLATOON_AT_REAR request
+                        cav_msgs::MobilityResponse response;
+                        response.header.sender_id = config_.vehicleID;
+                        response.header.recipient_id = lw_applicantId_;
+                        response.header.plan_id = pm_.currentPlatoonID;
+                        response.header.sender_bsm_id = host_bsm_id_;
+                        response.header.timestamp = ros::Time::now().toNSec()/1000000;
+                        response.is_accepted = true;
+
+                        ROS_DEBUG_STREAM("We are now in a suitable platooning lane, sending ACK to applicant " << lw_applicantId_);
+                        ROS_DEBUG_STREAM("Change to LeaderWaiting State and waiting for " << lw_applicantId_ << " to join");
+                        pm_.current_platoon_state = PlatoonState::LEADERWAITING;
+                        waitingStartTime = ros::Time::now().toNSec()/1000000;
+                        mobility_response_publisher_(response);
+                        
+                        // Vehicle is now in a suitable platooning lane; a lane change is no longer required
+                        leader_lane_change_required_ = false;                       
+                    }
+                }
+            }
+
             long tsEnd =  ros::Time::now().toNSec()/1000000; 
             long sleepDuration = std::max((int32_t)(statusMessageInterval_ - (tsEnd - tsStart)), 0);
             ros::Duration(sleepDuration/1000).sleep();
@@ -478,8 +517,9 @@ namespace platoon_strategic
                 ROS_DEBUG_STREAM("Since we have max allowed gap as " << desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
                 ROS_DEBUG_STREAM("The current gap from radar is " << currentGap << " m");
                 // TODO: temporary
-                if(true)//(currentGap <= maxJoinGap && pm_.current_plan.valid == false) {
+                if(current_lane_index_ == cf_target_lane_index_ && has_received_join_requirements_) //(currentGap <= maxJoinGap && pm_.current_plan.valid == false) {
                 {
+                    ROS_DEBUG_STREAM("We are now in the target lane index provided by the leader: " << cf_target_lane_index_);
                     cav_msgs::MobilityRequest request;
                     std::string planId = boost::uuids::to_string(boost::uuids::random_generator()());
                     long currentTime = ros::Time::now().toNSec()/1000000; 
@@ -688,7 +728,15 @@ namespace platoon_strategic
                     waitingStartTime = ros::Time::now().toNSec()/1000000;
                     lw_applicantId_ = msg.header.sender_id;
                     return MobilityRequestResponse::ACK;
-                } else {
+                } 
+                else if(isDistanceCloseEnough && !laneConditionsSatisfied) {
+                    ROS_DEBUG_STREAM("The applicant is close enough, but we must change into a suitable platooning lane before sending ACK.");
+                    lw_applicantId_ = msg.header.sender_id;
+
+                    // Set flag to indicate that a lane change into a suitable platooning lane is required prior to sending ACK to applicant
+                    leader_lane_change_required_ = true;
+                }
+                else {
                     ROS_DEBUG_STREAM("The applicant is too far away from us or not in corret lane. NACK.");
                     ROS_DEBUG_STREAM("isDistanceCloseEnough" << isDistanceCloseEnough);
                     ROS_DEBUG_STREAM("laneConditionsSatisfied" << laneConditionsSatisfied);
@@ -801,6 +849,7 @@ namespace platoon_strategic
                     ROS_DEBUG_STREAM("Change to CandidateFollower state and notify trajectory failure in order to replan");
                         // Change to candidate follower state and request a new plan to catch up with the front platoon
                         pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
+                        has_received_join_requirements_ = false;
                         candidatestateStartTime = ros::Time::now().toNSec()/1000000;
                         targetPlatoonId = potentialNewPlatoonId;
                         ROS_DEBUG_STREAM("targetPlatoonId = " << targetPlatoonId);
@@ -932,6 +981,8 @@ namespace platoon_strategic
         // We still need to handle STATUS operAtion message from our platoon
         std::string strategyParams = msg.strategy_params;
         bool isPlatoonStatusMsg = (strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0);
+        bool isJoinRequirementsMsg = (strategyParams.rfind(JOIN_REQUIREMENTS_TYPE, 0) == 0);
+
         if(isPlatoonStatusMsg) {
             std::string vehicleID = msg.header.sender_id;
             std::string platoonId = msg.header.plan_id;
@@ -965,6 +1016,22 @@ namespace platoon_strategic
 
             pm_.memberUpdates(vehicleID, platoonId, msg.header.sender_bsm_id, statusParams, dtd);
             ROS_DEBUG_STREAM("Received platoon status message from " << msg.header.sender_id);
+        }
+        else if(isJoinRequirementsMsg && msg.header.recipient_id == config_.vehicleID) {
+            has_received_join_requirements_ = true;
+
+            // JOIN_REQUIREMENTS message uses params string format "JOIN_REQUIREMENTS|LANE_INDEX:xx"
+            std::vector<std::string> inputsParams;
+            boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+
+            std::vector<std::string> target_lane_index_parsed;
+            boost::algorithm::split(target_lane_index_parsed, inputsParams[0], boost::is_any_of(":"));
+            int target_lane_index = std::stoi(target_lane_index_parsed[1]);
+
+            ROS_DEBUG_STREAM("Received JOIN_REQUIREMENTS MobilityOperation with target lane index: " << target_lane_index);
+
+            // Store the target CandidateFollower platoon lane index provided by the target Leader
+            cf_target_lane_index_ = target_lane_index;
         }
         else {
             ROS_DEBUG_STREAM("Received a mobility operation message with params " << msg.strategy_params << " but ignored.");
@@ -1337,7 +1404,7 @@ namespace platoon_strategic
     }
 
 
-    cav_msgs::MobilityOperation PlatoonStrategicPlugin::composeMobilityOperationLeaderWaiting()
+    cav_msgs::MobilityOperation PlatoonStrategicPlugin::composeMobilityOperationLeaderWaiting(const std::string& type)
     {
         cav_msgs::MobilityOperation msg;
         msg.header.plan_id = pm_.currentPlatoonID;
@@ -1349,19 +1416,35 @@ namespace platoon_strategic
         msg.header.timestamp = ros::Time::now().toNSec()/1000000;
 
         msg.strategy = MOBILITY_STRATEGY;
-        // For STATUS params, the string format is "STATUS|CMDSPEED:5.0,DOWNTRACK:100.0,SPEED:5.0"
 
-        double cmdSpeed = cmd_speed_;
-        boost::format fmter(OPERATION_STATUS_PARAMS);
-        fmter %cmdSpeed;
-        fmter %current_downtrack_;
-        fmter %current_speed_;
-        fmter %pose_ecef_point_.ecef_x;
-        fmter %pose_ecef_point_.ecef_y;
-        fmter %pose_ecef_point_.ecef_z;
-                    
-        std::string statusParams = fmter.str();
-        msg.strategy_params = statusParams;
+        if (type == OPERATION_STATUS_TYPE){
+            // For STATUS params, the string format is "STATUS|CMDSPEED:5.0,DOWNTRACK:100.0,SPEED:5.0"
+
+            double cmdSpeed = cmd_speed_;
+            boost::format fmter(OPERATION_STATUS_PARAMS);
+            fmter %cmdSpeed;
+            fmter %current_downtrack_;
+            fmter %current_speed_;
+            fmter %pose_ecef_point_.ecef_x;
+            fmter %pose_ecef_point_.ecef_y;
+            fmter %pose_ecef_point_.ecef_z;
+                        
+            std::string statusParams = fmter.str();
+            msg.strategy_params = statusParams;
+        }
+        else if (type == JOIN_REQUIREMENTS_TYPE) {
+            // For JOIN_REQUIREMENTS params, the string format is "JOIN_REQUIREMENTS|LANE_INDEX:xx"
+
+            msg.header.recipient_id = lw_applicantId_; // JOIN_REQUIREMENTS message is intended only for the current applicant
+
+            boost::format fmter(JOIN_REQUIREMENTS_PARAMS);
+            fmter %current_lane_index_; // Local lane index of host vehicle (0 is rightmost, 1 is second rightmost, etc.); considers only the current travel direction
+
+            std::string join_params = fmter.str();
+            msg.strategy_params = join_params;
+
+            ROS_DEBUG_STREAM("Composed a JOIN_REQUIREMENTS MobilityOperation message with params " << msg.strategy_params);
+        }
         return msg;
     }
 
