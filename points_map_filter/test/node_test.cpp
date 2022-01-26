@@ -26,16 +26,29 @@
 // TODO for USER: Implement a real test using GTest
 TEST(Testpoints_map_filter, example_test){
 
-    rclcpp::NodeOptions options;
-    auto worker_node = std::make_shared<points_map_filter::Node>(options);
+    // rclcpp::NodeOptions options;
+    // auto worker_node = std::make_shared<points_map_filter::Node>(options);
 
-    worker_node->configure(); //Call configure state transition
-    worker_node->activate();  //Call activate state transition to get not read for runtime
+    // worker_node->configure(); //Call configure state transition
+    // worker_node->activate();  //Call activate state transition to get not read for runtime
 
-    // std::unique_ptr<std_msgs::msg::String> msg = std::make_unique<std_msgs::msg::String>();
-    // msg->data = "my string";
+    // // Create a random generator to fill in the cloud
+    // float min = -2.0;
+    // float max = 2.0;
+    // float width = max - min;
+    // float height = width;
+    // uint32_t seed = 1234;
 
-    // worker_node->example_callback(move(msg)); // Manually drive topic callbacks
+    // auto cloud = pcl::make_shared<pcl::PointCloud<pcl::PointXYZI>>());
+    // pcl::common::CloudGenerator<pcl::PointXYZI, pcl::common::UniformGenerator<float>>
+    //     generator{{min, max, seed}};
+
+    // generator.fill(width, height, *cloud);
+
+    // // std::unique_ptr<std_msgs::msg::String> msg = std::make_unique<std_msgs::msg::String>();
+    // // msg->data = "my string";
+
+    // // worker_node->example_callback(move(msg)); // Manually drive topic callbacks
 
 }
 
