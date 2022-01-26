@@ -154,7 +154,7 @@ class NS3Adapter : public cav::DriverApplication
         * This method packs the message according to the J2375 2016 standard,
         * and sends it to the client program
         */
-        void onOutboundMessage(const cav_msgs::ByteArray::ConstPtr& message);
+        void onOutboundMessage(const cav_msgs::ByteArrayPtr& message);
 
         /**
         * @brief Message sending service

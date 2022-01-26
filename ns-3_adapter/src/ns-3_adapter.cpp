@@ -164,12 +164,13 @@ std::vector<uint8_t> NS3Adapter::packMessage(const cav_msgs::ByteArray& message)
 *
 * This method receives a message from the ROS network, and adds it to the send queue.
 */
-void NS3Adapter::onOutboundMessage(const cav_msgs::ByteArray::ConstPtr& message) {
+void NS3Adapter::onOutboundMessage(const cav_msgs::ByteArrayPtr& message) {
     if(!ns3_client_.connected())
     {
         ROS_WARN_STREAM("Outbound message received but node is not connected to NS-3");
         return;
     }
+    
     std::shared_ptr<std::vector<uint8_t>> message_content = std::make_shared<std::vector<uint8_t>>(std::move(packMessage(*message)));
     send_msg_queue_.push_back(std::move(message_content));
 }

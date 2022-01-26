@@ -5,12 +5,11 @@
 TEST(NS3AdapterTest, testOnConnectHandler)
 {
     int argc = 1;
-    char c[2][2] = {{'a','b'}, {'c','d'}};
     //char* argv[] {c[0], c[1]};
     char **argv;
     NS3Adapter worker(argc,argv);
 
-    ROS_ERROR_STREAM("Pre-Connection NS-3 Status: " << worker.getDriverStatus().status);
+    ROS_ERROR_STREAM("Pre-Connection NS-3 Status: " << static_cast<int>(worker.getDriverStatus().status));
     worker.onConnectHandler();
     EXPECT_EQ(worker.getDriverStatus().status, cav_msgs::DriverStatus::OPERATIONAL);
 }
@@ -22,7 +21,7 @@ TEST(NS3AdapterTest, testOnDisconnectHandler)
     char* argv[] {c[0], c[1]};
     NS3Adapter worker(argc,argv);
 
-    ROS_ERROR_STREAM("Pre-Connection NS-3 Status: " << worker.getDriverStatus().status);
+    ROS_ERROR_STREAM("Pre-Connection NS-3 Status: " << static_cast<int>(worker.getDriverStatus().status));
     worker.onDisconnectHandler();
     EXPECT_EQ(worker.getDriverStatus().status, cav_msgs::DriverStatus::OFF);
 
@@ -38,8 +37,8 @@ TEST(NS3AdapterTest, testOnMsgReceivedHandler)
     std::vector<uint8_t> content;
     content.push_back(1);
 
-    ROS_ERROR_STREAM("Pre-Connection NS-3 Status: " << worker.getDriverStatus().status);
-    EXPECT_THROW(worker.onMessageReceivedHandler(content, id), ros::TimeNotInitializedException);
+    ROS_ERROR_STREAM("Pre-Connection NS-3 Status: " << static_cast<int>(worker.getDriverStatus().status));
+    EXPECT_THROW(worker.onMessageReceivedHandler(content, id), ros::TimeNotInitializedException); //Since the onMessageReceivedHandler requires ros::Time initialized, this should throw an exception
     
     EXPECT_EQ(worker.getDriverStatus().status, cav_msgs::DriverStatus::OFF);
 
@@ -48,7 +47,24 @@ TEST(NS3AdapterTest, testOnMsgReceivedHandler)
 
 TEST(NS3AdapterTest, testpackMessage)
 {
+    int argc = 1;
+    char c[2][2] = {{'a','b'}, {'c','d'}};
+    char* argv[] {c[0], c[1]};
+    NS3Adapter worker(argc,argv);
+
+    cav_msgs::ByteArray array1;
+
+    uint8_t msg = 4;
+
+    array1.content.push_back(msg);
+
     
+    auto pm = worker.packMessage(array1);
+
+    ASSERT_GT(pm.size(), 0);
+    ASSERT_EQ(pm.size(), 150);
+
+
 }
 
 TEST(NS3AdapterTest, testonOutboundMessage)
@@ -60,15 +76,16 @@ TEST(NS3AdapterTest, testonOutboundMessage)
 
     cav_msgs::ByteArray array1;
 
-    uint8_t msg = 8;
+    uint8_t msg = 1;
 
     array1.content.push_back(msg);
 
-    cav_msgs::ByteArray::ConstPtr message = new cav_msgs::ByteArray::ConstPtr(array1);
-
-
+    cav_msgs::ByteArrayPtr message;
+    ROS_ERROR_STREAM("THISISATEST");
+    //message->content.push_back(msg);
     worker.onOutboundMessage(message);
-    EXPECT_EQ(worker.getMsgQueue().back(), message->content.back());*/
+    auto msg_q = worker.getMsgQueue();
+    EXPECT_EQ(msg_q.size(), 0);*/
 
 }
 
