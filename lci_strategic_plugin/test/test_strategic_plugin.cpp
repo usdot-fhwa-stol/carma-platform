@@ -47,14 +47,14 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
   cav_srvs::PlanManeuversRequest req;
   cav_srvs::PlanManeuversResponse resp;
 
-  // Light will be located on lanelet 1200 (25m) and control lanelet 1202, 1203
+  // Light will be located on lanelet 1200 (250m) and control lanelet 1202, 1203
   lanelet::Id traffic_light_id = lanelet::utils::getId();
-  carma_wm::test::addTrafficLight(cmw_, traffic_light_id, 1201, { 1202 });
+  carma_wm::test::addTrafficLight(cmw_, traffic_light_id, 1200, { 1203 });
 
-  ROS_DEBUG("Out of range test ");
+  ROS_WARN("Out of range test ");
   req.header.stamp = ros::Time(0);
   req.veh_x = 1.85;
-  req.veh_y = 1.0; // Out of range of light which should kick in at 8.36567466667
+  req.veh_y = 1.0; // Out of range of light which should kick in at 100 meters at 11.176 m/s
   req.veh_downtrack = req.veh_y;
   req.veh_logitudinal_velocity = 11.176;
   req.veh_lane_id = "1200";
@@ -64,10 +64,45 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
 
   ASSERT_TRUE(resp.new_plan.maneuvers.empty());
 
-  ROS_DEBUG("In range test ");
+  ROS_WARN(">>>>>>>>>>>>>>>>>>>>>>>>>>>In range test: GREEN");
   req = cav_srvs::PlanManeuversRequest();
   req.veh_x = 1.85;
-  req.veh_y = 10.0; // In approach range
+  req.veh_y = 130; // In approach range
+  req.veh_downtrack = req.veh_y;
+  req.veh_logitudinal_velocity = 11.176;
+  req.veh_lane_id = "1200";
+
+  lcip.planManeuverCb(req, resp);
+
+  ASSERT_EQ(2, resp.new_plan.maneuvers.size());
+  ASSERT_EQ(cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT, resp.new_plan.maneuvers[0].type);
+  ASSERT_EQ(130.0, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.start_dist );
+  ASSERT_NEAR(0.0, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.start_time.toSec(), 0.00001);
+  ASSERT_NEAR(req.veh_logitudinal_velocity, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.start_speed, 0.00001);
+  ASSERT_NEAR(26.2, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.end_time.toSec(), 0.001);
+  ASSERT_NEAR(245, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.end_dist, 0.0001);
+  // check trajectory smoothing parameters:
+  ASSERT_EQ("Carma/light_controlled_intersection", resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.parameters.string_valued_meta_data.front());
+  ASSERT_NEAR(1.30112, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.parameters.float_valued_meta_data[0], 0.001);
+  ASSERT_NEAR(-1.30112, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.parameters.float_valued_meta_data[1], 0.001);
+  ASSERT_NEAR(46.0783, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.parameters.float_valued_meta_data[2], 0.001);
+  ASSERT_NEAR(27.8434, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.parameters.float_valued_meta_data[3], 0.001);
+  ASSERT_NEAR(46.0783, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.parameters.float_valued_meta_data[4], 0.001);
+  ASSERT_NEAR(2.2352, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.parameters.float_valued_meta_data[5], 0.001);
+  ASSERT_NEAR(-1, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.parameters.float_valued_meta_data[6], 0.001);
+  ASSERT_EQ(4, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.parameters.int_valued_meta_data[0]);
+
+  ASSERT_EQ(cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT, resp.new_plan.maneuvers[1].type);
+  ASSERT_EQ(245, resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.start_dist );
+  ASSERT_NEAR(26.2, resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.start_time.toSec(), 0.00001);
+  ASSERT_NEAR(11.176, resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.start_speed, 0.00001);
+  ASSERT_NEAR(70.9387, resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.end_time.toSec(), 0.001);
+  ASSERT_NEAR(750, resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.end_dist, 0.0001);
+
+  ROS_WARN(">>>>>>>>>>>>>>>>>>>>>>>>>>>In range test: RED");
+  req = cav_srvs::PlanManeuversRequest();
+  req.veh_x = 1.85;
+  req.veh_y = 185; // In approach range
   req.veh_downtrack = req.veh_y;
   req.veh_logitudinal_velocity = 11.176;
   req.veh_lane_id = "1200";
@@ -76,20 +111,18 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
 
   ASSERT_EQ(1, resp.new_plan.maneuvers.size());
   ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, resp.new_plan.maneuvers[0].type);
-  ASSERT_EQ(10.0, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_dist );
+  ASSERT_EQ(req.veh_y, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_dist );
   ASSERT_NEAR(0.0, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_time.toSec(), 0.00001);
-  ASSERT_NEAR(11.176, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_speed, 0.00001);
-  ASSERT_NEAR(config.min_maneuver_planning_period, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.end_time.toSec(), 0.001);
-  ASSERT_NEAR(45.0, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.end_dist, 0.0001);
-  ASSERT_TRUE(resp.new_plan.maneuvers[0].stop_and_wait_maneuver.starting_lane_id.compare("1200") == 0);
-  ASSERT_TRUE(resp.new_plan.maneuvers[0].stop_and_wait_maneuver.ending_lane_id.compare("1202") == 0);
+  ASSERT_NEAR(req.veh_logitudinal_velocity, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_speed, 0.00001);
+  ASSERT_NEAR(15.1, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.end_time.toSec(), 0.001);
+  ASSERT_NEAR(245, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.end_dist, 0.0001);
 
-  ROS_DEBUG("Waiting test ");
+  ROS_WARN(">>>>>>>>>>>>>>>>>>>>>>>Waiting test ");
   req = cav_srvs::PlanManeuversRequest();
   ros::Time::setNow(ros::Time(6.0));
   req.header.stamp = ros::Time(6.0); // In red phase
   req.veh_x = 1.85;
-  req.veh_y = 49.0; // At one meter infront of stop bar at a stop
+  req.veh_y = 249.0; // At one meter infront of stop bar at a stop
   req.veh_downtrack = req.veh_y;
   req.veh_logitudinal_velocity = 0.0;
   req.veh_lane_id = "1201";
@@ -98,15 +131,15 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
 
   ASSERT_EQ(1, resp.new_plan.maneuvers.size());
   ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, resp.new_plan.maneuvers[0].type);
-  ASSERT_EQ(39.0, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_dist );
+  ASSERT_EQ(239.0, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_dist );
   ASSERT_NEAR(6.0, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_time.toSec(), 0.00001);
   ASSERT_NEAR(0.0, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_speed, 0.00001);
   ASSERT_NEAR((ros::Time(6.0) + ros::Duration(config.min_maneuver_planning_period)).toSec(), resp.new_plan.maneuvers[0].stop_and_wait_maneuver.end_time.toSec(), 0.001);
-  ASSERT_NEAR(50.0, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.end_dist, 0.0001);
+  ASSERT_NEAR(250.0, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.end_dist, 0.0001);
   ASSERT_TRUE(resp.new_plan.maneuvers[0].stop_and_wait_maneuver.starting_lane_id.compare("1201") == 0);
   ASSERT_TRUE(resp.new_plan.maneuvers[0].stop_and_wait_maneuver.ending_lane_id.compare("1201") == 0);
   
-  ROS_DEBUG("Departing test ");
+  ROS_WARN(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Departing test ");
   req = cav_srvs::PlanManeuversRequest();
   ros::Time::setNow(ros::Time(25.0));
   req.header.stamp = ros::Time(25.0); // In green phase
@@ -123,18 +156,18 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
   ASSERT_EQ(49.0, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.start_dist );
   ASSERT_NEAR(25.0, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.start_time.toSec(), 0.00001);
   ASSERT_NEAR(0.0, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.start_speed, 0.00001);
-  ASSERT_NEAR((ros::Time(25.0) + ros::Duration(4.473872536388049)).toSec(), resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.end_time.toSec(), 0.25);
-  ASSERT_NEAR(75.0, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.end_dist, 0.0001);
+  ASSERT_NEAR((ros::Time(150.0) + ros::Duration(0.4473872536388049)).toSec(), resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.end_time.toSec(), 0.25);
+  ASSERT_NEAR(750.0, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.end_dist, 0.0001);
   ASSERT_NEAR(11.176, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.end_speed, 0.00001);
-  ASSERT_TRUE(resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.starting_lane_id.compare("1201") == 0);
+  ASSERT_TRUE(resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.starting_lane_id.compare("1200") == 0);
   ASSERT_TRUE(resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.ending_lane_id.compare("1203") == 0);
 
-  ROS_DEBUG("Exit test ");
+  ROS_WARN(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Exit test ");
   req = cav_srvs::PlanManeuversRequest();
   ros::Time::setNow(ros::Time(30.0));
   req.header.stamp = ros::Time(30.0); // In green phase
   req.veh_x = 1.85;
-  req.veh_y = 76.0; // past intersection
+  req.veh_y = 760.0; // past intersection
   req.veh_downtrack = req.veh_y;
   req.veh_logitudinal_velocity = 11.176;
   req.veh_lane_id = "1203";
@@ -143,41 +176,42 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
 
   ASSERT_TRUE(resp.new_plan.maneuvers.empty());
 
-
-  ROS_DEBUG("Reset to evaluate flow throw behavior");
+  ROS_WARN(">>>>>>>>>>>>>>>>>>>>>>>>>>>RESET: In range test: RED with 2 maneuvers");
   req = cav_srvs::PlanManeuversRequest();
-  ros::Time::setNow(ros::Time(25.0));
-  req.header.stamp = ros::Time(25.0); // In green phase
+  ros::Time::setNow(ros::Time(10.0));
+  req.header.stamp = ros::Time(10.0);
   req.veh_x = 1.85;
-  req.veh_y = 10.0; // In approach range
+  req.veh_y = 165; // In approach range
   req.veh_downtrack = req.veh_y;
   req.veh_logitudinal_velocity = 11.176;
   req.veh_lane_id = "1200";
 
   lcip.planManeuverCb(req, resp);
 
-  ASSERT_EQ(2, resp.new_plan.maneuvers.size());
+  ASSERT_EQ(1, resp.new_plan.maneuvers.size());
+  ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, resp.new_plan.maneuvers[0].type);
+  ASSERT_EQ(req.veh_y, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_dist );
+  ASSERT_NEAR(0.0, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_time.toSec(), 0.00001);
+  ASSERT_NEAR(req.veh_logitudinal_velocity, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_speed, 0.00001);
+  ASSERT_NEAR(15.1, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.end_time.toSec(), 0.001);
+  ASSERT_NEAR(245, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.end_dist, 0.0001);
 
-  ASSERT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, resp.new_plan.maneuvers[0].type);
-  ASSERT_EQ(10.0, resp.new_plan.maneuvers[0].lane_following_maneuver.start_dist);
-  ASSERT_NEAR(25.0, resp.new_plan.maneuvers[0].lane_following_maneuver.start_time.toSec(), 0.00001);
-  ASSERT_NEAR(11.176, resp.new_plan.maneuvers[0].lane_following_maneuver.start_speed, 0.00001);
-  ASSERT_NEAR((ros::Time(25.0) + ros::Duration(3.13171080888)).toSec(), resp.new_plan.maneuvers[0].lane_following_maneuver.end_time.toSec(), 0.25);
-  ASSERT_NEAR(45.0, resp.new_plan.maneuvers[0].lane_following_maneuver.end_dist, 0.0001);
-  ASSERT_NEAR(11.176, resp.new_plan.maneuvers[0].lane_following_maneuver.end_speed, 0.00001);
-  ASSERT_EQ(3, resp.new_plan.maneuvers[0].lane_following_maneuver.lane_ids.size());
-  ASSERT_TRUE(resp.new_plan.maneuvers[0].lane_following_maneuver.lane_ids[0].compare("1200") == 0);
-  ASSERT_TRUE(resp.new_plan.maneuvers[0].lane_following_maneuver.lane_ids[1].compare("1201") == 0);
+  ROS_WARN(">>>>>>>>>>>>>>>>>>>>>>>>>>>RSET: In range test: GREEN: Algo failed and not able to stop");
+  req = cav_srvs::PlanManeuversRequest();
+  req.veh_x = 1.85;
+  req.veh_y = 185; // In approach range
+  req.veh_downtrack = req.veh_y;
+  req.veh_logitudinal_velocity = 11.176;
+  req.veh_lane_id = "1200";
 
+  lcip.planManeuverCb(req, resp);
 
-  ASSERT_EQ(cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT, resp.new_plan.maneuvers[1].type);
-  ASSERT_EQ(45.0, resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.start_dist );
-  ASSERT_NEAR((ros::Time(25.0) + ros::Duration(3.13171080888)).toSec(), resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.start_time.toSec(), 0.25);
-  ASSERT_NEAR(11.176, resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.start_speed, 0.00001);
-  ASSERT_NEAR((ros::Time(25.0) + ros::Duration(2.23693629205 + 3.13171080888)).toSec(), resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.end_time.toSec(), 0.25);
-  ASSERT_NEAR(75.0, resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.end_dist, 0.0001);
-  ASSERT_NEAR(11.176, resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.end_speed, 0.00001);
-  ASSERT_TRUE(resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.starting_lane_id.compare("1202") == 0);
-  ASSERT_TRUE(resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.ending_lane_id.compare("1202") == 0);
+  ASSERT_EQ(1, resp.new_plan.maneuvers.size());
+  ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, resp.new_plan.maneuvers[0].type);
+  ASSERT_EQ(req.veh_y, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_dist );
+  ASSERT_NEAR(0.0, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_time.toSec(), 0.00001);
+  ASSERT_NEAR(req.veh_logitudinal_velocity, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_speed, 0.00001);
+  ASSERT_NEAR(15.1, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.end_time.toSec(), 0.001);
+  ASSERT_NEAR(245, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.end_dist, 0.0001);
 }
 }  // namespace lci_strategic_plugin

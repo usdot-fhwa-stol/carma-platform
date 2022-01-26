@@ -19,12 +19,12 @@
 
 namespace lci_strategic_plugin
 {
-  // TODO clean up
+  
 // THERE SHOULD BE FOUR OPERATIONAL MODES FOR THIS PLUGIN
 // UNAVAILABLE { On In Intersection Range Event -> APPROACH }
 // APPROACHING { On Stopped Event -> WAITING, On Crossed Stop Bar -> DEPARTURE}
 // WAITING { On Green Light Event -> DEPARTURE}
-// DEPARTING { On exit intersection -> UNAVAILABLE} // TODO remove
+// DEPARTING { On exit intersection -> UNAVAILABLE}
 
 TransitState LCIStrategicStateTransitionTable::getState() const
 {

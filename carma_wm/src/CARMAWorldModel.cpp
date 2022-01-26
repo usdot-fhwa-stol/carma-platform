@@ -1190,19 +1190,73 @@ namespace carma_wm
         auto stop_line = light->getStopLine(ll);
         if (!stop_line)
         {
+          ROS_ERROR_STREAM("No stop line");
           continue;
         }
         else
         {
           double light_downtrack = routeTrackPos(stop_line.get().front().basicPoint2d()).downtrack;
           double distance_remaining_to_traffic_light = light_downtrack - curr_downtrack;
+
           if (distance_remaining_to_traffic_light < 0)
+          {
             continue;
+          }
           light_list.push_back(light);
         }
       }
     }
     return light_list;
+  }
+
+  boost::optional<std::pair<lanelet::ConstLanelet, lanelet::ConstLanelet>> CARMAWorldModel::getEntryExitOfSignalAlongRoute(const lanelet::CarmaTrafficSignalPtr& traffic_signal) const
+  {
+    if (!traffic_signal)
+    {
+      throw std::invalid_argument("Empty traffic signal pointer has been passed!");
+    }
+
+    std::pair<lanelet::ConstLanelet, lanelet::ConstLanelet> entry_exit;
+    bool found_entry = false;
+    bool found_exit = false;
+    auto entry_lanelets = traffic_signal->getControlStartLanelets();
+    auto exit_lanelets = traffic_signal->getControlEndLanelets();
+
+    // get entry and exit lane along route for the nearest given signal
+    for (const auto& ll: route_->shortestPath())
+    {
+      if (!found_entry)
+      {
+        for (const auto& entry: entry_lanelets)
+        {
+          if (ll.id() == entry.id())
+          {
+            entry_exit.first = entry;
+            found_entry = true;
+            break;
+          }
+        }
+      }
+
+      if (!found_exit)
+      {
+        for (const auto& exit: exit_lanelets)
+        {
+          if (ll.id() == exit.id())
+          {
+            entry_exit.second = exit;
+            found_exit = true;
+            break;
+          }
+        }
+      }
+
+      if (found_entry && found_exit)
+        return entry_exit;
+    }
+
+    // was not able to find entry and exit for this signal along route
+    return boost::none;
   }
 
   std::vector<std::shared_ptr<lanelet::AllWayStop>> CARMAWorldModel::getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const
