@@ -32,10 +32,10 @@ TEST(Testpoints_map_filter, example_test){
     worker_node->configure(); //Call configure state transition
     worker_node->activate();  //Call activate state transition to get not read for runtime
 
-    std::unique_ptr<std_msgs::msg::String> msg = std::make_unique<std_msgs::msg::String>();
-    msg->data = "my string";
+    // std::unique_ptr<std_msgs::msg::String> msg = std::make_unique<std_msgs::msg::String>();
+    // msg->data = "my string";
 
-    worker_node->example_callback(move(msg)); // Manually drive topic callbacks
+    // worker_node->example_callback(move(msg)); // Manually drive topic callbacks
 
 }
 
@@ -44,12 +44,12 @@ int main(int argc, char ** argv)
     ::testing::InitGoogleTest(&argc, argv);
 
     //Initialize ROS
-    rclcpp::init(argc, argv);
+    //rclcpp::init(argc, argv);
 
     bool success = RUN_ALL_TESTS();
 
     //shutdown ROS
-    rclcpp::shutdown();
+    //rclcpp::shutdown();
 
     return success;
 } 

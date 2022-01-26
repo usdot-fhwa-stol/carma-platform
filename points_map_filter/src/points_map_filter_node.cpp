@@ -21,8 +21,11 @@
 #include <lanelet2_io/io_handlers/Serialize.h>
 #include <lanelet2_io/Exceptions.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <pcl/filters/experimental/functor_filter.h>
 #include <pcl/point_types.h>
+
+// NOTE: The following include can be changed to <pcl/filters/experimental/functor_filter.h>
+//       once the underlying PCL version is updated to 1.12.1 which should occur with a ROS version update
+#include "pcl_expirimental-1.12.1/functor_filter.h"
 
 namespace points_map_filter
 {
@@ -42,12 +45,11 @@ namespace points_map_filter
   {
     auto error = update_params<double>({{"cell_side_length", config_.cell_side_length}}, parameters);
 
-    // TODO rebuild the map here
-
     if (!error) {
       auto lookup_config = lookup_grid_.get_config();
       lookup_config.cell_side_length = config_.cell_side_length;
-      lookup_grid_ = LookupGrid<pcl::PointXYZI>(lookup_config);
+
+      lookup_grid_ = approximate_intersection::LookupGrid<PointT>(lookup_config);
       recompute_lookup_grid();
     }
 
@@ -75,7 +77,7 @@ namespace points_map_filter
     points_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>("points_raw", 10,
                                                               std::bind(&Node::points_callback, this, std_ph::_1));
     
-    map_sub_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>("lanelet2_map", 10,
+    map_sub_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>("lanelet2_map", 1,
                                                               std::bind(&Node::map_callback, this, std_ph::_1));
 
     // Setup publishers
@@ -87,26 +89,28 @@ namespace points_map_filter
 
   void Node::points_callback(sensor_msgs::msg::PointCloud2::UniquePtr msg) {
     
-    pcl::PointCloud<pcl::PointXYZI> input_cloud;
-    pcl_conversions::moveFromROSMsg(*msg, input_cloud);
+
+    const auto input_cloud = pcl::make_shared<CloudT>();
+    const auto filtered_cloud = pcl::make_shared<CloudT>();
+
+    pcl::moveFromROSMsg(*msg, *input_cloud);
     
-    pcl::experimental::FilterFunction<pcl::PointXYZI> filter = 
-      [&input_cloud, &lookup_grid](const pcl::PointXYZI& cloud, pcl::index_t idx) {
-        return !lookup_grid.intersects(input_cloud[idx]);
+    pcl::experimental::FilterFunction<PointT> filter = 
+      [this](const CloudT& cloud, pcl::index_t idx) {
+        return this->lookup_grid_.intersects(cloud[idx]);
       };
 
     // build the filter
-    pcl::experimental::FunctionFilter<pcl::PointXYZ> func_filter(filter);
+    pcl::experimental::FunctionFilter<PointT> func_filter(filter);
     func_filter.setInputCloud(input_cloud);
 
     // apply filter
-    pcl::PointCloud<pcl::PointXYZI> filtered_cloud;
     func_filter.filter(*filtered_cloud);
 
     sensor_msgs::msg::PointCloud2 out_msg;
-    pcl_conversions::toROSMsg(filtered_cloud, out_msg);
+    pcl::toROSMsg(*filtered_cloud, out_msg);
 
-    points_sub_->publish(out_msg);
+    filtered_points_pub_->publish(out_msg);
 
   }
 
@@ -137,7 +141,6 @@ namespace points_map_filter
     {
       if (!map)
       {
-        ROS_ERROR_STREAM(__FUNCTION__ << ": map is null pointer!");
         return;
       }
 
@@ -156,15 +159,17 @@ namespace points_map_filter
 
   void Node::recompute_lookup_grid() {
     
-    if (!map_)
+    if (!map_) {
+      RCLCPP_ERROR(get_logger(), "No map received yet. Cannot recompute lookup grid");
       return;
+    }
 
-    for (const auto& point : map_->pointsLayer) {
-      pcl::PointXYZI p;
-      p.x = point.x;
-      p.y = point.y;
-      p.z = point.z;
-      lookup_grid.insert(p);
+    for (const auto& point : map_->pointLayer) {
+      PointT p;
+      p.x = point.x();
+      p.y = point.y();
+      p.z = point.z();
+      lookup_grid_.insert(p);
     }
 
   }
@@ -173,30 +178,30 @@ namespace points_map_filter
 
     lanelet::LaneletMapPtr new_map(new lanelet::LaneletMap);
 
-    fromBinMsg(*map_msg, new_map);
+    fromBinMsg(*msg, new_map);
 
     map_ = new_map;
 
     approximate_intersection::Config intersection_config;
     intersection_config.cell_side_length = config_.cell_side_length;
 
-    // TODO it would be great if lanelet2 already new the map bounds and this iteration didn't need to happen twice
+    // TODO it would be great if lanelet2 already knew the map bounds and this iteration didn't need to happen twice
     double min_x = std::numeric_limits<double>::max();
     double max_x = std::numeric_limits<double>::lowest();
     double min_y = std::numeric_limits<double>::max();
     double max_y = std::numeric_limits<double>::lowest();
-    for (const auto& point : map_->pointsLayer) {
-      if (point.x < min_x)
-        min_x = point.x;
+    for (const auto& point : map_->pointLayer) {
+      if (point.x() < min_x)
+        min_x = point.x();
       
-      if (point.x > max_x)
-        max_x = point.x;
+      if (point.x() > max_x)
+        max_x = point.x();
       
-      if (point.y < min_y)
-        min_y = point.y;
+      if (point.y() < min_y)
+        min_y = point.y();
       
-      if (point.y > max_y)
-        max_y = point.y;
+      if (point.y() > max_y)
+        max_y = point.y();
     }
 
     intersection_config.min_x = min_x;
@@ -204,7 +209,7 @@ namespace points_map_filter
     intersection_config.min_y = min_y;
     intersection_config.max_y = max_y;
 
-    lookup_grid_ = LookupGrid<pcl::PointXYZI>(intersection_config);
+    lookup_grid_ = approximate_intersection::LookupGrid<PointT>(intersection_config);
 
     recompute_lookup_grid();
 

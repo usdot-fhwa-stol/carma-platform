@@ -18,16 +18,20 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <functional>
-#include <sensor_msgs/msg/point_cloud_2.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <autoware_lanelet2_msgs/msg/map_bin.hpp>
 #include <lanelet2_core/LaneletMap.h>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <approximate_intersection/lookup_grid.hpp>
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
 #include "points_map_filter/points_map_filter_config.hpp"
 
 namespace points_map_filter
 {
 
+  using PointT = pcl::PointXYZI;
+  using CloudT = pcl::PointCloud<PointT>;
   /**
    * \brief TODO for USER: Add class description
    * 
@@ -49,7 +53,9 @@ namespace points_map_filter
     // The lanelet2 map to be checked against
     lanelet::LaneletMapPtr map_;
 
-    approximate_intersection::LookupGrid<pcl::PointXYZI> lookup_grid_;
+    approximate_intersection::LookupGrid<PointT> lookup_grid_;
+
+    void recompute_lookup_grid();
 
   public:
     /**
@@ -75,14 +81,6 @@ namespace points_map_filter
     ////
     carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
 
-    /**
-     * TODO for USER: The following lifecycle overrides are also available if needed
-     * handle_on_activate
-     * handle_on_deactivate
-     * handle_on_cleanup
-     * handle_on_shutdown
-     * handle_on_error
-     */
   };
 
 } // points_map_filter

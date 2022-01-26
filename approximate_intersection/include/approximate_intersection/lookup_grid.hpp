@@ -72,6 +72,10 @@ namespace approximate_intersection
       occupied_cells_.reserve(rough_cell_side_count * rough_cell_side_count);
     }
 
+    Config get_config() {
+      return config_;
+    }
+
     bool intersects(PointT point) {
 
       HashIndex cell = hasher_.bin(point.x, point.y, 0);
