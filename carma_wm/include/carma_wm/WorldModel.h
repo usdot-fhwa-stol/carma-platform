@@ -370,6 +370,18 @@ public:
   virtual std::vector<lanelet::CarmaTrafficSignalPtr> getSignalsAlongRoute(const lanelet::BasicPoint2d& loc) const = 0;
 
   /**
+   * \brief  TODO
+   * The traffic lights along a route and the next traffic light ahead of us on the route specifically, 
+   * so a sorted list (by downtrack distance) of traffic lights on the route ahead of us thus eliminating those behind the vehicle.
+   *
+   * \param loc location
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or route is not set
+   *
+   * \return list of traffic lights along the current route
+   */
+  virtual boost::optional<std::pair<lanelet::ConstLanelet, lanelet::ConstLanelet>> getEntryExitOfSignalAlongRoute(const lanelet::CarmaTrafficSignalPtr& traffic_signal) const = 0;
+   
+  /**
    * \brief  Return a list of all way stop intersections along the current route.  
    * The tall way stop intersections along a route and the next all way stop intersections ahead of us on the route specifically, 
    * so a sorted list (by downtrack distance) of all way stop intersections on the route ahead of us thus eliminating those behind the vehicle.

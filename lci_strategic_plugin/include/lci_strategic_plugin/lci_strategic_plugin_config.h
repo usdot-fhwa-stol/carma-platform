@@ -28,6 +28,12 @@ struct LCIStrategicPluginConfig
   //! A multiplier to apply to the maximum allowable vehicle deceleration limit so we plan under our capabilities
   double vehicle_decel_limit_multiplier = 0.75;
 
+  //! The maximum allowable vehicle acceleration limit in m/s
+  double vehicle_accel_limit = 2.0;
+
+  //! A multiplier to apply to the maximum allowable vehicle acceleration limit so we plan under our capabilities
+  double vehicle_accel_limit_multiplier = 0.75;
+
   //! The length parameter of the participant vehicle used to help calculate the distance before stopping at a red traffic signal
   double vehicle_length = 5.0;
 
@@ -39,6 +45,12 @@ struct LCIStrategicPluginConfig
 
   //! A buffer in seconds around the green phase which will reduce the phase length such that vehicle still considers it non-green
   double green_light_time_buffer = 2.0;
+
+  //! Minimum allowable speed in m/s
+  double minimum_speed = 2.2352;
+
+  //! Double: Minimum inter-vehicle gap
+  double min_gap = 10.0;
 
   //! The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
   double min_maneuver_planning_period = 15.1;

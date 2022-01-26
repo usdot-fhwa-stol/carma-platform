@@ -524,12 +524,10 @@ std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState
   lanelet::LineString3d virtual_stop_line(lanelet::utils::getId(), { owning_lanelet.leftBound().back(), owning_lanelet.rightBound().back() });
 
   // Build traffic light
-  std::shared_ptr<lanelet::CarmaTrafficSignal> traffic_light(new lanelet::CarmaTrafficSignal(lanelet::CarmaTrafficSignal::buildData(light_id, { virtual_stop_line }, {controlled_lanelets.front()}, {controlled_lanelets.back()} )));
+  std::shared_ptr<lanelet::CarmaTrafficSignal> traffic_light(new lanelet::CarmaTrafficSignal(lanelet::CarmaTrafficSignal::buildData(light_id, { virtual_stop_line }, {owning_lanelet}, {controlled_lanelets.back()} )));
   
   // Set the timing plan
   traffic_light->setStates(timing_plan,0);
-  
-  owning_lanelet.addRegulatoryElement(traffic_light);
 
   // Ensure map lookup tables are updated
   cmw->getMutableMap()->update(owning_lanelet, traffic_light);

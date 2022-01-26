@@ -44,7 +44,8 @@ include_directories(
 )
 
 # Build Lib
-add_library(${PROJECT_NAME} 
+add_library(${PROJECT_NAME}
+  src/lci_strategic_plugin_algo.cpp 
   src/lci_strategic_plugin.cpp
   src/lci_states.cpp
   src/lci_state_transition_table.cpp
@@ -88,9 +89,9 @@ install(DIRECTORY launch config
 
 catkin_add_gmock(${PROJECT_NAME}-test 
  test/test_main.cpp
- test/test_fixture.h
- test/test_strategic_plugin_helpers.cpp
- test/test_transition_table.cpp
+ #test/test_fixture.h
+ #test/test_strategic_plugin_helpers.cpp
+ #test/test_transition_table.cpp
  test/test_strategic_plugin.cpp
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
 

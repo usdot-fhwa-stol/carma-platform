@@ -1,0 +1,625 @@
+/*
+ * Copyright (C) 2021 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+#include "lci_strategic_plugin/lci_strategic_plugin.h"
+#include "lci_strategic_plugin/lci_states.h"
+
+namespace lci_strategic_plugin
+{
+
+double LCIStrategicPlugin::estimate_distance_to_stop(double v, double a) const
+{
+  return (v * v) / (2.0 * a);
+}
+
+double LCIStrategicPlugin::estimate_time_to_stop(double d, double v) const
+{
+  return 2.0 * d / v;
+};
+
+double LCIStrategicPlugin::get_distance_to_accel_or_decel_twice(double free_flow_speed, double current_speed, double departure_speed, double max_accel, double max_decel) const
+{
+  // (v_e^2 - v^2)/ 2a_a + (v_d^2 - v_e^2)/ 2a_d
+  return (std::pow(free_flow_speed, 2) - std::pow(current_speed, 2))/(2 * max_accel) + (std::pow(departure_speed, 2) - std::pow(free_flow_speed, 2))/(2* max_decel);
+}
+
+double LCIStrategicPlugin::get_distance_to_accel_or_decel_once (double current_speed, double departure_speed, double max_accel, double max_decel) const
+{
+  if (current_speed <= departure_speed)
+  {
+    return (std::pow(departure_speed, 2) - std::pow(current_speed, 2))/(2 * max_accel);
+  }
+  else
+  {
+    return (std::pow(departure_speed, 2) - std::pow(current_speed, 2))/(2 * max_decel);
+  }
+}
+
+ros::Time LCIStrategicPlugin::get_nearest_green_entry_time(const ros::Time& current_time, const ros::Time& earliest_entry_time, lanelet::CarmaTrafficSignalPtr signal, double minimum_required_green_time) const
+{
+  boost::posix_time::time_duration g =  lanelet::time::durationFromSec(minimum_required_green_time);         // provided by considering min headways of vehicles in front
+  boost::posix_time::ptime t = lanelet::time::timeFromSec(current_time.toSec());                        // time variable
+  boost::posix_time::ptime eet = lanelet::time::timeFromSec(earliest_entry_time.toSec());                        // earliest entry time
+
+  auto curr_pair = signal->predictState(t);
+
+  if (!curr_pair)
+    throw std::invalid_argument("Traffic signal with id:" + std::to_string(signal->id()) + ", does not have any recorded time stamps!");
+
+  boost::posix_time::time_duration theta =  curr_pair.get().first - t;   // remaining time left in this state
+  auto p = curr_pair.get().second;
+
+  while ( 0.0 < g.total_milliseconds() || p != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED) //green
+  {
+    if ( p == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+    {
+      if (g < theta)
+      {
+        t = t + g;
+        theta = theta - g;
+        g = boost::posix_time::seconds(0);
+      }
+      else
+      {
+        t = t + theta;
+        g = g - theta;
+        curr_pair = signal->predictState(t + boost::posix_time::milliseconds(20)); // select next phase
+        p = curr_pair.get().second;
+        theta = curr_pair.get().first - t;
+      }
+    }
+    else
+    {
+      t = t + theta;
+      curr_pair = signal->predictState(t + boost::posix_time::milliseconds(20)); // select next phase
+      p = curr_pair.get().second;
+      theta = curr_pair.get().first - t;
+    }
+  }
+
+  if (t <= eet)
+  {
+    double cycle_duration = signal->fixed_cycle_duration.total_milliseconds()*1000.0;
+    t = t + lanelet::time::durationFromSec(std::floor((eet - t).total_milliseconds()*1000.0/cycle_duration) * cycle_duration); //fancy logic was needed to compile
+    // could be wrong here
+    curr_pair = signal->predictState(t + boost::posix_time::milliseconds(20)); // select next phase
+    p = curr_pair.get().second;
+    theta = curr_pair.get().first - t;
+    while ( t < eet || p != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+    {
+      if ( p == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED && eet - t < theta)
+      {
+        t = eet;
+        theta = theta - (eet - t);
+      }
+      else
+      {
+        t = t + theta;
+        curr_pair = signal->predictState(t + boost::posix_time::milliseconds(20)); // select next phase
+        p = curr_pair.get().second;
+        theta = curr_pair.get().first - t;
+      }
+    }
+  }
+
+  return ros::Time(lanelet::time::toSec(t));
+}
+
+double LCIStrategicPlugin::get_trajectory_smoothing_activation_distance(double remaining_time, double current_speed, double departure_speed, double max_accel, double max_decel) const
+{
+  // TSMO USE CASE 2: Figure 11 Trajectory smoothing solution Case 3. Subsituted a+ as max_accel and solved for inflection_speed
+  double inflection_speed = (remaining_time - departure_speed / max_accel + current_speed / max_decel ) / (1 / max_decel + 1 / max_accel);
+
+  if (inflection_speed > 0 && inflection_speed < current_speed && inflection_speed < departure_speed)
+  {
+    // kinematic equation to find distance of deceleration + acceleration
+    // (vf^2 - vi^2)/2a = d
+    ROS_DEBUG_STREAM("calculated distance WITHOUT cruising: " << (std::pow(inflection_speed, 2) - std::pow (current_speed, 2)) / (2 * max_decel) +  (std::pow(departure_speed, 2) - std::pow(inflection_speed, 2)) / (2 * max_accel));
+    return (std::pow(inflection_speed, 2) - std::pow (current_speed, 2)) / (2 * max_decel) +  (std::pow(departure_speed, 2) - std::pow(inflection_speed, 2)) / (2 * max_accel);
+  }
+  else //there must be cruising
+  {
+    // acceleration and deceleration parts must reach until minimum speed
+    // kinematic equation: t = (vf - vi)/ a where vf = 0
+    double decel_time = current_speed / - 1 * max_decel;
+    double accel_time = departure_speed / max_accel;
+    double cruising_time = remaining_time - decel_time - accel_time;
+    ROS_DEBUG_STREAM("decel_time: " << decel_time << ", accel_time: " << accel_time << ", cruising_time: " << cruising_time);
+    ROS_DEBUG_STREAM("calculated distance with cruising: " << (std::pow (current_speed, 2)) / (2 * (-1) * max_decel) +  (std::pow(departure_speed, 2)/ (2 * max_accel)) + config_.minimum_speed * cruising_time);
+    return (std::pow (current_speed, 2)) / (2 * (-1) * max_decel) +  (std::pow(departure_speed, 2)/ (2 * max_accel)) + config_.minimum_speed * cruising_time;
+  }
+}
+
+ros::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_distance, double free_flow_speed, double current_speed, double departure_speed, double max_accel, double max_decel) const
+{
+  double x = remaining_distance;
+  double x2 = get_distance_to_accel_or_decel_once(current_speed, departure_speed, max_accel, max_decel);
+  double x1 = get_distance_to_accel_or_decel_twice(free_flow_speed, current_speed, departure_speed, max_accel, max_decel);
+  double v_hat = get_inflection_speed_value(x, x1, x2, free_flow_speed, current_speed, departure_speed, max_accel, max_decel);
+
+  ros::Duration t_accel;
+  if ( x < x2 && current_speed > departure_speed)
+  {
+    t_accel = ros::Duration(0.0);
+  }
+  else
+  {
+    t_accel = ros::Duration((v_hat - current_speed) / max_accel);
+  }
+  ros::Duration t_decel;
+  if ( x < x2 && current_speed > departure_speed)
+  {
+    t_decel = ros::Duration(0.0);
+  }
+  else
+  {
+    t_decel = ros::Duration((departure_speed - v_hat) / max_decel);
+  }
+  ros::Duration t_cruise;
+  if (x1 <= x)
+  {
+    t_cruise = ros::Duration((x - x1)/v_hat);
+  }
+  else
+  {
+    t_cruise = ros::Duration(0.0);
+  }
+  return t_accel + t_cruise + t_decel;
+
+}
+
+double LCIStrategicPlugin::get_inflection_speed_value(double x, double x1, double x2, double free_flow_speed, double current_speed, double departure_speed, double max_accel, double max_decel) const
+{
+  ROS_DEBUG_STREAM("x: " << x << 
+                   ", x1: " <<  x1 << 
+                   ", x2: " << x2 << 
+                   ", free_flow_speed: " << free_flow_speed << 
+                   ", current_speed: " << current_speed << 
+                   ", departure_speed: " << departure_speed << 
+                   ", max_accel: " << max_accel << 
+                   ", max_decel: " << max_decel);
+  
+  if (x >= x1)
+  {
+    ROS_ERROR_STREAM("returning here4: " << free_flow_speed);
+    return free_flow_speed;
+  }
+  else if (x1 > x >= x2)
+  {
+    ROS_ERROR_STREAM("returning here3: " << std::sqrt(2 * x * max_accel * max_decel + max_decel * std::pow(current_speed, 2) - max_accel * (std::pow(departure_speed, 2))/(max_decel - max_accel)));
+    return std::sqrt(2 * x * max_accel * max_decel + max_decel * std::pow(current_speed, 2) - max_accel * (std::pow(departure_speed, 2))/(max_decel - max_accel));
+  }
+  else if (x2 > x)
+  {
+    if (current_speed <= departure_speed)
+    {
+      ROS_ERROR_STREAM("returning here1: " << std::sqrt(2 * x * max_accel + std::pow(current_speed, 2)));
+      return std::sqrt(2 * x * max_accel + std::pow(current_speed, 2));
+    }
+    else
+    {
+      ROS_ERROR_STREAM("returning here2: " << std::sqrt(2 * x * max_decel + std::pow(current_speed, 2)));
+      return std::sqrt(2 * x * max_decel + std::pow(current_speed, 2));
+    }
+  }
+}
+
+double LCIStrategicPlugin::calc_estimated_entry_time_left(double entry_dist, double current_speed, double departure_speed) const
+{
+  double t_entry = 0;
+  // t = 2 * d / (v_i + v_f)
+  // from TSMO USE CASE 2 Algorithm Doc - Figure 4. Equation: Estimation of t*_nt
+  ROS_ERROR_STREAM("entry_dist: " << entry_dist << ", current_speed: " << current_speed << ", departure_speed: " << departure_speed);
+  t_entry = 2*entry_dist/(current_speed + departure_speed);
+  return t_entry;
+}
+
+double LCIStrategicPlugin::calc_speed_before_decel(double entry_time, double entry_dist, double current_speed, double departure_speed) const
+{
+  double speed_before_decel = 0;
+  
+  // from TSMO USE CASE 2 Algorithm Doc - Figure 7. Equation: Trajectory Smoothing Solution (Case 2)
+
+  // a_r = a_acc / a_dec
+  double acc_dec_ratio = max_comfort_accel_/max_comfort_decel_;
+  // v_r = d / t
+  double required_speed = entry_dist / entry_time;
+  // sqrt_term  = sqrt((1-a_r)^2*v_r^2 - (1-a_r)(a_r*v_f*(v_f-2*v_r) + v_i*(2*v_r - v_i)))
+  double sqr_term = sqrt(pow(1 - (acc_dec_ratio), 2) * pow(required_speed, 2) - (1 -acc_dec_ratio) *
+                        (acc_dec_ratio * departure_speed * (departure_speed - 2 * required_speed) + current_speed * (2* required_speed - current_speed)));
+  // v_e = v_r + sqrt_term/(1 - a_r)
+  speed_before_decel = required_speed + sqr_term/(1 - acc_dec_ratio);
+
+  return speed_before_decel;
+}
+
+double LCIStrategicPlugin::calc_speed_before_accel(double entry_time, double entry_dist, double current_speed, double departure_speed) const
+{
+  double speed_before_accel = 0;
+
+  // from TSMO USE CASE 2 Algorithm Doc - Figure 11. Equation: Trajectory Smoothing Solution (Case 3)
+  
+  // a_r = a_acc / a_dec
+  double acc_dec_ratio = max_comfort_accel_/max_comfort_decel_;
+  ROS_ERROR_STREAM("acc_dec_ratio: " << acc_dec_ratio);
+  // v_r = d / t
+  double required_speed = entry_dist / entry_time;
+  ROS_ERROR_STREAM("required_speed: " << required_speed);
+  // sqrt_term  = sqrt((a_r - 1)^2*v_r^2 - (a_r-1)(v_f*(v_f-2*v_r) + a_r*v_i*(2*v_r - v_i)))
+  double sqr_term = sqrt(pow((acc_dec_ratio - 1), 2) * pow(required_speed, 2) - (acc_dec_ratio - 1) *
+                        (departure_speed * (departure_speed - 2 * required_speed) + acc_dec_ratio * current_speed * (2* required_speed - current_speed)));
+  ROS_ERROR_STREAM("sqr_term: " << sqr_term);
+  // v_e = v_r + sqrt_term / (a_r - 1)
+  speed_before_accel = required_speed + sqr_term/(acc_dec_ratio - 1);
+
+  return speed_before_accel;
+}
+
+SpeedProfileCase LCIStrategicPlugin::determine_speed_profile_case(double estimated_entry_time, double scheduled_entry_time, double speed_before_decel, double speed_before_accel, double speed_limit)
+{
+  SpeedProfileCase case_num;
+  
+  ROS_DEBUG_STREAM("estimated_entry_time: " << estimated_entry_time << ", and scheduled_entry_time: " << scheduled_entry_time);
+  if (estimated_entry_time < scheduled_entry_time)
+  {
+    ROS_DEBUG_STREAM("speed_before_accel: " << speed_before_accel << ", and config_.minimum_speed: " << config_.minimum_speed);
+
+    if (speed_before_accel < config_.minimum_speed)
+    {
+      case_num = DECEL_CRUISE_ACCEL;
+    }
+    else
+    {
+      case_num = DECEL_ACCEL;
+    }
+  }
+  else
+  {
+    ROS_DEBUG_STREAM("speed_before_decel: " << speed_before_decel << ", and speed_limit: " << speed_limit);
+
+    if (speed_before_decel > speed_limit)
+    {
+      case_num = ACCEL_CRUISE_DECEL;
+    }
+    else
+    {
+      case_num = ACCEL_DECEL;
+    }
+  }
+  
+  return case_num;
+}
+
+TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_accel_cruise_decel_speed_profile(double remaining_downtrack, double remaining_time, double starting_speed, double speed_before_decel, double speed_limit, double departure_speed)
+{
+  TrajectorySmoothingParameters params;
+  params.is_algorithm_successful = true;
+
+  // a_r = a_acc / a_dec
+  double acc_dec_ratio = max_comfort_accel_/max_comfort_decel_;
+  
+  double t_cruise = 0.0; // Cruising Time Interval for Case 2. TSMO UC 2 Algorithm draft doc Figure 7.
+  double t_c_nom = 0.0;
+  double t_c_den = epsilon_;
+
+  if (speed_before_decel > speed_limit)
+  {
+    ROS_DEBUG_STREAM("Detected that cruising is necessary. Changed speed_before_decel: " << speed_before_decel << ", to : " << speed_limit);
+    speed_before_decel = speed_limit;
+
+    // Cruising Time Interval Equation (case 1) obtained from TSMO UC 2 Algorithm draft doc Figure 8.
+    // Nominator portion
+    t_c_nom = 2 * remaining_downtrack * ((1 - acc_dec_ratio) * speed_before_decel + acc_dec_ratio * departure_speed - starting_speed) - 
+                    remaining_time * ((1 - acc_dec_ratio) * pow(speed_before_decel, 2) + acc_dec_ratio * pow(departure_speed, 2) - pow(starting_speed, 2));
+    
+    // Denominator portion
+    t_c_den = pow(speed_before_decel - starting_speed, 2) - acc_dec_ratio * pow(speed_before_decel - departure_speed, 2);
+    
+    if (t_c_den >= 0 && t_c_den < epsilon_)
+    {
+      ROS_WARN_STREAM("Denominator of cruising time interval is too close to zero: " 
+                        << t_c_den << ", t_c_nom: " << t_c_nom << ", which may indicate there is only cruising portion available. Returning without any change..."); 
+      params.is_algorithm_successful = false;
+      return params; 
+    }
+    
+    t_cruise = t_c_nom / t_c_den;
+  }
+  // From TSMO USE CASE 2 Algorithm Doc - Figure 8. Equation: Trajectory Smoothing Solution (Case 1 and 2)
+
+  ROS_DEBUG_STREAM("max_comfort_accel_: " << max_comfort_accel_ << "\n" <<
+                   "max_comfort_decel_: " << max_comfort_decel_ << "\n" <<
+                   "acc_dec_ratio: " << acc_dec_ratio << "\n" <<
+                   "speed_limit: " << speed_limit);
+  
+  // Rest of the equations for acceleration rates and time intervals for when accelerating or decelerating 
+  double a_acc = ((1 - acc_dec_ratio) * speed_before_decel + acc_dec_ratio * departure_speed - starting_speed) / (remaining_time - t_cruise);
+  double a_dec = ((max_comfort_decel_ - max_comfort_accel_) * speed_before_decel + max_comfort_accel_ * departure_speed - max_comfort_decel_ * starting_speed) / (max_comfort_accel_ * (remaining_time - t_cruise));
+  double t_acc = (speed_before_decel - starting_speed) / a_acc;
+  double t_dec =  (departure_speed - speed_before_decel) / a_dec;
+
+  ROS_DEBUG_STREAM("speed_before_decel: " << speed_before_decel << "\n" <<
+                   "departure_speed: " << departure_speed << "\n" <<
+                   "remaining_downtrack: " << remaining_downtrack << "\n" <<
+                   "t_c_nom: " << t_c_nom << "\n" <<
+                   "t_c_den: " << t_c_den << "\n" <<
+                   "t_cruise: " << t_cruise << "\n" <<
+                   "a_acc: " << a_acc << "\n" <<
+                   "a_dec: " << a_dec << "\n" <<
+                   "t_acc: " << t_acc << "\n" <<
+                   "t_dec: " << t_dec);
+  
+  if (remaining_time - t_cruise < epsilon_ && remaining_time - t_cruise >= 0.0)
+  {
+    ROS_WARN_STREAM("Only Cruising is needed... therefore, no speed modification is required. Returning... ");
+    params.is_algorithm_successful = false;
+    return params;
+  }
+  else if (t_cruise < -epsilon_)
+  {
+    throw std::invalid_argument(std::string("Input parameters are not valid or do not qualify conditions " 
+                                "of estimated_time >= scheduled_time (case 1 and 2)"));
+  }
+
+  // Checking route geometry start against start_dist and adjust profile
+  double dist_accel;        //Distance over which acceleration happens
+  double dist_cruise;     //Distance over which cruising happens
+  double dist_decel;      //Distance over which deceleration happens
+
+  //Use maneuver parameters to create speed profile
+  //Kinematic: d = v_0 * t + 1/2 * a * t^2
+  dist_accel = starting_speed * t_acc + 0.5 * a_acc * pow(t_acc, 2);
+  dist_cruise = speed_before_decel * t_cruise;
+  dist_decel = speed_before_decel * t_dec + 0.5 * a_dec * pow(t_dec, 2);
+
+  //Check calculated total dist against maneuver limits
+  double total_distance_needed = dist_accel + dist_cruise + dist_decel;
+
+  if (a_acc < 0 || a_acc > max_comfort_accel_ || a_dec > 0 || a_dec < max_comfort_decel_ || total_distance_needed > remaining_downtrack) //algorithm was not able to calculate valid values
+  {
+    ROS_WARN_STREAM("get_parameters_for_accel_cruise_decel_speed_profile was NOT successful...");
+    params.is_algorithm_successful = false; 
+  }
+
+  ROS_DEBUG_STREAM("total_distance_needed: " << total_distance_needed << "\n" <<
+                  "dist_accel: " << dist_accel << "\n" <<
+                  "dist_decel: " << dist_decel << "\n" <<
+                  "dist_cruise: " << dist_cruise);
+
+  if(dist_accel < - epsilon_ )
+  {
+    //Requested maneuver needs to be modified to meet start and end dist req
+    //Sacrifice on cruising and then acceleration if needed
+    params.is_algorithm_successful = false;
+    //correcting signs. NOTE: Doing so will likely result being over max_comfort_accel_
+    dist_accel = std::fabs(dist_accel); 
+    a_acc = std::fabs(a_acc);
+    a_dec = -1 * std::fabs(a_dec);
+    //subtract distance from cruising segment to match original distance
+    dist_cruise -= 2 * dist_accel;
+    if(dist_cruise < 0)
+    {
+      dist_accel -= std::fabs(dist_cruise);
+      dist_cruise = 0;
+    }
+    ROS_WARN_STREAM("Maneuver needed to be modified (due to negative dist_accel) with new distance and accelerations: \n" << 
+                  "total_distance_needed: " << total_distance_needed << "\n" <<
+                  "a_acc: " << a_acc << "\n" <<
+                  "a_dec: " << a_dec << "\n" <<
+                  "dist_accel: " << dist_accel << "\n" <<
+                  "dist_decel: " << dist_decel << "\n" <<
+                  "dist_cruise: " << dist_cruise);
+    // not accounting dist_accel < 0 after this...
+  }
+
+  if(dist_decel < - epsilon_ )
+  {
+    //Requested maneuver needs to be modified to meet start and end dist req
+    //Sacrifice on cruising and then acceleration if needed
+    params.is_algorithm_successful = false;
+    //correct signs. NOTE: Doing so will likely result being over max_comfort_accel_
+    dist_decel = std::fabs(dist_decel);  
+    a_acc = std::fabs(a_acc);
+    a_dec = -1 * std::fabs(a_dec);
+    //subtract distance from cruising segment to match original distance
+    dist_cruise -= 2 * dist_decel;
+    if(dist_cruise < 0)
+    {
+      dist_accel -= std::fabs(dist_cruise);
+      dist_cruise = 0;
+    }
+    ROS_WARN_STREAM("Maneuver needed to be modified (due to negative dist_decel) with new distance and accelerations: \n" << 
+                  "total_distance_needed: " << total_distance_needed << "\n" <<
+                  "a_acc: " << a_acc << "\n" <<
+                  "a_dec: " << a_dec << "\n" <<
+                  "dist_accel: " << dist_accel << "\n" <<
+                  "dist_decel: " << dist_decel << "\n" <<
+                  "dist_cruise: " << dist_cruise);
+    // not accounting dist_accel < 0 after this...
+  }
+
+  params.a_accel = a_acc;
+  params.a_decel = a_dec;
+  params.dist_accel = dist_accel;
+  params.dist_cruise = dist_cruise;
+  params.dist_decel = dist_decel;
+  params.speed_before_decel = speed_before_decel;
+
+  return params;
+}
+
+TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_decel_cruise_accel_speed_profile(double remaining_downtrack, double remaining_time, double starting_speed, double speed_before_accel, double minimum_speed, double departure_speed)
+{
+  TrajectorySmoothingParameters params;
+  params.is_algorithm_successful = true;
+
+  // a_r = a_acc / a_dec
+  double acc_dec_ratio = max_comfort_accel_/max_comfort_decel_;
+  
+  double t_cruise = 0.0; // Cruising Time Interval for Case 4. TSMO UC 2 Algorithm draft doc Figure 12.
+  double t_c_nom = 0.0;
+  double t_c_den = epsilon_;
+
+  if (speed_before_accel < config_.minimum_speed)
+  {
+    ROS_DEBUG_STREAM("Detected that cruising is necessary. Changed speed_before_accel: " << speed_before_accel << ", to : " << config_.minimum_speed);
+    speed_before_accel = config_.minimum_speed;
+
+    // Cruising Time Interval Equation (case 1) obtained from TSMO UC 2 Algorithm draft doc Figure 8.
+    // Nominator portion
+    t_c_nom = 2 * remaining_downtrack * ((acc_dec_ratio - 1) * speed_before_accel + departure_speed - acc_dec_ratio * starting_speed) - 
+                    remaining_time * ((acc_dec_ratio - 1) * pow(speed_before_accel, 2) + pow(departure_speed, 2) - acc_dec_ratio * pow(starting_speed, 2));
+    
+    // Denominator portion
+    t_c_den = acc_dec_ratio * pow(speed_before_accel - starting_speed, 2) - pow(speed_before_accel - departure_speed, 2);
+    
+    if (t_c_den >= 0 && t_c_den < epsilon_)
+    {
+      ROS_WARN_STREAM("Denominator of cruising time interval is too close to zero: " 
+                        << t_c_den << ", t_c_nom: " << t_c_nom << ", which may indicate there is only cruising portion available. Returning without any change..."); 
+      params.is_algorithm_successful = false;
+      return params;
+    }
+    
+    t_cruise = t_c_nom / t_c_den;
+  }
+  // From TSMO USE CASE 2 Algorithm Doc - Figure 11 - 13. Equation: Trajectory Smoothing Solution (Case 1 and 2)
+
+  ROS_DEBUG_STREAM("max_comfort_accel_: " << max_comfort_accel_ << "\n" <<
+                   "max_comfort_decel_: " << max_comfort_decel_ << "\n" <<
+                   "acc_dec_ratio: " << acc_dec_ratio << "\n" <<
+                   "config_.minimum_speed: " << config_.minimum_speed);
+  
+  // Rest of the equations for acceleration rates and time intervals for when accelerating or decelerating 
+  double a_acc = ((acc_dec_ratio - 1) * speed_before_accel + departure_speed - acc_dec_ratio * starting_speed) / (remaining_time - t_cruise);
+  double a_dec = ((max_comfort_accel_ - max_comfort_decel_) * speed_before_accel + max_comfort_decel_ * departure_speed - max_comfort_accel_ * starting_speed) / (max_comfort_accel_ * (remaining_time - t_cruise));
+  double t_acc = (departure_speed - speed_before_accel) / a_acc;
+  double t_dec =  (speed_before_accel - starting_speed) / a_dec;
+
+  ROS_DEBUG_STREAM("speed_before_accel: " << speed_before_accel << "\n" <<
+                   "departure_speed: " << departure_speed << "\n" <<
+                   "remaining_downtrack: " << remaining_downtrack << "\n" <<
+                   "t_c_nom: " << t_c_nom << "\n" <<
+                   "t_c_den: " << t_c_den << "\n" <<
+                   "t_cruise: " << t_cruise << "\n" <<
+                   "a_acc: " << a_acc << "\n" <<
+                   "a_dec: " << a_dec << "\n" <<
+                   "t_acc: " << t_acc << "\n" <<
+                   "t_dec: " << t_dec);
+  
+  if (remaining_time - t_cruise < epsilon_ && remaining_time - t_cruise >= 0.0)
+  {
+    ROS_WARN_STREAM("Only Cruising is needed... therefore, no speed modification is required. Returning... ");
+    params.is_algorithm_successful = false;
+    return params;
+  }
+  else if (t_cruise < -epsilon_)
+  {
+    throw std::invalid_argument(std::string("Input parameters are not valid or do not qualify conditions " 
+                                "of estimated_time < scheduled_time (case 3 and 4)"));
+  }
+
+  // Checking route geometry start against start_dist and adjust profile
+  double dist_accel;        //Distance over which acceleration happens
+  double dist_cruise;     //Distance over which cruising happens
+  double dist_decel;      //Distance over which deceleration happens
+
+  //Use maneuver parameters to create speed profile
+  //Kinematic: d = v_0 * t + 1/2 * a * t^2
+  dist_decel = starting_speed * t_dec + 0.5 * a_dec * pow(t_dec, 2);
+  dist_cruise = speed_before_accel * t_cruise;
+  dist_accel = speed_before_accel * t_acc + 0.5 * a_acc * pow(t_acc, 2);
+  
+  
+  //Check calculated total dist against maneuver limits
+  double total_distance_needed = dist_accel + dist_cruise + dist_decel;
+
+  if (a_acc < 0 || a_acc > max_comfort_accel_ || a_dec > 0 || a_dec < max_comfort_decel_ || total_distance_needed > remaining_downtrack) //algorithm was not able to calculate valid values
+  {
+    ROS_WARN_STREAM("get_parameters_for_decel_cruise_accel_speed_profile was NOT successful...");
+    params.is_algorithm_successful = false; 
+  }
+
+  ROS_DEBUG_STREAM("total_distance_needed: " << total_distance_needed << "\n" <<
+                  "dist_accel: " << dist_accel << "\n" <<
+                  "dist_decel: " << dist_decel << "\n" <<
+                  "dist_cruise: " << dist_cruise);
+
+  if(dist_decel < - epsilon_ )
+  {
+    //Requested maneuver needs to be modified to meet start and end dist req
+    //Sacrifice on cruising and then deceleration if needed
+    params.is_algorithm_successful = false;
+
+    //correct signs. NOTE: Doing so will likely result being over max_comfort_decel_
+    dist_decel = std::fabs(dist_decel);  
+    a_acc = std::fabs(a_acc);
+    a_dec = -1 * std::fabs(a_dec);
+    //subtract distance from cruising segment to match original distance
+    dist_cruise -= 2 * dist_decel;
+    if(dist_cruise < 0)
+    {
+      dist_decel -= std::fabs(dist_cruise);
+      dist_cruise = 0;
+    }
+    ROS_WARN_STREAM("Maneuver needed to be modified (due to negative dist_decel) with new distance and accelerations: \n" << 
+                  "total_distance_needed: " << total_distance_needed << "\n" <<
+                  "a_acc: " << a_acc << "\n" <<
+                  "a_dec: " << a_dec << "\n" <<
+                  "dist_accel: " << dist_accel << "\n" <<
+                  "dist_decel: " << dist_decel << "\n" <<
+                  "dist_cruise: " << dist_cruise);
+    // not accounting dist_decel < 0 after this...
+  }
+
+  if(dist_accel < - epsilon_ )
+  {
+    //Requested maneuver needs to be modified to meet start and end dist req
+    //Sacrifice on cruising and then deceleration if needed
+    params.is_algorithm_successful = false;
+
+    //correcting signs. NOTE: Doing so will likely result being over max_comfort_decel_
+    dist_accel = std::fabs(dist_accel); 
+    a_acc = std::fabs(a_acc);
+    a_dec = -1 * std::fabs(a_dec);
+    //subtract distance from cruising segment to match original distance
+    dist_cruise -= 2 * dist_accel;
+    if(dist_cruise < 0)
+    {
+      dist_decel -= std::fabs(dist_cruise);
+      dist_cruise = 0;
+    }
+    ROS_WARN_STREAM("Maneuver needed to be modified (due to negative dist_accel) with new distance and accelerations: \n" << 
+                  "total_distance_needed: " << total_distance_needed << "\n" <<
+                  "a_acc: " << a_acc << "\n" <<
+                  "a_dec: " << a_dec << "\n" <<
+                  "dist_accel: " << dist_accel << "\n" <<
+                  "dist_decel: " << dist_decel << "\n" <<
+                  "dist_cruise: " << dist_cruise);
+    // not accounting dist_decel < 0 after this...
+  }
+
+  params.a_accel = a_acc;
+  params.a_decel = a_dec;
+  params.dist_accel = dist_accel;
+  params.dist_cruise = dist_cruise;
+  params.dist_decel = dist_decel;
+  params.speed_before_accel = speed_before_accel;
+
+  return params;
+}
+
+
+}  // namespace lci_strategic_plugin
