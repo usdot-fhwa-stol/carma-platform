@@ -53,6 +53,9 @@ def generate_launch_description():
     object_visualizer_param_file = os.path.join(
         get_package_share_directory('object_visualizer'), 'config/parameters.yaml')
 
+    points_map_filter_param_file = os.path.join(
+        get_package_share_directory('points_map_filter'), 'config/parameters.yaml')
+
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     # lidar_perception_container contains all nodes for lidar based object perception
@@ -66,6 +69,24 @@ def generate_launch_description():
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
             ComposableNode(
+                package='points_map_filter',
+                plugin='points_map_filter::Node',
+                name='points_map_filter',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('points_map_filter', env_log_levels) },
+                    {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
+                ],
+                remappings=[
+                    ("points_raw", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/lidar/points_raw" ] ),
+                    ("filtered_points", "map_filtered_points"),
+                    ("lanelet2_map", "semantic_map"),
+                    ("change_state", "disabled_change_state"), # Disable lifecycle topics since this is a lifecycle wrapper container
+                    ("get_state", "disabled_get_state")        # Disable lifecycle topics since this is a lifecycle wrapper container  
+                ],
+                parameters=[ points_map_filter_param_file ]
+            ),
+            ComposableNode(
                 package='frame_transformer',
                 plugin='frame_transformer::Node',
                 name='lidar_frame_transformer',
@@ -75,7 +96,7 @@ def generate_launch_description():
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[
-                    ("input", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/lidar/points_raw" ] ),
+                    ("input", "map_filtered_points" ),
                     ("output", "points_in_base_link"),
                     ("change_state", "disabled_change_state"), # Disable lifecycle topics since this is a lifecycle wrapper container
                     ("get_state", "disabled_get_state")        # Disable lifecycle topics since this is a lifecycle wrapper container  
