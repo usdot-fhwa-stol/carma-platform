@@ -72,6 +72,8 @@ namespace points_map_filter
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
 
+    RCLCPP_INFO_STREAM(get_logger(), "Loaded " << config_);
+
     // Setup subscribers
     points_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>("points_raw", 10,
                                                                      std::bind(&Node::points_callback, this, std_ph::_1));
@@ -97,7 +99,6 @@ namespace points_map_filter
     pcl::experimental::FilterFunction<PointT> filter =
         [this](const CloudT &cloud, pcl::index_t idx)
     {
-      std::cerr << "Intersection: " << cloud[idx].x << " " << cloud[idx].y << " Value: " << (int) this->lookup_grid_.intersects(cloud[idx]) << std::endl;
       return this->lookup_grid_.intersects(cloud[idx]);
     };
 
@@ -209,10 +210,16 @@ namespace points_map_filter
         max_y = point.y();
     }
 
-    intersection_config.min_x = min_x;
-    intersection_config.max_x = max_x;
-    intersection_config.min_y = min_y;
-    intersection_config.max_y = max_y;
+    double three_cells = config_.cell_side_length * 3;
+    intersection_config.min_x = min_x - three_cells;
+    intersection_config.max_x = max_x + three_cells;
+    intersection_config.min_y = min_y - three_cells;
+    intersection_config.max_y = max_y + three_cells;
+
+    RCLCPP_INFO_STREAM(get_logger(), "Found base map bounds of (min_x, max_x, min_y, max_y): "
+                                         << "( " << min_x << ", " << max_x << ", " << min_y << ", " << max_y << ")");
+    RCLCPP_INFO_STREAM(get_logger(), "Expanded map bounds to: "
+                                         << "( " << intersection_config.min_x << ", " << intersection_config.max_x << ", " << intersection_config.min_y << ", " << intersection_config.max_y << ")");
 
     lookup_grid_ = approximate_intersection::LookupGrid<PointT>(intersection_config);
 

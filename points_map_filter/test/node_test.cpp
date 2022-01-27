@@ -145,19 +145,9 @@ TEST(Testpoints_map_filter, example_test)
     worker_node->configure(); //Call configure state transition
     worker_node->activate();  //Call activate state transition to get not read for runtime
 
-    // Create a random generator to fill in the cloud
-    // float min = -6.0;
-    // float max = 6.0;
-    // float width = max - min;
-    // float height = width;
-    // uint32_t seed = 1234;
+
 
     auto cloud = pcl::make_shared<pcl::PointCloud<pcl::PointXYZI>>();
-    // pcl::common::CloudGenerator<pcl::PointXYZI, pcl::common::UniformGenerator<float>>
-    //     generator{{min, max, seed}};
-
-    // generator.fill(width, height, *cloud);
-
 
     for (double x = -2.9; x < 7; x += 1.5) {
         pcl::PointXYZI p;
@@ -165,14 +155,9 @@ TEST(Testpoints_map_filter, example_test)
         p.y = x;
         p.z = 0;
         cloud->points.push_back(p);
-        std::cerr << "x,y: " << p.x << ", " << p.y <<std::endl;
     }
 
-    pcl::PointXYZI p;
-        p.x = 30;
-        p.y = 30;
-        p.z = 0;
-        cloud->points.push_back(p);
+    ASSERT_EQ(cloud->points.size(), 7u);
 
 
     std::unique_ptr<autoware_lanelet2_msgs::msg::MapBin> map_msg = std::make_unique<autoware_lanelet2_msgs::msg::MapBin>();
@@ -187,7 +172,6 @@ TEST(Testpoints_map_filter, example_test)
     auto sub = worker_node->create_subscription<sensor_msgs::msg::PointCloud2>("/points_filter_test/filtered_points", 1,
         [&](sensor_msgs::msg::PointCloud2::UniquePtr msg)
         {
-            std::cerr << "Got result" << std::endl;
             result = *msg;
         });
 
@@ -208,7 +192,7 @@ TEST(Testpoints_map_filter, example_test)
 
     pcl::moveFromROSMsg(result, *output_cloud);
 
-    ASSERT_EQ(output_cloud->points.size(), 7u);
+    ASSERT_EQ(output_cloud->points.size(), 4u);
 
     for (auto p : output_cloud->points) {
         
@@ -216,10 +200,8 @@ TEST(Testpoints_map_filter, example_test)
         float y = p.y;
         float z = 0.0;
 
-        std::cerr << "x,y: " << p.x << ", " << p.y <<std::endl;
-
-        if (!( -1.5 <= x && x <= 4.5
-            && -1.5 <= y && y <= 4.5
+        if (!( -0.00001 <= x && x <= 6.0000001
+            && -0.00001 <= y && y <= 6.0000001
             && z == 0.0))
         {
             FAIL() << "Detected points outside of map's approximate bounds";

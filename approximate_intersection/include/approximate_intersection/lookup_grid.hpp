@@ -79,7 +79,6 @@ namespace approximate_intersection
     bool intersects(PointT point) {
 
       HashIndex cell = hasher_.bin(point.x, point.y, 0);
-      std::cerr << "Cell " << cell << std::endl;
 
       if (occupied_cells_.find(cell) != occupied_cells_.end()) {
         return true;
@@ -90,7 +89,6 @@ namespace approximate_intersection
 
     void insert(PointT point) {
       HashIndex cell = hasher_.bin(point.x, point.y, 0);
-      std::cerr << "Occupied Cell " << cell << std::endl;
       occupied_cells_.insert(cell);
     }
 
