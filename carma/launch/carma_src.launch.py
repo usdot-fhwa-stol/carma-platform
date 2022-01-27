@@ -55,6 +55,15 @@ def generate_launch_description():
         ]
     )
 
+    v2x_group = GroupAction(
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_MSG_NS', default_value='message')),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/message.launch.py'])
+            ),
+        ]
+    )
+
     system_controller = Node(
         package='system_controller',
         name='system_controller',
@@ -67,5 +76,6 @@ def generate_launch_description():
     return LaunchDescription([
         transform_group,
         environment_group,
+        v2x_group,
         system_controller
     ])
