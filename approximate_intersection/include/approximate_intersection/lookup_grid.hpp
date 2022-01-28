@@ -24,11 +24,14 @@
 namespace approximate_intersection
 {
 
-  
-
   /**
-   * \brief TODO for USER: Add class description
+   * \brief LookupGrid class implements a fast occupancy grid creation and intersection data structure.
+   *        The user provides 2d min/max bounds on the grid as well as cell side length (cells are always square).
+   *        The user can then add points into the grid. Cells which contain points are marked as occupied.
+   *        Once the grid is populated, intersections can be checked against.
+   *        If the queried point lands in an occupied cell the intersection is reported as true.
    * 
+   * \tparam PointT The type of 2d point which the grid will be built from. Must have publicly accessible .x and .y members. 
    */
   template<class PointT>
   class LookupGrid
@@ -38,21 +41,31 @@ namespace approximate_intersection
     using HashIndex = autoware::common::geometry::spatial_hash::Index;
     
 
-    // Configuration
+    //! Configuration
     Config config_;
 
+    //! Spatial hasher which defines the grid
     Hasher hasher_;
 
+    //! The set of occupied cells identified by their hash index
     std::unordered_set<HashIndex> occupied_cells_;
 
+    //! Static placeholder value for the Autoware.Auto Hasher in use which requires this value but does not utilize it.
     static constexpr size_t PLACE_HOLDER_CAPACITY = 1;
 
   public:
 
+    /**
+     * \brief Default constructor
+     *        Note: This constructor is provided for convenience but users should normally use the constructor which takes a Config object.
+     *      
+     */
     LookupGrid():LookupGrid(Config()) {};
     
     /**
-     * \brief Grid constructor 
+     * \brief Constructor
+     * 
+     * \param config The configuration for the grid.
      */
     LookupGrid(Config config):
       config_(config),
@@ -72,11 +85,23 @@ namespace approximate_intersection
       occupied_cells_.reserve(rough_cell_side_count * rough_cell_side_count);
     }
 
+    /**
+     * \brief Return the current config
+     * 
+     * \return the config in use by this object
+     */ 
     Config get_config() {
       return config_;
     }
 
-    bool intersects(PointT point) {
+    /**
+     * \brief Checks if a point lies within an occupied cell of the grid
+     * 
+     * \param point The point to check for intersection
+     * 
+     * \return True if the point lies within an occupied cell, false otherwise
+     */ 
+    bool intersects(PointT point) const {
 
       HashIndex cell = hasher_.bin(point.x, point.y, 0);
 
@@ -87,6 +112,12 @@ namespace approximate_intersection
       return false;
     }
 
+    /**
+     * \brief Adds a point to the grid. The point must lie within the grid bounds.
+     *        The cell which the point lies in is marked as occupied.
+     * 
+     * \param point The point to add to the grid
+     */
     void insert(PointT point) {
       HashIndex cell = hasher_.bin(point.x, point.y, 0);
       occupied_cells_.insert(cell);

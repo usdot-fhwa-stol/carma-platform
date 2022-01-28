@@ -29,7 +29,6 @@ struct TestPoint {
     double y = 0;
 };
 
-// // TODO for USER: Implement a real test using GTest
 TEST(approximate_intersection, test){
 
     Config config;
@@ -56,7 +55,6 @@ TEST(approximate_intersection, test){
         TestPoint p;
         p.x = i;
         p.y = i;
-        std::cerr << "p: " << p.x << " p.y " << p.y << std::endl; 
         grid.insert(p);
     }
 
@@ -68,7 +66,6 @@ TEST(approximate_intersection, test){
             p.y = j;
             if (i == j) {
                 ASSERT_TRUE(grid.intersects(p));
-                std::cerr<<"True" <<std::endl;
             } else {
                 ASSERT_FALSE(grid.intersects(p));
             }

@@ -69,6 +69,28 @@ def generate_launch_description():
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
             ComposableNode(
+                package='frame_transformer',
+                plugin='frame_transformer::Node',
+                name='lidar_to_map_frame_transformer',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('frame_transformer', env_log_levels) },
+                    {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
+                ],
+                remappings=[
+                    ("input", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/lidar/points_raw" ] ),
+                    ("output", "points_in_map"),
+                    ("change_state", "disabled_change_state"), # Disable lifecycle topics since this is a lifecycle wrapper container
+                    ("get_state", "disabled_get_state")        # Disable lifecycle topics since this is a lifecycle wrapper container  
+                ],
+                parameters=[ 
+                    { "target_frame" : "map"},
+                    { "message_type" : "sensor_msgs/PointCloud2"},
+                    { "queue_size" : 1},
+                    { "timeout" : 0},
+                ]
+            ),
+            ComposableNode(
                 package='points_map_filter',
                 plugin='points_map_filter::Node',
                 name='points_map_filter',
@@ -78,7 +100,7 @@ def generate_launch_description():
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[
-                    ("points_raw", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/lidar/points_raw" ] ),
+                    ("points_raw", "points_in_map" ),
                     ("filtered_points", "map_filtered_points"),
                     ("lanelet2_map", "semantic_map"),
                     ("change_state", "disabled_change_state"), # Disable lifecycle topics since this is a lifecycle wrapper container
