@@ -88,8 +88,7 @@ public:
    * \param config_lim A callback function that will be triggered after the world model receives a new map update
    */
   void setConfigSpeedLimit(double config_lim);
-
-
+  
 /**
  *  \brief Returns the current configured speed limit value
  * 

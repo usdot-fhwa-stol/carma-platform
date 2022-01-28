@@ -22,6 +22,7 @@
 #include <cav_msgs/BSM.h>
 #include <automotive_platform_msgs/VelocityAccelCov.h>
 #include <pacmod_msgs/YawRateRpt.h>
+#include <geometry_msgs/TwistStamped.h>
 #include <sensor_msgs/Imu.h>
 #include <j2735_msgs/TransmissionState.h>
 #include <std_msgs/Float64.h>
@@ -103,7 +104,7 @@ namespace bsm_generator
         void accelCallback(const automotive_platform_msgs::VelocityAccelCovConstPtr& msg);
         void yawCallback(const sensor_msgs::ImuConstPtr& msg);
         void gearCallback(const j2735_msgs::TransmissionStateConstPtr& msg);
-        void speedCallback(const std_msgs::Float64ConstPtr& msg);
+        void speedCallback(const geometry_msgs::TwistStampedPtr& msg);
         void steerWheelAngleCallback(const std_msgs::Float64ConstPtr& msg);
         void brakeCallback(const std_msgs::Float64ConstPtr& msg);
         void headingCallback(const gps_common::GPSFixConstPtr& msg);

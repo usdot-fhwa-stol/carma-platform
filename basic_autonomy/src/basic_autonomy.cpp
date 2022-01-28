@@ -182,14 +182,12 @@ namespace basic_autonomy
             
 
             double starting_route_downtrack = wm->routeTrackPos(points_and_target_speeds.front().point).downtrack;
-            double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist;
 
-            if(ending_downtrack + detailed_config.buffer_ending_downtrack < wm->getRouteEndTrackPos().downtrack){
-                ending_downtrack = ending_downtrack + detailed_config.buffer_ending_downtrack;
-            }
-            else{
-                ending_downtrack = wm->getRouteEndTrackPos().downtrack;
-            }
+            // Always try to add the maximum buffer. Even if the route ends it may still be possible to add buffered points.
+            // This does mean that downstream components might not be able to assume the buffer points are on the route 
+            // though this is not likely to be an issue as they are buffer only
+            double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack;
+
 
             size_t max_i = points_and_target_speeds.size() - 1;
             size_t unbuffered_idx = points_and_target_speeds.size() - 1;
@@ -197,7 +195,6 @@ namespace basic_autonomy
             double dist_accumulator = starting_route_downtrack;
             lanelet::BasicPoint2d prev_point;
 
-            
             boost::optional<lanelet::BasicPoint2d> delta_point;
             for (size_t i = 0; i < points_and_target_speeds.size(); ++i) {
                 auto current_point = points_and_target_speeds[i].point;
@@ -246,7 +243,6 @@ namespace basic_autonomy
 
                     points_and_target_speeds.push_back(new_pair);
                 }
-
 
                 prev_point = current_point;
             }
@@ -727,7 +723,9 @@ namespace basic_autonomy
             back_and_future.reserve(points_set.size());
             double total_dist = 0;
             int min_i = 0;
-            for (int i = nearest_pt_index; i >= 0; --i) // int must be used here to avoid overflow when i = 0
+
+            // int must be used here to avoid overflow when i = 0
+            for (int i = nearest_pt_index; i >= 0; --i)
             {
                 min_i = i;
                 total_dist += lanelet::geometry::distance2d(points_set[i].point, points_set[i - 1].point);

@@ -139,7 +139,7 @@ namespace port_drayage_plugin
             OperationID _enter_staging_area_operation{OperationID::ENTER_STAGING_AREA};
             OperationID _enter_port_operation{OperationID::ENTER_PORT};
             OperationID _holding_area_operation{OperationID::HOLDING_AREA};
-            unsigned long _cmv_id;
+            std::string _cmv_id;
             std::string _cargo_id; // Empty if CMV is not currently carrying cargo
             std::function<void(cav_msgs::MobilityOperation)> _publish_mobility_operation;
             std::function<void(cav_msgs::UIInstructions)> _publish_ui_instructions;
@@ -161,7 +161,7 @@ namespace port_drayage_plugin
             /**
              * \brief Standard constructor for the PortDrayageWorker
              * 
-             * \param cmv_id The Carrier Motor Vehicle ID (an unsigned long) for the host
+             * \param cmv_id The Carrier Motor Vehicle ID for the host
              * vehicle
              * 
              * \param cargo_id The identification string for the cargo carried
@@ -192,7 +192,7 @@ namespace port_drayage_plugin
              * the implementation of this class.
              */
             PortDrayageWorker(
-                unsigned long cmv_id,
+                std::string cmv_id,
                 std::string cargo_id,
                 std::string host_id,
                 bool starting_at_staging_area,
@@ -210,7 +210,7 @@ namespace port_drayage_plugin
                 _set_active_route(call_set_active_route_client),
                 _stop_speed_epsilon(stop_speed_epsilon),
                 _enable_port_drayage(enable_port_drayage) {
-                    initialize();       
+                    initialize();    
                 };
 
             /**

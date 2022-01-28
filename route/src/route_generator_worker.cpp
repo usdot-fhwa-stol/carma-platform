@@ -551,13 +551,8 @@ namespace route {
                     publish_route_event(cav_msgs::RouteEvent::ROUTE_DEPARTED);
                 }
 
-            // check if we reached our destination be remaining down track distance
-            auto end_point_3d = world_model_->getRoute()->getEndPoint();
-            auto last_ll = world_model_->getRoute()->shortestPath().back();
-            double end_point_downtrack = carma_wm::geometry::trackPos(last_ll, {end_point_3d.x(), end_point_3d.y()}).downtrack;
-            double last_lanelet_downtrack = carma_wm::geometry::trackPos(last_ll, last_ll.centerline().back().basicPoint2d()).downtrack;
-            
-            double route_length_2d = world_model_->getRoute()->length2d() - (last_lanelet_downtrack - end_point_downtrack);
+            // check if we reached our destination be remaining down track distance            
+            double route_length_2d = world_model_->getRouteEndTrackPos().downtrack;
             if((current_downtrack_distance_ > route_length_2d - down_track_target_range_ && current_speed_ < epsilon_) || (current_downtrack_distance_ > route_length_2d))
             {
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_COMPLETED);

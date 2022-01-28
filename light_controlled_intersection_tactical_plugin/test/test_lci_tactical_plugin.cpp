@@ -335,6 +335,281 @@ TEST(LCITacticalPluginTest, apply_accel_cruise_decel_speed_profile_test)
   // SACRIFICE START NEGATIVE ACCEL PART END
 }
 
+TEST(LCITacticalPluginTest, apply_decel_cruise_accel_speed_profile_test)
+{
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  LightControlledIntersectionTacticalPluginConfig config;
+  config.vehicle_accel_limit= 1;
+  config.vehicle_accel_limit_multiplier= 1;
+  config.vehicle_decel_limit= 1;
+  config.vehicle_decel_limit_multiplier= 1;
+  config.minimum_speed = 1;
+  
+  
+  LightControlledIntersectionTacticalPlugin lci(wm, config, [&](auto msg) {});
+
+  auto map = carma_wm::test::buildGuidanceTestMap(2, 2);
+
+  wm->setMap(map);
+  carma_wm::test::setSpeedLimit(15_mph, wm);
+
+  /**
+   * Total route length should be 100m
+   *
+   *        |1203|1213|1223|
+   *        | _  _  _  _  _|
+   *        |1202| Ob |1222|
+   *        | _  _  _  _  _|
+   *        |1201|1211|1221|    num   = lanelet id hardcoded for easier testing
+   *        | _  _  _  _  _|    |     = lane lines
+   *        |1200|1210|1220|    - - - = Lanelet boundary
+   *        |              |    O     = Default Obstacle
+   *        ****************
+   *           START_LINE
+   */
+
+  carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
+  
+  PointSpeedPair p;
+  std::vector<PointSpeedPair> points_and_target_speeds;
+  
+  // DECEL-CRUISE START
+ 
+  double departure_speed = 1;
+  double start_dist = 0;
+  double end_dist = 11;
+  double remaining_dist = end_dist - start_dist;
+  double starting_speed = 2; 
+  double remaining_time = 8;
+  int n = 11;
+  double step = end_dist / (n - 1);
+  for (auto i = 0; i < n; i++)
+  {
+    p.point = {0.5, i * step};
+    p.speed = starting_speed;
+    points_and_target_speeds.push_back(p);
+  }
+
+  ROS_DEBUG_STREAM("\n Estimated time: " << lci.calcEstimatedEntryTimeLeft(remaining_dist, starting_speed, departure_speed ) 
+                                         << ", scheduled time: " << remaining_time);
+  
+  double speed_before_accel = lci.calcSpeedBeforeAccel(remaining_time, remaining_dist, starting_speed, departure_speed);
+  
+  lci.apply_decel_cruise_accel_speed_profile(wm, points_and_target_speeds, start_dist, end_dist, 
+                                    remaining_time, starting_speed, speed_before_accel, departure_speed);
+
+  EXPECT_NEAR(points_and_target_speeds.front().speed, starting_speed, 0.001);
+  EXPECT_NEAR(points_and_target_speeds.back().speed, departure_speed, 0.001);
+
+  // DECEL-CRUISE START
+
+  // CRUISE ACCEL START
+  points_and_target_speeds = {};
+  departure_speed = 2;
+  start_dist = 0;
+  end_dist = 11;
+  remaining_dist = end_dist - start_dist;
+  starting_speed = 1; 
+  remaining_time = 8;
+  n = 11;
+  step = end_dist / (n - 1);
+  for (auto i = 0; i < n; i++)
+  {
+    p.point = {0.5, i * step};
+    p.speed = 5;
+    points_and_target_speeds.push_back(p);
+  }
+
+  ROS_DEBUG_STREAM("\n Estimated time: " << lci.calcEstimatedEntryTimeLeft(remaining_dist, starting_speed, departure_speed ) 
+                                         << ", scheduled time: " << remaining_time);
+  speed_before_accel = lci.calcSpeedBeforeAccel(remaining_time, remaining_dist, starting_speed, departure_speed);
+
+  lci.apply_decel_cruise_accel_speed_profile(wm, points_and_target_speeds, start_dist, end_dist, 
+                                    remaining_time, starting_speed, speed_before_accel, departure_speed);
+
+  EXPECT_NEAR(points_and_target_speeds.front().speed, starting_speed, 0.001);
+  EXPECT_NEAR(points_and_target_speeds.back().speed, departure_speed, 0.001);
+
+  // CRUISE ACCEL end
+  
+  
+  // DECEL ACCEL START
+  points_and_target_speeds = {};
+  lci.speed_limit_ = 3;
+  departure_speed = 2;
+  start_dist = 0;
+  end_dist = 11;
+  remaining_dist = end_dist - start_dist;
+  starting_speed = 2; 
+  remaining_time = 5.6;
+  n = 11;
+  step = end_dist / (n - 1);
+  for (auto i = 0; i < n; i++)
+  {
+    p.point = {0.5, i * step};
+    p.speed = 5;
+    points_and_target_speeds.push_back(p);
+  }
+
+  ROS_DEBUG_STREAM("\n Estimated time: " << lci.calcEstimatedEntryTimeLeft(remaining_dist, starting_speed, departure_speed ) 
+                                         << ", scheduled time: " << remaining_time);
+  speed_before_accel = lci.calcSpeedBeforeAccel(remaining_time, remaining_dist, starting_speed, departure_speed);
+
+  lci.apply_decel_cruise_accel_speed_profile(wm, points_and_target_speeds, start_dist, end_dist, 
+                                    remaining_time, starting_speed, speed_before_accel, departure_speed);
+
+  EXPECT_NEAR(points_and_target_speeds.front().speed, starting_speed, 0.001);
+  EXPECT_NEAR(points_and_target_speeds.back().speed, departure_speed, 0.001);
+  
+  // DECEL ACCEL END
+  
+  // DECEL CRUISE ACCEL START
+  points_and_target_speeds = {};
+  departure_speed = 1.5;
+  start_dist = 0;
+  end_dist = 11;
+  remaining_dist = end_dist - start_dist;
+  starting_speed = 2; 
+  remaining_time = 7;
+  n = 11;
+  step = end_dist / (n - 1);
+  for (auto i = 0; i < n; i++)
+  {
+    p.point = {0.5, i * step};
+    p.speed = 5;
+    points_and_target_speeds.push_back(p);
+  }
+
+  ROS_DEBUG_STREAM("\n Estimated time: " << lci.calcEstimatedEntryTimeLeft(remaining_dist, starting_speed, departure_speed ) 
+                                         << ", scheduled time: " << remaining_time);
+  speed_before_accel = lci.calcSpeedBeforeAccel(remaining_time, remaining_dist, starting_speed, departure_speed);
+
+  lci.apply_decel_cruise_accel_speed_profile(wm, points_and_target_speeds, start_dist, end_dist, 
+                                    remaining_time, starting_speed, speed_before_accel, departure_speed);
+
+  EXPECT_NEAR(points_and_target_speeds.front().speed, starting_speed, 0.001);
+  EXPECT_NEAR(points_and_target_speeds.back().speed, departure_speed, 0.001);
+  
+  // DECEL CRUISE ACCEL END
+  
+  // ONLY CRUISE START
+  points_and_target_speeds = {};
+  departure_speed = lci.speed_limit_;
+  start_dist = 0;
+  end_dist = 5;
+  remaining_dist = end_dist - start_dist;
+  starting_speed = lci.speed_limit_; 
+  remaining_time = 5;
+  n = 11;
+  step = end_dist / (n - 1);
+  for (auto i = 0; i < n; i++)
+  {
+    p.point = {0.5, i * step};
+    p.speed = lci.speed_limit_;
+    points_and_target_speeds.push_back(p);
+  }
+
+  ROS_DEBUG_STREAM("\n Estimated time: " << lci.calcEstimatedEntryTimeLeft(remaining_dist, starting_speed, departure_speed ) 
+                                         << ", scheduled time: " << remaining_time);
+  speed_before_accel = lci.calcSpeedBeforeAccel(remaining_time, remaining_dist, starting_speed, departure_speed);
+
+  lci.apply_decel_cruise_accel_speed_profile(wm, points_and_target_speeds, start_dist, end_dist, 
+                                    remaining_time, starting_speed, speed_before_accel, departure_speed);
+
+  EXPECT_NEAR(points_and_target_speeds.front().speed, starting_speed, 0.001);
+  EXPECT_NEAR(points_and_target_speeds.back().speed, departure_speed, 0.001);
+  
+  // ONLY CRUISE END
+  
+  // BUFFERED DECEL CRUISE ACCEL START 
+  points_and_target_speeds = {};
+  departure_speed = 1.5;
+  start_dist = 1;
+  end_dist = 12;
+  starting_speed = 2; 
+  remaining_time = 7;
+  remaining_dist = end_dist - start_dist;
+  n = 13;
+  step = end_dist / (n - 1);
+  for (auto i = 0; i < n; i++)
+  {
+    p.point = {0.5, i * step};
+    p.speed = lci.speed_limit_;
+    points_and_target_speeds.push_back(p);
+  }
+
+  ROS_DEBUG_STREAM("\n Estimated time: " << lci.calcEstimatedEntryTimeLeft(remaining_dist, starting_speed, departure_speed ) 
+                                         << ", scheduled time: " << remaining_time);
+  speed_before_accel = lci.calcSpeedBeforeAccel(remaining_time, remaining_dist, starting_speed, departure_speed);
+
+  lci.apply_decel_cruise_accel_speed_profile(wm, points_and_target_speeds, start_dist, end_dist, 
+                                    remaining_time, starting_speed, speed_before_accel, departure_speed);
+
+  EXPECT_NEAR(points_and_target_speeds.front().speed, starting_speed, 0.001);
+  EXPECT_NEAR(points_and_target_speeds.back().speed, departure_speed, 0.001);
+
+  // BUFFERED DECEL CRUISE ACCEL END
+  
+  
+  // SACRIFICE START NEGATIVE ACCEL PART START
+  points_and_target_speeds = {};
+  departure_speed = 3;
+  start_dist = 0;
+  end_dist = 10;
+  starting_speed = 2; 
+  remaining_time = 12.5;
+  remaining_dist = end_dist - start_dist;
+  n = 11;
+  step = end_dist / (n - 1);
+  for (auto i = 0; i < n; i++)
+  {
+    p.point = {0.5, i * step};
+    p.speed = lci.speed_limit_;
+    points_and_target_speeds.push_back(p);
+  }
+
+  ROS_DEBUG_STREAM("\n Estimated time: " << lci.calcEstimatedEntryTimeLeft(remaining_dist, starting_speed, departure_speed ) 
+                                         << ", scheduled time: " << remaining_time);
+  speed_before_accel = lci.calcSpeedBeforeAccel(remaining_time, remaining_dist, starting_speed, departure_speed);
+
+  lci.apply_decel_cruise_accel_speed_profile(wm, points_and_target_speeds, start_dist, end_dist, 
+                                    remaining_time, starting_speed, speed_before_accel, departure_speed);
+
+  EXPECT_NEAR(points_and_target_speeds.front().speed, starting_speed, 0.001);
+  EXPECT_NEAR(points_and_target_speeds.back().speed, departure_speed, 0.001);
+
+  // SACRIFICE START NEGATIVE ACCEL PART START
+  
+  // SACRIFICE START POSITIVE DECEL PART START
+  points_and_target_speeds = {};
+  departure_speed = 2;
+  start_dist = 0;
+  end_dist = 10;
+  starting_speed = 2; 
+  remaining_time = 15;
+  remaining_dist = end_dist - start_dist;
+  n = 11;
+  step = end_dist / (n - 1);
+  for (auto i = 0; i < n; i++)
+  {
+    p.point = {0.5, i * step};
+    p.speed = lci.speed_limit_;
+    points_and_target_speeds.push_back(p);
+  }
+
+  ROS_DEBUG_STREAM("\n Estimated time: " << lci.calcEstimatedEntryTimeLeft(remaining_dist, starting_speed, departure_speed ) 
+                                         << ", scheduled time: " << remaining_time);
+  speed_before_accel = lci.calcSpeedBeforeAccel(remaining_time, remaining_dist, starting_speed, departure_speed);
+
+  lci.apply_decel_cruise_accel_speed_profile(wm, points_and_target_speeds, start_dist, end_dist, 
+                                    remaining_time, starting_speed, speed_before_accel, departure_speed);
+
+  EXPECT_NEAR(points_and_target_speeds.front().speed, starting_speed, 0.001);
+  EXPECT_NEAR(points_and_target_speeds.back().speed, departure_speed, 0.001);
+
+  // SACRIFICE START POSITIVE DECEL PART END
+}
+
 }
 
 // Run all the tests

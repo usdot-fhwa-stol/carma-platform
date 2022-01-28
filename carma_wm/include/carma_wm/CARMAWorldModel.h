@@ -30,6 +30,7 @@
 #include "TrackPos.h"
 #include <carma_wm/WorldModelUtils.h>
 #include "boost/date_time/posix_time/posix_time.hpp"
+
 #include <carma_wm/SignalizedIntersectionManager.h>
 
 namespace carma_wm
@@ -125,6 +126,10 @@ public:
    */
   void setVehicleParticipationType(const std::string& participant);
   
+  /*! \brief Get vehicle participation type
+   */
+  std::string getVehicleParticipationType();
+
   /*! \brief Set endpoint of the route
    */
   void setRouteEndPoint(const lanelet::BasicPoint3d& end_point);
@@ -133,9 +138,13 @@ public:
    */
   void setRouteName(const std::string& route_name);
  
-  /*! \brief helper for traffic light Id
+  /*! \brief helper for traffic signal Id
    */
-  lanelet::Id getTrafficLightId(uint16_t intersection_id,uint8_t signal_id);
+  lanelet::Id getTrafficSignalId(uint16_t intersection_id,uint8_t signal_id);
+
+  /*! \brief helper for getting traffic signal with given lanelet::Id
+   */
+  lanelet::CarmaTrafficSignalPtr getTrafficSignal(const lanelet::Id& id) const;
 
   /**
    * \brief (non-const version) Gets the underlying lanelet, given the cartesian point on the map 
@@ -219,7 +228,9 @@ public:
   std::vector<lanelet::CarmaTrafficSignalPtr> getSignalsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
 
   std::vector<std::shared_ptr<lanelet::AllWayStop>> getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
-  
+
+  std::vector<lanelet::SignalizedIntersectionPtr> getSignalizedIntersectionsAlongRoute(const lanelet::BasicPoint2d &loc) const;
+
   std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 
   carma_wm::SignalizedIntersectionManager sim_; // records SPAT/MAP lane ids to lanelet ids
@@ -252,7 +263,6 @@ private:
   LaneletRoutePtr route_;
   LaneletRoutingGraphPtr map_routing_graph_;
   double route_length_ = 0;
-  std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>>> traffic_light_states_; //[intersection_id][signal_group_id]
   lanelet::LaneletSubmapConstUPtr shortest_path_view_;  // Map containing only lanelets along the shortest path of the
                                                      // route
   std::vector<lanelet::LineString3d> shortest_path_centerlines_;  // List of disjoint centerlines seperated by lane

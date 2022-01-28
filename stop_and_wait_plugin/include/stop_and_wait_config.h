@@ -31,7 +31,7 @@ struct StopandWaitConfig
   double crawl_speed = 1.34112;              // Minimum speed the vehicle can command before being ready to stop
   double cernterline_sampling_spacing = 1.0; // The gap in meters between points sampled from the lanelet centerlines for planning trajectory positions
   double default_stopping_buffer = 3.0;      // The default buffer in meters used for where the vehicle can come to a stop during execution. This value is overriden by the first value in maneuver.parameters.float_valued_meta_data[]
-
+  double moving_average_window_size = 11.0;  // Moving Average filter window size
   friend std::ostream& operator<<(std::ostream& output, const StopandWaitConfig& c)
   {
     output << "StopandWaitConfig { " << std::endl
