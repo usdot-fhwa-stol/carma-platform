@@ -231,7 +231,6 @@ namespace route_following_plugin
         // ROS publishers and subscribers
         ros::Publisher plugin_discovery_pub_;
         ros::Publisher upcoming_lane_change_status_pub_;
-        ros::Subscriber pose_sub_;
         ros::Subscriber twist_sub_;
         ros::Timer discovery_pub_timer_;
 
@@ -280,10 +279,9 @@ namespace route_following_plugin
         std::string lanefollow_planning_tactical_plugin_ = "InLaneCruisingPlugin"; 
 
         /**
-         * \brief Callback for the pose subscriber, which will store latest pose locally
-         * \param msg Latest pose message
+         * \brief Callback for the front bumper pose transform
          */
-        void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+        void bumper_pose_cb();
 
         /**
          * \brief Callback for the twist subscriber, which will store latest twist locally
@@ -300,9 +298,9 @@ namespace route_following_plugin
         ros::Duration getManeuverDuration(cav_msgs::Maneuver &maneuver, double epsilon) const;
 
         /**
-         * \brief Lookup Transform from front bumper to map
+         * \brief Initialize transform lookup from front bumper to map
          */
-        void lookupFrontBumperTransform();
+        void initializeBumperTransformLookup();
 
         geometry_msgs::TransformStamped tf_;
         
