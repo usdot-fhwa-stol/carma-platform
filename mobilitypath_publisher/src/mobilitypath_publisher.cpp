@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,10 +34,6 @@ namespace mobilitypath_publisher
   {
     auto error = update_params<double>({{"path_pub_rate", config_.path_pub_rate}}, parameters);
     auto error_2 = update_params<std::string>({{"vehicle_id", config_.vehicle_id}}, parameters);
-
-    for (auto param : parameters) {
-      RCLCPP_INFO_STREAM(this->get_logger(), "Available parameter: " << param.get_name());
-    }
 
     rcl_interfaces::msg::SetParametersResult result;
 
@@ -103,7 +99,7 @@ namespace mobilitypath_publisher
   void MobilityPathPublication::trajectory_cb(const carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg)
   {
     latest_trajectory_ = *msg;
-    latest_mobility_path_ = mobilityPathMessageGenerator(latest_trajectory_);
+    latest_mobility_path_ = mobility_path_message_generator(latest_trajectory_);
   }
 
   void MobilityPathPublication::bsm_cb(const carma_v2x_msgs::msg::BSM::UniquePtr msg)
@@ -111,29 +107,29 @@ namespace mobilitypath_publisher
     bsm_core_ = msg->core_data;
   }
 
-  carma_v2x_msgs::msg::MobilityPath MobilityPathPublication::mobilityPathMessageGenerator(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan)
+  carma_v2x_msgs::msg::MobilityPath MobilityPathPublication::mobility_path_message_generator(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan)
   {
     carma_v2x_msgs::msg::MobilityPath mobility_path_msg;
     uint64_t millisecs = (trajectory_plan.header.stamp.sec*1000000000 + trajectory_plan.header.stamp.nanosec) / 1000000;
-    mobility_path_msg.m_header = composeMobilityHeader(millisecs);
+    mobility_path_msg.m_header = compose_mobility_header(millisecs);
         
     if (!map_projector_) {
       RCLCPP_ERROR_STREAM(this->get_logger(), "MobilityPath cannot be populated as map projection is not available");
       return mobility_path_msg;
     }
 
-    carma_v2x_msgs::msg::Trajectory mob_path_traj = TrajectoryPlantoTrajectory(trajectory_plan.trajectory_points);
+    carma_v2x_msgs::msg::Trajectory mob_path_traj = trajectory_plan_to_trajectory(trajectory_plan.trajectory_points);
     mobility_path_msg.trajectory = mob_path_traj;
 
     return mobility_path_msg;
   }
 
-  carma_v2x_msgs::msg::MobilityHeader MobilityPathPublication::composeMobilityHeader(uint64_t time)
+  carma_v2x_msgs::msg::MobilityHeader MobilityPathPublication::compose_mobility_header(uint64_t time)
   {
     carma_v2x_msgs::msg::MobilityHeader header;
     header.sender_id = config_.vehicle_id;
     header.recipient_id = recipient_id;
-    header.sender_bsm_id = bsmIDtoString(bsm_core_);
+    header.sender_bsm_id = bsm_ID_to_string(bsm_core_);
 
     // random GUID that identifies this particular plan for future reference
     header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
@@ -142,11 +138,15 @@ namespace mobilitypath_publisher
     return header;
   }
 
-  carma_v2x_msgs::msg::Trajectory MobilityPathPublication::TrajectoryPlantoTrajectory(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& traj_points) const
+  carma_v2x_msgs::msg::Trajectory MobilityPathPublication::trajectory_plan_to_trajectory(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& traj_points) const
   {
     carma_v2x_msgs::msg::Trajectory traj;
 
-    carma_v2x_msgs::msg::LocationECEF ecef_location = TrajectoryPointtoECEF(traj_points[0]); //m to cm to fit the msg standard 
+    if (traj_points.empty()) {
+      throw std::invalid_argument("Received an empty vector of Trajectory Plan Points");
+    }
+
+    carma_v2x_msgs::msg::LocationECEF ecef_location = trajectory_point_to_ECEF(traj_points[0]); //m to cm to fit the msg standard 
 
     if (traj_points.size() < 2){
       RCLCPP_WARN_STREAM(this->get_logger(), "Received Trajectory Plan is too small");
@@ -157,7 +157,7 @@ namespace mobilitypath_publisher
       for (size_t i=1; i<traj_points.size(); i++){
                 
         carma_v2x_msgs::msg::LocationOffsetECEF offset;
-        carma_v2x_msgs::msg::LocationECEF new_point = TrajectoryPointtoECEF(traj_points[i]); //m to cm to fit the msg standard
+        carma_v2x_msgs::msg::LocationECEF new_point = trajectory_point_to_ECEF(traj_points[i]); //m to cm to fit the msg standard
         offset.offset_x = (int16_t)(new_point.ecef_x - prev_point.ecef_x);  
         offset.offset_y = (int16_t)(new_point.ecef_y - prev_point.ecef_y);
         offset.offset_z = (int16_t)(new_point.ecef_z - prev_point.ecef_z);
@@ -171,7 +171,7 @@ namespace mobilitypath_publisher
     return traj;    
   }
 
-  carma_v2x_msgs::msg::LocationECEF MobilityPathPublication::TrajectoryPointtoECEF(const carma_planning_msgs::msg::TrajectoryPlanPoint& traj_point) const
+  carma_v2x_msgs::msg::LocationECEF MobilityPathPublication::trajectory_point_to_ECEF(const carma_planning_msgs::msg::TrajectoryPlanPoint& traj_point) const
   {
     if (!map_projector_) {
       throw std::invalid_argument("No map projector available for ecef conversion");

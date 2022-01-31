@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,7 +47,7 @@ TEST(Testmobilitypath_publisher, test1)
     msg_ptr->data = base_proj;
     worker->georeference_cb(move(msg_ptr));  // Set projection
 
-    auto res = worker->mobilityPathMessageGenerator(plan);
+    auto res = worker->mobility_path_message_generator(plan);
     ASSERT_EQ(1, res.trajectory.offsets.size());
 
     ASSERT_EQ(637813699.0, res.trajectory.location.ecef_x);
@@ -71,7 +71,7 @@ TEST(Testmobilitypath_publisher, test2)
     rclcpp::NodeOptions options;
     auto worker = std::make_shared<mobilitypath_publisher::MobilityPathPublication>(options);
 
-    auto res = worker->mobilityPathMessageGenerator(plan);
+    auto res = worker->mobility_path_message_generator(plan);
 
     // Check values are unset as georeference was not provided
     ASSERT_EQ(0, res.trajectory.location.ecef_x);

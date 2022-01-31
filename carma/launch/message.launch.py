@@ -37,7 +37,7 @@ def generate_launch_description():
     mobilitypath_publisher_param_file = os.path.join(
         get_package_share_directory('mobilitypath_publisher'), 'config/parameters.yaml')
 
-    vehicle_characteristics_dir = LaunchConfiguration('vehicle_characteristics_dir')
+    vehicle_characteristics_path = LaunchConfiguration('vehicle_characteristics_path')
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
@@ -58,12 +58,12 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('mobilitypath_publisher', env_log_levels) }
                 ],
                 remappings=[
-                    ("plan_trajectory", "/guidance/plan_trajectory"),               # TODO: Use environment variable
-                    ("georeference", "/localization/map_param_loader/georeference") # TODO: Use environment variable
+                    ("plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plan_trajectory" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] )
                 ],
                 parameters=[ 
                     mobilitypath_publisher_param_file,
-                    vehicle_characteristics_dir
+                    vehicle_characteristics_path
                 ]
             ),
         ]

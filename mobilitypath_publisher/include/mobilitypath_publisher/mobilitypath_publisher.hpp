@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -99,28 +99,28 @@ namespace mobilitypath_publisher
      * \param time Time in milliseconds
      * \return A MobilityHeader 
      */
-    carma_v2x_msgs::msg::MobilityHeader composeMobilityHeader(uint64_t time);
+    carma_v2x_msgs::msg::MobilityHeader compose_mobility_header(uint64_t time);
 
     /**
      * \brief Converts a Trajectory Plan to a (Mobility) Trajectory
      * \param traj_points The TrajectoryPlan to be converted into a (Mobility) Trajectory
      * \return A (Mobility) Trajectory
      */
-    carma_v2x_msgs::msg::Trajectory TrajectoryPlantoTrajectory(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& traj_points) const;
+    carma_v2x_msgs::msg::Trajectory trajectory_plan_to_trajectory(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& traj_points) const;
     
     /**
      * \brief Converts Trajectory Plan Point to ECEF (accepts meters and outputs in cm)
      * \param traj_points The Trajectory Plan Point to be converted to ECEF
      * \return The Trajectory Plan Point in ECEF
      */
-    carma_v2x_msgs::msg::LocationECEF TrajectoryPointtoECEF(const carma_planning_msgs::msg::TrajectoryPlanPoint& traj_point) const;
+    carma_v2x_msgs::msg::LocationECEF trajectory_point_to_ECEF(const carma_planning_msgs::msg::TrajectoryPlanPoint& traj_point) const;
     
     /**
      * \brief Extracts the BSM ID from a BSMCoreData message and converts it to a string
      * \param bsm_core The BSMCoreData, which contains the BSM ID to be converted to a string
      * \return The BSM ID as a string
      */
-    std::string bsmIDtoString(carma_v2x_msgs::msg::BSMCoreData bsm_core){
+    std::string bsm_ID_to_string(carma_v2x_msgs::msg::BSMCoreData bsm_core){
       std::string res = "";
       for (size_t i=0; i<bsm_core.id.size(); i++){
         res+=std::to_string(bsm_core.id[i]);
@@ -144,7 +144,7 @@ namespace mobilitypath_publisher
      * \param trajectory_plan A TrajectoryPlan
      * \return A MobilityPath message
      */
-    carma_v2x_msgs::msg::MobilityPath mobilityPathMessageGenerator(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan);
+    carma_v2x_msgs::msg::MobilityPath mobility_path_message_generator(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan);
 
     /**
     * \brief Callback for map projection string to define lat/lon -> map conversion
