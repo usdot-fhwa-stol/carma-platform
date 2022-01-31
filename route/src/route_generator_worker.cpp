@@ -469,32 +469,28 @@ namespace route {
         return true;
     }
 
-    void RouteGeneratorWorker::lookupFrontBumperTransform() 
+    void RouteGeneratorWorker::initializeBumperTransformLookup() 
     {
         tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
         tf2_buffer_.setUsingDedicatedThread(true);
+    }
+
+    void RouteGeneratorWorker::bumper_pose_cb()
+    {
         try
         {
-            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(0.10)); //save to local copy of transform 20 sec timeout
+            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(0.10)); //save to local copy of transform 0.1 sec timeout
             tf2::fromMsg(tf_, frontbumper_transform_);
         }
         catch (const tf2::TransformException &ex)
         {
             ROS_WARN("%s", ex.what());
         }
-    }
 
-    void RouteGeneratorWorker::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
-    {
-        lookupFrontBumperTransform(); 
-        vehicle_pose_ = *msg;
-        if (vehicle_pose_)
-        {
-            vehicle_pose_->pose.position.x = frontbumper_transform_.getOrigin().getX();
-            vehicle_pose_->pose.position.y = frontbumper_transform_.getOrigin().getY();
-            vehicle_pose_->pose.position.z = frontbumper_transform_.getOrigin().getZ();
+        vehicle_pose_->pose.position.x = frontbumper_transform_.getOrigin().getX();
+        vehicle_pose_->pose.position.y = frontbumper_transform_.getOrigin().getY();
+        vehicle_pose_->pose.position.z = frontbumper_transform_.getOrigin().getZ();
             
-        }
 
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point

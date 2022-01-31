@@ -114,10 +114,9 @@ namespace route {
         bool abort_active_route_cb(cav_srvs::AbortActiveRouteRequest &req, cav_srvs::AbortActiveRouteResponse &resp);
 
         /**
-         * \brief Pose message callback. Use the latest pose message to determin if we left the route or reach the route destination
-         * \param msg A geometry_msgs::PoseStampedConstPtr msg which contains current vehicle pose in the map frame
+         * \brief Callback for the front bumper pose transform
          */
-        void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+        void bumper_pose_cb();
 
         /**
          * \brief Callback for the twist subscriber, which will store latest twist locally
@@ -231,9 +230,12 @@ namespace route {
         lanelet::Optional<lanelet::routing::Route> reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map);
 
         /**
-         * \brief Lookup transfrom from front bumper to the map
+         * \brief Initialize transform lookup from front bumper to map
          */
-        void lookupFrontBumperTransform();
+        void initializeBumperTransformLookup();
+
+        // Current vehicle pose if it has been recieved
+        boost::optional<geometry_msgs::PoseStamped> vehicle_pose_;
 
     private:
 
@@ -303,8 +305,7 @@ namespace route {
         // destination points in map
         std::vector<lanelet::BasicPoint2d> destination_points_in_map_;
 
-        // Current vehicle pose if it has been recieved
-        boost::optional<geometry_msgs::PoseStamped> vehicle_pose_;
+        
         // Vehicle front bumper pose
         geometry_msgs::PoseStampedPtr bumper_pose_;
 
