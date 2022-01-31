@@ -45,18 +45,19 @@ ament_auto_add_executable(${node_exec}
         src/main.cpp 
 )
 
-# Register component
-rclcpp_components_register_nodes(${node_lib} "points_map_filter::Node")
-
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies
 target_link_libraries(${node_lib} 
         ${PCL_LIBRARIES}
+        ${lanelet2_extension_LIBRARIES}
 )
 
 target_link_libraries(${node_exec}
         ${node_lib}
 )
+
+# Register component
+rclcpp_components_register_nodes(${node_lib} "points_map_filter::Node")
 
 # Testing
 if(BUILD_TESTING)  
