@@ -364,17 +364,6 @@ namespace platoon_strategic
         plugin.mob_req_cb(request);
 
         EXPECT_EQ(plugin.pm_.current_platoon_state, PlatoonState::LEADER);
-
-        plugin.single_lane_road_ = false;
-        plugin.in_rightmost_lane_ = false;
-
-        cav_msgs::MobilityRequest request1;
-        request1.plan_type.type = 3;
-        request1.strategy_params = "SIZE:1,SPEED:0,DTD:11.5599,ECEFX:1.0,ECEFY:200.0,ECEFZ:3.0";
-
-        plugin.mob_req_cb(request1);
-
-        EXPECT_EQ(plugin.pm_.current_platoon_state, PlatoonState::LEADERWAITING);
     }
 
     TEST(PlatoonManagerTest, test6)
@@ -548,10 +537,12 @@ namespace platoon_strategic
         EXPECT_EQ(plugin_rear.pm_.current_platoon_state, PlatoonState::CANDIDATEFOLLOWER);
 
         // Create JOIN_REQUIREMENTS MobilityOperation for front vehicle to send to rear vehicle
+        plugin_front.config_.vehicleID = "Front-ID";
         cav_msgs::MobilityOperation join_requirements = plugin_front.composeMobilityOperationLeaderWaiting("JOIN_REQUIREMENTS");
-        EXPECT_EQ(join_requirements.strategy_params, "JOIN_REQUIREMENTS|LANE_INDEX:1");
+        EXPECT_EQ(join_requirements.strategy_params, "JOIN_REQUIREMENTS|LANE_INDEX:1,LANE_GROUP_SIZE:3");
 
         // Rear vehicle receives JOIN_REQUIREMENTS MobilityOperation, which includes the target_lane_index
+        plugin_rear.pm_.targetLeaderId = "Front-ID";
         EXPECT_EQ(plugin_rear.has_received_join_requirements_, false);
         plugin_rear.mob_op_cb(join_requirements);
         EXPECT_EQ(plugin_rear.has_received_join_requirements_, true);

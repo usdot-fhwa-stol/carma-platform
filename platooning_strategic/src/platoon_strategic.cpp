@@ -119,6 +119,9 @@ namespace platoon_strategic
 
             checkForRightMostLane(current_loc);
 
+            current_lane_index_ = getCurrentLaneIndex(current_loc);
+
+            current_lane_group_size_ = getCurrentLaneGroupSize(current_loc);
         }
         
     }
@@ -169,9 +172,40 @@ namespace platoon_strategic
             single_lane_road_ = false;
             ROS_DEBUG_STREAM("Vehicle is NOT in a single-lane road");
         }
+    }
 
-        // Store the current local lane index of the host vehicle (0 is rightmost lane, 1 is second rightmost, etc.); considers only the current travel direction
-        current_lane_index_ = (routing_graph->rights(current_lanelet[0])).size();
+    int PlatoonStrategicPlugin::getCurrentLaneIndex(const lanelet::BasicPoint2d& current_location)
+    {
+        auto current_lanelet = wm_->getLaneletsFromPoint(current_location, 1);
+        if (current_lanelet.size()<1)
+        {
+            throw std::invalid_argument("There are no lanelets in the current location.");
+        }
+        ROS_DEBUG_STREAM("current_lanelet" << current_lanelet[0].id());
+        auto routing_graph = wm_->getMapRoutingGraph();
+
+        // Obtain the current local lane index (0 is rightmost lane, 1 is second rightmost, etc.); considers only the current travel direction
+        int lane_index = (routing_graph->rights(current_lanelet[0])).size();
+
+        return lane_index;
+    }
+
+    int PlatoonStrategicPlugin::getCurrentLaneGroupSize(const lanelet::BasicPoint2d& current_location)
+    {
+        auto current_lanelet = wm_->getLaneletsFromPoint(current_location, 1);
+        if (current_lanelet.size()<1)
+        {
+            throw std::invalid_argument("There are no lanelets in the current location.");
+        }
+        ROS_DEBUG_STREAM("current_lanelet" << current_lanelet[0].id());
+        auto routing_graph = wm_->getMapRoutingGraph();
+
+        // Obtain the current local lane index (0 is rightmost lane, 1 is second rightmost, etc.); considers only the current travel direction
+        int lane_quantity_right = (routing_graph->rights(current_lanelet[0])).size();
+        int lane_quantity_left = (routing_graph->lefts(current_lanelet[0])).size();
+        int lane_quantity = lane_quantity_right + lane_quantity_left + 1; // Include the '+1' to account for the current location's lane
+
+        return lane_quantity;
     }
 
     void PlatoonStrategicPlugin::updateCurrentStatus(cav_msgs::Maneuver maneuver, double& speed, double& current_progress, int& lane_id){
@@ -377,7 +411,7 @@ namespace platoon_strategic
 
         // Task 3: Publish JOIN_REQUIREMENTS MobilityOperation message to applicant 
         cav_msgs::MobilityOperation join_requirements;
-        join_requirements = composeMobilityOperationLeaderWaiting(JOIN_REQUIREMENTS_TYPE);
+        join_requirements = composeMobilityOperationLeaderWaiting(OPERATION_JOIN_REQUIREMENTS_TYPE);
 
         mobility_operation_publisher_(join_requirements);
         ROS_DEBUG_STREAM("Composed a JOIN_REQUIREMENTS MobilityOperation message with params " << join_requirements.strategy_params);
@@ -670,7 +704,10 @@ namespace platoon_strategic
     MobilityRequestResponse PlatoonStrategicPlugin::mob_req_cb_leader(const cav_msgs::MobilityRequest& msg)
     {
         cav_msgs::PlanType plan_type= msg.plan_type;
-        if (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR)
+
+        // Note: Do not process a 'JOIN_PLATOON_AT_REAR' request if host vehicle is currently 
+        //       required to conduct a lane change to form a platoon with another vehicle.
+        if (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR && !leader_lane_change_required_)
         {
             // We are currently checking two basic JOIN conditions:
             //     1. The size limitation on current platoon based on the plugin's parameters.
@@ -739,15 +776,13 @@ namespace platoon_strategic
                     waitingStartTime = ros::Time::now().toNSec()/1000000;
                     lw_applicantId_ = msg.header.sender_id;
                     return MobilityRequestResponse::ACK;
-                } 
-                else if(isDistanceCloseEnough && !laneConditionsSatisfied) {
+                } else if(isDistanceCloseEnough && !laneConditionsSatisfied) {
                     ROS_DEBUG_STREAM("The applicant is close enough, but we must change into a suitable platooning lane before sending ACK.");
                     lw_applicantId_ = msg.header.sender_id;
 
                     // Set flag to indicate that a lane change into a suitable platooning lane is required prior to sending ACK to applicant
                     leader_lane_change_required_ = true;
-                }
-                else {
+                } else {
                     ROS_DEBUG_STREAM("The applicant is too far away from us or not in corret lane. NACK.");
                     ROS_DEBUG_STREAM("isDistanceCloseEnough" << isDistanceCloseEnough);
                     ROS_DEBUG_STREAM("laneConditionsSatisfied" << laneConditionsSatisfied);
@@ -992,7 +1027,7 @@ namespace platoon_strategic
         // We still need to handle STATUS operAtion message from our platoon
         std::string strategyParams = msg.strategy_params;
         bool isPlatoonStatusMsg = (strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0);
-        bool isJoinRequirementsMsg = (strategyParams.rfind(JOIN_REQUIREMENTS_TYPE, 0) == 0);
+        bool isJoinRequirementsMsg = (strategyParams.rfind(OPERATION_JOIN_REQUIREMENTS_TYPE, 0) == 0);
 
         if(isPlatoonStatusMsg) {
             std::string vehicleID = msg.header.sender_id;
@@ -1029,25 +1064,41 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("Received platoon status message from " << msg.header.sender_id);
         }
         else if(isJoinRequirementsMsg && msg.header.recipient_id == config_.vehicleID) {
-            has_received_join_requirements_ = true;
+            bool isForHostVehicle = msg.header.recipient_id == config_.vehicleID;
+            bool isFromTargetLeader = msg.header.sender_id == pm_.targetLeaderId;
 
-            // JOIN_REQUIREMENTS message uses params string format "JOIN_REQUIREMENTS|LANE_INDEX:xx"
-            std::vector<std::string> inputsParams;
-            boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+            if (isForHostVehicle && isFromTargetLeader) {
+                has_received_join_requirements_ = true;
 
-            std::vector<std::string> target_lane_index_parsed;
-            boost::algorithm::split(target_lane_index_parsed, inputsParams[0], boost::is_any_of(":"));
-            int target_lane_index = std::stoi(target_lane_index_parsed[1]);
+                // JOIN_REQUIREMENTS message uses params string format "JOIN_REQUIREMENTS|LANE_INDEX:xx,LANE_GROUP_SIZE:xx"
+                std::vector<std::string> inputsParams;
+                boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
 
-            ROS_DEBUG_STREAM("Received JOIN_REQUIREMENTS MobilityOperation with target lane index: " << target_lane_index);
+                std::vector<std::string> target_lane_index_parsed;
+                boost::algorithm::split(target_lane_index_parsed, inputsParams[0], boost::is_any_of(":"));
+                int target_lane_index = std::stoi(target_lane_index_parsed[1]);
 
-            // Store the target CandidateFollower platoon lane index provided by the target Leader
-            cf_target_lane_index_ = target_lane_index;
+                std::vector<std::string> target_lane_group_size_parsed;
+                boost::algorithm::split(target_lane_group_size_parsed, inputsParams[1], boost::is_any_of(":"));
+                int target_lane_group_size = std::stoi(target_lane_group_size_parsed[1]);
 
-            // Set flag to indicate CandidateFollower must change lanes if it is not currently in the target lane platoon lane index
-            if (current_lane_index_ != cf_target_lane_index_) {
-                cf_lane_change_required_ = true;
-            }
+                ROS_DEBUG_STREAM("Received JOIN_REQUIREMENTS MobilityOperation with target lane index: " << target_lane_index \
+                                 << " and lane group size " << target_lane_group_size);
+
+                // Log a warning if the target leader's lane group size is different from host vehicle's lane group size
+                if (target_lane_group_size != current_lane_group_size_) {
+                    ROS_WARN_STREAM("Target leader's lane group size is " << target_lane_group_size << ", ours is " \
+                                    << current_lane_group_size_ << ". Lane-index communication may be incorrect.");
+                }
+
+                // Store the target CandidateFollower platoon lane index provided by the target Leader
+                cf_target_lane_index_ = target_lane_index;
+
+                // Set flag to indicate CandidateFollower must change lanes if it is not currently in the target lane platoon lane index
+                if (current_lane_index_ != cf_target_lane_index_) {
+                    cf_lane_change_required_ = true;
+                }
+            } 
         }
         else {
             ROS_DEBUG_STREAM("Received a mobility operation message with params " << msg.strategy_params << " but ignored.");
@@ -1227,7 +1278,7 @@ namespace platoon_strategic
                 request.strategy_params = fmter.str();
                 request.urgency = 50;
 
-                pm_.current_plan = PlatoonPlan(true, request.header.timestamp, request.header.plan_id, request.header.sender_id);
+                pm_.current_plan = PlatoonPlan(true, request.header.timestamp, request.header.plan_id, senderId);
                 mobility_request_publisher_(request);
                 ROS_DEBUG_STREAM("Publishing request to leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.header.plan_id);
                 potentialNewPlatoonId = platoonId;
@@ -1445,13 +1496,18 @@ namespace platoon_strategic
             std::string statusParams = fmter.str();
             msg.strategy_params = statusParams;
         }
-        else if (type == JOIN_REQUIREMENTS_TYPE) {
-            // For JOIN_REQUIREMENTS params, the string format is "JOIN_REQUIREMENTS|LANE_INDEX:xx"
+        else if (type == OPERATION_JOIN_REQUIREMENTS_TYPE) {
+            // Note: If the host vehicle is located on a different lanelet/lane group than the rear vehicle, and the two lane groups
+            //       have a different quantity of lanes in the current travel direction, then the communication of 'lane index' may 
+            //       be error-prone (i.e. a lane index of '1' may refer to a different lane for both vehicles). This is a known edge 
+            //       case that this plugin does not currently cover.
 
             msg.header.recipient_id = lw_applicantId_; // JOIN_REQUIREMENTS message is intended only for the current applicant
 
-            boost::format fmter(JOIN_REQUIREMENTS_PARAMS);
+            // For JOIN_REQUIREMENTS params, the string format is "JOIN_REQUIREMENTS|LANE_INDEX:xx,LANE_GROUP_SIZE:xx"
+            boost::format fmter(OPERATION_JOIN_REQUIREMENTS_PARAMS);
             fmter %current_lane_index_; // Local lane index of host vehicle (0 is rightmost, 1 is second rightmost, etc.); considers only the current travel direction
+            fmter %current_lane_group_size_; // Current quantity of lanes in the host vehicle's local lane group; considers only the current travel direction
 
             std::string join_params = fmter.str();
             msg.strategy_params = join_params;
