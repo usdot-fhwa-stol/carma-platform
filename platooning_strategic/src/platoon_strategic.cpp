@@ -1063,7 +1063,7 @@ namespace platoon_strategic
             pm_.memberUpdates(vehicleID, platoonId, msg.header.sender_bsm_id, statusParams, dtd);
             ROS_DEBUG_STREAM("Received platoon status message from " << msg.header.sender_id);
         }
-        else if(isJoinRequirementsMsg && msg.header.recipient_id == config_.vehicleID) {
+        else if(isJoinRequirementsMsg) {
             bool isForHostVehicle = msg.header.recipient_id == config_.vehicleID;
             bool isFromTargetLeader = msg.header.sender_id == pm_.targetLeaderId;
 
@@ -1082,12 +1082,15 @@ namespace platoon_strategic
                 boost::algorithm::split(target_lane_group_size_parsed, inputsParams[1], boost::is_any_of(":"));
                 int target_lane_group_size = std::stoi(target_lane_group_size_parsed[1]);
 
-                ROS_DEBUG_STREAM("Received JOIN_REQUIREMENTS MobilityOperation with target lane index: " << target_lane_index \
+                ROS_WARN_STREAM("Received JOIN_REQUIREMENTS MobilityOperation with target lane index: " << target_lane_index \
                                  << " and lane group size " << target_lane_group_size);
 
-                // Log a warning if the target leader's lane group size is different from host vehicle's lane group size
+                // Note: If the target Leader vehicle is located on a different lanelet/lane group than the host vehicle, and the two lane groups
+                //       have a different quantity of lanes in the current travel direction, then the communication of 'lane index' may 
+                //       be error-prone (i.e. a lane index of '1' may refer to a different lane for both vehicles). This is a known edge 
+                //       case that this plugin does not currently cover.
                 if (target_lane_group_size != current_lane_group_size_) {
-                    ROS_WARN_STREAM("Target leader's lane group size is " << target_lane_group_size << ", ours is " \
+                    ROS_WARN_STREAM("Target leader's lane group size is " << target_lane_group_size << ", host vehicle's is " \
                                     << current_lane_group_size_ << ". Lane-index communication may be incorrect.");
                 }
 

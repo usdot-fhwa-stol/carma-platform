@@ -229,7 +229,7 @@ namespace platoon_strategic
             void checkForRightMostLane(const lanelet::BasicPoint2d& current_location);
 
             /**
-            * \brief Get the local lane index of a provided location. The local lane index is 0 for rightmost lane,
+            * \brief Gets the local lane index of a provided location. The local lane index is 0 for rightmost lane,
             * 1 for second rightmost, etc. The local lane index considers only the current travel direction. 
             * \param current_location 2d point of current location x and y.
             * \return The local lane index of the provided location.
@@ -237,7 +237,7 @@ namespace platoon_strategic
             int getCurrentLaneIndex(const lanelet::BasicPoint2d& current_location);
 
             /**
-            * \brief Get the quantity of lanes in the local lane group of a provided location. This includes the
+            * \brief Gets the quantity of lanes in the local lane group of a provided location. This includes the
             * quantity of all side-by-side lanelets including the current lanelet. It considers only the current travel direction.
             * \param current_location 2d point of current location x and y.
             * \return Quantity of lanes in the local lane group of the provided location.

@@ -515,6 +515,7 @@ namespace platoon_strategic
         plugin_front.handle_mob_req(request);
         EXPECT_EQ(plugin_front.pm_.current_platoon_state, PlatoonState::LEADER);
         EXPECT_EQ(plugin_front.current_lane_index_, 0);
+        EXPECT_EQ(plugin_front.current_lane_group_size_, 3);
         EXPECT_EQ(plugin_front.leader_lane_change_required_, true);
         EXPECT_EQ(plugin_rear.pm_.current_platoon_state, PlatoonState::LEADER);
 
