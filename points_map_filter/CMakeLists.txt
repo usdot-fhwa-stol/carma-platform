@@ -23,6 +23,8 @@ carma_package()
 
 ## Find dependencies using ament auto
 find_package(ament_cmake_auto REQUIRED)
+find_package(PCL 1.10 REQUIRED)
+
 ament_auto_find_build_dependencies()
 
 # Name build targets
@@ -48,6 +50,10 @@ rclcpp_components_register_nodes(${node_lib} "points_map_filter::Node")
 
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies
+target_link_libraries(${node_lib} 
+        ${PCL_LIBRARIES}
+)
+
 target_link_libraries(${node_exec}
         ${node_lib}
 )
