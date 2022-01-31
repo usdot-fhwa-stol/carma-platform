@@ -24,7 +24,6 @@ from launch.actions import GroupAction
 from launch_ros.actions import PushRosNamespace
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from launch.substitutions import LaunchConfiguration
-from launch.actions import DeclareLaunchArgument
 
 import os
 
