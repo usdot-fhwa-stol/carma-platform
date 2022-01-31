@@ -21,6 +21,8 @@ from launch_ros.descriptions import ComposableNode
 from launch.substitutions import EnvironmentVariable
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
+from launch.substitutions import LaunchConfiguration
+
 import os
 
 
@@ -30,11 +32,42 @@ def generate_launch_description():
     """
 
     subsystem_controller_param_file = os.path.join(
-        get_package_share_directory('subsystem_controllers'), 'config/environment_perception_controller_config.yaml')
+        get_package_share_directory('subsystem_controllers'), 'config/v2x_controller_config.yaml')
+
+    mobilitypath_publisher_param_file = os.path.join(
+        get_package_share_directory('mobilitypath_publisher'), 'config/parameters.yaml')
+
+    vehicle_characteristics_path = LaunchConfiguration('vehicle_characteristics_path')
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
-    # TODO add nodes
+    # Nodes
+    carma_v2x_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='carma_v2x_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+
+            ComposableNode(
+                package='mobilitypath_publisher',
+                plugin='mobilitypath_publisher::MobilityPathPublication',
+                name='mobilitypath_publisher_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('mobilitypath_publisher', env_log_levels) }
+                ],
+                remappings=[
+                    ("plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plan_trajectory" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] )
+                ],
+                parameters=[ 
+                    mobilitypath_publisher_param_file,
+                    vehicle_characteristics_path
+                ]
+            ),
+        ]
+    )
 
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
@@ -47,5 +80,6 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        carma_v2x_container,
         subsystem_controller
-    ])
+    ]) 
