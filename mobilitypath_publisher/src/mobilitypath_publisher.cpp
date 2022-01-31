@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "mobilitypath_publisher.hpp"
+#include "mobilitypath_publisher/mobilitypath_publisher.hpp"
 
 namespace mobilitypath_publisher
 {
@@ -27,12 +27,17 @@ namespace mobilitypath_publisher
 
     // Declare parameters
     config_.path_pub_rate = declare_parameter<double>("path_pub_rate", config_.path_pub_rate);
+    config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
   }
 
   rcl_interfaces::msg::SetParametersResult MobilityPathPublication::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
   {
     auto error = update_params<double>({{"path_pub_rate", config_.path_pub_rate}}, parameters);
-    auto error_2 = update_params<std::string>({{"sender_id", config_.sender_id}}, parameters);
+    auto error_2 = update_params<std::string>({{"vehicle_id", config_.vehicle_id}}, parameters);
+
+    for (auto param : parameters) {
+      RCLCPP_INFO_STREAM(this->get_logger(), "Available parameter: " << param.get_name());
+    }
 
     rcl_interfaces::msg::SetParametersResult result;
 
@@ -43,12 +48,16 @@ namespace mobilitypath_publisher
 
   carma_ros2_utils::CallbackReturn MobilityPathPublication::handle_on_configure(const rclcpp_lifecycle::State &)
   {
+    RCLCPP_INFO_STREAM(this->get_logger(), "MobilityPathPublication trying to configure");
+
     // Reset config
     config_ = Config();
 
     // Load parameters
     get_parameter<double>("path_pub_rate", config_.path_pub_rate);
-    get_parameter<std::string>("vehicle_id", config_.sender_id);
+    get_parameter<std::string>("vehicle_id", config_.vehicle_id);
+
+    RCLCPP_INFO_STREAM(get_logger(), "Loaded params: " << config_);
 
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&MobilityPathPublication::parameter_update_callback, this, std_ph::_1));
@@ -75,6 +84,8 @@ namespace mobilitypath_publisher
     path_pub_timer_ = create_timer(get_clock(),
                                    std::chrono::milliseconds(path_pub_period_millisecs),
                                    std::bind(&MobilityPathPublication::spin_callback, this));
+
+    return CallbackReturn::SUCCESS;
   }
 
   bool MobilityPathPublication::spin_callback()
@@ -103,7 +114,6 @@ namespace mobilitypath_publisher
   carma_v2x_msgs::msg::MobilityPath MobilityPathPublication::mobilityPathMessageGenerator(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan)
   {
     carma_v2x_msgs::msg::MobilityPath mobility_path_msg;
-    // uint64_t millisecs = trajectory_plan.header.stamp.toNSec()/1000000;
     uint64_t millisecs = (trajectory_plan.header.stamp.sec*1000000000 + trajectory_plan.header.stamp.nanosec) / 1000000;
     mobility_path_msg.m_header = composeMobilityHeader(millisecs);
         
@@ -121,7 +131,7 @@ namespace mobilitypath_publisher
   carma_v2x_msgs::msg::MobilityHeader MobilityPathPublication::composeMobilityHeader(uint64_t time)
   {
     carma_v2x_msgs::msg::MobilityHeader header;
-    header.sender_id = config_.sender_id;
+    header.sender_id = config_.vehicle_id;
     header.recipient_id = recipient_id;
     header.sender_bsm_id = bsmIDtoString(bsm_core_);
 

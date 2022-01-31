@@ -27,7 +27,7 @@ ament_auto_find_build_dependencies()
 
 # Name build targets
 set(node_exec mobilitypath_publisher_exec)
-set(node_lib mobilitypath_publisher)
+set(node_lib mobilitypath_publisher_lib)
 
 # Includes
 include_directories(

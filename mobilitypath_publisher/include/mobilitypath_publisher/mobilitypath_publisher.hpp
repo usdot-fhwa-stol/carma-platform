@@ -29,7 +29,7 @@
 #include <carma_v2x_msgs/msg/bsm.hpp>
 
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
-#include "mobilitypath_publisher_config.hpp"
+#include "mobilitypath_publisher/mobilitypath_publisher_config.hpp"
 
 namespace mobilitypath_publisher
 {

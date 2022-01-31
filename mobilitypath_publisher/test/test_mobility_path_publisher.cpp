@@ -20,7 +20,7 @@
 #include <thread>
 #include <future>
 
-#include "mobilitypath_publisher.hpp"
+#include "mobilitypath_publisher/mobilitypath_publisher.hpp"
 
 TEST(Testmobilitypath_publisher, test1)
 {

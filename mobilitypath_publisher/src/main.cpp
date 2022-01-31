@@ -15,7 +15,7 @@
  */
 
 #include <rclcpp/rclcpp.hpp>
-#include "mobilitypath_publisher.hpp"
+#include "mobilitypath_publisher/mobilitypath_publisher.hpp"
 
 int main(int argc, char **argv) 
 {

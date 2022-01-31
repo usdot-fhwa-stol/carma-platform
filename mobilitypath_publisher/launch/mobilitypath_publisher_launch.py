@@ -24,7 +24,7 @@ import os
 
 
 '''
-This file is can be used to launch the CARMA mobilitypath_publisher_upgrade_node.
+This file is can be used to launch the CARMA mobilitypath_publisher node.
   Though in carma-platform it may be launched directly from the base launch file.
 '''
 
@@ -34,24 +34,24 @@ def generate_launch_description():
     log_level = LaunchConfiguration('log_level')
     declare_log_level_arg = DeclareLaunchArgument(
         name ='log_level', default_value='WARN')
-    
+
     # Get parameter file path
     param_file_path = os.path.join(
-        get_package_share_directory('mobilitypath_publisher_upgrade'), 'config/parameters.yaml')
+        get_package_share_directory('mobilitypath_publisher'), 'config/parameters.yaml')
         
     # Launch node(s) in a carma container to allow logging to be configured
     container = ComposableNodeContainer(
         package='carma_ros2_utils',
-        name='mobilitypath_publisher_upgrade_container',
+        name='mobilitypath_publisher_container',
         namespace=GetCurrentNamespace(),
         executable='carma_component_container_mt',
         composable_node_descriptions=[
             
             # Launch the core node(s)
             ComposableNode(
-                    package='mobilitypath_publisher_upgrade',
-                    plugin='mobilitypath_publisher_upgrade::MobilityPathPublication',
-                    name='mobilitypath_publisher_upgrade_node',
+                    package='mobilitypath_publisher',
+                    plugin='mobilitypath_publisher::MobilityPathPublication',
+                    name='mobilitypath_publisher_node',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
                         {'--log-level' : log_level }

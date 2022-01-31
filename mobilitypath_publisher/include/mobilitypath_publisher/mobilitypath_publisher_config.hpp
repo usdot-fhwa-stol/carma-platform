@@ -28,14 +28,14 @@ namespace mobilitypath_publisher
   struct Config
   {
     double path_pub_rate = 10.0; // Rate (in Hz) at which the MobilityPath message is published
-    std::string sender_id = "DEFAULT-SENDER-ID";  // Sender's static ID, which is its license plate
+    std::string vehicle_id = "DEFAULT-VEHICLE-ID";  // Sender's static ID, which is its license plate
 
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)
     {
       output << "mobilitypath_publisher::Config { " << std::endl
            << "path_pub_rate: " << c.path_pub_rate << std::endl
-           << "sender_id: " << c.sender_id << std::endl
+           << "vehicle_id: " << c.vehicle_id << std::endl
            << "}" << std::endl;
       return output;
     }
