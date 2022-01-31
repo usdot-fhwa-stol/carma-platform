@@ -28,7 +28,7 @@ import os
 
 def generate_launch_description():
     """
-    Launch V2X nodes.
+    Launch V2X subsystem nodes.
     """
 
     subsystem_controller_param_file = os.path.join(
