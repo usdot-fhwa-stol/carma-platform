@@ -20,6 +20,14 @@
 #include <lanelet2_io/io_handlers/OsmHandler.h>
 #include <lanelet2_io/io_handlers/Serialize.h>
 #include <lanelet2_io/Exceptions.h>
+#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+#include <lanelet2_extension/regulatory_elements/RegionAccessRule.h>
+#include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
+#include <lanelet2_extension/regulatory_elements/DirectionOfTravel.h>
+#include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
+#include <lanelet2_extension/regulatory_elements/DigitalMinimumGap.h>
+#include <lanelet2_extension/regulatory_elements/StopRule.h>
+#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_types.h>
 
