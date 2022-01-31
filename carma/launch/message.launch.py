@@ -23,6 +23,11 @@ from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 import os
 
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import GroupAction
+from launch_ros.actions import set_remap
+
 
 def generate_launch_description():
     """
@@ -46,6 +51,20 @@ def generate_launch_description():
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
 
+    # Add j2735_convertor node
+    j2735_convertor_pkg = get_package_share_directory('j2735_convertor')
+    j2735_convertor_group = GroupAction(
+        actions = [
+            # Launch SSC
+            set_remap.SetRemap('outgoing_bsm','bsm_outbound'),
+                        
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(['/', j2735_convertor_pkg, '/launch','/carma_speed_steering_control.launch.py']),
+            ),
+        ]
+    )
+
     return LaunchDescription([
-        subsystem_controller
+        subsystem_controller,
+        j2735_convertor_group
     ])
