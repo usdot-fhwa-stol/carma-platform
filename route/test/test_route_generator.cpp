@@ -413,7 +413,7 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     ////////////
     std::shared_ptr<carma_wm::CARMAWorldModel> cmw=std::make_shared<carma_wm::CARMAWorldModel>();    
     route::RouteGeneratorWorker worker;
-    worker.set_route_file_path("/workspaces/carma_ws/src/carma-platform/route/resource/route/");
+    worker.set_route_file_path("../resource/route/");
     worker.setWorldModelPtr(cmw);
     
     // Set projection
@@ -422,7 +422,7 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     lanelet::ErrorMessages load_errors;
 
     // Load map file and parameters
-    std::string file = "/workspaces/carma_ws/src/carma-platform/route/resource/map/town01_vector_map_1.osm";
+    std::string file = "../resource/map/town01_vector_map_1.osm";
     lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
     lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
     lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
@@ -486,7 +486,7 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     route::RouteGeneratorWorker worker2;
     worker2.georeference_cb(msg_ptr); 
     worker2.setWorldModelPtr(cmw);
-    worker2.set_route_file_path("/workspaces/carma_ws/src/carma-platform/route/resource/route/");
+    worker2.set_route_file_path("../resource/route/");
     worker2.vehicle_pose_ = *mpt;
 
     // Create array of destination points for the SetActiveRoute request
