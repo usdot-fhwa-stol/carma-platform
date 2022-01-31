@@ -23,6 +23,9 @@ from launch.substitutions import EnvironmentVariable
 from launch.actions import GroupAction
 from launch_ros.actions import PushRosNamespace
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
+from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument
+
 import os
 
 def generate_launch_description():
@@ -34,6 +37,16 @@ def generate_launch_description():
         get_package_share_directory('system_controller'), 'config/config.yaml')
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
+
+    vehicle_calibration_dir = LaunchConfiguration('vehicle_calibration_dir')
+
+    # Declare the vehicle_calibration_dir launch argument
+    vehicle_characteristics_path = LaunchConfiguration('vehicle_characteristics_path')
+    declare_vehicle_characteristics_path_arg = DeclareLaunchArgument(
+        name = 'vehicle_characteristics_path', 
+        default_value = [vehicle_calibration_dir, "/identifiers/UniqueVehicleParams.yaml"],
+        description = "Path to file containing unique vehicle characteristics"
+    )
 
     # Nodes
 
@@ -50,7 +63,8 @@ def generate_launch_description():
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_MSG_NS', default_value='message')),
             IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/message.launch.py'])
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/message.launch.py']),
+                launch_arguments = { 'vehicle_characteristics_path': vehicle_characteristics_path }.items()
             ),
         ]
     )
@@ -65,6 +79,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        declare_vehicle_characteristics_path_arg,
         environment_group,
         v2x_group,
         system_controller
