@@ -17,6 +17,7 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <carma_wm/SignalizedIntersectionManager.h>
+#include <algorithm>
 
 namespace carma_wm
 {
@@ -56,6 +57,12 @@ namespace carma_wm
 
     for (auto lane : intersection.lane_list)
     {
+      if (lane.lane_attributes.laneType.choice != j2735_msgs::LaneTypeAttributes::VEHICLE)
+      {
+        ROS_DEBUG_STREAM("Lane id: " << (int)lane.lane_id << ", is not a lane for vehicle. Only vehicle road is currently supported. Skipping..." );
+        continue;
+      }
+      
       double curr_x = ref_node.x();
       double curr_y = ref_node.y();
 
@@ -79,10 +86,19 @@ namespace carma_wm
 
         node_list.push_back(curr_node);
       }
+
+      ROS_DEBUG_STREAM("Lane directions: " << (int)lane.lane_attributes.directional_use.lane_direction); 
+      
+      if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::INGRESS)
+      {
+        // flip direction if ingress to pick up correct lanelets
+        ROS_DEBUG_STREAM("Reversed the node list!");
+        std::reverse(node_list.begin(), node_list.end());
+      }
       
       for (auto node : node_list)
       {
-        ROS_ERROR_STREAM("x: " << node.x() << ", y: " << node.y());
+        ROS_DEBUG_STREAM("x: " << node.x() << ", y: " << node.y());
       }
 
       // save which signal group connect to which exit lanes
@@ -99,10 +115,25 @@ namespace carma_wm
 
       if (affected_llts.empty())
       {
-        throw std::invalid_argument("Given offset points are not inside the map...");
+        // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593 
+        // Open issue TODO on how this error is handled
+        ROS_WARN_STREAM("Given offset points are not inside the map...");
+        continue;
       }
 
       lanelet::Id corresponding_lanelet_id = affected_llts.front().id(); 
+
+      for (auto llt : affected_llts) // filter out intersection lanelets
+      {
+        if (llt.lanelet().get().hasAttribute("turn_direction"))
+        {
+          ROS_DEBUG_STREAM("lanelet " << llt.id() << " is actually part of the intersection. Skipping...");
+          continue;
+        }
+        corresponding_lanelet_id = llt.id();
+
+        break;
+      }
 
       ROS_DEBUG_STREAM("Found existing lanelet id: " << corresponding_lanelet_id);
 
@@ -133,7 +164,9 @@ namespace carma_wm
         }
         else
         {
-          throw std::invalid_argument(std::string("Unable to convert exit lane Id: " + std::to_string((int)exit_lane) + ", to lanelet id using the given MAP.msg!").c_str());
+          // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593 
+          // Open issue TODO on how this error is handled
+          ROS_WARN_STREAM("Unable to convert exit lane Id: "  + std::to_string((int)exit_lane) + ", to lanelet id using the given MAP.msg!");
         }
       }
     }
@@ -143,14 +176,16 @@ namespace carma_wm
     {
       for (auto entry_lane : iter->second)
       {
-        ROS_DEBUG_STREAM("Adding  entry_lane id: " << entry_lane);
+        ROS_DEBUG_STREAM("Adding entry_lane id: " << entry_lane);
         if (entry.find(entry_lane) != entry.end())
         {
           signal_group_to_entry_lanelet_ids_[iter->first].insert(entry[entry_lane]);
         }
         else
         {
-          throw std::invalid_argument(std::string("Unable to convert entry lane Id: " + std::to_string((int)entry_lane) + ", to lanelet id using the given MAP.msg!").c_str());
+          // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593 
+          // Open issue TODO on how this error is handled
+          ROS_WARN_STREAM("Unable to convert entry lane Id: "  + std::to_string((int)entry_lane) + ", to lanelet id using the given MAP.msg!");
         }
       }
     }
@@ -225,6 +260,7 @@ namespace carma_wm
       std::vector<lanelet::Point3d> points;
       points.push_back(lanelet::Point3d(lanelet::utils::getId(), llt.leftBound2d().back().x(), llt.leftBound2d().back().y(), 0));
       points.push_back(lanelet::Point3d(lanelet::utils::getId(), llt.rightBound().back().x(), llt.rightBound().back().y(), 0));
+
       lanelet::LineString3d stop_line(lanelet::utils::getId(), points);
       stop_lines.push_back(stop_line);
     }    
@@ -336,5 +372,13 @@ namespace carma_wm
     return interior_llts;
   }
   
+  SignalizedIntersectionManager& SignalizedIntersectionManager::operator=(SignalizedIntersectionManager other)
+  {
+    this->signal_group_to_entry_lanelet_ids_ = other.signal_group_to_entry_lanelet_ids_;
+    this->signal_group_to_exit_lanelet_ids_ = other.signal_group_to_exit_lanelet_ids_;
+    this->intersection_id_to_regem_id_ = other.intersection_id_to_regem_id_;
+    this->signal_group_to_traffic_light_id_ = other.signal_group_to_traffic_light_id_;
 
+    return *this;
+  }
 }  // namespace carma_wm

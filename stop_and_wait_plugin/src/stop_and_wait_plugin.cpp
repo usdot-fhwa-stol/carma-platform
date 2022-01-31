@@ -235,14 +235,30 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   double req_dist = (starting_speed * starting_speed) /
                     (2.0 * target_accel);  // Distance needed to go from current speed to 0 at target accel
 
+  // In cases where the vehicle is not able to stop before the half_stopping_buffer the remaining distance becomes negative
+  // which will cause the target accel in this loop to be negative and make the vehicle speed up
+  while (remaining_distance <= 0.0)
+  {
+    if(remaining_distance <= (stop_location - starting_downtrack))
+    {
+    //Add additional distance to remaining to allow vehicle to stop within buffer
+      remaining_distance += 0.2;
+    }
+    else{
+     break;
+   }
+  }
+  
   if (req_dist > remaining_distance)
   {
+
     ROS_DEBUG_STREAM("Target Accel Update From: " << target_accel);
     target_accel =
         (starting_speed * starting_speed) / (2.0 * remaining_distance);  // If we cannot reach the end point it the
                                                                          // required distance update the accel target
     ROS_DEBUG_STREAM("Target Accel Update To: " << target_accel);
   }
+
 
   std::vector<double> inverse_downtracks; // Store downtracks in reverse
   inverse_downtracks.reserve(points.size());
@@ -315,31 +331,33 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
   bool vehicle_in_buffer = downtracks.back() < stop_location_buffer;
 
-  for (size_t i = 0; i < speeds.size(); i++)
+  std::vector<double> filtered_speeds = basic_autonomy::smoothing::moving_average_filter(speeds, config_.moving_average_window_size);
+
+  for (size_t i = 0; i < filtered_speeds.size(); i++)
   {  // Apply minimum speed constraint
     double downtrack = downtracks[i];
 
     constexpr double one_mph_in_mps = 0.44704;
 
-    if (downtracks.back() - downtrack < stop_location_buffer && speeds[i] < config_.crawl_speed + one_mph_in_mps)
+    if (downtracks.back() - downtrack < stop_location_buffer && filtered_speeds[i] < config_.crawl_speed + one_mph_in_mps)
     {  // if we are within the stopping buffer and going at near crawl speed then command stop
       
       // To avoid any issues in control plugin behavior we only command 0 if the vehicle is inside the buffer
-      if (vehicle_in_buffer || (i == speeds.size() - 1)) { // Vehicle is in the buffer
-        speeds[i] = 0.0;
+      if (vehicle_in_buffer || (i == filtered_speeds.size() - 1)) { // Vehicle is in the buffer
+        filtered_speeds[i] = 0.0;
       } else { // Vehicle is not in the buffer so fill buffer with crawl speed
-        speeds[i] = std::max(speeds[i], config_.crawl_speed);
+        filtered_speeds[i] = std::max(filtered_speeds[i], config_.crawl_speed);
       }
 
     }
     else
     {
-      speeds[i] = std::max(speeds[i], config_.crawl_speed);
+      filtered_speeds[i] = std::max(filtered_speeds[i], config_.crawl_speed);
     }
   }
 
   std::vector<double> times;
-  trajectory_utils::conversions::speed_to_time(downtracks, speeds, &times);
+  trajectory_utils::conversions::speed_to_time(downtracks, filtered_speeds, &times);
 
   for (size_t i = 0; i < times.size(); i++)
   {
@@ -355,7 +373,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
   for (size_t i = 0; i < points.size(); i++)
   {
-    ROS_DEBUG_STREAM("1d: " << downtracks[i] << " t: " << times[i] << " v: " << speeds[i]);
+    ROS_DEBUG_STREAM("1d: " << downtracks[i] << " t: " << times[i] << " v: " << filtered_speeds[i]);
   }
 
   auto traj = trajectory_from_points_times_orientations(raw_points, times, yaws, start_time);

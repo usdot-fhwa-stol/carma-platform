@@ -70,6 +70,12 @@ namespace platoon_strategic
         cav_msgs::PlatooningInfo platoon_status = composePlatoonInfoMsg();
         platooning_info_publisher_(platoon_status);
 
+        if (!platooning_enabled_)
+        {
+            pm_.current_platoon_state = PlatoonState::STANDBY;
+            return true;
+        }
+
         return true;
     }
 
@@ -102,6 +108,7 @@ namespace platoon_strategic
         if (pm_.current_platoon_state != PlatoonState::STANDBY)
         {
             lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
+        
             carma_wm::TrackPos tc = wm_->routeTrackPos(current_loc);
             current_downtrack_ = tc.downtrack;
             ROS_DEBUG_STREAM("current_downtrack_ = " << current_downtrack_);
@@ -109,10 +116,11 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("current_crosstrack_ = " << current_crosstrack_);
 
             pose_ecef_point_ = pose_to_ecef(pose_msg_);
+
+            checkForRightMostLane(current_loc);
+
         }
         
-        
-
     }
 
     void PlatoonStrategicPlugin::cmd_cb(const geometry_msgs::TwistStampedConstPtr& msg)
@@ -126,6 +134,40 @@ namespace platoon_strategic
         if (current_speed_ < 0.01)
         {
             current_speed_ = 0.0;
+        }
+    }
+
+    void PlatoonStrategicPlugin::checkForRightMostLane(const lanelet::BasicPoint2d& current_location)
+    {
+        auto current_lanelet = wm_->getLaneletsFromPoint(current_location, 1);
+        if (current_lanelet.size()<1)
+        {
+            throw std::invalid_argument("There are no lanelets in the current location.");
+        }
+        ROS_DEBUG_STREAM("current_lanelet" << current_lanelet[0].id());
+        auto routing_graph = wm_->getMapRoutingGraph();
+        auto right_lanelet = routing_graph->right(current_lanelet[0]);
+        if (!right_lanelet)
+        {
+            in_rightmost_lane_ = true;
+            ROS_DEBUG_STREAM("Vehicle is in the rightmost lane");
+        }
+        else
+        {
+            in_rightmost_lane_ = false;
+            ROS_DEBUG_STREAM("Vehicle is NOT in the rightmost lane");
+        }
+
+        auto left_lanelet = routing_graph->left(current_lanelet[0]);
+        if (!left_lanelet && in_rightmost_lane_)
+        {
+            single_lane_road_ = true;
+            ROS_DEBUG_STREAM("Vehicle is in a single-lane road");
+        }
+        else
+        {
+            single_lane_road_ = false;
+            ROS_DEBUG_STREAM("Vehicle is NOT in a single-lane road");
         }
     }
 
@@ -250,7 +292,7 @@ namespace platoon_strategic
             ROS_WARN_STREAM("Platoon size 1 so Empty maneuver sent");
         }
 
-        if (pm_.current_platoon_state == PlatoonState::STANDBY)
+        if (pm_.current_platoon_state == PlatoonState::STANDBY && platooning_enabled_)
         {
             pm_.current_platoon_state = PlatoonState::LEADER;
             pm_.currentPlatoonID = boost::uuids::to_string(boost::uuids::random_generator()());
@@ -367,7 +409,6 @@ namespace platoon_strategic
             if(hasFollower) {
                 cav_msgs::MobilityOperation statusOperation;
                 statusOperation = composeMobilityOperationLeader(OPERATION_STATUS_TYPE);
-                // mob_op_pub_.publish(statusOperation);
                 mobility_operation_publisher_(statusOperation);
                 ROS_DEBUG_STREAM("Published platoon STATUS operation message");
             }
@@ -646,16 +687,19 @@ namespace platoon_strategic
                 }
                 // Check if the applicant can join based on max timeGap/gap
                 bool isDistanceCloseEnough = (currentGap <= maxAllowedJoinGap_) || (currentTimeGap <= maxAllowedJoinTimeGap_);
-                if(isDistanceCloseEnough) {
+                bool laneConditionsSatisfied = !in_rightmost_lane_ || single_lane_road_;
+
+                if(isDistanceCloseEnough && laneConditionsSatisfied) {
                     ROS_DEBUG_STREAM("The applicant is close enough and we will allow it to try to join");
                     ROS_DEBUG_STREAM("Change to LeaderWaitingState and waiting for " << msg.header.sender_id << " to join");
                     pm_.current_platoon_state = PlatoonState::LEADERWAITING;
                     waitingStartTime = ros::Time::now().toNSec()/1000000;
                     lw_applicantId_ = msg.header.sender_id;
-                    // plugin.setState(new LeaderWaitingState(plugin, log, pluginServiceLocator, applicantId));
                     return MobilityRequestResponse::ACK;
                 } else {
-                    ROS_DEBUG_STREAM("The applicant is too far away from us. NACK.");
+                    ROS_DEBUG_STREAM("The applicant is too far away from us or not in corret lane. NACK.");
+                    ROS_DEBUG_STREAM("isDistanceCloseEnough" << isDistanceCloseEnough);
+                    ROS_DEBUG_STREAM("laneConditionsSatisfied" << laneConditionsSatisfied);
                     return MobilityRequestResponse::NACK;
                 }
             }
@@ -1059,19 +1103,16 @@ namespace platoon_strategic
             boost::algorithm::split(ecef_x_parsed, inputsParams[5], boost::is_any_of(":"));
             double ecef_x = std::stod(ecef_x_parsed[1]);
             ROS_DEBUG_STREAM("ecef_x_parsed: " << ecef_x);
-            std::cerr << "ecef_x_parsed: " << ecef_x << std::endl;
 
             std::vector<std::string> ecef_y_parsed;
             boost::algorithm::split(ecef_y_parsed, inputsParams[6], boost::is_any_of(":"));
             double ecef_y = std::stod(ecef_y_parsed[1]);
             ROS_DEBUG_STREAM("ecef_y_parsed: " << ecef_y);
-            std::cerr << "ecef_y_parsed: " << ecef_y << std::endl;
 
             std::vector<std::string> ecef_z_parsed;
             boost::algorithm::split(ecef_z_parsed, inputsParams[7], boost::is_any_of(":"));
             double ecef_z = std::stod(ecef_z_parsed[1]);
             ROS_DEBUG_STREAM("ecef_z_parsed: " << ecef_z);
-            std::cerr << "ecef_z_parsed: " << ecef_z << std::endl;
             
             cav_msgs::LocationECEF ecef_loc;
             ecef_loc.ecef_x = ecef_x;

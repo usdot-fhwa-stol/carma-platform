@@ -95,18 +95,18 @@ TEST_F(WorkZoneTestFixture, validLightState)
 {
   WzStrategicPluginConfig config;
   WzStrategicPlugin wzp(cmw_, config);
-
-  ASSERT_TRUE(wzp.validLightState(lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED, ros::Time(1)));
-  ASSERT_TRUE(wzp.validLightState(lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE, ros::Time(1)));
-  ASSERT_TRUE(wzp.validLightState(lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN, ros::Time(1)));
-
-  ASSERT_FALSE(wzp.validLightState(lanelet::CarmaTrafficSignalState::UNAVAILABLE, ros::Time(1)));
-  ASSERT_FALSE(wzp.validLightState(lanelet::CarmaTrafficSignalState::DARK, ros::Time(1)));
-  ASSERT_FALSE(wzp.validLightState(lanelet::CarmaTrafficSignalState::STOP_THEN_PROCEED, ros::Time(1)));
-  ASSERT_FALSE(wzp.validLightState(lanelet::CarmaTrafficSignalState::PRE_MOVEMENT, ros::Time(1)));
-  ASSERT_FALSE(wzp.validLightState(lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED, ros::Time(1)));
-  ASSERT_FALSE(wzp.validLightState(lanelet::CarmaTrafficSignalState::PERMISSIVE_CLEARANCE, ros::Time(1)));
-  ASSERT_FALSE(wzp.validLightState(lanelet::CarmaTrafficSignalState::CAUTION_CONFLICTING_TRAFFIC, ros::Time(1)));
+  boost::posix_time::ptime dummy_time;
+  ASSERT_TRUE(wzp.validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED), ros::Time(1)));
+  ASSERT_TRUE(wzp.validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE), ros::Time(1)));
+  ASSERT_TRUE(wzp.validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN), ros::Time(1)));
+  
+  ASSERT_FALSE(wzp.validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::UNAVAILABLE), ros::Time(1)));
+  ASSERT_FALSE(wzp.validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::DARK), ros::Time(1)));
+  ASSERT_FALSE(wzp.validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::STOP_THEN_PROCEED), ros::Time(1)));
+  ASSERT_FALSE(wzp.validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PRE_MOVEMENT), ros::Time(1)));
+  ASSERT_FALSE(wzp.validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED), ros::Time(1)));
+  ASSERT_FALSE(wzp.validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PERMISSIVE_CLEARANCE), ros::Time(1)));
+  ASSERT_FALSE(wzp.validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::CAUTION_CONFLICTING_TRAFFIC), ros::Time(1)));
   ASSERT_FALSE(wzp.validLightState(boost::none, ros::Time(1)));
 }
 

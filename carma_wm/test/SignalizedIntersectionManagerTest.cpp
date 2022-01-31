@@ -79,12 +79,12 @@ TEST(SignalizedIntersectionManger, convertLaneToLaneletId)
 
   cav_msgs::NodeXY node;
   node.delta.x = 7.5;
-  node.delta.y = 12.5;
+  node.delta.y = 25.0;
 
   lane.node_list.nodes.node_set_xy.push_back(node);
 
   node.delta.x = 0.0; //offset from previous
-  node.delta.y = 0.5;
+  node.delta.y = -0.5;
 
   lane.node_list.nodes.node_set_xy.push_back(node);
 
@@ -155,13 +155,13 @@ TEST(SignalizedIntersectionManger, createIntersectionFromMapMsg)
   lane.connect_to_list.push_back(connection);
 
   cav_msgs::NodeXY node;
-  node.delta.x = 5;
+  node.delta.x = 7.5;
   node.delta.y = 12.5;
 
   lane.node_list.nodes.node_set_xy.push_back(node);
 
-  node.delta.x = 2.5; //offset from previous
-  node.delta.y = 0;
+  node.delta.x = 0; //offset from previous
+  node.delta.y = -2.5;
 
   lane.node_list.nodes.node_set_xy.push_back(node);
 
@@ -173,13 +173,13 @@ TEST(SignalizedIntersectionManger, createIntersectionFromMapMsg)
   lane.node_list = {};
   lane.connect_to_list = {};
 
-  node.delta.x = 10;
+  node.delta.x = 12.5;
   node.delta.y = 12.5;
 
   lane.node_list.nodes.node_set_xy.push_back(node);
 
-  node.delta.x = 2.5; //offset from previous
-  node.delta.y = 0;
+  node.delta.x = 0; //offset from previous
+  node.delta.y = 2.5;
 
   lane.node_list.nodes.node_set_xy.push_back(node);
   intersection.lane_list.push_back(lane);

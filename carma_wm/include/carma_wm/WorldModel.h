@@ -32,6 +32,7 @@
 #include <cav_msgs/ExternalObject.h>
 #include <cav_msgs/ExternalObjectList.h>
 #include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
+#include <lanelet2_extension/regulatory_elements/SignalizedIntersection.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 #include "TrackPos.h"
 
@@ -379,6 +380,18 @@ public:
    * \return list of all way stop intersections along the current route
    */
   virtual std::vector<std::shared_ptr<lanelet::AllWayStop>> getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const = 0;
+
+  /**
+   * \brief  Return a list of signalized intersections along the current route.  
+   * The signalized intersections along a route and the next signalized intersections ahead of us on the route specifically, 
+   * so a sorted list (by downtrack distance) of signalized intersections on the route ahead of us thus eliminating those behind the vehicle.
+   *
+   * \param loc location
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or route is not set
+   *
+   * \return list of signalized intersections along the current route
+   */
+  virtual std::vector<lanelet::SignalizedIntersectionPtr> getSignalizedIntersectionsAlongRoute(const lanelet::BasicPoint2d &loc) const = 0;
 
   /**
    * \brief Given the cartesian point on the map, tries to get the opposite direction lanelet on the left

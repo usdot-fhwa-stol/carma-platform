@@ -76,7 +76,7 @@ namespace mobilitypath_publisher
     cav_msgs::MobilityPath MobilityPathPublication::mobilityPathMessageGenerator(const cav_msgs::TrajectoryPlan& trajectory_plan)
     {
         cav_msgs::MobilityPath mobility_path_msg;
-        uint64_t millisecs =trajectory_plan.header.stamp.toNSec()/1000000;
+        uint64_t millisecs = ros::Time::now().toNSec()/1000000;
         mobility_path_msg.header = composeMobilityHeader(millisecs);
         
         if (!map_projector_) {
@@ -94,7 +94,7 @@ namespace mobilitypath_publisher
         cav_msgs::MobilityHeader header;
         header.sender_id = sender_id;
         header.recipient_id = recipient_id;
-        header.sender_bsm_id = bsmIDtoString(bsm_core_);
+        header.sender_bsm_id = BSMHelper::BSMHelper::bsmIDtoString(bsm_core_.id);
         // random GUID that identifies this particular plan for future reference
         header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
         header.timestamp = time; //time in millisecond
@@ -122,6 +122,7 @@ namespace mobilitypath_publisher
                 offset.offset_z = (int16_t)(new_point.ecef_z - prev_point.ecef_z);
                 prev_point = new_point;
                 traj.offsets.push_back(offset);
+                if( i >= 60 ){ break;}; 
             }
         }
 
