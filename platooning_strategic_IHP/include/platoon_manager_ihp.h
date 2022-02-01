@@ -101,7 +101,7 @@ namespace platoon_strategic_ihp
         double vehiclePosition;
         // The local time stamp when the host vehicle update any informations of this member.
         long   timestamp;
-        PlatoonMember(): staticId(""), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), timestamp(0) {} 
+        PlatoonMember(): staticId("bogus"), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), timestamp(0) {} 
         PlatoonMember(std::string staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
             commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), vehiclePosition(vehiclePosition), timestamp(timestamp) {}
     };
@@ -186,9 +186,10 @@ namespace platoon_strategic_ihp
         /**
         * \brief Update status when state change from Leader to Follower
         *
-        * \param newPlatoonId platoon id of the leader
+        * \param newPlatoonId new ID of the platoon
+        * \param newLeaderId ID of the new lead vehicle
         */
-        void changeFromLeaderToFollower(std::string newPlatoonId);
+        void changeFromLeaderToFollower(std::string newPlatoonId, std::string newLeaderId);
         
         /**
         * \brief Get number of vehicles in front of host vehicle inside platoon
@@ -246,8 +247,6 @@ namespace platoon_strategic_ihp
         double getIHPDesPosFollower(double dt);
 
         // Member variables
-        int platoonSize = 2;
-        std::string leaderID = "default_leader_id";
         std::string currentPlatoonID = "default_test_id";
         bool isFollower = false;
 

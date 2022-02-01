@@ -67,7 +67,7 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("Downtrack Distance ecef: " << dtDistance);
         // read current speed, m/s
         std::vector<std::string> cur_parsed;
-        boost::algorithm::split(cur_parsed, inputsParams[2], boost::is_any_of(":"));
+        boost::algorithm::split(cur_parsed, inputsParams[1], boost::is_any_of(":"));
         double curSpeed = std::stod(cur_parsed[1]);
         ROS_DEBUG_STREAM("Current Speed Speed: " << curSpeed);
 
@@ -78,11 +78,14 @@ namespace platoon_strategic_ihp
         if(isFollower) 
         {
             // read message status        
-            bool isFromLeader = (leaderID == senderId);
+            bool isFromLeader = platoon[0].staticId == senderId;
             bool needPlatoonIdChange = isFromLeader && (currentPlatoonID != platoonId);
-            bool isVehicleInFrontOf = (dtDistance >= getCurrentDowntrackDistance());
+            bool isVehicleInFrontOf = dtDistance >= getCurrentDowntrackDistance();
 
             if(needPlatoonIdChange) {
+                // TODO: better to have leader explicitly inform us that it is merging into another platoon, rather than require us to deduce it here.
+                //       This condition may also result from missing some message traffic, new leader in this platoon, or other confusion/incorrect code.
+                //       Consider using a new STATUS msg param that tells members of new platoon ID and new leader ID when a change is made.
                 ROS_DEBUG_STREAM("It seems that the current leader is joining another platoon.");
                 ROS_DEBUG_STREAM("So the platoon ID is changed from " << currentPlatoonID << " to " << platoonId);
                 currentPlatoonID = platoonId;
@@ -92,12 +95,11 @@ namespace platoon_strategic_ihp
             {
                 ROS_DEBUG_STREAM("This STATUS messages is from our platoon in front of us. Updating the info...");
                 updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, curSpeed);
-                leaderID = (platoon.size()==0) ? HostMobilityId : platoon[0].staticId;
-                ROS_DEBUG_STREAM("The first vehicle in our list is now " << leaderID);
+                ROS_DEBUG_STREAM("The first vehicle in our list is now " << platoon[0].staticId);
             } 
-            else
+            else //sender is either in a different platoon or is behind host
             {
-                ROS_DEBUG_STREAM("This STATUS message is not from our platoon. We ignore this message with id: " << senderId);
+                ROS_DEBUG_STREAM("This STATUS message is not from a vehicle we care about. Ignore this message with id: " << senderId);
             }
         }
         else
@@ -118,7 +120,7 @@ namespace platoon_strategic_ihp
         updatesOrAddMemberInfo(hostStaticId, hostcmdSpeed, hostDtD, hostCurSpeed);
     }
     
-    // Check a new vehicle's existance; add its info to the platoon if not in list, update info if already existed. 
+    // Check a new vehicle's existence; add its info to the platoon if not in list, update info if already existed. 
     void PlatoonManager::updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double curSpeed) {
 
         bool isExisted = false;
@@ -130,9 +132,9 @@ namespace platoon_strategic_ihp
                 pm.vehicleSpeed = curSpeed; // m/s
                 pm.timestamp = ros::Time::now().toNSec()/1000000;
                 ROS_DEBUG_STREAM("Receive and update platooning info on vehicle " << pm.staticId);
-                ROS_DEBUG_STREAM("    Speed = "                                   << pm.vehicleSpeed);
-                ROS_DEBUG_STREAM("    Location = "                                << pm.vehiclePosition);
                 ROS_DEBUG_STREAM("    CommandSpeed = "                            << pm.commandSpeed);
+                ROS_DEBUG_STREAM("    Actual Speed = "                            << pm.vehicleSpeed);
+                ROS_DEBUG_STREAM("    Downtrack Location = "                      << pm.vehiclePosition);
                 isExisted = true;
                 break;
             }
@@ -153,9 +155,7 @@ namespace platoon_strategic_ihp
 
     // Get the platoon size.
     int PlatoonManager::getTotalPlatooningSize() {
-        // update the varaible "platoonSize".
-        platoonSize = platoon.size();
-        ROS_DEBUG_STREAM("platoonSize: " << platoonSize);
+        ROS_DEBUG_STREAM("platoonSize: " << platoon.size());
         return platoon.size();
     }
         
@@ -252,8 +252,8 @@ namespace platoon_strategic_ihp
         // If the distance headway between the subject vehicle and its predecessor is an issue
         // according to the "min_gap" and "max_gap" thresholds, then it should follow its predecessor
         // The following line will not throw exception because the length of downtrack array is larger than two in this case
-        double timeHeadwayWithPredecessor = downtrackDistance[downtrackDistance.size() - 2] - downtrackDistance[downtrackDistance.size() - 1];
-        gapWithPred_ = timeHeadwayWithPredecessor;
+        double distHeadwayWithPredecessor = downtrackDistance[downtrackDistance.size() - 2] - downtrackDistance[downtrackDistance.size() - 1];
+        gapWithPred_ = distHeadwayWithPredecessor;
         if(insufficientGapWithPredecessor(timeHeadwayWithPredecessor)) {
             ROS_DEBUG("APF algorithm decides there is an issue with the gap with preceding vehicle: " , timeHeadwayWithPredecessor , ". Case Two");
             return platoon.size() - 1;
@@ -363,13 +363,13 @@ namespace platoon_strategic_ihp
     bool PlatoonManager::insufficientGapWithPredecessor(double distanceToPredVehicle) {
         
         // For normal operation, gap > minGap is necessary. 
-        bool frontGapIsTooSmall = distanceToPredVehicle < minGap_; 
+        bool frontGapIsTooSmall = distanceToPredVehicle < config_.minGap; 
         
         // Host vehicle was following predecessor vehicle. --> The predecessor vehicel was violating gap threshold.
-        bool previousLeaderIsPredecessor = (previousFunctionalDynamicLeaderID_ == platoon[platoon.size() - 1].staticId); 
+        bool previousLeaderIsPredecessor = previousFunctionalDynamicLeaderID_ == platoon[platoon.size() - 1].staticId; 
         
         // Gap greater than maxGap_ is necessary for host to stop choosing predecessor as dynamic leader. 
-        bool frontGapIsNotLargeEnough = (distanceToPredVehicle < maxGap_ && previousLeaderIsPredecessor);
+        bool frontGapIsNotLargeEnough = (distanceToPredVehicle < config_.maxGap && previousLeaderIsPredecessor);
 
         return (frontGapIsTooSmall || frontGapIsNotLargeEnough);
     }
@@ -453,53 +453,67 @@ namespace platoon_strategic_ihp
     }
 
     // Change the local platoon manager from follower operation state to leader operation state for single vehicle status change. 
-    // Note: The platoon list will be firstly reset and then updated with new platoon members. 
+    // This could happen because host is 2nd in line and leader is departing, or because ATF algorithm decided host's gap is too
+    // large and we need to separate from front part of platoon.
     void PlatoonManager::changeFromFollowerToLeader() {
+        
+        // Get current host info - assumes departing leader or front of platoon hasn't already been removed from the vector
+        hostIndex = getNumberOfVehicleInFront();
+        hostInfo = platoon[hostIndex];
+        
+        // Clear the front part of the platoon info, since we are splitting off from it; leaves host as element 0
+        if (hostIndex > 0)
+        {
+            platoon.erase(platoon.begin(), platoon.begin()+hostIndex);
+        }else
+        {
+            ROS_WARNING("### Host becoming leader, but is already at index 0 in platoon vector!  Vector unchanged.");
+        }
+
         isFollower = false;
-        platoon = {};
-        leaderID = HostMobilityId;
         currentPlatoonID = boost::uuids::to_string(boost::uuids::random_generator()());
         previousFunctionalDynamicLeaderID_ = "";
         previousFunctionalDynamicLeaderIndex_ = -1;
-        ROS_DEBUG("The platoon manager is changed from follower state to leader state.");
+        ROS_DEBUG("The platoon manager is changed from follower state to leader state. New platoon ID = " << currentPlatoonID);
     }
 
     // Change the local platoon manager from leader operation state to follower operation state for single vehicle status change.
-    // Note: The platoon list will be firstly reset and then updated with new platoon members. 
-    void PlatoonManager::changeFromLeaderToFollower(std::string newPlatoonId) {
+    // This could happen because another vehicle did a front join and host is now 2nd in line, or because host was a solo vehicle
+    // that just completed joining a platoon at any position.
+    // Note: The platoon list will be firstly reset to only include the host (at index 0), then allowed to gradually repopulate via
+    // updateMembers() as new MobilityOperation messages come in.
+    void PlatoonManager::changeFromLeaderToFollower(std::string newPlatoonId, std::string newLeaderId) {
+        
+        // Save the current host info
+        hostIndex = getNumberOfVehicleInFront();
+        hostInfo = platoon[hostIndex];
+        
+        // Clear contents of the platoon vector and rebuild it with the two known members at this time, leader & host.
+        // Remaining leader info and info about any other members will get populated as messages come in.
+        newLeader = PlatoonMember();
+        newLeader.staticId = newLeaderId;
+        platoon.clear();
+        platoon.push_back(newLeader); //can get location info updated later with a STATUS or INFO message
+        platoon.push_back(hostInfo);
+ 
         isFollower = true;
         currentPlatoonID = newPlatoonId;
-        platoon = {};
-        ROS_DEBUG("The platoon manager is changed from leader state to follower state.");
+        ROS_DEBUG("The platoon manager is changed from leader state to follower state. Platoon vector re-initialized.");
     }
 
     // Return the number of vehicles in the front of the host vehicle. If host is leader/single vehicle, return 0.
     int PlatoonManager::getNumberOfVehicleInFront() {
-        if(isFollower) {
-            // search entire platoon, return the number of members in front.
-            for(int i = 0; i < platoon.size(); i++)
-            {
-                // case 1: if find one vehicle at the back of host vehicle, then stop and return the number of vehicle in front excluding host vehicle. 
-                if (platoon[i].vehiclePosition < current_downtrack_distance_)
-                {
-                    // do not count host vehicle itself.
-                    return i-1;
-                    break;
-                } 
-
-                // case 2: if i reaches last member index, then the host vehicel is the last member, return i.
-                else if (i == platoon.size()-1)
-                {
-                    return i;
-                }
-            }
-
-        }
-        // case 3: not in follower state, hence no vehicle in front.
-        else
+        
+        num = platoon.size() - 1;
+        for (int i = 0;  i < platoon.size();  ++i)
         {
-            return 0;
+            if (platoon[i].vehiclePosition <= current_downtrack_distance_ + 1.0) //allow for some uncertainty to count host also
+            {
+                num = i;
+                break;
+            }
         }
+        return num;
     }
 
     // Return the distance (m) to the predecessor vehicle.
@@ -520,8 +534,7 @@ namespace platoon_strategic_ihp
     // Return the current downtrack distance in m.
     double PlatoonManager::getCurrentDowntrackDistance() const
     {
-        double current_progress = current_downtrack_distance_;
-        return current_progress;
+        return current_downtrack_distance_;
     }
 
     // UCLA: return the host vehicle static ID.
@@ -533,9 +546,9 @@ namespace platoon_strategic_ihp
     // Return the pysical length from platoon front vehicle (front bumper) to platoon rear vehicle (rear bumper) in m.
     double PlatoonManager::getCurrentPlatoonLength() {
         if(platoon.size() == 0) {
-            return vehicleLength_;
+            return config_.vehicleLength;
         } else {
-            return platoon[0].vehiclePosition - platoon[platoon.size() - 1].vehiclePosition + vehicleLength_; 
+            return platoon[0].vehiclePosition - platoon[platoon.size() - 1].vehiclePosition + config_.vehicleLength; 
         }
     }
 
@@ -548,7 +561,7 @@ namespace platoon_strategic_ihp
         /**
          * Calculate desired position based on previous vehicle's trajectory for followers.
          * 
-         * Note: The platoon trajectory regulation is derived with the assumtion that all vehicle 
+         * TODO: The platoon trajectory regulation is derived with the assumtion that all vehicle 
          *       have identical length (i.e., 5m). Future development is needed to include variable 
          *       vehicle length into consideration.
          */
@@ -576,7 +589,7 @@ namespace platoon_strategic_ihp
             if (cur_dtd > current_downtrack_distance_)
             {
                 // greater dtd ==> in front of host veh 
-                tmp_time_hdw += vehicleLength_ / (speed[index] + 0.00001);
+                tmp_time_hdw += config_.vehicleLength / (speed[index] + 0.00001);
 
             }
         }
@@ -609,7 +622,7 @@ namespace platoon_strategic_ihp
         if ((pred_spd <= ego_spd) && (ego_spd <= config_.ss_theta))
         {
             // ---> 4.1 pos_g 
-            pos_g = (pred_pos - vehicleLength_ - config_.standstill + ego_pos*timeGapAndStepRatio) / (1 + timeGapAndStepRatio);
+            pos_g = (pred_pos - config_.vehicleLength - config_.standstill + ego_pos*timeGapAndStepRatio) / (1 + timeGapAndStepRatio);
             // ---> 4.2 pos_h
             double pos_h_nom = (pred_pos - config_.standstill + ego_pos*(totalTimeGap + tmp_time_hdw)/time_step);
             double pos_h_denom = (1 + ((totalTimeGap + tmp_time_hdw)/time_step));
@@ -619,7 +632,7 @@ namespace platoon_strategic_ihp
         else
         {   
             // ---> 4.1 pos_g 
-            pos_g = (pred_pos - vehicleLength_ + ego_pos*(timeGapAndStepRatio)) / (1 + timeGapAndStepRatio);
+            pos_g = (pred_pos - config_.vehicleLength + ego_pos*(timeGapAndStepRatio)) / (1 + timeGapAndStepRatio);
             // ---> 4.2 pos_h
             double pos_h_nom = (pred_pos + ego_pos*(totalTimeGap + tmp_time_hdw)/time_step);
             double pos_h_denom = (1 + ((totalTimeGap + tmp_time_hdw)/time_step));
