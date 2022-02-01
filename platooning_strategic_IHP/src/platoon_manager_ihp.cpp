@@ -161,13 +161,8 @@ namespace platoon_strategic_ihp
         
     // Find the downtrack distance of the last vehicle of the platoon, in m.    
     double PlatoonManager::getPlatoonRearDowntrackDistance(){
-        // if host is single vehicle
-        if(platoon.size() <= 1) 
-        {
-            double dist = getCurrentDowntrackDistance();
-            return dist;
-        }
-        // due to downtrack descending order, the 1ast vehicle in list is the platoon rear vehicle. 
+        // due to downtrack descending order, the 1ast vehicle in list is the platoon rear vehicle.
+        // Even if host is solo, platoon size is 1 so this works.
         return platoon[platoon.size()-1].vehiclePosition;
     }
 
@@ -187,32 +182,33 @@ namespace platoon_strategic_ihp
     PlatoonMember PlatoonManager::getDynamicLeader(){
         PlatoonMember dynamicLeader;
         ROS_DEBUG_STREAM("platoon size: " << platoon.size());
-        if(isFollower && platoon.size() != 0) 
+        if(isFollower) 
         {
             ROS_DEBUG_STREAM("Leader initially set as first vehicle in platoon");
             // return the first vehicle in the platoon as default if no valid algorithm applied
             // due to downtrack descending order, the platoon front veihcle is the first in list. 
             dynamicLeader = platoon[0];
             if (algorithmType_ == "APF_ALGORITHM"){
-                    int newLeaderIndex = allPredecessorFollowing();
-                    if(newLeaderIndex < platoon.size() && newLeaderIndex >= 0) {
-                        dynamicLeader = platoon[newLeaderIndex];
-                        ROS_DEBUG_STREAM("APF output: " << dynamicLeader.staticId);
-                        previousFunctionalDynamicLeaderIndex_ = newLeaderIndex;
-                        previousFunctionalDynamicLeaderID_ = dynamicLeader.staticId;
-                    }
-                    else {
-
-                        /**
-                         * it might happened when the subject vehicle gets far away from the preceding vehicle, 
-                         * in which case the host vehicle will follow the one in front.
-                         */
-                        dynamicLeader = platoon[getNumberOfVehicleInFront() - 1];
-                        // update index and ID 
-                        previousFunctionalDynamicLeaderIndex_ = getNumberOfVehicleInFront()-1;
-                        previousFunctionalDynamicLeaderID_ = dynamicLeader.staticId;
-                        ROS_DEBUG_STREAM("Based on the output of APF algorithm we start to follow our predecessor.");
-                    }
+                int newLeaderIndex = allPredecessorFollowing();
+                if(newLeaderIndex < platoon.size() && newLeaderIndex >= 0) { //this must always be true!
+                    dynamicLeader = platoon[newLeaderIndex];
+                    ROS_DEBUG_STREAM("APF output: " << dynamicLeader.staticId);
+                    previousFunctionalDynamicLeaderIndex_ = newLeaderIndex;
+                    previousFunctionalDynamicLeaderID_ = dynamicLeader.staticId;
+                }
+                else //something is terribly wrong in the logic!
+                {
+                    ROS_WARN("newLeaderIndex = " << newLeaderIndex << " is invalid coming from allPredecessorFollowing!")
+                    /**
+                     * it might happened when the subject vehicle gets far away from the preceding vehicle, 
+                     * in which case the host vehicle will follow the one in front.
+                     */
+                    dynamicLeader = platoon[getNumberOfVehicleInFront() - 1];
+                    // update index and ID 
+                    previousFunctionalDynamicLeaderIndex_ = getNumberOfVehicleInFront()-1;
+                    previousFunctionalDynamicLeaderID_ = dynamicLeader.staticId;
+                    ROS_DEBUG_STREAM("Based on the output of APF algorithm we start to follow our predecessor.");
+                }
             }
         }
         return dynamicLeader;
@@ -223,7 +219,7 @@ namespace platoon_strategic_ihp
     int PlatoonManager::allPredecessorFollowing(){
         ///***** Case Zero *****///
         // If the host vheicle is the second vehicle in this platoon,we will always follow the platoon leader in front of host vehicle
-        if(platoon.size() == 1) {
+        if(platoon.size() == 2) {
             ROS_DEBUG("As the second vehicle in the platoon, it will always follow the leader. Case Zero");
             return 0;
         }
@@ -545,11 +541,8 @@ namespace platoon_strategic_ihp
 
     // Return the pysical length from platoon front vehicle (front bumper) to platoon rear vehicle (rear bumper) in m.
     double PlatoonManager::getCurrentPlatoonLength() {
-        if(platoon.size() == 0) {
-            return config_.vehicleLength;
-        } else {
-            return platoon[0].vehiclePosition - platoon[platoon.size() - 1].vehiclePosition + config_.vehicleLength; 
-        }
+        //this works even if platoon size is 1 (can't be 0)
+        return platoon[0].vehiclePosition - platoon[platoon.size() - 1].vehiclePosition + config_.vehicleLength; 
     }
 
 

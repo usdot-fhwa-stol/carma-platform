@@ -280,9 +280,6 @@ namespace platoon_strategic_ihp
         double CurrentPlatoonLength = pm_.getCurrentPlatoonLength();
         double current_speed = current_speed_;
         int PlatoonSize = pm_.getTotalPlatooningSize();
-        double PlatoonRearDowntrackDistance = pm_.getPlatoonRearDowntrackDistance();
-        // UCLA: leader dtd == platoon front dtd --> use it to compare frontal join position 
-        double PlatoonFrontDowntrackDistance = current_downtrack_;
 
         boost::format fmter(OPERATION_INFO_PARAMS);
         //  Note: need to update "OPERATION_INFO_PARAMS" in header file --> strategic_platoon_ihp.h  
@@ -342,11 +339,11 @@ namespace platoon_strategic_ihp
             status_msg.state = cav_msgs::PlatooningInfo::CONNECTING_TO_NEW_FOLLOWER;
         }
         
-        // compose msgs for standby
+        // compose msgs for anything other than standby
         if (pm_.current_platoon_state != PlatoonState::STANDBY)
         {
             status_msg.platoon_id = pm_.currentPlatoonID;
-            status_msg.size = std::max(1, pm_.getTotalPlatooningSize());
+            status_msg.size = pm_.getTotalPlatooningSize();
             status_msg.size_limit = config_.maxPlatoonSize;
 
             if (pm_.current_platoon_state == PlatoonState::FOLLOWER)
@@ -934,12 +931,12 @@ namespace platoon_strategic_ihp
     // Middle state that decided whether to accept joiner  
     MobilityRequestResponse PlatoonStrategicIHPPlugin::mob_req_cb_leaderwaiting(const cav_msgs::MobilityRequest& msg)
     {
-        bool isTargetVehicle = (msg.header.sender_id == lw_applicantId_);
+        bool isTargetVehicle = msg.header.sender_id == lw_applicantId_;
         bool isCandidateJoin = msg.plan_type.type == cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
 
         lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location);
         double obj_cross_track = wm_->routeTrackPos(incoming_pose).crosstrack;
-        bool inTheSameLane = (abs(obj_cross_track - current_crosstrack_) < config_.maxCrosstrackError);
+        bool inTheSameLane = abs(obj_cross_track - current_crosstrack_) < config_.maxCrosstrackError;
         ROS_DEBUG_STREAM("current_cross_track error = " << abs(obj_cross_track - current_crosstrack_));
         ROS_DEBUG_STREAM("inTheSameLane = " << inTheSameLane);
         if (isTargetVehicle && isCandidateJoin && inTheSameLane)
@@ -1083,6 +1080,14 @@ namespace platoon_strategic_ihp
             {
                 ROS_DEBUG_STREAM("The strategy parameters are empty, return no response");
                 return MobilityRequestResponse::NO_RESPONSE;
+            }
+            
+            // Sanity check: another vehicle should not be requesting to join us at the front if we are a solo vehicle; if such
+            // a request is received and we don't have followers, then reject it
+            if (pm_.getTotalPlatooningSize() == 1)
+            {
+                ROS_WARN("Received request for front join even though we have no followers.  Should not have been requested.  NACK")
+                return MobilityRequestResponse::NACK;
             }
             
             // UCLA: For "JOIN PLATOON_FROM_FRONT" message, the strategy params is defined as "SIZE:xx,SPEED:xx,DTD:xx,ECEF(X,Y,Z)" 
