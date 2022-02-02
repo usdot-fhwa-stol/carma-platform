@@ -51,6 +51,15 @@ namespace platoon_strategic_ihp
     PlatoonManager::PlatoonManager()
     {}
 
+
+    // Update the location of the host in the vector of platoon members
+    void updateHostPose(const double downtrack, const double crosstrack)
+    {
+        platoon[hostPosInPlatoon_].vehiclePosition = downtrack
+        //TODO:  store crosstrack when it becomes a member of the PlatoonMember struct
+    }
+
+
     // Update/add one member's information from STATUS messages, update platoon ID if needed. Ignore if message is from other platoons. 
     void PlatoonManager::memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, const double& DtD){
 
@@ -168,12 +177,6 @@ namespace platoon_strategic_ihp
 
     // Find the downtrack distance of the first vehicle of the platoon, in m.
     double PlatoonManager::getPlatoonFrontDowntrackDistance(){
-        // if host is single vehicle
-        if(platoon.size() <= 1) 
-        {
-            double dist = getCurrentDowntrackDistance();
-            return dist;
-        }
         // due to downtrack descending order, the firest vehicle in list is the platoon front vehicle. 
         return platoon[0].vehiclePosition;
     }

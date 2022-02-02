@@ -37,9 +37,6 @@
 #include <autoware_msgs/ControlCommandStamped.h>
 #include "platoon_config_ihp.h"
 
-
-
-
 namespace platoon_strategic_ihp
 {
     /**
@@ -47,7 +44,6 @@ namespace platoon_strategic_ihp
     */ 
     struct PlatoonPlan 
     {
-        
         bool valid;
         long planStartTime;
         std::string planId;
@@ -105,7 +101,6 @@ namespace platoon_strategic_ihp
         PlatoonMember(std::string staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
             commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), vehiclePosition(vehiclePosition), timestamp(timestamp) {}
     };
-        
 
 
     class PlatoonManager
@@ -125,6 +120,14 @@ namespace platoon_strategic_ihp
 
         // Current vehicle downtrack
         double current_downtrack_distance_ = 0;
+
+        /**
+         * \brief Stores the latest info on location of the host vehicle.
+         * 
+         * \param downtrack distance downtrack from beginning of route, m
+         * \param crosstrack distance crosstrack from roadway centerline, m
+         */
+        void updateHostPose(const double downtrack, const double crosstrack);
 
         /**
         * \brief Update platoon members information
@@ -282,6 +285,8 @@ namespace platoon_strategic_ihp
         std::string previousFunctionalDynamicLeaderID_ = "";
         int previousFunctionalDynamicLeaderIndex_ = -1;
 
+        int hostPosInPlatoon_ = 0;  //index to the platoon vector that represents the host vehicle
+
         // note: APF related parameters are moved to config.h.
 
         double vehicleLength_ = 5.0;                            // the length of the vehicle, in m.
@@ -348,7 +353,5 @@ namespace platoon_strategic_ihp
         * \return An sub-vector start with given index.
         */
         std::vector<double> getTimeHeadwayFromIndex(std::vector<double> timeHeadways, int start) const;
-    
-
-    };
+     };
 }

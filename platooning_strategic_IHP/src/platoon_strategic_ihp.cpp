@@ -1877,6 +1877,9 @@ namespace platoon_strategic_ihp
     {
         plugin_discovery_publisher_(plugin_discovery_msg_);
         
+        // Update the platoon manager for host's current location
+        pm_.updateHostPose(current_downtrack_, current_crosstrack_);
+
         if (pm_.current_platoon_state == PlatoonState::LEADER)
         {
             run_leader();
