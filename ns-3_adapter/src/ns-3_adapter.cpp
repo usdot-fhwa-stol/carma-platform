@@ -63,6 +63,11 @@ void NS3Adapter::initialize() {
     comms_srv_ = comms_api_nh_->advertiseService("send", &NS3Adapter::sendMessageSrv, this);
     api_.push_back(comms_srv_.getService());
 
+    pose_sub_ = pnh_->subscribe("current_pose", 1, &NS3Adapter::pose_cb, this);
+
+    pnh_->getParam("vehicle_id", vehicle_id_);
+
+
     ns3_client_.onMessageReceived.connect([this](std::vector<uint8_t> const &msg, uint16_t id) {onMessageReceivedHandler(msg, id); });
     
     spin_rate = 50;
@@ -142,6 +147,7 @@ std::vector<uint8_t> NS3Adapter::packMessage(const cav_msgs::ByteArray& message)
     ss << "Version=0.7" << std::endl;
     ss << "Type=" << cfg.name << std::endl;
     ss << "PSID=" << cfg.psid << std::endl;
+    ss << "VehicleID=" << vehicle_id_ << std::endl;
     ss << "Priority=" << cfg.priority << std::endl;
     ss << "TxMode=ALT" << std::endl;
     ss << "TxChannel=" << cfg.channel << std::endl;
@@ -150,6 +156,9 @@ std::vector<uint8_t> NS3Adapter::packMessage(const cav_msgs::ByteArray& message)
     ss << "DeliveryStop=" << std::endl;
     ss << "Signature=False" << std::endl;
     ss << "Encryption=False" << std::endl;
+    ss << "VehiclePosX=" << pose_msg_.pose.position.x << std::endl;
+    ss << "VehiclePosY=" << pose_msg_.pose.position.y << std::endl;
+    
 
     ss << "Payload=" <<  uint8_vector_to_hex_string(message.content) << std::endl;
 
@@ -389,6 +398,13 @@ void NS3Adapter::shutdown()
     ROS_INFO("Closing connection to radio");
     ns3_client_.close();
 
+}
+
+void NS3Adapter::pose_cb(geometry_msgs::PoseStamped pose_msg)
+{
+    pose_msg_ = pose_msg;
+
+    /*TODO: Add Pose Functionality*/
 }
 
 cav_msgs::DriverStatus NS3Adapter::getDriverStatus()

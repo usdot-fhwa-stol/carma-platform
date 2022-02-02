@@ -33,6 +33,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+//Note: This functionality has been duplicated from the original repo because of the testing reasons
+// Link to original carma_utils repo: https://github.com/usdot-fhwa-stol/carma-utils/blob/develop/cav_driver_utils/include/cav_driver_utils/driver_application/driver_application.h
 
 #include <cav_srvs/Bind.h>
 #include <cav_srvs/GetDriverApi.h>
