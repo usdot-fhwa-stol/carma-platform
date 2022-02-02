@@ -49,7 +49,6 @@ namespace platoon_strategic_ihp
         pm_.HostMobilityId = hostStaticId;
         
         //add host vehicle to platoon list by default, prevent the function "isVehicleRightInFront" from returning zero.
-        std::string hostStaticId = pm_.getHostStaticID();
         double hostcmdSpeed = pm_.getCommandSpeed();
         double hostDtD = pm_.getCurrentDowntrackDistance();
         double hostCurSpeed = pm_.getCurrentSpeed();
@@ -1086,7 +1085,7 @@ namespace platoon_strategic_ihp
             // a request is received and we don't have followers, then reject it
             if (pm_.getTotalPlatooningSize() == 1)
             {
-                ROS_WARN("Received request for front join even though we have no followers.  Should not have been requested.  NACK")
+                ROS_WARN("Received request for front join even though we have no followers.  Should not have been requested.  NACK");
                 return MobilityRequestResponse::NACK;
             }
             
