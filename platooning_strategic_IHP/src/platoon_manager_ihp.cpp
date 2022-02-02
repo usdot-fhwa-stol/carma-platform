@@ -198,7 +198,7 @@ namespace platoon_strategic_ihp
                 }
                 else //something is terribly wrong in the logic!
                 {
-                    ROS_WARN("newLeaderIndex = " << newLeaderIndex << " is invalid coming from allPredecessorFollowing!")
+                    ROS_WARN("newLeaderIndex = ", newLeaderIndex, " is invalid coming from allPredecessorFollowing!");
                     /**
                      * it might happened when the subject vehicle gets far away from the preceding vehicle, 
                      * in which case the host vehicle will follow the one in front.
@@ -250,8 +250,8 @@ namespace platoon_strategic_ihp
         // The following line will not throw exception because the length of downtrack array is larger than two in this case
         double distHeadwayWithPredecessor = downtrackDistance[downtrackDistance.size() - 2] - downtrackDistance[downtrackDistance.size() - 1];
         gapWithPred_ = distHeadwayWithPredecessor;
-        if(insufficientGapWithPredecessor(timeHeadwayWithPredecessor)) {
-            ROS_DEBUG("APF algorithm decides there is an issue with the gap with preceding vehicle: " , timeHeadwayWithPredecessor , ". Case Two");
+        if(insufficientGapWithPredecessor(distHeadwayWithPredecessor)) {
+            ROS_DEBUG("APF algorithm decides there is an issue with the gap with preceding vehicle: " , distHeadwayWithPredecessor , " m. Case Two");
             return platoon.size() - 1;
         }
         else{
@@ -454,8 +454,8 @@ namespace platoon_strategic_ihp
     void PlatoonManager::changeFromFollowerToLeader() {
         
         // Get current host info - assumes departing leader or front of platoon hasn't already been removed from the vector
-        hostIndex = getNumberOfVehicleInFront();
-        hostInfo = platoon[hostIndex];
+        int hostIndex = getNumberOfVehicleInFront();
+        PlatoonMember hostInfo = platoon[hostIndex];
         
         // Clear the front part of the platoon info, since we are splitting off from it; leaves host as element 0
         if (hostIndex > 0)
@@ -463,14 +463,14 @@ namespace platoon_strategic_ihp
             platoon.erase(platoon.begin(), platoon.begin()+hostIndex);
         }else
         {
-            ROS_WARNING("### Host becoming leader, but is already at index 0 in platoon vector!  Vector unchanged.");
+            ROS_WARN("### Host becoming leader, but is already at index 0 in platoon vector!  Vector unchanged.");
         }
 
         isFollower = false;
         currentPlatoonID = boost::uuids::to_string(boost::uuids::random_generator()());
         previousFunctionalDynamicLeaderID_ = "";
         previousFunctionalDynamicLeaderIndex_ = -1;
-        ROS_DEBUG("The platoon manager is changed from follower state to leader state. New platoon ID = " << currentPlatoonID);
+        ROS_DEBUG_STREAM("The platoon manager is changed from follower state to leader state. New platoon ID = " << currentPlatoonID);
     }
 
     // Change the local platoon manager from leader operation state to follower operation state for single vehicle status change.
@@ -481,12 +481,12 @@ namespace platoon_strategic_ihp
     void PlatoonManager::changeFromLeaderToFollower(std::string newPlatoonId, std::string newLeaderId) {
         
         // Save the current host info
-        hostIndex = getNumberOfVehicleInFront();
-        hostInfo = platoon[hostIndex];
+        int hostIndex = getNumberOfVehicleInFront();
+        PlatoonMember hostInfo = platoon[hostIndex];
         
         // Clear contents of the platoon vector and rebuild it with the two known members at this time, leader & host.
         // Remaining leader info and info about any other members will get populated as messages come in.
-        newLeader = PlatoonMember();
+        PlatoonMember newLeader = PlatoonMember();
         newLeader.staticId = newLeaderId;
         platoon.clear();
         platoon.push_back(newLeader); //can get location info updated later with a STATUS or INFO message
@@ -500,7 +500,7 @@ namespace platoon_strategic_ihp
     // Return the number of vehicles in the front of the host vehicle. If host is leader/single vehicle, return 0.
     int PlatoonManager::getNumberOfVehicleInFront() {
         
-        num = platoon.size() - 1;
+        int num = platoon.size() - 1;
         for (int i = 0;  i < platoon.size();  ++i)
         {
             if (platoon[i].vehiclePosition <= current_downtrack_distance_ + 1.0) //allow for some uncertainty to count host also
