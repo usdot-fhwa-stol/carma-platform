@@ -138,6 +138,13 @@ namespace platoon_strategic_ihp
             int findLaneletIndexFromPath(int target_id, lanelet::routing::LaneletPath& path);
 
             /**
+            * \brief Find lanelet width from local position
+            * 
+            * \return lanelet index
+            */
+            double findLaneWidth();
+
+            /**
             * \brief Find lanelet index from path
             * 
             * \param current_dist: current downtrack distance (m)

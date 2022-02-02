@@ -210,6 +210,26 @@ namespace platoon_strategic_ihp
         
         return target_speed;
     }
+
+    // Find the lane width based on current location 
+    double PlatoonStrategicIHPPlugin::findLaneWidth()
+    {
+        lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
+
+        auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 10);
+        lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
+
+        // find left and right bound 
+        lanelet::ConstLineString3d left_bound = current_lanelet.leftBound();
+        lanelet::ConstLineString3d right_bound = current_lanelet.leftBound();
+
+        // find lane width 
+        double dx = abs (left_bound[0].x() - right_bound[0].x());
+        double dy = abs (left_bound[0].y() - right_bound[0].y());
+        double laneWidth = sqrt(dx*dx + dy*dy);
+
+        return laneWidth;
+    }
     
     // Check if target platoon is in front of the host vehicle, and within the same lane (downtrack is the DTD of the target vehicle).
     bool PlatoonStrategicIHPPlugin::isVehicleRightInFront(double downtrack, double crosstrack) 
@@ -377,10 +397,10 @@ namespace platoon_strategic_ihp
         double frontVehicleDtd = pm_.platoon[0].vehiclePosition;
         double frontVehicleCtd = pm_.platoon[0].vehiclePosition;
 
-        // lateral error for two lanes 
-        double two_lane_cross_error = 2*config_.maxCrosstrackError + config_.laneWidth; // todo: 3.5m is lane width, consider read it from map
-        // todo: use maxgap (35m) as longitudinal threshold, consider change 
-        bool longitudinalCheck = (currentDtd >= rearVehicleDtd - config_.maxAllowedJoinGap) || (currentDtd <= frontVehicleDtd + config_.maxGap);
+        // lateral error for two lanes (lane width was calculated based on current lanelet)
+        double two_lane_cross_error = 2*config_.maxCrosstrackError + findLaneWidth(); 
+        // add longitudinal check threshold in config file 
+        bool longitudinalCheck = (currentDtd >= rearVehicleDtd - config_.longitudinalCheckThresold) || (currentDtd <= frontVehicleDtd + config_.maxGap);
         bool lateralCheck = (currentCtd >= frontVehicleCtd - two_lane_cross_error) || (currentCtd <= frontVehicleCtd + two_lane_cross_error);
         // logs for longitudinal and lateral check 
         ROS_DEBUG_STREAM("The longitudinalCheck result is: " << longitudinalCheck );
@@ -2073,7 +2093,8 @@ namespace platoon_strategic_ihp
                 {
                     ROS_DEBUG_STREAM("Give up current on waiting plan with planId: " << pm_.current_plan.planId);
                     pm_.current_plan.valid = false;
-                    break;
+                    // exit function when timeout
+                    return;
                 }  
             }
             

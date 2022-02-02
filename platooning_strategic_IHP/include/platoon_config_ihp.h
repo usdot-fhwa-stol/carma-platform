@@ -34,14 +34,15 @@ struct PlatoonPluginConfig
   double epislon               = 0.001;   // m/s
   
   // following parameters are for platoon forming and operation
-  double timeHeadway           = 2.0;     // s
-  double standStillHeadway     = 12.0;    // m
-  double maxAllowedJoinTimeGap = 15.0;    // s
-  double maxAllowedJoinGap     = 90.0;    // m
-  double desiredJoinTimeGap    = 4.0;     // s
-  double desiredJoinGap        = 30.0;    // m
-  double waitingStateTimeout   = 25.0;    // s
-  double cmdSpeedMaxAdjustment = 10.0;    // m/s
+  double timeHeadway                    = 2.0;     // s
+  double standStillHeadway              = 12.0;    // m
+  double maxAllowedJoinTimeGap          = 15.0;    // s
+  double maxAllowedJoinGap              = 90.0;    // m
+  double longitudinalCheckThresold      = 85.0;    // m
+  double desiredJoinTimeGap             = 4.0;     // s
+  double desiredJoinGap                 = 30.0;    // m
+  double waitingStateTimeout            = 25.0;    // s
+  double cmdSpeedMaxAdjustment          = 10.0;    // m/s
     
   // following parameters are mainly for APF leader selection
   // UCLA: Rename the next four variables for better explainability.
