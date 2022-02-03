@@ -91,7 +91,11 @@ namespace frame_transformer
 
 
     buffer_ = std::make_shared<tf2_ros::Buffer>(get_clock());
-    buffer_->setUsingDedicatedThread(true);
+
+    if (config_.timeout != 0) {
+      buffer_->setUsingDedicatedThread(true);
+    }
+
     listener_ = std::make_shared<tf2_ros::TransformListener>(*buffer_, true);
 
     // Set the transformer based on the specified message type
