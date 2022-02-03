@@ -102,7 +102,7 @@ def generate_launch_description():
                 remappings=[
                     ("points_raw", "points_in_map" ),
                     ("filtered_points", "map_filtered_points"),
-                    ("lanelet2_map", "base_map"),
+                    ("lanelet2_map", "semantic_map"),
                     ("change_state", "disabled_change_state"), # Disable lifecycle topics since this is a lifecycle wrapper container
                     ("get_state", "disabled_get_state")        # Disable lifecycle topics since this is a lifecycle wrapper container  
                 ],
