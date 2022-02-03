@@ -37,9 +37,6 @@
 #include <autoware_msgs/ControlCommandStamped.h>
 #include "platoon_config_ihp.h"
 
-
-
-
 namespace platoon_strategic_ihp
 {
     /**
@@ -47,7 +44,6 @@ namespace platoon_strategic_ihp
     */ 
     struct PlatoonPlan 
     {
-        
         bool valid;
         long planStartTime;
         std::string planId;
@@ -101,11 +97,10 @@ namespace platoon_strategic_ihp
         double vehiclePosition;
         // The local time stamp when the host vehicle update any informations of this member.
         long   timestamp;
-        PlatoonMember(): staticId(""), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), timestamp(0) {} 
+        PlatoonMember(): staticId("bogus"), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), timestamp(0) {} 
         PlatoonMember(std::string staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
             commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), vehiclePosition(vehiclePosition), timestamp(timestamp) {}
     };
-        
 
 
     class PlatoonManager
@@ -125,6 +120,14 @@ namespace platoon_strategic_ihp
 
         // Current vehicle downtrack
         double current_downtrack_distance_ = 0;
+
+        /**
+         * \brief Stores the latest info on location of the host vehicle.
+         * 
+         * \param downtrack distance downtrack from beginning of route, m
+         * \param crosstrack distance crosstrack from roadway centerline, m
+         */
+        void updateHostPose(const double downtrack, const double crosstrack);
 
         /**
         * \brief Update platoon members information
@@ -186,9 +189,10 @@ namespace platoon_strategic_ihp
         /**
         * \brief Update status when state change from Leader to Follower
         *
-        * \param newPlatoonId platoon id of the leader
+        * \param newPlatoonId new ID of the platoon
+        * \param newLeaderId ID of the new lead vehicle
         */
-        void changeFromLeaderToFollower(std::string newPlatoonId);
+        void changeFromLeaderToFollower(std::string newPlatoonId, std::string newLeaderId);
         
         /**
         * \brief Get number of vehicles in front of host vehicle inside platoon
@@ -246,8 +250,6 @@ namespace platoon_strategic_ihp
         double getIHPDesPosFollower(double dt);
 
         // Member variables
-        int platoonSize = 2;
-        std::string leaderID = "default_leader_id";
         std::string currentPlatoonID = "default_test_id";
         bool isFollower = false;
 
@@ -282,6 +284,8 @@ namespace platoon_strategic_ihp
         double maxGap_ = 32.0;                                  // m
         std::string previousFunctionalDynamicLeaderID_ = "";
         int previousFunctionalDynamicLeaderIndex_ = -1;
+
+        int hostPosInPlatoon_ = 0;  //index to the platoon vector that represents the host vehicle
 
         // note: APF related parameters are moved to config.h.
 
@@ -349,7 +353,5 @@ namespace platoon_strategic_ihp
         * \return An sub-vector start with given index.
         */
         std::vector<double> getTimeHeadwayFromIndex(std::vector<double> timeHeadways, int start) const;
-    
-
-    };
+     };
 }
