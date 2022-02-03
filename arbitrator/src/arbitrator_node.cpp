@@ -81,8 +81,14 @@ int main(int argc, char** argv)
         ros::Rate(planning_frequency),
         wm };
 
-    ros::Subscriber pose_sub = nh.subscribe("current_pose", 1, &arbitrator::Arbitrator::pose_cb, &arbitrator);
+    
     ros::Subscriber twist_sub = nh.subscribe("current_velocity", 1, &arbitrator::Arbitrator::twist_cb, &arbitrator);
+
+    arbitrator.initializeBumperTransformLookup();
+
+    ros::Timer bumper_pose_timer = nh.createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [&arbitrator](const auto&) {arbitrator.bumper_pose_cb();});
 
     arbitrator.run();
 

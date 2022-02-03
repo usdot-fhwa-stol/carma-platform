@@ -98,7 +98,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
         plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
 
-        pose_sub_ = nh_->subscribe("current_pose", 1, &RouteFollowingPlugin::pose_cb, this);
+        // pose_sub_ = nh_->subscribe("current_pose", 1, &RouteFollowingPlugin::pose_cb, this);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteFollowingPlugin::twist_cb, this);
 
         // read ros parameters
@@ -130,9 +130,14 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             }
         });
 
+        initializeBumperTransformLookup();
+
+
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
-            [this](const auto &) { plugin_discovery_pub_.publish(plugin_discovery_msg_); });
+            [this](const auto &) { plugin_discovery_pub_.publish(plugin_discovery_msg_); 
+                                    bumper_pose_cb();
+                                    });
     }
 
     void RouteFollowingPlugin::run()
@@ -445,16 +450,32 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         return upcoming_lanechange_status_msg;
     }
 
-    void RouteFollowingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
+
+    void RouteFollowingPlugin::bumper_pose_cb()
     {
-
         ROS_DEBUG_STREAM("Entering pose_cb");
-        pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
 
+        ROS_DEBUG_STREAM("Looking up front bumper pose...");
+        
+        
+        try
+        {
+            tf_ = tf2_buffer_.lookupTransform("vehicle_front", "map", ros::Time(0), ros::Duration(1.0)); //save to local copy of transform 1 sec timeout
+            tf2::fromMsg(tf_, frontbumper_transform_);
+        }
+        catch (const tf2::TransformException &ex)
+        {
+            ROS_WARN("%s", ex.what());
+        }
+
+        geometry_msgs::Pose front_bumper_pose;
+        front_bumper_pose.position.x = frontbumper_transform_.getOrigin().getX();
+        front_bumper_pose.position.y = frontbumper_transform_.getOrigin().getY();
+        
         if (!wm_->getRoute())
             return;
 
-        lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
+        lanelet::BasicPoint2d current_loc(front_bumper_pose.position.x, front_bumper_pose.position.y);
         current_loc_ = current_loc;
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         
@@ -707,5 +728,11 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         {
             throw std::invalid_argument("Valid traffic rules object could not be built");
         }
+    }
+
+    void RouteFollowingPlugin::initializeBumperTransformLookup() 
+    {
+        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+        tf2_buffer_.setUsingDedicatedThread(true);
     }
 }

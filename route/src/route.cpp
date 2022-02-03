@@ -32,7 +32,6 @@ namespace route {
         route_state_pub_ = nh_->advertise<cav_msgs::RouteState>("route_state", 1, true);
         route_marker_pub_= nh_->advertise<visualization_msgs::Marker>("route_marker", 1, true);
         // init subscribers
-        pose_sub_ = nh_->subscribe("current_pose", 1, &RouteGeneratorWorker::pose_cb, &rg_worker_);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteGeneratorWorker::twist_cb, &rg_worker_);
         geo_sub_ = nh_->subscribe("georeference", 1, &RouteGeneratorWorker::georeference_cb, &rg_worker_);
         // init service server
@@ -57,6 +56,7 @@ namespace route {
         pnh_->getParam("route_file_path", route_file_location);
         rg_worker_.set_route_file_path(route_file_location);
         rg_worker_.set_publishers(route_event_pub_, route_state_pub_, route_pub_,route_marker_pub_);
+        rg_worker_.initializeBumperTransformLookup();
     }
 
     void Route::run()
