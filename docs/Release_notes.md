@@ -15,8 +15,8 @@ CARMA-Platform:
 Enhancements in this release:
 -	Issue 1563: The following new Plugins and updates have been added to the CARMA code bases:
 1.	Added Stop Controlled Intersection Strategic Plugin to communicate with CARMA Streets that includes broadcasting the status and intent of the vehicle. 
->	Receiving schedule messages from CARMA Streets and processing them.
->	Generate maneuvers based on the received schedule for approaching the intersection and stopping at the stop bar through the Strategic Plugin.
+-	Receiving schedule messages from CARMA Streets and processing them.
+-	Generate maneuvers based on the received schedule for approaching the intersection and stopping at the stop bar through the Strategic Plugin.
 2.	Added Stop Controlled Intersection Tactical Plugin in CARMA Platform for generating trajectories according to the Trajectory Smoothing (TS) logic.
 -	Issue 1584: Updated stop and wait plugin with a moving average filter to smooth the stopping behavior.
 Fixes in this release:
