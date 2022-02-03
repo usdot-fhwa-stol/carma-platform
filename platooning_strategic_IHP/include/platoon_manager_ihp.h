@@ -130,6 +130,14 @@ namespace platoon_strategic_ihp
         void updateHostPose(const double downtrack, const double crosstrack);
 
         /**
+         * \brief Stores the latest info on host vehicle's command & actual speeds
+         * 
+         * \param cmdSpeed current commanded speed, m/s
+         * \param actualSpeed current measured speed, m/s
+         */
+        void updateHostSpeeds(const double cmdSpeed, const double actualSpeed);
+
+        /**
         * \brief Update platoon members information
         * 
         * \param senderId static id of the broadcasting vehicle

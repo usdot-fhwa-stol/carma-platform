@@ -55,10 +55,17 @@ namespace platoon_strategic_ihp
     // Update the location of the host in the vector of platoon members
     void PlatoonManager::updateHostPose(const double downtrack, const double crosstrack)
     {
+        ROS_DEBUG_STREAM("Host (index " << hostPosInPlatoon_ << "): downtrack = " << downtrack << ", crosstrack = " << crosstrack);
         platoon[hostPosInPlatoon_].vehiclePosition = downtrack;
         //TODO:  store crosstrack when it becomes a member of the PlatoonMember struct
     }
 
+    // Update the speed info of the host in the vector of platoon members
+    void PlatoonManager::updateHostSpeeds(const double cmdSpeed, const double actualSpeed)
+    {
+        platoon[hostPosInPlatoon_].commandSpeed = cmdSpeed;
+        platoon[hostPosInPlatoon_].vehicleSpeed = actualSpeed;
+    }
 
     // Update/add one member's information from STATUS messages, update platoon ID if needed. Ignore if message is from other platoons. 
     void PlatoonManager::memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, const double& DtD){
