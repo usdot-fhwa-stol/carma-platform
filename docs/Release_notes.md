@@ -6,17 +6,19 @@ Version 3.11.0, released Jan 3rd, 2021
 
 **Summary:**
 Carma-platform release version 3.11.0 is the final version which is exclusively ROS1. It has one major enhancement which is to enable Cooperative Right-of-Way (CRW), stop sign intersection traversal.This release also includes new enhancements in Carma-streets, as listed below, to aid with the stop sign intersection traversal.Subsequent versions will contain both ROS1 and ROS2 code as the system is transitioned from the former to the latter. In addition to the stop sign intersection traversal enhancements, several bug fixes are included in this release.
+
 Note: V2X Hub release 7.1.0 includes a CARMA streets plugin for the following operations:
 -	Receive, decode and forward the BSM, Mobility Operations Message and Mobility Path Message to CARMA Streets.
 -	Broadcast schedule plan using Mobility Operations Message received from CARMA Streets.
 
 CARMA-Platform:
+
 Enhancements in this release:
 -	Issue 1563: The following new Plugins and updates have been added to the CARMA code bases:
-1.	Added Stop Controlled Intersection Strategic Plugin to communicate with CARMA Streets that includes broadcasting the status and intent of the vehicle. 
+1.Added Stop Controlled Intersection Strategic Plugin to communicate with CARMA Streets that includes broadcasting the status and intent of the vehicle. 
 -	Receiving schedule messages from CARMA Streets and processing them.
 -	Generate maneuvers based on the received schedule for approaching the intersection and stopping at the stop bar through the Strategic Plugin.
-2.	Added Stop Controlled Intersection Tactical Plugin in CARMA Platform for generating trajectories according to the Trajectory Smoothing (TS) logic.
+2.Added Stop Controlled Intersection Tactical Plugin in CARMA Platform for generating trajectories according to the Trajectory Smoothing (TS) logic.
 -	Issue 1584: Updated stop and wait plugin with a moving average filter to smooth the stopping behavior.
 
 Fixes in this release:
@@ -28,6 +30,7 @@ Fixes in this release:
 -	Issue 1592: Fixed Stopping behavior of vehicle at intersection by updating the parameters of involved plugins to minimize jerkiness and also ensure the vehicle stops smoothly.
 
 CARMA-Streets:
+
 Enhancement in this release:
 -	Issue 86: Added an open source software to monitor Kafka traffic to collect performance data and calculate metrics.Also added environment variables to set Kafka log retention time. 
 -	Issue 87: Added a message logger service to the scheduling service to log scheduling logic calculations through a CSV log file for every scheduling calculation.
