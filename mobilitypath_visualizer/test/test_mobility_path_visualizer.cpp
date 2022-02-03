@@ -96,25 +96,25 @@ TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
 
     EXPECT_EQ(expected_msg.markers[0].header.frame_id, result.markers[0].header.frame_id);
     EXPECT_EQ(expected_msg.markers[0].header.stamp.sec, result.markers[0].header.stamp.sec);
-    // EXPECT_EQ(expected_msg.markers[0].type, result.markers[0].type);
-    // EXPECT_EQ(expected_msg.markers[0].action, result.markers[0].action);
-    // EXPECT_EQ(expected_msg.markers[0].ns, result.markers[0].ns);
+    EXPECT_EQ(expected_msg.markers[0].type, result.markers[0].type);
+    EXPECT_EQ(expected_msg.markers[0].action, result.markers[0].action);
+    EXPECT_EQ(expected_msg.markers[0].ns, result.markers[0].ns);
     
-    // EXPECT_EQ(expected_msg.markers[0].color.a, result.markers[0].color.a);
-    // EXPECT_EQ(expected_msg.markers[0].color.b, result.markers[0].color.b);
-    // EXPECT_EQ(expected_msg.markers[0].color.g, result.markers[0].color.g);
-    // EXPECT_EQ(expected_msg.markers[0].color.r, result.markers[0].color.r);
+    EXPECT_EQ(expected_msg.markers[0].color.a, result.markers[0].color.a);
+    EXPECT_EQ(expected_msg.markers[0].color.b, result.markers[0].color.b);
+    EXPECT_EQ(expected_msg.markers[0].color.g, result.markers[0].color.g);
+    EXPECT_EQ(expected_msg.markers[0].color.r, result.markers[0].color.r);
     
-    // EXPECT_EQ(expected_msg.markers[0].points[0].x, result.markers[0].points[0].x);
-    // EXPECT_EQ(expected_msg.markers[0].points[0].y, result.markers[0].points[0].y);
-    // EXPECT_EQ(expected_msg.markers[0].points[0].z, result.markers[0].points[0].z);
+    EXPECT_EQ(expected_msg.markers[0].points[0].x, result.markers[0].points[0].x);
+    EXPECT_EQ(expected_msg.markers[0].points[0].y, result.markers[0].points[0].y);
+    EXPECT_EQ(expected_msg.markers[0].points[0].z, result.markers[0].points[0].z);
     
-    // EXPECT_EQ(expected_msg.markers[0].points[1].x, result.markers[0].points[1].x);
-    // EXPECT_EQ(expected_msg.markers[0].points[1].y, result.markers[0].points[1].y);
-    // EXPECT_EQ(expected_msg.markers[0].points[1].z, result.markers[0].points[1].z);
+    EXPECT_EQ(expected_msg.markers[0].points[1].x, result.markers[0].points[1].x);
+    EXPECT_EQ(expected_msg.markers[0].points[1].y, result.markers[0].points[1].y);
+    EXPECT_EQ(expected_msg.markers[0].points[1].z, result.markers[0].points[1].z);
 
-    // EXPECT_EQ(expected_msg.markers[1].points[0].x, result.markers[1].points[0].x);
-    // EXPECT_EQ(expected_msg.markers[1].points[1].x, result.markers[1].points[1].x);
+    EXPECT_EQ(expected_msg.markers[1].points[0].x, result.markers[1].points[0].x);
+    EXPECT_EQ(expected_msg.markers[1].points[1].x, result.markers[1].points[1].x);
     
 }
 
