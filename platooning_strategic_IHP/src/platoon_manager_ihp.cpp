@@ -114,6 +114,7 @@ namespace platoon_strategic_ihp
         else //host is leader
         {
             // If we are currently in any leader state, we only update platoon member based on platoon ID
+            ROS_DEBUG_STREAM("Host is leader: currentPlatoonID = " << currentPlatoonID << ", incoming platoonId = " << platoonId);
             if (currentPlatoonID == platoonId)
             {
                 ROS_DEBUG_STREAM("This STATUS messages is from our platoon. Updating the info...");
@@ -514,7 +515,7 @@ namespace platoon_strategic_ihp
         hostPosInPlatoon_ = 1;
         isFollower = true;
         currentPlatoonID = newPlatoonId;
-        ROS_DEBUG("The platoon manager is changed from leader state to follower state. Platoon vector re-initialized.");
+        ROS_DEBUG_STREAM("The platoon manager is changed from leader state to follower state. Platoon vector re-initialized. Plan ID = " << newPlatoonId);
     }
 
     // Return the number of vehicles in the front of the host vehicle. If host is leader/single vehicle, return 0.

@@ -943,6 +943,11 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("Target vehicle " << lw_applicantId_ << " is actually joining.");
             ROS_DEBUG_STREAM("Changing to PlatoonLeaderState and send ACK to target vehicle");
             pm_.current_platoon_state = PlatoonState::LEADER;
+            pm_.currentPlatoonID = msg.header.plan_id;
+            newMember = PlatoonMember();
+            newMember.staticId = msg.header.sender_id;
+            newMember.vehiclePosition = wm_->routeTrackPos(incoming_pose).downtrack;
+            pm_.platoon.push_back(newMember);
             return MobilityRequestResponse::ACK;
         }
         else
