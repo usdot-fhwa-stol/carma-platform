@@ -25,6 +25,7 @@
 #include <lanelet2_io/io_handlers/OsmHandler.h>
 #include <lanelet2_io/io_handlers/Serialize.h>
 #include <lanelet2_io/Exceptions.h>
+#include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
 #include <pcl/common/generate.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_types.h>
@@ -32,7 +33,7 @@
 #include "points_map_filter/points_map_filter_node.hpp"
 
 namespace {
-
+using namespace lanelet::units::literals;
 lanelet::Lanelet getLanelet(lanelet::LineString3d &left_ls, lanelet::LineString3d &right_ls,
                             const lanelet::Attribute &left_sub_type = lanelet::AttributeValueString::SolidSolid,
                             const lanelet::Attribute &right_sub_type = lanelet::AttributeValueString::Solid)
@@ -124,6 +125,12 @@ TEST(Testpoints_map_filter, example_test)
 
     lanelet::LaneletMapPtr map = lanelet::utils::createMap({ll}, {});
 
+
+    auto sl = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 20_mph, {ll},
+      {}, { lanelet::Participants::VehicleCar }));
+
+      ll.addRegulatoryElement(sl);
+      map->add(sl);//Add DigitalSpeedLimit data to the map
 
     std::vector<std::string> remaps; // Remaps to keep topics separate from other tests
     remaps.push_back("--ros-args");
