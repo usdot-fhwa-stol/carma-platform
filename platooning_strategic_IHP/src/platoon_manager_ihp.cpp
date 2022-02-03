@@ -120,6 +120,12 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("This STATUS messages is from our platoon. Updating the info...");
                 updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, curSpeed);
             }
+            else
+            {
+                ROS_DEBUG_STREAM("Platoon IDs not matched");
+                ROS_DEBUG_STREAM("currentPlatoonID: " << currentPlatoonID);
+                ROS_DEBUG_STREAM("incoming platoonId: " << platoonId);
+            }
         }
         
         // update host vehicle information each time new member is updated. Now platoon contains host vehicle.
