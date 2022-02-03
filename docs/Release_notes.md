@@ -11,7 +11,6 @@ Note: V2X Hub release 7.1.0 includes a CARMA streets plugin for the following op
 -	Broadcast schedule plan using Mobility Operations Message received from CARMA Streets.
 
 CARMA-Platform:
-
 Enhancements in this release:
 -	Issue 1563: The following new Plugins and updates have been added to the CARMA code bases:
 1.	Added Stop Controlled Intersection Strategic Plugin to communicate with CARMA Streets that includes broadcasting the status and intent of the vehicle. 
@@ -19,6 +18,7 @@ Enhancements in this release:
 -	Generate maneuvers based on the received schedule for approaching the intersection and stopping at the stop bar through the Strategic Plugin.
 2.	Added Stop Controlled Intersection Tactical Plugin in CARMA Platform for generating trajectories according to the Trajectory Smoothing (TS) logic.
 -	Issue 1584: Updated stop and wait plugin with a moving average filter to smooth the stopping behavior.
+
 Fixes in this release:
 -	Issue 1519: Fixed both Mobility Path and Mobility Operation header host BSM Id by changing the length from 10 digits to 8 digits with total length to send cpp message node. 
 -	Issue 1552: Fixed Mobility Path encoder error by Llimiting the number of mobility path offset messages to 60.
@@ -28,10 +28,10 @@ Fixes in this release:
 -	Issue 1592: Fixed Stopping behavior of vehicle at intersection by updating the parameters of involved plugins to minimize jerkiness and also ensure the vehicle stops smoothly.
 
 CARMA-Streets:
-
 Enhancement in this release:
 -	Issue 86: Added an open source software to monitor Kafka traffic to collect performance data and calculate metrics.Also added environment variables to set Kafka log retention time. 
 -	Issue 87: Added a message logger service to the scheduling service to log scheduling logic calculations through a CSV log file for every scheduling calculation.
+
 Fixes in this release:
 -	Issue 72:  Fixed Sonar scan Analysis on the intersection model source code by excluding Open API generated code for the REST server under the intersection model directory.
 - Issue 69: Fixed distance to end of Lanelet calculation since it sometimes generated the incorrect value, also removed code that is not needed.
