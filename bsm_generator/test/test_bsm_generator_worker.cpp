@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,9 +14,14 @@
  * the License.
  */
 
-#include "bsm_generator_worker.h"
 #include <gtest/gtest.h>
-#include <ros/ros.h>
+#include <memory>
+#include <chrono>
+#include <thread>
+#include <future>
+
+#include "bsm_generator/bsm_generator_worker.hpp"
+#include "bsm_generator/bsm_generator_node.hpp"
 
 TEST(BSMWorkerTest, testMsgCount)
 {
@@ -33,11 +38,11 @@ TEST(BSMWorkerTest, testMsgCount)
 TEST(BSMWorkerTest, testMsgId)
 {
     bsm_generator::BSMGeneratorWorker worker;
-    ros::Time time1(10, 0);
+    rclcpp::Time time1(10, 0);
     std::vector<uint8_t> msgId1 = worker.getMsgId(time1);
-    ros::Time time2(11, 0);
+    rclcpp::Time time2(11, 0);
     std::vector<uint8_t> msgId2 = worker.getMsgId(time2);
-    ros::Time time3(310, 0);
+    rclcpp::Time time3(310, 0);
     std::vector<uint8_t> msgId3 = worker.getMsgId(time3);
     EXPECT_TRUE(msgId1 == msgId2);
     EXPECT_TRUE(msgId2 != msgId3);
@@ -46,11 +51,11 @@ TEST(BSMWorkerTest, testMsgId)
 TEST(BSMWorkerTest, testSecMark)
 {
     bsm_generator::BSMGeneratorWorker worker;
-    ros::Time time1(10, 0);
+    rclcpp::Time time1(10, 0);
     EXPECT_EQ(10000, worker.getSecMark(time1));
-    ros::Time time2(70, 0);
+    rclcpp::Time time2(70, 0);
     EXPECT_EQ(10000, worker.getSecMark(time2));
-    ros::Time time3(71, 0);
+    rclcpp::Time time3(71, 0);
     EXPECT_EQ(11000, worker.getSecMark(time3));
 }
 
@@ -65,9 +70,9 @@ TEST(BSMWorkerTest, testSpeedInRange)
 TEST(BSMWorkerTest, testSteerWheelAngleInRnage)
 {
     bsm_generator::BSMGeneratorWorker worker;
-    EXPECT_NEAR(189.0, worker.getSteerWheelAngleInRnage(3.316), 0.01);
-    EXPECT_NEAR(-189.0, worker.getSteerWheelAngleInRnage(-3.316), 0.01);
-    EXPECT_NEAR(57.2958, worker.getSteerWheelAngleInRnage(1), 0.01);
+    EXPECT_NEAR(189.0, worker.getSteerWheelAngleInRange(3.316), 0.01);
+    EXPECT_NEAR(-189.0, worker.getSteerWheelAngleInRange(-3.316), 0.01);
+    EXPECT_NEAR(57.2958, worker.getSteerWheelAngleInRange(1), 0.01);
 }
 
 TEST(BSMWorkerTest, testLongAccelInRange)
@@ -102,9 +107,17 @@ TEST(BSMWorkerTest, testHeading)
     EXPECT_NEAR(300.001f, worker.getHeadingInRange(300.001f), 0.0001);
 }
 
-// Run all the tests
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
+    ::testing::InitGoogleTest(&argc, argv);
+
+    //Initialize ROS
+    rclcpp::init(argc, argv);
+
+    bool success = RUN_ALL_TESTS();
+
+    //shutdown ROS
+    rclcpp::shutdown();
+
+    return success;
+} 
