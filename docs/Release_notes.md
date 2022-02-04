@@ -1,7 +1,7 @@
 CARMA Platform Release Notes
 ----------------------------
 
-Version 3.11.0, released Jan 3rd, 2021
+Version 3.11.0, released Feb 3rd, 2021
 ----------------------------------------
 
 **Summary:**
