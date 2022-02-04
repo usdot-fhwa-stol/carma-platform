@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,10 +14,7 @@
  * the License.
  */
 
-#include "bsm_generator_worker.h"
-#include <stdlib.h>
-#include <ros/ros.h>
-#include <random>
+#include "bsm_generator/bsm_generator_worker.hpp"
 
 namespace bsm_generator
 {
@@ -34,11 +31,17 @@ namespace bsm_generator
         return old_msg_count;
     }
 
-    std::vector<uint8_t> BSMGeneratorWorker::getMsgId(const ros::Time now)
+    std::vector<uint8_t> BSMGeneratorWorker::getMsgId(const rclcpp::Time now)
     {
+        if (first_msg_id_) {
+            last_id_generation_time_ = now;
+            first_msg_id_ = false;
+        }
+
         std::vector<uint8_t> id(4);
+        
         // need to change ID every 5 mins
-        ros::Duration id_timeout(60 * 5);
+        rclcpp::Duration id_timeout(60*5, 0);
 
         std::default_random_engine generator;
         std::uniform_int_distribution<int> dis(0,INT_MAX);
@@ -55,9 +58,9 @@ namespace bsm_generator
         return id;
     }
 
-    uint16_t BSMGeneratorWorker::getSecMark(const ros::Time now)
+    uint16_t BSMGeneratorWorker::getSecMark(const rclcpp::Time now)
     {
-        return static_cast<uint16_t>((now.toNSec() / 1000000) % 60000);
+        return static_cast<uint16_t>((now.nanoseconds() / 1000000) % 60000);
     }
 
     float BSMGeneratorWorker::getSpeedInRange(const double speed)
@@ -65,7 +68,7 @@ namespace bsm_generator
         return static_cast<float>(std::max(std::min(speed, 163.8), 0.0));
     }
 
-    float BSMGeneratorWorker::getSteerWheelAngleInRnage(const double angle)
+    float BSMGeneratorWorker::getSteerWheelAngleInRange(const double angle)
     {
         return static_cast<float>(std::max(std::min(angle * 57.2958, 189.0), -189.0));
     }
@@ -89,4 +92,4 @@ namespace bsm_generator
     {
         return std::max(std::min(heading, 359.9875f), 0.0f);
     }
-}
+} // namespace bsm_generator

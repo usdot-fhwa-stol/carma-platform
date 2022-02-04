@@ -76,7 +76,7 @@ namespace mobilitypath_publisher
   carma_ros2_utils::CallbackReturn MobilityPathPublication::handle_on_activate(const rclcpp_lifecycle::State &prev_state)
   {
     // Timer setup
-    int path_pub_period_millisecs = 1 / (config_.path_pub_rate * 1000); // Conversion from frequency (Hz) to milliseconds time period
+    int path_pub_period_millisecs = (1 / config_.path_pub_rate) * 1000; // Conversion from frequency (Hz) to milliseconds time period
     path_pub_timer_ = create_timer(get_clock(),
                                    std::chrono::milliseconds(path_pub_period_millisecs),
                                    std::bind(&MobilityPathPublication::spin_callback, this));
