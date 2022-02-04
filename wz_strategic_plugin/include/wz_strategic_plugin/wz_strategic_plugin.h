@@ -27,7 +27,7 @@
 #include <lanelet2_core/Forward.h>
 #include <gtest/gtest_prod.h>
 
-#include <lanelet2_extension/regulatory_elements/CarmaTrafficLight.h>
+#include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
 #include "wz_strategic_plugin/wz_state_transition_table.h"
 #include "wz_strategic_plugin/wz_strategic_plugin_config.h"
 #include "wz_strategic_plugin/wz_states.h"
@@ -84,7 +84,7 @@ private:
    */
   void planWhenUNAVAILABLE(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
                            const VehicleState& current_state,
-                           const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights);
+                           const std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_lights);
 
   /**
    * \brief Method for performing maneuver planning when the current plugin state is TransitState::APPROACHING
@@ -98,7 +98,7 @@ private:
    */
   void planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
                            const VehicleState& current_state,
-                           const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights);
+                           const std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_lights);
 
   /**
    * \brief Method for performing maneuver planning when the current plugin state is TransitState::WAITING
@@ -112,7 +112,7 @@ private:
    */
   void planWhenWAITING(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
                        const VehicleState& current_state,
-                       const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights);
+                       const std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_lights);
 
   /**
    * \brief Method for performing maneuver planning when the current plugin state is TransitState::DEPARTING
@@ -192,7 +192,7 @@ private:
    *
    * \return true if the state is supported, flase otherwise
    */
-  bool supportedLightState(lanelet::CarmaTrafficLightState state) const;
+  bool supportedLightState(lanelet::CarmaTrafficSignalState state) const;
 
   /**
    * \brief Helper method that checks both if the input optional light state is set and if the state it contains is
@@ -203,7 +203,7 @@ private:
    *
    * \return True if the optional is set and the contained state is supported. False otherwise
    */
-  bool validLightState(const boost::optional<lanelet::CarmaTrafficLightState>& optional_state,
+  bool validLightState(const boost::optional<lanelet::CarmaTrafficSignalState>& optional_state,
                        const ros::Time& source_time) const;
 
   /**

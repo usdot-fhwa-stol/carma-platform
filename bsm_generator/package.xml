@@ -32,7 +32,6 @@
   <depend>geometry_msgs</depend>
   <depend>pacmod_msgs</depend>
   <depend>j2735_msgs</depend>
-  <depend>novatel_gps_msgs</depend>
   <depend>wgs84_utils</depend>
   <depend>lanelet2_extension</depend>
 </package>

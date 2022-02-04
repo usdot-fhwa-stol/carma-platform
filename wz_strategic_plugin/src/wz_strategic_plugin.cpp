@@ -51,29 +51,29 @@ cav_msgs::Plugin WzStrategicPlugin::getDiscoveryMsg() const
   return plugin_discovery_msg_;
 }
 
-bool WzStrategicPlugin::supportedLightState(lanelet::CarmaTrafficLightState state) const
+bool WzStrategicPlugin::supportedLightState(lanelet::CarmaTrafficSignalState state) const
 {
   switch (state)
   {
     // NOTE: Following cases are intentional fall through.
     // Supported light states
-    case lanelet::CarmaTrafficLightState::STOP_AND_REMAIN:              // Solid Red
-    case lanelet::CarmaTrafficLightState::PROTECTED_CLEARANCE:          // Yellow Solid no chance of conflicting traffic
-    case lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED:   // Solid Green no chance of conflict traffic
+    case lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN:              // Solid Red
+    case lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE:          // Yellow Solid no chance of conflicting traffic
+    case lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED:   // Solid Green no chance of conflict traffic
                                                                         // (normally used with arrows)
       return true;
 
     // Unsupported light states
-    case lanelet::CarmaTrafficLightState::PERMISSIVE_MOVEMENT_ALLOWED:  // Solid Green there could be conflict traffic
-    case lanelet::CarmaTrafficLightState::PERMISSIVE_CLEARANCE:         // Yellow Solid there is a chance of conflicting
+    case lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED:  // Solid Green there could be conflict traffic
+    case lanelet::CarmaTrafficSignalState::PERMISSIVE_CLEARANCE:         // Yellow Solid there is a chance of conflicting
                                                                         // traffic
-    case lanelet::CarmaTrafficLightState::UNAVAILABLE:                  // No data available
-    case lanelet::CarmaTrafficLightState::DARK:                         // Light is non-functional
-    case lanelet::CarmaTrafficLightState::STOP_THEN_PROCEED:            // Flashing Red
+    case lanelet::CarmaTrafficSignalState::UNAVAILABLE:                  // No data available
+    case lanelet::CarmaTrafficSignalState::DARK:                         // Light is non-functional
+    case lanelet::CarmaTrafficSignalState::STOP_THEN_PROCEED:            // Flashing Red
 
-    case lanelet::CarmaTrafficLightState::PRE_MOVEMENT:                 // Yellow Red transition (Found only in the EU)
+    case lanelet::CarmaTrafficSignalState::PRE_MOVEMENT:                 // Yellow Red transition (Found only in the EU)
                                                                         // (normally used with arrows)
-    case lanelet::CarmaTrafficLightState::CAUTION_CONFLICTING_TRAFFIC:  // Yellow Flashing
+    case lanelet::CarmaTrafficSignalState::CAUTION_CONFLICTING_TRAFFIC:  // Yellow Flashing
     default:
       return false;
   }
@@ -117,7 +117,7 @@ WzStrategicPlugin::VehicleState WzStrategicPlugin::extractInitialState(const cav
   return state;
 }
 
-bool WzStrategicPlugin::validLightState(const boost::optional<lanelet::CarmaTrafficLightState>& optional_state,
+bool WzStrategicPlugin::validLightState(const boost::optional<lanelet::CarmaTrafficSignalState>& optional_state,
                                         const ros::Time& source_time) const
 {
   if (!optional_state)
@@ -126,11 +126,11 @@ bool WzStrategicPlugin::validLightState(const boost::optional<lanelet::CarmaTraf
     return false;
   }
 
-  lanelet::CarmaTrafficLightState light_state = optional_state.get();
+  lanelet::CarmaTrafficSignalState light_state = optional_state.get();
 
   if (!supportedLightState(light_state))
   {
-    ROS_ERROR_STREAM("WorkZone Plugin asked to handle CarmaTrafficLightState: " << light_state
+    ROS_ERROR_STREAM("WorkZone Plugin asked to handle CarmaTrafficSignalState: " << light_state
                                                                                 << " which is not supported.");
     return false;
   }
@@ -158,7 +158,7 @@ std::vector<lanelet::ConstLanelet> WzStrategicPlugin::getLaneletsBetweenWithExce
 
 void WzStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversRequest& req,
                                             cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
-                                            const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights)
+                                            const std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_lights)
 {
   // Reset intersection state since in this state we are not yet known to be in or approaching an intersection
   intersection_speed_ = boost::none;
@@ -201,7 +201,7 @@ void WzStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversRequest
 // TODO should we handle when the vehicle is not going to make the light but doesn't have space to stop?
 void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest& req,
                                             cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
-                                            const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights)
+                                            const std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_lights)
 {
   if (traffic_lights.empty())  // If we are in the approaching state and there is no longer any lights ahead of us then
                                // the vehicle must have crossed the stop bar
@@ -231,12 +231,12 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
   // At this point we know the vehicle is within the activation distance and we know the current and next light phases
   // All we need to now determine is if we should stop or if we should continue
 
-  intersection_speed_ = findSpeedLimit(nearest_traffic_light->getControlledLanelets().front());
+  intersection_speed_ = findSpeedLimit(nearest_traffic_light->getControlStartLanelets().front());
 
   ROS_DEBUG_STREAM("intersection_speed_: " << intersection_speed_.get());
 
   intersection_end_downtrack_ =
-      wm_->routeTrackPos(nearest_traffic_light->getControlledLanelets().back().centerline2d().back()).downtrack;
+      wm_->routeTrackPos(nearest_traffic_light->getControlEndLanelets().back().centerline2d().back()).downtrack;
 
   ROS_DEBUG_STREAM("intersection_end_downtrack_: " << intersection_end_downtrack_.get());
 
@@ -280,9 +280,9 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
       getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
 
   // We will cross the light on the green phase even if we arrive early or late
-  if (early_arrival_state_at_freeflow_optional.get() == lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED &&
+  if (early_arrival_state_at_freeflow_optional.get() == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
       late_arrival_state_at_freeflow_optional.get() ==
-          lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED)  // Green light
+          lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)  // Green light
   {
 
     ROS_DEBUG_STREAM("Planning lane follow and intersection transit maneuvers");
@@ -302,7 +302,7 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
     resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
         traffic_light_down_track - config_.vehicle_length, intersection_end_downtrack_.get(), intersection_speed_.get(),
         intersection_speed_.get(), light_arrival_time_at_freeflow, intersection_exit_time, crossed_lanelets.back().id(),
-        nearest_traffic_light->getControlledLanelets().back().id()));
+        nearest_traffic_light->getControlEndLanelets().back().id()));
   }
   else  // Red or Yellow light
   {
@@ -318,7 +318,7 @@ void WzStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest
 
 void WzStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& req,
                                         cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
-                                        const std::vector<lanelet::CarmaTrafficLightPtr>& traffic_lights)
+                                        const std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_lights)
 {
   if (traffic_lights.empty())
   {
@@ -337,7 +337,7 @@ void WzStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& re
   if (!validLightState(current_light_state_optional, req.header.stamp))
     return;
 
-  if (current_light_state_optional.get() == lanelet::CarmaTrafficLightState::PROTECTED_MOVEMENT_ALLOWED)
+  if (current_light_state_optional.get() == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
   {
     transition_table_.signal(TransitEvent::RED_TO_GREEN_LIGHT);  // If the light is green send the light transition
                                                                  // signal
@@ -402,7 +402,7 @@ bool WzStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_
   // Get current traffic light information
   ROS_DEBUG("\n\nFinding traffic_light information");
 
-  auto traffic_list = wm_->getLightsAlongRoute({ req.veh_x, req.veh_y });
+  auto traffic_list = wm_->getSignalsAlongRoute({ req.veh_x, req.veh_y });
 
   TransitState prev_state;
 

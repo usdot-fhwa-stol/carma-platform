@@ -244,8 +244,8 @@ namespace basic_autonomy
                                                       const cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg,
                                                       const DetailedTrajConfig &detailed_config);
 
-        //Functions specific to lane change
-   /**
+     //Functions specific to lane change
+     /**
       * \brief Converts a set of requested LANE_CHANGE maneuvers to point speed limit pairs. 
       * 
       * \param maneuvers The list of maneuvers to convert
@@ -260,9 +260,36 @@ namespace basic_autonomy
       * 
       * \return A vector of point speed pair struct which contains geometry points as basicpoint::lanelet2d and speed as a double for the maneuver
       */
-     std::vector<PointSpeedPair> create_lanechange_geometry(const cav_msgs::Maneuver &maneuver, double max_starting_downtrack,
+     std::vector<PointSpeedPair> get_lanechange_points_from_maneuver(const cav_msgs::Maneuver &maneuver, double max_starting_downtrack,
                                                                    const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
-                                                                   const cav_msgs::VehicleState &state, const DetailedTrajConfig &detailed_config);
+                                                                   const cav_msgs::VehicleState &state, const GeneralTrajConfig &general_config,const DetailedTrajConfig &detailed_config);
+     
+     /**
+      * \brief Creates a vector of lane change points using parameters defined. 
+      * 
+      * \param starting_lane_id lanelet id for where lane change plan should start
+      * \param ending_lane_id lanelet id for where lane change plan should end
+      * \param starting_downtrack The downtrack distance from which the lane change maneuver starts
+      * \param ending_downtrack The downtrack distance at which the lane change maneuver end
+      * \param wm Pointer to intialized world model for semantic map access
+      * \param state The vehicle state at the time the function is called
+      * 
+      * \return A vector of geometry points as lanelet::basicpoint2d
+      */
+     std::vector<lanelet::BasicPoint2d> create_lanechange_geometry(lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, double starting_downtrack, double ending_downtrack,
+                                                            const carma_wm::WorldModelConstPtr &wm,const cav_msgs::VehicleState &state, int downsample_ratio);
+   
+     
+     /**
+      * \brief Resamples a pair of basicpoint2d lines to get lines of same number of points. 
+      * 
+      * \param line_1 a vector of points to be resampled
+      * \param line_2 a vector of points to be resampled
+      * 
+      * \return A 2d vector with input lines resampled at same rate. The first iteration is the resampled line_1 and the resampled line_2 is the second iteration
+      * Assumption here is for lane change to happen between two adjacent lanelets, they must share a lane boundary (linestring)
+      */
+     std::vector<std::vector<lanelet::BasicPoint2d>> resample_linestring_pair_to_same_size(std::vector<lanelet::BasicPoint2d>& line_1, std::vector<lanelet::BasicPoint2d>& line_2);
 
         /**
    * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning for a Lane following maneuver.

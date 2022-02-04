@@ -36,6 +36,7 @@
 #include <cav_msgs/Maneuver.h>
 #include <basic_autonomy/basic_autonomy.h>
 #include <basic_autonomy/helper_functions.h>
+#include <basic_autonomy/log/log.h>
 
 
 /**
@@ -112,7 +113,7 @@ public:
    * \return List of centerline points paired with target speeds
    */
   std::vector<PointSpeedPair> create_case_one_speed_profile(const carma_wm::WorldModelConstPtr& wm, const cav_msgs::Maneuver& maneuver,
-                                                            std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed);
+                                                            std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed, const cav_msgs::VehicleState& states);
   
      /**
    * \brief Creates a speed profile according to case two of the stop controlled intersection, 
