@@ -579,6 +579,18 @@ namespace platoon_strategic_ihp
             * \return (boolean): if target vehicle is behind the host vehicle.
             */
             bool isVehicleRightBehind(double downtrack, double crosstrack);
+
+            /**
+            * \brief The method for platoon leader to determine if the joining vehicle is closeby. (Note: Used when host vehicle is the platoon leader)
+            *  
+            *
+            * \param joining_downtrack: The downtrack distance of the joining vehicle.
+            *        joining_crosstrack:  The crosstrack distance of the joining vehicle.
+            *        
+            *
+            * \return (boolean): if the host vehicle is close to the target platoon.
+            */
+            bool isJoiningVehicleNearPlatoon(double joining_downtrack, double joining_crosstrack);
             
             /**
             * \brief Function to determine if the host vehicle is close to the target platoon (used for cut-in join scenarios). 
@@ -586,11 +598,14 @@ namespace platoon_strategic_ihp
             *
             * \param current_downtrack: The downtrack distance of the host vehicle.
             *        current_crosstrack:  The crosstrack distance of the host vehicle.
+            *        rearVehicleDtd: The downtrack of the platoon rear vehicle.
+            *        frontVehicleDtd: The downtrack of the platoon leader.
+            *        frontVehicleCtd: The crosstrack of the platoon leader.
             *        
             *
             * \return (boolean): if the host vehicle is close to the target platoon.
             */
-            bool isVehicleNearPlatoon(double current_downtrack, double current_crosstrack);
+            bool isVehicleNearTargetPlatoon(double currentDtd, double currentCtd, double rearVehicleDtd, double frontVehicleDtd, double frontVehicleCtd);
 
             /**
             * \brief Function to find the starting and ending lanelet ID for lane change in a two-lane scenario (used for cut-in join scenarios).
@@ -665,9 +680,18 @@ namespace platoon_strategic_ihp
             * \param msg incoming mobility operation message.
             */
             void mob_op_cb_STATUS(const cav_msgs::MobilityOperation& msg);
+
+            /**
+            * \brief Function to process mobility operation INFO params and find platoon length in m.
+            *
+            * \param strategyParams The parsed strategy params, used to find ecef locaton.
+            *   
+            * \return The length of the platoon in m.
+            */
+            double mob_op_find_platoon_length_from_INFO_params(std::string strategyParams);
             
             /**
-            * \brief Function to process mobility operation for INFO params.
+            * \brief Function to process mobility operation INFO params to find platoon leader's ecef location.
             *
             * \param strategyParams The parsed strategy params, used to find ecef locaton.
             *   

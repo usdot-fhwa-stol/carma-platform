@@ -29,6 +29,7 @@ struct PlatoonPluginConfig
   int    algorithmType         = 0;       // N/A
   int    statusMessageInterval = 100;     // ms
   int    infoMessageInterval   = 200;     // ms
+  double maneuver_plan_dt      = 15;      // s
   // following parameters are for IHP gap regulation algorithm
   double time_step             = 15;      // s
   double epislon               = 0.001;   // m/s

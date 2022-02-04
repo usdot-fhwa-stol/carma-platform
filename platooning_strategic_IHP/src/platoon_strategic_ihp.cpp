@@ -378,24 +378,53 @@ namespace platoon_strategic_ihp
     // Note: The function "find_target_lanelet_id" was used to test the IHP platooning logic and is only a pre-written scenario. 
     // The IHP platooning should provide necessary data in a maneuver plan for the arbitrary lane change module.  
 
-    // Check if the host vehicle is close to the platoon for cut-in join.
-    bool PlatoonStrategicIHPPlugin::isVehicleNearPlatoon(double currentDtd, double currentCtd)
+    // This is the platoon leader's function to determine if the joining vehicle is closeby
+    bool PlatoonStrategicIHPPlugin::isJoiningVehicleNearPlatoon(double joining_downtrack, double joining_crosstrack)
     {
         /**
-         * @brief Function to determine if the host vehicle is close to the target platoon
-         * 
-         * @param 
-         *   (double) currentDtd: the downtrack of the host vehicle.
-         *   (double) currentCtd: the crosstrack of the host vehicle.
-         * @return
-         *   (bool): if the host vehicle is close to the target platoon
+         * Note: 
+         *  This method is the new method for platoon leader to determine if the joining vehicle is closeby. 
          */
-
+        // Position info of the host vehcile
+        double frontVehicleDtd = current_downtrack_;
+        double frontVehicleCtd = current_crosstrack_;
         // platoon leader and rear positions
         int lastVehicleIndex = pm_.platoon.size()-1;
         double rearVehicleDtd = pm_.platoon[lastVehicleIndex].vehiclePosition;
-        double frontVehicleDtd = pm_.platoon[0].vehiclePosition;
-        double frontVehicleCtd = pm_.platoon[0].vehiclePosition;
+        
+        // lateral error for two lanes (lane width was calculated based on current lanelet)
+        double two_lane_cross_error = 2*config_.maxCrosstrackError + findLaneWidth(); 
+        // add longitudinal check threshold in config file 
+        bool longitudinalCheck = (joining_downtrack >= rearVehicleDtd - config_.longitudinalCheckThresold) || (joining_downtrack <= frontVehicleDtd + config_.maxGap);
+        bool lateralCheck = (joining_crosstrack >= frontVehicleCtd - two_lane_cross_error) || (joining_crosstrack <= frontVehicleCtd + two_lane_cross_error);
+        // logs for longitudinal and lateral check 
+        ROS_DEBUG_STREAM("The longitudinalCheck result is: " << longitudinalCheck );
+        ROS_DEBUG_STREAM("The lateralCheck result is: " << lateralCheck );
+
+        if (longitudinalCheck && lateralCheck) 
+        {
+            // host vehicle is close to target platoon logitudinaly (within 10m) and laterally (within 5m)
+            ROS_DEBUG_STREAM("Found a platoon nearby. We are able to join.");
+            return true;
+        }
+        else 
+        {
+            ROS_DEBUG_STREAM("The joining vehicle is not close by, the join request will not be approved.");
+            ROS_DEBUG_STREAM("The joining vehicle downtrack is " << joining_downtrack << " and the host (platoon leader) downtrack is " << frontVehicleDtd);
+            ROS_DEBUG_STREAM("The joining vehicle crosstrack is " << joining_crosstrack << " and the host (platoon leader) crosstrack is " << frontVehicleCtd);
+            return false;
+        }
+
+    }
+
+    // Check if the host vehicle is close to the platoon for cut-in join.
+    bool PlatoonStrategicIHPPlugin::isVehicleNearTargetPlatoon(double currentDtd, double currentCtd, double rearVehicleDtd, 
+                                                               double frontVehicleDtd, double frontVehicleCtd)
+    {
+        /**
+         * Note: 
+         *  This method has been mnodified to used calculated target platoon values based on INFO message. 
+         */
 
         // lateral error for two lanes (lane width was calculated based on current lanelet)
         double two_lane_cross_error = 2*config_.maxCrosstrackError + findLaneWidth(); 
@@ -708,6 +737,28 @@ namespace platoon_strategic_ihp
         return;
     }    
 
+    //
+    double PlatoonStrategicIHPPlugin::mob_op_find_platoon_length_from_INFO_params(std::string strategyParams)
+    {
+        /** 
+         * Note: INFO param format:
+         *      "INFO| --> LENGTH:%.2f,SPEED:%.2f,SIZE:%d,ECEFX:%.2f,ECEFY:%.2f,ECEFZ:%.2f"
+         *           |-------0-----------1---------2--------3----------4----------5-------|
+         */
+        // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d,DTD:%.2f
+        std::vector<std::string> inputsParams;
+        boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+
+        // Use the strategy params' length value and leader location to determine DTD of its rear
+        std::vector<std::string> target_platoon_length;
+        boost::algorithm::split(target_platoon_length, inputsParams[0], boost::is_any_of(":"));
+        double platoon_length = std::stod(target_platoon_length[1]);
+
+        ROS_DEBUG_STREAM("The length of the target platoon is: " << platoon_length);
+
+        return platoon_length;
+    }
+
     // UCLA: Sparse ecef location from INFO params
     cav_msgs::LocationECEF PlatoonStrategicIHPPlugin::mob_op_find_ecef_from_INFO_params(std::string strategyParams)
     {
@@ -899,9 +950,11 @@ namespace platoon_strategic_ihp
         bool isPlatoonStatusMsg = (strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0);    // STATUS message broadcast by platoon leader only.
         bool isInNegotiation = (pm_.current_plan.valid == true);                            // In negotiation indicate the vehicle is not available for a new join (i.e., currently in a platoon or trying to join a platoon). 
 
-        // If host vehicle receives platoon leader's INFO message and not in negotiating with other platoon, host can start to request join.
+        // Condition 1. Host vehicle is the single CAV joning the platoon.
         if(isPlatoonInfoMsg && !isInNegotiation)
         {
+            // step 1. read INFO messasge from the target platoon leader
+
             // read ecef location from strategy params.
             cav_msgs::LocationECEF ecef_loc;
             ecef_loc = mob_op_find_ecef_from_INFO_params(strategyParams);
@@ -916,32 +969,35 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("frontVehicleDtd from ecef: " << frontVehicleDtd);
             ROS_DEBUG_STREAM("frontVehicleCtd from ecef: " << frontVehicleCtd);
 
-            // Use pm_ to find platoon end vehicle and its downtrack in m.
-            int rearVehicleIndex = pm_.getTotalPlatooningSize()- 1;
-            double rearVehicleDtd = pm_.platoon[rearVehicleIndex].vehiclePosition; 
-            double rearVehicleCtd = pm_.platoon[rearVehicleIndex].vehicleCrossTrack; 
-            // downtrack and crosstrack of the platoon rear vehicle --> used for frontal join
-            ROS_DEBUG_STREAM("rearVehicleDtd from joining vehicle's platoon manager: " << rearVehicleDtd);
-            ROS_DEBUG_STREAM("rearVehicleCtd from joining vehicle's platoon manager: " << rearVehicleCtd);
+            // use INFO param to find platoon rear vehicle DTD and CTD.
+            double platoon_length = mob_op_find_platoon_length_from_INFO_params(strategyParams); // length of the entire platoon in meters.
+            /**
+             *  note: 
+             *       [**veh3*] ---------- [*veh2*] ----------------- [*veh1*] ---------- [*veh0**]
+             *           |<------------------ front-rear DTD difference -------------------->|
+             *       |<----------------------------- platoon length ---------------------------->|
+             *       
+             *       front-rear DTD difference = platoon_length - one_vehicle_length
+             */
+            double rearVehicleDtd = frontVehicleDtd - platoon_length + config_.vehicleLength;
+            // Note: For one platoon, we assume all members are in the same lane.
+            double rearVehicleCtd = frontVehicleCtd;
+            // ROS debug stream
+            ROS_DEBUG_STREAM("rearVehicleDtd calcualted by joining vehicle's : " << rearVehicleDtd);
+            ROS_DEBUG_STREAM("rearVehicleCtd calcualted by joining vehicle's : " << rearVehicleCtd);
 
             // Logs for the Noetic update
             // Parse the strategy params
             std::vector<std::string> inputsParams;
             boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
 
-            // Get the other platoon's size (number of members) from strategy params
-            std::vector<std::string> applicantSize_parsed;
-            boost::algorithm::split(applicantSize_parsed, inputsParams[2], boost::is_any_of(":"));
-            int applicantSize = std::stoi(applicantSize_parsed[1]);
-            ROS_DEBUG_STREAM("applicantSize: " << applicantSize);
+            // Get the target platoon's size (number of members) from strategy params
+            std::vector<std::string> targetPlatoonSize_parsed;
+            boost::algorithm::split(targetPlatoonSize_parsed, inputsParams[2], boost::is_any_of(":"));
+            int targetPlatoonSize = std::stoi(targetPlatoonSize_parsed[1]);
+            ROS_DEBUG_STREAM("target Platoon Size: " << targetPlatoonSize);
 
-            // Use the strategy params' length value and leader location to determine DTD of its rear
-            std::vector<std::string> applicant_length;
-            boost::algorithm::split(applicant_length, inputsParams[0], boost::is_any_of(":"));
-            double platoon_length = std::stod(applicant_length[1]);
-            ROS_DEBUG_STREAM("platoon_length = " << platoon_length << " (rear DTD = " << rearVehicleDtd << "). ");
-
-            // Read necessary info for platoon requests
+            // step 2. Generate ecessary info for join request
             cav_msgs::MobilityRequest request;
             request.header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
             request.header.recipient_id = senderId;
@@ -952,7 +1008,7 @@ namespace platoon_strategic_ihp
             
             int platoon_size = pm_.getTotalPlatooningSize();
 
-            // Request Rear Join 
+            // step 3. Request Rear Join 
             if(isVehicleRightInFront(rearVehicleDtd, rearVehicleCtd))
             {   
                 /**
@@ -984,8 +1040,8 @@ namespace platoon_strategic_ihp
                 potentialNewPlatoonId = platoonId;
             }
 
-            // Request frontal join, if the neighbor is a real platoon
-            else if (applicantSize > 1  &&  isVehicleRightBehind(frontVehicleDtd, frontVehicleCtd))
+            // step 4. Request frontal join, if the neighbor is a real platoon
+            else if (targetPlatoonSize > 1  &&  isVehicleRightBehind(frontVehicleDtd, frontVehicleCtd))
             {   
 
                 /**
@@ -1020,12 +1076,13 @@ namespace platoon_strategic_ihp
                 potentialNewPlatoonId_front_ = newLeaderPlatoonId;
             }
 
-            // UCLA: Condition passed the check for cut-in join
-            else if (isVehicleNearPlatoon(current_downtrack_, current_crosstrack_))
+            // step 5. Request cut-in join
+            else if (isVehicleNearTargetPlatoon(current_downtrack_, current_crosstrack_, rearVehicleDtd, 
+                                                                  frontVehicleDtd, frontVehicleCtd))
             {
                 /**
                  * UCLA Implementation note:
-                 *  1. isVehicleNearPlatoon --> determine if the platoon is next to host vheicle
+                 *  1. isVehicleNearTargetPlatoon --> determine if the platoon is next to host vheicle
                  *  2. sender_id == requesting veh ID --> front joiner ID
                  */
                 std::string newLeaderPlatoonId = pm_.currentPlatoonID; // set self's (front join veh) platoon ID as the new platoon ID
@@ -1058,14 +1115,14 @@ namespace platoon_strategic_ihp
                 potentialNewPlatoonId_front_ = newLeaderPlatoonId;
             }
 
-            // Return none if no platoon nearby
+            // step 6. Return none if no platoon nearby
             else 
             {
                 ROS_DEBUG_STREAM("Ignore platoon with platoon id: " << platoonId << " because it is not right in front of us or behind us");
             }
         }
         
-        // If host vehicle receives STATUS params, just update the condition.
+        // Condition 2. If host vehicle receives STATUS params, just update the condition.
         else if(isPlatoonStatusMsg) 
         {
             mob_op_cb_STATUS(msg);
@@ -1073,7 +1130,7 @@ namespace platoon_strategic_ihp
 
         }
         
-        // error/time out
+        // Condition 3.error/time out
         else
         {
             ROS_DEBUG_STREAM("Receive operation message but ignore it because isPlatoonInfoMsg = " << isPlatoonInfoMsg << 
@@ -1400,9 +1457,9 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("applicantCurrentmemberUpdates from ecef pose: " << applicantCurrentDtd);
 
         // Calculate crosstrack (m) bsaed on incoming pose. 
-        double applicant_crosstrack = wm_->routeTrackPos(incoming_pose).crosstrack;
-        ROS_DEBUG_STREAM("applicant_crosstrack from ecef pose: " << applicant_crosstrack);
-        bool isInLane = (abs(applicant_crosstrack - current_crosstrack_) < config_.maxCrosstrackError);
+        double applicantCurrentCtd = wm_->routeTrackPos(incoming_pose).crosstrack;
+        ROS_DEBUG_STREAM("applicantCurrentCtd from ecef pose: " << applicantCurrentCtd);
+        bool isInLane = (abs(applicantCurrentCtd - current_crosstrack_) < config_.maxCrosstrackError);
         ROS_DEBUG_STREAM("isInLane = " << isInLane);
         
         // Check if we have enough room for that applicant
@@ -1539,7 +1596,8 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("The received mobility JOIN request from " << applicantId << " and PlanId = " << msgHeader.plan_id << " is a CUT-IN-JOIN request !");
 
             // -- core condition to decided accept joiner or not. It is necessary leader only process the first cut-in joining reqeust.
-            if (hasEnoughRoomInPlatoon && isVehicleNearPlatoon(current_downtrack_, current_crosstrack_) )
+            // Note: The host is the polatoon leader, need to use a different method to determine if joining vehicle is nearby.
+            if (hasEnoughRoomInPlatoon && isJoiningVehicleNearPlatoon(applicantCurrentDtd, applicantCurrentCtd))
             {
                 ROS_DEBUG_STREAM("The current platoon has enough room for the applicant with size " << applicantSize);
                 ROS_DEBUG_STREAM("The applicant is close enough for cut-in join, send acceptance response");
@@ -2763,21 +2821,24 @@ namespace platoon_strategic_ihp
             }
         }
     }
-    
+
     // manuver plan callback (provide cav_srvs for arbitrator) 
     bool PlatoonStrategicIHPPlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp)
     {
-
+        // use current positoin to find lanelet ID
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
 
         // *** get the actually closest lanelets that relate to current location (n=10) ***//
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 10);  
+
+        // raise warn if no path was found
         if(current_lanelets.size() == 0)
         {
             ROS_WARN_STREAM("Cannot find any lanelet in map!");
             return true;
         }
-        
+
+        // locate lanelet on shortest path
         auto shortest_path = wm_->getRoute()->shortestPath(); // find path amoung route
 
         lanelet::ConstLanelet current_lanelet;
@@ -2795,11 +2856,14 @@ namespace platoon_strategic_ihp
                 }
             }
         }
+
+        // Raise error is not on shortest path.
         if(last_lanelet_index == -1)
         {
             ROS_ERROR_STREAM("Current position is not on the shortest path! Returning an empty maneuver");
             return true;
         }
+        // read status data
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         double speed_progress = current_speed_;
         ros::Time time_progress = ros::Time::now();
@@ -2903,9 +2967,28 @@ namespace platoon_strategic_ihp
                     {
                         break; 
                     }
-                    // "composeManeuverMessage" --> maneuver = lanefollowng, need to add a "lane changing" --> maneuver = lane change
-                    resp.new_plan.maneuvers.push_back(composeLaneChangeManeuverMessage(current_progress, end_dist,  
-                                            speed_progress, target_speed, current_lanelet_id, target_lanelet_id, time_progress));
+                    
+                    /**
+                     * note: the lane change should use a future position as the start of lane change plan. 
+                     *       maneuver_plan_dt is the planning horizon that sends future maneuver plan.
+                     */
+                    double lane_change_dtd = current_downtrack_ + current_speed_*config_.maneuver_plan_dt; 
+
+                    // use future position to find lanelet ID
+                    /**
+                     * note: 
+                     * The current speed's direction is along x axis. (current_speed_ = msg->twist.linear.x;)
+                     * Hence: next_point.x = current.x + current_speed_*dt
+                     */
+                    lanelet::BasicPoint2d next_loc(pose_msg_.pose.position.x+current_speed_*config_.maneuver_plan_dt, 
+                                                   pose_msg_.pose.position.y);
+
+                    // get the actually closest lanelets, 
+                    auto next_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, next_loc, 10);  
+
+                    // note: Since lanelet ID is not important for arbitrary lanechange, just use first lanelet's Id to create a maneuver msg.
+                    resp.new_plan.maneuvers.push_back(composeLaneChangeManeuverMessage(lane_change_dtd, end_dist,  
+                                            speed_progress, target_speed, next_lanelets[0].second.id(), target_lanelet_id, time_progress));
 
                     current_progress += dist_diff;
                     // read lane change maneuver end time as time progress
