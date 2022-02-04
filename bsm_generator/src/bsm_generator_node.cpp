@@ -35,15 +35,17 @@ namespace bsm_generator
 
   rcl_interfaces::msg::SetParametersResult BSMGenerator::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
   {
-    auto error   = update_params<double>({{"bsm_generation_frequency", config_.bsm_generation_frequency}}, parameters);
-    auto error_2 = update_params<bool>({{"bsm_id_rotation_enabled", config_.bsm_id_rotation_enabled}}, parameters);
-    auto error_3 = update_params<int>({{"bsm_message_id", config_.bsm_message_id}}, parameters);
-    auto error_4 = update_params<double>({{"vehicle_length", config_.vehicle_length}}, parameters);
-    auto error_5 = update_params<double>({{"vehicle_width", config_.vehicle_width}}, parameters);
+    auto error = update_params<bool>({{"bsm_id_rotation_enabled", config_.bsm_id_rotation_enabled}}, parameters);
+    auto error_2 = update_params<int>({{"bsm_message_id", config_.bsm_message_id}}, parameters);
+    auto error_3 = update_params<double>({
+        {"bsm_generation_frequency", config_.bsm_generation_frequency},
+        {"vehicle_length", config_.vehicle_length},
+        {"vehicle_width", config_.vehicle_width}
+    }, parameters);
 
     rcl_interfaces::msg::SetParametersResult result;
 
-    result.successful = !error && !error_2 && !error_3 && !error_4 && !error_5;
+    result.successful = !error && !error_2 && !error_3;
 
     return result;
   }
