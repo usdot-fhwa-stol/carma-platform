@@ -1,4 +1,4 @@
-# Copyright (C) 2021 LEIDOS.
+# Copyright (C) 2021-2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,12 +40,22 @@ def generate_launch_description():
 
     vehicle_calibration_dir = LaunchConfiguration('vehicle_calibration_dir')
 
+    vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
+
     # Declare the vehicle_calibration_dir launch argument
-    vehicle_characteristics_path = LaunchConfiguration('vehicle_characteristics_path')
-    declare_vehicle_characteristics_path_arg = DeclareLaunchArgument(
-        name = 'vehicle_characteristics_path', 
+    vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
+    declare_vehicle_characteristics_param_file_arg = DeclareLaunchArgument(
+        name = 'vehicle_characteristics_param_file', 
         default_value = [vehicle_calibration_dir, "/identifiers/UniqueVehicleParams.yaml"],
         description = "Path to file containing unique vehicle characteristics"
+    )
+
+    # Declare the vehicle_config_param_file launch argument
+    vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
+    declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_param_file',
+        default_value = [vehicle_config_dir, "/VehicleConfigParams.yaml"],
+        description = "Path to file contain vehicle configuration parameters"
     )
 
     # Nodes
@@ -64,7 +74,10 @@ def generate_launch_description():
             PushRosNamespace(EnvironmentVariable('CARMA_MSG_NS', default_value='message')),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/message.launch.py']),
-                launch_arguments = { 'vehicle_characteristics_path': vehicle_characteristics_path }.items()
+                launch_arguments = { 
+                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
+                    'vehicle_config_param_file' : vehicle_config_param_file
+                    }.items()
             ),
         ]
     )
@@ -79,7 +92,8 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        declare_vehicle_characteristics_path_arg,
+        declare_vehicle_characteristics_param_file_arg,
+        declare_vehicle_config_param_file_arg,
         environment_group,
         v2x_group,
         system_controller
