@@ -1,0 +1,4 @@
+# Double: The side length of the 2d cells which are used to discretize the filter space
+# Units: meters
+# US highway lanes are 3.7 meters. This is increased to 3.8 meters to allow some overlap
+cell_side_length : 3.8

@@ -75,6 +75,7 @@ namespace frame_transformer
 
     // Unit Test Accessors
     FRIEND_TEST(frame_transformer_test, transform_test);
+    FRIEND_TEST(frame_transformer_test, point_cloud_transform_test);
 
   };
 

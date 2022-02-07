@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--  
- Copyright (C) 2019-2021 LEIDOS.
+ Copyright (C) 2022 LEIDOS.
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  use this file except in compliance with the License. You may obtain a copy of
  the License at
@@ -14,9 +14,9 @@
 -->
 
 <package format="3">
-  <name>object_detection_tracking</name>
+  <name>points_map_filter</name>
   <version>1.0.0</version>
-  <description>The object_detection_tracking package</description>
+  <description>The points_map_filter package</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
 
@@ -26,16 +26,22 @@
   <build_depend>carma_cmake_common</build_depend>
   <build_depend>ament_auto_cmake</build_depend>
 
-  <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
-  <depend>carma_perception_msgs</depend>
   <depend>carma_ros2_utils</depend>
-  <depend>tf2_geometry_msgs</depend>
-  <depend>tf2</depend>
-  <depend>tf2_ros</depend>
-  <depend>autoware_auto_msgs</depend> 
   <depend>rclcpp_components</depend>
-  <depend>autoware_auto_geometry</depend>
+  <depend>sensor_msgs</depend>
+  <depend>autoware_lanelet2_msgs</depend>
+  <depend>lanelet2_core</depend>
+  <depend>lanelet2_io</depend>
+  <depend>lanelet2_traffic_rules</depend>
+  <depend>lanelet2_extension</depend>
+  <depend>approximate_intersection</depend>
+  <depend>pcl_conversions</depend>
+  <depend>PCL</depend> 
+  <depend>libpcl-all-dev</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
 
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>

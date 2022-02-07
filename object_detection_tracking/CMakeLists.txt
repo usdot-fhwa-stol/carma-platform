@@ -29,6 +29,8 @@ ament_auto_find_build_dependencies()
 set(worker_lib object_detection_tracking_worker_lib)
 set(node_exec object_detection_tracking_node)
 set(node_lib object_detection_tracking_node_lib)
+set(bounding_box_lib bounding_box_node_lib)
+set(bounding_box_exec bounding_box_node_exec)
 
 # Includes
 include_directories(
@@ -48,7 +50,16 @@ ament_auto_add_executable(${node_exec}
         src/main.cpp 
 )
 
+ament_auto_add_library(${bounding_box_lib} SHARED
+        src/bounding_box_to_detected_object/bounding_box_to_detected_object_node.cpp
+)
+
+ament_auto_add_executable(${bounding_box_exec} 
+        src/bounding_box_to_detected_object/main.cpp
+)
+
 rclcpp_components_register_nodes(${node_lib} "object::ObjectDetectionTrackingNode")
+rclcpp_components_register_nodes(${bounding_box_lib} "bounding_box_to_detected_object::Node")
 
 target_link_libraries(${node_lib}
         ${worker_lib}
@@ -56,6 +67,10 @@ target_link_libraries(${node_lib}
 
 target_link_libraries(${node_exec}
         ${node_lib}
+)
+
+target_link_libraries(${bounding_box_exec}
+        ${bounding_box_lib}
 )
 
 # Install
