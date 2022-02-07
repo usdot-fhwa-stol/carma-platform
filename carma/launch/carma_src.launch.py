@@ -1,4 +1,4 @@
-# Copyright (C) 2021 LEIDOS.
+# Copyright (C) 2021-2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ from launch.substitutions import EnvironmentVariable
 from launch.actions import GroupAction
 from launch_ros.actions import PushRosNamespace
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
+from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument
+
 import os
 
 def generate_launch_description():
@@ -34,6 +37,26 @@ def generate_launch_description():
         get_package_share_directory('system_controller'), 'config/config.yaml')
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
+
+    vehicle_calibration_dir = LaunchConfiguration('vehicle_calibration_dir')
+
+    vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
+
+    # Declare the vehicle_calibration_dir launch argument
+    vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
+    declare_vehicle_characteristics_param_file_arg = DeclareLaunchArgument(
+        name = 'vehicle_characteristics_param_file', 
+        default_value = [vehicle_calibration_dir, "/identifiers/UniqueVehicleParams.yaml"],
+        description = "Path to file containing unique vehicle characteristics"
+    )
+
+    # Declare the vehicle_config_param_file launch argument
+    vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
+    declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_param_file',
+        default_value = [vehicle_config_dir, "/VehicleConfigParams.yaml"],
+        description = "Path to file contain vehicle configuration parameters"
+    )
 
     # Nodes
 
@@ -59,7 +82,11 @@ def generate_launch_description():
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_MSG_NS', default_value='message')),
             IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/message.launch.py'])
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/message.launch.py']),
+                launch_arguments = { 
+                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
+                    'vehicle_config_param_file' : vehicle_config_param_file
+                    }.items()
             ),
         ]
     )
@@ -74,6 +101,8 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        declare_vehicle_characteristics_param_file_arg,
+        declare_vehicle_config_param_file_arg,
         transform_group,
         environment_group,
         v2x_group,
