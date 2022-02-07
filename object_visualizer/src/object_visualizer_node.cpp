@@ -103,7 +103,7 @@ namespace object_visualizer
       
       marker.header = msg->header;
 
-      marker.ns = "external_objects"; // TODO make parameter
+      marker.ns = config_.external_objects_viz_ns;
 
       // Pedestrian's will be represented as red box
       if (obj.object_type == carma_perception_msgs::msg::ExternalObject::PEDESTRIAN) {
@@ -179,7 +179,7 @@ namespace object_visualizer
       
       marker.header = obj.object.header;
 
-      marker.ns = "roadway_obstacles"; // TODO make parameter
+      marker.ns = config_.roadway_obstacles_viz_ns;
 
       // Pedestrian's will be represented as a red box
       if (obj.object.object_type == carma_perception_msgs::msg::ExternalObject::PEDESTRIAN) {

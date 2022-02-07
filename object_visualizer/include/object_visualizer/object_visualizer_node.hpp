@@ -30,7 +30,7 @@ namespace object_visualizer
 {
 
   /**
-   * \brief TODO for USER: Add class description
+   * \brief This node provides RViz visualization messages for recieved ExternalObject and RoadwayObstacle messages in carma-platform.
    * 
    */
   class Node : public carma_ros2_utils::CarmaLifecycleNode
