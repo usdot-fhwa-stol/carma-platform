@@ -40,7 +40,7 @@ namespace mobilitypath_visualizer {
         config_ = Config();
 
         // Declare parameters
-        config_.spin_rate = declare_parameter<double>("spin_rate", config_.spin_rate);
+        config_.timer_cb_rate = declare_parameter<int>("timer_cb_rate", config_.timer_cb_rate);
         config_.x = declare_parameter<double>("x", config_.x);
         config_.y = declare_parameter<double>("y", config_.y);
         config_.z = declare_parameter<double>("z", config_.z);
@@ -54,13 +54,13 @@ namespace mobilitypath_visualizer {
         config_ = Config();
         
         //Load parameters
-        get_parameter<double>("spin_rate", config_.spin_rate);
+        get_parameter<int>("timer_cb_rate", config_.timer_cb_rate);
         get_parameter<double>("x", config_.x);
         get_parameter<double>("y", config_.y);
         get_parameter<double>("z", config_.z);
         get_parameter<double>("t", config_.t);
 
-        // get_parameter("/vehicle_id", host_id_);
+        get_parameter("/vehicle_id", host_id_);
 
         // init publishers
         host_marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("host_marker", 1);
@@ -79,6 +79,38 @@ namespace mobilitypath_visualizer {
 
         // Return success if everthing initialized successfully
         return CallbackReturn::SUCCESS;
+    }
+
+    carma_ros2_utils::CallbackReturn MobilityPathVisualizer::handle_on_activate(const rclcpp_lifecycle::State &){
+        
+        //Setup timer
+        timer_ = create_timer(get_clock(), std::chrono::milliseconds(config_.timer_cb_rate), 
+        std::bind(&MobilityPathVisualizer::timer_callback, this));
+
+        return CallbackReturn::SUCCESS;
+    }
+
+    void MobilityPathVisualizer::timer_callback()
+    {
+        // match cav_markers' timestamps to that of host
+        if (!host_marker_received_){
+            return;
+        }   
+
+        // publish host marker
+        host_marker_pub_->publish(host_marker_);
+        
+        cav_markers_ = matchTrajectoryTimestamps(host_marker_, cav_markers_);
+
+        for (auto const &marker: cav_markers_)
+        {
+            cav_marker_pub_->publish(marker);
+        }
+
+        // publish label
+        label_marker_ = composeLabelMarker(host_marker_, cav_markers_);
+        label_marker_pub_->publish(label_marker_);
+        
     }
 
     void MobilityPathVisualizer::georeferenceCallback(std_msgs::msg::String::UniquePtr msg) 
@@ -111,7 +143,7 @@ namespace mobilitypath_visualizer {
         }
 
         MarkerColor cav_color;
-        if (msg->m_header.sender_id.compare(host_id_) ==0)
+        if (msg->m_header.sender_id.compare(host_id_) == 0)
         {
             cav_color.green = 1.0;
             host_marker_ = composeVisualizationMarker(*msg,cav_color);
@@ -302,16 +334,14 @@ namespace mobilitypath_visualizer {
             // this marker is outdated, drop
             rclcpp::Time curr_cav_marker_stamp(curr_cav.markers.back().header.stamp);
             rclcpp::Time host_marker_stamp(host_marker.markers[0].header.stamp);
-            std::cout<<"Reaching line 305"<<std::endl;
+            
             if (curr_cav_marker_stamp + rclcpp::Duration(time_step * 1e9) < host_marker_stamp){
                 continue;
             }
-            std::cout<<"Reaching line 309"<<std::endl;
+            
             // skip points until the idx to start interpolating
             while (curr_idx < curr_cav.markers.size() && rclcpp::Time(curr_cav.markers[curr_idx].header.stamp) <= rclcpp::Time(host_marker.markers[0].header.stamp))
             { 
-                std::cout<<"Time 1: "<< rclcpp::Time(curr_cav.markers[curr_idx].header.stamp).seconds() <<" Time 2: "<< rclcpp::Time(host_marker.markers[0].header.stamp).seconds()<<std::endl;
-                std::cout<<"curr_idx: "<<curr_idx<<std::endl;
                 curr_idx++;
             }
             
@@ -367,28 +397,6 @@ namespace mobilitypath_visualizer {
         }
 
         return synchronized_output;
-    }
-
-    bool MobilityPathVisualizer::spinCallback()
-    {
-        // match cav_markers' timestamps to that of host
-        if (!host_marker_received_)
-            return true;
-
-        // publish host marker
-        host_marker_pub_->publish(host_marker_);
-
-        cav_markers_ = matchTrajectoryTimestamps(host_marker_, cav_markers_);
-
-        for (auto const &marker: cav_markers_)
-        {
-            cav_marker_pub_->publish(marker);
-        }
-
-        // publish label
-        label_marker_ = composeLabelMarker(host_marker_, cav_markers_);
-        label_marker_pub_->publish(label_marker_);
-        return true;
     }
 
 }

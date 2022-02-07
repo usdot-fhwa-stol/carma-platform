@@ -186,12 +186,6 @@
     <arg name="route_file_folder" value="$(arg route_file_folder)"/>
   </include>
 
-  <!-- MobilityPath Visualizer -->
-  <group>
-    <remap from="mobility_path_msg" to="$(optenv CARMA_MSG_NS)/mobility_path_msg"/>
-    <remap from="incoming_mobility_path" to="$(optenv CARMA_MSG_NS)/incoming_mobility_path"/>
-    <include file="$(find mobilitypath_visualizer)/launch/mobilitypath_visualizer.launch"/>
-  </group>
 
   <!-- Trajectory Plan Speed Visualizer -->
   <group>

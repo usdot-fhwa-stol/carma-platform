@@ -103,6 +103,8 @@ namespace mobilitypath_visualizer {
         ////
         carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
 
+        carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &);
+
     private:
 
         // publisher
@@ -123,12 +125,14 @@ namespace mobilitypath_visualizer {
         Config config_;
 
         // spin rate
-        double spin_rate_;
+        double timer_cb_rate_;
+        // Timers
+        rclcpp::TimerBase::SharedPtr timer_;
 
         // callbacks
         void callbackMobilityPath(carma_v2x_msgs::msg::MobilityPath::UniquePtr msg);
-        bool spinCallback();
-
+        void timer_callback();
+        
         // latest msgs
         std::unordered_map<std::string, carma_v2x_msgs::msg::MobilityPath> latest_cav_mob_path_msg_;
 

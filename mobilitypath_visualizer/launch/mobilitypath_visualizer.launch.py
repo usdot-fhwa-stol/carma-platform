@@ -27,7 +27,7 @@ def generate_launch_description():
     # Declare the log_level launch argument
     log_level = LaunchConfiguration('log_level')
     declare_log_level_arg = DeclareLaunchArgument(
-        name ='log_level', default_value='WARN')
+        name ='log_level', default_value='DEBUG')
     
     # Get parameter file path
     param_file_path = os.path.join(

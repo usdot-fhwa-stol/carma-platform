@@ -27,7 +27,7 @@ namespace mobilitypath_visualizer
    */
   struct Config
   { 
-    double spin_rate = 10.0;
+    int timer_cb_rate = 10;
     double x = 0.5;
     double y = 0.5;
     double z = 1.0;
@@ -37,7 +37,7 @@ namespace mobilitypath_visualizer
     friend std::ostream &operator<<(std::ostream &output, const Config &c)
     {
       output << "mobilitypath_visualizer::Config { " << std::endl
-           << "spin_rate: " << c.spin_rate << std::endl
+           << "timer_cb_rate: " << c.timer_cb_rate << std::endl
            << "x: " << c.x << std::endl
            << "x: " << c.y << std::endl
            << "x: " << c.z << std::endl

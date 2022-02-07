@@ -58,6 +58,46 @@ def generate_launch_description():
         description = "Path to file contain vehicle configuration parameters"
     )
 
+    #Declare the route file folder launch argument
+    route_file_folder = LaunchConfiguration('route_file_folder')
+    declare_route_file_folder = DeclareLaunchArgument(
+        name = 'route_file_folder',
+        default_value='/opt/carma/routes/',
+        description = 'Path of folder containing routes to load'
+    )
+
+    # Declare enable_guidance_plugin_validate
+    enable_guidance_plugin_validator = LaunchConfiguration('enable_guidance_plugin_validator')
+    declare_enable_guidance_plugin_validator = DeclareLaunchArgument(
+        name = 'enable_guidance_plugin_validator', 
+        default_value='false', 
+        description='Flag indicating whether the Guidance Plugin Validator node will actively validate guidance strategic, tactical, and control plugins'
+    )
+
+    # Declare strategic_plugins_to_validate
+    strategic_plugins_to_validate = LaunchConfiguration('strategic_plugins_to_validate')
+    declare_strategic_plugins_to_validate = DeclareLaunchArgument(
+        name = 'strategic_plugins_to_validate',
+        default_value = '[]',
+        description = 'List of String: Guidance Strategic Plugins that will be validated by the Guidance Plugin Validator Node if enabled'
+    )
+
+    # Declare tactical_plugins_to_validate
+    tactical_plugins_to_validate = LaunchConfiguration('tactical_plugins_to_validate')
+    declare_tactical_plugins_to_validate = DeclareLaunchArgument(
+        name = 'tactical_plugins_to_validate',
+        default_value='[]',
+        description='List of String: Guidance Tactical Plugins that will be validated by the Guidance Plugin Validator Node if enabled'
+    )
+
+    # Declare strategic_plugins_to_validate
+    control_plugins_to_validate = LaunchConfiguration('control_plugins_to_validate')
+    declare_control_plugins_to_validate = DeclareLaunchArgument(
+        name = 'control_plugins_to_validate',
+        default_value= '[]',
+        description='List of String: Guidance Control Plugins that will be validated by the Guidance Plugin Validator Node if enabled'
+    )
+
     # Nodes
 
     environment_group = GroupAction(
@@ -82,6 +122,24 @@ def generate_launch_description():
         ]
     )
 
+    guidance_group = GroupAction(
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_GUIDE_NS', default_value='environemt')),
+            
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/guidance.launch.py']),
+                launch_arguments={
+                    'route_file_folder' : route_file_folder,
+                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file, 
+                    'enable_guidance_plugin_validator' : enable_guidance_plugin_validator,
+                    'strategic_plugins_to_validate' : strategic_plugins_to_validate,
+                    'tactical_plugins_to_validate' : tactical_plugins_to_validate,
+                    'control_plugins_to_validate' : control_plugins_to_validate
+                }.items()
+            ),
+        ]
+    )
+
     system_controller = Node(
         package='system_controller',
         name='system_controller',
@@ -94,7 +152,13 @@ def generate_launch_description():
     return LaunchDescription([
         declare_vehicle_characteristics_param_file_arg,
         declare_vehicle_config_param_file_arg,
+        declare_route_file_folder,
+        declare_enable_guidance_plugin_validator,
+        declare_strategic_plugins_to_validate,
+        declare_tactical_plugins_to_validate,
+        declare_control_plugins_to_validate,
         environment_group,
         v2x_group,
+        guidance_group, 
         system_controller
     ])
