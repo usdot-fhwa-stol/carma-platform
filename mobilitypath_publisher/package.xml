@@ -34,6 +34,7 @@
   <depend>std_msgs</depend>
   <depend>lanelet2_extension</depend>
   <depend>lanelet2_io</depend>
+  <depend>bsm_helper</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
