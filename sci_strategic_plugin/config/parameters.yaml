@@ -2,16 +2,16 @@
 vehicle_decel_limit_multiplier : 0.65
 
 # Double: multiplier to apply to the maximum allowable vehicle acceleration limit so we plan under our capabilities
-vehicle_accel_limit_multiplier : 0.50
+vehicle_accel_limit_multiplier : 0.65
 
 # Double: A buffer before of the stopping location which will still be considered a valid stop. Units in meters
-stop_line_buffer : 5.0
+stop_line_buffer : 3.5
 
 # Double: Update time interval of carma streets. Units in s
 delta_t : 1.0
 
 # Double: Update min_gap. Units in m
-min_gap : 10.0
+min_gap : 3.0
 
 # Double: Minimum vehicle reaction time. Units in s
 reaction_time : 5.0

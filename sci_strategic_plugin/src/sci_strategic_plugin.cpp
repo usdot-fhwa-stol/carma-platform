@@ -331,7 +331,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   {   
       auto tmp = (scheduled_stop_time_) - (street_msg_timestamp_);
       ROS_DEBUG_STREAM("tmp  " << tmp);
-      double time_to_schedule_stop = (tmp)/1000;
+      double time_to_schedule_stop = (tmp)/1000.0;
       ROS_DEBUG_STREAM("time_to_schedule_stop  " << time_to_schedule_stop);
       // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
       std::vector<lanelet::ConstLanelet> crossed_lanelets =
@@ -347,10 +347,10 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       double desired_deceleration = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
 
 
-      double safe_distance = pow(current_state.speed, 2)/(2*desired_deceleration) + config_.min_gap;
+      double safe_distance = pow(current_state.speed, 2)/(2*desired_deceleration);
        ROS_DEBUG_STREAM("safe_distance:  " << safe_distance);
 
-      if (distance_to_stopline > safe_distance)
+      if (distance_to_stopline - safe_distance > config_.stop_line_buffer)
       {
         int case_num = determineSpeedProfileCase(distance_to_stopline , current_state.speed, time_to_schedule_stop, speed_limit_);
         ROS_DEBUG_STREAM("case_num:  " << case_num);
@@ -382,6 +382,8 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
           current_state.downtrack, stop_intersection_down_track, current_state.speed, crossed_lanelets[0].id(),
           crossed_lanelets[0].id(), stopping_accel, current_state.stamp,
           current_state.stamp + ros::Duration(time_to_schedule_stop));
+
+          resp.new_plan.maneuvers.push_back(maneuver_planned);
 
         }
       }
