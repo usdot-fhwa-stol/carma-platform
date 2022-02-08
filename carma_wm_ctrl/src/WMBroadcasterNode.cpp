@@ -68,8 +68,11 @@ int WMBroadcasterNode::run()
   georef_sub_ = cnh_.subscribe("georeference", 1, &WMBroadcaster::geoReferenceCallback, &wmb_);
   // Geofence Sub
   geofence_sub_ = cnh_.subscribe("geofence", 200, &WMBroadcaster::geofenceCallback, &wmb_);
+  // External Map Msg Sub
+  incoming_map_sub_ = cnh_.subscribe("incoming_map", 20, &WMBroadcaster::externalMapMsgCallback, &wmb_);
   //Route Message Sub
   route_callmsg_sub_ = cnh_.subscribe("route", 1, &WMBroadcaster::routeCallbackMessage, &wmb_);
+
   //Current Location Sub
   curr_location_sub_ = cnh_.subscribe("current_pose", 1,&WMBroadcaster::currentLocationCallback, &wmb_);
   //TCM Visualizer pub

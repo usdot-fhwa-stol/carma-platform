@@ -26,6 +26,11 @@ namespace plan_delegator
         nh_ = ros::CARMANodeHandle();
         pnh_ = ros::CARMANodeHandle("~");
 
+        // Initialize world model
+        wml_.reset(new carma_wm::WMListener());
+
+        
+
         pnh_.param<std::string>("planning_topic_prefix", planning_topic_prefix_, "/plugins/");        
         pnh_.param<std::string>("planning_topic_suffix", planning_topic_suffix_, "/plan_trajectory");
         pnh_.param<double>("trajectory_planning_rate", trajectory_planning_rate_, 10.0);
@@ -40,7 +45,8 @@ namespace plan_delegator
             [this](const geometry_msgs::PoseStampedConstPtr& pose) {this->latest_pose_ = *pose;});
         guidance_state_sub_ = nh_.subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &PlanDelegator::guidanceStateCallback, this);
 
-
+        lookupFrontBumperTransform();
+        wm_ = wml_->getWorldModel();
         
         traj_timer_ = pnh_.createTimer(
             ros::Duration(ros::Rate(trajectory_planning_rate_)),
@@ -144,6 +150,20 @@ namespace plan_delegator
         return time_diff.toSec() >= max_trajectory_duration_;
     }
 
+    void PlanDelegator::updateManeuverDistances(cav_msgs::Maneuver& maneuver)
+    {
+        double original_start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
+        double original_end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
+        double adjusted_start_dist = original_start_dist - length_to_front_bumper_;
+        ROS_DEBUG_STREAM("original_start_dist:" << original_start_dist);
+        ROS_DEBUG_STREAM("adjusted_start_dist:" << adjusted_start_dist);
+        double adjusted_end_dist = original_end_dist - length_to_front_bumper_;
+        ROS_DEBUG_STREAM("original_end_dist:" << original_end_dist);
+        ROS_DEBUG_STREAM("adjusted_end_dist:" << adjusted_end_dist);
+        SET_MANEUVER_PROPERTY(maneuver, start_dist, adjusted_start_dist);
+        SET_MANEUVER_PROPERTY(maneuver, end_dist, adjusted_end_dist);
+    }
+
     cav_msgs::TrajectoryPlan PlanDelegator::planTrajectory()
     {
         cav_msgs::TrajectoryPlan latest_trajectory_plan;
@@ -162,7 +182,8 @@ namespace plan_delegator
         // Loop through maneuver list to make service call to applicable Tactical Plugin
         while(current_maneuver_index < latest_maneuver_plan_.maneuvers.size())
         {
-            const auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
+            // const auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
+            auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
 
             // ignore expired maneuvers
             if(isManeuverExpired(maneuver))
@@ -172,6 +193,25 @@ namespace plan_delegator
                 ++current_maneuver_index;
                 continue;
             }
+
+            updateManeuverDistances(maneuver);
+            
+            lanelet::BasicPoint2d current_loc(latest_pose_.pose.position.x, latest_pose_.pose.position.y);
+            double current_downtrack = wm_->routeTrackPos(current_loc).downtrack;
+            ROS_DEBUG_STREAM("current_downtrack" << current_downtrack);
+            double maneuver_end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
+            ROS_DEBUG_STREAM("maneuver_end_dist" << maneuver_end_dist);
+
+            // ignore maneuver that is passed.
+            if (current_downtrack > maneuver_end_dist)
+            {
+                ROS_INFO_STREAM("Dropping passed maneuver: " << GET_MANEUVER_PROPERTY(maneuver, parameters.maneuver_id));
+                // Update the maneuver plan index for the next loop
+                ++current_maneuver_index;
+                continue;
+            }
+            
+
             // get corresponding ros service client for plan trajectory
             auto maneuver_planner = GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin);
             auto client = getPlannerClientByName(maneuver_planner);
@@ -233,6 +273,7 @@ namespace plan_delegator
     void PlanDelegator::onTrajPlanTick(const ros::TimerEvent& te)
     {
         cav_msgs::TrajectoryPlan trajectory_plan = planTrajectory();
+        
         // Check if planned trajectory is valid before send out
         if(isTrajectoryValid(trajectory_plan))
         {
@@ -244,4 +285,22 @@ namespace plan_delegator
             ROS_WARN_STREAM("Planned trajectory is empty. It will not be published!");
         }
     }
+
+    void PlanDelegator::lookupFrontBumperTransform() 
+    {
+        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+        tf2_buffer_.setUsingDedicatedThread(true);
+        try
+        {
+            geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("base_link", "vehicle_front", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+            length_to_front_bumper_ = tf.transform.translation.x;
+            ROS_DEBUG_STREAM("length_to_front_bumper_: " << length_to_front_bumper_);
+            
+        }
+        catch (const tf2::TransformException &ex)
+        {
+            ROS_WARN("%s", ex.what());
+        }
+    }
+
 }

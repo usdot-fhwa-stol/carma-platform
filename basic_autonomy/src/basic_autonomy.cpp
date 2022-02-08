@@ -47,7 +47,7 @@ namespace basic_autonomy
                 }
                 else if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE){
                     ROS_DEBUG_STREAM("Creating Lane Change Geometry");
-                    std::vector<PointSpeedPair> lane_change_points = create_lanechange_geometry(maneuver, starting_downtrack, wm, ending_state_before_buffer, state, detailed_config);
+                    std::vector<PointSpeedPair> lane_change_points = get_lanechange_points_from_maneuver(maneuver, starting_downtrack, wm, ending_state_before_buffer, state, general_config, detailed_config);
                     points_and_target_speeds.insert(points_and_target_speeds.end(), lane_change_points.begin(), lane_change_points.end());
                 }
                 else{
@@ -182,14 +182,12 @@ namespace basic_autonomy
             
 
             double starting_route_downtrack = wm->routeTrackPos(points_and_target_speeds.front().point).downtrack;
-            double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist;
 
-            if(ending_downtrack + detailed_config.buffer_ending_downtrack < wm->getRouteEndTrackPos().downtrack){
-                ending_downtrack = ending_downtrack + detailed_config.buffer_ending_downtrack;
-            }
-            else{
-                ending_downtrack = wm->getRouteEndTrackPos().downtrack;
-            }
+            // Always try to add the maximum buffer. Even if the route ends it may still be possible to add buffered points.
+            // This does mean that downstream components might not be able to assume the buffer points are on the route 
+            // though this is not likely to be an issue as they are buffer only
+            double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack;
+
 
             size_t max_i = points_and_target_speeds.size() - 1;
             size_t unbuffered_idx = points_and_target_speeds.size() - 1;
@@ -197,7 +195,6 @@ namespace basic_autonomy
             double dist_accumulator = starting_route_downtrack;
             lanelet::BasicPoint2d prev_point;
 
-            
             boost::optional<lanelet::BasicPoint2d> delta_point;
             for (size_t i = 0; i < points_and_target_speeds.size(); ++i) {
                 auto current_point = points_and_target_speeds[i].point;
@@ -247,7 +244,6 @@ namespace basic_autonomy
                     points_and_target_speeds.push_back(new_pair);
                 }
 
-
                 prev_point = current_point;
             }
 
@@ -261,9 +257,220 @@ namespace basic_autonomy
             return constrained_points;
         }
 
-        std::vector<PointSpeedPair> create_lanechange_geometry(const cav_msgs::Maneuver &maneuver, double starting_downtrack,
+        std::vector<lanelet::BasicPoint2d> create_lanechange_geometry(lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, double starting_downtrack, double ending_downtrack,
+                                                                   const carma_wm::WorldModelConstPtr &wm,const cav_msgs::VehicleState &state, int downsample_ratio)
+        {
+            std::vector<lanelet::BasicPoint2d> centerline_points;
+
+            //Get starting lanelet and ending lanelets
+            lanelet::ConstLanelet starting_lanelet = wm->getMap()->laneletLayer.get(starting_lane_id);
+            lanelet::ConstLanelet ending_lanelet = wm->getMap()->laneletLayer.get(ending_lane_id);
+            
+            lanelet::ConstLanelets starting_lane;
+            starting_lane.push_back(starting_lanelet);
+
+            std::vector<lanelet::BasicPoint2d> reference_centerline;
+            // 400 value here is an arbitrary attempt at improving performance by reducing copy operations. 
+            // Value picked based on annecdotal evidence from STOL system testing
+            reference_centerline.reserve(400);
+            bool shared_boundary_found = false;
+            bool is_lanechange_left = false;
+            
+            lanelet::BasicLineString2d current_lanelet_centerline = starting_lanelet.centerline2d().basicLineString();
+            lanelet::ConstLanelet current_lanelet = starting_lanelet;
+            reference_centerline.insert(reference_centerline.end(), current_lanelet_centerline.begin(), current_lanelet_centerline.end());
+
+            while(!shared_boundary_found){
+                //Assumption- Adjacent lanelets share lane boundary
+                if(current_lanelet.leftBound() == ending_lanelet.rightBound()){   
+                    is_lanechange_left = true;
+                    shared_boundary_found = true;
+                }
+
+                else if(current_lanelet.rightBound() == ending_lanelet.leftBound()){
+                    shared_boundary_found = true;
+                }
+
+                else{
+                    //If there are no following lanelets on route, lanechange should be completing before reaching it
+                    if(wm->getMapRoutingGraph()->following(current_lanelet, false).empty())
+                    {
+                        // Maneuver requires we travel further before completing lane change, but no routable lanelet directly ahead
+                        //In this case we have reached a lanelet which does not have a routable lanelet ahead + isn't adjacent to the lanelet where lane change ends
+                        //A lane change should have already happened at this point
+                        throw(std::invalid_argument("No following lanelets from current lanelet reachable without a lane change, incorrectly chosen end lanelet"));
+                    }
+
+                    current_lanelet = wm->getMapRoutingGraph()->following(current_lanelet, false).front(); 
+                    if(current_lanelet.id() == starting_lanelet.id()){
+                        //Looped back to starting lanelet
+                        throw(std::invalid_argument("No lane change in path"));
+                    }
+                    auto current_lanelet_linestring = current_lanelet.centerline2d().basicLineString();   
+                    //Concatenate linestring starting from + 1 to avoid overlap 
+                    reference_centerline.insert(reference_centerline.end(), current_lanelet_linestring.begin() + 1, current_lanelet_linestring.end());
+                    starting_lane.push_back(current_lanelet);
+                }
+            }
+
+            //Find crosstrack distance between starting lane and ending lane
+            std::vector<lanelet::BasicPoint2d> target_lane_centerline;
+            for(size_t i = 0;i<starting_lane.size();++i){
+                lanelet::ConstLanelet curr_end_lanelet;
+                
+                if(is_lanechange_left){
+                    
+                    //get left lanelet
+                    if(wm->getMapRoutingGraph()->left(starting_lane[0])){
+                        curr_end_lanelet = wm->getMapRoutingGraph()->left(starting_lane[0]).get();
+                    }
+                    else{
+                        curr_end_lanelet = wm->getMapRoutingGraph()->adjacentLeft(starting_lane[0]).get();
+                    }
+                }
+                else{
+
+                    //get right lanelet
+                    if(wm->getMapRoutingGraph()->right(starting_lane[0])){
+                        curr_end_lanelet = wm->getMapRoutingGraph()->right(starting_lane[0]).get();
+                    }
+                    else{
+                        curr_end_lanelet = wm->getMapRoutingGraph()->adjacentRight(starting_lane[0]).get();
+                    }
+                }
+                
+                auto target_lane_linestring = curr_end_lanelet.centerline2d().basicLineString();
+                //Concatenate linestring starting from + 1 to avoid overlap
+                target_lane_centerline.insert(target_lane_centerline.end(), target_lane_linestring.begin() + 1, target_lane_linestring.end());
+                
+            }
+
+            //Downsample centerlines
+            // 400 value here is an arbitrary attempt at improving performance by reducing copy operations. 
+            // Value picked based on annecdotal evidence from STOL system testing
+
+            std::vector<lanelet::BasicPoint2d> downsampled_starting_centerline;
+            downsampled_starting_centerline.reserve(400);
+            downsampled_starting_centerline = carma_utils::containers::downsample_vector(reference_centerline, downsample_ratio);
+
+            std::vector<lanelet::BasicPoint2d> downsampled_target_centerline;
+            downsampled_target_centerline.reserve(400);
+            downsampled_target_centerline = carma_utils::containers::downsample_vector(target_lane_centerline, downsample_ratio);
+
+            //If points are not the same size - resample to ensure same size along both centerlines
+            if(downsampled_starting_centerline.size() != downsampled_target_centerline.size())
+            {
+                auto centerlines = resample_linestring_pair_to_same_size(downsampled_starting_centerline, downsampled_target_centerline);
+                downsampled_starting_centerline = centerlines.front();
+                downsampled_target_centerline = centerlines.back();
+
+            }
+
+            //Constrain to starting and ending downtrack
+            int start_index_starting_centerline = waypoint_generation::get_nearest_index_by_downtrack(downsampled_starting_centerline, wm, starting_downtrack);
+            cav_msgs::VehicleState start_state;
+            start_state.X_pos_global = downsampled_starting_centerline[start_index_starting_centerline].x();
+            start_state.Y_pos_global = downsampled_starting_centerline[start_index_starting_centerline].y();
+            int start_index_target_centerline = waypoint_generation::get_nearest_point_index(downsampled_target_centerline, start_state);
+
+            int end_index_target_centerline = waypoint_generation::get_nearest_index_by_downtrack(downsampled_target_centerline, wm, ending_downtrack);
+            cav_msgs::VehicleState end_state;
+            end_state.X_pos_global = downsampled_target_centerline[end_index_target_centerline].x();
+            end_state.Y_pos_global = downsampled_target_centerline[end_index_target_centerline].y();
+            int end_index_starting_centerline = waypoint_generation::get_nearest_point_index(downsampled_starting_centerline, end_state);
+
+            std::vector<lanelet::BasicPoint2d> constrained_start_centerline(downsampled_starting_centerline.begin() + start_index_starting_centerline, downsampled_starting_centerline.begin() + end_index_starting_centerline);
+            std::vector<lanelet::BasicPoint2d> constrained_target_centerline(downsampled_target_centerline.begin() + start_index_target_centerline, downsampled_target_centerline.begin() + end_index_target_centerline);
+
+            //Create Trajectory geometry
+            double delta_step = 1.0 / constrained_start_centerline.size();
+
+            for (size_t i = 0; i < constrained_start_centerline.size(); ++i)
+            {
+                lanelet::BasicPoint2d current_position;
+                lanelet::BasicPoint2d start_lane_pt = constrained_start_centerline[i];
+                lanelet::BasicPoint2d target_lane_pt = constrained_target_centerline[i];
+                double delta = delta_step * i;
+                current_position.x() = target_lane_pt.x() * delta + (1 - delta) * start_lane_pt.x();
+                current_position.y() = target_lane_pt.y() * delta + (1 - delta) * start_lane_pt.y();
+
+                centerline_points.push_back(current_position);
+            }
+
+            //Add points from following lanelet to provide sufficient distance for adding buffer
+            auto following_lanelets = wm->getMapRoutingGraph()->following(ending_lanelet, false);
+            if(!following_lanelets.empty()){
+                //Arbitrarily choosing first following lanelet for buffer since points are only being used to fit spline
+                auto following_lanelet_centerline = following_lanelets.front().centerline2d().basicLineString();
+                centerline_points.insert(centerline_points.end(), following_lanelet_centerline.begin(), 
+                                                                            following_lanelet_centerline.end());
+            }
+
+            return centerline_points;
+        }
+
+       std::vector<std::vector<lanelet::BasicPoint2d>> resample_linestring_pair_to_same_size(std::vector<lanelet::BasicPoint2d>& line_1, std::vector<lanelet::BasicPoint2d>& line_2){
+            
+            std::vector<std::vector<lanelet::BasicPoint2d>> output;
+            ros::WallTime start_time = ros::WallTime::now();  // Start timing the execution time for planning so it can be logged
+            
+            //Fit centerlines to a spline
+            std::unique_ptr<smoothing::SplineI> fit_curve_1 = compute_fit(line_1); // Compute splines based on curve points
+            if (!fit_curve_1)
+            {
+                throw std::invalid_argument("Could not fit a spline curve along the starting_lane centerline points!");
+            }
+
+            std::unique_ptr<smoothing::SplineI> fit_curve_2 = compute_fit(line_2); // Compute splines based on curve points
+            if (!fit_curve_2)
+            {
+                throw std::invalid_argument("Could not fit a spline curve along the ending_lane centerline points!");
+            }
+
+            //Sample spline to get centerlines of equal size
+            std::vector<lanelet::BasicPoint2d> all_sampling_points_line1;
+            std::vector<lanelet::BasicPoint2d> all_sampling_points_line2;
+
+            size_t total_point_size = std::min(line_1.size(), line_2.size());
+
+            all_sampling_points_line1.reserve(1 + total_point_size * 2);
+            std::vector<double> downtracks_raw_line1 = carma_wm::geometry::compute_arc_lengths(line_1);
+            int total_step_along_curve1 = static_cast<int>(downtracks_raw_line1.back() / 2.0);
+            double step_threshold_line1 = (double)total_step_along_curve1 / (double)total_point_size;
+            
+            all_sampling_points_line2.reserve(1 + total_point_size * 2);
+            std::vector<double> downtracks_raw_line2 = carma_wm::geometry::compute_arc_lengths(line_2);
+            int total_step_along_curve2 = static_cast<int>(downtracks_raw_line2.back() / 2.0);
+            double step_threshold_line2 = (double)total_step_along_curve2 / (double)total_point_size;
+
+            double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
+            
+            
+            all_sampling_points_line2.reserve(1 + total_point_size * 2);
+            
+            for(size_t i = 0;i<total_point_size; ++i){
+                lanelet::BasicPoint2d p1 = (*fit_curve_1)(scaled_steps_along_curve);
+                lanelet::BasicPoint2d p2 = (*fit_curve_2)(scaled_steps_along_curve);
+                all_sampling_points_line1.push_back(p1);
+                all_sampling_points_line2.push_back(p2);
+
+                scaled_steps_along_curve += 1.0 / total_point_size;  //adding steps_along_curve_step_size
+            }
+
+            output.push_back(all_sampling_points_line1);
+            output.push_back(all_sampling_points_line2);
+
+            ros::WallTime end_time = ros::WallTime::now();  // Planning complete
+
+            ros::WallDuration duration = end_time - start_time;
+            ROS_DEBUG_STREAM("ExecutionTime for resample lane change centerlines: " << duration.toSec());
+
+            return output;
+        }
+        
+        std::vector<PointSpeedPair> get_lanechange_points_from_maneuver(const cav_msgs::Maneuver &maneuver, double starting_downtrack,
                                                                    const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
-                                                                    const cav_msgs::VehicleState &state, const DetailedTrajConfig &detailed_config)
+                                                                    const cav_msgs::VehicleState &state, const GeneralTrajConfig &general_config,const DetailedTrajConfig &detailed_config)
         {
             if(maneuver.type != cav_msgs::Maneuver::LANE_CHANGE){
                 throw std::invalid_argument("Create_lanechange called on a maneuver type which is not LANE_CHANGE");
@@ -279,8 +486,10 @@ namespace basic_autonomy
                 throw(std::invalid_argument("Start distance is greater than or equal to ending distance"));
             }
 
-            //get route between starting and ending downtracks
-            std::vector<lanelet::BasicPoint2d> route_geometry = create_route_geom(starting_downtrack, stoi(lane_change_maneuver.starting_lane_id), ending_downtrack + detailed_config.buffer_ending_downtrack, wm);
+            //get route between starting and ending downtracks - downtracks should be constant for complete length of maneuver
+            double lanechange_starting_downtrack;
+            std::vector<lanelet::BasicPoint2d> route_geometry = create_lanechange_geometry(std::stoi(lane_change_maneuver.starting_lane_id),std::stoi(lane_change_maneuver.ending_lane_id),
+                                                                                        starting_downtrack, ending_downtrack, wm, state, general_config.default_downsample_ratio);
             ROS_DEBUG_STREAM("Route geometry size:"<<route_geometry.size());
 
             lanelet::BasicPoint2d state_pos(state.x_pos_global, state.y_pos_global);
@@ -514,7 +723,9 @@ namespace basic_autonomy
             back_and_future.reserve(points_set.size());
             double total_dist = 0;
             int min_i = 0;
-            for (int i = nearest_pt_index; i >= 0; --i) // int must be used here to avoid overflow when i = 0
+
+            // int must be used here to avoid overflow when i = 0
+            for (int i = nearest_pt_index; i >= 0; --i)
             {
                 min_i = i;
                 total_dist += lanelet::geometry::distance2d(points_set[i].point, points_set[i - 1].point);
@@ -799,10 +1010,34 @@ namespace basic_autonomy
             std::vector<lanelet::BasicPoint2d> future_geom_points;
             std::vector<double> final_actual_speeds;
             split_point_speed_pairs(future_points, &future_geom_points, &final_actual_speeds);
-            std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(future_geom_points);
 
+            std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(future_geom_points);
+            if(!fit_curve){
+                throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
+            }
+            ROS_DEBUG("Got fit");
+            std::vector<lanelet::BasicPoint2d> all_sampling_points;
+            all_sampling_points.reserve(1 + future_geom_points.size() * 2);
+
+        
             //Compute points to local downtracks
             std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(future_geom_points);
+
+            auto total_step_along_curve = static_cast<int>(downtracks.back() /detailed_config.curve_resample_step_size);
+            size_t total_point_size = future_geom_points.size();
+
+            double scaled_steps_along_curve = 0.0; //from 0 (start) to 1 (end) for the whole trajectory
+
+            for(size_t steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++){
+                lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
+
+                all_sampling_points.push_back(p);
+
+                scaled_steps_along_curve += 1.0 / total_step_along_curve; 
+            }
+            ROS_DEBUG_STREAM("Got sampled points with size:" << all_sampling_points.size());
+
+            std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(future_geom_points);
             final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, detailed_config.speed_moving_average_window_size);
 
             //Convert speeds to time
@@ -823,93 +1058,6 @@ namespace basic_autonomy
             return traj_points;
         }
 
-        lanelet::BasicLineString2d create_lanechange_path(const lanelet::ConstLanelet &start_lanelet, const lanelet::ConstLanelet &end_lanelet)
-        {
-            std::vector<lanelet::BasicPoint2d> centerline_points = {};
-            lanelet::BasicLineString2d centerline_start_lane = start_lanelet.centerline2d().basicLineString();
-            lanelet::BasicLineString2d centerline_end_lane = end_lanelet.centerline2d().basicLineString();
-
-            auto total_points = std::min(centerline_start_lane.size(), centerline_end_lane.size());
-            double delta_step = 1.0 / total_points;
-
-            for (int i = 0; i < total_points; i++)
-            {
-                lanelet::BasicPoint2d current_position;
-                lanelet::BasicPoint2d start_lane_pt = centerline_start_lane[i];
-                lanelet::BasicPoint2d end_lane_pt = centerline_end_lane[i];
-                double delta = delta_step * i;
-                current_position.x() = end_lane_pt.x() * delta + (1 - delta) * start_lane_pt.x();
-                current_position.y() = end_lane_pt.y() * delta + (1 - delta) * start_lane_pt.y();
-
-                centerline_points.push_back(current_position);
-            }
-
-            std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(centerline_points);
-            if (!fit_curve)
-            {
-                throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
-            }
-
-            lanelet::BasicLineString2d lc_route;
-
-            double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
-            for (int i = 0; i < centerline_points.size(); i++)
-            {
-                lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
-                lc_route.push_back(p);
-                scaled_steps_along_curve += 1.0 / total_points;
-            }
-            lc_route.push_back(centerline_end_lane.back()); // at 1.0 scaled steps
-
-            return lc_route;
-        }
-
-        std::vector<lanelet::BasicPoint2d> create_route_geom(double starting_downtrack, int starting_lane_id, double ending_downtrack, const carma_wm::WorldModelConstPtr &wm)
-        {
-            //Create route geometry for lane change maneuver
-            //Starting downtrack maybe in the previous lanelet, if it is, have a lane follow till new lanelet starts
-            std::vector<lanelet::ConstLanelet> lanelets_in_path = wm->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
-            lanelet::BasicLineString2d centerline_points = {};
-            int lane_change_iteration = 0;
-            if (lanelets_in_path[0].id() != starting_lane_id)
-            {
-                bool lane_change_req = false;
-                //Check if future lanelet is lane change lanelet
-                for (int i = 0; i < lanelets_in_path.size(); i++)
-                {
-                    if (lanelets_in_path[i].id() == starting_lane_id)
-                    {
-                        lane_change_req = true;
-                        lane_change_iteration = i;
-                        break;
-                    }
-                }
-                if (!lane_change_req)
-                {
-                    throw std::invalid_argument("Current path does not require a lane change. Request Incorrectly sent to Cooperative lane change plugin");
-                }
-                //lane_follow till lane_change req
-                lanelet::BasicLineString2d new_points = lanelets_in_path[lane_change_iteration - 1].centerline2d().basicLineString();
-                lanelet::BasicLineString2d new_points_spliced(new_points.begin(), new_points.end() - 1);
-                centerline_points.insert(centerline_points.end(), new_points_spliced.begin(), new_points_spliced.end());
-            }
-
-            lanelet::BasicLineString2d new_points = create_lanechange_path(lanelets_in_path[lane_change_iteration],lanelets_in_path[lane_change_iteration + 1]);
-            centerline_points.insert(centerline_points.end(), new_points.begin(), new_points.end());
-
-            //Add points from following lanelet to provide sufficient distance for adding buffer
-            auto following_lanelets = wm->getMapRoutingGraph()->following(lanelets_in_path[lane_change_iteration + 1], false);
-            if(!following_lanelets.empty()){
-                //Arbitrarily choosing first following lanelet for buffer since points are only being used to fit spline
-                auto following_lanelet_centerline = following_lanelets.front().centerline2d().basicLineString();
-                centerline_points.insert(centerline_points.end(), following_lanelet_centerline.begin(), 
-                                                                            following_lanelet_centerline.end());
-            }
-
-            std::vector<lanelet::BasicPoint2d> centerline_as_vector(centerline_points.begin(), centerline_points.end());
-
-            return centerline_as_vector;
-        }
 
     }
 }

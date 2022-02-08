@@ -165,12 +165,21 @@ namespace arbitrator
         ros::shutdown(); // Will stop upper level spin and shutdown node
     }
 
-    void Arbitrator::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg) 
+    void Arbitrator::bumper_pose_cb()
     {
-        vehicle_state_.stamp = msg->header.stamp;
-        vehicle_state_.x = msg->pose.position.x;
-        vehicle_state_.y = msg->pose.position.y;
-        
+        try
+        {
+            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(1.0)); //save to local copy of transform 1 sec timeout
+            tf2::fromMsg(tf_, bumper_transform_);
+            vehicle_state_.stamp = tf_.header.stamp;
+        }
+        catch (const tf2::TransformException &ex)
+        {
+            ROS_WARN("%s", ex.what());
+        }
+
+        vehicle_state_.x = bumper_transform_.getOrigin().getX();
+        vehicle_state_.y = bumper_transform_.getOrigin().getY();
         // If the route is available then set the downtrack and lane id
         if (wm_->getRoute()) {
 
@@ -188,10 +197,17 @@ namespace arbitrator
                 vehicle_state_.lane_id = lanelets[0].id();
             }
         }
+
     }
 
     void Arbitrator::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg) 
     {
         vehicle_state_.velocity = msg->twist.linear.x;
+    }
+
+    void Arbitrator::initializeBumperTransformLookup() 
+    {
+        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+        tf2_buffer_.setUsingDedicatedThread(true);
     }
 };

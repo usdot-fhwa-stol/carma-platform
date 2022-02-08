@@ -39,7 +39,7 @@ namespace health_monitor
         activate_plugin_service_server_ = nh_->advertiseService("plugins/activate_plugin", &HealthMonitor::activate_plugin_cb, this);
         get_strategic_plugin_by_capability_server_ = nh_->advertiseService("plugins/get_strategic_plugin_by_capability", &PluginManager::get_strategic_plugins_by_capability, &plugin_manager_);
         get_tactical_plugin_by_capability_server_ = nh_->advertiseService("plugins/get_tactical_plugin_by_capability", &PluginManager::get_tactical_plugins_by_capability, &plugin_manager_);
-        plugin_discovery_subscriber_ = nh_->subscribe<cav_msgs::Plugin>("plugin_discovery", 5, &HealthMonitor::plugin_discovery_cb, this);
+        plugin_discovery_subscriber_ = nh_->subscribe<cav_msgs::Plugin>("plugin_discovery", 10, &HealthMonitor::plugin_discovery_cb, this);
         driver_discovery_subscriber_ = nh_->subscribe<cav_msgs::DriverStatus>("driver_discovery", 5, &HealthMonitor::driver_discovery_cb, this);
 
         // load params

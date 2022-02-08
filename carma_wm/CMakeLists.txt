@@ -78,6 +78,7 @@ add_library(
   src/TrafficControl.cpp
   src/IndexedDistanceMap.cpp
   src/collision_detection.cpp
+  src/SignalizedIntersectionManager.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -135,6 +136,8 @@ install(DIRECTORY include/${PROJECT_NAME}/
 catkin_add_gmock(${PROJECT_NAME}-test
   test/TestMain.cpp
   test/CARMAWorldModelTest.cpp
+  test/WMListenerWorkerTest.cpp
+  test/SignalizedIntersectionManagerTest.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 
