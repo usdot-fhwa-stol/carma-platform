@@ -51,8 +51,8 @@ TEST(MockRoadwaySensorDriver, roadway_sensor_topic)
   lane_pub.publish(msg2);
 
   ros::Rate r(10);  // 10 hz
-  ros::WallTime endTime = ros::WallTime::now() + ros::WallDuration(10.0);
-  while (ros::ok() && endTime > ros::WallTime::now() 
+  ros::Test endTime = ros::Test::now() + ros::Duration(10.0);
+  while (ros::ok() && endTime > ros::Test::now() 
     && !(got_obj && got_lane))
   {
     ros::spinOnce();

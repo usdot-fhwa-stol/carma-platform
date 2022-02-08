@@ -61,7 +61,7 @@ bool PlatooningTacticalPlugin::onSpin()
 bool PlatooningTacticalPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req,
                                               cav_srvs::PlanTrajectoryResponse& resp)
 {
-  ros::WallTime start_time = ros::WallTime::now(); // Start timeing the execution time for planning so it can be logged
+  ros::Test start_time = ros::Test::now(); // Start timeing the execution time for planning so it can be logged
 
   lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
@@ -106,9 +106,9 @@ bool PlatooningTacticalPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryReques
   
   resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
-  ros::WallTime end_time = ros::WallTime::now();  // Planning complete
+  ros::Test end_time = ros::Test::now();  // Planning complete
 
-  ros::WallDuration duration = end_time - start_time;
+  ros::Duration duration = end_time - start_time;
   ROS_DEBUG_STREAM("ExecutionTime: " << duration.toSec());
 
   return true;

@@ -72,8 +72,8 @@ TEST(MockCANDriver, can_topic)
   twist_pub.publish(msg4);
 
   ros::Rate r(10);  // 10 hz
-  ros::WallTime endTime = ros::WallTime::now() + ros::WallDuration(10.0);
-  while (ros::ok() && endTime > ros::WallTime::now() 
+  ros::Time endTime = ros::Time::now() + ros::Duration(10.0);
+  while (ros::ok() && endTime > ros::Time::now() 
     && !(got_brake && got_steering_wheel && got_transmission && got_twist))
   {
     ros::spinOnce();

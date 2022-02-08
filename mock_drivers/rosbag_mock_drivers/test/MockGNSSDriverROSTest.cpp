@@ -40,8 +40,8 @@ TEST(MockGNSSDriver, gnss_fix_fused_topic)
   fix_fused_pub.publish(msg);
 
   ros::Rate r(10);  // 10 hz
-  ros::WallTime endTime = ros::WallTime::now() + ros::WallDuration(10.0);
-  while (ros::ok() && endTime > ros::WallTime::now() && !got_fix)
+  ros::Time endTime = ros::Time::now() + ros::Duration(10.0);
+  while (ros::ok() && endTime > ros::Test::now() && !got_fix)
   {
     ros::spinOnce();
     r.sleep();

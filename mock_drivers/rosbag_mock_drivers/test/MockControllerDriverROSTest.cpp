@@ -52,8 +52,8 @@ TEST(MockControllerDriver, controller_topic)
   ASSERT_TRUE(client.call(srv));
 
   ros::Rate r(10);  // 10 hz
-  ros::WallTime endTime = ros::WallTime::now() + ros::WallDuration(10.0);
-  while (ros::ok() && endTime > ros::WallTime::now() && !(enabled && active))
+  ros::Time endTime = ros::Time::now() + ros::Duration(10.0);
+  while (ros::ok() && endTime > ros::Time::now() && !(enabled && active))
   {
     ros::spinOnce();
     r.sleep();

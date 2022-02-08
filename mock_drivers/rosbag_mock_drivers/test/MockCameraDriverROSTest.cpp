@@ -71,8 +71,8 @@ TEST(MockCameraDriver, camera_topic)
   proj_pub.publish(msg4);
 
   ros::Rate r(10);  // 10 hz
-  ros::WallTime endTime = ros::WallTime::now() + ros::WallDuration(10.0);
-  while (ros::ok() && endTime > ros::WallTime::now() 
+  ros::Time endTime = ros::Time::now() + ros::Duration(10.0);
+  while (ros::ok() && endTime > ros::Time::now() 
     && !(got_info && got_raw && got_rect && got_mat))
   {
     ros::spinOnce();

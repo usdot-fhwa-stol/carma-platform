@@ -412,7 +412,7 @@ namespace basic_autonomy
        std::vector<std::vector<lanelet::BasicPoint2d>> resample_linestring_pair_to_same_size(std::vector<lanelet::BasicPoint2d>& line_1, std::vector<lanelet::BasicPoint2d>& line_2){
             
             std::vector<std::vector<lanelet::BasicPoint2d>> output;
-            ros::WallTime start_time = ros::WallTime::now();  // Start timing the execution time for planning so it can be logged
+            ros::Time start_time = ros::Time::now();  // Start timing the execution time for planning so it can be logged
             
             //Fit centerlines to a spline
             std::unique_ptr<smoothing::SplineI> fit_curve_1 = compute_fit(line_1); // Compute splines based on curve points
@@ -460,9 +460,9 @@ namespace basic_autonomy
             output.push_back(all_sampling_points_line1);
             output.push_back(all_sampling_points_line2);
 
-            ros::WallTime end_time = ros::WallTime::now();  // Planning complete
+            ros::Time end_time = ros::Time::now();  // Planning complete
 
-            ros::WallDuration duration = end_time - start_time;
+            ros::Duration duration = end_time - start_time;
             ROS_DEBUG_STREAM("ExecutionTime for resample lane change centerlines: " << duration.toSec());
 
             return output;
