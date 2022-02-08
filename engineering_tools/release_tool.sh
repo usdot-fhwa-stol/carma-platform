@@ -152,7 +152,7 @@ function release_tool__clone {
 function replace_docker_image_versions {
   local FILE="$1"
   local IMAGE_VERSION="$2"
-  sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$IMAGE_VERSION|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$IMAGE_VERSION|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$IMAGE_VERSION|g; s|:foxy-develop|:$IMAGE_VERSION|g; s|:vanden-plas|:$IMAGE_VERSION|g" \
+  sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$IMAGE_VERSION|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$IMAGE_VERSION|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$IMAGE_VERSION|g; s|:develop|:$IMAGE_VERSION|g; s|:vanden-plas|:$IMAGE_VERSION|g" \
       $FILE
 }
 
@@ -169,9 +169,9 @@ function update_version_numbers {
         for config in */; do
             if [[ -f $config/docker-compose.yml ]]; then
                 echo "Updating $config config"
-                sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:foxy-develop|:$TARGET_VERSION_ID|g; s|:vanden-plas|:$TARGET_VERSION_ID|g" \
+                sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:develop|:$TARGET_VERSION_ID|g; s|:vanden-plas|:$TARGET_VERSION_ID|g" \
                     $config/docker-compose.yml
-                sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:foxy-develop|:$TARGET_VERSION_ID|g; s|:vanden-plas|:$TARGET_VERSION_ID|g" \
+                sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:develop|:$TARGET_VERSION_ID|g; s|:vanden-plas|:$TARGET_VERSION_ID|g" \
                     $config/docker-compose-background.yml
             fi
         done
@@ -184,9 +184,9 @@ function update_version_numbers {
         for config in */; do
             if [[ -f $config/docker-compose.yml ]]; then
                 echo "Updating $config config"
-                sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:foxy-develop|:$TARGET_VERSION_ID|g; s|:vanden-plas|:$TARGET_VERSION_ID|g" \
+                sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:develop|:$TARGET_VERSION_ID|g; s|:vanden-plas|:$TARGET_VERSION_ID|g" \
                     $config/docker-compose.yml
-                sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:foxy-develop|:$TARGET_VERSION_ID|g; s|:vanden-plas|:$TARGET_VERSION_ID|g" \
+                sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:develop|:$TARGET_VERSION_ID|g; s|:vanden-plas|:$TARGET_VERSION_ID|g" \
                     $config/docker-compose-background.yml
             fi
         done
@@ -199,7 +199,7 @@ function update_version_numbers {
     echo "Updating version numbers in $REPOSITORY to $TARGET_VERSION_ID"
 
     if [[ -f Dockerfile ]]; then 
-        sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:foxy-develop|:$TARGET_VERSION_ID|g; s|:vanden-plas|:$TARGET_VERSION_ID|g" \
+        sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:develop|:$TARGET_VERSION_ID|g; s|:vanden-plas|:$TARGET_VERSION_ID|g" \
             Dockerfile
     else
         echo "No Dockerfile found for $REPOSITORY"
