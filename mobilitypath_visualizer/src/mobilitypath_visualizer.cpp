@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -60,7 +60,9 @@ namespace mobilitypath_visualizer {
         get_parameter<double>("z", config_.z);
         get_parameter<double>("t", config_.t);
 
-        get_parameter("/vehicle_id", host_id_);
+        get_parameter("vehicle_id", config_.host_id);
+
+        RCLCPP_INFO_STREAM(get_logger(), "Loaded params x: "<<config_.x<<" y:"<<config_.y<<" z:"<<config_.z<<" t:"<<config_.t);
 
         // init publishers
         host_marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("host_marker", 1);
@@ -143,7 +145,7 @@ namespace mobilitypath_visualizer {
         }
 
         MarkerColor cav_color;
-        if (msg->m_header.sender_id.compare(host_id_) == 0)
+        if (msg->m_header.sender_id.compare(config_.host_id) == 0)
         {
             cav_color.green = 1.0;
             host_marker_ = composeVisualizationMarker(*msg,cav_color);
@@ -172,9 +174,9 @@ namespace mobilitypath_visualizer {
         marker.action = visualization_msgs::msg::Marker::ADD;
         marker.ns = "mobilitypath_visualizer";
 
-        marker.scale.x = x_;
-        marker.scale.y = y_;
-        marker.scale.z = z_;
+        marker.scale.x = config_.x;
+        marker.scale.y = config_.y;
+        marker.scale.z = config_.z;
         marker.frame_locked = true;
 
         marker.color.r = (float)color.red;
@@ -207,6 +209,7 @@ namespace mobilitypath_visualizer {
         {
             marker.id = i;
             rclcpp::Time marker_cur_time(marker.header.stamp);
+            //Update time by 0.1s
             rclcpp::Time updated_time =  marker_cur_time + rclcpp::Duration(0.1 * 1e9);
             marker.header.stamp = builtin_interfaces::msg::Time(updated_time);
 
@@ -262,9 +265,9 @@ namespace mobilitypath_visualizer {
         marker.action = visualization_msgs::msg::Marker::ADD;
         marker.ns = "mobilitypath_visualizer";
 
-        marker.scale.x = x_;
-        marker.scale.y = y_;
-        marker.scale.z = z_;
+        marker.scale.x = config_.x;
+        marker.scale.y = config_.y;
+        marker.scale.z = config_.z;
         marker.color.r = 1.0;
         marker.color.g = 1.0;
         marker.color.b = 1.0;

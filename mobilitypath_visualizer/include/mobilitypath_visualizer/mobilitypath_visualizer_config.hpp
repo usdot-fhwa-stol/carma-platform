@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) <SUB><year> LEIDOS.
+ * Copyright (C) 2022LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ namespace mobilitypath_visualizer
     double y = 0.5;
     double z = 1.0;
     double t = 3.0;
+    std::string host_id = "";
 
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)
@@ -39,9 +40,10 @@ namespace mobilitypath_visualizer
       output << "mobilitypath_visualizer::Config { " << std::endl
            << "timer_cb_rate: " << c.timer_cb_rate << std::endl
            << "x: " << c.x << std::endl
-           << "x: " << c.y << std::endl
-           << "x: " << c.z << std::endl
-           << "x: " << c.t << std::endl
+           << "y: " << c.y << std::endl
+           << "z: " << c.z << std::endl
+           << "t: " << c.t << std::endl
+           << "host_id: "<<c.host_id <<std::endl;
            << "}" << std::endl;
       return output;
     }

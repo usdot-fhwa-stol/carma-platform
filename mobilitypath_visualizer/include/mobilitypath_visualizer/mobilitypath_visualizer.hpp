@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -124,8 +124,6 @@ namespace mobilitypath_visualizer {
 
         Config config_;
 
-        // spin rate
-        double timer_cb_rate_;
         // Timers
         rclcpp::TimerBase::SharedPtr timer_;
 
@@ -143,14 +141,8 @@ namespace mobilitypath_visualizer {
 
         // helper variable
         std::unordered_map<std::string, size_t> prev_marker_list_size_;
-        std::string host_id_;
         bool host_marker_received_ = false;
 
-        // Visualization::MarkerArray parameters
-        double x_;
-        double y_;
-        double z_;
-        double t_;
     };
 
 }

@@ -109,6 +109,12 @@ def generate_launch_description():
         ]
     )
 
+    localization_group = GroupAction(
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_LOCZ_NS', default_value='localization')),
+        ]
+    )
+
     v2x_group = GroupAction(
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_MSG_NS', default_value='message')),
@@ -124,7 +130,7 @@ def generate_launch_description():
 
     guidance_group = GroupAction(
         actions=[
-            PushRosNamespace(EnvironmentVariable('CARMA_GUIDE_NS', default_value='environemt')),
+            PushRosNamespace(EnvironmentVariable('CARMA_GUIDE_NS', default_value='guidance')),
             
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/guidance.launch.py']),
@@ -158,6 +164,7 @@ def generate_launch_description():
         declare_tactical_plugins_to_validate,
         declare_control_plugins_to_validate,
         environment_group,
+        localization_group,
         v2x_group,
         guidance_group, 
         system_controller

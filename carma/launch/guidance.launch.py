@@ -41,6 +41,9 @@ def generate_launch_description():
     tactical_plugins_to_validate = LaunchConfiguration('tactical_plugins_to_validate')
     control_plugins_to_validate = LaunchConfiguration('control_plugins_to_validate')
 
+    subsystem_controller_param_file = os.path.join(
+        get_package_share_directory('subsystem_controllers'), 'config/guidance_controller_config.yaml')
+
     mobilitypath_visualizer_param_file = os.path.join(
         get_package_share_directory('mobilitypath_visualizer'), 'config/params.yaml')
     
@@ -65,7 +68,8 @@ def generate_launch_description():
                 ],
                 remappings = [
                     ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/mobility_path_msg" ] ),
-                    ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] )
+                    ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NZ', default_value=''), "/map_param_loader/georeference"])
                 ],
                 parameters=[
                     vehicle_characteristics_param_file,
@@ -74,6 +78,17 @@ def generate_launch_description():
             ),
         ]
     )
+
+    # subsystem_controller which orchestrates the lifecycle of this subsystem's components
+    subsystem_controller = Node(
+        package='subsystem_controllers',
+        name='guidance_controller',
+        executable='guidance_controller',
+        parameters=[ subsystem_controller_param_file ],
+        on_exit= Shutdown(), # Mark the subsystem controller as required
+        arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
+    )
+
     return LaunchDescription([        
         carma_guidance_container
     ]) 
