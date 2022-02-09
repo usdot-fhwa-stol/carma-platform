@@ -110,7 +110,8 @@ namespace mobilitypath_publisher
   carma_v2x_msgs::msg::MobilityPath MobilityPathPublication::mobility_path_message_generator(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan)
   {
     carma_v2x_msgs::msg::MobilityPath mobility_path_msg;
-    uint64_t millisecs = (trajectory_plan.header.stamp.sec*1000000000 + trajectory_plan.header.stamp.nanosec) / 1000000;
+    // TODO this caluclation uses a poor assumption of zero latency see https://github.com/usdot-fhwa-stol/carma-platform/issues/1606
+    uint64_t millisecs = rclcpp::Time::now(get_clock()).nanoseconds() / 1000000;
     mobility_path_msg.m_header = compose_mobility_header(millisecs);
         
     if (!map_projector_) {
@@ -129,7 +130,7 @@ namespace mobilitypath_publisher
     carma_v2x_msgs::msg::MobilityHeader header;
     header.sender_id = config_.vehicle_id;
     header.recipient_id = recipient_id;
-    header.sender_bsm_id = bsm_ID_to_string(bsm_core_);
+    header.sender_bsm_id = BSMHelper::BSMHelper::bsmIDtoString(bsm_core_.id);
 
     // random GUID that identifies this particular plan for future reference
     header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
@@ -163,6 +164,7 @@ namespace mobilitypath_publisher
         offset.offset_z = (int16_t)(new_point.ecef_z - prev_point.ecef_z);
         prev_point = new_point;
         traj.offsets.push_back(offset);
+        if( i >= 60 ){ break;};
       }
     }
 

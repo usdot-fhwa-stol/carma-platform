@@ -261,8 +261,7 @@ namespace port_drayage_plugin
             std::istringstream strategy_params_ss(msg->strategy_params);
             boost::property_tree::json_parser::read_json(strategy_params_ss, pt);
 
-            // Note: Size of 'unsigned long' is implementation/compiler/architecture specific. Behavior may be undefined if code is run on something with size of 'unsigned long' smaller than 4 bytes.
-            unsigned long mobility_operation_cmv_id = pt.get<unsigned long>("cmv_id");
+            std::string mobility_operation_cmv_id = pt.get<std::string>("cmv_id");
 
             // Check if the received MobilityOperation message is intended for this vehicle's cmv_id   
             if(mobility_operation_cmv_id == _cmv_id) {

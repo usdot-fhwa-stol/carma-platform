@@ -45,6 +45,7 @@ namespace mobilitypath_visualizer {
         config_.y = declare_parameter<double>("y", config_.y);
         config_.z = declare_parameter<double>("z", config_.z);
         config_.t = declare_parameter<double>("t", config_.t);
+        config_.host_id = declare_parameter<std::string>("vehicle_id", config_.host_id);
     }
 
 

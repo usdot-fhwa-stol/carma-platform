@@ -1,0 +1,11 @@
+# Boolean: If true then RViz markers will be forwarded for received carma_perception_msgs/ExternalObjectList messages
+enable_external_objects_viz : True
+
+# Boolean: If true then RViz markers will be forwarded for received carma_perception_msgs/RoadwayObstacleList messages
+enable_roadway_objects_viz : False
+
+# String: External Objects marker rviz namespace
+external_objects_viz_ns : "external_objects"
+
+# String: Roadway Obstacles marker rviz namespace
+roadway_obstacles_viz_ns : "roadway_obstacles"

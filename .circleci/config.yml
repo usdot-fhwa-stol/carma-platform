@@ -28,11 +28,12 @@ jobs:
     # Pull docker image from docker hub
     # XTERM used for better catkin_make output
     docker:
-      - image: usdotfhwastoldev/autoware.ai:foxy-develop
+      - image: usdotfhwastoldev/autoware.ai:develop
         user: carma
         environment:
           TERM: xterm
           INIT_ENV: /home/carma/.base-image/init-env.sh
+    resource_class: large      
     # Set working directory
     working_directory: "/opt/carma/"
     # Pull code and execute tests
@@ -59,13 +60,13 @@ jobs:
           name: Build CARMA
           command: |
             source ${INIT_ENV}
-            export ROS_PARALLEL_JOBS='-j2 -l2' # Try to reduce memory consumption on build
+            export ROS_PARALLEL_JOBS='-j3 -l3' # Try to reduce memory consumption on build
             build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output bash make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
       - run:
           name: Run C++ Tests
           command: |
             source ${INIT_ENV}
-            export ROS_PARALLEL_JOBS='-j2 -l2' # Try to reduce memory consumption on build
+            export ROS_PARALLEL_JOBS='-j3 -l3' # Try to reduce memory consumption on build
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
           
       # Run SonarCloud analysis

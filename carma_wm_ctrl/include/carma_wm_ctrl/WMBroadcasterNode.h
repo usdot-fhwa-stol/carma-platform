@@ -100,6 +100,7 @@ private:
 
   ros::Subscriber georef_sub_;
   ros::Subscriber geofence_sub_;
+  ros::Subscriber incoming_map_sub_;
   ros::Subscriber curr_location_sub_;
   ros::Subscriber route_cache_sub_;
   ros::Timer timer;

@@ -30,6 +30,9 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   lanelet2_core
   carma_wm
+  tf
+  tf2
+  tf2_geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -53,7 +56,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES arbitrator
-   CATKIN_DEPENDS carma_utils cav_msgs cav_srvs roscpp lanelet2_core carma_wm
+   CATKIN_DEPENDS carma_utils cav_msgs cav_srvs roscpp lanelet2_core carma_wm tf tf2 tf2_geometry_msgs
 #  DEPENDS system_lib
 )
 

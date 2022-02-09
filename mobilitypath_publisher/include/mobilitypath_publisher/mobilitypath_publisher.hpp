@@ -22,7 +22,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lanelet2_extension/projection/local_frame_projector.h>
-
+#include <bsm_helper/bsm_helper.h>
 #include <std_msgs/msg/string.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <carma_v2x_msgs/msg/mobility_path.hpp>
@@ -114,19 +114,6 @@ namespace mobilitypath_publisher
      * \return The Trajectory Plan Point in ECEF
      */
     carma_v2x_msgs::msg::LocationECEF trajectory_point_to_ECEF(const carma_planning_msgs::msg::TrajectoryPlanPoint& traj_point) const;
-    
-    /**
-     * \brief Extracts the BSM ID from a BSMCoreData message and converts it to a string
-     * \param bsm_core The BSMCoreData, which contains the BSM ID to be converted to a string
-     * \return The BSM ID as a string
-     */
-    std::string bsm_ID_to_string(carma_v2x_msgs::msg::BSMCoreData bsm_core){
-      std::string res = "";
-      for (size_t i=0; i<bsm_core.id.size(); i++){
-        res+=std::to_string(bsm_core.id[i]);
-      }
-      return res;
-    }
 
   public:
     /**

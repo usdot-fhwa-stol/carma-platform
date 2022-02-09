@@ -117,7 +117,7 @@ namespace stop_controlled_intersection_transit_plugin
     std::vector<lanelet::BasicPoint2d> geometry_profile;
     std::vector<double> speeds;
     basic_autonomy::waypoint_generation:: split_point_speed_pairs(points_and_target_speeds, &geometry_profile, &speeds);
-    std::vector<PointSpeedPair> case_one_profile = plugin.create_case_one_speed_profile(wm, maneuver, geometry_profile,  req.vehicle_state.longitudinal_vel);
+    std::vector<PointSpeedPair> case_one_profile = plugin.create_case_one_speed_profile(wm, maneuver, geometry_profile,  req.vehicle_state.longitudinal_vel, req.vehicle_state);
     //Ensure acceleration and deceleration is happening
     double dist_to_cover = maneuver.lane_following_maneuver.end_dist - maneuver.lane_following_maneuver.start_dist;
     double total_dist_covered = 0;

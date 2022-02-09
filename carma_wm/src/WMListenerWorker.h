@@ -22,6 +22,7 @@
 #include <carma_wm/TrafficControl.h>
 #include <queue>
 #include <cav_msgs/SPAT.h>
+#include <carma_wm/SignalizedIntersectionManager.h>
 
 namespace carma_wm
 {
@@ -87,8 +88,7 @@ public:
    * \param config_lim A callback function that will be triggered after the world model receives a new map update
    */
   void setConfigSpeedLimit(double config_lim);
-
-
+  
 /**
  *  \brief Returns the current configured speed limit value
  * 
@@ -141,5 +141,6 @@ private:
   bool rerouting_flag_=false; //indicates whether if route node is in middle of rerouting
   bool route_node_flag_=false; //indicates whether if this node is route node
   long most_recent_update_msg_seq_ = -1; // Tracks the current sequence number for map update messages. Dropping even a single message would invalidate the map
+
 };
 }  // namespace carma_wm

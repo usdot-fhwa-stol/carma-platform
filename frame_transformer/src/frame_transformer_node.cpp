@@ -61,6 +61,12 @@ namespace frame_transformer
     else if (type == "sensor_msgs/PointCloud2")
       return std::make_unique<Transformer<sensor_msgs::msg::PointCloud2>>(config_, buffer_, shared_from_this());
 
+    else if (type == "autoware_auto_msgs/BoundingBoxArray")
+      return std::make_unique<Transformer<autoware_auto_msgs::msg::BoundingBoxArray>>(config_, buffer_, shared_from_this());
+
+    else if (type == "autoware_auto_msgs/DetectedObjects")
+      return std::make_unique<Transformer<autoware_auto_msgs::msg::DetectedObjects>>(config_, buffer_, shared_from_this());
+
     else
       return nullptr;
 
@@ -85,7 +91,12 @@ namespace frame_transformer
 
 
     buffer_ = std::make_shared<tf2_ros::Buffer>(get_clock());
-    listener_ = std::make_shared<tf2_ros::TransformListener>(*buffer_);
+
+    if (config_.timeout != 0) {
+      buffer_->setUsingDedicatedThread(true);
+    }
+
+    listener_ = std::make_shared<tf2_ros::TransformListener>(*buffer_, true);
 
     // Set the transformer based on the specified message type
     transformer_ = build_transformer();

@@ -14,6 +14,7 @@ set(PKG_CATKIN_DEPS
   cav_srvs
   cav_msgs
   carma_utils
+  bsm_helper
   carma_wm
   lanelet2_core
   lanelet2_traffic_rules

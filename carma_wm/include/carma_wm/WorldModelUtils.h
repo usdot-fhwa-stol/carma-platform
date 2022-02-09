@@ -30,6 +30,10 @@
 #include <boost/geometry/geometries/polygon.hpp>
 #include <ros/ros.h>
 #include <carma_wm/Geometry.h>
+#include <unordered_set>
+#include <unordered_map>
+#include <lanelet2_routing/RoutingGraph.h>
+
 
 namespace carma_wm
 {
@@ -102,6 +106,30 @@ std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::Lanel
  */
 std::vector<lanelet::Lanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& input_point,
                                                           const unsigned int n = 10);
+
+
+/*!
+  * \brief Gets the affected lanelet or areas based on the points in the given map's frame
+  * \param geofence_msg lanelet::Points3d in local frame
+  * \param lanelet_map Lanelet Map Ptr
+  * \param routing_graph Routing graph of the lanelet map
+  * \param max_lane_width max lane width of the lanes in the map
+  * 
+  * NOTE:Currently this function only checks lanelets and will be expanded to areas in the future.
+  */
+lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& gf_pts, const lanelet::LaneletMapPtr& lanelet_map, std::shared_ptr<const lanelet::routing::RoutingGraph> routing_graph, double max_lane_width);
+
+/*!
+  * \brief A function that filters successor lanelets of root_lanelets from possible_lanelets
+  * \param possible_lanelets all possible lanelets to check
+  * \param root_lanelets lanelets to filter from
+  * \param lanelet_map Lanelet Map Ptr
+  * \param routing_graph Routing graph of the lanelet map
+  * 
+  * NOTE:Mainly used as a helper function for getAffectedLaneletOrAreas
+  */
+std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets,
+                                                              const lanelet::LaneletMapPtr& lanelet_map, std::shared_ptr<const lanelet::routing::RoutingGraph> routing_graph);
 
 } // namespace query
 

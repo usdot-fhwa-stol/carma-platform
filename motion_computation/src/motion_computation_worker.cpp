@@ -155,6 +155,7 @@ void MotionComputationWorker::mobilityPathCallback(const cav_msgs::MobilityPath&
 {
   if (!map_projector_) {
     ROS_DEBUG_STREAM("Map projection not available yet so ignoring mobility path messages");
+    return;
   }
   mobility_path_list_.objects.push_back(mobilityPathToExternalObject(msg));
 }

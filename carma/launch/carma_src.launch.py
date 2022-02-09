@@ -100,6 +100,15 @@ def generate_launch_description():
 
     # Nodes
 
+    transform_group = GroupAction(
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_TF_NS', default_value='/')),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/transforms.launch.py'])
+            ),
+        ]
+    )
+
     environment_group = GroupAction(
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_ENV_NS', default_value='environment')),
@@ -163,6 +172,7 @@ def generate_launch_description():
         declare_strategic_plugins_to_validate,
         declare_tactical_plugins_to_validate,
         declare_control_plugins_to_validate,
+        transform_group,
         environment_group,
         localization_group,
         v2x_group,

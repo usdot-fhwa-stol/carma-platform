@@ -26,6 +26,9 @@
 #include <cav_srvs/PlanManeuvers.h>
 #include <cav_msgs/UpcomingLaneChangeStatus.h>
 #include <gtest/gtest_prod.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 /**
  * \brief Macro definition to enable easier access to fields shared across the maneuver types
@@ -228,7 +231,6 @@ namespace route_following_plugin
         // ROS publishers and subscribers
         ros::Publisher plugin_discovery_pub_;
         ros::Publisher upcoming_lane_change_status_pub_;
-        ros::Subscriber pose_sub_;
         ros::Subscriber twist_sub_;
         ros::Timer discovery_pub_timer_;
 
@@ -277,10 +279,9 @@ namespace route_following_plugin
         std::string lanefollow_planning_tactical_plugin_ = "InLaneCruisingPlugin"; 
 
         /**
-         * \brief Callback for the pose subscriber, which will store latest pose locally
-         * \param msg Latest pose message
+         * \brief Callback for the front bumper pose transform
          */
-        void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+        void bumper_pose_cb();
 
         /**
          * \brief Callback for the twist subscriber, which will store latest twist locally
@@ -295,6 +296,20 @@ namespace route_following_plugin
          * Throws exception if sum of start and target speed of maneuver is below limit defined by parameter epsilon
          */
         ros::Duration getManeuverDuration(cav_msgs::Maneuver &maneuver, double epsilon) const;
+
+        /**
+         * \brief Initialize transform lookup from front bumper to map
+         */
+        void initializeBumperTransformLookup();
+
+        geometry_msgs::TransformStamped tf_;
+        
+        // front bumper transform
+        tf2::Stamped<tf2::Transform> frontbumper_transform_;
+        
+        // TF listenser
+        tf2_ros::Buffer tf2_buffer_;
+        std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
 
         //Unit Tests
         FRIEND_TEST(RouteFollowingPluginTest, testComposeManeuverMessage);
