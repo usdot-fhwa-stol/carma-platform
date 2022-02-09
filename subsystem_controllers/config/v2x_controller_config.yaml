@@ -1,0 +1,21 @@
+/**:
+  ros__parameters:
+    # Long: Timeout for each service to be detected as available in milliseconds
+    # Units: milliseconds
+    service_timeout_ms : 200
+
+    # Long: Timeout for each service call in milliseconds
+    # Units: milliseconds
+    call_timeout_ms : 1000
+
+    # String: The namespace for nodes in this subsystem
+    subsystem_namespace: /message
+
+    # Required subsystem controller nodes for the overall system to be functional
+    # The V2X stack requires the message node and j2735_convertor node to be functional
+    required_subsystem_nodes: 
+      - /message/cpp_message
+      - /message/j2735_convertor
+
+    # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
+    full_subsystem_required: true

@@ -35,4 +35,5 @@
   <depend>trajectory_utils</depend>  
   <depend>basic_autonomy</depend>
   <depend>roslib</depend>
+  <build_depend>carma_cmake_common</build_depend>
 </package>

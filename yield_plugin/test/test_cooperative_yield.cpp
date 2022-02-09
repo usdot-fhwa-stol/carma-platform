@@ -33,8 +33,8 @@ TEST(YieldPluginTest, compose_mobility_response)
   YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
   cav_msgs::MobilityResponse resp = plugin.compose_mobility_response("recicpient_id", "plan_id", true);
 
-  EXPECT_EQ(resp.header.recipient_id, "recicpient_id");
-  EXPECT_EQ(resp.header.plan_id, "plan_id");
+  EXPECT_EQ(resp.m_header.recipient_id, "recicpient_id");
+  EXPECT_EQ(resp.m_header.plan_id, "plan_id");
   EXPECT_TRUE(resp.is_accepted);
 }
 
@@ -188,8 +188,8 @@ TEST(YieldPluginTest, test_traj_cb)
     original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
 
     cav_srvs::PlanTrajectoryRequest req;
-    req.vehicle_state.X_pos_global = 1.5;
-    req.vehicle_state.Y_pos_global = 5;
+    req.vehicle_state.x_pos_global = 1.5;
+    req.vehicle_state.y_pos_global = 5;
     req.vehicle_state.orientation = 0;
     req.vehicle_state.longitudinal_vel = 0.0;
 

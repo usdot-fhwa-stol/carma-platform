@@ -16,8 +16,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(motion_computation)
 
-## Compile as C++14, supported in ROS Noetic and newer
-add_compile_options(-std=c++14)
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -69,7 +70,8 @@ add_library(motion_computation_worker_lib
 add_dependencies(motion_computation_worker_lib ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(motion_computation_node motion_computation_worker_lib ${catkin_LIBRARIES})
+target_link_libraries(motion_computation_worker_lib ${catkin_LIBRARIES})
+target_link_libraries(motion_computation_node motion_computation_worker_lib)
 #############
 ## Install ##
 #############

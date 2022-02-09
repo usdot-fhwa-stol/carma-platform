@@ -34,7 +34,7 @@ TEST(SCIStrategicPluginTest, getDiscoveryMsg)
 
   auto msg = sci.getDiscoveryMsg();
   ASSERT_TRUE(msg.name.compare("test name") == 0);
-  ASSERT_TRUE(msg.versionId.compare("v1.0") == 0);
+  ASSERT_TRUE(msg.version_id.compare("v1.0") == 0);
   ASSERT_TRUE(msg.available);
   ASSERT_TRUE(msg.activated);
   ASSERT_EQ(msg.type, cav_msgs::Plugin::STRATEGIC);

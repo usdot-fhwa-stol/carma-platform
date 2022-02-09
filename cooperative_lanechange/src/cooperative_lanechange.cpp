@@ -48,7 +48,7 @@ namespace cooperative_lanechange
                 
         cooperative_lanechange_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
         plugin_discovery_msg_.name = "CooperativeLaneChangePlugin";
-        plugin_discovery_msg_.versionId = "v1.0";
+        plugin_discovery_msg_.version_id = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = false;
         plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
@@ -105,7 +105,7 @@ namespace cooperative_lanechange
 
     void CooperativeLaneChangePlugin::mobilityresponse_cb(const cav_msgs::MobilityResponse &msg){
         //@SONAR_STOP@
-        if (clc_called_ && clc_request_id_ == msg.header.plan_id)
+        if (clc_called_ && clc_request_id_ == msg.m_header.plan_id)
         {
             cav_msgs::LaneChangeStatus lc_status_msg;
             if(msg.is_accepted)
@@ -136,7 +136,7 @@ namespace cooperative_lanechange
         //find downtrack distance between ego and lag vehicle
         ROS_DEBUG_STREAM("entered find_current_gap");
         double current_gap = 0.0;
-        lanelet::BasicPoint2d ego_pos(ego_state.X_pos_global, ego_state.Y_pos_global);
+        lanelet::BasicPoint2d ego_pos(ego_state.x_pos_global, ego_state.y_pos_global);
         //double ego_current_downtrack = wm_->routeTrackPos(ego_pos).downtrack;
         
         lanelet::LaneletMapConstPtr const_map(wm_->getMap());
@@ -237,7 +237,7 @@ namespace cooperative_lanechange
         long target_lanelet_id = stol(maneuver_plan[0].lane_change_maneuver.ending_lane_id);
         double target_downtrack = maneuver_plan[0].lane_change_maneuver.end_dist;
         //get subject vehicle info
-        lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
+        lanelet::BasicPoint2d veh_pos(req.vehicle_state.x_pos_global, req.vehicle_state.y_pos_global);
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
         if(current_downtrack < maneuver_plan[0].lane_change_maneuver.start_dist - starting_downtrack_range_){
             return true;
@@ -380,7 +380,7 @@ namespace cooperative_lanechange
         header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
         clc_request_id_ = header.plan_id;
         header.timestamp = trajectory_plan.front().target_time.toNSec() *1000000;
-        request_msg.header = header;
+        request_msg.m_header = header;
 
         request_msg.strategy = "carma/cooperative-lane-change";
         request_msg.plan_type.type = cav_msgs::PlanType::CHANGE_LANE_LEFT;
@@ -491,7 +491,7 @@ namespace cooperative_lanechange
 
     std::vector<cav_msgs::TrajectoryPlanPoint> CooperativeLaneChangePlugin::plan_lanechange(cav_srvs::PlanTrajectoryRequest &req){
         
-        lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
+        lanelet::BasicPoint2d veh_pos(req.vehicle_state.x_pos_global, req.vehicle_state.y_pos_global);
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
         // Only plan the trajectory for the requested LANE_CHANGE maneuver

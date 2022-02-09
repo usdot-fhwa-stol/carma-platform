@@ -163,11 +163,11 @@ namespace port_drayage_plugin
     cav_msgs::MobilityOperation PortDrayageWorker::compose_arrival_message() const {
         cav_msgs::MobilityOperation msg;
 
-        msg.header.plan_id = "";
-        msg.header.sender_id = _host_id;
-        msg.header.sender_bsm_id = _host_bsm_id;
-        msg.header.recipient_id = "";
-        msg.header.timestamp = ros::Time::now().toNSec();
+        msg.m_header.plan_id = "";
+        msg.m_header.sender_id = _host_id;
+        msg.m_header.sender_bsm_id = _host_bsm_id;
+        msg.m_header.recipient_id = "";
+        msg.m_header.timestamp = ros::Time::now().toNSec();
 
         msg.strategy = PORT_DRAYAGE_STRATEGY_ID;
 

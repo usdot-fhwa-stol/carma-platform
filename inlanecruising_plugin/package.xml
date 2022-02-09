@@ -23,7 +23,9 @@
   <maintainer email="CARMA@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
   <author email="CARMA@dot.gov">carma</author>
+
   <buildtool_depend>catkin</buildtool_depend>
+
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>cav_srvs</depend>
@@ -36,5 +38,6 @@
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend> 
   <depend>trajectory_utils</depend>   
-  <depend>carma_debug_msgs</depend>  
+  <depend>carma_debug_msgs</depend> 
+  <build_depend>carma_cmake_common</build_depend>
 </package>

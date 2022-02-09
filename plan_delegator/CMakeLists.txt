@@ -15,10 +15,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(plan_delegator)
 
-## Compile as C++14, supported in ROS Noetic and newer
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -65,7 +64,6 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node 
-  src/plan_delegator.cpp
   src/plan_delegator_node.cpp)
 
 add_library(${PROJECT_NAME}_lib src/plan_delegator.cpp)
@@ -76,8 +74,11 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 add_dependencies(${PROJECT_NAME}_lib ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_node
+target_link_libraries(${PROJECT_NAME}_lib
   ${catkin_LIBRARIES}
+)
+target_link_libraries(${PROJECT_NAME}_node
+  ${PROJECT_NAME}_lib
 )
 
 #############
@@ -89,8 +90,10 @@ target_link_libraries(${PROJECT_NAME}_node
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS ${PROJECT_NAME}_node
+install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}_lib
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
 ## Mark cpp header files for installation

@@ -16,7 +16,7 @@ the License.
     <arg name="vehicle_calibration_dir" default="/opt/carma/vehicle/calibration"/>
     <!-- Pure Pursuit Node -->
     <group>
-        <node pkg="pure_pursuit" type="pure_pursuit" name="pure_pursuit" output="log">
+        <node pkg="pure_pursuit_ros1" type="pure_pursuit" name="pure_pursuit" output="log">
             <remap from="final_waypoints" to="carma_final_waypoints"/>
             <param name="is_linear_interpolation" value="True"/>
             <param name="publishes_for_steering_robot" value="True"/>

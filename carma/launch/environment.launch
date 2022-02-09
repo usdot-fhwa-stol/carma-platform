@@ -45,9 +45,8 @@
   <!-- World Model Updater -->
   <group>
     <remap from="outgoing_geofence_request" to="$(optenv CARMA_MSG_NS)/outgoing_geofence_request"/>
-  <include file="$(find carma_wm_ctrl)/launch/carma_wm_broadcaster.launch"/>
+    <include file="$(find carma_wm_ctrl)/launch/carma_wm_broadcaster.launch"/>
   </group>
-  <!-- Object Tracking and World Model -->
 
   <!-- CARMA Motion Computation Node -->
   <group>
@@ -57,179 +56,16 @@
   </group>
 
 
-  <!-- CARMA External Object Node -->
-  <group unless="$(arg simulation_mode)">
-    <remap to="prediction/motion_predictor/objects" from="detected_objects"/>
-    <include file="$(find object_detection_tracking)/launch/external_object.launch"/>
-  </group>
-
   <!-- CARMA Roadway Objects Node -->
- <group>
-  <remap from= "external_objects" to= "external_object_predictions"/>
-  <include file="$(find roadway_objects)/launch/roadway_objects.launch"/>
-</group>
+  <group>
+    <remap from= "external_objects" to= "external_object_predictions"/>
+    <include file="$(find roadway_objects)/launch/roadway_objects.launch"/>
+  </group>
 
   <!-- CARMA Motion Computation Visualizer Node -->
  <group>
-  <remap from= "external_objects" to= "external_object_predictions"/>
-  <include file="$(find motion_prediction_visualizer)/launch/motion_prediction_visualizer.launch"/>
-</group>
-
-  <!-- calibration_publisher -->
-  
-  <group>
-  <include file="$(find calibration_publisher)/launch/calibration_publisher.launch">
-  <arg name="register_lidar2camera_tf" value="true" />
-  <arg name="publish_extrinsic_mat" value="true"/>
-  <arg name="publish_camera_info" value="true"/>  
-  <arg name="target_frame" value="$(arg combined_lidar_frame)"/>
-  <arg name="camera_frame" value="left_optical" />
-  <arg name="image_topic_src" value="$(optenv CARMA_INTR_NS)/camera/image_raw"/>
-  <arg name="camera_info_topic" value="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
-  <arg name="projection_matrix_topic" value="$(optenv CARMA_INTR_NS)/camera/projection_matrix"/>
-  
-  <arg name="calibration_file" value="$(arg vehicle_calibration_dir)/range_vision_fusion/lidar_camera_fl_extrinsics.yaml"/>  
-
-  </include>
-  </group>
-
-  <!-- vision_darknet_detect -->
-  <group>
-  <remap from="/detection/image_detector/objects" to="detection/image_detector/objects"/>
-  <include file="$(find vision_darknet_detect)/launch/vision_yolo3_detect.launch">
-  <arg name="gpu_device_id" value="0"/>
-  <arg name="score_threshold" value="0.30"/>
-  <arg name="nms_threshold" value="0.30"/>
-
-  <arg name="network_definition_file" value="$(arg yolo_dir)/darknet/cfg/yolov3.cfg"/>
-  <arg name="pretrained_model_file" value="$(arg yolo_dir)/darknet/data/yolov3.weights"/>
-  <arg name="names_file" value="$(arg yolo_dir)/darknet/cfg/coco.names"/>
-
-  <arg name="camera_id" value="/"/>
-  <arg name="image_src" value="$(optenv CARMA_INTR_NS)/camera/image_raw"/>
-  <arg name="cuda" value="$(arg cuda)"/>
-  
-  </include>
-  </group>
-
-<!-- vision_beyond_track -->
-  <remap to="detection/image_detector/objects" from="vision_beyond_track_01/detection/image_detector/objects"/>
-  <remap from="/detection/image_tracker/objects" to="detection/image_tracker/objects"/>
-  <group>
-  <include file="$(find vision_beyond_track)/launch/vision_beyond_track.launch">
-  <arg name="camera_info_src" value="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
-  <arg name="objects_topic_src" value="detection/image_detector/objects"/>
-  <arg name="camera_height_calibration_params_file" value="$(arg vehicle_calibration_dir)/vision_beyond_track/calibration.yaml"/>
-  </include>
-  </group>
-  
-  <!-- lidar_euclidean_cluster_detect -->
-  <!-- todo: remove CARMA_ENV_NS namespace without the node generating extra unwanted topics-->
-  <group>
-  <remap to="$(optenv CARMA_ENV_NS)/detection/lidar_detector/cloud_clusters" from="/detection/lidar_detector/cloud_clusters"/>
-  <remap to="$(optenv CARMA_ENV_NS)/detection/lidar_detector/objects" from="/detection/lidar_detector/objects"/>
-  <remap to="$(optenv CARMA_ENV_NS)/detection/lidar_detector/objects_markers" from="/detection/lidar_detector/objects_markers"/>
-
-  <include file="$(find lidar_euclidean_cluster_detect)/launch/lidar_euclidean_cluster_detect.launch">
-    <arg name="points_node" value="points_no_ground" />
-
-    <arg name="remove_ground" value="false" />
-    <arg name="downsample_cloud" value="false" /> <!-- Apply VoxelGrid Filter with the value given by "leaf_size"-->
-    <arg name="leaf_size" value="0.1" /><!-- Voxel Grid Filter leaf size-->
-    <arg name="cluster_size_min" value="20" /><!-- Minimum number of points to consider a cluster as valid-->
-    <arg name="cluster_size_max" value="100000" /><!-- Maximum number of points to allow inside a cluster-->
-    <arg name="sync" value="false" />
-    <arg name="use_diffnormals" value="false" />
-    <arg name="pose_estimation" value="true" />
-    <arg name="calibration_params_file" value="$(arg vehicle_calibration_dir)/lidar_euclidean_cluster_detect/calibration.yaml"/> <!-- clip_max_height,clip_min_height and output_frame-->
-    <arg name="keep_lanes" value="false" />
-    <arg name="keep_lane_left_distance" value="5" />
-    <arg name="keep_lane_right_distance" value="5" />
-    <arg name="cluster_merge_threshold" value="1.5" />
-    <arg name="clustering_distance" value="0.75" />
-    <arg name="use_vector_map" value="false" />
-    <arg name="wayarea_gridmap_layer" value="wayarea" />
-    <arg name="remove_points_upto" value="0.0" />
-    <arg name="use_gpu" value="$(arg cuda)" />
-    <arg name="use_multiple_thres" value="false"/>
-    <arg name="clustering_ranges" value="[15,30,45,60]"/><!-- Distances to segment pointcloud -->
-    <arg name="clustering_distances"
-        value="[0.5,1.1,1.6,2.1,2.6]"/><!-- Euclidean Clustering threshold distance for each segment -->
-
-  </include>
-  </group>
- 
-  <!-- range_vision_fusion -->
-  <group>
-
-  <remap to="detection/image_tracker/objects" from="range_vision_fusion_01/detection/image_detector/objects"/>
-  <remap to="detection/lidar_detector/objects" from="range_vision_fusion_01/detection/lidar_detector/objects"/>
-  <remap to="detection/fusion_tools/objects" from="/detection/fusion_tools/objects"/>
-  
-  <include file="$(find range_vision_fusion)/launch/range_vision_fusion.launch">
-    <arg name="detected_objects_range" value="detection/lidar_detector/objects"/>
-    <arg name="detected_objects_vision" value="detection/image_detector/objects"/>
-    <arg name="camera_info_src" value="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
-    <arg name="min_car_dimensions" value="[3,2,2]"/>
-    <arg name="min_person_dimensions" value="[1,2,1]"/>
-    <arg name="min_truck_dimensions" value="[4,2,2]"/>
-    <arg name="sync_topics" value="false"/>
-    <arg name="overlap_threshold" value="0.6"/>
-    <arg name="use_vector_map" value="false"/>
-    <arg name="namespace" value="detection/fusion_tools"/>
-
-  </include>
-  </group>
-
-  <!-- imm_ukf_pda_track -->
-  <group>
-  <include file="$(find imm_ukf_pda_track)/launch/imm_ukf_pda_track_lanelet2.launch">
-    <arg name="namespace" value="detection"/>
-    <arg name="tracker_input_topic" value="fusion_tools/objects" />
-    <arg name="tracker_output_topic" value="object_tracker/objects" />
-
-    <arg name="tracking_frame" value="map" />
-    <arg name="gating_threshold" value="9.22" />
-    <arg name="gate_probability" value="0.99" />
-    <arg name="detection_probability" value="0.9" />
-    <arg name="life_time_threshold" value="8" />
-    <arg name="static_velocity_threshold" value="0.5" />
-    <arg name="static_num_history_threshold" value="3" />
-    <arg name="prevent_explosion_threshold" value="1000" />
-    <arg name="merge_distance_threshold" value="0.5"/>
-    <arg name="use_sukf" value="false" />
-
-    <!-- Vectormap -->
-    <arg name="use_map_info" value="false"/>
-    <arg name="lane_direction_chi_threshold" value="2.71" />
-    <arg name="nearest_lane_distance_threshold" value="1.0" />
-    <arg name="map_frame" value="map" />
-
-  </include>
-  </group>
-
-  <!-- naive_motion_predict -->
-  <!-- todo: remove CARMA_ENV_NS namespace without the node generating extra unwanted topics-->
-  <group>
-    <remap to="$(optenv CARMA_ENV_NS)/prediction/motion_predictor/objects" from="/prediction/motion_predictor/objects"/>
-    <remap to="$(optenv CARMA_ENV_NS)/prediction/motion_predictor/path_markers" from="/prediction/motion_predictor/path_markers"/>
-    <remap to="$(optenv CARMA_ENV_NS)/prediction/motion_predictor/objects_markers" from="/prediction/motion_predictor/objects_markers"/>
-    <include file="$(find naive_motion_predict)/launch/naive_motion_predict.launch">
-      <arg name="interval_sec" value="0.1"/>
-      <arg name="num_prediction" value="10"/>
-      <arg name="sensor_height_calibration_params_file" value="$(arg vehicle_calibration_dir)/naive_motion_predict/calibration.yaml"/>
-      <arg name="filter_out_close_object_threshold" value="1.5"/>
-      <arg name="input_topic" value="detection/object_tracker/objects"/>
-    </include>
-  </group>
-  
-  <!-- Ray Ground Filter -->
-  <group>
-    <remap from="points_raw" to="$(optenv CARMA_INTR_NS)/lidar/points_raw"/>
-    <include file="$(find points_preprocessor)/launch/ray_ground_filter.launch">
-      <arg name="no_ground_point_topic" value="points_no_ground" />
-      <arg name="ground_point_topic" value="points_ground" />
-    </include>
+    <remap from= "external_objects" to= "external_object_predictions"/>
+    <include file="$(find motion_prediction_visualizer)/launch/motion_prediction_visualizer.launch"/>
   </group>
 
   <!-- Traffic Incident Parser -->

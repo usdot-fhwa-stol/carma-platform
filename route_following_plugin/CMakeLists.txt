@@ -17,10 +17,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(route_following_plugin)
 
-## Compile as C++14, supported in ROS Noetic and newer
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
@@ -56,18 +55,17 @@ include_directories(
   include
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
 
 add_executable( ${PROJECT_NAME}
-  ${headers}
   src/route_following_plugin.cpp
   src/main.cpp)
 
-#add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 add_library(route_following_plugin_lib src/route_following_plugin.cpp)
 add_dependencies(route_following_plugin_lib ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME} route_following_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(route_following_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+target_link_libraries(${PROJECT_NAME} route_following_plugin_lib)
 
 #############
 ## Install ##
@@ -80,7 +78,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} route_following_plugin_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
