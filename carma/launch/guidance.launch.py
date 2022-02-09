@@ -90,5 +90,6 @@ def generate_launch_description():
     )
 
     return LaunchDescription([        
-        carma_guidance_container
+        carma_guidance_container,
+        subsystem_controller
     ]) 

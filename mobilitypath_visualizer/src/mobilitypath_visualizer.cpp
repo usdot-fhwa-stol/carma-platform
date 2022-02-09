@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -62,7 +62,7 @@ namespace mobilitypath_visualizer {
 
         get_parameter("vehicle_id", config_.host_id);
 
-        RCLCPP_INFO_STREAM(get_logger(), "Loaded params x: "<<config_.x<<" y:"<<config_.y<<" z:"<<config_.z<<" t:"<<config_.t);
+        RCLCPP_INFO_STREAM(get_logger(), "Loaded params "<< config_);
 
         // init publishers
         host_marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("host_marker", 1);
