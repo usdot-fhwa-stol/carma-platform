@@ -775,7 +775,6 @@ namespace platoon_strategic
                     pm_.current_platoon_state = PlatoonState::LEADERWAITING;
                     waitingStartTime = ros::Time::now().toNSec()/1000000;
                     lw_applicantId_ = msg.m_header.sender_id;
-                    // plugin.setState(new LeaderWaitingState(plugin, log, pluginServiceLocator, applicantId));
                     return MobilityRequestResponse::ACK;
                 } else if(isDistanceCloseEnough && !laneConditionsSatisfied) {
                     ROS_DEBUG_STREAM("The applicant is close enough, but we must change into a suitable platooning lane before sending ACK.");
