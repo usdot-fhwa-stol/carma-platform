@@ -53,7 +53,7 @@ LightControlledIntersectionTacticalPlugin::LightControlledIntersectionTacticalPl
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
   {
     plugin_discovery_msg_.name = "LightControlledIntersectionTacticalPlugin";
-    plugin_discovery_msg_.versionId = "v1.0";
+    plugin_discovery_msg_.version_id = "v1.0";
     plugin_discovery_msg_.available = true;
     plugin_discovery_msg_.activated = false;
     plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
@@ -92,8 +92,8 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
         }
     }
 
-    lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
-    ROS_DEBUG_STREAM("Planning state x:"<<req.vehicle_state.X_pos_global <<" , y: " << req.vehicle_state.Y_pos_global);
+    lanelet::BasicPoint2d veh_pos(req.vehicle_state.x_pos_global, req.vehicle_state.y_pos_global);
+    ROS_DEBUG_STREAM("Planning state x:"<<req.vehicle_state.x_pos_global <<" , y: " << req.vehicle_state.y_pos_global);
 
     current_downtrack_ = wm_->routeTrackPos(veh_pos).downtrack;
     ROS_DEBUG_STREAM("Current_downtrack"<< current_downtrack_);
