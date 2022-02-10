@@ -341,7 +341,7 @@ private:
 
   /**
    * \brief Gets maximum distance (nearest downtrack) the trajectory smoothing algorithm makes difference than simple lane following
-   *        within one fixed cycle time boundary compared to free flow arrival time.
+   *        within half of one full fixed cycle time boundary compared to free flow arrival time.
    *
    * \param time_remaining_at_free_flow Free flow arrival at the intersection
    * \param full_cycle_duration One fixed cycle of the signal

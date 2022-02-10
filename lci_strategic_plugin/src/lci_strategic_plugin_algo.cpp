@@ -121,7 +121,7 @@ double LCIStrategicPlugin::get_trajectory_smoothing_activation_distance(double t
 {
   // TSMO USE CASE 2: Figure 7. Trajectory smoothing solution Case 2. Subsituted a+ as max_accel and solved for inflection_speed
   double accel_ratio = max_accel / max_decel;
-  double remaining_time = time_remaining_at_free_flow - full_cycle_duration;
+  double remaining_time = time_remaining_at_free_flow - full_cycle_duration / 2;
   double inflection_speed = (max_accel * remaining_time - accel_ratio * departure_speed + current_speed)/ (1 - accel_ratio);
 
   if (remaining_time < 0)
