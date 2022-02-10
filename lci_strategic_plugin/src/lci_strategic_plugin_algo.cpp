@@ -123,6 +123,7 @@ double LCIStrategicPlugin::get_trajectory_smoothing_activation_distance(double t
   double accel_ratio = max_accel / max_decel;
   double remaining_time = time_remaining_at_free_flow - full_cycle_duration / 2;
   double inflection_speed = (max_accel * remaining_time - accel_ratio * departure_speed + current_speed)/ (1 - accel_ratio);
+  ROS_DEBUG_STREAM("ENTER TRAJ CALC: time_remaining_at_free_flow: " << time_remaining_at_free_flow << ", full_cycle_duration: " << full_cycle_duration << ", inflection_speed: " << inflection_speed);
 
   if (remaining_time < 0)
     return -1;
@@ -143,8 +144,9 @@ double LCIStrategicPlugin::get_trajectory_smoothing_activation_distance(double t
     double accel_time = (speed_limit - current_speed) / max_accel;
     double cruising_time = remaining_time - decel_time - accel_time;
     ROS_DEBUG_STREAM("decel_time: " << decel_time << ", accel_time: " << accel_time << ", cruising_time: " << cruising_time);
-    double d = (std::pow(inflection_speed, 2) - std::pow (current_speed, 2)) / (2 * max_accel) +  (std::pow(departure_speed, 2) - std::pow(inflection_speed, 2)) / (2 * max_decel) + cruising_time * speed_limit;
-    ROS_DEBUG_STREAM("calculated distance with cruising: " <<  d);
+    double d = (std::pow(speed_limit, 2) - std::pow (current_speed, 2)) / (2 * max_accel) +  (std::pow(departure_speed, 2) - std::pow(speed_limit, 2)) / (2 * max_decel) + cruising_time * speed_limit;
+    ROS_DEBUG_STREAM("calculated distance with cruising: " <<  d << ", accel_seg: " << (std::pow(speed_limit, 2) - std::pow (current_speed, 2)) / (2 * max_accel) << 
+                      ", cruising: " << + cruising_time * speed_limit << ", decel_seg:" << (std::pow(departure_speed, 2) - std::pow(speed_limit, 2)) / (2 * max_decel));
     return d;
   }
 }
