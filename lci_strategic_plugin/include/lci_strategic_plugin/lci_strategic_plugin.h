@@ -343,7 +343,8 @@ private:
    * \brief Gets maximum distance (nearest downtrack) the trajectory smoothing algorithm makes difference than simple lane following
    *        within one fixed cycle time boundary compared to free flow arrival time.
    *
-   * \param remaining_time One fixed cycle of the signal before the free flow arrival at the intersection 
+   * \param time_remaining_at_free_flow Free flow arrival at the intersection
+   * \param full_cycle_duration One fixed cycle of the signal
    * \param current_speed Current speed in m/s
    * \param speed_limit Speed limit speed in m/s
    * \param departure_speed Speed into the intersection in m/s. A.k.a target speed at the intersection
@@ -351,8 +352,9 @@ private:
    * \param max_decel The deceleration in m/s^2 of the deceleration segment
    *
    * \return the max distance the plugin should activate to support all speed profile cases of the trajectory smoothing algorithm
+   *         -1 if it is within the distance already
    */
-  double get_trajectory_smoothing_activation_distance(double remaining_time, double current_speed, double speed_limit, double departure_speed, double max_accel, double max_decel) const;
+  double get_trajectory_smoothing_activation_distance(double time_remaining_at_free_flow, double full_cycle_duration, double current_speed, double speed_limit, double departure_speed, double max_accel, double max_decel) const;
 
   /**
    * \brief Get required distance to accel then decel, or vise versa - each at least once - to reach departure_speed with given speed and acceleration parameters 

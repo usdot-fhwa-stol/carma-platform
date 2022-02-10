@@ -117,11 +117,15 @@ ros::Time LCIStrategicPlugin::get_nearest_green_entry_time(const ros::Time& curr
   return ros::Time(lanelet::time::toSec(t));
 }
 
-double LCIStrategicPlugin::get_trajectory_smoothing_activation_distance(double remaining_time, double current_speed, double speed_limit, double departure_speed, double max_accel, double max_decel) const
+double LCIStrategicPlugin::get_trajectory_smoothing_activation_distance(double time_remaining_at_free_flow, double full_cycle_duration, double current_speed, double speed_limit, double departure_speed, double max_accel, double max_decel) const
 {
   // TSMO USE CASE 2: Figure 7. Trajectory smoothing solution Case 2. Subsituted a+ as max_accel and solved for inflection_speed
   double accel_ratio = max_accel / max_decel;
+  double remaining_time = time_remaining_at_free_flow - full_cycle_duration;
   double inflection_speed = (max_accel * remaining_time - accel_ratio * departure_speed + current_speed)/ (1 - accel_ratio);
+
+  if (remaining_time < 0)
+    return -1;
 
   if (inflection_speed > 0 && inflection_speed <= speed_limit + epsilon_ && inflection_speed >= departure_speed - epsilon_)
   {
