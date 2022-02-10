@@ -243,18 +243,22 @@ private:
 
 
   /**
-   * \brief TODO
+   * \brief This function returns stopping maneuver if the vehicle is able to stop at red and in safe stopping distance.
+   * 1. Try to stop with max_decel and see if it aligns with red/yellow. If it does, go ahead and stop
+   * 2. If stopping with single deceleration falls on green phase, stop at next possible red phase by using 2 different decel_rate (max_decel then custom_decel)
    *
-   * \param start_dist Start downtrack distance of the current maneuver
-   * \param end_dist End downtrack distance of the current maneuver
-   * \param start_speed Start speed of the current maneuver
-   * \param target_speed Target speed pf the current maneuver, usually it is the lanelet speed limit
-   * \param start_time The starting time of the maneuver
-   * \param end_time The ending time of the maneuver
-   * \param starting_lane_id The starting lanelet id of this maneuver
-   * \param ending_lane_id The ending lanelet id of this maneuver
+   * \param req Plan maneuver request
+   * \param[out] resp Plan maneuver response with a list of maneuver plan
+   * \param current_state Current state of the vehicle
+   * \param traffic_light CarmaTrafficSignalPtr of the relevant signal
+   * \param entry_lanelet Entry lanelet in to the intersection along route
+   * \param exit_lanelet Exit lanelet in to the intersection along route
+   * \param current_lanelet Current lanelet
+   * \param nearest_green_entry_time The time when the vehicle was scheduled to enter intersection. 
+   *                                 The function utilizes nearest red signal within full_cylce beyond this green entry time 
+   * \param traffic_light_down_track Downtrack to the given traffic_light
    *
-   * \return A intersection transit maneuver maneuver message which is ready to be published
+   * \return void. if successful, resp is non-empty
    */
   void handleStopping(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp, 
                                         const VehicleState& current_state, 
@@ -336,18 +340,19 @@ private:
   ros::Duration get_earliest_entry_time(double remaining_distance, double free_flow_speed, double current_speed, double departure_speed, double max_accel, double max_decel) const;
 
   /**
-   * \brief Gets the latest entry time for the remaining distance. 
-   *        It does so by decelerating by maximum speed and cruising at minimum_speed (if cruising possible) and accelerating to departure speed
+   * \brief Gets maximum distance (nearest downtrack) the trajectory smoothing algorithm makes difference than simple lane following
+   *        within one fixed cycle time boundary compared to free flow arrival time.
    *
-   * \param remaining_distance Distance to the intersection in meters
+   * \param remaining_time One fixed cycle of the signal before the free flow arrival at the intersection 
    * \param current_speed Current speed in m/s
+   * \param speed_limit Speed limit speed in m/s
    * \param departure_speed Speed into the intersection in m/s. A.k.a target speed at the intersection
    * \param max_accel The acceleration in m/s^2 of the acceleration segment
    * \param max_decel The deceleration in m/s^2 of the deceleration segment
    *
-   * \return The max time the vehicle can travel the remaining distance.
+   * \return the max distance the plugin should activate to support all speed profile cases of the trajectory smoothing algorithm
    */
-  double get_trajectory_smoothing_activation_distance(double remaining_time, double current_speed, double departure_speed, double max_accel, double max_decel) const;
+  double get_trajectory_smoothing_activation_distance(double remaining_time, double current_speed, double speed_limit, double departure_speed, double max_accel, double max_decel) const;
 
   /**
    * \brief Get required distance to accel then decel, or vise versa - each at least once - to reach departure_speed with given speed and acceleration parameters 

@@ -117,28 +117,31 @@ ros::Time LCIStrategicPlugin::get_nearest_green_entry_time(const ros::Time& curr
   return ros::Time(lanelet::time::toSec(t));
 }
 
-double LCIStrategicPlugin::get_trajectory_smoothing_activation_distance(double remaining_time, double current_speed, double departure_speed, double max_accel, double max_decel) const
+double LCIStrategicPlugin::get_trajectory_smoothing_activation_distance(double remaining_time, double current_speed, double speed_limit, double departure_speed, double max_accel, double max_decel) const
 {
-  // TSMO USE CASE 2: Figure 11 Trajectory smoothing solution Case 3. Subsituted a+ as max_accel and solved for inflection_speed
-  double inflection_speed = (remaining_time - departure_speed / max_accel + current_speed / max_decel ) / (1 / max_decel + 1 / max_accel);
+  // TSMO USE CASE 2: Figure 7. Trajectory smoothing solution Case 2. Subsituted a+ as max_accel and solved for inflection_speed
+  double accel_ratio = max_accel / max_decel;
+  double inflection_speed = (max_accel * remaining_time - accel_ratio * departure_speed + current_speed)/ (1 - accel_ratio);
 
-  if (inflection_speed > 0 && inflection_speed < current_speed && inflection_speed < departure_speed)
+  if (inflection_speed > 0 && inflection_speed <= speed_limit + epsilon_ && inflection_speed >= departure_speed - epsilon_)
   {
-    // kinematic equation to find distance of deceleration + acceleration
+    // kinematic equation to find distance of acceleration + deceleration
     // (vf^2 - vi^2)/2a = d
-    ROS_DEBUG_STREAM("calculated distance WITHOUT cruising: " << (std::pow(inflection_speed, 2) - std::pow (current_speed, 2)) / (2 * max_decel) +  (std::pow(departure_speed, 2) - std::pow(inflection_speed, 2)) / (2 * max_accel));
-    return (std::pow(inflection_speed, 2) - std::pow (current_speed, 2)) / (2 * max_decel) +  (std::pow(departure_speed, 2) - std::pow(inflection_speed, 2)) / (2 * max_accel);
+    double d = (std::pow(inflection_speed, 2) - std::pow (current_speed, 2)) / (2 * max_accel) +  (std::pow(departure_speed, 2) - std::pow(inflection_speed, 2)) / (2 * max_decel);
+    ROS_DEBUG_STREAM("calculated distance WITHOUT cruising: " << d);
+    return d;
   }
   else //there must be cruising
   {
-    // acceleration and deceleration parts must reach until minimum speed
+    // acceleration and deceleration parts must reach maximum speed
     // kinematic equation: t = (vf - vi)/ a where vf = 0
-    double decel_time = current_speed / - 1 * max_decel;
-    double accel_time = departure_speed / max_accel;
+    double decel_time = (current_speed - speed_limit) / max_decel;
+    double accel_time = (speed_limit - current_speed) / max_accel;
     double cruising_time = remaining_time - decel_time - accel_time;
     ROS_DEBUG_STREAM("decel_time: " << decel_time << ", accel_time: " << accel_time << ", cruising_time: " << cruising_time);
-    ROS_DEBUG_STREAM("calculated distance with cruising: " << (std::pow (current_speed, 2)) / (2 * (-1) * max_decel) +  (std::pow(departure_speed, 2)/ (2 * max_accel)) + config_.minimum_speed * cruising_time);
-    return (std::pow (current_speed, 2)) / (2 * (-1) * max_decel) +  (std::pow(departure_speed, 2)/ (2 * max_accel)) + config_.minimum_speed * cruising_time;
+    double d = (std::pow(inflection_speed, 2) - std::pow (current_speed, 2)) / (2 * max_accel) +  (std::pow(departure_speed, 2) - std::pow(inflection_speed, 2)) / (2 * max_decel) + cruising_time * speed_limit;
+    ROS_DEBUG_STREAM("calculated distance with cruising: " <<  d);
+    return d;
   }
 }
 
