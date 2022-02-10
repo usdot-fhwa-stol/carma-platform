@@ -38,7 +38,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost)
+find_package(Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 ###################################
@@ -61,8 +61,6 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
 )
-message("catkin includes: " ${catkin_INCLUDE_DIRS})
-message("catkin_EXPORTED_TARGETS includes: " ${catkin_EXPORTED_TARGETS})
 
 add_executable( ${PROJECT_NAME}
   src/main.cpp)
@@ -70,7 +68,10 @@ add_executable( ${PROJECT_NAME}
 add_library(light_controlled_intersection_tactical_library 
             src/light_controlled_intersection_tactical_plugin.cpp)
 
-add_dependencies(light_controlled_intersection_tactical_library ${catkin_EXPORTED_TARGETS})
+target_link_libraries(light_controlled_intersection_tactical_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_dependencies(light_controlled_intersection_tactical_library ${${PROJECT_NAME}_EXPORTED_TARGETS}  ${catkin_EXPORTED_TARGETS})
+
 target_link_libraries(${PROJECT_NAME} light_controlled_intersection_tactical_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 #############
