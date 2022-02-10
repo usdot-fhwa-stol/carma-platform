@@ -16,9 +16,10 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(cooperative_lanechange)
 
-find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
-carma_package()
+## Compile as C++14, supported in ROS Noetic and newer
+add_compile_options(-std=c++14)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 set( CATKIN_DEPS
   roscpp
@@ -82,8 +83,7 @@ src/cooperative_lanechange.cpp
 
 add_dependencies(cooperative_lanechange_plugin_lib ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(cooperative_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} cooperative_lanechange_plugin_lib)
+target_link_libraries(${PROJECT_NAME} cooperative_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 
 #############

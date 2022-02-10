@@ -11,5 +11,4 @@
   <depend>cav_srvs</depend>
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
-  <build_depend>carma_cmake_common</build_depend>
 </package>

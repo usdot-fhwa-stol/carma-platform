@@ -155,9 +155,9 @@ namespace health_monitor
     
     bool HealthMonitor::activate_plugin_cb(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res)
     {
-        bool answer = plugin_manager_.activate_plugin(req.plugin_name, req.activated);
+        bool answer = plugin_manager_.activate_plugin(req.pluginName, req.activated);
         if(answer) {
-            res.newstate = req.activated;
+            res.newState = req.activated;
         }
         return answer;
     }

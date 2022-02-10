@@ -17,9 +17,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(intersection_transit_maneuvering)
 
-find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
-carma_package()
+## Compile as C++14, supported in ROS Kinetic and newer
+add_compile_options(-std=c++14)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 set( CATKIN_DEPS
   roscpp

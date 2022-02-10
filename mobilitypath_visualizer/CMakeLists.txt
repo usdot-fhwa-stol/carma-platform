@@ -17,9 +17,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mobilitypath_visualizer)
 
-find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
-carma_package()
+## Compile as C++14, supported in ROS Noetic and newer
+add_compile_options(-std=c++14)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
@@ -59,9 +60,7 @@ add_library(${PROJECT_NAME}_lib
   src/mobilitypath_visualizer.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_lib ${catkin_LIBRARIES})
-
-target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib)
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib ${catkin_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 add_dependencies(${PROJECT_NAME}_lib ${catkin_EXPORTED_TARGETS})
 

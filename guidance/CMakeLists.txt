@@ -15,9 +15,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(guidance)
 
-find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
-carma_package()
+## Compile as C++14, supported in ROS Noetic and newer
+add_compile_options(-std=c++14)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -75,11 +76,9 @@ add_library(guidance_state_machine_library src/guidance/guidance_state_machine.c
 add_dependencies(guidance_state_machine_library ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(guidance_state_machine_library
-  ${catkin_LIBRARIES}
-)
 target_link_libraries(${PROJECT_NAME}_node
   guidance_state_machine_library
+  ${catkin_LIBRARIES}
 )
 
 #############
@@ -87,7 +86,7 @@ target_link_libraries(${PROJECT_NAME}_node
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME}_node guidance_state_machine_library
+install(TARGETS ${PROJECT_NAME}_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

@@ -363,7 +363,7 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
 
     auto current_lanelet = worker.get_closest_lanelet_from_route_llts(current_loc);
 
-    // worker.pose_cb(mpt);
+    worker.pose_cb(mpt);
 
     lanelet::BasicPoint2d position;
     position.x()= msg.pose.position.x;
@@ -451,11 +451,10 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
             auto gps_points = worker.load_route_destination_gps_points_from_route_id("Test_town01_route_1");
             auto map_points = worker.load_route_destinations_in_map_frame(gps_points);
 
-            // TODO: temporarily disabled since map isnt loaded properly
-            // ASSERT_EQ(3, map_points.size()); 
-            // ASSERT_NEAR(-9.45542, map_points[0].x(), 0.001);
-            // ASSERT_NEAR(-182.324, map_points[0].y(), 0.001);  
-            // ASSERT_NEAR(72, map_points[0].z(), 0.001);
+            ASSERT_EQ(3, map_points.size());
+            ASSERT_NEAR(-9.45542, map_points[0].x(), 0.001);
+            ASSERT_NEAR(-182.324, map_points[0].y(), 0.001);  
+            ASSERT_NEAR(72, map_points[0].z(), 0.001);
         }
     }
 
@@ -464,7 +463,7 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     msg.pose.position.x = -9.45542;
     msg.pose.position.y = -182.324;
     geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
-    worker.vehicle_pose_ = *mpt;
+    worker.pose_cb(mpt);
 
     cav_srvs::SetActiveRouteRequest req2;
     cav_srvs::SetActiveRouteResponse resp2;
@@ -475,8 +474,7 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
             req2.routeID = i.route_id;
             req2.choice = cav_srvs::SetActiveRouteRequest::ROUTE_ID;
             ASSERT_EQ(worker.set_active_route_cb(req2, resp2), true);
-            // TODO: temporarily disabled since map isnt loaded properly
-            // ASSERT_EQ(resp2.errorStatus, cav_srvs::SetActiveRouteResponse::NO_ERROR);
+            ASSERT_EQ(resp2.errorStatus, cav_srvs::SetActiveRouteResponse::NO_ERROR);
         }
     }
 
@@ -487,7 +485,7 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     worker2.georeference_cb(msg_ptr); 
     worker2.setWorldModelPtr(cmw);
     worker2.set_route_file_path("../resource/route/");
-    worker2.vehicle_pose_ = *mpt;
+    worker2.pose_cb(mpt);
 
     // Create array of destination points for the SetActiveRoute request
     cav_msgs::Position3D destination;
@@ -502,8 +500,7 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     req4.choice = req4.choice = cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY;
 
     ASSERT_EQ(worker2.set_active_route_cb(req4, resp4), true);
-    // TODO: temporarily disabled since map isnt loaded properly
-    // ASSERT_EQ(resp4.errorStatus, cav_srvs::SetActiveRouteResponse::NO_ERROR);
+    ASSERT_EQ(resp4.errorStatus, cav_srvs::SetActiveRouteResponse::NO_ERROR);
 }
 
 TEST(RouteGeneratorTest, test_duplicate_lanelets_in_shortest_path)
@@ -576,7 +573,7 @@ TEST(RouteGeneratorTest, test_reroute_after_route_invalidation)
 
     geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
 
-    // worker.pose_cb(mpt);
+    worker.pose_cb(mpt);
 
     auto route = worker.reroute_after_route_invalidation(dest_points);
 
@@ -669,7 +666,7 @@ TEST(RouteGeneratorTest, test_get_closest_lanelet_from_route_llts)
 
     geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
 
-    // worker.pose_cb(mpt);
+    worker.pose_cb(mpt);
     worker.addllt(start_lanelet);
     lanelet::ConstLanelet llt = worker.get_closest_lanelet_from_route_llts(position);
 

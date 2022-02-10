@@ -28,5 +28,4 @@
   <depend>geometry_msgs</depend>
   <depend>visualization_msgs</depend>
   <depend>carma_utils</depend>
-  <build_depend>carma_cmake_common</build_depend>
 </package>

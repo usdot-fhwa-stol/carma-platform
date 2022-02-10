@@ -16,9 +16,8 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(rosbag_mock_drivers)
 
-find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
-carma_package()
+## Compile as C++14
+add_compile_options(-std=c++14)
 
 
 ####################

@@ -16,9 +16,10 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(carma_wm)
 
-find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
-carma_package()
+## Compile as C++14, as it is required by lanelet2
+add_compile_options(-std=c++17)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Set catkin dependencies
 set ( PKG_CATKIN_DEPS 

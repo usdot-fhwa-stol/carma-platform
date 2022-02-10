@@ -15,9 +15,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(platoon_strategic)
 
-find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
-carma_package()
+## Compile as C++14, supported in ROS Noetic and newer
+add_compile_options(-std=c++14)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
@@ -59,8 +60,10 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
 )
 
+file(GLOB_RECURSE headers */*.hpp */*.h)
 
 add_executable( ${PROJECT_NAME}
+  ${headers}
   src/platoon_strategic.cpp
   src/platoon_manager.cpp
   src/main.cpp)
@@ -72,8 +75,7 @@ add_library(platoon_strategic_plugin_lib
 
 add_dependencies(platoon_strategic_plugin_lib ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(platoon_strategic_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} platoon_strategic_plugin_lib)
+target_link_libraries(${PROJECT_NAME} platoon_strategic_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 
 #############
@@ -88,7 +90,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} platoon_strategic_plugin_lib
+install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

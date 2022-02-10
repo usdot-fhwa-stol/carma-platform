@@ -1,4 +1,3 @@
-# Double: Rate of BSM generation
-# Units: Hz
+# The desired frequency for BSM generation
 bsm_generation_frequency: 10.0
 

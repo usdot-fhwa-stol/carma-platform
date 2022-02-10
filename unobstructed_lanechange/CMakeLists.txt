@@ -15,9 +15,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(unobstructed_lanechange)
 
-find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
-carma_package()
+## Compile as C++14, supported in ROS Noetic and newer
+add_compile_options(-std=c++14)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 set(CATKIN_DEPS
   roscpp
@@ -79,9 +80,7 @@ src/unobstructed_lanechange.cpp
 
 add_dependencies(unobstructed_lanechange_plugin_lib ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-
-target_link_libraries(${PROJECT_NAME} unobstructed_lanechange_plugin_lib)
+target_link_libraries(${PROJECT_NAME} unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_library(lc_helper test/helper.cpp)
 target_link_libraries(lc_helper

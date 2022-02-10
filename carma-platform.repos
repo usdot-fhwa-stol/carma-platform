@@ -71,6 +71,10 @@ repositories:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-lightbar-driver.git
     version: develop
+  src/kvaser_interface:
+    type: git
+    url: git@github.com:astuff/kvaser_interface.git
+    version: master
   src/novatel_gps_driver:
     type: git
     url: git@github.com:usdot-fhwa-stol/novatel_gps_driver.git

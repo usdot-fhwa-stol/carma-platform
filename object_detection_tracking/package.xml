@@ -15,32 +15,30 @@
 
 <package format="3">
   <name>object_detection_tracking</name>
-  <version>1.0.0</version>
+  <version>0.0.0</version>
   <description>The object_detection_tracking package</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
 
   <license>Apache 2.0</license>
-  
-  <buildtool_depend>ament_cmake</buildtool_depend>
-  <build_depend>carma_cmake_common</build_depend>
-  <build_depend>ament_auto_cmake</build_depend>
-
+  <buildtool_depend>catkin</buildtool_depend>
   <depend>geometry_msgs</depend>
-  <depend>rclcpp</depend>
-  <depend>carma_perception_msgs</depend>
-  <depend>carma_ros2_utils</depend>
+  <depend>roscpp</depend>
+  <depend>rospy</depend>
+  <depend>std_msgs</depend>
+  <depend>tf2_msgs</depend>
+  <depend>cav_msgs</depend>
+  <depend>cav_srvs</depend>
+  <depend>wgs84_utils</depend>
+  <depend>message_filters</depend>
+  <depend>carma_utils</depend>
   <depend>tf2_geometry_msgs</depend>
-  <depend>tf2</depend>
-  <depend>tf2_ros</depend>
-  <depend>autoware_auto_msgs</depend> 
-  <depend>rclcpp_components</depend>
-  <depend>autoware_auto_geometry</depend>
 
-  <exec_depend>launch</exec_depend>
-  <exec_depend>launch_ros</exec_depend>
+  <depend>autoware_msgs</depend>
+  <depend>motion_predict</depend>
 
   <export>
-    <build_type>ament_cmake</build_type>
+  
+
   </export>
 </package>
