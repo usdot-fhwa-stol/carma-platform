@@ -48,7 +48,7 @@ protected:
   void SetUp() override
   {
     carma_wm::test::MapOptions options;
-    options.lane_length_ = 250;
+    options.lane_length_ = 500;
     options.lane_width_ = 3.7;
     options.speed_limit_ = carma_wm::test::MapOptions::SpeedLimit::DEFAULT;
     options.obstacle_ = carma_wm::test::MapOptions::Obstacle::NONE;
