@@ -197,8 +197,11 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
       (2.0 * (distance_remaining_to_traffic_light - config_.vehicle_length)) /
       (intersection_speed_.get() + current_state.speed);  // Kinematic Equation: 2*d / (vf + vi) = t
 
-  double trajectory_smoothing_activation_distance = get_trajectory_smoothing_activation_distance(time_remaining_at_free_flow - lanelet::time::toSec(traffic_light->fixed_cycle_duration), current_state.speed, speed_limit, intersection_speed_.get(), max_comfort_accel, max_comfort_decel);
-
+  double trajectory_smoothing_activation_distance = get_trajectory_smoothing_activation_distance(time_remaining_at_free_flow, lanelet::time::toSec(traffic_light->fixed_cycle_duration), 
+                                                                                      current_state.speed, speed_limit, intersection_speed_.get(), max_comfort_accel, max_comfort_decel);
+  if (trajectory_smoothing_activation_distance < 0)
+    trajectory_smoothing_activation_distance = distance_remaining_to_traffic_light;
+    
   ROS_DEBUG_STREAM("trajectory_smoothing_activation_distance: " << trajectory_smoothing_activation_distance);
 
   double stopping_dist = estimate_distance_to_stop(current_state.speed, config_.vehicle_decel_limit_multiplier  *
