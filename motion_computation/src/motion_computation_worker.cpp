@@ -155,6 +155,7 @@ void MotionComputationWorker::mobilityPathCallback(const cav_msgs::MobilityPath&
 {
   if (!map_projector_) {
     ROS_DEBUG_STREAM("Map projection not available yet so ignoring mobility path messages");
+    return;
   }
   mobility_path_list_.objects.push_back(mobilityPathToExternalObject(msg));
 }
@@ -182,17 +183,17 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
   output.presence_vector |= cav_msgs::ExternalObject::PREDICTION_PRESENCE_VECTOR;
   output.object_type = cav_msgs::ExternalObject::SMALL_VEHICLE;
   std::hash<std::string> hasher;
-  auto hashed = hasher(msg.header.sender_id); //TODO hasher returns size_t, message accept uint32_t which we might lose info
+  auto hashed = hasher(msg.m_header.sender_id); //TODO hasher returns size_t, message accept uint32_t which we might lose info
   output.id = (uint32_t)hashed;
   
-  for (size_t i = 0; i < msg.header.sender_bsm_id.size(); i+=2) // convert hex std::string to uint8_t array
+  for (size_t i = 0; i < msg.m_header.sender_bsm_id.size(); i+=2) // convert hex std::string to uint8_t array
   {
     int num = 0;
-    sscanf(msg.header.sender_bsm_id.substr(i, i + 2).c_str(), "%x", &num);
+    sscanf(msg.m_header.sender_bsm_id.substr(i, i + 2).c_str(), "%x", &num);
     output.bsm_id.push_back((uint8_t)num);
   }
   // first point's timestamp
-  output.header.stamp = ros::Time((double)msg.header.timestamp/ 1000.0); // ms to s
+  output.header.stamp = ros::Time((double)msg.m_header.timestamp/ 1000.0); // ms to s
 
   // If it is a static object, we finished processing
   if (msg.trajectory.offsets.size() < 2)

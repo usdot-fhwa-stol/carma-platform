@@ -78,6 +78,7 @@
   <group unless="$(arg simulation_mode)">
     <remap from="initialpose" to="managed_initialpose"/>
     <remap from="ekf_pose" to="current_pose"/>
+    <remap from="ekf_pose_with_covariance" to="current_pose_with_covariance"/>
 
     <include file="$(find ekf_localizer)/launch/ekf_localizer.launch" >
       <arg name="show_debug_info" default="false"/>

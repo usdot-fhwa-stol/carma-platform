@@ -14,11 +14,19 @@
  * the License.
  */
 #include "object_detection_tracking_node.h"
+#include "rclcpp/rclcpp.hpp"
 
 int main(int argc, char **argv) 
 {
-  ros::init(argc, argv, "object_detection_tracking");
-  object::ObjectDetectionTrackingNode node;
-  node.run(); 
+  rclcpp::init(argc, argv);
+
+  auto node = std::make_shared<object::ObjectDetectionTrackingNode>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
+
+  rclcpp::shutdown();
+
   return 0;
 }

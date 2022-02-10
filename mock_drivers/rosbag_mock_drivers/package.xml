@@ -27,6 +27,7 @@
   <depend>cav_srvs</depend>
   <depend>radar_msgs</depend>
   <depend>derived_object_msgs</depend>
+  <build_depend>carma_cmake_common</build_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

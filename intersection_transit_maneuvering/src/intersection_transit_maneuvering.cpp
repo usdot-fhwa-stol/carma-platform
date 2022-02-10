@@ -131,7 +131,7 @@ std::ostream& operator<<(std::ostream& os, cav_msgs::Maneuver m) {
                                                                      std::shared_ptr<CallInterface> obj)
     {        
         plugin_discovery_msg_.name = "IntersectionTransitPlugin";
-        plugin_discovery_msg_.versionId = "v1.0";
+        plugin_discovery_msg_.version_id = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = true;
         plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;

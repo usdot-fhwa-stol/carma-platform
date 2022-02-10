@@ -26,7 +26,7 @@
 namespace traffic
 {
 
-  TrafficIncidentParserWorker::TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm,const PublishTrafficControlCallback &traffic_control_pub) : traffic_control_pub_(traffic_control_pub),wm_(wm){};
+  TrafficIncidentParserWorker::TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm,const PublishTrafficControlCallback &traffic_control_pub) : traffic_control_pub_(traffic_control_pub),wm_(wm){}
 
   void TrafficIncidentParserWorker::mobilityOperationCallback(const cav_msgs::MobilityOperation &mobility_msg)
   {

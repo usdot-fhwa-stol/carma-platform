@@ -86,8 +86,8 @@ TEST(YieldPlugin, UnitTestYield)
 
     cav_srvs::PlanTrajectory traj_srv;
     traj_srv.request.initial_trajectory_plan = original_tp;
-    traj_srv.request.vehicle_state.X_pos_global= 1;
-    traj_srv.request.vehicle_state.Y_pos_global = 1;
+    traj_srv.request.vehicle_state.x_pos_global= 1;
+    traj_srv.request.vehicle_state.y_pos_global = 1;
     traj_srv.request.vehicle_state.longitudinal_vel = 11;
     traj_srv.request.maneuver_plan = plan;
     

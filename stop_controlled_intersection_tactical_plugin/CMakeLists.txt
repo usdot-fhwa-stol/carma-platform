@@ -17,10 +17,9 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(stop_controlled_intersection_tactical_plugin)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 set(CATKIN_DEPS
   roscpp
@@ -75,7 +74,8 @@ add_library(stop_controlled_intersection_tactical_library
             src/stop_controlled_intersection_tactical_plugin.cpp)
 
 add_dependencies(stop_controlled_intersection_tactical_library ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME} stop_controlled_intersection_tactical_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(stop_controlled_intersection_tactical_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} stop_controlled_intersection_tactical_library)
 
 #############
 ## Install ##

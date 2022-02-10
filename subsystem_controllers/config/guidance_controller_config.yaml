@@ -1,0 +1,29 @@
+/**:
+  ros__parameters:
+    # Long: Timeout for each service to be detected as available in milliseconds
+    # Units: milliseconds
+    service_timeout_ms : 200
+
+    # Long: Timeout for each service call in milliseconds
+    # Units: milliseconds
+    call_timeout_ms : 1000
+
+    # String: The namespace for nodes in this subsystem
+    subsystem_namespace: /guidance
+
+    # Required subsystem controller nodes for the overall system to be functional
+    required_subsystem_nodes:
+      - /guidance/arbitrator
+      - /guidance/guidance_node
+      - /guidance/plan_delegator
+      - /guidance/trajectory_executor
+      - /guidance/twist_filter
+      - /guidance/twist_gate
+      - /guidance/route_following_plugin # The minimal set of guidance plugins for system operation are route_following/inlane_cruising/pure_pursuit
+      - /guidance/inlanecruising_plugin
+      - /guidance/pure_pursuit_wrapper
+      - /guidance/pure_pursuit
+      - /guidance/yield_plugin
+
+    # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
+    full_subsystem_required: true

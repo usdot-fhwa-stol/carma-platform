@@ -28,4 +28,5 @@
   <depend>carma_wm</depend>
   <depend>lanelet2_core</depend>
   <depend>lanelet2_traffic_rules</depend>
+  <build_depend>carma_cmake_common</build_depend>
 </package>

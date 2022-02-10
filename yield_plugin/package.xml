@@ -33,4 +33,5 @@
   <depend>carma_wm</depend>
   <depend>trajectory_utils</depend>   
   <depend>lanelet2_extension</depend>
+  <build_depend>carma_cmake_common</build_depend>
 </package>

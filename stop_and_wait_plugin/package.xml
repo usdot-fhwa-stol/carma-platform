@@ -23,6 +23,7 @@
   <license>Apache License 2.0</license>
   <author email="carma@dot.gov">carma</author>
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>carma_cmake_common</build_depend>
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>cav_srvs</depend>

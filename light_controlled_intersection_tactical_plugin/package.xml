@@ -24,6 +24,7 @@
   <license>Apache License 2.0</license>
   <author email="CARMA@dot.gov">carma</author>
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>carma_cmake_common</build_depend>
   <depend>roscpp</depend>
   <depend>cav_srvs</depend>
   <depend>cav_msgs</depend>
@@ -31,5 +32,6 @@
   <depend>trajectory_utils</depend>   
   <depend>basic_autonomy</depend>  
   <depend>carma_wm</depend>
+  <depend>lanelet2_core</depend>
   
 </package>

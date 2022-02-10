@@ -186,12 +186,6 @@
     <arg name="route_file_folder" value="$(arg route_file_folder)"/>
   </include>
 
-  <!-- Mobility Path Publisher -->
-  <group>
-    <remap from="mobility_path_msg" to="$(optenv CARMA_MSG_NS)/mobility_path_msg"/>
-    <include file="$(find mobilitypath_publisher)/launch/mobilitypath_publisher.launch" />
-  </group>
-
   <!-- MobilityPath Visualizer -->
   <group>
     <remap from="mobility_path_msg" to="$(optenv CARMA_MSG_NS)/mobility_path_msg"/>

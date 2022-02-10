@@ -105,14 +105,14 @@ namespace truck_inspection_client
     {
         if(msg->strategy == this->INSPECTION_STRATEGY) {           
             cav_msgs::MobilityOperation mo_msg;
-            mo_msg.header.sender_bsm_id = bsm_id_;
+            mo_msg.m_header.sender_bsm_id = bsm_id_;
             mo_msg.strategy = this->INSPECTION_STRATEGY;
             std::string ads_auto_status = this->ads_engaged_ ? "Engaged" : "Not Engaged";
             std::string ads_health_status = ads_system_alert_type_ ;
             std::string params = boost::str(boost::format("vin_number:%s,license_plate:%s,carrier_name:%s,carrier_id:%s,weight:%d,ads_software_version:%s,date_of_last_state_inspection:%s,date_of_last_ads_calibration:%s,pre_trip_ads_health_check:%s,ads_health_status:%s,ads_auto_status:%s,iss_score:%d,permit_required:%s")
                                                          % vin_number_ % license_plate_ % carrier_name_ % carrier_id_ % weight_ % ads_software_version_ % date_of_last_state_inspection_ % date_of_last_ads_calibration_ % pre_trip_ads_health_check_ % ads_health_status % ads_auto_status % iss_score_ % permit_required_);
             long time = (long)(ros::Time::now().toNSec() / pow(10, 6));
-            mo_msg.header.timestamp = time;
+            mo_msg.m_header.timestamp = time;
             mo_msg.strategy_params = params;
             mo_pub_.publish(mo_msg);
         }

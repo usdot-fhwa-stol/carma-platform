@@ -25,4 +25,5 @@
   <depend>rosnode</depend>
   <depend>std_msgs</depend>
   <depend>cav_msgs</depend>
+  <build_depend>carma_cmake_common</build_depend>
 </package>

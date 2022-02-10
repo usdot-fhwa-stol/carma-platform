@@ -1,0 +1,111 @@
+#!/bin/bash
+
+set -e
+
+# This script is used to build a package for the CARMA platform.
+# The script will create a new folder in the parent folder with the name of the package.
+# After calling the script the new package should be immeadiatly buildable
+# Usage: ./carma_package <this template_package path> <package name> <path to new package parent folder>
+
+if [[ -z $BASH_VERSION  ]]; then
+    echo "Bash version could not be checked. Please run this script using bash"
+    exit 2
+fi
+
+if [[ "${BASH_VERSION:0:1}" -lt 4 ]]; then
+    echo "Bash version 4 or higher is required.  Exiting."
+    exit 2
+fi
+
+
+if [[ "$#" -ne 3 ]]; then
+    echo "Incorrect inputs: Input must be of form <this template_package path> <package name> <path to new package parent folder>"
+    exit 2
+fi
+
+template_package_path=$1
+
+if [[ ! -d ${template_package_path} ]]; then
+    echo "template_package directory ${template_package_path} DOES NOT exists." 
+    exit 2
+fi
+
+
+package_name=$2
+
+if [[ -z ${package_name} ]]; then
+    echo "Package name not provided." 
+    exit 2
+fi
+
+if [[ "${package_name}" =~ [^a-zA-Z0-9_\ ] ]]; then
+  echo "Package name ${package_name} contains invalid characters. Must be alpha numeric with any spaces as underscores."
+  exit 2
+fi
+
+package_parent_path=$3
+
+if [[ ! -d ${package_parent_path} ]]; then
+    echo "New package parent path directory ${package_parent_path} DOES NOT exists." 
+    exit 2
+fi
+
+target_path=$(realpath ${package_parent_path}/${package_name})
+
+# Copy the template_package to the new package
+cp -r ${template_package_path} ${target_path}
+
+cd ${target_path}
+
+current_year=$(date +"%Y")
+
+if [[ $PWD != $(realpath ${target_path}) ]]; then
+    echo "Failed to create target package directory. Check your path and permissions" 
+    exit 2
+fi
+
+# Perform substitutions
+find . -type f -exec sed -i "s/<SUB><package_name>/${package_name}/g" {} \;
+find . -type f -exec sed -i "s/<SUB><year>/${current_year}/g" {} \;
+
+# Update file names for new package
+shopt -s globstar
+for f in ./**; do
+
+    if [[ -d $f ]]; then
+        continue
+    fi
+
+    new_name=$(echo $f | sed "s/template_package/${package_name}/g")
+    directory_name=$(dirname $new_name)
+    if [[ ! -d $directory_name ]]; then
+        mkdir -p $directory_name
+    fi
+
+    if [[ $f != $new_name ]]; then
+        mv $f $new_name
+    fi
+done
+
+# Remove unused files
+for d in ./**; do
+
+    if [[ -f $d ]]; then
+        continue
+    fi
+
+    if [[ "$d" == *"template_package"* ]]; then
+        rm -r $d
+    fi
+done
+
+
+rm CATKIN_IGNORE
+rm COLCON_IGNORE
+rm README.md
+rm carma_package
+mv ${package_name}_README.md README.md
+
+# Notify user of success
+echo "${package_name} created at ${target_path}"
+

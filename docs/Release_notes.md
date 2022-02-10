@@ -1,6 +1,49 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 3.11.0, released Feb 3rd, 2021
+----------------------------------------
+
+**Summary:**
+Carma-platform release version 3.11.0 is the final version which is exclusively ROS1. It has one major enhancement which is to enable Cooperative Right-of-Way (CRW), stop sign intersection traversal.This release also includes new enhancements in Carma-streets, as listed below, to aid with the stop sign intersection traversal.Subsequent versions will contain both ROS1 and ROS2 code as the system is transitioned from the former to the latter. In addition to the stop sign intersection traversal enhancements, several bug fixes are included in this release.
+
+Note: V2X Hub release 7.1.0 includes a CARMA streets plugin for the following operations:
+-	Receive, decode and forward the BSM, Mobility Operations Message and Mobility Path Message to CARMA Streets.
+-	Broadcast schedule plan using Mobility Operations Message received from CARMA Streets.
+
+CARMA-Platform:
+
+Enhancements in this release:
+-	Issue 1563: The following new Plugins and updates have been added to the CARMA code bases:
+1.Added Stop Controlled Intersection Strategic Plugin to communicate with CARMA Streets that includes broadcasting the status and intent of the vehicle. 
+-	Receiving schedule messages from CARMA Streets and processing them.
+-	Generate maneuvers based on the received schedule for approaching the intersection and stopping at the stop bar through the Strategic Plugin.
+2.Added Stop Controlled Intersection Tactical Plugin in CARMA Platform for generating trajectories according to the Trajectory Smoothing (TS) logic.
+-	Issue 1584: Updated stop and wait plugin with a moving average filter to smooth the stopping behavior.
+
+Fixes in this release:
+-	Issue 1519: Fixed both Mobility Path and Mobility Operation header host BSM Id by changing the length from 10 digits to 8 digits with total length to send cpp message node. 
+-	Issue 1552: Fixed Mobility Path encoder error by Llimiting the number of mobility path offset messages to 60.
+-	Issue 1569: Fixed the BSM speed issues by updating the BSM generator launch files. 
+-	Issue 1572& 1573: Updated parameters and logic to stop and wait plugin to prevent acceleration when the vehicle was trying to slow down.
+-	Issue 1582: Fixed vehicle stops before 3 meters away from the stop line and wait for intersection access. 
+-	Issue 1592: Fixed Stopping behavior of vehicle at intersection by updating the parameters of involved plugins to minimize jerkiness and also ensure the vehicle stops smoothly.
+
+CARMA-Streets:
+
+Enhancement in this release:
+-	Issue 86: Added an open source software to monitor Kafka traffic to collect performance data and calculate metrics.Also added environment variables to set Kafka log retention time. 
+-	Issue 87: Added a message logger service to the scheduling service to log scheduling logic calculations through a CSV log file for every scheduling calculation.
+
+Fixes in this release:
+-	Issue 72:  Fixed Sonar scan Analysis on the intersection model source code by excluding Open API generated code for the REST server under the intersection model directory.
+- Issue 69: Fixed distance to end of Lanelet calculation since it sometimes generated the incorrect value, also removed code that is not needed.
+-	Issue 79: Fixed delayed mobility path messages since it sometimes arrives more than 0.1s later than the mobility operation message which affects the mapping function between these two messages.
+-	Issue 83&84: Updated frequency parameter in manifest JSON file to configure frequency of sending scheduling plans and set the scheduling delta to 0.2 sec.
+-	Issue 88: Removed two Kafka topics v2xhub_in and v2xhub_out initially created to demo the CARMA-Streets V2X-Hub plugin’s capability to transmit J2735 messages to a CARMA-Streets deployment via Kafka.
+-	Issue 92: Fixed Min 300 to max 900 milliseconds delay in these lanelet2 related functions for one vehicle testing. When one or more vehicles sends a message concurrently, the delay can be incrementally larger. 
+
+
 Version 3.10.0, released Dec 17th, 2021
 ----------------------------------------
 

@@ -130,8 +130,8 @@ namespace unobstructed_lanechange
         maneuvers.push_back(maneuver);
         worker.current_speed_ = maneuver.lane_change_maneuver.start_speed;
         cav_msgs::VehicleState vehicle_state;
-        vehicle_state.X_pos_global = veh_pos.x();
-        vehicle_state.Y_pos_global = veh_pos.y();
+        vehicle_state.x_pos_global = veh_pos.x();
+        vehicle_state.y_pos_global = veh_pos.y();
         
 
         /* Test PlanTrajectory cb */
@@ -141,8 +141,8 @@ namespace unobstructed_lanechange
         ros::Time::init();
         req.maneuver_plan.planning_start_time = ros::Time::now();
         req.maneuver_plan.planning_completion_time = req.maneuver_plan.planning_start_time + ros::Duration(10.0);
-        req.vehicle_state.X_pos_global = veh_pos.x();
-        req.vehicle_state.Y_pos_global = veh_pos.y();
+        req.vehicle_state.x_pos_global = veh_pos.x();
+        req.vehicle_state.y_pos_global = veh_pos.y();
         req.vehicle_state.longitudinal_vel = maneuver.lane_change_maneuver.start_speed;
 
         std::vector<cav_msgs::Maneuver> maneuvers_msg;  
