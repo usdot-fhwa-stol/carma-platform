@@ -190,7 +190,7 @@ TEST(SCIStrategicPluginTest, parseStrategyParamstest)
 
   cav_msgs::MobilityOperation outgoing_msg = sci.generateMobilityOperation();
   EXPECT_EQ(outgoing_msg.strategy, "Carma/stop_controlled_intersection");
-  EXPECT_EQ(outgoing_msg.header.sender_id, config.vehicle_id);
+  EXPECT_EQ(outgoing_msg.m_header.sender_id, config.vehicle_id);
   std::cout << "strategy_param: " << outgoing_msg.strategy_params << std::endl;
 }
 

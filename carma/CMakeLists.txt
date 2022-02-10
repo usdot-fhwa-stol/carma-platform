@@ -34,11 +34,7 @@ if(${ROS_VERSION} EQUAL 1) # ROS 1
         # Catkin
         ##############################################################################
 
-        find_package(catkin REQUIRED
-                cav_msgs
-                j2735_msgs
-                autoware_msgs
-        )
+        find_package(catkin REQUIRED)
 
         catkin_package()
 

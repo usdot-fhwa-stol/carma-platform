@@ -212,7 +212,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     ROS_DEBUG_STREAM("Maneuver starting downtrack: "<< start_dist);
     ROS_DEBUG_STREAM("Maneuver ending downtrack: "<< end_dist);
     //Checking state against start_dist and adjust profile
-    lanelet::BasicPoint2d state_point(state.X_pos_global, state.Y_pos_global);
+    lanelet::BasicPoint2d state_point(state.x_pos_global, state.y_pos_global);
     double route_starting_downtrack = wm->routeTrackPos(state_point).downtrack;  //Starting downtrack based on geometry points
     double dist_acc;        //Distance for which acceleration lasts
 

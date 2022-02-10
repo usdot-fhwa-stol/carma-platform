@@ -466,11 +466,11 @@ namespace platoon_strategic
 
                         // Leader is either on a single-lane road or not in the rightmost lane of a multi-lane road; it can now respond ACK to applicant's JOIN_PLATOON_AT_REAR request
                         cav_msgs::MobilityResponse response;
-                        response.header.sender_id = config_.vehicleID;
-                        response.header.recipient_id = lw_applicantId_;
-                        response.header.plan_id = pm_.currentPlatoonID;
-                        response.header.sender_bsm_id = host_bsm_id_;
-                        response.header.timestamp = ros::Time::now().toNSec()/1000000;
+                        response.m_header.sender_id = config_.vehicleID;
+                        response.m_header.recipient_id = lw_applicantId_;
+                        response.m_header.plan_id = pm_.currentPlatoonID;
+                        response.m_header.sender_bsm_id = host_bsm_id_;
+                        response.m_header.timestamp = ros::Time::now().toNSec()/1000000;
                         response.is_accepted = true;
 
                         ROS_DEBUG_STREAM("We are now in a suitable platooning lane, sending ACK to applicant " << lw_applicantId_);
@@ -778,7 +778,7 @@ namespace platoon_strategic
                     return MobilityRequestResponse::ACK;
                 } else if(isDistanceCloseEnough && !laneConditionsSatisfied) {
                     ROS_DEBUG_STREAM("The applicant is close enough, but we must change into a suitable platooning lane before sending ACK.");
-                    lw_applicantId_ = msg.header.sender_id;
+                    lw_applicantId_ = msg.m_header.sender_id;
 
                     // Set flag to indicate that a lane change into a suitable platooning lane is required prior to sending ACK to applicant
                     leader_lane_change_required_ = true;
@@ -1064,8 +1064,8 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("Received platoon status message from " << msg.m_header.sender_id);
         }
         else if(isJoinRequirementsMsg) {
-            bool isForHostVehicle = msg.header.recipient_id == config_.vehicleID;
-            bool isFromTargetLeader = msg.header.sender_id == pm_.targetLeaderId;
+            bool isForHostVehicle = msg.m_header.recipient_id == config_.vehicleID;
+            bool isFromTargetLeader = msg.m_header.sender_id == pm_.targetLeaderId;
 
             if (isForHostVehicle && isFromTargetLeader) {
                 has_received_join_requirements_ = true;
@@ -1505,7 +1505,7 @@ namespace platoon_strategic
             //       be error-prone (i.e. a lane index of '1' may refer to a different lane for both vehicles). This is a known edge 
             //       case that this plugin does not currently cover.
 
-            msg.header.recipient_id = lw_applicantId_; // JOIN_REQUIREMENTS message is intended only for the current applicant
+            msg.m_header.recipient_id = lw_applicantId_; // JOIN_REQUIREMENTS message is intended only for the current applicant
 
             // For JOIN_REQUIREMENTS params, the string format is "JOIN_REQUIREMENTS|LANE_INDEX:xx,LANE_GROUP_SIZE:xx"
             boost::format fmter(OPERATION_JOIN_REQUIREMENTS_PARAMS);
