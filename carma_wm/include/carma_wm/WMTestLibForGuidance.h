@@ -500,13 +500,14 @@ std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState
   std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(4.0), lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE), // 4 sec yellow
   std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(24.0), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN), // 20 sec red
   std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(44.0), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED) // 20 sec green
-}) {
+}) 
+{
   if (entry_lanelet_ids.size() != exit_lanelet_ids.size())
   {
     throw std::invalid_argument("Provided entry and exit lanelets size do not match!");
   }
   
-  lanelet::Lanelet entry_lanelets;
+  lanelet::Lanelets entry_lanelets;
 
   for (auto id : entry_lanelet_ids) {
     auto iterator = cmw->getMutableMap()->laneletLayer.find(id);
@@ -517,7 +518,7 @@ std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState
     entry_lanelets.push_back(*iterator);
   }
 
-  lanelet::Lanelet exit_lanelets;
+  lanelet::Lanelets exit_lanelets;
 
   for (auto id : exit_lanelet_ids) {
     auto iterator = cmw->getMutableMap()->laneletLayer.find(id);

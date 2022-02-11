@@ -179,11 +179,10 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
 
   ROS_DEBUG("traffic_light_down_track %f", traffic_light_down_track);
 
-  double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack - config_.vehicle_length;
+  double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack;
 
   ROS_DEBUG_STREAM("distance_remaining_to_traffic_light: " << distance_remaining_to_traffic_light <<
-                    ", current_state.downtrack: " << current_state.downtrack <<
-                    ", config_.vehicle_length: " << config_.vehicle_length);
+                    ", current_state.downtrack: " << current_state.downtrack);
 
   intersection_speed_ = findSpeedLimit(traffic_light->getControlStartLanelets().front());
 
@@ -194,7 +193,7 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
   ROS_DEBUG_STREAM("speed_limit (free flow speed): " << speed_limit);
 
   double time_remaining_at_free_flow =
-      (2.0 * (distance_remaining_to_traffic_light - config_.vehicle_length)) /
+      (2.0 * distance_remaining_to_traffic_light) /
       (intersection_speed_.get() + current_state.speed);  // Kinematic Equation: 2*d / (vf + vi) = t
 
   double trajectory_smoothing_activation_distance = get_trajectory_smoothing_activation_distance(time_remaining_at_free_flow, lanelet::time::toSec(traffic_light->fixed_cycle_duration), 
@@ -276,12 +275,12 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
         getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
 
-  double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_) + config_.min_gap + config_.vehicle_length;
+  double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_) + config_.min_gap;
   ROS_DEBUG_STREAM("safe_distance_to_stop at max_comfort_decel:  " << safe_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
   
   // earlier stop than this would result in stopping way before intersection
   double min_bound_stop_time =
-    (2.0 * (distance_remaining_to_traffic_light - config_.vehicle_length)) / current_state.speed;  // Kinematic Equation: 2*d / (vf + vi) = t where vf = 0
+    (2.0 * distance_remaining_to_traffic_light) / current_state.speed;  // Kinematic Equation: 2*d / (vf + vi) = t where vf = 0
 
   ROS_DEBUG_STREAM("distance_remaining_to_traffic_light:  " << distance_remaining_to_traffic_light << ", current_state.speed: " << current_state.speed);
   
@@ -304,7 +303,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
       ROS_DEBUG_STREAM("Planning stop and wait maneuver at decel_rate: -" << decel_rate);
       
       resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-        current_state.downtrack, traffic_light_down_track - config_.vehicle_length, current_state.speed, crossed_lanelets.front().id(),
+        current_state.downtrack, traffic_light_down_track, current_state.speed, crossed_lanelets.front().id(),
         crossed_lanelets.back().id(), current_state.stamp,
         req.header.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
       return;
@@ -385,7 +384,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         
         // then stop
         resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-            start_stopping_downtrack, traffic_light_down_track - config_.vehicle_length, speed_before_stop,
+            start_stopping_downtrack, traffic_light_down_track, speed_before_stop,
             starting_lanelet_for_stop.id(), exit_lanelet.id(), stop_starting_timestamp,
             stop_starting_timestamp + ros::Duration(config_.min_maneuver_planning_period), stopping_accel_norm));
         
@@ -503,7 +502,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     {
       ROS_DEBUG_STREAM("Algorithm successful, and able to make it at green with certainty. Planning traj smooth and intersection transit maneuvers");
       
-      resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track - config_.vehicle_length, 
+      resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
                                             current_state.speed, intersection_speed_.get(), current_state.stamp, light_arrival_time_by_algo, ts_params));
 
       double intersection_length = intersection_end_downtrack_.get() - traffic_light_down_track;
@@ -512,7 +511,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
           light_arrival_time_by_algo + ros::Duration(intersection_length / intersection_speed_.get());
 
       resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
-          traffic_light_down_track - config_.vehicle_length, intersection_end_downtrack_.get(), intersection_speed_.get(),
+          traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
           intersection_speed_.get(), light_arrival_time_by_algo, intersection_exit_time, entry_lanelet.id(), exit_lanelet.id()));
       return;
     }
@@ -532,7 +531,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   
   ts_params = handleFailureCase(current_state.speed, intersection_speed_.get(), distance_remaining_to_traffic_light);
 
-  resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track - config_.vehicle_length, 
+  resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
                                           current_state.speed, ts_params.modified_departure_speed, current_state.stamp, current_state.stamp + ros::Duration(ts_params.modified_remaining_time), ts_params));
 
   double intersection_length = intersection_end_downtrack_.get() - traffic_light_down_track;
@@ -541,7 +540,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       current_state.stamp + ros::Duration(ts_params.modified_remaining_time) + ros::Duration(intersection_length / ts_params.modified_departure_speed);
 
   resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
-      traffic_light_down_track - config_.vehicle_length, intersection_end_downtrack_.get(), intersection_speed_.get(),
+      traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
       ts_params.modified_departure_speed, current_state.stamp + ros::Duration(ts_params.modified_remaining_time), intersection_exit_time, crossed_lanelets.back().id(), exit_lanelet.id()));
 
 }
