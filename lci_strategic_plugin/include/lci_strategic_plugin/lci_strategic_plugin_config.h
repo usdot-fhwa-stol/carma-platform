@@ -41,7 +41,7 @@ struct LCIStrategicPluginConfig
   double stopping_location_buffer = 3.0;
 
   //! A buffer in seconds around the green phase which will reduce the phase length such that vehicle still considers it non-green
-  double green_light_time_buffer = 2.0;
+  double green_light_time_buffer = 0.0;
 
   //! Minimum allowable speed in m/s
   double minimum_speed = 2.2352;

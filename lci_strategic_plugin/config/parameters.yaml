@@ -11,7 +11,7 @@ min_approach_distance : 30.0
 stopping_location_buffer : 5.0
 
 # Double: A buffer in seconds around the green phase which will reduce the phase length such that vehicle still considers it non-green
-green_light_time_buffer : 2.0
+green_light_time_buffer : 0.0
 
 # Double: Minimum allowable speed in m/s
 minimum_speed : 2.2352
