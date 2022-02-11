@@ -1,5 +1,0 @@
-[0.000000] (-) TimerEvent: {}
-[0.000201] (light_controlled_intersection_tactical_plugin) JobQueued: {'identifier': 'light_controlled_intersection_tactical_plugin', 'dependencies': OrderedDict([('light_controlled_intersection_tactical_plugin', '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin/devel')])}
-[0.000436] (light_controlled_intersection_tactical_plugin) JobStarted: {'identifier': 'light_controlled_intersection_tactical_plugin'}
-[0.040133] (light_controlled_intersection_tactical_plugin) JobEnded: {'identifier': 'light_controlled_intersection_tactical_plugin', 'rc': 0}
-[0.041465] (-) EventReactorShutdown: {}
