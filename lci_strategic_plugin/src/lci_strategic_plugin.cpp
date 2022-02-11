@@ -201,7 +201,7 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
                                                                                       current_state.speed, speed_limit, intersection_speed_.get(), max_comfort_accel, max_comfort_decel);
   if (trajectory_smoothing_activation_distance < 0)
     trajectory_smoothing_activation_distance = distance_remaining_to_traffic_light;
-    
+
   ROS_DEBUG_STREAM("trajectory_smoothing_activation_distance: " << trajectory_smoothing_activation_distance);
 
   double stopping_dist = estimate_distance_to_stop(current_state.speed, config_.vehicle_decel_limit_multiplier  *
@@ -276,12 +276,15 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
         getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
 
-  double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_) + config_.min_gap;
+  double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_) + config_.min_gap + config_.vehicle_length;
   ROS_DEBUG_STREAM("safe_distance_to_stop at max_comfort_decel:  " << safe_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
   
   // earlier stop than this would result in stopping way before intersection
   double min_bound_stop_time =
     (2.0 * (distance_remaining_to_traffic_light - config_.vehicle_length)) / current_state.speed;  // Kinematic Equation: 2*d / (vf + vi) = t where vf = 0
+
+  ROS_DEBUG_STREAM("distance_remaining_to_traffic_light:  " << distance_remaining_to_traffic_light << ", current_state.speed: " << current_state.speed);
+  
 
   ROS_DEBUG_STREAM("min_bound_stop_time in sec:  " << min_bound_stop_time);
 
@@ -292,7 +295,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
     if (!validLightState(state_pair_at_stop, current_state.stamp + ros::Duration(min_bound_stop_time)))
     return;
 
-    ROS_ERROR_STREAM("Checking STOPPING state: " << state_pair_at_stop.get().second << ", at predicted time: " << current_state.stamp.toSec() + min_bound_stop_time);
+    ROS_DEBUG_STREAM("Checking STOPPING state: " << state_pair_at_stop.get().second << ", at predicted time: " << current_state.stamp.toSec() + min_bound_stop_time);
 
     // perfectly stop at red/yellow with given distance and constant deceleration 
     if (state_pair_at_stop.get().second != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
@@ -316,7 +319,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
 
     double max_stop_time_stamp = nearest_green_entry_time.toSec();
     double target_stop_time = min_bound_stop_time;
-    ROS_ERROR_STREAM("Checking INITIAL state: " << predicted_state_pair.get().second << ", with end_time: " << predicted_state_pair.get().first 
+    ROS_DEBUG_STREAM("Trying next stopping method. Checking INITIAL state: " << predicted_state_pair.get().second << ", with end_time: " << predicted_state_pair.get().first 
                                                                                      << ", at predicted_time: " << current_state.stamp.toSec() + min_bound_stop_time);
     
     while (lanelet::time::toSec(predicted_state_pair.get().first) < max_stop_time_stamp + lanelet::time::toSec(traffic_light->fixed_cycle_duration)) // look for valid stop light within 1 cycle
@@ -333,7 +336,6 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         break;
       }
       predicted_state_pair = traffic_light->predictState(predicted_state_pair.get().first + boost::posix_time::milliseconds(200)); //get next state
-      ROS_ERROR_STREAM("Checking state: " << predicted_state_pair.get().second << ", at end_time: " << predicted_state_pair.get().first);
     }
 
     // Stopping by decelerating at max_decel some distance and then stopping with custom decel_rate for total of target_stop_time
@@ -375,7 +377,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         ts_params.dist_cruise = 0.0;
         ts_params.dist_decel = start_stopping_downtrack - current_state.downtrack;
         ts_params.is_algorithm_successful = true;
-        ts_params.speed_before_decel = current_state.speed;
+        ts_params.speed_before_accel = speed_before_stop;
 
         // first decelerate (triggering algorithm as if the scheduled entry and target speed is at start of stopping downtrack) 
         resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, start_stopping_downtrack, 
@@ -461,7 +463,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   double speed_before_decel = calc_speed_before_decel(remaining_time, distance_remaining_to_traffic_light, current_state.speed, intersection_speed_.get());
   double speed_before_accel = calc_speed_before_accel(remaining_time, distance_remaining_to_traffic_light, current_state.speed, intersection_speed_.get());
   SpeedProfileCase case_num = determine_speed_profile_case(estimated_entry_time, remaining_time, speed_before_decel, speed_before_accel, speed_limit);
-  ROS_WARN_STREAM("ALERT: case_num: " << (int)case_num);
+
   // change speed profile depending on algorithm case starting from maneuver start_dist
   if(case_num == ACCEL_CRUISE_DECEL || case_num == ACCEL_DECEL){
     // acceleration (cruising if needed) then deceleration to reach desired intersection entry speed/time according to algorithm doc
@@ -477,8 +479,10 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     throw std::invalid_argument("The light controlled intersection tactical plugin doesn't handle the case number requested");
   }
 
-  ts_params.case_num = case_num;
+  if (ts_params.is_algorithm_successful)
+    ts_params.case_num = case_num;
 
+  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num);
   // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
         getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
@@ -525,17 +529,20 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   // 3. if not able to stop nor reach target speed at green, attempt its best to reach the target parameters at the intersection
   // ts_params would have been modified to try accommodate this scenario
   ROS_DEBUG_STREAM("The vehicle is not able to stop at red/yellow light nor is able to reach target speed at green. Attempting its best to pass through at green!");
+  
+  ts_params = handleFailureCase(current_state.speed, intersection_speed_.get(), distance_remaining_to_traffic_light);
+
   resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track - config_.vehicle_length, 
-                                          current_state.speed, intersection_speed_.get(), current_state.stamp, nearest_green_entry_time, ts_params));
+                                          current_state.speed, ts_params.modified_departure_speed, current_state.stamp, current_state.stamp + ros::Duration(ts_params.modified_remaining_time), ts_params));
 
   double intersection_length = intersection_end_downtrack_.get() - traffic_light_down_track;
 
   ros::Time intersection_exit_time =
-      nearest_green_entry_time + ros::Duration(intersection_length / intersection_speed_.get());
+      current_state.stamp + ros::Duration(ts_params.modified_remaining_time) + ros::Duration(intersection_length / ts_params.modified_departure_speed);
 
   resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
       traffic_light_down_track - config_.vehicle_length, intersection_end_downtrack_.get(), intersection_speed_.get(),
-      intersection_speed_.get(), nearest_green_entry_time, intersection_exit_time, crossed_lanelets.back().id(), exit_lanelet.id()));
+      ts_params.modified_departure_speed, current_state.stamp + ros::Duration(ts_params.modified_remaining_time), intersection_exit_time, crossed_lanelets.back().id(), exit_lanelet.id()));
 
 }
 
@@ -677,18 +684,6 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
     prev_state = transition_table_.getState();  // Cache previous state to check if state has changed after 1 iteration
 
-    /* NOTE: Leaving this commented out code is intentional to provide an easy way to monitor light state at runtime. If a better way is implemented then this can be removed
-    if (!traffic_list.empty()) { 
-      auto traffic_light = traffic_list.front();
-      ROS_ERROR_STREAM("\n\nCurrent Light State: " << traffic_light->getState().get() 
-      << std::endl <<  "                      1: " << traffic_light->predictState(lanelet::time::timeFromSec((ros::Time::now() + ros::Duration(1.0)).toSec())).get()
-      << std::endl <<  "                      2: " << traffic_light->predictState(lanelet::time::timeFromSec((ros::Time::now() + ros::Duration(2.0)).toSec())).get()
-      << std::endl <<  "                      3: " << traffic_light->predictState(lanelet::time::timeFromSec((ros::Time::now() + ros::Duration(3.0)).toSec())).get()
-      << std::endl <<  "                      4: " << traffic_light->predictState(lanelet::time::timeFromSec((ros::Time::now() + ros::Duration(4.0)).toSec())).get()
-      << std::endl <<  "                      5: " << traffic_light->predictState(lanelet::time::timeFromSec((ros::Time::now() + ros::Duration(5.0)).toSec())).get()
-      << std::endl);
-    }
-    */
     ROS_INFO_STREAM("Planning in state: " << transition_table_.getState());
     switch (transition_table_.getState())
     {

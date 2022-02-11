@@ -49,15 +49,19 @@ enum SpeedProfileCase {
  */
 struct TrajectorySmoothingParameters
 {
-  double dist_accel = 0.0;      // Acceleration distance (negative if the algorithm failed to meet criteria)
-  double dist_decel = 0.0;      // Deceleration distance (negative if the algorithm failed to meet criteria)
-  double dist_cruise = 0.0;     // Cruise distance (negative if the algorithm failed to meet criteria)
+  
   double a_accel = 0.0;        // Acceleration rate (negative if the algorithm failed to meet criteria)
   double a_decel = 0.0;        // Deceleration rate (positive if the algorithm failed to meet criteria)
-  double speed_before_decel = -1.0; // The highest speed before deceleration starts after accelerating (applies to case 1,2)
+  double dist_accel = 0.0;      // Acceleration distance (negative if the algorithm failed to meet criteria)
+  double dist_cruise = 0.0;     // Cruise distance (negative if the algorithm failed to meet criteria)
+  double dist_decel = 0.0;      // Deceleration distance (negative if the algorithm failed to meet criteria)
   double speed_before_accel = -1.0; // The lowest speed before acceleration starts after decelerating (applies to case 3,4)
+  double speed_before_decel = -1.0; // The highest speed before deceleration starts after accelerating (applies to case 1,2)
   SpeedProfileCase case_num;       // Trajectory Smoothing Case Number.
   bool is_algorithm_successful = true;  // True if the trajectory smoothing algorithm was able to get valid parameters
+  double modified_departure_speed = -1.0;  // modified departure speed if algorithm failed
+  double modified_remaining_time = -1.0;  // modified departure time if algorithm failed
+
 };
 
 class LCIStrategicPlugin
@@ -266,6 +270,18 @@ private:
                                         const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, const lanelet::ConstLanelet& current_lanelet,
                                         const ros::Time& nearest_green_entry_time,
                                         double traffic_light_down_track);
+
+  /**
+   * \brief When the vehicle is not able to successfully run the algorithm or not able to stop, this function modifies 
+   *        departure speed as close as possible to the original using max comfortable accelerations with given distance.
+   *
+   * \param starting_speed starting speed
+   * \param departure_speed departure_speed originally planned
+   * \param remaining_downtrack remaining_downtrack until the intersection
+   *
+   * \return TSP with parameters that is best available to pass the intersection. Either profile case 3(ACCEL_DECEL) or 2 (DECEL_ACCEL)
+   */
+  TrajectorySmoothingParameters handleFailureCase(double starting_speed, double departure_speed, double remaining_downtrack);
                                         
   /**
    * \brief Helper method to evaluate if the given traffic light state is supported by this plugin
