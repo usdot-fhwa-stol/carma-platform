@@ -10,4 +10,5 @@
   <depend>cav_srvs</depend>
   <depend>cav_msgs</depend>
   <depend>carma_utils</depend>
+  <build_depend>carma_cmake_common</build_depend>
 </package>

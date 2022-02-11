@@ -118,8 +118,8 @@
         traj_plan.trajectory_points.push_back(point_1);
         traj_plan.trajectory_points.push_back(point_2);
         cav_srvs::PlanTrajectory req = pd.composePlanTrajectoryRequest(traj_plan, current_maneuver_index);
-        EXPECT_NEAR(1.0, req.request.vehicle_state.X_pos_global, 0.01);
-        EXPECT_NEAR(1.0, req.request.vehicle_state.Y_pos_global, 0.01);
+        EXPECT_NEAR(1.0, req.request.vehicle_state.x_pos_global, 0.01);
+        EXPECT_NEAR(1.0, req.request.vehicle_state.y_pos_global, 0.01);
         EXPECT_NEAR(1.0, req.request.vehicle_state.longitudinal_vel, 0.1);
         EXPECT_EQ(0, req.request.maneuver_index_to_plan);
     }

@@ -16,10 +16,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(arbitrator)
 
-## Compile as C++14, supported in ROS Noetic and newer
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -31,6 +30,9 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   lanelet2_core
   carma_wm
+  tf
+  tf2
+  tf2_geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -54,7 +56,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES arbitrator
-   CATKIN_DEPENDS carma_utils cav_msgs cav_srvs roscpp lanelet2_core carma_wm
+   CATKIN_DEPENDS carma_utils cav_msgs cav_srvs roscpp lanelet2_core carma_wm tf tf2 tf2_geometry_msgs
 #  DEPENDS system_lib
 )
 
@@ -93,9 +95,11 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 add_dependencies(arbitrator_library ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
+
+target_link_libraries(arbitrator_library ${catkin_LIBRARIES})
+
 target_link_libraries(${PROJECT_NAME}_node
   arbitrator_library
-  ${catkin_LIBRARIES}
 )
 
 #############

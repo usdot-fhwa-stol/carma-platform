@@ -16,10 +16,9 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(stop_and_wait_plugin)
 
-## Compile as C++14, supported in ROS Noetic and newer
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 set( CATKIN_DEPS
   roscpp
@@ -75,7 +74,8 @@ add_executable( ${PROJECT_NAME}
 add_library(stopandwait_plugin_lib  src/stop_and_wait_plugin.cpp)  
 add_dependencies(stopandwait_plugin_lib ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME}  stopandwait_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(stopandwait_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}  stopandwait_plugin_lib)
 
 
 #############
@@ -89,7 +89,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} 
+install(TARGETS ${PROJECT_NAME} stopandwait_plugin_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

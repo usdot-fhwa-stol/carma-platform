@@ -1,0 +1,22 @@
+/**:
+  ros__parameters:
+    # Double: Delay period in seconds to wait before trying to configure system nodes
+    # Units: seconds
+    signal_configure_delay : 5.0
+
+    # Long: Timeout for each service to be detected as available in milliseconds
+    # Units: milliseconds
+    service_timeout_ms : 200
+
+    # Long: Timeout for each service call in milliseconds
+    # Units: milliseconds
+    # A larger value is reasonable here given service calls must ultimately be made to every node in the system
+    call_timeout_ms : 5000
+
+    # Required subsystem controller nodes for the overall system to be functional
+    required_subsystem_nodes:
+      - /environment/environment_perception_controller
+      #- /localization/localization_controller # TODO add these back in as subsystems are ported
+      #- /message/v2x_controller
+      #- /guidance/guidance_controller
+      #- /hardware_interface/drivers_controller

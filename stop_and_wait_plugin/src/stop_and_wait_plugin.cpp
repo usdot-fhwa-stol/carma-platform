@@ -54,7 +54,7 @@ StopandWait::StopandWait(carma_wm::WorldModelConstPtr wm, StopandWaitConfig conf
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
 {
   plugin_discovery_msg_.name = "StopAndWaitPlugin";
-  plugin_discovery_msg_.versionId = "v1.1";
+  plugin_discovery_msg_.version_id = "v1.1";
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = false;
   plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
@@ -84,9 +84,9 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
     throw std::invalid_argument("StopAndWait plugin asked to plan non STOP_AND_WAIT maneuver");
   }
 
-  lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
+  lanelet::BasicPoint2d veh_pos(req.vehicle_state.x_pos_global, req.vehicle_state.y_pos_global);
 
-  ROS_DEBUG_STREAM("planning state x:" << req.vehicle_state.X_pos_global << ", y: " << req.vehicle_state.Y_pos_global << ", speed: " << req.vehicle_state.longitudinal_vel);
+  ROS_DEBUG_STREAM("planning state x:" << req.vehicle_state.x_pos_global << ", y: " << req.vehicle_state.y_pos_global << ", speed: " << req.vehicle_state.longitudinal_vel);
 
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
@@ -159,7 +159,7 @@ std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<c
 
   cav_msgs::StopAndWaitManeuver stop_and_wait_maneuver = maneuvers[0].stop_and_wait_maneuver;
 
-  lanelet::BasicPoint2d veh_pos(state.X_pos_global, state.Y_pos_global);
+  lanelet::BasicPoint2d veh_pos(state.x_pos_global, state.y_pos_global);
   double starting_downtrack = wm_->routeTrackPos(veh_pos).downtrack;  // The vehicle position
   double starting_speed = state.longitudinal_vel;
 

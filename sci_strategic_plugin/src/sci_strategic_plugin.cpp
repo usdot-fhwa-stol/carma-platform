@@ -39,7 +39,7 @@ SCIStrategicPlugin::SCIStrategicPlugin(carma_wm::WorldModelConstPtr wm, SCIStrat
   : wm_(wm), config_(config)
 {
   plugin_discovery_msg_.name = config_.strategic_plugin_name;
-  plugin_discovery_msg_.versionId = "v1.0";
+  plugin_discovery_msg_.version_id = "v1.0";
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = true;
   plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
@@ -86,13 +86,13 @@ void SCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
 {
   if (msg->strategy == stop_controlled_intersection_strategy_)
   {
-    ROS_DEBUG_STREAM("Received Schedule message with id: " << msg->header.plan_id);
+    ROS_DEBUG_STREAM("Received Schedule message with id: " << msg->m_header.plan_id);
     approaching_stop_controlled_interction_ = true;
     ROS_DEBUG_STREAM("Approaching Stop Controlled Intersection: " << approaching_stop_controlled_interction_);
 
-    if (msg->header.recipient_id == config_.vehicle_id)
+    if (msg->m_header.recipient_id == config_.vehicle_id)
       {
-        street_msg_timestamp_ = msg->header.timestamp;
+        street_msg_timestamp_ = msg->m_header.timestamp;
         ROS_DEBUG_STREAM("street_msg_timestamp_: " << street_msg_timestamp_);
         parseStrategyParams(msg->strategy_params);
       }
@@ -331,7 +331,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   {   
       auto tmp = (scheduled_stop_time_) - (street_msg_timestamp_);
       ROS_DEBUG_STREAM("tmp  " << tmp);
-      double time_to_schedule_stop = (tmp)/1000;
+      double time_to_schedule_stop = (tmp)/1000.0;
       ROS_DEBUG_STREAM("time_to_schedule_stop  " << time_to_schedule_stop);
       // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
       std::vector<lanelet::ConstLanelet> crossed_lanelets =
@@ -347,10 +347,10 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       double desired_deceleration = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
 
 
-      double safe_distance = pow(current_state.speed, 2)/(2*desired_deceleration) + config_.min_gap;
+      double safe_distance = pow(current_state.speed, 2)/(2*desired_deceleration);
        ROS_DEBUG_STREAM("safe_distance:  " << safe_distance);
 
-      if (distance_to_stopline > safe_distance)
+      if (distance_to_stopline - safe_distance > config_.stop_line_buffer)
       {
         int case_num = determine_speed_profile_case(distance_to_stopline , current_state.speed, time_to_schedule_stop, speed_limit_);
         ROS_DEBUG_STREAM("case_num:  " << case_num);
@@ -382,6 +382,8 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
           current_state.downtrack, stop_intersection_down_track, current_state.speed, crossed_lanelets[0].id(),
           crossed_lanelets[0].id(), stopping_accel, current_state.stamp,
           current_state.stamp + ros::Duration(time_to_schedule_stop));
+
+          resp.new_plan.maneuvers.push_back(maneuver_planned);
 
         }
       }
@@ -670,9 +672,9 @@ double SCIStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt) cons
 cav_msgs::MobilityOperation SCIStrategicPlugin::generateMobilityOperation()
 {
     cav_msgs::MobilityOperation mo_;
-    mo_.header.timestamp = ros::Time::now().toNSec()/1000000;
-    mo_.header.sender_id = config_.vehicle_id;
-    mo_.header.sender_bsm_id = bsm_id_;
+    mo_.m_header.timestamp = ros::Time::now().toNSec()/1000000;
+    mo_.m_header.sender_id = config_.vehicle_id;
+    mo_.m_header.sender_bsm_id = bsm_id_;
     mo_.strategy = stop_controlled_intersection_strategy_;
 
     double vehicle_acceleration_limit_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;

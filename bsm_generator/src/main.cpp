@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,13 +14,20 @@
  * the License.
  */
 
-#include <ros/ros.h>
-#include "bsm_generator.h"
+#include <rclcpp/rclcpp.hpp>
+#include "bsm_generator/bsm_generator_node.hpp"
 
-int main(int argc, char** argv)
+int main(int argc, char **argv) 
 {
-    ros::init(argc, argv, "bsm_generator");
-    bsm_generator::BSMGenerator bg;
-    bg.run();
-    return 0;
-};
+  rclcpp::init(argc, argv);
+
+  auto node = std::make_shared<bsm_generator::BSMGenerator>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
+
+  rclcpp::shutdown();
+
+  return 0;
+}
