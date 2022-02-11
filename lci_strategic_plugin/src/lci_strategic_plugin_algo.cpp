@@ -190,36 +190,23 @@ ros::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_dista
 }
 
 double LCIStrategicPlugin::get_inflection_speed_value(double x, double x1, double x2, double free_flow_speed, double current_speed, double departure_speed, double max_accel, double max_decel) const
-{
-  ROS_DEBUG_STREAM("x: " << x << 
-                   ", x1: " <<  x1 << 
-                   ", x2: " << x2 << 
-                   ", free_flow_speed: " << free_flow_speed << 
-                   ", current_speed: " << current_speed << 
-                   ", departure_speed: " << departure_speed << 
-                   ", max_accel: " << max_accel << 
-                   ", max_decel: " << max_decel);
-  
+{  
   if (x >= x1)
   {
-    ROS_ERROR_STREAM("returning here4: " << free_flow_speed);
     return free_flow_speed;
   }
   else if (x1 > x >= x2)
   {
-    ROS_ERROR_STREAM("returning here3: " << std::sqrt(2 * x * max_accel * max_decel + max_decel * std::pow(current_speed, 2) - max_accel * (std::pow(departure_speed, 2))/(max_decel - max_accel)));
     return std::sqrt(2 * x * max_accel * max_decel + max_decel * std::pow(current_speed, 2) - max_accel * (std::pow(departure_speed, 2))/(max_decel - max_accel));
   }
   else if (x2 > x)
   {
     if (current_speed <= departure_speed)
     {
-      ROS_ERROR_STREAM("returning here1: " << std::sqrt(2 * x * max_accel + std::pow(current_speed, 2)));
       return std::sqrt(2 * x * max_accel + std::pow(current_speed, 2));
     }
     else
     {
-      ROS_ERROR_STREAM("returning here2: " << std::sqrt(2 * x * max_decel + std::pow(current_speed, 2)));
       return std::sqrt(2 * x * max_decel + std::pow(current_speed, 2));
     }
   }
@@ -230,7 +217,6 @@ double LCIStrategicPlugin::calc_estimated_entry_time_left(double entry_dist, dou
   double t_entry = 0;
   // t = 2 * d / (v_i + v_f)
   // from TSMO USE CASE 2 Algorithm Doc - Figure 4. Equation: Estimation of t*_nt
-  ROS_ERROR_STREAM("entry_dist: " << entry_dist << ", current_speed: " << current_speed << ", departure_speed: " << departure_speed);
   t_entry = 2*entry_dist/(current_speed + departure_speed);
   return t_entry;
 }
@@ -262,14 +248,11 @@ double LCIStrategicPlugin::calc_speed_before_accel(double entry_time, double ent
   
   // a_r = a_acc / a_dec
   double acc_dec_ratio = max_comfort_accel_/max_comfort_decel_;
-  ROS_ERROR_STREAM("acc_dec_ratio: " << acc_dec_ratio);
   // v_r = d / t
   double required_speed = entry_dist / entry_time;
-  ROS_ERROR_STREAM("required_speed: " << required_speed);
   // sqrt_term  = sqrt((a_r - 1)^2*v_r^2 - (a_r-1)(v_f*(v_f-2*v_r) + a_r*v_i*(2*v_r - v_i)))
   double sqr_term = sqrt(pow((acc_dec_ratio - 1), 2) * pow(required_speed, 2) - (acc_dec_ratio - 1) *
                         (departure_speed * (departure_speed - 2 * required_speed) + acc_dec_ratio * current_speed * (2* required_speed - current_speed)));
-  ROS_ERROR_STREAM("sqr_term: " << sqr_term);
   // v_e = v_r + sqrt_term / (a_r - 1)
   speed_before_accel = required_speed + sqr_term/(acc_dec_ratio - 1);
 
@@ -407,65 +390,13 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_accel_cruis
                   "dist_decel: " << dist_decel << "\n" <<
                   "dist_cruise: " << dist_cruise);
 
-  if(dist_accel < - epsilon_ )
-  {
-    //Requested maneuver needs to be modified to meet start and end dist req
-    //Sacrifice on cruising and then acceleration if needed
-    params.is_algorithm_successful = false;
-    //correcting signs. NOTE: Doing so will likely result being over max_comfort_accel_
-    dist_accel = std::fabs(dist_accel); 
-    a_acc = std::fabs(a_acc);
-    a_dec = -1 * std::fabs(a_dec);
-    //subtract distance from cruising segment to match original distance
-    dist_cruise -= 2 * dist_accel;
-    if(dist_cruise < 0)
-    {
-      dist_accel -= std::fabs(dist_cruise);
-      dist_cruise = 0;
-    }
-    ROS_WARN_STREAM("Maneuver needed to be modified (due to negative dist_accel) with new distance and accelerations: \n" << 
-                  "total_distance_needed: " << total_distance_needed << "\n" <<
-                  "a_acc: " << a_acc << "\n" <<
-                  "a_dec: " << a_dec << "\n" <<
-                  "dist_accel: " << dist_accel << "\n" <<
-                  "dist_decel: " << dist_decel << "\n" <<
-                  "dist_cruise: " << dist_cruise);
-    // not accounting dist_accel < 0 after this...
-  }
-
-  if(dist_decel < - epsilon_ )
-  {
-    //Requested maneuver needs to be modified to meet start and end dist req
-    //Sacrifice on cruising and then acceleration if needed
-    params.is_algorithm_successful = false;
-    //correct signs. NOTE: Doing so will likely result being over max_comfort_accel_
-    dist_decel = std::fabs(dist_decel);  
-    a_acc = std::fabs(a_acc);
-    a_dec = -1 * std::fabs(a_dec);
-    //subtract distance from cruising segment to match original distance
-    dist_cruise -= 2 * dist_decel;
-    if(dist_cruise < 0)
-    {
-      dist_accel -= std::fabs(dist_cruise);
-      dist_cruise = 0;
-    }
-    ROS_WARN_STREAM("Maneuver needed to be modified (due to negative dist_decel) with new distance and accelerations: \n" << 
-                  "total_distance_needed: " << total_distance_needed << "\n" <<
-                  "a_acc: " << a_acc << "\n" <<
-                  "a_dec: " << a_dec << "\n" <<
-                  "dist_accel: " << dist_accel << "\n" <<
-                  "dist_decel: " << dist_decel << "\n" <<
-                  "dist_cruise: " << dist_cruise);
-    // not accounting dist_accel < 0 after this...
-  }
-
   params.a_accel = a_acc;
   params.a_decel = a_dec;
   params.dist_accel = dist_accel;
   params.dist_cruise = dist_cruise;
   params.dist_decel = dist_decel;
   params.speed_before_decel = speed_before_decel;
-
+  
   return params;
 }
 
@@ -566,69 +497,61 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_decel_cruis
                   "dist_decel: " << dist_decel << "\n" <<
                   "dist_cruise: " << dist_cruise);
 
-  if(dist_decel < - epsilon_ )
-  {
-    //Requested maneuver needs to be modified to meet start and end dist req
-    //Sacrifice on cruising and then deceleration if needed
-    params.is_algorithm_successful = false;
-
-    //correct signs. NOTE: Doing so will likely result being over max_comfort_decel_
-    dist_decel = std::fabs(dist_decel);  
-    a_acc = std::fabs(a_acc);
-    a_dec = -1 * std::fabs(a_dec);
-    //subtract distance from cruising segment to match original distance
-    dist_cruise -= 2 * dist_decel;
-    if(dist_cruise < 0)
-    {
-      dist_decel -= std::fabs(dist_cruise);
-      dist_cruise = 0;
-    }
-    ROS_WARN_STREAM("Maneuver needed to be modified (due to negative dist_decel) with new distance and accelerations: \n" << 
-                  "total_distance_needed: " << total_distance_needed << "\n" <<
-                  "a_acc: " << a_acc << "\n" <<
-                  "a_dec: " << a_dec << "\n" <<
-                  "dist_accel: " << dist_accel << "\n" <<
-                  "dist_decel: " << dist_decel << "\n" <<
-                  "dist_cruise: " << dist_cruise);
-    // not accounting dist_decel < 0 after this...
-  }
-
-  if(dist_accel < - epsilon_ )
-  {
-    //Requested maneuver needs to be modified to meet start and end dist req
-    //Sacrifice on cruising and then deceleration if needed
-    params.is_algorithm_successful = false;
-
-    //correcting signs. NOTE: Doing so will likely result being over max_comfort_decel_
-    dist_accel = std::fabs(dist_accel); 
-    a_acc = std::fabs(a_acc);
-    a_dec = -1 * std::fabs(a_dec);
-    //subtract distance from cruising segment to match original distance
-    dist_cruise -= 2 * dist_accel;
-    if(dist_cruise < 0)
-    {
-      dist_decel -= std::fabs(dist_cruise);
-      dist_cruise = 0;
-    }
-    ROS_WARN_STREAM("Maneuver needed to be modified (due to negative dist_accel) with new distance and accelerations: \n" << 
-                  "total_distance_needed: " << total_distance_needed << "\n" <<
-                  "a_acc: " << a_acc << "\n" <<
-                  "a_dec: " << a_dec << "\n" <<
-                  "dist_accel: " << dist_accel << "\n" <<
-                  "dist_decel: " << dist_decel << "\n" <<
-                  "dist_cruise: " << dist_cruise);
-    // not accounting dist_decel < 0 after this...
-  }
-
   params.a_accel = a_acc;
   params.a_decel = a_dec;
   params.dist_accel = dist_accel;
   params.dist_cruise = dist_cruise;
   params.dist_decel = dist_decel;
   params.speed_before_accel = speed_before_accel;
-
+  
   return params;
 }
 
+TrajectorySmoothingParameters LCIStrategicPlugin::handleFailureCase(double starting_speed, double departure_speed, double remaining_downtrack)
+{
+  //Requested maneuver needs to be modified to meet remaining_dist req
+  //by trying to get close to the target_speed and remaining_time as much as possible
+  TrajectorySmoothingParameters params;
+
+  params.is_algorithm_successful = false;
+  params.speed_before_accel = -1;
+  params.speed_before_decel = -1;
+
+  if (starting_speed >= departure_speed - epsilon_) //decelerate
+  {
+    params.a_accel = 0;
+    params.a_decel = max_comfort_decel_;
+    params.speed_before_decel = starting_speed;
+    params.dist_accel = 0;
+    params.dist_cruise = 0;
+    params.dist_decel = remaining_downtrack;
+    // kinematic: vf = sqrt(vi^2 - a_norm) where a is negative
+    params.modified_departure_speed = sqrt(pow(starting_speed, 2) - 2 * remaining_downtrack * max_comfort_decel_norm_);
+    params.modified_remaining_time = (starting_speed - params.modified_departure_speed ) / max_comfort_decel_norm_;
+    params.case_num = SpeedProfileCase::ACCEL_DECEL;
+  }
+  else //accelerate
+  {
+    params.a_accel = max_comfort_accel_;
+    params.a_decel = 0;
+    params.speed_before_accel = starting_speed;
+    params.dist_accel = remaining_downtrack;
+    params.dist_cruise = 0;
+    params.dist_decel = 0;
+    // kinematic: vf = sqrt(vi^2 + a_norm) where a is positive
+    params.modified_departure_speed = sqrt(2 * remaining_downtrack * max_comfort_accel_ + pow(starting_speed, 2));
+    params.modified_remaining_time = (params.modified_departure_speed - starting_speed) / max_comfort_accel_;
+    params.case_num = SpeedProfileCase::DECEL_ACCEL;
+  }
+  ROS_WARN_STREAM("Maneuver needed to be modified (due to negative dist) with new distance and accelerations: \n" << 
+                "a_acc: " << params.a_accel << "\n" <<
+                "a_dec: " << params.a_decel << "\n" <<
+                "dist_accel: " << params.dist_accel << "\n" <<
+                "dist_decel: " << params.dist_decel << "\n" <<
+                "dist_cruise: " << params.dist_cruise << "\n" <<
+                "speed_before_accel: " << params.speed_before_accel << "\n" <<
+                "speed_before_decel: " << params.speed_before_decel);
+  return params;
+}
 
 }  // namespace lci_strategic_plugin
