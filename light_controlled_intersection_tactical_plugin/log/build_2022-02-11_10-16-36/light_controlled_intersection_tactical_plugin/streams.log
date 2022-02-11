@@ -1,0 +1,35 @@
+[0.022s] Invoking command in '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin': PS1=\t \u@\h \[\033[32m\]\w\[\033[33m\]$(parse_git_branch)\[\033[00m\] $ /usr/bin/cmake /workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin -DCATKIN_INSTALL_INTO_PREFIX_ROOT=0 -DCMAKE_INSTALL_PREFIX=/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/install/light_controlled_intersection_tactical_plugin
+[0.082s] -- The C compiler identification is GNU 9.3.0
+[0.137s] -- The CXX compiler identification is GNU 9.3.0
+[0.141s] -- Check for working C compiler: /usr/bin/cc
+[0.207s] -- Check for working C compiler: /usr/bin/cc -- works
+[0.208s] -- Detecting C compiler ABI info
+[0.272s] -- Detecting C compiler ABI info - done
+[0.284s] -- Detecting C compile features
+[0.284s] -- Detecting C compile features - done
+[0.286s] -- Check for working CXX compiler: /usr/bin/c++
+[0.366s] -- Check for working CXX compiler: /usr/bin/c++ -- works
+[0.366s] -- Detecting CXX compiler ABI info
+[0.435s] -- Detecting CXX compiler ABI info - done
+[0.446s] -- Detecting CXX compile features
+[0.446s] -- Detecting CXX compile features - done
+[0.463s] CMake Error at CMakeLists.txt:20 (find_package):
+[0.463s]   By not providing "Findcarma_cmake_common.cmake" in CMAKE_MODULE_PATH this
+[0.463s]   project has asked CMake to find a package configuration file provided by
+[0.463s]   "carma_cmake_common", but CMake did not find one.
+[0.463s] 
+[0.463s]   Could not find a package configuration file provided by
+[0.463s]   "carma_cmake_common" with any of the following names:
+[0.463s] 
+[0.463s]     carma_cmake_commonConfig.cmake
+[0.463s]     carma_cmake_common-config.cmake
+[0.464s] 
+[0.464s]   Add the installation prefix of "carma_cmake_common" to CMAKE_PREFIX_PATH or
+[0.464s]   set "carma_cmake_common_DIR" to a directory containing one of the above
+[0.464s]   files.  If "carma_cmake_common" provides a separate development package or
+[0.464s]   SDK, be sure it has been installed.
+[0.464s] 
+[0.464s] 
+[0.464s] -- Configuring incomplete, errors occurred!
+[0.464s] See also "/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin/CMakeFiles/CMakeOutput.log".
+[0.466s] Invoked command in '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin' returned '1': PS1=\t \u@\h \[\033[32m\]\w\[\033[33m\]$(parse_git_branch)\[\033[00m\] $ /usr/bin/cmake /workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin -DCATKIN_INSTALL_INTO_PREFIX_ROOT=0 -DCMAKE_INSTALL_PREFIX=/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/install/light_controlled_intersection_tactical_plugin

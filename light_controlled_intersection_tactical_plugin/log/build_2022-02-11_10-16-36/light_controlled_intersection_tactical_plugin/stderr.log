@@ -1,0 +1,17 @@
+CMake Error at CMakeLists.txt:20 (find_package):
+  By not providing "Findcarma_cmake_common.cmake" in CMAKE_MODULE_PATH this
+  project has asked CMake to find a package configuration file provided by
+  "carma_cmake_common", but CMake did not find one.
+
+  Could not find a package configuration file provided by
+  "carma_cmake_common" with any of the following names:
+
+    carma_cmake_commonConfig.cmake
+    carma_cmake_common-config.cmake
+
+  Add the installation prefix of "carma_cmake_common" to CMAKE_PREFIX_PATH or
+  set "carma_cmake_common_DIR" to a directory containing one of the above
+  files.  If "carma_cmake_common" provides a separate development package or
+  SDK, be sure it has been installed.
+
+
