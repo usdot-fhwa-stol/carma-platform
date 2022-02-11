@@ -26,10 +26,12 @@ min_maneuver_planning_period : 15.1
 strategic_plugin_name : LCIStrategicPlugin
 
 # String: The name of the tactical plugin to use for Lane Following trajectory planning
+#         This plugin is used to apply trajectory smoothing algorithm BEFORE entering the intersection if within activation distance
 lane_following_plugin_name : LightControlledIntersectionTacticalPlugin
 
 # String: The name of the plugin to use for stop and wait trajectory planning
 stop_and_wait_plugin_name : StopAndWaitPlugin
 
 # String: The name of the plugin to use for intersection transit trajectory planning
+#         This plugin is used to travel INSIDE the intersection where there is no trajectory smoothing algorithm active
 intersection_transit_plugin_name : IntersectionTransitPlugin

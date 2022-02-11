@@ -370,14 +370,13 @@ public:
   virtual std::vector<lanelet::CarmaTrafficSignalPtr> getSignalsAlongRoute(const lanelet::BasicPoint2d& loc) const = 0;
 
   /**
-   * \brief  TODO
-   * The traffic lights along a route and the next traffic light ahead of us on the route specifically, 
-   * so a sorted list (by downtrack distance) of traffic lights on the route ahead of us thus eliminating those behind the vehicle.
+   * \brief Returns the entry and exit lanelet of the signal along the SHORTEST PATH of route. This is useful if traffic_signal controls
+   *        both directions in an intersection for example. 
    *
-   * \param loc location
-   * \throw std::invalid_argument if the map is not set, contains no lanelets, or route is not set
+   * \param traffic_signal traffic signal of interest
+   * \throw std::invalid_argument if nullptr is passed in traffic_signal
    *
-   * \return list of traffic lights along the current route
+   * \return pair of entry and exit lanelet of the signal along the route. boost::none if the given signal doesn't have both entry/exit pair along the shortest path route.
    */
   virtual boost::optional<std::pair<lanelet::ConstLanelet, lanelet::ConstLanelet>> getEntryExitOfSignalAlongRoute(const lanelet::CarmaTrafficSignalPtr& traffic_signal) const = 0;
    

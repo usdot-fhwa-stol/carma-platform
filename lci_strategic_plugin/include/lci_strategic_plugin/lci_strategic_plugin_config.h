@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -59,12 +59,14 @@ struct LCIStrategicPluginConfig
   std::string strategic_plugin_name = "LCIStrategicPlugin";
 
   //! The name of the tactical plugin to use for Lane Following trajectory planning
+  //! This plugin is used to apply trajectory smoothing algorithm BEFORE entering the intersection if within activation distance
   std::string lane_following_plugin_name = "LightControlledIntersectionTacticalPlugin";
 
   //! The name of the plugin to use for stop and wait trajectory planning
   std::string stop_and_wait_plugin_name = "StopAndWaitPlugin";
 
   //! The name of the plugin to use for intersection transit trajectory planning
+  //! This plugin is used to travel INSIDE the intersection where there is no trajectory smoothing algorithm active
   std::string intersection_transit_plugin_name = "IntersectionTransitPlugin";
 };
 }  // namespace localizer
