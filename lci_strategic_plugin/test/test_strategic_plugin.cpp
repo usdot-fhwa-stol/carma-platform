@@ -79,7 +79,7 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
   ASSERT_NEAR(0.0, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.start_time.toSec(), 0.00001);
   ASSERT_NEAR(req.veh_logitudinal_velocity, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.start_speed, 0.00001);
   ASSERT_NEAR(26.2, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.end_time.toSec(), 0.001);
-  ASSERT_NEAR(295, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.end_dist, 0.0001);
+  ASSERT_NEAR(300, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.end_dist, 0.0001);
   // check trajectory smoothing parameters:
   ASSERT_EQ("Carma/light_controlled_intersection", resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.parameters.string_valued_meta_data.front());
   ASSERT_NEAR(0.717332, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.parameters.float_valued_meta_data[0], 0.001);
@@ -92,7 +92,7 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
   ASSERT_EQ(4, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.parameters.int_valued_meta_data[0]);
 
   ASSERT_EQ(cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT, resp.new_plan.maneuvers[1].type);
-  ASSERT_EQ(295, resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.start_dist );
+  ASSERT_EQ(300, resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.start_dist );
   ASSERT_NEAR(26.2, resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.start_time.toSec(), 0.00001);
   ASSERT_NEAR(11.176, resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.start_speed, 0.00001);
   ASSERT_NEAR(79.88647, resp.new_plan.maneuvers[1].intersection_transit_straight_maneuver.end_time.toSec(), 0.001);
@@ -114,7 +114,7 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
   ASSERT_NEAR(0.0, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_time.toSec(), 0.00001);
   ASSERT_NEAR(req.veh_logitudinal_velocity, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.start_speed, 0.00001);
   ASSERT_NEAR(15.1, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.end_time.toSec(), 0.001);
-  ASSERT_NEAR(295, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.end_dist, 0.0001);
+  ASSERT_NEAR(300, resp.new_plan.maneuvers[0].stop_and_wait_maneuver.end_dist, 0.0001);
 
   ROS_WARN(">>>>>>>>>>>>>>>>>>>>>>>Waiting test ");
   req = cav_srvs::PlanManeuversRequest();
@@ -209,7 +209,7 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
   ASSERT_NEAR(20.8446, resp.new_plan.maneuvers[1].stop_and_wait_maneuver.start_time.toSec(), 0.01);
   ASSERT_NEAR(2.40904, resp.new_plan.maneuvers[1].stop_and_wait_maneuver.start_speed, 0.01);
   ASSERT_NEAR(35.9446, resp.new_plan.maneuvers[1].stop_and_wait_maneuver.end_time.toSec(), 0.01);
-  ASSERT_NEAR(295, resp.new_plan.maneuvers[1].stop_and_wait_maneuver.end_dist, 0.1);
+  ASSERT_NEAR(300, resp.new_plan.maneuvers[1].stop_and_wait_maneuver.end_dist, 0.1);
   ASSERT_NEAR(0.0957666, resp.new_plan.maneuvers[1].stop_and_wait_maneuver.parameters.float_valued_meta_data[1] , 0.001);
 
   ROS_WARN(">>>>>>>>>>>>>>>>>>>>>>>>>>>RESET: In range test: GREEN: Algo failed and NOT able to stop");
@@ -228,7 +228,7 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
   ASSERT_NEAR(0.0, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.start_time.toSec(), 0.00001);
   ASSERT_NEAR(req.veh_logitudinal_velocity, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.start_speed, 0.00001);
   ASSERT_NEAR(2.7412, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.end_time.toSec(), 0.001);
-  ASSERT_NEAR(295, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.end_dist, 0.01);
+  ASSERT_NEAR(300, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.end_dist, 0.01);
   // trajectory smoothing part
   ASSERT_NEAR(0.0, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.parameters.float_valued_meta_data[0], 0.001);
   ASSERT_NEAR(-1.5, resp.new_plan.maneuvers[0].intersection_transit_straight_maneuver.parameters.float_valued_meta_data[1], 0.001);
