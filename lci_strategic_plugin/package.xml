@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--  
- Copyright (C) 2021 LEIDOS.
+ Copyright (C) 2022 LEIDOS.
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  use this file except in compliance with the License. You may obtain a copy of
  the License at
@@ -16,7 +16,7 @@
 <package format="3">
   <name>lci_strategic_plugin</name>
   <version>1.0.0</version>
-  <description>The strategic plugin generates maneuvers to make the vehicle go through the light controlled intersection. </description>
+  <description>The strategic plugin generates maneuvers to make the vehicle adjust its speed before the intersection and go through the light controlled intersection. </description>
   <maintainer email="carma@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
   <author email="carma@dot.gov">carma</author>

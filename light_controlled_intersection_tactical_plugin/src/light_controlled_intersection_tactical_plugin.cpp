@@ -146,8 +146,9 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
 
 void LightControlledIntersectionTacticalPlugin::apply_optimized_target_speed_profile(const cav_msgs::Maneuver& maneuver, const double starting_speed, std::vector<PointSpeedPair>& points_and_target_speeds)
 {
-  if(GET_MANEUVER_PROPERTY(maneuver,parameters.float_valued_meta_data).size() < 2){
-    throw std::invalid_argument("Manuever timestamp and desired entry time into the signalized intersection are not provided in the meta data.");
+  if(GET_MANEUVER_PROPERTY(maneuver,parameters.float_valued_meta_data).size() < 7 || 
+      GET_MANEUVER_PROPERTY(maneuver,parameters.int_valued_meta_data).size() < 1 ){
+    throw std::invalid_argument("There must be 7 float_valued_meta_data and 1 int_valued_meta_data to apply algorithm's parameters.");
   }
 
   double a_accel = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);

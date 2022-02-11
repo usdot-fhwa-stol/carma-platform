@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -396,7 +396,7 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_accel_cruis
   params.dist_cruise = dist_cruise;
   params.dist_decel = dist_decel;
   params.speed_before_decel = speed_before_decel;
-  
+
   return params;
 }
 
