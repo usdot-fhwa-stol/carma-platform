@@ -1,0 +1,68 @@
+[0.299s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'test']
+[0.299s] DEBUG:colcon:Parsed command line arguments: Namespace(abort_on_error=False, base_paths=['.'], build_base='build', ctest_args=None, event_handlers=None, executor='parallel', ignore_user_meta=False, install_base='install', log_base=None, log_level=None, main=<bound method TestVerb.main of <colcon_core.verb.test.TestVerb object at 0x7fdc563f0730>>, merge_install=False, metas=['./colcon.meta'], packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_end=None, packages_ignore=None, packages_ignore_regex=None, packages_select=None, packages_select_build_failed=False, packages_select_by_dep=None, packages_select_regex=None, packages_select_test_failures=False, packages_skip=None, packages_skip_build_finished=False, packages_skip_by_dep=None, packages_skip_regex=None, packages_skip_test_passed=False, packages_skip_up_to=None, packages_start=None, packages_up_to=None, packages_up_to_regex=None, parallel_workers=6, paths=None, pytest_args=None, pytest_with_coverage=False, python_testing=None, retest_until_fail=0, retest_until_pass=0, return_code_on_test_failure=False, test_result_base=None, unittest_args=None, verb_extension=<colcon_core.verb.test.TestVerb object at 0x7fdc563f0730>, verb_name='test', verb_parser=<colcon_defaults.argument_parser.defaults.DefaultArgumentsDecorator object at 0x7fdc56409190>)
+[0.317s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[0.317s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[0.317s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[0.317s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[0.317s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[0.318s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[0.318s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin'
+[0.318s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[0.318s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[0.318s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[0.318s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[0.318s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[0.318s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[0.318s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[0.318s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[0.318s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[0.330s] DEBUG:colcon.colcon_core.package_identification:Package '.' with type 'ros.catkin' and name 'light_controlled_intersection_tactical_plugin'
+[0.330s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[0.330s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[0.330s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[0.330s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[0.330s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[0.359s] Level 5:colcon.colcon_core.verb:set package 'light_controlled_intersection_tactical_plugin' test argument 'ctest_args' from command line to 'None'
+[0.359s] Level 5:colcon.colcon_core.verb:set package 'light_controlled_intersection_tactical_plugin' test argument 'python_testing' from command line to 'None'
+[0.360s] Level 5:colcon.colcon_core.verb:set package 'light_controlled_intersection_tactical_plugin' test argument 'pytest_args' from command line to 'None'
+[0.360s] Level 5:colcon.colcon_core.verb:set package 'light_controlled_intersection_tactical_plugin' test argument 'pytest_with_coverage' from command line to 'False'
+[0.360s] Level 5:colcon.colcon_core.verb:set package 'light_controlled_intersection_tactical_plugin' test argument 'unittest_args' from command line to 'None'
+[0.360s] Level 5:colcon.colcon_core.verb:set package 'light_controlled_intersection_tactical_plugin' test argument 'retest_until_pass' from command line to '0'
+[0.360s] Level 5:colcon.colcon_core.verb:set package 'light_controlled_intersection_tactical_plugin' test argument 'retest_until_fail' from command line to '0'
+[0.360s] DEBUG:colcon.colcon_core.verb.test:Testing package 'light_controlled_intersection_tactical_plugin' with the following arguments: {'build_base': '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin', 'ctest_args': None, 'install_base': '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/install/light_controlled_intersection_tactical_plugin', 'path': '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin', 'pytest_args': None, 'pytest_with_coverage': False, 'python_testing': None, 'retest_until_fail': 0, 'retest_until_pass': 0, 'test_result_base': None, 'unittest_args': None}
+[0.360s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[0.362s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[0.362s] INFO:colcon.colcon_ros.task.catkin.test:Testing ROS package in '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin' with build type 'catkin'
+[0.362s] Level 1:colcon.colcon_core.shell:create_environment_hook('light_controlled_intersection_tactical_plugin', 'ros_package_path')
+[0.366s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[0.367s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin/devel/share/light_controlled_intersection_tactical_plugin/hook/ros_package_path.ps1'
+[0.368s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin/devel/share/light_controlled_intersection_tactical_plugin/hook/ros_package_path.dsv'
+[0.368s] INFO:colcon.colcon_core.shell:Creating environment hook '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin/devel/share/light_controlled_intersection_tactical_plugin/hook/ros_package_path.sh'
+[0.369s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(light_controlled_intersection_tactical_plugin)
+[0.372s] Level 1:colcon.colcon_core.environment:checking '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin/devel' for CMake module files
+[0.373s] Level 1:colcon.colcon_core.environment:checking '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin/devel' for CMake config files
+[0.373s] Level 1:colcon.colcon_core.environment:checking '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin/devel/bin'
+[0.373s] Level 1:colcon.colcon_core.environment:checking '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin/devel/lib/pkgconfig/light_controlled_intersection_tactical_plugin.pc'
+[0.373s] Level 1:colcon.colcon_core.environment:checking '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin/devel/lib/python3.8/site-packages'
+[0.374s] INFO:colcon.colcon_core.shell:Creating package script '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin/devel/share/light_controlled_intersection_tactical_plugin/package.ps1'
+[0.375s] INFO:colcon.colcon_core.shell:Creating package descriptor '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin/devel/share/light_controlled_intersection_tactical_plugin/package.dsv'
+[0.376s] INFO:colcon.colcon_core.shell:Creating package script '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin/devel/share/light_controlled_intersection_tactical_plugin/package.sh'
+[0.377s] INFO:colcon.colcon_core.shell:Creating package script '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin/devel/share/light_controlled_intersection_tactical_plugin/package.bash'
+[0.378s] INFO:colcon.colcon_core.shell:Creating package script '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin/build/light_controlled_intersection_tactical_plugin/devel/share/light_controlled_intersection_tactical_plugin/package.zsh'
+[0.378s] INFO:colcon.colcon_cmake.task.cmake.test:Testing CMake package in '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin'
+[0.379s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.379s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.383s] WARNING:colcon.colcon_ros.prefix_path.catkin:The path '/workspaces/carma/devel' in the environment variable CMAKE_PREFIX_PATH doesn't exist
+[0.383s] WARNING:colcon.colcon_ros.prefix_path.catkin:The path '/home/carma/carma_ws/carma/devel' in the environment variable CMAKE_PREFIX_PATH doesn't exist
+[0.383s] DEBUG:colcon.colcon_core.shell:Ignoring prefix path '/opt/ros/noetic'
+[0.407s] Level 5:colcon.colcon_cmake.task.cmake.test:No ctests found in '/workspaces/carma/src/carma-platform/light_controlled_intersection_tactical_plugin'
+[0.407s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[0.407s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[0.407s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with '0'
+[0.408s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[0.415s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.notify_send': Could not find 'notify-send'
+[0.415s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.terminal_notifier': Not used on non-Darwin systems
+[0.415s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.win32': Not used on non-Windows systems
+[0.415s] INFO:colcon.colcon_notification.desktop_notification:Sending desktop notification using 'notify2'
+[0.415s] DEBUG:colcon.colcon_notification.desktop_notification.notify2:Failed to initialize notify2: org.freedesktop.DBus.Error.NotSupported: Unable to autolaunch a dbus-daemon without a $DISPLAY for X11
+[0.415s] DEBUG:colcon.colcon_core.event_reactor:joined thread
