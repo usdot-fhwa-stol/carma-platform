@@ -115,18 +115,18 @@ TEST_F(LCIStrategicTestFixture, getLaneletsBetweenWithException)
   LCIStrategicPluginConfig config;
   LCIStrategicPlugin lcip(cmw_, config);
 
-  auto result = lcip.getLaneletsBetweenWithException(24, 26, true);
+  auto result = lcip.getLaneletsBetweenWithException(290, 310, true);
 
   ASSERT_EQ(2, result.size());
   ASSERT_EQ(1200, result[0].id());
   ASSERT_EQ(1201, result[1].id());
 
-  result = lcip.getLaneletsBetweenWithException(24, 24, true);
+  result = lcip.getLaneletsBetweenWithException(290, 290, true);
 
   ASSERT_EQ(1, result.size());
   ASSERT_EQ(1200, result[0].id());
 
-  ASSERT_THROW(lcip.getLaneletsBetweenWithException(24, 23, true), std::invalid_argument);
+  ASSERT_THROW(lcip.getLaneletsBetweenWithException(240, 230, true), std::invalid_argument);
 }
 
 TEST_F(LCIStrategicTestFixture, composeTrajectorySmoothingManeuverMessage)

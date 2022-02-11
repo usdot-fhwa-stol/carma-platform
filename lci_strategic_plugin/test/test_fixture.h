@@ -24,7 +24,7 @@
 namespace lci_strategic_plugin
 {
 /**
- * \brief TODO
+ * \brief LCIStrategic plugin's test world map
  */
 class LCIStrategicTestFixture : public ::testing::Test
 {
@@ -57,8 +57,6 @@ protected:
 
     carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, cmw_);
   }
-
-  // void TearDown() override {}
 
   std::shared_ptr<carma_wm::CARMAWorldModel> cmw_;
 };
