@@ -49,7 +49,7 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
 
   // Light will be located on lanelet 1200 (300m) and control lanelet 1202, 1203
   lanelet::Id traffic_light_id = lanelet::utils::getId();
-  carma_wm::test::addTrafficLight(cmw_, traffic_light_id, 1200, { 1203 });
+  carma_wm::test::addTrafficLight(cmw_, traffic_light_id, {1200}, { 1203 });
 
   ROS_WARN("Out of range test ");
   req.header.stamp = ros::Time(0);
