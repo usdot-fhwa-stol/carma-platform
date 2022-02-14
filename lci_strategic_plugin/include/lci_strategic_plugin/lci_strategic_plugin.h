@@ -569,6 +569,26 @@ private:
   FRIEND_TEST(LCIStrategicTestFixture, composeIntersectionTransitMessage);
   FRIEND_TEST(LCIStrategicTestFixture, composeTrajectorySmoothingManeuverMessage);
   FRIEND_TEST(LCIStrategicTestFixture, findSpeedLimit);
+  // Algo Unit Tests
+  FRIEND_TEST(LCIStrategicTestFixture, calc_estimated_entry_time_left);
+  FRIEND_TEST(LCIStrategicTestFixture, determine_speed_profile_case);
+  FRIEND_TEST(LCIStrategicTestFixture, inflection_speeds_calc);
+  FRIEND_TEST(LCIStrategicTestFixture, estimate_distance_to_stop);
+  FRIEND_TEST(LCIStrategicTestFixture, estimate_time_to_stop);
+  FRIEND_TEST(LCIStrategicTestFixture, get_distance_to_accel_or_decel_twice);
+  FRIEND_TEST(LCIStrategicTestFixture, get_distance_to_accel_or_decel_once);
+  FRIEND_TEST(LCIStrategicTestFixture, get_nearest_green_entry_time);
+  FRIEND_TEST(LCIStrategicTestFixture, get_earliest_entry_time);
+  FRIEND_TEST(LCIStrategicTestFixture, calc_estimated_entry_time_left);
+  FRIEND_TEST(LCIStrategicTestFixture, get_parameters_for_accel_cruise_decel_speed_profile);
+  FRIEND_TEST(LCIStrategicTestFixture, get_parameters_for_decel_cruise_accel_speed_profile);
+  FRIEND_TEST(LCIStrategicTestFixture, handleFailureCase);
+  FRIEND_TEST(LCIStrategicTestFixture, handleStopping);
+
+
+
+
+
 
 };
 }  // namespace lci_strategic_plugin

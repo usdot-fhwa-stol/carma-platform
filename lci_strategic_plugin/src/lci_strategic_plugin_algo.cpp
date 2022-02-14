@@ -37,7 +37,7 @@ double LCIStrategicPlugin::get_distance_to_accel_or_decel_twice(double free_flow
 
 double LCIStrategicPlugin::get_distance_to_accel_or_decel_once (double current_speed, double departure_speed, double max_accel, double max_decel) const
 {
-  if (current_speed <= departure_speed)
+  if (current_speed <= departure_speed + epsilon_)
   {
     return (std::pow(departure_speed, 2) - std::pow(current_speed, 2))/(2 * max_accel);
   }
@@ -543,12 +543,21 @@ TrajectorySmoothingParameters LCIStrategicPlugin::handleFailureCase(double start
     params.modified_remaining_time = (params.modified_departure_speed - starting_speed) / max_comfort_accel_;
     params.case_num = SpeedProfileCase::DECEL_ACCEL;
   }
+  // handle hard failure case such as nan
+  if (isnan(params.modified_departure_speed) || params.modified_departure_speed < - epsilon_ ||
+      params.modified_departure_speed > 35.7632 ) //80_mph
+  {
+    throw std::invalid_argument("Calculated departure speed is invalid: " + std::to_string(params.modified_departure_speed));
+  }
   ROS_WARN_STREAM("Maneuver needed to be modified (due to negative dist) with new distance and accelerations: \n" << 
                 "a_acc: " << params.a_accel << "\n" <<
                 "a_dec: " << params.a_decel << "\n" <<
                 "dist_accel: " << params.dist_accel << "\n" <<
                 "dist_decel: " << params.dist_decel << "\n" <<
                 "dist_cruise: " << params.dist_cruise << "\n" <<
+                "modified_departure_speed: " << params.modified_departure_speed << "\n" <<
+                "modified_remaining_time: " << params.modified_remaining_time << "\n" <<
+                "case_num: " << params.case_num << "\n" <<
                 "speed_before_accel: " << params.speed_before_accel << "\n" <<
                 "speed_before_decel: " << params.speed_before_decel);
   return params;
