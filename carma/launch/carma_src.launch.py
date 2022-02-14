@@ -39,8 +39,18 @@ def generate_launch_description():
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     vehicle_calibration_dir = LaunchConfiguration('vehicle_calibration_dir')
+    declare_vehicle_calibration_dir_arg = DeclareLaunchArgument(
+        name = 'vehicle_calibration_dir', 
+        default_value = "/opt/carma/vehicle/calibration",
+        description = "Path to folder containing vehicle calibration directories"
+    )
 
     vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
+    declare_vehicle_config_dir_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_dir', 
+        default_value = "/opt/carma/vehicle/config",
+        description = "Path to file containing vehicle config directories"
+    )
 
     # Declare the vehicle_calibration_dir launch argument
     vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
@@ -101,6 +111,8 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        declare_vehicle_calibration_dir_arg,
+        declare_vehicle_config_dir_arg,
         declare_vehicle_characteristics_param_file_arg,
         declare_vehicle_config_param_file_arg,
         transform_group,
