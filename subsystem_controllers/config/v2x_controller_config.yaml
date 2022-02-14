@@ -14,8 +14,8 @@
     # Required subsystem controller nodes for the overall system to be functional
     # The V2X stack requires the message node and j2735_convertor node to be functional
     required_subsystem_nodes: 
-      - /message/cpp_message
-      - /message/j2735_convertor
+      - /message/cpp_message_node
+      - /message/j2735_convertor_node
 
     # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
     full_subsystem_required: true
