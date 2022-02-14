@@ -17,6 +17,6 @@
     required_subsystem_nodes:
       - /environment/environment_perception_controller
       #- /localization/localization_controller # TODO add these back in as subsystems are ported
-      #- /message/v2x_controller
+      - /message/v2x_controller
       #- /guidance/guidance_controller
       #- /hardware_interface/drivers_controller

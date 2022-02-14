@@ -100,7 +100,32 @@ def generate_launch_description():
                     vehicle_characteristics_param_file,
                     vehicle_config_param_file
                 ]
-            )
+            ),
+            ComposableNode(
+                package='cpp_message',
+                plugin='cpp_message::Node',
+                name='cpp_message_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('cpp_message', env_log_levels) }
+                ],
+                remappings=[
+                    ("inbound_binary_msg", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/comms/inbound_binary_msg" ] ),
+                    ("outbound_binary_msg", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/comms/outbound_binary_msg" ] ),
+                ],
+            ),
+            ComposableNode(
+                package='j2735_convertor',
+                plugin='j2735_convertor::Node',
+                name='j2735_convertor_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('j2735_convertor', env_log_levels) }
+                ],
+                remappings=[
+                    ("outgoing_bsm", "bsm_outbound" ),
+                ],
+            ),
         ]
     )
 
@@ -114,22 +139,8 @@ def generate_launch_description():
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
 
-    # Add j2735_convertor node
-    j2735_convertor_pkg = get_package_share_directory('j2735_convertor')
-    j2735_convertor_group = GroupAction(
-        actions = [
-            # Launch SSC
-            set_remap.SetRemap('outgoing_bsm','bsm_outbound'),
-                        
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(['/', j2735_convertor_pkg, '/launch','/carma_speed_steering_control.launch.py']),
-            ),
-        ]
-    )
-
     return LaunchDescription([        
         carma_v2x_container,
-        subsystem_controller,
-        j2735_convertor_group
+        subsystem_controller
     ]) 
 
