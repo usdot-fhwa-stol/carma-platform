@@ -37,7 +37,7 @@ def generate_launch_description():
     )
 
     subsystem_controller_param_file = os.path.join(
-        get_package_share_directory('subsystem_controllers'), 'config/v2x_controller_config.yaml')
+        get_package_share_directory('subsystem_controllers'), 'config/drivers_controller_config.yaml')
     
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
