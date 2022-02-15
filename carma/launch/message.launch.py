@@ -22,6 +22,7 @@ from launch.substitutions import EnvironmentVariable
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument
 
 import os
 
@@ -36,6 +37,8 @@ def generate_launch_description():
     Launch V2X subsystem nodes.
     """
 
+    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
+
     subsystem_controller_param_file = os.path.join(
         get_package_share_directory('subsystem_controllers'), 'config/v2x_controller_config.yaml')
 
@@ -46,10 +49,19 @@ def generate_launch_description():
         get_package_share_directory('bsm_generator'), 'config/parameters.yaml')
 
     vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
+    declare_vehicle_characteristics_param_file_arg = DeclareLaunchArgument(
+        name = 'vehicle_characteristics_param_file', 
+        default_value = "/opt/carma/vehicle/calibration/identifiers/UniqueVehicleParams.yaml",
+        description = "Path to file containing unique vehicle calibrations"
+    )
+    
     
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
-
-    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
+    declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_param_file',
+        default_value = "/opt/carma/vehicle/config/VehicleConfigParams.yaml",
+        description = "Path to file contain vehicle configuration parameters"
+    )
 
     # Nodes
     carma_v2x_container = ComposableNodeContainer(
@@ -139,7 +151,9 @@ def generate_launch_description():
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
 
-    return LaunchDescription([        
+    return LaunchDescription([
+        declare_vehicle_config_param_file_arg,
+        declare_vehicle_characteristics_param_file_arg,        
         carma_v2x_container,
         subsystem_controller
     ]) 
