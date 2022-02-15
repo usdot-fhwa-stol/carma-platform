@@ -1,4 +1,4 @@
-# Copyright (C) 2021 LEIDOS.
+# Copyright (C) 2019-2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -12,9 +12,9 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-# Double: Node spin rate
-# Units: Hz
-spin_rate: 10.0
+# Int: Timer callback rate
+# Units: millisecond
+timer_cb_rate: 100
 
 # Trajectory visualizer marker's arrow shaft diameter
 x: 0.5
