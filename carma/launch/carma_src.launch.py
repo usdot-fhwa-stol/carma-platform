@@ -68,6 +68,29 @@ def generate_launch_description():
         description = "Path to file contain vehicle configuration parameters"
     )
 
+    # Startup Drivers With Main CARMA System
+    launch_drivers = LaunchConfiguration('launch_drivers')
+    declare_launch_drivers = DeclareLaunchArgument(
+        name='launch_drivers', 
+        default_value='false',
+        description="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"
+    )
+
+    
+    mock_drivers = LaunchConfiguration('mock_drivers')
+    declare_mock_drivers = DeclareLaunchArgument(
+        name='mock_drivers',
+        default_value='false',
+        description='List of driver node base names which will be launched as mock drivers'
+    )
+
+    vehicle_ssc_param_dir = LaunchConfiguration('vehicle_ssc_param_dir')  
+    declare_vehicle_ssc_param_dir_arg = DeclareLaunchArgument(
+        name='vehicle_ssc_param_dir',
+        default_value=get_package_share_directory('ssc_pm_lexus')
+        description="Path to directory containing ssc launch file and license"
+    )
+
     # Nodes
 
     transform_group = GroupAction(
@@ -98,6 +121,21 @@ def generate_launch_description():
                     'vehicle_config_param_file' : vehicle_config_param_file
                     }.items()
             ),
+        ]
+    )
+
+    # Hardware Interface Stack 
+    hardware_interface_group = GroupAction(
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_INTR_NS', default_value='hardware_interface')),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/hardware_interface.launch.py']),
+            ),
+            launch_arguments = {
+                'mock_drivers' : mock_drivers,
+                'launch_drivers' : launch_drivers,
+                'vehicle_ssc_param_dir' : vehicle_ssc_param_dir
+            }.items()
         ]
     )
 
