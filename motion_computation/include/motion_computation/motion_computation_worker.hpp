@@ -14,8 +14,6 @@
  * the License.
  */
 
-#pragma once
-
 #ifndef MOTION_COMPUTATION_WORKER_H
 #define MOTION_COMPUTATION_WORKER_H
 
