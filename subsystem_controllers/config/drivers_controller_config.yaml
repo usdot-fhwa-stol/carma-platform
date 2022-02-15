@@ -12,12 +12,9 @@
     subsystem_namespace: /hardware_interface
 
     # Required subsystem controller nodes for the overall system to be functional
-    # Since CARMA assumes connected vehicles in most cases the current minimum node set is from motion prediction up
+    # TODO Move this parameter to carma config in some capacity
     required_subsystem_nodes:
-      - /hardware_interface/ssc_interface_wrapper
-      - /hardware_interface/velodyne_lidar_driver_wrapper
-      - /hardware_interface/novatel_gps_nodelet_wrapper
-      - /hardware_interface/camera
+      - /hardware_interface/dsrc_driver_node
 
     # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
     full_subsystem_required: true

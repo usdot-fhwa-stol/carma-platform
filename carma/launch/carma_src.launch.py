@@ -165,6 +165,18 @@ def generate_launch_description():
         ]
     )
 
+    drivers_group = GroupAction(
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_INTR_NS', default_value='hardware_interface')),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/drivers.launch.py']),
+                launch_arguments = { 
+                    'vehicle_config_param_file' : vehicle_config_param_file
+                    }.items()
+            ),
+        ]
+    )
+
     system_controller = Node(
         package='system_controller',
         name='system_controller',
@@ -184,6 +196,7 @@ def generate_launch_description():
         declare_strategic_plugins_to_validate,
         declare_tactical_plugins_to_validate,
         declare_control_plugins_to_validate,
+        drivers_group,
         transform_group,
         environment_group,
         localization_group,
