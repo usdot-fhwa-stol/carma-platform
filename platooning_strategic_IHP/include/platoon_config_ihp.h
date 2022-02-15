@@ -66,6 +66,7 @@ struct PlatoonPluginConfig
   double inter_tau = 1.5; // Inter-platoon time gap, refer to bumper to bumper gap time, in s.
   double intra_tau = 0.6; // Intra-platoon time gao, refer to bumper to bumper gap time, in s.
   double gap_weight = 0.9; // Weighted ratio for time-gap based calculation, unitless.
+  bool test_front_join = false;  //Flag to enable/disable front join functionality with two vehicles.
   //------------------------------------------------------------------------------------------------
 
 
