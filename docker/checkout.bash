@@ -46,8 +46,8 @@ if [[ "$BRANCH" = "develop" ]]; then
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch $BRANCH
 else
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch feature/ucla_ihp
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch develop
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch release/fiesta
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch release/fiesta
 fi
 
 # add astuff messages
