@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,59 +13,108 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "motion_computation_node.h"
-namespace object{
+#include "motion_computation/motion_computation_node.hpp"
 
-  using std::placeholders::_1;
+namespace motion_computation
+{
+  namespace std_ph = std::placeholders;
 
-  MotionComputationNode::MotionComputationNode(): motion_worker_(std::bind(&MotionComputationNode::publishObject, this, _1)){};
-
-  void MotionComputationNode::initialize()
+  MotionComputationNode::MotionComputationNode(const rclcpp::NodeOptions &options)
+      : carma_ros2_utils::CarmaLifecycleNode(options),
+        motion_worker_(
+          std::bind(&MotionComputationNode::publishObject, this, std_ph::_1),
+          get_node_logging_interface()
+        )
   {
+    // Create initial config
+    config_ = Config();
+
+    // Declare parameters
+    config_.prediction_time_step = declare_parameter<double>("prediction_time_step", config_.prediction_time_step);
+    config_.mobility_path_time_step = declare_parameter<double>("mobility_path_time_step", config_.mobility_path_time_step);
+    config_.prediction_period = declare_parameter<double>("prediction_period", config_.prediction_period);
+    config_.cv_x_accel_noise = declare_parameter<double>("cv_x_accel_noise", config_.cv_x_accel_noise);
+    config_.cv_y_accel_noise = declare_parameter<double>("cv_y_accel_noise", config_.cv_y_accel_noise);
+    config_.prediction_process_noise_max = declare_parameter<double>("prediction_process_noise_max", config_.prediction_process_noise_max);
+    config_.prediction_confidence_drop_rate = declare_parameter<double>("prediction_confidence_drop_rate", config_.prediction_confidence_drop_rate);
+    config_.external_object_prediction_mode = declare_parameter<int>("external_object_prediction_mode", config_.external_object_prediction_mode);
+  }
+
+  rcl_interfaces::msg::SetParametersResult MotionComputationNode::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
+  {
+    auto error = update_params<double>({
+        {"prediction_time_step", config_.prediction_time_step},
+        {"mobility_path_time_step", config_.mobility_path_time_step},
+        {"prediction_period", config_.prediction_period},
+        {"cv_x_accel_noise", config_.cv_x_accel_noise},
+        {"cv_y_accel_noise", config_.cv_y_accel_noise},
+        {"prediction_process_noise_max", config_.prediction_process_noise_max},
+        {"prediction_confidence_drop_rate", config_.prediction_confidence_drop_rate}
+    }, parameters);
+    auto error_2 = update_params<int>({{"external_object_prediction_mode", config_.external_object_prediction_mode}}, parameters);
+        
+    rcl_interfaces::msg::SetParametersResult result;
+
+    result.successful = !error && !error_2;
+
+    return result;
+  }
+
+  carma_ros2_utils::CallbackReturn MotionComputationNode::handle_on_configure(const rclcpp_lifecycle::State &)
+  {
+    RCLCPP_INFO_STREAM(get_logger(), "MotionComputationNode trying to configure");
+
+    // Reset config
+    config_ = Config();
+
     // Load parameters
-    double step = 0.1;
-    double mobility_step = 0.1;
-    double period = 2.0;
-    double ax = 9.0;
-    double ay = 9.0;
-    double process_noise_max = 1000.0;
-    double drop_rate = 0.9;
-    int external_object_prediction_mode = 1; //sensor only mode
+    get_parameter<double>("prediction_time_step", config_.prediction_time_step);
+    get_parameter<double>("mobility_path_time_step", config_.mobility_path_time_step);
+    get_parameter<double>("prediction_period", config_.prediction_period);
+    get_parameter<double>("cv_x_accel_noise", config_.cv_x_accel_noise);
+    get_parameter<double>("cv_y_accel_noise", config_.cv_y_accel_noise);
+    get_parameter<double>("prediction_process_noise_max", config_.prediction_process_noise_max);
+    get_parameter<double>("prediction_confidence_drop_rate", config_.prediction_confidence_drop_rate);
+    get_parameter<int>("external_object_prediction_mode", config_.external_object_prediction_mode);
 
-    pnh_.param<double>("prediction_time_step", step, step);
-    pnh_.param<double>("mobility_path_time_step", mobility_step, mobility_step);
-    pnh_.param<double>("prediction_period", period, period);
-    pnh_.param<double>("cv_x_accel_noise", ax, ax);
-    pnh_.param<double>("cv_y_accel_noise", ay, ay);
-    pnh_.param<double>("prediction_process_noise_max", process_noise_max, process_noise_max);
-    pnh_.param<double>("prediction_confidence_drop_rate", drop_rate, drop_rate);
-    pnh_.param<int>("external_object_prediction_mode", external_object_prediction_mode, external_object_prediction_mode);
+    RCLCPP_INFO_STREAM(get_logger(), "Loaded params: " << config_);
 
-    motion_worker_.setPredictionTimeStep(step);
-    motion_worker_.setMobilityPathPredictionTimeStep(mobility_step);
-    motion_worker_.setPredictionPeriod(period);
-    motion_worker_.setXAccelerationNoise(ax);
-    motion_worker_.setYAccelerationNoise(ay);
-    motion_worker_.setProcessNoiseMax(process_noise_max);
-    motion_worker_.setConfidenceDropRate(drop_rate);
-    motion_worker_.setExternalObjectPredictionMode(external_object_prediction_mode);
-    
-    // Setup pub/sub
-    motion_comp_sub_=nh_.subscribe("external_objects",1,&MotionComputationWorker::predictionLogic,&motion_worker_);
-    carma_obj_pub_=nh_.advertise<cav_msgs::ExternalObjectList>("external_object_predictions", 2);
-    mobility_path_sub_=nh_.subscribe("incoming_mobility_path",20,&MotionComputationWorker::mobilityPathCallback,&motion_worker_); // 20 is most number of vehicles in our immeadiate vicinity which might ever need to be tracked.
-    georeference_sub_ = nh_.subscribe("georeference", 1, &MotionComputationWorker::georeferenceCallback, &motion_worker_);
+    // Register runtime parameter update callback
+    add_on_set_parameters_callback(std::bind(&MotionComputationNode::parameter_update_callback, this, std_ph::_1));
+
+    // Setup subscribers
+    motion_comp_sub_ = create_subscription<carma_perception_msgs::msg::ExternalObjectList>("external_objects", 1,
+                                                              std::bind(&MotionComputationWorker::predictionLogic, &motion_worker_, std_ph::_1));
+    mobility_path_sub_ = create_subscription<carma_v2x_msgs::msg::MobilityPath>("incoming_mobility_path", 20,
+                                                              std::bind(&MotionComputationWorker::mobilityPathCallback, &motion_worker_, std_ph::_1));
+    georeference_sub_ = create_subscription<std_msgs::msg::String>("georeference", 1,
+                                                              std::bind(&MotionComputationWorker::georeferenceCallback, &motion_worker_, std_ph::_1));
+
+    // Setup publishers
+    carma_obj_pub_ = create_publisher<carma_perception_msgs::msg::ExternalObjectList>("external_object_predictions", 2);
+
+    // Set motion_worker_'s prediction parameters
+    motion_worker_.setPredictionTimeStep(config_.prediction_time_step);
+    motion_worker_.setMobilityPathPredictionTimeStep(config_.mobility_path_time_step);
+    motion_worker_.setPredictionPeriod(config_.prediction_period);
+    motion_worker_.setXAccelerationNoise(config_.cv_x_accel_noise);
+    motion_worker_.setYAccelerationNoise(config_.cv_y_accel_noise);
+    motion_worker_.setProcessNoiseMax(config_.prediction_process_noise_max);
+    motion_worker_.setConfidenceDropRate(config_.prediction_confidence_drop_rate);
+    motion_worker_.setExternalObjectPredictionMode(config_.external_object_prediction_mode);
+
+    // Return success if everthing initialized successfully
+    return CallbackReturn::SUCCESS;
   }
 
-  void MotionComputationNode::publishObject(const cav_msgs::ExternalObjectList& obj_pred_msg) const
+  void MotionComputationNode::publishObject(const carma_perception_msgs::msg::ExternalObjectList& obj_pred_msg) const
   {
-    carma_obj_pub_.publish(obj_pred_msg);
+    carma_obj_pub_->publish(obj_pred_msg);
   }
 
-  void MotionComputationNode::run()
-  {
-    initialize();
-    ros::CARMANodeHandle::spin();
-  }
+} // namespace motion_computation
 
-}//object namespace
+#include "rclcpp_components/register_node_macro.hpp"
+
+// Register the component with class_loader
+RCLCPP_COMPONENTS_REGISTER_NODE(motion_computation::MotionComputationNode)

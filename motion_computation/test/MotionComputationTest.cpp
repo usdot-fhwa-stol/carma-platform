@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 LEIDOS.
+ * Copyright (C) 2020-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,42 +14,31 @@
  * the License.
  */
 
-
-#include <gmock/gmock.h>
-#include <cav_msgs/ExternalObject.h>
-#include <cav_msgs/ExternalObjectList.h>
-#include "motion_computation_worker.h"  
-#include <functional>
-
+#include <gtest/gtest.h>
 #include <memory>
 #include <chrono>
-#include <ctime>
-#include <atomic>
+#include <thread>
+#include <future>
 
-using ::testing::_;
-using ::testing::A;
-using ::testing::DoAll;
-using ::testing::InSequence;
-using ::testing::Return;
-using ::testing::ReturnArg;
-#include <ros/ros.h>
-//using PublishObjectCallback = std::function<void(const cav_msgs::ExternalObjectList&)>;
+#include "motion_computation/motion_computation_worker.hpp"
 
 
-namespace object
+namespace motion_computation
 {
-
-
     TEST(MotionComputationWorker, Constructor)
     {   
-        MotionComputationWorker([](const cav_msgs::ExternalObjectList& obj_pub){});
+        // Create logger object
+        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger;
 
+        // Create MotionComputationWorker object
+        MotionComputationWorker worker([](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){}, logger);
     }
 
     TEST(MotionComputationWorker, motionPredictionCallback)
     {    
         bool published_data = false;
-        object::MotionComputationWorker mcw_sensor_only([&](const cav_msgs::ExternalObjectList& obj_pub){
+        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger;
+        MotionComputationWorker mcw_sensor_only([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){
             published_data = true;
             ASSERT_EQ(obj_pub.objects.size(), 1);
 
@@ -59,32 +48,37 @@ namespace object
                 if(item.predictions.size() > 0);
                     isFilled = true;
             }
-            ROS_INFO_STREAM("Test Predictions");
             ASSERT_EQ(isFilled, true);
 
-            });     
-        object::MotionComputationWorker mcw_mobility_only([&](const cav_msgs::ExternalObjectList& obj_pub){
+            }, logger); 
+
+        MotionComputationWorker mcw_mobility_only([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){
             published_data = true;
             ASSERT_EQ(obj_pub.objects.size(), 0);
-        });
-        object::MotionComputationWorker mcw_mixed_operation([&](const cav_msgs::ExternalObjectList& obj_pub){
+            }, logger);
+
+        MotionComputationWorker mcw_mixed_operation([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){
             published_data = true;
             ASSERT_EQ(obj_pub.objects.size(), 2);
-        });
-        mcw_sensor_only.setExternalObjectPredictionMode(object::SENSORS_ONLY);
-        mcw_mobility_only.setExternalObjectPredictionMode(object::MOBILITY_PATH_ONLY);
-        mcw_mixed_operation.setExternalObjectPredictionMode(object::PATH_AND_SENSORS);
+            }, logger);
+
+        mcw_sensor_only.setExternalObjectPredictionMode(motion_computation::SENSORS_ONLY);
+        mcw_mobility_only.setExternalObjectPredictionMode(motion_computation::MOBILITY_PATH_ONLY);
+        mcw_mixed_operation.setExternalObjectPredictionMode(motion_computation::PATH_AND_SENSORS);
 
         // 1 to 1 transform
         std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
-        std_msgs::String proj_msg;
-        proj_msg.data = base_proj;
-        std_msgs::StringConstPtr msg_ptr(new std_msgs::String(proj_msg));
-        mcw_sensor_only.georeferenceCallback(msg_ptr);  // Set projection
-        mcw_mobility_only.georeferenceCallback(msg_ptr);  // Set projection
-        mcw_mixed_operation.georeferenceCallback(msg_ptr);  // Set projection
+        std::unique_ptr<std_msgs::msg::String> georeference_ptr1 = std::make_unique<std_msgs::msg::String>();
+        std::unique_ptr<std_msgs::msg::String> georeference_ptr2 = std::make_unique<std_msgs::msg::String>();
+        std::unique_ptr<std_msgs::msg::String> georeference_ptr3 = std::make_unique<std_msgs::msg::String>();
+        georeference_ptr1->data = base_proj;
+        georeference_ptr2->data = base_proj;
+        georeference_ptr3->data = base_proj;
+        mcw_sensor_only.georeferenceCallback(move(georeference_ptr1));  // Set projection
+        mcw_mobility_only.georeferenceCallback(move(georeference_ptr2));  // Set projection
+        mcw_mixed_operation.georeferenceCallback(move(georeference_ptr3));  // Set projection
 
-        cav_msgs::ExternalObject msg;
+        carma_perception_msgs::msg::ExternalObject msg;
 
         /*Create test message*/
         msg.presence_vector = 16;
@@ -92,7 +86,6 @@ namespace object
 
         /*Test ExternalObject Presence Vector Values*/
         ASSERT_TRUE(msg.presence_vector > 0);
-
         
         bool pvValid = false;
         for(auto i= 0; i<10; i++) //Test whether presence vector values in ExternalObject are valid
@@ -112,16 +105,13 @@ namespace object
         ASSERT_EQ(otValid, true);
 
         /*Test ExternalObjectList*/
-        cav_msgs::ExternalObjectList obj;
-        
+        carma_perception_msgs::msg::ExternalObjectList obj;
 
-        ROS_INFO_STREAM("Before push back");
         obj.objects.push_back(msg);
-        ROS_INFO_STREAM("Push back successful");
         ASSERT_TRUE(obj.objects.size() > 0);
 
         // add mobilitypath data
-        cav_msgs::MobilityPath input_path;
+        carma_v2x_msgs::msg::MobilityPath input_path;
 
         // INPUT PATH
         input_path.m_header.sender_bsm_id = "FFFFFFFF";
@@ -130,42 +120,45 @@ namespace object
         input_path.trajectory.location.ecef_y = 0; 
         input_path.trajectory.location.ecef_z = 0; 
         
-        cav_msgs::LocationOffsetECEF location;
+        carma_v2x_msgs::msg::LocationOffsetECEF location;
         location.offset_x = 0;
         location.offset_y = 0;
         location.offset_z = 0;
 
         input_path.trajectory.offsets.push_back(location);
-        mcw_sensor_only.mobilityPathCallback(input_path); // added a mobilitypath which won't be processed
 
-        cav_msgs::ExternalObjectListPtr obj_list(new cav_msgs::ExternalObjectList(obj));
-        
+        std::unique_ptr<carma_v2x_msgs::msg::MobilityPath> input_path_ptr1 = std::make_unique<carma_v2x_msgs::msg::MobilityPath>(input_path);
+        std::unique_ptr<carma_v2x_msgs::msg::MobilityPath> input_path_ptr2 = std::make_unique<carma_v2x_msgs::msg::MobilityPath>(input_path);
+
+        std::unique_ptr<carma_perception_msgs::msg::ExternalObjectList> obj_list_ptr1 = std::make_unique<carma_perception_msgs::msg::ExternalObjectList>(obj);
+        std::unique_ptr<carma_perception_msgs::msg::ExternalObjectList> obj_list_ptr2 = std::make_unique<carma_perception_msgs::msg::ExternalObjectList>(obj);
+
         // Check sensor only mode
-        mcw_sensor_only.predictionLogic(obj_list);
+        mcw_sensor_only.mobilityPathCallback(move(input_path_ptr1)); // added a mobilitypath which won't be processed
+        mcw_sensor_only.predictionLogic(move(obj_list_ptr1));
         //assert published_data is true
         ASSERT_EQ(published_data, true);
 
         // check mixed operation mode
         published_data = false;
-        mcw_mixed_operation.mobilityPathCallback(input_path);
-        mcw_mixed_operation.predictionLogic(obj_list);
+        mcw_mixed_operation.mobilityPathCallback(move(input_path_ptr2));
+        mcw_mixed_operation.predictionLogic(move(obj_list_ptr2));
         //assert published_data is true
         ASSERT_EQ(published_data, true);
-        
     }
 
     TEST(MotionComputationWorker, composePredictedState)
     {    
-        object::MotionComputationWorker mcw([&](const cav_msgs::ExternalObjectList& obj_pub){});
+        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger;
+        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){}, logger);
 
         // 1 to 1 transform
         std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
-        std_msgs::String proj_msg;
-        proj_msg.data = base_proj;
-        std_msgs::StringConstPtr msg_ptr(new std_msgs::String(proj_msg));
-        mcw.georeferenceCallback(msg_ptr);  // Set projection
+        std::unique_ptr<std_msgs::msg::String> georeference_ptr = std::make_unique<std_msgs::msg::String>();
+        georeference_ptr->data = base_proj;
+        mcw.georeferenceCallback(move(georeference_ptr));  // Set projection
 
-        ros::Time time_stamp = ros::Time(5.0);
+        rclcpp::Time time_stamp = rclcpp::Time(5, 0);
         tf2::Vector3 curr = {5, 0, 0};
         tf2::Vector3 prev = {4, 0, 0};
 
@@ -191,34 +184,34 @@ namespace object
         ASSERT_NEAR(test_result.predicted_position.orientation.w, 0.9238, 0.0001 );
         ASSERT_NEAR(test_result.predicted_velocity.linear.x, 5.0*sqrt(2)/0.1 , 0.0001 );
         ASSERT_EQ(test_result.header.stamp, time_stamp);
-
     }
 
     TEST(MotionComputationWorker, mobilityPathToExternalObject)
-    {    
-        object::MotionComputationWorker mcw([&](const cav_msgs::ExternalObjectList& obj_pub){});
+    {   
+        auto node = std::make_shared<rclcpp::Node>("test_node");
+        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){}, node->get_node_logging_interface());
 
         // 1 to 1 transform
         std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
-        std_msgs::String proj_msg;
-        proj_msg.data = base_proj;
-        std_msgs::StringConstPtr msg_ptr(new std_msgs::String(proj_msg));
-        mcw.georeferenceCallback(msg_ptr);  // Set projection
+        std::unique_ptr<std_msgs::msg::String> georeference_ptr = std::make_unique<std_msgs::msg::String>();
+        georeference_ptr->data = base_proj;
+        mcw.georeferenceCallback(move(georeference_ptr));  // Set projection
 
         // Test no georef
-        cav_msgs::MobilityPath input;
-        cav_msgs::ExternalObject output, expected;
-        output = mcw.mobilityPathToExternalObject(input);
+        std::unique_ptr<carma_v2x_msgs::msg::MobilityPath> input_ptr1 = std::make_unique<carma_v2x_msgs::msg::MobilityPath>();
+        carma_perception_msgs::msg::ExternalObject output, expected;
+        output = mcw.mobilityPathToExternalObject(move(input_ptr1));
         ASSERT_EQ(output.header.stamp, expected.header.stamp); //empty object returned
 
         // INPUT
+        carma_v2x_msgs::msg::MobilityPath input;
         input.m_header.sender_bsm_id = "FFFFFFFF";
         input.m_header.timestamp = 1000;
         input.trajectory.location.ecef_x = 0; //local map 0,0,0
         input.trajectory.location.ecef_y = 0; 
         input.trajectory.location.ecef_z = 0; 
         
-        cav_msgs::LocationOffsetECEF location;
+        carma_v2x_msgs::msg::LocationOffsetECEF location;
         location.offset_x = 0;
         location.offset_y = 0;
         location.offset_z = 0;
@@ -226,16 +219,18 @@ namespace object
         input.trajectory.offsets.push_back(location); // First point has no movement
         
         // Test static/dynamic
-        output = mcw.mobilityPathToExternalObject(input);
+        std::unique_ptr<carma_v2x_msgs::msg::MobilityPath> input_ptr2 = std::make_unique<carma_v2x_msgs::msg::MobilityPath>(input);
+        output = mcw.mobilityPathToExternalObject(move(input_ptr2));
         ASSERT_FALSE(output.dynamic_obj);
-        
+
         location.offset_x = 500.00; 
         location.offset_y = 0;
         location.offset_z = 0;
         input.trajectory.offsets.push_back(location); // Second point moves 5m forward
 
         // Test 0th, 1st point predicted state
-        output = mcw.mobilityPathToExternalObject(input);
+        std::unique_ptr<carma_v2x_msgs::msg::MobilityPath> input_ptr3 = std::make_unique<carma_v2x_msgs::msg::MobilityPath>(input);
+        output = mcw.mobilityPathToExternalObject(move(input_ptr3));
         ASSERT_NEAR(output.pose.pose.orientation.w, 1.0, 0.0001);
         ASSERT_NEAR(output.pose.pose.position.x, 0.0, 0.005);
         ASSERT_NEAR(output.velocity.twist.linear.x, 0.0, 0.1);
@@ -248,29 +243,27 @@ namespace object
         ASSERT_NEAR(output.predictions[1].predicted_position.position.x, 5.0, 0.03);
         ASSERT_NEAR(output.predictions[1].predicted_velocity.linear.x, 50.0, 0.1);
 
-        ASSERT_EQ(output.header.stamp, ros::Time(1.0));
-        ROS_WARN_STREAM("time: " << output.predictions[0].header.stamp.toSec());
-        ASSERT_EQ(output.predictions[0].header.stamp, ros::Time(1.1));
-
+        ASSERT_EQ(output.header.stamp, rclcpp::Time(1, 0));
+        ASSERT_EQ(output.predictions[0].header.stamp, rclcpp::Time(1, 0.1*1e9));
     }
 
     TEST(MotionComputationWorker, synchronizeAndAppend)
-    {    
-        object::MotionComputationWorker mcw_mixed_operation([&](const cav_msgs::ExternalObjectList& obj_pub){});
-        mcw_mixed_operation.setExternalObjectPredictionMode(object::PATH_AND_SENSORS);
-        mcw_mixed_operation.setMobilityPathPredictionTimeStep(0.2);
+    {   
+        auto node = std::make_shared<rclcpp::Node>("test_node");
+        MotionComputationWorker mcw_mixed_operation([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){}, node->get_node_logging_interface());
+        mcw_mixed_operation.setExternalObjectPredictionMode(motion_computation::PATH_AND_SENSORS);
+        mcw_mixed_operation.setMobilityPathPredictionTimeStep(0.2); // 0.2 Seconds
 
         // 1 to 1 transform
         std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
-        std_msgs::String proj_msg;
-        proj_msg.data = base_proj;
-        std_msgs::StringConstPtr msg_ptr(new std_msgs::String(proj_msg));
-        mcw_mixed_operation.georeferenceCallback(msg_ptr);  // Set projection
+        std::unique_ptr<std_msgs::msg::String> georeference_ptr = std::make_unique<std_msgs::msg::String>();
+        georeference_ptr->data = base_proj;
+        mcw_mixed_operation.georeferenceCallback(move(georeference_ptr));  // Set projection
 
         // Test no georef
-        cav_msgs::ExternalObject sensor_obj, mobility_path_obj;
-        sensor_obj.header.stamp = ros::Time(1.6);
-        mobility_path_obj.header.stamp = ros::Time(1.1);
+        carma_perception_msgs::msg::ExternalObject sensor_obj, mobility_path_obj;
+        sensor_obj.header.stamp = rclcpp::Time(1.6 * 1e9); // 1.6 Seconds
+        mobility_path_obj.header.stamp = rclcpp::Time(1.1 * 1e9); // 1.1 Seconds
         mobility_path_obj.pose.pose.orientation.w = 1;
         mobility_path_obj.pose.pose.orientation.x = 0;
         mobility_path_obj.pose.pose.orientation.y = 0;
@@ -280,8 +273,8 @@ namespace object
         mobility_path_obj.pose.pose.position.z = 0;
         mobility_path_obj.velocity.twist.linear.x = 2000;
 
-        cav_msgs::PredictedState next_state;                // 0
-        next_state.header.stamp = ros::Time(1.3);
+        carma_perception_msgs::msg::PredictedState next_state;   // 0
+        next_state.header.stamp = rclcpp::Time(1.3 * 1e9); // 1.3 Seconds
         next_state.predicted_position.orientation.w = 1;
         next_state.predicted_position.orientation.x = 0;
         next_state.predicted_position.orientation.y = 0;
@@ -291,32 +284,30 @@ namespace object
         next_state.predicted_position.position.z = 0;
         next_state.predicted_velocity.linear.x = 2000;
         mobility_path_obj.predictions.push_back(next_state); //1
-        next_state.header.stamp = ros::Time(1.5);
+        next_state.header.stamp = rclcpp::Time(1.5 * 1e9); // 1.5 Seconds
         next_state.predicted_position.position.x = 400;
         mobility_path_obj.predictions.push_back(next_state); //2
-        next_state.header.stamp = ros::Time(1.7);
+        next_state.header.stamp = rclcpp::Time(1.7 * 1e9); // 1.7 Seconds
         next_state.predicted_position.position.x = 600;
         mobility_path_obj.predictions.push_back(next_state); //3
-        next_state.header.stamp = ros::Time(1.9);
+        next_state.header.stamp = rclcpp::Time(1.9 * 1e9); // 1.9 Seconds
         next_state.predicted_position.position.x = 800;
         mobility_path_obj.predictions.push_back(next_state); //4
-        next_state.header.stamp = ros::Time(2.1);
+        next_state.header.stamp = rclcpp::Time(2.1 * 1e9); // 2.1 Seconds
         next_state.predicted_position.position.x = 1000;
         mobility_path_obj.predictions.push_back(next_state); //5
 
-        cav_msgs::ExternalObjectList sensor_list, mobility_path_list;
+        carma_perception_msgs::msg::ExternalObjectList sensor_list, mobility_path_list;
         sensor_list.objects.push_back(sensor_obj);
         mobility_path_list.objects.push_back(mobility_path_obj);
         auto result = mcw_mixed_operation.synchronizeAndAppend(sensor_list, mobility_path_list);
         
         ASSERT_EQ(result.objects.size(), 2);
         ASSERT_EQ(result.objects[1].predictions.size(), 2); // we dropped 2 points
-        ASSERT_EQ(result.objects[1].predictions[0].header.stamp, ros::Time(1.8));
+        ASSERT_EQ(result.objects[1].predictions[0].header.stamp, rclcpp::Time(1.8 * 1e9)); // 1.8 Seconds
         ASSERT_EQ(result.objects[1].predictions[0].predicted_position.position.x, 700);
-        ASSERT_EQ(result.objects[1].predictions[1].header.stamp, ros::Time(2.0));
+        ASSERT_EQ(result.objects[1].predictions[1].header.stamp, rclcpp::Time(2.0 * 1e9)); // 2.0 Seconds
         ASSERT_EQ(result.objects[1].predictions[1].predicted_position.position.x, 900);
-
     }
 
-
-} // namespace object
+} // namespace motion_computation
