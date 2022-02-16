@@ -687,7 +687,7 @@ namespace basic_autonomy
 
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
             const std::vector<lanelet::BasicPoint2d> &points, const std::vector<double> &times, const std::vector<double> &yaws,
-            ros::Time startTime)
+            ros::Time startTime, const std::string &desired_controller_plugin)
         {
             if (points.size() != times.size() || points.size() != yaws.size())
             {
@@ -706,7 +706,7 @@ namespace basic_autonomy
                 tpp.y = points[i].y();
                 tpp.yaw = yaws[i];
 
-                tpp.controller_plugin_name = "default";
+                tpp.controller_plugin_name = desired_controller_plugin;
                 //tpp.planner_plugin_name        //Planner plugin name is filled in the tactical plugin
 
                 traj.push_back(tpp);
@@ -932,7 +932,7 @@ namespace basic_autonomy
 
             // Build trajectory points
             std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
-                trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, state_time);
+                trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, state_time, detailed_config.desired_controller_plugin);
 
             //debug msg
             carma_debug_msgs::TrajectoryCurvatureSpeeds msg;
@@ -963,7 +963,8 @@ namespace basic_autonomy
                                                               int speed_moving_average_window_size,
                                                               int curvature_moving_average_window_size,
                                                               double back_distance,
-                                                              double buffer_ending_downtrack)
+                                                              double buffer_ending_downtrack,
+                                                              std::string desired_controller_plugin)
         {
             DetailedTrajConfig detailed_config;
 
@@ -976,6 +977,7 @@ namespace basic_autonomy
             detailed_config.curvature_moving_average_window_size = curvature_moving_average_window_size;
             detailed_config.back_distance = back_distance;
             detailed_config.buffer_ending_downtrack = buffer_ending_downtrack;
+            detailed_config.desired_controller_plugin = desired_controller_plugin;
 
             return detailed_config;
         }
@@ -1053,7 +1055,7 @@ namespace basic_autonomy
             ROS_DEBUG_STREAM("After removing extra buffer points, future_geom_points.size():"<< future_geom_points.size());
 
             std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
-                trajectory_from_points_times_orientations(future_geom_points, times, final_yaw_values, state_time);
+                trajectory_from_points_times_orientations(future_geom_points, times, final_yaw_values, state_time, detailed_config.desired_controller_plugin);
 
             return traj_points;
         }
