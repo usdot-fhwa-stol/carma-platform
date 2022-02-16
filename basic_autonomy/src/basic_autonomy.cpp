@@ -782,7 +782,7 @@ namespace basic_autonomy
             ROS_DEBUG_STREAM("NearestPtIndex: " << nearest_pt_index);
 
             std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); // Points in front of current vehicle position
-			ROS_DEBUG_STREAM("Ready to call constrain_to_time_boundary: future_points size = " << future_points.size(), ", trajectory_time_length = " << detailed_config.trajectory_time_length);
+			ROS_DEBUG_STREAM("Ready to call constrain_to_time_boundary: future_points size = " << future_points.size() << ", trajectory_time_length = " << detailed_config.trajectory_time_length);
             auto time_bound_points = constrain_to_time_boundary(future_points, detailed_config.trajectory_time_length);
 
             ROS_DEBUG_STREAM("Got time_bound_points with size:" << time_bound_points.size());
