@@ -68,27 +68,44 @@ def generate_launch_description():
         description = "Path to file contain vehicle configuration parameters"
     )
 
-    # Startup Drivers With Main CARMA System
-    launch_drivers = LaunchConfiguration('launch_drivers')
-    declare_launch_drivers = DeclareLaunchArgument(
-        name='launch_drivers', 
-        default_value='false',
-        description="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"
+    #Declare the route file folder launch argument
+    route_file_folder = LaunchConfiguration('route_file_folder')
+    declare_route_file_folder = DeclareLaunchArgument(
+        name = 'route_file_folder',
+        default_value='/opt/carma/routes/',
+        description = 'Path of folder containing routes to load'
     )
 
-    
-    mock_drivers = LaunchConfiguration('mock_drivers')
-    declare_mock_drivers = DeclareLaunchArgument(
-        name='mock_drivers',
-        default_value='false',
-        description='List of driver node base names which will be launched as mock drivers'
+    # Declare enable_guidance_plugin_validate
+    enable_guidance_plugin_validator = LaunchConfiguration('enable_guidance_plugin_validator')
+    declare_enable_guidance_plugin_validator = DeclareLaunchArgument(
+        name = 'enable_guidance_plugin_validator', 
+        default_value='false', 
+        description='Flag indicating whether the Guidance Plugin Validator node will actively validate guidance strategic, tactical, and control plugins'
     )
 
-    vehicle_ssc_param_dir = LaunchConfiguration('vehicle_ssc_param_dir')  
-    declare_vehicle_ssc_param_dir_arg = DeclareLaunchArgument(
-        name='vehicle_ssc_param_dir',
-        default_value=get_package_share_directory('ssc_pm_lexus')
-        description="Path to directory containing ssc launch file and license"
+    # Declare strategic_plugins_to_validate
+    strategic_plugins_to_validate = LaunchConfiguration('strategic_plugins_to_validate')
+    declare_strategic_plugins_to_validate = DeclareLaunchArgument(
+        name = 'strategic_plugins_to_validate',
+        default_value = '[]',
+        description = 'List of String: Guidance Strategic Plugins that will be validated by the Guidance Plugin Validator Node if enabled'
+    )
+
+    # Declare tactical_plugins_to_validate
+    tactical_plugins_to_validate = LaunchConfiguration('tactical_plugins_to_validate')
+    declare_tactical_plugins_to_validate = DeclareLaunchArgument(
+        name = 'tactical_plugins_to_validate',
+        default_value='[]',
+        description='List of String: Guidance Tactical Plugins that will be validated by the Guidance Plugin Validator Node if enabled'
+    )
+
+    # Declare strategic_plugins_to_validate
+    control_plugins_to_validate = LaunchConfiguration('control_plugins_to_validate')
+    declare_control_plugins_to_validate = DeclareLaunchArgument(
+        name = 'control_plugins_to_validate',
+        default_value= '[]',
+        description='List of String: Guidance Control Plugins that will be validated by the Guidance Plugin Validator Node if enabled'
     )
 
     # Nodes
@@ -111,6 +128,12 @@ def generate_launch_description():
         ]
     )
 
+    localization_group = GroupAction(
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_LOCZ_NS', default_value='localization')),
+        ]
+    )
+
     v2x_group = GroupAction(
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_MSG_NS', default_value='message')),
@@ -124,18 +147,33 @@ def generate_launch_description():
         ]
     )
 
-    # Hardware Interface Stack 
-    hardware_interface_group = GroupAction(
+    guidance_group = GroupAction(
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_GUIDE_NS', default_value='guidance')),
+            
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/guidance.launch.py']),
+                launch_arguments={
+                    'route_file_folder' : route_file_folder,
+                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file, 
+                    'enable_guidance_plugin_validator' : enable_guidance_plugin_validator,
+                    'strategic_plugins_to_validate' : strategic_plugins_to_validate,
+                    'tactical_plugins_to_validate' : tactical_plugins_to_validate,
+                    'control_plugins_to_validate' : control_plugins_to_validate
+                }.items()
+            ),
+        ]
+    )
+
+    drivers_group = GroupAction(
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_INTR_NS', default_value='hardware_interface')),
             IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/hardware_interface.launch.py']),
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/drivers.launch.py']),
+                launch_arguments = { 
+                    'vehicle_config_param_file' : vehicle_config_param_file
+                    }.items()
             ),
-            launch_arguments = {
-                'mock_drivers' : mock_drivers,
-                'launch_drivers' : launch_drivers,
-                'vehicle_ssc_param_dir' : vehicle_ssc_param_dir
-            }.items()
         ]
     )
 
@@ -153,8 +191,16 @@ def generate_launch_description():
         declare_vehicle_config_dir_arg,
         declare_vehicle_characteristics_param_file_arg,
         declare_vehicle_config_param_file_arg,
+        declare_route_file_folder,
+        declare_enable_guidance_plugin_validator,
+        declare_strategic_plugins_to_validate,
+        declare_tactical_plugins_to_validate,
+        declare_control_plugins_to_validate,
+        drivers_group,
         transform_group,
         environment_group,
+        localization_group,
         v2x_group,
+        guidance_group, 
         system_controller
     ])

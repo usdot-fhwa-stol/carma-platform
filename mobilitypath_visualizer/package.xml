@@ -23,11 +23,27 @@
   <maintainer email="carma@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
   <author email="carma@dot.gov">carma</author>
-  <buildtool_depend>catkin</buildtool_depend>
-  <depend>roscpp</depend>
-  <depend>carma_utils</depend>
-  <depend>cav_msgs</depend>
-  <depend>std_msgs</depend>
-  <depend>lanelet2_extension</depend>
+  
+  <buildtool_depend>ament_cmake</buildtool_depend>
   <build_depend>carma_cmake_common</build_depend>
+  <build_depend>ament_auto_cmake</build_depend>
+
+  <depend>rclcpp</depend>
+  <depend>carma_ros2_utils</depend>
+  <depend>rclcpp_components</depend>
+  <depend>carma_v2x_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>lanelet2_io</depend>
+  <depend>lanelet2_extension</depend>
+  <depend>visualization_msgs</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
