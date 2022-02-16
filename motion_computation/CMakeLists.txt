@@ -21,13 +21,6 @@ find_package(carma_cmake_common REQUIRED)
 carma_check_ros_version(2)
 carma_package()
 
-find_package(Eigen3 REQUIRED)
-
-set(dependencies
-    EIGEN3
-    motion_predict
-)
-
 ## Find dependencies using ament auto
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
