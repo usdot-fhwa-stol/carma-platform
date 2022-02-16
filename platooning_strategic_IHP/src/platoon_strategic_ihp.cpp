@@ -2016,7 +2016,8 @@ namespace platoon_strategic_ihp
         double total_maneuver_length;
         double target_speed;
         // 1. determine if follower 
-        if (pm_.isFollower)
+        // TODO temporary disable the check
+        if (false)//(pm_.isFollower)
         {
             // 2. Use IHP platoon trajectory regulation for followers.
             double dt = config_.time_step;
