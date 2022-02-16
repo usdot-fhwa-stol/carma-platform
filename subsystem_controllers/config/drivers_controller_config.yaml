@@ -15,6 +15,7 @@
     # TODO Move this parameter to carma config in some capacity
     required_subsystem_nodes:
       - /hardware_interface/dsrc_driver_node
+      - /hardware_interface/velodyne_lidar_driver_wrapper_node
 
     # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
     full_subsystem_required: true
