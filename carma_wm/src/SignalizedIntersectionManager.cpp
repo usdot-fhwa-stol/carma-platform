@@ -52,8 +52,6 @@ namespace carma_wm
     auto ref_node  = local_projector.forward(gps_point);
 
     ROS_DEBUG_STREAM("Reference node in map frame x: " << ref_node.x() << ", y: " << ref_node.y());
-    
-    std::vector<lanelet::Point3d> node_list;
 
     for (auto lane : intersection.lane_list)
     {
@@ -62,6 +60,7 @@ namespace carma_wm
         ROS_DEBUG_STREAM("Lane id: " << (int)lane.lane_id << ", is not a lane for vehicle. Only vehicle road is currently supported. Skipping..." );
         continue;
       }
+      std::vector<lanelet::Point3d> node_list_raw;
       
       double curr_x = ref_node.x();
       double curr_y = ref_node.y();
@@ -70,13 +69,15 @@ namespace carma_wm
       
       size_t min_number_of_points = 2; // only two points are sufficient to get corresponding lanelets
 
-      if (lane.node_list.nodes.node_set_xy.size() < min_number_of_points)
+      size_t size_of_available_points = lane.node_list.nodes.node_set_xy.size();
+      
+      if (size_of_available_points < min_number_of_points)
       {
         ROS_WARN_STREAM("Not enough points are provided to match a lane. Skipping... ");
         continue;
       }
 
-      for (size_t i = 0; i < min_number_of_points; i ++ )
+      for (size_t i = 0; i < size_of_available_points; i ++ )
       {
         curr_x = lane.node_list.nodes.node_set_xy[i].delta.x + curr_x;
         curr_y = lane.node_list.nodes.node_set_xy[i].delta.y + curr_y;
@@ -84,7 +85,7 @@ namespace carma_wm
 
         ROS_DEBUG_STREAM("Current node x: " << curr_x << ", y: " << curr_y);
 
-        node_list.push_back(curr_node);
+        node_list_raw.push_back(curr_node);
       }
 
       ROS_DEBUG_STREAM("Lane directions: " << (int)lane.lane_attributes.directional_use.lane_direction); 
@@ -93,13 +94,16 @@ namespace carma_wm
       {
         // flip direction if ingress to pick up correct lanelets
         ROS_DEBUG_STREAM("Reversed the node list!");
-        std::reverse(node_list.begin(), node_list.end());
+        std::reverse(node_list_raw.begin(), node_list_raw.end());
       }
       
-      for (auto node : node_list)
+      for (auto node : node_list_raw)
       {
         ROS_DEBUG_STREAM("x: " << node.x() << ", y: " << node.y());
       }
+      
+      // cut only to minimum required
+      std::vector<lanelet::Point3d> node_list(node_list_raw.begin(), node_list_raw.begin() + min_number_of_points);
 
       // save which signal group connect to which exit lanes
       for (auto connection : lane.connect_to_list)
@@ -148,8 +152,6 @@ namespace carma_wm
         exit[lane.lane_id] = corresponding_lanelet_id;
       }
       // ignoring types that are neither ingress nor egress 
-
-      node_list = {}; 
     }
 
     // convert and save exit lane ids into lanelet ids with their corresponding signal group ids
