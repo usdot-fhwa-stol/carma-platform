@@ -60,7 +60,7 @@ namespace carma_wm
         ROS_DEBUG_STREAM("Lane id: " << (int)lane.lane_id << ", is not a lane for vehicle. Only vehicle road is currently supported. Skipping..." );
         continue;
       }
-      std::vector<lanelet::Point3d> node_list_raw;
+      std::vector<lanelet::Point3d> node_list;
       
       double curr_x = ref_node.x();
       double curr_y = ref_node.y();
@@ -85,7 +85,7 @@ namespace carma_wm
 
         ROS_DEBUG_STREAM("Current node x: " << curr_x << ", y: " << curr_y);
 
-        node_list_raw.push_back(curr_node);
+        node_list.push_back(curr_node);
       }
 
       ROS_DEBUG_STREAM("Lane directions: " << (int)lane.lane_attributes.directional_use.lane_direction); 
@@ -94,17 +94,14 @@ namespace carma_wm
       {
         // flip direction if ingress to pick up correct lanelets
         ROS_DEBUG_STREAM("Reversed the node list!");
-        std::reverse(node_list_raw.begin(), node_list_raw.end());
+        std::reverse(node_list.begin(), node_list.end());
       }
       
-      for (auto node : node_list_raw)
+      for (auto node : node_list)
       {
         ROS_DEBUG_STREAM("x: " << node.x() << ", y: " << node.y());
       }
       
-      // cut only to minimum required
-      std::vector<lanelet::Point3d> node_list(node_list_raw.begin(), node_list_raw.begin() + min_number_of_points);
-
       // save which signal group connect to which exit lanes
       for (auto connection : lane.connect_to_list)
       {
@@ -129,7 +126,9 @@ namespace carma_wm
 
       for (auto llt : affected_llts) // filter out intersection lanelets
       {
-        if (llt.lanelet().get().hasAttribute("turn_direction"))
+        if (llt.lanelet().get().hasAttribute("turn_direction") && 
+            (llt.lanelet().get().attribute("turn_direction").value().compare("left") ||
+            llt.lanelet().get().attribute("turn_direction").value().compare("right") ))
         {
           ROS_DEBUG_STREAM("lanelet " << llt.id() << " is actually part of the intersection. Skipping...");
           continue;
