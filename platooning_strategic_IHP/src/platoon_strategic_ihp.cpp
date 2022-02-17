@@ -716,7 +716,7 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("frontVehicleDtd from ecef: " << frontVehicleDtd);
             
             // Check for target vehicle to join host at the rear - is the front vehicle in the identified platoon in front of host?
-            if(isVehicleRightInFront(rearVehicleDtd))
+            if(isVehicleRightInFront(rearVehicleDtd) && !config_.test_front_join)
             {   
                 /**
                  *    1. isVehicleRightInFront(rearVehicleDtd) is compare platoon and host vehicle downtrack.
@@ -758,8 +758,9 @@ namespace platoon_strategic_ihp
             }
             
             // Request frontal join, if the neighbor is a real platoon
-            else if (applicantSize > 1  &&  isVehicleRightBehind(frontVehicleDtd))
+            else if ((applicantSize > 1 || config_.test_front_join)  &&  isVehicleRightBehind(frontVehicleDtd))
             {   
+                ROS_DEBUG_STREAM("isVehicleRightBehind: " << isVehicleRightBehind(frontVehicleDtd));
                 
                 /**
                  *    UCLA Implementation note
@@ -1415,11 +1416,14 @@ namespace platoon_strategic_ihp
         
         bool isRearJoin = (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR);
         ROS_DEBUG_STREAM("isRearJoin = " << isRearJoin);
-        // TODO temporary disable this check
-        isRearJoin = true;
         
         bool isFrontJoin = (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT);
         ROS_DEBUG_STREAM("isFrontJoin = " << isFrontJoin);
+
+        // TODO temporary disable this check
+        isRearJoin = !config_.test_front_join;
+        isFrontJoin = config_.test_front_join;
+
 
         // Check if current plan is still valid (i.e., not timed out).
         if (pm_.current_plan.valid)
@@ -2012,7 +2016,8 @@ namespace platoon_strategic_ihp
         double total_maneuver_length;
         double target_speed;
         // 1. determine if follower 
-        if (pm_.isFollower)
+        // TODO temporary disable the check
+        if (false)//(pm_.isFollower)
         {
             // 2. Use IHP platoon trajectory regulation for followers.
             double dt = config_.time_step;
