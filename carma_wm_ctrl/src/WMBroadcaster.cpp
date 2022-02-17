@@ -1882,7 +1882,7 @@ cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geom
 
   if (active_geofence_llt_ids_.size() <= 0 ) 
   {
-    ROS_INFO_STREAM("No active geofence llt ids are loaded to the WMBroadcaster");
+    //ROS_INFO_STREAM("No active geofence llt ids are loaded to the WMBroadcaster");
     return outgoing_geof;
   }
 
