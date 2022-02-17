@@ -122,20 +122,49 @@ namespace carma_wm
         continue;
       }
 
-      lanelet::Id corresponding_lanelet_id = affected_llts.front().id(); 
+      lanelet::Id corresponding_lanelet_id;
+      if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::EGRESS)
+      {        
+        corresponding_lanelet_id = affected_llts.front().id(); 
+        ROS_DEBUG_STREAM("Default corresponding_lanelet_id: " << corresponding_lanelet_id <<", in EGRESS");
+
+      }
+      else //ingress
+      {        
+        corresponding_lanelet_id = affected_llts.back().id(); 
+        ROS_DEBUG_STREAM("Default corresponding_lanelet_id: " << corresponding_lanelet_id <<", in INGRESS");
+      }
 
       for (auto llt : affected_llts) // filter out intersection lanelets
       {
+        ROS_DEBUG_STREAM("Checking if we can get entry/exit from lanelet " << llt.id());
+        
         if (llt.lanelet().get().hasAttribute("turn_direction") && 
             (llt.lanelet().get().attribute("turn_direction").value().compare("left") ||
             llt.lanelet().get().attribute("turn_direction").value().compare("right") ))
         {
-          ROS_DEBUG_STREAM("lanelet " << llt.id() << " is actually part of the intersection. Skipping...");
-          continue;
-        }
-        corresponding_lanelet_id = llt.id();
+          std::vector<lanelet::ConstLanelet> connecting_llts;
+          if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::EGRESS)
+          {
+            ROS_DEBUG_STREAM("lanelet " << llt.id() << " is actually part of the intersecion. Trying to detect EGRESS...");
+            connecting_llts = current_routing_graph->following(llt.lanelet().get());
+          }
+          else
+          {
+            ROS_DEBUG_STREAM("lanelet " << llt.id() << " is actually part of the intersecion. Trying to detect INGRESS...");
+            connecting_llts = current_routing_graph->previous(llt.lanelet().get());
+          }
 
-        break;
+          if (!connecting_llts.empty())
+            corresponding_lanelet_id = connecting_llts[0].id();
+          else
+          {
+            ROS_WARN_STREAM("Interestingly, did not detect here");
+            continue;
+          }
+
+          break;
+        }
       }
 
       ROS_DEBUG_STREAM("Found existing lanelet id: " << corresponding_lanelet_id);
