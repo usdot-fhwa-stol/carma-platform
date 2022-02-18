@@ -274,7 +274,7 @@ namespace mobilitypath_visualizer {
         marker.color.b = 1.0;
         marker.color.a = 1.0;
         marker.frame_locked = true;
-        marker.lifetime = builtin_interfaces::msg::Duration((rclcpp::Duration(t_ * 1e9)));
+        marker.lifetime = builtin_interfaces::msg::Duration((rclcpp::Duration(config_.t * 1e9)));
         
         for (auto const& cav_marker: cav_markers)
         {
