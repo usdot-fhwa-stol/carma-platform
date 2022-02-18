@@ -67,7 +67,7 @@ namespace carma_wm
 
       ROS_DEBUG_STREAM("Processing Lane id: " << (int)lane.lane_id);
       
-      size_t min_number_of_points = 2; // only two points are sufficient to get corresponding lanelets
+      size_t min_number_of_points = 2; // two points minimum are required
 
       size_t size_of_available_points = lane.node_list.nodes.node_set_xy.size();
       
@@ -118,7 +118,7 @@ namespace carma_wm
       {
         // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593 
         // Open issue TODO on how this error is handled
-        ROS_WARN_STREAM("Given offset points are not inside the map...");
+        ROS_WARN_STREAM("Given offset points are not inside the map for lane: " << (int)lane.lane_id);
         continue;
       }
 
