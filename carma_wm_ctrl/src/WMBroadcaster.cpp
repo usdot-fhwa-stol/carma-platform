@@ -1005,6 +1005,11 @@ void WMBroadcaster::externalMapMsgCallback(const cav_msgs::MapData& map_msg)
 {
   auto gf_ptr = std::make_shared<Geofence>();
 
+  if (!current_map_ || current_map_->laneletLayer.size() == 0)
+  {
+    ROS_INFO_STREAM("Map is not available yet. Skipping MAP msg");
+  }
+
   // check if we have seen this message already
   bool up_to_date = false;
   if (sim_.intersection_id_to_regem_id_.size() == map_msg.intersections.size())
