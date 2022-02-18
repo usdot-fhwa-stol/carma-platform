@@ -118,9 +118,6 @@ namespace platoon_strategic_ihp
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
 
-        // Current vehicle downtrack
-        double current_downtrack_distance_ = 0;
-
         /**
          * \brief Stores the latest info on location of the host vehicle.
          * 
@@ -230,7 +227,7 @@ namespace platoon_strategic_ihp
         /**
         * \brief Returns command speed. in m/s.
         */
-        double getCommandSpeed();
+        double getCommandSpeed() const;
 
         /**
         * \brief Returns current downtrack distance, in m.
@@ -260,9 +257,6 @@ namespace platoon_strategic_ihp
         // Member variables
         std::string currentPlatoonID = "default_test_id";
         bool isFollower = false;
-
-        double current_speed_ = 0; // m/s
-        double command_speed_ = 0; // m/s
 
         // Platoon State
         PlatoonState current_platoon_state = PlatoonState::STANDBY;

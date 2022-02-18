@@ -2098,10 +2098,6 @@ namespace platoon_strategic_ihp
             pm_.currentPlatoonID = boost::uuids::to_string(boost::uuids::random_generator()());
             ROS_DEBUG_STREAM("change the state from standby to leader at start-up");
         }
-
-        
-        pm_.current_downtrack_distance_ = current_downtrack_;
-        ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
         
         return true;
     }

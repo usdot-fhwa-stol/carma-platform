@@ -557,7 +557,8 @@ namespace platoon_strategic_ihp
     }
 
     // Return the current command speed of host vehicle in m/s.
-    double PlatoonManager::getCommandSpeed(){
+    double PlatoonManager::getCommandSpeed() const
+    {
         return platoon[hostPosInPlatoon_].commandSpeed;
     }
 
