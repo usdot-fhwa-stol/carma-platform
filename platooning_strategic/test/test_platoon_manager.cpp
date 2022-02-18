@@ -558,6 +558,73 @@ namespace platoon_strategic
         plugin_rear.onSpin(); // Trigger state transition
         EXPECT_EQ(plugin_rear.cf_lane_change_required_, false);
     }
+
+    TEST(PlatoonStrategicPlugin, test_platoon_lane_change)
+    {
+        // Use Guidance Lib to create map
+        carma_wm::test::MapOptions options;
+        options.lane_length_ = 20;
+        options.lane_width_ = 3.7;
+        std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
+        // Create the Semantic Map
+        lanelet::LaneletMapPtr map = carma_wm::test::buildGuidanceTestMap(options.lane_width_, options.lane_length_);
+
+        // Set carma_wm with this map along with its speed limit and a route
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
+        carma_wm::test::setSpeedLimit(15_mph, cmw);
+        carma_wm::test::setRouteByIds({1211, 1212}, cmw);
+
+        // Create a PlatoonStrategicPlugin for both a front and a rear vehicle and set their initial platoon state to Leader
+        PlatoonPluginConfig config;
+        PlatoonStrategicPlugin plugin1(cmw, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+        plugin1.platooning_enabled_ = true;
+        plugin1.pm_.current_platoon_state = PlatoonState::LEADER;
+
+        // Add member to the platoon
+        platoon_strategic::PlatoonMember member = platoon_strategic::PlatoonMember("1", "1", 1.0, 1.1, 0.1, 100);
+        std::vector<platoon_strategic::PlatoonMember> cur_pl;
+        cur_pl.push_back(member);
+        plugin1.pm_.platoon = cur_pl;
+
+        // Set georeference projection for front and rear vehicle
+        std::string base_proj = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs";
+        std_msgs::String georeference_msg;
+        georeference_msg.data = base_proj;
+        std_msgs::StringConstPtr msg_ptr(new std_msgs::String(georeference_msg));
+        plugin1.georeference_cb(msg_ptr);  
+
+        geometry_msgs::PoseStamped msg;
+        msg.pose.position.x = 4;
+        msg.pose.position.y = 25;
+        geometry_msgs::PoseStampedPtr mpt3(new geometry_msgs::PoseStamped(msg));
+        plugin1.pose_cb(mpt3);
+        plugin1.leader_lane_change_required_ = true;
+
+        cav_srvs::PlanManeuversRequest req;
+        req.prior_plan.maneuvers = {};
+        cav_srvs::PlanManeuversResponse resp;
+        ros::Time::init();
+
+        if (plugin1.plan_maneuver_cb(req, resp))
+        {
+            ASSERT_EQ(cav_msgs::Maneuver::LANE_CHANGE, resp.new_plan.maneuvers.front().type);
+        }
+
+        plugin1.pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
+        plugin1.cf_target_lane_index_ = 1;
+        plugin1.cf_lane_change_required_ = true;
+
+        cav_srvs::PlanManeuversRequest req1;
+        req.prior_plan.maneuvers = {};
+        cav_srvs::PlanManeuversResponse resp1;
+        if (plugin1.plan_maneuver_cb(req1, resp1))
+        {
+            ASSERT_EQ(cav_msgs::Maneuver::LANE_CHANGE, resp1.new_plan.maneuvers.front().type);
+        }
+
+        
+        
+    }
 }
 
 

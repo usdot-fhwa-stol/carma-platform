@@ -243,6 +243,18 @@ namespace platoon_strategic
             * \return Quantity of lanes in the local lane group of the provided location.
             */
             int getCurrentLaneGroupSize(const lanelet::BasicPoint2d& current_location);
+
+            /**
+             * \brief Compose a lane keeping maneuver message based on input params
+             * \param start_dist Start downtrack distance of the current maneuver
+             * \param end_dist End downtrack distance of the current maneuver
+             * \param start_speed Start speed of the current maneuver
+             * \param target_speed Target speed pf the current maneuver, usually it is the lanelet speed limit
+             * \param lane_ids List of lanelet IDs that the current maneuver traverses. Message expects these to be contiguous and end to end 
+             * \return A lane keeping maneuver message which is ready to be published
+             */
+            cav_msgs::Maneuver composeLaneChangeManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id) const;
+    
             
             // ECEF position of the host vehicle
             cav_msgs::LocationECEF pose_ecef_point_;
@@ -254,6 +266,8 @@ namespace platoon_strategic
 
             // Flag to enable/disable platooning plugin
             bool platooning_enabled_ = false;
+
+
         
         private:
 
@@ -566,6 +580,7 @@ namespace platoon_strategic
             
             // Unit Tests
             FRIEND_TEST(PlatoonStrategicPlugin, test_platoon_formation_lane_conditions);
+            FRIEND_TEST(PlatoonStrategicPlugin, test_platoon_lane_change);
 
 
     };
