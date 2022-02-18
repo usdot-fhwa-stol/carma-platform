@@ -264,13 +264,13 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     if (regemptr_it != world_model_->getMutableMap()->regulatoryElementLayer.end())  
     {
 
-      ROS_DEBUG_STREAM("Reapplying previously existing element");
+      ROS_DEBUG_STREAM("Reapplying previously existing element for lanelet id:" << parent_llt.id() << ", and regem id: " << regemptr_it->get()->id());
       // again we should use the element with correct data address to be consistent
       world_model_->getMutableMap()->update(parent_llt, *regemptr_it);
     }
     else // Updates are treated as new regulations after the old value was removed. In both cases we enter this block. 
     {
-      ROS_DEBUG_STREAM("New regulatory element " << pair.second->id());
+      ROS_DEBUG_STREAM("New regulatory element at lanelet: " << parent_llt.id() << ", and id: " << pair.second->id());
       newRegemUpdateHelper(parent_llt, pair.second.get());
     }
   }
