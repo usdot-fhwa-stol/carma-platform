@@ -138,10 +138,10 @@ namespace carma_wm
       for (auto llt : affected_llts) // filter out intersection lanelets
       {
         ROS_DEBUG_STREAM("Checking if we can get entry/exit from lanelet " << llt.id());
-        
+        //TODO direction of affected_llts may play role, but it should be good
         if (llt.lanelet().get().hasAttribute("turn_direction") && 
-            (llt.lanelet().get().attribute("turn_direction").value().compare("left") ||
-            llt.lanelet().get().attribute("turn_direction").value().compare("right") ))
+            (llt.lanelet().get().attribute("turn_direction").value().compare("left") == 0 ||
+            llt.lanelet().get().attribute("turn_direction").value().compare("right") == 0))
         {
           std::vector<lanelet::ConstLanelet> connecting_llts;
           if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::EGRESS)
