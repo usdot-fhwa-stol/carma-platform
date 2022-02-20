@@ -39,7 +39,6 @@
 
 
 
-
 namespace platoon_strategic_ihp
 {
     /**
@@ -71,23 +70,31 @@ namespace platoon_strategic_ihp
     };
 
     /**
-    * \brief Platoon States. UCLA: Added two additional states 
+    * \brief Platoon States. UCLA: Added additional states 
     * (i.e., LEADERABORTING and CANDIDATELEADER) for same-lane front join.
+    * (i.e., LEADWITHOPERATION and PREPARETOJOIN) for cut-in front join.
     *  
     */
     enum PlatoonState
     {
-        STANDBY,
-        LEADERWAITING,
-        LEADER,
-        CANDIDATEFOLLOWER,
-        FOLLOWER,
-        LEADERABORTING,
-        CANDIDATELEADER
+        STANDBY,                    // 0;
+        LEADERWAITING,              // 1;
+        LEADER,                     // 2;
+        CANDIDATEFOLLOWER,          // 3;
+        FOLLOWER,                   // 4;
+        //UCLA: FRONTAL JOIN STATE
+        LEADERABORTING,             // 5;
+        //UCLA: FRONTAL JOIN STATE
+        CANDIDATELEADER,            // 6;
+        //UCLA: CUT-IN JOIN STATE
+        LEADWITHOPERATION,          // 7;
+        //UCLA: CUT-IN JOIN STATE
+        PREPARETOJOIN               // 8;
     };
 
     /**
-    * \brief Platoon States
+    * \brief Platoon States 
+    * Note: Include cross track as one of the class variables.
     */
     struct PlatoonMember
     {
@@ -97,13 +104,15 @@ namespace platoon_strategic_ihp
         double commandSpeed;
         // Actual vehicle speed in m/s.
         double vehicleSpeed;
-        // Vehicle current down track distance on the current route in m.
+        // Vehicle current downtrack distance on the current route in m.
         double vehiclePosition;
+        // Vehicle current crosstrack distance on the current route in m.
+        double vehicleCrossTrack;
         // The local time stamp when the host vehicle update any informations of this member.
         long   timestamp;
-        PlatoonMember(): staticId(""), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), timestamp(0) {} 
-        PlatoonMember(std::string staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
-            commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), vehiclePosition(vehiclePosition), timestamp(timestamp) {}
+        PlatoonMember(): staticId(""), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), vehicleCrossTrack(0.0), timestamp(0) {} 
+        PlatoonMember(std::string staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, double vehicleCrossTrack, long timestamp): staticId(staticId),
+            commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), vehiclePosition(vehiclePosition), vehicleCrossTrack(vehicleCrossTrack), timestamp(timestamp) {}
     };
         
 
@@ -123,8 +132,11 @@ namespace platoon_strategic_ihp
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
 
-        // Current vehicle downtrack
+        // Current vehicle downtrack, in m.
         double current_downtrack_distance_ = 0;
+
+        // Current vehcile crosstrack, in m.
+        double current_crosstrack_distance_ = 0;
 
         /**
         * \brief Update platoon members information
@@ -134,7 +146,7 @@ namespace platoon_strategic_ihp
         * \param params strategy parameters
         * \param Dtd downtrack distance
         */
-        void memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, const double& DtD);
+        void memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, const double& DtD, const double& CtD);
 
         /**
          * \brief Given any valid platooning mobility STATUS operation parameters and sender staticId,
@@ -146,7 +158,7 @@ namespace platoon_strategic_ihp
          * \param platoonId sender platoon id
          * \param params strategy params from STATUS message in the format of "CMDSPEED:xx,DOWNTRACK:xx,SPEED:xx"
          **/
-        void updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double curSpeed);
+        void updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double ctDistance, double curSpeed);
         
         /**
         * \brief Returns total size of the platoon , in number of vehicles.
@@ -160,6 +172,7 @@ namespace platoon_strategic_ihp
         * \return The current dynamic leader as a vehcile object. 
         */
         PlatoonMember getDynamicLeader();
+
 
         /**
          * \brief This is the implementation of all predecessor following (APF) algorithm for leader
@@ -226,6 +239,11 @@ namespace platoon_strategic_ihp
         double getCurrentDowntrackDistance() const;
 
         /**
+        * \brief Returns current crosstrack distance, in m.
+        */
+        double getCurrentCrosstrackDistance() const;
+
+        /**
         * \brief Returns current host static ID as a string.
         */
         std::string getHostStaticID() const;
@@ -244,6 +262,26 @@ namespace platoon_strategic_ihp
         * \return: Host vehicle's desired position as downtrack distance, in m.
         */
         double getIHPDesPosFollower(double dt);
+
+        /**
+         * \brief UCLA: Return joiner's desired position in terms of platoon index to cut into the platoon. 
+         * 
+         * \params joinerDtD: The current downtrack distance (with regards to host vehicle) of the joiner vehicle.
+         * 
+         * \return: cut-in index: The index of the gap-leading vehicle within the platoon. If front join, return -1.
+         */
+        int getClosestIndex(double joinerDtD);
+
+        /**
+         * \brief UCLA: Return the desired gap size for cut-in join, in m.
+         *        Note: The origin of the vehicle (for downtrack distance calculation) is located at the rear axle. 
+         * 
+         * \params gap_leading_index: The platoon index of the  gap-leading vehicle. 
+         *         joinerDtD: The current downtrack distance (with regards to host vehicle) of the joiner vehicle.
+         * 
+         * \return: cut-in gap: The desired gap size for cut-in join, in m.
+         */
+        double getCutInGap(int gap_leading_index, double joinerDtD);
 
         // Member variables
         int platoonSize = 2;
@@ -264,7 +302,12 @@ namespace platoon_strategic_ihp
 
         // host vehicle's static ID 
         std::string HostMobilityId = "default_host_id";
-    
+
+        // UCLA: add indicator of creating gap
+        bool isCreateGap = false;
+        // UCLA: add indicator of lane change 
+        bool safeToLaneChange = false;
+        
     private:
 
         // local copy of configuration file
@@ -301,7 +344,7 @@ namespace platoon_strategic_ihp
         * \return (bool) if the predecessor is to close.
         */
         bool insufficientGapWithPredecessor(double distanceToPredVehicle);
-        
+                
         /**
         * \brief Calculate the time headaway of each platoon member and save as a vector.
         * 
@@ -311,7 +354,7 @@ namespace platoon_strategic_ihp
         * \return A vector containing the time headaway of all platoon members, each headway is in s.
         */
         std::vector<double> calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed) const;
-
+        
         /**
         * \brief Determine the proper vehicle to follow based the time headway of each member. 
         * Note that the host will always choose the closest violator (i.e. time headaway too small or too large) to follow.
@@ -329,7 +372,7 @@ namespace platoon_strategic_ihp
         * 
         * \return An index indicating the closest violating vehicle. If no violator, return -1.
         */
-        int findLowerBoundaryViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const;
+       int findLowerBoundaryViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const;
 
         /**
         * \brief Find the closest vehicle to the host vehicle that violates the (time headaway) maximum spacing condition. 

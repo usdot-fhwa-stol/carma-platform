@@ -114,4 +114,4 @@ public:
   }
 };
 
-}
+}  // namespace platoon_strategicIHP

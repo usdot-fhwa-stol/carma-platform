@@ -109,7 +109,6 @@ install(DIRECTORY
 
 catkin_add_gmock(${PROJECT_NAME}-test
   test/test_platoon_manager_front_join.cpp
-  test/test_platoon_manager.cpp
   test/mobility_messages.cpp
   test/main_test.cpp)
 
