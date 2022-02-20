@@ -531,13 +531,13 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("The platoon manager is changed from leader state to follower state. Platoon vector re-initialized. Plan ID = " << newPlatoonId);
     }
 
-    // Return the number of vehicles in the front of the host vehicle. If host is leader/single vehicle, return 0.
+    // Return the number of vehicles in the front of the host vehicle. If host is leader or a single vehicle, return 0.
     int PlatoonManager::getNumberOfVehicleInFront() {
         
         int num = platoon.size() - 1;
         for (int i = 0;  i < platoon.size();  ++i)
         {
-            if (platoon[i].vehiclePosition <= current_downtrack_distance_ + 1.0) //allow for some uncertainty to count host also
+            if (platoon[i].vehiclePosition <= getCurrentDowntrackDistance() + 1.0) //allow for some uncertainty to count host also
             {
                 num = i;
                 break;
@@ -553,18 +553,19 @@ namespace platoon_strategic_ihp
 
     // Return the current host vehicle speed in m/s.
     double PlatoonManager::getCurrentSpeed() const {
-        return current_speed_;
+        return platoon[hostPosInPlatoon_].vehicleSpeed;
     }
 
     // Return the current command speed of host vehicle in m/s.
-    double PlatoonManager::getCommandSpeed(){
-        return command_speed_;
+    double PlatoonManager::getCommandSpeed() const
+    {
+        return platoon[hostPosInPlatoon_].commandSpeed;
     }
 
     // Return the current downtrack distance in m.
     double PlatoonManager::getCurrentDowntrackDistance() const
     {
-        return current_downtrack_distance_;
+        return platoon[hostPosInPlatoon_].vehiclePosition;
     }
 
     // UCLA: return the host vehicle static ID.
@@ -573,7 +574,7 @@ namespace platoon_strategic_ihp
         return HostMobilityId;
     }
 
-    // Return the pysical length from platoon front vehicle (front bumper) to platoon rear vehicle (rear bumper) in m.
+    // Return the physical length from platoon front vehicle (front bumper) to platoon rear vehicle (rear bumper) in m.
     double PlatoonManager::getCurrentPlatoonLength() {
         //this works even if platoon size is 1 (can't be 0)
         return platoon[0].vehiclePosition - platoon[platoon.size() - 1].vehiclePosition + config_.vehicleLength; 
@@ -588,7 +589,7 @@ namespace platoon_strategic_ihp
         /**
          * Calculate desired position based on previous vehicle's trajectory for followers.
          * 
-         * TODO: The platoon trajectory regulation is derived with the assumtion that all vehicle 
+         * TODO: The platoon trajectory regulation is derived with the assumption that all vehicle 
          *       have identical length (i.e., 5m). Future development is needed to include variable 
          *       vehicle length into consideration.
          */
@@ -613,7 +614,7 @@ namespace platoon_strategic_ihp
         for (size_t index = 0; index < downtrackDistance.size(); index++)
         {
             cur_dtd = downtrackDistance[index];
-            if (cur_dtd > current_downtrack_distance_)
+            if (cur_dtd > getCurrentDowntrackDistance())
             {
                 // greater dtd ==> in front of host veh 
                 tmp_time_hdw += config_.vehicleLength / (speed[index] + 0.00001);
@@ -627,8 +628,8 @@ namespace platoon_strategic_ihp
         double pred_pos = downtrackDistance[getNumberOfVehicleInFront()-1]; // m
         
         // host data. 
-        double ego_spd = current_speed_; // m/s
-        double ego_pos = current_downtrack_distance_; // m
+        double ego_spd = getCurrentSpeed(); // m/s
+        double ego_pos = getCurrentDowntrackDistance(); // m
         
         // platoon position index
         int pos_idx = getNumberOfVehicleInFront();
