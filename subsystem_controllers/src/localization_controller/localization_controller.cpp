@@ -72,6 +72,11 @@ namespace subsystem_controllers
       current_sensor_status.emplace_back(sensor_status_[node]);
     }
 
+    // If the controller has not been configured to handle this fault configuration then do nothing
+    if (config_.sensor_fault_map.find(current_sensor_status) == config_.sensor_fault_map.end()) {
+      return;
+    }
+
     // Extract the alert required by this type of sensor statuses
     SensorAlertStatus alert_status = config_.sensor_fault_map[current_sensor_status];
     output_alert.description = "Localization required sensor failure from: " + alert.source_node;

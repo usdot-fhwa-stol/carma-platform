@@ -28,6 +28,8 @@ namespace health_monitor
     {
         Entry driver_status(msg->status == cav_msgs::DriverStatus::OPERATIONAL || msg->status == cav_msgs::DriverStatus::DEGRADED,true, msg->name, current_time, 0, "");
         em_.update_entry(driver_status);
+        // NOTE: The following is a temporary hack to allow the lidar driver to be moved to ROS2 which will not use this node
+        Entry fake_entry(msg->status == cav_msgs::DriverStatus::OPERATIONAL,true, msg->name, current_time, 0, "");
     }
 
     void DriverManager::evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout)
