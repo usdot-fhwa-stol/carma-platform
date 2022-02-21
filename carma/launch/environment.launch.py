@@ -246,7 +246,7 @@ def generate_launch_description():
                         {'--log-level' : GetLogLevel('motion_prediction_visualizer', env_log_levels) }
                     ],
                     remappings=[
-                        ("external_objects", "/external_object_predictions" ),
+                        ("external_objects", "external_object_predictions" ),
                     ]
             ),
         ]
