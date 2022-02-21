@@ -237,7 +237,7 @@ def generate_launch_description():
                     motion_computation_param_file,
                 ]
             ),
-            ComposableNode( #CARMA Motion Computation Visualizer Node
+            ComposableNode( #CARMA Motion Prediction Visualizer Node
                     package='motion_prediction_visualizer',
                     plugin='motion_prediction_visualizer::Node',
                     name='motion_prediction_visualizer',
