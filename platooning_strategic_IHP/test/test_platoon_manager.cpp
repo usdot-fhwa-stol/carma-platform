@@ -38,7 +38,6 @@ TEST(PlatoonManagerTest, test_construct)
     // Use Getter to retrieve host Platoon Manager class
     PlatoonManager pm_ = plugin.getHostPM();
     pm_.current_platoon_state = PlatoonState::LEADER;
-
 }
 
 TEST(PlatoonManagerTest, test_ecef_encode)
@@ -57,7 +56,6 @@ TEST(PlatoonManagerTest, test_ecef_encode)
     // Update ecef location
     plugin.setHostECEF(ecef_point_test);
     plugin.run_candidate_leader();
-
 }
 
 
@@ -148,11 +146,9 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub)
     std::vector<PlatoonMember> cur_pl;
     cur_pl.push_back(member);
     pm_.platoon = cur_pl;
-
     
     cav_msgs::PlatooningInfo info_msg2 = plugin.composePlatoonInfoMsg();
     EXPECT_EQ(info_msg2.leader_id, "1");
-   
 }
 
 TEST(PlatoonStrategicIHPPlugin, test_follower)
@@ -199,9 +195,7 @@ TEST(PlatoonStrategicIHPPlugin, test_get_leader)
     PlatoonMember platoon_leader = pm_.getDynamicLeader();
 
     EXPECT_EQ(member1.staticId, "1");
-
     EXPECT_EQ(platoon_leader.staticId, "1");
-   
 }
 
 
@@ -228,7 +222,6 @@ TEST(PlatoonManagerTest, test2)
 
     EXPECT_EQ(2, pm.platoon.size());
     EXPECT_EQ("1", pm.platoon[0].staticId);
-
 }
 
 
@@ -274,13 +267,9 @@ TEST(PlatoonManagerTest, test4)
     pm.leaderID = "0";
     pm.currentPlatoonID = "a";
 
-
     ros::Time::init();
 
     int res = pm.allPredecessorFollowing();
 
     EXPECT_EQ(0, res);
-
 }
-
-

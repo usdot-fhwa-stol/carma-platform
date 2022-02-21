@@ -85,8 +85,7 @@ namespace platoon_strategic_ihp
                                 PublishPluginDiscoveryCB plugin_discovery_publisher, MobilityResponseCB mobility_response_publisher,
                                 MobilityRequestCB mobility_request_publisher, MobilityOperationCB mobility_operation_publisher,
                                 PlatooningInfoCB platooning_info_publisher);
-
-
+            
             /**
             * \brief Callback function for Mobility Operation Message
             * 
@@ -238,7 +237,7 @@ namespace platoon_strategic_ihp
             * \brief Spin callback function
             */
             bool onSpin();
-            
+
             /**
             * \brief Run Leader State
             */
@@ -258,6 +257,9 @@ namespace platoon_strategic_ihp
             * \brief Run Follower State
             */
             void run_follower();
+
+            // ECEF position of the host vehicle
+            cav_msgs::LocationECEF pose_ecef_point_;
 
             // -------------- UCLA: add two states for frontal join ------------------
             /**
@@ -312,7 +314,6 @@ namespace platoon_strategic_ihp
             void setToFollower();
 
         private:
-
             
             PublishPluginDiscoveryCB plugin_discovery_publisher_;
             MobilityRequestCB mobility_request_publisher_;
@@ -384,8 +385,8 @@ namespace platoon_strategic_ihp
             * \brief Function to determine if a target vehicle is in the front of host vehicle
             *        note: This is only applicable for same lane application, so it will check cross track distance.
             *
-            * \param downtrack: vehicle downtrack
-            *        crosstrack: vehicle crosstrack
+            * \param downtrack target vehicle downtrack distance relative to host's route (m)
+            *        crosstrack: target vehicle crosstrack (m)
             *
             * \return true or false
             */
@@ -399,7 +400,6 @@ namespace platoon_strategic_ihp
             * \return speed limit value (m/s)
             */
             double findSpeedLimit(const lanelet::ConstLanelet& llt);
-            
 
             /**
             * \brief Function to process mobility request in leader state
@@ -714,7 +714,7 @@ namespace platoon_strategic_ihp
             * \param msg incoming mobility operation message.
             */
             void mob_op_cb_leaderaborting(const cav_msgs::MobilityOperation& msg);
-
+            
             /**
             * \brief Function to process mobility operation in candidateleader state.
             *
@@ -816,21 +816,22 @@ namespace platoon_strategic_ihp
             // Plugin discovery message
             cav_msgs::Plugin plugin_discovery_msg_;
 
-            // Add condition for leader aborting state, to prevent sending repeated requests 
-            bool isFirstLeaderAbortRequest_ = true;
+            double maxAllowedJoinTimeGap_ = 15.0;
+            double maxAllowedJoinGap_ = 90;
+            int maxPlatoonSize_ = 10;
+            double vehicleLength_ = 5.0;
+            int infoMessageInterval_ = 200; // ms
+            long prevHeartBeatTime_ = 0.0;
+            int statusMessageInterval_ = 100; // ms
+            int NEGOTIATION_TIMEOUT = 5000;  // ms
+            int noLeaderUpdatesCounter = 0;
+            int LEADER_TIMEOUT_COUNTER_LIMIT = 5;
+            double waitingStateTimeout = 25.0; // s
+            double desiredJoinGap = 30.0; // m
+            double desiredJoinTimeGap = 4.0; // s
 
-            // Internal FSM parameters 
-            int infoMessageInterval_ = 200;             // ms
-            long prevHeartBeatTime_ = 0.0;              // ms
-            int statusMessageInterval_ = 100;           // ms
-            int NEGOTIATION_TIMEOUT = 5000;             // ms
-            int LANE_CHANGE_TIMEOUT = 300000;           // ms (5 min)
-            int noLeaderUpdatesCounter = 0;             // counter 
-            int LEADER_TIMEOUT_COUNTER_LIMIT = 5;       // counter 
-            double waitingStateTimeout = 25.0;          // s
-            
-            // Threshold for determining if vehicle is stopped; non-zero allows for measurement noise
-            const double STOPPED_SPEED = 0.05;          // m/s
+            // Speed below which platooning will not be attempted; non-zero value allows for sensor noise
+            const double STOPPED_SPEED = 0.5; // m/s
 
             // UCLA: add member variable for state prepare to join
             int target_join_index_;
@@ -879,6 +880,5 @@ namespace platoon_strategic_ihp
              * index = 4, ECEFZ, in cm.
              */
             const std::string JOIN_CUT_IN_PARAMS = "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%";
-
     };
 }

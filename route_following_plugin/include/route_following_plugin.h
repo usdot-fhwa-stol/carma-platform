@@ -122,9 +122,10 @@ namespace route_following_plugin
          * \param start_speed Start speed of the current maneuver
          * \param start_lane_id Starting Lanelet ID of the current maneuver
          * \param ending_lane_id Ending Lanelet ID of the current maneuver
+         * \param stopping_accel Acceleration used for calculating the stopping distance
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double start_dist, double end_dist, double start_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id) const;
+        cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double start_dist, double end_dist, double start_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, double stopping_accel) const;
 
         /**
          * \brief Given a LaneletRelations and ID of the next lanelet in the shortest path

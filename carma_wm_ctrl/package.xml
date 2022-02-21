@@ -18,6 +18,7 @@
   <depend>carma_wm</depend>
   <depend>cav_msgs</depend>
   <depend>roscpp</depend>
+  <depend>autoware_lanelet2_ros_interface</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

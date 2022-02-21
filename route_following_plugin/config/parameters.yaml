@@ -3,7 +3,7 @@ minimal_plan_duration: 15
 
 # Multiplier for the acceleration limit which will be used for formulating the stopping maneuver
 # This multiplier should be a bit lower than whatever plugin will be used to bring the vehicle to a stop to provide buffer in planning
-stopping_accel_limit_multiplier: 0.75
+stopping_accel_limit_multiplier: 0.5
 
 # Double : Extra time allowed for lane change, in order to make transition smooth
 #Unit : seconds

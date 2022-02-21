@@ -29,7 +29,7 @@
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <autoware_lanelet2_msgs/MapBin.h>
-#include <lanelet2_extension/utility/message_conversion.h>
+#include <autoware_lanelet2_ros_interface/utility/message_conversion.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <carma_wm_ctrl/GeofenceScheduler.h>
 #include <lanelet2_core/geometry/BoundingBox.h>
@@ -55,6 +55,8 @@
 #include <cav_msgs/TrafficControlRequestPolygon.h>
 #include <carma_wm/WorldModelUtils.h>
 #include <std_msgs/Int32MultiArray.h>
+#include <cav_msgs/MapData.h>
+#include <carma_wm/SignalizedIntersectionManager.h>
 
 
 namespace carma_wm_ctrl
@@ -107,6 +109,13 @@ public:
    * \param geofence_msg The ROS msg of the geofence to add. 
    */
   void geofenceCallback(const cav_msgs::TrafficControlMessage& geofence_msg);
+
+  /*!
+   * \brief Callback to MAP.msg which contains intersections' static info such geometry and lane ids
+   *
+   * \param map_msg The ROS msg of the MAP.msg to process
+   */
+  void externalMapMsgCallback(const cav_msgs::MapData& map_msg);
 
   /*!
    * \brief Adds a geofence to the current map and publishes the ROS msg
@@ -192,6 +201,14 @@ public:
    * \throw InvalidObjectStateError if base_map is not set or the base_map's georeference is empty
    */
   void geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& geofence_msg);
+
+  /*!
+   * \brief Fills geofence object from MAP Data ROS Msg which contains intersections' static data such as geometry and signal_group
+   * \param Geofence object to fill with information extracted from this msg
+   * \param geofence_msg The MAP ROS msg that contains intersection information
+   * \throw InvalidObjectStateError if base_map is not set or the base_map's georeference is empty
+   */
+  std::vector<std::shared_ptr<Geofence>> geofenceFromMapMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::MapData& map_msg);
 
   /*!
    * \brief Returns the route distance (downtrack or crosstrack in meters) to the nearest active geofence lanelet
@@ -390,7 +407,7 @@ private:
   
   lanelet::LaneletMapPtr base_map_;
   lanelet::LaneletMapPtr current_map_;
-  lanelet::routing::RoutingGraphUPtr current_routing_graph_; // Current map routing graph
+  lanelet::routing::RoutingGraphPtr current_routing_graph_; // Current map routing graph
   lanelet::Velocity config_limit;
   std::string participant_ = lanelet::Participants::VehicleCar;//Default participant type
   std::unordered_set<std::string>  checked_geofence_ids_;
@@ -422,6 +439,7 @@ private:
 
   size_t update_count_ = 0; // Records the total number of sent map updates. Used as the set value for update.header.seq
 
+  carma_wm::SignalizedIntersectionManager sim_;
 };
 
 

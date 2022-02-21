@@ -22,13 +22,13 @@
 #include <math.h>
 #include <tf/LinearMath/Vector3.h>
 #include <carma_wm/WMTestLibForGuidance.h>
-#include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>
 #include <lanelet2_io/io_handlers/Writer.h>
-#include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/geometry/LineString.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <string>
 #include <sstream>
 #include <ros/package.h>
@@ -83,7 +83,7 @@ namespace basic_autonomy
         std::vector<double> yaws = {0.2, 0.5, 0.6, 1.0};
         ros::Time startTime(1.0);
         std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
-            basic_autonomy::waypoint_generation::trajectory_from_points_times_orientations(points, times, yaws, startTime);
+            basic_autonomy::waypoint_generation::trajectory_from_points_times_orientations(points, times, yaws, startTime, "default");
 
         ASSERT_EQ(4, traj_points.size());
         ASSERT_NEAR(1.0, traj_points[0].target_time.toSec(), 0.0000001);
@@ -590,6 +590,96 @@ namespace basic_autonomy
         ASSERT_NEAR(6.0, result[4].point.y(), 0.0000001);
     }
 
+    TEST(BasicAutonomyTest, test_lanechange_trajectory)
+    {
+        //Case 1: Lane change from start to end of adjacent lanelets
+        std::string path = ros::package::getPath("basic_autonomy");
+        std::string file = "/resource/map/town01_vector_map_lane_change.osm";
+        file = path.append(file);
+        int projector_type = 0;
+        std::string target_frame;
+        lanelet::ErrorMessages load_errors;
+        lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+        lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+        lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+        if (map->laneletLayer.size() == 0)
+        {
+            FAIL() << "Input map does not contain any lanelets";
+        }
+        std::shared_ptr<carma_wm::CARMAWorldModel> cwm = std::make_shared<carma_wm::CARMAWorldModel>();
+        cwm->carma_wm::CARMAWorldModel::setMap(map);
+
+        //Set Route
+        lanelet::Id start_id = 106;
+        lanelet::Id end_id = 111;
+
+        carma_wm::test::setRouteByIds({start_id,end_id},cwm);
+        //get starting position
+        auto shortest_path = cwm->getRoute()->shortestPath();
+        lanelet::BasicPoint2d veh_pos = shortest_path[0].centerline2d().front();
+        double starting_downtrack =cwm->routeTrackPos(veh_pos).downtrack;
+        double ending_downtrack = cwm->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack;
+
+        //Arguments for create geometry profile function-
+        cav_msgs::Maneuver maneuver;
+        maneuver.type = cav_msgs::Maneuver::LANE_CHANGE;
+        maneuver.lane_change_maneuver.start_dist = starting_downtrack;
+        maneuver.lane_change_maneuver.end_dist = ending_downtrack;
+        maneuver.lane_change_maneuver.start_speed = 5.0;
+        maneuver.lane_change_maneuver.start_time = ros::Time::now();
+        //calculate end_time assuming constant acceleration
+        double acc = pow(maneuver.lane_change_maneuver.start_speed, 2) / (2 * (ending_downtrack - starting_downtrack));
+        double end_time = maneuver.lane_change_maneuver.start_speed / acc;
+        maneuver.lane_change_maneuver.end_speed = 25.0;
+        maneuver.lane_change_maneuver.end_time = ros::Time(end_time + 10.0);
+        maneuver.lane_change_maneuver.starting_lane_id = std::to_string(start_id);
+        maneuver.lane_change_maneuver.ending_lane_id = std::to_string(end_id);
+
+        std::vector<cav_msgs::Maneuver> maneuvers;
+        maneuvers.push_back(maneuver);
+        cav_msgs::VehicleState state;
+        state.X_pos_global = veh_pos.x();
+        state.Y_pos_global = veh_pos.y();
+        state.longitudinal_vel = 8.0;
+
+        std::string trajectory_type = "cooperative_lanechange";
+        waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 1, 1);
+        const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0, 0, 0, 0, 0, 5, 0, 0, 20);
+        double maneuver_fraction_completed;
+        cav_msgs::VehicleState ending_state;
+        
+        std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers, 
+                                                                                    starting_downtrack, cwm, ending_state, state, general_config, config);
+        ros::Time state_time = ros::Time::now();
+        double target_speed = 11.176;
+        
+        EXPECT_EQ(points.back().speed, state.longitudinal_vel);
+
+
+        //Case 2: Complete lane change before end of lanelet
+        int centerline_size = shortest_path.back().centerline2d().size();
+        maneuver.lane_change_maneuver.end_dist = cwm->routeTrackPos(shortest_path.back().centerline2d()[centerline_size/2]).downtrack;
+        maneuvers[0] = maneuver;
+        points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers, 
+                                                                                    starting_downtrack, cwm, ending_state, state, general_config, config);
+        
+        EXPECT_TRUE(points.size() > 4);
+
+        //Test resample linestring
+        lanelet::BasicLineString2d line_one = shortest_path.front().centerline2d().basicLineString();
+        std::vector<lanelet::BasicPoint2d> line_1;
+        for(int i = 0;i<line_one.size();i++){
+            line_1.push_back(line_one[i]);
+        }
+        lanelet::BasicLineString2d line_two = shortest_path.back().centerline2d().basicLineString();
+        std::vector<lanelet::BasicPoint2d> line_2;
+        for(int i = 0;i<line_two.size();i++){
+            line_2.push_back(line_two[i]);
+        }
+        std::vector<std::vector<lanelet::BasicPoint2d>> linestrings = basic_autonomy::waypoint_generation::resample_linestring_pair_to_same_size(line_1, line_2);
+
+    }
+
     TEST(BasicAutonomyTest, maneuvers_to_lanechange_points)
     {
 
@@ -643,8 +733,8 @@ namespace basic_autonomy
         state.longitudinal_vel = 8.0;
 
         std::string trajectory_type = "cooperative_lanechange";
-        waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 0, 0);
-        const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0, 0, 0, 0, 0, 5, 0, 0, 20);
+        waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 1, 1);
+        const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0, 1, 0, 0, 0, 5, 0, 0, 20);
         double maneuver_fraction_completed;
         cav_msgs::VehicleState ending_state;
         
@@ -656,19 +746,7 @@ namespace basic_autonomy
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_path(points,
                                                                                                                                                           state, state_time, cmw, ending_state, config);
         EXPECT_TRUE(trajectory_points.size() > 2);
-
-        basic_autonomy::waypoint_generation::create_route_geom(starting_downtrack, int(start_id), ending_downtrack, cmw);
-
-        lanelet::ConstLanelet start_lanelet = shortest_path.front();
-        lanelet::BasicPoint2d lc_start_point = start_lanelet.centerline2d().front();
-        lanelet::ConstLanelet end_lanelet = shortest_path.back();
-        lanelet::BasicPoint2d lc_end_point = end_lanelet.centerline2d().back();
-        //create lanechange path creates the actual lanechange path. From starting of first lanelet's centerline, to the end of the adjacent
-        //lanelet's centerline
-        lanelet::BasicLineString2d lc_geom = basic_autonomy::waypoint_generation::create_lanechange_path(start_lanelet, end_lanelet);
-                                                                                                         
-        ASSERT_NEAR(lc_start_point.y(), lc_geom.front().y(), 0.000001);
-        ASSERT_NEAR(lc_start_point.x(), lc_geom.front().x(), 0.000001);
+        basic_autonomy::waypoint_generation::create_lanechange_geometry(start_id, end_id,starting_downtrack, ending_downtrack, cmw, state, 1);
     } 
 
     TEST(BasicAutonomyTest, lanefollow_geometry_visited_lanelets)

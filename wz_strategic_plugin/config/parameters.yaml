@@ -1,5 +1,5 @@
 # Double: multiplier to apply to the maximum allowable vehicle deceleration limit so we plan under our capabilities
-vehicle_decel_limit_multiplier : 0.50
+vehicle_decel_limit_multiplier : 0.5
 
 # Double: The minimum distance in meters that the vehicle can be at before requiring a transition to the APPROACH state
 min_approach_distance : 30.0

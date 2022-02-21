@@ -10,9 +10,9 @@ stop_timestep : 0.1
 # Units: m
 trajectory_step_size : 1.0
 
-# Double: Downtrack distance between trajectory points
+# Double: multiplier to apply to the maximum allowable vehicle deceleration limit so we plan under our capabilities
 # Units: percentage
-accel_limit_multiplier : 0.7
+accel_limit_multiplier : 0.95
 
 # Double: Minimum speed the vehicle can command before being ready to stop
 # Units: m/s

@@ -33,7 +33,6 @@
   <depend>cav_srvs</depend>
   <depend>wgs84_utils</depend>
   <depend>message_filters</depend>
-  <depend>novatel_gps_msgs</depend>
   <depend>carma_utils</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>lanelet2_extension</depend>

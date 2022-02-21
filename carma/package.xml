@@ -62,7 +62,6 @@
   <depend>rospy</depend>
   <depend>autoware_msgs</depend>
   <depend>derived_object_msgs</depend>
-  <depend>radar_msgs</depend>
   <exec_depend>robot_state_publisher</exec_depend>
 
 

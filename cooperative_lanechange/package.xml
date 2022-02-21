@@ -22,5 +22,3 @@
   <depend>carma_debug_msgs</depend> 
   <depend>lanelet2_extension</depend>
 </package>
-
-  

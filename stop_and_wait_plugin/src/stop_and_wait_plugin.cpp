@@ -119,17 +119,26 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
   // Extract the stopping buffer used to consider a stopping behavior complete
   double stop_location_buffer = config_.default_stopping_buffer;  // If no maneuver meta data is provided we will use the default buffer
   
+  double stopping_accel = 0.0;
   if (maneuver_plan[0].stop_and_wait_maneuver.parameters.presence_vector &
       cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA)
   {
+    if(maneuver_plan[0].stop_and_wait_maneuver.parameters.float_valued_meta_data.size() < 2){
+      throw std::invalid_argument("stop and wait maneuver message missing required meta data");
+    }
     stop_location_buffer = maneuver_plan[0].stop_and_wait_maneuver.parameters.float_valued_meta_data[0];
+    stopping_accel = maneuver_plan[0].stop_and_wait_maneuver.parameters.float_valued_meta_data[1];
 
     ROS_DEBUG_STREAM("Using stop buffer from meta data: " << stop_location_buffer);
+    ROS_DEBUG_STREAM("Using stopping acceleration from meta data: "<< stopping_accel);
+  }
+  else{
+    throw std::invalid_argument("stop and wait maneuver message missing required float meta data");
   }
 
   trajectory.trajectory_points = compose_trajectory_from_centerline(
       points_and_target_speeds, current_downtrack, req.vehicle_state.longitudinal_vel,
-      maneuver_plan[0].stop_and_wait_maneuver.end_dist, stop_location_buffer, req.header.stamp);
+      maneuver_plan[0].stop_and_wait_maneuver.end_dist, stop_location_buffer, req.header.stamp, stopping_accel);
 
   ROS_DEBUG_STREAM("Trajectory points size:" << trajectory.trajectory_points.size());
 
@@ -208,7 +217,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::trajectory_from_points_t
 
 std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_centerline(
     const std::vector<PointSpeedPair>& points, double starting_downtrack, double starting_speed, double stop_location,
-    double stop_location_buffer, ros::Time start_time)
+    double stop_location_buffer, ros::Time start_time, double stopping_acceleration)
 {
   std::vector<cav_msgs::TrajectoryPlanPoint> plan;
   if (points.size() == 0)
@@ -221,7 +230,8 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
   double half_stopping_buffer = stop_location_buffer * 0.5;
   double remaining_distance = stop_location - half_stopping_buffer - starting_downtrack; // Target to stop in the middle of the buffer
-  double target_accel = config_.accel_limit_multiplier * config_.accel_limit;
+
+  double target_accel = stopping_acceleration * config_.accel_limit_multiplier;
   double req_dist = (starting_speed * starting_speed) /
                     (2.0 * target_accel);  // Distance needed to go from current speed to 0 at target accel
 

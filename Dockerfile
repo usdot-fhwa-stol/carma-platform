@@ -33,7 +33,7 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 
-FROM usdotfhwastoldev/autoware.ai:develop AS base-image
+FROM usdotfhwastol/autoware.ai:carma-system-3.11.0 AS base-image
 
 FROM base-image AS source-code
 
@@ -51,7 +51,6 @@ FROM base-image AS install
 # Copy the source files from the previous stage and build/install
 RUN mkdir ~/carma_ws
 COPY --from=source-code --chown=carma /home/carma/src /home/carma/carma_ws/src
-
 
 RUN ~/carma_ws/src/carma-platform/docker/install.sh
 

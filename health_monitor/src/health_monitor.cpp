@@ -26,7 +26,6 @@ namespace health_monitor
     {
         car_ = false;
         truck_ = false;
-
     }
     void HealthMonitor::initialize()
     {
@@ -34,14 +33,13 @@ namespace health_monitor
         ROS_INFO_STREAM("Initalizing health_monitor node...");
         pnh_.reset(new ros::CARMANodeHandle("~"));
         nh_.reset(new ros::CARMANodeHandle());
-
         // init ros service servers, publishers and subscribers
         registered_plugin_service_server_ = nh_->advertiseService("plugins/get_registered_plugins", &HealthMonitor::registered_plugin_cb, this);
         active_plugin_service_server_ = nh_->advertiseService("plugins/get_active_plugins", &HealthMonitor::active_plugin_cb, this);
         activate_plugin_service_server_ = nh_->advertiseService("plugins/activate_plugin", &HealthMonitor::activate_plugin_cb, this);
         get_strategic_plugin_by_capability_server_ = nh_->advertiseService("plugins/get_strategic_plugin_by_capability", &PluginManager::get_strategic_plugins_by_capability, &plugin_manager_);
         get_tactical_plugin_by_capability_server_ = nh_->advertiseService("plugins/get_tactical_plugin_by_capability", &PluginManager::get_tactical_plugins_by_capability, &plugin_manager_);
-        plugin_discovery_subscriber_ = nh_->subscribe<cav_msgs::Plugin>("plugin_discovery", 5, &HealthMonitor::plugin_discovery_cb, this);
+        plugin_discovery_subscriber_ = nh_->subscribe<cav_msgs::Plugin>("plugin_discovery", 10, &HealthMonitor::plugin_discovery_cb, this);
         driver_discovery_subscriber_ = nh_->subscribe<cav_msgs::DriverStatus>("driver_discovery", 5, &HealthMonitor::driver_discovery_cb, this);
 
         // load params
