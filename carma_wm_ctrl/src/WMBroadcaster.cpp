@@ -206,7 +206,14 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
   std::vector<std::shared_ptr<lanelet::SignalizedIntersection>> intersections;
   std::vector<std::shared_ptr<lanelet::CarmaTrafficSignal>> traffic_signals;
 
+  auto sim_copy = sim_;
   sim_.createIntersectionFromMapMsg(intersections, traffic_signals, map_msg, current_map_, current_routing_graph_);
+
+  if (sim_ == sim_copy) // if no change
+  {
+    ROS_DEBUG_STREAM(">>> Detected no change from previous, ignoring duplicate message! with gf id: " << gf_ptr->id_);
+    return {};
+  }
 
   for (auto intersection : intersections)
   {
@@ -1008,6 +1015,7 @@ void WMBroadcaster::externalMapMsgCallback(const cav_msgs::MapData& map_msg)
   if (!current_map_ || current_map_->laneletLayer.size() == 0)
   {
     ROS_INFO_STREAM("Map is not available yet. Skipping MAP msg");
+    return;
   }
 
   // check if we have seen this message already
@@ -1020,17 +1028,27 @@ void WMBroadcaster::externalMapMsgCallback(const cav_msgs::MapData& map_msg)
     {
       if (sim_.intersection_id_to_regem_id_.find(intersection.id.id) == sim_.intersection_id_to_regem_id_.end())
       {
+        ROS_ERROR_STREAM("It was not updated!!!");
         up_to_date = false;
+        break;
       }
     }
   }
 
   if(up_to_date)
+  {
+    ROS_ERROR_STREAM("It was updated!!! So skipping");
     return;
-
+  }
+  else
+  {
+    ROS_ERROR_STREAM("In the end, it was not updated, so updating again...");
+  }
+    
   gf_ptr->map_msg_ = map_msg;
   gf_ptr->msg_.package.label_exists = true;
   gf_ptr->msg_.package.label = "MAP_MSG";
+  gf_ptr->id_ = boost::uuids::random_generator()(); 
 
   // create dummy traffic Control message to add instant activation schedule
   cav_msgs::TrafficControlMessageV01 traffic_control_msg;

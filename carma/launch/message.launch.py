@@ -124,6 +124,7 @@ def generate_launch_description():
                 remappings=[
                     ("inbound_binary_msg", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/comms/inbound_binary_msg" ] ),
                     ("outbound_binary_msg", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/comms/outbound_binary_msg" ] ),
+                    ("incoming_mobility_operation", "incoming_mobility_operation_test" ),
                 ],
             ),
             ComposableNode(
