@@ -13,11 +13,11 @@
 
     # Required subsystem controller nodes for the overall system to be functional and will have their lifecycle's managed
     # TODO Move this parameter to carma config in some capacity
-    required_subsystem_nodes: []
+    required_subsystem_nodes: ['']
 
     # List of nodes which will not be directly managed by this subsystem controller 
     # but which are required to be operational for the subsystem to function
-    unmanaged_required_nodes: []
+    unmanaged_required_nodes: ['']
 
     # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
     full_subsystem_required: false

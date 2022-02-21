@@ -20,7 +20,7 @@
     
     # List of nodes which will not be directly managed by this subsystem controller 
     # but which are required to be operational for the subsystem to function
-    unmanaged_required_nodes: [] # TODO localization needs GPS and lidar but this will be handled with more complex logic then this list
+    unmanaged_required_nodes: [''] # TODO localization needs GPS and lidar but this will be handled with more complex logic then this list
 
     # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
     full_subsystem_required: true

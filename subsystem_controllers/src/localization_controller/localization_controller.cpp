@@ -26,6 +26,12 @@ namespace subsystem_controllers
   {
     config_.sensor_nodes = declare_parameter<std::vector<std::string>>("sensor_nodes", config_.sensor_nodes);
     config_.sensor_fault_map = sensor_fault_map_from_json(declare_parameter<std::string>("sensor_fault_map", ""));
+  
+    // Handle fact that parameter vectors cannot be empty
+    if (base_config_.sensor_nodes.size() == 1 && base_config_.sensor_nodes[0].empty()) {
+      base_config_.sensor_nodes.clear();
+    }
+  
   }
 
   carma_ros2_utils::CallbackReturn LocalizationControllerNode::handle_on_configure(const rclcpp_lifecycle::State &prev_state) {
@@ -39,6 +45,12 @@ namespace subsystem_controllers
     // Reset and reload config
     config_ = LocalizationControllerConfig();
     get_parameter<std::vector<std::string>>("sensor_nodes", config_.sensor_nodes);
+    
+    // Handle fact that parameter vectors cannot be empty
+    if (base_config_.sensor_nodes.size() == 1 && base_config_.sensor_nodes[0].empty()) {
+      base_config_.sensor_nodes.clear();
+    }
+    
     std::string json_string;
     get_parameter<std::string>("sensor_fault_map", json_string);
     
