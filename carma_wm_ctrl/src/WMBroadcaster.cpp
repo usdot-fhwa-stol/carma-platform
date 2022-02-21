@@ -206,7 +206,14 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
   std::vector<std::shared_ptr<lanelet::SignalizedIntersection>> intersections;
   std::vector<std::shared_ptr<lanelet::CarmaTrafficSignal>> traffic_signals;
 
+  auto sim_copy = sim_;
   sim_.createIntersectionFromMapMsg(intersections, traffic_signals, map_msg, current_map_, current_routing_graph_);
+
+  if (sim_ == sim_copy) // if no change
+  {
+    ROS_DEBUG_STREAM(">>> Detected no change from previous, ignoring duplicate message! with gf id: " << gf_ptr->id_);
+    return {};
+  }
 
   for (auto intersection : intersections)
   {
@@ -1041,6 +1048,7 @@ void WMBroadcaster::externalMapMsgCallback(const cav_msgs::MapData& map_msg)
   gf_ptr->map_msg_ = map_msg;
   gf_ptr->msg_.package.label_exists = true;
   gf_ptr->msg_.package.label = "MAP_MSG";
+  gf_ptr->id_ = boost::uuids::random_generator()(); 
 
   // create dummy traffic Control message to add instant activation schedule
   cav_msgs::TrafficControlMessageV01 traffic_control_msg;
