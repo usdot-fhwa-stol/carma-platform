@@ -79,6 +79,13 @@ namespace health_monitor
             
         }
 
+        //////////////////////
+        // NOTE: THIS IS A MANUAL DISABLE OF ALL LIDAR FAILURE DETECTION FOLLOWING THE ROS2 PORT
+        /////////////////////
+        lidar1=1;
+        lidar2=1;
+        /////////////////////
+
         //Decision making 
         if (ssc == 0)
         {
@@ -151,6 +158,12 @@ namespace health_monitor
                 evaluate_sensor(camera,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
         }
+
+        //////////////////////
+        // NOTE: THIS IS A MANUAL DISABLE OF ALL LIDAR FAILURE DETECTION FOLLOWING THE ROS2 PORT
+        /////////////////////
+        lidar=1;
+        /////////////////////
 
         //Decision making 
         if(ssc==1)
