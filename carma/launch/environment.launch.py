@@ -243,12 +243,11 @@ def generate_launch_description():
                     name='motion_prediction_visualizer',
                     extra_arguments=[
                         {'use_intra_process_comms': True}, 
-                        {'--log-level' : GetLogLevel('tracking_nodes', env_log_levels) }
+                        {'--log-level' : GetLogLevel('motion_prediction_visualizer', env_log_levels) }
                     ],
                     remappings=[
-                        ("external_objects", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/external_object_predictions" ] ),
-                    ],
-                    parameters=[ tracking_nodes_param_file ]
+                        ("external_objects", "/external_object_predictions" ),
+                    ]
             ),
         ]
     )

@@ -15,7 +15,7 @@
 
 <package format="3">
   <name>motion_prediction_visualizer</name>
-  <version>1.0.0</version>
+  <version>4.0.0</version>
   <description>The motion_prediction_visualizer package visualizes predication state of external objects</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
@@ -29,10 +29,7 @@
   <depend>rclcpp</depend>
   <depend>carma_ros2_utils</depend>
   <depend>rclcpp_components</depend>
-  <depend>std_srvs</depend>
-  <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>visualization_msgs</depend>
   <depend>carma_perception_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>

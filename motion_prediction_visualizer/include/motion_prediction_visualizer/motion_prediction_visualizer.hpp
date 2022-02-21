@@ -18,12 +18,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <functional>
-#include <std_msgs/msg/string.hpp>
-#include <std_srvs/srv/empty.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
-#include <carma_perception_msgs/msg/roadway_obstacle_list.hpp>
 
 
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
