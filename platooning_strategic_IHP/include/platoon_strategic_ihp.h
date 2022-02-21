@@ -682,7 +682,7 @@ namespace platoon_strategic_ihp
             void mob_op_cb_STATUS(const cav_msgs::MobilityOperation& msg);
 
             /**
-            * \brief Function to process mobility operation INFO params and find platoon length in m.
+            * \brief Function to process mobility operation INFO params to find platoon length in m.
             *
             * \param strategyParams The parsed strategy params, used to find ecef locaton.
             *   
