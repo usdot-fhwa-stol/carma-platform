@@ -57,7 +57,13 @@ fi
 #
 #cd astuff_sensor_msgs
 #git checkout 41d5ef0c33fb27eb3c9ba808b51332bcce186a83
-#
+
+ls
+cd carma-platform/mock_drivers/rosbag_mock_drivers
+ls 
+echo "" > COLCON_IGNORE
+cd ../../../
+
 ##Disable ibeo_msgs
 #cd ibeo_msgs
 #echo "" > COLCON_IGNORE

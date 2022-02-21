@@ -484,13 +484,20 @@ namespace route {
         }
         catch (const tf2::TransformException &ex)
         {
+            ROS_DEBUG_STREAM("It did NOT pass");
             ROS_WARN("%s", ex.what());
+
         }
+        ROS_DEBUG_STREAM("It passed");
 
         vehicle_pose_->pose.position.x = frontbumper_transform_.getOrigin().getX();
         vehicle_pose_->pose.position.y = frontbumper_transform_.getOrigin().getY();
         vehicle_pose_->pose.position.z = frontbumper_transform_.getOrigin().getZ();
-            
+        
+        if (vehicle_pose_)
+            ROS_DEBUG_STREAM("POSE It passed");
+        else
+            ROS_DEBUG_STREAM("POSE it did not pass");
 
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
