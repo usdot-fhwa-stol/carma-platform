@@ -53,13 +53,49 @@ fi
 # add astuff messages
 # NOTE: The ibeo_msgs package is ignored because on build the cmake files in that package run a sed command 
 #       which can make them incompatible with a new ros version after a source switch
-git clone https://github.com/astuff/astuff_sensor_msgs 
-
-cd astuff_sensor_msgs
-git checkout 41d5ef0c33fb27eb3c9ba808b51332bcce186a83
-
-# Disable ibeo_msgs
-cd ibeo_msgs
-echo "" > COLCON_IGNORE
-cd ../astuff_sensor_msgs
-echo "" > COLCON_IGNORE
+#git clone https://github.com/astuff/astuff_sensor_msgs 
+#
+#cd astuff_sensor_msgs
+#git checkout 41d5ef0c33fb27eb3c9ba808b51332bcce186a83
+#
+##Disable ibeo_msgs
+#cd ibeo_msgs
+#echo "" > COLCON_IGNORE
+#cd ../astuff_sensor_msgs
+#echo "" > COLCON_IGNORE
+#
+##NOTE: disable other unused packages in order to save time building.
+#
+##Disable delphi_esr_msgs
+#cd delphi_esr_msgs
+#echo "" > COLCON_IGNORE
+#cd ../astuff_sensor_msgs
+#
+##Disable delphi_srr_msgs
+#cd delphi_srr_msgs
+#echo "" > COLCON_IGNORE
+#cd ../astuff_sensor_msgs
+#
+##Disable kartech_linear_actuator_msgs
+#cd kartech_linear_actuator_msgs
+#echo "" > COLCON_IGNORE
+#cd ../astuff_sensor_msgs
+#
+##Disable mobileye_560_660_msgs
+#cd mobileye_560_660_msgs
+#echo "" > COLCON_IGNORE
+#cd ../astuff_sensor_msgs
+#
+##Disable neobotix_usboard_msgs
+#cd neobotix_usboard_msgs
+#echo "" > COLCON_IGNORE
+#cd ../astuff_sensor_msgs
+#
+##Disable pacmod_msgs
+#cd pacmod_msgs
+#echo "" > COLCON_IGNORE
+#cd ../astuff_sensor_msgs
+#
+#
+#
+#
