@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2021-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,17 +49,6 @@ namespace subsystem_controllers
 
     // TODO comments
     std::unordered_map<std::vector<SensorBooleanStatus>, SensorAlertStatus, VectorHash> sensor_fault_map;
-    // sensor_fault_map: '
-    //   {
-    //     "sensor_fault_map": 
-    //     [
-    //       [0,1,1,2],
-    //       [1,0,1,2],
-    //       [0,0,1,3],
-    //       [0,0,0,0]
-    //     ],
-    //   }
-    //   '
 
 
     // Stream operator for this config

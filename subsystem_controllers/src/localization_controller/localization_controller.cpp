@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2021-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ namespace subsystem_controllers
     auto base_return = BaseSubsystemController::handle_on_configure(prev_state);
 
     if (base_return != carma_ros2_utils::CallbackReturn::SUCCESS) {
+      RCLCPP_ERROR(get_logger(), "Localization Controller could not configure");
       return base_return;
     }
 
@@ -40,7 +41,12 @@ namespace subsystem_controllers
     get_parameter<std::vector<std::string>>("sensor_nodes", config_.sensor_nodes);
     std::string json_string;
     get_parameter<std::string>("sensor_fault_map", json_string);
+    
+    RCLCPP_INFO_STREAM(get_logger(), "Loaded sensor_fault_map json string: " << json_string);
+    
     config_.sensor_fault_map = sensor_fault_map_from_json(json_string);
+
+    RCLCPP_INFO_STREAM(get_logger(), "Loaded localization config: " << config_);
 
     for (auto node : config_.sensor_nodes) {
       sensor_status_[node] = SensorBooleanStatus::OPERATIONAL; // Start tracking the sensor status's
@@ -58,6 +64,7 @@ namespace subsystem_controllers
     // Check if our list of coordinated sensors contains the node providing the alert
     // No need to check required nodes as that has already been handled in the parent call
     if (sensor_status_.find(alert.source_node) == sensor_status_.end()) {
+      RCLCPP_INFO_STREAM(get_logger(), "Alert not from a sensor node. Alerting node: " << alert.source_node);
       return;
     }
 
@@ -74,6 +81,7 @@ namespace subsystem_controllers
 
     // If the controller has not been configured to handle this fault configuration then do nothing
     if (config_.sensor_fault_map.find(current_sensor_status) == config_.sensor_fault_map.end()) {
+      RCLCPP_INFO_STREAM(get_logger(), "Failure does not match with fault configuration. Assuming system remains operational ");
       return;
     }
 
@@ -106,32 +114,38 @@ namespace subsystem_controllers
     std::unordered_map<std::vector<SensorBooleanStatus>, SensorAlertStatus, VectorHash> map;
     
     rapidjson::Document d;
-    d.Parse(json_string.c_str());
+
+    if(d.Parse(json_string.c_str()).HasParseError())
+    {
+        RCLCPP_WARN(get_logger(), "Failed to parse sensor_fault map. Invalid json structure");
+        return map;
+    }
+
     if (!d.HasMember("sensor_fault_map")) {
-      // TODO log warning
+      RCLCPP_WARN(get_logger(), "No sensor_fault_map found in localization config");
       return map;
     }
 
     rapidjson::Value& map_value = d["sensor_fault_map"];
 
     if (!map_value.IsArray()) {
-      // TODO log warning
+      RCLCPP_WARN(get_logger(), "No sensor_fault_map cannot be read as array");
       return map;
     }
 
     if (map_value.Size() == 0) {
-      // TODO log warning
+      RCLCPP_WARN(get_logger(), "sensor_fault_map has zero size");
       return map;
     }
 
     for (rapidjson::SizeType i = 0; i < map_value.Size(); i++) {
       if (!map_value[i].IsArray()) {
-        // TODO log warning
+        RCLCPP_WARN(get_logger(), "sensor_fault_map rows are not arrays");
         continue;
       }
 
       if (map_value[i].Size() < 2) {
-        // TODO Log warning
+        RCLCPP_WARN(get_logger(), "sensor_fault_map rows do not contain more than 1 element");
         continue;
       }
 
@@ -139,7 +153,7 @@ namespace subsystem_controllers
       statuses.reserve(map_value[i].Size()-1);
       for (rapidjson::SizeType j = 0; j < map_value[i].Size() - 1; j++) {
         if (!map_value[i][j].IsInt()) {
-          // TODO log warning
+          RCLCPP_WARN_STREAM(get_logger(), "sensor_fault_map row " << i << " element " << j << " is not an int");
           continue;
         }
 
@@ -149,7 +163,7 @@ namespace subsystem_controllers
       rapidjson::Value& alert = map_value[i][map_value[i].Size() - 1];
 
       if (!alert.IsInt()) {
-        //TODO log warning
+        RCLCPP_WARN_STREAM(get_logger(), "sensor_fault_map alert type is not an int in row " << i);
         continue;
       }
 
