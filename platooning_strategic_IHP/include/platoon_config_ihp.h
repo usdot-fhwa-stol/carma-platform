@@ -34,17 +34,17 @@ struct PlatoonPluginConfig
   double epislon               = 0.001; // m/s
   
   // following parameters are for platoon forming and operation
-  double timeHeadway           = 2.0;  // s
-  double standStillHeadway     = 12.0; // m
-  double maxAllowedJoinTimeGap = 15.0; // s
-  double maxAllowedJoinGap     = 90.0; // m
-  double desiredJoinTimeGap    = 4.0;  // s
-  double desiredJoinGap        = 30.0; // m
-  double waitingStateTimeout   = 25.0; // s
-  double cmdSpeedMaxAdjustment = 10.0; // m/s
+  double timeHeadway                    = 2.0;     // s
+  double standStillHeadway              = 12.0;    // m
+  double maxAllowedJoinTimeGap          = 15.0;    // s
+  double maxAllowedJoinGap              = 90.0;    // m
+  double longitudinalCheckThresold      = 85.0;    // m
+  double desiredJoinTimeGap             = 4.0;     // s
+  double desiredJoinGap                 = 30.0;    // m
+  double waitingStateTimeout            = 25.0;    // s
+  double cmdSpeedMaxAdjustment          = 10.0;    // m/s
     
   // following parameters are mainly for APF leader selection
-  // UCLA: Rename the next four variables for better explainability.
   double minAllowableHeadaway    = 1.6;  // s
   double headawayStableLowerBond = 1.7;  // s
   double maxAllowableHeadaway    = 4.0;  // s
@@ -53,6 +53,9 @@ struct PlatoonPluginConfig
   double minGap                  = 22.0; // m
   double maxGap                  = 32.0; // m
   double maxCrosstrackError      = 2.0;  // m
+
+  // width of lane, temporary parameter that used to check end of lane change.
+  double laneWidth              = 3.0;    // m
 
   std::string vehicleID       = "default_id";
 

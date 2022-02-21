@@ -35,8 +35,9 @@ TEST(PlatoonManagerTest, test_construct)
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
     PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
-    plugin.pm_.current_platoon_state = PlatoonState::LEADER;
-
+    // Use Getter to retrieve host Platoon Manager class
+    PlatoonManager pm_ = plugin.getHostPM();
+    pm_.current_platoon_state = PlatoonState::LEADER;
 }
 
 TEST(PlatoonManagerTest, test_ecef_encode)
@@ -47,13 +48,14 @@ TEST(PlatoonManagerTest, test_ecef_encode)
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
     PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+
     cav_msgs::LocationECEF ecef_point_test;
     ecef_point_test.ecef_x = 1.0;
     ecef_point_test.ecef_y = 2.0;
     ecef_point_test.ecef_z = 3.0;
-    plugin.pose_ecef_point_ = ecef_point_test;
-    plugin.run_leader_waiting();
-
+    // Update ecef location
+    plugin.setHostECEF(ecef_point_test);
+    plugin.run_candidate_leader();
 }
 
 
@@ -83,8 +85,8 @@ TEST(PlatoonManagerTest, test_split)
 //     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
 //     PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
-//     plugin.pm_.current_platoon_state = PlatoonState::LEADER;
-//     plugin.pm_.current_downtrack_distance_ = 20;
+//     pm_.current_platoon_state = PlatoonState::LEADER;
+//     pm_.current_downtrack_distance_ = 20;
 
 //     cav_msgs::MobilityRequest request;
 //     request.plan_type.type = 3;
@@ -92,7 +94,7 @@ TEST(PlatoonManagerTest, test_split)
 
 //     plugin.mob_req_cb(request);
 
-//     EXPECT_EQ(plugin.pm_.current_platoon_state, PlatoonState::LEADERWAITING);
+//     EXPECT_EQ(pm_.current_platoon_state, PlatoonState::LEADERWAITING);
 // }
 
 TEST(PlatoonManagerTest, test_compose)
@@ -117,7 +119,9 @@ TEST(PlatoonStrategicIHPPlugin, mob_resp_cb)
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
     PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
-    plugin.pm_.current_platoon_state = PlatoonState::FOLLOWER;
+    // Use Getter to retrieve host Platoon Manager class
+    PlatoonManager pm_ = plugin.getHostPM();
+    pm_.current_platoon_state = PlatoonState::FOLLOWER;
 
     plugin.onSpin();
    
@@ -129,22 +133,22 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub)
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
     PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
-    plugin.pm_.current_platoon_state = PlatoonState::LEADER;
+    // Use Getter to retrieve host Platoon Manager class
+    PlatoonManager pm_ = plugin.getHostPM();
+    pm_.current_platoon_state = PlatoonState::LEADER;
 
     cav_msgs::PlatooningInfo info_msg1 = plugin.composePlatoonInfoMsg();
     EXPECT_EQ(info_msg1.leader_id, "default_id");
 
-    plugin.pm_.current_platoon_state = PlatoonState::FOLLOWER;
-    plugin.pm_.isFollower = true;
-    PlatoonMember member = PlatoonMember("1", "1", 1.0, 1.1, 0.1, 100);
+    pm_.current_platoon_state = PlatoonState::FOLLOWER;
+    pm_.isFollower = true;
+    PlatoonMember member = PlatoonMember("1", 1.0, 1.1, 0.1, 100);
     std::vector<PlatoonMember> cur_pl;
     cur_pl.push_back(member);
-    plugin.pm_.platoon = cur_pl;
-
+    pm_.platoon = cur_pl;
     
     cav_msgs::PlatooningInfo info_msg2 = plugin.composePlatoonInfoMsg();
     EXPECT_EQ(info_msg2.leader_id, "1");
-   
 }
 
 TEST(PlatoonStrategicIHPPlugin, test_follower)
@@ -153,16 +157,18 @@ TEST(PlatoonStrategicIHPPlugin, test_follower)
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
     PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
-    plugin.pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
-    plugin.pm_.current_plan.valid = true;
-    EXPECT_EQ(plugin.pm_.isFollower, false);
+    // Use Getter to retrieve host Platoon Manager class
+    PlatoonManager pm_ = plugin.getHostPM();
+    pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
+    pm_.current_plan.valid = true;
+    EXPECT_EQ(pm_.isFollower, false);
 
     cav_msgs::MobilityResponse resp;
     resp.header.plan_id = "resp";
     resp.is_accepted = true;
     plugin.mob_resp_cb(resp);
-    EXPECT_EQ(plugin.pm_.current_platoon_state, PlatoonState::FOLLOWER);
-    EXPECT_EQ(plugin.pm_.isFollower, true);
+    EXPECT_EQ(pm_.current_platoon_state, PlatoonState::FOLLOWER);
+    EXPECT_EQ(pm_.isFollower, true);
 }
 
 TEST(PlatoonStrategicIHPPlugin, test_get_leader)
@@ -171,31 +177,31 @@ TEST(PlatoonStrategicIHPPlugin, test_get_leader)
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
     PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
-    plugin.pm_.current_platoon_state = PlatoonState::FOLLOWER;
+    // Use Getter to retrieve host Platoon Manager class
+    PlatoonManager pm_ = plugin.getHostPM();
+    pm_.current_platoon_state = PlatoonState::FOLLOWER;
 
-    PlatoonMember member = PlatoonMember("1", "1", 1.0, 1.1, 0.1, 100);
+    PlatoonMember member = PlatoonMember("1", 1.0, 1.1, 0.1, 100);
     std::vector<PlatoonMember> cur_pl;
     cur_pl.push_back(member);
 
-    plugin.pm_.platoon = cur_pl;
+    pm_.platoon = cur_pl;
 
-    EXPECT_EQ(plugin.pm_.platoon.size(), 1);
+    EXPECT_EQ(pm_.platoon.size(), 1);
 
-    PlatoonMember member1 = plugin.pm_.platoon[0];
+    PlatoonMember member1 = pm_.platoon[0];
 
-    plugin.pm_.isFollower = true;
-    PlatoonMember platoon_leader = plugin.pm_.getDynamicLeader();
+    pm_.isFollower = true;
+    PlatoonMember platoon_leader = pm_.getDynamicLeader();
 
     EXPECT_EQ(member1.staticId, "1");
-
     EXPECT_EQ(platoon_leader.staticId, "1");
-   
 }
 
 
 TEST(PlatoonManagerTest, test2)
 {
-    platoon_strategic_ihp::PlatoonMember* member = new platoon_strategic_ihp::PlatoonMember("1", "1", 1.0, 1.1, 0.1, 100);
+    platoon_strategic_ihp::PlatoonMember* member = new platoon_strategic_ihp::PlatoonMember("1", 1.0, 1.1, 0.1, 100);
     std::vector<platoon_strategic_ihp::PlatoonMember> cur_pl;
 
     cur_pl.push_back(*member);
@@ -212,11 +218,10 @@ TEST(PlatoonManagerTest, test2)
 
     ros::Time::init();
 
-    pm.updatesOrAddMemberInfo("2", "2", 2.0, 1.0, 2.5);
+    pm.updatesOrAddMemberInfo("2", 2.0, 1.0, 2.5);
 
     EXPECT_EQ(2, pm.platoon.size());
     EXPECT_EQ("1", pm.platoon[0].staticId);
-
 }
 
 
@@ -247,8 +252,8 @@ TEST(PlatoonManagerTest, test3)
 
 TEST(PlatoonManagerTest, test4)
 {
-    platoon_strategic_ihp::PlatoonMember* member1 = new platoon_strategic_ihp::PlatoonMember("1", "1", 1.0, 1.1, 0.1, 100);
-    platoon_strategic_ihp::PlatoonMember* member2 = new platoon_strategic_ihp::PlatoonMember("2", "2", 2.0, 2.1, 0.2, 200);
+    platoon_strategic_ihp::PlatoonMember* member1 = new platoon_strategic_ihp::PlatoonMember("1", 1.0, 1.1, 0.1, 100);
+    platoon_strategic_ihp::PlatoonMember* member2 = new platoon_strategic_ihp::PlatoonMember("2", 2.0, 2.1, 0.2, 200);
     std::vector<platoon_strategic_ihp::PlatoonMember> cur_pl;
 
     cur_pl.push_back(*member1);
@@ -262,13 +267,9 @@ TEST(PlatoonManagerTest, test4)
     pm.leaderID = "0";
     pm.currentPlatoonID = "a";
 
-
     ros::Time::init();
 
     int res = pm.allPredecessorFollowing();
 
     EXPECT_EQ(0, res);
-
 }
-
-
