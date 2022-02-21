@@ -28,8 +28,8 @@ namespace subsystem_controllers
     config_.sensor_fault_map = sensor_fault_map_from_json(declare_parameter<std::string>("sensor_fault_map", ""));
   
     // Handle fact that parameter vectors cannot be empty
-    if (base_config_.sensor_nodes.size() == 1 && base_config_.sensor_nodes[0].empty()) {
-      base_config_.sensor_nodes.clear();
+    if (config_.sensor_nodes.size() == 1 && config_.sensor_nodes[0].empty()) {
+      config_.sensor_nodes.clear();
     }
   
   }
@@ -47,8 +47,8 @@ namespace subsystem_controllers
     get_parameter<std::vector<std::string>>("sensor_nodes", config_.sensor_nodes);
     
     // Handle fact that parameter vectors cannot be empty
-    if (base_config_.sensor_nodes.size() == 1 && base_config_.sensor_nodes[0].empty()) {
-      base_config_.sensor_nodes.clear();
+    if (config_.sensor_nodes.size() == 1 && config_.sensor_nodes[0].empty()) {
+      config_.sensor_nodes.clear();
     }
     
     std::string json_string;
