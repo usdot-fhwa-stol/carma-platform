@@ -55,6 +55,9 @@ def generate_launch_description():
 
     points_map_filter_param_file = os.path.join(
         get_package_share_directory('points_map_filter'), 'config/parameters.yaml')
+    
+    motion_computation_param_file = os.path.join(
+        get_package_share_directory('motion_computation'), 'config/parameters.yaml')
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
@@ -218,6 +221,22 @@ def generate_launch_description():
                     ],
                     parameters=[ object_visualizer_param_file ]
             ),
+            ComposableNode(
+                package='motion_computation',
+                plugin='motion_computation::MotionComputationNode',
+                name='motion_computation_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('motion_computation', env_log_levels) }
+                ],
+                remappings=[
+                    ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] )
+                ],
+                parameters=[ 
+                    motion_computation_param_file,
+                ]
+            )
         ]
     )
 

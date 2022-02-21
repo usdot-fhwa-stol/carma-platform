@@ -6,7 +6,7 @@
 
     # Long: Timeout for each service call in milliseconds
     # Units: milliseconds
-    call_timeout_ms : 1000
+    call_timeout_ms : 1500
 
     # String: The namespace for nodes in this subsystem
     subsystem_namespace: /environment

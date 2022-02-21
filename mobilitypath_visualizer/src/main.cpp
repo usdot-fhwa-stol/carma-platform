@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,15 +14,21 @@
  * the License.
  */
 
-#include <ros/ros.h>
-
-#include "mobilitypath_visualizer.h"
+#include <rclcpp/rclcpp.hpp>
+#include "mobilitypath_visualizer/mobilitypath_visualizer.hpp"
 
 int main(int argc, char** argv)
 { 
-    ros::init(argc, argv, "mobilitypath_visualizer");
-    mobilitypath_visualizer::MobilityPathVisualizer mobilitypath_visualizer_node;
-    mobilitypath_visualizer_node.run();
-    return 0;
+  rclcpp::init(argc, argv);
+
+  auto node = std::make_shared<mobilitypath_visualizer::MobilityPathVisualizer>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
+
+  rclcpp::shutdown();
+
+  return 0;
 
 }
