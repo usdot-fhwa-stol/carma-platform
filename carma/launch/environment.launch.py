@@ -236,7 +236,20 @@ def generate_launch_description():
                 parameters=[ 
                     motion_computation_param_file,
                 ]
-            )
+            ),
+            ComposableNode(
+                    package='motion_prediction_visualizer',
+                    plugin='motion_prediction_visualizer::Node',
+                    name='motion_prediction_visualizer',
+                    extra_arguments=[
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('tracking_nodes', env_log_levels) }
+                    ],
+                    remappings=[
+                        ("external_objects", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/external_object_predictions" ] ),
+                    ],
+                    parameters=[ tracking_nodes_param_file ]
+            ),
         ]
     )
 
