@@ -6,7 +6,7 @@
 
     # Long: Timeout for each service call in milliseconds
     # Units: milliseconds
-    call_timeout_ms : 1000
+    call_timeout_ms : 1500
 
     # String: The namespace for nodes in this subsystem. All nodes under this namespace will have their lifecycle's managed by this controller
     subsystem_namespace: /environment

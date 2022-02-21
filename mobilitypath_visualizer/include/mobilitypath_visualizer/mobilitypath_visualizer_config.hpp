@@ -43,7 +43,7 @@ namespace mobilitypath_visualizer
            << "y: " << c.y << std::endl
            << "z: " << c.z << std::endl
            << "t: " << c.t << std::endl
-           << "host_id: "<<c.host_id <<std::endl;
+           << "host_id: "<< c.host_id << std::endl
            << "}" << std::endl;
       return output;
     }
