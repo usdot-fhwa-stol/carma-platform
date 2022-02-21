@@ -237,7 +237,7 @@ namespace platoon_strategic_ihp
         // Position info of the host vehcile
         double currentDtd = current_downtrack_;
         double currentCtd = current_crosstrack_;
-        bool samelane = abs(currentCtd-crosstrack) <= config_.laneWidth;
+        bool samelane = abs(currentCtd-crosstrack) <= findlaneWidth();
 
         if (downtrack > currentDtd && samelane)
         {
@@ -246,7 +246,7 @@ namespace platoon_strategic_ihp
         }
         else 
         {
-            ROS_DEBUG_STREAM("Ignoring platoon from our back.");
+            ROS_DEBUG_STREAM("Ignoring platoon that is either behind host or in another lane.");
             ROS_DEBUG_STREAM("The front platoon dtd is " << downtrack << " and we are current at " << currentDtd);
             return false;
         }
@@ -257,7 +257,7 @@ namespace platoon_strategic_ihp
     {   
         double currentDtd = current_downtrack_;
         double currentCtd = current_crosstrack_;
-        bool samelane = abs(currentCtd-crosstrack) <= config_.laneWidth;
+        bool samelane = abs(currentCtd-crosstrack) <= findlaneWidth();
 
         if (downtrack < currentDtd && samelane) 
         {
@@ -266,7 +266,7 @@ namespace platoon_strategic_ihp
         }
         else 
         {
-            ROS_DEBUG_STREAM("Ignoring platoon from front.");
+            ROS_DEBUG_STREAM("Ignoring platoon that is either ahead of us or in another lane.");
             ROS_DEBUG_STREAM("The front platoon dtd is " << downtrack << " and we are current at " << currentDtd);
             return false;
         }
@@ -352,16 +352,13 @@ namespace platoon_strategic_ihp
         msg.strategy = PLATOONING_STRATEGY;
 
         double CurrentPlatoonLength = pm_.getCurrentPlatoonLength();
-        double current_speed = current_speed_;
         int PlatoonSize = pm_.getTotalPlatooningSize();
         double PlatoonRearDowntrackDistance = pm_.getPlatoonRearDowntrackDistance();
-        // UCLA: leader dtd == platoon front dtd --> use it to compare frontal join position 
-        double PlatoonFrontDowntrackDistance = current_downtrack_;
 
         boost::format fmter(OPERATION_INFO_PARAMS);
         //  Note: need to update "OPERATION_INFO_PARAMS" in header file --> strategic_platoon_ihp.h  
         fmter% CurrentPlatoonLength;            // index = 0, physical length of the platoon, in m.
-        fmter% current_speed;                   // index = 1, in m/s.
+        fmter% current_speed_;                  // index = 1, in m/s.
         fmter% PlatoonSize;                     // index = 2, number of members 
         fmter% pose_ecef_point_.ecef_x;         // index = 3, in cm.
         fmter% pose_ecef_point_.ecef_y;         // index = 4, in cm.
@@ -759,7 +756,7 @@ namespace platoon_strategic_ihp
         return platoon_length;
     }
 
-    // UCLA: Sparse ecef location from INFO params
+    // UCLA: Parse ecef location from INFO params
     cav_msgs::LocationECEF PlatoonStrategicIHPPlugin::mob_op_find_ecef_from_INFO_params(std::string strategyParams)
     {
         /** 
@@ -2443,7 +2440,7 @@ namespace platoon_strategic_ihp
         /*  
             UCLA implementation note:
             1. this function  send step plan type: "PLATOON_FRONT_JOIN"
-            2. the sender of the plan is the previous leader (old leader), it wil prepare to follow front joiner (new leader)
+            2. the sender of the plan (host vehicle) is the previous leader, it wil prepare to follow front joiner (new leader)
         */
         long tsStart = ros::Time::now().toNSec() / 1000000;
         // Task 1: state timeout
@@ -2486,7 +2483,7 @@ namespace platoon_strategic_ihp
 
         // Check if gap is big enough and if current plan is timeout.
         // Add a condition to prevent sending repeated requests (Note: This is a same-lane maneuver, so no need to consider lower bond of joining gap.)
-        if (currentGap <= maxJoinGap && pm_.current_plan.valid == false && isFirstLeaderAbortRequest_) 
+        if (currentGap <= maxJoinGap  &&  !pm_.current_plan.valid  &&  isFirstLeaderAbortRequest_) 
         {
             // compose frontal joining plan, senderID is the old leader 
             cav_msgs::MobilityRequest request;
@@ -2520,6 +2517,7 @@ namespace platoon_strategic_ihp
         }
 
         //Task 4: publish platoon status message (as single joiner)
+        //TODO: confirm isn't this test always going to pass?  What does it mean and what do we do if it doesn't?
         if (pm_.getTotalPlatooningSize() > 1) 
         {
             cav_msgs::MobilityOperation status;
@@ -2917,7 +2915,7 @@ namespace platoon_strategic_ihp
             // for testing purpose only, check lane change status
             double start_crosstrack = 0.5*config_.laneWidth; // Assume vehicle start at left lane when testing.
             double crosstrackDiff = current_crosstrack_ - start_crosstrack; 
-            bool isLaneChangeFinished = crosstrackDiff >= config_.laneWidth*0.85; // Use 85% of lane width to account for noise.
+            bool isLaneChangeFinished = crosstrackDiff >= findlaneWidth()*0.85; // Use 85% of lane width to account for noise.
              
             /**  
              * Note: The function "find_target_lanelet_id" was used to test the IHP platooning logic and is only a pre-written scenario. 
@@ -2963,7 +2961,7 @@ namespace platoon_strategic_ihp
                     }
                     // Update lane change status to stop the while loop when langchange finshed.
                     crosstrackDiff = current_crosstrack_ - start_crosstrack;  // Assume vehicle start at left lane when testing.
-                    if (crosstrackDiff >= config_.laneWidth*0.85) // Use 85% of lane width to account for noise.
+                    if (crosstrackDiff >= findlaneWidth()*0.85) // Use 85% of lane width to account for noise.
                     {
                         break; 
                     }

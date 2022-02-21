@@ -169,7 +169,7 @@ namespace platoon_strategic_ihp
     // Find the downtrack distance of the last vehicle of the platoon, in m.    
     double PlatoonManager::getPlatoonRearDowntrackDistance(){
         // if host is single vehicle
-        if(platoon.size() <= 1) 
+        if(platoon.size() == 1) 
         {
             double dist = getCurrentDowntrackDistance();
             return dist;
@@ -181,7 +181,7 @@ namespace platoon_strategic_ihp
     // Find the downtrack distance of the first vehicle of the platoon, in m.
     double PlatoonManager::getPlatoonFrontDowntrackDistance(){
         // if host is single vehicle
-        if(platoon.size() <= 1) 
+        if(platoon.size() == 1) 
         {
             double dist = getCurrentDowntrackDistance();
             return dist;
