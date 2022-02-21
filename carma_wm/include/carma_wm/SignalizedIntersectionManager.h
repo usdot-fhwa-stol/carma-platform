@@ -60,6 +60,14 @@ public:
   SignalizedIntersectionManager& operator=(SignalizedIntersectionManager other);
 
   /*! 
+  *  \brief Inequality operator that checks if every mapping are same except the traffic signal states. 
+            This is to keep the states although the map is updated or a similar event happened
+            NOTE: The function does not update the map with new elements
+  *  \param[out] rhs manager
+  */
+  bool operator==(const SignalizedIntersectionManager& rhs);
+
+  /*! 
   *  \brief Create relevant signalized intersection and carma traffic signals based on the MAP.msg and the lanelet_map
             NOTE: The function does not update the map with new elements
   *  \param[out] intersections to return

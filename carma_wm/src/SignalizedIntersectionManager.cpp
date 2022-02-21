@@ -31,6 +31,29 @@ namespace carma_wm
     max_lane_width_ = max_lane_width;
   }
 
+  bool SignalizedIntersectionManager::operator==(const SignalizedIntersectionManager& rhs)
+  {
+    bool is_same = true;
+    if (rhs.intersection_id_to_regem_id_ != this->intersection_id_to_regem_id_)
+    {
+      is_same = false;
+    }
+    if (rhs.signal_group_to_entry_lanelet_ids_ != this->signal_group_to_entry_lanelet_ids_)
+    {
+      is_same = false;
+    }
+    if (rhs.signal_group_to_exit_lanelet_ids_ != this->signal_group_to_exit_lanelet_ids_)
+    {
+      is_same = false;
+    }
+    if (rhs.signal_group_to_traffic_light_id_ != this->signal_group_to_traffic_light_id_)
+    {
+      is_same = false;
+    }
+
+    return is_same;
+  }
+
   void SignalizedIntersectionManager::convertLaneToLaneletId(std::unordered_map<uint8_t, lanelet::Id>& entry, std::unordered_map<uint8_t, lanelet::Id>& exit, const cav_msgs::IntersectionGeometry& intersection, 
                                                               const std::shared_ptr<lanelet::LaneletMap>& map, std::shared_ptr<const lanelet::routing::RoutingGraph> current_routing_graph) 
   {
