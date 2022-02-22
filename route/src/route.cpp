@@ -57,7 +57,6 @@ namespace route {
         rg_worker_.set_route_file_path(route_file_location);
         rg_worker_.set_publishers(route_event_pub_, route_state_pub_, route_pub_,route_marker_pub_);
         rg_worker_.initializeBumperTransformLookup();
-        rg_worker_.bumper_pose_cb();
     }
 
     void Route::run()
@@ -67,7 +66,8 @@ namespace route {
         // spin with spin_callback function from RouteGeneratorWorker
         ros::Timer spin_timer = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
-            [this](const auto&) { rg_worker_.spin_callback(); });
+            [this](const auto&) { rg_worker_.spin_callback(); 
+                                  rg_worker_.bumper_pose_cb();});
 
         ros::CARMANodeHandle::spin();
     }

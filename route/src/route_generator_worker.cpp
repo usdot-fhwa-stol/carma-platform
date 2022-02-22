@@ -489,11 +489,13 @@ namespace route {
 
         }
         ROS_DEBUG_STREAM("It passed");
-
-        vehicle_pose_->pose.position.x = frontbumper_transform_.getOrigin().getX();
-        vehicle_pose_->pose.position.y = frontbumper_transform_.getOrigin().getY();
-        vehicle_pose_->pose.position.z = frontbumper_transform_.getOrigin().getZ();
         
+        geometry_msgs::PoseStamped updated_vehicle_pose;
+        updated_vehicle_pose.pose.position.x = frontbumper_transform_.getOrigin().getX();
+        updated_vehicle_pose.pose.position.y = frontbumper_transform_.getOrigin().getY();
+        updated_vehicle_pose.pose.position.z = frontbumper_transform_.getOrigin().getZ();
+        vehicle_pose_ = updated_vehicle_pose; 
+
         if (vehicle_pose_)
             ROS_DEBUG_STREAM("POSE It passed");
         else
