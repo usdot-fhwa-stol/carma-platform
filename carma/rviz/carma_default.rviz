@@ -612,7 +612,7 @@ Visualization Manager:
       Marker Topic: /guidance/route_marker
       Name: RouteMarker
       Namespaces:
-        {}
+        route_visualizer: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -738,7 +738,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -4.034999370574951
+      Angle: -3.5699994564056396
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -748,10 +748,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: -13.012432098388672
+      Scale: -6.867075443267822
       Target Frame: base_link
-      X: 2.192695140838623
-      Y: 4.063644886016846
+      X: 28.128429412841797
+      Y: -4.545811653137207
     Saved: ~
 Window Geometry:
   Camera:

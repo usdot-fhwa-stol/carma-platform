@@ -1426,12 +1426,12 @@ namespace carma_wm
           auto inception_boost(boost::posix_time::time_from_string("1970-01-01 00:00:00.000")); // inception of epoch
           auto duration_since_inception(lanelet::time::durationFromSec(ros::Time::now().toSec()));
           auto curr_time_boost = inception_boost + duration_since_inception;
-          ROS_DEBUG_STREAM("Calculated current time: " << boost::posix_time::to_simple_string(curr_time_boost));
+          //ROS_DEBUG_STREAM("Calculated current time: " << boost::posix_time::to_simple_string(curr_time_boost));
 
           int curr_year = curr_time_boost.date().year();
           auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year)+ "-01-01 00:00:00.000"));
 
-          ROS_DEBUG_STREAM("MOY extracted: " << (int)curr_intersection.moy);
+          //ROS_DEBUG_STREAM("MOY extracted: " << (int)curr_intersection.moy);
           auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)curr_intersection.moy);
 
           int hours_of_day = curr_minute_stamp_boost.time_of_day().hours();
@@ -1442,7 +1442,7 @@ namespace carma_wm
           auto curr_hour_boost = curr_day_boost + boost::posix_time::hours(hours_of_day);
 
           min_end_time += lanelet::time::durationFromSec(lanelet::time::toSec(curr_hour_boost));
-          ROS_DEBUG_STREAM("New min_end_time: " << std::to_string(lanelet::time::toSec(min_end_time)));
+          //ROS_DEBUG_STREAM("New min_end_time: " << std::to_string(lanelet::time::toSec(min_end_time)));
         }
 
         auto last_time_difference = sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first - min_end_time;  
