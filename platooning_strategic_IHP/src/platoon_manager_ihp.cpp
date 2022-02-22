@@ -58,7 +58,6 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("Host (index " << hostPosInPlatoon_ << "): downtrack = " << downtrack << ", crosstrack = " << crosstrack);
         platoon[hostPosInPlatoon_].vehiclePosition = downtrack;
         platoon[hostPosInPlatoon_].vehicleCrossTrack = crosstrack;
-        //TODO:  store crosstrack when it becomes a member of the PlatoonMember struct
     }
 
     // Update the speed info of the host in the vector of platoon members
