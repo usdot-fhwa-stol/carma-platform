@@ -66,7 +66,8 @@ namespace route {
         // spin with spin_callback function from RouteGeneratorWorker
         ros::Timer spin_timer = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
-            [this](const auto&) { rg_worker_.spin_callback(); });
+            [this](const auto&) { rg_worker_.spin_callback(); 
+                                  rg_worker_.bumper_pose_cb();});
 
         ros::CARMANodeHandle::spin();
     }
