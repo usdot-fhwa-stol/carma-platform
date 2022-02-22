@@ -50,16 +50,16 @@ namespace platoon_strategic_ihp
         std::string hostStaticId = config_.vehicleID; //static ID for this vehicle
         pm_.HostMobilityId = hostStaticId;
         
+        // construct platoon member for host vehicle as the first element in the vector, since it starts life as a solo vehicle
+        PlatoonMember hostVehicleMember = PlatoonMember(hostStaticId, hostcmdSpeed, hostCurSpeed, hostDtD, hostCtD, cur_t); 
+        pm_.platoon.push_back(hostVehicleMember);
+
         //add host vehicle to platoon list by default, prevent the function "isVehicleRightInFront" from returning zero.
         double hostcmdSpeed = pm_.getCommandSpeed();
         double hostDtD = pm_.getCurrentDowntrackDistance();
         double hostCtD = pm_.getCurrentCrosstrackDistance();
         double hostCurSpeed = pm_.getCurrentSpeed();
         long cur_t = ros::Time::now().toNSec()/1000000; // time in millisecond
-
-        // construct platoon member for host vehicle as the first element in the vector, since it starts life as a solo vehicle
-        PlatoonMember hostVehicleMember = PlatoonMember(hostStaticId, hostcmdSpeed, hostCurSpeed, hostDtD, hostCtD, cur_t); 
-        pm_.platoon.push_back(hostVehicleMember);
 
         plugin_discovery_msg_.name = "PlatooningStrategicIHPPlugin";
         plugin_discovery_msg_.versionId = "v1.0";
