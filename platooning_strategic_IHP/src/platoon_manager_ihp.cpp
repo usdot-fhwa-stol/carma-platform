@@ -49,7 +49,9 @@ namespace platoon_strategic_ihp
      */
 
     PlatoonManager::PlatoonManager()
-    {}
+    {
+        ROS_DEBUG_STREAM("Top of PlatoonManager ctor.");
+    }
 
 
     // Update the location of the host in the vector of platoon members

@@ -45,9 +45,9 @@ namespace platoon_strategic_ihp
       mobility_response_publisher_(mobility_response_publisher), mobility_request_publisher_(mobility_request_publisher),
       mobility_operation_publisher_(mobility_operation_publisher), platooning_info_publisher_(platooning_info_publisher)
     {
+        ROS_DEBUG_STREAM("Top of PlatoonStrategicIHP ctor.");
         pm_ = PlatoonManager();
-        // std::string hostStaticId = config_.vehicleID; //static ID for this vehicle
-        std::string hostStaticId = pm_.getHostStaticID();
+        std::string hostStaticId = config_.vehicleID; //static ID for this vehicle
         pm_.HostMobilityId = hostStaticId;
         
         //add host vehicle to platoon list by default, prevent the function "isVehicleRightInFront" from returning zero.
@@ -66,7 +66,8 @@ namespace platoon_strategic_ihp
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = false;
         plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
-        plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";  
+        plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
+        ROS_DEBUG_STREAM("ctor complete. hostStaticId = " << hostStaticId);
     }
 
 
@@ -161,11 +162,13 @@ namespace platoon_strategic_ihp
     void PlatoonStrategicIHPPlugin::cmd_cb(const geometry_msgs::TwistStampedConstPtr& msg)
     {
         cmd_speed_ = msg->twist.linear.x;
+        ROS_DEBUG_STREAM("In cmd_cb: cmd_speed = " << cmd_speed_); //TODO remove me
     }
    
     // twist command, linear speed on x direction, in m/s.
     void PlatoonStrategicIHPPlugin::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg)
     {
+        ROS_DEBUG_STREAM("In twist_cb: current_speed_ = " << msg->twist.linear.x); //TODO remove me
         current_speed_ = msg->twist.linear.x;
         if (current_speed_ < STOPPED_SPEED)
         {
@@ -287,6 +290,7 @@ namespace platoon_strategic_ihp
     // Build map projector from proj string (georefernce).
     void PlatoonStrategicIHPPlugin::georeference_cb(const std_msgs::StringConstPtr& msg) 
     {
+        ROS_DEBUG_STREAM("In georeference_cb"); //TODO remove me
         map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str()); 
     }
 
