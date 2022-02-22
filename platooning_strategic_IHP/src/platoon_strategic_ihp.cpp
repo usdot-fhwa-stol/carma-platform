@@ -143,17 +143,11 @@ namespace platoon_strategic_ihp
             lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
             carma_wm::TrackPos tc = wm_->routeTrackPos(current_loc);
 
-            // update DtD for plugin
+            // update host's DtD and CtD
             current_downtrack_ = tc.downtrack;
-            // update DtD for platoon manager 
-            pm_.current_downtrack_distance_ = tc.downtrack;
-            ROS_DEBUG_STREAM("current_downtrack_ = " << current_downtrack_);
-            
-            // update CtD for plugin
             current_crosstrack_ = tc.crosstrack;
-            // update CtD for platoon manager 
-            pm_. current_crosstrack_distance_ = tc.crosstrack;
-            ROS_DEBUG_STREAM("current_crosstrack_ = " << current_crosstrack_);
+            ROS_DEBUG_STREAM("current_downtrack_ = " << current_downtrack_ << ", current_crosstrack_ = " << current_crosstrack_);
+            pm_.updateHostPose(current_downtrack_, current_crosstrack_);
 
             // note: the ecef read from "pose_ecef_point" is in cm.
             cav_msgs::LocationECEF pose_ecef_point = pose_to_ecef(pose_msg_);
