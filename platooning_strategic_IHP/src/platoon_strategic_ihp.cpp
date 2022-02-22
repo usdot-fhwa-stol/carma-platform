@@ -46,12 +46,14 @@ namespace platoon_strategic_ihp
       mobility_operation_publisher_(mobility_operation_publisher), platooning_info_publisher_(platooning_info_publisher)
     {
         pm_ = PlatoonManager();
-        std::string hostStaticId = config_.vehicleID; //static ID for this vehicle
+        // std::string hostStaticId = config_.vehicleID; //static ID for this vehicle
+        std::string hostStaticId = pm_.getHostStaticID();
         pm_.HostMobilityId = hostStaticId;
         
         //add host vehicle to platoon list by default, prevent the function "isVehicleRightInFront" from returning zero.
         double hostcmdSpeed = pm_.getCommandSpeed();
         double hostDtD = pm_.getCurrentDowntrackDistance();
+        double hostCtD = pm_.getCurrentCrosstrackDistance();
         double hostCurSpeed = pm_.getCurrentSpeed();
         long cur_t = ros::Time::now().toNSec()/1000000; // time in millisecond
 
@@ -145,14 +147,12 @@ namespace platoon_strategic_ihp
 
             // update DtD for plugin
             current_downtrack_ = tc.downtrack;
-            // update DtD for platoon manager 
-            pm_.current_downtrack_distance_ = tc.downtrack;
             ROS_DEBUG_STREAM("current_downtrack_ = " << current_downtrack_);
             
             // update CtD for plugin
             current_crosstrack_ = tc.crosstrack;
-            // update CtD for platoon manager 
-            pm_. current_crosstrack_distance_ = tc.crosstrack;
+            // update DtD and CtD for platoon manager 
+            pm_.updateHostPose(tc.downtrack, tc.crosstrack);
             ROS_DEBUG_STREAM("current_crosstrack_ = " << current_crosstrack_);
 
             // note: the ecef read from "pose_ecef_point" is in cm.
@@ -256,7 +256,7 @@ namespace platoon_strategic_ihp
     {   
         double currentDtd = current_downtrack_;
         double currentCtd = current_crosstrack_;
-        bool samelane = abs(currentCtd-crosstrack) <= findlaneWidth();
+        bool samelane = abs(currentCtd-crosstrack) <= findLaneWidth();
 
         if (downtrack < currentDtd && samelane) 
         {
@@ -672,9 +672,6 @@ namespace platoon_strategic_ihp
          *              |----------0----------1---------2---------3---------4------|
          */
 
-        std::string strategyParams = msg.strategy_params;
-        std::string vehicleID = msg.header.sender_id;
-        std::string platoonId = msg.header.plan_id;
         std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
 
         std::vector<std::string> inputsParams;
@@ -2043,7 +2040,7 @@ namespace platoon_strategic_ihp
                     // do not need to update platoon leader and platoon ID for candidate leader
                 }
                 // Current platoon leader
-                else if(pm_.platoonSize >= 2)
+                else if(pm_.platoon.size() >= 2)
                 {
                     // Keep the leader idling if the host is leading the plaoon.
                     ROS_DEBUG_STREAM("Host received response for joinging vehicles, remain idling as the host is the current platoon leader.");
@@ -2105,7 +2102,7 @@ namespace platoon_strategic_ihp
 
                     targetPlatoonId = msg.header.plan_id;
                     // change platoon manager to follower state 
-                    pm_.changeFromLeaderToFollower(targetPlatoonId);
+                    pm_.changeFromLeaderToFollower(targetPlatoonId, msg.header.sender_id);
                     ROS_WARN("changed to follower");
                 }
                 else
@@ -2932,7 +2929,7 @@ namespace platoon_strategic_ihp
             // for testing purpose only, check lane change status
             double start_crosstrack = 0.5*config_.laneWidth; // Assume vehicle start at left lane when testing.
             double crosstrackDiff = current_crosstrack_ - start_crosstrack; 
-            bool isLaneChangeFinished = crosstrackDiff >= findlaneWidth()*0.85; // Use 85% of lane width to account for noise.
+            bool isLaneChangeFinished = crosstrackDiff >= findLaneWidth()*0.85; // Use 85% of lane width to account for noise.
              
             /**  
              * Note: The function "find_target_lanelet_id" was used to test the IHP platooning logic and is only a pre-written scenario. 
@@ -2978,16 +2975,16 @@ namespace platoon_strategic_ihp
                     }
                     // Update lane change status to stop the while loop when langchange finshed.
                     crosstrackDiff = current_crosstrack_ - start_crosstrack;  // Assume vehicle start at left lane when testing.
-                    if (crosstrackDiff >= findlaneWidth()*0.85) // Use 85% of lane width to account for noise.
+                    if (crosstrackDiff >= findLaneWidth()*0.85) // Use 85% of lane width to account for noise.
                     {
                         break; 
                     }
                     
                     /**
                      * note: the lane change should use a future position as the start of lane change plan. 
-                     *       maneuver_plan_dt is the planning horizon that sends future maneuver plan.
+                     *       time_step is the planning horizon that sends future maneuver plan.
                      */
-                    double lane_change_dtd = current_downtrack_ + current_speed_*config_.maneuver_plan_dt; 
+                    double lane_change_dtd = current_downtrack_ + current_speed_*config_.time_step; 
 
                     // use future position to find lanelet ID
                     /**
@@ -2995,7 +2992,7 @@ namespace platoon_strategic_ihp
                      * The current speed's direction is along x axis. (current_speed_ = msg->twist.linear.x;)
                      * Hence: next_point.x = current.x + current_speed_*dt
                      */
-                    lanelet::BasicPoint2d next_loc(pose_msg_.pose.position.x+current_speed_*config_.maneuver_plan_dt, 
+                    lanelet::BasicPoint2d next_loc(pose_msg_.pose.position.x+current_speed_*config_.time_step, 
                                                    pose_msg_.pose.position.y);
 
                     // get the actually closest lanelets, 
@@ -3110,7 +3107,7 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("change the state from standby to leader at start-up");
         }
 
-        pm_.current_downtrack_distance_ = current_downtrack_;
+        // pm_.current_downtrack_distance_ = current_downtrack_;
         pm_.HostMobilityId = config_.vehicleID;
         ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
         
