@@ -169,7 +169,7 @@ namespace arbitrator
     {
         try
         {
-            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(1.0)); //save to local copy of transform 1 sec timeout
+            tf_ = tf2_buffer_.lookupTransform("vehicle_front", "map", ros::Time(0), ros::Duration(1.0)); //save to local copy of transform 1 sec timeout
             tf2::fromMsg(tf_, bumper_transform_);
             vehicle_state_.stamp = tf_.header.stamp;
         }
