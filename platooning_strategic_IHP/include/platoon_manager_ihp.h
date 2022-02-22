@@ -318,7 +318,7 @@ namespace platoon_strategic_ihp
         std::string previousFunctionalDynamicLeaderID_ = "";
         int previousFunctionalDynamicLeaderIndex_ = -1;
 
-        int hostPosInPlatoon_ = 0;  //index to the platoon vector that represents the host vehicle
+        size_t hostPosInPlatoon_ = 0;  //index to the platoon vector that represents the host vehicle
 
         // note: APF related parameters are in config.h.
 

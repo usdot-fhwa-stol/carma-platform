@@ -155,7 +155,7 @@ namespace platoon_strategic_ihp
         bool isExisted = false;
 
         // update/add this info into the list
-        for (int i = 0;  i < platoon.size();  ++i){
+        for (size_t i = 0;  i < platoon.size();  ++i){
             if(platoon[i].staticId == senderId) {
                 platoon[i].commandSpeed = cmdSpeed;         // m/s
                 platoon[i].vehiclePosition = dtDistance;    // m 
@@ -189,7 +189,7 @@ namespace platoon_strategic_ihp
 
             ROS_DEBUG_STREAM("Add a new vehicle into our platoon list " << newMember.staticId << " platoon.size now = " << platoon.size());
             ROS_DEBUG_STREAM("    Platoon order is now:");
-            for (int i = 0;  i < platoon.size();  ++i)
+            for (size_t i = 0;  i < platoon.size();  ++i)
             {
                 std::string hostFlag = " ";
                 if (i == hostPosInPlatoon_)
@@ -416,7 +416,7 @@ namespace platoon_strategic_ihp
     std::vector<double> PlatoonManager::calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed) const{
         std::vector<double> timeHeadways(downtrackDistance.size() - 1);
         // Due to downtrack descending order, the platoon member with smaller index has larger downtrack, hence closer to the front of the platoon.
-        for (int i=0; i<timeHeadways.size(); i++){
+        for (size_t i = 0; i < timeHeadways.size(); i++){
             // Calculate time headaway between the vehicle behind. 
             if (speed[i+1] >= config_.ss_theta) // speed is in m/s
             {
@@ -543,7 +543,7 @@ namespace platoon_strategic_ihp
     int PlatoonManager::getNumberOfVehicleInFront() {
         
         int num = platoon.size() - 1;
-        for (int i = 0;  i < platoon.size();  ++i)
+        for (size_t i = 0;  i < platoon.size();  ++i)
         {
             if (platoon[i].vehiclePosition <= getCurrentDowntrackDistance() + 1.0) //allow for some uncertainty to count host also
             {
