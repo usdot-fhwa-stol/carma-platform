@@ -156,13 +156,11 @@ namespace platoon_strategic_ihp
     void PlatoonStrategicIHPPlugin::cmd_cb(const geometry_msgs::TwistStampedConstPtr& msg)
     {
         cmd_speed_ = msg->twist.linear.x;
-        ROS_DEBUG_STREAM("In cmd_cb: cmd_speed = " << cmd_speed_); //TODO remove me
     }
    
     // twist command, linear speed on x direction, in m/s.
     void PlatoonStrategicIHPPlugin::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg)
     {
-        ROS_DEBUG_STREAM("In twist_cb: current_speed_ = " << msg->twist.linear.x); //TODO remove me
         current_speed_ = msg->twist.linear.x;
         if (current_speed_ < STOPPED_SPEED)
         {
@@ -284,7 +282,6 @@ namespace platoon_strategic_ihp
     // Build map projector from proj string (georefernce).
     void PlatoonStrategicIHPPlugin::georeference_cb(const std_msgs::StringConstPtr& msg) 
     {
-        ROS_DEBUG_STREAM("In georeference_cb"); //TODO remove me
         map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str()); 
     }
 
