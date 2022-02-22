@@ -107,12 +107,12 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("It seems that the current leader is joining another platoon.");
                 ROS_DEBUG_STREAM("So the platoon ID is changed from " << currentPlatoonID << " to " << platoonId);
                 currentPlatoonID = platoonId;
-                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, curSpeed);
+                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
             } 
             else if (currentPlatoonID == platoonId)
             {
                 ROS_DEBUG_STREAM("This STATUS messages is from our platoon. Updating the info...");
-                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, curSpeed);
+                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
                 ROS_DEBUG_STREAM("The first vehicle in our list is now " << platoon[0].staticId);
             } 
             else //sender is in a different platoon
@@ -127,7 +127,7 @@ namespace platoon_strategic_ihp
             if (currentPlatoonID == platoonId)
             {
                 ROS_DEBUG_STREAM("This STATUS messages is from our platoon. Updating the info...");
-                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, curSpeed);
+                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
             }
             else
             {
@@ -572,6 +572,7 @@ namespace platoon_strategic_ihp
     double PlatoonManager::getCurrentDowntrackDistance() const
     {
         return platoon[hostPosInPlatoon_].vehiclePosition;
+    }
 
     // Return the current crosstrack distance, in m.
     double PlatoonManager::getCurrentCrosstrackDistance() const

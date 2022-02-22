@@ -324,8 +324,6 @@ namespace platoon_strategic_ihp
             // Platoon Manager Object
             PlatoonManager pm_;
 
-            // ECEF position of the host vehicle
-            cav_msgs::LocationECEF pose_ecef_point_;
 
             // wm listener pointer and pointer to the actual wm object
             std::shared_ptr<carma_wm::WMListener> wml_;
@@ -816,6 +814,8 @@ namespace platoon_strategic_ihp
             // Plugin discovery message
             cav_msgs::Plugin plugin_discovery_msg_;
 
+            bool isFirstLeaderAbortRequest_ = true;
+
             double maxAllowedJoinTimeGap_ = 15.0;
             double maxAllowedJoinGap_ = 90;
             int maxPlatoonSize_ = 10;
@@ -824,6 +824,7 @@ namespace platoon_strategic_ihp
             long prevHeartBeatTime_ = 0.0;
             int statusMessageInterval_ = 100; // ms
             int NEGOTIATION_TIMEOUT = 5000;  // ms
+            int LANE_CHANGE_TIMEOUT = 300000; // ms (5 min)
             int noLeaderUpdatesCounter = 0;
             int LEADER_TIMEOUT_COUNTER_LIMIT = 5;
             double waitingStateTimeout = 25.0; // s
