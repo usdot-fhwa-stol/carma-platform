@@ -2923,7 +2923,7 @@ namespace platoon_strategic_ihp
         if (pm_.safeToLaneChange)
         {   
             // for testing purpose only, check lane change status
-            double start_crosstrack = 0.5*config_.laneWidth; // Assume vehicle start at left lane when testing.
+            double start_crosstrack = 0.5*findLaneWidth();// Assume vehicle start at left lane when testing.
             double crosstrackDiff = current_crosstrack_ - start_crosstrack; 
             bool isLaneChangeFinished = crosstrackDiff >= findLaneWidth()*0.85; // Use 85% of lane width to account for noise.
              
