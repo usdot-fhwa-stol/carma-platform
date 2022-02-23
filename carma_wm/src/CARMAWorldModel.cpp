@@ -1454,7 +1454,7 @@ namespace carma_wm
             sim_.last_seen_state_[curr_intersection.id.id].find(current_movement_state.signal_group) != sim_.last_seen_state_[curr_intersection.id.id].end() && 
             is_duplicate)
         {
-          ROS_DEBUG_STREAM("Duplicate as last time! : " << std::to_string(lanelet::time::toSec(min_end_time)));
+          ROS_DEBUG_STREAM("Duplicate as last time! : id: " << curr_light->id() << ", time: " << std::to_string(lanelet::time::toSec(min_end_time)));
           continue;
         }
 
@@ -1465,7 +1465,7 @@ namespace carma_wm
             sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].second == received_state &&
             sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first < min_end_time)
         {
-          ROS_DEBUG_STREAM("Updated time for state: " << received_state << ", with time: "
+          ROS_DEBUG_STREAM("Updated time for id: " << curr_light->id()  << " with state: " << received_state << ", with time: "
                                                       << std::to_string(lanelet::time::toSec(min_end_time)));
           sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first = min_end_time;
           continue;
