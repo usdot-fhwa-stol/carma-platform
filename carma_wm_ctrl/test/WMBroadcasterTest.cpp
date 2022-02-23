@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 LEIDOS.
+ * Copyright (C) 2020-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -944,6 +944,25 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   pt.x = 0.5; pt.y = 1.5; pt.z = 0;
   msg_v01.geometry.nodes.push_back(pt);
   msg_v01.params_exists = true;
+
+  // Create geofence pointer that will be used throughout this test case
+  auto gf_ptr = std::make_shared<Geofence>();
+
+  // test restricted lane (trucks and buses will not have access)
+  msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::RESTRICTED_CHOICE;
+  j2735_msgs::TrafficControlVehClass restricted_veh_class1;
+  j2735_msgs::TrafficControlVehClass restricted_veh_class2;
+  restricted_veh_class1.vehicle_class = j2735_msgs::TrafficControlVehClass::TWO_AXLE_SIX_TIRE_SINGLE_UNIT_TRUCK;
+  restricted_veh_class2.vehicle_class = j2735_msgs::TrafficControlVehClass::BUS;
+  msg_v01.params.vclasses.push_back(restricted_veh_class1);
+  msg_v01.params.vclasses.push_back(restricted_veh_class2);
+  wmb.geofenceFromMsg(gf_ptr, msg_v01);
+
+  lanelet::RegionAccessRulePtr region_access_rule = std::dynamic_pointer_cast<lanelet::RegionAccessRule>(gf_ptr->regulatory_element_);
+  ASSERT_EQ(region_access_rule->accessable(lanelet::Participants::VehicleBus), false);   // Bus does not have access
+  ASSERT_EQ(region_access_rule->accessable(lanelet::Participants::VehicleTruck), false); // Truck does not have access
+  ASSERT_EQ(region_access_rule->accessable(lanelet::Participants::VehicleCar), true);    // Car has access
+  msg_v01.params.vclasses = {}; // Clear the set vclasses for msg_v01
   
   // test maxspeed - config limit inactive
   msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
@@ -951,7 +970,6 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
 
   lanelet::Velocity limit = 80_mph;
 
-  auto gf_ptr = std::make_shared<Geofence>();
   wmb.geofenceFromMsg(gf_ptr, msg_v01);
   ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   lanelet::DigitalSpeedLimitPtr max_speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
