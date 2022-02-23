@@ -123,7 +123,7 @@ double LCIStrategicPlugin::get_trajectory_smoothing_activation_distance(double t
   double accel_ratio = max_accel / max_decel;
   double remaining_time = time_remaining_at_free_flow - full_cycle_duration / 2;
   double inflection_speed = (max_accel * remaining_time - accel_ratio * departure_speed + current_speed)/ (1 - accel_ratio);
-  ROS_DEBUG_STREAM("ENTER TRAJ CALC: time_remaining_at_free_flow: " << time_remaining_at_free_flow << ", full_cycle_duration: " << full_cycle_duration << ", inflection_speed: " << inflection_speed);
+  ROS_ERROR_STREAM("ENTER TRAJ CALC: time_remaining_at_free_flow: " << time_remaining_at_free_flow << ", full_cycle_duration: " << full_cycle_duration << ", inflection_speed: " << inflection_speed);
 
   if (remaining_time < 0)
     return -1;
@@ -133,7 +133,7 @@ double LCIStrategicPlugin::get_trajectory_smoothing_activation_distance(double t
     // kinematic equation to find distance of acceleration + deceleration
     // (vf^2 - vi^2)/2a = d
     double d = (std::pow(inflection_speed, 2) - std::pow (current_speed, 2)) / (2 * max_accel) +  (std::pow(departure_speed, 2) - std::pow(inflection_speed, 2)) / (2 * max_decel);
-    ROS_DEBUG_STREAM("calculated distance WITHOUT cruising: " << d);
+    ROS_ERROR_STREAM("calculated distance WITHOUT cruising: " << d);
     return d;
   }
   else //there must be cruising
@@ -143,9 +143,9 @@ double LCIStrategicPlugin::get_trajectory_smoothing_activation_distance(double t
     double decel_time = (current_speed - speed_limit) / max_decel;
     double accel_time = (speed_limit - current_speed) / max_accel;
     double cruising_time = remaining_time - decel_time - accel_time;
-    ROS_DEBUG_STREAM("decel_time: " << decel_time << ", accel_time: " << accel_time << ", cruising_time: " << cruising_time);
+    ROS_ERROR_STREAM("decel_time: " << decel_time << ", accel_time: " << accel_time << ", cruising_time: " << cruising_time);
     double d = (std::pow(speed_limit, 2) - std::pow (current_speed, 2)) / (2 * max_accel) +  (std::pow(departure_speed, 2) - std::pow(speed_limit, 2)) / (2 * max_decel) + cruising_time * speed_limit;
-    ROS_DEBUG_STREAM("calculated distance with cruising: " <<  d << ", accel_seg: " << (std::pow(speed_limit, 2) - std::pow (current_speed, 2)) / (2 * max_accel) << 
+    ROS_ERROR_STREAM("calculated distance with cruising: " <<  d << ", accel_seg: " << (std::pow(speed_limit, 2) - std::pow (current_speed, 2)) / (2 * max_accel) << 
                       ", cruising: " << + cruising_time * speed_limit << ", decel_seg:" << (std::pow(departure_speed, 2) - std::pow(speed_limit, 2)) / (2 * max_decel));
     return d;
   }
@@ -263,10 +263,10 @@ SpeedProfileCase LCIStrategicPlugin::determine_speed_profile_case(double estimat
 {
   SpeedProfileCase case_num;
   
-  ROS_DEBUG_STREAM("estimated_entry_time: " << estimated_entry_time << ", and scheduled_entry_time: " << scheduled_entry_time);
+  ROS_ERROR_STREAM("estimated_entry_time: " << estimated_entry_time << ", and scheduled_entry_time: " << scheduled_entry_time);
   if (estimated_entry_time < scheduled_entry_time)
   {
-    ROS_DEBUG_STREAM("speed_before_accel: " << speed_before_accel << ", and config_.minimum_speed: " << config_.minimum_speed);
+    ROS_ERROR_STREAM("speed_before_accel: " << speed_before_accel << ", and config_.minimum_speed: " << config_.minimum_speed);
 
     if (speed_before_accel < config_.minimum_speed)
     {
@@ -279,7 +279,7 @@ SpeedProfileCase LCIStrategicPlugin::determine_speed_profile_case(double estimat
   }
   else
   {
-    ROS_DEBUG_STREAM("speed_before_decel: " << speed_before_decel << ", and speed_limit: " << speed_limit);
+    ROS_ERROR_STREAM("speed_before_decel: " << speed_before_decel << ", and speed_limit: " << speed_limit);
 
     if (speed_before_decel > speed_limit)
     {
@@ -308,7 +308,7 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_accel_cruis
 
   if (speed_before_decel > speed_limit)
   {
-    ROS_DEBUG_STREAM("Detected that cruising is necessary. Changed speed_before_decel: " << speed_before_decel << ", to : " << speed_limit);
+    ROS_ERROR_STREAM("Detected that cruising is necessary. Changed speed_before_decel: " << speed_before_decel << ", to : " << speed_limit);
     speed_before_decel = speed_limit;
 
     // Cruising Time Interval Equation (case 1) obtained from TSMO UC 2 Algorithm draft doc Figure 8.
@@ -319,9 +319,9 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_accel_cruis
     // Denominator portion
     t_c_den = pow(speed_before_decel - starting_speed, 2) - acc_dec_ratio * pow(speed_before_decel - departure_speed, 2);
     
-    if (t_c_den >= 0 && t_c_den < epsilon_)
+    if (t_c_den > -epsilon_ && t_c_den < epsilon_)
     {
-      ROS_WARN_STREAM("Denominator of cruising time interval is too close to zero: " 
+      ROS_ERROR_STREAM("WARN: Denominator of cruising time interval is too close to zero: " 
                         << t_c_den << ", t_c_nom: " << t_c_nom << ", which may indicate there is only cruising portion available. Returning without any change..."); 
       params.is_algorithm_successful = false;
       return params; 
@@ -331,7 +331,7 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_accel_cruis
   }
   // From TSMO USE CASE 2 Algorithm Doc - Figure 8. Equation: Trajectory Smoothing Solution (Case 1 and 2)
 
-  ROS_DEBUG_STREAM("max_comfort_accel_: " << max_comfort_accel_ << "\n" <<
+  ROS_ERROR_STREAM("max_comfort_accel_: " << max_comfort_accel_ << "\n" <<
                    "max_comfort_decel_: " << max_comfort_decel_ << "\n" <<
                    "acc_dec_ratio: " << acc_dec_ratio << "\n" <<
                    "speed_limit: " << speed_limit);
@@ -342,7 +342,7 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_accel_cruis
   double t_acc = (speed_before_decel - starting_speed) / a_acc;
   double t_dec =  (departure_speed - speed_before_decel) / a_dec;
 
-  ROS_DEBUG_STREAM("speed_before_decel: " << speed_before_decel << "\n" <<
+  ROS_ERROR_STREAM("speed_before_decel: " << speed_before_decel << "\n" <<
                    "departure_speed: " << departure_speed << "\n" <<
                    "remaining_downtrack: " << remaining_downtrack << "\n" <<
                    "t_c_nom: " << t_c_nom << "\n" <<
@@ -355,7 +355,7 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_accel_cruis
   
   if (remaining_time - t_cruise < epsilon_ && remaining_time - t_cruise >= 0.0)
   {
-    ROS_WARN_STREAM("Only Cruising is needed... therefore, no speed modification is required. Returning... ");
+    ROS_ERROR_STREAM("WARN: Only Cruising is needed... therefore, no speed modification is required. Returning... ");
     params.is_algorithm_successful = false;
     return params;
   }
@@ -379,13 +379,14 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_accel_cruis
   //Check calculated total dist against maneuver limits
   double total_distance_needed = dist_accel + dist_cruise + dist_decel;
 
-  if (a_acc < 0 || a_acc > max_comfort_accel_ || a_dec > 0 || a_dec < max_comfort_decel_ || total_distance_needed > remaining_downtrack) //algorithm was not able to calculate valid values
+  if (a_acc < - epsilon_ || a_acc > max_comfort_accel_ || a_dec > epsilon_ || a_dec < max_comfort_decel_ || total_distance_needed > remaining_downtrack ||
+      dist_decel < - epsilon_ || dist_cruise < -epsilon_ || dist_accel < epsilon_) //algorithm was not able to calculate valid values
   {
-    ROS_WARN_STREAM("get_parameters_for_accel_cruise_decel_speed_profile was NOT successful...");
+    ROS_ERROR_STREAM("WARN: get_parameters_for_accel_cruise_decel_speed_profile was NOT successful...");
     params.is_algorithm_successful = false; 
   }
 
-  ROS_DEBUG_STREAM("total_distance_needed: " << total_distance_needed << "\n" <<
+  ROS_ERROR_STREAM("total_distance_needed: " << total_distance_needed << "\n" <<
                   "dist_accel: " << dist_accel << "\n" <<
                   "dist_decel: " << dist_decel << "\n" <<
                   "dist_cruise: " << dist_cruise);
@@ -414,7 +415,7 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_decel_cruis
 
   if (speed_before_accel < config_.minimum_speed)
   {
-    ROS_DEBUG_STREAM("Detected that cruising is necessary. Changed speed_before_accel: " << speed_before_accel << ", to : " << config_.minimum_speed);
+    ROS_ERROR_STREAM("Detected that cruising is necessary. Changed speed_before_accel: " << speed_before_accel << ", to : " << config_.minimum_speed);
     speed_before_accel = config_.minimum_speed;
 
     // Cruising Time Interval Equation (case 1) obtained from TSMO UC 2 Algorithm draft doc Figure 8.
@@ -425,9 +426,9 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_decel_cruis
     // Denominator portion
     t_c_den = acc_dec_ratio * pow(speed_before_accel - starting_speed, 2) - pow(speed_before_accel - departure_speed, 2);
     
-    if (t_c_den >= 0 && t_c_den < epsilon_)
+    if (t_c_den > -epsilon_ && t_c_den < epsilon_)
     {
-      ROS_WARN_STREAM("Denominator of cruising time interval is too close to zero: " 
+      ROS_ERROR_STREAM("WARN: Denominator of cruising time interval is too close to zero: " 
                         << t_c_den << ", t_c_nom: " << t_c_nom << ", which may indicate there is only cruising portion available. Returning without any change..."); 
       params.is_algorithm_successful = false;
       return params;
@@ -437,7 +438,7 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_decel_cruis
   }
   // From TSMO USE CASE 2 Algorithm Doc - Figure 11 - 13. Equation: Trajectory Smoothing Solution (Case 1 and 2)
 
-  ROS_DEBUG_STREAM("max_comfort_accel_: " << max_comfort_accel_ << "\n" <<
+  ROS_ERROR_STREAM("max_comfort_accel_: " << max_comfort_accel_ << "\n" <<
                    "max_comfort_decel_: " << max_comfort_decel_ << "\n" <<
                    "acc_dec_ratio: " << acc_dec_ratio << "\n" <<
                    "config_.minimum_speed: " << config_.minimum_speed);
@@ -448,7 +449,7 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_decel_cruis
   double t_acc = (departure_speed - speed_before_accel) / a_acc;
   double t_dec =  (speed_before_accel - starting_speed) / a_dec;
 
-  ROS_DEBUG_STREAM("speed_before_accel: " << speed_before_accel << "\n" <<
+  ROS_ERROR_STREAM("speed_before_accel: " << speed_before_accel << "\n" <<
                    "departure_speed: " << departure_speed << "\n" <<
                    "remaining_downtrack: " << remaining_downtrack << "\n" <<
                    "t_c_nom: " << t_c_nom << "\n" <<
@@ -461,7 +462,7 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_decel_cruis
   
   if (remaining_time - t_cruise < epsilon_ && remaining_time - t_cruise >= 0.0)
   {
-    ROS_WARN_STREAM("Only Cruising is needed... therefore, no speed modification is required. Returning... ");
+    ROS_ERROR_STREAM("WARN: Only Cruising is needed... therefore, no speed modification is required. Returning... ");
     params.is_algorithm_successful = false;
     return params;
   }
@@ -486,13 +487,14 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_decel_cruis
   //Check calculated total dist against maneuver limits
   double total_distance_needed = dist_accel + dist_cruise + dist_decel;
 
-  if (a_acc < 0 || a_acc > max_comfort_accel_ || a_dec > 0 || a_dec < max_comfort_decel_ || total_distance_needed > remaining_downtrack) //algorithm was not able to calculate valid values
+  if (a_acc < -epsilon_ || a_acc > max_comfort_accel_ || a_dec > epsilon_ || a_dec < max_comfort_decel_ || total_distance_needed > remaining_downtrack || 
+      dist_decel < - epsilon_ || dist_cruise < -epsilon_ || dist_accel < epsilon_) //algorithm was not able to calculate valid values
   {
-    ROS_WARN_STREAM("get_parameters_for_decel_cruise_accel_speed_profile was NOT successful...");
+    ROS_ERROR_STREAM("WARN: get_parameters_for_decel_cruise_accel_speed_profile was NOT successful...");
     params.is_algorithm_successful = false; 
   }
 
-  ROS_DEBUG_STREAM("total_distance_needed: " << total_distance_needed << "\n" <<
+  ROS_ERROR_STREAM("total_distance_needed: " << total_distance_needed << "\n" <<
                   "dist_accel: " << dist_accel << "\n" <<
                   "dist_decel: " << dist_decel << "\n" <<
                   "dist_cruise: " << dist_cruise);
@@ -549,7 +551,7 @@ TrajectorySmoothingParameters LCIStrategicPlugin::handleFailureCase(double start
   {
     throw std::invalid_argument("Calculated departure speed is invalid: " + std::to_string(params.modified_departure_speed));
   }
-  ROS_WARN_STREAM("Maneuver needed to be modified (due to negative dist) with new distance and accelerations: \n" << 
+  ROS_ERROR_STREAM("WARN: Maneuver needed to be modified (due to negative dist) with new distance and accelerations: \n" << 
                 "a_acc: " << params.a_accel << "\n" <<
                 "a_dec: " << params.a_decel << "\n" <<
                 "dist_accel: " << params.dist_accel << "\n" <<

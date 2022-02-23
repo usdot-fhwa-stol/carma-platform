@@ -86,6 +86,8 @@ cd ../truck_inspection_client
 echo "" > COLCON_IGNORE
 cd ../port_drayage_plugin
 echo "" > COLCON_IGNORE
+cd ../traffic_incident_parser
+echo "" > COLCON_IGNORE
 
 cd ../
 
