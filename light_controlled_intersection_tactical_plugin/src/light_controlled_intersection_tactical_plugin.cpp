@@ -114,6 +114,8 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
                                                                               config_.curvature_moving_average_window_size, config_.back_distance,
                                                                               config_.buffer_ending_downtrack);
 
+    
+    
     // Create curve-fitting compatible trajectories (with extra back and front attached points) with raw speed limits from maneuver 
     auto points_and_target_speeds = create_geometry_profile(maneuver_plan, std::max((double)0, current_downtrack_ - config_.back_distance),
                                                                             wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config);
@@ -211,7 +213,7 @@ std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::create_ge
       cav_msgs::Maneuver temp_maneuver = maneuver;
       temp_maneuver.type =cav_msgs::Maneuver::LANE_FOLLOWING;
       ROS_DEBUG_STREAM("Creating Lane Follow Geometry");
-      std::vector<PointSpeedPair> lane_follow_points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config, visited_lanelets);
+      std::vector<PointSpeedPair> lane_follow_points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(temp_maneuver, starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config, visited_lanelets);
       points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
       
       break; // expected to receive only one maneuver to plan
