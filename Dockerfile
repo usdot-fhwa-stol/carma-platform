@@ -35,7 +35,7 @@
 
 FROM usdotfhwastoldev/autoware.ai:develop AS base-image
 FROM usdotfhwastoldev/carma-msgs:develop AS base-image-msgs
-
+FROM usdotfhwastoldev/carma-messenger-core:develop AS base-image-messenger
 
 FROM base-image AS source-code
 
@@ -55,6 +55,8 @@ COPY --from=source-code --chown=carma /home/carma/src /home/carma/carma_ws/src
 RUN mkdir ~/carma_ws/install
 COPY --from=base-image-msgs --chown=carma /home/carma/.base-image/ros1_msgs_ws/install/ /home/carma/carma_ws/install/ros1_msgs_install
 COPY --from=base-image-msgs --chown=carma /home/carma/.base-image/ros2_msgs_ws/install/ /home/carma/carma_ws/install/ros2_msgs_install
+COPY --from=base-image-messenger --chown=carma /opt/carma/install /home/carma/carma_ws/install/ros1_messenger_install
+COPY --from=base-image-messenger --chown=carma /opt/carma/install_ros2 /home/carma/carma_ws/install/ros2_messenger_install
 
 RUN ~/carma_ws/src/carma-platform/docker/install.sh
 
