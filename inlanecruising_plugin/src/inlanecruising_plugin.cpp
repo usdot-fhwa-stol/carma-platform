@@ -167,7 +167,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
 
   ros::WallTime end_time = ros::WallTime::now();  // Planning complete
 
-  ros::Duration duration = end_time - start_time;
+  ros::WallDuration duration = end_time - start_time;
   ROS_DEBUG_STREAM("ExecutionTime: " << duration.toSec());
 
   return true;
