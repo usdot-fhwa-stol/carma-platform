@@ -143,7 +143,7 @@ std::ostream& operator<<(std::ostream& os, cav_msgs::Maneuver m) {
     bool IntersectionTransitManeuvering::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
     {
 
-        ros::Time start_time = ros::Time::now();  // Start timeing the execution time for planning so it can be logged
+        ros::WallTime start_time = ros::WallTime::now();  // Start timeing the execution time for planning so it can be logged
 
         std::vector<cav_msgs::Maneuver> maneuver_plan;
 
