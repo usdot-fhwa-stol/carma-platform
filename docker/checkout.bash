@@ -90,6 +90,8 @@ cd ../traffic_incident_parser
 echo "" > COLCON_IGNORE
 cd ../cooperative_lanechange
 echo "" > COLCON_IGNORE
+cd ../bsm_generator
+echo "" > COLCON_IGNORE
 
 
 cd ../

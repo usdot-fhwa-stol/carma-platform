@@ -45,8 +45,8 @@ def generate_launch_description():
     #mobilitypath_publisher_param_file = os.path.join(
     #    get_package_share_directory('mobilitypath_publisher'), 'config/parameters.yaml')
 
-    bsm_generator_param_file = os.path.join(
-        get_package_share_directory('bsm_generator'), 'config/parameters.yaml')
+    #bsm_generator_param_file = os.path.join(
+    #    get_package_share_directory('bsm_generator'), 'config/parameters.yaml')
 
     vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
     declare_vehicle_characteristics_param_file_arg = DeclareLaunchArgument(
@@ -69,31 +69,31 @@ def generate_launch_description():
         executable='carma_component_container_mt',
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
-            ComposableNode(
-                package='bsm_generator',
-                plugin='bsm_generator::BSMGenerator',
-                name='bsm_generator_node',
-                extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('bsm_generator', env_log_levels) }
-                ],
-                remappings=[
-                    ("velocity_accel_cov", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/velocity_accel_cov" ] ),
-                    ("ekf_twist", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
-                    ("imu_raw", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/imu_raw" ] ),
-                    ("transmission_state", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/can/transmission_state" ] ),
-                    ("brake_position", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/can/brake_position" ] ),
-                    ("steering_wheel_angle", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/can/steering_wheel_angle" ] ),
-                    ("gnss_fix_fused", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/gnss_fix_fused" ] ),
-                    ("pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] )
-                ],
-                parameters=[ 
-                    bsm_generator_param_file,
-                    vehicle_characteristics_param_file,
-                    vehicle_config_param_file
-                ]
-            ),
+            #ComposableNode(
+            #    package='bsm_generator',
+            #    plugin='bsm_generator::BSMGenerator',
+            #    name='bsm_generator_node',
+            #    extra_arguments=[
+            #        {'use_intra_process_comms': True}, 
+            #        {'--log-level' : GetLogLevel('bsm_generator', env_log_levels) }
+            #    ],
+            #    remappings=[
+            #        ("velocity_accel_cov", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/velocity_accel_cov" ] ),
+            #        ("ekf_twist", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
+            #        ("imu_raw", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/imu_raw" ] ),
+            #        ("transmission_state", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/can/transmission_state" ] ),
+            #        ("brake_position", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/can/brake_position" ] ),
+            #        ("steering_wheel_angle", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/can/steering_wheel_angle" ] ),
+            #        ("gnss_fix_fused", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/gnss_fix_fused" ] ),
+            #        ("pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+            #        ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] )
+            #    ],
+            #    parameters=[ 
+            #        bsm_generator_param_file,
+            #        vehicle_characteristics_param_file,
+            #        vehicle_config_param_file
+            #    ]
+            #),
             ComposableNode(
                 package='cpp_message',
                 plugin='cpp_message::Node',
