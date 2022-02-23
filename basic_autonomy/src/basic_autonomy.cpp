@@ -687,7 +687,7 @@ namespace basic_autonomy
 
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
             const std::vector<lanelet::BasicPoint2d> &points, const std::vector<double> &times, const std::vector<double> &yaws,
-            ros::Time startTime)
+            ros::WallTime startTime)
         {
             if (points.size() != times.size() || points.size() != yaws.size())
             {
