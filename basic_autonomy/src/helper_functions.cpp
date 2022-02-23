@@ -24,7 +24,7 @@ namespace waypoint_generation
     int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
                                                  const cav_msgs::VehicleState& state)
     {
-        lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
+        lanelet::BasicPoint2d veh_point(state.x_pos_global, state.y_pos_global);
         double min_distance = std::numeric_limits<double>::max();
         int i = 0;
         int best_index = 0;
@@ -44,7 +44,7 @@ namespace waypoint_generation
     int get_nearest_point_index(const std::vector<PointSpeedPair>& points,
                                                  const cav_msgs::VehicleState& state)
     {
-        lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
+        lanelet::BasicPoint2d veh_point(state.x_pos_global, state.y_pos_global);
         ROS_DEBUG_STREAM("veh_point: " << veh_point.x() << ", " << veh_point.y());
         double min_distance = std::numeric_limits<double>::max();
         int i = 0;
@@ -97,7 +97,7 @@ namespace waypoint_generation
     int get_nearest_index_by_downtrack(const std::vector<PointSpeedPair>& points, const carma_wm::WorldModelConstPtr& wm,
                                       const cav_msgs::VehicleState& state)
     {
-        lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
+        lanelet::BasicPoint2d state_pos(state.x_pos_global, state.y_pos_global);
         double ending_downtrack = wm->routeTrackPos(state_pos).downtrack;
         std::vector<lanelet::BasicPoint2d> basic_points;
         std::vector<double> speeds;
@@ -108,7 +108,7 @@ namespace waypoint_generation
     int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm,
                                       const cav_msgs::VehicleState& state)
     {
-        lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
+        lanelet::BasicPoint2d state_pos(state.x_pos_global, state.y_pos_global);
         double ending_downtrack = wm->routeTrackPos(state_pos).downtrack;
         return get_nearest_index_by_downtrack(points, wm, ending_downtrack);
     }

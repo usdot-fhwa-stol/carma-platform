@@ -487,11 +487,12 @@ namespace route {
             ROS_WARN("%s", ex.what());
         }
 
-        vehicle_pose_->pose.position.x = frontbumper_transform_.getOrigin().getX();
-        vehicle_pose_->pose.position.y = frontbumper_transform_.getOrigin().getY();
-        vehicle_pose_->pose.position.z = frontbumper_transform_.getOrigin().getZ();
+        geometry_msgs::PoseStamped updated_vehicle_pose;
+        updated_vehicle_pose.pose.position.x = frontbumper_transform_.getOrigin().getX();
+        updated_vehicle_pose.pose.position.y = frontbumper_transform_.getOrigin().getY();
+        updated_vehicle_pose.pose.position.z = frontbumper_transform_.getOrigin().getZ();
+        vehicle_pose_ = updated_vehicle_pose; 
             
-
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
             current_loc_ = lanelet::BasicPoint2d(vehicle_pose_->pose.position.x, vehicle_pose_->pose.position.y);
@@ -616,6 +617,9 @@ namespace route {
 
     bool RouteGeneratorWorker::spin_callback()
     {
+        // Update vehicle position
+        bumper_pose_cb();
+
         if(reroutingChecker()==true)
         {
            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);

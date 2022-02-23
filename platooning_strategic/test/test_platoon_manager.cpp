@@ -191,7 +191,7 @@ namespace platoon_strategic
         EXPECT_EQ(plugin.pm_.isFollower, false);
 
         cav_msgs::MobilityResponse resp;
-        resp.header.plan_id = "resp";
+        resp.m_header.plan_id = "resp";
         resp.is_accepted = true;
         plugin.mob_resp_cb(resp);
         EXPECT_EQ(plugin.pm_.current_platoon_state, PlatoonState::FOLLOWER);
@@ -470,11 +470,11 @@ namespace platoon_strategic
 
         // Create the rear vehicle's 'JOIN_PLATOON_AT_REAR' MobilityRequest, which will be sent to the front vehicle
         cav_msgs::MobilityRequest request;
-        request.header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
-        request.header.recipient_id = "default_recipient_id"; 
-        request.header.sender_bsm_id = "default_host_id";
-        request.header.sender_id = "default_id";
-        request.header.timestamp = ros::Time::now().toNSec()/1000000;
+        request.m_header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
+        request.m_header.recipient_id = "default_recipient_id"; 
+        request.m_header.sender_bsm_id = "default_host_id";
+        request.m_header.sender_id = "default_id";
+        request.m_header.timestamp = ros::Time::now().toNSec()/1000000;
         request.location = rear_vehicle_location; // Rear vehicle is in Lanelet 1210
         request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_AT_REAR;
         request.strategy = "Carma/Platooning";

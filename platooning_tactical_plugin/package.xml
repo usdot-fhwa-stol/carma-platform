@@ -37,4 +37,5 @@ The platooning_tactical_plugin converts maneuvers from platooning strategic plug
 <depend>tf2</depend>
 <depend>tf2_geometry_msgs</depend>
 <depend>trajectory_utils</depend>
+<build_depend>carma_cmake_common</build_depend>
 </package>

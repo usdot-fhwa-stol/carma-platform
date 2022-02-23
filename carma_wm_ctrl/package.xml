@@ -19,6 +19,7 @@
   <depend>cav_msgs</depend>
   <depend>roscpp</depend>
   <depend>autoware_lanelet2_ros_interface</depend>
+  <build_depend>carma_cmake_common</build_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -26,7 +26,7 @@ PurePursuitWrapper::PurePursuitWrapper(PurePursuitWrapperConfig config, Waypoint
   : config_(config), waypoint_pub_(waypoint_pub), plugin_discovery_pub_(plugin_discovery_pub)
 {
   plugin_discovery_msg_.name = "Pure Pursuit";
-  plugin_discovery_msg_.versionId = "v1.0";
+  plugin_discovery_msg_.version_id = "v1.0";
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = true;
   plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;

@@ -247,10 +247,10 @@ namespace basic_autonomy
                 prev_point = current_point;
             }
 
-            ending_state_before_buffer.X_pos_global = points_and_target_speeds[unbuffered_idx].point.x();
-            ending_state_before_buffer.Y_pos_global = points_and_target_speeds[unbuffered_idx].point.y();
-            ROS_DEBUG_STREAM("Here ending_state_before_buffer.X_pos_global: " << ending_state_before_buffer.X_pos_global << 
-            ", and Y_pos_global" << ending_state_before_buffer.Y_pos_global);
+            ending_state_before_buffer.x_pos_global = points_and_target_speeds[unbuffered_idx].point.x();
+            ending_state_before_buffer.y_pos_global = points_and_target_speeds[unbuffered_idx].point.y();
+            ROS_DEBUG_STREAM("Here ending_state_before_buffer.x_pos_global: " << ending_state_before_buffer.x_pos_global << 
+            ", and y_pos_global" << ending_state_before_buffer.y_pos_global);
 
             std::vector<PointSpeedPair> constrained_points(points_and_target_speeds.begin(), points_and_target_speeds.begin() + max_i);
 
@@ -369,14 +369,14 @@ namespace basic_autonomy
             //Constrain to starting and ending downtrack
             int start_index_starting_centerline = waypoint_generation::get_nearest_index_by_downtrack(downsampled_starting_centerline, wm, starting_downtrack);
             cav_msgs::VehicleState start_state;
-            start_state.X_pos_global = downsampled_starting_centerline[start_index_starting_centerline].x();
-            start_state.Y_pos_global = downsampled_starting_centerline[start_index_starting_centerline].y();
+            start_state.x_pos_global = downsampled_starting_centerline[start_index_starting_centerline].x();
+            start_state.y_pos_global = downsampled_starting_centerline[start_index_starting_centerline].y();
             int start_index_target_centerline = waypoint_generation::get_nearest_point_index(downsampled_target_centerline, start_state);
 
             int end_index_target_centerline = waypoint_generation::get_nearest_index_by_downtrack(downsampled_target_centerline, wm, ending_downtrack);
             cav_msgs::VehicleState end_state;
-            end_state.X_pos_global = downsampled_target_centerline[end_index_target_centerline].x();
-            end_state.Y_pos_global = downsampled_target_centerline[end_index_target_centerline].y();
+            end_state.x_pos_global = downsampled_target_centerline[end_index_target_centerline].x();
+            end_state.y_pos_global = downsampled_target_centerline[end_index_target_centerline].y();
             int end_index_starting_centerline = waypoint_generation::get_nearest_point_index(downsampled_starting_centerline, end_state);
 
             std::vector<lanelet::BasicPoint2d> constrained_start_centerline(downsampled_starting_centerline.begin() + start_index_starting_centerline, downsampled_starting_centerline.begin() + end_index_starting_centerline);
@@ -492,18 +492,18 @@ namespace basic_autonomy
                                                                                         starting_downtrack, ending_downtrack, wm, state, general_config.default_downsample_ratio);
             ROS_DEBUG_STREAM("Route geometry size:"<<route_geometry.size());
 
-            lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
+            lanelet::BasicPoint2d state_pos(state.x_pos_global, state.y_pos_global);
             double current_downtrack = wm->routeTrackPos(state_pos).downtrack;
             int nearest_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, current_downtrack);
             int ending_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, ending_downtrack);
             ROS_DEBUG_STREAM("Nearest pt index in maneuvers to points: "<< nearest_pt_index);
             ROS_DEBUG_STREAM("Ending pt index in maneuvers to points: "<< ending_pt_index);
 
-            ending_state_before_buffer.X_pos_global = route_geometry[ending_pt_index].x();
-            ending_state_before_buffer.Y_pos_global = route_geometry[ending_pt_index].y();
+            ending_state_before_buffer.x_pos_global = route_geometry[ending_pt_index].x();
+            ending_state_before_buffer.y_pos_global = route_geometry[ending_pt_index].y();
 
-            ROS_DEBUG_STREAM("ending_state_before_buffer_:"<<ending_state_before_buffer.X_pos_global << 
-                    ", ending_state_before_buffer_.Y_pos_global" << ending_state_before_buffer.Y_pos_global);
+            ROS_DEBUG_STREAM("ending_state_before_buffer_:"<<ending_state_before_buffer.x_pos_global << 
+                    ", ending_state_before_buffer_.y_pos_global" << ending_state_before_buffer.y_pos_global);
 
             
             double route_length = wm->getRouteEndTrackPos().downtrack;
@@ -771,7 +771,7 @@ namespace basic_autonomy
             const cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg, const DetailedTrajConfig &detailed_config)
         {
             ROS_DEBUG_STREAM("VehicleState: "
-                             << " x: " << state.X_pos_global << " y: " << state.Y_pos_global << " yaw: " << state.orientation
+                             << " x: " << state.x_pos_global << " y: " << state.y_pos_global << " yaw: " << state.orientation
                              << " speed: " << state.longitudinal_vel);
 
             log::printDebugPerLine(points, &log::pointSpeedPairToStream);
@@ -870,7 +870,7 @@ namespace basic_autonomy
 
             nearest_pt_index = get_nearest_index_by_downtrack(all_sampling_points, wm, state);
             ROS_DEBUG_STREAM("Current state's nearest_pt_index: " << nearest_pt_index);
-            ROS_DEBUG_STREAM("Curvature right now: " << better_curvature[nearest_pt_index] << ", at state x: " << state.X_pos_global << ", state y: " << state.Y_pos_global);
+            ROS_DEBUG_STREAM("Curvature right now: " << better_curvature[nearest_pt_index] << ", at state x: " << state.x_pos_global << ", state y: " << state.y_pos_global);
             ROS_DEBUG_STREAM("Corresponding to point: x: " << all_sampling_points[nearest_pt_index].x() << ", y:" << all_sampling_points[nearest_pt_index].y());
 
             int buffer_pt_index = get_nearest_index_by_downtrack(all_sampling_points, wm, ending_state_before_buffer);
@@ -896,7 +896,7 @@ namespace basic_autonomy
             final_yaw_values = future_yaw;
             ROS_DEBUG_STREAM("Trimmed future points to size: "<< future_basic_points.size());
 
-            lanelet::BasicPoint2d cur_veh_point(state.X_pos_global, state.Y_pos_global);
+            lanelet::BasicPoint2d cur_veh_point(state.x_pos_global, state.y_pos_global);
 
             all_sampling_points.insert(all_sampling_points.begin(),
                                        cur_veh_point); // Add current vehicle position to front of sample points

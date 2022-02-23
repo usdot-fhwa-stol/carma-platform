@@ -21,4 +21,5 @@
   <depend>basic_autonomy</depend>
   <depend>carma_debug_msgs</depend> 
   <depend>lanelet2_extension</depend>
+  <build_depend>carma_cmake_common</build_depend>
 </package>

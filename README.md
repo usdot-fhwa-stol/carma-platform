@@ -35,6 +35,8 @@ The current version and release history of the CARMA software platform: [CARMA R
 
 **Repo Structure Note:**  The master and develop branches of this repo (and all other repos in the usdot-fhwa-stol GitHub organization) now reflects the third generation of CARMA code and documentation, called CARMA3.  It uses [Autoware](https://github.com/autowarefoundation/autoware) to provide SAE level 2 and 3 automation capability.  The legacy CARMA2 code is still being supported.  It was used extensively by FHWA during 2018 for SAE level 1 experiments.  To work with that code base, please check out the CARMA2-integration branch and make pull requests to it (using the contribution process outlined below).
 
+**ROS Version Note:** Release 3.11 was the final version of CARMA Platform to contain only ROS1 code. The develop branches and future versions will contain a mix of ROS1 and ROS2 code in a mixed system until all code has been fully ported to ROS2. You can learn more about this system and the ROS2 migration efforts on confluence here: [CARMA Platform ROS2 Docs](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/573341725/ROS+2)
+
 ## Roadmap
 The current CARMA ecosystem development direction and release plans can be found here: [CARMA Roadmap](https://usdot-carma.atlassian.net/wiki/spaces/CRMECO/pages/1093435397/CARMA+Ecosystem+Roadmap)
 

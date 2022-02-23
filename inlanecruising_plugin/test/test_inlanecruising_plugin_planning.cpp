@@ -92,8 +92,8 @@ TEST(InLaneCruisingPluginTest, testPlanningCallback)
   carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
 
   cav_srvs::PlanTrajectoryRequest req;
-  req.vehicle_state.X_pos_global = 1.5;
-  req.vehicle_state.Y_pos_global = 5;
+  req.vehicle_state.x_pos_global = 1.5;
+  req.vehicle_state.y_pos_global = 5;
   req.vehicle_state.orientation = 0;
   req.vehicle_state.longitudinal_vel = 0.0;
 
@@ -185,8 +185,8 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
 
   cav_srvs::PlanTrajectoryRequest req;
 
-  req.vehicle_state.X_pos_global = -107;
-  req.vehicle_state.Y_pos_global = 311.904;
+  req.vehicle_state.x_pos_global = -107;
+  req.vehicle_state.y_pos_global = 311.904;
   req.vehicle_state.orientation = -2.7570977;
   req.vehicle_state.longitudinal_vel = 0.0;
 

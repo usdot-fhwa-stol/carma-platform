@@ -54,7 +54,7 @@ StopControlledIntersectionTacticalPlugin::StopControlledIntersectionTacticalPlug
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
   {
     plugin_discovery_msg_.name = "StopControlledIntersectionTacticalPlugin";
-    plugin_discovery_msg_.versionId = "v1.0";
+    plugin_discovery_msg_.version_id = "v1.0";
     plugin_discovery_msg_.available = true;
     plugin_discovery_msg_.activated = true;
     plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
@@ -93,8 +93,8 @@ bool StopControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Plan
         }
     }
 
-    lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
-    ROS_DEBUG_STREAM("Planning state x:"<<req.vehicle_state.X_pos_global <<" , y: " << req.vehicle_state.Y_pos_global);
+    lanelet::BasicPoint2d veh_pos(req.vehicle_state.x_pos_global, req.vehicle_state.y_pos_global);
+    ROS_DEBUG_STREAM("Planning state x:"<<req.vehicle_state.x_pos_global <<" , y: " << req.vehicle_state.y_pos_global);
 
     double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
     ROS_DEBUG_STREAM("Current_downtrack"<< current_downtrack);
@@ -131,7 +131,7 @@ std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_
     std::vector<PointSpeedPair> points_and_target_speeds;
     std::unordered_set<lanelet::Id> visited_lanelets;
 
-    lanelet::BasicPoint2d veh_pos(state.X_pos_global, state.Y_pos_global);
+    lanelet::BasicPoint2d veh_pos(state.x_pos_global, state.y_pos_global);
     double max_starting_downtrack = wm_->routeTrackPos(veh_pos).downtrack; //The vehicle position
     double starting_speed = state.longitudinal_vel;
 
@@ -212,7 +212,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     ROS_DEBUG_STREAM("Maneuver starting downtrack: "<< start_dist);
     ROS_DEBUG_STREAM("Maneuver ending downtrack: "<< end_dist);
     //Checking state against start_dist and adjust profile
-    lanelet::BasicPoint2d state_point(state.X_pos_global, state.Y_pos_global);
+    lanelet::BasicPoint2d state_point(state.x_pos_global, state.y_pos_global);
     double route_starting_downtrack = wm->routeTrackPos(state_point).downtrack;  //Starting downtrack based on geometry points
     double dist_acc;        //Distance for which acceleration lasts
 
@@ -439,7 +439,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlu
     
     std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;
     ROS_DEBUG_STREAM("VehicleState: "
-                        << " x: " << state.X_pos_global << " y: " << state.Y_pos_global << " yaw: " << state.orientation
+                        << " x: " << state.x_pos_global << " y: " << state.y_pos_global << " yaw: " << state.orientation
                         << " speed: " << state.longitudinal_vel);
     
     int nearest_pt_index = basic_autonomy::waypoint_generation::get_nearest_point_index(points, state);
@@ -530,7 +530,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlu
                                     final_yaw_values.end());
 
     // Add current vehicle point to front of the trajectory
-    lanelet::BasicPoint2d cur_veh_point(state.X_pos_global, state.Y_pos_global);
+    lanelet::BasicPoint2d cur_veh_point(state.x_pos_global, state.y_pos_global);
 
     future_basic_points.insert(future_basic_points.begin(),
                                 cur_veh_point); // Add current vehicle position to front of sample points

@@ -195,8 +195,8 @@ namespace basic_autonomy
         basic_points.push_back(p.point);
 
         cav_msgs::VehicleState state;
-        state.X_pos_global = 3.3;
-        state.Y_pos_global = 3.3;
+        state.x_pos_global = 3.3;
+        state.y_pos_global = 3.3;
 
         ASSERT_EQ(3, waypoint_generation::get_nearest_point_index(basic_points, state));
         ASSERT_EQ(3, waypoint_generation::get_nearest_point_index(points, state));
@@ -226,8 +226,8 @@ namespace basic_autonomy
         points.push_back(p);
 
         cav_msgs::VehicleState state;
-        state.X_pos_global = 3.3;
-        state.Y_pos_global = 3.3;
+        state.x_pos_global = 3.3;
+        state.y_pos_global = 3.3;
 
         ASSERT_EQ(3, waypoint_generation::get_nearest_point_index(points, state));
     }
@@ -638,8 +638,8 @@ namespace basic_autonomy
         std::vector<cav_msgs::Maneuver> maneuvers;
         maneuvers.push_back(maneuver);
         cav_msgs::VehicleState state;
-        state.X_pos_global = veh_pos.x();
-        state.Y_pos_global = veh_pos.y();
+        state.x_pos_global = veh_pos.x();
+        state.y_pos_global = veh_pos.y();
         state.longitudinal_vel = 8.0;
 
         std::string trajectory_type = "cooperative_lanechange";
@@ -728,8 +728,8 @@ namespace basic_autonomy
         std::vector<cav_msgs::Maneuver> maneuvers;
         maneuvers.push_back(maneuver);
         cav_msgs::VehicleState state;
-        state.X_pos_global = veh_pos.x();
-        state.Y_pos_global = veh_pos.y();
+        state.x_pos_global = veh_pos.x();
+        state.y_pos_global = veh_pos.y();
         state.longitudinal_vel = 8.0;
 
         std::string trajectory_type = "cooperative_lanechange";

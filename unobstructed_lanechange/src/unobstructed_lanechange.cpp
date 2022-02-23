@@ -37,7 +37,7 @@ namespace unobstructed_lanechange
                 
         unobstructed_lanechange_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
         plugin_discovery_msg_.name = "UnobstructedLaneChangePlugin";
-        plugin_discovery_msg_.versionId = "v1.0";
+        plugin_discovery_msg_.version_id = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = false;
         plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
@@ -96,7 +96,7 @@ namespace unobstructed_lanechange
 
     bool UnobstructedLaneChangePlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
 
-        lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
+        lanelet::BasicPoint2d veh_pos(req.vehicle_state.x_pos_global, req.vehicle_state.y_pos_global);
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
         //convert maneuver info to route points and speeds

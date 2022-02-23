@@ -17,10 +17,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(route)
 
-## Compile as C++14, supported in ROS Noetic and newer
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
@@ -57,16 +56,15 @@ include_directories(
   include
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
 
 add_executable( ${PROJECT_NAME}
-  ${headers}
   src/main.cpp
   src/route.cpp
   src/route_generator_worker.cpp
   src/route_state_worker.cpp)
 add_library(route_library src/route_generator_worker.cpp src/route_state_worker.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} route_library)
+target_link_libraries(route_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 add_dependencies(route_library ${catkin_EXPORTED_TARGETS})
 
@@ -81,7 +79,7 @@ install(DIRECTORY include
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} route_library
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

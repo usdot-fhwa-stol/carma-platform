@@ -66,8 +66,8 @@ TEST(Intersection_Transit_Maneuvering_Test, Planning_Callback_Test)
 
 
     cav_srvs::PlanTrajectoryRequest req;
-    req.vehicle_state.X_pos_global = 1.5;
-    req.vehicle_state.Y_pos_global = 5;
+    req.vehicle_state.x_pos_global = 1.5;
+    req.vehicle_state.y_pos_global = 5;
     req.vehicle_state.orientation = 0;
     req.vehicle_state.longitudinal_vel = 0.0;
 
@@ -113,8 +113,8 @@ TEST(Intersection_Transit_Maneuvering_Test, Planning_Callback_Test)
 
     /*Test call() function*/
     ASSERT_EQ(1, test_req.maneuver_plan.maneuvers.size());
-    ASSERT_EQ(req.vehicle_state.X_pos_global, test_req.vehicle_state.X_pos_global);
-    ASSERT_EQ(req.vehicle_state.Y_pos_global, test_req.vehicle_state.Y_pos_global);
+    ASSERT_EQ(req.vehicle_state.x_pos_global, test_req.vehicle_state.x_pos_global);
+    ASSERT_EQ(req.vehicle_state.y_pos_global, test_req.vehicle_state.y_pos_global);
     ASSERT_EQ(req.vehicle_state.longitudinal_vel, test_req.vehicle_state.longitudinal_vel);
     ASSERT_EQ(req.vehicle_state.orientation, test_req.vehicle_state.orientation);
     ASSERT_EQ(req.initial_trajectory_plan.trajectory_id, test_req.initial_trajectory_plan.trajectory_id);

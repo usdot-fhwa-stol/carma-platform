@@ -18,53 +18,81 @@
 namespace object{
 
   using std::placeholders::_1;
+  using std::placeholders::_2;
+  using std::placeholders::_3;
 
-  ObjectDetectionTrackingNode::ObjectDetectionTrackingNode(): pnh_("~"), object_worker_(std::bind(&ObjectDetectionTrackingNode::publishObject, this, _1)){}
+  ObjectDetectionTrackingNode::ObjectDetectionTrackingNode(const rclcpp::NodeOptions& options)
+  : carma_ros2_utils::CarmaLifecycleNode(options),
+    object_worker_( 
+      std::bind(&ObjectDetectionTrackingNode::publishObject, this, _1), 
+      std::bind(&ObjectDetectionTrackingNode::lookupTransform, this, _1, _2, _3),
+      get_node_logging_interface()
+    ),
+    tfBuffer_(get_clock()),
+    tfListener_(tfBuffer_)
+    {
+      map_frame_ = this->declare_parameter<std::string>("map_frame", map_frame_);
+    }
 
-  void ObjectDetectionTrackingNode::initialize()
-  {
+  carma_ros2_utils::CallbackReturn ObjectDetectionTrackingNode::handle_on_configure(const rclcpp_lifecycle::State &) {
+
     // Load parameters
-    double step = 0.1;
-    double period = 2.0;
-    double ax = 9.0;
-    double ay = 9.0;
-    double process_noise_max = 1000.0;
-    double drop_rate = 0.9;
-    std::string velodyne_frame_ = "velodyne";
-    std::string map_frame_ = "map";
+    this->get_parameter<std::string>("map_frame", map_frame_);
+    this->object_worker_.setMapFrame(map_frame_);
 
-    pnh_.param<double>("prediction_time_step", step, step);
-    pnh_.param<double>("prediction_period", period, period);
-    pnh_.param<double>("cv_x_accel_noise", ax, ax);
-    pnh_.param<double>("cv_y_accel_noise", ay, ay);
-    pnh_.param<double>("prediction_process_noise_max", process_noise_max, process_noise_max);
-    pnh_.param<double>("prediction_confidence_drop_rate", drop_rate, drop_rate);
-    pnh_.param<std::string>("velodyne_frame", velodyne_frame_, velodyne_frame_);
-    pnh_.param<std::string>("map_frame", map_frame_, map_frame_);
+    this->add_on_set_parameters_callback(
+        [this](auto param_vec) {
+          
+          auto error = update_params<std::string>({ {"map_frame", map_frame_} }, param_vec);
 
-    object_worker_.setPredictionTimeStep(step);
-    object_worker_.setPredictionPeriod(period);
-    object_worker_.setXAccelerationNoise(ax);
-    object_worker_.setYAccelerationNoise(ay);
-    object_worker_.setProcessNoiseMax(process_noise_max);
-    object_worker_.setConfidenceDropRate(drop_rate);
-    object_worker_.setVelodyneFrame(velodyne_frame_);
-    object_worker_.setMapFrame(map_frame_);
+          rcl_interfaces::msg::SetParametersResult result;
+
+          result.successful = !error;
+
+          if (error) {
+            result.reason = error.get();
+          } else {
+            this->object_worker_.setMapFrame(map_frame_);
+          }
+
+          return result;
+        }
+      );
+    
 
     // Setup pub/sub
-    autoware_obj_sub_=nh_.subscribe("detected_objects",10,&ObjectDetectionTrackingWorker::detectedObjectCallback,&object_worker_);
-    carma_obj_pub_=nh_.advertise<cav_msgs::ExternalObjectList>("external_objects", 10);
+    autoware_obj_sub_= create_subscription<autoware_auto_msgs::msg::TrackedObjects>("detected_objects",10,
+      std::bind(&ObjectDetectionTrackingWorker::detectedObjectCallback,&object_worker_, _1)
+    );
+
+    carma_obj_pub_= create_publisher<carma_perception_msgs::msg::ExternalObjectList>("external_objects", 10);
+
+    return CallbackReturn::SUCCESS;
   }
 
-  void ObjectDetectionTrackingNode::publishObject(const cav_msgs::ExternalObjectList& obj_msg)
+  void ObjectDetectionTrackingNode::publishObject(const carma_perception_msgs::msg::ExternalObjectList& obj_msg)
   {
-  carma_obj_pub_.publish(obj_msg);
+    carma_obj_pub_->publish(obj_msg);
   }
 
-  void ObjectDetectionTrackingNode::run()
-  {
-    initialize();
-    nh_.spin();
+  boost::optional<geometry_msgs::msg::TransformStamped> 
+  ObjectDetectionTrackingNode::lookupTransform(const std::string& parent, const std::string& child, const rclcpp::Time& stamp) {
+    try {
+
+      return tfBuffer_.lookupTransform(parent ,child, stamp);
+
+    } catch (tf2::TransformException &ex) {
+
+      RCLCPP_WARN_STREAM(get_logger(), "Failed to find transform with exception " << ex.what());
+      return boost::none;
+    }
   }
+
+    
 
 }//object
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+// Register the component with class_loader
+RCLCPP_COMPONENTS_REGISTER_NODE(object::ObjectDetectionTrackingNode)

@@ -68,7 +68,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
     cav_msgs::MobilityOperation msg = pdw.compose_arrival_message();
 
     ASSERT_EQ("carma/port_drayage", msg.strategy);
-    ASSERT_EQ("TEST_CARMA_HOST_ID", msg.header.sender_id);
+    ASSERT_EQ("TEST_CARMA_HOST_ID", msg.m_header.sender_id);
     ASSERT_FALSE(msg.strategy_params.empty());
 
     std::istringstream strstream(msg.strategy_params);
@@ -109,7 +109,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
     cav_msgs::MobilityOperation msg2 = pdw2.compose_arrival_message();
 
     ASSERT_EQ("carma/port_drayage", msg2.strategy);
-    ASSERT_EQ("TEST_CARMA_HOST_ID", msg2.header.sender_id);
+    ASSERT_EQ("TEST_CARMA_HOST_ID", msg2.m_header.sender_id);
     ASSERT_FALSE(msg2.strategy_params.empty());
 
     std::istringstream strstream2(msg2.strategy_params);
@@ -618,7 +618,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
 
     // Verify the contents of the broadcasted message
     ASSERT_EQ("carma/port_drayage", msg.strategy);
-    ASSERT_EQ("TEST_CARMA_HOST_ID", msg.header.sender_id);
+    ASSERT_EQ("TEST_CARMA_HOST_ID", msg.m_header.sender_id);
     ASSERT_FALSE(msg.strategy_params.empty());
     ASSERT_EQ("123", cmv_id);
     ASSERT_FALSE(has_cargo);
@@ -667,7 +667,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
 
     // Verify the contents of the broadcasted message
     ASSERT_EQ("carma/port_drayage", msg2.strategy);
-    ASSERT_EQ("TEST_CARMA_HOST_ID", msg2.header.sender_id);
+    ASSERT_EQ("TEST_CARMA_HOST_ID", msg2.m_header.sender_id);
     ASSERT_FALSE(msg2.strategy_params.empty());
     ASSERT_EQ("123", cmv_id);
     ASSERT_TRUE(has_cargo);
@@ -716,7 +716,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
 
     // Verify the contents of the broadcasted message
     ASSERT_EQ("carma/port_drayage", msg3.strategy);
-    ASSERT_EQ("TEST_CARMA_HOST_ID", msg3.header.sender_id);
+    ASSERT_EQ("TEST_CARMA_HOST_ID", msg3.m_header.sender_id);
     ASSERT_FALSE(msg3.strategy_params.empty());
     ASSERT_EQ("123", cmv_id);
     ASSERT_TRUE(has_cargo);
@@ -765,7 +765,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
 
     // Verify the contents of the broadcasted message
     ASSERT_EQ("carma/port_drayage", msg4.strategy);
-    ASSERT_EQ("TEST_CARMA_HOST_ID", msg4.header.sender_id);
+    ASSERT_EQ("TEST_CARMA_HOST_ID", msg4.m_header.sender_id);
     ASSERT_FALSE(msg4.strategy_params.empty());
     ASSERT_EQ("123", cmv_id);
     ASSERT_TRUE(has_cargo);
@@ -813,7 +813,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
 
     // Verify the contents of the broadcasted message
     ASSERT_EQ("carma/port_drayage", msg5.strategy);
-    ASSERT_EQ("TEST_CARMA_HOST_ID", msg5.header.sender_id);
+    ASSERT_EQ("TEST_CARMA_HOST_ID", msg5.m_header.sender_id);
     ASSERT_FALSE(msg5.strategy_params.empty());
     ASSERT_EQ("123", cmv_id);
     ASSERT_FALSE(has_cargo);
@@ -861,7 +861,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
 
     // Verify the contents of the broadcasted message
     ASSERT_EQ("carma/port_drayage", msg6.strategy);
-    ASSERT_EQ("TEST_CARMA_HOST_ID", msg6.header.sender_id);
+    ASSERT_EQ("TEST_CARMA_HOST_ID", msg6.m_header.sender_id);
     ASSERT_FALSE(msg6.strategy_params.empty());
     ASSERT_EQ("123", cmv_id);
     ASSERT_TRUE(has_cargo);
@@ -909,7 +909,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
 
     // Verify the contents of the broadcasted message
     ASSERT_EQ("carma/port_drayage", msg7.strategy);
-    ASSERT_EQ("TEST_CARMA_HOST_ID", msg7.header.sender_id);
+    ASSERT_EQ("TEST_CARMA_HOST_ID", msg7.m_header.sender_id);
     ASSERT_FALSE(msg7.strategy_params.empty());
     ASSERT_EQ("123", cmv_id);
     ASSERT_TRUE(has_cargo);
@@ -957,7 +957,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
 
     // Verify the contents of the broadcasted message
     ASSERT_EQ("carma/port_drayage", msg8.strategy);
-    ASSERT_EQ("TEST_CARMA_HOST_ID", msg8.header.sender_id);
+    ASSERT_EQ("TEST_CARMA_HOST_ID", msg8.m_header.sender_id);
     ASSERT_FALSE(msg8.strategy_params.empty());
     ASSERT_EQ("123", cmv_id);
     ASSERT_TRUE(has_cargo);
@@ -1005,7 +1005,7 @@ TEST(PortDrayageTest, testInboundAndComposedMobilityOperation)
 
     // Verify the contents of the broadcasted message
     ASSERT_EQ("carma/port_drayage", msg9.strategy);
-    ASSERT_EQ("TEST_CARMA_HOST_ID", msg9.header.sender_id);
+    ASSERT_EQ("TEST_CARMA_HOST_ID", msg9.m_header.sender_id);
     ASSERT_FALSE(msg9.strategy_params.empty());
     ASSERT_EQ("123", cmv_id);
     ASSERT_TRUE(has_cargo);

@@ -118,8 +118,8 @@ namespace plan_delegator
         {
             plan_req.request.header.stamp = latest_pose_.header.stamp;
             plan_req.request.vehicle_state.longitudinal_vel = latest_twist_.twist.linear.x;
-            plan_req.request.vehicle_state.X_pos_global = latest_pose_.pose.position.x;
-            plan_req.request.vehicle_state.Y_pos_global = latest_pose_.pose.position.y;
+            plan_req.request.vehicle_state.x_pos_global = latest_pose_.pose.position.x;
+            plan_req.request.vehicle_state.y_pos_global = latest_pose_.pose.position.y;
             double roll, pitch, yaw;
             carma_wm::geometry::rpyFromQuaternion(latest_pose_.pose.orientation, roll, pitch, yaw);
             plan_req.request.vehicle_state.orientation = yaw;
@@ -130,8 +130,8 @@ namespace plan_delegator
         {
             cav_msgs::TrajectoryPlanPoint last_point = latest_trajectory_plan.trajectory_points.back();
             cav_msgs::TrajectoryPlanPoint second_last_point = *(latest_trajectory_plan.trajectory_points.rbegin() + 1);
-            plan_req.request.vehicle_state.X_pos_global = last_point.x;
-            plan_req.request.vehicle_state.Y_pos_global = last_point.y;
+            plan_req.request.vehicle_state.x_pos_global = last_point.x;
+            plan_req.request.vehicle_state.y_pos_global = last_point.y;
             auto distance_diff = std::sqrt(std::pow(last_point.x - second_last_point.x, 2) + std::pow(last_point.y - second_last_point.y, 2));
             ros::Duration time_diff = last_point.target_time - second_last_point.target_time;
             auto time_diff_sec = time_diff.toSec();

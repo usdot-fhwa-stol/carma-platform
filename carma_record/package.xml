@@ -28,5 +28,6 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
   <depend>carma_utils</depend>
+  <build_depend>carma_cmake_common</build_depend>
 
 </package>

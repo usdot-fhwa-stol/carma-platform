@@ -34,7 +34,7 @@ TEST(SCIStrategicPluginTest, getDiscoveryMsg)
 
   auto msg = sci.getDiscoveryMsg();
   ASSERT_TRUE(msg.name.compare("test name") == 0);
-  ASSERT_TRUE(msg.versionId.compare("v1.0") == 0);
+  ASSERT_TRUE(msg.version_id.compare("v1.0") == 0);
   ASSERT_TRUE(msg.available);
   ASSERT_TRUE(msg.activated);
   ASSERT_EQ(msg.type, cav_msgs::Plugin::STRATEGIC);
@@ -190,7 +190,7 @@ TEST(SCIStrategicPluginTest, parseStrategyParamstest)
 
   cav_msgs::MobilityOperation outgoing_msg = sci.generateMobilityOperation();
   EXPECT_EQ(outgoing_msg.strategy, "Carma/stop_controlled_intersection");
-  EXPECT_EQ(outgoing_msg.header.sender_id, config.vehicle_id);
+  EXPECT_EQ(outgoing_msg.m_header.sender_id, config.vehicle_id);
   std::cout << "strategy_param: " << outgoing_msg.strategy_params << std::endl;
 }
 
