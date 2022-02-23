@@ -55,7 +55,6 @@ def generate_launch_description():
         description = "Path to file containing unique vehicle calibrations"
     )
     
-    
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
     declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
         name = 'vehicle_config_param_file',
@@ -70,24 +69,6 @@ def generate_launch_description():
         executable='carma_component_container_mt',
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
-
-            #ComposableNode(
-            #    package='mobilitypath_publisher',
-            #    plugin='mobilitypath_publisher::MobilityPathPublication',
-            #    name='mobilitypath_publisher_node',
-            #    extra_arguments=[
-            #        {'use_intra_process_comms': True}, 
-            #        {'--log-level' : GetLogLevel('mobilitypath_publisher', env_log_levels) }
-            #    ],
-            #    remappings=[
-            #        ("plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plan_trajectory" ] ),
-            #        ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] )
-            #    ],
-            #    parameters=[ 
-            #        mobilitypath_publisher_param_file,
-            #        vehicle_characteristics_param_file
-            #    ]
-            #),
             ComposableNode(
                 package='bsm_generator',
                 plugin='bsm_generator::BSMGenerator',
