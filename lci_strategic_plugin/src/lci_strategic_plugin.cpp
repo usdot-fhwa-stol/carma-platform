@@ -581,7 +581,7 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
   double stopping_accel = config_.vehicle_decel_limit_multiplier * config_.vehicle_decel_limit;
 
   resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-      current_state.downtrack - stop_maneuver_buffer, traffic_light_down_track, current_state_speed,
+      current_state.downtrack - stop_maneuver_buffer, traffic_light_down_track, current_state.speed,
       current_state.lane_id, current_state.lane_id, current_state.stamp,
       current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), stopping_accel));
 }
@@ -599,7 +599,7 @@ void LCIStrategicPlugin::planWhenDEPARTING(const cav_srvs::PlanManeuversRequest&
   // Calculate exit time assuming constant acceleration
   ros::Time intersection_exit_time =
       current_state.stamp +
-      ros::Duration(2.0 * (intersection_end_downtrack - current_state.downtrack) / (current_state_speed + intersection_speed_limit));
+      ros::Duration(2.0 * (intersection_end_downtrack - current_state.downtrack) / (current_state.speed + intersection_speed_limit));
 
   // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
@@ -607,7 +607,7 @@ void LCIStrategicPlugin::planWhenDEPARTING(const cav_srvs::PlanManeuversRequest&
 
   // Compose intersection transit maneuver
   resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
-      current_state.downtrack, intersection_end_downtrack, current_state_speed, intersection_speed_limit,
+      current_state.downtrack, intersection_end_downtrack, current_state.speed, intersection_speed_limit,
       current_state.stamp, intersection_exit_time, crossed_lanelets.front().id(), crossed_lanelets.back().id()));
 }
 
