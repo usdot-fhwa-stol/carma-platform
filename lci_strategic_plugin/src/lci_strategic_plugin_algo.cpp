@@ -380,7 +380,7 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_accel_cruis
   double total_distance_needed = dist_accel + dist_cruise + dist_decel;
 
   if (a_acc < - epsilon_ || a_acc > max_comfort_accel_ || a_dec > epsilon_ || a_dec < max_comfort_decel_ || total_distance_needed > remaining_downtrack ||
-      dist_decel < - epsilon_ || dist_cruise < -epsilon_ || dist_accel < epsilon_) //algorithm was not able to calculate valid values
+      dist_decel < - epsilon_ || dist_cruise < -epsilon_ || dist_accel < - epsilon_) //algorithm was not able to calculate valid values
   {
     ROS_ERROR_STREAM("WARN: get_parameters_for_accel_cruise_decel_speed_profile was NOT successful...");
     params.is_algorithm_successful = false; 
@@ -488,7 +488,7 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_decel_cruis
   double total_distance_needed = dist_accel + dist_cruise + dist_decel;
 
   if (a_acc < -epsilon_ || a_acc > max_comfort_accel_ || a_dec > epsilon_ || a_dec < max_comfort_decel_ || total_distance_needed > remaining_downtrack || 
-      dist_decel < - epsilon_ || dist_cruise < -epsilon_ || dist_accel < epsilon_) //algorithm was not able to calculate valid values
+      dist_decel < - epsilon_ || dist_cruise < -epsilon_ || dist_accel < - epsilon_) //algorithm was not able to calculate valid values
   {
     ROS_ERROR_STREAM("WARN: get_parameters_for_decel_cruise_accel_speed_profile was NOT successful...");
     params.is_algorithm_successful = false; 
