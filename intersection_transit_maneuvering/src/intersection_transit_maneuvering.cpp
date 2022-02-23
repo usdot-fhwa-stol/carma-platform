@@ -203,7 +203,7 @@ std::ostream& operator<<(std::ostream& os, cav_msgs::Maneuver m) {
 
         ros::WallTime end_time = ros::WallTime::now();
 
-        ros::Duration duration = end_time - start_time;
+        ros::WallDuration duration = end_time - start_time;
         ROS_DEBUG_STREAM("ExecutionTime: " << duration.toSec());
         return true;
     }
