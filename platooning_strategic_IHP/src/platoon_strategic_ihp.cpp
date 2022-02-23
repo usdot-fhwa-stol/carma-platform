@@ -217,6 +217,7 @@ namespace platoon_strategic_ihp
         double dx = abs (left_bound[0].x() - right_bound[0].x());
         double dy = abs (left_bound[0].y() - right_bound[0].y());
         double laneWidth = sqrt(dx*dx + dy*dy);
+        ROS_DEBUG_STREAM("calculated lane width: " << laneWidth);
 
         return laneWidth;
     }
@@ -1091,7 +1092,8 @@ namespace platoon_strategic_ihp
                 request.location = pose_to_ecef(pose_msg_);
                 
                 // UCLA: Desired joining index for cut-in join, indicate the index of gap-leading vehicle. -1 indicate cut-in from front.
-                request.join_index = -1; // Note: not used by same-lane functions.
+                // request.join_index = -1; // Note: not used by same-lane functions.
+                int join_index = -1;
                 // UCLA: this is a newly added plan type 
                 request.plan_type.type = cav_msgs::PlanType::CUT_IN_FROM_SIDE; 
                 request.strategy = PLATOONING_STRATEGY;
@@ -1107,6 +1109,7 @@ namespace platoon_strategic_ihp
                 fmter %pose_ecef_point_.ecef_x;     //  index = 2
                 fmter %pose_ecef_point_.ecef_y;     //  index = 3
                 fmter %pose_ecef_point_.ecef_z;     //  index = 4
+                fmter %join_index;                  //  index = 5
 
                 request.strategy_params = fmter.str();
                 request.urgency = 50;
@@ -1257,14 +1260,35 @@ namespace platoon_strategic_ihp
                     request.plan_type.type = cav_msgs::PlanType::CUT_IN_MID_OR_REAR_DONE;
                 }
                 request.strategy = PLATOONING_STRATEGY;
-                request.strategy_params = "";
+                // request.strategy_params = "";
+                double platoon_size = pm_.getTotalPlatooningSize();
+                /**
+                 * JOIN_PARAMS format: 
+                 *       JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%""
+                 *                        |-------0------ --1---------2---------3---------4--------5------|
+                 */
+                boost::format fmter(JOIN_CUT_IN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
+                fmter %platoon_size;                //  index = 0
+                fmter %current_speed_;              //  index = 1, in m/s
+                fmter %pose_ecef_point_.ecef_x;     //  index = 2
+                fmter %pose_ecef_point_.ecef_y;     //  index = 3
+                fmter %pose_ecef_point_.ecef_z;     //  index = 4
+                /* 
+                 * UCLA: Add joining index for cut-in join. Necessary to update the cav_msgs/MobilityRequests.
+                 * Note: For rear join, cut-in index == platoon.size()-1; for join from front, index == -1.
+                 *       For cut-in in middle, index indicate the gap leading vehicle's index.
+                 */       
+                fmter %target_join_index_;                  //  index = 5
+
+                request.strategy_params = fmter.str();
+
                 request.urgency = 50;
                 /* 
                  * UCLA: Add joining index for cut-in join. Necessary to update the cav_msgs/MobilityRequests.
                  * Note: For rear join, cut-in index == platoon.size()-1; for join from front, index == -1.
                  *       For cut-in in middle, index indicate the gap leading vehicle's index.
                  */       
-                request.join_index = target_join_index_;
+                // request.join_index = target_join_index_;
                 mobility_request_publisher_(request); 
                 ROS_DEBUG_STREAM("Published Mobility request to revert to same-lane operation"); 
             }
@@ -1691,6 +1715,7 @@ namespace platoon_strategic_ihp
 
         // Check request plan type  
         cav_msgs::PlanType plan_type = msg.plan_type;
+        std::string strategyParams = msg.strategy_params;
 
         // Calculate downtrack (m) bsaed on ecef. 
         lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location);
@@ -1698,10 +1723,20 @@ namespace platoon_strategic_ihp
         double applicantCurrentDtd = wm_->routeTrackPos(incoming_pose).downtrack;
         ROS_DEBUG_STREAM("Applicant downtrack from ecef pose: " << applicantCurrentDtd);
 
+        std::vector<std::string> inputsParams;
+        boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+
+        std::vector<std::string> join_index_parsed;
+        boost::algorithm::split(join_index_parsed, inputsParams[5], boost::is_any_of(":"));
+        int join_index = std::stoi(join_index_parsed[1]);
+        ROS_DEBUG_STREAM("join_index parsed: " << join_index);
+
+
+
         if (plan_type.type == cav_msgs::PlanType::PLATOON_CUTIN_JOIN) 
         {
             // task 1. slow down to create gap 
-            int join_index = msg.join_index;
+            // int join_index = msg.join_index;
             // determine if joining vehicle in position
             double cutinDtdDifference = applicantCurrentDtd - current_downtrack_ - config_.vehicleLength;
             bool isFrontJoinerInPosition = (cutinDtdDifference <= 1.5*config_.vehicleLength) || (cutinDtdDifference >= -1.5*config_.vehicleLength);
@@ -2181,9 +2216,25 @@ namespace platoon_strategic_ihp
             request.strategy_params = "";
             request.urgency = 50;
             request.location = pose_to_ecef(pose_msg_);
+            double platoon_size = pm_.getTotalPlatooningSize(); 
             // note: for rear join, cut-in index == platoon.size()-1; for join from front, index == -1
             //       for cut-in in middle, index indicate the gap leading vehicle's index
-            request.join_index = target_join_index_;
+
+            /**
+            * JOIN_PARAMS format: 
+            *       JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%""
+            *                        |-------0------ --1---------2---------3---------4--------5------|
+            */
+            boost::format fmter(JOIN_CUT_IN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
+            fmter %platoon_size;                     //  index = 0
+            fmter %current_speed_;                  //  index = 1, in m/s
+            fmter %pose_ecef_point_.ecef_x;         //  index = 2
+            fmter %pose_ecef_point_.ecef_y;         //  index = 3
+            fmter %pose_ecef_point_.ecef_z;         //  index = 4   
+            fmter %target_join_index_;              //  index = 5
+
+            request.strategy_params = fmter.str();
+            // request.join_index = target_join_index_;
             mobility_request_publisher_(request); 
             ROS_DEBUG_STREAM("Published Mobility Candidate-Join request to the leader");
             ROS_WARN("Published Mobility Candidate-Join request to the leader");
@@ -2500,12 +2551,30 @@ namespace platoon_strategic_ihp
             request.header.sender_id = config_.vehicleID;
             request.header.timestamp = currentTime;
             // UCLA added for cut-in, not used for other cases
-            request.join_index = -1; // Note: not used by same-lane functions.
+            // request.join_index = -1; 
+            int join_index = -1; // Note: not used by same-lane functions.
+            double platoon_size = pm_.getTotalPlatooningSize(); 
+            // note: for rear join, cut-in index == platoon.size()-1; for join from front, index == -1
+            //       for cut-in in middle, index indicate the gap leading vehicle's index
+
+            /**
+            * JOIN_PARAMS format: 
+            *       JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%""
+            *                        |-------0------ --1---------2---------3---------4--------5------|
+            */
+            boost::format fmter(JOIN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
+            fmter %platoon_size;                //  index = 0
+            fmter %current_speed_;              //  index = 1, in m/s
+            fmter %pose_ecef_point_.ecef_x;     //  index = 2
+            fmter %pose_ecef_point_.ecef_y;     //  index = 3
+            fmter %pose_ecef_point_.ecef_z;     //  index = 4   
+            fmter %join_index;                  //  index = 5
+
+            request.strategy_params = fmter.str();
 
             // assign a new plan type 
             request.plan_type.type = cav_msgs::PlanType::PLATOON_FRONT_JOIN;
             request.strategy = PLATOONING_STRATEGY;
-            request.strategy_params = "";
             request.urgency = 50;
             request.location = pose_to_ecef(pose_msg_);
             mobility_request_publisher_(request);
@@ -2663,16 +2732,32 @@ namespace platoon_strategic_ihp
         // UCLA: assign a new plan type
         request.plan_type.type = cav_msgs::PlanType::PLATOON_CUTIN_JOIN;
         request.strategy = PLATOONING_STRATEGY;
-        request.strategy_params = "";
+        // request.strategy_params = "";
         request.urgency = 50;
         request.location = pose_to_ecef(pose_msg_);
-        
+        double platoon_size = pm_.getTotalPlatooningSize(); 
+
+        /**
+        * JOIN_PARAMS format: 
+        *       JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%""
+        *                        |-------0------ --1---------2---------3---------4--------5------|
+        */
+        boost::format fmter(JOIN_CUT_IN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
+        fmter %platoon_size;                //  index = 0
+        fmter %current_speed_;              //  index = 1, in m/s
+        fmter %pose_ecef_point_.ecef_x;     //  index = 2
+        fmter %pose_ecef_point_.ecef_y;     //  index = 3
+        fmter %pose_ecef_point_.ecef_z;     //  index = 4
         /** note: The cut-in index is zero-based and points to the gap-leading vehicle's index. 
          *  eg:  for rear join, cut-in index == platoon.size()-1; 
          *       for join from front, index == -1;
          *       for cut-in in middle, index indicate the gap leading vehicle's index.
-         */      
-        request.join_index = target_join_index_;
+         */         
+        fmter %target_join_index_;             //  index = 5
+
+        request.strategy_params = fmter.str();
+        
+        // request.join_index = target_join_index_;
         
         mobility_request_publisher_(request); 
         ROS_DEBUG_STREAM("Published Mobility cut-in join request to the leader");

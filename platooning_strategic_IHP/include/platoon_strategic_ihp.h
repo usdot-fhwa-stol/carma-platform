@@ -881,5 +881,15 @@ namespace platoon_strategic_ihp
              * index = 4, ECEFZ, in cm.
              */
             const std::string JOIN_CUT_IN_PARAMS = "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%";
+
+            // JOIN Strategy Params
+            /**
+             * index = 0, SIZE, number of members.
+             * index = 1, SPEED, in m/s.
+             * index = 2, ECEFX, in cm.
+             * index = 3, ECEFY, in cm.
+             * index = 4, ECEFZ, in cm.
+             */
+            const std::string JOIN_PARAMS = "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%";
     };
 }
