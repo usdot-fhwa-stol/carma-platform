@@ -141,7 +141,7 @@ namespace subsystem_controllers
     rapidjson::Value& map_value = d["sensor_fault_map"];
 
     if (!map_value.IsArray()) {
-      RCLCPP_WARN(get_logger(), "No sensor_fault_map cannot be read as array");
+      RCLCPP_WARN(get_logger(), "sensor_fault_map cannot be read as array");
       return map;
     }
 
