@@ -342,7 +342,6 @@ namespace platoon_strategic_ihp
 
         double CurrentPlatoonLength = pm_.getCurrentPlatoonLength();
         int PlatoonSize = pm_.getTotalPlatooningSize();
-        double PlatoonRearDowntrackDistance = pm_.getPlatoonRearDowntrackDistance();
 
         boost::format fmter(OPERATION_INFO_PARAMS);
         //  Note: need to update "OPERATION_INFO_PARAMS" in header file --> strategic_platoon_ihp.h  
@@ -2212,9 +2211,6 @@ namespace platoon_strategic_ihp
             return;
         }
         
-        // UCLA: read current request plan 
-        cav_msgs::PlanType req_plan_type = msg.plan_type; 
-        
         cav_msgs::MobilityResponse response;
         response.header.sender_id = config_.vehicleID;
         response.header.recipient_id = msg.header.sender_id;
@@ -2222,7 +2218,6 @@ namespace platoon_strategic_ihp
         response.header.timestamp = ros::Time::now().toNSec() / 1000000;
 
         // UCLA: add plantype in response 
-        // response.plan_type.type = req_plan_type.type;
         response.plan_type.type = msg.plan_type.type;
         
         MobilityRequestResponse req_response = handle_mob_req(msg);
@@ -2284,7 +2279,7 @@ namespace platoon_strategic_ihp
 
     void PlatoonStrategicIHPPlugin::run_leader()
     {
-        long tsStart = ros::Time::now().toNSec() / 1000000;
+        unsigned long tsStart = ros::Time::now().toNSec() / 1000000;
 
         // Task 1: heart beat timeout: send INFO mob_op when vehicle is rolling
         if (current_speed_ > STOPPED_SPEED)
@@ -2390,7 +2385,7 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("pm_.current_plan.planStartTime: " << pm_.current_plan.planStartTime);
             ROS_DEBUG_STREAM("timeout2: " << tsStart - pm_.current_plan.planStartTime);
             ROS_DEBUG_STREAM("NEGOTIATION_TIMEOUT: " << NEGOTIATION_TIMEOUT);
-            bool isPlanTimeout = (tsStart - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT;
+            bool isPlanTimeout = tsStart - pm_.current_plan.planStartTime > NEGOTIATION_TIMEOUT;
             if (isPlanTimeout) 
             {
                 pm_.current_plan.valid = false;
@@ -2465,7 +2460,7 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("pm_.current_plan.planStartTime: " << pm_.current_plan.planStartTime);
             ROS_DEBUG_STREAM("timeout2: " << tsStart - pm_.current_plan.planStartTime);
             ROS_DEBUG_STREAM("NEGOTIATION_TIMEOUT: " << NEGOTIATION_TIMEOUT);
-            bool isPlanTimeout = (tsStart - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT;
+            bool isPlanTimeout = tsStart - pm_.current_plan.planStartTime > NEGOTIATION_TIMEOUT;
             if (isPlanTimeout) 
             {
                 pm_.current_plan.valid = false;
@@ -2636,7 +2631,7 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("pm_.current_plan.planStartTime: " << pm_.current_plan.planStartTime);
             ROS_DEBUG_STREAM("timeout2: " << tsStart - pm_.current_plan.planStartTime);
             ROS_DEBUG_STREAM("NEGOTIATION_TIMEOUT: " << NEGOTIATION_TIMEOUT);
-            bool isPlanTimeout = (tsStart - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT;
+            bool isPlanTimeout = tsStart - pm_.current_plan.planStartTime > NEGOTIATION_TIMEOUT;
             if (isPlanTimeout) 
             {
                 pm_.current_plan.valid = false;
@@ -2866,7 +2861,7 @@ namespace platoon_strategic_ihp
             return true;
         }
 
-      // read status data
+        // read status data
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         double speed_progress = current_speed_;
         ros::Time time_progress = ros::Time::now();
@@ -2901,15 +2896,13 @@ namespace platoon_strategic_ihp
         total_maneuver_length = std::min(total_maneuver_length, route_length);
 
         // Update current status based on prior plan
-        if(req.prior_plan.maneuvers.size()!=0)
+        if(req.prior_plan.maneuvers.size()!= 0)
         {
             time_progress = req.prior_plan.planning_completion_time;
-            int end_lanelet =0;
-            updateCurrentStatus(req.prior_plan.maneuvers.back(),speed_progress,current_progress,end_lanelet);
-            last_lanelet_index = findLaneletIndexFromPath(end_lanelet,shortest_path);
+            int end_lanelet = 0;
+            updateCurrentStatus(req.prior_plan.maneuvers.back(), speed_progress, current_progress, end_lanelet);
+            last_lanelet_index = findLaneletIndexFromPath(end_lanelet, shortest_path);
         }
-        bool approaching_route_end = false;
-        double time_req_to_stop,stopping_dist;
 
         ROS_DEBUG_STREAM("Starting Loop");
         ROS_DEBUG_STREAM("total_maneuver_length: " << total_maneuver_length << " route_length: " << route_length);
@@ -2997,7 +2990,7 @@ namespace platoon_strategic_ihp
                     // read lane change maneuver end time as time progress
                     time_progress = resp.new_plan.maneuvers.back().lane_change_maneuver.end_time;
                     speed_progress = target_speed;
-                    if(current_progress >= total_maneuver_length || last_lanelet_index == shortest_path.size() - 1)
+                    if(current_progress >= total_maneuver_length || last_lanelet_index == static_cast<int>(shortest_path.size()) - 1)
                     {
                         break;
                     }
@@ -3035,7 +3028,7 @@ namespace platoon_strategic_ihp
                     current_progress += dist_diff;
                     time_progress = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
                     speed_progress = target_speed;
-                    if(current_progress >= total_maneuver_length || last_lanelet_index == shortest_path.size() - 1)
+                    if(current_progress >= total_maneuver_length || last_lanelet_index == static_cast<int>(shortest_path.size()) - 1)
                     {
                         break;
                     }
@@ -3072,7 +3065,7 @@ namespace platoon_strategic_ihp
                 current_progress += dist_diff;
                 time_progress = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
                 speed_progress = target_speed;
-                if(current_progress >= total_maneuver_length || last_lanelet_index == shortest_path.size() - 1)
+                if(current_progress >= total_maneuver_length || last_lanelet_index == static_cast<int>(shortest_path.size()) - 1)
                 {
                     break;
                 }

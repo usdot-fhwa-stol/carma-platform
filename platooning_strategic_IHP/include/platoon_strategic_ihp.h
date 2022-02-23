@@ -820,11 +820,11 @@ namespace platoon_strategic_ihp
             double maxAllowedJoinGap_ = 90;
             int maxPlatoonSize_ = 10;
             double vehicleLength_ = 5.0;
-            int infoMessageInterval_ = 200; // ms
-            long prevHeartBeatTime_ = 0.0;
+            unsigned long infoMessageInterval_ = 200; // ms
+            unsigned long prevHeartBeatTime_ = 0.0;
             int statusMessageInterval_ = 100; // ms
-            int NEGOTIATION_TIMEOUT = 5000;  // ms
-            int LANE_CHANGE_TIMEOUT = 300000; // ms (5 min)
+            unsigned long NEGOTIATION_TIMEOUT = 5000;  // ms
+            unsigned long LANE_CHANGE_TIMEOUT = 300000; // ms (5 min)
             int noLeaderUpdatesCounter = 0;
             int LEADER_TIMEOUT_COUNTER_LIMIT = 5;
             double waitingStateTimeout = 25.0; // s

@@ -45,11 +45,11 @@ namespace platoon_strategic_ihp
     struct PlatoonPlan 
     {
         bool valid;
-        long planStartTime;
+        unsigned long planStartTime;
         std::string planId;
         std::string peerId;
         PlatoonPlan():valid(false), planStartTime(0), planId(""), peerId("") {} ;
-        PlatoonPlan(bool valid, long planStartTime, std::string planId, std::string peerId): 
+        PlatoonPlan(bool valid, unsigned long planStartTime, std::string planId, std::string peerId): 
             valid(valid), planStartTime(planStartTime), planId(planId), peerId(peerId) {}  
     };
 
@@ -283,7 +283,7 @@ namespace platoon_strategic_ihp
          * 
          * \return: cut-in gap: The desired gap size for cut-in join, in m.
          */
-        double getCutInGap(int gap_leading_index, double joinerDtD);
+        double getCutInGap(const int gap_leading_index, const double joinerDtD);
 
         // Member variables
         std::string currentPlatoonID = "default_test_id";
@@ -318,7 +318,7 @@ namespace platoon_strategic_ihp
         std::string previousFunctionalDynamicLeaderID_ = "";
         int previousFunctionalDynamicLeaderIndex_ = -1;
 
-        int hostPosInPlatoon_ = 0;  //index to the platoon vector that represents the host vehicle
+        size_t hostPosInPlatoon_ = 0;  //index to the platoon vector that represents the host vehicle
 
         // note: APF related parameters are in config.h.
 
