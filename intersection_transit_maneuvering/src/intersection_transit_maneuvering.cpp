@@ -201,7 +201,7 @@ std::ostream& operator<<(std::ostream& os, cav_msgs::Maneuver m) {
             resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
         }
 
-        ros::Time end_time = ros::Time::now();
+        ros::WallTime end_time = ros::WallTime::now();
 
         ros::Duration duration = end_time - start_time;
         ROS_DEBUG_STREAM("ExecutionTime: " << duration.toSec());

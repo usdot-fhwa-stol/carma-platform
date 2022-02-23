@@ -460,7 +460,7 @@ namespace basic_autonomy
             output.push_back(all_sampling_points_line1);
             output.push_back(all_sampling_points_line2);
 
-            ros::WallTime end_time = ros::WallTime::now();  // Planning complete
+            ros::Time end_time = ros::Time::now();  // Planning complete
 
             ros::Duration duration = end_time - start_time;
             ROS_DEBUG_STREAM("ExecutionTime for resample lane change centerlines: " << duration.toSec());
@@ -996,7 +996,7 @@ namespace basic_autonomy
 
 
         std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanechange_trajectory_from_path(
-            const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::WallTime &state_time,
+            const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time,
             const carma_wm::WorldModelConstPtr &wm, const cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config)
         {
             ROS_DEBUG_STREAM("Input points size in compose traj from centerline: "<< points.size());
