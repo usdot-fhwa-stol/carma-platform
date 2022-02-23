@@ -51,8 +51,8 @@ TEST(MockRadarDriver, radar_topic)
   tracks_pub.publish(msg2);
 
   ros::Rate r(10);  // 10 hz
-  ros::Test endTime = ros::Test::now() + ros::Duration(10.0);
-  while (ros::ok() && endTime > ros::Test::now() 
+  ros::Time endTime = ros::Time::now() + ros::Duration(10.0);
+  while (ros::ok() && endTime > ros::Time::now() 
     && !(got_status && got_tracks))
   {
     ros::spinOnce();
