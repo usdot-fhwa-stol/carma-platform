@@ -88,6 +88,9 @@ cd ../port_drayage_plugin
 echo "" > COLCON_IGNORE
 cd ../traffic_incident_parser
 echo "" > COLCON_IGNORE
+cd ../cooperative_lanechange
+echo "" > COLCON_IGNORE
+
 
 cd ../
 
