@@ -415,11 +415,7 @@ namespace platoon_strategic_ihp
     std::vector<double> PlatoonManager::calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed) const{
         std::vector<double> timeHeadways(downtrackDistance.size() - 1);
         // Due to downtrack descending order, the platoon member with smaller index has larger downtrack, hence closer to the front of the platoon.
-<<<<<<< HEAD
-        for (size_t i=0; i<timeHeadways.size(); i++){
-=======
         for (size_t i = 0; i < timeHeadways.size(); i++){
->>>>>>> c1ae83aa87f955ea0f12852ce6a3c71ffdc244d2
             // Calculate time headaway between the vehicle behind. 
             if (speed[i+1] >= config_.ss_theta) // speed is in m/s
             {
