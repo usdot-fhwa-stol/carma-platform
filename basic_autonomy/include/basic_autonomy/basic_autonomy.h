@@ -150,7 +150,7 @@ namespace basic_autonomy
    */
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
             const std::vector<lanelet::BasicPoint2d> &points, const std::vector<double> &times,
-            const std::vector<double> &yaws, ros::Time startTime);
+            const std::vector<double> &yaws, ros::WallTime startTime);
 
         /**
    * \brief Attaches back_distance length of points behind the future points
@@ -240,7 +240,7 @@ namespace basic_autonomy
      */
         std::vector<cav_msgs::TrajectoryPlanPoint>
         compose_lanefollow_trajectory_from_path(const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state,
-                                                      const ros::Time &state_time, const carma_wm::WorldModelConstPtr &wm, 
+                                                      const ros::WallTime &state_time, const carma_wm::WorldModelConstPtr &wm, 
                                                       const cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg,
                                                       const DetailedTrajConfig &detailed_config);
 
@@ -305,7 +305,7 @@ namespace basic_autonomy
    */
 
         std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanechange_trajectory_from_path(
-               const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time,
+               const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::WallTime &state_time,
                const carma_wm::WorldModelConstPtr &wm, const cav_msgs::VehicleState &ending_state_before_buffer,
                const DetailedTrajConfig &detailed_config);
 

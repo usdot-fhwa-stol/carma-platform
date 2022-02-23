@@ -412,7 +412,7 @@ namespace basic_autonomy
        std::vector<std::vector<lanelet::BasicPoint2d>> resample_linestring_pair_to_same_size(std::vector<lanelet::BasicPoint2d>& line_1, std::vector<lanelet::BasicPoint2d>& line_2){
             
             std::vector<std::vector<lanelet::BasicPoint2d>> output;
-            ros::Time start_time = ros::Time::now();  // Start timing the execution time for planning so it can be logged
+            ros::WallTime start_time = ros::WallTime::now();  // Start timing the execution time for planning so it can be logged
             
             //Fit centerlines to a spline
             std::unique_ptr<smoothing::SplineI> fit_curve_1 = compute_fit(line_1); // Compute splines based on curve points
@@ -767,7 +767,7 @@ namespace basic_autonomy
         }
 
         std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanefollow_trajectory_from_path(
-            const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time, const carma_wm::WorldModelConstPtr &wm,
+            const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::WallTime &state_time, const carma_wm::WorldModelConstPtr &wm,
             const cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg, const DetailedTrajConfig &detailed_config)
         {
             ROS_DEBUG_STREAM("VehicleState: "
@@ -996,7 +996,7 @@ namespace basic_autonomy
 
 
         std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanechange_trajectory_from_path(
-            const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time,
+            const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::WallTime &state_time,
             const carma_wm::WorldModelConstPtr &wm, const cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config)
         {
             ROS_DEBUG_STREAM("Input points size in compose traj from centerline: "<< points.size());
