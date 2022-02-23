@@ -40,8 +40,8 @@ TEST(MockImuDriver, imu_topic)
   pub.publish(msg);
 
   ros::Rate r(10);  // 10 hz
-  ros::Test endTime = ros::Test::now() + ros::Duration(10.0);
-  while (ros::ok() && endTime > ros::Test::now() && !got_imu)
+  ros::Time endTime = ros::Time::now() + ros::Duration(10.0);
+  while (ros::ok() && endTime > ros::Time::now() && !got_imu)
   {
     ros::spinOnce();
     r.sleep();
