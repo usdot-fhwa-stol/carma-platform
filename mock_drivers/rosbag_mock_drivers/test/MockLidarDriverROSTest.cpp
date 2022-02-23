@@ -40,8 +40,8 @@ TEST(MockLidarDriver, points_raw_topic)
   bag_points_pub.publish(points);
 
   ros::Rate r(10);  // 10 hz
-  ros::Test endTime = ros::Test::now() + ros::Duration(10.0);
-  while (ros::ok() && endTime > ros::Test::now() && !got_points)
+  ros::Time endTime = ros::Time::now() + ros::Duration(10.0);
+  while (ros::ok() && endTime > ros::Time::now() && !got_points)
   {
     ros::spinOnce();
     r.sleep();

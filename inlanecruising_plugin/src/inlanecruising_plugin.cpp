@@ -59,7 +59,7 @@ bool InLaneCruisingPlugin::onSpin()
 bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req,
                                               cav_srvs::PlanTrajectoryResponse& resp)
 {
-   ros::Time start_time = ros::Time::now();  // Start timeing the execution time for planning so it can be logged
+   ros::WallTime start_time = ros::WallTime::now();  // Start timeing the execution time for planning so it can be logged
 
   lanelet::BasicPoint2d veh_pos(req.vehicle_state.x_pos_global, req.vehicle_state.y_pos_global);
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
