@@ -460,9 +460,9 @@ namespace basic_autonomy
             output.push_back(all_sampling_points_line1);
             output.push_back(all_sampling_points_line2);
 
-            ros::Time end_time = ros::Time::now();  // Planning complete
+            ros::WallTime end_time = ros::Time::now();  // Planning complete
 
-            ros::Duration duration = end_time - start_time;
+            ros::WallDuration duration = end_time - start_time;
             ROS_DEBUG_STREAM("ExecutionTime for resample lane change centerlines: " << duration.toSec());
 
             return output;
