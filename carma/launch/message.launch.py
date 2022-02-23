@@ -42,8 +42,8 @@ def generate_launch_description():
     subsystem_controller_param_file = os.path.join(
         get_package_share_directory('subsystem_controllers'), 'config/v2x_controller_config.yaml')
 
-    mobilitypath_publisher_param_file = os.path.join(
-        get_package_share_directory('mobilitypath_publisher'), 'config/parameters.yaml')
+    #mobilitypath_publisher_param_file = os.path.join(
+    #    get_package_share_directory('mobilitypath_publisher'), 'config/parameters.yaml')
 
     bsm_generator_param_file = os.path.join(
         get_package_share_directory('bsm_generator'), 'config/parameters.yaml')
@@ -71,23 +71,23 @@ def generate_launch_description():
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
 
-            ComposableNode(
-                package='mobilitypath_publisher',
-                plugin='mobilitypath_publisher::MobilityPathPublication',
-                name='mobilitypath_publisher_node',
-                extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('mobilitypath_publisher', env_log_levels) }
-                ],
-                remappings=[
-                    ("plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plan_trajectory" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] )
-                ],
-                parameters=[ 
-                    mobilitypath_publisher_param_file,
-                    vehicle_characteristics_param_file
-                ]
-            ),
+            #ComposableNode(
+            #    package='mobilitypath_publisher',
+            #    plugin='mobilitypath_publisher::MobilityPathPublication',
+            #    name='mobilitypath_publisher_node',
+            #    extra_arguments=[
+            #        {'use_intra_process_comms': True}, 
+            #        {'--log-level' : GetLogLevel('mobilitypath_publisher', env_log_levels) }
+            #    ],
+            #    remappings=[
+            #        ("plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plan_trajectory" ] ),
+            #        ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] )
+            #    ],
+            #    parameters=[ 
+            #        mobilitypath_publisher_param_file,
+            #        vehicle_characteristics_param_file
+            #    ]
+            #),
             ComposableNode(
                 package='bsm_generator',
                 plugin='bsm_generator::BSMGenerator',

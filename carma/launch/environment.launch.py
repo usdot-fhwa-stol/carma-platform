@@ -237,18 +237,18 @@ def generate_launch_description():
                     motion_computation_param_file,
                 ]
             ),
-            ComposableNode( #CARMA Motion Prediction Visualizer Node
-                    package='motion_prediction_visualizer',
-                    plugin='motion_prediction_visualizer::Node',
-                    name='motion_prediction_visualizer',
-                    extra_arguments=[
-                        {'use_intra_process_comms': True}, 
-                        {'--log-level' : GetLogLevel('motion_prediction_visualizer', env_log_levels) }
-                    ],
-                    remappings=[
-                        ("external_objects", "external_object_predictions" ),
-                    ]
-            ),
+            #ComposableNode( #CARMA Motion Prediction Visualizer Node
+            #        package='motion_prediction_visualizer',
+            #        plugin='motion_prediction_visualizer::Node',
+            #        name='motion_prediction_visualizer',
+            #        extra_arguments=[
+            #            {'use_intra_process_comms': True}, 
+            #            {'--log-level' : GetLogLevel('motion_prediction_visualizer', env_log_levels) }
+            #        ],
+            #        remappings=[
+            #            ("external_objects", "external_object_predictions" ),
+            #        ]
+            #),
         ]
     )
 

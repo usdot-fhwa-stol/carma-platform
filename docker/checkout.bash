@@ -43,11 +43,11 @@ cd ${dir}/src
 if [[ "$BRANCH" = "develop" ]]; then
       #git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch $BRANCH
-      #git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch $BRANCH	
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch $BRANCH	
 else
       #git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch develop
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch develop
-      #git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
 fi
 
 # add astuff messages
@@ -58,11 +58,36 @@ fi
 #cd astuff_sensor_msgs
 #git checkout 41d5ef0c33fb27eb3c9ba808b51332bcce186a83
 
-ls
 cd carma-platform/mock_drivers/rosbag_mock_drivers
-ls 
 echo "" > COLCON_IGNORE
-cd ../../../
+cd ../../mobilitypath_publisher
+echo "" > COLCON_IGNORE
+cd ../mobilitypath_visualizer
+echo "" > COLCON_IGNORE
+cd ../motion_prediction_visualizer
+echo "" > COLCON_IGNORE
+cd ../platooning_control
+echo "" > COLCON_IGNORE
+cd ../platooning_strategic
+echo "" > COLCON_IGNORE
+cd ../platooning_tactical_plugin
+echo "" > COLCON_IGNORE
+cd ../sci_strategic_plugin
+echo "" > COLCON_IGNORE
+cd ../stop_controlled_intersection_tactical_plugin
+echo "" > COLCON_IGNORE
+cd ../unobstructed_lanechange
+echo "" > COLCON_IGNORE
+cd ../wz_strategic_plugin
+echo "" > COLCON_IGNORE
+cd ../yield_plugin
+echo "" > COLCON_IGNORE
+cd ../truck_inspection_client
+echo "" > COLCON_IGNORE
+cd ../port_drayage_plugin
+echo "" > COLCON_IGNORE
+
+cd ../
 
 ##Disable ibeo_msgs
 #cd ibeo_msgs
