@@ -48,8 +48,7 @@ namespace truck_inspection_client
         while((!pnh_->getParam("/vin_number", vin_number_)) && vin_retrive_count < MAX_RETRIEVE_VIN_COUNT)
         {
             //sleep for 0.1 second
-            ros::Duration sleep_time(0.1); 
-            boost::this_thread::sleep_for(sleep_time);
+            boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
             vin_retrive_count++;
 
             if(pnh_->getParam("/vin_number", vin_number_))
