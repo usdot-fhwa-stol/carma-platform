@@ -97,7 +97,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
     ROS_DEBUG_STREAM("Planning state x:"<<req.vehicle_state.x_pos_global <<" , y: " << req.vehicle_state.y_pos_global);
 
     current_downtrack_ = wm_->routeTrackPos(veh_pos).downtrack;
-    ROS_DEBUG_STREAM("Current_downtrack"<< current_downtrack_);
+    ROS_DEBUG_STREAM("Current_downtrack: "<< current_downtrack_);
 
     DetailedTrajConfig wpg_detail_config;
     GeneralTrajConfig wpg_general_config;
@@ -194,7 +194,7 @@ std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::create_ge
   bool first = true;
   std::unordered_set<lanelet::Id> visited_lanelets;
 
-  ROS_DEBUG_STREAM("VehDowntrack:"<<max_starting_downtrack);
+  ROS_DEBUG_STREAM("VehDowntrack: "<<max_starting_downtrack);
   for(const auto &maneuver : maneuvers)
   {
       double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
