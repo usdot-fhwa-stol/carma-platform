@@ -2045,7 +2045,7 @@ namespace platoon_strategic_ihp
                     ROS_DEBUG_STREAM("targetPlatoonId = " << targetPlatoonId);
                     pm_.targetLeaderId = pm_.current_plan.peerId;
                     ROS_DEBUG_STREAM("pm_.targetLeaderId = " << pm_.targetLeaderId);
-                    pm_.current_plan = false;
+                    pm_.current_plan.valid = false;
                 }
 
                 // UCLA: frontal join (candidate leader, inherited from leaderwaiting)
