@@ -6,7 +6,7 @@ centerline_sampling_spacing: 1.0
 trajectory_time_length: 6.0 
 
 # Amount to downsample input lanelet centerline data. Value corresponds to saving each nth point.
-default_downsample_ratio: 36 
+default_downsample_ratio: 28 
 
 # Amount to downsample input lanelet centerline data on turns. Value corresponds to saving each nth point.
 turn_downsample_ratio: 20 

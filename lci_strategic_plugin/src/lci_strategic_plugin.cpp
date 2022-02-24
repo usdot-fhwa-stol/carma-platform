@@ -353,7 +353,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         double decelerating_time = (current_state_speed - speed_before_stop) / max_comfort_decel_norm_;
         double stopping_time = target_stop_time - decelerating_time;
         double stopping_accel_norm = speed_before_stop / stopping_time;
-        double stopping_distance = pow(speed_before_stop, 2)/(2 * stopping_accel_norm) + config_.min_gap;
+        double stopping_distance = pow(speed_before_stop, 2)/(2 * stopping_accel_norm);
         double start_stopping_downtrack = traffic_light_down_track - stopping_distance;
 
         ros::Time stop_starting_timestamp = current_state.stamp + ros::Duration(decelerating_time);
