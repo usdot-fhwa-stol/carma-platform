@@ -219,6 +219,10 @@ namespace platoon_strategic_ihp
         double laneWidth = sqrt(dx*dx + dy*dy);
         ROS_DEBUG_STREAM("calculated lane width: " << laneWidth);
 
+        // TODO temporary disable this function and return constant value
+        laneWidth = 3.5;
+        
+
         return laneWidth;
     }
     
@@ -1103,7 +1107,7 @@ namespace platoon_strategic_ihp
                  *       JOIN_CUT_IN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%"
                  *                            |-------0------ --1---------2---------3---------4------|
                  */
-                boost::format fmter(JOIN_CUT_IN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
+                boost::format fmter(JOIN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
                 fmter %platoon_size;                //  index = 0
                 fmter %current_speed_;              //  index = 1, in m/s
                 fmter %pose_ecef_point_.ecef_x;     //  index = 2
@@ -1267,7 +1271,7 @@ namespace platoon_strategic_ihp
                  *       JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%""
                  *                        |-------0------ --1---------2---------3---------4--------5------|
                  */
-                boost::format fmter(JOIN_CUT_IN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
+                boost::format fmter(JOIN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
                 fmter %platoon_size;                //  index = 0
                 fmter %current_speed_;              //  index = 1, in m/s
                 fmter %pose_ecef_point_.ecef_x;     //  index = 2
@@ -2225,7 +2229,7 @@ namespace platoon_strategic_ihp
             *       JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%""
             *                        |-------0------ --1---------2---------3---------4--------5------|
             */
-            boost::format fmter(JOIN_CUT_IN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
+            boost::format fmter(JOIN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
             fmter %platoon_size;                     //  index = 0
             fmter %current_speed_;                  //  index = 1, in m/s
             fmter %pose_ecef_point_.ecef_x;         //  index = 2
@@ -2742,7 +2746,7 @@ namespace platoon_strategic_ihp
         *       JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%""
         *                        |-------0------ --1---------2---------3---------4--------5------|
         */
-        boost::format fmter(JOIN_CUT_IN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
+        boost::format fmter(JOIN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
         fmter %platoon_size;                //  index = 0
         fmter %current_speed_;              //  index = 1, in m/s
         fmter %pose_ecef_point_.ecef_x;     //  index = 2
