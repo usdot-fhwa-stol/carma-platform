@@ -321,7 +321,12 @@ namespace platoon_strategic
                 }
                 else
                 {  
-                    ROS_DEBUG_STREAM("No adjacent left lanes exist, so no lanechange is planned");
+                    // In case a left lane is not detected, a lane following is maneuver is generated instead of the lane change to prevent discontinuity
+                    // The single lane flag is also enabled to help continue platooning process. 
+                    single_lane_road_ = true;
+                    ROS_WARN_STREAM("No adjacent left lanes exist, so no lanechange is planned");
+                    resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist,  
+                                    speed_progress, target_speed,shortest_path[last_lanelet_index].id(), time_progress));
                 }
 
             }
@@ -333,7 +338,7 @@ namespace platoon_strategic
 
             
             current_progress += dist_diff;
-            time_progress = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
+            time_progress = GET_MANEUVER_PROPERTY(resp.new_plan.maneuvers.back(), end_time);
             speed_progress = target_speed;
             if(current_progress >= total_maneuver_length || last_lanelet_index == shortest_path.size() - 1)
             {

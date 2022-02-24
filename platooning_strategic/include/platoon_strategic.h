@@ -54,6 +54,23 @@
 
 namespace platoon_strategic
 {
+    /**
+     * \brief Macro definition to enable easier access to fields shared across the maneuver types
+     * \param mvr The maneuver object to invoke the accessors on
+     * \param property The name of the field to access on the specific maneuver types. Must be shared by all extant maneuver types
+     * \return Expands to an expression (in the form of chained ternary operators) that evalutes to the desired field
+     */
+    #define GET_MANEUVER_PROPERTY(mvr, property)\
+        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
+            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
+                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
+                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property :\
+                        ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
+                            ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
+                                throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id " + std::to_string((mvr).type)))))))))
+
+
+
     using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
     using MobilityResponseCB = std::function<void(const cav_msgs::MobilityResponse&)>;
     using MobilityRequestCB = std::function<void(const cav_msgs::MobilityRequest&)>;
@@ -245,12 +262,13 @@ namespace platoon_strategic
             int getCurrentLaneGroupSize(const lanelet::BasicPoint2d& current_location);
 
             /**
-             * \brief Compose a lane keeping maneuver message based on input params
+             * \brief Compose a lane change maneuver message based on input params
              * \param start_dist Start downtrack distance of the current maneuver
              * \param end_dist End downtrack distance of the current maneuver
              * \param start_speed Start speed of the current maneuver
              * \param target_speed Target speed pf the current maneuver, usually it is the lanelet speed limit
-             * \param lane_ids List of lanelet IDs that the current maneuver traverses. Message expects these to be contiguous and end to end 
+             * \param starting_lane_id starting lane id of the lane change 
+             * \param ending_lane_id starting lane id of the lane change 
              * \return A lane keeping maneuver message which is ready to be published
              */
             cav_msgs::Maneuver composeLaneChangeManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id) const;
