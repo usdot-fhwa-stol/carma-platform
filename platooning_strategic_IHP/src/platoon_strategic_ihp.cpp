@@ -41,9 +41,9 @@ namespace platoon_strategic_ihp
                                 PublishPluginDiscoveryCB plugin_discovery_publisher, MobilityResponseCB mobility_response_publisher,
                                 MobilityRequestCB mobility_request_publisher, MobilityOperationCB mobility_operation_publisher,
                                 PlatooningInfoCB platooning_info_publisher)
-    : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher), 
-      mobility_response_publisher_(mobility_response_publisher), mobility_request_publisher_(mobility_request_publisher),
-      mobility_operation_publisher_(mobility_operation_publisher), platooning_info_publisher_(platooning_info_publisher)
+    : plugin_discovery_publisher_(plugin_discovery_publisher), mobility_request_publisher_(mobility_request_publisher), 
+      mobility_response_publisher_(mobility_response_publisher), mobility_operation_publisher_(mobility_operation_publisher), 
+      platooning_info_publisher_(platooning_info_publisher), wm_(wm), config_(config)
     {
         ROS_DEBUG_STREAM("Top of PlatoonStrategicIHP ctor.");
         pm_ = PlatoonManager();
