@@ -403,37 +403,33 @@ namespace platoon_strategic_ihp
     }
 
     // Check if the host vehicle is close to the platoon for cut-in join.
-    bool PlatoonStrategicIHPPlugin::isVehicleNearTargetPlatoon(double currentDtd, double currentCtd, double rearVehicleDtd, 
-                                                               double frontVehicleDtd, double frontVehicleCtd)
+    bool PlatoonStrategicIHPPlugin::isVehicleNearTargetPlatoon(double rearVehicleDtd, double frontVehicleDtd, double frontVehicleCtd)
     {
-        /**
-         * Note: 
-         *  This method has been mnodified to used calculated target platoon values based on INFO message. 
-         */
 
         // lateral error for two lanes (lane width was calculated based on current lanelet)
         double two_lane_cross_error = 2*config_.maxCrosstrackError + findLaneWidth(); 
         // add longitudinal check threshold in config file 
-        bool longitudinalCheck = (currentDtd >= rearVehicleDtd - config_.longitudinalCheckThresold) || (currentDtd <= frontVehicleDtd + config_.maxGap);
-        bool lateralCheck = (currentCtd >= frontVehicleCtd - two_lane_cross_error) || (currentCtd <= frontVehicleCtd + two_lane_cross_error);
+        bool longitudinalCheck = current_downtrack_ >= rearVehicleDtd - config_.longitudinalCheckThresold || 
+                                 current_downtrack_ <= frontVehicleDtd + config_.maxGap;
+        bool lateralCheck = current_crosstrack_ >= frontVehicleCtd - two_lane_cross_error || 
+                            current_crosstrack_ <= frontVehicleCtd + two_lane_cross_error;
         // logs for longitudinal and lateral check 
         ROS_DEBUG_STREAM("The longitudinalCheck result is: " << longitudinalCheck );
         ROS_DEBUG_STREAM("The lateralCheck result is: " << lateralCheck );
 
         if (longitudinalCheck && lateralCheck) 
         {
-            // host vehicle is close to target platoon logitudinaly (within 10m) and laterally (within 5m)
+            // host vehicle is close to target platoon longitudinally (within 10m) and laterally (within 5m)
             ROS_DEBUG_STREAM("Found a platoon nearby. We are able to join.");
             return true;
         }
         else 
         {
             ROS_DEBUG_STREAM("Ignoring platoon.");
-            ROS_DEBUG_STREAM("The platoon leader dtd is " << frontVehicleDtd << " and we are current at " << currentDtd);
-            ROS_DEBUG_STREAM("The platoon leader ctd is " << frontVehicleCtd << " and we are current at " << currentCtd);
+            ROS_DEBUG_STREAM("The platoon leader dtd is " << frontVehicleDtd << " and we are current at " << current_downtrack_);
+            ROS_DEBUG_STREAM("The platoon leader ctd is " << frontVehicleCtd << " and we are current at " << current_crosstrack_);
             return false;
         }
-
     }
 
     // Compose platoon info msg for all states.
@@ -501,6 +497,7 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("isFollower: " << pm_.isFollower);
                 ROS_DEBUG_STREAM("pm platoonsize: " << pm_.getTotalPlatooningSize());
 
+                //TODO: this method should not be changing the object's state; consider moving this stmt to run_follower()
                 pm_.isFollower = true;
 
                 PlatoonMember platoon_leader = pm_.getDynamicLeader();
@@ -910,14 +907,14 @@ namespace platoon_strategic_ihp
          * 
          * Single ADS will send out INFO messages. Platoon leaders will send out both INFO and STATUS messages.
          * 
-         * If the host is single vehicle, it shoud have "isPlatoonInfoMsg = true" and "isInNegotiation = false". In such condition, single leader will start 
+         * If the host is single vehicle, it should have "isPlatoonInfoMsg = true" and "isInNegotiation = false". In such condition, single leader will start 
          * joining and send request to the platoon leader. 
          * 
-         * If the host vechile is platoon leader, then it should have "isPlatoonInfoMsg = true" and "isInNegotiation = true". But existing platoon leader do not 
+         * If the host vehicle is platoon leader, then it should have "isPlatoonInfoMsg = true" and "isInNegotiation = true". But existing platoon leader do not 
          * need to send out joining request.
          * 
          * Both the platoon leader and single vehicle need to subscribe to the STATUS message to populate the platoon manager with existing platoon members, 
-         * so the PM can calculate dtd and ctd corresponds to host vechile's origin position, hence to be used for later calculation.          
+         * so the PM can calculate dtd and ctd corresponds to host vehicle's origin position, hence to be used for later calculation.          
          */
 
         // Read incoming message info
@@ -934,10 +931,10 @@ namespace platoon_strategic_ihp
                                                                                             // (i.e., currently in a platoon or trying to join a platoon).
         ROS_DEBUG_STREAM("Top of mob_op_cb_leader, isInNegotiation = " << isInNegotiation);
 
-        // Condition 1. Host vehicle is the single CAV joning the platoon.
+        // Condition 1. Host vehicle is the single CAV joining the platoon.
         if(isPlatoonInfoMsg && !isInNegotiation)
         {
-            // step 1. read INFO messasge from the target platoon leader
+            // step 1. read INFO message from the target platoon leader
 
             // read ecef location from strategy params.
             cav_msgs::LocationECEF ecef_loc;
@@ -950,8 +947,7 @@ namespace platoon_strategic_ihp
             // use ecef_loc to calculate front Ctd in m.
             double frontVehicleCtd = wm_->routeTrackPos(incoming_pose).crosstrack;
             // downtrack and crosstrack of the platoon leader --> used for frontal join
-            ROS_DEBUG_STREAM("frontVehicleDtd from ecef: " << frontVehicleDtd);
-            ROS_DEBUG_STREAM("frontVehicleCtd from ecef: " << frontVehicleCtd);
+            ROS_DEBUG_STREAM("Neighbor platoon frontVehicleDtd from ecef: " << frontVehicleDtd << ", frontVehicleCtd from ecef: " << frontVehicleCtd);
 
             // use INFO param to find platoon rear vehicle DTD and CTD.
             double platoon_length = mob_op_find_platoon_length_from_INFO_params(strategyParams); // length of the entire platoon in meters.
@@ -961,16 +957,14 @@ namespace platoon_strategic_ihp
              *           |<------------------ front-rear DTD difference -------------------->|
              *       |<----------------------------- platoon length ---------------------------->|
              *       
-             *       front-rear DTD difference = platoon_length - one_vehicle_length
+             *       front-rear DTD difference = platoon_length + one_vehicle_length
+             *       Vehicle length is already accounted for in the message's LENGTH value
              */
-            double rearVehicleDtd = frontVehicleDtd - platoon_length + config_.vehicleLength;
+            double rearVehicleDtd = frontVehicleDtd - platoon_length;
             // Note: For one platoon, we assume all members are in the same lane.
             double rearVehicleCtd = frontVehicleCtd;
-            // ROS debug stream
-            ROS_DEBUG_STREAM("rearVehicleDtd calcualted by joining vehicle's : " << rearVehicleDtd);
-            ROS_DEBUG_STREAM("rearVehicleCtd calcualted by joining vehicle's : " << rearVehicleCtd);
+            ROS_DEBUG_STREAM("Neighbor platoon rearVehicleDtd: " << rearVehicleDtd << ", rearVehicleCtd: " << rearVehicleCtd);
 
-            // Logs for the Noetic update
             // Parse the strategy params
             std::vector<std::string> inputsParams;
             boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
@@ -981,7 +975,7 @@ namespace platoon_strategic_ihp
             int targetPlatoonSize = std::stoi(targetPlatoonSize_parsed[1]);
             ROS_DEBUG_STREAM("target Platoon Size: " << targetPlatoonSize);
 
-            // step 2. Generate ecessary info for join request
+            // step 2. Generate necessary info for join request
             cav_msgs::MobilityRequest request;
             request.header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
             request.header.recipient_id = senderId;
@@ -996,7 +990,7 @@ namespace platoon_strategic_ihp
             if(isVehicleRightInFront(rearVehicleDtd, rearVehicleCtd)  &&  !config_.test_front_join)
             {   
                 /**
-                 *  Note: "isVehicleRightInFront" only applies for same-lane maneuvers, so need to check for CtD.
+                 *  Note: "isVehicleRightInFront" tests for same lane
                  */
 
                 ROS_DEBUG_STREAM("Found a platoon with id = " << platoonId << " in front of us.");
@@ -1028,17 +1022,15 @@ namespace platoon_strategic_ihp
             else if ((targetPlatoonSize > 1  ||  config_.test_front_join)  &&  isVehicleRightBehind(frontVehicleDtd, frontVehicleCtd))
             {   
                 /**
-                 *  Note: "isVehicleRightBehind" only apploes for same-lane maneuvers, so necessary to check for CtD.
+                 *  Note: "isVehicleRightBehind" tests for same lane
                  */
-                ROS_DEBUG_STREAM("isVehicleRightBehind: " << isVehicleRightBehind(frontVehicleDtd, frontVehicleCtd));
-
-                std::string newLeaderPlatoonId = pm_.currentPlatoonID; // set self's (front join veh) platoon ID as the new platoon ID
-                ROS_DEBUG_STREAM("Host vehicle platoon id = " << newLeaderPlatoonId << "; join the rear platoon as the new leader (frontal join).");
+                ROS_DEBUG_STREAM("Neighbor platoon leader is right behind us");
                 
                 // compose request
                 cav_msgs::MobilityRequest request;
-                request.header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
-                request.header.recipient_id = senderId;
+                potentialNewPlatoonId_front_ = boost::uuids::to_string(boost::uuids::random_generator()());
+                request.header.plan_id = potentialNewPlatoonId_front_;
+                request.header.recipient_id = senderId; //neighbor platoon leader
                 request.header.sender_id = config_.vehicleID;
                 request.header.timestamp = ros::Time::now().toNSec() / 1000000;
                 request.location = pose_to_ecef(pose_msg_);
@@ -1065,19 +1057,24 @@ namespace platoon_strategic_ihp
                 // UCLA: generate new platoonplan for front join.
                 pm_.current_plan = PlatoonPlan(true, request.header.timestamp, request.header.plan_id, request.header.sender_id);
                 mobility_request_publisher_(request);
-                ROS_DEBUG_STREAM("Publishing request to the leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.header.plan_id);
-                potentialNewPlatoonId_front_ = newLeaderPlatoonId;
+                ROS_DEBUG_STREAM("Publishing front join request to the leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.header.plan_id);
             }
 
-            // step 5. Request cut-in join
-            else if (isVehicleNearTargetPlatoon(current_downtrack_, current_crosstrack_, rearVehicleDtd, 
-                                                                  frontVehicleDtd, frontVehicleCtd))
+            // step 5. Request cut-in join (front, middle or rear, from adjacent lane)
+            else if (isVehicleNearTargetPlatoon(rearVehicleDtd, frontVehicleDtd, frontVehicleCtd))
             {
                 /**
                  * UCLA Implementation note:
-                 *  1. isVehicleNearTargetPlatoon --> determine if the platoon is next to host vheicle
+                 *  1. isVehicleNearTargetPlatoon --> determine if the platoon is next to host vehicle
                  *  2. sender_id == requesting veh ID --> front joiner ID
                  */
+
+                //TODO: verify purpose of this logic then its correctness accordingly:
+                //  -is step 5 really for all 3 types of joining?
+                //  -ensure join_index gets an appropriate value for the type of join
+                //  -ensure plan type corresponds to join_index
+                //  -should we continue using existing platoon's plan ID instead of generating a new one if not front join?
+
                 std::string newLeaderPlatoonId = pm_.currentPlatoonID; // set self's (front join veh) platoon ID as the new platoon ID
                 ROS_DEBUG_STREAM("Host vehicle platoon id = " << newLeaderPlatoonId << "; join the rear platoon as the new leader (frontal join).");
 

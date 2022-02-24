@@ -257,14 +257,16 @@ namespace platoon_strategic_ihp
 
     }
 
-    // The implementation of all predecessor following algorithm. Determine the dynamic leader for the host vheicle to follow.
+    // The implementation of all predecessor following algorithm. Determine the dynamic leader for the host vehicle to follow.
     int PlatoonManager::allPredecessorFollowing(){
+
         ///***** Case Zero *****///
-        // If the host vheicle is the second vehicle in this platoon,we will always follow the platoon leader in front of host vehicle
-        if(platoon.size() == 2) {
+        // If the host vehicle is the second vehicle in this platoon,we will always follow the platoon leader in front of host vehicle
+        if(hostPosInPlatoon_ == 1) {
             ROS_DEBUG_STREAM("As the second vehicle in the platoon, it will always follow the leader. Case Zero");
             return 0;
         }
+
         ///***** Case One *****///
         // If there weren't a leader in the previous time step, follow the first vehicle (i.e., the platoon leader) as default.
         if(previousFunctionalDynamicLeaderID_ == "") {
@@ -402,11 +404,11 @@ namespace platoon_strategic_ihp
         // For normal operation, gap > minGap is necessary. 
         bool frontGapIsTooSmall = distanceToPredVehicle < config_.minGap; 
         
-        // Host vehicle was following predecessor vehicle. --> The predecessor vehicel was violating gap threshold.
+        // Host vehicle was following predecessor vehicle. --> The predecessor vehicle was violating gap threshold.
         bool previousLeaderIsPredecessor = previousFunctionalDynamicLeaderID_ == platoon[platoon.size() - 1].staticId; 
         
         // Gap greater than maxGap_ is necessary for host to stop choosing predecessor as dynamic leader. 
-        bool frontGapIsNotLargeEnough = (distanceToPredVehicle < config_.maxGap && previousLeaderIsPredecessor);
+        bool frontGapIsNotLargeEnough = distanceToPredVehicle < config_.maxGap && previousLeaderIsPredecessor;
 
         return (frontGapIsTooSmall || frontGapIsNotLargeEnough);
     }
