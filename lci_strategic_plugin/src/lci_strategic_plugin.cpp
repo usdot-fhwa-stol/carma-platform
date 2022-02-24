@@ -725,31 +725,31 @@ cav_msgs::Maneuver LCIStrategicPlugin::composeTrajectorySmoothingManeuverMessage
                                                        const TrajectorySmoothingParameters& tsp) const
 {
   cav_msgs::Maneuver maneuver_msg;
-  maneuver_msg.type = cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT;
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.negotiation_type =
+  maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+  maneuver_msg.lane_following_maneuver.parameters.negotiation_type =
       cav_msgs::ManeuverParameters::NO_NEGOTIATION;
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.presence_vector =
-      cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.planning_tactical_plugin =
-      config_.lane_following_plugin_name; // since maneuver is technically before intersection
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.planning_strategic_plugin =
+  maneuver_msg.lane_following_maneuver.parameters.presence_vector =
+      cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN | cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA | cav_msgs::ManeuverParameters::HAS_INT_META_DATA;
+  maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin =
+      config_.lane_following_plugin_name;
+  maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin =
       config_.strategic_plugin_name;
-  maneuver_msg.intersection_transit_straight_maneuver.start_dist = start_dist;
-  maneuver_msg.intersection_transit_straight_maneuver.start_speed = start_speed;
-  maneuver_msg.intersection_transit_straight_maneuver.start_time = start_time;
-  maneuver_msg.intersection_transit_straight_maneuver.end_dist = end_dist;
-  maneuver_msg.intersection_transit_straight_maneuver.end_speed = target_speed;
-  maneuver_msg.intersection_transit_straight_maneuver.end_time = end_time;
-
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.string_valued_meta_data.push_back(light_controlled_intersection_strategy_);
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.float_valued_meta_data.push_back(tsp.a_accel);
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.float_valued_meta_data.push_back(tsp.a_decel);
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.float_valued_meta_data.push_back(tsp.dist_accel);
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.float_valued_meta_data.push_back(tsp.dist_cruise);
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.float_valued_meta_data.push_back(tsp.dist_decel);
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.float_valued_meta_data.push_back(tsp.speed_before_accel);
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.float_valued_meta_data.push_back(tsp.speed_before_decel);
-  maneuver_msg.intersection_transit_straight_maneuver.parameters.int_valued_meta_data.push_back(static_cast<int>(tsp.case_num));
+  maneuver_msg.lane_following_maneuver.start_dist = start_dist;
+  maneuver_msg.lane_following_maneuver.start_speed = start_speed;
+  maneuver_msg.lane_following_maneuver.start_time = start_time;
+  maneuver_msg.lane_following_maneuver.end_dist = end_dist;
+  maneuver_msg.lane_following_maneuver.end_speed = target_speed;
+  maneuver_msg.lane_following_maneuver.end_time = end_time;
+  
+  maneuver_msg.lane_following_maneuver.parameters.string_valued_meta_data.push_back(light_controlled_intersection_strategy_);
+  maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.a_accel);
+  maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.a_decel);
+  maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.dist_accel);
+  maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.dist_cruise);
+  maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.dist_decel);
+  maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.speed_before_accel);
+  maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.speed_before_decel);
+  maneuver_msg.lane_following_maneuver.parameters.int_valued_meta_data.push_back(static_cast<int>(tsp.case_num));
 
   // Start time and end time for maneuver are assigned in updateTimeProgress
 

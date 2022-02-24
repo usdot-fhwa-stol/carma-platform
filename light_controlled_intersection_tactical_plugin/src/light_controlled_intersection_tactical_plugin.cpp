@@ -79,8 +79,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
     // expecting only one maneuver for an intersection
     for(size_t i = req.maneuver_index_to_plan; i < req.maneuver_plan.maneuvers.size(); i++){
         
-        if(req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT
-        || req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN || req.maneuver_plan.maneuvers[i].type ==cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN
+        if(req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_FOLLOWING
         && GET_MANEUVER_PROPERTY(req.maneuver_plan.maneuvers[i], parameters.string_valued_meta_data.front()) == light_controlled_intersection_strategy_)
         {
             maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
@@ -210,10 +209,8 @@ std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::create_ge
       }
 
       //overwrite maneuver type to use lane follow library function
-      cav_msgs::Maneuver temp_maneuver = maneuver;
-      temp_maneuver.type =cav_msgs::Maneuver::LANE_FOLLOWING;
       ROS_DEBUG_STREAM("Creating Lane Follow Geometry");
-      std::vector<PointSpeedPair> lane_follow_points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(temp_maneuver, starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config, visited_lanelets);
+      std::vector<PointSpeedPair> lane_follow_points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config, visited_lanelets);
       points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
       
       break; // expected to receive only one maneuver to plan
