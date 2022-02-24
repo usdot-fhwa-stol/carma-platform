@@ -85,9 +85,9 @@ namespace platoon_strategic_ihp
         location.ecef_z = ecef_point.z() * 100.0;    
         
 
-        ROS_DEBUG_STREAM("location.ecef_x: " << location.ecef_x);
-        ROS_DEBUG_STREAM("location.ecef_y: " << location.ecef_y);
-        ROS_DEBUG_STREAM("location.ecef_z: " << location.ecef_z);
+        // ROS_DEBUG_STREAM("location.ecef_x: " << location.ecef_x);
+        // ROS_DEBUG_STREAM("location.ecef_y: " << location.ecef_y);
+        // ROS_DEBUG_STREAM("location.ecef_z: " << location.ecef_z);
 
         // note: the returned ecef is in cm.
         return location;
@@ -143,7 +143,7 @@ namespace platoon_strategic_ihp
             // update host's DtD and CtD
             current_downtrack_ = tc.downtrack;
             current_crosstrack_ = tc.crosstrack;
-            ROS_DEBUG_STREAM("current_downtrack_ = " << current_downtrack_ << ", current_crosstrack_ = " << current_crosstrack_);
+            // ROS_DEBUG_STREAM("current_downtrack_ = " << current_downtrack_ << ", current_crosstrack_ = " << current_crosstrack_);
             pm_.updateHostPose(current_downtrack_, current_crosstrack_);
 
             // note: the ecef read from "pose_ecef_point" is in cm.
@@ -1835,7 +1835,9 @@ namespace platoon_strategic_ihp
                         isForCurrentPlan << ", isFromTargetVehicle = " << isFromTargetVehicle);
         ROS_DEBUG_STREAM("current plan ID = " << pm_.current_plan.planId << ", target leader ID = " << pm_.targetLeaderId);
         
-        if (!(isCurrPlanValid && isForCurrentPlan && isFromTargetVehicle)) 
+        ROS_DEBUG_STREAM("isCurrPlanValid && isForCurrentPlan initial check = " << isCurrPlanValid && isForCurrentPlan);
+        // TODO temporary disabled (pm_.targetleaderid is not set early on)
+        if (!(true))//(isCurrPlanValid && isForCurrentPlan && isFromTargetVehicle)) 
         {
             /**
              * If any of the three condition (i.e., isCurrPlanValid, isForCurrentPlan and isFromTargetVehicle) 
