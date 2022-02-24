@@ -1,6 +1,6 @@
 version: 2
 
-#  Copyright (C) 2018-2021 LEIDOS.
+#  Copyright (C) 2018-2022 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,7 @@ jobs:
         environment:
           TERM: xterm
           INIT_ENV: /home/carma/.base-image/init-env.sh
-    resource_class: large      
+    resource_class: xlarge      
     # Set working directory
     working_directory: "/opt/carma/"
     # Pull code and execute tests
@@ -60,13 +60,13 @@ jobs:
           name: Build CARMA
           command: |
             source ${INIT_ENV}
-            export ROS_PARALLEL_JOBS='-j3 -l3' # Try to reduce memory consumption on build
+            export ROS_PARALLEL_JOBS='-j4 -l4' # Try to reduce memory consumption on build
             build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output bash make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
       - run:
           name: Run C++ Tests
           command: |
             source ${INIT_ENV}
-            export ROS_PARALLEL_JOBS='-j3 -l3' # Try to reduce memory consumption on build
+            export ROS_PARALLEL_JOBS='-j4 -l4' # Try to reduce memory consumption on build
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
           
       # Run SonarCloud analysis
