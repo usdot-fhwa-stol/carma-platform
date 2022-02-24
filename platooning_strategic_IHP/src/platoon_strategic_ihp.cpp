@@ -1044,7 +1044,7 @@ namespace platoon_strategic_ihp
                 // compose request
                 cav_msgs::MobilityRequest request;
                 request.header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
-                request.header.recipient_id = c;
+                request.header.recipient_id = senderId;
                 request.header.sender_id = config_.vehicleID;
                 request.header.timestamp = ros::Time::now().toNSec() / 1000000;
                 request.location = pose_to_ecef(pose_msg_);
