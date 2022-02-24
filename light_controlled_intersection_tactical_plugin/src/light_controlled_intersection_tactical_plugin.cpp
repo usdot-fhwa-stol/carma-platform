@@ -216,6 +216,11 @@ std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::create_ge
       break; // expected to receive only one maneuver to plan
   }
 
+  //Add buffer ending to lane follow points at the end of maneuver(s) end dist 
+  if(maneuvers.back().type == cav_msgs::Maneuver::LANE_FOLLOWING){
+      points_and_target_speeds = add_lanefollow_buffer(wm, points_and_target_speeds, maneuvers, ending_state_before_buffer, detailed_config);
+  }
+
   return points_and_target_speeds;
 }
 

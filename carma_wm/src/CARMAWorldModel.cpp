@@ -1465,8 +1465,8 @@ namespace carma_wm
             sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].second == received_state &&
             sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first < min_end_time)
         {
-          ROS_DEBUG_STREAM("Updated time for id: " << curr_light->id()  << " with state: " << received_state << ", with time: "
-                                                      << std::to_string(lanelet::time::toSec(min_end_time)));
+          //ROS_DEBUG_STREAM("Updated time for id: " << curr_light->id()  << " with state: " << received_state << ", with time: "
+          //                                            << std::to_string(lanelet::time::toSec(min_end_time)));
           sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first = min_end_time;
           continue;
         }
@@ -1521,6 +1521,7 @@ namespace carma_wm
         {
           ROS_DEBUG_STREAM("Setting last recorded state for light: " << curr_light_id << ", with state: " << sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second << ", time: " << sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first);
           curr_light->setStates(sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group], curr_intersection.revision);
+          ROS_ERROR_STREAM("SUCCESS!: Set new cycle of total seconds: " << lanelet::time::toSec(curr_light->fixed_cycle_duration));
           ROS_DEBUG_STREAM("SUCCESS!: Set new cycle of total seconds: " << lanelet::time::toSec(curr_light->fixed_cycle_duration));
         }
         else if (curr_light->recorded_time_stamps.empty()) // if it was never initialized, do its best to plan with the current state until the future state is also received.
