@@ -29,6 +29,7 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import GroupAction
 from launch_ros.actions import set_remap
+from launch.actions import DeclareLaunchArgument
 
 # Launch file for launching the nodes in the CARMA guidance stack
 
@@ -41,13 +42,20 @@ def generate_launch_description():
     tactical_plugins_to_validate = LaunchConfiguration('tactical_plugins_to_validate')
     control_plugins_to_validate = LaunchConfiguration('control_plugins_to_validate')
 
-    subsystem_controller_param_file = os.path.join(
+    subsystem_controller_default_param_file = os.path.join(
         get_package_share_directory('subsystem_controllers'), 'config/guidance_controller_config.yaml')
 
     mobilitypath_visualizer_param_file = os.path.join(
         get_package_share_directory('mobilitypath_visualizer'), 'config/params.yaml')
     
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
+
+    subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
+    declare_subsystem_controller_param_file_arg = DeclareLaunchArgument(
+        name = 'subsystem_controller_param_file',
+        default_value = subsystem_controller_default_param_file,
+        description = "Path to file containing override parameters for the subsystem controller"
+    )
 
 
     # Nodes
@@ -84,12 +92,13 @@ def generate_launch_description():
         package='subsystem_controllers',
         name='guidance_controller',
         executable='guidance_controller',
-        parameters=[ subsystem_controller_param_file ],
+        parameters=[ subsystem_controller_default_param_file, subsystem_controller_param_file ],
         on_exit= Shutdown(), # Mark the subsystem controller as required
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
 
-    return LaunchDescription([        
+    return LaunchDescription([  
+        declare_subsystem_controller_param_file_arg,      
         carma_guidance_container,
         subsystem_controller
     ]) 

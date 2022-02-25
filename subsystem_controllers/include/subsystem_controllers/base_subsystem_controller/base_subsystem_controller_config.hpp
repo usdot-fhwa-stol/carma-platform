@@ -29,6 +29,10 @@ namespace subsystem_controllers
     //! List of nodes to consider required and who's failure shall result in system shutdown
     std::vector<std::string> required_subsystem_nodes;
 
+    //! List of nodes which will not be directly managed by this subsystem controller 
+    //  but which are required to be operational for the subsystem to function
+    std::vector<std::string> unmanaged_required_nodes;
+
     //! Node Namespace. Any node under this namespace shall have its lifecycle managed by this controller
     std::string subsystem_namespace = "/false_namespace";
 
@@ -50,7 +54,12 @@ namespace subsystem_controllers
              << "call_timeout_ms: " << c.call_timeout_ms << std::endl
              << "subsystem_namespace: " << c.subsystem_namespace << std::endl
              << "full_subsystem_required: " << c.full_subsystem_required << std::endl
-             << "required_subsystem_nodes: [ ";
+             << "unmanaged_required_nodes: [ " << std::endl;
+            
+            for (auto node : c.unmanaged_required_nodes)
+              output << node << " ";
+
+      output << "] " << std::endl << "required_subsystem_nodes: [ ";
 
       for (auto node : c.required_subsystem_nodes)
         output << node << " ";
