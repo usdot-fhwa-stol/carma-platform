@@ -12,34 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from launch import LaunchDescription
-from launch_ros.actions import Node
 from ament_index_python import get_package_share_directory
 from launch.actions import Shutdown
-from carma_ros2_utils.launch.get_log_level import GetLogLevel
+from launch import LaunchDescription
+from launch_ros.actions import Node
+from launch_ros.actions import ComposableNodeContainer
+from launch_ros.descriptions import ComposableNode
 from launch.substitutions import EnvironmentVariable
-from launch.actions import DeclareLaunchArgument
+from carma_ros2_utils.launch.get_log_level import GetLogLevel
+from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument
+
 import os
+
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import GroupAction
+from launch_ros.actions import set_remap
 
 
 def generate_launch_description():
     """
-    Launch the subsystem controller for the hardware interface subsystem.
-    The actual drivers will not be launched in this file and will instead be launched in the carma-config.
+    Launch Localization subsystem nodes
     """
-    
-    vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
-    declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
-        name = 'vehicle_config_param_file',
-        default_value = "/opt/carma/vehicle/config/VehicleConfigParams.yaml",
-        description = "Path to file contain vehicle configuration parameters"
-    )
-    
+
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_default_param_file = os.path.join(
-        get_package_share_directory('subsystem_controllers'), 'config/drivers_controller_config.yaml')
+        get_package_share_directory('subsystem_controllers'), 'config/localization_controller_config.yaml')
 
     subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
     declare_subsystem_controller_param_file_arg = DeclareLaunchArgument(
@@ -47,19 +48,23 @@ def generate_launch_description():
         default_value = subsystem_controller_default_param_file,
         description = "Path to file containing override parameters for the subsystem controller"
     )
+    
+
+    # Nodes
+    # TODO add ROS2 localization nodes here
 
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
         package='subsystem_controllers',
-        name='drivers_controller',
-        executable='drivers_controller',
-        parameters=[ subsystem_controller_default_param_file, subsystem_controller_param_file  ], 
+        name='localization_controller',
+        executable='localization_controller',
+        parameters=[ subsystem_controller_default_param_file, subsystem_controller_param_file ], # Default file is loaded first followed by config file
         on_exit= Shutdown(), # Mark the subsystem controller as required
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
 
     return LaunchDescription([
-        declare_subsystem_controller_param_file_arg,
-        declare_vehicle_config_param_file_arg,
+        declare_subsystem_controller_param_file_arg,       
         subsystem_controller
-    ])
+    ]) 
+

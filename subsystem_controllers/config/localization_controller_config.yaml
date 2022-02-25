@@ -8,15 +8,50 @@
     # Units: milliseconds
     call_timeout_ms : 1000
 
-    # String: The namespace for nodes in this subsystem
+    # String: The namespace for nodes in this subsystem. All nodes under this namespace will have their lifecycle's managed by this controller
     subsystem_namespace: /localization
 
-    # Required subsystem controller nodes for the overall system to be functional
+    # Required subsystem controller nodes for the overall system to be functional and will have their lifecycle's managed
     # Once initialized the localization subsystem requires a GNSS, localization manage, and ekf_localizer in order to continue functioning
     required_subsystem_nodes:
       - /localization/ekf_localizer
       - /localization/gnss_to_map_convertor
       - /localization/localization_manager
+    
+    # List of nodes which will not be directly managed by this subsystem controller 
+    # but which are required to be operational for the subsystem to function
+    unmanaged_required_nodes: [''] # TODO localization needs GPS and lidar but this will be handled with more complex logic then this list
 
     # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
     full_subsystem_required: true
+
+    # List of nodes which are sensors used by the localization system and have their fault behavior described by 
+    # the sensor_fault_map parameter
+    sensor_nodes:
+      - /hardware_interface/velodyne_lidar_driver_wrapper_node
+      - /hardware_interface/temp_lidar_2
+      - /hardware_interface/temp_gps
+
+    # JSON String: Sensor Fault Map
+    # NOTE: It would have been preferable to use a 2d array here but ROS2 Foxy does not support this type of parameter
+    # The sensor_fault_map is described as a 2d array where the last element is the desired status alert type
+    # The set of values in front should have the same size as the sensor_nodes list and describe the status of those nodes in that order
+    # Input Enum Values:
+    # Operational: 1
+    # Failed: 0
+    # Output Enum Values: 
+    # FATAL: 0
+    # OPERATIONAL: 1
+    # CAUTION: 2
+    # WARNING: 3
+    sensor_fault_map: '
+      {
+        "sensor_fault_map": 
+        [
+          [0,1,1,2],
+          [1,0,1,2],
+          [0,0,1,3],
+          [0,0,0,0]
+        ],
+      }
+      '
