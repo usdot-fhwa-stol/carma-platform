@@ -136,7 +136,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
     trajectory.trajectory_points = basic_autonomy:: waypoint_generation::compose_lanefollow_trajectory_from_path(points_and_target_speeds, 
                                                                                 req.vehicle_state, req.header.stamp, wm_, ending_state_before_buffer_, debug_msg_, 
                                                                                 wpg_detail_config); // Compute the trajectory
-    trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
+    trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
 
     resp.trajectory_plan = trajectory;
     

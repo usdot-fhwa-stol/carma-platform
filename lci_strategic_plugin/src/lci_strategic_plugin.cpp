@@ -308,7 +308,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
       resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
         current_state.downtrack, traffic_light_down_track, current_state_speed, crossed_lanelets.front().id(),
         crossed_lanelets.back().id(), current_state.stamp,
-        req.header.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
+        current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
       return;
     }
 
@@ -348,6 +348,8 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
       
       ROS_DEBUG_STREAM("New RED StopTime's speed before calling stop_and_wait_plugin: " << speed_before_stop << ", at decel_rate: " << max_comfort_decel_);
       
+      // TODO include crawl here?
+      
       if (speed_before_stop < current_state_speed || speed_before_stop > 0) //todo change 0 to minimum speed?
       {
         // calculate necessary parameters
@@ -386,7 +388,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
 
         // first decelerate (triggering algorithm as if the scheduled entry and target speed is at start of stopping downtrack) 
         resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, start_stopping_downtrack, 
-                                            current_state_speed, speed_before_stop, current_state.stamp, stop_starting_timestamp, ts_params));
+                                            current_state_speed, speed_before_stop, current_state.stamp, current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), ts_params));
         
         // then stop
         resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
