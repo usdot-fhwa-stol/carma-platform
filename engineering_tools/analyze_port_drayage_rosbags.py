@@ -26,6 +26,90 @@ import math
 # Usage:
 # python3.7 analyze_port_drayage_rosbags.py <path to folder containing Port Drayage Use Case .bag files>
 
+def generate_speed_plot(bag, engagement_times, route_id):
+    # Speed command: /hardware_interface/arbitrated_speed_commands: msg.speed
+    # True Speed:     /hardware_interface/pacmod_parsed_tx/vehicle_speed_rpt: msg.vehicle_speed
+    total_duration = 25
+    time_start_engagement = engagement_times[0]
+    time_end_engagement = engagement_times[1]
+    time_duration = rospy.Duration(total_duration)
+
+    # Get the true vehicle speed and plot it
+    first = True
+    true_vehicle_speed_times = []
+    true_vehicle_speeds = []
+    # Note: This topic name assumes a pacmod controller is being used (freightliners or lexus)
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/pacmod/parsed_tx/vehicle_speed_rpt'], start_time = time_start_engagement, end_time = time_end_engagement): # time_start_engagement+time_duration):
+        if first:
+            time_start = t
+            first = False
+            continue
+
+        true_vehicle_speed_times.append((t-time_start).to_sec())
+        true_vehicle_speeds.append(msg.vehicle_speed)
+
+    first = True
+    cmd_vehicle_speed_times = []
+    cmd_vehicle_speeds = []
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/arbitrated_speed_commands'], start_time = time_start_engagement, end_time = time_end_engagement): # time_start_engagement+time_duration):
+        if first:
+            time_start = t
+            first = False
+            continue  
+        
+        cmd_vehicle_speed_times.append((t-time_start).to_sec())
+        cmd_vehicle_speeds.append(msg.speed)
+
+    fig, ax = plt.subplots()
+    print(true_vehicle_speed_times[0])
+    ax.plot(true_vehicle_speed_times, true_vehicle_speeds, 'b--', label='Actual Speed')
+    ax.plot(cmd_vehicle_speed_times, cmd_vehicle_speeds, 'g:', label='Cmd Speed')
+    ax.legend()
+    ax.set_title("Speed (Cmd and Actual) for Route " + str(route_id))
+    ax.set_xlabel("Time (seconds) since start of engagement")
+    ax.set_ylabel("Vehicle Speed (m/s)")
+    plt.show()
+
+    return
+
+def generate_steering_plot(bag, engagement_times, route_id):
+    # Speed command: /hardware_interface/arbitrated_speed_commands: msg.speed
+    # True Speed:     /hardware_interface/pacmod_parsed_tx/vehicle_speed_rpt: msg.vehicle_speed
+    total_duration = 25
+    time_start_engagement = engagement_times[0]
+    time_end_engagement = engagement_times[1]
+    time_duration = rospy.Duration(total_duration)
+
+    # Get the true vehicle speed and plot it
+    first = True
+    true_steering_times = []
+    true_steering = []
+    cmd_steering_times = []
+    cmd_steering = []
+    # Note: This topic name assumes a pacmod controller is being used (freightliners or lexus)
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/pacmod/parsed_tx/steer_rpt'], start_time = time_start_engagement, end_time = time_end_engagement): #time_start_engagement+time_duration):
+        if first:
+            time_start = t
+            first = False
+            continue
+
+        true_steering_times.append((t-time_start).to_sec())
+        true_steering.append(msg.output)
+        cmd_steering_times.append((t-time_start).to_sec())
+        cmd_steering.append(msg.command)
+
+
+    fig, ax = plt.subplots()
+    ax.plot(true_steering_times, true_steering, 'b--', label='Actual Steering (rad)')
+    ax.plot(cmd_steering_times, cmd_steering, 'g:', label='Cmd Steering (rad)')
+    ax.legend()
+    ax.set_title("Steering Angle (Cmd and Actual) for Route " + str(route_id))
+    ax.set_xlabel("Time (seconds) since start of engagement")
+    ax.set_ylabel("Steering Angle (rad)")
+    plt.show()
+
+    return
+
 # Helper Function: Get the original speed limit for the lanelets within the vehicle's route
 # Note: Assumes that all lanelets in the route share the same speed limit prior to the first geofence CARMA Cloud message being processed.
 def get_route_original_speed_limit(bag, time_test_start_engagement):
