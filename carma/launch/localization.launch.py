@@ -34,13 +34,13 @@ from launch_ros.actions import set_remap
 
 def generate_launch_description():
     """
-    Launch V2X subsystem nodes.
+    Launch Localization subsystem nodes
     """
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_default_param_file = os.path.join(
-        get_package_share_directory('subsystem_controllers'), 'config/v2x_controller_config.yaml')
+        get_package_share_directory('subsystem_controllers'), 'config/localization_controller_config.yaml')
 
     subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
     declare_subsystem_controller_param_file_arg = DeclareLaunchArgument(
