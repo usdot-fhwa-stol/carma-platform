@@ -303,6 +303,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
     {
       double decel_rate = current_state_speed / min_bound_stop_time; // Kinematic |(v_f - v_i) / t = a|
       ROS_ERROR_STREAM("22222222: Planning stop and wait maneuver at decel_rate: -" << decel_rate);
+      ROS_DEBUG_STREAM("22222222: Planning stop and wait maneuver at decel_rate: -" << decel_rate);
       
       resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
         current_state.downtrack, traffic_light_down_track, current_state_speed, crossed_lanelets.front().id(),
@@ -370,6 +371,9 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         ROS_ERROR_STREAM("33333333: Modified Stop: speed_before_stop at: " << speed_before_stop << ", stopping_accel_norm: " << stopping_accel_norm);
         ROS_ERROR_STREAM("33333333: Modified Stop: stopping_distance at: " << stopping_distance << ", start_stopping_downtrack: " << start_stopping_downtrack);
 
+        ROS_DEBUG_STREAM("33333333: Modified Stop: speed_before_stop at: " << speed_before_stop << ", stopping_accel_norm: " << stopping_accel_norm);
+        ROS_DEBUG_STREAM("33333333: Modified Stop: stopping_distance at: " << stopping_distance << ", start_stopping_downtrack: " << start_stopping_downtrack);
+
         // compose ts_params manually with above parameters
         TrajectorySmoothingParameters ts_params;
         ts_params.a_decel = max_comfort_decel_;
@@ -423,7 +427,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   // If the vehicle is at a stop trigger the stopped state
   constexpr double HALF_MPH_IN_MPS = 0.22352;
-  if (current_state_speed < HALF_MPH_IN_MPS &&
+  if (current_state.speed < HALF_MPH_IN_MPS &&
       fabs(distance_remaining_to_traffic_light) < config_.stopping_location_buffer)
   {
     transition_table_.signal(TransitEvent::STOPPED);  // The vehicle has come to a stop at the light
@@ -483,7 +487,23 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   if (ts_params.is_algorithm_successful)
     ts_params.case_num = case_num;
 
-  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num);
+  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+
   // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
         getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
@@ -503,6 +523,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     if (can_make_green_optional.get())
     {
       ROS_ERROR_STREAM("1111111111111: Algorithm successful, and able to make it at green with certainty. Planning traj smooth and intersection transit maneuvers");
+      ROS_DEBUG_STREAM("1111111111111: Algorithm successful, and able to make it at green with certainty. Planning traj smooth and intersection transit maneuvers");
       
       resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
                                             current_state_speed, intersection_speed_.get(), current_state.stamp, light_arrival_time_by_algo, ts_params));
@@ -530,6 +551,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   // 3. if not able to stop nor reach target speed at green, attempt its best to reach the target parameters at the intersection
   // ts_params would have been modified to try accommodate this scenario
   ROS_ERROR_STREAM("44444: >>>>>LAST<<<<<< The vehicle is not able to stop at red/yellow light nor is able to reach target speed at green. Attempting its best to pass through at green!");
+  ROS_DEBUG_STREAM("44444: >>>>>LAST<<<<<< The vehicle is not able to stop at red/yellow light nor is able to reach target speed at green. Attempting its best to pass through at green!");
   
   ts_params = handleFailureCase(current_state_speed, intersection_speed_.get(), distance_remaining_to_traffic_light);
 
