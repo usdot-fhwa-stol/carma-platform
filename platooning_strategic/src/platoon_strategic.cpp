@@ -309,7 +309,8 @@ namespace platoon_strategic
             {
                 ROS_DEBUG_STREAM("Planning a required lane change");
 
-                auto adjacentleft_lanelet = routing_graph->adjacentLeft(current_lanelet);
+
+                auto adjacentleft_lanelet = routing_graph->left(current_lanelet);
                 lanelet::ConstLanelet target_lanelet;
                 
                 if (adjacentleft_lanelet)
@@ -336,7 +337,6 @@ namespace platoon_strategic
                                     speed_progress, target_speed,shortest_path[last_lanelet_index].id(), time_progress));
             }
 
-            
             current_progress += dist_diff;
             time_progress = GET_MANEUVER_PROPERTY(resp.new_plan.maneuvers.back(), end_time);
             speed_progress = target_speed;
@@ -817,7 +817,6 @@ namespace platoon_strategic
                 // Check if the applicant can join based on max timeGap/gap
                 bool isDistanceCloseEnough = (currentGap <= maxAllowedJoinGap_) || (currentTimeGap <= maxAllowedJoinTimeGap_);
                 bool laneConditionsSatisfied = !in_rightmost_lane_ || single_lane_road_;
-
                 if(isDistanceCloseEnough && laneConditionsSatisfied) {
                     ROS_DEBUG_STREAM("The applicant is close enough and we will allow it to try to join");
                     ROS_DEBUG_STREAM("Change to LeaderWaitingState and waiting for " << msg.m_header.sender_id << " to join");
@@ -831,6 +830,7 @@ namespace platoon_strategic
 
                     // Set flag to indicate that a lane change into a suitable platooning lane is required prior to sending ACK to applicant
                     leader_lane_change_required_ = true;
+                    return MobilityRequestResponse::NO_RESPONSE;
                 } else {
                     ROS_DEBUG_STREAM("The applicant is too far away from us or not in corret lane. NACK.");
                     ROS_DEBUG_STREAM("isDistanceCloseEnough" << isDistanceCloseEnough);
