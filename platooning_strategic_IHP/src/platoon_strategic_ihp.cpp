@@ -1412,6 +1412,7 @@ namespace platoon_strategic_ihp
             {
                 // Accept plan and idle (becasue rear join, gap leading vehicle do not need to slow down).
                 ROS_DEBUG_STREAM("Requested cut-in index is: " << req_sender_join_index << ", start approve cut-in and wait for lane change.");
+                ROS_DEBUG_STREAM("Due to the rear join nature, there is no need to slow down or create gap.");
                 return MobilityRequestResponse::ACK;
 
             }
@@ -1437,8 +1438,8 @@ namespace platoon_strategic_ihp
         else if (isGapCreated)
         {
             ROS_DEBUG_STREAM("Gap is created, revert to normal operating speed.");
+            // Only reset create gap indicator, no need to send response. 
             pm_.isCreateGap = false;
-            // Only reset speed adjuster, no need to send response. 
             return MobilityRequestResponse::NO_RESPONSE;
         }
 
@@ -1815,11 +1816,9 @@ namespace platoon_strategic_ihp
             else if ((req_sender_join_index == pm_.platoon.size()-1) && isRearJoinerInPosition)
             {
                 // Task 4: send request to last member to slow down (i.e., set isCreateGap to true) 
-                pm_.isCreateGap = true;
-
-                // compose request (the target recipent ID is the gap leading vehicle and joining vehicle cut-in from behind)
+                // Note: Request recieving vehicle set pm_.isCreateGap 
                 
-                // send request to target vehicle
+                // compose request (the target recipent ID is the gap leading vehicle and joining vehicle cut-in from behind)
                 cav_msgs::MobilityRequest request;
                 request.header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
                 // Note: For cut-in rear, there is only a gap leading vehicle that is relavent as recipent member.
@@ -1845,7 +1844,7 @@ namespace platoon_strategic_ihp
             else if (isMidJoinerInPosition)
             {
                 // Task 4: send request to index member to slow down (i.e., set isCreateGap to true) 
-                pm_.isCreateGap = true;
+                // Note: Request recieving vehicle set pm_.isCreateGap 
 
                 // compose request (the target recipent ID is the gap leading vehicle --> the gap rear vehicle needs to slow down to creat gap)
                 cav_msgs::MobilityRequest request;
@@ -1874,7 +1873,7 @@ namespace platoon_strategic_ihp
         // task 2: For cut-in from front, the leader need to stop creating gap when gap is big enough
         if (plan_type.type == cav_msgs::PlanType::STOP_CREATE_GAP && pm_.isCreateGap) 
         {
-            // reset creat gap indicator
+            // reset create gap indicator
             pm_.isCreateGap = false;
             // no need to response, simple reset the indicator
             return MobilityRequestResponse::NO_RESPONSE;
@@ -3042,7 +3041,7 @@ namespace platoon_strategic_ihp
         else
         {
             // 3. Use CARMA planning method (control_length = step_time * speed limit).
-            target_speed = findSpeedLimit(current_lanelet);   //get Speed Limit TOTO update
+            target_speed = findSpeedLimit(current_lanelet);   //get Speed Limit TO update
             total_maneuver_length = current_progress + config_.time_step * target_speed;
         }
         // ----------------------------------------------------------------
