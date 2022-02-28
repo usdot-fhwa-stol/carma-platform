@@ -299,7 +299,8 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
     ROS_DEBUG_STREAM("Checking STOPPING state: " << state_pair_at_stop.get().second << ", at predicted time: " << std::to_string(current_state.stamp.toSec() + min_bound_stop_time));
 
     // perfectly stop at red/yellow with given distance and constant deceleration 
-    if (state_pair_at_stop.get().second != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+    if (state_pair_at_stop.get().second != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
+      current_state.speed > config_.minimum_speed + epsilon_)
     {
       double decel_rate = current_state_speed / min_bound_stop_time; // Kinematic |(v_f - v_i) / t = a|
       ROS_ERROR_STREAM("22222222: Planning stop and wait maneuver at decel_rate: -" << decel_rate);
@@ -310,6 +311,11 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         crossed_lanelets.back().id(), current_state.stamp,
         current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
       return;
+    }
+    if (current_state.speed <= config_.minimum_speed + epsilon_)
+    {
+      ROS_DEBUG_STREAM("DETECTED WE WOULD HAVE WENT 222222222222 at low speed");
+      ROS_ERROR_STREAM("DETECTED WE WOULD HAVE WENT 222222222222 at low speed");
     }
 
     // 2. If stopping with single deceleration falls on green phase, stop at next possible red phase
@@ -350,7 +356,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
       
       // TODO include crawl here?
       
-      if (speed_before_stop < current_state_speed || speed_before_stop > config_.minimum_speed + epsilon_) //todo change 0 to minimum speed?
+      if (speed_before_stop < current_state_speed && speed_before_stop > config_.minimum_speed + epsilon_) //todo change 0 to minimum speed?
       {
         // calculate necessary parameters
         double decelerating_time = (current_state_speed - speed_before_stop) / max_comfort_decel_norm_;
@@ -398,7 +404,8 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         
         return;
       }
-      else if (speed_before_stop <= config_.minimum_speed + epsilon_)
+      else if (speed_before_stop <= config_.minimum_speed + epsilon_ ||
+              current_state.speed <= config_.minimum_speed + epsilon_)
       {
         ROS_ERROR_STREAM("ZZZZZZZZZZZZZZ::: ACTUALLY USING speed:" << config_.minimum_speed << ". instead of " << speed_before_stop);
         ROS_DEBUG_STREAM("ZZZZZZZZZZZZZ ::: ACTUALLY USING speed:" << config_.minimum_speed << ". instead of " << speed_before_stop);
@@ -426,13 +433,14 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
 
         // compose ts_params manually with above parameters
         TrajectorySmoothingParameters ts_params;
+        ts_params.a_accel = max_comfort_accel_; // will be unused if speed_before_stop < minimum_speed and crawl
         ts_params.a_decel = max_comfort_decel_; // will be unused if speed_before_stop < minimum_speed and crawl
-        ts_params.case_num = SpeedProfileCase::DECEL_ACCEL;
+        ts_params.case_num = SpeedProfileCase::ACCEL_DECEL;
         ts_params.dist_accel = 0.0;
-        ts_params.dist_cruise = 0.0;
+        ts_params.dist_cruise = start_stopping_downtrack - current_state.downtrack;;
         ts_params.is_algorithm_successful = true;
         ts_params.speed_before_accel = speed_before_stop;
-        ts_params.dist_decel = start_stopping_downtrack - current_state.downtrack;
+        ts_params.dist_decel = 0.0;
 
         // first decelerate (triggering algorithm as if the scheduled entry and target speed is at start of stopping downtrack) 
         resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, start_stopping_downtrack, 
@@ -481,6 +489,11 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       fabs(distance_remaining_to_traffic_light) < config_.stopping_location_buffer)
   {
     transition_table_.signal(TransitEvent::STOPPED);  // The vehicle has come to a stop at the light
+    ROS_ERROR_STREAM("WWWWWWWWWWWWEEEE STOOOOOOOOOOOOOOOOOOOOPPPPED");
+    ROS_ERROR_STREAM("WWWWWWWWWWWWEEEE STOOOOOOOOOOOOOOOOOOOOPPPPED");
+    ROS_ERROR_STREAM("WWWWWWWWWWWWEEEE STOOOOOOOOOOOOOOOOOOOOPPPPED");
+    ROS_DEBUG_STREAM("WWWWWWWWWWWWEEEE STOOOOOOOOOOOOOOOOOOOOPPPPED");
+
     return;
   }
 
