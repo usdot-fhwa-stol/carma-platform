@@ -34,6 +34,17 @@ namespace subsystem_controllers
     base_config_.required_subsystem_nodes = this->declare_parameter<std::vector<std::string>>("required_subsystem_nodes", base_config_.required_subsystem_nodes);
     base_config_.subsystem_namespace = this->declare_parameter<std::string>("subsystem_namespace", base_config_.subsystem_namespace);
     base_config_.full_subsystem_required = this->declare_parameter<bool>("full_subsystem_required", base_config_.full_subsystem_required);
+    base_config_.unmanaged_required_nodes = this->declare_parameter<std::vector<std::string>>("unmanaged_required_nodes", base_config_.unmanaged_required_nodes);
+  
+    // Handle fact that parameter vectors cannot be empty
+    if (base_config_.required_subsystem_nodes.size() == 1 && base_config_.required_subsystem_nodes[0].empty()) {
+      base_config_.required_subsystem_nodes.clear();
+    }
+
+    if (base_config_.unmanaged_required_nodes.size() == 1 && base_config_.unmanaged_required_nodes[0].empty()) {
+      base_config_.unmanaged_required_nodes.clear();
+    }
+
   }
 
   void BaseSubsystemController::set_config(BaseSubSystemControllerConfig config)
@@ -53,7 +64,8 @@ namespace subsystem_controllers
     {
 
       // Required node has failed
-      if (std::find(base_config_.required_subsystem_nodes.begin(), base_config_.required_subsystem_nodes.end(), msg->source_node) != base_config_.required_subsystem_nodes.end())
+      if (std::find(base_config_.required_subsystem_nodes.begin(), base_config_.required_subsystem_nodes.end(), msg->source_node) != base_config_.required_subsystem_nodes.end()
+          || std::find(base_config_.unmanaged_required_nodes.begin(), base_config_.unmanaged_required_nodes.end(), msg->source_node) != base_config_.unmanaged_required_nodes.end())
       {
         // Our subsystem has failed so notify the overall system controller
 
@@ -90,6 +102,16 @@ namespace subsystem_controllers
     get_parameter<std::vector<std::string>>("required_subsystem_nodes", base_config_.required_subsystem_nodes);
     get_parameter<std::string>("subsystem_namespace", base_config_.subsystem_namespace);
     get_parameter<bool>("full_subsystem_required", base_config_.full_subsystem_required);
+    get_parameter<std::vector<std::string>>("unmanaged_required_nodes", base_config_.unmanaged_required_nodes);
+
+    // Handle fact that parameter vectors cannot be empty
+    if (base_config_.required_subsystem_nodes.size() == 1 && base_config_.required_subsystem_nodes[0].empty()) {
+      base_config_.required_subsystem_nodes.clear();
+    }
+
+    if (base_config_.unmanaged_required_nodes.size() == 1 && base_config_.unmanaged_required_nodes[0].empty()) {
+      base_config_.unmanaged_required_nodes.clear();
+    }
 
     RCLCPP_INFO_STREAM(get_logger(), "Loaded config: " << base_config_);
 

@@ -39,7 +39,7 @@ def generate_launch_description():
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
-    subsystem_controller_param_file = os.path.join(
+    subsystem_controller_default_param_file = os.path.join(
         get_package_share_directory('subsystem_controllers'), 'config/v2x_controller_config.yaml')
 
     mobilitypath_publisher_param_file = os.path.join(
@@ -62,6 +62,14 @@ def generate_launch_description():
         default_value = "/opt/carma/vehicle/config/VehicleConfigParams.yaml",
         description = "Path to file contain vehicle configuration parameters"
     )
+
+    subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
+    declare_subsystem_controller_param_file_arg = DeclareLaunchArgument(
+        name = 'subsystem_controller_param_file',
+        default_value = subsystem_controller_default_param_file,
+        description = "Path to file containing override parameters for the subsystem controller"
+    )
+    
 
     # Nodes
     carma_v2x_container = ComposableNodeContainer(
@@ -146,14 +154,15 @@ def generate_launch_description():
         package='subsystem_controllers',
         name='v2x_controller',
         executable='v2x_controller',
-        parameters=[ subsystem_controller_param_file ],
+        parameters=[ subsystem_controller_default_param_file, subsystem_controller_param_file ], # Default file is loaded first followed by config file
         on_exit= Shutdown(), # Mark the subsystem controller as required
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
 
     return LaunchDescription([
         declare_vehicle_config_param_file_arg,
-        declare_vehicle_characteristics_param_file_arg,        
+        declare_vehicle_characteristics_param_file_arg, 
+        declare_subsystem_controller_param_file_arg,       
         carma_v2x_container,
         subsystem_controller
     ]) 

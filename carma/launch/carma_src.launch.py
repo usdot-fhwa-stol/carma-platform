@@ -123,7 +123,10 @@ def generate_launch_description():
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_ENV_NS', default_value='environment')),
             IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/environment.launch.py'])
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/environment.launch.py']),
+                launch_arguments = { 
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                    }.items()
             ),
         ]
     )
@@ -131,6 +134,12 @@ def generate_launch_description():
     localization_group = GroupAction(
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_LOCZ_NS', default_value='localization')),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/localization.launch.py']),
+                launch_arguments = { 
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                }.items()
+            )
         ]
     )
 
@@ -141,8 +150,9 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/message.launch.py']),
                 launch_arguments = { 
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
-                    'vehicle_config_param_file' : vehicle_config_param_file
-                    }.items()
+                    'vehicle_config_param_file' : vehicle_config_param_file,
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml']
+                }.items()
             ),
         ]
     )
@@ -159,7 +169,8 @@ def generate_launch_description():
                     'enable_guidance_plugin_validator' : enable_guidance_plugin_validator,
                     'strategic_plugins_to_validate' : strategic_plugins_to_validate,
                     'tactical_plugins_to_validate' : tactical_plugins_to_validate,
-                    'control_plugins_to_validate' : control_plugins_to_validate
+                    'control_plugins_to_validate' : control_plugins_to_validate,
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
                 }.items()
             ),
         ]
@@ -171,8 +182,9 @@ def generate_launch_description():
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/drivers.launch.py']),
                 launch_arguments = { 
-                    'vehicle_config_param_file' : vehicle_config_param_file
-                    }.items()
+                    'vehicle_config_param_file' : vehicle_config_param_file,
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                }.items()
             ),
         ]
     )

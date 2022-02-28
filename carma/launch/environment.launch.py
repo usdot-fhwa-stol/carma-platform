@@ -21,6 +21,8 @@ from launch_ros.descriptions import ComposableNode
 from launch.substitutions import EnvironmentVariable
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
+from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument
 import os
 
 
@@ -44,8 +46,15 @@ def generate_launch_description():
     object_detection_tracking_param_file = os.path.join(
         get_package_share_directory('object_detection_tracking'), 'config/parameters.yaml')
 
-    subsystem_controller_param_file = os.path.join(
+    subsystem_controller_default_param_file = os.path.join(
         get_package_share_directory('subsystem_controllers'), 'config/environment_perception_controller_config.yaml')
+
+    subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
+    declare_subsystem_controller_param_file_arg = DeclareLaunchArgument(
+        name = 'subsystem_controller_param_file',
+        default_value = subsystem_controller_default_param_file,
+        description = "Path to file containing override parameters for the subsystem controller"
+    )
 
     frame_transformer_param_file = os.path.join(
         get_package_share_directory('frame_transformer'), 'config/parameters.yaml')
@@ -257,12 +266,13 @@ def generate_launch_description():
         package='subsystem_controllers',
         name='environment_perception_controller',
         executable='environment_perception_controller',
-        parameters=[ subsystem_controller_param_file ],
+        parameters=[ subsystem_controller_default_param_file, subsystem_controller_param_file ],
         on_exit= Shutdown(), # Mark the subsystem controller as required
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
 
     return LaunchDescription([
+        declare_subsystem_controller_param_file_arg,
         lidar_perception_container,
         carma_external_objects_container,
         subsystem_controller

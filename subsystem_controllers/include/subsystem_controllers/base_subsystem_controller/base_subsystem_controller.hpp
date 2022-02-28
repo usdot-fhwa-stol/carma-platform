@@ -53,7 +53,7 @@ namespace subsystem_controllers
 
     void set_config(BaseSubSystemControllerConfig config);
 
-    void on_system_alert(const carma_msgs::msg::SystemAlert::UniquePtr msg);
+    virtual void on_system_alert(const carma_msgs::msg::SystemAlert::UniquePtr msg);
 
     ////
     // Overrides
