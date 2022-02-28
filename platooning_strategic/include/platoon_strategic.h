@@ -253,7 +253,7 @@ namespace platoon_strategic
             bool single_lane_road_ = false;
 
             // Flag to enable/disable platooning plugin
-            bool platooning_enabled_ = false;
+            bool platooning_enabled_ = true;
         
         private:
 
