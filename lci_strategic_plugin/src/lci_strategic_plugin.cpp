@@ -402,12 +402,12 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
       {
         ROS_ERROR_STREAM("ZZZZZZZZZZZZZZ::: ACTUALLY USING speed:" << config_.minimum_speed << ". instead of " << speed_before_stop);
         ROS_DEBUG_STREAM("ZZZZZZZZZZZZZ ::: ACTUALLY USING speed:" << config_.minimum_speed << ". instead of " << speed_before_stop);
-        speed_before_stop = std::max(speed_before_stop, config_.minimum_speed); //just crawl if it is below minimum speed
-        double start_stopping_downtrack = traffic_light_down_track - pow(config_.minimum_speed, 2) / (2 * max_comfort_decel_norm);
-        ros::Time stop_starting_timestamp = target_stop_time - config_.minimum_speed / max_comfort_decel_norm;
-        
         // calculate necessary parameters
-        double stopping_distance = pow(speed_before_stop, 2)/(2 * stopping_accel_norm);
+        
+        speed_before_stop = std::max(speed_before_stop, config_.minimum_speed); //just crawl if it is below minimum speed
+        double stopping_distance = pow(config_.minimum_speed, 2) / (2 * max_comfort_decel_norm_);
+        double start_stopping_downtrack = traffic_light_down_track - stopping_distance;
+        ros::Time stop_starting_timestamp = current_state.stamp + ros::Duration(target_stop_time) - ros::Duration(config_.minimum_speed / max_comfort_decel_norm_);
         ROS_DEBUG_STREAM("Found stop_starting_timestamp at: " << std::to_string(stop_starting_timestamp.toSec()) << ", where current_state is: " << std::to_string(current_state.stamp.toSec()));
 
         lanelet::ConstLanelet starting_lanelet_for_stop = crossed_lanelets.front();
@@ -418,10 +418,10 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
             starting_lanelet_for_stop = llt;
           }
         }
-        ROS_ERROR_STREAM("33333333: Modified Stop: speed_before_stop at: " << speed_before_stop << ", stopping_accel_norm: " << stopping_accel_norm);
+        ROS_ERROR_STREAM("33333333: Modified Stop: speed_before_stop at: " << speed_before_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
         ROS_ERROR_STREAM("33333333: Modified Stop: stopping_distance at: " << stopping_distance << ", start_stopping_downtrack: " << start_stopping_downtrack);
 
-        ROS_DEBUG_STREAM("33333333: Modified Stop: speed_before_stop at: " << speed_before_stop << ", stopping_accel_norm: " << stopping_accel_norm);
+        ROS_DEBUG_STREAM("33333333: Modified Stop: speed_before_stop at: " << speed_before_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
         ROS_DEBUG_STREAM("33333333: Modified Stop: stopping_distance at: " << stopping_distance << ", start_stopping_downtrack: " << start_stopping_downtrack);
 
         // compose ts_params manually with above parameters
@@ -442,7 +442,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
             start_stopping_downtrack, traffic_light_down_track, speed_before_stop,
             starting_lanelet_for_stop.id(), exit_lanelet.id(), stop_starting_timestamp,
-            stop_starting_timestamp + ros::Duration(config_.min_maneuver_planning_period), stopping_accel_norm));
+            stop_starting_timestamp + ros::Duration(config_.min_maneuver_planning_period), max_comfort_decel_norm_));
         
         return;
       }
