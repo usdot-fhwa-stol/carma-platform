@@ -1,8 +1,8 @@
 # Double: multiplier to apply to the maximum allowable vehicle deceleration limit so we plan under our capabilities
-vehicle_decel_limit_multiplier : 0.5
+vehicle_decel_limit_multiplier : 0.8
 
 # Double: multiplier to apply to the maximum allowable vehicle acceleration limit so we plan under our capabilities
-vehicle_accel_limit_multiplier : 0.5
+vehicle_accel_limit_multiplier : 0.8
 
 # Double: The minimum distance in meters that the vehicle can be at before requiring a transition to the APPROACH state
 min_approach_distance : 30.0
@@ -17,7 +17,7 @@ green_light_time_buffer : 2.0
 minimum_speed : 2.2352
 
 # Double: Update min_gap. Units in m
-min_gap : 10
+min_gap : 0
 
 # Double: The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
 min_maneuver_planning_period : 15.1
