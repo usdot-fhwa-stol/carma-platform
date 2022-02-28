@@ -350,7 +350,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
       
       // TODO include crawl here?
       
-      if (speed_before_stop < current_state_speed || speed_before_stop > 0) //todo change 0 to minimum speed?
+      if (speed_before_stop < current_state_speed || speed_before_stop > config_.minimum_speed + epsilon_) //todo change 0 to minimum speed?
       {
         // calculate necessary parameters
         double decelerating_time = (current_state_speed - speed_before_stop) / max_comfort_decel_norm_;
@@ -365,7 +365,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         lanelet::ConstLanelet starting_lanelet_for_stop = crossed_lanelets.front();
         for (auto llt: crossed_lanelets)
         {
-          if (wm_->routeTrackPos(llt.centerline2d().back().basicPoint2d()).downtrack < current_state.downtrack + stopping_distance)
+          if (wm_->routeTrackPos(llt.centerline2d().back().basicPoint2d()).downtrack > start_stopping_downtrack)
           {
             starting_lanelet_for_stop = llt;
           }
@@ -378,13 +378,61 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
 
         // compose ts_params manually with above parameters
         TrajectorySmoothingParameters ts_params;
-        ts_params.a_decel = max_comfort_decel_;
+        ts_params.a_decel = max_comfort_decel_; // will be unused if speed_before_stop < minimum_speed and crawl
         ts_params.case_num = SpeedProfileCase::DECEL_ACCEL;
         ts_params.dist_accel = 0.0;
         ts_params.dist_cruise = 0.0;
-        ts_params.dist_decel = start_stopping_downtrack - current_state.downtrack;
         ts_params.is_algorithm_successful = true;
         ts_params.speed_before_accel = speed_before_stop;
+        ts_params.dist_decel = start_stopping_downtrack - current_state.downtrack;
+
+        // first decelerate (triggering algorithm as if the scheduled entry and target speed is at start of stopping downtrack) 
+        resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, start_stopping_downtrack, 
+                                            current_state_speed, speed_before_stop, current_state.stamp, current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), ts_params));
+        
+        // then stop
+        resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
+            start_stopping_downtrack, traffic_light_down_track, speed_before_stop,
+            starting_lanelet_for_stop.id(), exit_lanelet.id(), stop_starting_timestamp,
+            stop_starting_timestamp + ros::Duration(config_.min_maneuver_planning_period), stopping_accel_norm));
+        
+        return;
+      }
+      else if (speed_before_stop <= config_.minimum_speed + epsilon_)
+      {
+        ROS_ERROR_STREAM("ZZZZZZZZZZZZZZ::: ACTUALLY USING speed:" << config_.minimum_speed << ". instead of " << speed_before_stop);
+        ROS_DEBUG_STREAM("ZZZZZZZZZZZZZ ::: ACTUALLY USING speed:" << config_.minimum_speed << ". instead of " << speed_before_stop);
+        speed_before_stop = std::max(speed_before_stop, config_.minimum_speed); //just crawl if it is below minimum speed
+        double start_stopping_downtrack = traffic_light_down_track - pow(config_.minimum_speed, 2) / (2 * max_comfort_decel_norm);
+        ros::Time stop_starting_timestamp = target_stop_time - config_.minimum_speed / max_comfort_decel_norm;
+        
+        // calculate necessary parameters
+        double stopping_distance = pow(speed_before_stop, 2)/(2 * stopping_accel_norm);
+        ROS_DEBUG_STREAM("Found stop_starting_timestamp at: " << std::to_string(stop_starting_timestamp.toSec()) << ", where current_state is: " << std::to_string(current_state.stamp.toSec()));
+
+        lanelet::ConstLanelet starting_lanelet_for_stop = crossed_lanelets.front();
+        for (auto llt: crossed_lanelets)
+        {
+          if (wm_->routeTrackPos(llt.centerline2d().back().basicPoint2d()).downtrack > start_stopping_downtrack)
+          {
+            starting_lanelet_for_stop = llt;
+          }
+        }
+        ROS_ERROR_STREAM("33333333: Modified Stop: speed_before_stop at: " << speed_before_stop << ", stopping_accel_norm: " << stopping_accel_norm);
+        ROS_ERROR_STREAM("33333333: Modified Stop: stopping_distance at: " << stopping_distance << ", start_stopping_downtrack: " << start_stopping_downtrack);
+
+        ROS_DEBUG_STREAM("33333333: Modified Stop: speed_before_stop at: " << speed_before_stop << ", stopping_accel_norm: " << stopping_accel_norm);
+        ROS_DEBUG_STREAM("33333333: Modified Stop: stopping_distance at: " << stopping_distance << ", start_stopping_downtrack: " << start_stopping_downtrack);
+
+        // compose ts_params manually with above parameters
+        TrajectorySmoothingParameters ts_params;
+        ts_params.a_decel = max_comfort_decel_; // will be unused if speed_before_stop < minimum_speed and crawl
+        ts_params.case_num = SpeedProfileCase::DECEL_ACCEL;
+        ts_params.dist_accel = 0.0;
+        ts_params.dist_cruise = 0.0;
+        ts_params.is_algorithm_successful = true;
+        ts_params.speed_before_accel = speed_before_stop;
+        ts_params.dist_decel = start_stopping_downtrack - current_state.downtrack;
 
         // first decelerate (triggering algorithm as if the scheduled entry and target speed is at start of stopping downtrack) 
         resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, start_stopping_downtrack, 
