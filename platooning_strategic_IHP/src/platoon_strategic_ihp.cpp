@@ -1047,17 +1047,9 @@ namespace platoon_strategic_ihp
                 std::string newLeaderPlatoonId = pm_.currentPlatoonID; // set self's (front join veh) platoon ID as the new platoon ID
                 ROS_DEBUG_STREAM("Host vehicle platoon id = " << newLeaderPlatoonId << "; join the rear platoon as the new leader (frontal join).");
                 
-                // compose request
-                cav_msgs::MobilityRequest request;
-                request.header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
-                request.header.recipient_id = senderId;
-                request.header.sender_id = config_.vehicleID;
-                request.header.timestamp = ros::Time::now().toNSec() / 1000000;
-                request.location = pose_to_ecef(pose_msg_);
-                
+                // Note: Request conposed outside of if conditions
                 // UCLA: assign a new plan type
                 request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT;
-                request.strategy = PLATOONING_STRATEGY;
 
                 /**
                  * SAME_LANE_JOIN_PARAMS format: 
@@ -1093,19 +1085,10 @@ namespace platoon_strategic_ihp
                 std::string newLeaderPlatoonId = pm_.currentPlatoonID; // set self's (front join veh) platoon ID as the new platoon ID
                 ROS_DEBUG_STREAM("Host vehicle platoon id = " << newLeaderPlatoonId << "; join the rear platoon as the new leader (frontal join).");
 
-                // compose request
-                cav_msgs::MobilityRequest request;
-                request.header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
-                request.header.recipient_id = senderId;
-                request.header.sender_id = config_.vehicleID;
-                request.header.timestamp = ros::Time::now().toNSec() / 1000000;
-                request.location = pose_to_ecef(pose_msg_);
-                
+                // Note: Request conposed outside of if conditions
                 // UCLA: Desired joining index for cut-in join, indicate the index of gap-leading vehicle. -1 indicate cut-in from front.
                 //Note: remove join_index to STATUS param. request.join_index = -1; // Note: not used by same-lane functions.
-                // UCLA: this is a newly added plan type 
                 request.plan_type.type = cav_msgs::PlanType::CUT_IN_FROM_DIFFERENT_LANE; 
-                request.strategy = PLATOONING_STRATEGY;
 
                 /**
                  * JOIN_CUT_IN_PARAMS format: 
