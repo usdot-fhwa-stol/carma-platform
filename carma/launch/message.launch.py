@@ -22,6 +22,7 @@ from launch.substitutions import EnvironmentVariable
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument
 
 import os
 
@@ -36,7 +37,9 @@ def generate_launch_description():
     Launch V2X subsystem nodes.
     """
 
-    subsystem_controller_param_file = os.path.join(
+    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
+
+    subsystem_controller_default_param_file = os.path.join(
         get_package_share_directory('subsystem_controllers'), 'config/v2x_controller_config.yaml')
 
     mobilitypath_publisher_param_file = os.path.join(
@@ -46,10 +49,27 @@ def generate_launch_description():
         get_package_share_directory('bsm_generator'), 'config/parameters.yaml')
 
     vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
+    declare_vehicle_characteristics_param_file_arg = DeclareLaunchArgument(
+        name = 'vehicle_characteristics_param_file', 
+        default_value = "/opt/carma/vehicle/calibration/identifiers/UniqueVehicleParams.yaml",
+        description = "Path to file containing unique vehicle calibrations"
+    )
+    
     
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
+    declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_param_file',
+        default_value = "/opt/carma/vehicle/config/VehicleConfigParams.yaml",
+        description = "Path to file contain vehicle configuration parameters"
+    )
 
-    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
+    subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
+    declare_subsystem_controller_param_file_arg = DeclareLaunchArgument(
+        name = 'subsystem_controller_param_file',
+        default_value = subsystem_controller_default_param_file,
+        description = "Path to file containing override parameters for the subsystem controller"
+    )
+    
 
     # Nodes
     carma_v2x_container = ComposableNodeContainer(
@@ -100,7 +120,32 @@ def generate_launch_description():
                     vehicle_characteristics_param_file,
                     vehicle_config_param_file
                 ]
-            )
+            ),
+            ComposableNode(
+                package='cpp_message',
+                plugin='cpp_message::Node',
+                name='cpp_message_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('cpp_message', env_log_levels) }
+                ],
+                remappings=[
+                    ("inbound_binary_msg", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/comms/inbound_binary_msg" ] ),
+                    ("outbound_binary_msg", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/comms/outbound_binary_msg" ] ),
+                ],
+            ),
+            ComposableNode(
+                package='j2735_convertor',
+                plugin='j2735_convertor::Node',
+                name='j2735_convertor_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('j2735_convertor', env_log_levels) }
+                ],
+                remappings=[
+                    ("outgoing_bsm", "bsm_outbound" ),
+                ],
+            ),
         ]
     )
 
@@ -109,27 +154,16 @@ def generate_launch_description():
         package='subsystem_controllers',
         name='v2x_controller',
         executable='v2x_controller',
-        parameters=[ subsystem_controller_param_file ],
+        parameters=[ subsystem_controller_default_param_file, subsystem_controller_param_file ], # Default file is loaded first followed by config file
         on_exit= Shutdown(), # Mark the subsystem controller as required
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
 
-    # Add j2735_convertor node
-    j2735_convertor_pkg = get_package_share_directory('j2735_convertor')
-    j2735_convertor_group = GroupAction(
-        actions = [
-            # Launch SSC
-            set_remap.SetRemap('outgoing_bsm','bsm_outbound'),
-                        
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(['/', j2735_convertor_pkg, '/launch','/carma_speed_steering_control.launch.py']),
-            ),
-        ]
-    )
-
-    return LaunchDescription([        
+    return LaunchDescription([
+        declare_vehicle_config_param_file_arg,
+        declare_vehicle_characteristics_param_file_arg, 
+        declare_subsystem_controller_param_file_arg,       
         carma_v2x_container,
-        subsystem_controller,
-        j2735_convertor_group
+        subsystem_controller
     ]) 
 

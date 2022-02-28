@@ -39,8 +39,18 @@ def generate_launch_description():
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     vehicle_calibration_dir = LaunchConfiguration('vehicle_calibration_dir')
+    declare_vehicle_calibration_dir_arg = DeclareLaunchArgument(
+        name = 'vehicle_calibration_dir', 
+        default_value = "/opt/carma/vehicle/calibration",
+        description = "Path to folder containing vehicle calibration directories"
+    )
 
     vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
+    declare_vehicle_config_dir_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_dir', 
+        default_value = "/opt/carma/vehicle/config",
+        description = "Path to file containing vehicle config directories"
+    )
 
     # Declare the vehicle_calibration_dir launch argument
     vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
@@ -58,6 +68,46 @@ def generate_launch_description():
         description = "Path to file contain vehicle configuration parameters"
     )
 
+    #Declare the route file folder launch argument
+    route_file_folder = LaunchConfiguration('route_file_folder')
+    declare_route_file_folder = DeclareLaunchArgument(
+        name = 'route_file_folder',
+        default_value='/opt/carma/routes/',
+        description = 'Path of folder containing routes to load'
+    )
+
+    # Declare enable_guidance_plugin_validate
+    enable_guidance_plugin_validator = LaunchConfiguration('enable_guidance_plugin_validator')
+    declare_enable_guidance_plugin_validator = DeclareLaunchArgument(
+        name = 'enable_guidance_plugin_validator', 
+        default_value='false', 
+        description='Flag indicating whether the Guidance Plugin Validator node will actively validate guidance strategic, tactical, and control plugins'
+    )
+
+    # Declare strategic_plugins_to_validate
+    strategic_plugins_to_validate = LaunchConfiguration('strategic_plugins_to_validate')
+    declare_strategic_plugins_to_validate = DeclareLaunchArgument(
+        name = 'strategic_plugins_to_validate',
+        default_value = '[]',
+        description = 'List of String: Guidance Strategic Plugins that will be validated by the Guidance Plugin Validator Node if enabled'
+    )
+
+    # Declare tactical_plugins_to_validate
+    tactical_plugins_to_validate = LaunchConfiguration('tactical_plugins_to_validate')
+    declare_tactical_plugins_to_validate = DeclareLaunchArgument(
+        name = 'tactical_plugins_to_validate',
+        default_value='[]',
+        description='List of String: Guidance Tactical Plugins that will be validated by the Guidance Plugin Validator Node if enabled'
+    )
+
+    # Declare strategic_plugins_to_validate
+    control_plugins_to_validate = LaunchConfiguration('control_plugins_to_validate')
+    declare_control_plugins_to_validate = DeclareLaunchArgument(
+        name = 'control_plugins_to_validate',
+        default_value= '[]',
+        description='List of String: Guidance Control Plugins that will be validated by the Guidance Plugin Validator Node if enabled'
+    )
+
     # Nodes
 
     transform_group = GroupAction(
@@ -73,8 +123,23 @@ def generate_launch_description():
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_ENV_NS', default_value='environment')),
             IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/environment.launch.py'])
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/environment.launch.py']),
+                launch_arguments = { 
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                    }.items()
             ),
+        ]
+    )
+
+    localization_group = GroupAction(
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_LOCZ_NS', default_value='localization')),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/localization.launch.py']),
+                launch_arguments = { 
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                }.items()
+            )
         ]
     )
 
@@ -85,8 +150,41 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/message.launch.py']),
                 launch_arguments = { 
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
-                    'vehicle_config_param_file' : vehicle_config_param_file
-                    }.items()
+                    'vehicle_config_param_file' : vehicle_config_param_file,
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml']
+                }.items()
+            ),
+        ]
+    )
+
+    guidance_group = GroupAction(
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_GUIDE_NS', default_value='guidance')),
+            
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/guidance.launch.py']),
+                launch_arguments={
+                    'route_file_folder' : route_file_folder,
+                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file, 
+                    'enable_guidance_plugin_validator' : enable_guidance_plugin_validator,
+                    'strategic_plugins_to_validate' : strategic_plugins_to_validate,
+                    'tactical_plugins_to_validate' : tactical_plugins_to_validate,
+                    'control_plugins_to_validate' : control_plugins_to_validate,
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                }.items()
+            ),
+        ]
+    )
+
+    drivers_group = GroupAction(
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_INTR_NS', default_value='hardware_interface')),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/drivers.launch.py']),
+                launch_arguments = { 
+                    'vehicle_config_param_file' : vehicle_config_param_file,
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                }.items()
             ),
         ]
     )
@@ -101,10 +199,20 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        declare_vehicle_calibration_dir_arg,
+        declare_vehicle_config_dir_arg,
         declare_vehicle_characteristics_param_file_arg,
         declare_vehicle_config_param_file_arg,
+        declare_route_file_folder,
+        declare_enable_guidance_plugin_validator,
+        declare_strategic_plugins_to_validate,
+        declare_tactical_plugins_to_validate,
+        declare_control_plugins_to_validate,
+        drivers_group,
         transform_group,
         environment_group,
+        localization_group,
         v2x_group,
+        guidance_group, 
         system_controller
     ])
