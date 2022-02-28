@@ -40,7 +40,6 @@ using namespace platoon_strategic_ihp;
 
 TEST(PlatoonManagerTestFrontJoin, test_construct_front)
 {
-    
     ros::Time::init();
 
     PlatoonPluginConfig config;
@@ -50,7 +49,6 @@ TEST(PlatoonManagerTestFrontJoin, test_construct_front)
     // Use Getter to retrieve host Platoon Manager class
     // change state
     plugin.setPMState(PlatoonState::LEADER);
-
 }
 
 // UCLA: use "run_candidate_leader" to test ecef encoding
@@ -69,7 +67,6 @@ TEST(PlatoonManagerTestFrontJoin, test_ecef_encode_front)
     // Update ecef location
     plugin.setHostECEF(ecef_point_test);
     plugin.run_candidate_leader();
-
 }
 
 
@@ -117,7 +114,6 @@ TEST(PlatoonStrategicIHPPlugin, mob_resp_cb_front)
     plugin.setPMState(PlatoonState::FOLLOWER);
 
     plugin.onSpin();
-   
 }
 
 TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
@@ -129,7 +125,7 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
     
     // Use platoon manager setter to set state
     plugin.setPMState(PlatoonState::LEADER);
-    // compose pltoon info
+    // compose platoon info
     cav_msgs::PlatooningInfo info_msg1 = plugin.composePlatoonInfoMsg();
     // check platoon info (Host is a single ADS vehicle, so it's also the leader)
     EXPECT_EQ(info_msg1.leader_id, "default_id");
@@ -148,7 +144,6 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
     cav_msgs::PlatooningInfo info_msg2 = plugin.composePlatoonInfoMsg();
     // check platoo info (when host is follower, the newly added member will be the leader)
     EXPECT_EQ(info_msg2.leader_id, "1");
-   
 }
 
 // ---------------------------------------- UCLA Tests for same-lane front join and cut-in front join ---------------------------------------
@@ -342,7 +337,6 @@ TEST(PlatoonManagerTestFrontJoin, test2_front)
 
     EXPECT_EQ(2, pm.platoon.size());
     EXPECT_EQ("2", pm.platoon[0].staticId);  // sorted by dtd distance, larger downtrack means vehicle at front, hence ranked higher.
-
 }
 
 // add 2 member to platoon, test size 
@@ -369,7 +363,6 @@ TEST(PlatoonManagerTestFrontJoin, test3_front)
     int res = pm.getTotalPlatooningSize();
 
     EXPECT_EQ(2, res);
-
 }
 
 // test APF for 3 vehicles
@@ -390,14 +383,9 @@ TEST(PlatoonManagerTestFrontJoin, test4_front)
     pm.leaderID = "0";
     pm.currentPlatoonID = "a";
 
-
     ros::Time::init();
 
     int res = pm.allPredecessorFollowing();
 
     EXPECT_EQ(0, res);
-
 }
-
-
-

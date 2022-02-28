@@ -56,8 +56,8 @@ struct PlatoonPluginConfig
   double maxGap                  = 32.0;  // m
   double maxCrosstrackError      = 2.0;   // m
 
-  // width of lane, temporary parameter that used to check end of lane change.
-  double laneWidth              = 3.0;    // m
+  // Speed adjuster to slow down platoon memebr to create gap
+  double slowDownAdjuster         = 0.75;    // ratio 
 
   std::string vehicleID       = "default_id";
 
@@ -71,6 +71,9 @@ struct PlatoonPluginConfig
   double inter_tau = 1.5; // Inter-platoon time gap, refer to bumper to bumper gap time, in s.
   double intra_tau = 0.6; // Intra-platoon time gao, refer to bumper to bumper gap time, in s.
   double gap_weight = 0.9; // Weighted ratio for time-gap based calculation, unitless.
+  bool test_front_join = false;  //Flag to enable/disable front join functionality with two vehicles.
+                                // Flag can be set to true, to test front join functionality with two vehicles
+                                // But in normal operating conditions it should be set to false
   //------------------------------------------------------------------------------------------------
 
 
