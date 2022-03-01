@@ -80,10 +80,11 @@ namespace health_monitor
         }
 
         //////////////////////
-        // NOTE: THIS IS A MANUAL DISABLE OF ALL LIDAR FAILURE DETECTION FOLLOWING THE ROS2 PORT
+        // NOTE: THIS IS A MANUAL DISABLE OF ALL LIDAR AND GPS FAILURE DETECTION FOLLOWING THE ROS2 PORT
         /////////////////////
         lidar1=1;
         lidar2=1;
+        gps=1;
         /////////////////////
 
         //Decision making 
