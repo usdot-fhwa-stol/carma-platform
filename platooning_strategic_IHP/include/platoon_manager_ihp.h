@@ -133,6 +133,9 @@ namespace platoon_strategic_ihp
          * \param crosstrack distance crosstrack from roadway centerline, m
          */
         void updateHostPose(const double downtrack, const double crosstrack);
+		
+		//John added some stuff here
+		//Testing remote PR
 
         /**
          * \brief Stores the latest info on host vehicle's command & actual speeds
