@@ -164,6 +164,7 @@ namespace health_monitor
         // NOTE: THIS IS A MANUAL DISABLE OF ALL LIDAR FAILURE DETECTION FOLLOWING THE ROS2 PORT
         /////////////////////
         lidar=1;
+        gps=1;
         /////////////////////
 
         //Decision making 
