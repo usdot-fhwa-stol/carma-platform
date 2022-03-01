@@ -187,7 +187,8 @@ namespace basic_autonomy
             // This does mean that downstream components might not be able to assume the buffer points are on the route 
             // though this is not likely to be an issue as they are buffer only
             double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack;
-
+            ROS_DEBUG_STREAM("Add lanefollow buffer: ending_downtrack: " << ending_downtrack << ", maneuvers.back().lane_following_maneuver.end_dist: " << maneuvers.back().lane_following_maneuver.end_dist <<
+                            ", detailed_config.buffer_ending_downtrack: " << detailed_config.buffer_ending_downtrack);
 
             size_t max_i = points_and_target_speeds.size() - 1;
             size_t unbuffered_idx = points_and_target_speeds.size() - 1;

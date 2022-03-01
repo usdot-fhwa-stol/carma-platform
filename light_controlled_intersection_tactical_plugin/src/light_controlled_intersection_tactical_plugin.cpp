@@ -192,7 +192,7 @@ std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::create_ge
   
   bool first = true;
   std::unordered_set<lanelet::Id> visited_lanelets;
-
+  std::vector<cav_msgs::Maneuver> processed_maneuvers;
   ROS_DEBUG_STREAM("VehDowntrack: "<<max_starting_downtrack);
   for(const auto &maneuver : maneuvers)
   {
@@ -212,13 +212,13 @@ std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::create_ge
       ROS_DEBUG_STREAM("Creating Lane Follow Geometry");
       std::vector<PointSpeedPair> lane_follow_points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config, visited_lanelets);
       points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
-      
+      processed_maneuvers.push_back(maneuver);
       break; // expected to receive only one maneuver to plan
   }
 
   //Add buffer ending to lane follow points at the end of maneuver(s) end dist 
-  if(maneuvers.back().type == cav_msgs::Maneuver::LANE_FOLLOWING){
-      points_and_target_speeds = add_lanefollow_buffer(wm, points_and_target_speeds, maneuvers, ending_state_before_buffer, detailed_config);
+  if(!processed_maneuvers.empty() && processed_maneuvers.back().type == cav_msgs::Maneuver::LANE_FOLLOWING){
+      points_and_target_speeds = add_lanefollow_buffer(wm, points_and_target_speeds, processed_maneuvers, ending_state_before_buffer, detailed_config);
   }
 
   return points_and_target_speeds;
@@ -287,12 +287,12 @@ void LightControlledIntersectionTacticalPlugin::apply_accel_cruise_decel_speed_p
       //buffer points that will be cut
       speed_i = prev_speed;
     }
-    
-    p.speed = std::min(speed_i,speed_before_decel);
+    p.speed = std::max(speed_i,config_.minimum_speed);
+    p.speed = std::min(p.speed,speed_before_decel);
     ROS_DEBUG_STREAM("Applied speed: " << p.speed << ", at dist: " << total_dist_planned);
 
     prev_point = p;
-    prev_speed = speed_i;
+    prev_speed = p.speed;
   }
 }
 
@@ -366,7 +366,7 @@ void LightControlledIntersectionTacticalPlugin::apply_decel_cruise_accel_speed_p
     ROS_DEBUG_STREAM("Applied speed: " << p.speed << ", at dist: " << total_dist_planned);
 
     prev_point = p;
-    prev_speed = speed_i;
+    prev_speed = p.speed;
   }
 }
 

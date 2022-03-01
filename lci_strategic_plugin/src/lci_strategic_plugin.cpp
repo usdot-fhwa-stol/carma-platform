@@ -195,7 +195,7 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
 
   double time_remaining_at_free_flow =
       (2.0 * distance_remaining_to_traffic_light) /
-      (intersection_speed_.get() + current_state_speed);  // Kinematic Equation: 2*d / (vf + vi) = t
+      (intersection_speed_.get() + current_state.speed);  // Kinematic Equation: 2*d / (vf + vi) = t
 
   double trajectory_smoothing_activation_distance = get_trajectory_smoothing_activation_distance(time_remaining_at_free_flow, lanelet::time::toSec(traffic_light->fixed_cycle_duration), 
                                                                                       current_state_speed, speed_limit, intersection_speed_.get(), max_comfort_accel, max_comfort_decel);
@@ -440,11 +440,13 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         ts_params.dist_cruise = start_stopping_downtrack - current_state.downtrack;;
         ts_params.is_algorithm_successful = true;
         ts_params.speed_before_accel = speed_before_stop;
+        ts_params.speed_before_decel = speed_before_stop;
         ts_params.dist_decel = 0.0;
+        
 
         // first decelerate (triggering algorithm as if the scheduled entry and target speed is at start of stopping downtrack) 
         resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, start_stopping_downtrack, 
-                                            current_state_speed, speed_before_stop, current_state.stamp, current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), ts_params));
+                                            speed_before_stop, speed_before_stop, current_state.stamp, current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), ts_params));
         
         // then stop
         resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
@@ -514,7 +516,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   // Start of TSMO UC2 Algorithm
 
   ros::Time earliest_entry_time = current_state.stamp + get_earliest_entry_time(distance_remaining_to_traffic_light, speed_limit, 
-                                                  current_state_speed, intersection_speed_.get(), max_comfort_accel_, max_comfort_decel_);
+                                                  current_state.speed, intersection_speed_.get(), max_comfort_accel_, max_comfort_decel_);
 
   ROS_DEBUG_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));
 
@@ -526,21 +528,21 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   // CASE SELECTION START
   TrajectorySmoothingParameters ts_params;
 
-  double estimated_entry_time = calc_estimated_entry_time_left(distance_remaining_to_traffic_light, current_state_speed, intersection_speed_.get() );
+  double estimated_entry_time = calc_estimated_entry_time_left(distance_remaining_to_traffic_light, current_state.speed, intersection_speed_.get() );
   double remaining_time = nearest_green_entry_time.toSec() - current_state.stamp.toSec();
-  double speed_before_decel = calc_speed_before_decel(remaining_time, distance_remaining_to_traffic_light, current_state_speed, intersection_speed_.get());
-  double speed_before_accel = calc_speed_before_accel(remaining_time, distance_remaining_to_traffic_light, current_state_speed, intersection_speed_.get());
+  double speed_before_decel = calc_speed_before_decel(remaining_time, distance_remaining_to_traffic_light, current_state.speed, intersection_speed_.get());
+  double speed_before_accel = calc_speed_before_accel(remaining_time, distance_remaining_to_traffic_light, current_state.speed, intersection_speed_.get());
   SpeedProfileCase case_num = determine_speed_profile_case(estimated_entry_time, remaining_time, speed_before_decel, speed_before_accel, speed_limit);
 
   // change speed profile depending on algorithm case starting from maneuver start_dist
   if(case_num == ACCEL_CRUISE_DECEL || case_num == ACCEL_DECEL){
     // acceleration (cruising if needed) then deceleration to reach desired intersection entry speed/time according to algorithm doc
-    ts_params = get_parameters_for_accel_cruise_decel_speed_profile(distance_remaining_to_traffic_light, remaining_time, current_state_speed, speed_before_decel, speed_limit, intersection_speed_.get());
+    ts_params = get_parameters_for_accel_cruise_decel_speed_profile(distance_remaining_to_traffic_light, remaining_time, current_state.speed, speed_before_decel, speed_limit, intersection_speed_.get());
   }
   else if(case_num == DECEL_ACCEL || case_num == DECEL_CRUISE_ACCEL)
   {
     // deceleration (cruising if needed) then acceleration to reach desired intersection entry speed/time according to algorithm doc
-    ts_params = get_parameters_for_decel_cruise_accel_speed_profile(distance_remaining_to_traffic_light, remaining_time, current_state_speed, speed_before_accel, config_.minimum_speed, intersection_speed_.get());
+    ts_params = get_parameters_for_decel_cruise_accel_speed_profile(distance_remaining_to_traffic_light, remaining_time, current_state.speed, speed_before_accel, config_.minimum_speed, intersection_speed_.get());
   }
   else
   {

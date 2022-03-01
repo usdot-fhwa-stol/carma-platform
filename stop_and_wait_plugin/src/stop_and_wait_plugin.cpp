@@ -88,6 +88,14 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
 
   ROS_DEBUG_STREAM("planning state x:" << req.vehicle_state.x_pos_global << ", y: " << req.vehicle_state.y_pos_global << ", speed: " << req.vehicle_state.longitudinal_vel);
 
+  if (req.vehicle_state.longitudinal_vel < epsilon_)
+  {
+    ROS_WARN_STREAM("Detected that car is already stopped! Ignoring the request to plan Stop&Wait");
+    ROS_DEBUG_STREAM("Detected that car is already stopped! Ignoring the request to plan Stop&Wait");
+    
+    return true;
+  }
+
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
   ROS_DEBUG_STREAM("Current_downtrack" << current_downtrack);

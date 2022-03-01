@@ -119,6 +119,8 @@ public:
 
 private:
 
+  double epsilon_ = 0.001; //small constant to compare double
+
   // pointer to the actual wm object
   carma_wm::WorldModelConstPtr wm_;
   StopandWaitConfig config_;
