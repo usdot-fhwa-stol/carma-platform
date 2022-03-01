@@ -155,7 +155,7 @@ namespace platoon_strategic_ihp
         bool isExisted = false;
 
         // update/add this info into the list
-        for (int i = 0;  i < platoon.size();  ++i){
+        for (size_t i = 0;  i < platoon.size();  ++i){
             if(platoon[i].staticId == senderId) {
                 platoon[i].commandSpeed = cmdSpeed;         // m/s
                 platoon[i].vehiclePosition = dtDistance;    // m 
@@ -189,7 +189,7 @@ namespace platoon_strategic_ihp
 
             ROS_DEBUG_STREAM("Add a new vehicle into our platoon list " << newMember.staticId << " platoon.size now = " << platoon.size());
             ROS_DEBUG_STREAM("    Platoon order is now:");
-            for (int i = 0;  i < platoon.size();  ++i)
+            for (size_t i = 0;  i < platoon.size();  ++i)
             {
                 std::string hostFlag = " ";
                 if (i == hostPosInPlatoon_)
@@ -231,7 +231,7 @@ namespace platoon_strategic_ihp
             // due to downtrack descending order, the platoon front veihcle is the first in list. 
             dynamicLeader = platoon[0];
             if (algorithmType_ == "APF_ALGORITHM"){
-                int newLeaderIndex = allPredecessorFollowing();
+                size_t newLeaderIndex = allPredecessorFollowing();
                 if(newLeaderIndex < platoon.size() && newLeaderIndex >= 0) { //this must always be true!
                     dynamicLeader = platoon[newLeaderIndex];
                     ROS_DEBUG_STREAM("APF output: " << dynamicLeader.staticId);
@@ -240,7 +240,7 @@ namespace platoon_strategic_ihp
                 }
                 else //something is terribly wrong in the logic!
                 {
-                    ROS_WARN("newLeaderIndex = ", newLeaderIndex, " is invalid coming from allPredecessorFollowing!");
+                    ROS_WARN_STREAM("newLeaderIndex = " << newLeaderIndex << " is invalid coming from allPredecessorFollowing!");
                     /**
                      * it might happened when the subject vehicle gets far away from the preceding vehicle, 
                      * in which case the host vehicle will follow the one in front.
@@ -257,18 +257,20 @@ namespace platoon_strategic_ihp
 
     }
 
-    // The implementation of all predecessor following algorithm. Determine the dynamic leader for the host vheicle to follow.
+    // The implementation of all predecessor following algorithm. Determine the dynamic leader for the host vehicle to follow.
     int PlatoonManager::allPredecessorFollowing(){
+
         ///***** Case Zero *****///
-        // If the host vheicle is the second vehicle in this platoon,we will always follow the platoon leader in front of host vehicle
-        if(platoon.size() == 2) {
-            ROS_DEBUG("As the second vehicle in the platoon, it will always follow the leader. Case Zero");
+        // If the host vehicle is the second vehicle in this platoon,we will always follow the platoon leader in front of host vehicle
+        if(hostPosInPlatoon_ == 1) {
+            ROS_DEBUG_STREAM("As the second vehicle in the platoon, it will always follow the leader. Case Zero");
             return 0;
         }
+
         ///***** Case One *****///
         // If there weren't a leader in the previous time step, follow the first vehicle (i.e., the platoon leader) as default.
         if(previousFunctionalDynamicLeaderID_ == "") {
-            ROS_DEBUG("APF algorithm did not found a dynamic leader in previous time step. Case one");
+            ROS_DEBUG_STREAM("APF algorithm did not found a dynamic leader in previous time step. Case one");
             return 0;
         }
 
@@ -276,12 +278,12 @@ namespace platoon_strategic_ihp
         // Update host vehicle info when update member info, so platoon list include host vehicle, direct use platoon size for downtrack/speed vector.
         // Record downtrack distance (m) of each member
         std::vector<double> downtrackDistance(platoon.size());
-        for(int i = 0; i < platoon.size(); i++) {
+        for(size_t i = 0; i < platoon.size(); i++) {
             downtrackDistance[i] = platoon[i].vehiclePosition; // m
         }
         // Record speed (m/s) of each member
         std::vector<double> speed(platoon.size());
-        for(int i = 0; i < platoon.size(); i++) {
+        for(size_t i = 0; i < platoon.size(); i++) {
             speed[i] = platoon[i].vehicleSpeed; // m/s
         }
         
@@ -293,36 +295,35 @@ namespace platoon_strategic_ihp
         double distHeadwayWithPredecessor = downtrackDistance[downtrackDistance.size() - 2] - downtrackDistance[downtrackDistance.size() - 1];
         gapWithPred_ = distHeadwayWithPredecessor;
         if(insufficientGapWithPredecessor(distHeadwayWithPredecessor)) {
-            ROS_DEBUG("APF algorithm decides there is an issue with the gap with preceding vehicle: " , distHeadwayWithPredecessor , " m. Case Two");
+            ROS_DEBUG_STREAM("APF algorithm decides there is an issue with the gap with preceding vehicle: " << distHeadwayWithPredecessor << " m. Case Two");
             return platoon.size() - 1;
         }
         else{
             // implementation of the main part of APF algorithm
             // calculate the time headway between every consecutive pair of vehicles
             std::vector<double> timeHeadways = calculateTimeHeadway(downtrackDistance, speed);
-            ROS_DEBUG("APF calculate time headways: " );
+            ROS_DEBUG_STREAM("APF calculate time headways: " );
             for (const auto& value : timeHeadways)
             {
-                ROS_DEBUG("APF time headways: " , value);
+                ROS_DEBUG_STREAM("APF time headways: " << value);
             }
-            ROS_DEBUG("APF found the previous dynamic leader is " , previousFunctionalDynamicLeaderID_);
+            ROS_DEBUG_STREAM("APF found the previous dynamic leader is " << previousFunctionalDynamicLeaderID_);
             // if the previous dynamic leader is the first vehicle in the platoon
             
             if(previousFunctionalDynamicLeaderIndex_ == 0) {
 
                 ///***** Case Three *****///
                 // If there is a violation, the return value is the desired dynamic leader index
-                ROS_DEBUG("APF use violations on lower boundary or maximum spacing to choose dynamic leader. Case Three.");
+                ROS_DEBUG_STREAM("APF use violations on lower boundary or maximum spacing to choose dynamic leader. Case Three.");
                 return determineDynamicLeaderBasedOnViolation(timeHeadways);
             }
             else{
                 // if the previous dynamic leader is not the first vehicle
                 // get the time headway between every consecutive pair of vehicles from index Of Previous dynamic Leader
                 std::vector<double> partialTimeHeadways = getTimeHeadwayFromIndex(timeHeadways, previousFunctionalDynamicLeaderIndex_);
-                ROS_DEBUG("APF partial time headways array:: " );
                 for (const auto& value : partialTimeHeadways)
                 {
-                    ROS_DEBUG("APF partial time headways: " , value);
+                    ROS_DEBUG_STREAM("APF partial time headways: " << value);
                 }
                 int closestLowerBoundaryViolation = findLowerBoundaryViolationClosestToTheHostVehicle(partialTimeHeadways);
                 int closestMaximumSpacingViolation = findMaximumSpacingViolationClosestToTheHostVehicle(partialTimeHeadways);
@@ -347,42 +348,42 @@ namespace platoon_strategic_ihp
                     ///***** Case Four *****///
                     //we may switch dynamic leader further downstream
                     if(condition1 && condition2) {
-                        ROS_DEBUG("APF found two conditions for assigning local dynamic leadership further downstream are satisfied. Case Four");
+                        ROS_DEBUG_STREAM("APF found two conditions for assigning local dynamic leadership further downstream are satisfied. Case Four");
                         return determineDynamicLeaderBasedOnViolation(timeHeadways);
                     } else {
                         
                         ///***** Case Five *****///
                         // We may not switch dynamic leadership to another vehicle further downstream because some criteria are not satisfied
-                        ROS_DEBUG("APF found two conditions for assigning local dynamic leadership further downstream are not satisfied. Case Five.");
-                        ROS_DEBUG("condition1: " , condition1 , " & condition2: " , condition2);
+                        ROS_DEBUG_STREAM("APF found two conditions for assigning local dynamic leadership further downstream are not satisfied. Case Five.");
+                        ROS_DEBUG_STREAM("condition1: " << condition1 << " & condition2: " << condition2);
                         return previousFunctionalDynamicLeaderIndex_;
                     }
                 } else if(closestLowerBoundaryViolation != -1 && closestMaximumSpacingViolation == -1) {
                     // The rest four cases have roughly the same logic: locate the closest violation and assign dynamic leadership accordingly
                     
                     ///***** Case Six *****///
-                    ROS_DEBUG("APF found closestLowerBoundaryViolation on partial time headways. Case Six.");
+                    ROS_DEBUG_STREAM("APF found closestLowerBoundaryViolation on partial time headways. Case Six.");
                     return previousFunctionalDynamicLeaderIndex_ - 1 + closestLowerBoundaryViolation;
 
                 } else if(closestLowerBoundaryViolation == -1 && closestMaximumSpacingViolation != -1) {
                     
                     ///***** Case Seven *****///
-                    ROS_DEBUG("APF found closestMaximumSpacingViolation on partial time headways. Case Seven.");
+                    ROS_DEBUG_STREAM("APF found closestMaximumSpacingViolation on partial time headways. Case Seven.");
                     return previousFunctionalDynamicLeaderIndex_ + closestMaximumSpacingViolation;
                 } else{
-                    ROS_DEBUG("APF found closestMaximumSpacingViolation and closestLowerBoundaryViolation on partial time headways.");
+                    ROS_DEBUG_STREAM("APF found closestMaximumSpacingViolation and closestLowerBoundaryViolation on partial time headways.");
                     if(closestLowerBoundaryViolation > closestMaximumSpacingViolation) {
                         
                         ///***** Case Eight *****///
-                        ROS_DEBUG("closest LowerBoundaryViolation is higher than closestMaximumSpacingViolation on partial time headways. Case Eight.");
+                        ROS_DEBUG_STREAM("closest LowerBoundaryViolation is higher than closestMaximumSpacingViolation on partial time headways. Case Eight.");
                         return previousFunctionalDynamicLeaderIndex_ - 1 + closestLowerBoundaryViolation;
                     } else if(closestLowerBoundaryViolation < closestMaximumSpacingViolation) {
                         
                         ///***** Case Nine *****///
-                        ROS_DEBUG("closestMaximumSpacingViolation is higher than closestLowerBoundaryViolation on partial time headways. Case Nine.");
+                        ROS_DEBUG_STREAM("closestMaximumSpacingViolation is higher than closestLowerBoundaryViolation on partial time headways. Case Nine.");
                         return previousFunctionalDynamicLeaderIndex_ + closestMaximumSpacingViolation;
                     } else {
-                        ROS_DEBUG("APF dynamic Leader selection parameter is wrong!");
+                        ROS_DEBUG_STREAM("APF dynamic Leader selection parameter is wrong!");
                         return 0;
                     }
                 }
@@ -403,11 +404,11 @@ namespace platoon_strategic_ihp
         // For normal operation, gap > minGap is necessary. 
         bool frontGapIsTooSmall = distanceToPredVehicle < config_.minGap; 
         
-        // Host vehicle was following predecessor vehicle. --> The predecessor vehicel was violating gap threshold.
+        // Host vehicle was following predecessor vehicle. --> The predecessor vehicle was violating gap threshold.
         bool previousLeaderIsPredecessor = previousFunctionalDynamicLeaderID_ == platoon[platoon.size() - 1].staticId; 
         
         // Gap greater than maxGap_ is necessary for host to stop choosing predecessor as dynamic leader. 
-        bool frontGapIsNotLargeEnough = (distanceToPredVehicle < config_.maxGap && previousLeaderIsPredecessor);
+        bool frontGapIsNotLargeEnough = distanceToPredVehicle < config_.maxGap && previousLeaderIsPredecessor;
 
         return (frontGapIsTooSmall || frontGapIsNotLargeEnough);
     }
@@ -416,7 +417,7 @@ namespace platoon_strategic_ihp
     std::vector<double> PlatoonManager::calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed) const{
         std::vector<double> timeHeadways(downtrackDistance.size() - 1);
         // Due to downtrack descending order, the platoon member with smaller index has larger downtrack, hence closer to the front of the platoon.
-        for (int i=0; i<timeHeadways.size(); i++){
+        for (size_t i = 0; i < timeHeadways.size(); i++){
             // Calculate time headaway between the vehicle behind. 
             if (speed[i+1] >= config_.ss_theta) // speed is in m/s
             {
@@ -453,15 +454,15 @@ namespace platoon_strategic_ihp
         
         // Compare the violation locations, always following the closer violation vehicle (larger index) first, then the furthur ones.
         if(closestLowerBoundaryViolation > closestMaximumSpacingViolation) {
-            ROS_DEBUG("APF found violation on closestLowerBoundaryViolation at " , closestLowerBoundaryViolation);
+            ROS_DEBUG_STREAM("APF found violation on closestLowerBoundaryViolation at " << closestLowerBoundaryViolation);
             return closestLowerBoundaryViolation; // Min violation, following the vehicle that is in font of the violating gap.
         } 
         else if(closestLowerBoundaryViolation < closestMaximumSpacingViolation){
-            ROS_DEBUG("APF found violation on closestMaximumSpacingViolation at " , closestMaximumSpacingViolation);
+            ROS_DEBUG_STREAM("APF found violation on closestMaximumSpacingViolation at " << closestMaximumSpacingViolation);
             return closestMaximumSpacingViolation + 1; // Max violation, follow the vehicle that is behinf the violating gap.
         }
         else{
-            ROS_DEBUG("APF found no violations on both closestLowerBoundaryViolation and closestMaximumSpacingViolation");
+            ROS_DEBUG_STREAM("APF found no violations on both closestLowerBoundaryViolation and closestMaximumSpacingViolation");
             return 0;
         }
     }
@@ -543,7 +544,7 @@ namespace platoon_strategic_ihp
     int PlatoonManager::getNumberOfVehicleInFront() {
         
         int num = platoon.size() - 1;
-        for (int i = 0;  i < platoon.size();  ++i)
+        for (size_t i = 0;  i < platoon.size();  ++i)
         {
             if (platoon[i].vehiclePosition <= getCurrentDowntrackDistance() + 1.0) //allow for some uncertainty to count host also
             {
@@ -701,7 +702,7 @@ namespace platoon_strategic_ihp
         double min_diff = 99999.000;
         int cut_in_index = -1;
         // Loop through all platoon members  
-        for(int i = 0; i < platoon.size(); i++) 
+        for(size_t i = 0; i < platoon.size(); i++) 
         {
             double current_member_dtd = platoon[i].vehiclePosition; 
             double curent_dtd_diff = current_member_dtd - joinerDtD;
@@ -717,32 +718,33 @@ namespace platoon_strategic_ihp
     }
 
     // UCLA: find the cut-in join target gap size in downtrack distance (m). The origin of the vehicle when calculating DtD is locate at the rear axle. 
-    double PlatoonManager::getCutInGap(int gap_leading_index, double joinerDtD)
+    double PlatoonManager::getCutInGap(const int gap_leading_index, const double joinerDtD)
     {
         /*
             Locate the target cut-in join gap size based on the index.   
         */
         // Initiate variables 
-        double gap_size;
+        double gap_size = -0.999;
+        size_t index = static_cast<size_t>(gap_leading_index);
 
         // cut-in from front 
         if (gap_leading_index == -1)
         {
             double gap_rear_dtd = platoon[0].vehiclePosition;
-            double gap_size = joinerDtD - gap_rear_dtd - config_.vehicleLength;
+            gap_size = joinerDtD - gap_rear_dtd - config_.vehicleLength;
         }
         // cut-in from behind 
-        else if (gap_leading_index == platoon.size() - 1)
+        else if (index == platoon.size() - 1)
         {    
-            double gap_leading_dtd = platoon[gap_leading_index].vehiclePosition;
-            double gap_size = gap_leading_dtd - joinerDtD - config_.vehicleLength;;
+            double gap_leading_dtd = platoon[index].vehiclePosition;
+            gap_size = gap_leading_dtd - joinerDtD - config_.vehicleLength;;
         }
         // cut-in in the middle
         else
         {
-            double gap_leading_dtd = platoon[gap_leading_index].vehiclePosition;
-            double gap_rear_dtd = platoon[gap_leading_index + 1].vehiclePosition;
-            double gap_size = gap_leading_dtd - gap_rear_dtd - config_.vehicleLength;
+            double gap_leading_dtd = platoon[index].vehiclePosition;
+            double gap_rear_dtd = platoon[index + 1].vehiclePosition;
+            gap_size = gap_leading_dtd - gap_rear_dtd - config_.vehicleLength;
         }
 
         // return gap_size value

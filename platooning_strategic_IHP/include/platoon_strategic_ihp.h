@@ -594,23 +594,20 @@ namespace platoon_strategic_ihp
             * \brief Function to determine if the host vehicle is close to the target platoon (used for cut-in join scenarios). 
             *  
             *
-            * \param current_downtrack: The downtrack distance of the host vehicle.
-            *        current_crosstrack:  The crosstrack distance of the host vehicle.
-            *        rearVehicleDtd: The downtrack of the platoon rear vehicle.
-            *        frontVehicleDtd: The downtrack of the platoon leader.
-            *        frontVehicleCtd: The crosstrack of the platoon leader.
-            *        
+            * \param rearVehicleDtd: The downtrack of the neighbor platoon rear vehicle.
+            * \param frontVehicleDtd: The downtrack of the neighbor platoon leader.
+            * \param frontVehicleCtd: The crosstrack of the neighbor platoon leader.
             *
             * \return (boolean): if the host vehicle is close to the target platoon.
             */
-            bool isVehicleNearTargetPlatoon(double currentDtd, double currentCtd, double rearVehicleDtd, double frontVehicleDtd, double frontVehicleCtd);
+            bool isVehicleNearTargetPlatoon(double rearVehicleDtd, double frontVehicleDtd, double frontVehicleCtd);
 
             /**
             * \brief Function to find the starting and ending lanelet ID for lane change in a two-lane scenario (used for cut-in join scenarios).
             * 
             * Note: This is a temporary function for internal test only. The scenario is not genrealized. Can only find adjacebt lanletID based on predefiend direction (left, right).
             *       
-            * \TODO: This function should be replaced by the complete arbitarty lane change module. 
+            * \TODO: This function should be replaced by the complete arbitrary lane change module. 
             *
             * \param start_downtrack: The downtrack distance (m) of the starting point.
             *        end_downtrack: The downtrack distance (m) of the target (end) point.
@@ -820,11 +817,11 @@ namespace platoon_strategic_ihp
             double maxAllowedJoinGap_ = 90;
             int maxPlatoonSize_ = 10;
             double vehicleLength_ = 5.0;
-            int infoMessageInterval_ = 200; // ms
-            long prevHeartBeatTime_ = 0.0;
+            unsigned long infoMessageInterval_ = 200; // ms
+            unsigned long prevHeartBeatTime_ = 0.0;
             int statusMessageInterval_ = 100; // ms
-            int NEGOTIATION_TIMEOUT = 5000;  // ms
-            int LANE_CHANGE_TIMEOUT = 300000; // ms (5 min)
+            unsigned long NEGOTIATION_TIMEOUT = 5000;  // ms
+            unsigned long LANE_CHANGE_TIMEOUT = 300000; // ms (5 min)
             int noLeaderUpdatesCounter = 0;
             int LEADER_TIMEOUT_COUNTER_LIMIT = 5;
             double waitingStateTimeout = 25.0; // s
