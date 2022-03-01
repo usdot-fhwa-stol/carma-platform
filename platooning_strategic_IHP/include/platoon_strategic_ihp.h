@@ -881,5 +881,21 @@ namespace platoon_strategic_ihp
              * index = 4, ECEFZ, in cm.
              */
             const std::string JOIN_CUT_IN_PARAMS = "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%";
+
+            // JOIN Strategy Params
+            /**
+             * index = 0, SIZE, number of members.
+             * index = 1, SPEED, in m/s.
+             * index = 2, ECEFX, in cm.
+             * index = 3, ECEFY, in cm.
+             * index = 4, ECEFZ, in cm.
+             * index = 5, JOINIDX, index of the position in platoon the incoming vehicle tries to join
+             */
+            /** note: The cut-in index is zero-based and points to the gap-leading vehicle's index. 
+             *  eg:  for rear join, cut-in index == platoon.size()-1; 
+             *       for join from front, index == -1;
+             *       for cut-in in middle, index indicate the gap leading vehicle's index.
+             */    
+            const std::string JOIN_PARAMS = "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%";
     };
 }
