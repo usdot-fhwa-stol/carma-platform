@@ -70,6 +70,11 @@ namespace plan_delegator
         // do basic check to see if the input is valid
         if (isManeuverPlanValid(plan))
         {
+            for (auto& maneuver : plan->maneuvers)
+            {
+                updateManeuverDistances(maneuver);
+            }
+            
             latest_maneuver_plan_ = *plan;
         }
         else {
@@ -194,8 +199,6 @@ namespace plan_delegator
                 continue;
             }
 
-            updateManeuverDistances(maneuver);
-            
             lanelet::BasicPoint2d current_loc(latest_pose_.pose.position.x, latest_pose_.pose.position.y);
             double current_downtrack = wm_->routeTrackPos(current_loc).downtrack;
             ROS_DEBUG_STREAM("current_downtrack" << current_downtrack);
