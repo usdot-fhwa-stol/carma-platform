@@ -17,6 +17,9 @@ set(PKG_CATKIN_DEPS
   carma_wm
   lanelet2_core
   lanelet2_traffic_rules
+  tf
+  tf2
+  tf2_geometry_msgs
 )
 
 find_package(catkin REQUIRED COMPONENTS
