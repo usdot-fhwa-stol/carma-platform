@@ -53,7 +53,7 @@ int main(int argc, char** argv)
   pnh.param<std::string>("stop_and_wait_plugin_name",        config.stop_and_wait_plugin_name, config.stop_and_wait_plugin_name);
   pnh.param<std::string>("intersection_transit_plugin_name", config.intersection_transit_plugin_name, config.intersection_transit_plugin_name);
   // clang-format on
-
+  
   // Construct plugin
   lci_strategic_plugin::LCIStrategicPlugin lcip(wml.getWorldModel(), config);
 
@@ -61,6 +61,8 @@ int main(int argc, char** argv)
   ros::ServiceServer plan_maneuver_srv =
       nh.advertiseService("plugins/" + config.strategic_plugin_name + "/plan_maneuvers", &lci_strategic_plugin::LCIStrategicPlugin::planManeuverCb, &lcip);
 
+  lcip.lookupFrontBumperTransform();
+  
   ros::Timer discovery_pub_timer =
       nh.createTimer(ros::Duration(ros::Rate(10.0)), [&lcip, &plugin_discovery_pub](const auto&) {
         plugin_discovery_pub.publish(lcip.getDiscoveryMsg());

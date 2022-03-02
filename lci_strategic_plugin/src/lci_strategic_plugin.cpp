@@ -83,6 +83,23 @@ bool LCIStrategicPlugin::supportedLightState(lanelet::CarmaTrafficSignalState st
   }
 }
 
+void LCIStrategicPlugin::lookupFrontBumperTransform() 
+{
+    tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+    tf2_buffer_.setUsingDedicatedThread(true);
+    try
+    {
+        geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("base_link", "vehicle_front", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
+        length_to_front_bumper_ = tf.transform.translation.x;
+        ROS_DEBUG_STREAM("length_to_front_bumper_: " << length_to_front_bumper_);
+        
+    }
+    catch (const tf2::TransformException &ex)
+    {
+        ROS_WARN("%s", ex.what());
+    }
+}
+
 LCIStrategicPlugin::VehicleState LCIStrategicPlugin::extractInitialState(const cav_srvs::PlanManeuversRequest& req) const
 {
   VehicleState state;
@@ -488,7 +505,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   // If the vehicle is at a stop trigger the stopped state
   constexpr double HALF_MPH_IN_MPS = 0.22352;
   if (current_state.speed < HALF_MPH_IN_MPS &&
-      fabs(distance_remaining_to_traffic_light) < config_.stopping_location_buffer)
+      fabs(distance_remaining_to_traffic_light) < config_.stopping_location_buffer + length_to_front_bumper_)
   {
     transition_table_.signal(TransitEvent::STOPPED);  // The vehicle has come to a stop at the light
     ROS_ERROR_STREAM("WWWWWWWWWWWWEEEE STOOOOOOOOOOOOOOOOOOOOPPPPED");
