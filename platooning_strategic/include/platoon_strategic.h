@@ -224,7 +224,7 @@ namespace platoon_strategic
             cav_msgs::LocationECEF pose_ecef_point_;
 
             // Flag to enable/disable platooning plugin
-            bool platooning_enabled_ = false;
+            bool platooning_enabled_ = true;
 
         
         private:
