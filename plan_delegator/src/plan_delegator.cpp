@@ -70,12 +70,12 @@ namespace plan_delegator
         // do basic check to see if the input is valid
         if (isManeuverPlanValid(plan))
         {
-            for (auto& maneuver : plan->maneuvers)
+            latest_maneuver_plan_ = *plan;
+
+            for (auto& maneuver : latest_maneuver_plan_.maneuvers)
             {
                 updateManeuverDistances(maneuver);
             }
-            
-            latest_maneuver_plan_ = *plan;
         }
         else {
             ROS_WARN_STREAM("Received empty plan, no maneuvers found in plan ID " << plan->maneuver_plan_id);
