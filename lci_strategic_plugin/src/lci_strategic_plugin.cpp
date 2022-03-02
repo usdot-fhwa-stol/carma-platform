@@ -660,13 +660,20 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
     throw std::invalid_argument("While in WAITING state, the traffic lights disappeared.");
   }
 
+  auto stop_line = traffic_light->getStopLine(entry_lanelet);
+
+  if (!stop_line)
+  {
+    throw std::invalid_argument("Given entry lanelet doesn't have stop_line...");
+  }
+
   double traffic_light_down_track =
-      wm_->routeTrackPos(traffic_light->stopLine().front().front().basicPoint2d()).downtrack;
+      wm_->routeTrackPos(stop_line.get().front().basicPoint2d()).downtrack;
 
   ROS_DEBUG("traffic_light_down_track %f", traffic_light_down_track);
-
+  
   auto current_light_state_optional = traffic_light->predictState(lanelet::time::timeFromSec(req.header.stamp.toSec()));
-
+  ROS_DEBUG_STREAM("WAITING STATE: requested time to check: " << req.header.stamp.toSec());
   if (!validLightState(current_light_state_optional, req.header.stamp))
     return;
 

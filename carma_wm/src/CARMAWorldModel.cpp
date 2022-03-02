@@ -1479,9 +1479,9 @@ namespace carma_wm
         
         if (!curr_light->recorded_time_stamps.empty())
         {
-          boost::posix_time::time_duration time_difference = curr_light->predictState(min_end_time).get().first - min_end_time;
+          boost::posix_time::time_duration time_difference = curr_light->predictState(min_end_time - lanelet::time::durationFromSec(0.3)).get().first - min_end_time; //0.3s to account for error
           ROS_DEBUG_STREAM("Initial time_difference: " << (double)(time_difference.total_milliseconds() / 1000.0));
-          if (curr_light->predictState(min_end_time).get().second !=  received_state)
+          if (curr_light->predictState(min_end_time - lanelet::time::durationFromSec(0.3)).get().second !=  received_state)
           {
             // shift to same state's end
             boost::posix_time::time_duration shift_to_match_state = curr_light->fixed_cycle_duration - curr_light->signal_durations[received_state];
@@ -1489,11 +1489,11 @@ namespace carma_wm
             ROS_DEBUG_STREAM("Time_difference new: " << (double)(time_difference.total_milliseconds() / 1000.0));
           }
           
-          // if |time difference| is less than 0.1 sec
+          // if |time difference| is less than 0.3 sec
           bool same_time_stamp_as_last = time_difference.total_milliseconds() >= -30 && time_difference.total_milliseconds() <= 30;
         
           // Received same cycle info while signal already has full cycle, then skip
-          if (curr_light->predictState(min_end_time).get().second == received_state &&
+          if (curr_light->predictState(min_end_time - lanelet::time::durationFromSec(0.3)).get().second == received_state &&
               same_time_stamp_as_last &&
               sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] > 4 )  // checking >4 because: 3 unique + 1 more state to 
                                                                                                               // complete cycle. And last state (e.g. 4th) is updated on next (e.g 5th)
@@ -1513,6 +1513,8 @@ namespace carma_wm
             sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time, received_state));
             sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] = 1;
             ROS_DEBUG_STREAM("Detected new cycle info! Shifted everything! : " << std::to_string(lanelet::time::toSec(min_end_time)) << ", time_difference sec:" << time_difference.total_seconds());
+            ROS_ERROR_STREAM("Detected new cycle info! Shifted everything! : " << std::to_string(lanelet::time::toSec(min_end_time)) << ", time_difference sec:" << time_difference.total_seconds());
+            
             continue;
           }
         }
