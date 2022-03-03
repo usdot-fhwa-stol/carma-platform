@@ -157,6 +157,24 @@ ros::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_dista
   double x2 = get_distance_to_accel_or_decel_once(current_speed, departure_speed, max_accel, max_decel);
   double x1 = get_distance_to_accel_or_decel_twice(free_flow_speed, current_speed, departure_speed, max_accel, max_decel);
   double v_hat = get_inflection_speed_value(x, x1, x2, free_flow_speed, current_speed, departure_speed, max_accel, max_decel);
+  
+  ROS_DEBUG_STREAM("x: " << x << ", x2: " << x2 << ", x1: " << x1);
+
+  if (v_hat <= config_.minimum_speed - epsilon_)
+  {
+    ROS_ERROR_STREAM("Detected that v_hat is smaller than allowed!!!: " << v_hat);
+    ROS_DEBUG_STREAM("Detected that v_hat is smaller than allowed!!!: " << v_hat);
+    
+    v_hat = config_.minimum_speed;
+  }
+
+  if (v_hat >= free_flow_speed + epsilon_)
+  {
+    ROS_ERROR_STREAM("Detected that v_hat is Bigger than allowed!!!: " << v_hat);
+    ROS_DEBUG_STREAM("Detected that v_hat is Bigger than allowed!!!: " << v_hat);
+    
+    v_hat = free_flow_speed;
+  }
 
   ros::Duration t_accel;
   if ( x < x2 && current_speed > departure_speed)
@@ -185,6 +203,7 @@ ros::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_dista
   {
     t_cruise = ros::Duration(0.0);
   }
+  ROS_DEBUG_STREAM("t_accel: " <<  t_accel << ", t_cruise: " << t_cruise << ", t_decel: " << t_decel);
   return t_accel + t_cruise + t_decel;
 
 }
