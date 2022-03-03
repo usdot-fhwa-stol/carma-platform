@@ -1420,7 +1420,7 @@ namespace carma_wm
         // raw min_end_time in seconds measured from the most recent full hour
         boost::posix_time::ptime min_end_time = lanelet::time::timeFromSec(current_movement_state.movement_event_list[0].timing.min_end_time);
         auto received_state = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state);
-
+        
         if (curr_intersection.moy_exists) //account for minute of the year
         {
           auto inception_boost(boost::posix_time::time_from_string("1970-01-01 00:00:00.000")); // inception of epoch

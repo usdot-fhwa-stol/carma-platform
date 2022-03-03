@@ -672,9 +672,11 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
 
   ROS_DEBUG("traffic_light_down_track %f", traffic_light_down_track);
   
-  auto current_light_state_optional = traffic_light->predictState(lanelet::time::timeFromSec(req.header.stamp.toSec()));
-  ROS_DEBUG_STREAM("WAITING STATE: requested time to check: " << req.header.stamp.toSec());
-  if (!validLightState(current_light_state_optional, req.header.stamp))
+  auto current_light_state_optional = traffic_light->predictState(lanelet::time::timeFromSec(current_state.stamp.toSec()));
+  ROS_DEBUG_STREAM("WAITING STATE: requested time to check: " << std::to_string(req.header.stamp.toSec()));
+  ROS_DEBUG_STREAM("WAITING STATE: requested time to CURRENT STATE check: " << std::to_string(current_state.stamp.toSec()));
+  
+  if (!validLightState(current_light_state_optional, current_state.stamp))
     return;
 
   if (current_light_state_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
@@ -797,6 +799,8 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     prev_state = transition_table_.getState();  // Cache previous state to check if state has changed after 1 iteration
 
     ROS_INFO_STREAM("Planning in state: " << transition_table_.getState());
+    auto current_light_state_optional = nearest_traffic_signal->predictState(lanelet::time::timeFromSec(current_state.stamp.toSec()));
+    ROS_ERROR_STREAM("CURRENT SIGNAL DETECTED: " << current_light_state_optional.get().second << ", for Id: " << nearest_traffic_signal->id());
     switch (transition_table_.getState())
     {
       case TransitState::UNAVAILABLE:
