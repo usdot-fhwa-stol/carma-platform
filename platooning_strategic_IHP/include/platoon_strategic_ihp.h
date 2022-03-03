@@ -831,8 +831,8 @@ namespace platoon_strategic_ihp
             // Speed below which platooning will not be attempted; non-zero value allows for sensor noise
             const double STOPPED_SPEED = 0.5; // m/s
 
-            // UCLA: add member variable for state prepare to join
-            int target_join_index_;
+            // UCLA: add member variable for state prepare to join (default -2, front join -1, mid/rear join other integer)
+            int target_join_index_ = -2;
 
             // Strategy types
             const std::string PLATOONING_STRATEGY = "Carma/Platooning";

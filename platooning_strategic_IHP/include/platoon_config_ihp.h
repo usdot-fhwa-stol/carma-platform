@@ -56,6 +56,9 @@ struct PlatoonPluginConfig
   double maxGap                  = 32.0;  // m
   double maxCrosstrackError      = 2.0;   // m
 
+  // Speed adjuster to slow down platoon memebr to create gap
+  double slowDownAdjuster         = 0.75;    // ratio 
+
   std::string vehicleID       = "default_id";
 
   // ---------------------- UCLA: parameters for IHP platoon trajectory regulation ----------------
