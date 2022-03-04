@@ -97,4 +97,4 @@ curve_resample_step_size: 1.0
 back_distance: 0.0
 
 #Double: 
-buffer_ending_downtrack: 5.0
+buffer_ending_downtrack: 15.0

@@ -78,4 +78,4 @@ back_distance: 0.0
 
 # Double : The additional downtrack beyond requested end dist used to fit points along spline. Extra points removed before returning trajectory. Feature not used if end dist is route end
 #Units: meters
-ending_buffer_downtrack : 5.0
+ending_buffer_downtrack : 15.0
