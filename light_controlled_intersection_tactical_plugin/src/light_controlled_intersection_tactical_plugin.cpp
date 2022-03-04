@@ -138,14 +138,29 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
                                                                                 wpg_detail_config); // Compute the trajectory
     trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
     
-    
-
     if (last_case_ && last_case_.get() == static_cast<SpeedProfileCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0]))
+    {
       resp.trajectory_plan = last_trajectory_;
+      ROS_ERROR_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_);
+      ROS_ERROR_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_);
+      ROS_ERROR_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_);
+      ROS_DEBUG_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_);
+      ROS_DEBUG_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_);
+      ROS_DEBUG_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_);
+      
+    }  
     else
     {
       last_trajectory_ = trajectory;
       resp.trajectory_plan = trajectory;
+      last_case_ = static_cast<SpeedProfileCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0]);
+      ROS_ERROR_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_);
+      ROS_ERROR_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_);
+      ROS_ERROR_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_);
+      ROS_DEBUG_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_);
+      ROS_DEBUG_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_);
+      ROS_DEBUG_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_);
+      
     }
 
     resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
