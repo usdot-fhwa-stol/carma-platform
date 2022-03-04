@@ -138,7 +138,8 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
                                                                                 wpg_detail_config); // Compute the trajectory
     trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
     
-    if (last_case_ && last_case_.get() == static_cast<SpeedProfileCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0]))
+    if (last_case_ && last_case_.get() == static_cast<SpeedProfileCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0])
+          && last_trajectory_.trajectory_points.back().target_time <= req.header.stamp - ros::Duration(1.0))
     {
       resp.trajectory_plan = last_trajectory_;
       ROS_ERROR_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_.get());
