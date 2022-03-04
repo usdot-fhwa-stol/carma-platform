@@ -84,6 +84,11 @@ namespace platoon_control
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
             [this](const auto&) { plugin_discovery_pub_.publish(plugin_discovery_msg_); });
+
+
+        ros::Timer control_pub_timer_ = pnh_->createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [this](const auto&) {controlTimerCb();});    
     }
 
                                     
@@ -92,6 +97,20 @@ namespace platoon_control
         ros::CARMANodeHandle::spin();
     }
 
+    bool PlatoonControlPlugin::controlTimerCb()
+    {
+
+        cav_msgs::TrajectoryPlanPoint first_trajectory_point = latest_trajectory_.trajectory_points[1]; // TODO this variable appears to be misnamed. It is the second trajectory point
+        cav_msgs::TrajectoryPlanPoint lookahead_point = getLookaheadTrajectoryPoint(latest_trajectory_);
+
+        trajectory_speed_ = getTrajectorySpeed(latest_trajectory_.trajectory_points);
+        
+        generateControlSignals(first_trajectory_point, lookahead_point); // TODO this should really be called on a timer against that last trajectory so 30Hz control loop can be achieved
+
+        return true;
+    }   
+    
+
 
     void  PlatoonControlPlugin::trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
         
@@ -99,16 +118,8 @@ namespace platoon_control
             ROS_WARN_STREAM("PlatoonControlPlugin cannot execute trajectory as only 1 point was provided");
             return;
         }
-        cav_msgs::TrajectoryPlanPoint first_trajectory_point = tp->trajectory_points[1]; // TODO this variable appears to be misnamed. It is the second trajectory point
-        cav_msgs::TrajectoryPlanPoint lookahead_point = getLookaheadTrajectoryPoint(*tp);
 
-        trajectory_speed_ = getTrajectorySpeed(tp->trajectory_points);
-
-    	
-        
-        generateControlSignals(first_trajectory_point, lookahead_point); // TODO this should really be called on a timer against that last trajectory so 30Hz control loop can be achieved
-
-
+        latest_trajectory_ = *tp;
     }
 
     cav_msgs::TrajectoryPlanPoint PlatoonControlPlugin::getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan)
