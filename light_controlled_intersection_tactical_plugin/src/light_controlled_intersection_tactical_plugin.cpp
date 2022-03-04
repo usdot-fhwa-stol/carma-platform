@@ -137,9 +137,17 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
                                                                                 req.vehicle_state, req.header.stamp, wm_, ending_state_before_buffer_, debug_msg_, 
                                                                                 wpg_detail_config); // Compute the trajectory
     trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
-
-    resp.trajectory_plan = trajectory;
     
+    
+
+    if (last_case_ && last_case_.get() == static_cast<SpeedProfileCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0]))
+      resp.trajectory_plan = last_trajectory_;
+    else
+    {
+      last_trajectory_ = trajectory;
+      resp.trajectory_plan = trajectory;
+    }
+
     resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
     return true;
