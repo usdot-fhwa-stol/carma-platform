@@ -218,7 +218,7 @@ namespace platoon_control
 
     void PlatoonControlPlugin::generateControlSignals(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point){
 
-        pcw_.setCurrentSpeed(trajectory_speed_);
+        pcw_.setCurrentSpeed(trajectory_speed_); //TODO why this and not the actual vehicle speed?  Method name suggests different use than this.
         // pcw_.setCurrentSpeed(current_speed_);
         pcw_.setLeader(platoon_leader_);
     	pcw_.generateSpeed(first_trajectory_point);
@@ -243,9 +243,11 @@ namespace platoon_control
         double t1 = (trajectory_points[trajectory_points.size()-1].target_time.toSec() - trajectory_points[0].target_time.toSec());
 
         double avg_speed = d1/t1;
+        ROS_DEBUG_STREAM("trajectory_points size = " << trajectory_points.size() << ", d1 = " << d1 << ", t1 = " << t1 << ", avg_speed = " << avg_speed);
 
         for(size_t i = 0; i < trajectory_points.size() - 2; i++ )
-        {            double dx = trajectory_points[i + 1].x - trajectory_points[i].x;
+        {            
+            double dx = trajectory_points[i + 1].x - trajectory_points[i].x;
             double dy = trajectory_points[i + 1].y - trajectory_points[i].y;
             double d = sqrt(dx*dx + dy*dy); 
             double t = (trajectory_points[i + 1].target_time.toSec() - trajectory_points[i].target_time.toSec());
@@ -259,7 +261,7 @@ namespace platoon_control
         ROS_DEBUG_STREAM("trajectory speed: " << trajectory_speed);
         ROS_DEBUG_STREAM("avg trajectory speed: " << avg_speed);
 
-        return avg_speed;
+        return avg_speed; //TODO: why are 2 speeds being calculated? Which should be returned?
 
     }
 
