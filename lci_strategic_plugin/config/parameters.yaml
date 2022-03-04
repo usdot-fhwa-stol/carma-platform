@@ -1,8 +1,8 @@
 # Double: multiplier to apply to the maximum allowable vehicle deceleration limit so we plan under our capabilities
-vehicle_decel_limit_multiplier : 0.8
+vehicle_decel_limit_multiplier : 1.0
 
 # Double: multiplier to apply to the maximum allowable vehicle acceleration limit so we plan under our capabilities
-vehicle_accel_limit_multiplier : 0.8
+vehicle_accel_limit_multiplier : 1.0
 
 # Double: The minimum distance in meters that the vehicle can be at before requiring a transition to the APPROACH state
 min_approach_distance : 30.0
@@ -11,10 +11,10 @@ min_approach_distance : 30.0
 stopping_location_buffer : 5.0
 
 # Double: A buffer in seconds around the green phase which will reduce the phase length such that vehicle still considers it non-green
-green_light_time_buffer : 2.0
+green_light_time_buffer : 0.0
 
 # Double: Minimum allowable speed in m/s
-minimum_speed : 2.2352
+minimum_speed : 4.4704 # 10mph
 
 # Double: Update min_gap. Units in m
 min_gap : 0

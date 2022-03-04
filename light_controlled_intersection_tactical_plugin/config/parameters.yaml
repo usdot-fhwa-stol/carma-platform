@@ -27,10 +27,10 @@ back_distance: 20.0
 buffer_ending_downtrack: 40.0
 
 # Double: multiplier to apply to the maximum allowable vehicle deceleration limit so we plan under our capabilities
-vehicle_decel_limit_multiplier : 0.8
+vehicle_decel_limit_multiplier : 1.0
 
 # Double: multiplier to apply to the maximum allowable vehicle acceleration limit so we plan under our capabilities
-vehicle_accel_limit_multiplier : 0.8
+vehicle_accel_limit_multiplier : 1.0
 
 # Multiplier of lat_accel to bring the value under lat_accel
 lat_accel_multiplier: 0.50
