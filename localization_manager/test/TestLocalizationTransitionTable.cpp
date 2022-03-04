@@ -19,7 +19,7 @@
 #include <boost/optional.hpp>
 #include "localization_manager/LocalizationTransitionTable.h"
 
-using namespace localizer;
+using namespace localization_manager;
 
 /**
  * \brief Helper function to assert that the provided list of signals do not change the current state of the provided

@@ -31,7 +31,7 @@
 #include "LocalizationManagerConfig.h"
 #include "LocalizationManager.h"
 
-namespace localizer
+namespace localization_manager
 {
 /**
  * \brief Node class for this package
@@ -102,4 +102,4 @@ private:
   typedef message_filters::Synchronizer<PoseStatsSyncPolicy> PoseStatsSynchronizer;
 };
 
-}  // namespace localizer
+}  // namespace localization_manager

@@ -18,7 +18,7 @@
 #include <algorithm>
 #include "localization_manager/LocalizationManager.h"
 
-namespace localizer
+namespace localization_manager
 {
 // Initialize static values
 const std::unordered_set<std::string> LocalizationManager::LIDAR_FAILURE_STRINGS({ "One LIDAR Failed", "Both LIDARS Failed" });
@@ -274,4 +274,4 @@ LocalizationState LocalizationManager::getState() const
   return transition_table_.getState();
 }
 
-}  // namespace localizer
+}  // namespace localization_manager

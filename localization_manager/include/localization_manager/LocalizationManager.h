@@ -33,7 +33,7 @@
 #include "LocalizationManagerConfig.h"
 #include "LocalizationTransitionTable.h"
 
-namespace localizer
+namespace localization_manager
 {
 /**
  * \brief Primary logic class for the localization manager node.
@@ -166,4 +166,4 @@ private:
   double computeFreq(const ros::Time& old_stamp, const ros::Time& new_stamp) const;
 };
 
-}  // namespace localizer
+}  // namespace localization_manager

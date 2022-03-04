@@ -24,7 +24,7 @@
 #include "localization_manager/LocalizationManager.h"
 
 
-namespace localizer 
+namespace localization_manager 
 {
 
 // Helper function returns the config that these tests were origionally meant to assume was the default

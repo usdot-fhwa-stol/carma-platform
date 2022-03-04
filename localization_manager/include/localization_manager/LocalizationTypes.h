@@ -18,7 +18,7 @@
 #include <iostream>
 #include <cav_msgs/LocalizationStatusReport.h>
 
-namespace localizer
+namespace localization_manager
 {
 //! @brief Enum describing the possible operational modes of the LocalizationManager
 enum LocalizerMode
@@ -76,4 +76,4 @@ enum class LocalizationSignal
  */
 std::ostream& operator<<(std::ostream& os, LocalizationSignal s);
 
-}  // namespace localizer
+}  // namespace localization_manager

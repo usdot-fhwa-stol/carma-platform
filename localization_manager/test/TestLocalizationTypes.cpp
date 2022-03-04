@@ -18,7 +18,7 @@
 #include <sstream>
 #include "localization_manager/LocalizationTypes.h"
 
-using namespace localizer;
+using namespace localization_manager;
 
 TEST(LocalizationState, testStream)
 {

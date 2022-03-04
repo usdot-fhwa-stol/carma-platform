@@ -17,7 +17,7 @@
 #include <ros/console.h>
 #include "localization_manager/LocalizationTransitionTable.h"
 
-namespace localizer
+namespace localization_manager
 {
 LocalizationTransitionTable::LocalizationTransitionTable(LocalizerMode mode) : mode_(mode)
 {
@@ -245,4 +245,4 @@ void LocalizationTransitionTable::setTransitionCallback(TransitionCallback cb)
 {
   transition_callback_ = cb;
 }
-}  // namespace localizer
+}  // namespace localization_manager

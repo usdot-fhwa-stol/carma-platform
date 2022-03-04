@@ -16,7 +16,7 @@
 
 #include "localization_manager/LocalizationTypes.h"
 
-namespace localizer
+namespace localization_manager
 {
 std::ostream& operator<<(std::ostream& os, LocalizerMode m)
 {
@@ -97,4 +97,4 @@ cav_msgs::LocalizationStatusReport stateToMsg(LocalizationState state, const ros
   return msg;
 }
 
-}  // namespace localizer
+}  // namespace localization_manager

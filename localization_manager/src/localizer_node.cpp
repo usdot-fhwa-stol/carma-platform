@@ -17,7 +17,7 @@
 #include "localization_manager/localizer_node.h"
 #include <boost/bind/placeholders.hpp>
 
-namespace localizer
+namespace localization_manager
 {
 namespace std_ph = std::placeholders;  // Make alias for std placeholders to differentiate from boost.
 
@@ -113,4 +113,4 @@ void Localizer::run()
       manager_.get());
   ros::CARMANodeHandle::spin();
 }
-}  // namespace localizer
+}  // namespace localization_manager

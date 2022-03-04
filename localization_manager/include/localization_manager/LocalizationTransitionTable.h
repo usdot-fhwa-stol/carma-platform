@@ -16,7 +16,7 @@
  */
 #include "LocalizationTypes.h"
 
-namespace localizer
+namespace localization_manager
 {
 /**
  * \brief Class defining the state transition table behavior for the LocalizationManager
@@ -86,4 +86,4 @@ private:
    */ 
   void setAndLogState(LocalizationState new_state, LocalizationSignal source_signal);
 };
-}  // namespace localizer
+}  // namespace localization_manager

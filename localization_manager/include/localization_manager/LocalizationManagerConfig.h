@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
  */
 #include "LocalizationTypes.h"
 
-namespace localizer
+namespace localization_manager
 {
 //! @brief Struct to store the configuration settings for the LocalizationManager class
 struct LocalizationManagerConfig
@@ -43,5 +43,25 @@ struct LocalizationManagerConfig
   int gnss_data_timeout = 500;
   //! Localization mode to use
   LocalizerMode localization_mode = LocalizerMode::AUTO_WITHOUT_TIMEOUT;
+  //! Selected pose publication rate
+  double pose_pub_rate = 10.0;
+
+  // Stream operator for this config
+  friend std::ostream &operator<<(std::ostream &output, const Config &c)
+  {
+    output << "localization_manager::Config { " << std::endl
+          << "fitness_score_degraded_threshold: " << c.fitness_score_degraded_threshold << std::endl
+          << "fitness_score_fault_threshold: " << c.fitness_score_fault_threshold << std::endl
+          << "ndt_frequency_degraded_threshold: " << c.ndt_frequency_degraded_threshold << std::endl
+          << "ndt_frequency_fault_threshold: " << c.ndt_frequency_fault_threshold << std::endl
+          << "auto_initialization_timeout: " << c.auto_initialization_timeout << std::endl
+          << "gnss_only_operation_timeout: " << c.gnss_only_operation_timeout << std::endl
+          << "sequential_timesteps_until_gps_operation: " << c.sequential_timesteps_until_gps_operation << std::endl
+          << "gnss_data_timeout: " << c.gnss_data_timeout << std::endl
+          << "localization_mode: " << static_cast<int>(c.localization_mode) << std::endl
+          << "pose_pub_rate: " << c.pose_pub_rate << std::endl
+          << "}" << std::endl;
+    return output;
+  }
 };
-}  // namespace localizer
+}  // namespace localization_manager
