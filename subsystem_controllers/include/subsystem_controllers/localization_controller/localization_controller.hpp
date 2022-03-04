@@ -22,6 +22,7 @@
 #include "ros2_lifecycle_manager/ros2_lifecycle_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "subsystem_controllers/base_subsystem_controller/base_subsystem_controller.hpp"
+#include "subsystem_controllers/localization_controller/localization_controller_config.hpp"
 
 namespace subsystem_controllers
 {
@@ -40,9 +41,26 @@ namespace subsystem_controllers
      */
     explicit LocalizationControllerNode(const rclcpp::NodeOptions &options);
 
+    ////
+    // Overrides
+    ////
+    void on_system_alert(const carma_msgs::msg::SystemAlert::UniquePtr msg);
+    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &prev_state);
+
+  protected:
+    /**
+     * \brief Helper function to convert a json string into an unordered map of sensor status's to required alerts
+     * TODO add example
+     */ 
+    std::unordered_map<std::vector<SensorBooleanStatus>, SensorAlertStatus, VectorHash> sensor_fault_map_from_json(std::string json_string);
+
+    // A map of sensor node names to their status and index in the config_.sensor_nodes list
+    std::unordered_map<std::string, SensorBooleanStatus> sensor_status_;
+    LocalizationControllerConfig config_;
+
     // TODO The ROS1 localization manager functionality should be updated to properly interact with or exist in this node
     // https://github.com/usdot-fhwa-stol/carma-platform/issues/1498 
 
   };
 
-} // namespace v2x_controller
+} // namespace subsystem_controllers

@@ -8,13 +8,16 @@
     # Units: milliseconds
     call_timeout_ms : 1000
 
-    # String: The namespace for nodes in this subsystem
+    # String: The namespace for nodes in this subsystem. All nodes under this namespace will have their lifecycle's managed by this controller
     subsystem_namespace: /hardware_interface
 
-    # Required subsystem controller nodes for the overall system to be functional
+    # Required subsystem controller nodes for the overall system to be functional and will have their lifecycle's managed
     # TODO Move this parameter to carma config in some capacity
-    required_subsystem_nodes:
-      - /hardware_interface/dsrc_driver_node
+    required_subsystem_nodes: ['']
+
+    # List of nodes which will not be directly managed by this subsystem controller 
+    # but which are required to be operational for the subsystem to function
+    unmanaged_required_nodes: ['']
 
     # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
-    full_subsystem_required: true
+    full_subsystem_required: false

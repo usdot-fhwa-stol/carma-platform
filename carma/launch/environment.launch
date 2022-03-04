@@ -54,12 +54,6 @@
     <include file="$(find roadway_objects)/launch/roadway_objects.launch"/>
   </group>
 
-  <!-- CARMA Motion Computation Visualizer Node -->
- <group>
-    <remap from= "external_objects" to= "external_object_predictions"/>
-    <include file="$(find motion_prediction_visualizer)/launch/motion_prediction_visualizer.launch"/>
-  </group>
-
   <!-- Traffic Incident Parser -->
   <group>
     <remap from="georeference" to="$(optenv CARMA_LOCZ_NS)/map_param_loader/georeference"/>
