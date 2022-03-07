@@ -142,7 +142,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
     
     if (is_last_case_successful_ && last_case_ && last_case_.get() == static_cast<SpeedProfileCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0])
           && is_last_case_successful_.get() == is_successful
-          && last_trajectory_.trajectory_points.back().target_time <= req.header.stamp - ros::Duration(1.0))
+          && last_trajectory_.trajectory_points.back().target_time > req.header.stamp + ros::Duration(1.0))
     {
       resp.trajectory_plan = last_trajectory_;
       ROS_DEBUG_STREAM("USING LAST: Target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req.header.stamp);
@@ -159,6 +159,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
       last_trajectory_ = trajectory;
       resp.trajectory_plan = trajectory;
       last_case_ = static_cast<SpeedProfileCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0]);
+      is_last_case_successful_ = is_successful;
       ROS_DEBUG_STREAM("USING NEW: Target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req.header.stamp);
       
       ROS_ERROR_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
