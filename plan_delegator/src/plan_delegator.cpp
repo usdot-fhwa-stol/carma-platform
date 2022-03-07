@@ -72,7 +72,7 @@ namespace plan_delegator
         {
             latest_maneuver_plan_ = *plan;
             
-            // Update the details associated with each maneuver
+            // Update the parameters associated with each maneuver
             for (auto& maneuver : latest_maneuver_plan_.maneuvers) {
                 updateManeuverParameters(maneuver);
             }
