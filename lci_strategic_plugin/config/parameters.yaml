@@ -14,7 +14,7 @@ stopping_location_buffer : 5.0
 green_light_time_buffer : 1.0
 
 # Double: Minimum allowable speed in m/s
-minimum_speed : 2.2352 # 10mph
+minimum_speed : 2.68224 # 6mph
 
 # Double: Update min_gap. Units in m
 min_gap : 0
