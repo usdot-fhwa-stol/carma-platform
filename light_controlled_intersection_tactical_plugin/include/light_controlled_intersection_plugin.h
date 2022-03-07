@@ -186,6 +186,7 @@ public:
   // approximate speed limit 
   double speed_limit_ = 100.0;
   boost::optional<SpeedProfileCase> last_case_;
+  boost::optional<bool> is_last_case_successful_;
   cav_msgs::TrajectoryPlan last_trajectory_;
 
   cav_msgs::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later

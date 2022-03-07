@@ -138,10 +138,14 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
                                                                                 wpg_detail_config); // Compute the trajectory
     trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
     
-    if (last_case_ && last_case_.get() == static_cast<SpeedProfileCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0])
+    bool is_successful = GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[1]);
+    
+    if (is_last_case_successful_ && last_case_ && last_case_.get() == static_cast<SpeedProfileCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0])
+          && is_last_case_successful_.get() == is_successful
           && last_trajectory_.trajectory_points.back().target_time <= req.header.stamp - ros::Duration(1.0))
     {
       resp.trajectory_plan = last_trajectory_;
+      ROS_DEBUG_STREAM("USING LAST: Target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req.header.stamp);
       ROS_ERROR_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_.get());
       ROS_ERROR_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_.get());
       ROS_ERROR_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_.get());
@@ -155,6 +159,8 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
       last_trajectory_ = trajectory;
       resp.trajectory_plan = trajectory;
       last_case_ = static_cast<SpeedProfileCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0]);
+      ROS_DEBUG_STREAM("USING NEW: Target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req.header.stamp);
+      
       ROS_ERROR_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
       ROS_ERROR_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
       ROS_ERROR_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
@@ -163,6 +169,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
       ROS_DEBUG_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
       
     }
+    
 
     resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
@@ -172,8 +179,8 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
 void LightControlledIntersectionTacticalPlugin::apply_optimized_target_speed_profile(const cav_msgs::Maneuver& maneuver, const double starting_speed, std::vector<PointSpeedPair>& points_and_target_speeds)
 {
   if(GET_MANEUVER_PROPERTY(maneuver,parameters.float_valued_meta_data).size() < 7 || 
-      GET_MANEUVER_PROPERTY(maneuver,parameters.int_valued_meta_data).size() < 1 ){
-    throw std::invalid_argument("There must be 7 float_valued_meta_data and 1 int_valued_meta_data to apply algorithm's parameters.");
+      GET_MANEUVER_PROPERTY(maneuver,parameters.int_valued_meta_data).size() < 2 ){
+    throw std::invalid_argument("There must be 7 float_valued_meta_data and 2 int_valued_meta_data to apply algorithm's parameters.");
   }
 
   double a_accel = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);

@@ -405,7 +405,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         ts_params.case_num = SpeedProfileCase::DECEL_ACCEL;
         ts_params.dist_accel = 0.0;
         ts_params.dist_cruise = 0.0;
-        ts_params.is_algorithm_successful = true;
+        ts_params.is_algorithm_successful = false;
         ts_params.speed_before_accel = speed_before_stop;
         ts_params.dist_decel = start_stopping_downtrack - current_state.downtrack;
 
@@ -455,7 +455,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         ts_params.case_num = SpeedProfileCase::ACCEL_DECEL;
         ts_params.dist_accel = 0.0;
         ts_params.dist_cruise = start_stopping_downtrack - current_state.downtrack;;
-        ts_params.is_algorithm_successful = true;
+        ts_params.is_algorithm_successful = false;
         ts_params.speed_before_accel = speed_before_stop;
         ts_params.speed_before_decel = speed_before_stop;
         ts_params.dist_decel = 0.0;
@@ -865,6 +865,7 @@ cav_msgs::Maneuver LCIStrategicPlugin::composeTrajectorySmoothingManeuverMessage
   maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.speed_before_accel);
   maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.speed_before_decel);
   maneuver_msg.lane_following_maneuver.parameters.int_valued_meta_data.push_back(static_cast<int>(tsp.case_num));
+  maneuver_msg.lane_following_maneuver.parameters.int_valued_meta_data.push_back(static_cast<int>(tsp.is_algorithm_successful));
 
   // Start time and end time for maneuver are assigned in updateTimeProgress
 
