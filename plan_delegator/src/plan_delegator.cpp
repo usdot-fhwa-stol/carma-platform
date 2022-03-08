@@ -229,7 +229,6 @@ namespace plan_delegator
                 ROS_DEBUG_STREAM("Crosses lanelet " << std::to_string(lanelet.id()));
             }
 
-            maneuver.lane_following_maneuver.lane_ids = adjusted_lanelet_ids;
         }
         else {
             ROS_WARN_STREAM("Received maneuver type will not have its lanelet parameters updated!");
