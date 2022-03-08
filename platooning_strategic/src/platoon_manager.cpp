@@ -76,6 +76,7 @@ namespace platoon_strategic
                 updatesOrAddMemberInfo(senderId, senderBsmId, cmdSpeed, dtDistance, curSpeed);
                 leaderID = (platoon.size()==0) ? HostMobilityId : platoon[0].staticId;
                 ROS_DEBUG_STREAM("The first vehicle in our list is now " << leaderID);
+                
             } 
             else
             {
@@ -133,7 +134,7 @@ namespace platoon_strategic
 
     int PlatoonManager::getTotalPlatooningSize() const{
         if(isFollower) {
-            return platoonSize;
+            return std::max((int)(platoon.size() + 1), platoonSize);
         }
         return platoon.size() + 1;
     }
@@ -161,6 +162,7 @@ namespace platoon_strategic
                     if(newLeaderIndex < platoon.size() && newLeaderIndex >= 0) {
                         leader = platoon[newLeaderIndex];
                         ROS_DEBUG_STREAM("APF output: " << leader.staticId);
+                        dynamic_leader_index_ = newLeaderIndex;
                         previousFunctionalLeaderIndex_ = newLeaderIndex;
                         previousFunctionalLeaderID_ = leader.staticId;
                     }
@@ -168,6 +170,7 @@ namespace platoon_strategic
                         // it might happened when the subject vehicle gets far away from the preceding vehicle so we follow the one in front
                         leader = platoon[platoon.size() - 1];
                         previousFunctionalLeaderIndex_ = platoon.size() - 1;
+                        dynamic_leader_index_ = platoon.size() - 1;
                         previousFunctionalLeaderID_ = leader.staticId;
                         ROS_DEBUG_STREAM("Based on the output of APF algorithm we start to follow our predecessor.");
                     }

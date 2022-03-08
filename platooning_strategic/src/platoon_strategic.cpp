@@ -842,7 +842,12 @@ namespace platoon_strategic
                 status_msg.leader_cmd_speed = platoon_leader.commandSpeed;
                 status_msg.host_platoon_position = pm_.getNumberOfVehicleInFront();
 
-                status_msg.desired_gap = std::max(config_.standStillHeadway, config_.timeHeadway *  current_speed_);
+                int numOfVehiclesGaps = pm_.getNumberOfVehicleInFront() - pm_.dynamic_leader_index_;
+                ROS_DEBUG_STREAM("The host vehicle have " << numOfVehiclesGaps << " vehicles between itself and its leader (includes the leader)");
+
+                status_msg.desired_gap = std::max(config_.standStillHeadway * numOfVehiclesGaps, config_.timeHeadway * current_speed_* numOfVehiclesGaps);
+                ROS_DEBUG_STREAM("The desired gap with the leader is " << status_msg.desired_gap);
+
                 status_msg.actual_gap = platoon_leader.vehiclePosition - current_downtrack_;
 
             }
@@ -1042,6 +1047,22 @@ namespace platoon_strategic
         bool isPlatoonInfoMsg = (strategyParams.rfind(OPERATION_INFO_TYPE, 0) == 0);
         bool isPlatoonStatusMsg = (strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0);
         bool isNotInNegotiation = (pm_.current_plan.valid == false);
+        bool isFromCurrentPlatoon = (pm_.currentPlatoonID == platoonId);
+
+        if(isPlatoonInfoMsg && isFromCurrentPlatoon)
+        {
+            ROS_DEBUG_STREAM("Received an INFO mobility operation message from the current platoon");
+            std::vector<std::string> inputsParams;
+            boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+
+            std::vector<std::string> platoonSize_parsed;
+            boost::algorithm::split(platoonSize_parsed, inputsParams[3], boost::is_any_of(":"));
+            int platoonSize = std::stoi(platoonSize_parsed[1]);
+            ROS_DEBUG_STREAM("platoonSize obtained from INFO message: " << platoonSize);
+            pm_.platoonSize = platoonSize;
+        }
+
+
         if(isPlatoonInfoMsg && isNotInNegotiation)
         {
             // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d,DTD:%.2f
