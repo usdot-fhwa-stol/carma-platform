@@ -103,6 +103,22 @@ namespace platoon_control
 
     bool PlatoonControlPlugin::controlTimerCb()
     {
+        // If it has been a long time since input data has arrived then reset the input counter and return
+        // Note: this quiets the controller after its input stream stops, which is necessary to allow 
+        // the replacement controller to publish on the same output topic after this one is done.
+        long current_time = ros::Time::now().toNsec() / 1000000;
+        if (current_time - prev_input_time_ > config_.shutdownTimeout)
+        {
+            consecutive_input_counter_ = 0;
+            return;
+        }
+
+        // If there have not been enough consecutive timely inputs then return (waiting for
+        // previous control plugin to time out and stop publishing, since it uses same output topic)
+        if (consecutive_input_counter_ <= config_.ignoreInitialInputs)
+        {
+            return;
+        }
 
         cav_msgs::TrajectoryPlanPoint second_trajectory_point = latest_trajectory_.trajectory_points[1]; 
         cav_msgs::TrajectoryPlanPoint lookahead_point = getLookaheadTrajectoryPoint(latest_trajectory_);
@@ -113,17 +129,17 @@ namespace platoon_control
 
         return true;
     }   
-    
 
-
-    void  PlatoonControlPlugin::trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
-        
+    void  PlatoonControlPlugin::trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp)
+    {
         if (tp->trajectory_points.size() < 2) {
             ROS_WARN_STREAM("PlatoonControlPlugin cannot execute trajectory as only 1 point was provided");
             return;
         }
 
         latest_trajectory_ = *tp;
+        prev_input_time_ = ros::Time::now().toNsec() / 1000000;
+        ++consecutive_input_counter_;
     }
 
     cav_msgs::TrajectoryPlanPoint PlatoonControlPlugin::getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan)
