@@ -59,6 +59,7 @@ namespace platoon_control
 			cav_msgs::TrajectoryPlanPoint getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan);
 
 			// timer callback for control signal publishers
+			// returns true if control signals are correctly calculated.
 			bool controlTimerCb();
 			
 			// local copy of pose

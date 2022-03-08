@@ -87,7 +87,7 @@ namespace platoon_control
 
 
         ros::Timer control_pub_timer_ = pnh_->createTimer(
-            ros::Duration(ros::Rate(10.0)),
+            ros::Duration(ros::Rate(30.0)),
             [this](const auto&) {controlTimerCb();});    
     }
 
@@ -100,12 +100,12 @@ namespace platoon_control
     bool PlatoonControlPlugin::controlTimerCb()
     {
 
-        cav_msgs::TrajectoryPlanPoint first_trajectory_point = latest_trajectory_.trajectory_points[1]; // TODO this variable appears to be misnamed. It is the second trajectory point
+        cav_msgs::TrajectoryPlanPoint second_trajectory_point = latest_trajectory_.trajectory_points[1]; 
         cav_msgs::TrajectoryPlanPoint lookahead_point = getLookaheadTrajectoryPoint(latest_trajectory_);
 
         trajectory_speed_ = getTrajectorySpeed(latest_trajectory_.trajectory_points);
         
-        generateControlSignals(first_trajectory_point, lookahead_point); // TODO this should really be called on a timer against that last trajectory so 30Hz control loop can be achieved
+        generateControlSignals(second_trajectory_point, lookahead_point); 
 
         return true;
     }   
