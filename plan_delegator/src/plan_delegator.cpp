@@ -186,8 +186,8 @@ namespace plan_delegator
                 ROS_DEBUG_STREAM("Crosses lanelet " << std::to_string(lanelet.id()));
             }
 
-            std::string adjusted_starting_lane_id = std::to_string(adjusted_crossed_lanelets[0].id());
-            std::string adjusted_ending_lane_id = std::to_string(adjusted_crossed_lanelets[-1].id());
+            std::string adjusted_starting_lane_id = std::to_string(adjusted_crossed_lanelets.front().id());
+            std::string adjusted_ending_lane_id = std::to_string(adjusted_crossed_lanelets.back().id());
 
             if (maneuver.type == cav_msgs::Maneuver::LANE_CHANGE) {
                 maneuver.lane_change_maneuver.starting_lane_id = adjusted_starting_lane_id;
