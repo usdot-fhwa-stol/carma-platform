@@ -291,7 +291,7 @@ private:
    *
    * \return TSP with parameters that is best available to pass the intersection. Either profile case 3(ACCEL_DECEL) or 2 (DECEL_ACCEL)
    */
-  TrajectorySmoothingParameters handleFailureCase(double starting_speed, double departure_speed, double remaining_downtrack);
+  TrajectorySmoothingParameters handleFailureCase(double starting_speed, double departure_speed, double remaining_downtrack, double remaining_time);
                                         
   /**
    * \brief Helper method to evaluate if the given traffic light state is supported by this plugin
