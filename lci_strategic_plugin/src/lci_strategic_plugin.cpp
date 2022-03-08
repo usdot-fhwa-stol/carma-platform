@@ -431,13 +431,14 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         speed_before_stop = std::max(speed_before_stop, config_.minimum_speed); //just crawl if it is below minimum speed
         double stopping_distance = pow(config_.minimum_speed, 2) / (2 * max_comfort_decel_norm_);
         double start_stopping_downtrack = traffic_light_down_track - stopping_distance;
-        ros::Time stop_starting_timestamp = current_state.stamp + ros::Duration(target_stop_time) - ros::Duration(config_.minimum_speed / max_comfort_decel_norm_);
+        double crawling_distance = start_stopping_downtrack - current_state.downtrack;
+        ros::Time stop_starting_timestamp = current_state.stamp + ros::Duration(crawling_distance / config_.minimum_speed) - ros::Duration(config_.minimum_speed / max_comfort_decel_norm_);
         ROS_DEBUG_STREAM("Found stop_starting_timestamp at: " << std::to_string(stop_starting_timestamp.toSec()) << ", where current_state is: " << std::to_string(current_state.stamp.toSec()));
 
-        if (config_.minimum_speed * (stop_starting_timestamp - current_state.stamp).toSec() > start_stopping_downtrack - current_state.downtrack);
+        if (traffic_light->predictState(lanelet::time::timeFromSec((stop_starting_timestamp + ros::Duration(config_.minimum_speed / max_comfort_decel_norm_)).toSec())).second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED);
         {
-          ROS_DEBUG_STREAM("We are not able to stop at RED light, crawling distance:" << config_.minimum_speed * (stop_starting_timestamp - current_state.stamp).toSec() << ", where distance left is: " << start_stopping_downtrack - current_state.downtrack);
-          ROS_ERROR_STREAM("We are not able to stop at RED light, crawling distance:" << config_.minimum_speed * (stop_starting_timestamp - current_state.stamp).toSec() << ", where distance left is: " << start_stopping_downtrack - current_state.downtrack);
+          ROS_DEBUG_STREAM("We are not able to stop at RED light, crawling distance:" << config_.minimum_speed * (stop_starting_timestamp - current_state.stamp).toSec() << ", where distance left is: " << distance_remaining_to_traffic_light);
+          ROS_ERROR_STREAM("We are not able to stop at RED light, crawling distance:" << config_.minimum_speed * (stop_starting_timestamp - current_state.stamp).toSec() << ", where distance left is: " << distance_remaining_to_traffic_light);
           return;
         }
         lanelet::ConstLanelet starting_lanelet_for_stop = crossed_lanelets.front();
