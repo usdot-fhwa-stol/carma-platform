@@ -87,6 +87,8 @@ namespace platoon_control
 
 			// Variables
 			PlatoonLeaderInfo platoon_leader_;
+			long prev_input_time_ = 0;				//timestamp of the previous trajectory plan input received
+			long consecutive_input_counter_ = 0;	//num inputs seen without a timeout
 
 			// callback function for pose
 			void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
@@ -102,12 +104,8 @@ namespace platoon_control
 
 			double getTrajectorySpeed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points);
 
-
-			
-
         	// Plugin discovery message
         	cav_msgs::Plugin plugin_discovery_msg_;
-
 
         	// ROS Subscriber
         	ros::Subscriber trajectory_plan_sub;
@@ -120,12 +118,5 @@ namespace platoon_control
         	ros::Publisher plugin_discovery_pub_;
 			ros::Publisher platoon_info_pub_;
 			ros::Timer discovery_pub_timer_;
-			
-			
-
-
-
-
-    
     };
 }
