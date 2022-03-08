@@ -36,12 +36,14 @@ struct PlatooningControlPluginConfig
   int cmdTmestamp = 100;
   double integratorMax = 100;
   double integratorMin = -100;
-  double Kdd = 4.5;                             //coeficient for smooth steering
+  double Kdd = 4.5;                             //coefficient for smooth steering
   double wheelBase = 3.09;
   double lowpassGain = 0.5;
   double lookaheadRatio = 2.0;
   double minLookaheadDist = 6.0;
   std::string vehicleID = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
+  int     shutdownTimeout = 200;                // ms 
+  int     ignoreInitialInputs = 0;              // num inputs to throw away after startup
   
   
   friend std::ostream& operator<<(std::ostream& output, const PlatooningControlPluginConfig& c)
@@ -66,6 +68,8 @@ struct PlatooningControlPluginConfig
            << "lookaheadRatio: " << c.lookaheadRatio << std::endl
            << "minLookaheadDist: " << c.minLookaheadDist << std::endl
            << "vehicleID: " << c.vehicleID << std::endl
+           << "shutdownTimeout: " << c.shutdownTimeout << std::endl
+           << "ignoreInitialInputs: " << c.ignoreInitialInputs << std::endl
            << "}" << std::endl;
     return output;
   }

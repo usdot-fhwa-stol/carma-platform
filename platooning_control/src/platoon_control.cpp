@@ -49,8 +49,12 @@ namespace platoon_control
         pnh_->param<double>("lowpassGain", config.lowpassGain, config.lowpassGain);
         pnh_->param<double>("lookaheadRatio", config.lookaheadRatio, config.lookaheadRatio);
         pnh_->param<double>("minLookaheadDist", config.minLookaheadDist, config.minLookaheadDist);
+
+        // Global params (from vehicle config)
         pnh_->getParam("/vehicle_id", config.vehicleID);
         pnh_->getParam("/vehicle_wheel_base", config.wheelBase);
+        pnh_->getParam("/control_plugin_shutdown_timeout", config.shutdownTimeout);
+        pnh_->getParam("/control_plugin_ignore_initial_inputs", config.ignoreInitialInputs);
 
         pcw_.updateConfigParams(config);
         config_ = config;
@@ -99,13 +103,18 @@ namespace platoon_control
             ROS_WARN_STREAM("PlatoonControlPlugin cannot execute trajectory as only 1 point was provided");
             return;
         }
-        cav_msgs::TrajectoryPlanPoint first_trajectory_point = tp->trajectory_points[1]; // TODO this variable appears to be misnamed. It is the second trajectory point
-        cav_msgs::TrajectoryPlanPoint lookahead_point = getLookaheadTrajectoryPoint(*tp);
+
+        // Update input timestamp and counter
+        current = ros::Time::Now().toNsec() / 1000000;
+        prev_input_time_ = current;
+        ++consecutive_input_counter_;
 
         trajectory_speed_ = getTrajectorySpeed(tp->trajectory_points);
 
     	
         
+        cav_msgs::TrajectoryPlanPoint first_trajectory_point = tp->trajectory_points[1]; // TODO this variable appears to be misnamed. It is the second trajectory point
+        cav_msgs::TrajectoryPlanPoint lookahead_point = getLookaheadTrajectoryPoint(*tp);
         generateControlSignals(first_trajectory_point, lookahead_point); // TODO this should really be called on a timer against that last trajectory so 30Hz control loop can be achieved
 
 
