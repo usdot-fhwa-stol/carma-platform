@@ -106,18 +106,21 @@ namespace platoon_control
         // If it has been a long time since input data has arrived then reset the input counter and return
         // Note: this quiets the controller after its input stream stops, which is necessary to allow 
         // the replacement controller to publish on the same output topic after this one is done.
-        long current_time = ros::Time::now().toNsec() / 1000000;
+        long current_time = ros::Time::now().toNSec() / 1000000;
+        ROS_DEBUG_STREAM("current_time = " << current_time << ", prev_input_time_ = " << prev_input_time_ << ", input counter = " << consecutive_input_counter_);
         if (current_time - prev_input_time_ > config_.shutdownTimeout)
         {
+            ROS_DEBUG_STREAM("returning due to timeout.");
             consecutive_input_counter_ = 0;
-            return;
+            return false;
         }
 
         // If there have not been enough consecutive timely inputs then return (waiting for
         // previous control plugin to time out and stop publishing, since it uses same output topic)
         if (consecutive_input_counter_ <= config_.ignoreInitialInputs)
         {
-            return;
+            ROS_DEBUG_STREAM("returning due to first data input");
+            return false;
         }
 
         cav_msgs::TrajectoryPlanPoint second_trajectory_point = latest_trajectory_.trajectory_points[1]; 
@@ -138,8 +141,10 @@ namespace platoon_control
         }
 
         latest_trajectory_ = *tp;
-        prev_input_time_ = ros::Time::now().toNsec() / 1000000;
+        prev_input_time_ = ros::Time::now().toNSec() / 1000000;
         ++consecutive_input_counter_;
+        ROS_DEBUG_STREAM("New trajectory plan #" << consecutive_input_counter_ << " at time " << prev_input_time_);
+        ROS_DEBUG_STREAM("tp header time =                " << tp->header.stamp.toNSec() / 1000000);
     }
 
     cav_msgs::TrajectoryPlanPoint PlatoonControlPlugin::getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan)

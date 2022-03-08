@@ -104,12 +104,8 @@ namespace platoon_control
 
 			double getTrajectorySpeed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points);
 
-
-			
-
         	// Plugin discovery message
         	cav_msgs::Plugin plugin_discovery_msg_;
-
 
         	// ROS Subscriber
         	ros::Subscriber trajectory_plan_sub;
@@ -122,12 +118,5 @@ namespace platoon_control
         	ros::Publisher plugin_discovery_pub_;
 			ros::Publisher platoon_info_pub_;
 			ros::Timer discovery_pub_timer_;
-			
-			
-
-
-
-
-    
     };
 }
