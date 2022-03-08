@@ -91,9 +91,8 @@ ros::Time LCIStrategicPlugin::get_nearest_green_entry_time(const ros::Time& curr
 
   if (t <= eet)
   {
-    double cycle_duration = signal->fixed_cycle_duration.total_milliseconds()*1000.0;
-    t = t + lanelet::time::durationFromSec(std::floor((eet - t).total_milliseconds()*1000.0/cycle_duration) * cycle_duration); //fancy logic was needed to compile
-    // could be wrong here
+    double cycle_duration = signal->fixed_cycle_duration.total_milliseconds()/1000.0;
+    t = t + lanelet::time::durationFromSec(std::floor((eet - t).total_milliseconds()/1000.0/cycle_duration) * cycle_duration); //fancy logic was needed to compile
     curr_pair = signal->predictState(t + boost::posix_time::milliseconds(20)); // select next phase
     p = curr_pair.get().second;
     theta = curr_pair.get().first - t;

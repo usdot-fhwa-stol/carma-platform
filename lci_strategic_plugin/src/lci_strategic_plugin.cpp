@@ -434,6 +434,12 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         ros::Time stop_starting_timestamp = current_state.stamp + ros::Duration(target_stop_time) - ros::Duration(config_.minimum_speed / max_comfort_decel_norm_);
         ROS_DEBUG_STREAM("Found stop_starting_timestamp at: " << std::to_string(stop_starting_timestamp.toSec()) << ", where current_state is: " << std::to_string(current_state.stamp.toSec()));
 
+        if (config_.minimum_speed * (stop_starting_timestamp - current_state.stamp).toSec() > start_stopping_downtrack - current_state.downtrack);
+        {
+          ROS_DEBUG_STREAM("We are not able to stop at RED light, crawling distance:" << config_.minimum_speed * (stop_starting_timestamp - current_state.stamp).toSec() << ", where distance left is: " << start_stopping_downtrack - current_state.downtrack);
+          ROS_ERROR_STREAM("We are not able to stop at RED light, crawling distance:" << config_.minimum_speed * (stop_starting_timestamp - current_state.stamp).toSec() << ", where distance left is: " << start_stopping_downtrack - current_state.downtrack);
+          return;
+        }
         lanelet::ConstLanelet starting_lanelet_for_stop = crossed_lanelets.front();
         for (auto llt: crossed_lanelets)
         {
@@ -454,7 +460,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         ts_params.a_decel = max_comfort_decel_; // will be unused if speed_before_stop < minimum_speed and crawl
         ts_params.case_num = SpeedProfileCase::ACCEL_DECEL;
         ts_params.dist_accel = 0.0;
-        ts_params.dist_cruise = start_stopping_downtrack - current_state.downtrack;;
+        ts_params.dist_cruise = start_stopping_downtrack - current_state.downtrack;
         ts_params.is_algorithm_successful = false;
         ts_params.speed_before_accel = speed_before_stop;
         ts_params.speed_before_decel = speed_before_stop;
