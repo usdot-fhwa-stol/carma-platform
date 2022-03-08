@@ -527,7 +527,7 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_decel_cruis
   return params;
 }
 
-TrajectorySmoothingParameters LCIStrategicPlugin::handleFailureCase(double starting_speed, double departure_speed, double remaining_downtrack)
+TrajectorySmoothingParameters LCIStrategicPlugin::handleFailureCase(double starting_speed, double departure_speed, double remaining_downtrack, double remaining_time)
 {
   //Requested maneuver needs to be modified to meet remaining_dist req
   //by trying to get close to the target_speed and remaining_time as much as possible
@@ -545,7 +545,7 @@ TrajectorySmoothingParameters LCIStrategicPlugin::handleFailureCase(double start
     params.dist_accel = 0;
     params.dist_cruise = 0;
     params.dist_decel = remaining_downtrack;
-    // kinematic: vf = sqrt(vi^2 - a_norm) where a is negative
+    // kinematic: TODO
     params.modified_departure_speed = sqrt(pow(starting_speed, 2) - 2 * remaining_downtrack * max_comfort_decel_norm_);
     params.modified_remaining_time = (starting_speed - params.modified_departure_speed ) / max_comfort_decel_norm_;
     params.case_num = SpeedProfileCase::ACCEL_DECEL;
@@ -558,10 +558,44 @@ TrajectorySmoothingParameters LCIStrategicPlugin::handleFailureCase(double start
     params.dist_accel = remaining_downtrack;
     params.dist_cruise = 0;
     params.dist_decel = 0;
-    // kinematic: vf = sqrt(vi^2 + a_norm) where a is positive
+    // kinematic: TODO
     params.modified_departure_speed = sqrt(2 * remaining_downtrack * max_comfort_accel_ + pow(starting_speed, 2));
     params.modified_remaining_time = (params.modified_departure_speed - starting_speed) / max_comfort_accel_;
     params.case_num = SpeedProfileCase::DECEL_ACCEL;
+  }
+
+  if (params.modified_departure_speed > departure_speed)
+  {
+    ROS_ERROR_STREAM("Trying different way");
+    ROS_DEBUG_STREAM("Trying different way");
+    TrajectorySmoothingParameters new_params;
+
+    // kinematic: TODO
+    double new_accel = 2 * (remaining_downtrack - starting_speed * remaining_time)/ (pow(remaining_time, 2));
+    
+    new_params.is_algorithm_successful = false;
+    new_params.speed_before_accel = -1;
+    new_params.speed_before_decel = -1;
+
+    if (new_accel < -epsilon_)
+    {
+      new_params.a_decel = new_accel;
+      new_params.speed_before_decel = starting_speed;
+      new_params.dist_decel = remaining_downtrack;
+      new_params.case_num = SpeedProfileCase::ACCEL_DECEL;
+    }
+    else
+    {
+      new_params.a_accel = new_accel;
+      new_params.speed_before_accel = starting_speed;
+      new_params.dist_accel = remaining_downtrack;
+      new_params.case_num = SpeedProfileCase::DECEL_ACCEL;
+    }
+
+    new_params.modified_departure_speed = starting_speed + new_accel * remaining_time;
+    new_params.dist_cruise = 0;
+    new_params.modified_remaining_time = remaining_time;
+    params = new_params;
   }
   // handle hard failure case such as nan
   if (isnan(params.modified_departure_speed) || params.modified_departure_speed < - epsilon_ ||

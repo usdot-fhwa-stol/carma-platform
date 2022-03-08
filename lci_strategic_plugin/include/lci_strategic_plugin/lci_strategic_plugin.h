@@ -287,6 +287,7 @@ private:
    * \param starting_speed starting speed
    * \param departure_speed departure_speed originally planned
    * \param remaining_downtrack remaining_downtrack until the intersection
+   * \param remaining_time  remaining_time when vehicle is scheduled to enter
    *
    * \return TSP with parameters that is best available to pass the intersection. Either profile case 3(ACCEL_DECEL) or 2 (DECEL_ACCEL)
    */

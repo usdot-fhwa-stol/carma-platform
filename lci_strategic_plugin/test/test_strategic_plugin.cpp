@@ -330,7 +330,7 @@ TEST_F(LCIStrategicTestFixture, handleFailureCase)
 
   LCIStrategicPlugin lcip(cmw_, config);
 
-  auto params = lcip.handleFailureCase(5, 10, 12);
+  auto params = lcip.handleFailureCase(5, 10, 12, 0);
   
   EXPECT_NEAR(params.a_accel, 1, 0.001);
   EXPECT_NEAR(params.a_decel, 0, 0.001);
@@ -343,7 +343,7 @@ TEST_F(LCIStrategicTestFixture, handleFailureCase)
   EXPECT_NEAR(params.modified_remaining_time, 2, 0.01);
   EXPECT_EQ(params.case_num, SpeedProfileCase::DECEL_ACCEL);
 
-  params = lcip.handleFailureCase(5, 0, 8);
+  params = lcip.handleFailureCase(5, 0, 8, 0);
 
   EXPECT_NEAR(params.a_accel, 0, 0.001);
   EXPECT_NEAR(params.a_decel, -1, 0.001);
@@ -356,7 +356,7 @@ TEST_F(LCIStrategicTestFixture, handleFailureCase)
   EXPECT_NEAR(params.modified_remaining_time, 2, 0.01);
   EXPECT_EQ(params.case_num, SpeedProfileCase::ACCEL_DECEL);
 
-  EXPECT_THROW(lcip.handleFailureCase(5 ,0, 15), std::invalid_argument);
+  EXPECT_THROW(lcip.handleFailureCase(5 ,0, 15, 0), std::invalid_argument);
 
 
 }
