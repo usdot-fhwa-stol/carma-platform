@@ -57,6 +57,10 @@ namespace platoon_control
 
 			// find the point correspoding to the lookahead distance
 			cav_msgs::TrajectoryPlanPoint getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan);
+
+			// timer callback for control signal publishers
+			// returns true if control signals are correctly calculated.
+			bool controlTimerCb();
 			
 			// local copy of pose
         	geometry_msgs::PoseStamped pose_msg_;
@@ -64,6 +68,8 @@ namespace platoon_control
 			// current speed (in m/s)
 			double current_speed_ = 0.0;
 			double trajectory_speed_ = 0.0;
+
+			cav_msgs::TrajectoryPlan latest_trajectory_;
 
         
         private:
@@ -95,6 +101,7 @@ namespace platoon_control
 			void currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist);
 
 			double getTrajectorySpeed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points);
+
 
 			
 

@@ -2786,14 +2786,15 @@ namespace platoon_strategic_ihp
         
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         double cur_plus_target = current_speed + target_speed;
-        if (cur_plus_target < 0.00001) 
-        {
-            maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration(config_.time_step);
-        } 
-        else 
-        {
-            maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * cur_plus_target));
-        }
+        maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration(config_.time_step);
+        // if (cur_plus_target < 0.00001) 
+        // {
+        //     maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration(config_.time_step);
+        // } 
+        // else 
+        // {
+        //     maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * cur_plus_target));
+        // }
         maneuver_msg.lane_following_maneuver.lane_ids = { std::to_string(lane_id) };
         current_time = maneuver_msg.lane_following_maneuver.end_time;
         ROS_DEBUG_STREAM("Creating lane follow start dist:"<<current_dist<<" end dist:"<<end_dist);
@@ -2908,21 +2909,26 @@ namespace platoon_strategic_ihp
         // ---------------- use IHP platoon trajectory regulation here --------------------
         double total_maneuver_length;
         double target_speed;
-        // 1. determine if follower 
-        if (pm_.isFollower)
-        {
-            // 2. Use IHP platoon trajectory regulation for followers.
-            double dt = config_.time_step;
-            total_maneuver_length = pm_.getIHPDesPosFollower(dt);
-            target_speed = (total_maneuver_length - current_progress) / dt;
-        }
-        else
-        {
-            // 3. Use CARMA planning method (control_length = step_time * speed limit).
-            target_speed = findSpeedLimit(current_lanelet);   //get Speed Limit TOTO update
-            total_maneuver_length = current_progress + config_.time_step * target_speed;
-        }
+
+        // TODO: Disable temporarily. In future, either remove or replace with speed based gap regulation
+        // // 1. determine if follower 
+        // if (pm_.isFollower)
+        // {
+        //     // 2. Use IHP platoon trajectory regulation for followers.
+        //     double dt = config_.time_step;
+        //     total_maneuver_length = pm_.getIHPDesPosFollower(dt);
+        //     target_speed = (total_maneuver_length - current_progress) / dt;
+        // }
+        // else
+        // {
+        //     // 3. Use CARMA planning method (control_length = step_time * speed limit).
+        //     target_speed = findSpeedLimit(current_lanelet);   //get Speed Limit TOTO update
+        //     total_maneuver_length = current_progress + config_.time_step * target_speed;
+        // }
         // ----------------------------------------------------------------
+
+        target_speed = findSpeedLimit(current_lanelet);   //get Speed Limit TOTO update
+        total_maneuver_length = current_progress + config_.time_step * target_speed;
 
         // UCLA: add create gap indicator, if true, use smaller target speed to create gap
         if (pm_.isCreateGap)
@@ -2937,6 +2943,7 @@ namespace platoon_strategic_ihp
         // Update current status based on prior plan
         if(req.prior_plan.maneuvers.size()!= 0)
         {
+            ROS_DEBUG_STREAM("Provided with initial plan...");
             time_progress = req.prior_plan.planning_completion_time;
             int end_lanelet = 0;
             updateCurrentStatus(req.prior_plan.maneuvers.back(), speed_progress, current_progress, end_lanelet);
@@ -2949,6 +2956,7 @@ namespace platoon_strategic_ihp
         // lane change maneuver 
         if (pm_.safeToLaneChange)
         {   
+            ROS_DEBUG_STREAM("pm_.safeToLaneChange: " << pm_.safeToLaneChange);
             // for testing purpose only, check lane change status
             double start_crosstrack = 0.5*findLaneWidth();// Assume vehicle start at left lane when testing.
             double crosstrackDiff = current_crosstrack_ - start_crosstrack; 
@@ -3051,7 +3059,8 @@ namespace platoon_strategic_ihp
                     ROS_DEBUG_STREAM("time_progress: " << time_progress.toSec());
                     auto p = shortest_path[last_lanelet_index].centerline2d().back();
                     double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
-                    end_dist = std::min(end_dist, total_maneuver_length);
+                    // end_dist = std::min(end_dist, total_maneuver_length);
+                    end_dist = std::max(end_dist, total_maneuver_length);
                     ROS_DEBUG_STREAM("end_dist: " << end_dist);
                     double dist_diff = end_dist - current_progress;
                     ROS_DEBUG_STREAM("dist_diff: " << dist_diff);
@@ -3079,6 +3088,7 @@ namespace platoon_strategic_ihp
         // same-lane maneuver  
         else 
         {
+            ROS_DEBUG_STREAM("Planning Same Lane Maneuver! ");
             while (current_progress < total_maneuver_length)
             {   
                 ROS_DEBUG_STREAM("Same Lane Maneuver for platoon join ! ");

@@ -84,6 +84,11 @@ namespace platoon_control
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
             [this](const auto&) { plugin_discovery_pub_.publish(plugin_discovery_msg_); });
+
+
+        ros::Timer control_pub_timer_ = pnh_->createTimer(
+            ros::Duration(ros::Rate(30.0)),
+            [this](const auto&) {controlTimerCb();});    
     }
 
                                     
@@ -92,6 +97,20 @@ namespace platoon_control
         ros::CARMANodeHandle::spin();
     }
 
+    bool PlatoonControlPlugin::controlTimerCb()
+    {
+
+        cav_msgs::TrajectoryPlanPoint second_trajectory_point = latest_trajectory_.trajectory_points[1]; 
+        cav_msgs::TrajectoryPlanPoint lookahead_point = getLookaheadTrajectoryPoint(latest_trajectory_);
+
+        trajectory_speed_ = getTrajectorySpeed(latest_trajectory_.trajectory_points);
+        
+        generateControlSignals(second_trajectory_point, lookahead_point); 
+
+        return true;
+    }   
+    
+
 
     void  PlatoonControlPlugin::trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
         
@@ -99,16 +118,8 @@ namespace platoon_control
             ROS_WARN_STREAM("PlatoonControlPlugin cannot execute trajectory as only 1 point was provided");
             return;
         }
-        cav_msgs::TrajectoryPlanPoint first_trajectory_point = tp->trajectory_points[1]; // TODO this variable appears to be misnamed. It is the second trajectory point
-        cav_msgs::TrajectoryPlanPoint lookahead_point = getLookaheadTrajectoryPoint(*tp);
 
-        trajectory_speed_ = getTrajectorySpeed(tp->trajectory_points);
-
-    	
-        
-        generateControlSignals(first_trajectory_point, lookahead_point); // TODO this should really be called on a timer against that last trajectory so 30Hz control loop can be achieved
-
-
+        latest_trajectory_ = *tp;
     }
 
     cav_msgs::TrajectoryPlanPoint PlatoonControlPlugin::getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan)
@@ -218,7 +229,7 @@ namespace platoon_control
 
     void PlatoonControlPlugin::generateControlSignals(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point){
 
-        pcw_.setCurrentSpeed(trajectory_speed_);
+        pcw_.setCurrentSpeed(trajectory_speed_); //TODO why this and not the actual vehicle speed?  Method name suggests different use than this.
         // pcw_.setCurrentSpeed(current_speed_);
         pcw_.setLeader(platoon_leader_);
     	pcw_.generateSpeed(first_trajectory_point);
@@ -243,9 +254,11 @@ namespace platoon_control
         double t1 = (trajectory_points[trajectory_points.size()-1].target_time.toSec() - trajectory_points[0].target_time.toSec());
 
         double avg_speed = d1/t1;
+        ROS_DEBUG_STREAM("trajectory_points size = " << trajectory_points.size() << ", d1 = " << d1 << ", t1 = " << t1 << ", avg_speed = " << avg_speed);
 
         for(size_t i = 0; i < trajectory_points.size() - 2; i++ )
-        {            double dx = trajectory_points[i + 1].x - trajectory_points[i].x;
+        {            
+            double dx = trajectory_points[i + 1].x - trajectory_points[i].x;
             double dy = trajectory_points[i + 1].y - trajectory_points[i].y;
             double d = sqrt(dx*dx + dy*dy); 
             double t = (trajectory_points[i + 1].target_time.toSec() - trajectory_points[i].target_time.toSec());
@@ -259,7 +272,7 @@ namespace platoon_control
         ROS_DEBUG_STREAM("trajectory speed: " << trajectory_speed);
         ROS_DEBUG_STREAM("avg trajectory speed: " << avg_speed);
 
-        return avg_speed;
+        return avg_speed; //TODO: why are 2 speeds being calculated? Which should be returned?
 
     }
 
