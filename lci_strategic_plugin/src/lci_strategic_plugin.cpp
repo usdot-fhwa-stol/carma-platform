@@ -435,7 +435,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         ros::Time stop_starting_timestamp = current_state.stamp + ros::Duration(crawling_distance / config_.minimum_speed) - ros::Duration(config_.minimum_speed / max_comfort_decel_norm_);
         ROS_DEBUG_STREAM("Found stop_starting_timestamp at: " << std::to_string(stop_starting_timestamp.toSec()) << ", where current_state is: " << std::to_string(current_state.stamp.toSec()));
 
-        if (traffic_light->predictState(lanelet::time::timeFromSec((stop_starting_timestamp + ros::Duration(config_.minimum_speed / max_comfort_decel_norm_)).toSec())).second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED);
+        if (traffic_light->predictState(lanelet::time::timeFromSec((stop_starting_timestamp + ros::Duration(config_.minimum_speed / max_comfort_decel_norm_)).toSec())).get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED);
         {
           ROS_DEBUG_STREAM("We are not able to stop at RED light, crawling distance:" << config_.minimum_speed * (stop_starting_timestamp - current_state.stamp).toSec() << ", where distance left is: " << distance_remaining_to_traffic_light);
           ROS_ERROR_STREAM("We are not able to stop at RED light, crawling distance:" << config_.minimum_speed * (stop_starting_timestamp - current_state.stamp).toSec() << ", where distance left is: " << distance_remaining_to_traffic_light);
