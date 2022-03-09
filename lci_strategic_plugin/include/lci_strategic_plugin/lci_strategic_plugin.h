@@ -547,6 +547,7 @@ private:
   double max_comfort_accel_ = 2.0;  // acceleration rates after applying miltiplier
   double max_comfort_decel_ = -2.0; 
   double max_comfort_decel_norm_ = -1 * max_comfort_decel_;
+  boost::optional<ros::Time> nearest_green_entry_time_cached_;
 
   //! World Model pointer
   carma_wm::WorldModelConstPtr wm_;

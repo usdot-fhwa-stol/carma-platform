@@ -14,7 +14,7 @@ stopping_location_buffer : 5.0
 green_light_time_buffer : 1.0
 
 # Double: Minimum allowable speed in m/s
-minimum_speed : 2.2352 # 5mph 10mph: 4.4704, 6mph: 2.68224, 7mph: 3.12928 TODO
+minimum_speed : 4.4704 # 5mph 10mph: 4.4704, 6mph: 2.68224, 7mph: 3.12928 TODO
 
 # Double: Update min_gap. Units in m
 min_gap : 0

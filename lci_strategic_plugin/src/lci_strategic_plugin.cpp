@@ -317,7 +317,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
 
     // perfectly stop at red/yellow with given distance and constant deceleration 
     if (state_pair_at_stop.get().second != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
-      current_state.speed > config_.minimum_speed + epsilon_)
+      current_state.speed > 2.2352 + epsilon_) //hardcoded
     {
       double decel_rate = current_state_speed / min_bound_stop_time; // Kinematic |(v_f - v_i) / t = a|
       ROS_ERROR_STREAM("22222222: Planning stop and wait maneuver at decel_rate: -" << decel_rate);
@@ -329,10 +329,10 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
       return;
     }
-    if (current_state.speed <= config_.minimum_speed + epsilon_)
+    if (current_state.speed <= 2.2352 + epsilon_)
     {
-      ROS_DEBUG_STREAM("DETECTED WE WOULD HAVE WENT 222222222222 at low speed");
-      ROS_ERROR_STREAM("DETECTED WE WOULD HAVE WENT 222222222222 at low speed");
+      ROS_DEBUG_STREAM("DETECTED WE WOULD HAVE WENT 222222222222 at 2.2352 + epsilon_ speed");
+      ROS_ERROR_STREAM("DETECTED WE WOULD HAVE WENT 222222222222 at 2.2352 + epsilon_ speed");
     }
 
     // 2. If stopping with single deceleration falls on green phase, stop at next possible red phase
@@ -373,7 +373,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
       
       // TODO include crawl here?
       
-      if (speed_before_stop < current_state_speed && speed_before_stop > config_.minimum_speed + epsilon_) //todo change 0 to minimum speed?
+      if (speed_before_stop < current_state_speed && speed_before_stop > 2.2352 + epsilon_) //todo change 0 to minimum speed?
       {
         // calculate necessary parameters
         double decelerating_time = (current_state_speed - speed_before_stop) / max_comfort_decel_norm_;
@@ -546,7 +546,24 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   ros::Time nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
                                           + ros::Duration(0.01); //0.01sec more buffer since green_light buffer also ends at previous state
+  
+  if (!nearest_green_entry_time_cached_)
+  {
+    ROS_ERROR_STREAM("APPLIED GREEN BUFFER! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
+    ROS_DEBUG_STREAM("APPLIED GREEN BUFFER! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
 
+    nearest_green_entry_time_cached_ = nearest_green_entry_time + ros::Duration(config_.green_light_time_buffer);
+    nearest_green_entry_time = nearest_green_entry_time_cached_.get();
+  }
+  else if ((nearest_green_entry_time_cached_.get() - nearest_green_entry_time).toSec() > 0.1)
+  {
+    nearest_green_entry_time = nearest_green_entry_time_cached_.get();
+  }
+  else
+  {
+    ROS_ERROR_STREAM("CONSIDERABLY CLOSE TO GREEN BUFFER! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
+    ROS_DEBUG_STREAM("CONSIDERABLY CLOSE TO GREEN BUFFER! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
+  }
   ROS_DEBUG_STREAM("nearest_green_entry_time with buffer: " << std::to_string(nearest_green_entry_time.toSec()));
 
   // CASE SELECTION START
