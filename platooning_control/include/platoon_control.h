@@ -118,5 +118,6 @@ namespace platoon_control
         	ros::Publisher plugin_discovery_pub_;
 			ros::Publisher platoon_info_pub_;
 			ros::Timer discovery_pub_timer_;
+			ros::Timer control_pub_timer_;
     };
 }

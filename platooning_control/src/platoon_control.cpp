@@ -87,16 +87,17 @@ namespace platoon_control
 
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
-            [this](const auto&) { plugin_discovery_pub_.publish(plugin_discovery_msg_); 
-                                  controlTimerCb();});
+            [this](const auto&) { plugin_discovery_pub_.publish(plugin_discovery_msg_);
+                                  ROS_DEBUG_STREAM("10hz timer callback called");});
         
-        ROS_DEBUG_STREAM("discovery timer callback ");
-        ros::Timer control_pub_timer_ = pnh_->createTimer(
+        ROS_DEBUG_STREAM("discovery timer created");
+        
+        control_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(30.0)),
-            [this](const auto&) {controlTimerCb();
-                                 ROS_DEBUG_STREAM("30hz timer callback called");   }); 
+            [this](const auto&) { ROS_DEBUG_STREAM("30hz timer callback called"); 
+                                  controlTimerCb();  }); 
         
-        ROS_DEBUG_STREAM("control timer callback ");
+        ROS_DEBUG_STREAM("control timer created ");
     }
 
                                     
