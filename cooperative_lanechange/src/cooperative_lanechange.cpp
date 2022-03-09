@@ -239,7 +239,14 @@ namespace cooperative_lanechange
         //get subject vehicle info
         lanelet::BasicPoint2d veh_pos(req.vehicle_state.x_pos_global, req.vehicle_state.y_pos_global);
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
+
+        ROS_DEBUG_STREAM("target_lanelet_id: " << target_lanelet_id);
+        ROS_DEBUG_STREAM("target_downtrack: " << target_downtrack);
+        ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack);
+        ROS_DEBUG_STREAM("Starting CLC downtrack: " << maneuver_plan[0].lane_change_maneuver.start_dist);
+
         if(current_downtrack < maneuver_plan[0].lane_change_maneuver.start_dist - starting_downtrack_range_){
+            ROS_DEBUG_STREAM("current_downtrack is more than 5 meters before Starting CLC downtrack");
             return true;
         }
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, veh_pos, 10);       
