@@ -87,12 +87,17 @@ namespace platoon_control
 
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
-            [this](const auto&) { plugin_discovery_pub_.publish(plugin_discovery_msg_); });
-
-
-        ros::Timer control_pub_timer_ = pnh_->createTimer(
+            [this](const auto&) { plugin_discovery_pub_.publish(plugin_discovery_msg_);
+                                  ROS_DEBUG_STREAM("10hz timer callback called");});
+        
+        ROS_DEBUG_STREAM("discovery timer created");
+        
+        control_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(30.0)),
-            [this](const auto&) {controlTimerCb();});    
+            [this](const auto&) { ROS_DEBUG_STREAM("30hz timer callback called"); 
+                                  controlTimerCb();  }); 
+        
+        ROS_DEBUG_STREAM("control timer created ");
     }
 
                                     
@@ -103,6 +108,7 @@ namespace platoon_control
 
     bool PlatoonControlPlugin::controlTimerCb()
     {
+        ROS_DEBUG_STREAM("In control timer callback ");
         // If it has been a long time since input data has arrived then reset the input counter and return
         // Note: this quiets the controller after its input stream stops, which is necessary to allow 
         // the replacement controller to publish on the same output topic after this one is done.
