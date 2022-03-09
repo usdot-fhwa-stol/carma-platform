@@ -234,11 +234,11 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   autoware_lanelet2_msgs::MapBin gf_reverse_msg;
   auto reverse_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, {}));
   carma_wm::toBinMsg(reverse_data, &gf_reverse_msg);
-  gf_reverse_msg.header.seq +=2;
+  gf_reverse_msg.seq_id +=2;
 
   // test the MapUpdateCallback reverse
   auto gf_rev_msg_ptr =  boost::make_shared<autoware_lanelet2_msgs::MapBin>(gf_reverse_msg);
-  gf_obj_msg.header.seq ++;
+  gf_obj_msg.seq_id ++;
   gf_msg_ptr =  boost::make_shared<autoware_lanelet2_msgs::MapBin>(gf_obj_msg);
   EXPECT_THROW(wmlw.mapUpdateCallback(gf_msg_ptr), lanelet::InvalidInputError); // because we are trying update the exact same llt and regem relationship again
   wmlw.mapUpdateCallback(gf_rev_msg_ptr);
