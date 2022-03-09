@@ -595,7 +595,20 @@ TrajectorySmoothingParameters LCIStrategicPlugin::handleFailureCase(double start
     new_params.modified_departure_speed = starting_speed + new_accel * remaining_time;
     new_params.dist_cruise = 0;
     new_params.modified_remaining_time = remaining_time;
-    params = new_params;
+    // handle hard failure case such as nan
+    if (!isnan(params.modified_departure_speed) && params.modified_departure_speed > epsilon_ &&
+        params.modified_departure_speed < 35.7632 ) //80_mph
+    {
+      params = new_params;
+      ROS_ERROR_STREAM("Updated!!! : " << new_params.modified_departure_speed);
+      ROS_DEBUG_STREAM("Updated!!! : " << new_params.modified_departure_speed);
+    }
+
+    else
+    {
+      ROS_ERROR_STREAM("Ignoring!!! : " << new_params.modified_departure_speed);
+      ROS_DEBUG_STREAM("Ignoring!!! : " << new_params.modified_departure_speed);
+    }
   }
   // handle hard failure case such as nan
   if (isnan(params.modified_departure_speed) || params.modified_departure_speed < - epsilon_ ||

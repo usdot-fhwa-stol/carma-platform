@@ -545,7 +545,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   ROS_DEBUG_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));
 
   ros::Time nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
-                                          + ros::Duration(config_.green_light_time_buffer + 0.01); //0.01sec more buffer since green_light buffer also ends at previous state
+                                          + ros::Duration(0.01); //0.01sec more buffer since green_light buffer also ends at previous state
 
   ROS_DEBUG_STREAM("nearest_green_entry_time with buffer: " << std::to_string(nearest_green_entry_time.toSec()));
 
