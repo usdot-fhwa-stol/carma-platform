@@ -42,7 +42,7 @@ namespace basic_autonomy
 
                 if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING){
                     ROS_DEBUG_STREAM("Creating Lane Follow Geometry");
-                    ROS_DEBUG_STREAM("Maneuver's end_dist is " << maneuver.lane_following_maneuver.end_dist)
+                    ROS_DEBUG_STREAM("Maneuver's end_dist is " << maneuver.lane_following_maneuver.end_dist);
                     std::vector<PointSpeedPair> lane_follow_points = create_lanefollow_geometry(maneuver, starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config, visited_lanelets);
                     points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
                 }
@@ -190,7 +190,7 @@ namespace basic_autonomy
             double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack;
 
             ROS_DEBUG_STREAM("starting_route_downtrack: " << starting_route_downtrack);
-            ROS_DEBUG_STREAM("Trajectory ending downtrack: " << maneuvers.back().lane_following_maneuver.end_dist)
+            ROS_DEBUG_STREAM("Trajectory ending downtrack: " << maneuvers.back().lane_following_maneuver.end_dist);
             ROS_DEBUG_STREAM("Trajectory ending downtrack with buffer: " << ending_downtrack);
 
             size_t max_i = points_and_target_speeds.size() - 1;
