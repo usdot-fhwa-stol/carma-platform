@@ -124,7 +124,7 @@ namespace platoon_strategic
             PlatoonMember newMember = PlatoonMember(senderId, senderBsmId, cmdSpeed, curSpeed, dtDistance, cur_t);
             platoon.push_back(newMember);
 
-            std::sort(std::begin(platoon), std::end(platoon), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition < b.vehiclePosition;});
+            std::sort(std::begin(platoon), std::end(platoon), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition > b.vehiclePosition;});
 
             ROS_DEBUG_STREAM("Add a new vehicle into our platoon list " << newMember.staticId);
         }
