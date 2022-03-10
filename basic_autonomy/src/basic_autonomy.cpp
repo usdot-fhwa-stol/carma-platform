@@ -286,17 +286,17 @@ namespace basic_autonomy
             lanelet::ConstLanelet current_lanelet = starting_lanelet;
             reference_centerline.insert(reference_centerline.end(), current_lanelet_centerline.begin(), current_lanelet_centerline.end());
 
-            ROS_DEBUG_STREAM("Searching for shared boundary with starting lanechange lanelet " << std::to_string(current_lanelet.id() " and ending lanelet " << std::to_string(ending_lanelet.id());
+            ROS_DEBUG_STREAM("Searching for shared boundary with starting lanechange lanelet " << std::to_string(current_lanelet.id()) " and ending lanelet " << std::to_string(ending_lanelet.id()));
             while(!shared_boundary_found){
                 //Assumption- Adjacent lanelets share lane boundary
                 if(current_lanelet.leftBound() == ending_lanelet.rightBound()){   
-                    ROS_DEBUG_STREAM("Lanelet " << std::to_string(current_lanelet.id() << " shares left boundary with " << std::to_string(ending_lanelet.id());
+                    ROS_DEBUG_STREAM("Lanelet " << std::to_string(current_lanelet.id()) << " shares left boundary with " << std::to_string(ending_lanelet.id()));
                     is_lanechange_left = true;
                     shared_boundary_found = true;
                 }
 
                 else if(current_lanelet.rightBound() == ending_lanelet.leftBound()){
-                    ROS_DEBUG_STREAM("Lanelet " << std::to_string(current_lanelet.id() << " shares right boundary with " << std::to_string(ending_lanelet.id());
+                    ROS_DEBUG_STREAM("Lanelet " << std::to_string(current_lanelet.id()) << " shares right boundary with " << std::to_string(ending_lanelet.id()));
                     shared_boundary_found = true;
                 }
 
@@ -315,7 +315,7 @@ namespace basic_autonomy
                         //Looped back to starting lanelet
                         throw(std::invalid_argument("No lane change in path"));
                     }
-                    ROS_DEBUG_STREAM("Now checking for shared lane boundary with lanelet " << std::to_string(current_lanelet.id() << " and ending lanelet " << std::to_string(ending_lanelet.id());
+                    ROS_DEBUG_STREAM("Now checking for shared lane boundary with lanelet " << std::to_string(current_lanelet.id()) << " and ending lanelet " << std::to_string(ending_lanelet.id()));
                     auto current_lanelet_linestring = current_lanelet.centerline2d().basicLineString();   
                     //Concatenate linestring starting from + 1 to avoid overlap 
                     reference_centerline.insert(reference_centerline.end(), current_lanelet_linestring.begin() + 1, current_lanelet_linestring.end());
