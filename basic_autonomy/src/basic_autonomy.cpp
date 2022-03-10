@@ -323,7 +323,7 @@ namespace basic_autonomy
                 }
             }
 
-            //Find crosstrack distance between starting lane and ending lane
+            // Create the target lane centerline using lanelets adjacent to the lanechange lanelets in the starting lane
             std::vector<lanelet::BasicPoint2d> target_lane_centerline;
             for(size_t i = 0;i<starting_lane.size();++i){
                 lanelet::ConstLanelet curr_end_lanelet;
