@@ -209,10 +209,12 @@ namespace basic_autonomy
                 }
 
                 double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
-                ROS_DEBUG_STREAM("Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() << 
-                "current_point.y():" << current_point.y());
+                //ROS_DEBUG_STREAM("Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() << 
+                //"current_point.y():" << current_point.y());
 
                 dist_accumulator += delta_d;
+                ROS_DEBUG_STREAM("Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() << 
+                "current_point.y():" << current_point.y());
                 if (dist_accumulator > maneuvers.back().lane_following_maneuver.end_dist && !found_unbuffered_idx)
                 {
                     unbuffered_idx = i - 1;
@@ -284,14 +286,17 @@ namespace basic_autonomy
             lanelet::ConstLanelet current_lanelet = starting_lanelet;
             reference_centerline.insert(reference_centerline.end(), current_lanelet_centerline.begin(), current_lanelet_centerline.end());
 
+            ROS_DEBUG_STREAM("Searching for shared boundary with starting lanechange lanelet " << std::to_string(current_lanelet.id() " and ending lanelet " << std::to_string(ending_lanelet.id());
             while(!shared_boundary_found){
                 //Assumption- Adjacent lanelets share lane boundary
                 if(current_lanelet.leftBound() == ending_lanelet.rightBound()){   
+                    ROS_DEBUG_STREAM("Lanelet " << std::to_string(current_lanelet.id() << " shares left boundary with " << std::to_string(ending_lanelet.id());
                     is_lanechange_left = true;
                     shared_boundary_found = true;
                 }
 
                 else if(current_lanelet.rightBound() == ending_lanelet.leftBound()){
+                    ROS_DEBUG_STREAM("Lanelet " << std::to_string(current_lanelet.id() << " shares right boundary with " << std::to_string(ending_lanelet.id());
                     shared_boundary_found = true;
                 }
 
@@ -310,6 +315,7 @@ namespace basic_autonomy
                         //Looped back to starting lanelet
                         throw(std::invalid_argument("No lane change in path"));
                     }
+                    ROS_DEBUG_STREAM("Now checking for shared lane boundary with lanelet " << std::to_string(current_lanelet.id() << " and ending lanelet " << std::to_string(ending_lanelet.id());
                     auto current_lanelet_linestring = current_lanelet.centerline2d().basicLineString();   
                     //Concatenate linestring starting from + 1 to avoid overlap 
                     reference_centerline.insert(reference_centerline.end(), current_lanelet_linestring.begin() + 1, current_lanelet_linestring.end());
@@ -325,21 +331,21 @@ namespace basic_autonomy
                 if(is_lanechange_left){
                     
                     //get left lanelet
-                    if(wm->getMapRoutingGraph()->left(starting_lane[0])){
-                        curr_end_lanelet = wm->getMapRoutingGraph()->left(starting_lane[0]).get();
+                    if(wm->getMapRoutingGraph()->left(starting_lane[i])){
+                        curr_end_lanelet = wm->getMapRoutingGraph()->left(starting_lane[i]).get();
                     }
                     else{
-                        curr_end_lanelet = wm->getMapRoutingGraph()->adjacentLeft(starting_lane[0]).get();
+                        curr_end_lanelet = wm->getMapRoutingGraph()->adjacentLeft(starting_lane[i]).get();
                     }
                 }
                 else{
 
                     //get right lanelet
-                    if(wm->getMapRoutingGraph()->right(starting_lane[0])){
-                        curr_end_lanelet = wm->getMapRoutingGraph()->right(starting_lane[0]).get();
+                    if(wm->getMapRoutingGraph()->right(starting_lane[i])){
+                        curr_end_lanelet = wm->getMapRoutingGraph()->right(starting_lane[i]).get();
                     }
                     else{
-                        curr_end_lanelet = wm->getMapRoutingGraph()->adjacentRight(starting_lane[0]).get();
+                        curr_end_lanelet = wm->getMapRoutingGraph()->adjacentRight(starting_lane[i]).get();
                     }
                 }
                 
