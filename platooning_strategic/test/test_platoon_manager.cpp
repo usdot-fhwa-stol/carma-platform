@@ -229,9 +229,12 @@ TEST(PlatoonManagerTest, test2)
     pm.updatesOrAddMemberInfo("2", "2", 2.0, 1.0, 2.5);
 
     EXPECT_EQ(2, pm.platoon.size());
-    EXPECT_EQ("1", pm.platoon[0].staticId);
+    EXPECT_EQ("2", pm.platoon[0].staticId);
+    EXPECT_EQ(1.0, pm.platoon[0].vehiclePosition);
 
 }
+
+
 
 
 TEST(PlatoonManagerTest, test3)
