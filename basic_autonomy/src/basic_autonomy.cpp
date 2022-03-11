@@ -286,7 +286,7 @@ namespace basic_autonomy
             lanelet::ConstLanelet current_lanelet = starting_lanelet;
             reference_centerline.insert(reference_centerline.end(), current_lanelet_centerline.begin(), current_lanelet_centerline.end());
 
-            ROS_DEBUG_STREAM("Searching for shared boundary with starting lanechange lanelet " << std::to_string(current_lanelet.id()) " and ending lanelet " << std::to_string(ending_lanelet.id()));
+            ROS_DEBUG_STREAM("Searching for shared boundary with starting lanechange lanelet " << std::to_string(current_lanelet.id()) << " and ending lanelet " << std::to_string(ending_lanelet.id()));
             while(!shared_boundary_found){
                 //Assumption- Adjacent lanelets share lane boundary
                 if(current_lanelet.leftBound() == ending_lanelet.rightBound()){   
