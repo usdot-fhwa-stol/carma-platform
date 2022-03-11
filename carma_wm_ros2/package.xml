@@ -43,7 +43,6 @@
   <depend>j2735_v2x_msgs</depend>
   <depend>carma_debug_ros2_msgs</depend>
 
-  <!-- Needs to be ported to ros2? -->
   <depend>autoware_lanelet2_ros_interface</depend>  
   
 

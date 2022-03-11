@@ -19,7 +19,6 @@
 #include <functional>
 #include <mutex>
 #include <rclcpp/rclcpp.hpp>
-// #include <ros/callback_queue.h>
 #include <carma_wm_ros2/WorldModel.hpp>
 #include <carma_ros2_utils/carma_ros2_utils.hpp>
 #include <autoware_lanelet2_msgs/msg/map_bin.hpp>
@@ -45,7 +44,7 @@ class WMListenerWorker;  // Forward declaration of worker class
  * NOTE: At the moment the mechanism of route communication in ROS is not defined therefore it is a TODO: to implement
  * full route support
  */
-class WMListener : public carma_ros2_utils::CarmaLifecycleNode
+class WMListener : public rclcpp::Node
 {
 public:
   /*!
@@ -56,7 +55,7 @@ public:
    * 
    * \param multi_thread If true this object will subscribe using background threads. Defaults to false
    */
-  WMListener(const rclcpp::NodeOptions &, bool multi_thread = false);
+  WMListener(bool multi_thread = false);
 
   /*!
    * \brief Returns a pointer to an intialized world model instance
@@ -116,12 +115,8 @@ public:
    * 
    * \return True is rerouting is needed
    */ 
-  bool checkIfReRoutingNeededWL() const;
+  bool checkIfReRoutingNeededWL();
 
- ////
- // Overrides
- ////
- carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
 
 private:
   // Callback function that uses lock to edit the map
@@ -130,18 +125,13 @@ private:
   carma_ros2_utils::SubPtr<autoware_lanelet2_msgs::msg::MapBin> map_update_sub_;
   std::unique_ptr<WMListenerWorker> worker_;
   
-//   ros::CallbackQueue async_queue_;
-//   std::unique_ptr<ros::AsyncSpinner> wm_spinner_;
   carma_ros2_utils::SubPtr<autoware_lanelet2_msgs::msg::MapBin> map_sub_;
   carma_ros2_utils::SubPtr<carma_planning_msgs::msg::Route> route_sub_;
   carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::SPAT> traffic_spat_sub_;
   const bool multi_threaded_;
   std::mutex mw_mutex_;
   
- 
-//   ros::CARMANodeHandle nh2_{"/"};
   double config_speed_limit_;
-
   std::string participant_;
 
 };

@@ -21,23 +21,14 @@
 namespace carma_wm
 {
   // @SONAR_STOP@
-WMListener::WMListener(const rclcpp::NodeOptions &options, bool multi_thread)
-    : carma_ros2_utils::CarmaLifecycleNode(options), worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker)), multi_threaded_(multi_thread)
+WMListener::WMListener(bool multi_thread)
+    : Node("carma_wm"), worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker)), multi_threaded_(multi_thread)
 {
     RCLCPP_DEBUG_STREAM(get_logger(), "WMListener: Creating world model listener");
+    config_speed_limit_ = declare_parameter<double>("config_speed_limit", config_speed_limit_);
+    participant_ = declare_parameter<std::string>("vehicle_participant_type", participant_);
 
-    if (multi_threaded_)
-    {
-      RCLCPP_DEBUG_STREAM(get_logger(), "WMListener: Using a multi-threaded subscription");
-
-    }
-}
-
-carma_ros2_utils::CallbackReturn WMListener::handle_on_configure(const rclcpp_lifecycle::State &)
-{
-    
     get_parameter<double>("config_speed_limit", config_speed_limit_);
-
     get_parameter<std::string>("vehicle_participant_type", participant_);
 
     rclcpp::SubscriptionOptions map_update_options;
@@ -48,6 +39,8 @@ carma_ros2_utils::CallbackReturn WMListener::handle_on_configure(const rclcpp_li
 
     if(multi_threaded_)
     {
+
+      RCLCPP_DEBUG_STREAM(get_logger(), "WMListener: Using a multi-threaded subscription");
       auto map_update_cb_group = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
       map_update_options.callback_group = map_update_cb_group;
 
@@ -75,19 +68,18 @@ carma_ros2_utils::CallbackReturn WMListener::handle_on_configure(const rclcpp_li
     roadway_objects_sub_ = create_subscription<carma_perception_msgs::msg::RoadwayObstacleList>("roadway_objects", 1,
                                     std::bind(&WMListenerWorker::roadwayObjectListCallback, worker_.get(), std::placeholders::_1), roadway_objects_options);
     traffic_spat_sub_ = create_subscription<carma_v2x_msgs::msg::SPAT>("incoming_spat", 1,
-                                    std::bind(&WMListenerWorker::incomingSpatCallback, worker_.get(), std::placeholders::_1), traffic_spat_options);                                 
-    
-    // Return success if everthing initialized successfully
-    return CallbackReturn::SUCCESS;                              
+                                    std::bind(&WMListenerWorker::incomingSpatCallback, worker_.get(), std::placeholders::_1), traffic_spat_options); 
 }
 
 void WMListener::enableUpdatesWithoutRouteWL()
 {
-   worker_->enableUpdatesWithoutRoute();
+  const std::lock_guard<std::mutex> lock(mw_mutex_);
+  worker_->enableUpdatesWithoutRoute();
 }
 
-bool WMListener::checkIfReRoutingNeededWL() const
+bool WMListener::checkIfReRoutingNeededWL()
 {
+  const std::lock_guard<std::mutex> lock(mw_mutex_);
   return worker_->checkIfReRoutingNeeded();
 }
 
