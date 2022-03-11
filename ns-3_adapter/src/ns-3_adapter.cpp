@@ -103,7 +103,7 @@ void NS3Adapter::onMessageReceivedHandler(const std::vector<uint8_t> &data, uint
     cav_msgs::ByteArray msg;
     msg.header.stamp = ros::Time::now();
     msg.header.frame_id = "";
-    msg.messageType = it != wave_cfg_items_.end() ? it->name : "Unknown";
+    msg.message_type = it != wave_cfg_items_.end() ? it->name : "Unknown";
     msg.content = data;
     // Publish it
     comms_pub_.publish(msg);
@@ -126,14 +126,14 @@ std::vector<uint8_t> NS3Adapter::packMessage(const cav_msgs::ByteArray& message)
     std::stringstream ss;
     auto wave_item = std::find_if(wave_cfg_items_.begin(),wave_cfg_items_.end(),[&message](const WaveConfigStruct& entry)
     {
-        return entry.name == message.messageType;
+        return entry.name == message.message_type;
     });
 
     WaveConfigStruct cfg;
     if(wave_item == wave_cfg_items_.end())
     {
-        ROS_WARN_STREAM("No wave config entry for type: " << message.messageType << ", using defaults");
-        cfg.name = message.messageType;
+        ROS_WARN_STREAM("No wave config entry for type: " << message.message_type << ", using defaults");
+        cfg.name = message.message_type;
         cfg.channel = "CCH";  //Assuming the Default channel is not the safety related info that would be in a BSM message
         cfg.priority = "1";
         cfg.ns3_id = std::to_string((message.content[0] << 8 ) | message.content[1]);

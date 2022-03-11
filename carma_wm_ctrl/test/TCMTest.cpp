@@ -110,19 +110,19 @@ TEST(WMBroadcaster, DISABLED_geofenceCallback)
 
   cav_msgs::TrafficControlMessage tcm;
   tcm.choice = 1;
-  tcm.tcmV01.reqid.id = {0,0,0,0,0,0,0,0}; // Original id was {254, 16, 166, 86, 224, 213, 73, 249} changed to broadcast to support testing
-  tcm.tcmV01.reqseq = 0;
-  tcm.tcmV01.msgtot = 2;
-  tcm.tcmV01.msgnum = 1;
-  tcm.tcmV01.id.id = {245, 58, 198, 220, 227, 49, 222, 135, 14, 191, 107, 175, 134, 207, 23, 89};
-  tcm.tcmV01.updated.sec = 0;
-  tcm.tcmV01.updated.nsec = 0;
-  tcm.tcmV01.package.label = "weather";
-  tcm.tcmV01.package.label_exists = true;
+  tcm.tcm_v01.reqid.id = {0,0,0,0,0,0,0,0}; // Original id was {254, 16, 166, 86, 224, 213, 73, 249} changed to broadcast to support testing
+  tcm.tcm_v01.reqseq = 0;
+  tcm.tcm_v01.msgtot = 2;
+  tcm.tcm_v01.msgnum = 1;
+  tcm.tcm_v01.id.id = {245, 58, 198, 220, 227, 49, 222, 135, 14, 191, 107, 175, 134, 207, 23, 89};
+  tcm.tcm_v01.updated.sec = 0;
+  tcm.tcm_v01.updated.nsec = 0;
+  tcm.tcm_v01.package.label = "weather";
+  tcm.tcm_v01.package.label_exists = true;
   j2735_msgs::Id128b gid;
   gid.id = { 245, 58, 198, 220, 227, 49, 222, 135, 14, 191, 107, 175, 134, 207, 23, 89 };
-  tcm.tcmV01.package.tcids = { gid };
-  tcm.tcmV01.package_exists = true;
+  tcm.tcm_v01.package.tcids = { gid };
+  tcm.tcm_v01.package_exists = true;
   j2735_msgs::TrafficControlVehClass a,b,c,d,e,f,g,h,i,j,k,l,m;
   a.vehicle_class = 4;
   b.vehicle_class = 5;
@@ -137,23 +137,23 @@ TEST(WMBroadcaster, DISABLED_geofenceCallback)
   k.vehicle_class = 14;
   l.vehicle_class = 15;
   m.vehicle_class = 16;
-  tcm.tcmV01.params.vclasses = { a,b,c,d,e,f,g,h,i,j,k,l,m };
-  tcm.tcmV01.params.schedule.start.sec = 1624476360;
-  tcm.tcmV01.params.schedule.start.nsec = 0;
-  tcm.tcmV01.params.schedule.dow.dow = { 1,1,1,1,1,1,1 };
-  tcm.tcmV01.params.schedule.dow_exists = true;
-  tcm.tcmV01.params.regulatory = true;
-  tcm.tcmV01.params.detail.choice = 5;
-  tcm.tcmV01.params.detail.closed = 1;
-  tcm.tcmV01.params_exists = true;
-  tcm.tcmV01.geometry.proj = "epsg:3785";
-  tcm.tcmV01.geometry.datum = "WGS84";
-  tcm.tcmV01.geometry.reftime.sec = 2891441912;
-  tcm.tcmV01.geometry.reftime.nsec = 0;
-  tcm.tcmV01.geometry.reflon = -77.9696101;
-  tcm.tcmV01.geometry.reflat = 39.2339986;
-  tcm.tcmV01.geometry.refelv = -409.600006104;
-  tcm.tcmV01.geometry.heading = 331.299987793;
+  tcm.tcm_v01.params.vclasses = { a,b,c,d,e,f,g,h,i,j,k,l,m };
+  tcm.tcm_v01.params.schedule.start.sec = 1624476360;
+  tcm.tcm_v01.params.schedule.start.nsec = 0;
+  tcm.tcm_v01.params.schedule.dow.dow = { 1,1,1,1,1,1,1 };
+  tcm.tcm_v01.params.schedule.dow_exists = true;
+  tcm.tcm_v01.params.regulatory = true;
+  tcm.tcm_v01.params.detail.choice = 5;
+  tcm.tcm_v01.params.detail.closed = 1;
+  tcm.tcm_v01.params_exists = true;
+  tcm.tcm_v01.geometry.proj = "epsg:3785";
+  tcm.tcm_v01.geometry.datum = "WGS84";
+  tcm.tcm_v01.geometry.reftime.sec = 2891441912;
+  tcm.tcm_v01.geometry.reftime.nsec = 0;
+  tcm.tcm_v01.geometry.reflon = -77.9696101;
+  tcm.tcm_v01.geometry.reflat = 39.2339986;
+  tcm.tcm_v01.geometry.refelv = -409.600006104;
+  tcm.tcm_v01.geometry.heading = 331.299987793;
 
   cav_msgs::PathNode aa,bb,cc;
   aa.x = 0.0;
@@ -171,8 +171,8 @@ TEST(WMBroadcaster, DISABLED_geofenceCallback)
   cc.width = -0.00999999977648;
   cc.width_exists = true;
 
-  tcm.tcmV01.geometry.nodes = { aa, bb, cc };
-  tcm.tcmV01.geometry_exists = true;
+  tcm.tcm_v01.geometry.nodes = { aa, bb, cc };
+  tcm.tcm_v01.geometry_exists = true;
 
   wmb.geofenceCallback(tcm);
 
