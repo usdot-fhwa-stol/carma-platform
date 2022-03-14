@@ -333,7 +333,17 @@ TEST(GNSSToMapConvertor, gnssFixCb)
 
     double error_bound_dist = 0.0001;
     double error_bound_rad = 0.000001;
-    assertNear(solution, pose_msg->pose, error_bound_dist, error_bound_rad);
+    // assertNear(solution, pose_msg->pose, error_bound_dist, error_bound_rad);
+
+    ASSERT_NEAR(solution.getOrigin().getX(), pose_msg->pose.position.x, error_bound_dist);
+    ASSERT_NEAR(solution.getOrigin().getY(), pose_msg->pose.position.y, error_bound_dist);
+    ASSERT_NEAR(solution.getOrigin().getZ(), pose_msg->pose.position.z, error_bound_dist);
+
+    // ASSERT_NEAR(solution.getRotation().getX(), pose_msg->pose.orientation.x, error_bound_rad);
+    // ASSERT_NEAR(solution.getRotation().getY(), pose_msg->pose.orientation.y, error_bound_rad);
+    // ASSERT_NEAR(solution.getRotation().getZ(), pose_msg->pose.orientation.z, error_bound_rad);
+    ASSERT_NEAR(solution.getRotation().getW(), pose_msg->pose.orientation.w, error_bound_rad);
+
 
 }
 
