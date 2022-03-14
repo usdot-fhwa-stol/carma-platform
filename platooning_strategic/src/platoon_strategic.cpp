@@ -845,6 +845,7 @@ namespace platoon_strategic
                 int numOfVehiclesGaps = pm_.getNumberOfVehicleInFront() - pm_.dynamic_leader_index_;
                 ROS_DEBUG_STREAM("The host vehicle have " << numOfVehiclesGaps << " vehicles between itself and its leader (includes the leader)");
 
+                // TODO: currently the average length of the vehicle is obtained from a config parameter. In future, plugin needs to be updated to receive each vehicle's actual length through status or BSM messages for more accuracy.
                 status_msg.desired_gap = std::max(config_.standStillHeadway * numOfVehiclesGaps, config_.timeHeadway * current_speed_* numOfVehiclesGaps) + (numOfVehiclesGaps - 1) * config_.averageVehicleLength;
                 ROS_DEBUG_STREAM("The desired gap with the leader is " << status_msg.desired_gap);
 
