@@ -159,12 +159,12 @@ ros::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_dista
   
   ROS_DEBUG_STREAM("x: " << x << ", x2: " << x2 << ", x1: " << x1);
 
-  if (v_hat <= config_.minimum_speed - epsilon_)
+  if (v_hat <= config_.algo_minimum_speed - epsilon_)
   {
     ROS_ERROR_STREAM("Detected that v_hat is smaller than allowed!!!: " << v_hat);
     ROS_DEBUG_STREAM("Detected that v_hat is smaller than allowed!!!: " << v_hat);
     
-    v_hat = config_.minimum_speed;
+    v_hat = config_.algo_minimum_speed;
   }
 
   if (v_hat >= free_flow_speed + epsilon_)
@@ -284,9 +284,9 @@ SpeedProfileCase LCIStrategicPlugin::determine_speed_profile_case(double estimat
   ROS_DEBUG_STREAM("estimated_entry_time: " << estimated_entry_time << ", and scheduled_entry_time: " << scheduled_entry_time);
   if (estimated_entry_time < scheduled_entry_time)
   {
-    ROS_DEBUG_STREAM("speed_before_accel: " << speed_before_accel << ", and config_.minimum_speed: " << config_.minimum_speed);
+    ROS_DEBUG_STREAM("speed_before_accel: " << speed_before_accel << ", and config_.algo_minimum_speed: " << config_.algo_minimum_speed);
 
-    if (speed_before_accel < config_.minimum_speed)
+    if (speed_before_accel < config_.algo_minimum_speed)
     {
       case_num = DECEL_CRUISE_ACCEL;
     }
@@ -419,7 +419,7 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_accel_cruis
   return params;
 }
 
-TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_decel_cruise_accel_speed_profile(double remaining_downtrack, double remaining_time, double starting_speed, double speed_before_accel, double minimum_speed, double departure_speed)
+TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_decel_cruise_accel_speed_profile(double remaining_downtrack, double remaining_time, double starting_speed, double speed_before_accel, double algo_minimum_speed, double departure_speed)
 {
   TrajectorySmoothingParameters params;
   params.is_algorithm_successful = true;
@@ -431,10 +431,10 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_decel_cruis
   double t_c_nom = 0.0;
   double t_c_den = epsilon_;
 
-  if (speed_before_accel < config_.minimum_speed)
+  if (speed_before_accel < config_.algo_minimum_speed)
   {
-    ROS_DEBUG_STREAM("Detected that cruising is necessary. Changed speed_before_accel: " << speed_before_accel << ", to : " << config_.minimum_speed);
-    speed_before_accel = config_.minimum_speed;
+    ROS_DEBUG_STREAM("Detected that cruising is necessary. Changed speed_before_accel: " << speed_before_accel << ", to : " << config_.algo_minimum_speed);
+    speed_before_accel = config_.algo_minimum_speed;
 
     // Cruising Time Interval Equation (case 1) obtained from TSMO UC 2 Algorithm draft doc Figure 8.
     // Nominator portion
@@ -459,7 +459,7 @@ TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_decel_cruis
   ROS_DEBUG_STREAM("max_comfort_accel_: " << max_comfort_accel_ << "\n" <<
                    "max_comfort_decel_: " << max_comfort_decel_ << "\n" <<
                    "acc_dec_ratio: " << acc_dec_ratio << "\n" <<
-                   "config_.minimum_speed: " << config_.minimum_speed);
+                   "config_.algo_minimum_speed: " << config_.algo_minimum_speed);
   
   // Rest of the equations for acceleration rates and time intervals for when accelerating or decelerating 
   double a_acc = ((acc_dec_ratio - 1) * speed_before_accel + departure_speed - acc_dec_ratio * starting_speed) / (remaining_time - t_cruise);

@@ -174,7 +174,7 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
   // Reset intersection state since in this state we are not yet known to be in or approaching an intersection
   intersection_speed_ = boost::none;
   intersection_end_downtrack_ = boost::none;
-  double current_state_speed = std::max(current_state.speed, config_.minimum_speed);
+  double current_state_speed = std::max(current_state.speed, config_.algo_minimum_speed);
 
   if (!traffic_light)
   {
@@ -288,7 +288,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
                                         double traffic_light_down_track)
 {
   double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack;
-  double current_state_speed = std::max(current_state.speed, config_.minimum_speed);
+  double current_state_speed = std::max(current_state.speed, config_.absolute_minimum_speed);
 
   // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
@@ -317,7 +317,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
 
     // perfectly stop at red/yellow with given distance and constant deceleration 
     if (state_pair_at_stop.get().second != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
-      current_state.speed > config_.minimum_speed + epsilon_) //hardcoded
+      current_state.speed > config_.absolute_minimum_speed + epsilon_)
     {
       double decel_rate = current_state_speed / min_bound_stop_time; // Kinematic |(v_f - v_i) / t = a|
       ROS_ERROR_STREAM("22222222: Planning stop and wait maneuver at decel_rate: -" << decel_rate);
@@ -329,10 +329,10 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
       return;
     }
-    if (current_state.speed <= config_.minimum_speed + epsilon_)
+    if (current_state.speed <= config_.absolute_minimum_speed + epsilon_)
     {
-      ROS_DEBUG_STREAM("DETECTED WE WOULD HAVE WENT 222222222222 at config_.minimum_speed + epsilon_ speed");
-      ROS_ERROR_STREAM("DETECTED WE WOULD HAVE WENT 222222222222 at config_.minimum_speed + epsilon_ speed");
+      ROS_DEBUG_STREAM("DETECTED WE WOULD HAVE WENT 222222222222 at config_.algo_minimum_speed + epsilon_ speed");
+      ROS_ERROR_STREAM("DETECTED WE WOULD HAVE WENT 222222222222 at config_.algo_minimum_speed + epsilon_ speed");
     }
 
     // 2. If stopping with single deceleration falls on green phase, stop at next possible red phase
@@ -351,10 +351,10 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
     {
       if (predicted_state_pair.get().second != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
       {
-        // check if midway timestamp of this signal state
+        // get 0.5 sec after timestamp of this signal state starts
         double stop_time_temp = lanelet::time::toSec(predicted_state_pair.get().first)
-                                  - lanelet::time::toSec(traffic_light->signal_durations[predicted_state_pair.get().second])/2
-                                  - current_state.stamp.toSec();
+                                  - lanelet::time::toSec(traffic_light->signal_durations[predicted_state_pair.get().second])
+                                  - current_state.stamp.toSec() + 0.5;
         ROS_DEBUG_STREAM("Found new stop time at: " << std::to_string(stop_time_temp) << ", where min_bound_stop_time is: " << std::to_string(min_bound_stop_time));
         target_stop_time = std::max(stop_time_temp, min_bound_stop_time); // min_bound_stop is guaranteed to be on same signal state
         new_stop_time_found = true;
@@ -373,7 +373,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
       
       // TODO include crawl here?
       
-      if (speed_before_stop < current_state_speed && speed_before_stop > config_.minimum_speed + epsilon_) //todo change 0 to minimum speed?
+      if (speed_before_stop < current_state_speed && speed_before_stop > config_.absolute_minimum_speed + epsilon_) //todo change 0 to minimum speed?
       {
         // calculate necessary parameters
         double decelerating_time = (current_state_speed - speed_before_stop) / max_comfort_decel_norm_;
@@ -401,7 +401,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
 
         // compose ts_params manually with above parameters
         TrajectorySmoothingParameters ts_params;
-        ts_params.a_decel = max_comfort_decel_; // will be unused if speed_before_stop < minimum_speed and crawl
+        ts_params.a_decel = max_comfort_decel_; // will be unused if speed_before_stop < algo_minimum_speed and crawl
         ts_params.case_num = SpeedProfileCase::DECEL_ACCEL;
         ts_params.dist_accel = 0.0;
         ts_params.dist_cruise = 0.0;
@@ -421,24 +421,24 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         
         return;
       }
-      else if (speed_before_stop <= config_.minimum_speed + epsilon_ ||
-              current_state.speed <= config_.minimum_speed + epsilon_)
+      else if (speed_before_stop <= config_.absolute_minimum_speed + epsilon_ ||
+              current_state.speed <= config_.absolute_minimum_speed + epsilon_)
       {
-        ROS_ERROR_STREAM("ZZZZZZZZZZZZZZ::: ACTUALLY USING speed:" << config_.minimum_speed << ". instead of " << speed_before_stop);
-        ROS_DEBUG_STREAM("ZZZZZZZZZZZZZ ::: ACTUALLY USING speed:" << config_.minimum_speed << ". instead of " << speed_before_stop);
+        ROS_ERROR_STREAM("ZZZZZZZZZZZZZZ::: ACTUALLY USING speed:" << config_.absolute_minimum_speed << ". instead of " << speed_before_stop);
+        ROS_DEBUG_STREAM("ZZZZZZZZZZZZZ ::: ACTUALLY USING speed:" << config_.absolute_minimum_speed << ". instead of " << speed_before_stop);
         // calculate necessary parameters
         
-        speed_before_stop = std::max(speed_before_stop, config_.minimum_speed); //just crawl if it is below minimum speed
-        double stopping_distance = pow(config_.minimum_speed, 2) / (2 * max_comfort_decel_norm_);
+        speed_before_stop = std::max(speed_before_stop, config_.absolute_minimum_speed); //just crawl if it is below minimum speed
+        double stopping_distance = pow(config_.absolute_minimum_speed, 2) / (2 * max_comfort_decel_norm_);
         double start_stopping_downtrack = traffic_light_down_track - stopping_distance;
         double crawling_distance = start_stopping_downtrack - current_state.downtrack;
-        ros::Time stop_starting_timestamp = current_state.stamp + ros::Duration(crawling_distance / config_.minimum_speed);
+        ros::Time stop_starting_timestamp = current_state.stamp + ros::Duration(crawling_distance / config_.absolute_minimum_speed);
         ROS_DEBUG_STREAM("Found stop_starting_timestamp at: " << std::to_string(stop_starting_timestamp.toSec()) << ", where current_state is: " << std::to_string(current_state.stamp.toSec()));
 
-        if (traffic_light->predictState(lanelet::time::timeFromSec((stop_starting_timestamp + ros::Duration(config_.minimum_speed / max_comfort_decel_norm_)).toSec())).get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED);
+        if (traffic_light->predictState(lanelet::time::timeFromSec((stop_starting_timestamp + ros::Duration(config_.absolute_minimum_speed / max_comfort_decel_norm_)).toSec())).get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED);
         {
-          ROS_DEBUG_STREAM("We are not able to stop at RED light, crawling distance:" << config_.minimum_speed * (stop_starting_timestamp - current_state.stamp).toSec() << ", where distance left is: " << distance_remaining_to_traffic_light);
-          ROS_ERROR_STREAM("We are not able to stop at RED light, crawling distance:" << config_.minimum_speed * (stop_starting_timestamp - current_state.stamp).toSec() << ", where distance left is: " << distance_remaining_to_traffic_light);
+          ROS_DEBUG_STREAM("We are not able to stop at RED light, crawling distance:" << config_.absolute_minimum_speed * (stop_starting_timestamp - current_state.stamp).toSec() << ", where distance left is: " << distance_remaining_to_traffic_light);
+          ROS_ERROR_STREAM("We are not able to stop at RED light, crawling distance:" << config_.absolute_minimum_speed * (stop_starting_timestamp - current_state.stamp).toSec() << ", where distance left is: " << distance_remaining_to_traffic_light);
           return;
         }
         lanelet::ConstLanelet starting_lanelet_for_stop = crossed_lanelets.front();
@@ -457,8 +457,8 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
 
         // compose ts_params manually with above parameters
         TrajectorySmoothingParameters ts_params;
-        ts_params.a_accel = max_comfort_accel_; // will be unused if speed_before_stop < minimum_speed and crawl
-        ts_params.a_decel = max_comfort_decel_; // will be unused if speed_before_stop < minimum_speed and crawl
+        ts_params.a_accel = max_comfort_accel_; // will be unused if speed_before_stop < absolute_minimum_speed and crawl
+        ts_params.a_decel = max_comfort_decel_; // will be unused if speed_before_stop < absolute_minimum_speed and crawl
         ts_params.case_num = SpeedProfileCase::ACCEL_DECEL;
         ts_params.dist_accel = 0.0;
         ts_params.dist_cruise = start_stopping_downtrack - current_state.downtrack;
@@ -493,7 +493,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     transition_table_.signal(TransitEvent::CROSSED_STOP_BAR);
     return;
   }
-  double current_state_speed = std::max(current_state.speed, config_.minimum_speed);
+  double current_state_speed = std::max(current_state.speed, config_.algo_minimum_speed);
 
   auto stop_line = traffic_light->getStopLine(entry_lanelet);
 
@@ -583,7 +583,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   else if(case_num == DECEL_ACCEL || case_num == DECEL_CRUISE_ACCEL)
   {
     // deceleration (cruising if needed) then acceleration to reach desired intersection entry speed/time according to algorithm doc
-    ts_params = get_parameters_for_decel_cruise_accel_speed_profile(distance_remaining_to_traffic_light, remaining_time, current_state_speed, speed_before_accel, config_.minimum_speed, intersection_speed_.get());
+    ts_params = get_parameters_for_decel_cruise_accel_speed_profile(distance_remaining_to_traffic_light, remaining_time, current_state_speed, speed_before_accel, config_.algo_minimum_speed, intersection_speed_.get());
   }
   else
   {

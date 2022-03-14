@@ -540,7 +540,7 @@ private:
    * \return TrajectoySmoothingParameters that has readily usable parameters to apply speed profile into the trajectory points
    * NOTE: Cruising speed profile is applied (case 4) if speed before acceleration is lower than minimum speed allowed. Otherwise Case 3.
    */
-  TrajectorySmoothingParameters get_parameters_for_decel_cruise_accel_speed_profile(double remaining_downtrack, double remaining_time, double starting_speed, double speed_before_accel, double minimum_speed, double departure_speed);
+  TrajectorySmoothingParameters get_parameters_for_decel_cruise_accel_speed_profile(double remaining_downtrack, double remaining_time, double starting_speed, double speed_before_accel, double algo_minimum_speed, double departure_speed);
   
   ////////// VARIABLES ///////////
 

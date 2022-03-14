@@ -43,8 +43,11 @@ struct LCIStrategicPluginConfig
   //! A buffer in seconds around the green phase which will reduce the phase length such that vehicle still considers it non-green
   double green_light_time_buffer = 0.0;
 
+  //! Minimum allowable speed TS algorithm in m/s
+  double algo_minimum_speed = 2.2352;
+
   //! Minimum allowable speed in m/s
-  double minimum_speed = 2.2352;
+  double absolute_minimum_speed = 2.2352;
 
   //! Double: Minimum inter-vehicle gap
   double min_gap = 10.0;
