@@ -91,6 +91,8 @@ public:
     pnh.param<double>("/vehicle_acceleration_limit", config.vehicle_accel_limit, config.vehicle_accel_limit);
     pnh.param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
     pnh.param<double>("stop_line_buffer", config.stop_line_buffer, config.stop_line_buffer);
+    pnh.param<double>("algorithm_evaluation_distance", config.algorithm_evaluation_distance, config.algorithm_evaluation_distance);
+    pnh.param<double>("algorithm_evaluation_period", config.algorithm_evaluation_period, config.algorithm_evaluation_period);
     pnh.param<double>("minimum_speed", config.minimum_speed, config.minimum_speed);
     
     ROS_INFO_STREAM("LightControlledIntersectionTacticalPlugin Params" << config);

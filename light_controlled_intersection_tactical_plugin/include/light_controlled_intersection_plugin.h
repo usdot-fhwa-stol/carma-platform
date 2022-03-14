@@ -194,6 +194,9 @@ public:
   // downtrack of host vehicle
   double current_downtrack_ = 0.0;
 
+  double last_successful_ending_downtrack_;         // if algorithm was successful, this is traffic_light_downtrack
+  double last_successful_scheduled_entry_time_;     // if algorithm was successful, this is also scheduled entry time (ET in TSMO UC2 Algo)
+
   private:
 
   carma_wm::WorldModelConstPtr wm_;

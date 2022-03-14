@@ -32,7 +32,7 @@
                                                                                                       "maneuver with " \
                                                                                                       "invalid type "  \
                                                                                                       "id"))))))
-
+   
 namespace lci_strategic_plugin
 {
 LCIStrategicPlugin::LCIStrategicPlugin(carma_wm::WorldModelConstPtr wm, LCIStrategicPluginConfig config)
@@ -317,7 +317,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
 
     // perfectly stop at red/yellow with given distance and constant deceleration 
     if (state_pair_at_stop.get().second != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
-      current_state.speed > 2.2352 + epsilon_) //hardcoded
+      current_state.speed > config_.minimum_speed + epsilon_) //hardcoded
     {
       double decel_rate = current_state_speed / min_bound_stop_time; // Kinematic |(v_f - v_i) / t = a|
       ROS_ERROR_STREAM("22222222: Planning stop and wait maneuver at decel_rate: -" << decel_rate);
@@ -329,10 +329,10 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
       return;
     }
-    if (current_state.speed <= 2.2352 + epsilon_)
+    if (current_state.speed <= config_.minimum_speed + epsilon_)
     {
-      ROS_DEBUG_STREAM("DETECTED WE WOULD HAVE WENT 222222222222 at 2.2352 + epsilon_ speed");
-      ROS_ERROR_STREAM("DETECTED WE WOULD HAVE WENT 222222222222 at 2.2352 + epsilon_ speed");
+      ROS_DEBUG_STREAM("DETECTED WE WOULD HAVE WENT 222222222222 at config_.minimum_speed + epsilon_ speed");
+      ROS_ERROR_STREAM("DETECTED WE WOULD HAVE WENT 222222222222 at config_.minimum_speed + epsilon_ speed");
     }
 
     // 2. If stopping with single deceleration falls on green phase, stop at next possible red phase
@@ -373,7 +373,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
       
       // TODO include crawl here?
       
-      if (speed_before_stop < current_state_speed && speed_before_stop > 2.2352 + epsilon_) //todo change 0 to minimum speed?
+      if (speed_before_stop < current_state_speed && speed_before_stop > config_.minimum_speed + epsilon_) //todo change 0 to minimum speed?
       {
         // calculate necessary parameters
         double decelerating_time = (current_state_speed - speed_before_stop) / max_comfort_decel_norm_;
@@ -432,7 +432,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         double stopping_distance = pow(config_.minimum_speed, 2) / (2 * max_comfort_decel_norm_);
         double start_stopping_downtrack = traffic_light_down_track - stopping_distance;
         double crawling_distance = start_stopping_downtrack - current_state.downtrack;
-        ros::Time stop_starting_timestamp = current_state.stamp + ros::Duration(crawling_distance / config_.minimum_speed) - ros::Duration(config_.minimum_speed / max_comfort_decel_norm_);
+        ros::Time stop_starting_timestamp = current_state.stamp + ros::Duration(crawling_distance / config_.minimum_speed);
         ROS_DEBUG_STREAM("Found stop_starting_timestamp at: " << std::to_string(stop_starting_timestamp.toSec()) << ", where current_state is: " << std::to_string(current_state.stamp.toSec()));
 
         if (traffic_light->predictState(lanelet::time::timeFromSec((stop_starting_timestamp + ros::Duration(config_.minimum_speed / max_comfort_decel_norm_)).toSec())).get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED);

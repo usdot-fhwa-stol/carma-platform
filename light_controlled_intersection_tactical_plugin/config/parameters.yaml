@@ -40,3 +40,9 @@ stop_line_buffer : 2.0
 
 # Double: Minimum allowable speed in m/s
 minimum_speed : 2.2352
+
+# Double: Distance from the nearest traffic light where the vehicle decides whether to run last successful trajectory or accept new one (in meters)
+algorithm_evaluation_distance : 35.0
+
+# Double: Period if scheduled entry time is within which the vehicle decides to run the last successful trajectory smoothing trajectory (in seconds)
+algorithm_evaluation_period : 4.5

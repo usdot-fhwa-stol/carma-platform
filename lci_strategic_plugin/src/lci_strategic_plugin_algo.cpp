@@ -537,79 +537,55 @@ TrajectorySmoothingParameters LCIStrategicPlugin::handleFailureCase(double start
   params.speed_before_accel = -1;
   params.speed_before_decel = -1;
 
-  if (starting_speed >= departure_speed - epsilon_) //decelerate
+  ROS_ERROR_STREAM("HANDLE FAILURE CASE I KNOW IS WRONG!!"); // TODO
+  ROS_DEBUG_STREAM("HANDLE FAILURE CASE I KNOW IS WRONG!!");
+
+  // kinematic: TODO
+  double new_accel = 2 * (remaining_downtrack - starting_speed * remaining_time)/ (pow(remaining_time, 2));
+
+  if (new_accel < -epsilon_)
   {
-    params.a_accel = 0;
-    params.a_decel = max_comfort_decel_;
+    params.a_decel = new_accel;
     params.speed_before_decel = starting_speed;
-    params.dist_accel = 0;
-    params.dist_cruise = 0;
     params.dist_decel = remaining_downtrack;
-    // kinematic: TODO
-    params.modified_departure_speed = sqrt(pow(starting_speed, 2) - 2 * remaining_downtrack * max_comfort_decel_norm_);
-    params.modified_remaining_time = (starting_speed - params.modified_departure_speed ) / max_comfort_decel_norm_;
     params.case_num = SpeedProfileCase::ACCEL_DECEL;
   }
-  else //accelerate
+  else
   {
-    params.a_accel = max_comfort_accel_;
-    params.a_decel = 0;
+    params.a_accel = new_accel;
     params.speed_before_accel = starting_speed;
     params.dist_accel = remaining_downtrack;
-    params.dist_cruise = 0;
-    params.dist_decel = 0;
-    // kinematic: TODO
-    params.modified_departure_speed = sqrt(2 * remaining_downtrack * max_comfort_accel_ + pow(starting_speed, 2));
-    params.modified_remaining_time = (params.modified_departure_speed - starting_speed) / max_comfort_accel_;
     params.case_num = SpeedProfileCase::DECEL_ACCEL;
   }
 
-  if (params.modified_departure_speed > departure_speed)
+  params.modified_departure_speed = starting_speed + new_accel * remaining_time;
+  params.dist_cruise = 0;
+  params.modified_remaining_time = remaining_time;
+
+  // handle hard failure case such as nan
+  if (!isnan(params.modified_departure_speed) && params.modified_departure_speed > epsilon_ &&
+      params.modified_departure_speed < 35.7632 ) //80_mph
   {
-    ROS_ERROR_STREAM("Trying different way");
-    ROS_DEBUG_STREAM("Trying different way");
-    TrajectorySmoothingParameters new_params;
-
-    // kinematic: TODO
-    double new_accel = 2 * (remaining_downtrack - starting_speed * remaining_time)/ (pow(remaining_time, 2));
-    
-    new_params.is_algorithm_successful = false;
-    new_params.speed_before_accel = -1;
-    new_params.speed_before_decel = -1;
-
-    if (new_accel < -epsilon_)
-    {
-      new_params.a_decel = new_accel;
-      new_params.speed_before_decel = starting_speed;
-      new_params.dist_decel = remaining_downtrack;
-      new_params.case_num = SpeedProfileCase::ACCEL_DECEL;
-    }
-    else
-    {
-      new_params.a_accel = new_accel;
-      new_params.speed_before_accel = starting_speed;
-      new_params.dist_accel = remaining_downtrack;
-      new_params.case_num = SpeedProfileCase::DECEL_ACCEL;
-    }
-
-    new_params.modified_departure_speed = starting_speed + new_accel * remaining_time;
-    new_params.dist_cruise = 0;
-    new_params.modified_remaining_time = remaining_time;
-    // handle hard failure case such as nan
-    if (!isnan(params.modified_departure_speed) && params.modified_departure_speed > epsilon_ &&
-        params.modified_departure_speed < 35.7632 ) //80_mph
-    {
-      params = new_params;
-      ROS_ERROR_STREAM("Updated!!! : " << new_params.modified_departure_speed);
-      ROS_DEBUG_STREAM("Updated!!! : " << new_params.modified_departure_speed);
-    }
-
-    else
-    {
-      ROS_ERROR_STREAM("Ignoring!!! : " << new_params.modified_departure_speed);
-      ROS_DEBUG_STREAM("Ignoring!!! : " << new_params.modified_departure_speed);
-    }
+    ROS_ERROR_STREAM("Updated!!! : " << params.modified_departure_speed);
+    ROS_DEBUG_STREAM("Updated!!! : " << params.modified_departure_speed);
   }
+  else
+  {
+    params.a_accel = 0;
+    params.speed_before_accel = -1;
+    params.dist_accel = 0;
+    params.a_decel = 0;
+    params.speed_before_decel = starting_speed;
+    params.dist_decel = 0;
+    params.case_num = SpeedProfileCase::ACCEL_CRUISE_DECEL;
+    params.modified_departure_speed = starting_speed;
+    params.dist_cruise = remaining_downtrack;
+    params.modified_remaining_time = remaining_downtrack / starting_speed;
+
+    ROS_ERROR_STREAM("Cruising!!! at: " << params.modified_departure_speed <<", for sec: " << params.modified_remaining_time << ", where remaining_time: " << remaining_time);
+    ROS_DEBUG_STREAM("Cruising!!! at: " << params.modified_departure_speed <<", for sec: " << params.modified_remaining_time << ", where remaining_time: " << remaining_time);
+  }
+
   // handle hard failure case such as nan
   if (isnan(params.modified_departure_speed) || params.modified_departure_speed < - epsilon_ ||
       params.modified_departure_speed > 35.7632 ) //80_mph

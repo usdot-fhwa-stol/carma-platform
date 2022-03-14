@@ -97,7 +97,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
 
     current_downtrack_ = wm_->routeTrackPos(veh_pos).downtrack;
     ROS_DEBUG_STREAM("Current_downtrack: "<< current_downtrack_);
-
+  
     DetailedTrajConfig wpg_detail_config;
     GeneralTrajConfig wpg_general_config;
 
@@ -138,11 +138,13 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
                                                                                 wpg_detail_config); // Compute the trajectory
     trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
     
-    bool is_successful = GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[1]);
-    
-    if (is_last_case_successful_ && last_case_ && last_case_.get() == static_cast<SpeedProfileCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0])
-          && is_last_case_successful_.get() == is_successful
-          && last_trajectory_.trajectory_points.back().target_time > req.header.stamp + ros::Duration(1.0))
+    bool is_new_case_successful = GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[1]);
+    SpeedProfileCase new_case = static_cast<SpeedProfileCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0]);
+
+    if (is_last_case_successful_ && last_case_ 
+          && last_case_.get() == new_case
+          && is_last_case_successful_.get() == is_new_case_successful
+          && last_trajectory_.trajectory_points.back().target_time > req.header.stamp + ros::Duration(1.0)) // 1 sec buffer of valid trajectory remaining
     {
       resp.trajectory_plan = last_trajectory_;
       ROS_DEBUG_STREAM("USING LAST: Target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req.header.stamp);
@@ -153,15 +155,35 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
       ROS_DEBUG_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_.get());
       ROS_DEBUG_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_.get());
       
+    }
+    else if (is_last_case_successful_ && last_case_ 
+            && is_last_case_successful_.get() == true
+            && is_new_case_successful == false
+            && last_successful_ending_downtrack_ - current_downtrack_ < config_.algorithm_evaluation_distance
+            && last_successful_scheduled_entry_time_ - req.header.stamp.toSec() < config_.algorithm_evaluation_period
+            && last_trajectory_.trajectory_points.back().target_time > req.header.stamp + ros::Duration(1.0))
+    {
+      resp.trajectory_plan = last_trajectory_;
+      ROS_DEBUG_STREAM("USING LAST: Target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req.header.stamp << ", and scheduled: " << std::to_string(last_successful_scheduled_entry_time_));
+      ROS_ERROR_STREAM("!!!!!! EDGE CASE. USING LAST!!! : " << (int)last_case_.get());
+      ROS_ERROR_STREAM("!!!!!! EDGE CASE. USING LAST!!! : " << (int)last_case_.get());
+      ROS_ERROR_STREAM("!!!!!! EDGE CASE. USING LAST!!! : " << (int)last_case_.get());
+      ROS_DEBUG_STREAM("!!!!!! EDGE CASE. USING LAST!!! : " << (int)last_case_.get());
+      ROS_DEBUG_STREAM("!!!!!! EDGE CASE. USING LAST!!! : " << (int)last_case_.get());
+      ROS_DEBUG_STREAM("!!!!!! EDGE CASE. USING LAST!!! : " << (int)last_case_.get());
     }  
     else
     {
       last_trajectory_ = trajectory;
       resp.trajectory_plan = trajectory;
-      last_case_ = static_cast<SpeedProfileCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0]);
-      is_last_case_successful_ = is_successful;
+      last_case_ = new_case;
+      is_last_case_successful_ = is_new_case_successful;
       ROS_DEBUG_STREAM("USING NEW: Target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req.header.stamp);
-      
+      if (is_new_case_successful)
+      {
+        last_successful_ending_downtrack_ = GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_dist);              // if algorithm was successful, this is traffic_light_downtrack
+        last_successful_scheduled_entry_time_ = GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_time).toSec();  // if algorithm was successful, this is also scheduled entry time (ET in TSMO UC2 Algo)
+      }
       ROS_ERROR_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
       ROS_ERROR_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
       ROS_ERROR_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
@@ -170,6 +192,8 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
       ROS_DEBUG_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
       
     }
+      ROS_DEBUG_STREAM("Debug: new case:" << (int) new_case << ", is_new_case_successful: " << is_new_case_successful);
+
     
 
     resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);

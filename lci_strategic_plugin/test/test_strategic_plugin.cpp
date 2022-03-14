@@ -24,6 +24,8 @@
 namespace lci_strategic_plugin
 {
 
+
+
 /**
  *  - getGuidanceTestMap gives a simple one way, 3 lane map (25mph speed limit) with one static prebaked obstacle and
  *      4 lanelets in a lane (if 2 stripes make up one lanelet):
@@ -259,7 +261,33 @@ TEST_F(LCIStrategicTestFixture, determine_speed_profile_case)
   profile_case = lcip.determine_speed_profile_case(5, 10, 0, 3, 5);
 
   EXPECT_EQ(profile_case,SpeedProfileCase::DECEL_ACCEL);
-}
+
+  TrajectorySmoothingParameters params;
+  params.a_accel = 999;
+  params.a_decel = 999;
+  params.dist_accel = 999;
+  params.dist_cruise = 999;
+  params.dist_decel = 999;
+  params.speed_before_accel = 999;
+  
+
+  params.is_algorithm_successful = false;
+  params.case_num = SpeedProfileCase::ACCEL_DECEL;
+  auto mvr = lcip.composeTrajectorySmoothingManeuverMessage(0, 0, 0, 0,ros::Time(0), ros::Time(0), params);
+
+  bool is_successful = mvr.lane_following_maneuver.parameters.int_valued_meta_data[1];
+  SpeedProfileCase new_case = static_cast<SpeedProfileCase>(mvr.lane_following_maneuver.parameters.int_valued_meta_data[0]);
+  if (is_successful)
+  {
+    ROS_ERROR_STREAM("IT WAS SUCCESSFUL");
+  }
+  else
+  {
+    ROS_ERROR_STREAM("IT WAS NOT SUCCESSFUL");
+  }
+  ASSERT_EQ(new_case, SpeedProfileCase::ACCEL_DECEL);
+  ASSERT_TRUE(false);
+} 
 
 TEST_F(LCIStrategicTestFixture, inflection_speeds_calc)
 {
@@ -357,6 +385,8 @@ TEST_F(LCIStrategicTestFixture, handleFailureCase)
   EXPECT_EQ(params.case_num, SpeedProfileCase::ACCEL_DECEL);
 
   EXPECT_THROW(lcip.handleFailureCase(5 ,0, 15, 0), std::invalid_argument);
+
+
 
 
 }
