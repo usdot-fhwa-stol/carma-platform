@@ -183,6 +183,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
       {
         last_successful_ending_downtrack_ = GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_dist);              // if algorithm was successful, this is traffic_light_downtrack
         last_successful_scheduled_entry_time_ = GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_time).toSec();  // if algorithm was successful, this is also scheduled entry time (ET in TSMO UC2 Algo)
+        ROS_DEBUG_STREAM("last_successful_ending_downtrack_:" << last_successful_ending_downtrack_ << ", last_successful_scheduled_entry_time_: " << last_successful_scheduled_entry_time_);
       }
       ROS_ERROR_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
       ROS_ERROR_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
