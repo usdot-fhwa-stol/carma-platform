@@ -2596,7 +2596,7 @@ namespace platoon_strategic_ihp
             infoOperation = composeMobilityOperationLeadWithOperation(OPERATION_INFO_TYPE);
             mobility_operation_publisher_(infoOperation);
             prevHeartBeatTime_ = ros::Time::now().toNSec() / 1000000;
-            ROS_DEBUG_STREAM("Published heart beat platoon INFO mobility operatrion message");
+            ROS_DEBUG_STREAM("Published heart beat platoon INFO mobility operation message");
         }
         // Task 2
         // if (isTimeForHeartBeat) 

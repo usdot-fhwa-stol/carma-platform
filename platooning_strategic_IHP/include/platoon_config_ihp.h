@@ -44,6 +44,7 @@ struct PlatoonPluginConfig
   double desiredJoinGap                 = 30.0;    // m
   double waitingStateTimeout            = 25.0;    // s
   double cmdSpeedMaxAdjustment          = 10.0;    // m/s
+  int    memberDropoutTimeout           = 1000;    // ms
     
   // following parameters are mainly for APF leader selection
   // UCLA: Rename the next four variables for better explainability.
@@ -76,7 +77,7 @@ struct PlatoonPluginConfig
 
   friend std::ostream& operator<<(std::ostream& output, const PlatoonPluginConfig& c)
   {
-    output << "PlatoonPluginConfig { " << std::endl
+    output << "Platoon Strategic Plugin Config { " << std::endl
           << "maxPlatoonSize: " << c.maxPlatoonSize << std::endl
           << "algorithmType: " << c.algorithmType << std::endl
           << "statusMessageInterval: " << c.statusMessageInterval << std::endl
@@ -88,6 +89,7 @@ struct PlatoonPluginConfig
           << "desiredJoinGap: " << c.desiredJoinGap << std::endl
           << "waitingStateTimeout: " << c.waitingStateTimeout << std::endl
           << "cmdSpeedMaxAdjustment: " << c.cmdSpeedMaxAdjustment << std::endl
+          << "memberDropoutTimeout: " << c.memberDropoutTimeout << std::endl
           << "minAllowableHeadaway: " << c.minAllowableHeadaway << std::endl
           << "maxAllowableHeadaway: " << c.maxAllowableHeadaway << std::endl
           << "headawayStableLowerBond: " << c.headawayStableLowerBond << std::endl

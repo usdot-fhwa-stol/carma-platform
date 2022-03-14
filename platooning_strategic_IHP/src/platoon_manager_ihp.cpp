@@ -690,7 +690,7 @@ namespace platoon_strategic_ihp
     }
 
     // UCLA: find the index of the closest vehicle that is in front of the host vehicle (cut-in joiner).
-    // Note: The joiner will cut-in at the back of this vehcile, which make this index points to the vehicle that is leading the cut-in gap.
+    // Note: The joiner will cut-in at the back of this vehicle, which make this index points to the vehicle that is leading the cut-in gap.
     int PlatoonManager::getClosestIndex(double joinerDtD)
     {   
         /*

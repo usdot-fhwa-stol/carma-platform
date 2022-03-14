@@ -77,6 +77,7 @@ public:
     pnh.param<double>("desiredJoinGap", config.desiredJoinGap, config.desiredJoinGap);
     pnh.param<double>("waitingStateTimeout", config.waitingStateTimeout, config.waitingStateTimeout);
     pnh.param<double>("cmdSpeedMaxAdjustment", config.cmdSpeedMaxAdjustment, config.cmdSpeedMaxAdjustment);
+    pnh.param<int>("memberDropoutTimeout", config.memberDropoutTimeout, config.memberDropoutTimeout);
     pnh.param<double>("minAllowableHeadaway", config.minAllowableHeadaway, config.minAllowableHeadaway);
     pnh.param<double>("maxAllowableHeadaway", config.maxAllowableHeadaway, config.maxAllowableHeadaway);
     pnh.param<double>("headawayStableLowerBond", config.headawayStableLowerBond, config.headawayStableLowerBond);
@@ -84,6 +85,8 @@ public:
     pnh.param<double>("minGap", config.minGap, config.minGap);
     pnh.param<double>("maxGap", config.maxGap, config.maxGap);
     pnh.param<double>("maxCrosstrackError", config.maxCrosstrackError, config.maxCrosstrackError);
+
+    // Global params from vehicle config file
     pnh.getParam("/vehicle_length", config.vehicleLength);
     pnh.getParam("/vehicle_id", config.vehicleID);
     

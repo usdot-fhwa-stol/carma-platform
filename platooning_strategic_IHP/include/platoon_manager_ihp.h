@@ -163,6 +163,15 @@ namespace platoon_strategic_ihp
          * \param params strategy params from STATUS message in the format of "CMDSPEED:xx,DOWNTRACK:xx,SPEED:xx"
          **/
         void updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double ctDistance, double curSpeed);
+
+        /**
+         * \brief Checks all platoon member data to be sure it is recent. If any member's data has not been updated within a timeout
+         * period then it is dropped from the platoon list, as are all members behind it. Those training members are considered to have
+         * departed the platoon (perhaps involuntarily), due to lack of communication.
+         * 
+         * \return true if one or more members has been removed, false otherwise
+         */
+        bool checkForMemberDropout();
         
         /**
         * \brief Returns total size of the platoon , in number of vehicles.
