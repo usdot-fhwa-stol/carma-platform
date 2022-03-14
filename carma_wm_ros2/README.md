@@ -55,8 +55,9 @@ int main(int argc, char **argv)
     rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base = node->get_node_base_interface(); 
     rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging = node->get_node_logging_interface();)
     rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics = node->get_node_topics_interface();
+    rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_params_ = node->get_node_parameters_interface();
     
-    auto wml = std::make_shared<carma_wm::WMListener>(rclcpp::NodeOptions(), node_base, node_logging, node_topics); // Create single threaded listener instance. Equivalent to carma_wm::WMListener wm (rclcpp::NodeOptions(), node_base, node_logging, node_topics,false);
+    auto wml = std::make_shared<carma_wm::WMListener>(rclcpp::NodeOptions(), node_base, node_logging, node_topics, node_params_); // Create single threaded listener instance. Equivalent to carma_wm::WMListener wm (rclcpp::NodeOptions(), node_base, node_logging, node_topics,false);
 
     carma_wm::WorldModelConstPtr wm = wml.getWorldModel(); // Get pointer to WorldModel
 
@@ -94,10 +95,11 @@ int main(int argc, char **argv)
     rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base = node->get_node_base_interface(); 
     rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging = node->get_node_logging_interface();)
     rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics = node->get_node_topics_interface();
+    rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_params_ = node->get_node_parameters_interface();
 
     // Create WMListener after initializing ros
     // It is recommended only one instance be created per node
-    auto wml = std::make_shared<carma_wm::WMListener>(rclcpp::NodeOptions(), node_base, node_logging, node_topics, true); // Create multi-threaded listener instance by passing true constructor parameter
+    auto wml = std::make_shared<carma_wm::WMListener>(rclcpp::NodeOptions(), node_base, node_logging, node_topics, node_params_, true); // Create multi-threaded listener instance by passing true constructor parameter
 
     carma_wm::WorldModelConstPtr wm = wml.getWorldModel(); // Get pointer to WorldModel
 
