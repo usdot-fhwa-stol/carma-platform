@@ -83,7 +83,7 @@ namespace basic_autonomy
         std::vector<double> yaws = {0.2, 0.5, 0.6, 1.0};
         ros::Time startTime(1.0);
         std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
-            basic_autonomy::waypoint_generation::trajectory_from_points_times_orientations(points, times, yaws, startTime);
+            basic_autonomy::waypoint_generation::trajectory_from_points_times_orientations(points, times, yaws, startTime, "default");
 
         ASSERT_EQ(4, traj_points.size());
         ASSERT_NEAR(1.0, traj_points[0].target_time.toSec(), 0.0000001);
