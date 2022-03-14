@@ -1191,6 +1191,7 @@ namespace carma_wm
         auto stop_line = light->getStopLine(ll);
         if (!stop_line)
         {
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::CARMAWorldModel"), "No stop line");
           continue;
         }
         else
@@ -1198,12 +1199,64 @@ namespace carma_wm
           double light_downtrack = routeTrackPos(stop_line.get().front().basicPoint2d()).downtrack;
           double distance_remaining_to_traffic_light = light_downtrack - curr_downtrack;
           if (distance_remaining_to_traffic_light < 0)
+          {
             continue;
+          }
           light_list.push_back(light);
         }
       }
     }
     return light_list;
+  }
+
+  boost::optional<std::pair<lanelet::ConstLanelet, lanelet::ConstLanelet>> CARMAWorldModel::getEntryExitOfSignalAlongRoute(const lanelet::CarmaTrafficSignalPtr& traffic_signal) const
+  {
+    if (!traffic_signal)
+    {
+      throw std::invalid_argument("Empty traffic signal pointer has been passed!");
+    }
+
+    std::pair<lanelet::ConstLanelet, lanelet::ConstLanelet> entry_exit;
+    bool found_entry = false;
+    bool found_exit = false;
+    auto entry_lanelets = traffic_signal->getControlStartLanelets();
+    auto exit_lanelets = traffic_signal->getControlEndLanelets();
+
+    // get entry and exit lane along route for the nearest given signal
+    for (const auto& ll: route_->shortestPath())
+    {
+      if (!found_entry)
+      {
+        for (const auto& entry: entry_lanelets)
+        {
+          if (ll.id() == entry.id())
+          {
+            entry_exit.first = entry;
+            found_entry = true;
+            break;
+          }
+        }
+      }
+
+      if (!found_exit)
+      {
+        for (const auto& exit: exit_lanelets)
+        {
+          if (ll.id() == exit.id())
+          {
+            entry_exit.second = exit;
+            found_exit = true;
+            break;
+          }
+        }
+      }
+
+      if (found_entry && found_exit)
+        return entry_exit;
+    }
+
+    // was not able to find entry and exit for this signal along route
+    return boost::none;
   }
 
   std::vector<std::shared_ptr<lanelet::AllWayStop>> CARMAWorldModel::getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const
@@ -1393,7 +1446,7 @@ namespace carma_wm
         }
 
         auto last_time_difference = sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first - min_end_time;  
-        bool is_duplicate = last_time_difference.total_milliseconds() >= -30 && last_time_difference.total_milliseconds() <= 30;
+        bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
 
         //if same data as last time (duplicate or outdated message):
         //where state is same and timestamp is equal or less, skip
@@ -1426,9 +1479,10 @@ namespace carma_wm
         
         if (!curr_light->recorded_time_stamps.empty())
         {
-          boost::posix_time::time_duration time_difference = curr_light->predictState(min_end_time).get().first - min_end_time;
+          boost::posix_time::time_duration time_difference = curr_light->predictState(min_end_time - lanelet::time::durationFromSec(0.5)).get().first - min_end_time; //0.5s to account for error
           RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::CARMAWorldModel"), "Initial time_difference: " << (double)(time_difference.total_milliseconds() / 1000.0));
-          if (curr_light->predictState(min_end_time).get().second !=  received_state)
+          
+          if (curr_light->predictState(min_end_time - lanelet::time::durationFromSec(0.5)).get().second !=  received_state)
           {
             // shift to same state's end
             boost::posix_time::time_duration shift_to_match_state = curr_light->fixed_cycle_duration - curr_light->signal_durations[received_state];
@@ -1436,11 +1490,11 @@ namespace carma_wm
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::CARMAWorldModel"), "Time_difference new: " << (double)(time_difference.total_milliseconds() / 1000.0));
           }
           
-          // if |time difference| is less than 0.1 sec
-          bool same_time_stamp_as_last = time_difference.total_milliseconds() >= -30 && time_difference.total_milliseconds() <= 30;
+          // if |time difference| is less than 0.5 sec
+          bool same_time_stamp_as_last = time_difference.total_milliseconds() >= -500 && time_difference.total_milliseconds() <= 500;
         
           // Received same cycle info while signal already has full cycle, then skip
-          if (curr_light->predictState(min_end_time).get().second == received_state &&
+          if (curr_light->predictState(min_end_time - lanelet::time::durationFromSec(0.5)).get().second == received_state &&
               same_time_stamp_as_last &&
               sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] > 4 )  // checking >4 because: 3 unique + 1 more state to 
                                                                                                               // complete cycle. And last state (e.g. 4th) is updated on next (e.g 5th)
