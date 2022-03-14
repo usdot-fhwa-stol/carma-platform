@@ -18,57 +18,80 @@
 #include <carma_wm_ros2/WMListener.hpp>
 #include "WMListenerWorker.hpp"
 
+
 namespace carma_wm
 {
   // @SONAR_STOP@
-WMListener::WMListener(bool multi_thread)
-    : Node("carma_wm"), worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker)), multi_threaded_(multi_thread)
+WMListener::WMListener(
+  const rclcpp::NodeOptions& options,
+  rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base,
+  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging,
+  rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics,
+  bool multi_thread)
+    : CarmaLifecycleNode(options), node_base_(node_base),node_logging_(node_logging),node_topics_(node_topics),worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker)), multi_threaded_(multi_thread)
 {
-    RCLCPP_DEBUG_STREAM(get_logger(), "WMListener: Creating world model listener");
-    config_speed_limit_ = declare_parameter<double>("config_speed_limit", config_speed_limit_);
-    participant_ = declare_parameter<std::string>("vehicle_participant_type", participant_);
 
-    get_parameter<double>("config_speed_limit", config_speed_limit_);
-    get_parameter<std::string>("vehicle_participant_type", participant_);
+  RCLCPP_DEBUG_STREAM(node_logging_->get_logger(), "WMListener: Creating world model listener");
+  config_speed_limit_ = declare_parameter<double>("config_speed_limit", config_speed_limit_);
+  participant_ = declare_parameter<std::string>("vehicle_participant_type", participant_);
 
-    rclcpp::SubscriptionOptions map_update_options;
-    rclcpp::SubscriptionOptions map_options;
-    rclcpp::SubscriptionOptions route_options;
-    rclcpp::SubscriptionOptions roadway_objects_options;
-    rclcpp::SubscriptionOptions traffic_spat_options;
+  if(multi_threaded_)
+  {
+    RCLCPP_DEBUG_STREAM(node_logging_->get_logger(), "WMListener: Using a multi-threaded subscription");
+  }  
+  
+}
 
-    if(multi_threaded_)
-    {
+carma_ros2_utils::CallbackReturn WMListener::handle_on_configure(const rclcpp_lifecycle::State &)
+{
+  get_parameter<double>("config_speed_limit", config_speed_limit_);
+  get_parameter<std::string>("vehicle_participant_type", participant_);
 
-      RCLCPP_DEBUG_STREAM(get_logger(), "WMListener: Using a multi-threaded subscription");
-      auto map_update_cb_group = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-      map_update_options.callback_group = map_update_cb_group;
+  rclcpp::SubscriptionOptions map_update_options;
+  rclcpp::SubscriptionOptions map_options;
+  rclcpp::SubscriptionOptions route_options;
+  rclcpp::SubscriptionOptions roadway_objects_options;
+  rclcpp::SubscriptionOptions traffic_spat_options;
 
-      auto map_cb_group = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-      map_options.callback_group = map_cb_group;
+  if(multi_threaded_)
+  {
 
-      auto route_cb_group = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-      route_options.callback_group = route_cb_group;                               
+    auto map_update_cb_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    map_update_options.callback_group = map_update_cb_group;
 
-      auto roadway_objects_group = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-      roadway_objects_options.callback_group = roadway_objects_group;                                      
+    auto map_cb_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    map_options.callback_group = map_cb_group;
 
-      auto traffic_spat_group = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-      traffic_spat_options.callback_group = traffic_spat_group;                                      
+    auto route_cb_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    route_options.callback_group = route_cb_group;                               
 
-    }
+    auto roadway_objects_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    roadway_objects_options.callback_group = roadway_objects_group;                                      
 
-    // Setup subscribers
-    map_update_sub_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>("map_update", 200, 
-                                    std::bind(&WMListener::mapUpdateCallback, this, std::placeholders::_1), map_update_options);
-    map_sub_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>("semantic_map", 2, 
-                                    std::bind(&WMListenerWorker::mapCallback, worker_.get(), std::placeholders::_1), map_options);
-    route_sub_ = create_subscription<carma_planning_msgs::msg::Route>("roadway_objects", 1, 
-                                    std::bind(&WMListenerWorker::routeCallback, worker_.get(), std::placeholders::_1), route_options);
-    roadway_objects_sub_ = create_subscription<carma_perception_msgs::msg::RoadwayObstacleList>("roadway_objects", 1,
-                                    std::bind(&WMListenerWorker::roadwayObjectListCallback, worker_.get(), std::placeholders::_1), roadway_objects_options);
-    traffic_spat_sub_ = create_subscription<carma_v2x_msgs::msg::SPAT>("incoming_spat", 1,
-                                    std::bind(&WMListenerWorker::incomingSpatCallback, worker_.get(), std::placeholders::_1), traffic_spat_options); 
+    auto traffic_spat_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    traffic_spat_options.callback_group = traffic_spat_group;                                      
+
+  }
+
+  // Setup subscribers
+  map_update_sub_ = rclcpp::create_subscription<autoware_lanelet2_msgs::msg::MapBin>(node_topics_, "map_update", 10, 
+                  std::bind(&WMListener::mapUpdateCallback, this, std::placeholders::_1), map_update_options);
+
+  map_sub_ = rclcpp::create_subscription<autoware_lanelet2_msgs::msg::MapBin>(node_topics_, "semantic_map", 2, 
+                                  std::bind(&WMListenerWorker::mapCallback, worker_.get(), std::placeholders::_1), map_options);
+
+  route_sub_ = rclcpp::create_subscription<carma_planning_msgs::msg::Route>(node_topics_, "roadway_objects", 1, 
+                                  std::bind(&WMListenerWorker::routeCallback, worker_.get(), std::placeholders::_1), route_options);
+
+  roadway_objects_sub_ = rclcpp::create_subscription<carma_perception_msgs::msg::RoadwayObstacleList>(node_topics_, "roadway_objects", 1,
+                                  std::bind(&WMListenerWorker::roadwayObjectListCallback, worker_.get(), std::placeholders::_1), roadway_objects_options);
+
+  traffic_spat_sub_ = rclcpp::create_subscription<carma_v2x_msgs::msg::SPAT>(node_topics_, "incoming_spat", 1,
+                                  std::bind(&WMListenerWorker::incomingSpatCallback, worker_.get(), std::placeholders::_1), traffic_spat_options); 
+  
+  
+  // Return success if everthing initialized successfully
+  return CallbackReturn::SUCCESS;
 }
 
 void WMListener::enableUpdatesWithoutRouteWL()
@@ -93,7 +116,7 @@ void WMListener::mapUpdateCallback(const autoware_lanelet2_msgs::msg::MapBin::Un
 {
   const std::lock_guard<std::mutex> lock(mw_mutex_);
 
-  RCLCPP_INFO_STREAM(get_logger(), "New Map Update Received. SeqNum: " << geofence_msg->seq_id);
+  RCLCPP_INFO_STREAM(node_logging_->get_logger(), "New Map Update Received. SeqNum: " << geofence_msg->seq_id);
 
   worker_->mapUpdateCallback(*geofence_msg);
 }

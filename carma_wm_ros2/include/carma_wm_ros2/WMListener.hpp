@@ -44,7 +44,7 @@ class WMListenerWorker;  // Forward declaration of worker class
  * NOTE: At the moment the mechanism of route communication in ROS is not defined therefore it is a TODO: to implement
  * full route support
  */
-class WMListener : public rclcpp::Node
+class WMListener : public carma_ros2_utils::CarmaLifecycleNode
 {
 public:
   /*!
@@ -55,7 +55,12 @@ public:
    * 
    * \param multi_thread If true this object will subscribe using background threads. Defaults to false
    */
-  WMListener(bool multi_thread = false);
+  WMListener(
+    const rclcpp::NodeOptions& options,
+    rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base,
+    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging,
+    rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics,
+    bool multi_thread = false);
 
   /*!
    * \brief Returns a pointer to an intialized world model instance
@@ -117,6 +122,11 @@ public:
    */ 
   bool checkIfReRoutingNeededWL();
 
+  ////
+    // Overrides
+    ////
+  carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
+
 
 private:
   // Callback function that uses lock to edit the map
@@ -133,6 +143,11 @@ private:
   
   double config_speed_limit_;
   std::string participant_;
+  
+  rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_;
+  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging_;
+  rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics_;
+  
 
 };
 }  // namespace carma_wm

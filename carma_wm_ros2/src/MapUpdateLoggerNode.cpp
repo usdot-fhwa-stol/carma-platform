@@ -47,17 +47,11 @@
 class MapUpdateLogger : public rclcpp::Node
 {
   public:
-    MapUpdateLogger(const rclcpp::NodeOptions& options)
-     : Node("map_update_logger")
-    {
-        
-        readable_pub_ = this->create_publisher<carma_debug_ros2_msgs::msg::MapUpdateReadable>("/environment/map_update", 100);
-    }
+    MapUpdateLogger(const rclcpp::NodeOptions& options);
     
-
     private:
     rclcpp::Publisher<carma_debug_ros2_msgs::msg::MapUpdateReadable>::SharedPtr readable_pub_;
-    // rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr update_sub_;
+    rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr update_sub_;
 
     /**
      * \brief Converts a TrafficControl pair into the corresponding debug message type
@@ -77,12 +71,19 @@ class MapUpdateLogger : public rclcpp::Node
      */ 
     carma_debug_ros2_msgs::msg::MapUpdateReadable mapUpdateCallback(const autoware_lanelet2_msgs::msg::MapBin& update);
 
-    void raw_callback(const autoware_lanelet2_msgs::msg::MapBin::UniquePtr& msg) {
+    void raw_callback(const autoware_lanelet2_msgs::msg::MapBin::SharedPtr msg) {
       readable_pub_->publish(mapUpdateCallback(*msg));
     }
 };
 
-
+MapUpdateLogger::MapUpdateLogger(const rclcpp::NodeOptions& options)
+  : Node("map_update_logger")
+{
+    
+    readable_pub_ = this->create_publisher<carma_debug_ros2_msgs::msg::MapUpdateReadable>("map_update_debug", 100);
+    update_sub_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>("/environment/map_update", 100,
+                                                          std::bind(&MapUpdateLogger::raw_callback, this, std::placeholders::_1));
+}
 
 carma_debug_ros2_msgs::msg::LaneletIdRegulatoryElementPair MapUpdateLogger::pairToDebugMessage(const std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>& id_reg_pair) {
   carma_debug_ros2_msgs::msg::LaneletIdRegulatoryElementPair pair;
