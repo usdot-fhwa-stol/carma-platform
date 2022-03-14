@@ -30,7 +30,7 @@ uint8_t MockCommsDriver::getDriverStatus()
 
 void MockCommsDriver::outboundCallback(const cav_msgs::ByteArray::ConstPtr& msg) const
 {
-  ROS_DEBUG_STREAM("Received Byte Array of type: " << msg->messageType);
+  ROS_DEBUG_STREAM("Received Byte Array of type: " << msg->message_type);
 };
 
 MockCommsDriver::MockCommsDriver(bool dummy)
