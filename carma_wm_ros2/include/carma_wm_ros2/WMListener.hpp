@@ -44,7 +44,7 @@ class WMListenerWorker;  // Forward declaration of worker class
  * NOTE: At the moment the mechanism of route communication in ROS is not defined therefore it is a TODO: to implement
  * full route support
  */
-class WMListener : public carma_ros2_utils::CarmaLifecycleNode
+class WMListener
 {
 public:
   /*!
@@ -56,10 +56,10 @@ public:
    * \param multi_thread If true this object will subscribe using background threads. Defaults to false
    */
   WMListener(
-    const rclcpp::NodeOptions& options,
     rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base,
     rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging,
     rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics,
+    rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_params_,
     bool multi_thread = false);
 
   /*!
@@ -122,11 +122,6 @@ public:
    */ 
   bool checkIfReRoutingNeededWL();
 
-  ////
-    // Overrides
-    ////
-  carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
-
 
 private:
   // Callback function that uses lock to edit the map
@@ -141,12 +136,13 @@ private:
   const bool multi_threaded_;
   std::mutex mw_mutex_;
   
-  double config_speed_limit_;
-  std::string participant_;
+  double config_speed_limit_ = 0.0;
+  std::string participant_  = "";
   
   rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_;
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging_;
   rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics_;
+  rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_params_;
   
 
 };

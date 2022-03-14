@@ -49,10 +49,12 @@ int main(int argc, char **argv)
     // Create WMListener after initializing ros
     // It is recommended only one instance be created per node
 
-    //Extract node interfaces from base node class
-    rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base; //Node->get_node_base_interface()
-    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging;//Node->get_node_logging_interface()
-    rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics;//Node->get_node_topics_interface()
+    auto node = std::make_shared<rclcpp::Node>("base_node");
+
+    //Extract node interfaces from base node
+    rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base = node->get_node_base_interface(); 
+    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging = node->get_node_logging_interface();)
+    rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics = node->get_node_topics_interface();
     
     auto wml = std::make_shared<carma_wm::WMListener>(rclcpp::NodeOptions(), node_base, node_logging, node_topics); // Create single threaded listener instance. Equivalent to carma_wm::WMListener wm (rclcpp::NodeOptions(), node_base, node_logging, node_topics,false);
 
@@ -64,8 +66,10 @@ int main(int argc, char **argv)
 
         carma_wm::TrackPos tc = wm->routeTrackPos(pt); // Get the downtrack and crosstrack position of the provided point on the route
     }
-
-    rclcpp::spin_some(wml);
+    
+    rclcpp::executors::MultiThreadedExecutor executor;
+    executor.add_node(node->get_node_base_interface());
+    executor.spin();
 
     rclcpp::shutdown();
     return 0;
@@ -84,10 +88,12 @@ int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv, "map_user");
 
-    //Extract node interfaces from base node class
-    rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base; //Node->get_node_base_interface()
-    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging;//Node->get_node_logging_interface()
-    rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics;//Node->get_node_topics_interface()
+    auto node = std::make_shared<rclcpp::Node>("base_node");
+
+    //Extract node interfaces from base node
+    rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base = node->get_node_base_interface(); 
+    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging = node->get_node_logging_interface();)
+    rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics = node->get_node_topics_interface();
 
     // Create WMListener after initializing ros
     // It is recommended only one instance be created per node
@@ -106,7 +112,10 @@ int main(int argc, char **argv)
         lanelet::Point3d pt;
         carma_wm::TrackPos tc = wm->routeTrackPos(pt); // Get the downtrack and crosstrack position of the provided point on the route
     }
-    rclcpp::spin_some(wml);
+    
+    rclcpp::executors::MultiThreadedExecutor executor;
+    executor.add_node(node->get_node_base_interface());
+    executor.spin();
 
     rclcpp::shutdown();
   
