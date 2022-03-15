@@ -135,7 +135,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped GNSSToMapConvertor::poseFromGnss(
   const double alt = fix_msg.altitude;
 
   lanelet::BasicPoint3d map_point = projector.forward({ lat, lon, alt });
-  // RCLCPP_DEBUG_STREAM(logger_->get_logger(), "map_point: " << map_point.x() << ", " << map_point.y() << ", " << map_point.z());
+  RCLCPP_DEBUG_STREAM(logger_->get_logger(), "map_point: " << map_point.x() << ", " << map_point.y() << ", " << map_point.z());
 
   if (fabs(map_point.x()) > 10000.0 || fabs(map_point.y()) > 10000.0)
   {  // Above 10km from map origin earth curvature will start to have a negative impact on system performance
@@ -160,19 +160,19 @@ geometry_msgs::msg::PoseWithCovarianceStamped GNSSToMapConvertor::poseFromGnss(
       R_m_n * R_n_h * R_h_s;  // Rotation of sensor in map frame under assumption that distance from map origin is
                               // sufficiently small so as to ignore local changes in NED orientation
 
-    RCLCPP_INFO_STREAM(logger_->get_logger(), "R_m_n (x,y,z,w) : ( "
+    RCLCPP_DEBUG_STREAM(logger_->get_logger(), "R_m_n (x,y,z,w) : ( "
                   << R_m_n.x() << ", " << R_m_n.y() << ", "
                   << R_m_n.z() << ", " << R_m_n.w());
     
-    RCLCPP_INFO_STREAM(logger_->get_logger(), "R_n_h (x,y,z,w) : ( "
+    RCLCPP_DEBUG_STREAM(logger_->get_logger(), "R_n_h (x,y,z,w) : ( "
                   << R_n_h.x() << ", " << R_n_h.y() << ", "
                   << R_n_h.z() << ", " << R_n_h.w());
     
-    RCLCPP_INFO_STREAM(logger_->get_logger(), "R_h_s (x,y,z,w) : ( "
+    RCLCPP_DEBUG_STREAM(logger_->get_logger(), "R_h_s (x,y,z,w) : ( "
                   << R_h_s.x() << ", " << R_h_s.y() << ", "
                   << R_h_s.z() << ", " << R_h_s.w());
 
-    RCLCPP_INFO_STREAM(logger_->get_logger(), "R_m_s (x,y,z,w) : ( "
+    RCLCPP_DEBUG_STREAM(logger_->get_logger(), "R_m_s (x,y,z,w) : ( "
                   << R_m_s.x() << ", " << R_m_s.y() << ", "
                   << R_m_s.z() << ", " << R_m_s.w());
 
@@ -182,13 +182,13 @@ geometry_msgs::msg::PoseWithCovarianceStamped GNSSToMapConvertor::poseFromGnss(
   tf2::Transform T_s_b(baselink_in_sensor);  // Transform between sensor and baselink frame
   tf2::Transform T_m_b = T_m_s * T_s_b;      // Transform between map and baselink frame
 
-  RCLCPP_INFO_STREAM(logger_->get_logger(), "T_m_s (x,y,z,w) : ( "
+  RCLCPP_DEBUG_STREAM(logger_->get_logger(), "T_m_s (x,y,z,w) : ( "
                << T_m_s.getRotation().x() << ", " << T_m_s.getRotation().y() << ", "
                << T_m_s.getRotation().z() << ", " << T_m_s.getRotation().w());
-  RCLCPP_INFO_STREAM(logger_->get_logger(), "T_s_b (x,y,z,w) : ( "
+  RCLCPP_DEBUG_STREAM(logger_->get_logger(), "T_s_b (x,y,z,w) : ( "
                << T_s_b.getRotation().x() << ", " << T_s_b.getRotation().y() << ", "
                << T_s_b.getRotation().z() << ", " << T_s_b.getRotation().w());
-  RCLCPP_INFO_STREAM(logger_->get_logger(), "T_m_b (x,y,z,w) : ( "
+  RCLCPP_DEBUG_STREAM(logger_->get_logger(), "T_m_b (x,y,z,w) : ( "
                << T_m_b.getRotation().x() << ", " << T_m_b.getRotation().y() << ", "
                << T_m_b.getRotation().z() << ", " << T_m_b.getRotation().w());
 
