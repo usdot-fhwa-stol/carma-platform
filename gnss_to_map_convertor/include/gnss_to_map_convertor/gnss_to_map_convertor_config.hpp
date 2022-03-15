@@ -27,9 +27,9 @@ namespace gnss_to_map_convertor
    */
   struct Config
   {
-    std::string base_link_frame = "base_link";
-    std::string map_frame = "map";
-    std::string heading_frame = "ned_heading";
+    std::string base_link_frame = "base_link"; // Frame ID of the base_link frame
+    std::string map_frame = "map";             // Frame ID of the map frame
+    std::string heading_frame = "ned_heading"; // Frame ID of the frame with +x aligned to vehicle heading and +z into the ground
 
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)
