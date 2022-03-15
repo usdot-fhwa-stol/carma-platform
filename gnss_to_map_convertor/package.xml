@@ -15,7 +15,7 @@
 
 <package format="3">
   <name>gnss_to_map_convertor</name>
-  <version>1.0.0</version>
+  <version>4.0.0</version>
   <description>The gnss_to_map_convertor package</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
