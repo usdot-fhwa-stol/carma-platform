@@ -3,4 +3,4 @@ heading_frame : "ned_heading"
 # Frame ID of the base_link frame
 base_link_frame : "base_link"
 # Frame ID of the map frame
-map_frame : "map_frame"
+map_frame : "map"
