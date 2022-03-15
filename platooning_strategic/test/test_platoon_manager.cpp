@@ -426,12 +426,10 @@ namespace platoon_strategic
         std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
         // Create the Semantic Map
         lanelet::LaneletMapPtr map = carma_wm::test::buildGuidanceTestMap(options.lane_width_, options.lane_length_);
-
         // Set carma_wm with this map along with its speed limit and a route
         cmw->carma_wm::CARMAWorldModel::setMap(map);
         carma_wm::test::setSpeedLimit(15_mph, cmw);
         carma_wm::test::setRouteByIds({1210, 1213}, cmw);
-
         // Create a PlatoonStrategicPlugin for both a front and a rear vehicle and set their initial platoon state to Leader
         PlatoonPluginConfig config;
         PlatoonStrategicPlugin plugin_front(cmw, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
@@ -440,7 +438,6 @@ namespace platoon_strategic
         PlatoonStrategicPlugin plugin_rear(cmw, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
         plugin_rear.platooning_enabled_ = true;
         plugin_rear.pm_.current_platoon_state = PlatoonState::LEADER;
-
         // Set georeference projection for front and rear vehicle
         std::string base_proj = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs";
         std_msgs::String georeference_msg;
@@ -448,7 +445,6 @@ namespace platoon_strategic
         std_msgs::StringConstPtr msg_ptr(new std_msgs::String(georeference_msg));
         plugin_front.georeference_cb(msg_ptr);  
         plugin_rear.georeference_cb(msg_ptr);   
-
         //////// TEST 1: Front vehicle transitions LEADER -> LEADERWAITING after receiving a valid      /////////////
         ////////         JOIN_PLATOON_AT_REAR request if Front vehicle is in a suitable platooning lane /////////////
 
@@ -460,7 +456,6 @@ namespace platoon_strategic
         plugin_front.pose_cb(mpt2);
         EXPECT_EQ(plugin_front.in_rightmost_lane_, false);
         plugin_front.pm_.current_downtrack_distance_ = 20;
-
         // Place rear vehicle in 1210 (middle lane first lanelet) and obtain the ECEF location of this point
         msg.pose.position.x = 4;
         msg.pose.position.y = 10;
@@ -480,7 +475,6 @@ namespace platoon_strategic
         request.strategy = "Carma/Platooning";
         request.strategy_params = "SIZE:0,SPEED:4.0,DTD:15.0,ECEFX:4.0,ECEFY:10.0,ECEFZ:0.0";
         request.urgency = 50;
-
         // Front vehicle receives the 'JOIN_PLATOON_AT_REAR' MobilityRequest and transitions to LEADERWAITING
         plugin_front.handle_mob_req(request);
         EXPECT_EQ(plugin_front.pm_.current_platoon_state, PlatoonState::LEADERWAITING);
@@ -497,7 +491,6 @@ namespace platoon_strategic
         geometry_msgs::PoseStampedPtr mpt3(new geometry_msgs::PoseStamped(msg));
         plugin_front.pose_cb(mpt3);
         EXPECT_EQ(plugin_front.in_rightmost_lane_, true);
-
         // Place rear vehicle in lanelet 1220 (also rightmost lane)
         msg.pose.position.x = 10;
         msg.pose.position.y = 9;
@@ -505,11 +498,9 @@ namespace platoon_strategic
         plugin_rear.pose_cb(mpt4);
         rear_vehicle_location = plugin_rear.pose_ecef_point_;
         EXPECT_EQ(plugin_front.in_rightmost_lane_, true);
-
         // Create the rear vehicle's 'JOIN_PLATOON_AT_REAR' MobilityRequest, which will be sent to the front vehicle
         request.location = rear_vehicle_location; // Rear vehicle is in Lanelet 1220
         request.strategy_params = "SIZE:0,SPEED:4.0,DTD:15.0,ECEFX:10.0,ECEFY:9.0,ECEFZ:0.0";
-
         // Front vehicle receives the 'JOIN_PLATOON_AT_REAR' MobilityRequest and does not transition to LEADERWAITING since it is in rightmost lane
         EXPECT_EQ(plugin_front.leader_lane_change_required_, false);
         plugin_front.handle_mob_req(request);
@@ -518,7 +509,6 @@ namespace platoon_strategic
         EXPECT_EQ(plugin_front.current_lane_group_size_, 3);
         EXPECT_EQ(plugin_front.leader_lane_change_required_, true);
         EXPECT_EQ(plugin_rear.pm_.current_platoon_state, PlatoonState::LEADER);
-
         // Place front vehicle in lanelet 1211 so it is now in the middle lane (a suitable platooning lane)
         msg.pose.position.x = 4;
         msg.pose.position.y = 25;
@@ -529,19 +519,16 @@ namespace platoon_strategic
         EXPECT_EQ(plugin_front.current_lane_index_, 1);
         EXPECT_EQ(plugin_front.leader_lane_change_required_, false);
         EXPECT_EQ(plugin_front.pm_.current_platoon_state, PlatoonState::LEADERWAITING);
-
         // Rear vehicle receives ACK
         plugin_rear.pm_.current_plan.valid = true;
         cav_msgs::MobilityResponse response;
         response.is_accepted = true;
         plugin_rear.mob_resp_cb(response);
         EXPECT_EQ(plugin_rear.pm_.current_platoon_state, PlatoonState::CANDIDATEFOLLOWER);
-
         // Create JOIN_REQUIREMENTS MobilityOperation for front vehicle to send to rear vehicle
         plugin_front.config_.vehicleID = "Front-ID";
         cav_msgs::MobilityOperation join_requirements = plugin_front.composeMobilityOperationLeaderWaiting("JOIN_REQUIREMENTS");
         EXPECT_EQ(join_requirements.strategy_params, "JOIN_REQUIREMENTS|LANE_INDEX:1,LANE_GROUP_SIZE:3");
-
         // Rear vehicle receives JOIN_REQUIREMENTS MobilityOperation, which includes the target_lane_index
         plugin_rear.pm_.targetLeaderId = "Front-ID";
         EXPECT_EQ(plugin_rear.has_received_join_requirements_, false);
@@ -549,7 +536,6 @@ namespace platoon_strategic
         EXPECT_EQ(plugin_rear.has_received_join_requirements_, true);
         EXPECT_EQ(plugin_rear.cf_target_lane_index_, 1);
         EXPECT_EQ(plugin_rear.cf_lane_change_required_, true);
-
         // Rear vehicle enters target_lane_index and is no longer required to change lanes
         msg.pose.position.x = 4;
         msg.pose.position.y = 10;
@@ -557,6 +543,73 @@ namespace platoon_strategic
         plugin_rear.pose_cb(mpt6);
         plugin_rear.onSpin(); // Trigger state transition
         EXPECT_EQ(plugin_rear.cf_lane_change_required_, false);
+    }
+
+    TEST(PlatoonStrategicPlugin, test_platoon_lane_change)
+    {
+        // Use Guidance Lib to create map
+        carma_wm::test::MapOptions options;
+        options.lane_length_ = 20;
+        options.lane_width_ = 3.7;
+        std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
+        // Create the Semantic Map
+        lanelet::LaneletMapPtr map = carma_wm::test::buildGuidanceTestMap(options.lane_width_, options.lane_length_);
+
+        // Set carma_wm with this map along with its speed limit and a route
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
+        carma_wm::test::setSpeedLimit(15_mph, cmw);
+        carma_wm::test::setRouteByIds({1220, 1221}, cmw);
+
+        // Create a PlatoonStrategicPlugin for both a front and a rear vehicle and set their initial platoon state to Leader
+        PlatoonPluginConfig config;
+        PlatoonStrategicPlugin plugin1(cmw, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+        plugin1.platooning_enabled_ = true;
+        plugin1.pm_.current_platoon_state = PlatoonState::LEADER;
+
+        // Add member to the platoon
+        platoon_strategic::PlatoonMember member = platoon_strategic::PlatoonMember("1", "1", 1.0, 1.1, 0.1, 100);
+        std::vector<platoon_strategic::PlatoonMember> cur_pl;
+        cur_pl.push_back(member);
+        plugin1.pm_.platoon = cur_pl;
+
+        // Set georeference projection for front and rear vehicle
+        std::string base_proj = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs";
+        std_msgs::String georeference_msg;
+        georeference_msg.data = base_proj;
+        std_msgs::StringConstPtr msg_ptr(new std_msgs::String(georeference_msg));
+        plugin1.georeference_cb(msg_ptr);  
+
+        geometry_msgs::PoseStamped msg;
+        msg.pose.position.x = 10;
+        msg.pose.position.y = 8;
+        geometry_msgs::PoseStampedPtr mpt3(new geometry_msgs::PoseStamped(msg));
+        plugin1.pose_cb(mpt3);
+        plugin1.leader_lane_change_required_ = true;
+
+        cav_srvs::PlanManeuversRequest req;
+        req.prior_plan.maneuvers = {};
+        cav_srvs::PlanManeuversResponse resp;
+        ros::Time::init();
+
+        if (plugin1.plan_maneuver_cb(req, resp))
+        {
+            ASSERT_EQ(cav_msgs::Maneuver::LANE_CHANGE, resp.new_plan.maneuvers.front().type);
+        }
+
+        plugin1.pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
+        plugin1.cf_target_lane_index_ = 1;
+        plugin1.cf_lane_change_required_ = true;
+
+        cav_srvs::PlanManeuversRequest req1;
+        req.prior_plan.maneuvers = {};
+        cav_srvs::PlanManeuversResponse resp1;
+        if (plugin1.plan_maneuver_cb(req1, resp1))
+        {
+            ASSERT_EQ(cav_msgs::Maneuver::LANE_CHANGE, resp1.new_plan.maneuvers.front().type);
+        }
+
+        
+        
     }
 }
 

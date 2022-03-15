@@ -57,7 +57,7 @@ namespace carma_wm
 
     for (auto lane : intersection.lane_list)
     {
-      if (lane.lane_attributes.laneType.choice != j2735_msgs::LaneTypeAttributes::VEHICLE)
+      if (lane.lane_attributes.lane_type.choice != j2735_msgs::LaneTypeAttributes::VEHICLE)
       {
         ROS_DEBUG_STREAM("Lane id: " << (int)lane.lane_id << ", is not a lane for vehicle. Only vehicle road is currently supported. Skipping..." );
         continue;

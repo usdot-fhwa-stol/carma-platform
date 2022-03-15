@@ -638,8 +638,8 @@ namespace basic_autonomy
         std::vector<cav_msgs::Maneuver> maneuvers;
         maneuvers.push_back(maneuver);
         cav_msgs::VehicleState state;
-        state.X_pos_global = veh_pos.x();
-        state.Y_pos_global = veh_pos.y();
+        state.x_pos_global = veh_pos.x();
+        state.y_pos_global = veh_pos.y();
         state.longitudinal_vel = 8.0;
 
         std::string trajectory_type = "cooperative_lanechange";

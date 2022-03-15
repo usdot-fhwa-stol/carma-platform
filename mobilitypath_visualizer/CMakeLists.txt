@@ -14,81 +14,60 @@
 # the License.
 #
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(mobilitypath_visualizer)
 
+# Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
+carma_check_ros_version(2)
 carma_package()
 
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  carma_utils
-  cav_msgs
-  std_msgs
-  lanelet2_extension
-)
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-## System dependencies are found with CMake's conventions
+# Name build targets
+set(node_exec mobilitypath_visualizer_node_exec)
+set(node_lib mobilitypath_visualizer_node)
 
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp carma_utils cav_msgs std_msgs
-)
-
-###########
-## Build ##
-###########
-
+# Includes
 include_directories(
-  ${catkin_INCLUDE_DIRS}
   include
 )
 
-add_executable( ${PROJECT_NAME}
-  src/main.cpp
-)
-
-## Declare C++ library
-add_library(${PROJECT_NAME}_lib
+# Build
+ament_auto_add_library(${node_lib} SHARED
   src/mobilitypath_visualizer.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_lib ${catkin_LIBRARIES})
-
-target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib)
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_dependencies(${PROJECT_NAME}_lib ${catkin_EXPORTED_TARGETS})
-
-
-#############
-## Install ##
-#############
-
-install(DIRECTORY include
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
 )
 
-## Install C++
-install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_lib
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# Register component
+rclcpp_components_register_nodes(${node_lib} "mobilitypath_visualizer::MobilityPathVisualizer")
+
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_exec}
+        ${node_lib}
 )
 
-## Install Other Resources
-install(DIRECTORY launch config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+# Testing
+if(BUILD_TESTING)  
 
-#############
-## Testing ##
-#############
-find_package(rostest REQUIRED)
-  add_rostest_gtest(mob_path_viz test/mob_path_viz.test test/test_mobility_path_visualizer.cpp)
-target_link_libraries(mob_path_viz ${PROJECT_NAME}_lib ${catkin_LIBRARIES})
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+
+  ament_add_gtest(test_mobilitypath_visualizer test/test_mobility_path_visualizer.cpp)
+
+  ament_target_dependencies(test_mobilitypath_visualizer ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+
+  target_link_libraries(test_mobilitypath_visualizer ${node_lib})
+
+endif()
+
+# Install
+ament_auto_package(
+        INSTALL_TO_SHARE config launch
+)

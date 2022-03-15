@@ -14,13 +14,12 @@
 # the License.
 #
 
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(light_controlled_intersection_tactical_plugin)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 set(CATKIN_DEPS
   roscpp
@@ -30,6 +29,7 @@ set(CATKIN_DEPS
   trajectory_utils
   carma_wm
   basic_autonomy
+  lanelet2_core
 )
 
 ## Find catkin macros and libraries
@@ -38,7 +38,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost)
+find_package(Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 ###################################
@@ -68,7 +68,10 @@ add_executable( ${PROJECT_NAME}
 add_library(light_controlled_intersection_tactical_library 
             src/light_controlled_intersection_tactical_plugin.cpp)
 
-add_dependencies(light_controlled_intersection_tactical_library ${catkin_EXPORTED_TARGETS})
+target_link_libraries(light_controlled_intersection_tactical_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_dependencies(light_controlled_intersection_tactical_library ${${PROJECT_NAME}_EXPORTED_TARGETS}  ${catkin_EXPORTED_TARGETS})
+
 target_link_libraries(${PROJECT_NAME} light_controlled_intersection_tactical_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 #############

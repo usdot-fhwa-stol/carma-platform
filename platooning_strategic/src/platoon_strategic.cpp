@@ -265,11 +265,9 @@ namespace platoon_strategic
         double speed_progress = current_speed_;
         ros::Time time_progress = ros::Time::now();
         double target_speed = findSpeedLimit(current_lanelet);   //get Speed Limit TOTO update
-
         double total_maneuver_length = current_progress + config_.mvr_duration * target_speed;
         double route_length =  wm_->getRouteEndTrackPos().downtrack; 
         total_maneuver_length = std::min(total_maneuver_length, route_length);
-
         //Update current status based on prior plan
         if(req.prior_plan.maneuvers.size()!=0){
             time_progress = req.prior_plan.planning_completion_time;
@@ -282,11 +280,14 @@ namespace platoon_strategic
             }
             last_lanelet_index = findLaneletIndexFromPath(end_lanelet,shortest_path);
         }
+        
         bool approaching_route_end = false;
         double time_req_to_stop,stopping_dist;
 
         ROS_DEBUG_STREAM("Starting Loop");
         ROS_DEBUG_STREAM("total_maneuver_length: " << total_maneuver_length << " route_length: " << route_length);
+        auto routing_graph = wm_->getMapRoutingGraph();
+
         while(current_progress < total_maneuver_length)
         {
             ROS_DEBUG_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
@@ -304,12 +305,40 @@ namespace platoon_strategic
                 break;
             }
 
-            resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist,  
-                                    speed_progress, target_speed,shortest_path[last_lanelet_index].id(), time_progress));
+            if (cf_lane_change_required_ || leader_lane_change_required_)
+            {
+                ROS_DEBUG_STREAM("Planning a required lane change");
 
-            
+
+                auto adjacentleft_lanelet = routing_graph->left(current_lanelet);
+                lanelet::ConstLanelet target_lanelet;
+                
+                if (adjacentleft_lanelet)
+                {
+                    target_lanelet = adjacentleft_lanelet.get();
+                    ROS_DEBUG_STREAM("target lanelet id for lane change: " << target_lanelet.id());
+                    auto lc_maneuver = composeLaneChangeManeuverMessage(current_progress, end_dist, speed_progress, target_speed, current_lanelet.id(), target_lanelet.id());
+                    resp.new_plan.maneuvers.push_back(lc_maneuver);
+                }
+                else
+                {  
+                    // In case a left lane is not detected, a lane following is maneuver is generated instead of the lane change to prevent discontinuity
+                    // The single lane flag is also enabled to help continue platooning process. 
+                    single_lane_road_ = true;
+                    ROS_WARN_STREAM("No adjacent left lanes exist, so no lanechange is planned");
+                    resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist,  
+                                    speed_progress, target_speed,shortest_path[last_lanelet_index].id(), time_progress));
+                }
+
+            }
+            else
+            {
+                resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist,  
+                                    speed_progress, target_speed,shortest_path[last_lanelet_index].id(), time_progress));
+            }
+
             current_progress += dist_diff;
-            time_progress = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
+            time_progress = GET_MANEUVER_PROPERTY(resp.new_plan.maneuvers.back(), end_time);
             speed_progress = target_speed;
             if(current_progress >= total_maneuver_length || last_lanelet_index == shortest_path.size() - 1)
             {
@@ -335,13 +364,33 @@ namespace platoon_strategic
             pm_.currentPlatoonID = boost::uuids::to_string(boost::uuids::random_generator()());
             ROS_DEBUG_STREAM("change the state from standby to leader at start-up");
         }
-
         
         pm_.current_downtrack_distance_ = current_downtrack_;
         pm_.HostMobilityId = config_.vehicleID;
         ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
-        
         return true;
+    }
+
+    cav_msgs::Maneuver PlatoonStrategicPlugin::composeLaneChangeManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id) const
+    {
+        cav_msgs::Maneuver maneuver_msg;
+        maneuver_msg.type = cav_msgs::Maneuver::LANE_CHANGE;
+        maneuver_msg.lane_change_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.lane_change_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
+        maneuver_msg.lane_change_maneuver.parameters.planning_tactical_plugin = "CooperativeLaneChangePlugin";
+        maneuver_msg.lane_change_maneuver.parameters.planning_strategic_plugin = "PlatooningStrategicPlugin";
+        maneuver_msg.lane_change_maneuver.start_dist = start_dist;
+        maneuver_msg.lane_change_maneuver.start_speed = start_speed;
+        maneuver_msg.lane_change_maneuver.end_dist = end_dist;
+        maneuver_msg.lane_change_maneuver.end_speed = target_speed;
+        maneuver_msg.lane_change_maneuver.starting_lane_id = std::to_string(starting_lane_id);
+        maneuver_msg.lane_change_maneuver.ending_lane_id = std::to_string(ending_lane_id);
+        //Start time and end time for maneuver are assigned in updateTimeProgress
+
+
+        ROS_DEBUG_STREAM("Creating lane change : "  << "start dist: " << start_dist << " end dist: " << end_dist << " Starting llt: " << starting_lane_id << " Ending llt: " << ending_lane_id);
+
+        return maneuver_msg;
     }
 
     double PlatoonStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt)
@@ -466,11 +515,11 @@ namespace platoon_strategic
 
                         // Leader is either on a single-lane road or not in the rightmost lane of a multi-lane road; it can now respond ACK to applicant's JOIN_PLATOON_AT_REAR request
                         cav_msgs::MobilityResponse response;
-                        response.header.sender_id = config_.vehicleID;
-                        response.header.recipient_id = lw_applicantId_;
-                        response.header.plan_id = pm_.currentPlatoonID;
-                        response.header.sender_bsm_id = host_bsm_id_;
-                        response.header.timestamp = ros::Time::now().toNSec()/1000000;
+                        response.m_header.sender_id = config_.vehicleID;
+                        response.m_header.recipient_id = lw_applicantId_;
+                        response.m_header.plan_id = pm_.currentPlatoonID;
+                        response.m_header.sender_bsm_id = host_bsm_id_;
+                        response.m_header.timestamp = ros::Time::now().toNSec()/1000000;
                         response.is_accepted = true;
 
                         ROS_DEBUG_STREAM("We are now in a suitable platooning lane, sending ACK to applicant " << lw_applicantId_);
@@ -768,7 +817,6 @@ namespace platoon_strategic
                 // Check if the applicant can join based on max timeGap/gap
                 bool isDistanceCloseEnough = (currentGap <= maxAllowedJoinGap_) || (currentTimeGap <= maxAllowedJoinTimeGap_);
                 bool laneConditionsSatisfied = !in_rightmost_lane_ || single_lane_road_;
-
                 if(isDistanceCloseEnough && laneConditionsSatisfied) {
                     ROS_DEBUG_STREAM("The applicant is close enough and we will allow it to try to join");
                     ROS_DEBUG_STREAM("Change to LeaderWaitingState and waiting for " << msg.m_header.sender_id << " to join");
@@ -778,10 +826,11 @@ namespace platoon_strategic
                     return MobilityRequestResponse::ACK;
                 } else if(isDistanceCloseEnough && !laneConditionsSatisfied) {
                     ROS_DEBUG_STREAM("The applicant is close enough, but we must change into a suitable platooning lane before sending ACK.");
-                    lw_applicantId_ = msg.header.sender_id;
+                    lw_applicantId_ = msg.m_header.sender_id;
 
                     // Set flag to indicate that a lane change into a suitable platooning lane is required prior to sending ACK to applicant
                     leader_lane_change_required_ = true;
+                    return MobilityRequestResponse::NO_RESPONSE;
                 } else {
                     ROS_DEBUG_STREAM("The applicant is too far away from us or not in corret lane. NACK.");
                     ROS_DEBUG_STREAM("isDistanceCloseEnough" << isDistanceCloseEnough);
@@ -1064,8 +1113,8 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("Received platoon status message from " << msg.m_header.sender_id);
         }
         else if(isJoinRequirementsMsg) {
-            bool isForHostVehicle = msg.header.recipient_id == config_.vehicleID;
-            bool isFromTargetLeader = msg.header.sender_id == pm_.targetLeaderId;
+            bool isForHostVehicle = msg.m_header.recipient_id == config_.vehicleID;
+            bool isFromTargetLeader = msg.m_header.sender_id == pm_.targetLeaderId;
 
             if (isForHostVehicle && isFromTargetLeader) {
                 has_received_join_requirements_ = true;
@@ -1505,7 +1554,7 @@ namespace platoon_strategic
             //       be error-prone (i.e. a lane index of '1' may refer to a different lane for both vehicles). This is a known edge 
             //       case that this plugin does not currently cover.
 
-            msg.header.recipient_id = lw_applicantId_; // JOIN_REQUIREMENTS message is intended only for the current applicant
+            msg.m_header.recipient_id = lw_applicantId_; // JOIN_REQUIREMENTS message is intended only for the current applicant
 
             // For JOIN_REQUIREMENTS params, the string format is "JOIN_REQUIREMENTS|LANE_INDEX:xx,LANE_GROUP_SIZE:xx"
             boost::format fmter(OPERATION_JOIN_REQUIREMENTS_PARAMS);

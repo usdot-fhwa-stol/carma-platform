@@ -111,7 +111,7 @@ namespace mobilitypath_publisher
   {
     carma_v2x_msgs::msg::MobilityPath mobility_path_msg;
     // TODO this caluclation uses a poor assumption of zero latency see https://github.com/usdot-fhwa-stol/carma-platform/issues/1606
-    uint64_t millisecs = rclcpp::Time::now(get_clock()).nanoseconds() / 1000000;
+    uint64_t millisecs = get_clock()->now().nanoseconds() / 1000000;
     mobility_path_msg.m_header = compose_mobility_header(millisecs);
         
     if (!map_projector_) {

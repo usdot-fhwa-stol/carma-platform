@@ -99,11 +99,6 @@
     </include>
   </group>
 
-  <!-- Comms Messaging Stack -->
-  <group ns="$(env CARMA_MSG_NS)">
-    <include file="$(find carma)/launch/message.launch"/>
-  </group>
-
   <!-- Environment Perception Stack -->
   <group ns="$(env CARMA_ENV_NS)">
     <include file="$(find carma)/launch/environment.launch">

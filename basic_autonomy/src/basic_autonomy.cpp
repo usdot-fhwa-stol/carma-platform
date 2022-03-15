@@ -369,14 +369,14 @@ namespace basic_autonomy
             //Constrain to starting and ending downtrack
             int start_index_starting_centerline = waypoint_generation::get_nearest_index_by_downtrack(downsampled_starting_centerline, wm, starting_downtrack);
             cav_msgs::VehicleState start_state;
-            start_state.X_pos_global = downsampled_starting_centerline[start_index_starting_centerline].x();
-            start_state.Y_pos_global = downsampled_starting_centerline[start_index_starting_centerline].y();
+            start_state.x_pos_global = downsampled_starting_centerline[start_index_starting_centerline].x();
+            start_state.y_pos_global = downsampled_starting_centerline[start_index_starting_centerline].y();
             int start_index_target_centerline = waypoint_generation::get_nearest_point_index(downsampled_target_centerline, start_state);
 
             int end_index_target_centerline = waypoint_generation::get_nearest_index_by_downtrack(downsampled_target_centerline, wm, ending_downtrack);
             cav_msgs::VehicleState end_state;
-            end_state.X_pos_global = downsampled_target_centerline[end_index_target_centerline].x();
-            end_state.Y_pos_global = downsampled_target_centerline[end_index_target_centerline].y();
+            end_state.x_pos_global = downsampled_target_centerline[end_index_target_centerline].x();
+            end_state.y_pos_global = downsampled_target_centerline[end_index_target_centerline].y();
             int end_index_starting_centerline = waypoint_generation::get_nearest_point_index(downsampled_starting_centerline, end_state);
 
             std::vector<lanelet::BasicPoint2d> constrained_start_centerline(downsampled_starting_centerline.begin() + start_index_starting_centerline, downsampled_starting_centerline.begin() + end_index_starting_centerline);
