@@ -61,11 +61,7 @@ namespace gnss_to_map_convertor
      */
     explicit Node(const rclcpp::NodeOptions &);
 
-    /**
-     * \brief Example callback for dynamic parameter updates
-     */
     rcl_interfaces::msg::SetParametersResult parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
-
 
     carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
 
