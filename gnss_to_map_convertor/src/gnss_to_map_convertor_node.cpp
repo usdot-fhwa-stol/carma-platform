@@ -32,7 +32,6 @@ namespace gnss_to_map_convertor
 
   rcl_interfaces::msg::SetParametersResult Node::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
   {
-    // TODO for the USER: Ensure all parameters can be updated dynamically by adding them to this method
     auto error = update_params<std::string>({{"base_link_frame", config_.base_link_frame},{"map_frame", config_.map_frame},{"heading_frame", config_.heading_frame}}, parameters);
 
     rcl_interfaces::msg::SetParametersResult result;
