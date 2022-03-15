@@ -83,7 +83,7 @@ void WMListener::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geof
 {
   const std::lock_guard<std::mutex> lock(mw_mutex_);
 
-  ROS_INFO_STREAM("New Map Update Received. SeqNum: " << geofence_msg->header.seq);
+  ROS_INFO_STREAM("New Map Update Received. SeqNum: " << geofence_msg->seq_id);
 
   worker_->mapUpdateCallback(geofence_msg);
 }
