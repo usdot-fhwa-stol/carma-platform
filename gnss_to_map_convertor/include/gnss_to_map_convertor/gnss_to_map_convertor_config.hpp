@@ -27,13 +27,11 @@ namespace gnss_to_map_convertor
    */
   struct Config
   {
-    //! Example parameter
     std::string base_link_frame = "base_link";
     std::string map_frame = "map";
     std::string heading_frame = "ned_heading";
 
     // Stream operator for this config
-    // TODO for USER: Update prints for the added parameters
     friend std::ostream &operator<<(std::ostream &output, const Config &c)
     {
       output << "gnss_to_map_convertor::Config { " << std::endl
