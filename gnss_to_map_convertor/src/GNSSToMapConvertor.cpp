@@ -106,7 +106,7 @@ void GNSSToMapConvertor::geoReferenceCallback(std_msgs::msg::String::UniquePtr g
 
   ned_in_map_rotation_ = wgs84_utils::proj_tools::getRotationOfNEDFromProjAxis(axis);  // Extract map rotation from axis
 
-  RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Extracted NED in Map Rotation (x,y,z,w) : ( "
+  RCLCPP_INFO_STREAM(logger_->get_logger(), "Extracted NED in Map Rotation (x,y,z,w) : ( "
                   << ned_in_map_rotation_.get().x() << ", " << ned_in_map_rotation_.get().y() << ", "
                   << ned_in_map_rotation_.get().z() << ", " << ned_in_map_rotation_.get().w());
 }
