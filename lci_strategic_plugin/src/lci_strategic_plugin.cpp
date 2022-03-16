@@ -555,14 +555,15 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     nearest_green_entry_time_cached_ = nearest_green_entry_time + ros::Duration(config_.green_light_time_buffer);
     nearest_green_entry_time = nearest_green_entry_time_cached_.get();
   }
-  else if ((nearest_green_entry_time_cached_.get() - nearest_green_entry_time).toSec() > 0.1)
-  {
-    nearest_green_entry_time = nearest_green_entry_time_cached_.get();
+  else if (nearest_green_entry_time_cached_) 
+  { // always pick later of buffered green entry time, or earliest entry time
+    nearest_green_entry_time = ros::Time(std::max(nearest_green_entry_time.toSec(), nearest_green_entry_time_cached_.get().toSec()));
   }
-  else
+  
+  if (nearest_green_entry_time != nearest_green_entry_time_cached_.get())
   {
-    ROS_ERROR_STREAM("CONSIDERABLY CLOSE TO GREEN BUFFER! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
-    ROS_DEBUG_STREAM("CONSIDERABLY CLOSE TO GREEN BUFFER! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
+    ROS_ERROR_STREAM("CONSIDERABLY CLOSE TO GREEN BUFFER! nearest_green_entry_time cached:" << std::to_string(nearest_green_entry_time_cached_.get().toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
+    ROS_DEBUG_STREAM("CONSIDERABLY CLOSE TO GREEN BUFFER! nearest_green_entry_time cached:" << std::to_string(nearest_green_entry_time_cached_.get().toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
   }
   ROS_DEBUG_STREAM("nearest_green_entry_time with buffer: " << std::to_string(nearest_green_entry_time.toSec()));
 

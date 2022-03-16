@@ -83,7 +83,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
         && GET_MANEUVER_PROPERTY(req.maneuver_plan.maneuvers[i], parameters.string_valued_meta_data.front()) == light_controlled_intersection_strategy_)
         {
             maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
-            resp.related_maneuvers.push_back(req.maneuver_plan.maneuvers[i].type);
+            resp.related_maneuvers.push_back(i);
             break;
         }
         else
