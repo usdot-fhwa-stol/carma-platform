@@ -70,10 +70,6 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   {
     if(req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_FOLLOWING)
     {
-      ROS_DEBUG_STREAM("Adding lane_following_maneuver to plan.");
-      ROS_DEBUG_STREAM("Maneuver start_dist: " << req.maneuver_plan.maneuvers[i].lane_following_maneuver.start_dist);
-      ROS_DEBUG_STREAM("Maneuver end_dist: " << req.maneuver_plan.maneuvers[i].lane_following_maneuver.end_dist);
-
       maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
       resp.related_maneuvers.push_back(i);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,42 @@
 
 namespace plan_delegator
 {
+
+    namespace 
+    {
+        /**
+         * \brief Anonymous function to set the lanelet ids for all maneuver types except lane following. These
+         * maneuver parameters cannot be set with SET_MANEUVER_PROPERTY calls since they are not included in
+         * LANE_FOLLOW maneuvers.
+         */ 
+        void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanelet::Id end_id) {
+
+            switch(mvr.type) {
+                case cav_msgs::Maneuver::LANE_CHANGE:
+                    mvr.lane_change_maneuver.starting_lane_id = std::to_string(start_id);
+                    mvr.lane_change_maneuver.ending_lane_id = std::to_string(end_id);
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+                    mvr.intersection_transit_straight_maneuver.starting_lane_id = std::to_string(start_id);
+                    mvr.intersection_transit_straight_maneuver.ending_lane_id = std::to_string(end_id);
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+                    mvr.intersection_transit_left_turn_maneuver.starting_lane_id = std::to_string(start_id);
+                    mvr.intersection_transit_left_turn_maneuver.ending_lane_id = std::to_string(end_id);
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+                    mvr.intersection_transit_right_turn_maneuver.starting_lane_id = std::to_string(start_id);
+                    mvr.intersection_transit_right_turn_maneuver.ending_lane_id = std::to_string(end_id);
+                    break;
+                case cav_msgs::Maneuver::STOP_AND_WAIT:
+                    mvr.stop_and_wait_maneuver.starting_lane_id = std::to_string(start_id);
+                    mvr.stop_and_wait_maneuver.ending_lane_id = std::to_string(end_id);
+                    break;
+                default:
+                    throw std::invalid_argument("Maneuver type does not have starting and ending lane ids");
+            }
+        }
+    }
     
     void PlanDelegator::init()
     {
@@ -171,67 +207,18 @@ namespace plan_delegator
         SET_MANEUVER_PROPERTY(maneuver, start_dist, adjusted_start_dist);
         SET_MANEUVER_PROPERTY(maneuver, end_dist, adjusted_end_dist);
 
+        // Get lanelets crossed by the updated maneuver
+        std::vector<lanelet::ConstLanelet> adjusted_crossed_lanelets = wm_->getLaneletsBetween(adjusted_start_dist, adjusted_end_dist, true, false);
+        
+        if (adjusted_crossed_lanelets.size() == 0) {
+            throw std::invalid_argument("The adjusted maneuver does not cross any lanelets going from: " + std::to_string(adjusted_start_dist) + " to " + std::to_string(adjusted_end_dist));
+        }
+
         // Update maneuver-specific lanelet ID parameters
-        if (maneuver.type == cav_msgs::Maneuver::LANE_CHANGE || maneuver.type == cav_msgs::Maneuver::STOP_AND_WAIT ||
-        maneuver.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT  || maneuver.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ||
-        maneuver.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN) {
-            ROS_DEBUG_STREAM("Updating CLC or S&W Maneuver");
-            auto adjusted_crossed_lanelets = wm_->getLaneletsBetween(adjusted_start_dist, adjusted_end_dist, true, true);
-
-            if (adjusted_crossed_lanelets.size() == 0) {
-                throw std::invalid_argument("The adjusted maneuver does not cross any lanelets going from: " + std::to_string(adjusted_start_dist) + " to " + std::to_string(adjusted_end_dist));
-            }
-
-            for(auto& lanelet : adjusted_crossed_lanelets) {
-                ROS_DEBUG_STREAM("Crosses lanelet " << std::to_string(lanelet.id()));
-            }
-
-            std::string adjusted_starting_lane_id = std::to_string(adjusted_crossed_lanelets.front().id());
-            std::string adjusted_ending_lane_id = std::to_string(adjusted_crossed_lanelets.back().id());
-
-            if (maneuver.type == cav_msgs::Maneuver::LANE_CHANGE) {
-                maneuver.lane_change_maneuver.starting_lane_id = adjusted_starting_lane_id;
-                maneuver.lane_change_maneuver.ending_lane_id = adjusted_ending_lane_id;
-            }
-            else if (maneuver.type == cav_msgs::Maneuver::STOP_AND_WAIT) {
-                maneuver.stop_and_wait_maneuver.starting_lane_id = adjusted_starting_lane_id;
-                maneuver.stop_and_wait_maneuver.ending_lane_id = adjusted_ending_lane_id;
-            }
-            else if (maneuver.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT) {
-                maneuver.intersection_transit_straight_maneuver.starting_lane_id = adjusted_starting_lane_id;
-                maneuver.intersection_transit_straight_maneuver.ending_lane_id = adjusted_ending_lane_id;
-            }
-            else if (maneuver.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN) {
-                maneuver.intersection_transit_left_turn_maneuver.starting_lane_id = adjusted_starting_lane_id;
-                maneuver.intersection_transit_left_turn_maneuver.ending_lane_id = adjusted_ending_lane_id;
-            }
-            else if (maneuver.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN) {
-                maneuver.intersection_transit_right_turn_maneuver.starting_lane_id = adjusted_starting_lane_id;
-                maneuver.intersection_transit_right_turn_maneuver.ending_lane_id = adjusted_ending_lane_id;
-            }
-
-            ROS_DEBUG_STREAM("adjusted_starting_lane_id: " << adjusted_starting_lane_id);
-            ROS_DEBUG_STREAM("adjusted_ending_lane_id: " << adjusted_ending_lane_id);
-        }
-        else if (maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING) {
-            ROS_DEBUG_STREAM("Updating ILC Maneuver");
-            maneuver.lane_following_maneuver.lane_ids.clear();
-            auto adjusted_crossed_lanelets = wm_->getLaneletsBetween(adjusted_start_dist, adjusted_end_dist, true, false); 
-
-            if (adjusted_crossed_lanelets.size() == 0) {
-                throw std::invalid_argument("The adjusted lane following maneuver does not cross any lanelets going from: " + std::to_string(adjusted_start_dist) + " to: " + std::to_string(adjusted_end_dist));
-            }
-
-            std::vector<std::string> adjusted_lanelet_ids;
-            for(auto& lanelet : adjusted_crossed_lanelets) {
-                //adjusted_lanelet_ids.push_back(std::to_string(lanelet.id()));
-                maneuver.lane_following_maneuver.lane_ids.push_back(std::to_string(lanelet.id()));
-                ROS_DEBUG_STREAM("Crosses lanelet " << std::to_string(lanelet.id()));
-            }
-
-        }
-        else {
-            ROS_WARN_STREAM("Received maneuver type will not have its lanelet parameters updated!");
+        if (maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING) {
+            maneuver.lane_following_maneuver.lane_ids = lanelet::utils::transform(adjusted_crossed_lanelets, [](auto ll) { return std::to_string(ll.id()); });
+        } else {
+            setManeuverLaneletIds(maneuver, adjusted_crossed_lanelets.front().id(), adjusted_crossed_lanelets.back().id());
         }
     }
 

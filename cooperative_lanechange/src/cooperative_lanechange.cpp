@@ -246,7 +246,7 @@ namespace cooperative_lanechange
         ROS_DEBUG_STREAM("Starting CLC downtrack: " << maneuver_plan[0].lane_change_maneuver.start_dist);
 
         if(current_downtrack < maneuver_plan[0].lane_change_maneuver.start_dist - starting_downtrack_range_){
-            ROS_DEBUG_STREAM("current_downtrack is more than 5 meters before Starting CLC downtrack");
+            ROS_DEBUG_STREAM("Lane change trajectory will not be planned. current_downtrack is more than " << starting_downtrack_range_ << " meters before starting CLC downtrack");
             return true;
         }
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, veh_pos, 10);       
