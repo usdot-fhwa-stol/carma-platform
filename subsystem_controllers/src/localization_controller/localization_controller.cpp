@@ -99,7 +99,7 @@ namespace subsystem_controllers
 
     // Extract the alert required by this type of sensor statuses
     SensorAlertStatus alert_status = config_.sensor_fault_map[current_sensor_status];
-    output_alert.description = "Localization required sensor failure from: " + alert.source_node;
+    output_alert.description = "Localization optional sensor failure from: " + alert.source_node;
 
     switch(alert_status) {
       case SensorAlertStatus::FATAL:
