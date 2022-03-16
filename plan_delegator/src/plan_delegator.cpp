@@ -71,9 +71,9 @@ namespace plan_delegator
         if (isManeuverPlanValid(plan))
         {
             latest_maneuver_plan_ = *plan;
-
-            for (auto& maneuver : latest_maneuver_plan_.maneuvers)
-            {
+            
+            // Update the starting and ending downtracks associated with each maneuver 
+            for (auto& maneuver : latest_maneuver_plan_.maneuvers) {
                 updateManeuverDistances(maneuver);
             }
         }
@@ -199,7 +199,6 @@ namespace plan_delegator
                 ++current_maneuver_index;
                 continue;
             }
-
             lanelet::BasicPoint2d current_loc(latest_pose_.pose.position.x, latest_pose_.pose.position.y);
             double current_downtrack = wm_->routeTrackPos(current_loc).downtrack;
             ROS_DEBUG_STREAM("current_downtrack" << current_downtrack);

@@ -142,15 +142,15 @@ void logSignalizedIntersectionManager(const carma_wm::SignalizedIntersectionMana
 
 void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg)
 {
-  ROS_INFO_STREAM("Map Update Being Evaluated. SeqNum: " << geofence_msg->header.seq);
+  ROS_INFO_STREAM("Map Update Being Evaluated. SeqNum: " << geofence_msg->seq_id);
   if (rerouting_flag_) // no update should be applied if rerouting 
   {
-    ROS_INFO_STREAM("Currently new route is being processed. Queueing this update. Received seq: " << geofence_msg->header.seq << " prev seq: " << most_recent_update_msg_seq_);
+    ROS_INFO_STREAM("Currently new route is being processed. Queueing this update. Received seq: " << geofence_msg->seq_id << " prev seq: " << most_recent_update_msg_seq_);
     map_update_queue_.push(geofence_msg);
     return;
   }
-  if (geofence_msg->header.seq <= most_recent_update_msg_seq_) {
-    ROS_DEBUG_STREAM("Dropping map update which has already been processed. Received seq: " << geofence_msg->header.seq << " prev seq: " << most_recent_update_msg_seq_);
+  if (geofence_msg->seq_id <= most_recent_update_msg_seq_) {
+    ROS_DEBUG_STREAM("Dropping map update which has already been processed. Received seq: " << geofence_msg->seq_id << " prev seq: " << most_recent_update_msg_seq_);
     return;
   } else if(!world_model_->getMap() || current_map_version_ < geofence_msg->map_version) { // If our current map version is older than the version target by this update
     ROS_DEBUG_STREAM("Update received for newer map version than available. Queueing update until map is available.");
@@ -159,8 +159,8 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   } else if (current_map_version_ > geofence_msg->map_version) { // If this update is for an older map
     ROS_WARN_STREAM("Dropping old map update as newer map is already available.");
     return;
-  } else if (most_recent_update_msg_seq_ + 1 < geofence_msg->header.seq) {
-    ROS_INFO_STREAM("Queuing map update as we are waiting on an earlier update to be applied. most_recent_update_msg_seq_: " << most_recent_update_msg_seq_ << "geofence_msg->header.seq: " << geofence_msg->header.seq);
+  } else if (most_recent_update_msg_seq_ + 1 < geofence_msg->seq_id) {
+    ROS_INFO_STREAM("Queuing map update as we are waiting on an earlier update to be applied. most_recent_update_msg_seq_: " << most_recent_update_msg_seq_ << "geofence_msg->seq_id: " << geofence_msg->seq_id);
     map_update_queue_.push(geofence_msg);
     return;
   }
@@ -181,7 +181,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     }
   }
 
-  most_recent_update_msg_seq_ = geofence_msg->header.seq; // Update current sequence count
+  most_recent_update_msg_seq_ = geofence_msg->seq_id; // Update current sequence count
 
   auto gf_ptr = std::shared_ptr<carma_wm::TrafficControl>(new carma_wm::TrafficControl);
   
