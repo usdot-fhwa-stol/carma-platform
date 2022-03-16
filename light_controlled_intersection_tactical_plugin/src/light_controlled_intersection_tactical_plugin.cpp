@@ -138,6 +138,11 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
                                                                                 wpg_detail_config); // Compute the trajectory
     trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
     
+    // Set the planning plugin field name
+    for (auto& p : trajectory.trajectory_points) {
+      p.planner_plugin_name = plugin_discovery_msg_.name;
+    }
+    
     bool is_new_case_successful = GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[1]);
     SpeedProfileCase new_case = static_cast<SpeedProfileCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0]);
 
@@ -145,7 +150,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
           && last_case_.get() == new_case
           && is_last_case_successful_.get() == is_new_case_successful
           && last_trajectory_.trajectory_points.back().target_time > req.header.stamp + ros::Duration(1.0)) // 1 sec buffer of valid trajectory remaining
-    {is_new_case_successful:
+    {
       resp.trajectory_plan = last_trajectory_;
       ROS_DEBUG_STREAM("USING LAST: Target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req.header.stamp);
       ROS_ERROR_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_.get());
