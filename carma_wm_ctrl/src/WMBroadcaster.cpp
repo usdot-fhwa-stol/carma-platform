@@ -1053,7 +1053,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   }
 
   boost::uuids::uuid id;
-  std::copy(geofence_msg.tcmV01.id.id.begin(), geofence_msg.tcmV01.id.id.end(), id.begin());
+  std::copy(geofence_msg.tcm_v01.id.id.begin(), geofence_msg.tcm_v01.id.id.end(), id.begin());
   if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end()) { 
     ROS_DEBUG_STREAM("Dropping received TrafficControl message with already handled id: " <<  boost::uuids::to_string(id));
     return;
@@ -1061,7 +1061,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
 
   // convert reqid to string check if it has been seen before
   boost::array<uint8_t, 16UL> req_id;
-  for (auto i = 0; i < 8; i ++) req_id[i] = geofence_msg.tcmV01.reqid.id[i];
+  for (auto i = 0; i < 8; i ++) req_id[i] = geofence_msg.tcm_v01.reqid.id[i];
   boost::uuids::uuid uuid_id;
   std::copy(req_id.begin(),req_id.end(), uuid_id.begin());
   std::string reqid = boost::uuids::to_string(uuid_id).substr(0, 8);
@@ -1076,10 +1076,10 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
 
   auto gf_ptr = std::make_shared<Geofence>();
 
-  gf_ptr->msg_ = geofence_msg.tcmV01;
+  gf_ptr->msg_ = geofence_msg.tcm_v01;
 
   // process schedule from message
-  addScheduleFromMsg(gf_ptr, geofence_msg.tcmV01);
+  addScheduleFromMsg(gf_ptr, geofence_msg.tcm_v01);
   
   scheduleGeofence(gf_ptr);
 };
@@ -1186,7 +1186,7 @@ uint32_t WMBroadcaster::generate32BitId(const std::string& label)
 }
 
 // currently only supports geofence message version 1: TrafficControlMessageV01 
-lanelet::Points3d WMBroadcaster::getPointsInLocalFrame(const cav_msgs::TrafficControlMessageV01& tcmV01)
+lanelet::Points3d WMBroadcaster::getPointsInLocalFrame(const cav_msgs::TrafficControlMessageV01& tcm_v01)
 {
   ROS_DEBUG_STREAM("Getting affected lanelets");
   if (!current_map_ || current_map_->laneletLayer.size() == 0)
@@ -1201,8 +1201,8 @@ lanelet::Points3d WMBroadcaster::getPointsInLocalFrame(const cav_msgs::TrafficCo
   // The datum field is used to identify the frame for the provided referance lat/lon. 
   // This reference is then converted to the provided projection as a reference origin point
   // From the reference the message projection to map projection transformation is used to convert the nodes in the TrafficControlMessage
-  std::string projection = tcmV01.geometry.proj;
-  std::string datum = tcmV01.geometry.datum;
+  std::string projection = tcm_v01.geometry.proj;
+  std::string datum = tcm_v01.geometry.datum;
   if (datum.empty()) {
     ROS_WARN_STREAM("Datum field not populated. Attempting to use WGS84");
     datum = "WGS84";
@@ -1214,7 +1214,7 @@ lanelet::Points3d WMBroadcaster::getPointsInLocalFrame(const cav_msgs::TrafficCo
   std::string universal_frame = datum; //lat/long included in TCM is in this datum
 
 
-  ROS_DEBUG_STREAM("Traffic Control heading provided: " << tcmV01.geometry.heading << " System understanding is that this value will not affect the projection and is only provided for supporting derivative calculations.");
+  ROS_DEBUG_STREAM("Traffic Control heading provided: " << tcm_v01.geometry.heading << " System understanding is that this value will not affect the projection and is only provided for supporting derivative calculations.");
   
   // Create the resulting projection transformation
   PJ* universal_to_target = proj_create_crs_to_crs(PJ_DEFAULT_CTX, universal_frame.c_str(), projection.c_str(), nullptr);
@@ -1240,14 +1240,14 @@ lanelet::Points3d WMBroadcaster::getPointsInLocalFrame(const cav_msgs::TrafficCo
   // convert all geofence points into our map's frame
   std::vector<lanelet::Point3d> gf_pts;
   cav_msgs::PathNode prev_pt;
-  PJ_COORD c_init_latlong{{tcmV01.geometry.reflat, tcmV01.geometry.reflon, tcmV01.geometry.refelv}};
+  PJ_COORD c_init_latlong{{tcm_v01.geometry.reflat, tcm_v01.geometry.reflon, tcm_v01.geometry.refelv}};
   PJ_COORD c_init = proj_trans(universal_to_target, PJ_FWD, c_init_latlong);
 
   prev_pt.x = c_init.xyz.x;
   prev_pt.y =  c_init.xyz.y;
 
   ROS_DEBUG_STREAM("In TCM's frame, initial Point X "<< prev_pt.x<<" Before conversion: Point Y "<< prev_pt.y );
-  for (auto pt : tcmV01.geometry.nodes)
+  for (auto pt : tcm_v01.geometry.nodes)
   { 
     ROS_DEBUG_STREAM("Before conversion in TCM frame: Point X "<< pt.x <<" Before conversion: Point Y "<< pt.y);
 
@@ -1442,7 +1442,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 
     carma_wm::toBinMsg(send_data, &gf_msg);
     update_count_++; // Update the sequence count for the geofence messages
-    gf_msg.header.seq = update_count_;
+    gf_msg.seq_id = update_count_;
     gf_msg.invalidates_route=update->invalidate_route_; 
     gf_msg.map_version = current_map_version_;
     map_update_message_queue_.push_back(gf_msg); // Add diff to current map update queue
@@ -1467,7 +1467,7 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   
   carma_wm::toBinMsg(send_data, &gf_msg_revert);
   update_count_++; // Update the sequence count for geofence messages
-  gf_msg_revert.header.seq = update_count_;
+  gf_msg_revert.seq_id = update_count_;
   gf_msg_revert.map_version = current_map_version_;
   map_update_message_queue_.push_back(gf_msg_revert); // Add diff to current map update queue
   map_update_pub_(gf_msg_revert);
@@ -1631,11 +1631,11 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   std::copy(uuid_id.begin(),uuid_id.end(), req_id.begin());
   for (auto i = 0; i < 8; i ++)
   {
-    cR.tcrV01.reqid.id[i] = req_id[i];
+    cR.tcr_v01.reqid.id[i] = req_id[i];
     if (req_id_for_testing) req_id_for_testing->id[i] = req_id[i];
   }
 
-  cR.tcrV01.bounds.push_back(cB);
+  cR.tcr_v01.bounds.push_back(cB);
   
   return cR;
 

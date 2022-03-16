@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,15 +14,16 @@
  * the License.
  */
 
-#include <autoware_lanelet2_ros_interface/utility/message_conversion.h>
+#include <autoware_lanelet2_ros2_interface/utility/message_conversion.hpp>
 #include <lanelet2_extension/regulatory_elements/DirectionOfTravel.h>
 #include <lanelet2_extension/regulatory_elements/StopRule.h>
 #include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
 #include <lanelet2_extension/regulatory_elements/SignalizedIntersection.h>
-#include "WMListenerWorker.h"
+#include "WMListenerWorker.hpp"
 
 namespace carma_wm
 {
+
 enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, REGION_ACCESS_RULE, DIGITAL_MINIMUM_GAP, 
                           DIRECTION_OF_TRAVEL, STOP_RULE, CARMA_TRAFFIC_LIGHT, SIGNALIZED_INTERSECTION/* ... others */ };
 // helper function that return geofence type as an enum, which makes it cleaner by allowing switch statement
@@ -50,7 +51,7 @@ WorldModelConstPtr WMListenerWorker::getWorldModel() const
   return std::static_pointer_cast<const WorldModel>(world_model_);  // Cast pointer to const variant
 }
 
-void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr& map_msg)
+void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg)
 {
   current_map_version_ = map_msg->map_version;
 
@@ -67,14 +68,14 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
     auto update = map_update_queue_.front(); // Get first update
     map_update_queue_.pop(); // Remove update from queue
 
-    if (update->map_version < current_map_version_) { // Drop any so far unapplied updates for the previous map
-      ROS_WARN_STREAM("There were unapplied updates in carma_wm when a new map was recieved.");
+    if (update.map_version < current_map_version_) { // Drop any so far unapplied updates for the previous map
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "There were unapplied updates in carma_wm when a new map was recieved.");
       continue;
     }
-    if (update->map_version == current_map_version_) { // Current update goes with current map
+    if (update.map_version == current_map_version_) { // Current update goes with current map
       mapUpdateCallback(update); // Apply the update
     } else {
-      ROS_INFO_STREAM("Done applying updates for new map. However, more updates are waiting for a future map.");
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Done applying updates for new map. However, more updates are waiting for a future map.");
       more_updates_to_apply = false; // If there is more updates queued that are not for this map version assume they are for a future map version
     }
 
@@ -87,20 +88,20 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
   }
 
   if (delayed_route_msg_) {
-    if (delayed_route_msg_.get()->map_version == current_map_version_) { // If there is a delayed route message to apply then do so
-      routeCallback(delayed_route_msg_.get());
-    } else if (delayed_route_msg_.get()->map_version < current_map_version_) {
-      ROS_WARN_STREAM("Dropping delayed route message which was never applied as updated map was not recieved");
+    if (delayed_route_msg_.get().map_version == current_map_version_) { // If there is a delayed route message to apply then do so
+      routeCallback(std::make_unique<carma_planning_msgs::msg::Route>(delayed_route_msg_.get()));
+    } else if (delayed_route_msg_.get().map_version < current_map_version_) {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Dropping delayed route message which was never applied as updated map was not recieved");
       delayed_route_msg_ = boost::none;
     } else {
-      ROS_INFO_STREAM("There is a delayed route message still waiting to be applied in carma_wm");
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "There is a delayed route message still waiting to be applied in carma_wm");
     }
   }
 }
 
-void WMListenerWorker::incomingSpatCallback(const cav_msgs::SPAT& spat_msg)
+void WMListenerWorker::incomingSpatCallback(const carma_v2x_msgs::msg::SPAT::UniquePtr spat_msg)
 {
-  world_model_->processSpatFromMsg(spat_msg);
+  world_model_->processSpatFromMsg(*spat_msg);
 }
 
 bool WMListenerWorker::checkIfReRoutingNeeded() const
@@ -118,83 +119,83 @@ void logSignalizedIntersectionManager(const carma_wm::SignalizedIntersectionMana
 {
   for (auto pair : sim.intersection_id_to_regem_id_)
   {
-    ROS_DEBUG_STREAM("inter id: " << (int)pair.first << ", regem id: " << pair.second);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "inter id: " << (int)pair.first << ", regem id: " << pair.second);
   }
   for (auto pair : sim.signal_group_to_entry_lanelet_ids_)
   {
     for (auto iter = pair.second.begin(); iter != pair.second.end(); iter++)
     {
-      ROS_DEBUG_STREAM("signal id: " << (int)pair.first << ", entry llt id: " << *iter);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)pair.first << ", entry llt id: " << *iter);
     }
   }
   for (auto pair : sim.signal_group_to_exit_lanelet_ids_)
   {
     for (auto iter = pair.second.begin(); iter != pair.second.end(); iter++)
     {
-      ROS_DEBUG_STREAM("signal id: " << (int)pair.first << ", exit llt id: " << *iter);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)pair.first << ", exit llt id: " << *iter);
     }
   }
   for (auto pair : sim.signal_group_to_traffic_light_id_)
   {
-    ROS_DEBUG_STREAM("signal id: " << (int)pair.first << ", regem id: " << pair.second);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)pair.first << ", regem id: " << pair.second);
   }
 }
 
-void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg)
+void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::msg::MapBin geofence_msg)
 {
-  ROS_INFO_STREAM("Map Update Being Evaluated. SeqNum: " << geofence_msg->seq_id);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Map Update Being Evaluated. SeqNum: " << geofence_msg.seq_id);
   if (rerouting_flag_) // no update should be applied if rerouting 
   {
-    ROS_INFO_STREAM("Currently new route is being processed. Queueing this update. Received seq: " << geofence_msg->seq_id << " prev seq: " << most_recent_update_msg_seq_);
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Currently new route is being processed. Queueing this update. Received seq: " << geofence_msg.seq_id << " prev seq: " << most_recent_update_msg_seq_);
     map_update_queue_.push(geofence_msg);
     return;
   }
-  if (geofence_msg->seq_id <= most_recent_update_msg_seq_) {
-    ROS_DEBUG_STREAM("Dropping map update which has already been processed. Received seq: " << geofence_msg->seq_id << " prev seq: " << most_recent_update_msg_seq_);
+  if (geofence_msg.seq_id <= most_recent_update_msg_seq_) {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Dropping map update which has already been processed. Received seq: " << geofence_msg.seq_id << " prev seq: " << most_recent_update_msg_seq_);
     return;
-  } else if(!world_model_->getMap() || current_map_version_ < geofence_msg->map_version) { // If our current map version is older than the version target by this update
-    ROS_DEBUG_STREAM("Update received for newer map version than available. Queueing update until map is available.");
+  } else if(!world_model_->getMap() || current_map_version_ < geofence_msg.map_version) { // If our current map version is older than the version target by this update
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Update received for newer map version than available. Queueing update until map is available.");
     map_update_queue_.push(geofence_msg);
     return;
-  } else if (current_map_version_ > geofence_msg->map_version) { // If this update is for an older map
-    ROS_WARN_STREAM("Dropping old map update as newer map is already available.");
+  } else if (current_map_version_ > geofence_msg.map_version) { // If this update is for an older map
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Dropping old map update as newer map is already available.");
     return;
-  } else if (most_recent_update_msg_seq_ + 1 < geofence_msg->seq_id) {
-    ROS_INFO_STREAM("Queuing map update as we are waiting on an earlier update to be applied. most_recent_update_msg_seq_: " << most_recent_update_msg_seq_ << "geofence_msg->seq_id: " << geofence_msg->seq_id);
+  } else if (most_recent_update_msg_seq_ + 1 < geofence_msg.seq_id) {
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Queuing map update as we are waiting on an earlier update to be applied. most_recent_update_msg_seq_: " << most_recent_update_msg_seq_ << "geofence_msg.seq_id: " << geofence_msg.seq_id);
     map_update_queue_.push(geofence_msg);
     return;
   }
 
 
-  if(geofence_msg->invalidates_route==true && world_model_->getRoute())
+  if(geofence_msg.invalidates_route==true && world_model_->getRoute())
   {  
     rerouting_flag_=true;
     recompute_route_flag_ = true;
 
-    ROS_DEBUG_STREAM("Received notice that route has been invalidated in mapUpdateCallback");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Received notice that route has been invalidated in mapUpdateCallback");
 
     if(route_node_flag_!=true)
     {
-     ROS_INFO_STREAM("Route is not yet available. Therefore queueing the update");
+     RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Route is not yet available. Therefore queueing the update");
      map_update_queue_.push(geofence_msg);
      return;
     }
   }
 
-  most_recent_update_msg_seq_ = geofence_msg->seq_id; // Update current sequence count
+  most_recent_update_msg_seq_ = geofence_msg.seq_id; // Update current sequence count
 
   auto gf_ptr = std::shared_ptr<carma_wm::TrafficControl>(new carma_wm::TrafficControl);
   
   // convert ros msg to geofence object
-  carma_wm::fromBinMsg(*geofence_msg, gf_ptr, world_model_->getMutableMap());
+  carma_wm::fromBinMsg(geofence_msg, gf_ptr, world_model_->getMutableMap());
 
-  ROS_INFO_STREAM("Processing Map Update with Geofence Id:" << gf_ptr->id_);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Processing Map Update with Geofence Id:" << gf_ptr->id_);
   
-  ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " requests addition of lanelets size: " << gf_ptr->lanelet_additions_.size());
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Geofence id" << gf_ptr->id_ << " requests addition of lanelets size: " << gf_ptr->lanelet_additions_.size());
   for (auto llt : gf_ptr->lanelet_additions_)
   {
     // world model here should blindly accept the map update received
-    ROS_DEBUG_STREAM("Adding new lanelet with id: " << llt.id());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Adding new lanelet with id: " << llt.id());
     auto left = llt.leftBound3d(); //new lanelet coming in
     
     // updating incoming points' memory addresses with local ones of same ids
@@ -218,38 +219,38 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     world_model_->getMutableMap()->add(llt);
   }
 
-  ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " sends record of traffic_lights_id size: " << gf_ptr->traffic_light_id_lookup_.size());
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Geofence id" << gf_ptr->id_ << " sends record of traffic_lights_id size: " << gf_ptr->traffic_light_id_lookup_.size());
   for (auto pair : gf_ptr->traffic_light_id_lookup_)
   {
-    ROS_DEBUG_STREAM("Adding new pair for traffic light ids: " << pair.first << ", and lanelet::Id: " << pair.second);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Adding new pair for traffic light ids: " << pair.first << ", and lanelet::Id: " << pair.second);
     world_model_->setTrafficLightIds(pair.first, pair.second);
   }
 
-  ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " sends record of intersections size: " << gf_ptr->sim_.intersection_id_to_regem_id_.size());
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Geofence id" << gf_ptr->id_ << " sends record of intersections size: " << gf_ptr->sim_.intersection_id_to_regem_id_.size());
   if (gf_ptr->sim_.intersection_id_to_regem_id_.size() > 0)
   {
     world_model_->sim_ = gf_ptr->sim_;
     logSignalizedIntersectionManager(world_model_->sim_);
   }
 
-  ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " requests removal of size: " << gf_ptr->remove_list_.size());
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Geofence id" << gf_ptr->id_ << " requests removal of size: " << gf_ptr->remove_list_.size());
   for (auto pair : gf_ptr->remove_list_)
   {
     auto parent_llt = world_model_->getMutableMap()->laneletLayer.get(pair.first);
     // we can only check by id, if the element is there
     // this is only for speed optimization, as world model here should blindly accept the map update received
     auto regems_copy_to_check = parent_llt.regulatoryElements(); // save local copy as the regem can be deleted during iteration
-    ROS_DEBUG_STREAM("Regems found in lanelet: " << regems_copy_to_check.size());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Regems found in lanelet: " << regems_copy_to_check.size());
     for (auto regem: regems_copy_to_check)
     {
       // we can't use the deserialized element as its data address conflicts the one in this node
       if (pair.second->id() == regem->id()) world_model_->getMutableMap()->remove(parent_llt, regem);
     }
-    ROS_DEBUG_STREAM("Regems left in lanelet after removal: " << parent_llt.regulatoryElements().size());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Regems left in lanelet after removal: " << parent_llt.regulatoryElements().size());
 
   }
   
-  ROS_INFO_STREAM("Geofence id" << gf_ptr->id_ << " requests update of size: " << gf_ptr->update_list_.size());
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Geofence id" << gf_ptr->id_ << " requests update of size: " << gf_ptr->update_list_.size());
 
   // we should extract general regem to specific type of regem the geofence specifies
   for (auto pair : gf_ptr->update_list_)
@@ -264,13 +265,13 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     if (regemptr_it != world_model_->getMutableMap()->regulatoryElementLayer.end())  
     {
 
-      ROS_DEBUG_STREAM("Reapplying previously existing element");
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Reapplying previously existing element for lanelet id:" << parent_llt.id() << ", and regem id: " << regemptr_it->get()->id());
       // again we should use the element with correct data address to be consistent
       world_model_->getMutableMap()->update(parent_llt, *regemptr_it);
     }
     else // Updates are treated as new regulations after the old value was removed. In both cases we enter this block. 
     {
-      ROS_DEBUG_STREAM("New regulatory element " << pair.second->id());
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "New regulatory element at lanelet: " << parent_llt.id() << ", and id: " << pair.second->id());
       newRegemUpdateHelper(parent_llt, pair.second.get());
     }
   }
@@ -283,12 +284,12 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     recompute_route_flag_ = false;
   
 
-  ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_); 
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_); 
 
   // Call user defined map callback
   if (map_callback_)
   {
-    ROS_INFO_STREAM("Calling user defined map update callback");
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Calling user defined map update callback");
     map_callback_();
   }
 }
@@ -423,7 +424,7 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
       break;
     }
     default:
-      ROS_WARN_STREAM("World Model instance received an unsupported geofence type in its map update callback!");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "World Model instance received an unsupported geofence type in its map update callback!");
       break;
   }
 }
@@ -433,23 +434,23 @@ std::string WMListenerWorker::getVehicleParticipationType() const
   return world_model_->getVehicleParticipationType();
 }
 
-void WMListenerWorker::roadwayObjectListCallback(const cav_msgs::RoadwayObstacleList& msg)
+void WMListenerWorker::roadwayObjectListCallback(const carma_perception_msgs::msg::RoadwayObstacleList::UniquePtr msg)
 {
   // this topic publishes only the objects that are on the road
-  world_model_->setRoadwayObjects(msg.roadway_obstacles);
+  world_model_->setRoadwayObjects(msg->roadway_obstacles);
 }
 
-void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
+void WMListenerWorker::routeCallback(const carma_planning_msgs::msg::Route::UniquePtr route_msg)
 {
   if (route_msg->map_version < current_map_version_) {
-    ROS_WARN_STREAM("Route message rejected as it is for an older map");
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Route message rejected as it is for an older map");
     rerouting_flag_ = false; // Clear any blockers on map updates as the route we were waiting for is no longer valid
     return;
   }
 
   if (route_msg->map_version > current_map_version_) {
-    ROS_WARN_STREAM("Route message received for future map. Delaying application until map is recieved");
-    delayed_route_msg_ = route_msg;
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Route message received for future map. Delaying application until map is recieved");
+    delayed_route_msg_ = *route_msg;
     return;
   }
 
@@ -465,17 +466,17 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
       auto update = map_update_queue_.front(); // Get first update
       map_update_queue_.pop(); // Remove update from queue
       rerouting_flag_ = false;  // route node has finished routing, allow update
-      update->invalidates_route=false; // do not trigger rerouting for route node again
+      update.invalidates_route=false; // do not trigger rerouting for route node again
 
-      if (update->map_version < current_map_version_) { // Drop any so far unapplied updates for the current map
-        ROS_WARN_STREAM("Apply from reroute: There were unapplied updates in carma_wm when a new map was recieved.");
+      if (update.map_version < current_map_version_) { // Drop any so far unapplied updates for the current map
+        RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Apply from reroute: There were unapplied updates in carma_wm when a new map was recieved.");
         continue;
       }
-      if (update->map_version == current_map_version_) { // Current update goes with current map which is also the map used by this route
-        ROS_DEBUG_STREAM("Applying queued update after route was recieved. ");
+      if (update.map_version == current_map_version_) { // Current update goes with current map which is also the map used by this route
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Applying queued update after route was recieved. ");
         mapUpdateCallback(update); // Apply the update
       } else {
-        ROS_INFO_STREAM("Apply from reroute: Done applying updates for new map. However, more updates are waiting for a future map.");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Apply from reroute: Done applying updates for new map. However, more updates are waiting for a future map.");
         more_updates_to_apply = false; // If there is more updates queued that are not for this map version assume they are for a future map version
       }
 
@@ -487,7 +488,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
   rerouting_flag_ = false;
 
   if (!world_model_->getMap()) { // This check is a bit redundant but still useful from a debugging perspective as the alternative is a segfault
-    ROS_ERROR_STREAM("WMListener received a route before a map was available. Dropping route message.");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "WMListener received a route before a map was available. Dropping route message.");
     return;
   }
 
