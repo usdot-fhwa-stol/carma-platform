@@ -560,7 +560,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     nearest_green_entry_time = ros::Time(std::max(nearest_green_entry_time.toSec(), nearest_green_entry_time_cached_.get().toSec()));
   }
   
-  if (nearest_green_entry_time != nearest_green_entry_time_cached_.get())
+  if (nearest_green_entry_time != nearest_green_entry_time_cached_.get()) //TODO this equation does not work
   {
     ROS_ERROR_STREAM("CONSIDERABLY CLOSE TO GREEN BUFFER! nearest_green_entry_time cached:" << std::to_string(nearest_green_entry_time_cached_.get().toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
     ROS_DEBUG_STREAM("CONSIDERABLY CLOSE TO GREEN BUFFER! nearest_green_entry_time cached:" << std::to_string(nearest_green_entry_time_cached_.get().toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
