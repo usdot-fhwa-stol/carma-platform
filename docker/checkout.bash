@@ -53,12 +53,19 @@ fi
 # add astuff messages
 # NOTE: The ibeo_msgs package is ignored because on build the cmake files in that package run a sed command 
 #       which can make them incompatible with a new ros version after a source switch
-#git clone https://github.com/astuff/astuff_sensor_msgs 
+git clone https://github.com/astuff/astuff_sensor_msgs 
 #
-#cd astuff_sensor_msgs
-#git checkout 41d5ef0c33fb27eb3c9ba808b51332bcce186a83
+cd astuff_sensor_msgs
+git checkout 41d5ef0c33fb27eb3c9ba808b51332bcce186a83
 
-cd carma-platform/mock_drivers/rosbag_mock_drivers
+##Disable ibeo_msgs
+cd ibeo_msgs
+echo "" > COLCON_IGNORE
+cd ../astuff_sensor_msgs
+echo "" > COLCON_IGNORE
+#
+
+cd ../../carma-platform/mock_drivers/rosbag_mock_drivers
 echo "" > COLCON_IGNORE
 cd ../../mobilitypath_publisher
 echo "" > COLCON_IGNORE
