@@ -99,6 +99,8 @@ cd ../cooperative_lanechange
 echo "" > COLCON_IGNORE
 cd ../bsm_generator
 echo "" > COLCON_IGNORE
+cd ../ns-3_adapter
+echo "" > COLCON_IGNORE
 
 
 cd ../

@@ -159,6 +159,7 @@ namespace plan_delegator
     {
         double original_start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
         double original_end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
+        ROS_DEBUG_STREAM("Changing maneuver distances for planner: " << GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin));
         double adjusted_start_dist = original_start_dist - length_to_front_bumper_;
         ROS_DEBUG_STREAM("original_start_dist:" << original_start_dist);
         ROS_DEBUG_STREAM("adjusted_start_dist:" << adjusted_start_dist);
