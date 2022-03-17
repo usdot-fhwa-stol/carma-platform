@@ -150,6 +150,17 @@ namespace motion_computation{
     {
         // Build projector from proj string
         map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str()); 
+
+        
+        std::string axis = wgs84_utils::proj_tools::getAxisFromProjString(msg->data);  // Extract axis for orientation calc
+
+        ROS_INFO_STREAM("Extracted Axis: " << axis);
+
+        ned_in_map_rotation_ = wgs84_utils::proj_tools::getRotationOfNEDFromProjAxis(axis);  // Extract map rotation from axis
+
+        ROS_DEBUG_STREAM("Extracted NED in Map Rotation (x,y,z,w) : ( "
+                        << ned_in_map_rotation_.get().x() << ", " << ned_in_map_rotation_.get().y() << ", "
+                        << ned_in_map_rotation_.get().z() << ", " << ned_in_map_rotation_.get().w());
     }
     
     void MotionComputationWorker::setPredictionTimeStep(double time_step)
@@ -345,12 +356,106 @@ namespace motion_computation{
     {
         carma_perception_msgs::msg::ExternalObject output;
         
+        output.dynamic_obj = true; // If a PSM is sent then the object is dynamic since its a living thing
+
+        // Generate a unique object id from the psm id
+        output.id = 0
+        for (int i = msg->id.id.size() - 1; i >= 0; i--) { // using signed iterator to handle empty case
+            output.id |= msg->id.id[i] << (8*i);
+        }
+
+        // Additionally, store the id in the bsm_id field
+        output.bsm_id = msg->id.id;
+
+        // Compute the pose
+        output.pose = pose_from_gnss(
+            map_projector_, 
+            ned_in_map_rotation_,
+            { msg->position.latitude, msg->position.longitude, msg->position.elevation }, 
+            msg->heading.heading
+        );
+
+        // Compute the position covariance
+        // TODO
+
+        msg->sec_mark.millisecond
+
+        // Compute the timestamp
+        // TODO
+
+        if (msg->sec_mark.millisecond)
+        
+        // HERE TRYING TO CONVERT TIMESTAMP CORRECTLY
+        auto current_time = get_clock()->now();
+        auto inception_boost( boost::posix_time::time_from_string("1970-01-01 00:00:00.000") ); // inception of epoch
+        auto duration_since_inception( lanelet::time::durationFromSec(current_time.seconds()) );
+        auto curr_time_boost = inception_boost + duration_since_inception;
+        boost::posix_time::ptime start_of_day(curr_time_boost.date().day());
+        boost::posix_time::ptime
+
+        
+        boost::posix_time::ptime s_in_minute = lanelet::time::timeFromSec(msg->sec_mark.millisecond * 1000.0);
+        auto received_state = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state);
+
+        if (curr_intersection.moy_exists) //account for minute of the year
+        {
+          auto inception_boost(boost::posix_time::time_from_string("1970-01-01 00:00:00.000")); // inception of epoch
+          auto duration_since_inception(lanelet::time::durationFromSec(ros::Time::now().toSec()));
+          auto curr_time_boost = inception_boost + duration_since_inception;
+          ROS_DEBUG_STREAM("Calculated current time: " << boost::posix_time::to_simple_string(curr_time_boost));
+
+          int curr_year = curr_time_boost.date().year();
+          auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year)+ "-01-01 00:00:00.000"));
+
+          ROS_DEBUG_STREAM("MOY extracted: " << (int)curr_intersection.moy);
+          auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)curr_intersection.moy);
+
+          int hours_of_day = curr_minute_stamp_boost.time_of_day().hours();
+          int curr_month = curr_minute_stamp_boost.date().month();
+          int curr_day = curr_minute_stamp_boost.date().day();
+
+          auto curr_day_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "/" + std::to_string(curr_month) + "/" + std::to_string(curr_day) +" 00:00:00.000")); // GMT is the standard
+          auto curr_hour_boost = curr_day_boost + boost::posix_time::hours(hours_of_day);
+
+          min_end_time += lanelet::time::durationFromSec(lanelet::time::toSec(curr_hour_boost));
+          ROS_DEBUG_STREAM("New min_end_time: " << std::to_string(lanelet::time::toSec(min_end_time)));
+        }
+
+        // Set the type
+        // TODO
+
+        // Set the velocity
+        // TODO
+
+        // Compute the velocity covariance TODO
+
+        // Set the size
+        // TODO
+
+        // Set the confidence
+        // TODO
+
+        // Compute predictions 
+        // TODO
+
+
+
+        
+
         return output;
     }
 
     carma_perception_msgs::msg::ExternalObject MotionComputationWorker::bsmToExternalObject(const carma_v2x_msgs::msg::BSM::UniquePtr& msg) const
     {
         carma_perception_msgs::msg::ExternalObject output;
+
+        // Generate a unique object id from the bsm id
+        output.id = 0
+        for (int i = msg->core_data.id.size() - 1; i >= 0; i--) { // using signed iterator to handle empty case
+            output.id |= msg->core_data.id[i] << (8*i);
+        }
+
+        output.bsm_id = msg->core_data.id;
 
         return output;
     }
@@ -521,6 +626,91 @@ namespace motion_computation{
         lanelet::BasicPoint3d map_point = map_projector_->projectECEF( { ecef_point.x(),  ecef_point.y(), ecef_point.z() } , -1); // Input should already be converted to m
         
         return tf2::Vector3(map_point.x(), map_point.y(), map_point.z());
+    }
+
+
+    tf2::Vector3 MotionComputationWorker::gnss_to_map(double lat, double lon, double ele) const
+    {
+        if (!map_projector_) {
+            throw std::invalid_argument("No map projector available for gnss conversion");
+        }
+
+        // GPSPoint gps_point;
+        // gps_point.lat = lat; // TODO if possible delete
+
+            
+        lanelet::BasicPoint3d map_point = map_projector_->forward( { lat,  lon, ele } ); // Input should already be converted to m
+        
+        return tf2::Vector3(map_point.x(), map_point.y(), map_point.z());
+    }
+
+    // NOTE heading will need to be set after calling this
+    geometry_msgs::PoseWithCovariance MotionComputationWorker::pose_from_gnss(
+        const lanelet::projection::LocalFrameProjector& projector, 
+        const tf2::Quaternion& ned_in_map_rotation,
+        const GPSPoint& gps_point, 
+        const double& heading)
+    {
+        //// Convert the position information into the map frame using the proj library
+        lanelet::BasicPoint3d map_point = projector.forward(gps_point);
+
+        ROS_DEBUG_STREAM("map_point: " << map_point.x() << ", " << map_point.y() << ", " << map_point.z());
+
+        if (fabs(map_point.x()) > 10000.0 || fabs(map_point.y()) > 10000.0)
+        {  // Above 10km from map origin earth curvature will start to have a negative impact on system performance
+
+            ROS_WARN_STREAM("Distance from map origin is larger than supported by system assumptions. Strongly advise "
+                            "alternative map origin be used. ");
+        }
+
+        //// Convert the orientation information into the map frame
+        // This logic assumes that the orientation difference between an NED frame located at the map origin and an NED frame
+        // located at the GNSS point are sufficiently small that they can be ignored. Therefore it is assumed the heading
+        // report of the GNSS system regardless of its postion in the map without change in its orientation will give the
+        // same result (as far as we are concered).
+
+        tf2::Quaternion R_m_n(ned_in_map_rotation);  // Rotation of NED frame in map frame
+        tf2::Quaternion R_n_h;                       // Rotation of sensor heading report in NED frame
+        R_n_h.setRPY(0, 0, heading * wgs84_utils::DEG2RAD);
+
+        tf2::Quaternion R_m_s =
+            R_m_n * R_n_h;  // Rotation of sensor in map frame under assumption that distance from map origin is
+                            // sufficiently small so as to ignore local changes in NED orientation
+
+            ROS_DEBUG_STREAM("R_m_n (x,y,z,w) : ( "
+                        << R_m_n.x() << ", " << R_m_n.y() << ", "
+                        << R_m_n.z() << ", " << R_m_n.w());
+            
+            ROS_DEBUG_STREAM("R_n_h (x,y,z,w) : ( "
+                        << R_n_h.x() << ", " << R_n_h.y() << ", "
+                        << R_n_h.z() << ", " << R_n_h.w());
+            
+            ROS_DEBUG_STREAM("R_h_s (x,y,z,w) : ( "
+                        << R_h_s.x() << ", " << R_h_s.y() << ", "
+                        << R_h_s.z() << ", " << R_h_s.w());
+
+            ROS_DEBUG_STREAM("R_m_s (x,y,z,w) : ( "
+                        << R_m_s.x() << ", " << R_m_s.y() << ", "
+                        << R_m_s.z() << ", " << R_m_s.w());
+
+        tf2::Transform T_m_s(R_m_s,
+                            tf2::Vector3(map_point.x(), map_point.y(), map_point.z()));  // Reported position and orientation
+                                                                                            // of sensor frame in map frame
+
+        // TODO handle covariance. This should be doable with the recent changes
+
+        // Populate message
+        geometry_msgs::PoseWithCovariance pose;
+        pose.pose.position.x = T_m_s.getOrigin().getX();
+        pose.pose.position.y = T_m_s.getOrigin().getY();
+        pose.pose.position.z = T_m_s.getOrigin().getZ();
+
+        pose.pose.orientation.x = T_m_s.getRotation().getX();
+        pose.pose.orientation.y = T_m_s.getRotation().getY();
+        pose.pose.orientation.z = T_m_s.getRotation().getZ();
+        pose.pose.orientation.w = T_m_s.getRotation().getW();
+
+        return pose;
     }
 
 } // namespace motion_computation

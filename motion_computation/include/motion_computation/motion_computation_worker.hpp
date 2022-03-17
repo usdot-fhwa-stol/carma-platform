@@ -158,6 +158,9 @@ namespace motion_computation
             carma_perception_msgs::msg::ExternalObjectList mobility_path_list_;
 
             std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
+
+            tf2::Quaternion ned_in_map_rotation_; // TODO comments
+            
     };
 
 } // namespace motion_computation
