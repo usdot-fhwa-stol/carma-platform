@@ -140,7 +140,7 @@ private:
   bool recompute_route_flag_=false; // indicates whether if this node should recompute its route based on invalidated msg
   bool rerouting_flag_=false; //indicates whether if route node is in middle of rerouting
   bool route_node_flag_=false; //indicates whether if this node is route node
-  long most_recent_update_msg_seq_ = -1; // Tracks the current sequence number for map update messages. Dropping even a single message would invalidate the map
+  long most_recent_update_msg_seq_ = 0; // Tracks the current sequence number for map update messages. Dropping even a single message would invalidate the map
 
 };
 }  // namespace carma_wm
