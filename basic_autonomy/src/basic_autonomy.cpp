@@ -257,7 +257,7 @@ namespace basic_autonomy
         }
 
         std::vector<lanelet::BasicPoint2d> create_lanechange_geometry(lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, double starting_downtrack, double ending_downtrack,
-                                                                   const carma_wm::WorldModelConstPtr &wm,const cav_msgs::VehicleState &state, int downsample_ratio)
+                                                                   const carma_wm::WorldModelConstPtr &wm,const cav_msgs::VehicleState &state, int downsample_ratio, double buffer_ending_downtrack)
         {
             std::vector<lanelet::BasicPoint2d> centerline_points;
 
@@ -401,15 +401,19 @@ namespace basic_autonomy
             }
 
             // Add points from the remaining length of the target lanelet to provide sufficient distance for adding buffer
+            double dist_to_target_lane_end = lanelet::geometry::distance2d(centerline_points.back(), downsampled_target_centerline.back());
             centerline_points.insert(centerline_points.end(), downsampled_target_centerline.begin() + end_index_target_centerline, downsampled_target_centerline.end());
             
-            // Also add points from the lanelet following the target lanelet to provide sufficient distance for adding buffer
-            auto following_lanelets = wm->getMapRoutingGraph()->following(ending_lanelet, false);
-            if(!following_lanelets.empty()){
-                //Arbitrarily choosing first following lanelet for buffer since points are only being used to fit spline
-                auto following_lanelet_centerline = following_lanelets.front().centerline2d().basicLineString();
-                centerline_points.insert(centerline_points.end(), following_lanelet_centerline.begin(), 
-                                                                            following_lanelet_centerline.end());
+            // If the additional distance from the remaining length of the target lanelet does not provide more than the required
+            // buffer_ending_downtrack, then also add points from the lanelet following the target lanelet
+            if (dist_to_target_lane_end < buffer_ending_downtrack) {
+                auto following_lanelets = wm->getMapRoutingGraph()->following(ending_lanelet, false);
+                if(!following_lanelets.empty()){
+                    //Arbitrarily choosing first following lanelet for buffer since points are only being used to fit spline
+                    auto following_lanelet_centerline = following_lanelets.front().centerline2d().basicLineString();
+                    centerline_points.insert(centerline_points.end(), following_lanelet_centerline.begin(), 
+                                                                                following_lanelet_centerline.end());
+                }
             }
 
             return centerline_points;
@@ -495,7 +499,7 @@ namespace basic_autonomy
             //get route between starting and ending downtracks - downtracks should be constant for complete length of maneuver
             double lanechange_starting_downtrack;
             std::vector<lanelet::BasicPoint2d> route_geometry = create_lanechange_geometry(std::stoi(lane_change_maneuver.starting_lane_id),std::stoi(lane_change_maneuver.ending_lane_id),
-                                                                                        starting_downtrack, ending_downtrack, wm, state, general_config.default_downsample_ratio);
+                                                                                        starting_downtrack, ending_downtrack, wm, state, general_config.default_downsample_ratio, detailed_config.buffer_ending_downtrack);
             ROS_DEBUG_STREAM("Route geometry size:"<<route_geometry.size());
 
             lanelet::BasicPoint2d state_pos(state.x_pos_global, state.y_pos_global);
