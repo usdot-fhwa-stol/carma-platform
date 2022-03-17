@@ -37,7 +37,10 @@ namespace motion_computation
     config_.cv_y_accel_noise = declare_parameter<double>("cv_y_accel_noise", config_.cv_y_accel_noise);
     config_.prediction_process_noise_max = declare_parameter<double>("prediction_process_noise_max", config_.prediction_process_noise_max);
     config_.prediction_confidence_drop_rate = declare_parameter<double>("prediction_confidence_drop_rate", config_.prediction_confidence_drop_rate);
-    config_.external_object_prediction_mode = declare_parameter<int>("external_object_prediction_mode", config_.external_object_prediction_mode);
+    config_.enable_bsm_processing = declare_parameter<bool>("enable_bsm_processing", config_.enable_bsm_processing);
+    config_.enable_psm_processing = declare_parameter<bool>("enable_psm_processing", config_.enable_psm_processing);
+    config_.enable_mobility_path_processing = declare_parameter<bool>("enable_mobility_path_processing", config_.enable_mobility_path_processing);
+    config_.enable_sensor_processing = declare_parameter<bool>("enable_sensor_processing", config_.enable_sensor_processing);
   }
 
   rcl_interfaces::msg::SetParametersResult MotionComputationNode::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
@@ -51,7 +54,13 @@ namespace motion_computation
         {"prediction_process_noise_max", config_.prediction_process_noise_max},
         {"prediction_confidence_drop_rate", config_.prediction_confidence_drop_rate}
     }, parameters);
-    auto error_2 = update_params<int>({{"external_object_prediction_mode", config_.external_object_prediction_mode}}, parameters);
+    
+    auto error_2 = update_params<bool>({
+      {"enable_bsm_processing", config_.enable_bsm_processing},
+      {"enable_psm_processing", config_.enable_psm_processing},
+      {"enable_mobility_path_processing", config_.enable_mobility_path_processing},
+      {"enable_sensor_processing", config_.enable_sensor_processing}
+    }, parameters);
         
     rcl_interfaces::msg::SetParametersResult result;
 
@@ -75,7 +84,10 @@ namespace motion_computation
     get_parameter<double>("cv_y_accel_noise", config_.cv_y_accel_noise);
     get_parameter<double>("prediction_process_noise_max", config_.prediction_process_noise_max);
     get_parameter<double>("prediction_confidence_drop_rate", config_.prediction_confidence_drop_rate);
-    get_parameter<int>("external_object_prediction_mode", config_.external_object_prediction_mode);
+    get_parameter<bool>("enable_bsm_processing", config_.enable_bsm_processing);
+    get_parameter<bool>("enable_psm_processing", config_.enable_psm_processing);
+    get_parameter<bool>("enable_mobility_path_processing", config_.enable_mobility_path_processing);
+    get_parameter<bool>("enable_sensor_processing", config_.enable_sensor_processing);
 
     RCLCPP_INFO_STREAM(get_logger(), "Loaded params: " << config_);
 
@@ -85,8 +97,10 @@ namespace motion_computation
     // Setup subscribers
     motion_comp_sub_ = create_subscription<carma_perception_msgs::msg::ExternalObjectList>("external_objects", 1,
                                                               std::bind(&MotionComputationWorker::predictionLogic, &motion_worker_, std_ph::_1));
+    
     mobility_path_sub_ = create_subscription<carma_v2x_msgs::msg::MobilityPath>("incoming_mobility_path", 20,
                                                               std::bind(&MotionComputationWorker::mobilityPathCallback, &motion_worker_, std_ph::_1));
+    
     georeference_sub_ = create_subscription<std_msgs::msg::String>("georeference", 1,
                                                               std::bind(&MotionComputationWorker::georeferenceCallback, &motion_worker_, std_ph::_1));
 

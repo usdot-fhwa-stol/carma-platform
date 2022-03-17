@@ -80,21 +80,64 @@ namespace motion_computation{
             sensor_list.objects.emplace_back(obj);
         }//end for-loop
 
-        // Determine mode
-        switch(external_object_prediction_mode_)
-        {
-            case SENSORS_ONLY:
-                output_list = sensor_list;
-                break;
-            case PATH_AND_SENSORS:
-                output_list = synchronizeAndAppend(sensor_list, mobility_path_list_);
-                break;
-            case MOBILITY_PATH_ONLY:
-                output_list = mobility_path_list_;
-                break;
-            default:
-                RCLCPP_WARN_STREAM(logger_->get_logger(), "Received invalid motion computation operational mode:" << external_object_prediction_mode_ << " publishing empty list.");
-                break;
+
+        // Synchronization priority
+        // Sensor
+        // BSM
+        // PSM
+        // MobilityPath
+        // TODO add descriptive comments here
+        const carma_perception_msgs::msg::ExternalObjectList& synchronization_base_objects;
+        if (enable_sensor_processing) {
+
+            synchronization_base_objects = sensor_list;
+
+        } else if (enable_bsm_processing) {
+
+            synchronization_base_objects = bsm_list;
+
+        } else if (enable_psm_processing) {
+
+            synchronization_base_objects = psm_list;
+
+        } else if (enable_mobility_path_processing) {
+
+            synchronization_base_objects = mobility_path_list_;
+
+        } else {
+            
+            RCLCPP_WARN_STREAM(logger_->get_logger(), "Not configured to publish any data publishing empty object list. Operating like this is NOT advised.");
+            // synchronization_base_objects.header.stamp = now();// TODO get access to clock
+            obj_pub_(synchronization_base_objects);
+            // TODO clear queues?
+            return;
+        }
+
+        carma_perception_msgs::msg::ExternalObjectList current_output; // TODO we need to set the header for this
+        current_output.objects.reserve(synchronization_base_objects.objects.size());
+
+        if (enable_sensor_processing) {
+
+            current_output = synchronizeAndAppend(sensor_list, current_output);
+
+        }
+        
+        if (enable_bsm_processing) {
+
+            current_output = synchronizeAndAppend(bsm_list, current_output);
+
+        } 
+        
+        if (enable_psm_processing) {
+
+            current_output = synchronizeAndAppend(psm_list, current_output);
+
+        } 
+        
+        if (enable_mobility_path_processing) {
+            
+            current_output = synchronizeAndAppend(mobility_path_list_, current_output);
+
         }
 
         obj_pub_(output_list);
@@ -152,9 +195,46 @@ namespace motion_computation{
     void MotionComputationWorker::mobilityPathCallback(const carma_v2x_msgs::msg::MobilityPath::UniquePtr msg)
     {
         if (!map_projector_) {
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Map projection not available yet so ignoring mobility path messages");
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Map projection not available yet so ignoring MobilityPath messages");
+            return;
         }
+
+        if (!enable_mobility_path_processing) {
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "enable_mobility_path_processing is false so ignoring MobilityPath messages");
+            return;
+        }
+
         mobility_path_list_.objects.push_back(mobilityPathToExternalObject(msg));
+    }
+
+    void MotionComputationWorker::psmCallback(const carma_v2x_msgs::msg::PSM::UniquePtr msg)
+    {
+        if (!map_projector_) {
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Map projection not available yet so ignoring PSM messages");
+            return;
+        }
+
+        if (!enable_psm_processing) {
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "enable_psm_processing is false so ignoring PSM messages");
+            return;
+        }
+
+        psm_list_.objects.push_back(mobilityPathToExternalObject(msg));
+    }
+
+    void MotionComputationWorker::bsmCallback(const carma_v2x_msgs::msg::BSM::UniquePtr msg)
+    {
+        if (!map_projector_) {
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Map projection not available yet so ignoring PSM messages");
+            return;
+        }
+
+        if (!enable_bsm_processing) {
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "enable_bsm_processing is false so ignoring BSM messages");
+            return;
+        }
+
+        bsm_list_.objects.push_back(mobilityPathToExternalObject(msg));
     }
 
     carma_perception_msgs::msg::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(const carma_v2x_msgs::msg::MobilityPath::UniquePtr& msg) const
@@ -261,6 +341,21 @@ namespace motion_computation{
         return output;
     }
 
+    carma_perception_msgs::msg::ExternalObject MotionComputationWorker::psmToExternalObject(const carma_v2x_msgs::msg::PSM::UniquePtr& msg) const
+    {
+        carma_perception_msgs::msg::ExternalObject output;
+        
+        return output;
+    }
+
+    carma_perception_msgs::msg::ExternalObject MotionComputationWorker::bsmToExternalObject(const carma_v2x_msgs::msg::BSM::UniquePtr& msg) const
+    {
+        carma_perception_msgs::msg::ExternalObject output;
+
+        return output;
+    }
+    
+
     double getYawFromQuaternionMsg(const geometry_msgs::msg::Quaternion& quaternion)
     {
         tf2::Quaternion orientation;
@@ -340,7 +435,7 @@ namespace motion_computation{
         for (auto &path: mobility_path_list.objects)
         {
             // interpolate and match timesteps
-            path = matchAndInterpolateTimeStamp(path, rclcpp::Time(sensor_list.objects[0].header.stamp));
+            path = matchAndInterpolateTimeStamp(path, rclcpp::Time(sensor_list.header.stamp));
         }
         
         output_list.objects.insert(output_list.objects.begin(),sensor_list.objects.begin(),sensor_list.objects.end());
