@@ -41,7 +41,7 @@ PlatooningTacticalPlugin::PlatooningTacticalPlugin(carma_wm::WorldModelConstPtr 
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
 {
   plugin_discovery_msg_.name = "PlatooningTacticalPlugin";
-  plugin_discovery_msg_.version_id = "v1.0";
+  plugin_discovery_msg_.version_id = "v1.1"; //1.1 to work with IHP2 as a ROS1 node
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = false;
   plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
