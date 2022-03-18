@@ -287,23 +287,40 @@ namespace plan_delegator
         // Note: Assumes that the maneuver start and end distances are adjusted by a distance less than the length of a lanelet. 
         if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING) 
         {
-            // Note: Assumes that strategic plugins have planned lane following maneuvers far enough into their specified 
-            //       ending lanelet that the maneuver ending lanelet remains unchanged.
-
             // Obtain the original starting lanelet from the maneuver's lane_ids
             lanelet::Id original_starting_lanelet_id = std::stoi(maneuver.lane_following_maneuver.lane_ids.front());
             lanelet::ConstLanelet original_starting_lanelet = wm_->getMap()->laneletLayer.get(original_starting_lanelet_id);
 
-            // Check whether the lanelet prior to the original starting lanelet is crossed by the updated maneuver
-            for(auto lanelet : adjusted_crossed_lanelets) {
-                auto routing_relation = wm_->getMapRoutingGraph()->routingRelation(lanelet, original_starting_lanelet);
+            // Obtain the original ending lanelet from the maneuver's lane_ids
+            lanelet::Id original_ending_lanelet_id = std::stoi(maneuver.lane_following_maneuver.lane_ids.back());
+            lanelet::ConstLanelet original_ending_lanelet = wm_->getMap()->laneletLayer.get(original_ending_lanelet_id);
 
-                // Lanelet prior to the original starting lanelet is crossed by the updated maneuver, so it is added to the beginning of lane_ids
-                if (routing_relation == lanelet::routing::RelationType::Successor) {
-                    ROS_DEBUG_STREAM("Lanelet " << lanelet.id() << " added to front of maneuver's lane_ids");
+            // Check whether the updated maneuver crosses a new starting lanelet and whether it still crosses the original ending lanelet
+            bool found_lanelet_before_starting_lanelet = false;
+            bool crosses_original_ending_lanelet = false;
+            for(auto lanelet : adjusted_crossed_lanelets) {
+                auto starting_relation = wm_->getMapRoutingGraph()->routingRelation(lanelet, original_starting_lanelet);
+
+                // Lanelet preceeding the original starting lanelet is crossed by the updated maneuver, so it is added to the beginning of lane_ids
+                if (starting_relation == lanelet::routing::RelationType::Successor && !found_lanelet_before_starting_lanelet) {
+                    ROS_DEBUG_STREAM("Lanelet " << lanelet.id() << " inserted at the front of maneuver's lane_ids");
+
+                    // lane_ids array is ordered by increasing downtrack, so this new starting lanelet is inserted at the front
                     maneuver.lane_following_maneuver.lane_ids.insert(maneuver.lane_following_maneuver.lane_ids.begin(), std::to_string(lanelet.id()));
-                    break;
+
+                    found_lanelet_before_starting_lanelet = true;
                 }
+                else if (lanelet == original_ending_lanelet) {
+                    crosses_original_ending_lanelet = true;
+                }
+            }
+
+            // If the updated maneuver does not cross the original ending lanelet, remove that lanelet from the end of the maneuver's lane_ids
+            if (!crosses_original_ending_lanelet) {
+                ROS_DEBUG_STREAM("Original ending lanelet " << original_ending_lanelet.id() << " removed from lane_ids since the updated maneuver no longer crosses it");
+                
+                // lane_ids array is ordered by increasing downtrack, so the last element in the array corresponds to the original ending lanelet
+                maneuver.lane_following_maneuver.lane_ids.pop_back();
             }
         } 
         else 
