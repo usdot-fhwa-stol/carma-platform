@@ -388,11 +388,24 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             return false;
         }
 
-        double current_downtrack = wm_->routeTrackPos(current_loc_).downtrack;
-
+        double current_downtrack;
+        
+        if (!req.prior_plan.maneuvers.empty())
+        {
+            current_downtrack = req.prior_plan.maneuvers.back().lane_following_maneuver.end_dist;
+            ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end_dist:"<< current_downtrack);            
+        }
+        else
+        {
+            current_downtrack = req.veh_downtrack;
+            ROS_DEBUG_STREAM("Detected NO prior plan! Using req.veh_downtrack: "<< current_downtrack);
+        }
+        
         //Return the set of maneuvers which intersect with min_plan_duration
         size_t i = 0;
         double planned_time = 0.0;
+
+        std::vector<cav_msgs::Maneuver> new_maneuvers;
 
         while (planned_time < min_plan_duration_ && i < latest_maneuver_plan_.size())
         {
@@ -411,21 +424,42 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             }
             planned_time += getManeuverDuration(latest_maneuver_plan_[i], epsilon_).toSec();
 
-            resp.new_plan.maneuvers.push_back(latest_maneuver_plan_[i]);
+            new_maneuvers.push_back(latest_maneuver_plan_[i]);
             ++i;
         }
 
-        if (resp.new_plan.maneuvers.size() == 0)
+        if (new_maneuvers.size() == 0)
         {
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
             return false;
         }
-        //update plan
 
         //Update time progress for maneuvers
-        updateTimeProgress(resp.new_plan.maneuvers, ros::Time::now());
+        if (!req.prior_plan.maneuvers.empty())
+        {
+            updateTimeProgress(new_maneuvers, req.prior_plan.planning_completion_time);
+            ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end time:"<< std::to_string(req.prior_plan.maneuvers.back().lane_following_maneuver.end_time.toSec()));    
+            ROS_DEBUG_STREAM("Where plan_completion_time was:"<< std::to_string(req.prior_plan.planning_completion_time.toSec()));            
+        }
+        else
+        {
+            updateTimeProgress(new_maneuvers, ros::Time::now());
+            ROS_DEBUG_STREAM("Detected NO prior plan! Using ros::Time::now():"<< std::to_string(ros::Time::now().toSec()));   
+        }
+
         //update starting speed of first maneuver
-        updateStartingSpeed(resp.new_plan.maneuvers.front(), current_speed_);
+        updateStartingSpeed(new_maneuvers.front(), req.veh_logitudinal_velocity);
+
+        //update plan
+        resp.new_plan = req.prior_plan;
+        ROS_DEBUG_STREAM("Updating maneuvers before returning... Prior plan size:" << req.prior_plan.maneuvers.size());
+        for (auto mvr : new_maneuvers)
+        {
+            resp.new_plan.maneuvers.push_back(mvr);
+        }
+
+        ROS_DEBUG_STREAM("Returning total of maneuver size: " << resp.new_plan.maneuvers.size());
+        resp.new_plan.planning_completion_time = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
 
         return true;
     }

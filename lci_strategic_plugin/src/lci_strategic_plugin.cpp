@@ -371,8 +371,6 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
       
       ROS_DEBUG_STREAM("New RED StopTime's speed before calling stop_and_wait_plugin: " << speed_before_stop << ", at decel_rate: " << max_comfort_decel_);
       
-      // TODO include crawl here?
-      
       if (speed_before_stop < current_state_speed && speed_before_stop > config_.absolute_minimum_speed + epsilon_) //todo change 0 to minimum speed?
       {
         // calculate necessary parameters
@@ -545,13 +543,13 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   ROS_DEBUG_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));
 
   ros::Time nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
-                                          + ros::Duration(0.01); //0.01sec more buffer since green_light buffer also ends at previous state
+                                          + ros::Duration(0.01); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal
   
-  if (!nearest_green_entry_time_cached_)
+  if (!nearest_green_entry_time_cached_) 
   {
     ROS_ERROR_STREAM("APPLIED GREEN BUFFER! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
     ROS_DEBUG_STREAM("APPLIED GREEN BUFFER! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
-
+    // save first calculated nearest_green_entry_time + buffer to compare against in the future as nearest_green_entry_time changes with earliest_entry_time
     nearest_green_entry_time_cached_ = nearest_green_entry_time + ros::Duration(config_.green_light_time_buffer);
     nearest_green_entry_time = nearest_green_entry_time_cached_.get();
   }
@@ -656,7 +654,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     return;
 
   // 3. if not able to stop nor reach target speed at green, attempt its best to reach the target parameters at the intersection
-  // ts_params would have been modified to try accommodate this scenario
   ROS_ERROR_STREAM("44444: >>>>>LAST<<<<<< The vehicle is not able to stop at red/yellow light nor is able to reach target speed at green. Attempting its best to pass through at green!");
   ROS_DEBUG_STREAM("44444: >>>>>LAST<<<<<< The vehicle is not able to stop at red/yellow light nor is able to reach target speed at green. Attempting its best to pass through at green!");
   

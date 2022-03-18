@@ -65,7 +65,7 @@ fi
 #echo "" > COLCON_IGNORE
 #
 
-cd carma-platform/mock_drivers/rosbag_mock_drivers
+cd ../../carma-platform/mock_drivers/rosbag_mock_drivers
 echo "" > COLCON_IGNORE
 cd ../../mobilitypath_publisher
 echo "" > COLCON_IGNORE
