@@ -46,6 +46,7 @@ namespace arbitrator
         std::vector<cav_msgs::ManeuverPlan> out;
         for (auto it = res.begin(); it != res.end(); it++)
         {
+            ROS_DEBUG_STREAM("Pushing response of child: " << it->first << ", which had mvr size: " << it->second.response.new_plan.maneuvers.size());
             out.push_back(it->second.response.new_plan);
         }
         return out;
