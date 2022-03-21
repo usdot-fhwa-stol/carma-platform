@@ -47,7 +47,7 @@ namespace arbitrator
                 
                 for (auto mvr : cur_plan.maneuvers)
                 {
-                    ROS_DEBUG_STREAM("Printing cur_plan: mvr: "<< (int)mvr.type):
+                    ROS_DEBUG_STREAM("Printing cur_plan: mvr: "<< (int)mvr.type);
                 }   
 
                 ROS_DEBUG_STREAM("PRINT END");
