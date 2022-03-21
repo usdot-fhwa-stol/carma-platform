@@ -199,7 +199,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     
     // updating incoming points' memory addresses with local ones of same ids
     // so that lanelet library can recognize they are same objects 
-    for (int i = 0; i < left.size(); i ++)
+    for (size_t i = 0; i < left.size(); i ++)
     {
       if (world_model_->getMutableMap()->pointLayer.exists(left[i].id())) //rewrite the memory address of new pts with that of local
       {
@@ -207,7 +207,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
       }
     }
     auto right = llt.rightBound3d(); //new lanelet coming in
-    for (int i = 0; i < right.size(); i ++)
+    for (size_t i = 0; i < right.size(); i ++)
     {
       if (world_model_->getMutableMap()->pointLayer.exists(right[i].id())) //rewrite the memory address of new pts with that of local
       {

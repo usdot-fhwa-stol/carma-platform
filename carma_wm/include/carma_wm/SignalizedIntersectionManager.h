@@ -52,12 +52,20 @@ public:
   SignalizedIntersectionManager(){}
 
   /*! 
-  *  \brief Copy operator that copies everything except the traffic signal states. 
+  *  \brief Assignment operator that copies everything except the traffic signal states. 
             This is to keep the states although the map is updated or a similar event happened
             NOTE: The function does not update the map with new elements
   *  \param[out] other manager
   */
   SignalizedIntersectionManager& operator=(SignalizedIntersectionManager other);
+
+  /*! 
+  *  \brief Copy constructor that copies everything except the traffic signal states. 
+            This is to keep the states although the map is updated or a similar event happened
+            NOTE: The function does not update the map with new elements
+  *  \param[out] other manager
+  */
+  SignalizedIntersectionManager(const SignalizedIntersectionManager& other);
 
   /*! 
   *  \brief Create relevant signalized intersection and carma traffic signals based on the MAP.msg and the lanelet_map
