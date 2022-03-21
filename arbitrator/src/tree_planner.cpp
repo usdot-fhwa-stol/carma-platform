@@ -71,11 +71,11 @@ namespace arbitrator
                 // Evaluate plan_duration is sufficient do not expand more
                 if (plan_duration >= target_plan_duration_) 
                 {
-                    final_open_list.push_back(it*);
+                    final_open_list.push_back((*it));
                     ROS_DEBUG_STREAM("Has enough duration, skipping that which has following mvrs..:");
                     for (auto mvr : it->first.maneuvers)
                     {
-                        ROS_DEBUG_STREAM("Printing mvr: "<< (int)mvr.type):
+                        ROS_DEBUG_STREAM("Printing mvr: "<< (int)mvr.type);
                     }  
                     continue;
                 }
@@ -88,7 +88,7 @@ namespace arbitrator
                 {
                     if (child->maneuvers.empty())
                     {
-                        ROS_DEBUG_STREAM("Child was empty for id: " << (int)child->maneuver_plan_id);
+                        ROS_DEBUG_STREAM("Child was empty for id: " << child->maneuver_plan_id);
                         continue;   
                     }
                     temp_open_list.push_back(std::make_pair(*child, cost_function_.compute_cost_per_unit_distance(*child)));
