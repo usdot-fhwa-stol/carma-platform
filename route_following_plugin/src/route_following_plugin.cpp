@@ -450,8 +450,30 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         //update starting speed of first maneuver
         if (!req.prior_plan.maneuvers.empty())
         {
-            updateStartingSpeed(new_maneuvers.front(), GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_speed));
-            ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end speed:"<< GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_speed));    
+            double start_speed;
+            switch (req.prior_plan.maneuvers.back().type)
+            {
+                case cav_msgs::Maneuver::LANE_FOLLOWING:
+                    start_speed = req.prior_plan.maneuvers.back().lane_following_maneuver.end_speed;
+                    break;
+                case cav_msgs::Maneuver::LANE_CHANGE:
+                    start_speed = req.prior_plan.maneuvers.back().lane_change_maneuver.end_speed;
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+                    start_speed = req.prior_plan.maneuvers.back().intersection_transit_straight_maneuver.end_speed;
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+                    start_speed = req.prior_plan.maneuvers.back().intersection_transit_left_turn_maneuver.end_speed;
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+                    start_speed = req.prior_plan.maneuvers.back().intersection_transit_right_turn_maneuver.end_speed;
+                    break;
+                default:
+                    throw std::invalid_argument("Invalid maneuver type, cannot update starting speed for maneuver");
+            }
+            
+            updateStartingSpeed(new_maneuvers.front(), start_speed);
+            ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end speed:"<< start_speed);    
         }
         else 
         {
