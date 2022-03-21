@@ -437,8 +437,8 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         //Update time progress for maneuvers
         if (!req.prior_plan.maneuvers.empty())
         {
-            updateTimeProgress(new_maneuvers, req.prior_plan.maneuvers.back().lane_following_maneuver.end_time);
-            ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end time:"<< std::to_string(req.prior_plan.maneuvers.back().lane_following_maneuver.end_time.toSec()));    
+            updateTimeProgress(new_maneuvers, GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_time));
+            ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end time:"<< std::to_string(GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_time).toSec()));    
             ROS_DEBUG_STREAM("Where plan_completion_time was:"<< std::to_string(req.prior_plan.planning_completion_time.toSec()));            
         }
         else
@@ -450,8 +450,8 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         //update starting speed of first maneuver
         if (!req.prior_plan.maneuvers.empty())
         {
-            updateStartingSpeed(new_maneuvers.front(), req.prior_plan.maneuvers.back().lane_following_maneuver.end_speed);
-            ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end speed:"<< req.prior_plan.maneuvers.back().lane_following_maneuver.end_speed);    
+            updateStartingSpeed(new_maneuvers.front(), GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_speed));
+            ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end speed:"<< GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_speed));    
         }
         else 
         {
