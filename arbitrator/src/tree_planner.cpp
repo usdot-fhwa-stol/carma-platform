@@ -104,7 +104,7 @@ namespace arbitrator
         for (auto pair : final_open_list)
         {
             // Pop the first element off the open list
-            cav_msgs::ManeuverPlan cur_plan = it->first;
+            cav_msgs::ManeuverPlan cur_plan = pair.first;
             ros::Duration plan_duration; // zero duration
 
             // get plan duration
