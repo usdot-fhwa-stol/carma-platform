@@ -437,19 +437,27 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         //Update time progress for maneuvers
         if (!req.prior_plan.maneuvers.empty())
         {
-            updateTimeProgress(new_maneuvers, req.prior_plan.planning_completion_time);
+            updateTimeProgress(new_maneuvers, req.prior_plan.maneuvers.back().lane_following_maneuver.end_time);
             ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end time:"<< std::to_string(req.prior_plan.maneuvers.back().lane_following_maneuver.end_time.toSec()));    
             ROS_DEBUG_STREAM("Where plan_completion_time was:"<< std::to_string(req.prior_plan.planning_completion_time.toSec()));            
         }
         else
         {
-            updateTimeProgress(new_maneuvers, ros::Time::now());
+            updateTimeProgress(new_maneuvers, req.header.stamp);
             ROS_DEBUG_STREAM("Detected NO prior plan! Using ros::Time::now():"<< std::to_string(ros::Time::now().toSec()));   
         }
 
         //update starting speed of first maneuver
-        updateStartingSpeed(new_maneuvers.front(), req.veh_logitudinal_velocity);
-
+        if (!req.prior_plan.maneuvers.empty())
+        {
+            updateStartingSpeed(new_maneuvers.front(), req.prior_plan.maneuvers.back().lane_following_maneuver.end_speed);
+            ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end speed:"<< req.prior_plan.maneuvers.back().lane_following_maneuver.end_speed);    
+        }
+        else 
+        {
+            updateStartingSpeed(new_maneuvers.front(), req.veh_logitudinal_velocity);
+            ROS_DEBUG_STREAM("Detected NO prior plan! Using req.veh_logitudinal_velocity:"<< req.veh_logitudinal_velocity);    
+        }
         //update plan
         resp.new_plan = req.prior_plan;
         ROS_DEBUG_STREAM("Updating maneuvers before returning... Prior plan size:" << req.prior_plan.maneuvers.size());
@@ -459,7 +467,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         }
 
         ROS_DEBUG_STREAM("Returning total of maneuver size: " << resp.new_plan.maneuvers.size());
-        resp.new_plan.planning_completion_time = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
+        resp.new_plan.planning_completion_time = ros::Time::now();
 
         return true;
     }
