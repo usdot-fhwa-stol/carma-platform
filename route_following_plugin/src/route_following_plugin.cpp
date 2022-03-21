@@ -392,7 +392,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         
         if (!req.prior_plan.maneuvers.empty())
         {
-            current_downtrack = req.prior_plan.maneuvers.back().lane_following_maneuver.end_dist;
+            current_downtrack = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_dist);
             ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end_dist:"<< current_downtrack);            
         }
         else
