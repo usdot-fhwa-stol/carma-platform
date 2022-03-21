@@ -105,12 +105,10 @@ namespace platoon_strategic_ihp
         double vehicleCrossTrack;
         // The local time stamp when the host vehicle update any informations of this member.
         long   timestamp;
-        // UCLA: Add cut_in index for cut-in join. Default value -2 (-1 is front join, 0 to n is cut-in position)
-        int joinIndex;
 
-        PlatoonMember(): staticId(""), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), vehicleCrossTrack(0.0), timestamp(0), joinIndex(-2) {} 
-        PlatoonMember(std::string staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, double vehicleCrossTrack, long timestamp, int joinIndex): staticId(staticId),
-            commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), vehiclePosition(vehiclePosition), vehicleCrossTrack(vehicleCrossTrack), timestamp(timestamp), joinIndex(joinIndex) {}
+        PlatoonMember(): staticId(""), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), vehicleCrossTrack(0.0), timestamp(0) {}  
+        PlatoonMember(std::string staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, double vehicleCrossTrack, long timestamp): staticId(staticId), 
+            commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), vehiclePosition(vehiclePosition), vehicleCrossTrack(vehicleCrossTrack), timestamp(timestamp) {} 
     };
 
 
@@ -165,7 +163,7 @@ namespace platoon_strategic_ihp
          * \param platoonId sender platoon id
          * \param params strategy params from STATUS message in the format of "CMDSPEED:xx,DOWNTRACK:xx,SPEED:xx"
          **/
-        void updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double ctDistance, double curSpeed, int joinIndex);
+        void updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double ctDistance, double curSpeed);
         
         /**
         * \brief Returns total size of the platoon , in number of vehicles.
@@ -219,11 +217,6 @@ namespace platoon_strategic_ihp
         double getCurrentPlatoonLength();
 
         /**
-         * \breif Return the join index of the current mobility request sender
-         */
-        int getRequestJoinIndex(std::string reqSenderID);
-
-        /**
         * \brief Returns downtrack distance of the rear vehicle in platoon, in m.
         */
         double getPlatoonRearDowntrackDistance();
@@ -263,6 +256,21 @@ namespace platoon_strategic_ihp
          */
         double getPlatoonFrontDowntrackDistance();
 
+        /**
+         * \brief UCLA: Return the time headway summation of all predecessors, in m.
+         */
+        double getPredecessorTimeHeadwaySum();
+        
+        /**
+         * \brief UCLA: Return the speed of the preceding vehicle, in m/s.
+         */
+        double getPredecessorSpeed();
+
+        /**
+         * \brief UCLA: Return the position of the preceding vehicle, in m.
+         */
+        double getPredecessorPosition();
+        
         /**
         * \brief UCLA: Return follower's desired position (i.e., downtrack, in m) that maintains the desired 
         * intra-platoon time gap, based on IHP platoon trajectory regulation algorithm.
