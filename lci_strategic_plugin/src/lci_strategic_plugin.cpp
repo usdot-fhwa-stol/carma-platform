@@ -214,12 +214,13 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
       (2.0 * distance_remaining_to_traffic_light) /
       (intersection_speed_.get() + current_state.speed);  // Kinematic Equation: 2*d / (vf + vi) = t
 
-  double trajectory_smoothing_activation_distance = get_trajectory_smoothing_activation_distance(time_remaining_at_free_flow, lanelet::time::toSec(traffic_light->fixed_cycle_duration), 
-                                                                                      current_state_speed, speed_limit, intersection_speed_.get(), max_comfort_accel, max_comfort_decel);
-  if (trajectory_smoothing_activation_distance < 0)
-    trajectory_smoothing_activation_distance = distance_remaining_to_traffic_light;
+  //double trajectory_smoothing_activation_distance = get_trajectory_smoothing_activation_distance(time_remaining_at_free_flow, lanelet::time::toSec(traffic_light->fixed_cycle_duration), 
+  //                                                                                    current_state_speed, speed_limit, intersection_speed_.get(), max_comfort_accel, max_comfort_decel);
+  
+  //if (trajectory_smoothing_activation_distance < 0)
+  //  trajectory_smoothing_activation_distance = distance_remaining_to_traffic_light;
 
-  ROS_DEBUG_STREAM("trajectory_smoothing_activation_distance: " << trajectory_smoothing_activation_distance);
+  ROS_DEBUG_STREAM("trajectory_smoothing_activation_distance: " << config_.trajectory_smoothing_activation_distance);
 
   double stopping_dist = estimate_distance_to_stop(current_state_speed, config_.vehicle_decel_limit_multiplier  *
                                                                             config_.vehicle_decel_limit); //accepts positive decel
@@ -228,7 +229,7 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
 
   double plugin_activation_distance = std::max(stopping_dist, config_.min_approach_distance);
 
-  plugin_activation_distance = std::max(plugin_activation_distance, trajectory_smoothing_activation_distance);
+  plugin_activation_distance = std::max(plugin_activation_distance, config_.trajectory_smoothing_activation_distance);
 
   ROS_DEBUG_STREAM("plugin_activation_distance: " << plugin_activation_distance);
 

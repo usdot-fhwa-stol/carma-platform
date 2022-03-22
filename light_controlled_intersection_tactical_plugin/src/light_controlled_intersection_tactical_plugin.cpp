@@ -146,10 +146,22 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
     bool is_new_case_successful = GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[1]);
     SpeedProfileCase new_case = static_cast<SpeedProfileCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0]);
 
-    if (is_last_case_successful_ && last_case_ 
+    if (is_last_case_successful_ != boost::none && last_case_ != boost::none)
+    {
+      ROS_DEBUG_STREAM("all variables are set!");
+      ROS_DEBUG_STREAM("is_last_case_successful_.get():" << (int)is_last_case_successful_.get());
+      ROS_DEBUG_STREAM("evaluation distance:" << last_successful_ending_downtrack_ - current_downtrack_);
+      ROS_DEBUG_STREAM("evaluation time" << std::to_string(last_successful_scheduled_entry_time_ - req.header.stamp.toSec()));
+    }
+    else
+    {
+      ROS_DEBUG_STREAM("Not all variables are set...");
+    }
+
+    if (is_last_case_successful_ != boost::none && last_case_ != boost::none
           && last_case_.get() == new_case
           && is_last_case_successful_.get() == is_new_case_successful
-          && last_trajectory_.trajectory_points.back().target_time > req.header.stamp + ros::Duration(1.0)) // 1 sec buffer of valid trajectory remaining
+          && last_trajectory_.trajectory_points.back().target_time > req.header.stamp)
     {
       resp.trajectory_plan = last_trajectory_;
       ROS_DEBUG_STREAM("USING LAST: Target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req.header.stamp);
@@ -161,12 +173,12 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
       ROS_DEBUG_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_.get());
       
     }
-    else if (is_last_case_successful_ && last_case_ 
+    else if (is_last_case_successful_ != boost::none && last_case_ != boost::none
             && is_last_case_successful_.get() == true
             && is_new_case_successful == false
             && last_successful_ending_downtrack_ - current_downtrack_ < config_.algorithm_evaluation_distance
             && last_successful_scheduled_entry_time_ - req.header.stamp.toSec() < config_.algorithm_evaluation_period
-            && last_trajectory_.trajectory_points.back().target_time > req.header.stamp + ros::Duration(1.0))
+            && last_trajectory_.trajectory_points.back().target_time > req.header.stamp)
     {
       resp.trajectory_plan = last_trajectory_;
       ROS_DEBUG_STREAM("USING LAST: Target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req.header.stamp << ", and scheduled: " << std::to_string(last_successful_scheduled_entry_time_));

@@ -45,9 +45,11 @@ int main(int argc, char** argv)
   pnh.param<double>("vehicle_decel_limit_multiplier",   config.vehicle_decel_limit_multiplier, config.vehicle_decel_limit_multiplier);
   pnh.param<double>("vehicle_accel_limit_multiplier",   config.vehicle_accel_limit_multiplier, config.vehicle_accel_limit_multiplier);
   pnh.param<double>("min_approach_distance",            config.min_approach_distance, config.min_approach_distance);
+  pnh.param<double>("trajectory_smoothing_activation_distance",            config.trajectory_smoothing_activation_distance, config.trajectory_smoothing_activation_distance);
   pnh.param<double>("stopping_location_buffer",         config.stopping_location_buffer, config.stopping_location_buffer);
   pnh.param<double>("green_light_time_buffer",          config.green_light_time_buffer, config.green_light_time_buffer);
   pnh.param<double>("algo_minimum_speed",                    config.algo_minimum_speed, config.algo_minimum_speed);
+  pnh.param<double>("absolute_minimum_speed",                    config.absolute_minimum_speed, config.absolute_minimum_speed);
   pnh.param<double>("min_gap",                    config.min_gap, config.min_gap);
   pnh.param<double>("min_maneuver_planning_period",     config.min_maneuver_planning_period, config.min_maneuver_planning_period);
   pnh.param<std::string>("strategic_plugin_name",            config.strategic_plugin_name, config.strategic_plugin_name);

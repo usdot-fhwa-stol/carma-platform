@@ -37,6 +37,9 @@ struct LCIStrategicPluginConfig
   //! The minimum distance in meters that the vehicle can be at before requiring a transition to the APPROACH state
   double min_approach_distance = 30.0;
 
+  //! Downtrack distance until nearest intersection where the Trajectory Smoothing algorithm should activate
+  double trajectory_smoothing_activation_distance = 200.0;
+
   //! A buffer infront of the stopping location which will still be considered a valid stop. Units in meters
   double stopping_location_buffer = 3.0;
 
