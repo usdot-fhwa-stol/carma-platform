@@ -11,7 +11,7 @@ min_approach_distance : 30.0
 trajectory_smoothing_activation_distance: 200.0
 
 # Double: A buffer infront of the stopping location which will still be considered a valid stop. Units in meters
-stopping_location_buffer : 5.0
+stopping_location_buffer : 7.0
 
 # Double: A buffer in seconds around the green phase which will reduce the phase length such that vehicle still considers it non-green
 green_light_time_buffer : 2.0

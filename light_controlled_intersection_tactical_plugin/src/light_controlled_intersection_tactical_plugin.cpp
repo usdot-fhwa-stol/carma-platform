@@ -161,7 +161,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
     if (is_last_case_successful_ != boost::none && last_case_ != boost::none
           && last_case_.get() == new_case
           && is_new_case_successful == true
-          && last_trajectory_.trajectory_points.back().target_time > req.header.stamp)
+          && last_trajectory_.trajectory_points.back().target_time > req.header.stamp + ros::Duration(1))
     {
       resp.trajectory_plan = last_trajectory_;
       ROS_DEBUG_STREAM("USING LAST: Target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req.header.stamp);
