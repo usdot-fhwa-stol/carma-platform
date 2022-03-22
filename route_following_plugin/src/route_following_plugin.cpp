@@ -411,7 +411,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         {
             ROS_DEBUG_STREAM("Checking maneuver id " << i);
             //Ignore plans for distance already covered
-            if (GET_MANEUVER_PROPERTY(latest_maneuver_plan_[i], end_dist) < current_downtrack)
+            if (GET_MANEUVER_PROPERTY(latest_maneuver_plan_[i], end_dist) <= current_downtrack)
             {
                 ROS_DEBUG_STREAM("Skipping maneuver id " << i);
 
