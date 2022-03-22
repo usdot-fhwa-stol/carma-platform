@@ -160,7 +160,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
 
     if (is_last_case_successful_ != boost::none && last_case_ != boost::none
           && last_case_.get() == new_case
-          && is_last_case_successful_.get() == is_new_case_successful
+          && is_new_case_successful == true
           && last_trajectory_.trajectory_points.back().target_time > req.header.stamp)
     {
       resp.trajectory_plan = last_trajectory_;

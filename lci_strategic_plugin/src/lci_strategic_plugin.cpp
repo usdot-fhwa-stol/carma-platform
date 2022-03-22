@@ -294,11 +294,11 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
         getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
 
-  double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_) + config_.min_gap;
+  double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_);
   ROS_DEBUG_STREAM("safe_distance_to_stop at max_comfort_decel:  " << safe_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
 
-  double desired_distance_to_stop = pow(current_state.speed, 2)/(max_comfort_decel_norm_);
-  ROS_DEBUG_STREAM("desired_distance_to_stop at 1/2 max_comfort_decel:  " << desired_distance_to_stop << ", 1/ 2 max_comfort_decel_norm_: " << max_comfort_decel_norm_ / 2);
+  double desired_distance_to_stop = pow(current_state.speed, 2)/(max_comfort_decel_norm_ / std::max(4.0, (double)config_.min_gap));
+  ROS_DEBUG_STREAM("desired_distance_to_stop at at config_.min_gap fraction: max_comfort_decel:  " << desired_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_ / config_.min_gap);
   
   // earlier stop than this would result in stopping way before intersection
   double min_bound_stop_time =
@@ -314,7 +314,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
     ROS_ERROR_STREAM("No longer within safe distance to stop! Returning...");
     return;
   }
-  else if (safe_distance_to_stop <= distance_remaining_to_traffic_light && desired_distance_to_stop > distance_remaining_to_traffic_light)
+  else if (safe_distance_to_stop <= distance_remaining_to_traffic_light && desired_distance_to_stop >= distance_remaining_to_traffic_light)
   {
     auto state_pair_at_stop = traffic_light->predictState(lanelet::time::timeFromSec(current_state.stamp.toSec() + min_bound_stop_time));
     
@@ -336,6 +336,11 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
       return;
     }
+  }
+  else if (desired_distance_to_stop < distance_remaining_to_traffic_light)
+  {
+    ROS_DEBUG_STREAM("Way too early to stop");
+    ROS_ERROR_STREAM("Way too early to stop");
   }
 }
 void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest& req,
