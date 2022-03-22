@@ -361,8 +361,8 @@ namespace basic_autonomy
             if(downsampled_starting_centerline.size() != downsampled_target_centerline.size())
             {
                 auto centerlines = resample_linestring_pair_to_same_size(downsampled_starting_centerline, downsampled_target_centerline);
-                downsampled_starting_centerline = centerlines.front();
-                downsampled_target_centerline = centerlines.back();
+                downsampled_starting_centerline = centerlines[0];
+                downsampled_target_centerline = centerlines[1];
 
             }
 
