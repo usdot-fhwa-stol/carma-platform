@@ -1552,7 +1552,7 @@ namespace platoon_strategic_ihp
                 bool isDistanceCloseEnough = currentGap <= config_.maxAllowedJoinGap  ||  currentTimeGap <= config_.maxAllowedJoinTimeGap;
 
                 // UCLA: add condition: only allow front join when platoon length >= 2 (make sure when two single vehicle join, only use back join)
-                bool isPlatoonNotSingle = pm_.getTotalPlatooningSize() >= 2;
+                bool isPlatoonNotSingle = pm_.getTotalPlatooningSize() >= 2 || config_.test_front_join;
 
                 if (isDistanceCloseEnough && isPlatoonNotSingle) 
                 {
