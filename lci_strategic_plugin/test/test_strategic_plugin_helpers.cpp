@@ -166,7 +166,7 @@ TEST_F(LCIStrategicTestFixture, composeStopAndWaitManeuverMessage)
   ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result.type);
   ASSERT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, result.stop_and_wait_maneuver.parameters.negotiation_type);
   ASSERT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN | cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA,
-            result.stop_and_wait_maneuver.parameters.presence_vector);  // TODO diff
+            result.stop_and_wait_maneuver.parameters.presence_vector);  
   ASSERT_TRUE(config.stop_and_wait_plugin_name.compare(
                   result.stop_and_wait_maneuver.parameters.planning_tactical_plugin) == 0);
   ASSERT_TRUE(

@@ -39,33 +39,55 @@
 namespace lci_strategic_plugin
 {
 
-enum SpeedProfileCase {
-  ACCEL_CRUISE_DECEL = 1,
-  ACCEL_DECEL = 2,
-  DECEL_ACCEL = 3,
-  DECEL_CRUISE_ACCEL = 4,
-};
-
 /**
  * \brief Struct representing trajectory smoothing algorithm parameters using distance and acceleration
  *        Based on TSMO USE CASE 2. Chapter 2. Trajectory Smoothing
- *        These parameter representation were selected to make it ready to be applied on speed profile.
  */
-struct TrajectorySmoothingParameters
+enum TSCase {
+  CASE_1 = 1,
+  CASE_2 = 2,
+  CASE_3 = 3,
+  CASE_4 = 4,
+  CASE_5 = 5,
+  CASE_6 = 6,
+  CASE_7 = 7,
+  CASE_8 = 8,
+};
+
+struct TrajectoryParams
 {
-  
-  double a_accel = 0.0;        // Acceleration rate (negative if the algorithm failed to meet criteria)
-  double a_decel = 0.0;        // Deceleration rate (positive if the algorithm failed to meet criteria)
-  double dist_accel = 0.0;      // Acceleration distance (negative if the algorithm failed to meet criteria)
-  double dist_cruise = 0.0;     // Cruise distance (negative if the algorithm failed to meet criteria)
-  double dist_decel = 0.0;      // Deceleration distance (negative if the algorithm failed to meet criteria)
-  double speed_before_accel = -1.0; // The lowest speed before acceleration starts after decelerating (applies to case 3,4)
-  double speed_before_decel = -1.0; // The highest speed before deceleration starts after accelerating (applies to case 1,2)
-  SpeedProfileCase case_num;       // Trajectory Smoothing Case Number.
-  bool is_algorithm_successful = true;  // True if the trajectory smoothing algorithm was able to get valid parameters
+  double t0_ = 0;
+  double v0_ = 0;
+  double x0_ = 0;
+
+  double a1_ = 0;
+  double t1_ = 0;
+  double v1_ = 0;
+  double x1_ = 0;
+
+  double a2_ = 0;
+  double t2_ = 0;
+  double v2_ = 0;
+  double x2_ = 0;
+
+  double a3_ = 0;
+  double t3_ = 0;
+  double v3_ = 0;
+  double x3_ = 0;
+
+  bool is_algorithm_successful = true;
+  TSCase case_num;
   double modified_departure_speed = -1.0;  // modified departure speed if algorithm failed
   double modified_remaining_time = -1.0;  // modified departure time if algorithm failed
+};
 
+struct BoundaryDistances
+{
+  double dx1 = 0.0;
+  double dx2 = 0.0;
+  double dx3 = 0.0;
+  double dx4 = 0.0;
+  double dx5 = 0.0;
 };
 
 class LCIStrategicPlugin
@@ -214,7 +236,7 @@ private:
    */
   cav_msgs::Maneuver composeTrajectorySmoothingManeuverMessage(double start_dist, double end_dist, double start_speed,
                                                        double target_speed, ros::Time start_time, ros::Time end_time,
-                                                       const TrajectorySmoothingParameters& tsp) const;
+                                                       const TrajectoryParams& tsp) const;
   
   /**
    * \brief Compose a stop and wait maneuver message based on input params
@@ -257,9 +279,7 @@ private:
 
   /**
    * \brief This function returns stopping maneuver if the vehicle is able to stop at red and in safe stopping distance.
-   * 1. Try to stop with max_decel and see if it aligns with red/yellow. If it does, go ahead and stop
-   * 2. If stopping with single deceleration falls on green phase, stop at next possible red phase by using 2 different decel_rate (max_decel then custom_decel)
-   *
+   * Given the initial speed, ending speed (which is 0), and remaining_downtrack, this function checks if calculated remaining_time falls on RED
    * \param req Plan maneuver request
    * \param[out] resp Plan maneuver response with a list of maneuver plan
    * \param current_state Current state of the vehicle
@@ -267,8 +287,6 @@ private:
    * \param entry_lanelet Entry lanelet in to the intersection along route
    * \param exit_lanelet Exit lanelet in to the intersection along route
    * \param current_lanelet Current lanelet
-   * \param nearest_green_entry_time The time when the vehicle was scheduled to enter intersection. 
-   *                                 The function utilizes nearest red signal within full_cylce beyond this green entry time 
    * \param traffic_light_down_track Downtrack to the given traffic_light
    *
    * \return void. if successful, resp is non-empty
@@ -277,7 +295,6 @@ private:
                                         const VehicleState& current_state, 
                                         const lanelet::CarmaTrafficSignalPtr& traffic_light,
                                         const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, const lanelet::ConstLanelet& current_lanelet,
-                                        const ros::Time& nearest_green_entry_time,
                                         double traffic_light_down_track);
 
   /**
@@ -288,10 +305,11 @@ private:
    * \param departure_speed departure_speed originally planned
    * \param remaining_downtrack remaining_downtrack until the intersection
    * \param remaining_time  remaining_time when vehicle is scheduled to enter
+   * \param traffic_light_downtrack  traffic_light_downtrack when vehicle is scheduled to enter
    *
    * \return TSP with parameters that is best available to pass the intersection. Either profile case 3(ACCEL_DECEL) or 2 (DECEL_ACCEL)
    */
-  TrajectorySmoothingParameters handleFailureCase(double starting_speed, double departure_speed, double remaining_downtrack, double remaining_time);
+  TrajectoryParams handleFailureCase(double starting_speed, double departure_speed, double remaining_downtrack, double remaining_time, double traffic_light_downtrack);
                                         
   /**
    * \brief Helper method to evaluate if the given traffic light state is supported by this plugin
@@ -332,7 +350,7 @@ private:
   std::vector<lanelet::ConstLanelet> getLaneletsBetweenWithException(double start_downtrack, double end_downtrack,
                                                                      bool shortest_path_only = false,
                                                                      bool bounds_inclusive = true) const;
-
+  
   /**
    * \brief Provides the scheduled entry time for the vehicle in the future. This scheduled time is the earliest possible entry time that 
    *        is during green phase and after timestamps both that is kinematically possible and required times for vehicle in front to pass through first 
@@ -458,52 +476,6 @@ private:
   double findSpeedLimit(const lanelet::ConstLanelet& llt) const;
 
   /**
-   * \brief calculate the speed, right before the car starts to decelerate for timed entry into the intersection
-    *
-   * \param entry_time time the vehicle must stop
-   *
-   * \param entry_dist distance to stop line
-   *
-   * \param current_speed current speed of vehicle
-   * 
-   * \param departure_speed speed to get into the intersection
-   *
-   * \return speed value
-   */
-  double calc_speed_before_decel(double entry_time, double entry_dist, double current_speed, double departure_speed) const;
-
-  /**
-   * \brief calculate the speed, right before the car starts to accelerate for timed entry into the intersection
-    *
-   * \param entry_time time the vehicle must stop
-   *
-   * \param entry_dist distance to stop line
-   *
-   * \param current_speed current speed of vehicle
-   * 
-   * \param departure_speed speed to get into the intersection
-   *
-   * \return speed value
-   */
-  double calc_speed_before_accel(double entry_time, double entry_dist, double current_speed, double departure_speed) const;
-
-  /**
-   * \brief Determine the speed profile case for approaching an intersection. 
-   *        It internally utilizes config_.min_speed and speed_limit_ to determine upper and lower speed bounds
-   * 
-   * \param estimated_entry_time estimated time to enter the intersection without speed modification
-   * 
-   * \param scheduled_entry_time scheduled time to enter the intersection
-   *
-   * \param speed_before_decel speed before starting to decelerate (applicable in case 1, 2)
-   * 
-   * \param  speed_before_accel speed before starting to accelerate (applicable in case 1, 2)
-   *
-   * \return integer case number
-   */
-  SpeedProfileCase determine_speed_profile_case(double estimated_entry_time, double scheduled_entry_time, double speed_before_decel, double speed_before_accel, double speed_limit);
-
-  /**
    * \brief calculate the time vehicle will enter to intersection with optimal deceleration
    *
    * \param entry_dist distance to stop line
@@ -517,30 +489,71 @@ private:
   double calc_estimated_entry_time_left(double entry_dist, double current_speed, double departure_speed) const;
 
   /**
-   * \brief Get parameters for a speed profile according to case one or two of the light controlled intersection, where the vehicle accelerates (then cruises if needed) and decelerates into the intersection. 
-   * \param remaining_downtrack distance for the maneuver to be planned (excluding buffer points) in m
-   * \param remaining_time remaining time in seconds until scheduled entry into the intersection 
-   * \param starting_speed starting speed at the start of the maneuver in m/s
-   * \param speed_before_decel highest speed desired between acceleration and deceleration  m/s
-   * \param speed_limit speed limit in m/s
-   * \param departure_speed intersection speed in m/s
-   * \return TrajectorySmoothingParameters that has readily usable parameters to apply speed profile into the trajectory points
-   * NOTE: Cruising speed profile is applied (case 1) if speed before deceleration is higher than speed limit. Otherwise Case 2.
+   * \brief Get boundary distances used to compare against current state in order to create trajectory smoothing parameters
+   *
+   * \param v0 starting_speed
+   * \param v1 departure_speed
+   * \param v_max speed_limit
+   * \param v_min minimum speed
+   * \param a_max max_comfort_acceleration limit
+   * \param a_min max_comfort_deceleration limit
+   * \return boundary distances used to generate trajectory smoothing segments
    */
-  TrajectorySmoothingParameters get_parameters_for_accel_cruise_decel_speed_profile(double remaining_downtrack, double remaining_time, double starting_speed, double speed_before_decel, double speed_limit, double departure_speed);
+  BoundaryDistances get_delta_x(double v0, double v1, double v_max, double v_min, double a_max, double a_min);
+  
+    /**
+   * \brief Get all possible trajectory smoothing parameters for each segments. Later this will be used to generate a single trajectory
+   * \param t current time in seconds
+   * \param v0 starting_speed
+   * \param v1 departure_speed
+   * \param v_max speed_limit
+   * \param v_min minimum speed
+   * \param a_max max_comfort_acceleration limit
+   * \param a_min max_comfort_deceleration limit
+   * \param x0 current_downtrack
+   * \param x_end traffic_light_down_track
+   * \param dx distance_remaining_to_traffic_light
+   * \param boundary_distances boundary_distances to compare against current state
+   * \return all possible trajectory smoothing parameters to later generate single trajectory
+   */
+  std::vector<TrajectoryParams> get_boundary_traj_params(double t, double v0, double v1, double v_max, double v_min, double a_max, double a_min, double x0, double x_end, double dx, BoundaryDistances boundary_distances);
+  
+  /**
+   * \brief Helper method to print TrajectoryParams
+   */
+  void print_params(TrajectoryParams params);
 
   /**
-   * \brief Creates a speed profile according to case three or four of the light controlled intersection, where the vehicle decelerates (then cruises if needed) and accelerates into the intersection. 
-   * \param remaining_downtrack distance for the maneuver to be planned (excluding buffer points) in m
-   * \param remaining_time remaining time in seconds until scheduled entry into the intersection 
-   * \param starting_speed starting speed at the start of the maneuver in m/s
-   * \param speed_before_accel lowest speed desired between deceleration and acceleration in m/s
-   * \param speed_limit speed limit in m/s
-   * \param departure_speed intersection speed in m/s
-   * \return TrajectoySmoothingParameters that has readily usable parameters to apply speed profile into the trajectory points
-   * NOTE: Cruising speed profile is applied (case 4) if speed before acceleration is lower than minimum speed allowed. Otherwise Case 3.
+   * \brief Helper method to print TrajectoryParams
    */
-  TrajectorySmoothingParameters get_parameters_for_decel_cruise_accel_speed_profile(double remaining_downtrack, double remaining_time, double starting_speed, double speed_before_accel, double algo_minimum_speed, double departure_speed);
+  void print_boundary_distances(BoundaryDistances delta_xs);
+  
+  /**
+   * \brief Trajectory Smoothing Algorithm 8 cases.  TSMO UC2, UC3 algorithm equations
+   */
+  TrajectoryParams ts_case1(double t, double et, double v0, double v1, double v_max, double a_max, double a_min, double x0, double x_end, double dx);
+  TrajectoryParams ts_case2(double t, double et, double v0, double v1, double a_max, double a_min, double x0, double x_end, double dx);
+  TrajectoryParams ts_case3(double t, double et, double v0, double v1, double a_max, double a_min, double x0, double x_end, double dx);
+  TrajectoryParams ts_case4(double t, double et, double v0, double v1, double v_min, double a_max, double a_min, double x0, double x_end, double dx);
+  TrajectoryParams ts_case5(double t, double et, double v0, double a_max, double a_min, double x0, double x_end, double dx); //TODO Saeid: pls check dx, I included as it was missing
+  TrajectoryParams ts_case6(double t, double et, double v0, double v_min, double a_min, double x0, double x_end, double dx, double dx3, TrajectoryParams traj6);
+  TrajectoryParams ts_case7(double t, double et, double v0, double v_min, double a_min, double x0, double x_end, double dx);
+  TrajectoryParams ts_case8(double dx, double dx5, TrajectoryParams traj8);
+
+  TrajectoryParams boundary_accel_or_decel_incomplete_upper(double t, double v0, double v1, double a_max, double a_min, double x0, double x_end, double dx);
+  TrajectoryParams boundary_accel_nocruise_notmaxspeed_decel(double t, double v0, double v1, double a_max, double a_min, double x0, double x_end, double dx); //TODO Saeid: pls check + - (which is it?) AND (a_min - a_max) will be 0 which will segfault?.
+  TrajectoryParams boundary_accel_cruise_maxspeed_decel(double t, double v0, double v1, double v_max, double a_max, double a_min, double x0, double x_end, double dx);
+  TrajectoryParams boundary_accel_nocruise_maxspeed_decel(double t, double v0, double v1, double v_max, double a_max, double a_min, double x0, double x_end, double dx);
+  TrajectoryParams boundary_accel_or_decel_complete_upper(double t, double v0, double v1, double x0, double x_end, double dx);
+  TrajectoryParams boundary_decel_nocruise_notminspeed_accel(double t, double v0, double v1, double v_min, double a_max, double a_min, double x0, double x_end, double dx); // TODO Saeid: pls check v1, I included as it was missing. and also + -
+  TrajectoryParams boundary_decel_nocruise_minspeed_accel_incomplete(double t, double v0, double v_min, double a_max, double a_min, double x0, double x_end, double dx);
+  TrajectoryParams boundary_decel_nocruise_minspeed_accel_complete(double t, double v0, double v1, double v_max, double v_min, double a_max, double a_min, double x0, double x_end, double dx);
+  TrajectoryParams boundary_decel_cruise_minspeed_accel(double t, double v0, double v1, double v_min, double a_max, double a_min, double x0, double x_end, double dx);
+  TrajectoryParams boundary_decel_cruise_minspeed(double t, double v0, double v_min, double a_min, double x0, double x_end, double dx);
+  TrajectoryParams boundary_decel_incomplete_lower(double t, double v0, double a_min, double x0, double x_end, double dx);
+  TrajectoryParams boundary_decel_cruise_minspeed_decel(double t, double v0, double v_min, double a_min, double x0, double x_end, double dx);
+  
+  TrajectoryParams get_ts_case(double t, double et, double v0, double v1, double v_max, double v_min, double a_max, double a_min, double x0, double x_end, double dx, BoundaryDistances boundary_distances, std::vector<TrajectoryParams> params);
   
   ////////// VARIABLES ///////////
 
@@ -589,8 +602,6 @@ private:
   FRIEND_TEST(LCIStrategicTestFixture, findSpeedLimit);
   // Algo Unit Tests
   FRIEND_TEST(LCIStrategicTestFixture, calc_estimated_entry_time_left);
-  FRIEND_TEST(LCIStrategicTestFixture, determine_speed_profile_case);
-  FRIEND_TEST(LCIStrategicTestFixture, inflection_speeds_calc);
   FRIEND_TEST(LCIStrategicTestFixture, estimate_distance_to_stop);
   FRIEND_TEST(LCIStrategicTestFixture, estimate_time_to_stop);
   FRIEND_TEST(LCIStrategicTestFixture, get_distance_to_accel_or_decel_twice);
@@ -598,8 +609,6 @@ private:
   FRIEND_TEST(LCIStrategicTestFixture, get_nearest_green_entry_time);
   FRIEND_TEST(LCIStrategicTestFixture, get_earliest_entry_time);
   FRIEND_TEST(LCIStrategicTestFixture, calc_estimated_entry_time_left);
-  FRIEND_TEST(LCIStrategicTestFixture, get_parameters_for_accel_cruise_decel_speed_profile);
-  FRIEND_TEST(LCIStrategicTestFixture, get_parameters_for_decel_cruise_accel_speed_profile);
   FRIEND_TEST(LCIStrategicTestFixture, handleFailureCase);
   FRIEND_TEST(LCIStrategicTestFixture, handleStopping);
 

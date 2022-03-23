@@ -58,11 +58,30 @@ using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
 using GeneralTrajConfig = basic_autonomy::waypoint_generation::GeneralTrajConfig;
 using DetailedTrajConfig = basic_autonomy::waypoint_generation::DetailedTrajConfig;
 
-enum SpeedProfileCase {
-    ACCEL_CRUISE_DECEL = 1,
-    ACCEL_DECEL = 2,
-    DECEL_ACCEL = 3,
-    DECEL_CRUISE_ACCEL = 4,
+enum TSCase {
+  CASE_1 = 1,
+  CASE_2 = 2,
+  CASE_3 = 3,
+  CASE_4 = 4,
+  CASE_5 = 5,
+  CASE_6 = 6,
+  CASE_7 = 7,
+  CASE_8 = 8,
+};
+
+struct TrajectoryParams
+{
+  double a1_ = 0;
+  double v1_ = 0;
+  double x1_ = 0;
+
+  double a2_ = 0;
+  double v2_ = 0;
+  double x2_ = 0;
+
+  double a3_ = 0;
+  double v3_ = 0;
+  double x3_ = 0;
 };
 
 /**
@@ -101,38 +120,14 @@ public:
    * \param start_dist starting downtrack of the maneuver to be planned (excluding buffer points) in m
    * \param remaining_dist distance for the maneuver to be planned (excluding buffer points) in m
    * \param starting_speed starting speed at the start of the maneuver in m/s
-   * \param speed_before_decel highest speed desired between acceleration and deceleration  m/s
    * \param departure_speed ending speed of the maneuver a.k.a entry speed into the intersection m/s
-   * \param dist_accel distance over acceleration occurs (excluding buffer points) in m
-   * \param dist_cruise distance over cruising occurs (excluding buffer points) in m
-   * \param dist_decel distance over deceleration occurs (excluding buffer points) in m
-   * \param a_acc acceleration rate m/s^2
-   * \param a_dec deceleration rate m/s^2
+   * \param tsp trajectory smoothing parameters
+
    * NOTE: Cruising speed profile is applied (case 1) if speed before deceleration is higher than speed limit. Otherwise Case 2.
    * NOTE: when applying the speed profile, the function ignores buffer points beyond start_dist and end_dist. Internally uses: config_.back_distance and speed_limit_
    */
-  void apply_accel_cruise_decel_speed_profile(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double remaining_dist, 
-                                    double starting_speed, double speed_before_decel, double departure_speed, double dist_accel, double dist_cruise, double dist_decel, double a_acc, double a_dec);
-
-   /**
-   * \brief Creates a speed profile according to case three or four of the light controlled intersection, where the vehicle decelerates (then cruises if needed) and accelerates into the intersection. 
-   * \param wm world_model pointer
-   * \param points_and_target_speeds of centerline points paired with speed limits whose speeds are to be modified:
-   * \param start_dist starting downtrack of the maneuver to be planned (excluding buffer points) in m
-   * \param remaining_dist distance for the maneuver to be planned (excluding buffer points) in m
-   * \param starting_speed starting speed at the start of the maneuver in m/s
-   * \param speed_before_accel lowest speed desired between deceleration and acceleration  m/s
-   * \param departure_speed ending speed of the maneuver a.k.a entry speed into the intersection m/s
-   * \param dist_accel distance over acceleration occurs (excluding buffer points) in m
-   * \param dist_cruise distance over cruising occurs (excluding buffer points) in m
-   * \param dist_decel distance over deceleration occurs (excluding buffer points) in m
-   * \param a_acc acceleration rate m/s^2
-   * \param a_dec deceleration rate m/s^2
-   * NOTE: Cruising speed profile is applied (case 4) if speed before acceleration is lower than minimum speed allowed. Otherwise Case 3.
-   * NOTE: when applying the speed profile, the function ignores buffer points beyond start_dist and end_dist. Internally uses: config_.back_distance and min_speed_allowed_
-   */
-  void apply_decel_cruise_accel_speed_profile(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double remaining_dist, 
-                                    double starting_speed, double speed_before_accel, double departure_speed, double dist_accel, double dist_cruise, double dist_decel, double a_acc, double a_dec);
+  void apply_trajectory_smoothing_algorithm(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double remaining_dist, 
+                                    double starting_speed, double departure_speed, TrajectoryParams tsp);
 
   /**
    * \brief Apply optimized target speeds to the trajectory determined for fixed-time and actuated signals.
@@ -185,7 +180,7 @@ public:
 
   // approximate speed limit 
   double speed_limit_ = 100.0;
-  boost::optional<SpeedProfileCase> last_case_;
+  boost::optional<TSCase> last_case_;
   boost::optional<bool> is_last_case_successful_;
   cav_msgs::TrajectoryPlan last_trajectory_;
 
