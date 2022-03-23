@@ -2509,7 +2509,7 @@ namespace platoon_strategic_ihp
 
         // Check if gap is big enough and if current plan is timeout.
         // Add a condition to prevent sending repeated requests (Note: This is a same-lane maneuver, so no need to consider lower bound of joining gap.)
-        if (currentGap <= maxJoinGap  &&  pm_.current_plan.valid  &&  isFirstLeaderAbortRequest_) 
+        if (currentGap <= maxJoinGap  &&  !pm_.current_plan.valid  &&  isFirstLeaderAbortRequest_) 
         {
             // compose frontal joining plan, senderID is the old leader 
             cav_msgs::MobilityRequest request;
