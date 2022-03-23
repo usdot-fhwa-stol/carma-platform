@@ -68,9 +68,9 @@ struct MapOptions
                             lane_width_(lane_width), lane_length_(lane_length), obstacle_(obstacle), speed_limit_(speed_limit), seg_num_(seg_num){}
   double lane_width_;
   double lane_length_;
-  int seg_num_;
   Obstacle obstacle_ ;
   SpeedLimit speed_limit_;
+  int seg_num_;
 };
 /**
  * \brief helper function for quickly creating a lanelet::Point3d. random id is assigned
@@ -323,8 +323,11 @@ inline void addObstacle(double x, double y, std::shared_ptr<carma_wm::CARMAWorld
  * \param length length of roadway object, default 3 meters
  * NOTE: This assumes a similar simple shape of the GuidanceTestMap and does not populate cartesian components of the roadway object.
  */
-inline void addObstacle(carma_wm::TrackPos tp, lanelet::Id lanelet_id, std::shared_ptr<carma_wm::CARMAWorldModel> cmw, std::vector<carma_wm::TrackPos> pred_trackpos_list = {}, int time_step = 100, double width = 3, double length = 3)
+inline void addObstacle(carma_wm::TrackPos tp, lanelet::Id lanelet_id, std::shared_ptr<carma_wm::CARMAWorldModel> cmw, 
+                        std::vector<carma_wm::TrackPos> pred_trackpos_list = {}, int time_step = 100, double width = 3, double length = 3)
 {
+  //TODO: width & length are not used; if there are no plans to use them soon, remove them from param list
+
   cav_msgs::RoadwayObstacle rwo;	
 
   if (!cmw->getMap() || cmw->getMap()->laneletLayer.size() == 0)

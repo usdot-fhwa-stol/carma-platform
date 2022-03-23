@@ -69,7 +69,12 @@ TEST(SignalizedIntersectionManger, convertLaneToLaneletId)
   intersection.id.id = 9001;
 
   cav_msgs::GenericLane lane;
-  lane.lane_id = 1210;
+  lane.lane_id = 1210;        //TODO: broken! implicit conversion from int to unsigned char makes this value 186. Is lane_id the wrong type???
+
+
+
+
+
   lane.lane_attributes.directional_use.lane_direction = 1u; //ingress
   j2735_msgs::Connection connection;
   connection.signal_group = 1;
@@ -90,7 +95,13 @@ TEST(SignalizedIntersectionManger, convertLaneToLaneletId)
 
   intersection.lane_list.push_back(lane);
 
-  lane.lane_id = 1211;
+  lane.lane_id = 1211;  //TODO: broken! implicit conversion from int to unsigned char makes this value 187. Is lane_id the wrong type???
+
+
+
+
+
+
   lane.lane_attributes.directional_use.lane_direction = 2u; // egress imagining intersection 
                                                             // entering 1210 from left and out through 1220
   lane.node_list = {};
@@ -146,7 +157,10 @@ TEST(SignalizedIntersectionManger, createIntersectionFromMapMsg)
   intersection.id.id = 9001;
 
   cav_msgs::GenericLane lane;
-  lane.lane_id = 1210;
+  lane.lane_id = 1210;  //TODO: broken! implicit conversion from int to unsigned char makes this value 186. Is lane_id the wrong type???
+
+
+
   lane.lane_attributes.directional_use.lane_direction = 1u; //ingress
   j2735_msgs::Connection connection;
   connection.signal_group = 1;
@@ -167,7 +181,13 @@ TEST(SignalizedIntersectionManger, createIntersectionFromMapMsg)
 
   intersection.lane_list.push_back(lane);
 
-  lane.lane_id = 1220;
+  lane.lane_id = 1220;  //TODO: broken! implicit conversion from int to unsigned char makes this a different value. Is lane_id the wrong type???
+
+
+
+
+
+  
   lane.lane_attributes.directional_use.lane_direction = 2u; // egress imagining intersection 
                                                             // entering 1210 from left and out through 1220
   lane.node_list = {};

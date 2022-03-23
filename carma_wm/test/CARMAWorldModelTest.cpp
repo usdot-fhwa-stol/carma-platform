@@ -39,6 +39,9 @@ namespace carma_wm
 void createTestingWorld(carma_wm::CARMAWorldModel& cmw, std::vector<lanelet::Lanelet>& llts,
                                           lanelet::LaneletMapPtr& map,  std::vector<cav_msgs::ExternalObject>& obstacles)
 {
+  //TODO: cmw is not used; if there are no plans to use it soon, remove it from param list
+  //TODO: map is overwritten before it is used, so it has no value as an input param; is it intended to be an output?
+  
   /*
   * Create 2x2 lanelets map by hand
   */
@@ -115,7 +118,7 @@ void createTestingWorld(carma_wm::CARMAWorldModel& cmw, std::vector<lanelet::Lan
   size.y = 2;
   size.z = 1;
 
-  for (int i = 0; i < x_offsets.size(); i++)
+  for (size_t i = 0; i < x_offsets.size(); i++)
   {
       geometry_msgs::Pose pose;
       pose.position.x = x_offsets[i];
