@@ -2102,13 +2102,9 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds(const lanelet::Lanelet cur_l
       continue;
     }
     exit_lls.push_back(current_map_->laneletLayer.get(*itr));
-    intersection_id = sim_.matchSignalizedIntersection(entry_lls, exit_lls, current_map_);
-    
-    if(intersection_id != lanelet::InvalId)
-    {
-      break;
-    }
   }
+
+  intersection_id = sim_.matchSignalizedIntersection(entry_lls, exit_lls, current_map_);
 
   if(intersection_id != lanelet::InvalId)
   {
@@ -2120,7 +2116,7 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds(const lanelet::Lanelet cur_l
       }
     }
   }
-  
+
   ROS_DEBUG_STREAM("MAP msg: Intersection ID = " <<  map_msg_intersection_id << ", Signal Group ID =" << cur_signal_group_id );
   upcoming_intersection_ids_.data.push_back(static_cast<int>(map_msg_intersection_id));
   upcoming_intersection_ids_.data.push_back(static_cast<int>(cur_signal_group_id));
