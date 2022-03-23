@@ -2090,36 +2090,47 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds(const lanelet::Lanelet cur_l
     }
   }
 
-  lanelet::Lanelets entry_lls;
-  entry_lls.push_back(cur_lanelet);
-  lanelet::Lanelets exit_lls;
-  lanelet::Ids lanelet_ids = current_route.route_path_lanelet_ids;
-  lanelet::Id intersection_id = lanelet::InvalId ;
-  for(auto itr = lanelet_ids.begin() ; itr != lanelet_ids.end() ; itr++)
+  auto intersections = cur_lanelet.regulatoryElementsAs<lanelet::SignalizedIntersection>();
+  if (intersections.empty())
   {
-    if(*itr == cur_lanelet.id())
-    {
-      continue;
-    }
-    exit_lls.push_back(current_map_->laneletLayer.get(*itr));
+    // no match if any of the entry lanelet is not part of any intersection.
+    ROS_DEBUG_STREAM("NO matching intersection for current lanelet. lanelet id = " << cur_lanelet.id());
   }
-
-  intersection_id = sim_.matchSignalizedIntersection(entry_lls, exit_lls, current_map_);
-
-  if(intersection_id != lanelet::InvalId)
+  else
   {
-    for(auto itr = sim_.intersection_id_to_regem_id_.begin(); itr != sim_.intersection_id_to_regem_id_.end(); itr++)
+    lanelet::Ids cur_route_lanelet_ids = current_route.route_path_lanelet_ids;
+    lanelet::Id intersection_id = lanelet::InvalId ;
+
+    //Identify intersection based on the exit lanelets.
+    for(auto itr = intersections.begin(); itr != intersections.end(); itr++)
     {
-      if(itr->second == intersection_id)
+      lanelet::ConstLanelets exit_lls = itr->get()->getExitLanelets();
+      
+      for(auto inner_itr = exit_lls.begin(); inner_itr != exit_lls.end(); inner_itr++)
       {
-        map_msg_intersection_id = itr->first;
+        if(std::find(cur_route_lanelet_ids.begin(), cur_route_lanelet_ids.end() , *inner_itr) != cur_route_lanelet_ids.end())
+        {
+          intersection_id = itr->get()->id();
+        }
+      }      
+    }
+
+    if(intersection_id != lanelet::InvalId)
+    {
+      for(auto itr = sim_.intersection_id_to_regem_id_.begin(); itr != sim_.intersection_id_to_regem_id_.end(); itr++)
+      {
+        if(itr->second == intersection_id)
+        {
+          map_msg_intersection_id = itr->first;
+        }
       }
     }
-  }
 
-  ROS_DEBUG_STREAM("MAP msg: Intersection ID = " <<  map_msg_intersection_id << ", Signal Group ID =" << cur_signal_group_id );
-  upcoming_intersection_ids_.data.push_back(static_cast<int>(map_msg_intersection_id));
-  upcoming_intersection_ids_.data.push_back(static_cast<int>(cur_signal_group_id));
+    ROS_DEBUG_STREAM("MAP msg: Intersection ID = " <<  map_msg_intersection_id << ", Signal Group ID =" << cur_signal_group_id );
+    upcoming_intersection_ids_.data.push_back(static_cast<int>(map_msg_intersection_id));
+    upcoming_intersection_ids_.data.push_back(static_cast<int>(cur_signal_group_id));
+
+  } //END intersections
 }
 
 const uint8_t WorkZoneSection::OPEN = 0;
