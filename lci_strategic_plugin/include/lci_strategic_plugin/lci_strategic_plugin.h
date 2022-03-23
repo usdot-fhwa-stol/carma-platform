@@ -535,17 +535,17 @@ private:
   TrajectoryParams ts_case2(double t, double et, double v0, double v1, double a_max, double a_min, double x0, double x_end, double dx);
   TrajectoryParams ts_case3(double t, double et, double v0, double v1, double a_max, double a_min, double x0, double x_end, double dx);
   TrajectoryParams ts_case4(double t, double et, double v0, double v1, double v_min, double a_max, double a_min, double x0, double x_end, double dx);
-  TrajectoryParams ts_case5(double t, double et, double v0, double a_max, double a_min, double x0, double x_end, double dx); //TODO Saeid: pls check dx, I included as it was missing
+  TrajectoryParams ts_case5(double t, double et, double v0, double a_max, double a_min, double x0, double x_end, double dx);
   TrajectoryParams ts_case6(double t, double et, double v0, double v_min, double a_min, double x0, double x_end, double dx, double dx3, TrajectoryParams traj6);
   TrajectoryParams ts_case7(double t, double et, double v0, double v_min, double a_min, double x0, double x_end, double dx);
   TrajectoryParams ts_case8(double dx, double dx5, TrajectoryParams traj8);
 
   TrajectoryParams boundary_accel_or_decel_incomplete_upper(double t, double v0, double v1, double a_max, double a_min, double x0, double x_end, double dx);
-  TrajectoryParams boundary_accel_nocruise_notmaxspeed_decel(double t, double v0, double v1, double a_max, double a_min, double x0, double x_end, double dx); //TODO Saeid: pls check + - (which is it?) AND (a_min - a_max) will be 0 which will segfault?.
+  TrajectoryParams boundary_accel_nocruise_notmaxspeed_decel(double t, double v0, double v1, double a_max, double a_min, double x0, double x_end, double dx); 
   TrajectoryParams boundary_accel_cruise_maxspeed_decel(double t, double v0, double v1, double v_max, double a_max, double a_min, double x0, double x_end, double dx);
   TrajectoryParams boundary_accel_nocruise_maxspeed_decel(double t, double v0, double v1, double v_max, double a_max, double a_min, double x0, double x_end, double dx);
   TrajectoryParams boundary_accel_or_decel_complete_upper(double t, double v0, double v1, double x0, double x_end, double dx);
-  TrajectoryParams boundary_decel_nocruise_notminspeed_accel(double t, double v0, double v1, double v_min, double a_max, double a_min, double x0, double x_end, double dx); // TODO Saeid: pls check v1, I included as it was missing. and also + -
+  TrajectoryParams boundary_decel_nocruise_notminspeed_accel(double t, double v0, double v1, double v_min, double a_max, double a_min, double x0, double x_end, double dx);
   TrajectoryParams boundary_decel_nocruise_minspeed_accel_incomplete(double t, double v0, double v_min, double a_max, double a_min, double x0, double x_end, double dx);
   TrajectoryParams boundary_decel_nocruise_minspeed_accel_complete(double t, double v0, double v1, double v_max, double v_min, double a_max, double a_min, double x0, double x_end, double dx);
   TrajectoryParams boundary_decel_cruise_minspeed_accel(double t, double v0, double v1, double v_min, double a_max, double a_min, double x0, double x_end, double dx);

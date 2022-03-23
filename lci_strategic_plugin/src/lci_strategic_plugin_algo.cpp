@@ -467,10 +467,10 @@ std::vector<TrajectoryParams> LCIStrategicPlugin::get_boundary_traj_params(doubl
   // t4, t5, t6, t7
   if (dx < dx4)
   {
-    traj4 = boundary_decel_incomplete_lower(t, v0, a_min, x0, x_end, dx);
-    traj5 = traj4;
-    traj6 = traj4;
-    traj7 = traj4;
+    traj4 = traj1;
+    traj5 = traj1;
+    traj6 = boundary_decel_incomplete_lower(t, v0, a_min, x0, x_end, dx);
+    traj7 = traj6;
   }
   else if (dx < dx3)
   {
@@ -481,10 +481,11 @@ std::vector<TrajectoryParams> LCIStrategicPlugin::get_boundary_traj_params(doubl
     else
     {
       traj4 = boundary_decel_nocruise_notminspeed_accel(t, v0, v1, v_min, a_max, a_min, x0, x_end, dx);
-      traj5 = traj4;
-      traj6 = boundary_decel_nocruise_minspeed_accel_incomplete(t, v0, v_min, a_max, a_min, x0, x_end, dx);
-      traj7 = boundary_decel_cruise_minspeed(t, v0, v_min, a_min, x0, x_end, dx);
     }
+    traj5 = traj4;
+    traj6 = boundary_decel_nocruise_minspeed_accel_incomplete(t, v0, v_min, a_max, a_min, x0, x_end, dx);
+    traj7 = boundary_decel_cruise_minspeed(t, v0, v_min, a_min, x0, x_end, dx);
+    
   }
   else
   {
@@ -623,7 +624,7 @@ TrajectoryParams LCIStrategicPlugin::ts_case1(double t, double et, double v0, do
   traj.x2_ = traj.x1_ + (v_max * tc);
 
   traj.t3_ = et;
-  traj.a3_ = a_min;
+  traj.a3_ = traj.a1_ * (a_min / a_max);
   traj.v3_ = v1;
   traj.x3_ = x_end;
 
@@ -934,10 +935,8 @@ TrajectoryParams LCIStrategicPlugin::boundary_accel_or_decel_incomplete_upper(do
 
 TrajectoryParams LCIStrategicPlugin::boundary_accel_nocruise_notmaxspeed_decel(double t, double v0, double v1, double a_max, double a_min, double x0, double x_end, double dx)
 { 
-  // if (a_min - a_max <= epsilon_ && a_min - a_max >= -epsilon_)
-  //   throw std::invalid_argument("boundary_accel_nocruise_notmaxspeed_decel: Received a_min - a_max near zero..." + std::to_string(a_min - a_max));
-  
-  double v_hat = sqrt(((2 * dx * a_max * a_min) + (a_min * pow(v0, 2)) - (a_max * pow(v1, 2))) / (a_min - a_max)); //TODO CHECK a_min - a_max? segfault
+ 
+  double v_hat = sqrt(((2 * dx * a_max * a_min) + (a_min * pow(v0, 2)) - (a_max * pow(v1, 2))) / (a_min - a_max));
   double t_end = t + ((v_hat * (a_min - a_max)) - (v0 * a_min) + (v1 * a_max)) / (a_max * a_min);
 
   TrajectoryParams traj;
@@ -1076,7 +1075,7 @@ TrajectoryParams LCIStrategicPlugin::boundary_accel_or_decel_complete_upper(doub
 
 TrajectoryParams LCIStrategicPlugin::boundary_decel_nocruise_notminspeed_accel(double t, double v0, double v1, double v_min, double a_max, double a_min, double x0, double x_end, double dx)
 { 
-  double v_hat = sqrt(((2 * dx * a_max * a_min) + (a_max * pow(v0, 2)) - (a_min * pow(v1, 2))) / (a_max - a_min)); //TODO double check + - segfault
+  double v_hat = sqrt(((2 * dx * a_max * a_min) + (a_max * pow(v0, 2)) - (a_min * pow(v1, 2))) / (a_max - a_min));
   double t_end = t + ((v_hat * (a_max - a_min)) - (v0 * a_max) + (v1 * a_min)) / (a_max * a_min);
 
   TrajectoryParams traj;
