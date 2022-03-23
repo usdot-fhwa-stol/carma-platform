@@ -497,7 +497,7 @@ std::vector<TrajectoryParams> LCIStrategicPlugin::get_boundary_traj_params(doubl
   // t8
   if (dx < dx4)
   {
-    traj8 = traj4;
+    traj8 = traj6;
   }
   else if (dx < dx5)
   {
