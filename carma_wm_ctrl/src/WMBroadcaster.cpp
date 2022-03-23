@@ -2084,13 +2084,15 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds(const lanelet::Lanelet cur_l
   uint16_t cur_signal_group_id = 0;
   for(auto itr = sim_.signal_group_to_entry_lanelet_ids_.begin(); itr != sim_.signal_group_to_entry_lanelet_ids_.end(); itr++)
   {
-    if(itr->second == cur_lanelet.id())
+    if(itr->second.find(cur_lanelet.id()) != itr->second.end())
     {
       cur_signal_group_id = itr->first;
     }
   }
-
-  lanelet::Ids lanelet_ids = current_route.route_path_lanelet_ids();
+  lanelet::Lanelets entry_lls;
+  entry_lls.push_back(cur_lanelet);
+  lanelet::Lanelets exit_lls;
+  lanelet::Ids lanelet_ids = current_route.route_path_lanelet_ids;
   lanelet::Id intersection_id = lanelet::InvalId ;
   for(auto itr = lanelet_ids.begin() ; itr != lanelet_ids.end() ; itr++)
   {
@@ -2098,7 +2100,8 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds(const lanelet::Lanelet cur_l
     {
       continue;
     }
-    intersection_id = sim_.matchSignalizedIntersection(cur_lanelet, current_map_->laneletLayer.get(*itr), current_map_);
+    exit_lls.push_back(current_map_->laneletLayer.get(*itr));
+    intersection_id = sim_.matchSignalizedIntersection(entry_lls, exit_lls, current_map_);
   }
 
   if(intersection_id != lanelet::InvalId)
