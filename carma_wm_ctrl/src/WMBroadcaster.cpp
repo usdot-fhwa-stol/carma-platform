@@ -1915,7 +1915,10 @@ cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geom
 
   // Obtain the closest lanelet to the vehicle's current position
   auto current_llt = lanelet::geometry::findNearest(current_map_->laneletLayer, curr_pos, 1)[0].second;
-  
+
+  //updating upcoming traffic signal group id and intersection id
+  updateUpcomingSGIntersectionIds(current_llt);
+
   /* determine whether or not the vehicle's current position is within an active geofence */
   if (boost::geometry::within(curr_pos, current_llt.polygon2d().basicPolygon()))
   {         
@@ -2075,6 +2078,42 @@ lanelet::Lanelet  WMBroadcaster::createLinearInterpolatingLanelet(const lanelet:
   return lanelet::Lanelet(lanelet::utils::getId(), createLinearInterpolatingLinestring(left_front_pt, left_back_pt, increment_distance), createLinearInterpolatingLinestring(right_front_pt, right_back_pt, increment_distance));
 }
 
+void WMBroadcaster::updateUpcomingSGIntersectionIds(const lanelet::Lanelet cur_lanelet)
+{
+  uint16_t map_msg_intersection_id = 0;
+  uint16_t cur_signal_group_id = 0;
+  for(auto itr = sim_.signal_group_to_entry_lanelet_ids_.begin(); itr != sim_.signal_group_to_entry_lanelet_ids_.end(); itr++)
+  {
+    if(itr->second == cur_lanelet.id())
+    {
+      cur_signal_group_id = itr->first;
+    }
+  }
+
+  lanelet::Ids lanelet_ids = current_route.route_path_lanelet_ids();
+  lanelet::Id intersection_id = lanelet::InvalId ;
+  for(auto itr = lanelet_ids.begin() ; itr != lanelet_ids.end() ; itr++)
+  {
+    if(*itr == cur_lanelet.id())
+    {
+      continue;
+    }
+    intersection_id = sim_.matchSignalizedIntersection(cur_lanelet, current_map_->laneletLayer.get(*itr), current_map_);
+  }
+
+  if(intersection_id != lanelet::InvalId)
+  {
+    for(auto itr = sim_.intersection_id_to_regem_id_.begin(); itr != sim_.intersection_id_to_regem_id_.end(); itr++)
+    {
+      if(itr->second == intersection_id)
+      {
+        map_msg_intersection_id = itr->first;
+      }
+    }
+  }
+  upcoming_intersection_ids_.data.push_back(static_cast<int>(map_msg_intersection_id));
+  upcoming_intersection_ids_.data.push_back(static_cast<int>(cur_signal_group_id));
+}
 
 const uint8_t WorkZoneSection::OPEN = 0;
 const uint8_t WorkZoneSection::CLOSED = 1;
