@@ -1541,7 +1541,7 @@ namespace platoon_strategic_ihp
                 // UCLA: adjust for calculating gap between new leader and old leader
                 double currentGap =  applicantCurrentDtd - currentFrontDtd - config_.vehicleLength;
                 double currentTimeGap = currentGap / applicantCurrentSpeed;
-                ROS_DEBUG_STREAM("The gap between current platoon rear and applicant is " << currentGap << "m or " << currentTimeGap << "s");
+                ROS_DEBUG_STREAM("The gap between current platoon front and applicant is " << currentGap << "m or " << currentTimeGap << "s");
                 
                 if (currentGap < 0) 
                 {
@@ -2501,14 +2501,15 @@ namespace platoon_strategic_ihp
         double desiredJoinGap2 = config_.desiredJoinTimeGap * current_speed_;
         double maxJoinGap = std::max(config_.desiredJoinGap, desiredJoinGap2);
         // check if compatible for front join --> return front gap, no veh type check, is compatible
-        double currentGap = pm_.getDistanceToPredVehicle();
-        ROS_DEBUG_STREAM("Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " ms");
+        double currentGap = pm_.getDistanceToPredVehicle();  //TODO: fix this! it always returns 0.
+        ROS_DEBUG_STREAM("Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " m");
         ROS_DEBUG_STREAM("Since we have max allowed gap as " << config_.desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
-        ROS_DEBUG_STREAM("The current gap from radar is " << currentGap << " m");
+        ROS_DEBUG_STREAM("The current gap to joiner is " << currentGap << " m");
+        ROS_DEBUG_STREAM("current_plan valid = " << pm_.current_plan.valid << ", isFirstLeaderAbortRequest = " << isFirstLeaderAbortRequest_);
 
         // Check if gap is big enough and if current plan is timeout.
-        // Add a condition to prevent sending repeated requests (Note: This is a same-lane maneuver, so no need to consider lower bond of joining gap.)
-        if (currentGap <= maxJoinGap  &&  !pm_.current_plan.valid  &&  isFirstLeaderAbortRequest_) 
+        // Add a condition to prevent sending repeated requests (Note: This is a same-lane maneuver, so no need to consider lower bound of joining gap.)
+        if (currentGap <= maxJoinGap  &&  pm_.current_plan.valid  &&  isFirstLeaderAbortRequest_) 
         {
             // compose frontal joining plan, senderID is the old leader 
             cav_msgs::MobilityRequest request;
@@ -2529,7 +2530,6 @@ namespace platoon_strategic_ihp
             fmter %pose_ecef_point_.ecef_y;     //  index = 3
             fmter %pose_ecef_point_.ecef_z;     //  index = 4   
             fmter %join_index;                  //  index = 5
-
             request.strategy_params = fmter.str();
 
             // assign a new plan type 
@@ -2542,7 +2542,7 @@ namespace platoon_strategic_ihp
             // first request has been sent, mark check condition
             isFirstLeaderAbortRequest_ = false;
             
-            ROS_WARN("Published Mobility Candidate-Join request to the leader");
+            ROS_WARN("Published Mobility Candidate-Join request to the new leader");
             pm_.current_plan = PlatoonPlan(true, currentTime, planId, pm_.targetLeaderId);
         }
 
