@@ -239,328 +239,48 @@ double LCIStrategicPlugin::calc_estimated_entry_time_left(double entry_dist, dou
   return t_entry;
 }
 
-double LCIStrategicPlugin::calc_speed_before_decel(double entry_time, double entry_dist, double current_speed, double departure_speed) const
-{
-  double speed_before_decel = 0;
-  
-  // from TSMO USE CASE 2 Algorithm Doc - Figure 7. Equation: Trajectory Smoothing Solution (Case 2)
 
-  // a_r = a_acc / a_dec
-  double acc_dec_ratio = max_comfort_accel_/max_comfort_decel_;
-  // v_r = d / t
-  double required_speed = entry_dist / entry_time;
-  // sqrt_term  = sqrt((1-a_r)^2*v_r^2 - (1-a_r)(a_r*v_f*(v_f-2*v_r) + v_i*(2*v_r - v_i)))
-  double sqr_term = sqrt(pow(1 - (acc_dec_ratio), 2) * pow(required_speed, 2) - (1 -acc_dec_ratio) *
-                        (acc_dec_ratio * departure_speed * (departure_speed - 2 * required_speed) + current_speed * (2* required_speed - current_speed)));
-  // v_e = v_r + sqrt_term/(1 - a_r)
-  speed_before_decel = required_speed + sqr_term/(1 - acc_dec_ratio);
-
-  return speed_before_decel;
-}
-
-double LCIStrategicPlugin::calc_speed_before_accel(double entry_time, double entry_dist, double current_speed, double departure_speed) const
-{
-  double speed_before_accel = 0;
-
-  // from TSMO USE CASE 2 Algorithm Doc - Figure 11. Equation: Trajectory Smoothing Solution (Case 3)
-  
-  // a_r = a_acc / a_dec
-  double acc_dec_ratio = max_comfort_accel_/max_comfort_decel_;
-  // v_r = d / t
-  double required_speed = entry_dist / entry_time;
-  // sqrt_term  = sqrt((a_r - 1)^2*v_r^2 - (a_r-1)(v_f*(v_f-2*v_r) + a_r*v_i*(2*v_r - v_i)))
-  double sqr_term = sqrt(pow((acc_dec_ratio - 1), 2) * pow(required_speed, 2) - (acc_dec_ratio - 1) *
-                        (departure_speed * (departure_speed - 2 * required_speed) + acc_dec_ratio * current_speed * (2* required_speed - current_speed)));
-  // v_e = v_r + sqrt_term / (a_r - 1)
-  speed_before_accel = required_speed + sqr_term/(acc_dec_ratio - 1);
-
-  return speed_before_accel;
-}
-
-SpeedProfileCase LCIStrategicPlugin::determine_speed_profile_case(double estimated_entry_time, double scheduled_entry_time, double speed_before_decel, double speed_before_accel, double speed_limit)
-{
-  SpeedProfileCase case_num;
-  
-  ROS_DEBUG_STREAM("estimated_entry_time: " << estimated_entry_time << ", and scheduled_entry_time: " << scheduled_entry_time);
-  if (estimated_entry_time < scheduled_entry_time)
-  {
-    ROS_DEBUG_STREAM("speed_before_accel: " << speed_before_accel << ", and config_.algo_minimum_speed: " << config_.algo_minimum_speed);
-
-    if (speed_before_accel < config_.algo_minimum_speed)
-    {
-      case_num = DECEL_CRUISE_ACCEL;
-    }
-    else
-    {
-      case_num = DECEL_ACCEL;
-    }
-  }
-  else
-  {
-    ROS_DEBUG_STREAM("speed_before_decel: " << speed_before_decel << ", and speed_limit: " << speed_limit);
-
-    if (speed_before_decel > speed_limit)
-    {
-      case_num = ACCEL_CRUISE_DECEL;
-    }
-    else
-    {
-      case_num = ACCEL_DECEL;
-    }
-  }
-  
-  return case_num;
-}
-
-TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_accel_cruise_decel_speed_profile(double remaining_downtrack, double remaining_time, double starting_speed, double speed_before_decel, double speed_limit, double departure_speed)
-{
-  TrajectorySmoothingParameters params;
-  params.is_algorithm_successful = true;
-
-  // a_r = a_acc / a_dec
-  double acc_dec_ratio = max_comfort_accel_/max_comfort_decel_;
-  
-  double t_cruise = 0.0; // Cruising Time Interval for Case 2. TSMO UC 2 Algorithm draft doc Figure 7.
-  double t_c_nom = 0.0;
-  double t_c_den = epsilon_;
-
-  if (speed_before_decel > speed_limit)
-  {
-    ROS_DEBUG_STREAM("Detected that cruising is necessary. Changed speed_before_decel: " << speed_before_decel << ", to : " << speed_limit);
-    speed_before_decel = speed_limit;
-
-    // Cruising Time Interval Equation (case 1) obtained from TSMO UC 2 Algorithm draft doc Figure 8.
-    // Nominator portion
-    t_c_nom = 2 * remaining_downtrack * ((1 - acc_dec_ratio) * speed_before_decel + acc_dec_ratio * departure_speed - starting_speed) - 
-                    remaining_time * ((1 - acc_dec_ratio) * pow(speed_before_decel, 2) + acc_dec_ratio * pow(departure_speed, 2) - pow(starting_speed, 2));
-    
-    // Denominator portion
-    t_c_den = pow(speed_before_decel - starting_speed, 2) - acc_dec_ratio * pow(speed_before_decel - departure_speed, 2);
-    
-    if (t_c_den > -epsilon_ && t_c_den < epsilon_)
-    {
-      ROS_DEBUG_STREAM("WARN: Denominator of cruising time interval is too close to zero: " 
-                        << t_c_den << ", t_c_nom: " << t_c_nom << ", which may indicate there is only cruising portion available. Returning without any change..."); 
-      params.is_algorithm_successful = false;
-      return params; 
-    }
-    
-    t_cruise = t_c_nom / t_c_den;
-  }
-  // From TSMO USE CASE 2 Algorithm Doc - Figure 8. Equation: Trajectory Smoothing Solution (Case 1 and 2)
-
-  ROS_DEBUG_STREAM("max_comfort_accel_: " << max_comfort_accel_ << "\n" <<
-                   "max_comfort_decel_: " << max_comfort_decel_ << "\n" <<
-                   "acc_dec_ratio: " << acc_dec_ratio << "\n" <<
-                   "speed_limit: " << speed_limit);
-  
-  // Rest of the equations for acceleration rates and time intervals for when accelerating or decelerating 
-  double a_acc = ((1 - acc_dec_ratio) * speed_before_decel + acc_dec_ratio * departure_speed - starting_speed) / (remaining_time - t_cruise);
-  double a_dec = ((max_comfort_decel_ - max_comfort_accel_) * speed_before_decel + max_comfort_accel_ * departure_speed - max_comfort_decel_ * starting_speed) / (max_comfort_accel_ * (remaining_time - t_cruise));
-  double t_acc = (speed_before_decel - starting_speed) / a_acc;
-  double t_dec =  (departure_speed - speed_before_decel) / a_dec;
-
-  ROS_DEBUG_STREAM("speed_before_decel: " << speed_before_decel << "\n" <<
-                   "departure_speed: " << departure_speed << "\n" <<
-                   "remaining_downtrack: " << remaining_downtrack << "\n" <<
-                   "t_c_nom: " << t_c_nom << "\n" <<
-                   "t_c_den: " << t_c_den << "\n" <<
-                   "t_cruise: " << t_cruise << "\n" <<
-                   "a_acc: " << a_acc << "\n" <<
-                   "a_dec: " << a_dec << "\n" <<
-                   "t_acc: " << t_acc << "\n" <<
-                   "t_dec: " << t_dec);
-  
-  if (remaining_time - t_cruise < epsilon_ && remaining_time - t_cruise >= 0.0)
-  {
-    ROS_DEBUG_STREAM("WARN: Only Cruising is needed... therefore, no speed modification is required. Returning... ");
-    params.is_algorithm_successful = false;
-    return params;
-  }
-  else if (t_cruise < -epsilon_)
-  {
-    throw std::invalid_argument(std::string("Input parameters are not valid or do not qualify conditions " 
-                                "of estimated_time >= scheduled_time (case 1 and 2)"));
-  }
-
-  // Checking route geometry start against start_dist and adjust profile
-  double dist_accel;        //Distance over which acceleration happens
-  double dist_cruise;     //Distance over which cruising happens
-  double dist_decel;      //Distance over which deceleration happens
-
-  //Use maneuver parameters to create speed profile
-  //Kinematic: d = v_0 * t + 1/2 * a * t^2
-  dist_accel = starting_speed * t_acc + 0.5 * a_acc * pow(t_acc, 2);
-  dist_cruise = speed_before_decel * t_cruise;
-  dist_decel = speed_before_decel * t_dec + 0.5 * a_dec * pow(t_dec, 2);
-
-  //Check calculated total dist against maneuver limits
-  double total_distance_needed = dist_accel + dist_cruise + dist_decel;
-
-  if (a_acc < - epsilon_ || a_acc > max_comfort_accel_ || a_dec > epsilon_ || a_dec < max_comfort_decel_ || total_distance_needed > remaining_downtrack + 0.5 || //0.5 meter buffer
-      dist_decel < - 0.1 || dist_cruise < -0.1 || dist_accel < - 0.1) //algorithm was not able to calculate valid values
-  {
-    ROS_DEBUG_STREAM("WARN: get_parameters_for_accel_cruise_decel_speed_profile was NOT successful...");
-    params.is_algorithm_successful = false; 
-  }
-
-  ROS_DEBUG_STREAM("total_distance_needed: " << total_distance_needed << "\n" <<
-                  "dist_accel: " << dist_accel << "\n" <<
-                  "dist_decel: " << dist_decel << "\n" <<
-                  "dist_cruise: " << dist_cruise);
-
-  params.a_accel = a_acc;
-  params.a_decel = a_dec;
-  params.dist_accel = dist_accel;
-  params.dist_cruise = dist_cruise;
-  params.dist_decel = dist_decel;
-  params.speed_before_decel = speed_before_decel;
-
-  return params;
-}
-
-TrajectorySmoothingParameters LCIStrategicPlugin::get_parameters_for_decel_cruise_accel_speed_profile(double remaining_downtrack, double remaining_time, double starting_speed, double speed_before_accel, double algo_minimum_speed, double departure_speed)
-{
-  TrajectorySmoothingParameters params;
-  params.is_algorithm_successful = true;
-
-  // a_r = a_acc / a_dec
-  double acc_dec_ratio = max_comfort_accel_/max_comfort_decel_;
-  
-  double t_cruise = 0.0; // Cruising Time Interval for Case 4. TSMO UC 2 Algorithm draft doc Figure 12.
-  double t_c_nom = 0.0;
-  double t_c_den = epsilon_;
-
-  if (speed_before_accel < config_.algo_minimum_speed)
-  {
-    ROS_DEBUG_STREAM("Detected that cruising is necessary. Changed speed_before_accel: " << speed_before_accel << ", to : " << config_.algo_minimum_speed);
-    speed_before_accel = config_.algo_minimum_speed;
-
-    // Cruising Time Interval Equation (case 1) obtained from TSMO UC 2 Algorithm draft doc Figure 8.
-    // Nominator portion
-    t_c_nom = 2 * remaining_downtrack * ((acc_dec_ratio - 1) * speed_before_accel + departure_speed - acc_dec_ratio * starting_speed) - 
-                    remaining_time * ((acc_dec_ratio - 1) * pow(speed_before_accel, 2) + pow(departure_speed, 2) - acc_dec_ratio * pow(starting_speed, 2));
-    
-    // Denominator portion
-    t_c_den = acc_dec_ratio * pow(speed_before_accel - starting_speed, 2) - pow(speed_before_accel - departure_speed, 2);
-    
-    if (t_c_den > -epsilon_ && t_c_den < epsilon_)
-    {
-      ROS_DEBUG_STREAM("WARN: Denominator of cruising time interval is too close to zero: " 
-                        << t_c_den << ", t_c_nom: " << t_c_nom << ", which may indicate there is only cruising portion available. Returning without any change..."); 
-      params.is_algorithm_successful = false;
-      return params;
-    }
-    
-    t_cruise = t_c_nom / t_c_den;
-  }
-  // From TSMO USE CASE 2 Algorithm Doc - Figure 11 - 13. Equation: Trajectory Smoothing Solution (Case 1 and 2)
-
-  ROS_DEBUG_STREAM("max_comfort_accel_: " << max_comfort_accel_ << "\n" <<
-                   "max_comfort_decel_: " << max_comfort_decel_ << "\n" <<
-                   "acc_dec_ratio: " << acc_dec_ratio << "\n" <<
-                   "config_.algo_minimum_speed: " << config_.algo_minimum_speed);
-  
-  // Rest of the equations for acceleration rates and time intervals for when accelerating or decelerating 
-  double a_acc = ((acc_dec_ratio - 1) * speed_before_accel + departure_speed - acc_dec_ratio * starting_speed) / (remaining_time - t_cruise);
-  double a_dec = ((max_comfort_accel_ - max_comfort_decel_) * speed_before_accel + max_comfort_decel_ * departure_speed - max_comfort_accel_ * starting_speed) / (max_comfort_accel_ * (remaining_time - t_cruise));
-  double t_acc = (departure_speed - speed_before_accel) / a_acc;
-  double t_dec =  (speed_before_accel - starting_speed) / a_dec;
-
-  ROS_DEBUG_STREAM("speed_before_accel: " << speed_before_accel << "\n" <<
-                   "departure_speed: " << departure_speed << "\n" <<
-                   "remaining_downtrack: " << remaining_downtrack << "\n" <<
-                   "t_c_nom: " << t_c_nom << "\n" <<
-                   "t_c_den: " << t_c_den << "\n" <<
-                   "t_cruise: " << t_cruise << "\n" <<
-                   "a_acc: " << a_acc << "\n" <<
-                   "a_dec: " << a_dec << "\n" <<
-                   "t_acc: " << t_acc << "\n" <<
-                   "t_dec: " << t_dec);
-  
-  if (remaining_time - t_cruise < epsilon_ && remaining_time - t_cruise >= 0.0)
-  {
-    ROS_DEBUG_STREAM("WARN: Only Cruising is needed... therefore, no speed modification is required. Returning... ");
-    params.is_algorithm_successful = false;
-    return params;
-  }
-  else if (t_cruise < -epsilon_)
-  {
-    throw std::invalid_argument(std::string("Input parameters are not valid or do not qualify conditions " 
-                                "of estimated_time < scheduled_time (case 3 and 4)"));
-  }
-
-  // Checking route geometry start against start_dist and adjust profile
-  double dist_accel;        //Distance over which acceleration happens
-  double dist_cruise;     //Distance over which cruising happens
-  double dist_decel;      //Distance over which deceleration happens
-
-  //Use maneuver parameters to create speed profile
-  //Kinematic: d = v_0 * t + 1/2 * a * t^2
-  dist_decel = starting_speed * t_dec + 0.5 * a_dec * pow(t_dec, 2);
-  dist_cruise = speed_before_accel * t_cruise;
-  dist_accel = speed_before_accel * t_acc + 0.5 * a_acc * pow(t_acc, 2);
-  
-  
-  //Check calculated total dist against maneuver limits
-  double total_distance_needed = dist_accel + dist_cruise + dist_decel;
-
-  if (a_acc < -epsilon_ || a_acc > max_comfort_accel_ || a_dec > epsilon_ || a_dec < max_comfort_decel_ || total_distance_needed > remaining_downtrack + 0.5 || //0.5 meter buffer
-      dist_decel < - 0.1 || dist_cruise < -0.1 || dist_accel < - 0.1) //algorithm was not able to calculate valid values
-  {
-    ROS_DEBUG_STREAM("WARN: get_parameters_for_decel_cruise_accel_speed_profile was NOT successful...");
-    params.is_algorithm_successful = false; 
-  }
-
-  ROS_DEBUG_STREAM("total_distance_needed: " << total_distance_needed << "\n" <<
-                  "dist_accel: " << dist_accel << "\n" <<
-                  "dist_decel: " << dist_decel << "\n" <<
-                  "dist_cruise: " << dist_cruise);
-
-  params.a_accel = a_acc;
-  params.a_decel = a_dec;
-  params.dist_accel = dist_accel;
-  params.dist_cruise = dist_cruise;
-  params.dist_decel = dist_decel;
-  params.speed_before_accel = speed_before_accel;
-  
-  return params;
-}
-
-TrajectorySmoothingParameters LCIStrategicPlugin::handleFailureCase(double starting_speed, double departure_speed, double remaining_downtrack, double remaining_time)
+TrajectoryParams LCIStrategicPlugin::handleFailureCase(double starting_speed, double departure_speed, double remaining_downtrack, double remaining_time, double traffic_light_downtrack)
 {
   //Requested maneuver needs to be modified to meet remaining_dist req
   //by trying to get close to the target_speed and remaining_time as much as possible
-  TrajectorySmoothingParameters params;
+  TrajectoryParams params;
 
   params.is_algorithm_successful = false;
-  params.speed_before_accel = -1;
-  params.speed_before_decel = -1;
+  params.case_num = CASE_1;
 
-  ROS_ERROR_STREAM("HANDLE FAILURE CASE I KNOW IS WRONG!!"); // TODO
-  ROS_DEBUG_STREAM("HANDLE FAILURE CASE I KNOW IS WRONG!!");
+  ROS_ERROR_STREAM("HANDLE FAILURE CASE USING ACCEL_OR_DECEL_INCOMPLETE_UPPER"); // TODO
+  ROS_DEBUG_STREAM("HANDLE FAILURE CASE USING ACCEL_OR_DECEL_INCOMPLETE_UPPER");
+  double modified_remaining_time;
 
-  // kinematic: TODO
-  double new_accel = 2 * (remaining_downtrack - starting_speed * remaining_time)/ (pow(remaining_time, 2));
+  if (starting_speed <= departure_speed)
+    modified_remaining_time = (sqrt(pow(starting_speed, 2) + (2 * max_comfort_accel_ * remaining_downtrack)) - starting_speed)/ max_comfort_accel_;
+  else
+    modified_remaining_time = (sqrt(pow(starting_speed, 2) + (2 * max_comfort_decel_ * remaining_downtrack)) - starting_speed) / max_comfort_decel_;
 
-  if (new_accel < -epsilon_)
+  if (starting_speed <= departure_speed)
   {
-    params.a_decel = new_accel;
-    params.speed_before_decel = starting_speed;
-    params.dist_decel = remaining_downtrack;
-    params.case_num = SpeedProfileCase::ACCEL_DECEL;
+     params.a1_ = max_comfort_accel_;
+    params.v1_ = sqrt(pow(starting_speed, 2) + (2 * max_comfort_accel_ * remaining_downtrack));
   }
   else
   {
-    params.a_accel = new_accel;
-    params.speed_before_accel = starting_speed;
-    params.dist_accel = remaining_downtrack;
-    params.case_num = SpeedProfileCase::DECEL_ACCEL;
+    params.a1_ = max_comfort_decel_;
+    params.v1_ = sqrt(pow(starting_speed, 2) + (2 * max_comfort_decel_ * remaining_downtrack));
   }
 
-  params.modified_departure_speed = starting_speed + new_accel * remaining_time;
-  params.dist_cruise = 0;
-  params.modified_remaining_time = remaining_time;
+  params.x1_ = traffic_light_downtrack;
+
+  params.a2_ = 0;
+  params.v2_ = params.v1_;
+  params.x2_ = params.x1_;
+
+  params.a3_ = 0;
+  params.v3_ = params.v1_;
+  params.x3_ = params.x1_;
+
+  params.modified_departure_speed = params.v1_;
+  params.modified_remaining_time = modified_remaining_time;
 
   // handle hard failure case such as nan
   if (!isnan(params.modified_departure_speed) && params.modified_departure_speed > epsilon_ &&
@@ -568,42 +288,1004 @@ TrajectorySmoothingParameters LCIStrategicPlugin::handleFailureCase(double start
   {
     ROS_ERROR_STREAM("Updated!!! : " << params.modified_departure_speed);
     ROS_DEBUG_STREAM("Updated!!! : " << params.modified_departure_speed);
-  }
-  else
-  {
-    params.a_accel = 0;
-    params.speed_before_accel = -1;
-    params.dist_accel = 0;
-    params.a_decel = 0;
-    params.speed_before_decel = starting_speed;
-    params.dist_decel = 0;
-    params.case_num = SpeedProfileCase::ACCEL_CRUISE_DECEL;
-    params.modified_departure_speed = starting_speed;
-    params.dist_cruise = remaining_downtrack;
-    params.modified_remaining_time = remaining_downtrack / starting_speed;
-
-    ROS_ERROR_STREAM("Cruising!!! at: " << params.modified_departure_speed <<", for sec: " << params.modified_remaining_time << ", where remaining_time: " << remaining_time);
-    ROS_DEBUG_STREAM("Cruising!!! at: " << params.modified_departure_speed <<", for sec: " << params.modified_remaining_time << ", where remaining_time: " << remaining_time);
+    print_params(params);
+    return params;
   }
 
+  params.a1_ = 0;
+  params.v1_ = starting_speed;
+  params.x1_ = traffic_light_downtrack;
+
+  params.a2_ = 0;
+  params.v2_ = params.v1_;
+  params.x2_ = params.x1_;
+
+  params.a3_ = 0;
+  params.v3_ = params.v1_;
+  params.x3_ = params.x1_;
+
+  params.modified_departure_speed = params.v1_;
+  params.modified_remaining_time = remaining_downtrack / starting_speed;
+
+  ROS_ERROR_STREAM("Cruising!!! at: " << params.modified_departure_speed <<", for sec: " << params.modified_remaining_time << ", where remaining_time: " << remaining_time);
+  ROS_DEBUG_STREAM("Cruising!!! at: " << params.modified_departure_speed <<", for sec: " << params.modified_remaining_time << ", where remaining_time: " << remaining_time);
+  
   // handle hard failure case such as nan
   if (isnan(params.modified_departure_speed) || params.modified_departure_speed < - epsilon_ ||
       params.modified_departure_speed > 35.7632 ) //80_mph
   {
     throw std::invalid_argument("Calculated departure speed is invalid: " + std::to_string(params.modified_departure_speed));
   }
-  ROS_DEBUG_STREAM("WARN: Maneuver needed to be modified (due to negative dist) with new distance and accelerations: \n" << 
-                "a_acc: " << params.a_accel << "\n" <<
-                "a_dec: " << params.a_decel << "\n" <<
-                "dist_accel: " << params.dist_accel << "\n" <<
-                "dist_decel: " << params.dist_decel << "\n" <<
-                "dist_cruise: " << params.dist_cruise << "\n" <<
-                "modified_departure_speed: " << params.modified_departure_speed << "\n" <<
-                "modified_remaining_time: " << params.modified_remaining_time << "\n" <<
-                "case_num: " << params.case_num << "\n" <<
-                "speed_before_accel: " << params.speed_before_accel << "\n" <<
-                "speed_before_decel: " << params.speed_before_decel);
+  print_params(params);
+  
   return params;
 }
 
+void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp, 
+                                        const VehicleState& current_state, 
+                                        const lanelet::CarmaTrafficSignalPtr& traffic_light,
+                                        const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, const lanelet::ConstLanelet& current_lanelet,
+                                        double traffic_light_down_track)
+{
+  double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack;
+
+  // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
+  std::vector<lanelet::ConstLanelet> crossed_lanelets =
+        getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
+
+  double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_);
+  ROS_DEBUG_STREAM("safe_distance_to_stop at max_comfort_decel:  " << safe_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
+
+  double desired_distance_to_stop = pow(current_state.speed, 2)/(max_comfort_decel_norm_ / std::max(4.0, (double)config_.min_gap));
+  ROS_DEBUG_STREAM("desired_distance_to_stop at at config_.min_gap fraction: max_comfort_decel:  " << desired_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_ / config_.min_gap);
+  
+  // earlier stop than this would result in stopping way before intersection
+  double min_bound_stop_time =
+    (2.0 * distance_remaining_to_traffic_light) / current_state.speed;  // Kinematic Equation: 2*d / (vf + vi) = t where vf = 0
+
+  ROS_DEBUG_STREAM("distance_remaining_to_traffic_light:  " << distance_remaining_to_traffic_light << ", current_state.speed: " << current_state.speed);
+  
+  ROS_DEBUG_STREAM("min_bound_stop_time in sec:  " << min_bound_stop_time);
+
+  if (safe_distance_to_stop > distance_remaining_to_traffic_light)
+  {
+    ROS_DEBUG_STREAM("No longer within safe distance to stop! Returning...");
+    ROS_ERROR_STREAM("No longer within safe distance to stop! Returning...");
+    return;
+  }
+  else if (safe_distance_to_stop <= distance_remaining_to_traffic_light && desired_distance_to_stop >= distance_remaining_to_traffic_light)
+  {
+    auto state_pair_at_stop = traffic_light->predictState(lanelet::time::timeFromSec(current_state.stamp.toSec() + min_bound_stop_time));
+    
+    if (!validLightState(state_pair_at_stop, current_state.stamp + ros::Duration(min_bound_stop_time)))
+    return;
+
+    ROS_DEBUG_STREAM("Checking STOPPING state: " << state_pair_at_stop.get().second << ", at predicted time: " << std::to_string(current_state.stamp.toSec() + min_bound_stop_time));
+
+    // perfectly stop at red/yellow with given distance and constant deceleration 
+    if (state_pair_at_stop.get().second != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+    {
+      double decel_rate =  current_state.speed/ min_bound_stop_time; // Kinematic |(v_f - v_i) / t = a|
+      ROS_ERROR_STREAM("22222222: Planning stop and wait maneuver at decel_rate: -" << decel_rate);
+      ROS_DEBUG_STREAM("22222222: Planning stop and wait maneuver at decel_rate: -" << decel_rate);
+      
+      resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
+        current_state.downtrack, traffic_light_down_track, current_state.speed, crossed_lanelets.front().id(),
+        crossed_lanelets.back().id(), current_state.stamp,
+        current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
+      return;
+    }
+  }
+  else if (desired_distance_to_stop < distance_remaining_to_traffic_light)
+  {
+    ROS_DEBUG_STREAM("Way too early to stop");
+    ROS_ERROR_STREAM("Way too early to stop");
+  }
+}
+
+//// NEW EQUATIONS START
+BoundaryDistances LCIStrategicPlugin::get_delta_x(double v0, double v1, double v_max, double v_min, double a_max, double a_min)
+{
+  BoundaryDistances distances;
+  
+  distances.dx1 = ((pow(v_max, 2) - pow(v0, 2)) / (2 * a_max)) + ((pow(v1, 2) - pow(v_max, 2)) / (2 * a_min));
+  if (v1 > v0)
+    distances.dx2 = ((pow(v1, 2) - pow(v0, 2)) / (2 * a_max));
+  else
+    distances.dx2 = ((pow(v1, 2) - pow(v0, 2)) / (2 * a_min));
+
+  distances.dx3 = ((pow(v_min, 2) - pow(v0, 2)) / (2 * a_min)) + ((pow(v1, 2) - pow(v_min, 2)) / (2 * a_max));
+  distances.dx4 = ((pow(v_min, 2) - pow(v0, 2)) / (2 * a_min));
+  distances.dx5 = - pow(v0, 2) / (2 * a_min);
+
+  return distances;
+}
+
+void LCIStrategicPlugin::print_params(TrajectoryParams params)
+{
+  ROS_DEBUG_STREAM("\n");
+  ROS_DEBUG_STREAM("t0: " << std::to_string(params.t0_));
+  ROS_DEBUG_STREAM("v0: " << params.v0_);
+  ROS_DEBUG_STREAM("x0: " << params.x0_);
+
+  ROS_DEBUG_STREAM("t1: " << std::to_string(params.t1_));
+  ROS_DEBUG_STREAM("v1: " << params.v1_);
+  ROS_DEBUG_STREAM("x1: " << params.x1_);
+  ROS_DEBUG_STREAM("a1: " << params.a1_);
+
+  ROS_DEBUG_STREAM("t2: " << std::to_string(params.t2_));
+  ROS_DEBUG_STREAM("v2: " << params.v2_);
+  ROS_DEBUG_STREAM("x2: " << params.x2_);
+  ROS_DEBUG_STREAM("a2: " << params.a2_);
+
+  ROS_DEBUG_STREAM("t3: " << std::to_string(params.t3_));
+  ROS_DEBUG_STREAM("v3: " << params.v3_);
+  ROS_DEBUG_STREAM("x3: " << params.x3_);
+  ROS_DEBUG_STREAM("a3: " << params.a3_);
+
+  ROS_DEBUG_STREAM("\n");
+}
+
+void LCIStrategicPlugin::print_boundary_distances(BoundaryDistances delta_xs)
+{
+  ROS_DEBUG_STREAM("\n");
+  ROS_DEBUG_STREAM("dx1: " << delta_xs.dx1);
+  ROS_DEBUG_STREAM("dx2: " << delta_xs.dx2);
+  ROS_DEBUG_STREAM("dx3: " << delta_xs.dx3);
+  ROS_DEBUG_STREAM("dx4: " << delta_xs.dx4);
+  ROS_DEBUG_STREAM("dx5: " << delta_xs.dx5 << "\n");
+}
+
+std::vector<TrajectoryParams> LCIStrategicPlugin::get_boundary_traj_params(double t, double v0, double v1, double v_max, double v_min, double a_max, double a_min, double x0, double x_end, double dx, BoundaryDistances boundary_distances)
+{
+  double dx1 = boundary_distances.dx1;
+  double dx2 = boundary_distances.dx2;
+  double dx3 = boundary_distances.dx3;
+  double dx4 = boundary_distances.dx4;
+  double dx5 = boundary_distances.dx5;
+  TrajectoryParams traj1, traj2, traj3, traj4, traj5, traj6, traj7, traj8;
+
+  // t1, t2, t3
+  if (dx < dx2)
+  {
+    traj1 = boundary_accel_or_decel_incomplete_upper(t, v0, v1, a_max, a_min, x0, x_end, dx);
+    traj2 = traj1;
+    traj3 = traj1;
+  }
+  else if (dx < dx1)
+  {
+    traj1 = boundary_accel_nocruise_notmaxspeed_decel(t, v0, v1, a_max, a_min, x0, x_end, dx);
+    traj2 = traj1;
+    traj3 = boundary_accel_or_decel_complete_upper(t, v0, v1, x0, x_end, dx);
+  }
+  else
+  {
+    traj1 = boundary_accel_cruise_maxspeed_decel(t, v0, v1, v_max, a_max, a_min, x0, x_end, dx);
+    traj2 = boundary_accel_nocruise_maxspeed_decel(t, v0, v1, v_max, a_max, a_min, x0, x_end, dx);
+    traj3 = boundary_accel_or_decel_complete_upper(t, v0, v1, x0, x_end, dx);
+  }
+  // t4, t5, t6, t7
+  if (dx < dx4)
+  {
+    traj4 = boundary_decel_incomplete_lower(t, v0, a_min, x0, x_end, dx);
+    traj5 = traj4;
+    traj6 = traj4;
+    traj7 = traj4;
+  }
+  else if (dx < dx3)
+  {
+    if (dx < dx2)
+    {
+      traj4 = traj1;
+    }
+    else
+    {
+      traj4 = boundary_decel_nocruise_notminspeed_accel(t, v0, v1, v_min, a_max, a_min, x0, x_end, dx);
+      traj5 = traj4;
+      traj6 = boundary_decel_nocruise_minspeed_accel_incomplete(t, v0, v_min, a_max, a_min, x0, x_end, dx);
+      traj7 = boundary_decel_cruise_minspeed(t, v0, v_min, a_min, x0, x_end, dx);
+    }
+  }
+  else
+  {
+    traj4 = boundary_decel_nocruise_minspeed_accel_complete(t, v0, v1, v_max, v_min, a_max, a_min, x0, x_end, dx);
+    traj5 = boundary_decel_cruise_minspeed_accel(t, v0, v1, v_min, a_max, a_min, x0, x_end, dx);
+    traj6 = traj5;
+    traj7 = boundary_decel_cruise_minspeed(t, v0, v_min, a_min, x0, x_end, dx);
+  }
+  // t8
+  if (dx < dx4)
+  {
+    traj8 = traj4;
+  }
+  else if (dx < dx5)
+  {
+    traj8 = boundary_decel_incomplete_lower(t, v0, a_min, x0, x_end, dx);
+  }
+  else
+  {
+    traj8 = boundary_decel_cruise_minspeed_decel(t, v0, v_min, a_min, x0, x_end, dx);
+  }
+
+  return {traj1, traj2, traj3, traj4, traj5, traj6, traj7, traj8};
+}
+
+TrajectoryParams LCIStrategicPlugin::get_ts_case(double t, double et, double v0, double v1, double v_max, double v_min, double a_max, double a_min, double x0, double x_end, double dx, BoundaryDistances boundary_distances, std::vector<TrajectoryParams> params)
+{
+  double dx1 = boundary_distances.dx1;
+  double dx2 = boundary_distances.dx2;
+  double dx3 = boundary_distances.dx3;
+  double dx4 = boundary_distances.dx4;
+  double dx5 = boundary_distances.dx5;
+  
+  if (params.size() != 8)
+  {
+    throw std::invalid_argument("Not enough trajectory paras given! Given size: " + std::to_string(params.size()));
+  }
+
+  TrajectoryParams traj1 = params[0];
+  TrajectoryParams traj2 = params[1];
+  TrajectoryParams traj3 = params[2];
+  TrajectoryParams traj4 = params[3];
+  TrajectoryParams traj5 = params[4];
+  TrajectoryParams traj6 = params[5];
+  TrajectoryParams traj7 = params[6];
+  TrajectoryParams traj8 = params[7];
+  TrajectoryParams veh_traj;
+
+  if (traj1.t3_ <= et && et < traj2.t3_)
+  {
+    ROS_DEBUG_STREAM("CALCULATED: case 1");
+    veh_traj = ts_case1(t, et, v0, v1, v_max, a_max, a_min, x0, x_end, dx);
+    veh_traj.case_num = CASE_1;
+  }
+  else if (traj2.t3_ <= et && et < traj3.t3_)
+  {
+    ROS_DEBUG_STREAM("CALCULATED: case 2");
+    veh_traj = ts_case2(t, et, v0, v1, a_max, a_min, x0, x_end, dx);
+    veh_traj.case_num = CASE_2;
+  }
+  else if (traj3.t3_ <= et && et < traj4.t3_)
+  {
+    ROS_DEBUG_STREAM("CALCULATED: case 3");
+    veh_traj = ts_case3(t, et, v0, v1, a_max, a_min, x0, x_end, dx);
+    veh_traj.case_num = CASE_3;
+  }
+  else if (traj4.t3_ <= et && et < traj5.t3_)
+  {
+    ROS_DEBUG_STREAM("CALCULATED: case 4");
+    veh_traj = ts_case4(t, et, v0, v1, v_min, a_max, a_min, x0, x_end, dx);
+    veh_traj.case_num = CASE_4;
+  }
+  else if (traj5.t3_ <= et && et < traj6.t3_)
+  {
+    ROS_DEBUG_STREAM("CALCULATED: case 5");
+    veh_traj = ts_case5(t, et, v0, a_max, a_min, x0, x_end, dx);
+    veh_traj.case_num = CASE_5;
+  }
+  else if (traj6.t3_ <= et && et < traj7.t3_)
+  {
+    ROS_DEBUG_STREAM("CALCULATED: case 6");
+    veh_traj = ts_case6(t, et, v0, v_min, a_min, x0, x_end, dx, dx3, traj6);
+    veh_traj.case_num = CASE_6;
+  }
+  else if (traj7.t3_ <= et && et <= traj8.t3_)
+  {
+    ROS_DEBUG_STREAM("CALCULATED: case 7");
+    veh_traj = ts_case7(t, et, v0, v_min, a_min, x0, x_end, dx);
+    veh_traj.case_num = CASE_7;
+  }
+  else
+  {
+    ROS_DEBUG_STREAM("CALCULATED: case 8");
+    veh_traj = ts_case8(dx, dx5, traj8);
+    veh_traj.case_num = CASE_8;
+  }
+
+  return veh_traj;
+}
+
+
+TrajectoryParams LCIStrategicPlugin::ts_case1(double t, double et, double v0, double v1, double v_max, double a_max, double a_min, double x0, double x_end, double dx)
+{ 
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  double dt = et - t;
+  double nom1 = 2 * dx * (((1 - (a_max / a_min)) * v_max) + ((a_max / a_min) * v1) - v0);
+  double nom2 = dt * (((1 - (a_max / a_min)) * pow(v_max, 2)) + ((a_max / a_min) * pow(v1, 2)) - pow(v0, 2));
+  double den = pow(v_max - v0, 2) - ((a_max / a_min) * pow(v_max - v1, 2));
+
+  if (den <= epsilon_ && den >= -epsilon_)
+    throw std::invalid_argument("CASE1: Received den near zero..." + std::to_string(den));
+
+  double tc = (nom1 - nom2) / den;
+
+  traj.v1_ = v_max;
+
+  if (dt - tc <= epsilon_ && dt - tc >= -epsilon_)
+    throw std::invalid_argument("CASE1: Received dt - tc near zero..." + std::to_string(dt - tc));
+
+  traj.a1_ = (((1 - (a_max / a_min)) * v_max) + ((a_max / a_min) * v1) - v0) / (dt - tc);
+
+  if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
+    throw std::invalid_argument("CASE1: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
+
+  traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
+  traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
+
+  traj.a2_ = 0;
+  traj.v2_ = v_max;
+  traj.t2_ = traj.t1_ + tc;
+  traj.x2_ = traj.x1_ + (v_max * tc);
+
+  traj.t3_ = et;
+  traj.a3_ = a_min;
+  traj.v3_ = v1;
+  traj.x3_ = x_end;
+
+  return traj;
+
+}
+TrajectoryParams LCIStrategicPlugin::ts_case2(double t, double et, double v0, double v1, double a_max, double a_min, double x0, double x_end, double dx)
+{ 
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  double dt = et - t;
+
+  if (dt <= epsilon_ && dt >= -epsilon_)
+    throw std::invalid_argument("CASE2: Received dt near zero..." + std::to_string(dt));
+
+  double sqr1 = pow(1 - (a_max / a_min), 2) * pow(dx / dt, 2);
+  double sqr2 = (1 - (a_max / a_min)) * (((a_max / a_min) * v1 * (v1 - (2 * dx / dt))) + (v0 * ((2 * dx / dt) - v0)));
+  double v_hat = (dx / dt) + (sqrt(sqr1 - sqr2) / (1 - (a_max / a_min)));
+
+  traj.v1_ = v_hat;
+  traj.a1_ = (((1 - (a_max / a_min)) * v_hat) + ((a_max / a_min) * v1) - v0) / dt;
+
+  if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
+    throw std::invalid_argument("CASE2: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
+
+  traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
+  traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
+
+  traj.v2_ = v1;
+  traj.a2_ = traj.a1_ * a_min / a_max;
+
+  if (traj.a2_ <= epsilon_ && traj.a2_ >= -epsilon_)
+    throw std::invalid_argument("CASE2: Received traj.a2_ near zero..." + std::to_string(traj.a2_));
+
+  traj.t2_ = traj.t1_ + ((traj.v2_ - traj.v1_) / traj.a2_);
+  traj.x2_ = x_end;
+
+  traj.t3_ = traj.t2_;
+  traj.a3_ = 0;
+  traj.v3_ = traj.v2_;
+  traj.x3_ = traj.x2_;
+
+  return traj;
+}
+TrajectoryParams LCIStrategicPlugin::ts_case3(double t, double et, double v0, double v1, double a_max, double a_min, double x0, double x_end, double dx)
+{ 
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  double dt = et - t;
+  
+  if (dt <= epsilon_ && dt >= -epsilon_)
+    throw std::invalid_argument("CASE3: Received dt near zero..." + std::to_string(dt));
+
+  double sqr1 = pow((a_max / a_min) - 1, 2) * pow(dx / dt, 2);
+  double sqr2 = ((a_max / a_min) - 1) * ((v1 * (v1 - (2 * dx / dt))) + ((a_max / a_min) * v0 * ((2 * dx / dt) - v0)));
+  double v_hat = (dx / dt) + (sqrt(sqr1 - sqr2) / ((a_max / a_min) - 1));
+
+  traj.v1_ = v_hat;
+  traj.a1_ = (((1 - (a_min / a_max)) * v_hat) + ((a_min / a_max) * v1) - v0) / dt;
+  
+  if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
+    throw std::invalid_argument("CASE3: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
+
+  traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
+  traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
+
+  traj.v2_ = v1;
+  traj.a2_ = traj.a1_ * a_max / a_min;
+  traj.t2_ = traj.t1_ + ((traj.v2_ - traj.v1_) / traj.a2_);
+  traj.x2_ = x_end;
+
+  traj.t3_ = traj.t2_;
+  traj.a3_ = 0;
+  traj.v3_ = traj.v2_;
+  traj.x3_ = traj.x2_;
+
+  return traj;
+}
+TrajectoryParams LCIStrategicPlugin::ts_case4(double t, double et, double v0, double v1, double v_min, double a_max, double a_min, double x0, double x_end, double dx)
+{ 
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  double dt = et - t;
+  double nom1 = 2 * dx * ((((a_max / a_min) - 1) * v_min) + v1 - ((a_max / a_min) * v0));
+  double nom2 = dt * ((((a_max / a_min) - 1) * pow(v_min, 2)) + pow(v1, 2) - ((a_max / a_min) * pow(v0, 2)));
+  double den = ((a_max / a_min) * pow(v_min - v0, 2)) - pow(v_min - v1, 2);
+
+  if (den <= epsilon_ && den >= -epsilon_)
+    throw std::invalid_argument("CASE4: Received den near zero..." + std::to_string(den));
+
+  double tc = (nom1 - nom2) / den;
+
+  traj.v1_ = v_min;
+
+  if (dt - tc <= epsilon_ && dt - tc >= -epsilon_)
+    throw std::invalid_argument("CASE4: Received dt - tc near zero..." + std::to_string(dt - tc));
+
+  traj.a1_ = (((1 - (a_min / a_max)) * v_min) + ((a_min / a_max) * v1) - v0) / (dt - tc);
+
+  if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
+    throw std::invalid_argument("CASE4: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
+
+  traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
+  traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
+
+  traj.v2_ = v_min;
+  traj.a2_ = 0;
+  traj.t2_ = traj.t1_ + tc;
+  traj.x2_ = traj.x1_ + (v_min * tc);
+
+  traj.t3_ = et;
+  traj.a3_ = traj.a1_ * a_max / a_min;
+  traj.v3_ = v1;
+  traj.x3_ = x_end;
+
+  return traj;
+}
+
+TrajectoryParams LCIStrategicPlugin::ts_case5(double t, double et, double v0, double a_max, double a_min, double x0, double x_end, double dx)
+{ 
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  double dt = et - t;
+  double sqr = ((a_max / a_min) - 1) * ((2 * a_min * (dx - (v0 * dt))) - pow(a_min * dt, 2));
+  double v_hat = (v0 + (a_min * dt)) - (sqrt(sqr) / ((a_max / a_min) - 1));
+  double v_p = ((1 - (a_max / a_min)) * v_hat) + ((a_max / a_min) * v0) + (a_max * dt);
+
+  traj.v1_ = v_hat;
+  traj.a1_ = a_min;
+
+  if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
+    throw std::invalid_argument("CASE5: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
+
+  traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
+  traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
+
+  traj.v2_ = v_p;
+  traj.a2_ = a_max;
+  traj.t2_ = traj.t1_ + ((traj.v2_ - traj.v1_) / traj.a2_);
+  traj.x2_ = x_end;
+
+  traj.t3_ = traj.t2_;
+  traj.a3_ = 0;
+  traj.v3_ = traj.v2_;
+  traj.x3_ = traj.x2_;
+
+  return traj;
+}
+
+TrajectoryParams LCIStrategicPlugin::ts_case6(double t, double et, double v0, double v_min, double a_min, double x0, double x_end, double dx, double dx3, TrajectoryParams traj6)
+{ 
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  double dt = et - t;
+
+  traj.v1_ = v_min;
+  traj.a1_ = a_min;
+  traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
+
+  if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
+    throw std::invalid_argument("CASE6: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
+
+  traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
+
+  double tc;
+
+  if (dx <= dx3)
+    tc = 0;
+  else
+    tc = traj6.t2_ - traj6.t1_;
+
+  traj.v2_ = v_min;
+  traj.a2_ = 0;
+  traj.t2_ = traj.t1_ + tc;
+  traj.x2_ = traj.x1_ + (v_min * tc);
+
+  double dt_p = dt - (traj.t1_ - traj.t0_) - tc;
+
+  if (dt_p <= epsilon_ && dt_p >= -epsilon_)
+    throw std::invalid_argument("CASE6: Received dt_p near zero..." + std::to_string(dt_p));
+
+  double v_p = ((2 * a_min * (dx - (v_min * tc))) - (pow(v_min, 2) - pow(v0, 2)) - (v_min * dt_p * a_min)) / (dt_p * a_min);
+
+  traj.v3_ = v_p;
+  traj.a3_ = (v_p - v_min) / dt_p;
+  traj.t3_ = et;
+  traj.x3_ = x_end;
+
+  return traj;
+}
+
+TrajectoryParams LCIStrategicPlugin::ts_case7(double t, double et, double v0, double v_min, double a_min, double x0, double x_end, double dx)
+{ 
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  traj.v1_ = v_min;
+  traj.a1_ = a_min;
+  traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
+
+  if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
+    throw std::invalid_argument("CASE7: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
+
+  traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
+
+  double dt = et - t;
+  double v_p = v_min - sqrt(pow(v_min - v0, 2) - (2 * a_min * ((v_min * dt) - dx)));
+  double dt_p = (v_p - v_min) / a_min;
+
+  if (dt_p <= epsilon_ && dt_p >= -epsilon_)
+    throw std::invalid_argument("CASE7: Received dt_p near zero..." + std::to_string(dt_p));
+
+  double tc = dt - ((v_p - v0) / a_min);
+
+  traj.v2_ = v_min;
+  traj.a2_ = 0;
+  traj.t2_ = traj.t1_ + tc;
+  traj.x2_ = traj.x1_ + (v_min * tc);
+
+  traj.v3_ = v_p;
+  traj.a3_ = (v_p - v_min) / dt_p;
+  traj.t3_ = et;
+  traj.x3_ = x_end;
+
+  return traj;
+}
+
+TrajectoryParams LCIStrategicPlugin::ts_case8(double dx, double dx5, TrajectoryParams traj8)
+{ 
+  TrajectoryParams traj = traj8;
+  if (dx < dx5)
+  {
+    traj.is_algorithm_successful = false;
+    ROS_DEBUG_STREAM("!!! Safety error - the vehicle cannot stop at the stop bar ... Cruising...");
+    ROS_DEBUG_STREAM("!!! Safety error - the vehicle cannot stop at the stop bar ... Cruising...");
+    ROS_ERROR_STREAM("!!! Safety error - the vehicle cannot stop at the stop bar ... Cruising...");
+    ROS_ERROR_STREAM("!!! Safety error - the vehicle cannot stop at the stop bar ... Cruising...");
+  }
+  return traj;
+}
+
+
+TrajectoryParams LCIStrategicPlugin::boundary_accel_or_decel_incomplete_upper(double t, double v0, double v1, double a_max, double a_min, double x0, double x_end, double dx)
+{ 
+  double t_end;
+
+  if (v0 <= v1 + epsilon_)
+    t_end = t + (sqrt(pow(v0, 2) + (2 * a_max * dx)) - v0)/a_max;
+  else
+    t_end = t + (sqrt(pow(v0, 2) + (2 * a_min * dx)) - v0) / a_min;
+
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  traj.t1_ = t_end;
+
+  if (v0 <= v1 + epsilon_)
+  {
+    traj.a1_ = a_max;
+    traj.v1_ = sqrt(pow(v0, 2) + (2 * a_max * dx));
+  }
+  else
+  {
+    traj.a1_ = a_min;
+    traj.v1_ = sqrt(pow(v0, 2) + (2 * a_min * dx));
+  }
+
+  traj.x1_ = x_end;
+
+  traj.t2_ = traj.t1_;
+  traj.a2_ = 0;
+  traj.v2_ = traj.v1_;
+  traj.x2_ = traj.x1_;
+
+  traj.t3_ = traj.t1_;
+  traj.a3_ = 0;
+  traj.v3_ = traj.v1_;
+  traj.x3_ = traj.x1_;
+
+  return traj;
+}
+
+TrajectoryParams LCIStrategicPlugin::boundary_accel_nocruise_notmaxspeed_decel(double t, double v0, double v1, double a_max, double a_min, double x0, double x_end, double dx)
+{ 
+  // if (a_min - a_max <= epsilon_ && a_min - a_max >= -epsilon_)
+  //   throw std::invalid_argument("boundary_accel_nocruise_notmaxspeed_decel: Received a_min - a_max near zero..." + std::to_string(a_min - a_max));
+  
+  double v_hat = sqrt(((2 * dx * a_max * a_min) + (a_min * pow(v0, 2)) - (a_max * pow(v1, 2))) / (a_min - a_max)); //TODO CHECK a_min - a_max? segfault
+  double t_end = t + ((v_hat * (a_min - a_max)) - (v0 * a_min) + (v1 * a_max)) / (a_max * a_min);
+
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  traj.v1_ = v_hat;
+  traj.a1_ = a_max;
+  traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
+
+  traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
+
+  traj.t2_ = t_end;
+  traj.a2_ = a_min;
+  traj.v2_ = v1;
+  traj.x2_ = x_end;
+
+  traj.t3_ = traj.t2_;
+  traj.a3_ = 0;
+  traj.v3_ = traj.v2_;
+  traj.x3_ = traj.x2_;
+
+  return traj;
+
+}
+
+TrajectoryParams LCIStrategicPlugin::boundary_accel_cruise_maxspeed_decel(double t, double v0, double v1, double v_max, double a_max, double a_min, double x0, double x_end, double dx)
+{ 
+  double t_end = t + (dx / v_max) + (pow(v_max - v0, 2) / (2 * a_max * v_max)) - (pow(v1 - v_max, 2) / (2 * a_min * v_max));
+
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  traj.v1_ = v_max;
+  traj.a1_ = a_max;
+  traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
+  traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
+
+  traj.v2_ = v_max;
+  traj.a2_ = 0;
+  traj.t2_ = t_end - ((v1 - v_max) / a_min);
+  traj.x2_ = x_end - ((pow(v1, 2) - pow(v_max, 2)) / (2 * a_min));
+
+  traj.t3_ = t_end;
+  traj.a3_ = a_min;
+  traj.v3_ = v1;
+  traj.x3_ = x_end;
+
+  return traj;
+}
+
+TrajectoryParams LCIStrategicPlugin::boundary_accel_nocruise_maxspeed_decel(double t, double v0, double v1, double v_max, double a_max, double a_min, double x0, double x_end, double dx)
+{ 
+  double nom = (v_max - v0) + ((a_max / a_min) * (v1 - v_max));
+  double den = (pow(v_max, 2) - pow(v0, 2)) + ((a_max / a_min) * (pow(v1, 2) - pow(v_max, 2)));
+
+  if (den <= epsilon_ && den >= -epsilon_)
+    throw std::invalid_argument("boundary_accel_nocruise_maxspeed_decel: Received den near zero..." + std::to_string(den));
+  
+  double t_end = t + (2 * dx * nom / den);
+
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  double dt = t_end - t;
+  double tc = 0;
+
+  traj.v1_ = v_max;
+
+  if (dt - tc <= epsilon_ && dt - tc >= -epsilon_)
+    throw std::invalid_argument("boundary_accel_nocruise_maxspeed_decel: Received dt - tc near zero..." + std::to_string(dt - tc));
+
+  traj.a1_ = (((1 - (a_max / a_min)) * v_max) + ((a_max / a_min) * v1) - v0) / (dt - tc);
+
+  if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
+    throw std::invalid_argument("boundary_accel_nocruise_maxspeed_decel: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
+
+  traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
+  traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
+
+  traj.t2_ = t_end;
+  traj.a2_ = ((((a_min / a_max) - 1) * v_max) + v1 - ((a_min / a_max) * v0)) / (dt - tc);
+  traj.v2_ = v1;
+  traj.x2_ = x_end;
+
+  traj.t3_ = traj.t2_;
+  traj.a3_ = 0;
+  traj.v3_ = traj.v2_;
+  traj.x3_ = traj.x2_;
+
+  return traj;
+}
+
+TrajectoryParams LCIStrategicPlugin::boundary_accel_or_decel_complete_upper(double t, double v0, double v1, double x0, double x_end, double dx)
+{ 
+  if (v0 + v1 <= epsilon_ && v0 + v1 >= -epsilon_)
+    throw std::invalid_argument("boundary_accel_or_decel_complete_upper: Received v0 + v1 near zero..." + std::to_string(v0 + v1));
+  
+  double t_end = t + ((2 * dx) / (v0 + v1));
+
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  traj.t1_ = t_end;
+
+  if (dx <= epsilon_ && dx >= -epsilon_)
+    throw std::invalid_argument("boundary_accel_or_decel_complete_upper: Received dx near zero..." + std::to_string(dx));
+
+  traj.a1_ = (pow(v1, 2) - pow(v0, 2)) / (2 * dx);
+  traj.v1_ = v1;
+  traj.x1_ = x_end;
+
+  traj.t2_ = traj.t1_;
+  traj.a2_ = 0;
+  traj.v2_ = traj.v1_;
+  traj.x2_ = traj.x1_;
+
+  traj.t3_ = traj.t1_;
+  traj.a3_ = 0;
+  traj.v3_ = traj.v1_;
+  traj.x3_ = traj.x1_;
+
+  return traj;
+}
+
+TrajectoryParams LCIStrategicPlugin::boundary_decel_nocruise_notminspeed_accel(double t, double v0, double v1, double v_min, double a_max, double a_min, double x0, double x_end, double dx)
+{ 
+  double v_hat = sqrt(((2 * dx * a_max * a_min) + (a_max * pow(v0, 2)) - (a_min * pow(v1, 2))) / (a_max - a_min)); //TODO double check + - segfault
+  double t_end = t + ((v_hat * (a_max - a_min)) - (v0 * a_max) + (v1 * a_min)) / (a_max * a_min);
+
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  traj.v1_ = v_hat;
+  traj.a1_ = a_min;
+  traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
+  traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
+
+  traj.t2_ = t_end;
+  traj.a2_ = a_max;
+  traj.v2_ = v1;
+  traj.x2_ = x_end;
+
+  traj.t3_ = traj.t2_;
+  traj.a3_ = 0;
+  traj.v3_ = traj.v2_;
+  traj.x3_ = traj.x2_;
+
+  return traj;
+}
+
+TrajectoryParams LCIStrategicPlugin::boundary_decel_nocruise_minspeed_accel_incomplete(double t, double v0, double v_min, double a_max, double a_min, double x0, double x_end, double dx)
+{ 
+  double sqr = sqrt((2 * a_max * dx) - ((pow(v_min, 2) - pow(v0, 2)) * (a_max / a_min)) + pow(v_min, 2));
+
+  double t_end = t + ((sqr - v_min) / a_max) + ((v_min - v0) / a_min);
+
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  traj.v1_ = v_min;
+  traj.a1_ = a_min;
+  traj.t1_ = traj.t0_ + (traj.v1_ - traj.v0_) / a_min;
+  traj.x1_ = traj.x0_ + (pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * a_min);
+
+  traj.t2_ = t_end;
+  traj.a2_ = a_max;
+  traj.v2_ = (traj.a2_ * (traj.t2_ - traj.t1_)) + traj.v1_;
+  traj.x2_ = x_end;
+
+  traj.t3_ = traj.t2_;
+  traj.a3_ = 0;
+  traj.v3_ = traj.v2_;
+  traj.x3_ = traj.x2_;
+
+  return traj;
+}
+
+TrajectoryParams LCIStrategicPlugin::boundary_decel_nocruise_minspeed_accel_complete(double t, double v0, double v1, double v_max, double v_min, double a_max, double a_min, double x0, double x_end, double dx)
+{ 
+  double nom = (v1 - v_min) + ((a_max / a_min) * (v_min - v0));
+  double den = (pow(v1, 2) - pow(v_min, 2)) + ((a_max / a_min) * (pow(v_min, 2) - pow(v0, 2)));
+
+  if (den <= epsilon_ && den >= -epsilon_)
+    throw std::invalid_argument("boundary_decel_nocruise_minspeed_accel_complete: Received den near zero..." + std::to_string(den));
+
+  double t_end = t + (2 * dx * nom / den);
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  double dt = t_end - t;
+  double tc = 0;
+
+  traj.v1_ = v_min;
+
+  if (dt - tc <= epsilon_ && dt - tc >= -epsilon_)
+    throw std::invalid_argument("boundary_decel_nocruise_minspeed_accel_complete: Received dt - tc near zero..." + std::to_string(dt - tc));
+    
+  traj.a1_ = (((1 - (a_min / a_max)) * v_min) + ((a_min / a_max) * v1) - v0) / (dt - tc);
+  traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
+  traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
+
+  traj.t2_ = t_end;
+  traj.a2_ = ((((a_max / a_min) - 1) * v_min) + v1 - ((a_max / a_min) * v0)) / (dt - tc);
+  traj.v2_ = v1;
+  traj.x2_ = x_end;
+
+  traj.t3_ = traj.t2_;
+  traj.a3_ = 0;
+  traj.v3_ = traj.v2_;
+  traj.x3_ = traj.x2_;
+
+  return traj;
+}
+TrajectoryParams LCIStrategicPlugin::boundary_decel_cruise_minspeed_accel(double t, double v0, double v1, double v_min, double a_max, double a_min, double x0, double x_end, double dx)
+{ 
+  double t_end = t + (dx / v_min) + ((pow(v_min - v0, 2)) / (2 * a_min * v_min)) - ((pow(v1 - v_min, 2)) / (2 * a_max * v_min));
+
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  traj.v1_ = v_min;
+  traj.a1_ = a_min;
+  traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
+  traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
+
+  traj.v2_ = v_min;
+  traj.a2_ = 0;
+  traj.t2_ = t_end - ((v1 - v_min) / a_max);
+  traj.x2_ = x_end - ((pow(v1, 2) - pow(v_min, 2)) / (2 * a_max));
+
+  traj.t3_ = t_end;
+  traj.a3_ = a_max;
+  traj.v3_ = v1;
+  traj.x3_ = x_end;
+
+  return traj;
+}
+
+TrajectoryParams LCIStrategicPlugin::boundary_decel_cruise_minspeed(double t, double v0, double v_min, double a_min, double x0, double x_end, double dx)
+{ 
+  double t_end = t + (dx / v_min) + (pow(v_min - v0, 2) / (2 * a_min * v_min));
+
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  traj.v1_ = v_min;
+  traj.a1_ = a_min;
+  traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
+  traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
+
+  traj.v2_ = v_min;
+  traj.a2_ = 0;
+  traj.t2_ = t_end;
+  traj.x2_ = x_end;
+
+  traj.t3_ = traj.t2_;
+  traj.a3_ = traj.a2_;
+  traj.v3_ = traj.v2_;
+  traj.x3_ = traj.x2_;
+
+  return traj;
+}
+TrajectoryParams LCIStrategicPlugin::boundary_decel_incomplete_lower(double t, double v0, double a_min, double x0, double x_end, double dx)
+{ 
+  double t_end = t + (sqrt(pow(v0, 2) + (2 * a_min * dx)) - v0) / a_min;
+
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  traj.t1_ = t_end;
+  traj.v1_ = sqrt(pow(v0, 2) + (2 * a_min * dx));
+  traj.a1_ = a_min;
+  traj.x1_ = x_end;
+
+  traj.t2_ = traj.t1_;
+  traj.a2_ = 0;
+  traj.v2_ = traj.v1_;
+  traj.x2_ = traj.x1_;
+
+  traj.t3_ = traj.t1_;
+  traj.a3_ = 0;
+  traj.v3_ = traj.v1_;
+  traj.x3_ = traj.x1_;
+
+  return traj;
+}
+TrajectoryParams LCIStrategicPlugin::boundary_decel_cruise_minspeed_decel(double t, double v0, double v_min, double a_min, double x0, double x_end, double dx)
+{ 
+  double t_end = t + (dx / v_min) + (v0 * (v0 - (2 * v_min)) / (2 * a_min * v_min));
+
+  TrajectoryParams traj;
+
+  traj.t0_ = t;
+  traj.v0_ = v0;
+  traj.x0_ = x0;
+
+  traj.v1_ = v_min;
+  traj.a1_ = a_min;
+
+  if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
+    throw std::invalid_argument("boundary_decel_cruise_minspeed_decel: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
+
+  traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
+  traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
+
+  traj.a2_ = 0;
+  traj.v2_ = v_min;
+  traj.t2_ = t_end - ((0 - traj.v2_) / a_min);
+  traj.x2_ = x_end - ((0 - pow(traj.v2_, 2)) / (2 * a_min));
+
+  traj.t3_ = t_end;
+  traj.a3_ = a_min;
+  traj.v3_ = 0;
+  traj.x3_ = x_end;
+
+  return traj;
+}
+
+
+//// NEW EQUATIONS END
 }  // namespace lci_strategic_plugin

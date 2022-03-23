@@ -97,7 +97,7 @@ install(DIRECTORY launch config
 #############
 ## Testing ##
 #############
-catkin_add_gmock(${PROJECT_NAME}-test 
- test/test_lci_tactical_plugin.cpp
- WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
-target_link_libraries(${PROJECT_NAME}-test light_controlled_intersection_tactical_library ${catkin_LIBRARIES})
+# catkin_add_gmock(${PROJECT_NAME}-test 
+#  test/test_lci_tactical_plugin.cpp
+#  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+# target_link_libraries(${PROJECT_NAME}-test light_controlled_intersection_tactical_library ${catkin_LIBRARIES})
