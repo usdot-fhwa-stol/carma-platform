@@ -2567,7 +2567,7 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("Run Candidate Leader State ");
         long tsStart = ros::Time::now().toNSec() / 1000000;
         // Task 1: State time out
-        if (tsStart - waitingStartTime > waitingStateTimeout * 1000)
+        if (tsStart - candidatestateStartTime > waitingStateTimeout * 1000)
         {
             //TODO if the current state timeouts, we need to have a kind of ABORT message to inform the applicant
             ROS_DEBUG_STREAM("CandidateLeader state is timeout, changing back to PlatoonLeaderState.");
