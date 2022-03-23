@@ -298,8 +298,11 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
   ROS_DEBUG_STREAM("safe_distance_to_stop at max_comfort_decel:  " << safe_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
 
   double desired_distance_to_stop = pow(current_state.speed, 2)/(max_comfort_decel_norm_ / std::max(4.0, (double)config_.min_gap));
-  ROS_DEBUG_STREAM("desired_distance_to_stop at at config_.min_gap fraction: max_comfort_decel:  " << desired_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_ / config_.min_gap);
+  ROS_DEBUG_STREAM("desired_distance_to_stop at at config_.min_gap fraction: max_comfort_decel:  " << desired_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_ / std::max(4.0, (double)config_.min_gap));
   
+  desired_distance_to_stop = std::max(config_.min_approach_distance, desired_distance_to_stop);
+  ROS_DEBUG_STREAM("desired_distance_to_stop updated to: " << desired_distance_to_stop);
+
   // earlier stop than this would result in stopping way before intersection
   double min_bound_stop_time =
     (2.0 * distance_remaining_to_traffic_light) / current_state.speed;  // Kinematic Equation: 2*d / (vf + vi) = t where vf = 0

@@ -65,9 +65,9 @@ cd ../astuff_sensor_msgs
 echo "" > COLCON_IGNORE
 #
 
-cd ../../carma-platform/mock_drivers/rosbag_mock_drivers
-echo "" > COLCON_IGNORE
-cd ../../mobilitypath_publisher
+#cd ../../carma-platform/mock_drivers/rosbag_mock_drivers
+#echo "" > COLCON_IGNORE
+cd ../../carma-platform/mobilitypath_publisher
 echo "" > COLCON_IGNORE
 cd ../mobilitypath_visualizer
 echo "" > COLCON_IGNORE
