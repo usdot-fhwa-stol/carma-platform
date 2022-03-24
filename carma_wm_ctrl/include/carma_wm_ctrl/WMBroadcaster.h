@@ -383,7 +383,6 @@ public:
   void publishLightId();
 
   /*! \brief populate upcoming_intersection_ids_ from local traffic lanelet ids
-  @param current_lanelet vehicle location
    */
   void updateUpcomingSGIntersectionIds();
 
