@@ -391,13 +391,13 @@ public:
   void setConfigVehicleId(std::string vehicle_id);
 
    /*!
-   * \brief Sets the TCM Aknowledgement publish times. 
-   @param ack_pub_times the number of times it publishes TCM Aknowledgement 
+   * \brief Sets the TCM Acknowledgement publish times. 
+   @param ack_pub_times the number of times it publishes TCM Acknowledgement 
    */
   void setConfigACKPubTimes(int ack_pub_times);
 
   /*!
-  * \brief Construct TCM aknowledgement object and populate it with params. Publish the object for a configured number of times.
+  * \brief Construct TCM acknowledgement object and populate it with params. Publish the object for a configured number of times.
   */
   void pubTCMACK(j2735_msgs::Id64b tcm_req_id, uint16_t msgnum, uint8_t ack_status, const std::string ack_reason);
 
