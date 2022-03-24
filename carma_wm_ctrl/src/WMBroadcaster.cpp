@@ -2108,7 +2108,7 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds(const lanelet::Lanelet cur_l
       
       for(auto inner_itr = exit_lls.begin(); inner_itr != exit_lls.end(); inner_itr++)
       {
-        if(std::find(cur_route_lanelet_ids.begin(), cur_route_lanelet_ids.end() , *inner_itr) != cur_route_lanelet_ids.end())
+        if(std::find(cur_route_lanelet_ids.begin(), cur_route_lanelet_ids.end() , inner_itr->id() ) != cur_route_lanelet_ids.end())
         {
           intersection_id = itr->get()->id();
         }
