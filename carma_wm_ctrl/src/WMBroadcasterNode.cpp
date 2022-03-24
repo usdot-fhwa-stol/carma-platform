@@ -57,6 +57,10 @@ WMBroadcasterNode::WMBroadcasterNode()
 
 int WMBroadcasterNode::run()
 {
+  int ack_pub_times = 1;
+  pnh_.getParam("ack_pub_times", ack_pub_times);
+  wmb_.setConfigACKPubTimes(ack_pub_times);
+  
   // Map Publisher
   map_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("semantic_map", 1, true);
   // Map Update Publisher
@@ -67,7 +71,7 @@ int WMBroadcasterNode::run()
   //Check Active Geofence Publisher
   active_pub_ = cnh_.advertise<cav_msgs::CheckActiveGeofence>("active_geofence", 200, true);
   //publish TCM acknowledgement after processing TCM
-  tcm_ack_pub_ = cnh_.advertise<cav_msgs::MobilityOperation>("outgoing_geofence_ack", 1, true);
+  tcm_ack_pub_ = cnh_.advertise<cav_msgs::MobilityOperation>("outgoing_geofence_ack", 2 * ack_pub_times , true);
   // Base Map Sub
   base_map_sub_ = cnh_.subscribe("base_map", 1, &WMBroadcaster::baseMapCallback, &wmb_);
   // Base Map Georeference Sub
@@ -90,7 +94,6 @@ int WMBroadcasterNode::run()
 
   double config_limit;
   double lane_max_width;
-  int ack_pub_times;
   std::string vehicle_id;
   pnh_.getParam("max_lane_width", lane_max_width);
   wmb_.setMaxLaneWidth(lane_max_width);
@@ -100,9 +103,6 @@ int WMBroadcasterNode::run()
 
   pnh2_.getParam("/vehicle_id", vehicle_id);
   wmb_.setConfigVehicleId(vehicle_id);
-
-  pnh_.getParam("ack_pub_times", ack_pub_times);
-  wmb_.setConfigACKPubTimes(ack_pub_times);
 
   std::string participant;
   pnh2_.getParam("/vehicle_participant_type", participant);

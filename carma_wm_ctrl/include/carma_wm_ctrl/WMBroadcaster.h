@@ -388,7 +388,7 @@ public:
    * \brief Retrieve the vehicle ID from global vehicle parameters, and set instance memeber vehicle id
    @param vehicle_id Vehicle ID from UniqueVehicleParams.yaml 
    */
-  void setConfigVehicleId(std::string vehicle_id);
+  void setConfigVehicleId(const std::string& vehicle_id);
 
    /*!
    * \brief Sets the TCM Acknowledgement publish times. 
@@ -399,7 +399,7 @@ public:
   /*!
   * \brief Construct TCM acknowledgement object and populate it with params. Publish the object for a configured number of times.
   */
-  void pubTCMACK(j2735_msgs::Id64b tcm_req_id, uint16_t msgnum, uint8_t ack_status, const std::string ack_reason);
+  void pubTCMACK(j2735_msgs::Id64b tcm_req_id, uint16_t msgnum, uint8_t ack_status, const std::string& ack_reason);
 
 
   visualization_msgs::MarkerArray tcm_marker_array_;

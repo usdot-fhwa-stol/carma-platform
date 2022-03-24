@@ -1050,7 +1050,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   // quickly check if the id has been added
   if (geofence_msg.choice != cav_msgs::TrafficControlMessage::TCMV01) {
     reason_ss << "Dropping received geofence for unsupported TrafficControl version: " << geofence_msg.choice;
-    ROS_WARN_STREAM(reason_ss.str());
+    ROS_WARN_STREAM(reason_ss);
     pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, acknowledgement_status__rejected, reason_ss.str());
     return;
   }
@@ -1060,7 +1060,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end()) { 
     reason_ss.str("");
     reason_ss << "Dropping received TrafficControl message with already handled id: " << boost::uuids::to_string(id);
-    ROS_DEBUG_STREAM(reason_ss.str());
+    ROS_DEBUG_STREAM(reason_ss);
     pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, acknowledgement_status__acknowledged, reason_ss.str());
     return;
   }
@@ -1182,7 +1182,7 @@ void WMBroadcaster::setConfigSpeedLimit(double cL)
   config_limit = lanelet::Velocity(cL * lanelet::units::MPH());
 }
 
-void WMBroadcaster::setConfigVehicleId(std::string vehicle_id){
+void WMBroadcaster::setConfigVehicleId(const std::string& vehicle_id){
   vehicle_id_ = vehicle_id;
 }
 
@@ -2078,7 +2078,7 @@ lanelet::Lanelet  WMBroadcaster::createLinearInterpolatingLanelet(const lanelet:
   return lanelet::Lanelet(lanelet::utils::getId(), createLinearInterpolatingLinestring(left_front_pt, left_back_pt, increment_distance), createLinearInterpolatingLinestring(right_front_pt, right_back_pt, increment_distance));
 }
 
-void WMBroadcaster::pubTCMACK(j2735_msgs::Id64b tcm_req_id, uint16_t msgnum, uint8_t ack_status, const std::string ack_reason)
+void WMBroadcaster::pubTCMACK(j2735_msgs::Id64b tcm_req_id, uint16_t msgnum, uint8_t ack_status, const std::string& ack_reason)
 {
   cav_msgs::MobilityOperation mom_msg;
   mom_msg.m_header.timestamp = ros::Time::now().toNSec()/1000000;
