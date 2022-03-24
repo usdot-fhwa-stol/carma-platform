@@ -52,6 +52,32 @@ def generate_launch_description():
 
     # Nodes
     # TODO add ROS2 localization nodes here
+    
+    gnss_to_map_convertor_param_file = os.path.join(
+    get_package_share_directory('gnss_to_map_convertor'), 'config/parameters.yaml')
+
+    gnss_to_map_convertor_container = ComposableNodeContainer(
+    package='carma_ros2_utils',
+    name='gnss_to_map_convertor_container',
+    executable='carma_component_container_mt',
+    namespace=GetCurrentNamespace(),
+    composable_node_descriptions=[
+
+        ComposableNode(
+                package='gnss_to_map_convertor',
+                plugin='gnss_to_map_convertor::Node',
+                name='gnss_to_map_convertor',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('gnss_to_map_convertor', env_log_levels) }
+                ],
+                remappings=[
+                    ("gnss_fix_fused", "$(optenv CARMA_INTR_NS)/gnss_fix_fused"),
+                    ("georeference", "map_param_loader/georeference"),
+                ],
+                parameters=[ gnss_to_map_convertor_param_file ]
+        )
+    ])
 
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
