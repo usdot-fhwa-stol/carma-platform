@@ -1916,8 +1916,6 @@ cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geom
   // Obtain the closest lanelet to the vehicle's current position
   auto current_llt = lanelet::geometry::findNearest(current_map_->laneletLayer, curr_pos, 1)[0].second;
 
-  //updating upcoming traffic signal group id and intersection id
-  updateUpcomingSGIntersectionIds(current_llt);
 
   /* determine whether or not the vehicle's current position is within an active geofence */
   if (boost::geometry::within(curr_pos, current_llt.polygon2d().basicPolygon()))
@@ -2078,43 +2076,49 @@ lanelet::Lanelet  WMBroadcaster::createLinearInterpolatingLanelet(const lanelet:
   return lanelet::Lanelet(lanelet::utils::getId(), createLinearInterpolatingLinestring(left_front_pt, left_back_pt, increment_distance), createLinearInterpolatingLinestring(right_front_pt, right_back_pt, increment_distance));
 }
 
-void WMBroadcaster::updateUpcomingSGIntersectionIds(const lanelet::Lanelet cur_lanelet)
+void WMBroadcaster::updateUpcomingSGIntersectionIds()
 {
   uint16_t map_msg_intersection_id = 0;
   uint16_t cur_signal_group_id = 0;
-  for(auto itr = sim_.signal_group_to_entry_lanelet_ids_.begin(); itr != sim_.signal_group_to_entry_lanelet_ids_.end(); itr++)
-  {
-    if(itr->second.find(cur_lanelet.id()) != itr->second.end())
+  std::vector<lanelet::CarmaTrafficSignalPtr> traffic_lights;
+  lanelet::Lanelet route_lanelet;
+  lanelet::Ids cur_route_lanelet_ids = current_route.route_path_lanelet_ids;
+  bool isLightFound = false;
+  for(auto id : cur_route_lanelet_ids) 
+  {    
+    route_lanelet= current_map_->laneletLayer.get(id);
+    traffic_lights = route_lanelet.regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
+    if(!traffic_lights.empty())
     {
-      cur_signal_group_id = itr->first;
+      isLightFound  = true;
+      break;
     }
   }
 
-  auto intersections = cur_lanelet.regulatoryElementsAs<lanelet::SignalizedIntersection>();
+  if(isLightFound)
+  {
+    for(auto itr = sim_.signal_group_to_traffic_light_id_.begin(); itr != sim_.signal_group_to_traffic_light_id_.end(); itr++)
+    {     
+      if(itr->second == traffic_lights.front()->id())
+      {
+        cur_signal_group_id = itr->first;
+      }
+    }
+  }
+  else{
+     ROS_DEBUG_STREAM("NO matching Traffic lights along the route");
+  }
+
+  auto intersections = route_lanelet.regulatoryElementsAs<lanelet::SignalizedIntersection>();
   if (intersections.empty())
   {
     // no match if any of the entry lanelet is not part of any intersection.
-    ROS_DEBUG_STREAM("NO matching intersection for current lanelet. lanelet id = " << cur_lanelet.id());
+    ROS_DEBUG_STREAM("NO matching intersection for current lanelet. lanelet id = " << route_lanelet.id());
   }
   else
   {
-    lanelet::Ids cur_route_lanelet_ids = current_route.route_path_lanelet_ids;
-    lanelet::Id intersection_id = lanelet::InvalId ;
-
-    //Identify intersection based on the exit lanelets.
-    for(auto itr = intersections.begin(); itr != intersections.end(); itr++)
-    {
-      lanelet::ConstLanelets exit_lls = itr->get()->getExitLanelets();
-      
-      for(auto inner_itr = exit_lls.begin(); inner_itr != exit_lls.end(); inner_itr++)
-      {
-        if(std::find(cur_route_lanelet_ids.begin(), cur_route_lanelet_ids.end() , inner_itr->id() ) != cur_route_lanelet_ids.end())
-        {
-          intersection_id = itr->get()->id();
-        }
-      }      
-    }
-
+    //Currently, each lanelet has only one intersection
+    lanelet::Id intersection_id = intersections.front()->id();    
     if(intersection_id != lanelet::InvalId)
     {
       for(auto itr = sim_.intersection_id_to_regem_id_.begin(); itr != sim_.intersection_id_to_regem_id_.end(); itr++)

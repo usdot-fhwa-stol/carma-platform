@@ -385,7 +385,7 @@ public:
   /*! \brief populate upcoming_intersection_ids_ from local traffic lanelet ids
   @param current_lanelet vehicle location
    */
-  void updateUpcomingSGIntersectionIds(const lanelet::Lanelet cur_lanelet);
+  void updateUpcomingSGIntersectionIds();
 
   visualization_msgs::MarkerArray tcm_marker_array_;
   cav_msgs::TrafficControlRequestPolygon tcr_polygon_;
