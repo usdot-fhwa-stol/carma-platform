@@ -2133,7 +2133,8 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds()
 
   ROS_DEBUG_STREAM("MAP msg: Intersection ID = " <<  map_msg_intersection_id << ", Signal Group ID =" << cur_signal_group_id );
   if(map_msg_intersection_id != 0 && cur_signal_group_id != 0)
-  {    
+  { 
+    upcoming_intersection_ids_.data.clear();
     upcoming_intersection_ids_.data.push_back(static_cast<int>(map_msg_intersection_id));
     upcoming_intersection_ids_.data.push_back(static_cast<int>(cur_signal_group_id));
   }
