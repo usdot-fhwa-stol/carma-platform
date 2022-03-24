@@ -1050,7 +1050,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   // quickly check if the id has been added
   if (geofence_msg.choice != cav_msgs::TrafficControlMessage::TCMV01) {
     reason_ss << "Dropping received geofence for unsupported TrafficControl version: " << geofence_msg.choice;
-    ROS_WARN_STREAM(reason_ss);
+    ROS_WARN_STREAM(reason_ss.str());
     pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::REJECTED), reason_ss.str());
     return;
   }
@@ -1060,7 +1060,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end()) { 
     reason_ss.str("");
     reason_ss << "Dropping received TrafficControl message with already handled id: " << boost::uuids::to_string(id);
-    ROS_DEBUG_STREAM(reason_ss);
+    ROS_DEBUG_STREAM(reason_ss.str());
     pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::ACKNOWLEDGED), reason_ss.str());
     return;
   }
