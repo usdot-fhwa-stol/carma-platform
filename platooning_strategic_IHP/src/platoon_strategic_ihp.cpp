@@ -1668,7 +1668,11 @@ namespace platoon_strategic_ihp
         bool inTheSameLane = abs(obj_cross_track - current_crosstrack_) < config_.maxCrosstrackError;
         ROS_DEBUG_STREAM("current_cross_track error = " << abs(obj_cross_track - current_crosstrack_));
         ROS_DEBUG_STREAM("inTheSameLane = " << inTheSameLane);
-        if (isTargetVehicle && isCandidateJoin && inTheSameLane)
+        ROS_DEBUG_STREAM("isTargetVehicle = " << isTargetVehicle);
+        ROS_DEBUG_STREAM("isCandidateJoin = " << isCandidateJoin);
+        ROS_DEBUG_STREAM("fj_new_joiner_Id_ = " << fj_new_joiner_Id_);
+        // TODO temporarily disablethe check
+        if (true)//(isTargetVehicle && isCandidateJoin && inTheSameLane)
         {
             ROS_DEBUG_STREAM("New joiner vehicle " << fj_new_joiner_Id_ << " (previous leader) is joining .");
             ROS_DEBUG_STREAM("Changing to PlatoonLeaderState and send ACK to the new joiner vehicle");
