@@ -461,8 +461,10 @@ private:
   size_t update_count_ = 0; // Records the total number of sent map updates. Used as the set value for update.seq_id
 
   carma_wm::SignalizedIntersectionManager sim_;
-  const uint8_t acknowledgement_status__acknowledged = 1;
-  const uint8_t acknowledgement_status__rejected = 2;
+  enum class AcknowledgementStatus {
+    ACKNOWLEDGED = 1,
+    REJECTED = 2
+  };
   const std::string geofence_ack_strategy_ = "carma3/Geofence_Acknowledgement";
   int ack_pub_times_ = 1;
   std::string vehicle_id_;

@@ -1051,7 +1051,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   if (geofence_msg.choice != cav_msgs::TrafficControlMessage::TCMV01) {
     reason_ss << "Dropping received geofence for unsupported TrafficControl version: " << geofence_msg.choice;
     ROS_WARN_STREAM(reason_ss);
-    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, acknowledgement_status__rejected, reason_ss.str());
+    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, AcknowledgementStatus::REJECTED, reason_ss.str());
     return;
   }
 
@@ -1061,7 +1061,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
     reason_ss.str("");
     reason_ss << "Dropping received TrafficControl message with already handled id: " << boost::uuids::to_string(id);
     ROS_DEBUG_STREAM(reason_ss);
-    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, acknowledgement_status__acknowledged, reason_ss.str());
+    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, AcknowledgementStatus::ACKNOWLEDGED, reason_ss.str());
     return;
   }
 
@@ -1091,13 +1091,13 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
     scheduleGeofence(gf_ptr);
     reason_ss.str("");
     reason_ss << "Successfully processed TCM.";
-    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, acknowledgement_status__acknowledged, reason_ss.str());
+    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, AcknowledgementStatus::ACKNOWLEDGED, reason_ss.str());
   }
   catch(std::exception& ex)
   {
     reason_ss.str("");
     reason_ss << "Failed to process TCM. " << ex.what();
-    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, acknowledgement_status__rejected, reason_ss.str());
+    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, AcknowledgementStatus::REJECTED, reason_ss.str());
     throw; //rethrows the exception object
   }
 };
