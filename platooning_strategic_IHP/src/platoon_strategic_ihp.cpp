@@ -1066,7 +1066,7 @@ namespace platoon_strategic_ihp
             }
 
             // step 5. Request cut-in join (front, middle or rear, from adjacent lane)
-            else if (isVehicleNearTargetPlatoon(rearVehicleDtd, frontVehicleDtd, frontVehicleCtd))
+            else if (isVehicleNearTargetPlatoon(rearVehicleDtd, frontVehicleDtd, frontVehicleCtd) && !config_.test_front_join)
             {
                 /**
                  * UCLA Implementation note:
@@ -2090,17 +2090,20 @@ namespace platoon_strategic_ihp
         if (pm_.current_plan.valid)
         {
             bool isForCurrentPlan = msg.header.plan_id == pm_.current_plan.planId;
+            bool isForFrontJoin = msg.plan_type.type == cav_msgs::PlanType::PLATOON_FRONT_JOIN;
             // bool isFromTargetVehicle = msg.header.sender_id == pm_.targetLeaderId;
             bool isFromTargetVehicle = msg.header.sender_id == fj_new_joiner_Id_;
             ROS_DEBUG_STREAM("msg.header.sender_id " << msg.header.sender_id);
             ROS_DEBUG_STREAM("fj_new_joiner_Id_ " << fj_new_joiner_Id_);
             ROS_DEBUG_STREAM("pm_.targetLeaderId " << pm_.targetLeaderId);
-            
+            ROS_DEBUG_STREAM("Plan Type " << msg.plan_type.type);
+            ROS_DEBUG_STREAM("isForFrontJoin " << isForFrontJoin);
+
             ROS_DEBUG_STREAM("isForCurrentPlan " << isForCurrentPlan);
             ROS_DEBUG_STREAM("isFromTargetVehicle " << isFromTargetVehicle);
 
             // Check the response is received correctly (i.e., host vehicle is the desired receiver).
-            if (isForCurrentPlan && isFromTargetVehicle)
+            if (isForCurrentPlan && isFromTargetVehicle && isForFrontJoin)
             {
                 if (msg.is_accepted)
                 {
