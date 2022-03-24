@@ -1671,7 +1671,7 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("isTargetVehicle = " << isTargetVehicle);
         ROS_DEBUG_STREAM("isCandidateJoin = " << isCandidateJoin);
         ROS_DEBUG_STREAM("fj_new_joiner_Id_ = " << fj_new_joiner_Id_);
-        if (isTargetVehicle && inTheSameLane)
+        if (isCandidateJoin && inTheSameLane)
         {
             ROS_DEBUG_STREAM("New joiner vehicle " << fj_new_joiner_Id_ << " (previous leader) is joining .");
             ROS_DEBUG_STREAM("Changing to PlatoonLeaderState and send ACK to the new joiner vehicle");
