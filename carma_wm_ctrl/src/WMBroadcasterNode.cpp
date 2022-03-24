@@ -98,6 +98,8 @@ int WMBroadcasterNode::run()
       tcm_visualizer_pub_.publish(wmb_.tcm_marker_array_);
       tcr_visualizer_pub_.publish(wmb_.tcr_polygon_);
       wmb_.publishLightId();
+      //updating upcoming traffic signal group id and intersection id
+      wmb_.updateUpcomingSGIntersectionIds();
       if (wmb_.upcoming_intersection_ids_.data.size() > 0)
         upcoming_intersection_ids_pub_.publish(wmb_.upcoming_intersection_ids_);
       if(wmb_.getRoute().route_path_lanelet_ids.size() > 0)
