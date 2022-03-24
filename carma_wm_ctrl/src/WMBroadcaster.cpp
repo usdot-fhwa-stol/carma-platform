@@ -2107,7 +2107,7 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds()
   }
   else{
      ROS_DEBUG_STREAM("NO matching Traffic lights along the route");
-  }
+  }//END Traffic signals
 
   auto intersections = route_lanelet.regulatoryElementsAs<lanelet::SignalizedIntersection>();
   if (intersections.empty())
@@ -2129,12 +2129,14 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds()
         }
       }
     }
+  } //END intersections
 
-    ROS_DEBUG_STREAM("MAP msg: Intersection ID = " <<  map_msg_intersection_id << ", Signal Group ID =" << cur_signal_group_id );
+  ROS_DEBUG_STREAM("MAP msg: Intersection ID = " <<  map_msg_intersection_id << ", Signal Group ID =" << cur_signal_group_id );
+  if(map_msg_intersection_id != 0 && cur_signal_group_id != 0)
+  {    
     upcoming_intersection_ids_.data.push_back(static_cast<int>(map_msg_intersection_id));
     upcoming_intersection_ids_.data.push_back(static_cast<int>(cur_signal_group_id));
-
-  } //END intersections
+  }
 }
 
 const uint8_t WorkZoneSection::OPEN = 0;
