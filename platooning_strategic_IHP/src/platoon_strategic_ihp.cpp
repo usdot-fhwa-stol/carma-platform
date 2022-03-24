@@ -1561,7 +1561,7 @@ namespace platoon_strategic_ihp
 
                     // ----------------- give up leader position and look for new leader --------------------------
                     ROS_DEBUG_STREAM("Received positive response for plan id = " << pm_.current_plan.planId);
-                    ROS_DEBUG_STREAM("Change to CandidateFollower state and notify trajectory failure in order to replan");
+                    ROS_DEBUG_STREAM("Change to LEADERABORTING state and notify trajectory failure in order to replan");
 
                     // adjust for frontal join. Platoon info is related to the platoon at back of the candidate leader vehicle.
                     pm_.current_platoon_state = PlatoonState::LEADERABORTING;
@@ -1652,7 +1652,7 @@ namespace platoon_strategic_ihp
     {
         // This state does not handle any mobility request for now
         // TODO Maybe it should handle some ABORT request from a waiting leader
-        ROS_DEBUG_STREAM("Recived mobility request with type " << msg.plan_type.type << " but ignored.");
+        ROS_DEBUG_STREAM("Received mobility request with type " << msg.plan_type.type << " but ignored.");
         return MobilityRequestResponse::NO_RESPONSE;
     }
 
