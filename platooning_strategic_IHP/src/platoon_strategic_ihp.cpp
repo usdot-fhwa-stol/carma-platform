@@ -2091,6 +2091,21 @@ namespace platoon_strategic_ihp
         {
             bool isForCurrentPlan = msg.header.plan_id == pm_.current_plan.planId;
             bool isForFrontJoin = msg.plan_type.type == cav_msgs::PlanType::PLATOON_FRONT_JOIN;
+
+
+            //TODO remove these diagnostics
+            isForFrontJoin = true;
+            if (msg.plan_type.type == cav_msgs::PlanType::UNKNOWN){
+                ROS_DEBUG_STREAM("*** plan type UNKNOWN");
+            }else if (msg.plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT){
+                ROS_DEBUG_STREAM("*** plan type JOIN_PLATOON_FROM_FRONT");
+            }else if (msg.plan_type.type == cav_msgs::PlanType::CUT_IN_FROM_SIDE){
+                ROS_DEBUG_STREAM("*** plan type CUT_IN_FROM_SIDE");
+            }else {
+                ROS_DEBUG_STREAM("*** plan type not captured.");
+            }
+
+
             // bool isFromTargetVehicle = msg.header.sender_id == pm_.targetLeaderId;
             bool isFromTargetVehicle = msg.header.sender_id == fj_new_joiner_Id_;
             ROS_DEBUG_STREAM("msg.header.sender_id " << msg.header.sender_id);
