@@ -2078,7 +2078,7 @@ lanelet::Lanelet  WMBroadcaster::createLinearInterpolatingLanelet(const lanelet:
   return lanelet::Lanelet(lanelet::utils::getId(), createLinearInterpolatingLinestring(left_front_pt, left_back_pt, increment_distance), createLinearInterpolatingLinestring(right_front_pt, right_back_pt, increment_distance));
 }
 
-void WMBroadcaster::pubTCMACK(j2735_msgs::Id64b tcm_req_id, uint16_t msgnum, uint8_t ack_status, const std::string& ack_reason)
+void WMBroadcaster::pubTCMACK(j2735_msgs::Id64b tcm_req_id, uint16_t msgnum, AcknowledgementStatus ack_status, const std::string& ack_reason)
 {
   cav_msgs::MobilityOperation mom_msg;
   mom_msg.m_header.timestamp = ros::Time::now().toNSec()/1000000;
@@ -2091,7 +2091,7 @@ void WMBroadcaster::pubTCMACK(j2735_msgs::Id64b tcm_req_id, uint16_t msgnum, uin
   }
 	std::string tcmv01_req_id_hex = ss.str();	
   ss.str("");
-  ss << "traffic_control_id:" << tcmv01_req_id_hex << ", msgnum:"<< msgnum << ", acknowledgement:" << ack_status << ", reason:" << ack_reason;
+  ss << "traffic_control_id:" << tcmv01_req_id_hex << ", msgnum:"<< msgnum << ", acknowledgement:" << static_cast<int>(ack_status) << ", reason:" << ack_reason;
   mom_msg.strategy_params = ss.str();
   for(int i = 0; i < ack_pub_times_; i++)
   {

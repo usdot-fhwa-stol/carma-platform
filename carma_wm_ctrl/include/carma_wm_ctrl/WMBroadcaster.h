@@ -399,7 +399,7 @@ public:
   /*!
   * \brief Construct TCM acknowledgement object and populate it with params. Publish the object for a configured number of times.
   */
-  void pubTCMACK(j2735_msgs::Id64b tcm_req_id, uint16_t msgnum, uint8_t ack_status, const std::string& ack_reason);
+  void pubTCMACK(j2735_msgs::Id64b tcm_req_id, uint16_t msgnum, AcknowledgementStatus ack_status, const std::string& ack_reason);
 
 
   visualization_msgs::MarkerArray tcm_marker_array_;
