@@ -45,11 +45,15 @@ void WMBroadcasterNode::publishActiveGeofence(const cav_msgs::CheckActiveGeofenc
   active_pub_.publish(active_geof_msg);
 }
 
+void WMBroadcasterNode::publishTCMACK(const cav_msgs::MobilityOperation& mom_msg)
+{
+  tcm_ack_pub_.publish(mom_msg);
+}
 
 WMBroadcasterNode::WMBroadcasterNode()
   : wmb_(std::bind(&WMBroadcasterNode::publishMap, this, _1), std::bind(&WMBroadcasterNode::publishMapUpdate, this, _1), 
   std::bind(&WMBroadcasterNode::publishCtrlReq, this, _1), std::bind(&WMBroadcasterNode::publishActiveGeofence, this, _1),
-    std::make_unique<carma_utils::timers::ROSTimerFactory>()){};
+    std::make_unique<carma_utils::timers::ROSTimerFactory>(), std::bind(&WMBroadcasterNode::publishTCMACK, this, _1)){};
 
 int WMBroadcasterNode::run()
 {
@@ -62,6 +66,8 @@ int WMBroadcasterNode::run()
   control_msg_pub_= cnh_.advertise<cav_msgs::TrafficControlRequest>("outgoing_geofence_request", 1, true);
   //Check Active Geofence Publisher
   active_pub_ = cnh_.advertise<cav_msgs::CheckActiveGeofence>("active_geofence", 200, true);
+  //publish TCM acknowledgement after processing TCM
+  tcm_ack_pub_ = cnh_.advertise<cav_msgs::MobilityOperation>("outgoing_geofence_ack", 1, true);
   // Base Map Sub
   base_map_sub_ = cnh_.subscribe("base_map", 1, &WMBroadcaster::baseMapCallback, &wmb_);
   // Base Map Georeference Sub
@@ -84,11 +90,19 @@ int WMBroadcasterNode::run()
 
   double config_limit;
   double lane_max_width;
+  int ack_pub_times;
+  std::string vehicle_id;
   pnh_.getParam("max_lane_width", lane_max_width);
   wmb_.setMaxLaneWidth(lane_max_width);
 
   pnh2_.getParam("/config_speed_limit", config_limit);
   wmb_.setConfigSpeedLimit(config_limit);
+
+  pnh2_.getParam("/vehicle_id", vehicle_id);
+  wmb_.setConfigVehicleId(vehicle_id);
+
+  pnh_.getParam("ack_pub_times", ack_pub_times);
+  wmb_.setConfigACKPubTimes(ack_pub_times);
 
   std::string participant;
   pnh2_.getParam("/vehicle_participant_type", participant);
