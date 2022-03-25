@@ -72,7 +72,7 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('gnss_to_map_convertor', env_log_levels) }
                 ],
                 remappings=[
-                    ("gnss_fix_fused", "$(optenv CARMA_INTR_NS)/gnss_fix_fused"),
+                    ("gnss_fix_fused",  EnvironmentVariable('CARMA_INTR_NS', default_value=''),"/gnss_fix_fused"),
                     ("georeference", "map_param_loader/georeference"),
                 ],
                 parameters=[ gnss_to_map_convertor_param_file ]
