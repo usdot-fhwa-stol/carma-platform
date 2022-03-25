@@ -297,7 +297,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
   double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_);
   ROS_DEBUG_STREAM("safe_distance_to_stop at max_comfort_decel:  " << safe_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
 
-  double desired_distance_to_stop = pow(current_state.speed, 2)/(max_comfort_decel_norm_ / std::max(4.0, (double)config_.min_gap));
+  double desired_distance_to_stop = pow(current_state.speed, 2)/(max_comfort_decel_norm_ / std::max(4.0, (double)config_.min_gap)) + 5; //5 meter buffer to make it smoother
   ROS_DEBUG_STREAM("desired_distance_to_stop at at config_.min_gap fraction: max_comfort_decel:  " << desired_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_ / std::max(4.0, (double)config_.min_gap));
   
   desired_distance_to_stop = std::max(config_.min_approach_distance, desired_distance_to_stop);
