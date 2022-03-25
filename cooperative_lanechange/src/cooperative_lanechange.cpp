@@ -303,11 +303,20 @@ namespace cooperative_lanechange
         //plan lanechange without filling in response
         ROS_DEBUG_STREAM("Planning lane change trajectory");
 
-        // Set starting downtrack for lane change maneuver, which will remain constant constant
+        // If this lane change maneuver ID is being received for this first time, store its original start_dist and starting_lane_id locally
         std::string maneuver_id = maneuver_plan[0].lane_change_maneuver.parameters.maneuver_id;
-        if (original_maneuver_start_dists_.find(maneuver_id) == original_maneuver_start_dists_.end()) {
-            ROS_DEBUG_STREAM("Received maneuver id " << maneuver_id << " for the first time. Original start dist is " << maneuver_plan[0].lane_change_maneuver.start_dist);
-            original_maneuver_start_dists_[maneuver_id] = maneuver_plan[0].lane_change_maneuver.start_dist;
+        if (original_lc_maneuver_values_.find(maneuver_id) == original_lc_maneuver_values_.end()) {
+            ROS_DEBUG_STREAM("Received maneuver id " << maneuver_id << " for the first time");
+            ROS_DEBUG_STREAM("Original start dist is " << maneuver_plan[0].lane_change_maneuver.start_dist);
+            ROS_DEBUG_STREAM("Original starting_lane_id is " << maneuver_plan[0].lane_change_maneuver.starting_lane_id);
+
+            // Create LaneChangeManeuverOriginalValues object for this lane change maneuver
+            LaneChangeManeuverOriginalValues original_lc_values;
+            original_lc_values.maneuver_id = maneuver_id;
+            original_lc_values.original_starting_lane_id = maneuver_plan[0].lane_change_maneuver.starting_lane_id;
+            original_lc_values.original_start_dist = maneuver_plan[0].lane_change_maneuver.start_dist;
+
+            original_lc_maneuver_values_[maneuver_id] = original_lc_values;
         }
 
         std::vector<cav_msgs::TrajectoryPlanPoint> planned_trajectory_points = plan_lanechange(req);
@@ -523,13 +532,15 @@ namespace cooperative_lanechange
         
         std::string maneuver_id = maneuver_plan.front().lane_change_maneuver.parameters.maneuver_id;
         double original_start_dist = current_downtrack; // Initialize so original_start_dist cannot be less than the current downtrack
-        
-        if (original_maneuver_start_dists_.find(maneuver_id) != original_maneuver_start_dists_.end()) {
-            original_start_dist = original_maneuver_start_dists_[maneuver_id];
+        if (original_lc_maneuver_values_.find(maneuver_id) != original_lc_maneuver_values_.end()) {
+            original_start_dist = (original_lc_maneuver_values_[maneuver_id]).original_start_dist;
             ROS_DEBUG_STREAM("Maneuver id " << maneuver_id << " original start dist is " << original_start_dist);
+
+            maneuver_plan.front().lane_change_maneuver.starting_lane_id = (original_lc_maneuver_values_[maneuver_id]).original_starting_lane_id;
+            ROS_DEBUG_STREAM("Updated maneuver id " << maneuver_id << " starting_lanelet_id to its original value of " << (original_lc_maneuver_values_[maneuver_id]).original_starting_lane_id);
         }
         else {
-            ROS_WARN_STREAM("No original start_dist for lane change maneuver was found!");
+            ROS_WARN_STREAM("No original values for lane change maneuver were found!");
         }
 
         double starting_downtrack = std::min(current_downtrack, original_start_dist);

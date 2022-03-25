@@ -45,7 +45,18 @@ namespace cooperative_lanechange
 {
   // Helpful using declarations
   using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
-  
+
+    /**
+     * \brief Convenience struct for storing the original start_dist and starting_lane_id associated 
+     * with a received lane change maneuver.
+     */
+    struct LaneChangeManeuverOriginalValues
+    {
+        std::string maneuver_id;
+        std::string original_starting_lane_id; // original starting_lane_id associated with lane change maneuver
+        double original_start_dist; // original start_dist associated with lane change maneuver
+    };
+
     class CooperativeLaneChangePlugin
     {
         public:
@@ -189,8 +200,8 @@ namespace cooperative_lanechange
             std::string sender_id_ = DEFAULT_STRING_;
             cav_msgs::BSMCoreData bsm_core_;
 
-            // Maps maneuver IDs to their original start_dist value
-            std::unordered_map<std::string, double> original_maneuver_start_dists_;
+            // Maps maneuver IDs to their corresponding LaneChangeManeuverOriginalValues object
+            std::unordered_map<std::string, LaneChangeManeuverOriginalValues> original_lc_maneuver_values_;
 
             //Plugin specific params
             double desired_time_gap_ = 3.0;
