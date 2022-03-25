@@ -306,6 +306,7 @@ namespace cooperative_lanechange
         // Set starting downtrack for lane change maneuver, which will remain constant constant
         std::string maneuver_id = maneuver_plan[0].lane_change_maneuver.parameters.maneuver_id;
         if (original_maneuver_start_dists_.find(maneuver_id) == original_maneuver_start_dists_.end()) {
+            ROS_DEBUG_STREAM("Received maneuver id " << maneuver_id << " for the first time. Original start dist is " << maneuver_plan[0].lane_change_maneuver.start_dist);
             original_maneuver_start_dists_[maneuver_id] = maneuver_plan[0].lane_change_maneuver.start_dist;
         }
 
@@ -525,6 +526,7 @@ namespace cooperative_lanechange
         
         if (original_maneuver_start_dists_.find(maneuver_id) != original_maneuver_start_dists_.end()) {
             original_start_dist = original_maneuver_start_dists_[maneuver_id];
+            ROS_DEBUG_STREAM("Maneuver id " << maneuver_id << " original start dist is " << original_start_dist);
         }
         else {
             ROS_WARN_STREAM("No original start_dist for lane change maneuver was found!");
