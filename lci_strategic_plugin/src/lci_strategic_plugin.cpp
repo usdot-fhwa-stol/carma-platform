@@ -288,6 +288,8 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
                                         const ros::Time& nearest_green_entry_time,
                                         double traffic_light_down_track)
 {
+  case_num_ = UNAVAILABLE;
+  
   double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack;
 
   // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
@@ -455,7 +457,14 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   }
 
   if (ts_params.is_algorithm_successful)
+  {
     ts_params.case_num = case_num;
+    case_num_ = case_num;
+  }
+  else
+  {
+    case_num_ = UNAVAILABLE;
+  }
 
   ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
   ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
@@ -541,6 +550,8 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
                                         cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
                                         const lanelet::CarmaTrafficSignalPtr& traffic_light, const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, const lanelet::ConstLanelet& current_lanelet)
 {
+  case_num_ = UNAVAILABLE;
+
   if (!traffic_light)
   {
     throw std::invalid_argument("While in WAITING state, the traffic lights disappeared.");
