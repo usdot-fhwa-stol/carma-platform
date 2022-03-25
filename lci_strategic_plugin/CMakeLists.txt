@@ -20,6 +20,7 @@ set(PKG_CATKIN_DEPS
   tf
   tf2
   tf2_geometry_msgs
+  std_msgs
 )
 
 find_package(catkin REQUIRED COMPONENTS

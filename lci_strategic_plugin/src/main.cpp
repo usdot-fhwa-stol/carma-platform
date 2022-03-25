@@ -69,10 +69,10 @@ int main(int argc, char** argv)
   lcip.lookupFrontBumperTransform();
   
   ros::Timer discovery_pub_timer =
-      nh.createTimer(ros::Duration(ros::Rate(10.0)), [&lcip, &plugin_discovery_pub](const auto&) {
+      nh.createTimer(ros::Duration(ros::Rate(10.0)), [&lcip, &plugin_discovery_pub, &case_pub](const auto&) {
         plugin_discovery_pub.publish(lcip.getDiscoveryMsg());
         std_msgs::Int8 msg;
-        msg.data = static_cast<int>(case_num_);
+        msg.data = static_cast<int>(lcip.case_num_);
         case_pub.publish(msg);
       });
 

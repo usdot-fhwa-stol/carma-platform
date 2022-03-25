@@ -288,7 +288,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
                                         const ros::Time& nearest_green_entry_time,
                                         double traffic_light_down_track)
 {
-  case_num_ = UNAVAILABLE;
+  case_num_ = SpeedProfileCase::UNAVAILABLE;
 
   double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack;
 
@@ -334,7 +334,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
       double decel_rate =  current_state.speed/ min_bound_stop_time; // Kinematic |(v_f - v_i) / t = a|
       ROS_ERROR_STREAM("22222222: Planning stop and wait maneuver at decel_rate: -" << decel_rate);
       ROS_DEBUG_STREAM("22222222: Planning stop and wait maneuver at decel_rate: -" << decel_rate);
-      case_num_ = STOPPING;
+      case_num_ = SpeedProfileCase::STOPPING;
       resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
         current_state.downtrack, traffic_light_down_track, current_state.speed, crossed_lanelets.front().id(),
         crossed_lanelets.back().id(), current_state.stamp,
@@ -463,7 +463,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   }
   else
   {
-    case_num_ = UNAVAILABLE;
+    case_num_ = SpeedProfileCase::UNAVAILABLE;
   }
 
   ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
@@ -550,7 +550,7 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
                                         cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
                                         const lanelet::CarmaTrafficSignalPtr& traffic_light, const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, const lanelet::ConstLanelet& current_lanelet)
 {
-  case_num_ = STOPPING;
+  case_num_ = SpeedProfileCase::STOPPING;
 
   if (!traffic_light)
   {
@@ -600,7 +600,7 @@ void LCIStrategicPlugin::planWhenDEPARTING(const cav_srvs::PlanManeuversRequest&
                                           cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
                                           double intersection_end_downtrack, double intersection_speed_limit)
 {
-  case_num_ = UNAVAILABLE;
+  case_num_ = SpeedProfileCase::UNAVAILABLE;
   
   if (current_state.downtrack > intersection_end_downtrack)
   {

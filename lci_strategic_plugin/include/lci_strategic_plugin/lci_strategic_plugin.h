@@ -45,8 +45,8 @@ enum SpeedProfileCase {
   ACCEL_DECEL = 2,
   DECEL_ACCEL = 3,
   DECEL_CRUISE_ACCEL = 4,
-  STOPPING=5;
-  UNAVAILABLE = 6;
+  STOPPING=5,
+  UNAVAILABLE = 6,
 };
 
 /**
@@ -101,6 +101,11 @@ public:
    * \brief Lookup transfrom from front bumper to base link
    */
   void lookupFrontBumperTransform();
+
+   /**
+   * \brief Current speed profile case generated
+   */
+  SpeedProfileCase case_num_ = SpeedProfileCase::UNAVAILABLE; 
 
 private:
   /**
@@ -574,7 +579,6 @@ private:
   std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
   tf2::Stamped<tf2::Transform> frontbumper_transform_;
   double length_to_front_bumper_ = 3.0;
-  SpeedProfileCase case_num_ = SpeedProfileCase::UNAVAILABLE; 
 
   double epsilon_ = 0.001; //Small constant to compare (double) 0.0 with
 
