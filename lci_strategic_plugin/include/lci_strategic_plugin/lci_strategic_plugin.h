@@ -45,7 +45,8 @@ enum SpeedProfileCase {
   ACCEL_DECEL = 2,
   DECEL_ACCEL = 3,
   DECEL_CRUISE_ACCEL = 4,
-  UNAVAILABLE = 5;
+  STOPPING=5;
+  UNAVAILABLE = 6;
 };
 
 /**
