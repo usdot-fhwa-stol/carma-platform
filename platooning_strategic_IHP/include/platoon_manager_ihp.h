@@ -44,11 +44,13 @@ namespace platoon_strategic_ihp
     */ 
     struct PlatoonPlan 
     {
-        bool valid;
-        unsigned long planStartTime;
-        std::string planId;
-        std::string peerId;
-        PlatoonPlan():valid(false), planStartTime(0), planId(""), peerId("") {} ;
+        bool            valid;          //is this plan currently in use?
+        unsigned long   planStartTime;  //time that plan was initiated
+        std::string     planId;         //ID of this platoon
+        std::string     peerId;         //vehicle ID of a candidtate joining vehicle
+
+        PlatoonPlan() : valid(false), planStartTime(0), planId(""), peerId("") {}
+
         PlatoonPlan(bool valid, unsigned long planStartTime, std::string planId, std::string peerId): 
             valid(valid), planStartTime(planStartTime), planId(planId), peerId(peerId) {}  
     };
@@ -286,11 +288,9 @@ namespace platoon_strategic_ihp
         double getCutInGap(const int gap_leading_index, const double joinerDtD);
 
         // Member variables
-        std::string currentPlatoonID = "default_test_id";
         bool isFollower = false;
         PlatoonState current_platoon_state = PlatoonState::STANDBY;
         PlatoonPlan current_plan;
-        std::string targetLeaderId = "default_target_leader_id";
 
         // host vehicle's static ID 
         std::string HostMobilityId = "default_host_id";
@@ -305,7 +305,6 @@ namespace platoon_strategic_ihp
         // local copy of configuration file
         PlatoonPluginConfig config_;
 
-        std::string targetPlatoonId;
         std::string OPERATION_INFO_TYPE = "INFO";
         std::string OPERATION_STATUS_TYPE = "STATUS";
         std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";

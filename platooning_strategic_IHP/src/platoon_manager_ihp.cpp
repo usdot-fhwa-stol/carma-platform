@@ -536,7 +536,7 @@ namespace platoon_strategic_ihp
  
         hostPosInPlatoon_ = 1;
         isFollower = true;
-        currentPlatoonID = newPlatoonId;
+        current_plan.planId = newPlatoonId;
         ROS_DEBUG_STREAM("The platoon manager is changed from leader state to follower state. Platoon vector re-initialized. Plan ID = " << newPlatoonId);
     }
 

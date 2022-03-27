@@ -299,11 +299,6 @@ namespace platoon_strategic_ihp
             void setPMState(PlatoonState desiredState);
 
             /**
-             * \brief UCLA Setter: function to set pm_.current_plan.valid. (This is only used for UniteTst).
-             */
-            void setPMValid(bool isPlanValid);
-
-            /**
              * \brief UCLA Setter: Update platoon list (Unit Test).
              */
             void updatePlatoonList(std::vector<PlatoonMember> platoon_list);
@@ -355,8 +350,6 @@ namespace platoon_strategic_ihp
             // UCLA: potential new platoon id for front join
             std::string potentialNewPlatoonId_front_  = "";
 
-            // target platood id 
-            std::string targetPlatoonId = "";
             // Host Mobility ID
             std::string HostMobilityId = "hostid";
 
@@ -811,6 +804,7 @@ namespace platoon_strategic_ihp
             // Plugin discovery message
             cav_msgs::Plugin plugin_discovery_msg_;
 
+            // Latch to allow only one request from aborting leader to a front joiner
             bool isFirstLeaderAbortRequest_ = true;
 
             double maxAllowedJoinTimeGap_ = 15.0;
