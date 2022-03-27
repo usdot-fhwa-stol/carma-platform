@@ -44,10 +44,10 @@ namespace platoon_strategic_ihp
     */ 
     struct PlatoonPlan 
     {
-        bool            valid;          //is this plan currently in use?
+        bool            valid;          //is host currently in or joining a platoon?
         unsigned long   planStartTime;  //time that plan was initiated
         std::string     planId;         //ID of this platoon
-        std::string     peerId;         //vehicle ID of a candidtate joining vehicle
+        std::string     peerId;         //vehicle ID of a candidtate joining vehicle or leader of platoon we are joining
 
         PlatoonPlan() : valid(false), planStartTime(0), planId(""), peerId("") {}
 

@@ -344,21 +344,9 @@ namespace platoon_strategic_ihp
             long waitingStartTime = 0;
             // start time of candidate follower state, s
             long candidatestateStartTime = 0;
-            // potential new platood id 
-            std::string potentialNewPlatoonId = "";
-
-            // UCLA: potential new platoon id for front join
-            std::string potentialNewPlatoonId_front_  = "";
 
             // Host Mobility ID
             std::string HostMobilityId = "hostid";
-
-            // UCLA: leader_waiting applicant id
-            std::string lw_applicantId_ = "";
-            // UCLA: add new joiner ID front for frontal join
-            std::string fj_new_joiner_Id_ = "";
-            // The current joining vehicle's static ID. (This value will be reset once the leader exit lead_with_operation state)
-            std::string joiningID_ = "";
 
             // ROS Publishers
             ros::Publisher platoon_strategic_ihp_plugin_discovery_pub_;
