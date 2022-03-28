@@ -382,6 +382,10 @@ public:
    */
   void publishLightId();
 
+  /*! \brief populate upcoming_intersection_ids_ from local traffic lanelet ids
+   */
+  void updateUpcomingSGIntersectionIds();
+
   visualization_msgs::MarkerArray tcm_marker_array_;
   cav_msgs::TrafficControlRequestPolygon tcr_polygon_;
   std_msgs::Int32MultiArray upcoming_intersection_ids_;

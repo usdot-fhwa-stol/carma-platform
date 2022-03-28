@@ -35,10 +35,10 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <std_msgs/Int8.h>
 
 namespace lci_strategic_plugin
 {
-
 /**
  * \brief Struct representing trajectory smoothing algorithm parameters using distance and acceleration
  *        Based on TSMO USE CASE 2. Chapter 2. Trajectory Smoothing
@@ -52,6 +52,8 @@ enum TSCase {
   CASE_6 = 6,
   CASE_7 = 7,
   CASE_8 = 8,
+  STOPPING=5,
+  UNAVAILABLE = 6,
 };
 
 struct TrajectoryParams
@@ -120,6 +122,11 @@ public:
    * \brief Lookup transfrom from front bumper to base link
    */
   void lookupFrontBumperTransform();
+
+   /**
+   * \brief Current speed profile case generated
+   */
+  TSCase case_num_ = TSCase::UNAVAILABLE; 
 
 private:
   /**
@@ -584,7 +591,6 @@ private:
   std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
   tf2::Stamped<tf2::Transform> frontbumper_transform_;
   double length_to_front_bumper_ = 3.0;
-  
 
   double epsilon_ = 0.001; //Small constant to compare (double) 0.0 with
 

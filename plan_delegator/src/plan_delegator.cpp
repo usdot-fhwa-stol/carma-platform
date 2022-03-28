@@ -286,7 +286,7 @@ namespace plan_delegator
 
         // Update maneuver-specific lanelet ID parameters
         // Note: Assumes that the maneuver start and end distances are adjusted by a distance less than the length of a lanelet. 
-        if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING) 
+        if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING && !maneuver.lane_following_maneuver.lane_ids.empty()) 
         {
             // Obtain the original starting lanelet from the maneuver's lane_ids
             lanelet::Id original_starting_lanelet_id = std::stoi(maneuver.lane_following_maneuver.lane_ids.front());
@@ -324,7 +324,7 @@ namespace plan_delegator
                 maneuver.lane_following_maneuver.lane_ids.pop_back();
             }
         } 
-        else 
+        else if (maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING)
         {
             // Obtain the original starting lanelet from the maneuver
             lanelet::Id original_starting_lanelet_id = std::stoi(getManeuverStartingLaneletId(maneuver));

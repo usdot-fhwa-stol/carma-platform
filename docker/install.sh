@@ -24,7 +24,7 @@ set -ex
 ###
 # Source the autoware installation
 source /opt/autoware.ai/ros/install/setup.bash
-#source /home/carma/carma_ws/install/ros1_msgs_install/local_setup.bash
+source /home/carma/carma_ws/install/ros1_msgs_install/local_setup.bash
 
 cd ~/carma_ws
 
@@ -44,7 +44,7 @@ echo "Build of ROS1 CARMA Components Complete"
 # Source the ROS2 autoware installation
 source /home/carma/catkin/setup.bash
 source /opt/autoware.ai/ros/install_ros2/setup.bash
-#source /home/carma/carma_ws/install/ros2_msgs_install/local_setup.bash
+source /home/carma/carma_ws/install/ros2_msgs_install/local_setup.bash
 
 cd ~/carma_ws
 

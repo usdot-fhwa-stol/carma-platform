@@ -32,6 +32,7 @@ int main(int argc, char** argv)
 
   // Create publishers
   ros::Publisher plugin_discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+  ros::Publisher case_pub = nh.advertise<std_msgs::Int8>("ts_case_num", 1);
 
   // Initialize world model
   carma_wm::WMListener wml;
@@ -68,8 +69,11 @@ int main(int argc, char** argv)
   lcip.lookupFrontBumperTransform();
   
   ros::Timer discovery_pub_timer =
-      nh.createTimer(ros::Duration(ros::Rate(10.0)), [&lcip, &plugin_discovery_pub](const auto&) {
+      nh.createTimer(ros::Duration(ros::Rate(10.0)), [&lcip, &plugin_discovery_pub, &case_pub](const auto&) {
         plugin_discovery_pub.publish(lcip.getDiscoveryMsg());
+        std_msgs::Int8 msg;
+        msg.data = static_cast<int>(lcip.case_num_);
+        case_pub.publish(msg);
       });
 
   // Start

@@ -41,11 +41,11 @@ cd ${dir}/src
 # clone carma repos
 
 if [[ "$BRANCH" = "develop" ]]; then
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch $BRANCH
+      #git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch $BRANCH	
 else
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch develop
+      #git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch develop
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch develop
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
 fi
@@ -65,9 +65,9 @@ cd ../astuff_sensor_msgs
 echo "" > COLCON_IGNORE
 #
 
-cd ../../carma-platform/mock_drivers/rosbag_mock_drivers
-echo "" > COLCON_IGNORE
-cd ../../mobilitypath_publisher
+#cd ../../carma-platform/mock_drivers/rosbag_mock_drivers
+#echo "" > COLCON_IGNORE
+cd ../../carma-platform/mobilitypath_publisher
 echo "" > COLCON_IGNORE
 cd ../mobilitypath_visualizer
 echo "" > COLCON_IGNORE
