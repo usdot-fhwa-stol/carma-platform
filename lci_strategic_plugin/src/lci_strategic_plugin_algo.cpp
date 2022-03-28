@@ -533,6 +533,7 @@ TrajectoryParams LCIStrategicPlugin::get_ts_case(double t, double et, double v0,
   TrajectoryParams traj7 = params[6];
   TrajectoryParams traj8 = params[7];
   TrajectoryParams veh_traj;
+  veh_traj.is_algorithm_successful = true;
 
   if (traj1.t3_ <= et && et < traj2.t3_)
   {
