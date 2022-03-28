@@ -374,6 +374,13 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack;
 
+  if (distance_remaining_to_traffic_light < 0) // there is small discrepancy between signal's routeTrackPos as well as current
+  {                                            // downtrack calculated using veh_x,y from state. Therefore, it may have crossed it 
+    ROS_DEBUG("Crossed the bar distance_remaining_to_traffic_light %f", Crossed the bar distance_remaining_to_traffic_light);
+    transition_table_.signal(TransitEvent::CROSSED_STOP_BAR);
+    return;
+  }
+
   // If the vehicle is at a stop trigger the stopped state
   constexpr double HALF_MPH_IN_MPS = 0.22352;
   if (current_state.speed < HALF_MPH_IN_MPS &&
@@ -644,6 +651,7 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   ROS_DEBUG("\n\nFinding traffic_light information");
 
   auto traffic_list = wm_->getSignalsAlongRoute({ req.veh_x, req.veh_y });
+
   ROS_DEBUG_STREAM("Found traffic lights of size: " << traffic_list.size());
   auto current_lanelets = wm_->getLaneletsFromPoint({ req.veh_x, req.veh_y});
   lanelet::ConstLanelet current_lanelet;
@@ -686,7 +694,9 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     nearest_traffic_signal = signal;
     break;
   }
-  
+
+
+
   TransitState prev_state;
 
   do
