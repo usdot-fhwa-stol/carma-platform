@@ -206,6 +206,14 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("platoonSize: " << platoon.size());
         return platoon.size();
     }
+
+    // Reset variables to indicate there is no current action in work
+    void PlatoonManager::clearActionPlan()
+    {
+        current_plan.valid = false;
+        current_plan.planId = "";
+        current_plan.peerId = "";
+    }
         
     // Find the downtrack distance of the last vehicle of the platoon, in m.    
     double PlatoonManager::getPlatoonRearDowntrackDistance(){
@@ -534,9 +542,9 @@ namespace platoon_strategic_ihp
         platoon.push_back(newLeader); //can get location info updated later with a STATUS or INFO message
         platoon.push_back(hostInfo);
  
-        hostPosInPlatoon_ = 1;
+        hostPosInPlatoon_ = 1; //since host was previously leader it is now guaranteed to be 2nd in the line (index 1)
         isFollower = true;
-        current_plan.planId = newPlatoonId;
+        currentPlatoonID = newPlatoonId;
         ROS_DEBUG_STREAM("The platoon manager is changed from leader state to follower state. Platoon vector re-initialized. Plan ID = " << newPlatoonId);
     }
 
