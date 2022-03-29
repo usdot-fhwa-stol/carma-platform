@@ -174,7 +174,7 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
   // Reset intersection state since in this state we are not yet known to be in or approaching an intersection
   intersection_speed_ = boost::none;
   intersection_end_downtrack_ = boost::none;
-  double current_state_speed = std::max(current_state.speed, config_.algo_minimum_speed);
+  double current_state_speed = std::max(current_state.speed, config_.algo_minimum_speed * 1.001);
 
 
   if (!traffic_light)
@@ -297,7 +297,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   }
 
   
-  double current_state_speed = std::max(current_state.speed, config_.algo_minimum_speed);
+  double current_state_speed = std::max(current_state.speed, config_.algo_minimum_speed * 1.001);
 
   auto stop_line = traffic_light->getStopLine(entry_lanelet);
 
