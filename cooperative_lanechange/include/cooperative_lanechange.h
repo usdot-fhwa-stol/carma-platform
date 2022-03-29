@@ -45,7 +45,18 @@ namespace cooperative_lanechange
 {
   // Helpful using declarations
   using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
-  
+
+    /**
+     * \brief Convenience struct for storing the original start_dist and starting_lane_id associated 
+     * with a received lane change maneuver.
+     */
+    struct LaneChangeManeuverOriginalValues
+    {
+        std::string maneuver_id;
+        std::string original_starting_lane_id; // original starting_lane_id associated with lane change maneuver
+        double original_start_dist; // original start_dist associated with lane change maneuver
+    };
+
     class CooperativeLaneChangePlugin
     {
         public:
@@ -182,15 +193,15 @@ namespace cooperative_lanechange
             double maneuver_fraction_completed_ = 0;
             // flag to check if CLC plugin is called
             bool clc_called_ = false;
-            //flag to check if lane change is in progress
-            bool is_lanechange_in_progress_ = false;
-            double lc_starting_downtrack_ = 0.0;
             // Mobility request id
             std::string clc_request_id_ = "default_request_id";
             // ROS params
             //Vehicle params
             std::string sender_id_ = DEFAULT_STRING_;
             cav_msgs::BSMCoreData bsm_core_;
+
+            // Maps maneuver IDs to their corresponding LaneChangeManeuverOriginalValues object
+            std::unordered_map<std::string, LaneChangeManeuverOriginalValues> original_lc_maneuver_values_;
 
             //Plugin specific params
             double desired_time_gap_ = 3.0;

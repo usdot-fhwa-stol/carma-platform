@@ -1029,6 +1029,12 @@ namespace basic_autonomy
             std::vector<lanelet::BasicPoint2d> all_sampling_points;
             all_sampling_points.reserve(1 + future_geom_points.size() * 2);
 
+            lanelet::BasicPoint2d current_vehicle_point(state.x_pos_global, state.y_pos_global);
+
+            future_geom_points.insert(future_geom_points.begin(),
+                                       current_vehicle_point); // Add current vehicle position to front of future geometry points
+
+            final_actual_speeds.insert(final_actual_speeds.begin(), state.longitudinal_vel);
         
             //Compute points to local downtracks
             std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(future_geom_points);
@@ -1048,6 +1054,10 @@ namespace basic_autonomy
             ROS_DEBUG_STREAM("Got sampled points with size:" << all_sampling_points.size());
 
             std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(future_geom_points);
+            if(final_yaw_values.size() > 0) {
+                final_yaw_values[0] = state.orientation; // Set the initial yaw value based on the initial state
+            }
+
             final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, detailed_config.speed_moving_average_window_size);
 
             //Convert speeds to time
