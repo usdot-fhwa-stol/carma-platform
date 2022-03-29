@@ -297,7 +297,7 @@ namespace platoon_strategic_ihp
         // Member variables
         std::string currentPlatoonID = ""; //empty string indicates not part of a platoon
         std::string platoonLeaderID = "";  //empty string indicates not part of a platoon
-        bool isFollower = false;
+        std::string targetPlatoonID = "";  //ID of a real platoon that we may be attempting to join (empty if neighbor is a solo vehicle)
         PlatoonState current_platoon_state = PlatoonState::STANDBY;
         ActionPlan current_plan = ActionPlan(); //this plan represents a joining activity only, not the platoon itself
 

@@ -526,16 +526,6 @@ namespace platoon_strategic_ihp
             cav_msgs::MobilityOperation composeMobilityOperationCandidateFollower();
             
             /**
-             * \brief Helper to store info on new action plan and platoon updates
-             * 
-             * \param msg the incoming mobility operation message with leader & platoon info
-             * \param request a structure holding mobility request header info to the platoon leader
-             * \param targetPlatoonSize num vehicles in the platoon described by msg
-             */
-            void create_join_action_plan(const cav_msgs::MobilityOperation& msg, const cav_msgs::MobilityRequest& request, 
-                                         const int targetPlatoonSize);
-
-            /**
             * \brief Function to convert pose from map frame to ecef location
             *
             * \param pose_msg pose message
@@ -804,6 +794,9 @@ namespace platoon_strategic_ihp
 
             // Latch to allow only one request from aborting leader to a front joiner
             bool isFirstLeaderAbortRequest_ = true;
+
+            // Number of calls to the run_leader_aborting() method
+            int numLeaderAbortingCalls_ = 0;
 
             double maxAllowedJoinTimeGap_ = 15.0;
             double maxAllowedJoinGap_ = 90;

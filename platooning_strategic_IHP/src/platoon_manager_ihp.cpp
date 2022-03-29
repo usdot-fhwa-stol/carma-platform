@@ -213,6 +213,7 @@ namespace platoon_strategic_ihp
         current_plan.valid = false;
         current_plan.planId = "";
         current_plan.peerId = "";
+        // Leave the platoon & leader IDs alone since we might continue to be in one
     }
         
     // Find the downtrack distance of the last vehicle of the platoon, in m.    
