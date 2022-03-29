@@ -96,8 +96,35 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
     ROS_DEBUG_STREAM("Planning state x:"<<req.vehicle_state.x_pos_global <<" , y: " << req.vehicle_state.y_pos_global);
 
     current_downtrack_ = wm_->routeTrackPos(veh_pos).downtrack;
+
     ROS_DEBUG_STREAM("Current_downtrack: "<< current_downtrack_);
-  
+
+    auto current_lanelets = wm_->getLaneletsFromPoint({ req.vehicle_state.x_pos_global, req.vehicle_state.y_pos_global});
+    lanelet::ConstLanelet current_lanelet;
+    
+    if (current_lanelets.empty())
+    {
+      ROS_ERROR_STREAM("Given vehicle position is not on the road! Returning...");
+      return true;
+    }
+
+    // get the lanelet that is on the route in case overlapping ones found
+    for (auto llt : current_lanelets)
+    {
+      auto route = wm_->getRoute()->shortestPath();
+      if (std::find(route.begin(), route.end(), llt) != route.end())
+      {
+        current_lanelet = llt;
+        break;
+      }
+    }
+
+    ROS_DEBUG_STREAM("Current_lanelet: "<< current_lanelet.id());
+
+    speed_limit_ = findSpeedLimit(current_lanelet);
+
+    ROS_DEBUG_STREAM("speed_limit_: "<< speed_limit_);
+
     DetailedTrajConfig wpg_detail_config;
     GeneralTrajConfig wpg_general_config;
 
@@ -274,6 +301,20 @@ void LightControlledIntersectionTacticalPlugin::apply_optimized_target_speed_pro
     throw std::invalid_argument("The light controlled intersection tactical plugin doesn't handle the case number requested");
   }
 }
+
+double LightControlledIntersectionTacticalPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt) const
+{
+  lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
+  if (traffic_rules)
+  {
+    return (*traffic_rules)->speedLimit(llt).speedLimit.value();
+  }
+  else
+  {
+    throw std::invalid_argument("Valid traffic rules object could not be built");
+  }
+}
+
 std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::create_geometry_profile(const std::vector<cav_msgs::Maneuver> &maneuvers, double max_starting_downtrack,const carma_wm::WorldModelConstPtr &wm,
                                                                    cav_msgs::VehicleState &ending_state_before_buffer,const cav_msgs::VehicleState& state,
                                                                    const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config)
