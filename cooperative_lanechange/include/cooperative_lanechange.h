@@ -52,9 +52,11 @@ namespace cooperative_lanechange
      */
     struct LaneChangeManeuverOriginalValues
     {
-        std::string maneuver_id;
-        std::string original_starting_lane_id; // original starting_lane_id associated with lane change maneuver
-        double original_start_dist; // original start_dist associated with lane change maneuver
+        std::string maneuver_id; // maneuver_id that this object corresponds to
+        std::string original_starting_lane_id; // Original starting_lane_id associated with this lane change maneuver
+        double original_start_dist; // Original start_dist associated with this lane change maneuver
+        double original_longitudinal_vel_ms; // The vehicle velocity (in m/s) when the vehicle first began this lane change
+        bool has_started = false; // Flag to indicate whether the vehicle's downtrack is beyond the original_start_dist of this lane change maneuver
     };
 
     class CooperativeLaneChangePlugin
