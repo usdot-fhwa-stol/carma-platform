@@ -593,6 +593,7 @@ private:
   double length_to_front_bumper_ = 3.0;
 
   double epsilon_ = 0.001; //Small constant to compare (double) 0.0 with
+  double accel_epsilon_ = 0.0001; //Small constant to compare (double) 0.0 with
 
   //Unit Tests
   FRIEND_TEST(LCIStrategicTestFixture, getDiscoveryMsg);

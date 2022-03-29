@@ -613,7 +613,7 @@ TrajectoryParams LCIStrategicPlugin::ts_case1(double t, double et, double v0, do
 
   traj.a1_ = (((1 - (a_max / a_min)) * v_max) + ((a_max / a_min) * v1) - v0) / (dt - tc);
 
-  if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
+  if (traj.a1_ <= accel_epsilon_ && traj.a1_ >= -accel_epsilon_)
   {
     // throw std::invalid_argument("CASE1: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
     ROS_DEBUG_STREAM("CASE1: Received traj.a1_ near zero...");
@@ -658,7 +658,7 @@ TrajectoryParams LCIStrategicPlugin::ts_case2(double t, double et, double v0, do
   traj.v1_ = v_hat;
   traj.a1_ = (((1 - (a_max / a_min)) * v_hat) + ((a_max / a_min) * v1) - v0) / dt;
 
-  if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
+  if (traj.a1_ <= accel_epsilon_ && traj.a1_ >= -accel_epsilon_)
   {
     // throw std::invalid_argument("CASE2: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
     ROS_DEBUG_STREAM("CASE2: Received traj.a1_ near zero...");
@@ -674,7 +674,7 @@ TrajectoryParams LCIStrategicPlugin::ts_case2(double t, double et, double v0, do
   traj.v2_ = v1;
   traj.a2_ = traj.a1_ * a_min / a_max;
 
-  if (traj.a2_ <= epsilon_ && traj.a2_ >= -epsilon_)
+  if (traj.a2_ <= accel_epsilon_ && traj.a2_ >= -accel_epsilon_)
   {
     // throw std::invalid_argument("CASE2: Received traj.a2_ near zero..." + std::to_string(traj.a2_));
     ROS_DEBUG_STREAM("CASE2: Received traj.a2_ near zero...");
@@ -714,7 +714,7 @@ TrajectoryParams LCIStrategicPlugin::ts_case3(double t, double et, double v0, do
   traj.v1_ = v_hat;
   traj.a1_ = (((1 - (a_min / a_max)) * v_hat) + ((a_min / a_max) * v1) - v0) / dt;
   
-  if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
+  if (traj.a1_ <= accel_epsilon_ && traj.a1_ >= -accel_epsilon_)
   {
         // throw std::invalid_argument("CASE3: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
     ROS_DEBUG_STREAM("CASE3: Received traj.a1_ near zero...");
@@ -764,7 +764,7 @@ TrajectoryParams LCIStrategicPlugin::ts_case4(double t, double et, double v0, do
 
   traj.a1_ = (((1 - (a_min / a_max)) * v_min) + ((a_min / a_max) * v1) - v0) / (dt - tc);
 
-  if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
+  if (traj.a1_ <= accel_epsilon_ && traj.a1_ >= -accel_epsilon_)
   {
     // throw std::invalid_argument("CASE4: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
     ROS_DEBUG_STREAM("CASE4: Received traj.a1_ near zero...");
@@ -1054,7 +1054,7 @@ TrajectoryParams LCIStrategicPlugin::boundary_accel_nocruise_maxspeed_decel(doub
 
   traj.a1_ = (((1 - (a_max / a_min)) * v_max) + ((a_max / a_min) * v1) - v0) / (dt - tc);
 
-  if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
+  if (traj.a1_ <= accel_epsilon_ && traj.a1_ >= -accel_epsilon_)
   {
     // throw std::invalid_argument("boundary_accel_nocruise_maxspeed_decel: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
     ROS_DEBUG_STREAM("boundary_accel_nocruise_maxspeed_decel: Received traj.a1_ near zero...");
