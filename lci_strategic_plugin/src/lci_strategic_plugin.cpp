@@ -481,9 +481,13 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
                                             current_state_speed, ts_params.v2_, current_state.stamp, ros::Time(ts_params.t2_), ts_params));
 
+    // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
+    std::vector<lanelet::ConstLanelet> case_8_crossed_lanelets =
+        getLaneletsBetweenWithException(ts_params.x2_, traffic_light_down_track, true, true);
+
     resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-      ts_params.x2_, traffic_light_down_track, ts_params.v2_, crossed_lanelets.front().id(),
-      crossed_lanelets.back().id(), ros::Time(ts_params.t2_),
+      ts_params.x2_, traffic_light_down_track, ts_params.v2_, case_8_crossed_lanelets.front().id(),
+      case_8_crossed_lanelets.back().id(), ros::Time(ts_params.t2_),
       current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
     return;
   }
