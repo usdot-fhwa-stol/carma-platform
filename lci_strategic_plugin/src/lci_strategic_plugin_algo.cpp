@@ -240,7 +240,7 @@ double LCIStrategicPlugin::calc_estimated_entry_time_left(double entry_dist, dou
 }
 
 
-TrajectoryParams LCIStrategicPlugin::handleFailureCase(double starting_speed, double departure_speed, double remaining_downtrack, double remaining_time, double traffic_light_downtrack)
+TrajectoryParams LCIStrategicPlugin::handleFailureCase(double starting_speed, double departure_speed,  double speed_limit, double remaining_downtrack, double remaining_time, double traffic_light_downtrack)
 {
   //Requested maneuver needs to be modified to meet remaining_dist req
   //by trying to get close to the target_speed and remaining_time as much as possible
@@ -284,7 +284,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCase(double starting_speed, do
 
   // handle hard failure case such as nan
   if (!isnan(params.modified_departure_speed) && params.modified_departure_speed > epsilon_ &&
-      params.modified_departure_speed < 35.7632 ) //80_mph
+      params.modified_departure_speed <  speed_limit ) //80_mph
   {
     ROS_ERROR_STREAM("Updated!!! : " << params.modified_departure_speed);
     ROS_DEBUG_STREAM("Updated!!! : " << params.modified_departure_speed);
@@ -328,6 +328,8 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
                                         double traffic_light_down_track)
 {
   double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack;
+
+  case_num_ = TSCase::STOPPING;
 
   // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
@@ -912,10 +914,10 @@ TrajectoryParams LCIStrategicPlugin::ts_case7(double t, double et, double v0, do
 
 TrajectoryParams LCIStrategicPlugin::ts_case8(double dx, double dx5, TrajectoryParams traj8)
 { 
+  traj.is_algorithm_successful = false;
   TrajectoryParams traj = traj8;
   if (dx < dx5)
-  {
-    traj.is_algorithm_successful = false;
+  { 
     ROS_DEBUG_STREAM("!!! Safety error - the vehicle cannot stop at the stop bar ... Cruising...");
     ROS_DEBUG_STREAM("!!! Safety error - the vehicle cannot stop at the stop bar ... Cruising...");
     ROS_ERROR_STREAM("!!! Safety error - the vehicle cannot stop at the stop bar ... Cruising...");

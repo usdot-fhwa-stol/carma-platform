@@ -312,11 +312,11 @@ private:
    * \param departure_speed departure_speed originally planned
    * \param remaining_downtrack remaining_downtrack until the intersection
    * \param remaining_time  remaining_time when vehicle is scheduled to enter
-   * \param traffic_light_downtrack  traffic_light_downtrack when vehicle is scheduled to enter
+   * \param traffic_light_downtrack  traffic_light_downtrack when vehicle is scheduled to enter TODO
    *
    * \return TSP with parameters that is best available to pass the intersection. Either profile case 3(ACCEL_DECEL) or 2 (DECEL_ACCEL)
    */
-  TrajectoryParams handleFailureCase(double starting_speed, double departure_speed, double remaining_downtrack, double remaining_time, double traffic_light_downtrack);
+  TrajectoryParams handleFailureCase(double starting_speed, double departure_speed, double speed_limit, double remaining_downtrack, double remaining_time, double traffic_light_downtrack);
                                         
   /**
    * \brief Helper method to evaluate if the given traffic light state is supported by this plugin
