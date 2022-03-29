@@ -176,6 +176,7 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
   intersection_end_downtrack_ = boost::none;
   double current_state_speed = std::max(current_state.speed, config_.algo_minimum_speed);
 
+
   if (!traffic_light)
   {
     ROS_DEBUG("No lights found along route. Returning maneuver plan unchanged");
@@ -207,6 +208,8 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
   ROS_DEBUG_STREAM("intersection_speed_: " << intersection_speed_.get());
 
   auto speed_limit = findSpeedLimit(current_lanelet);
+
+  current_state_speed = std::min(speed_limit, current_state_speed);
 
   ROS_DEBUG_STREAM("speed_limit (free flow speed): " << speed_limit);
 
@@ -376,7 +379,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   if (distance_remaining_to_traffic_light < 0) // there is small discrepancy between signal's routeTrackPos as well as current
   {                                            // downtrack calculated using veh_x,y from state. Therefore, it may have crossed it 
-    ROS_DEBUG("Crossed the bar distance_remaining_to_traffic_light %f", Crossed the bar distance_remaining_to_traffic_light);
+    ROS_DEBUG("Crossed the bar distance_remaining_to_traffic_light: %f", distance_remaining_to_traffic_light);
     transition_table_.signal(TransitEvent::CROSSED_STOP_BAR);
     return;
   }
@@ -401,6 +404,8 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   intersection_speed_ = findSpeedLimit(entry_lanelet); //technically lanelet is not "inside the lanelet"
 
   double speed_limit = findSpeedLimit(current_lanelet);
+
+  current_state_speed = std::min(current_state_speed, speed_limit);
 
   ROS_DEBUG_STREAM("intersection_speed_: " << intersection_speed_.get());
 

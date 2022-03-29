@@ -158,9 +158,22 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
       ROS_DEBUG_STREAM("Not all variables are set...");
     }
 
+    cav_msgs::TrajectoryPlan reduced_last_traj; 
+    
+    for (const auto &pt :last_trajectory_.trajectory_points)
+    {
+      if (pt.target_time > req.header.stamp - ros::Duration(0.1))
+      {
+        reduced_last_traj.trajectory_points.emplace_back(pt);
+      }
+    }
+
+    last_trajectory_.trajectory_points = reduced_last_traj.trajectory_points;
+
     if (is_last_case_successful_ != boost::none && last_case_ != boost::none
           && last_case_.get() == new_case
           && is_new_case_successful == true
+          && !last_trajectory_.trajectory_points.empty()
           && last_trajectory_.trajectory_points.back().target_time > req.header.stamp + ros::Duration(1))
     {
       resp.trajectory_plan = last_trajectory_;
@@ -178,6 +191,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
             && is_new_case_successful == false
             && last_successful_ending_downtrack_ - current_downtrack_ < config_.algorithm_evaluation_distance
             && last_successful_scheduled_entry_time_ - req.header.stamp.toSec() < config_.algorithm_evaluation_period
+            && !last_trajectory_.trajectory_points.empty()
             && last_trajectory_.trajectory_points.back().target_time > req.header.stamp)
     {
       resp.trajectory_plan = last_trajectory_;
@@ -240,6 +254,8 @@ void LightControlledIntersectionTacticalPlugin::apply_optimized_target_speed_pro
   double departure_speed = GET_MANEUVER_PROPERTY(maneuver, end_speed);
   double scheduled_entry_time = GET_MANEUVER_PROPERTY(maneuver, end_time).toSec();
   double entry_dist = ending_downtrack - starting_downtrack;
+
+
 
   // change speed profile depending on algorithm case starting from maneuver start_dist
   if(case_num == ACCEL_CRUISE_DECEL || case_num == ACCEL_DECEL){
@@ -361,8 +377,10 @@ void LightControlledIntersectionTacticalPlugin::apply_accel_cruise_decel_speed_p
       //buffer points that will be cut
       speed_i = prev_speed;
     }
+    double max_speed = std::min(speed_limit_,speed_before_decel);
     p.speed = std::max(speed_i,config_.minimum_speed);
-    p.speed = std::min(p.speed,speed_before_decel);
+    p.speed = std::min(p.speed,max_speed); 
+
     ROS_DEBUG_STREAM("Applied speed: " << p.speed << ", at dist: " << total_dist_planned);
 
     prev_point = p;
@@ -434,8 +452,9 @@ void LightControlledIntersectionTacticalPlugin::apply_decel_cruise_accel_speed_p
       
       speed_i = prev_speed;
     }
-    
-    p.speed = std::max(speed_i,speed_before_accel);
+
+    double min_speed = std::max(config_.minimum_speed,speed_before_accel);
+    p.speed = std::max(speed_i,min_speed);
     p.speed = std::min(p.speed,speed_limit_);
     ROS_DEBUG_STREAM("Applied speed: " << p.speed << ", at dist: " << total_dist_planned);
 
