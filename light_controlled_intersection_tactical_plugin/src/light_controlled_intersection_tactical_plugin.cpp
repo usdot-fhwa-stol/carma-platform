@@ -158,9 +158,22 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
       ROS_DEBUG_STREAM("Not all variables are set...");
     }
 
+    cav_msgs::TrajectoryPlan reduced_last_traj; 
+    
+    for (const auto &pt :last_trajectory_.trajectory_points)
+    {
+      if (pt.target_time > req.header.stamp - ros::Duration(0.1))
+      {
+        reduced_last_traj.trajectory_points.emplace_back(pt);
+      }
+    }
+
+    last_trajectory_.trajectory_points = reduced_last_traj.trajectory_points;
+
     if (is_last_case_successful_ != boost::none && last_case_ != boost::none
           && last_case_.get() == new_case
           && is_new_case_successful == true
+          && !last_trajectory_.trajectory_points.empty()
           && last_trajectory_.trajectory_points.back().target_time > req.header.stamp + ros::Duration(1))
     {
       resp.trajectory_plan = last_trajectory_;
@@ -178,6 +191,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
             && is_new_case_successful == false
             && last_successful_ending_downtrack_ - current_downtrack_ < config_.algorithm_evaluation_distance
             && last_successful_scheduled_entry_time_ - req.header.stamp.toSec() < config_.algorithm_evaluation_period
+            && !last_trajectory_.trajectory_points.empty()
             && last_trajectory_.trajectory_points.back().target_time > req.header.stamp)
     {
       resp.trajectory_plan = last_trajectory_;
@@ -245,6 +259,8 @@ void LightControlledIntersectionTacticalPlugin::apply_optimized_target_speed_pro
   double departure_speed = GET_MANEUVER_PROPERTY(maneuver, end_speed);
   double scheduled_entry_time = GET_MANEUVER_PROPERTY(maneuver, end_time).toSec();
   double entry_dist = ending_downtrack - starting_downtrack;
+
+
 
   // change speed profile depending on algorithm case starting from maneuver start_dist
   apply_trajectory_smoothing_algorithm(wm_, points_and_target_speeds, starting_downtrack, entry_dist, starting_speed, 

@@ -9,7 +9,7 @@ trajectory_time_length: 12.0
 default_downsample_ratio: 10  
 
 # Amount to downsample input lanelet centerline data on turns. Value corresponds to saving each nth point.
-turn_downsample_ratio: 20 
+turn_downsample_ratio: 5 
 
 # Curve re-sampling step size in m
 curve_resample_step_size: 1.0 
