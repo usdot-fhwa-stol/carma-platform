@@ -502,7 +502,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
                                             current_state_speed, ts_params.v2_, current_state.stamp, ros::Time(ts_params.t2_), ts_params));
 
     resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-      ts_params.x2_, traffic_light_down_track, ts_params.v2, crossed_lanelets.front().id(),
+      ts_params.x2_, traffic_light_down_track, ts_params.v2_, crossed_lanelets.front().id(),
       crossed_lanelets.back().id(), ros::Time(ts_params.t2_),
       current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
     return;
@@ -712,7 +712,7 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
     ROS_INFO_STREAM("Planning in state: " << transition_table_.getState());
 
-    boost::optional<std::pair<boost::posix_time::ptime, CarmaTrafficSignalState>> current_light_state_optional = boost::none;
+    boost::optional<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>> current_light_state_optional = boost::none;
     if (nearest_traffic_signal)
     {
       current_light_state_optional = nearest_traffic_signal->predictState(lanelet::time::timeFromSec(current_state.stamp.toSec()));

@@ -914,8 +914,8 @@ TrajectoryParams LCIStrategicPlugin::ts_case7(double t, double et, double v0, do
 
 TrajectoryParams LCIStrategicPlugin::ts_case8(double dx, double dx5, TrajectoryParams traj8)
 { 
-  traj.is_algorithm_successful = false;
   TrajectoryParams traj = traj8;
+  traj.is_algorithm_successful = false;
   if (dx < dx5)
   { 
     ROS_DEBUG_STREAM("!!! Safety error - the vehicle cannot stop at the stop bar ... Cruising...");
