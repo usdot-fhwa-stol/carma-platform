@@ -15,10 +15,14 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(platoon_strategic_ihp)
 
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
+
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+#add_compile_options(-std=c++14)
+#set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+#set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
@@ -60,7 +64,7 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
+#file(GLOB_RECURSE headers */*.hpp */*.h)
 
 add_executable( ${PROJECT_NAME}
   ${headers}
