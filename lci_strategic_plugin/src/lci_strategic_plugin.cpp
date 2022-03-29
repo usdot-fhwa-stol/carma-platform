@@ -176,8 +176,6 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
   intersection_end_downtrack_ = boost::none;
   double current_state_speed = std::max(current_state.speed, config_.algo_minimum_speed);
 
-  ROS_ERROR_STREAM("DEBUG 3");
-  ROS_DEBUG_STREAM("DEBUG 3");
 
   if (!traffic_light)
   {
@@ -247,8 +245,6 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
   {
     ROS_DEBUG_STREAM("Not within intersection range");
   }
-  ROS_ERROR_STREAM("DEBUG 4");
-  ROS_DEBUG_STREAM("DEBUG 4");
 
 }
 
@@ -292,8 +288,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
                                             cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
                                             const lanelet::CarmaTrafficSignalPtr& traffic_light, const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, const lanelet::ConstLanelet& current_lanelet)
 {
-  ROS_ERROR_STREAM("DEBUG 5");
-  ROS_DEBUG_STREAM("DEBUG 5");
 
   if (!traffic_light)  // If we are in the approaching state and there is no longer any lights ahead of us then
                        // the vehicle must have crossed the stop bar
@@ -312,8 +306,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     throw std::invalid_argument("Given entry lanelet doesn't have stop_line...");
   }
 
-  ROS_ERROR_STREAM("DEBUG 6");
-  ROS_DEBUG_STREAM("DEBUG 6");
 
 
   double traffic_light_down_track =
@@ -330,8 +322,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     return;
   }
 
-  ROS_ERROR_STREAM("DEBUG 7");
-  ROS_DEBUG_STREAM("DEBUG 7");
 
   // If the vehicle is at a stop trigger the stopped state
   constexpr double HALF_MPH_IN_MPS = 0.22352;
@@ -372,8 +362,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   ros::Time nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
                                           + ros::Duration(0.01); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal
 
-  ROS_ERROR_STREAM("DEBUG 8");
-  ROS_DEBUG_STREAM("DEBUG 8");
 
   if (!nearest_green_entry_time_cached_) 
   {
@@ -400,20 +388,14 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   auto boundary_distances = get_delta_x(current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_);
   print_boundary_distances(boundary_distances); //debug
 
-  ROS_ERROR_STREAM("DEBUG 9");    
-  ROS_DEBUG_STREAM("DEBUG 9");    
 
 
   auto boundary_traj_params = get_boundary_traj_params(req.header.stamp.toSec(), current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_, current_state.downtrack, traffic_light_down_track, distance_remaining_to_traffic_light, boundary_distances);
 
-  ROS_ERROR_STREAM("DEBUG 10");    
-  ROS_DEBUG_STREAM("DEBUG 10");    
 
   TrajectoryParams ts_params = get_ts_case(req.header.stamp.toSec(), nearest_green_entry_time.toSec(), current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_, current_state.downtrack, traffic_light_down_track, distance_remaining_to_traffic_light, boundary_distances, boundary_traj_params);
   print_params(ts_params);
 
-  ROS_ERROR_STREAM("DEBUG 11");    
-  ROS_DEBUG_STREAM("DEBUG 11");    
 
 
   if (ts_params.is_algorithm_successful || ts_params.case_num == TSCase::CASE_8)
@@ -448,8 +430,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   // CASE SELECTION END
 
-  ROS_ERROR_STREAM("DEBUG 12");    
-  ROS_DEBUG_STREAM("DEBUG 12");    
 
   // Although algorithm determines nearest_green_time is possible, check if the vehicle can arrive with certainty
   if (ts_params.is_algorithm_successful) 
@@ -508,16 +488,12 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     return;
   }
 
-  ROS_ERROR_STREAM("DEBUG 13");    
-  ROS_DEBUG_STREAM("DEBUG 13");    
 
 
   // if algorithm is NOT successful or if the vehicle cannot make the green light with certainty
   // Check if we can stop safely on RED
   handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track);
 
-  ROS_ERROR_STREAM("DEBUG 14");    
-  ROS_DEBUG_STREAM("DEBUG 14");    
 
   if (!resp.new_plan.maneuvers.empty()) // able to stop
     return;
@@ -672,8 +648,6 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     }
   }
 
-  ROS_ERROR_STREAM("DEBUG1");
-  ROS_DEBUG_STREAM("DEBUG1");
 
   lanelet::CarmaTrafficSignalPtr nearest_traffic_signal = nullptr;
   
@@ -697,8 +671,6 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     break;
   }
 
-  ROS_ERROR_STREAM("DEBUG2");
-  ROS_DEBUG_STREAM("DEBUG2");
 
   TransitState prev_state;
 
