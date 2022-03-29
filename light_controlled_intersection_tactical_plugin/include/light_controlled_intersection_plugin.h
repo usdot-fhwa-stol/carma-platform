@@ -157,6 +157,17 @@ public:
                                                                    cav_msgs::VehicleState &ending_state_before_buffer,const cav_msgs::VehicleState& state,
                                                                    const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config);
 
+  /**
+   * \brief Given a Lanelet, find it's associated Speed Limit
+   *
+   * \param llt Constant Lanelet object
+   *
+   * \throw std::invalid_argument if the speed limit could not be retrieved
+   *
+   * \return value of speed limit in mps
+   */
+  double findSpeedLimit(const lanelet::ConstLanelet& llt) const;
+  
     /**
    * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
    */ 
@@ -179,7 +190,7 @@ public:
   bool is_allowed_int_ = false;
 
   // approximate speed limit 
-  double speed_limit_ = 100.0;
+  double speed_limit_ = 11.176; //25mph by default
   boost::optional<TSCase> last_case_;
   boost::optional<bool> is_last_case_successful_;
   cav_msgs::TrajectoryPlan last_trajectory_;
