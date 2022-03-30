@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-#  Copyright (C) 2021 LEIDOS.
+#  Copyright (C) 2022 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
@@ -37,7 +37,7 @@ import math
 ###########################################################################################################
 '''
 Required topics
-- SPaT Data : /message/incoming_spat
+- SPaT Data : /message/incoming_spat cav_msgs/SPAT
 Other Required information
 - Movement Ids from the Spat that are needed for the vehicle and scenario being tested (may need to be a hard coded mapping)
 - Intersection Id for the spat. Since we have two intersections but only one is used in the test the id of interest should be hard coded into the analysis
@@ -57,7 +57,7 @@ Approach:
 ###
 '''
 Required topics
-- Map Data : /message/incoming_map
+- Map Data : /message/incoming_map cav_msgs/Map
 Other Required Data:
 - Map messages have intersection Ids. Since we have two intersections but only one is used in the test the id of interest should be hard coded into the analysis
   With the expected id we can verify that the required map message is received. 
@@ -72,9 +72,9 @@ Other Required Data:
 ###########################################################################################################
 '''
 Required topics
-- SPaT Data : /message/incoming_spat
-- Map Data : /message/incoming_map
-- Engagement status : /guidance/state
+- SPaT Data : /message/incoming_spat cav_msgs/SPAT
+- Map Data : /message/incoming_map cav_msgs/Map
+- Engagement status : /guidance/state cav_msgs/GuidanceState
 
 Approach:
 - After the first 3 Spat messages have been received consider communication stable enough for analysis (this may be before or after engagement)
@@ -95,8 +95,8 @@ Plotting:
 
 '''
 Required topics
-- Current lanelet data : /guidance/route_state
-- Engagement status : /guidance/state
+- Current lanelet data : /guidance/route_state cav_msgs/RouteState
+- Engagement status : /guidance/state cav_msgs/GuidanceState
 
 Approach: 
 - Hard code the expected lanelet ids for each approach in each test scenario
@@ -119,10 +119,10 @@ Approach:
 '''
 Required topics
 - Not a topic, but will need knowledge of current test case being evaluated to determine expected behavior.
-- Current lanelet and downtrack: /guidance/route_state
-- Engagement status : /guidance/state
-- Current_speed : /hardware_interface/vehicle/twist
-- SPaT Data : /message/incoming_spat
+- Current lanelet and downtrack: /guidance/route_state cav_msgs/RouteState
+- Engagement status : /guidance/state cav_msgs/GuidanceState
+- Current_speed : /hardware_interface/vehicle/twist geometry_msgs/TwistStamped (http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/TwistStamped.html)
+- SPaT Data : /message/incoming_spat cav_msgs/SPAT
 
 Other Required Data:
 - Log file from lci_strategic_plugin with DEBUG logs enabled. This is needed to get the EET value
@@ -159,9 +159,9 @@ Approach:
 
 '''
 Required topics
-- Current lanelet data : /guidance/route_state
-- Engagement status : /guidance/state
-- SPaT Data : /message/incoming_spat
+- Current lanelet data : /guidance/route_state cav_msgs/RouteState
+- Engagement status : /guidance/state cav_msgs/GuidanceState
+- SPaT Data : /message/incoming_spat cav_msgs/SPAT
 Other Required Data:
 - The intersection and movement ids expected for the vehicle and scenario being tested
 
@@ -180,9 +180,9 @@ Approach:
 
 '''
 Required topics
-- Current lanelet data : /guidance/route_state
-- Engagement status : /guidance/state
-- Determine lci plugin is used in planning : /guidance/plan_trajectory
+- Current lanelet data : /guidance/route_state cav_msgs/RouteState
+- Engagement status : /guidance/state cav_msgs/GuidanceState
+- Determine lci plugin is used in planning : /guidance/plan_trajectory cav_msgs/TrajectoryPlan
 
 Approach:
 - When the vehicle is engaged, gets its current lanelet from the route state
@@ -200,9 +200,9 @@ Approach:
 
 '''
 Required topics
-- Engagement status : /guidance/state
-- Current_speed : /hardware_interface/vehicle/twist (use to compute accel)
-- Vehicle accel : /hardware_interface/velocity_accel_cov (use as alternative source of accel)
+- Engagement status : /guidance/state cav_msgs/GuidanceState
+- Current_speed : /hardware_interface/vehicle/twist (use to compute accel) geometry_msgs/TwistStamped
+- Vehicle accel : /hardware_interface/velocity_accel_cov (use as alternative source of accel) automotive_platform_msgs/VelocityAccelCov (https://github.com/astuff/automotive_autonomy_msgs/blob/master/automotive_platform_msgs/msg/VelocityAccelCov.msg)
 
 Approach:
 - While the vehicle is engaged, create a 1s sliding window and take the start and end speed for each timestep of the window and compute the average acceleration
@@ -216,8 +216,8 @@ Approach:
 ###
 '''
 Required topics
-- Engagement status : /guidance/state
-- Current_speed : /hardware_interface/vehicle/twist
+- Engagement status : /guidance/state cav_msgs/GuidanceState
+- Current_speed : /hardware_interface/vehicle/twist geometry_msgs/TwistStamped
 Other Required Data:
 - Speed limit extracted from map
 
@@ -232,9 +232,9 @@ Approach:
 
 '''
 Required topics
-- Engagement status : /guidance/state
-- Current_speed : /hardware_interface/vehicle/twist
-- SPaT Data : /message/incoming_spat
+- Engagement status : /guidance/state 
+- Current_speed : /hardware_interface/vehicle/twist 
+- SPaT Data : /message/incoming_spat 
 
 Other Required Data:
 - Intersection id and movement id for the spat message
@@ -286,11 +286,6 @@ Approach:
 NOTE: This plot should be generated in two forms 1 time for the individual vehicles and once as a single plot combing the data from two vehicles
 '''
 
-###########################################################################################################
-# Additional Requested Plots: Map and SPaT receiving frequencies
-###########################################################################################################
-'''
-'''
 
 # Main Function; run all tests from here
 # TODO: The contents of this main function provide some basic structure for loading data, but need not be followed if not applicable
