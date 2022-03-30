@@ -137,10 +137,21 @@ def print_lanelet_entrance_times(bag, time_start_engagement):
 # Expected: True
 # TODO implement
 ###########################################################################################################
+'''
+Required topics
+- SPaT Data : /message/incoming_spat
+- Determine lci plugin is used in planning : /guidance/plan_trajectory
+'''
+
+
 
 ###
 # Mike suggested. MAP messages received and processed and they contain intersection ids matching the expected values
 ###
+'''
+Required topics
+- Map Data : /message/incoming_map
+'''
 
 
 ###########################################################################################################
@@ -149,7 +160,11 @@ def print_lanelet_entrance_times(bag, time_start_engagement):
 # Expected: 10 Hz ± 1 Hz for SPaT, 1 Hz ± 0.5 Hz for MA
 # TODO implement
 ###########################################################################################################
-
+'''
+Required topics
+- SPaT Data : /message/incoming_spat
+- Map Data : /message/incoming_map
+'''
 
 ###########################################################################################################
 # TSMO UC2-M2.1 : Each vehicle should travel sequentially through the lanelets defined in its path.
@@ -157,6 +172,12 @@ def print_lanelet_entrance_times(bag, time_start_engagement):
 # Expected: True
 # TODO implement. Note the expected set of lanelets changes based on the approach being used by the vehicle
 ###########################################################################################################
+
+'''
+Required topics
+- Current lanelet data : /guidance/route_state
+- Engagement status : /guidance/state
+'''
 
 ###########################################################################################################
 # TSMO UC2-M2.2 : Each vehicle shall process the SPaT message 
@@ -168,6 +189,17 @@ def print_lanelet_entrance_times(bag, time_start_engagement):
 # TODO implement
 ###########################################################################################################
 
+'''
+Required topics
+- Not a topic, but will need knowledge of current test case being evaluated to determine expected behavior.
+- Current lanelet and downtrack: /guidance/route_state
+- Engagement status : /guidance/state
+- Current_speed : /hardware_interface/vehicle/twist
+- SPaT Data : /message/incoming_spat
+- Map Data : /message/incoming_map (maybe)
+- TODO There is an open question on how I should identify which spat phase to use for each approach. This may need to be hard coded
+'''
+
 ###########################################################################################################
 # TSMO UC2-M2.3 : Vehicles shall not enter the intersection box at yellow or red phases.
 # 
@@ -175,12 +207,29 @@ def print_lanelet_entrance_times(bag, time_start_engagement):
 # TODO implement
 ###########################################################################################################
 
+'''
+Required topics
+- Current lanelet data : /guidance/route_state
+- Engagement status : /guidance/state
+- SPaT Data : /message/incoming_spat
+- Map Data : /message/incoming_map (maybe)
+- TODO There is an open question on how I should identify which spat phase to use for each approach. This may need to be hard coded
+
+'''
+
 ###########################################################################################################
 # TSMO UC2-M2.4 : Each vehicle should switch away from the TS mode after entering the intersection box
 # Note that the intersection box is the box per the HD map, which may not be exactly as physically seen on the road.
 # Expected: True
 # TODO implement
 ###########################################################################################################
+
+'''
+Required topics
+- Current lanelet data : /guidance/route_state
+- Engagement status : /guidance/state
+- Determine lci plugin is used in planning : /guidance/plan_trajectory
+'''
 
 ###########################################################################################################
 # TSMO UC2-M2.3 : The average deceleration\acceleration over any 1-second portion of the test time horizon
@@ -190,25 +239,53 @@ def print_lanelet_entrance_times(bag, time_start_engagement):
 # TODO implement
 ###########################################################################################################
 
-###
-# Mike suggested. Operater override does not occur until the vehicle is at least fully inside the intersection box
-###
+'''
+Required topics
+- Engagement status : /guidance/state
+- Current_speed : /hardware_interface/vehicle/twist (use to compute accel)
+- Vehicle accel : /hardware_interface/velocity_accel_cov (use as alternative source of accel)
+'''
+
 
 ###
 # Mike suggested plot. Speed over time with matching signal state shown
 ###
 
+'''
+Required topics
+- Engagement status : /guidance/state
+- Current_speed : /hardware_interface/vehicle/twist
+- SPaT Data : /message/incoming_spat
+- Map Data : /message/incoming_map (maybe)
+- TODO There is an open question on how I should identify which spat phase to use for each approach. This may need to be hard coded
+'''
+
 ###
 # Mike suggested plots. Downtrack position over time with matching signal state shown
 ###
+
+'''
+Required topics
+- Engagement status : /guidance/state
+- Current downtrack data : /guidance/route_state
+- SPaT Data : /message/incoming_spat
+- Map Data : /message/incoming_map (maybe)
+- TODO There is an open question on how I should identify which spat phase to use for each approach. This may need to be hard coded
+'''
 
 ###
 # Mike suggested plots. Acceleration over time with matching signal state shown
 ###
 
-###
-# Mike reach suggested plots. Crosstrack error overtime or just a violation count of the lane boundaries
-###
+'''
+Required topics
+- Engagement status : /guidance/state
+- Current_speed : /hardware_interface/vehicle/twist (use to compute accel)
+- Vehicle accel : /hardware_interface/velocity_accel_cov (use as alternative source of accel)
+- SPaT Data : /message/incoming_spat
+- Map Data : /message/incoming_map (maybe)
+- TODO There is an open question on how I should identify which spat phase to use for each approach. This may need to be hard coded
+'''
 
 # Main Function; run all tests from here
 def main():  
