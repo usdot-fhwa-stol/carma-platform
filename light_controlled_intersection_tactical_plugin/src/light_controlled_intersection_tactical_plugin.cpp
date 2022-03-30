@@ -187,6 +187,8 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
     cav_msgs::TrajectoryPlan reduced_last_traj;
     std::vector<double> reduced_final_speeds;
     
+    ROS_DEBUG_STREAM("traj points size:" << last_trajectory_.trajectory_points.size() << ",last_final_speeds_ size: " <<
+                         last_final_speeds_.size() );
     for (size_t i = 0; i < last_trajectory_.trajectory_points.size(); i++)
     {
       if (last_trajectory_.trajectory_points[i].target_time > req.header.stamp - ros::Duration(0.1))
