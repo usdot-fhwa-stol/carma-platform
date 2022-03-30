@@ -189,7 +189,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
     
     for (size_t i = 0; i < last_trajectory_.trajectory_points.size(); i++)
     {
-      if (pt.target_time > req.header.stamp - ros::Duration(0.1))
+      if (last_trajectory_.trajectory_points[i].target_time > req.header.stamp - ros::Duration(0.1))
       {
         reduced_last_traj.trajectory_points.emplace_back(last_trajectory_.trajectory_points[i]);
         reduced_final_speeds.emplace_back(last_final_speeds_[i]);
