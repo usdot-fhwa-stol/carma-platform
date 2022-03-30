@@ -99,6 +99,8 @@ Approach:
 '''
 
 ###########################################################################################################
+# 
+# NOTE: This metric is not clearly defined waiting on further details from Saeid and Amir
 # TSMO UC2-M2.2 : Each vehicle shall process the SPaT message 
 # and adjust its speed such that it can enter the intersection box at a green phase with minimum or no stopping
 # Stopping condition: speed < 0.1 meter/sec
