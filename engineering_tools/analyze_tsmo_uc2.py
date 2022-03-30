@@ -14,6 +14,7 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
+from cmath import phase
 from inspect import TPFLAGS_IS_ABSTRACT
 import sys
 import csv
@@ -51,6 +52,7 @@ Approach:
 
 ###
 # Mike suggested. MAP messages received and processed and they contain intersection ids matching the expected values
+# This when combined with above metric confirms all required v2i information is available
 # TODO implement if extra time
 ###
 '''
@@ -79,6 +81,9 @@ Approach:
 - Count the number of both spat and map starting from engagement to disengagement. 
   Divide this number by the total time period of engagement to get total average frequency for each message
 - Additionally, create a 1s sliding window for spat and a 5s sliding window for map and verify that the average frequency within these windows never falls outside the specified ranges
+
+Plotting: 
+- In addition to the pass/fail criterion plots should be generated of the frequency in the sliding windows at each timestep
 '''
 
 ###########################################################################################################
@@ -100,12 +105,13 @@ Approach:
 
 ###########################################################################################################
 # 
-# NOTE: This metric is not clearly defined waiting on further details from Saeid and Amir
+# NOTE: This metric may get tweaked. Suggest tackling last
+
 # TSMO UC2-M2.2 : Each vehicle shall process the SPaT message 
 # and adjust its speed such that it can enter the intersection box at a green phase with minimum or no stopping
-# Stopping condition: speed < 0.1 meter/sec
+# Specifically the vehicle should on average stop for less time then would be required by the baseline case of EET (Earliest entry time)
 #
-# Expected: The average stopping time before the vehicle enter the intersection box < 4 sec w 
+# Expected: Vehicle's actual stopping time is less then predicted from EET
 #           
 # TODO implement
 ###########################################################################################################
@@ -118,8 +124,30 @@ Required topics
 - Current_speed : /hardware_interface/vehicle/twist
 - SPaT Data : /message/incoming_spat
 
+Other Required Data:
+- Log file from lci_strategic_plugin with DEBUG logs enabled. This is needed to get the EET value
+- Intersection and movement ids for identifying correct spat
+
 Approach: 
-- TODO need further details on this metric
+- At the start of vehicle engagement look in the lci_strategic_plugin log file for the first occurrence of "earliest_entry_time" This will be the EET value. (from ROS_DEBUG_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));)
+- Using the EET value determine if the light was red, yellow, or green from SPAT
+- If the light was red at EET then find the next time when the light turns green
+-- Save the delta between next green start and EET (will refer to as BaseCaseStopTime)
+-- Based on the data determine how much time the vehicle was at a stop at the stop bar while engaged (will refer to as VehicleStopTime)
+-- If VehicleStopTime < BaseCaseStopTime 
+---- Record a Successes (algorithm performs better than base case)
+- If the light was green at EET 
+-- If the vehicle stops in this case,
+---- Record failure
+-- else 
+---- Record success
+- If the light was yellow at EET
+-- If the vehicle stops 
+---- Record success
+-- If the vehicle does not stop
+---- Record failure
+
+
 '''
 
 ###########################################################################################################
@@ -183,6 +211,7 @@ Approach:
 
 ###
 # Mike suggested. Vehicle does not violate speed limit my more than 1 mph
+# Good to confirm as this showed up as an issue multiple times during integration testing
 # TODO implement if extra time
 ###
 '''
@@ -213,6 +242,8 @@ Other Required Data:
 Approach:
 - While the vehicle is engaged plot the current speed twist.linear.x
 - Also plot the signal phase as red, green, yellow bars on the same graph
+
+NOTE: This plot should be generated in two forms 1 time for the individual vehicles and once as a single plot combing the data from two vehicles
 '''
 
 ###########################################################################################################
@@ -231,6 +262,8 @@ Approach:
 - While the vehicle is engaged plot the current downtrack distance reported by route_state
 - Identify where the stop bar is in terms of downtrack distance (this might change per run)
 - At the position where the stop bar is (y-axis) draw a set of red/green/yellow rectangles showing the current signal phase
+
+NOTE: This plot should be generated in two forms 1 time for the individual vehicles and once as a single plot combing the data from two vehicles
 '''
 
 ###########################################################################################################
@@ -249,9 +282,18 @@ Other Required Data:
 Approach:
 - While the vehicle is engaged plot the current acceleration
 - Also plot the signal phase as red, green, yellow bars on the same graph
+
+NOTE: This plot should be generated in two forms 1 time for the individual vehicles and once as a single plot combing the data from two vehicles
+'''
+
+###########################################################################################################
+# Additional Requested Plots: Map and SPaT receiving frequencies
+###########################################################################################################
+'''
 '''
 
 # Main Function; run all tests from here
+# TODO: The contents of this main function provide some basic structure for loading data, but need not be followed if not applicable
 def main():  
     if len(sys.argv) < 2:
         print("Need 1 arguments: process_bag.py <path to source folder with .bag files> ")
