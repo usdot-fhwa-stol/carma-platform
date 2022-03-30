@@ -15,10 +15,14 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(platoon_strategic_ihp)
 
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
+
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+#add_compile_options(-std=c++14)
+#set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+#set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
@@ -36,7 +40,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -60,22 +64,19 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
-
-add_executable( ${PROJECT_NAME}
-  ${headers}
-  src/platoon_strategic_ihp.cpp
-  src/platoon_manager_ihp.cpp
-  src/main_ihp.cpp)
-
+#file(GLOB_RECURSE headers */*.hpp */*.h)
 
 add_library(platoon_strategic_ihp_plugin_lib
  src/platoon_strategic_ihp.cpp
  src/platoon_manager_ihp.cpp)
 
 add_dependencies(platoon_strategic_ihp_plugin_lib ${catkin_EXPORTED_TARGETS})
+target_link_libraries(platoon_strategic_ihp_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
-target_link_libraries(${PROJECT_NAME} platoon_strategic_ihp_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_executable( ${PROJECT_NAME}
+  src/main_ihp.cpp)
+
+target_link_libraries(${PROJECT_NAME} platoon_strategic_ihp_plugin_lib)
 
 
 #############
@@ -90,7 +91,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} platoon_strategic_ihp_plugin_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

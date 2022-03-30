@@ -56,7 +56,7 @@ namespace platoon_strategic_ihp
         pm_.platoon.push_back(hostVehicleMember);
 
         plugin_discovery_msg_.name = "PlatooningStrategicIHPPlugin";
-        plugin_discovery_msg_.versionId = "v1.0";
+        plugin_discovery_msg_.version_id = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = false;
         plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
@@ -306,11 +306,11 @@ namespace platoon_strategic_ihp
 
         // Extract data
         cav_msgs::MobilityOperation msg;
-        msg.header.plan_id = pm_.currentPlatoonID;
-        msg.header.recipient_id = "";
+        msg.m_header.plan_id = pm_.currentPlatoonID;
+        msg.m_header.recipient_id = "";
         std::string hostStaticId = config_.vehicleID;
-        msg.header.sender_id = hostStaticId;
-        msg.header.timestamp = ros::Time::now().toNSec() / 1000000;
+        msg.m_header.sender_id = hostStaticId;
+        msg.m_header.timestamp = ros::Time::now().toNSec() / 1000000;
         msg.strategy = PLATOONING_STRATEGY;
 
         // form message 
@@ -338,18 +338,18 @@ namespace platoon_strategic_ihp
          *           |-------0-----------1---------2--------3----------4----------5-------|
          */ 
         cav_msgs::MobilityOperation msg;
-        msg.header.plan_id = pm_.currentPlatoonID; // msg.header.plan_id is the platoon ID of the request sender (rear join and frontal join). 
-        msg.header.recipient_id = "";
+        msg.m_header.plan_id = pm_.currentPlatoonID; // msg.m_header.plan_id is the platoon ID of the request sender (rear join and frontal join). 
+        msg.m_header.recipient_id = "";
         std::string hostStaticId = config_.vehicleID;
-        msg.header.sender_id = hostStaticId;
-        msg.header.timestamp = ros::Time::now().toNSec() / 1000000;;
+        msg.m_header.sender_id = hostStaticId;
+        msg.m_header.timestamp = ros::Time::now().toNSec() / 1000000;;
         msg.strategy = PLATOONING_STRATEGY;
 
         double CurrentPlatoonLength = pm_.getCurrentPlatoonLength();
         int PlatoonSize = pm_.getTotalPlatooningSize();
 
         boost::format fmter(OPERATION_INFO_PARAMS);
-        //  Note: need to update "OPERATION_INFO_PARAMS" in header file --> strategic_platoon_ihp.h  
+        //  Note: need to update "OPERATION_INFO_PARAMS" in m_header file --> strategic_platoon_ihp.h  
         fmter% CurrentPlatoonLength;            // index = 0, physical length of the platoon, in m.
         fmter% current_speed_;                  // index = 1, in m/s.
         fmter% PlatoonSize;                     // index = 2, number of members 
@@ -702,8 +702,8 @@ namespace platoon_strategic_ihp
          */
 
         std::string strategyParams = msg.strategy_params;
-        std::string vehicleID = msg.header.sender_id;
-        std::string platoonId = msg.header.plan_id;
+        std::string vehicleID = msg.m_header.sender_id;
+        std::string platoonId = msg.m_header.plan_id;
         std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
 
         // read ecef from STATUS
@@ -718,7 +718,7 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("CTD calculated from ecef is: " << ctd);
 
         pm_.memberUpdates(vehicleID, platoonId, statusParams, dtd, ctd);
-        ROS_DEBUG_STREAM("Received platoon status message from vehicle: " << msg.header.sender_id);
+        ROS_DEBUG_STREAM("Received platoon status message from vehicle: " << msg.m_header.sender_id);
 
         return;
     }    
@@ -786,8 +786,8 @@ namespace platoon_strategic_ihp
     // handle message for each states.
     void PlatoonStrategicIHPPlugin::mob_op_cb(const cav_msgs::MobilityOperation& msg)
     {
-        ROS_DEBUG_STREAM("mob_op_cb received msg with sender ID " << msg.header.sender_id
-                        << ", plan ID " << msg.header.plan_id);
+        ROS_DEBUG_STREAM("mob_op_cb received msg with sender ID " << msg.m_header.sender_id
+                        << ", plan ID " << msg.m_header.plan_id);
         ROS_DEBUG_STREAM("...strategy " << msg.strategy << ", strategy params " << msg.strategy_params);
 
         // Check that this is a message about platooning (could be from some other Carma activity nearby)
@@ -924,8 +924,8 @@ namespace platoon_strategic_ihp
 
         // Read incoming message info
         std::string strategyParams = msg.strategy_params;
-        std::string senderId = msg.header.sender_id; 
-        std::string platoonId = msg.header.plan_id; 
+        std::string senderId = msg.m_header.sender_id; 
+        std::string platoonId = msg.m_header.plan_id; 
 
         // In the current state, host vehicle care about the INFO heart-beat operation message if we are not currently in
         // a negotiation, and host also need to care about operation from members in our current platoon.
@@ -982,10 +982,10 @@ namespace platoon_strategic_ihp
 
             // step 2. Generate necessary info for join request
             cav_msgs::MobilityRequest request;
-            request.header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
-            request.header.recipient_id = senderId;
-            request.header.sender_id = config_.vehicleID;
-            request.header.timestamp = ros::Time::now().toNSec()/1000000;
+            request.m_header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
+            request.m_header.recipient_id = senderId;
+            request.m_header.sender_id = config_.vehicleID;
+            request.m_header.timestamp = ros::Time::now().toNSec()/1000000;
             request.location = pose_to_ecef(pose_msg_);
             request.strategy = PLATOONING_STRATEGY;
             
@@ -1017,9 +1017,9 @@ namespace platoon_strategic_ihp
                 request.strategy_params = fmter.str();
                 request.urgency = 50;
 
-                pm_.current_plan = PlatoonPlan(true, request.header.timestamp, request.header.plan_id, senderId);
+                pm_.current_plan = PlatoonPlan(true, request.m_header.timestamp, request.m_header.plan_id, senderId);
                 mobility_request_publisher_(request);
-                ROS_DEBUG_STREAM("Publishing request to leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.header.plan_id);
+                ROS_DEBUG_STREAM("Publishing request to leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.m_header.plan_id);
                 potentialNewPlatoonId = platoonId;
             }
 
@@ -1034,10 +1034,10 @@ namespace platoon_strategic_ihp
                 // compose request
                 cav_msgs::MobilityRequest request;
                 potentialNewPlatoonId_front_ = boost::uuids::to_string(boost::uuids::random_generator()());
-                request.header.plan_id = potentialNewPlatoonId_front_;
-                request.header.recipient_id = senderId; //neighbor platoon leader
-                request.header.sender_id = config_.vehicleID;
-                request.header.timestamp = ros::Time::now().toNSec() / 1000000;
+                request.m_header.plan_id = potentialNewPlatoonId_front_;
+                request.m_header.recipient_id = senderId; //neighbor platoon leader
+                request.m_header.sender_id = config_.vehicleID;
+                request.m_header.timestamp = ros::Time::now().toNSec() / 1000000;
                 request.location = pose_to_ecef(pose_msg_);
                 
                 // UCLA: assign a new plan type
@@ -1060,9 +1060,9 @@ namespace platoon_strategic_ihp
                 request.urgency = 50;
 
                 // UCLA: generate new platoonplan for front join.
-                pm_.current_plan = PlatoonPlan(true, request.header.timestamp, request.header.plan_id, senderId);
+                pm_.current_plan = PlatoonPlan(true, request.m_header.timestamp, request.m_header.plan_id, senderId);
                 mobility_request_publisher_(request);
-                ROS_DEBUG_STREAM("Publishing front join request to the leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.header.plan_id);
+                ROS_DEBUG_STREAM("Publishing front join request to the leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.m_header.plan_id);
             }
 
             // step 5. Request cut-in join (front, middle or rear, from adjacent lane)
@@ -1085,10 +1085,10 @@ namespace platoon_strategic_ihp
 
                 // compose request
                 cav_msgs::MobilityRequest request;
-                request.header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
-                request.header.recipient_id = senderId;
-                request.header.sender_id = config_.vehicleID;
-                request.header.timestamp = ros::Time::now().toNSec() / 1000000;
+                request.m_header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
+                request.m_header.recipient_id = senderId;
+                request.m_header.sender_id = config_.vehicleID;
+                request.m_header.timestamp = ros::Time::now().toNSec() / 1000000;
                 request.location = pose_to_ecef(pose_msg_);
 
                 int join_index = -1;
@@ -1108,9 +1108,9 @@ namespace platoon_strategic_ihp
                 request.urgency = 50;
 
                 // UCLA: generate new platoonplan for front join.
-                pm_.current_plan = PlatoonPlan(true, request.header.timestamp, request.header.plan_id, senderId);
+                pm_.current_plan = PlatoonPlan(true, request.m_header.timestamp, request.m_header.plan_id, senderId);
                 mobility_request_publisher_(request);
-                ROS_DEBUG_STREAM("Publishing request to the leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.header.plan_id);
+                ROS_DEBUG_STREAM("Publishing request to the leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.m_header.plan_id);
                 potentialNewPlatoonId_front_ = newLeaderPlatoonId;
             }
 
@@ -1173,7 +1173,7 @@ namespace platoon_strategic_ihp
     {
         std::string strategyParams = msg.strategy_params;
         bool isPlatoonStatusMsg = (strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0);
-        std::string senderId = msg.header.sender_id; 
+        std::string senderId = msg.m_header.sender_id; 
 
         if(isPlatoonStatusMsg) 
         {
@@ -1197,7 +1197,7 @@ namespace platoon_strategic_ihp
 
         // read parameters
         std::string strategyParams = msg.strategy_params;
-        std::string senderId = msg.header.sender_id; 
+        std::string senderId = msg.m_header.sender_id; 
         
         // locate INFO type
         bool isPlatoonInfoMsg = (strategyParams.rfind(OPERATION_INFO_TYPE, 0) == 0);
@@ -1237,10 +1237,10 @@ namespace platoon_strategic_ihp
                 
                 // request 2. change to same lane operation states (determine based on DTD differences)
                 cav_msgs::MobilityRequest request;
-                request.header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
-                request.header.recipient_id = senderId;
-                request.header.sender_id = config_.vehicleID;
-                request.header.timestamp = ros::Time::now().toNSec()/1000000;
+                request.m_header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
+                request.m_header.recipient_id = senderId;
+                request.m_header.sender_id = config_.vehicleID;
+                request.m_header.timestamp = ros::Time::now().toNSec()/1000000;
                 request.location = pose_to_ecef(pose_msg_);
 
                 // UCLA: send request based on cut-in type
@@ -1372,7 +1372,7 @@ namespace platoon_strategic_ihp
     // Middle state that decided whether to accept joiner  
     MobilityRequestResponse PlatoonStrategicIHPPlugin::mob_req_cb_leaderwaiting(const cav_msgs::MobilityRequest& msg)
     {
-        bool isTargetVehicle = msg.header.sender_id == lw_applicantId_;
+        bool isTargetVehicle = msg.m_header.sender_id == lw_applicantId_;
         bool isCandidateJoin = msg.plan_type.type == cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
 
         lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location);
@@ -1385,16 +1385,16 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("Target vehicle " << lw_applicantId_ << " is actually joining.");
             ROS_DEBUG_STREAM("Changing to PlatoonLeaderState and send ACK to target vehicle");
             pm_.current_platoon_state = PlatoonState::LEADER;
-            pm_.currentPlatoonID = msg.header.plan_id;
+            pm_.currentPlatoonID = msg.m_header.plan_id;
             PlatoonMember newMember = PlatoonMember();
-            newMember.staticId = msg.header.sender_id;
+            newMember.staticId = msg.m_header.sender_id;
             newMember.vehiclePosition = wm_->routeTrackPos(incoming_pose).downtrack;
             pm_.platoon.push_back(newMember);
             return MobilityRequestResponse::ACK;
         }
         else
         {
-            ROS_DEBUG_STREAM("Received platoon request with vehicle id = " << msg.header.sender_id);
+            ROS_DEBUG_STREAM("Received platoon request with vehicle id = " << msg.m_header.sender_id);
             ROS_DEBUG_STREAM("The request type is " << msg.plan_type.type << " and we choose to ignore");
             return MobilityRequestResponse::NO_RESPONSE;
         }
@@ -1433,7 +1433,7 @@ namespace platoon_strategic_ihp
         //     1. The size limitation on current platoon based on the plugin's parameters.
         //     2. Calculate how long that vehicle can be in a reasonable distance to actually join us.
         // TODO: We ignore the lane information for now and assume the applicant is in the same lane with us.
-        cav_msgs::MobilityHeader msgHeader = msg.header;
+        cav_msgs::MobilityHeader msgHeader = msg.m_header;
         std::string params = msg.strategy_params;
         std::string applicantId = msgHeader.sender_id;
         ROS_DEBUG_STREAM("Receive mobility JOIN request from " << applicantId << " and PlanId = " << msgHeader.plan_id);
@@ -1503,11 +1503,11 @@ namespace platoon_strategic_ihp
                 if (isDistanceCloseEnough) 
                 {
                     ROS_DEBUG_STREAM("The applicant is close enough and we will allow it to try to join");
-                    ROS_DEBUG_STREAM("Change to LeaderWaitingState and waiting for " << msg.header.sender_id << " to join");
+                    ROS_DEBUG_STREAM("Change to LeaderWaitingState and waiting for " << msg.m_header.sender_id << " to join");
                     // change state to leaderwaiting !
                     pm_.current_platoon_state = PlatoonState::LEADERWAITING;
                     waitingStartTime = ros::Time::now().toNSec() / 1000000;
-                    lw_applicantId_ = msg.header.sender_id;  // this is ID of the backjoin applicant (plan sender is always the car trying to find a leader)
+                    lw_applicantId_ = msg.m_header.sender_id;  // this is ID of the backjoin applicant (plan sender is always the car trying to find a leader)
                     // plugin.setState(new LeaderWaitingState(plugin, log, pluginServiceLocator, applicantId));
                     return MobilityRequestResponse::ACK;
                 }
@@ -1557,7 +1557,7 @@ namespace platoon_strategic_ihp
                 if (isDistanceCloseEnough && isPlatoonNotSingle) 
                 {
                     ROS_DEBUG_STREAM("The applicant is close enough for frontal join, send acceptance response");
-                    ROS_DEBUG_STREAM("Change to LeaderAborting state and waiting for " << msg.header.sender_id << " to join as the new platoon leader");
+                    ROS_DEBUG_STREAM("Change to LeaderAborting state and waiting for " << msg.m_header.sender_id << " to join as the new platoon leader");
 
                     // ----------------- give up leader position and look for new leader --------------------------
                     ROS_DEBUG_STREAM("Received positive response for plan id = " << pm_.current_plan.planId);
@@ -1578,7 +1578,7 @@ namespace platoon_strategic_ihp
                     waitingStartTime = ros::Time::now().toNSec() / 1000000;
 
                     // add front join new joiner ID (fj_new_joiner_Id_)
-                    fj_new_joiner_Id_ = msg.header.sender_id; // old leader that is applying to join new leader at front
+                    fj_new_joiner_Id_ = msg.m_header.sender_id; // old leader that is applying to join new leader at front
 
                     // plugin.setState(new LeaderWaitingState(plugin, log, pluginServiceLocator, applicantId));
                     return MobilityRequestResponse::ACK;
@@ -1615,7 +1615,7 @@ namespace platoon_strategic_ihp
                 // update the joiningID_ if the current joining request is the first request
                 joiningID_ = (joiningID_=="") ? applicantId : joiningID_;
                 
-                ROS_DEBUG_STREAM("Change to Leading with operation state and waiting for " << msg.header.sender_id << " to change lane");
+                ROS_DEBUG_STREAM("Change to Leading with operation state and waiting for " << msgHeader.sender_id << " to change lane");
                 // change state to lead with operation
                 pm_.current_platoon_state = PlatoonState::LEADWITHOPERATION;
                 waitingStartTime = ros::Time::now().toNSec() / 1000000;
@@ -1660,7 +1660,7 @@ namespace platoon_strategic_ihp
     MobilityRequestResponse PlatoonStrategicIHPPlugin::mob_req_cb_candidateleader(const cav_msgs::MobilityRequest& msg)
     {   
         
-        bool isTargetVehicle = msg.header.sender_id == fj_new_joiner_Id_; // need to check: senderID (old leader) == front join applicant ID
+        bool isTargetVehicle = msg.m_header.sender_id == fj_new_joiner_Id_; // need to check: senderID (old leader) == front join applicant ID
         bool isCandidateJoin = msg.plan_type.type == cav_msgs::PlanType::PLATOON_FRONT_JOIN;
 
         lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location);
@@ -1677,7 +1677,7 @@ namespace platoon_strategic_ihp
         }
         else
         {
-            ROS_DEBUG_STREAM("Received platoon request with vehicle id = " << msg.header.sender_id);
+            ROS_DEBUG_STREAM("Received platoon request with vehicle id = " << msg.m_header.sender_id);
             ROS_DEBUG_STREAM("The request type is " << msg.plan_type.type << " and we choose to ignore");
             return MobilityRequestResponse::NO_RESPONSE;
         }
@@ -1801,8 +1801,8 @@ namespace platoon_strategic_ihp
     {
         // Firstly, check eligibility of the received message. 
         bool isCurrPlanValid = pm_.current_plan.valid;                          // Check if current plan is still valid (i.e., not timed out).
-        bool isForCurrentPlan = msg.header.plan_id == pm_.current_plan.planId;  // Check if plan Id matches.
-        bool isFromTargetVehicle = msg.header.sender_id == pm_.targetLeaderId;  // Check of target leader ID and sender ID matches.
+        bool isForCurrentPlan = msg.m_header.plan_id == pm_.current_plan.planId;  // Check if plan Id matches.
+        bool isFromTargetVehicle = msg.m_header.sender_id == pm_.targetLeaderId;  // Check of target leader ID and sender ID matches.
         ROS_DEBUG_STREAM("mob_resp_cb: isCurrPlanValid = " << isCurrPlanValid << ", isForCurrentPlan = " << 
                         isForCurrentPlan << ", isFromTargetVehicle = " << isFromTargetVehicle);
         ROS_DEBUG_STREAM("current plan ID = " << pm_.current_plan.planId << ", target leader ID = " << pm_.targetLeaderId);
@@ -1872,8 +1872,8 @@ namespace platoon_strategic_ihp
         // Check if current plan is still valid (i.e., not timed out)
         if (pm_.current_plan.valid)
         {
-            bool isForCurrentPlan = msg.header.plan_id == pm_.current_plan.planId;
-            bool isFromTargetVehicle = msg.header.sender_id == pm_.targetLeaderId;
+            bool isForCurrentPlan = msg.m_header.plan_id == pm_.current_plan.planId;
+            bool isFromTargetVehicle = msg.m_header.sender_id == pm_.targetLeaderId;
             ROS_DEBUG_STREAM("isForCurrentPlan " << isForCurrentPlan);
 
             ROS_DEBUG_STREAM("isFromTargetVehicle " << isFromTargetVehicle);
@@ -1885,17 +1885,17 @@ namespace platoon_strategic_ihp
                 {
                     // We change to follower state and start to actually follow that leader
                     // The platoon manager also need to change the platoon Id to the one that the target leader is using 
-                    ROS_DEBUG_STREAM("The leader " << msg.header.sender_id << " agreed on our join. Change to follower state.");
+                    ROS_DEBUG_STREAM("The leader " << msg.m_header.sender_id << " agreed on our join. Change to follower state.");
                     pm_.current_platoon_state = PlatoonState::FOLLOWER;
-                    targetPlatoonId = msg.header.plan_id;
+                    targetPlatoonId = msg.m_header.plan_id;
                     // change platoon manager to follower state 
-                    pm_.changeFromLeaderToFollower(targetPlatoonId, msg.header.sender_id);
+                    pm_.changeFromLeaderToFollower(targetPlatoonId, msg.m_header.sender_id);
                     ROS_WARN("changed to follower");
                 }
                 else
                 {
                     // We change back to normal leader state and try to join other platoons
-                    ROS_DEBUG_STREAM("The leader " << msg.header.sender_id << " does not agree on our join. Change back to leader state.");
+                    ROS_DEBUG_STREAM("The leader " << msg.m_header.sender_id << " does not agree on our join. Change back to leader state.");
                     pm_.current_platoon_state = PlatoonState::LEADER;
                 }
             }
@@ -1997,12 +1997,12 @@ namespace platoon_strategic_ihp
         // Check if current plan is still valid (i.e., not timed out).
         if (pm_.current_plan.valid)
         {
-            ROS_DEBUG_STREAM("My plan id = " << pm_.current_plan.planId << " and response plan Id = " << msg.header.plan_id);
-            ROS_DEBUG_STREAM("And peer id match " << (pm_.current_plan.peerId == msg.header.sender_id));
-            ROS_DEBUG_STREAM("Expected peer id = " << pm_.current_plan.peerId << " and response sender Id = " << msg.header.sender_id);
+            ROS_DEBUG_STREAM("My plan id = " << pm_.current_plan.planId << " and response plan Id = " << msg.m_header.plan_id);
+            ROS_DEBUG_STREAM("And peer id match " << (pm_.current_plan.peerId == msg.m_header.sender_id));
+            ROS_DEBUG_STREAM("Expected peer id = " << pm_.current_plan.peerId << " and response sender Id = " << msg.m_header.sender_id);
 
             // Check the response is received correctly (i.e., host vehicle is the desired receiver).
-            if (pm_.current_plan.planId == msg.header.plan_id && pm_.current_plan.peerId == msg.header.sender_id) 
+            if (pm_.current_plan.planId == msg.m_header.plan_id && pm_.current_plan.peerId == msg.m_header.sender_id) 
             {   
                 // bool indicator is initiated in header files
                 // rear join
@@ -2059,10 +2059,10 @@ namespace platoon_strategic_ihp
             }
             else
             {
-                ROS_DEBUG_STREAM("Ignore the response message because planID match: " << (pm_.current_plan.planId == msg.header.plan_id));
-                ROS_DEBUG_STREAM("My plan id = " << pm_.current_plan.planId << " and response plan Id = " << msg.header.plan_id);
-                ROS_DEBUG_STREAM("And peer id match " << (pm_.current_plan.peerId == msg.header.sender_id));
-                ROS_DEBUG_STREAM("Expected peer id = " << pm_.current_plan.peerId << " and response sender Id = " << msg.header.sender_id);
+                ROS_DEBUG_STREAM("Ignore the response message because planID match: " << (pm_.current_plan.planId == msg.m_header.plan_id));
+                ROS_DEBUG_STREAM("My plan id = " << pm_.current_plan.planId << " and response plan Id = " << msg.m_header.plan_id);
+                ROS_DEBUG_STREAM("And peer id match " << (pm_.current_plan.peerId == msg.m_header.sender_id));
+                ROS_DEBUG_STREAM("Expected peer id = " << pm_.current_plan.peerId << " and response sender Id = " << msg.m_header.sender_id);
             }
         }
     }
@@ -2086,8 +2086,8 @@ namespace platoon_strategic_ihp
         // Check if current plan is still valid (i.e., not timed out).
         if (pm_.current_plan.valid)
         {
-            bool isForCurrentPlan = msg.header.plan_id == pm_.current_plan.planId;
-            bool isFromTargetVehicle = msg.header.sender_id == pm_.targetLeaderId;
+            bool isForCurrentPlan = msg.m_header.plan_id == pm_.current_plan.planId;
+            bool isFromTargetVehicle = msg.m_header.sender_id == pm_.targetLeaderId;
             ROS_DEBUG_STREAM("isForCurrentPlan " << isForCurrentPlan);
 
             ROS_DEBUG_STREAM("isFromTargetVehicle " << isFromTargetVehicle);
@@ -2099,21 +2099,21 @@ namespace platoon_strategic_ihp
                 {
                     // We change to follower state and start to actually follow the new leader
                     // The platoon manager also need to change the platoon Id to the one that the target leader is using                
-                    ROS_DEBUG_STREAM("The new leader " << msg.header.sender_id << " agreed on the frontal join. Change to follower state.");
+                    ROS_DEBUG_STREAM("The new leader " << msg.m_header.sender_id << " agreed on the frontal join. Change to follower state.");
                     pm_.current_platoon_state = PlatoonState::FOLLOWER;
                     
                     // reset leader aborting request marker
                     isFirstLeaderAbortRequest_ = true;
 
-                    targetPlatoonId = msg.header.plan_id;
+                    targetPlatoonId = msg.m_header.plan_id;
                     // change platoon manager to follower state 
-                    pm_.changeFromLeaderToFollower(targetPlatoonId, msg.header.sender_id);
+                    pm_.changeFromLeaderToFollower(targetPlatoonId, msg.m_header.sender_id);
                     ROS_WARN("changed to follower");
                 }
                 else
                 {
                     // We change back to normal leader state and try to join other platoons
-                    ROS_DEBUG_STREAM("The new leader " << msg.header.sender_id << " does not agree on the frontal join. Change back to leader state.");
+                    ROS_DEBUG_STREAM("The new leader " << msg.m_header.sender_id << " does not agree on the frontal join. Change back to leader state.");
                     pm_.current_platoon_state = PlatoonState::LEADER;
                 }
             }
@@ -2185,10 +2185,10 @@ namespace platoon_strategic_ihp
 
             // task 3: notify gap-rear vehicle to stop slowing down
             cav_msgs::MobilityRequest request;
-            request.header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
-            request.header.recipient_id = pm_.targetLeaderId;
-            request.header.sender_id = config_.vehicleID;
-            request.header.timestamp = ros::Time::now().toNSec() / 1000000;;
+            request.m_header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
+            request.m_header.recipient_id = pm_.targetLeaderId;
+            request.m_header.sender_id = config_.vehicleID;
+            request.m_header.timestamp = ros::Time::now().toNSec() / 1000000;;
             // UCLA: A new plan type to stop creat gap.
             request.plan_type.type = cav_msgs::PlanType::STOP_CREATE_GAP;
             request.strategy = PLATOONING_STRATEGY;
@@ -2235,10 +2235,10 @@ namespace platoon_strategic_ihp
         }
         
         cav_msgs::MobilityResponse response;
-        response.header.sender_id = config_.vehicleID;
-        response.header.recipient_id = msg.header.sender_id;
-        response.header.plan_id = msg.header.plan_id;
-        response.header.timestamp = ros::Time::now().toNSec() / 1000000;
+        response.m_header.sender_id = config_.vehicleID;
+        response.m_header.recipient_id = msg.m_header.sender_id;
+        response.m_header.plan_id = msg.m_header.plan_id;
+        response.m_header.timestamp = ros::Time::now().toNSec() / 1000000;
 
         // UCLA: add plantype in response 
         response.plan_type.type = msg.plan_type.type;
@@ -2430,10 +2430,10 @@ namespace platoon_strategic_ihp
             cav_msgs::MobilityRequest request;
             std::string planId = boost::uuids::to_string(boost::uuids::random_generator()());
             long currentTime = ros::Time::now().toNSec() / 1000000;
-            request.header.plan_id = planId;
-            request.header.recipient_id = pm_.targetLeaderId;
-            request.header.sender_id = config_.vehicleID;
-            request.header.timestamp = currentTime;
+            request.m_header.plan_id = planId;
+            request.m_header.recipient_id = pm_.targetLeaderId;
+            request.m_header.sender_id = config_.vehicleID;
+            request.m_header.timestamp = currentTime;
 
             request.plan_type.type = cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
             request.strategy = PLATOONING_STRATEGY;
@@ -2514,10 +2514,10 @@ namespace platoon_strategic_ihp
             cav_msgs::MobilityRequest request;
             std::string planId = boost::uuids::to_string(boost::uuids::random_generator()());
             long currentTime = ros::Time::now().toNSec() / 1000000;
-            request.header.plan_id = planId;
-            request.header.recipient_id = pm_.targetLeaderId;
-            request.header.sender_id = config_.vehicleID;
-            request.header.timestamp = currentTime;
+            request.m_header.plan_id = planId;
+            request.m_header.recipient_id = pm_.targetLeaderId;
+            request.m_header.sender_id = config_.vehicleID;
+            request.m_header.timestamp = currentTime;
             // UCLA added for cut-in, not used for other cases
             int join_index = -1; // Note: not used by same-lane functions.
             double platoon_size = pm_.getTotalPlatooningSize(); 
@@ -2685,10 +2685,10 @@ namespace platoon_strategic_ihp
         cav_msgs::MobilityRequest request;
         std::string planId = boost::uuids::to_string(boost::uuids::random_generator()());
         long currentTime = ros::Time::now().toNSec() / 1000000;
-        request.header.plan_id = planId;
-        request.header.recipient_id = pm_.targetLeaderId;
-        request.header.sender_id = config_.vehicleID;
-        request.header.timestamp = currentTime;
+        request.m_header.plan_id = planId;
+        request.m_header.recipient_id = pm_.targetLeaderId;
+        request.m_header.sender_id = config_.vehicleID;
+        request.m_header.timestamp = currentTime;
         // UCLA: assign a new plan type
         request.plan_type.type = cav_msgs::PlanType::PLATOON_CUTIN_JOIN;
         request.strategy = PLATOONING_STRATEGY;
