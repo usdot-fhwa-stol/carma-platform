@@ -339,7 +339,23 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   // At this point we know the vehicle is within the activation distance and we know the current and next light phases
   // All we need to now determine is if we should stop or if we should continue
-  intersection_speed_ = findSpeedLimit(entry_lanelet); //technically lanelet is not "inside the lanelet" TODO
+  lanelet::Lanelet intersection_lanelet;
+
+  auto route = wm_->getRoute()->shortestPath();
+  auto entry_llt_iter = std::find(route.begin(), route.end(), entry_lanelet);
+  if (entry_llt_iter != route.end())
+  {
+    intersection_lanelet = *(entry_llt_iter + 1);
+  }
+  
+  if (intersection_lanelet.id() != lanelet::Id)
+  {
+    intersection_speed_ = findSpeedLimit(intersection_lanelet); 
+  }
+  else
+  {
+    intersection_speed_ = findSpeedLimit(exit_lanelet); 
+  }
 
   intersection_speed_ = intersection_speed_.get() * 0.999; // so that speed_limit is not exactly same as departure or current speed
 
