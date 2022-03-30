@@ -163,7 +163,6 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
     trajectory.trajectory_points = basic_autonomy:: waypoint_generation::compose_lanefollow_trajectory_from_path(points_and_target_speeds, 
                                                                                 req.vehicle_state, req.header.stamp, wm_, ending_state_before_buffer_, debug_msg_, 
                                                                                 wpg_detail_config); // Compute the trajectory
-    trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
     
     // Set the planning plugin field name
     for (auto& p : trajectory.trajectory_points) {
@@ -185,16 +184,19 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
       ROS_DEBUG_STREAM("Not all variables are set...");
     }
 
-    cav_msgs::TrajectoryPlan reduced_last_traj; 
+    cav_msgs::TrajectoryPlan reduced_last_traj;
+    std::vector<double> reduced_final_speeds;
     
-    for (const auto &pt :last_trajectory_.trajectory_points)
+    for (size_t i = 0; i < last_trajectory_.trajectory_points.size(); i++)
     {
       if (pt.target_time > req.header.stamp - ros::Duration(0.1))
       {
-        reduced_last_traj.trajectory_points.emplace_back(pt);
+        reduced_last_traj.trajectory_points.emplace_back(last_trajectory_.trajectory_points[i]);
+        reduced_final_speeds.emplace_back(last_final_speeds_[i]);
       }
     }
 
+    last_final_speeds_ = reduced_final_speeds;
     last_trajectory_.trajectory_points = reduced_last_traj.trajectory_points;
 
     if (is_last_case_successful_ != boost::none && last_case_ != boost::none
@@ -235,6 +237,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
       last_trajectory_ = trajectory;
       resp.trajectory_plan = trajectory;
       last_case_ = new_case;
+      last_final_speeds_ = debug_msg_.velocity_profile;
       is_last_case_successful_ = is_new_case_successful;
       ROS_DEBUG_STREAM("USING NEW: Target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req.header.stamp);
       if (is_new_case_successful)
@@ -251,9 +254,9 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
       ROS_DEBUG_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
       
     }
-      ROS_DEBUG_STREAM("Debug: new case:" << (int) new_case << ", is_new_case_successful: " << is_new_case_successful);
+    ROS_DEBUG_STREAM("Debug: new case:" << (int) new_case << ", is_new_case_successful: " << is_new_case_successful);
 
-    
+    resp.trajectory_plan.initial_longitudinal_velocity = last_final_speeds_.front();
 
     resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 

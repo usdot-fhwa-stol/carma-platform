@@ -211,6 +211,7 @@ public:
  
   cav_msgs::Plugin plugin_discovery_msg_;
   carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg_;
+  std::vector<double> last_final_speeds_;
 
   std::string light_controlled_intersection_strategy_ = "Carma/light_controlled_intersection";
 
