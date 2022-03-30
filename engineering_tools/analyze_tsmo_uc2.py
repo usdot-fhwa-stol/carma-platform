@@ -23,109 +23,6 @@ import rosbag # To import this, run the following command: "pip install --extra-
 import datetime
 import math
 
-# Usage:
-# python analyze_wz_rosbags.py <path to folder containing Workzone Use Case .bag files>
-
-def generate_speed_plot(bag):
-    # Get the vehicle speed and plot it
-    speed_received_first_msg = 0.0
-    first = True
-    times = []
-    speeds = []
-    crosstracks = []
-    downtracks = []
-    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle_status']):
-    #for topic, msg, t in bag.read_messages(topics=['/guidance/route_state']):
-        if first:
-            time_start = t
-            first = False
-            continue
-        
-        times.append((t-time_start).to_sec())
-        speeds.append(msg.speed * 0.621371) # Conversion from kph to mph
-        #crosstracks.append(msg.cross_track)
-        #downtracks.append(msg.down_track)
-    
-    plt.plot(times,speeds)
-    #plt.plot(times,crosstracks)
-    #plt.plot(times,downtracks)
-    plt.show()
-
-    return
-
-# Helper Function: Get the original speed limit for the lanelets within the vehicle's route
-# Note: Assumes that all lanelets in the route share the same speed limit prior to the first geofence CARMA Cloud message being processed.
-def get_route_original_speed_limit(bag, time_test_start_engagement):
-    # Initialize the return variable
-    original_speed_limit = 0.0
-
-    # Find the speed limit associated with the first lanelet when the system first becomes engaged
-    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_test_start_engagement):
-        original_speed_limit = msg.speed_limit
-        break
-
-    return original_speed_limit
-
-# Helper Function: Get start and end times of the period of engagement that includes the in-geofence section
-# TODO remove unneeded geofence sections
-def get_test_case_engagement_times(bag, time_enter_active_geofence, time_exit_active_geofence):
-    # Initialize system engagement start and end times
-    time_start_engagement = rospy.Time()
-    time_stop_engagement = rospy.Time()
-
-    # Loop through /guidance/state messages to determine start and end times of engagement that include the in-geofence section
-    is_engaged = False
-    found_engagement_times = False
-    has_reached_geofence_entrance = False
-    has_reached_geofence_exit = False
-    for topic, msg, t in bag.read_messages(topics=['/guidance/state']):
-        # If entering engagement, track this start time
-        if (msg.state == 4 and not is_engaged):
-            time_start_engagement = t
-            is_engaged = True
-
-        # Store the last recorded engagement timestamp in case CARMA ends engagement before a new guidance
-        #       state can be published.
-        if (msg.state == 4):
-            time_last_engaged = t
-        
-        # If exiting engagement, check whether this period of engagement included the geofence entrance and exit times
-        elif (msg.state != 4 and is_engaged):
-            is_engaged = False
-            time_stop_engagement = t
-
-            # Check if the engagement start time was before the geofence entrance and exit times
-            if (time_start_engagement <= time_enter_active_geofence and t >= time_enter_active_geofence):
-                has_reached_geofence_entrance = True
-            if (time_start_engagement <= time_exit_active_geofence and t >= time_exit_active_geofence):
-                has_reached_geofence_exit = True
-
-            # Set flag if this engagement period includes both the geofence entrance and exit times
-            if (has_reached_geofence_entrance and has_reached_geofence_exit):
-                found_test_case_engagement_times = True
-                break
-    
-    # If CARMA ended engagement before guidance state could be updated, check if the last recorded
-    #    time of engagement came after exiting the geofence
-    if not found_engagement_times:
-        if time_last_engaged >= time_exit_active_geofence:
-            time_stop_engagement = time_last_engaged
-            found_engagement_times = True
-    
-    return time_start_engagement, time_stop_engagement, found_engagement_times
-
-# Helper Function: Print out the times associated with the vehicle entering each new lanelet according to /guidance/route_state
-def print_lanelet_entrance_times(bag, time_start_engagement):
-    # Print out time vehicle enters each lanelet according to /guidance/route_state
-    id = 0
-    print("/guidance/route_state lanelet change times:")
-    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_start_engagement):
-        if msg.lanelet_id != id:
-            print("Time: " + str(t.to_sec()) + "; Lanelet: " + str(msg.lanelet_id) + "; Speed Limit: " + str(msg.speed_limit))
-            id = msg.lanelet_id
-    
-    return
-
 ###########################################################################################################
 # TSMO UC1-M1.1 : Vehicles should receive SPaT messages from RSU 
 # once the vehicles enter the communication area until the vehicles depart the intersection box.
@@ -140,17 +37,28 @@ def print_lanelet_entrance_times(bag, time_start_engagement):
 '''
 Required topics
 - SPaT Data : /message/incoming_spat
-- Determine lci plugin is used in planning : /guidance/plan_trajectory
+Other Required information
+- Movement Ids from the Spat that are needed for the vehicle and scenario being tested (may need to be a hard coded mapping)
+- Intersection Id for the spat. Since we have two intersections but only one is used in the test the id of interest should be hard coded into the analysis
+  With the expected id we can verify that the required correct spat message is received.
+Approach:
+- Spat will provide the current light phase state by matching the movement id for the current scenario into the plan
+- Spat fields can be checked for availability to ensure the listed fields in the metric are available
+- Intersection id of the spat message can be checked to ensure it is the correct message being analyzed
 '''
 
 
 
 ###
 # Mike suggested. MAP messages received and processed and they contain intersection ids matching the expected values
+# TODO implement if extra time
 ###
 '''
 Required topics
 - Map Data : /message/incoming_map
+Other Required Data:
+- Map messages have intersection Ids. Since we have two intersections but only one is used in the test the id of interest should be hard coded into the analysis
+  With the expected id we can verify that the required map message is received. 
 '''
 
 
@@ -164,6 +72,13 @@ Required topics
 Required topics
 - SPaT Data : /message/incoming_spat
 - Map Data : /message/incoming_map
+- Engagement status : /guidance/state
+
+Approach:
+- After the first 3 Spat messages have been received consider communication stable enough for analysis (this may be before or after engagement)
+- Count the number of both spat and map starting from engagement to disengagement. 
+  Divide this number by the total time period of engagement to get total average frequency for each message
+- Additionally, create a 1s sliding window for spat and a 5s sliding window for map and verify that the average frequency within these windows never falls outside the specified ranges
 '''
 
 ###########################################################################################################
@@ -177,6 +92,10 @@ Required topics
 Required topics
 - Current lanelet data : /guidance/route_state
 - Engagement status : /guidance/state
+
+Approach: 
+- Hard code the expected lanelet ids for each approach in each test scenario
+- For a given run after the system is engaged, verify that the route_state reports the current lanelets in sequence following the same order as specified for the scenario and approach
 '''
 
 ###########################################################################################################
@@ -196,8 +115,9 @@ Required topics
 - Engagement status : /guidance/state
 - Current_speed : /hardware_interface/vehicle/twist
 - SPaT Data : /message/incoming_spat
-- Map Data : /message/incoming_map (maybe)
-- TODO There is an open question on how I should identify which spat phase to use for each approach. This may need to be hard coded
+
+Approach: 
+- TODO need further details on this metric
 '''
 
 ###########################################################################################################
@@ -212,9 +132,13 @@ Required topics
 - Current lanelet data : /guidance/route_state
 - Engagement status : /guidance/state
 - SPaT Data : /message/incoming_spat
-- Map Data : /message/incoming_map (maybe)
-- TODO There is an open question on how I should identify which spat phase to use for each approach. This may need to be hard coded
+Other Required Data:
+- The intersection and movement ids expected for the vehicle and scenario being tested
 
+Approach:
+- Use the intersection id and movement id to identify the current phase of the light which is required
+- Use the route_state to determine the current lanelet of the vehicle 
+- While the vehicle is engaged, its reported lanelet should never be one inside the intersection while the phase state is not green
 '''
 
 ###########################################################################################################
@@ -229,6 +153,11 @@ Required topics
 - Current lanelet data : /guidance/route_state
 - Engagement status : /guidance/state
 - Determine lci plugin is used in planning : /guidance/plan_trajectory
+
+Approach:
+- When the vehicle is engaged, gets its current lanelet from the route state
+- Verify that when the lanelet is one inside the intersection the current planning trajectory is not coming from the lci tactical plugin
+- To check the controlling tactical plugin look at the planner_plugin field of the first point on the current plan_trajectory
 '''
 
 ###########################################################################################################
@@ -244,38 +173,67 @@ Required topics
 - Engagement status : /guidance/state
 - Current_speed : /hardware_interface/vehicle/twist (use to compute accel)
 - Vehicle accel : /hardware_interface/velocity_accel_cov (use as alternative source of accel)
+
+Approach:
+- While the vehicle is engaged, create a 1s sliding window and take the start and end speed for each timestep of the window and compute the average acceleration
+- Additionally, verify that the abs(/hardware_interface/velocity_accel_cov reported value) never exceeds 3.0 for more than 1 timestep at any point during engagement
+'''
+
+###
+# Mike suggested. Vehicle does not violate speed limit my more than 1 mph
+# TODO implement if extra time
+###
+'''
+Required topics
+- Engagement status : /guidance/state
+- Current_speed : /hardware_interface/vehicle/twist
+Other Required Data:
+- Speed limit extracted from map
+
+Approach:
+- In TSMO UC2 all the speed limits will be the same so a simple conditional while the vehicle is engaged on twist.linear.x will suffice to check if the limit is exceeded
 '''
 
 
-###
-# Mike suggested plot. Speed over time with matching signal state shown
-###
+###########################################################################################################
+# Additional Requested Plots: Speed over time with matching signal state shown
+###########################################################################################################
 
 '''
 Required topics
 - Engagement status : /guidance/state
 - Current_speed : /hardware_interface/vehicle/twist
 - SPaT Data : /message/incoming_spat
-- Map Data : /message/incoming_map (maybe)
-- TODO There is an open question on how I should identify which spat phase to use for each approach. This may need to be hard coded
+
+Other Required Data:
+- Intersection id and movement id for the spat message
+
+Approach:
+- While the vehicle is engaged plot the current speed twist.linear.x
+- Also plot the signal phase as red, green, yellow bars on the same graph
 '''
 
-###
-# Mike suggested plots. Downtrack position over time with matching signal state shown
-###
+###########################################################################################################
+# Additional Requested Plots: Downtrack position over time with matching signal state shown
+###########################################################################################################
 
 '''
 Required topics
 - Engagement status : /guidance/state
 - Current downtrack data : /guidance/route_state
 - SPaT Data : /message/incoming_spat
-- Map Data : /message/incoming_map (maybe)
-- TODO There is an open question on how I should identify which spat phase to use for each approach. This may need to be hard coded
+Other Required Data:
+- Intersection id and movement id for the spat message
+
+Approach:
+- While the vehicle is engaged plot the current downtrack distance reported by route_state
+- Identify where the stop bar is in terms of downtrack distance (this might change per run)
+- At the position where the stop bar is (y-axis) draw a set of red/green/yellow rectangles showing the current signal phase
 '''
 
-###
-# Mike suggested plots. Acceleration over time with matching signal state shown
-###
+###########################################################################################################
+# Additional Requested Plots: Acceleration over time with matching signal state shown
+###########################################################################################################
 
 '''
 Required topics
@@ -283,8 +241,12 @@ Required topics
 - Current_speed : /hardware_interface/vehicle/twist (use to compute accel)
 - Vehicle accel : /hardware_interface/velocity_accel_cov (use as alternative source of accel)
 - SPaT Data : /message/incoming_spat
-- Map Data : /message/incoming_map (maybe)
-- TODO There is an open question on how I should identify which spat phase to use for each approach. This may need to be hard coded
+Other Required Data:
+- Intersection id and movement id for the spat message
+
+Approach:
+- While the vehicle is engaged plot the current acceleration
+- Also plot the signal phase as red, green, yellow bars on the same graph
 '''
 
 # Main Function; run all tests from here
@@ -344,7 +306,7 @@ def main():
         print("Processing new bag: " + str(bag_file))
         # TODO update bags groups
         if bag_file in black_pacifica_red_bag_files:
-            print("Black Pacifica Red Light Workzone Test Case")
+            print("Black Pacifica Red Light Workzone Test Case") # TODO update conditionals here
         elif bag_file in ford_fusion_red_bag_files:
             print("Ford Fusion Red Light Workzone Test Case")
         elif bag_file in blue_lexus_red_bag_files:
@@ -375,8 +337,12 @@ def main():
         # Get the rosbag times associated with the starting engagement and ending engagement for the Basic Travel use case test
         # TODO update to remove geofence information
         print("Getting engagement times at " + str(datetime.datetime.now()))
-        time_test_start_engagement, time_test_end_engagement, found_test_times = get_test_case_engagement_times(bag, time_enter_geofence, time_exit_geofence)
+        # TODO get engagement times
+        #time_test_start_engagement, time_test_end_engagement, found_test_times = get_test_case_engagement_times(bag)
         print("Got engagement times at " + str(datetime.datetime.now()))
+        found_test_times = True # TODO remove these placeholder values
+        time_test_start_engagement = 0.0
+        time_test_end_engagement = 1.0
         if (not found_test_times):
             print("Could not find test case engagement start and end times in bag file.")
             continue
@@ -386,10 +352,10 @@ def main():
         print("Engagement ends at " + str(time_test_end_engagement.to_sec()))
         print("Time spent engaged: " + str((time_test_end_engagement - time_test_start_engagement).to_sec()) + " seconds")
 
-        original_speed_limit = get_route_original_speed_limit(bag, time_test_start_engagement) # Units: m/s
+        # TODO implement
+        original_speed_limit = 1.0 # TODO remove placeholder
+        # original_speed_limit = get_route_original_speed_limit(bag, time_test_start_engagement) # Units: m/s
         print("Original Speed Limit is " + str(original_speed_limit) + " m/s")
-
-        print_lanelet_entrance_times(bag, time_test_start_engagement)
 
         # Initialize results 
         # TODO updates results
@@ -421,76 +387,7 @@ def main():
         wz_26_result = None
         wz_27_result = None
 
-        # Metrics WZ-4, WZ-5, WZ-6, WZ-7, and WZ-8
-        advisory_speed_limit, time_first_msg_received, wz_4_result, wz_5_result, wz_6_result, wz_7_result, wz_8_result = get_workzone_TCM_data(bag)
-        
-        # Convert advisory speed limit from WZ-19 to m/s for future metric evaluations
-        advisory_speed_limit = advisory_speed_limit * 0.44704 # Conversion from mph to m/s
-
-        lanelets_in_geofence = get_geofence_lanelets(bag, time_enter_geofence, advisory_speed_limit)
-        
-        # Metric WZ-1 and WZ-5
-        closed_lanelets = [12459, 1245999, 1245998]
-        wz_1_result, wz_5_result = check_geofence_in_initial_route(bag, closed_lanelets)
-
-        # Metric WZ-2
-        wz_2_result = check_steady_state_before_first_received_message(bag, time_test_start_engagement, time_first_msg_received, original_speed_limit)
-
-        # Metric WZ-9
-        wz_9_result = check_percentage_successful_spat_msg(bag, time_test_start_engagement, time_test_end_engagement)
-
-        # Metric WZ-10
-        wz_10_result = check_duration_between_spat_msg_below_max_duration(bag, time_test_start_engagement, time_test_end_engagement)
-
-        stop_bar_location = [-36.8063, 323.251] # Map [x,y] coordinate of stop bar. Hardcoded; same value for every test
-        #end_geofence_location = [0,0] # Map [x,y] coordinate of the end of the geofence. Hardcoded; same value for every test
-
-        if bag_file in red_light_bag_files:
-            wz_11_result, time_last_accel, time_stopped = check_deceleration_for_red_light(bag, time_test_start_engagement)
-
-            dist_rear_axle_to_front_bumper = 4.0 # TODO: Obtain improved measurement for this distance for each vehicle
-            wz_12_result = check_stop_location_for_red_light(bag, stop_bar_location, dist_rear_axle_to_front_bumper, time_test_start_engagement, time_last_accel, time_stopped)
-            #generate_speed_plot(bag)
-
-            wz_13_result = check_acceleration_time_after_green_light(bag, time_stopped)
-
-            wz_14_result = check_acceleration_after_stop(bag, time_stopped)
-
-            print("WZ-15 N/A (Red Light Bag)")
-            print("WZ-16 N/A (Red Light Bag)")
-
-        else:
-            print("WZ-11 N/A (Green Light Bag)")
-            print("WZ-12 N/A (Green Light Bag)")
-            print("WZ-13 N/A (Green Light Bag)")
-            print("WZ-14 N/A (Green Light Bag)")
-
-
-            wz_15_result, time_vehicle_at_stop_bar = check_vehicle_speed_at_green_light(bag, advisory_speed_limit, stop_bar_location, time_test_start_engagement)
-
-            wz_16_result = check_deceleration_after_green_light(bag, time_vehicle_at_stop_bar, time_test_start_engagement)
-
-        wz_23_result = check_steady_state_after_geofence(bag, time_test_end_engagement, original_speed_limit)
-
-        wz_24_result = check_speed_limit_when_not_in_geofence(bag, original_speed_limit)
-
-        wz_25_result = check_advisory_speed_limit(bag, advisory_speed_limit, original_speed_limit)
-
-        # Get vehicle type that this bag file is from
-        vehicle_name = "Unknown"
-        if bag_file in black_pacifica_green_bag_files or bag_file in black_pacifica_red_bag_files:
-            vehicle_name = "Black Pacifica"
-        elif bag_file in ford_fusion_green_bag_files or bag_file in ford_fusion_red_bag_files:
-            vehicle_name = "Ford Fusion"
-        else:
-            vehicle_name = "N/A"
-
-        # Get test type that this bag file is for
-        vehicle_role = "Unknown"
-        if bag_file in red_light_bag_files:
-            vehicle_role = "Red Light"
-        elif bag_file in green_light_bag_files:
-            vehicle_role = "Green Light"
+        # TODO call metric functions
 
         # Write simple pass/fail results to .csv file for appropriate row:
         csv_results_writer.writerow([bag_file, vehicle_name, vehicle_role,
