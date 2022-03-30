@@ -300,6 +300,7 @@ namespace platoon_strategic_ihp
         std::string targetPlatoonID = "";  //ID of a real platoon that we may be attempting to join (empty if neighbor is a solo vehicle)
         PlatoonState current_platoon_state = PlatoonState::STANDBY;
         ActionPlan current_plan = ActionPlan(); //this plan represents a joining activity only, not the platoon itself
+        bool isFollower = false;
 
         // host vehicle's static ID 
         std::string HostMobilityId = "default_host_id";

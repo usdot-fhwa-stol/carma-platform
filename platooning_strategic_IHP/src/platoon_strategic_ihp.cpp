@@ -989,6 +989,8 @@ namespace platoon_strategic_ihp
             request.location = pose_to_ecef(pose_msg_);
             request.strategy = PLATOONING_STRATEGY;
             request.urgency = 50;
+
+            int platoon_size = pm_.getTotalPlatooningSize();
             
             // step 3. Request Rear Join 
             if(isVehicleRightInFront(rearVehicleDtd, rearVehicleCtd)  &&  !config_.test_front_join)
@@ -1794,7 +1796,6 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("CUT-IN join maneuver is already in operation, NACK incoming join requests from other candidates.");
             return MobilityRequestResponse::NACK;
         }
-
     }
 
     // UCLA: add request call-back function for prepare to join (for cut-in join)
@@ -2673,7 +2674,7 @@ namespace platoon_strategic_ihp
             infoOperation = composeMobilityOperationLeadWithOperation(OPERATION_INFO_TYPE);
             mobility_operation_publisher_(infoOperation);
             prevHeartBeatTime_ = ros::Time::now().toNSec() / 1000000;
-            ROS_DEBUG_STREAM("Published heart beat platoon INFO mobility operatrion message");
+            ROS_DEBUG_STREAM("Published heart beat platoon INFO mobility operation message");
         }
         // Task 2
         // if (isTimeForHeartBeat) 
@@ -2836,6 +2837,7 @@ namespace platoon_strategic_ihp
         else if (pm_.current_platoon_state == PlatoonState::PREPARETOJOIN)
         {
             run_prepare_to_join();
+        }
         // coding oversight
         else
         {
