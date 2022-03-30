@@ -40,7 +40,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -66,20 +66,17 @@ include_directories(
 
 #file(GLOB_RECURSE headers */*.hpp */*.h)
 
-add_executable( ${PROJECT_NAME}
-  ${headers}
-  src/platoon_strategic_ihp.cpp
-  src/platoon_manager_ihp.cpp
-  src/main_ihp.cpp)
-
-
 add_library(platoon_strategic_ihp_plugin_lib
  src/platoon_strategic_ihp.cpp
  src/platoon_manager_ihp.cpp)
 
 add_dependencies(platoon_strategic_ihp_plugin_lib ${catkin_EXPORTED_TARGETS})
+target_link_libraries(platoon_strategic_ihp_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
-target_link_libraries(${PROJECT_NAME} platoon_strategic_ihp_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_executable( ${PROJECT_NAME}
+  src/main_ihp.cpp)
+
+target_link_libraries(${PROJECT_NAME} platoon_strategic_ihp_plugin_lib)
 
 
 #############
@@ -94,7 +91,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} platoon_strategic_ihp_plugin_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
