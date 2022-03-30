@@ -341,6 +341,10 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
   double desired_distance_to_stop = pow(current_state.speed, 2)/(max_comfort_decel_norm_ / std::max(4.0, (double)config_.min_gap));
   ROS_DEBUG_STREAM("desired_distance_to_stop at at config_.min_gap fraction: max_comfort_decel:  " << desired_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_ / config_.min_gap);
   
+  desired_distance_to_stop = std::max(desired_distance_to_stop, config_.min_approach_distance);
+
+  ROS_DEBUG_STREAM("new desired_distance_to_stop: " << desired_distance_to_stop);
+
   // earlier stop than this would result in stopping way before intersection
   double min_bound_stop_time =
     (2.0 * distance_remaining_to_traffic_light) / current_state.speed;  // Kinematic Equation: 2*d / (vf + vi) = t where vf = 0
@@ -915,9 +919,9 @@ TrajectoryParams LCIStrategicPlugin::ts_case7(double t, double et, double v0, do
 TrajectoryParams LCIStrategicPlugin::ts_case8(double dx, double dx5, TrajectoryParams traj8)
 { 
   TrajectoryParams traj = traj8;
-  traj.is_algorithm_successful = false;
   if (dx < dx5)
   { 
+    traj.is_algorithm_successful = false;
     ROS_DEBUG_STREAM("!!! Safety error - the vehicle cannot stop at the stop bar ... Cruising...");
     ROS_DEBUG_STREAM("!!! Safety error - the vehicle cannot stop at the stop bar ... Cruising...");
     ROS_ERROR_STREAM("!!! Safety error - the vehicle cannot stop at the stop bar ... Cruising...");

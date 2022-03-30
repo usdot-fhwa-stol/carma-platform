@@ -437,7 +437,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
 
   // Although algorithm determines nearest_green_time is possible, check if the vehicle can arrive with certainty
-  if (ts_params.is_algorithm_successful) 
+  if (ts_params.is_algorithm_successful && ts_params.case_num != TSCase::CASE_8) 
   {
     ros::Time light_arrival_time_by_algo = ros::Time(ts_params.t3_);
     remaining_time = light_arrival_time_by_algo.toSec() - req.header.stamp.toSec();
@@ -471,7 +471,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       ROS_DEBUG_STREAM("Not able to make it with certainty: TSCase: " << ts_params.case_num);
     }
   }
-  else if (ts_params.case_num == TSCase::CASE_8)
+  else if (ts_params.is_algorithm_successful && ts_params.case_num == TSCase::CASE_8)
   {
     double decel_rate = ts_params.a3_;
 
@@ -496,8 +496,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
     return;
   }
-
-
 
   // if algorithm is NOT successful or if the vehicle cannot make the green light with certainty
   // Check if we can stop safely on RED
