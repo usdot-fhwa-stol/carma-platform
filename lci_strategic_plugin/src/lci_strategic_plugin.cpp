@@ -471,7 +471,15 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       ROS_DEBUG_STREAM("Not able to make it with certainty: TSCase: " << ts_params.case_num);
     }
   }
-  else if (ts_params.is_algorithm_successful && ts_params.case_num == TSCase::CASE_8)
+  
+  // if algorithm is NOT successful or if the vehicle cannot make the green light with certainty
+  // Check if we can stop safely on RED
+  handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track);
+
+  if (!resp.new_plan.maneuvers.empty()) // able to stop
+    return;
+  
+  if (ts_params.is_algorithm_successful && ts_params.case_num == TSCase::CASE_8)
   {
     double decel_rate = ts_params.a3_;
 
@@ -496,14 +504,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
     return;
   }
-
-  // if algorithm is NOT successful or if the vehicle cannot make the green light with certainty
-  // Check if we can stop safely on RED
-  handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track);
-
-
-  if (!resp.new_plan.maneuvers.empty()) // able to stop
-    return;
 
   // 3. if not able to stop nor reach target speed at green, attempt its best to reach the target parameters at the intersection
   ROS_ERROR_STREAM("44444: >>>>>LAST<<<<<< The vehicle is not able to stop at red/yellow light nor is able to reach target speed at green. Attempting its best to pass through at green!");
