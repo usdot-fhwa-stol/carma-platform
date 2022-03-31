@@ -44,8 +44,8 @@ namespace carma_wm_ctrl
 using std::placeholders::_1;
 
 WMBroadcaster::WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const PublishCtrlRequestCallback& control_msg_pub,
-const PublishActiveGeofCallback& active_pub, std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory)
-  : map_pub_(map_pub), map_update_pub_(map_update_pub), control_msg_pub_(control_msg_pub), active_pub_(active_pub), scheduler_(std::move(timer_factory))
+const PublishActiveGeofCallback& active_pub, std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory, const PublishMobilityOperationCallback& tcm_ack_pub)
+  : map_pub_(map_pub), map_update_pub_(map_update_pub), control_msg_pub_(control_msg_pub), active_pub_(active_pub), scheduler_(std::move(timer_factory)), tcm_ack_pub_(tcm_ack_pub)
 {
   scheduler_.onGeofenceActive(std::bind(&WMBroadcaster::addGeofence, this, _1));
   scheduler_.onGeofenceInactive(std::bind(&WMBroadcaster::removeGeofence, this, _1));
@@ -1063,16 +1063,22 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
 {
   
   std::lock_guard<std::mutex> guard(map_mutex_);
+  std::stringstream reason_ss;
   // quickly check if the id has been added
   if (geofence_msg.choice != cav_msgs::TrafficControlMessage::TCMV01) {
-    ROS_WARN_STREAM("Dropping received geofence for unsupported TrafficControl version: " << geofence_msg.choice);
+    reason_ss << "Dropping received geofence for unsupported TrafficControl version: " << geofence_msg.choice;
+    ROS_WARN_STREAM(reason_ss.str());
+    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::REJECTED), reason_ss.str());
     return;
   }
 
   boost::uuids::uuid id;
   std::copy(geofence_msg.tcm_v01.id.id.begin(), geofence_msg.tcm_v01.id.id.end(), id.begin());
   if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end()) { 
-    ROS_DEBUG_STREAM("Dropping received TrafficControl message with already handled id: " <<  boost::uuids::to_string(id));
+    reason_ss.str("");
+    reason_ss << "Dropping received TrafficControl message with already handled id: " << boost::uuids::to_string(id);
+    ROS_DEBUG_STREAM(reason_ss.str());
+    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::ACKNOWLEDGED), reason_ss.str());
     return;
   }
 
@@ -1095,10 +1101,22 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
 
   gf_ptr->msg_ = geofence_msg.tcm_v01;
 
-  // process schedule from message
-  addScheduleFromMsg(gf_ptr, geofence_msg.tcm_v01);
-  
-  scheduleGeofence(gf_ptr);
+  try
+  {
+    // process schedule from message
+    addScheduleFromMsg(gf_ptr, geofence_msg.tcm_v01);    
+    scheduleGeofence(gf_ptr);
+    reason_ss.str("");
+    reason_ss << "Successfully processed TCM.";
+    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::ACKNOWLEDGED), reason_ss.str());
+  }
+  catch(std::exception& ex)
+  {
+    reason_ss.str("");
+    reason_ss << "Failed to process TCM. " << ex.what();
+    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::REJECTED), reason_ss.str());
+    throw; //rethrows the exception object
+  }
 };
 
 void WMBroadcaster::scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr)
@@ -1179,6 +1197,14 @@ void WMBroadcaster::setConfigSpeedLimit(double cL)
 {
   /*Logic to change config_lim to Velocity value config_limit*/
   config_limit = lanelet::Velocity(cL * lanelet::units::MPH());
+}
+
+void WMBroadcaster::setConfigVehicleId(const std::string& vehicle_id){
+  vehicle_id_ = vehicle_id;
+}
+
+void WMBroadcaster::setConfigACKPubTimes(int ack_pub_times){
+  ack_pub_times_ = ack_pub_times;
 }
 
 void WMBroadcaster::setVehicleParticipationType(std::string participant)
@@ -2131,6 +2157,27 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds()
     upcoming_intersection_ids_.data.clear();
     upcoming_intersection_ids_.data.push_back(static_cast<int>(map_msg_intersection_id));
     upcoming_intersection_ids_.data.push_back(static_cast<int>(cur_signal_group_id));
+  }
+}
+
+void WMBroadcaster::pubTCMACK(j2735_msgs::Id64b tcm_req_id, uint16_t msgnum, int ack_status, const std::string& ack_reason)
+{
+  cav_msgs::MobilityOperation mom_msg;
+  mom_msg.m_header.timestamp = ros::Time::now().toNSec()/1000000;
+  mom_msg.m_header.sender_id = vehicle_id_;
+  mom_msg.strategy = geofence_ack_strategy_;
+  std::stringstream ss;
+  for(size_t i=0; i < tcm_req_id.id.size(); i++)
+  {
+    ss << std::setfill('0') << std::setw(2) << std::hex << (unsigned) tcm_req_id.id.at(i);
+  }
+	std::string tcmv01_req_id_hex = ss.str();	
+  ss.str("");
+  ss << "traffic_control_id:" << tcmv01_req_id_hex << ", msgnum:"<< msgnum << ", acknowledgement:" << ack_status << ", reason:" << ack_reason;
+  mom_msg.strategy_params = ss.str();
+  for(int i = 0; i < ack_pub_times_; i++)
+  {
+    tcm_ack_pub_(mom_msg);
   }
 }
 
