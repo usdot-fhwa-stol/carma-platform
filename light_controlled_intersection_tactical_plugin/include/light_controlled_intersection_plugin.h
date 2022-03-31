@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,11 +58,30 @@ using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
 using GeneralTrajConfig = basic_autonomy::waypoint_generation::GeneralTrajConfig;
 using DetailedTrajConfig = basic_autonomy::waypoint_generation::DetailedTrajConfig;
 
-enum SpeedProfileCase {
-    ACCEL_CRUISE_DECEL = 1,
-    ACCEL_DECEL = 2,
-    DECEL_ACCEL = 3,
-    DECEL_CRUISE_ACCEL = 4,
+enum TSCase {
+  CASE_1 = 1,
+  CASE_2 = 2,
+  CASE_3 = 3,
+  CASE_4 = 4,
+  CASE_5 = 5,
+  CASE_6 = 6,
+  CASE_7 = 7,
+  CASE_8 = 8,
+};
+
+struct TrajectoryParams
+{
+  double a1_ = 0;
+  double v1_ = 0;
+  double x1_ = 0;
+
+  double a2_ = 0;
+  double v2_ = 0;
+  double x2_ = 0;
+
+  double a3_ = 0;
+  double v3_ = 0;
+  double x3_ = 0;
 };
 
 /**
@@ -97,34 +116,18 @@ public:
    /**
    * \brief Creates a speed profile according to case one or two of the light controlled intersection, where the vehicle accelerates (then cruises if needed) and decelerates into the intersection. 
    * \param wm world_model pointer
-   * \param List of centerline points paired with speed limits whose speeds are to be modified:
-   * \param start_dist starting downtrack of the maneuver to be planned (excluding buffer points)
-   * \param end_dist ending downtrack of the maneuver to be planned (excluding buffer points)
-   * \param remaining_time time interval left for scheduled entry into the intersection
-   * \param starting_speed starting speed at the start of the maneuver
-   * \param speed_before_decel highest speed desired between acceleration and decelaration
-   * \param departure_speed ending speed of the maneuver a.k.a entry speed into the intersection
+   * \param points_and_target_speeds of centerline points paired with speed limits whose speeds are to be modified:
+   * \param start_dist starting downtrack of the maneuver to be planned (excluding buffer points) in m
+   * \param remaining_dist distance for the maneuver to be planned (excluding buffer points) in m
+   * \param starting_speed starting speed at the start of the maneuver in m/s
+   * \param departure_speed ending speed of the maneuver a.k.a entry speed into the intersection m/s
+   * \param tsp trajectory smoothing parameters
+
    * NOTE: Cruising speed profile is applied (case 1) if speed before deceleration is higher than speed limit. Otherwise Case 2.
    * NOTE: when applying the speed profile, the function ignores buffer points beyond start_dist and end_dist. Internally uses: config_.back_distance and speed_limit_
    */
-  void apply_accel_cruise_decel_speed_profile(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double end_dist, 
-                                    double remaining_time, double starting_speed, double speed_before_decel, double departure_speed);
-
-   /**
-   * \brief Creates a speed profile according to case three or four of the light controlled intersection, where the vehicle decelerates (then cruises if needed) and accelerates into the intersection. 
-   * \param wm world_model pointer
-   * \param List of centerline points paired with speed limits whose speeds are to be modified:
-   * \param start_dist starting downtrack of the maneuver to be planned (excluding buffer points)
-   * \param end_dist ending downtrack of the maneuver to be planned (excluding buffer points)
-   * \param remaining_time time interval left for scheduled entry into the intersection
-   * \param starting_speed starting speed at the start of the maneuver
-   * \param speed_before_accel highest speed desired between deceleration and acceleration
-   * \param departure_speed ending speed of the maneuver a.k.a entry speed into the intersection
-   * NOTE: Cruising speed profile is applied (case 4) if speed before acceleration is lower than minimum speed allowed. Otherwise Case 3.
-   * NOTE: when applying the speed profile, the function ignores buffer points beyond start_dist and end_dist. Internally uses: config_.back_distance and min_speed_allowed_
-   */
-  void apply_decel_cruise_accel_speed_profile(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double end_dist, 
-                                    double remaining_time, double starting_speed, double speed_before_accel, double departure_speed);
+  void apply_trajectory_smoothing_algorithm(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double remaining_dist, 
+                                    double starting_speed, double departure_speed, TrajectoryParams tsp);
 
   /**
    * \brief Apply optimized target speeds to the trajectory determined for fixed-time and actuated signals.
@@ -154,71 +157,22 @@ public:
                                                                    cav_msgs::VehicleState &ending_state_before_buffer,const cav_msgs::VehicleState& state,
                                                                    const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config);
 
+  /**
+   * \brief Given a Lanelet, find it's associated Speed Limit
+   *
+   * \param llt Constant Lanelet object
+   *
+   * \throw std::invalid_argument if the speed limit could not be retrieved
+   *
+   * \return value of speed limit in mps
+   */
+  double findSpeedLimit(const lanelet::ConstLanelet& llt) const;
+  
     /**
    * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
    */ 
 
   void onSpin();
-
-    /**
-   * \brief calculate the speed, right before the car starts to decelerate for timed entry into the intersection
-    *
-   * \param entry_time time the vehicle must stop
-   *
-   * \param entry_dist distance to stop line
-   *
-   * \param current_speed current speed of vehicle
-   * 
-   * \param departure_speed speed to get into the intersection
-   *
-   * \return speed value
-   */
-  double calcSpeedBeforeDecel(double entry_time, double entry_dist, double current_speed, double departure_speed) const;
-
-  /**
-   * \brief calculate the speed, right before the car starts to accelerate for timed entry into the intersection
-    *
-   * \param entry_time time the vehicle must stop
-   *
-   * \param entry_dist distance to stop line
-   *
-   * \param current_speed current speed of vehicle
-   * 
-   * \param departure_speed speed to get into the intersection
-   *
-   * \return speed value
-   */
-  double calcSpeedBeforeAccel(double entry_time, double entry_dist, double current_speed, double departure_speed) const;
-
-    /**
-   * \brief Determine the speed profile case for approaching an intersection. 
-   *        It internally utilizes config_.min_speed and speed_limit_ to determine upper and lower speed bounds
-   * 
-   * \param estimated_entry_time estimated time to enter the intersection without speed modification
-   * 
-   * \param scheduled_entry_time scheduled time to enter the intersection
-   *
-   * \param speed_before_decel speed before starting to decelerate (applicable in case 1, 2)
-   * 
-   * \param  speed_before_accel speed before starting to accelerate (applicable in case 1, 2)
-   *
-   * \return integer case number
-   */
-  SpeedProfileCase determineSpeedProfileCase(double estimated_entry_time, double scheduled_entry_time, double speed_before_decel, double speed_before_accel);
-
-
-  /**
-   * \brief calculate the time vehicle will enter to intersection with optimal deceleration
-   *
-   * \param entry_dist distance to stop line
-   *
-   * \param current_speed current speed of vehicle
-   * 
-   * \param departure_speed speed to get into the intersection
-   *
-   * \return the time vehicle will stop with optimal decelarion
-   */
-  double calcEstimatedEntryTimeLeft(double entry_dist, double current_speed, double departure_speed) const;
 
   ////////// VARIABLES ///////////
   // CARMA Streets Variables
@@ -236,12 +190,18 @@ public:
   bool is_allowed_int_ = false;
 
   // approximate speed limit 
-  double speed_limit_ = 100.0;
+  double speed_limit_ = 11.176; //25mph by default
+  boost::optional<TSCase> last_case_;
+  boost::optional<bool> is_last_case_successful_;
+  cav_msgs::TrajectoryPlan last_trajectory_;
 
   cav_msgs::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
 
   // downtrack of host vehicle
   double current_downtrack_ = 0.0;
+
+  double last_successful_ending_downtrack_;         // if algorithm was successful, this is traffic_light_downtrack
+  double last_successful_scheduled_entry_time_;     // if algorithm was successful, this is also scheduled entry time (ET in TSMO UC2 Algo)
 
   private:
 
@@ -251,6 +211,7 @@ public:
  
   cav_msgs::Plugin plugin_discovery_msg_;
   carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg_;
+  std::vector<double> last_final_speeds_;
 
   std::string light_controlled_intersection_strategy_ = "Carma/light_controlled_intersection";
 

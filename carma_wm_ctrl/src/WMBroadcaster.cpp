@@ -206,7 +206,14 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
   std::vector<std::shared_ptr<lanelet::SignalizedIntersection>> intersections;
   std::vector<std::shared_ptr<lanelet::CarmaTrafficSignal>> traffic_signals;
 
+  auto sim_copy = sim_;
   sim_.createIntersectionFromMapMsg(intersections, traffic_signals, map_msg, current_map_, current_routing_graph_);
+
+  if (sim_ == sim_copy) // if no change
+  {
+    ROS_DEBUG_STREAM(">>> Detected no change from previous, ignoring duplicate message! with gf id: " << gf_ptr->id_);
+    return {};
+  }
 
   for (auto intersection : intersections)
   {
@@ -1009,6 +1016,12 @@ void WMBroadcaster::externalMapMsgCallback(const cav_msgs::MapData& map_msg)
 {
   auto gf_ptr = std::make_shared<Geofence>();
 
+  if (!current_map_ || current_map_->laneletLayer.size() == 0)
+  {
+    ROS_INFO_STREAM("Map is not available yet. Skipping MAP msg");
+    return;
+  }
+
   // check if we have seen this message already
   bool up_to_date = false;
   if (sim_.intersection_id_to_regem_id_.size() == map_msg.intersections.size())
@@ -1020,16 +1033,20 @@ void WMBroadcaster::externalMapMsgCallback(const cav_msgs::MapData& map_msg)
       if (sim_.intersection_id_to_regem_id_.find(intersection.id.id) == sim_.intersection_id_to_regem_id_.end())
       {
         up_to_date = false;
+        break;
       }
     }
   }
 
   if(up_to_date)
+  {
     return;
-
+  }
+    
   gf_ptr->map_msg_ = map_msg;
   gf_ptr->msg_.package.label_exists = true;
   gf_ptr->msg_.package.label = "MAP_MSG";
+  gf_ptr->id_ = boost::uuids::random_generator()(); 
 
   // create dummy traffic Control message to add instant activation schedule
   cav_msgs::TrafficControlMessageV01 traffic_control_msg;
@@ -1918,7 +1935,8 @@ cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geom
 
   // Obtain the closest lanelet to the vehicle's current position
   auto current_llt = lanelet::geometry::findNearest(current_map_->laneletLayer, curr_pos, 1)[0].second;
-  
+
+
   /* determine whether or not the vehicle's current position is within an active geofence */
   if (boost::geometry::within(curr_pos, current_llt.polygon2d().basicPolygon()))
   {         
@@ -2076,6 +2094,70 @@ lanelet::LineString3d WMBroadcaster::createLinearInterpolatingLinestring(const l
 lanelet::Lanelet  WMBroadcaster::createLinearInterpolatingLanelet(const lanelet::Point3d& left_front_pt, const lanelet::Point3d& right_front_pt, const lanelet::Point3d& left_back_pt, const lanelet::Point3d& right_back_pt, double increment_distance)
 {
   return lanelet::Lanelet(lanelet::utils::getId(), createLinearInterpolatingLinestring(left_front_pt, left_back_pt, increment_distance), createLinearInterpolatingLinestring(right_front_pt, right_back_pt, increment_distance));
+}
+
+void WMBroadcaster::updateUpcomingSGIntersectionIds()
+{
+  uint16_t map_msg_intersection_id = 0;
+  uint16_t cur_signal_group_id = 0;
+  std::vector<lanelet::CarmaTrafficSignalPtr> traffic_lights;
+  lanelet::Lanelet route_lanelet;
+  lanelet::Ids cur_route_lanelet_ids = current_route.route_path_lanelet_ids;
+  bool isLightFound = false;
+  for(auto id : cur_route_lanelet_ids) 
+  {    
+    route_lanelet= current_map_->laneletLayer.get(id);
+    traffic_lights = route_lanelet.regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
+    if(!traffic_lights.empty())
+    {
+      isLightFound  = true;
+      break;
+    }
+  }
+
+  if(isLightFound)
+  {
+    for(auto itr = sim_.signal_group_to_traffic_light_id_.begin(); itr != sim_.signal_group_to_traffic_light_id_.end(); itr++)
+    {     
+      if(itr->second == traffic_lights.front()->id())
+      {
+        cur_signal_group_id = itr->first;
+      }
+    }
+  }
+  else{
+     ROS_DEBUG_STREAM("NO matching Traffic lights along the route");
+  }//END Traffic signals
+
+  auto intersections = route_lanelet.regulatoryElementsAs<lanelet::SignalizedIntersection>();
+  if (intersections.empty())
+  {
+    // no match if any of the entry lanelet is not part of any intersection.
+    ROS_DEBUG_STREAM("NO matching intersection for current lanelet. lanelet id = " << route_lanelet.id());
+  }
+  else
+  {
+    //Currently, each lanelet has only one intersection
+    lanelet::Id intersection_id = intersections.front()->id();    
+    if(intersection_id != lanelet::InvalId)
+    {
+      for(auto itr = sim_.intersection_id_to_regem_id_.begin(); itr != sim_.intersection_id_to_regem_id_.end(); itr++)
+      {
+        if(itr->second == intersection_id)
+        {
+          map_msg_intersection_id = itr->first;
+        }
+      }
+    }
+  } //END intersections
+
+  ROS_DEBUG_STREAM("MAP msg: Intersection ID = " <<  map_msg_intersection_id << ", Signal Group ID =" << cur_signal_group_id );
+  if(map_msg_intersection_id != 0 && cur_signal_group_id != 0)
+  { 
+    upcoming_intersection_ids_.data.clear();
+    upcoming_intersection_ids_.data.push_back(static_cast<int>(map_msg_intersection_id));
+    upcoming_intersection_ids_.data.push_back(static_cast<int>(cur_signal_group_id));
+  }
 }
 
 void WMBroadcaster::pubTCMACK(j2735_msgs::Id64b tcm_req_id, uint16_t msgnum, int ack_status, const std::string& ack_reason)

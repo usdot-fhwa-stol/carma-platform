@@ -402,6 +402,10 @@ public:
   void pubTCMACK(j2735_msgs::Id64b tcm_req_id, uint16_t msgnum, int ack_status, const std::string& ack_reason);
 
 
+  /*! \brief populate upcoming_intersection_ids_ from local traffic lanelet ids
+   */
+  void updateUpcomingSGIntersectionIds();
+
   visualization_msgs::MarkerArray tcm_marker_array_;
   cav_msgs::TrafficControlRequestPolygon tcr_polygon_;
   std_msgs::Int32MultiArray upcoming_intersection_ids_;
@@ -458,7 +462,7 @@ private:
    */
   std::vector<autoware_lanelet2_msgs::MapBin> map_update_message_queue_; 
 
-  size_t update_count_ = 0; // Records the total number of sent map updates. Used as the set value for update.seq_id
+  size_t update_count_ = -1; // Records the total number of sent map updates. Used as the set value for update.seq_id
 
   carma_wm::SignalizedIntersectionManager sim_;
   enum class AcknowledgementStatus {

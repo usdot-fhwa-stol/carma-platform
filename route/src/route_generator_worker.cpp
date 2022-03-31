@@ -486,7 +486,7 @@ namespace route {
         {
             ROS_WARN("%s", ex.what());
         }
-
+        
         geometry_msgs::PoseStamped updated_vehicle_pose;
         updated_vehicle_pose.pose.position.x = frontbumper_transform_.getOrigin().getX();
         updated_vehicle_pose.pose.position.y = frontbumper_transform_.getOrigin().getY();

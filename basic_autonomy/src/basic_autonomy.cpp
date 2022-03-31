@@ -188,6 +188,9 @@ namespace basic_autonomy
             // though this is not likely to be an issue as they are buffer only
             double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack;
 
+            ROS_DEBUG_STREAM("Add lanefollow buffer: ending_downtrack: " << ending_downtrack << ", maneuvers.back().lane_following_maneuver.end_dist: " << maneuvers.back().lane_following_maneuver.end_dist <<
+                            ", detailed_config.buffer_ending_downtrack: " << detailed_config.buffer_ending_downtrack);
+
             size_t max_i = points_and_target_speeds.size() - 1;
             size_t unbuffered_idx = points_and_target_speeds.size() - 1;
             bool found_unbuffered_idx = false;
@@ -778,7 +781,7 @@ namespace basic_autonomy
 
         std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanefollow_trajectory_from_path(
             const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time, const carma_wm::WorldModelConstPtr &wm,
-            const cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg, const DetailedTrajConfig &detailed_config)
+            const cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds& debug_msg, const DetailedTrajConfig &detailed_config)
         {
             ROS_DEBUG_STREAM("VehicleState: "
                              << " x: " << state.x_pos_global << " y: " << state.y_pos_global << " yaw: " << state.orientation

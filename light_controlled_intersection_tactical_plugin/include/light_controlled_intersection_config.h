@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,6 +49,12 @@ struct LightControlledIntersectionTacticalPluginConfig
 
     //! A buffer infront of the stopping location which will still be considered a valid stop
     double stop_line_buffer = 2.0;
+
+    //! Distance from the nearest traffic light where the vehicle decides whether to run last successful trajectory or accept new one (in meters)
+    double algorithm_evaluation_distance = 35.0;
+
+    //! Period if scheduled entry time is within which the vehicle decides to run the last successful trajectory smoothing trajectory (in seconds)
+    double algorithm_evaluation_period = 4.5;
     
     friend std::ostream& operator<<(std::ostream& output, const LightControlledIntersectionTacticalPluginConfig& c)
     {
@@ -69,6 +75,8 @@ struct LightControlledIntersectionTacticalPluginConfig
                 << "vehicle_accel_limit: " << c.vehicle_accel_limit << std::endl
                 << "vehicle_accel_limit_multiplier: " << c.vehicle_accel_limit_multiplier << std::endl
                 << "stop_line_buffer: " << c.stop_line_buffer << std::endl
+                << "algorithm_evaluation_distance: " << c.algorithm_evaluation_distance << std::endl
+                << "algorithm_evaluation_period: " << c.algorithm_evaluation_period << std::endl
                 << "}" << std::endl;
         return output;
     }

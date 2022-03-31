@@ -267,6 +267,7 @@ namespace plan_delegator
         // Update maneuver starting and ending downtrack distances
         double original_start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
         double original_end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
+        ROS_DEBUG_STREAM("Changing maneuver distances for planner: " << GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin));
         double adjusted_start_dist = original_start_dist - length_to_front_bumper_;
         ROS_DEBUG_STREAM("original_start_dist:" << original_start_dist);
         ROS_DEBUG_STREAM("adjusted_start_dist:" << adjusted_start_dist);
@@ -285,7 +286,7 @@ namespace plan_delegator
 
         // Update maneuver-specific lanelet ID parameters
         // Note: Assumes that the maneuver start and end distances are adjusted by a distance less than the length of a lanelet. 
-        if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING) 
+        if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING && !maneuver.lane_following_maneuver.lane_ids.empty()) 
         {
             // Obtain the original starting lanelet from the maneuver's lane_ids
             lanelet::Id original_starting_lanelet_id = std::stoi(maneuver.lane_following_maneuver.lane_ids.front());
@@ -323,7 +324,7 @@ namespace plan_delegator
                 maneuver.lane_following_maneuver.lane_ids.pop_back();
             }
         } 
-        else 
+        else if (maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING)
         {
             // Obtain the original starting lanelet from the maneuver
             lanelet::Id original_starting_lanelet_id = std::stoi(getManeuverStartingLaneletId(maneuver));
@@ -401,7 +402,6 @@ namespace plan_delegator
                 ++current_maneuver_index;
                 continue;
             }
-            
             lanelet::BasicPoint2d current_loc(latest_pose_.pose.position.x, latest_pose_.pose.position.y);
             double current_downtrack = wm_->routeTrackPos(current_loc).downtrack;
             ROS_DEBUG_STREAM("current_downtrack" << current_downtrack);
@@ -421,6 +421,8 @@ namespace plan_delegator
             // get corresponding ros service client for plan trajectory
             auto maneuver_planner = GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin);
             auto client = getPlannerClientByName(maneuver_planner);
+            
+            ROS_DEBUG_STREAM("Current planner: " << maneuver_planner);
 
             // compose service request
             auto plan_req = composePlanTrajectoryRequest(latest_trajectory_plan, current_maneuver_index);
@@ -437,13 +439,16 @@ namespace plan_delegator
                 if(latest_trajectory_plan.trajectory_points.size() !=0){
                     
                     if(latest_trajectory_plan.trajectory_points.back().target_time == plan_req.response.trajectory_plan.trajectory_points.front().target_time){
-                        ROS_DEBUG_STREAM("Removing duplicate point");
+                        ROS_DEBUG_STREAM("Removing duplicate point for planner: " << maneuver_planner);
                         plan_req.response.trajectory_plan.trajectory_points.erase(plan_req.response.trajectory_plan.trajectory_points.begin());
+                        ROS_DEBUG_STREAM("plan_req.response.trajectory_plan size: " << plan_req.response.trajectory_plan.trajectory_points.size());
+
                     }
                 }
                 latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
                                                                 plan_req.response.trajectory_plan.trajectory_points.begin(),
                                                                 plan_req.response.trajectory_plan.trajectory_points.end());
+                ROS_DEBUG_STREAM("new latest_trajectory_plan size: " << latest_trajectory_plan.trajectory_points.size());
                 
                 // Assign the trajectory plan's initial longitudinal velocity based on the first tactical plugin's response
                 if(first_trajectory_plan == true)

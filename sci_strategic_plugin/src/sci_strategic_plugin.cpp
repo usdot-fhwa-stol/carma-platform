@@ -158,7 +158,7 @@ void SCIStrategicPlugin::parseStrategyParams(const std::string& strategy_params)
 
 }
 
-int SCIStrategicPlugin::determineSpeedProfileCase(double stop_dist, double current_speed, double schedule_stop_time, double speed_limit)
+int SCIStrategicPlugin::determine_speed_profile_case(double stop_dist, double current_speed, double schedule_stop_time, double speed_limit)
 {
   int case_num = 0;
   double estimated_stop_time = calcEstimatedStopTime(stop_dist, current_speed);
@@ -170,7 +170,7 @@ int SCIStrategicPlugin::determineSpeedProfileCase(double stop_dist, double curre
   }
   else
   {
-    double speed_before_stop = calcSpeedBeforeDecel(estimated_stop_time, stop_dist, current_speed);
+    double speed_before_stop = calc_speed_before_decel(estimated_stop_time, stop_dist, current_speed);
     ROS_DEBUG_STREAM("speed_before_stop: " << speed_before_stop);
     if (speed_before_stop < speed_limit)
     {
@@ -193,7 +193,7 @@ double SCIStrategicPlugin::calcEstimatedStopTime(double stop_dist, double curren
   return t_stop;
 }
 
-double SCIStrategicPlugin::calcSpeedBeforeDecel(double stop_time, double stop_dist, double current_speed) const
+double SCIStrategicPlugin::calc_speed_before_decel(double stop_time, double stop_dist, double current_speed) const
 {
   double speed_before_decel = 0;
 
@@ -352,7 +352,7 @@ bool SCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
 
       if (distance_to_stopline - safe_distance > config_.stop_line_buffer)
       {
-        int case_num = determineSpeedProfileCase(distance_to_stopline , current_state.speed, time_to_schedule_stop, speed_limit_);
+        int case_num = determine_speed_profile_case(distance_to_stopline , current_state.speed, time_to_schedule_stop, speed_limit_);
         ROS_DEBUG_STREAM("case_num:  " << case_num);
 
         if (case_num < 3)
@@ -633,7 +633,7 @@ cav_msgs::Maneuver SCIStrategicPlugin::composeLaneFollowingManeuverMessage(int c
 
   std::vector<double> float_metadata_list;
 
-  double speed_before_decel = calcSpeedBeforeDecel(time_to_stop, end_dist-start_dist, start_speed);
+  double speed_before_decel = calc_speed_before_decel(time_to_stop, end_dist-start_dist, start_speed);
 
   switch(case_num)
   {

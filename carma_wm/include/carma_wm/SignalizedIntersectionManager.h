@@ -36,8 +36,8 @@ namespace carma_wm
 
 struct LANE_DIRECTION
 {
-  static const uint8_t INGRESS = 1;
-  static const uint8_t EGRESS = 2;
+  static const uint8_t INGRESS = 2;
+  static const uint8_t EGRESS = 1;
 };
 
 using namespace lanelet::units::literals;
@@ -58,6 +58,14 @@ public:
   *  \param[out] other manager
   */
   SignalizedIntersectionManager& operator=(SignalizedIntersectionManager other);
+
+  /*! 
+  *  \brief Inequality operator that checks if every mapping are same except the traffic signal states. 
+            This is to keep the states although the map is updated or a similar event happened
+            NOTE: The function does not update the map with new elements
+  *  \param[out] rhs manager
+  */
+  bool operator==(const SignalizedIntersectionManager& rhs);
 
   /*! 
   *  \brief Create relevant signalized intersection and carma traffic signals based on the MAP.msg and the lanelet_map
