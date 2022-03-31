@@ -301,7 +301,7 @@ namespace platoon_strategic_ihp
         /**
          * Note: STATUS params format:
          *       STATUS | --> "CMDSPEED:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%"
-         *              |----------0----------1---------2---------3---------4-------|
+         *              |----------0----------1---------2---------3---------4------|
          */  
 
         // Extract data
@@ -513,13 +513,23 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("platoon_leader position: " << platoon_leader.vehiclePosition);
                 status_msg.leader_cmd_speed = platoon_leader.commandSpeed;
                 status_msg.host_platoon_position = pm_.getNumberOfVehicleInFront();
+
                 // UCLA: Add the value of the summation of "veh_len/veh_speed" for all predecessors
                 status_msg.current_predecessor_time_headway_sum = pm_.getPredecessorTimeHeadwaySum();
                 // UCLA: preceding vehicle info 
                 status_msg.predecessor_speed = pm_.getPredecessorSpeed();
                 status_msg.predecessor_position = pm_.getPredecessorPosition();
-                
-                status_msg.desired_gap = std::max(config_.standStillHeadway, config_.timeHeadway * current_speed_);
+
+                // Note: use isCreateGap to adjust the desired gap send to control plugin 
+                double regular_gap = std::max(config_.standStillHeadway, config_.timeHeadway * current_speed_);
+                if (pm_.isCreateGap){
+                    // enlarged desired gap for gap creation
+                    status_msg.desired_gap = regular_gap*(1 + config_.createGapAdjuster);
+                }
+                else{
+                    // normal desired gap
+                    status_msg.desired_gap = regular_gap;
+                }
                 status_msg.actual_gap = platoon_leader.vehiclePosition - current_downtrack_;
                 
             }
@@ -1098,13 +1108,7 @@ namespace platoon_strategic_ihp
                 // note: At this step all cut-in types all start with this request, so the join_index at this point is set to default, -2.
                 // REVISIOn note: At this step a join index is really  not needed until later. The later index were changed to name "target_index". So it is ok to delete cut-in here.
                 int join_index = -2;
-
-                /**
-                 * JOIN_CUT_IN_PARAMS format: 
-                 *       JOIN_CUT_IN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOININDEX:%6%"
-                 *                            |-------0------ --1---------2---------3---------4--------5--------|
-                 */
-                boost::format fmter(JOIN_CUT_IN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
+                boost::format fmter(JOIN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
                 fmter %platoon_size;                //  index = 0
                 fmter %current_speed_;              //  index = 1, in m/s
                 fmter %pose_ecef_point_.ecef_x;     //  index = 2
@@ -1894,7 +1898,7 @@ namespace platoon_strategic_ihp
         }
 
         // task 2: For cut-in from front, the leader need to stop creating gap when gap is big enough
-        else if (plan_type.type == cav_msgs::PlanType::STOP_CREATE_GAP) 
+        else if (plan_type.type == cav_msgs::PlanType::STOP_CREATE_GAP && pm_.isCreateGap) 
         {
             // reset create gap indicator
             pm_.isCreateGap = false;
@@ -2237,13 +2241,35 @@ namespace platoon_strategic_ihp
         if (pm_.current_plan.valid)
         {
             bool isForCurrentPlan = msg.header.plan_id == pm_.current_plan.planId;
-            bool isFromTargetVehicle = msg.header.sender_id == pm_.targetLeaderId;
-            ROS_DEBUG_STREAM("isForCurrentPlan " << isForCurrentPlan);
+            bool isForFrontJoin = msg.plan_type.type == cav_msgs::PlanType::PLATOON_FRONT_JOIN;
 
+
+            //TODO remove these diagnostics
+            isForFrontJoin = true;
+            if (msg.plan_type.type == cav_msgs::PlanType::UNKNOWN){
+                ROS_DEBUG_STREAM("*** plan type UNKNOWN");
+            }else if (msg.plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT){
+                ROS_DEBUG_STREAM("*** plan type JOIN_PLATOON_FROM_FRONT");
+            }else if (msg.plan_type.type == cav_msgs::PlanType::CUT_IN_FROM_DIFFERENT_LANE){
+                ROS_DEBUG_STREAM("*** plan type CUT_IN_FROM_DIFFERENT_LANE");
+            }else {
+                ROS_DEBUG_STREAM("*** plan type not captured.");
+            }
+
+
+            // bool isFromTargetVehicle = msg.header.sender_id == pm_.targetLeaderId;
+            bool isFromTargetVehicle = msg.header.sender_id == fj_new_joiner_Id_;
+            ROS_DEBUG_STREAM("msg.header.sender_id " << msg.header.sender_id);
+            ROS_DEBUG_STREAM("fj_new_joiner_Id_ " << fj_new_joiner_Id_);
+            ROS_DEBUG_STREAM("pm_.targetLeaderId " << pm_.targetLeaderId);
+            ROS_DEBUG_STREAM("Plan Type " << msg.plan_type.type);
+            ROS_DEBUG_STREAM("isForFrontJoin " << isForFrontJoin);
+
+            ROS_DEBUG_STREAM("isForCurrentPlan " << isForCurrentPlan);
             ROS_DEBUG_STREAM("isFromTargetVehicle " << isFromTargetVehicle);
 
             // Check the response is received correctly (i.e., host vehicle is the desired receiver).
-            if (isForCurrentPlan && isFromTargetVehicle)
+            if (isForCurrentPlan && isFromTargetVehicle && isForFrontJoin)
             {
                 if (msg.is_accepted)
                 {
@@ -2351,7 +2377,7 @@ namespace platoon_strategic_ihp
             fmter %pose_ecef_point_.ecef_x;         //  index = 2
             fmter %pose_ecef_point_.ecef_y;         //  index = 3
             fmter %pose_ecef_point_.ecef_z;         //  index = 4   
-            fmter %target_join_index_;              //  innex = 5
+            fmter %target_join_index_;              //  index = 5
 
             request.strategy_params = fmter.str();
             mobility_request_publisher_(request); 
@@ -2647,13 +2673,14 @@ namespace platoon_strategic_ihp
         double desiredJoinGap2 = config_.desiredJoinTimeGap * current_speed_;
         double maxJoinGap = std::max(config_.desiredJoinGap, desiredJoinGap2);
         // check if compatible for front join --> return front gap, no veh type check, is compatible
-        double currentGap = pm_.getDistanceToPredVehicle();
-        ROS_DEBUG_STREAM("Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " ms");
+        double currentGap = pm_.getDistanceToPredVehicle();  //TODO: fix this! it always returns 0.
+        ROS_DEBUG_STREAM("Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " m");
         ROS_DEBUG_STREAM("Since we have max allowed gap as " << config_.desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
-        ROS_DEBUG_STREAM("The current gap from radar is " << currentGap << " m");
+        ROS_DEBUG_STREAM("The current gap to joiner is " << currentGap << " m");
+        ROS_DEBUG_STREAM("current_plan valid = " << pm_.current_plan.valid << ", isFirstLeaderAbortRequest = " << isFirstLeaderAbortRequest_);
 
         // Check if gap is big enough and if current plan is timeout.
-        // Add a condition to prevent sending repeated requests (Note: This is a same-lane maneuver, so no need to consider lower bond of joining gap.)
+        // Add a condition to prevent sending repeated requests (Note: This is a same-lane maneuver, so no need to consider lower bound of joining gap.)
         if (currentGap <= maxJoinGap  &&  !pm_.current_plan.valid  &&  isFirstLeaderAbortRequest_) 
         {
             // compose frontal joining plan, senderID is the old leader 
@@ -2668,13 +2695,13 @@ namespace platoon_strategic_ihp
             double platoon_size = pm_.getTotalPlatooningSize(); 
             
             boost::format fmter(SAME_LANE_JOIN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
-            // note: leader aborting is same-lane operation, hence using SAME_LANE_JOIN_PARAMS.
+            // note: leader aborting is same-lane operation, hence using SAME_LANE_JOIN_PARAMS, no need to include join index.
             fmter %platoon_size;                //  index = 0
             fmter %current_speed_;              //  index = 1, in m/s
             fmter %pose_ecef_point_.ecef_x;     //  index = 2
             fmter %pose_ecef_point_.ecef_y;     //  index = 3
             fmter %pose_ecef_point_.ecef_z;     //  index = 4   
-        
+            
             request.strategy_params = fmter.str();
 
             // assign a new plan type 
@@ -2687,7 +2714,7 @@ namespace platoon_strategic_ihp
             // first request has been sent, mark check condition
             isFirstLeaderAbortRequest_ = false;
             
-            ROS_WARN("Published Mobility Candidate-Join request to the leader");
+            ROS_WARN("Published Mobility Candidate-Join request to the new leader");
             pm_.current_plan = PlatoonPlan(true, currentTime, planId, pm_.targetLeaderId);
         }
 
@@ -2712,7 +2739,7 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("Run Candidate Leader State ");
         long tsStart = ros::Time::now().toNSec() / 1000000;
         // Task 1: State time out
-        if (tsStart - waitingStartTime > waitingStateTimeout * 1000)
+        if (tsStart - candidatestateStartTime > waitingStateTimeout * 1000)
         {
             //TODO if the current state timeouts, we need to have a kind of ABORT message to inform the applicant
             ROS_DEBUG_STREAM("CandidateLeader state is timeout, changing back to PlatoonLeaderState.");
@@ -3056,32 +3083,15 @@ namespace platoon_strategic_ihp
         ros::Time time_progress = ros::Time::now();
 
         // ---------------- use IHP platoon trajectory regulation here --------------------
-        double total_maneuver_length;
-        double target_speed;
-        // 1. determine if follower 
-        if (pm_.isFollower)
-        {
-            // 2. Use IHP platoon trajectory regulation for followers.
-            double dt = config_.time_step;
-            total_maneuver_length = pm_.getIHPDesPosFollower(dt);
-            target_speed = (total_maneuver_length - current_progress) / dt;
-        }
-        else
-        {
-            // 3. Use CARMA planning method (control_length = step_time * speed limit).
-            target_speed = findSpeedLimit(current_lanelet);   //get Speed Limit
-            total_maneuver_length = current_progress + config_.time_step * target_speed;
-        }
+        // Note: The desired gap will be adjusted and send to control plugin (via platoon_info_msg) where gap creation will be handled.
+        double total_maneuver_length; 
+        double target_speed;   
+        
+        // Note: gap regulation has moved to control plug-in, no need to adjust speed here.
+        target_speed = findSpeedLimit(current_lanelet);   //get Speed Limit
+        total_maneuver_length = current_progress + config_.time_step * target_speed;
         // ----------------------------------------------------------------
 
-        // UCLA: add create gap indicator, if true, use smaller target speed to create gap
-        if (pm_.isCreateGap)
-        {
-            // Note: slowDownAdjuster is defined in the platoon config header file.
-            // Currently, slowDownAdjuster uses 0.75 for demo.
-            target_speed = target_speed * config_.slowDownAdjuster;
-        }
-        
         // pick smaller length, accomendate when host is close to the route end
         double route_length =  wm_->getRouteEndTrackPos().downtrack; 
         total_maneuver_length = std::min(total_maneuver_length, route_length);
@@ -3089,6 +3099,7 @@ namespace platoon_strategic_ihp
         // Update current status based on prior plan
         if(req.prior_plan.maneuvers.size()!= 0)
         {
+            ROS_DEBUG_STREAM("Provided with initial plan...");
             time_progress = req.prior_plan.planning_completion_time;
             int end_lanelet = 0;
             updateCurrentStatus(req.prior_plan.maneuvers.back(), speed_progress, current_progress, end_lanelet);
@@ -3101,6 +3112,7 @@ namespace platoon_strategic_ihp
         // lane change maneuver 
         if (pm_.safeToLaneChange)
         {   
+            ROS_DEBUG_STREAM("pm_.safeToLaneChange: " << pm_.safeToLaneChange);
             // for testing purpose only, check lane change status
             double start_crosstrack = 0.5*findLaneWidth();// Assume vehicle start at left lane when testing.
             double crosstrackDiff = current_crosstrack_ - start_crosstrack; 
@@ -3203,7 +3215,8 @@ namespace platoon_strategic_ihp
                     ROS_DEBUG_STREAM("time_progress: " << time_progress.toSec());
                     auto p = shortest_path[last_lanelet_index].centerline2d().back();
                     double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
-                    end_dist = std::min(end_dist, total_maneuver_length);
+                    // end_dist = std::min(end_dist, total_maneuver_length);
+                    end_dist = std::max(end_dist, total_maneuver_length);
                     ROS_DEBUG_STREAM("end_dist: " << end_dist);
                     double dist_diff = end_dist - current_progress;
                     ROS_DEBUG_STREAM("dist_diff: " << dist_diff);
@@ -3231,6 +3244,7 @@ namespace platoon_strategic_ihp
         // same-lane maneuver  
         else 
         {
+            ROS_DEBUG_STREAM("Planning Same Lane Maneuver! ");
             while (current_progress < total_maneuver_length)
             {   
                 ROS_DEBUG_STREAM("Same Lane Maneuver for platoon join ! ");

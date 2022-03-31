@@ -263,8 +263,8 @@ namespace platoon_strategic_ihp
     int PlatoonManager::allPredecessorFollowing(){
 
         ///***** Case Zero *****///
-        // If the host vehicle is the follower of a two-vehicle platoon,we will always follow the platoon leader in front of host vehicle
-        if(platoon.size() == 2) {
+        // If the host vehicle is the second follower of a platoon, it will always follow the platoon leader in the front 
+        if(getNumberOfVehicleInFront() == 1) {
             if (isFollower){
                 // If the platoon length is 2 and the host is follower, then follow the leader.
                 ROS_DEBUG_STREAM("As the second vehicle in the platoon, it will always follow the leader. Case Zero");
@@ -492,6 +492,7 @@ namespace platoon_strategic_ihp
         // UCLA: Add maxAllowableHeadaway adjuster to increase the threshold during gap creating period.
         double maxAllowableHeadaway_adjusted = config_.maxAllowableHeadaway;
         if (isCreateGap) {
+            // adjust maximum allowed headway to allow for a bigger gap 
             maxAllowableHeadaway_adjusted = maxAllowableHeadaway_adjusted*(1 + config_.createGapAdjuster);
             } 
         
@@ -647,29 +648,21 @@ namespace platoon_strategic_ihp
     // Return the predecessor speed 
     double PlatoonManager::getPredecessorSpeed()
     {
-        // Construct speed vector
-        std::vector<double> speed(platoon.size());
-        for (size_t i = 0; i < platoon.size(); i++)
-        {
-            speed[i] = platoon[i].vehicleSpeed;
-        }
+        // Read host index. 
+        int host_platoon_index = getNumberOfVehicleInFront();
 
         // Return speed
-        return speed[getNumberOfVehicleInFront()-1]; // m/s 
+        return platoon[host_platoon_index].vehicleSpeed; // m/s 
     }
 
     // Return the predecessor location
     double PlatoonManager::getPredecessorPosition()
     {
-        // Construct dtd vector 
-        std::vector<double> downtrackDistance(platoon.size());
-        for (size_t i = 0; i < platoon.size(); i++)
-        {
-            downtrackDistance[i] = platoon[i].vehiclePosition;
-        }
+        // Read host index. 
+        int host_platoon_index = getNumberOfVehicleInFront();
 
-        // Return position
-        return downtrackDistance[getNumberOfVehicleInFront()-1]; // m
+        // Return speed
+        return platoon[host_platoon_index].vehiclePosition; // m
     }
 
     // Trajectory based platoon trajectory regulation.
