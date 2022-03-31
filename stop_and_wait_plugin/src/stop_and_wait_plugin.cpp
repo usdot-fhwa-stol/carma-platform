@@ -144,13 +144,15 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
     throw std::invalid_argument("stop and wait maneuver message missing required float meta data");
   }
 
+  double initial_speed = req.vehicle_state.longitudinal_vel; //will be modified after compose_trajectory_from_centerline 
+
   trajectory.trajectory_points = compose_trajectory_from_centerline(
       points_and_target_speeds, current_downtrack, req.vehicle_state.longitudinal_vel,
-      maneuver_plan[0].stop_and_wait_maneuver.end_dist, stop_location_buffer, req.header.stamp, stopping_accel);
+      maneuver_plan[0].stop_and_wait_maneuver.end_dist, stop_location_buffer, req.header.stamp, stopping_accel, initial_speed);
 
   ROS_DEBUG_STREAM("Trajectory points size:" << trajectory.trajectory_points.size());
 
-  trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
+  trajectory.initial_longitudinal_velocity = initial_speed;
 
   resp.trajectory_plan = trajectory;
 
@@ -225,7 +227,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::trajectory_from_points_t
 
 std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_centerline(
     const std::vector<PointSpeedPair>& points, double starting_downtrack, double starting_speed, double stop_location,
-    double stop_location_buffer, ros::Time start_time, double stopping_acceleration)
+    double stop_location_buffer, ros::Time start_time, double stopping_acceleration, double& initial_speed)
 {
   std::vector<cav_msgs::TrajectoryPlanPoint> plan;
   if (points.size() == 0)
@@ -392,6 +394,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
     new_point.target_time = new_point.target_time + ros::Duration(config_.stop_timestep);
     traj.push_back(new_point);
   }
+
+  if (!filtered_speeds.empty())
+    initial_speed = filtered_speeds.front(); //modify initial_speed variable passed by reference
 
   return traj;
 }

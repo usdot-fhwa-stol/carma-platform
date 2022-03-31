@@ -22,8 +22,8 @@ algo_minimum_speed : 4.4704 # 5mph 10mph: 4.4704, 6mph: 2.68224, 7mph: 3.12928 T
 # Double: Minimum allowable speed of the car m/s
 absolute_minimum_speed : 4.4704 # 5mph 10mph: 4.4704, 6mph: 2.68224, 7mph: 3.12928 TODO
 
-# Double: Update min_gap. Units in m
-min_gap : 6
+# Double: Fraction of max deceleration to start considering to stop. max_decel / X = desired_accel to start stopping. Unit: N/A
+deceleration_fraction : 6.0
 
 # Double: The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
 min_maneuver_planning_period : 15.1

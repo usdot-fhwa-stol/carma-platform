@@ -51,7 +51,7 @@ int main(int argc, char** argv)
   pnh.param<double>("green_light_time_buffer",          config.green_light_time_buffer, config.green_light_time_buffer);
   pnh.param<double>("algo_minimum_speed",                    config.algo_minimum_speed, config.algo_minimum_speed);
   pnh.param<double>("absolute_minimum_speed",                    config.absolute_minimum_speed, config.absolute_minimum_speed);
-  pnh.param<double>("min_gap",                    config.min_gap, config.min_gap);
+  pnh.param<double>("deceleration_fraction",                    config.deceleration_fraction, config.deceleration_fraction);
   pnh.param<double>("min_maneuver_planning_period",     config.min_maneuver_planning_period, config.min_maneuver_planning_period);
   pnh.param<std::string>("strategic_plugin_name",            config.strategic_plugin_name, config.strategic_plugin_name);
   pnh.param<std::string>("lane_following_plugin_name",       config.lane_following_plugin_name, config.lane_following_plugin_name);

@@ -52,8 +52,8 @@ struct LCIStrategicPluginConfig
   //! Minimum allowable speed in m/s
   double absolute_minimum_speed = 2.2352;
 
-  //! Double: Minimum inter-vehicle gap
-  double min_gap = 10.0;
+  //! Double: Fraction of max deceleration to start considering to stop. max_decel / X = desired_accel to start stopping. Unit: N/A
+  double deceleration_fraction = 6.0;
 
   //! The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
   double min_maneuver_planning_period = 15.1;

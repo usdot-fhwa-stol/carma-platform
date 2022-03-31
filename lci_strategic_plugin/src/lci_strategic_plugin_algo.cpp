@@ -329,8 +329,6 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
 {
   double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack;
 
-  case_num_ = TSCase::STOPPING;
-
   // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
         getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
@@ -338,8 +336,8 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
   double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_);
   ROS_DEBUG_STREAM("safe_distance_to_stop at max_comfort_decel:  " << safe_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
 
-  double desired_distance_to_stop = pow(current_state.speed, 2)/(max_comfort_decel_norm_ / std::max(4.0, (double)config_.min_gap));
-  ROS_DEBUG_STREAM("desired_distance_to_stop at at config_.min_gap fraction: max_comfort_decel:  " << desired_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_ / config_.min_gap);
+  double desired_distance_to_stop = pow(current_state.speed, 2)/(max_comfort_decel_norm_ / std::max(4.0, (double)config_.deceleration_fraction));
+  ROS_DEBUG_STREAM("desired_distance_to_stop at at config_.deceleration_fraction fraction: max_comfort_decel:  " << desired_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_ / config_.deceleration_fraction);
   
   desired_distance_to_stop = std::max(desired_distance_to_stop, config_.min_approach_distance);
 
@@ -374,6 +372,8 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
       double decel_rate =  current_state.speed/ min_bound_stop_time; // Kinematic |(v_f - v_i) / t = a|
       ROS_ERROR_STREAM("22222222: Planning stop and wait maneuver at decel_rate: -" << decel_rate);
       ROS_DEBUG_STREAM("22222222: Planning stop and wait maneuver at decel_rate: -" << decel_rate);
+      
+      case_num_ = TSCase::STOPPING;
       
       resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
         current_state.downtrack, traffic_light_down_track, current_state.speed, crossed_lanelets.front().id(),

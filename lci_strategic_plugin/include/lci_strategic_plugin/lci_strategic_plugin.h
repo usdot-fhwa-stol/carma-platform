@@ -52,8 +52,8 @@ enum TSCase {
   CASE_6 = 6,
   CASE_7 = 7,
   CASE_8 = 8,
-  STOPPING=5,
-  UNAVAILABLE = 6,
+  STOPPING=9,
+  UNAVAILABLE = 10,
 };
 
 struct TrajectoryParams

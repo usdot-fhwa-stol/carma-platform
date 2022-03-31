@@ -229,6 +229,7 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
   }
   else
   {
+    case_num_ = TSCase::UNAVAILABLE;
     ROS_DEBUG_STREAM("Not within intersection range");
   }
 
@@ -401,17 +402,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   TrajectoryParams ts_params = get_ts_case(req.header.stamp.toSec(), nearest_green_entry_time.toSec(), current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_, current_state.downtrack, traffic_light_down_track, distance_remaining_to_traffic_light, boundary_distances, boundary_traj_params);
   print_params(ts_params);
 
-
-
-  if (ts_params.is_algorithm_successful || ts_params.case_num == TSCase::CASE_8)
-  {
-    case_num_ = ts_params.case_num; //to print for debugging
-  }
-  else
-  {
-    case_num_ = TSCase::UNAVAILABLE;
-  }
-  
   ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
   ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
   ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
@@ -464,6 +454,9 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
           traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
           intersection_speed_.get(), light_arrival_time_by_algo, intersection_exit_time, entry_lanelet.id(), exit_lanelet.id()));
+      
+      case_num_ = ts_params.case_num; //to print for debugging
+
       return;
     }
     else
@@ -502,6 +495,9 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       ts_params.x2_, traffic_light_down_track, ts_params.v2_, case_8_crossed_lanelets.front().id(),
       case_8_crossed_lanelets.back().id(), ros::Time(ts_params.t2_),
       current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
+
+    case_num_ = TSCase::CASE_8;
+
     return;
   }
 
@@ -523,6 +519,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
       incomplete_traj_params.modified_departure_speed, current_state.stamp + ros::Duration(incomplete_traj_params.modified_remaining_time), intersection_exit_time, crossed_lanelets.back().id(), exit_lanelet.id()));
 
+  case_num_ = TSCase::UNAVAILABLE;
 }
 
 void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& req,
