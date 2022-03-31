@@ -45,8 +45,8 @@ def generate_launch_description():
     subsystem_controller_default_param_file = os.path.join(
         get_package_share_directory('subsystem_controllers'), 'config/guidance_controller_config.yaml')
 
-    #mobilitypath_visualizer_param_file = os.path.join(
-    #    get_package_share_directory('mobilitypath_visualizer'), 'config/params.yaml')
+    mobilitypath_visualizer_param_file = os.path.join(
+        get_package_share_directory('mobilitypath_visualizer'), 'config/params.yaml')
     
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
@@ -59,33 +59,33 @@ def generate_launch_description():
 
 
     # Nodes
-    #carma_guidance_container = ComposableNodeContainer(
-    #    package='carma_ros2_utils',
-    #    name='carma_guidance_container',
-    #    executable='carma_component_container_mt',
-    #    namespace=GetCurrentNamespace(),
-    #    composable_node_descriptions=[
-#
-    #        ComposableNode(
-    #            package='mobilitypath_visualizer',
-    #            plugin='mobilitypath_visualizer::MobilityPathVisualizer',
-    #            name='mobilitypath_visualizer_node',
-    #            extra_arguments=[
-    #                {'use_intra_process_comms': True}, 
-    #                {'--log-level' : GetLogLevel('mobilitypath_visualizer', env_log_levels) }
-    #            ],
-    #            remappings = [
-    #                ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/mobility_path_msg" ] ),
-    #                ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
-    #                ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NZ', default_value=''), "/map_param_loader/georeference"])
-    #            ],
-    #            parameters=[
-    #                vehicle_characteristics_param_file,
-    #                mobilitypath_visualizer_param_file
-    #            ]
-    #        ),
-    #    ]
-    #)
+    carma_guidance_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='carma_guidance_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+
+            ComposableNode(
+                package='mobilitypath_visualizer',
+                plugin='mobilitypath_visualizer::MobilityPathVisualizer',
+                name='mobilitypath_visualizer_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('mobilitypath_visualizer', env_log_levels) }
+                ],
+                remappings = [
+                    ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/mobility_path_msg" ] ),
+                    ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NZ', default_value=''), "/map_param_loader/georeference"])
+                ],
+                parameters=[
+                    vehicle_characteristics_param_file,
+                    mobilitypath_visualizer_param_file
+                ]
+            ),
+        ]
+    )
 
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
@@ -99,6 +99,6 @@ def generate_launch_description():
 
     return LaunchDescription([  
         declare_subsystem_controller_param_file_arg,      
-        #carma_guidance_container,
+        carma_guidance_container,
         subsystem_controller
     ]) 
