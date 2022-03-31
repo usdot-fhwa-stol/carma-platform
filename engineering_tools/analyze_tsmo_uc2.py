@@ -14,15 +14,21 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
+from cProfile import label
 from cmath import phase
 from inspect import TPFLAGS_IS_ABSTRACT
 import sys
 import csv
+from turtle import color
+from click import style
 import matplotlib.pyplot as plt
+import scipy as sp
 import rospy
+import pandas as pd
 import rosbag # To import this, run the following command: "pip install --extra-index-url https://rospypi.github.io/simple/ rospy rosbag rospkg"
 import datetime
 import math
+import numpy as np
 
 ###########################################################################################################
 # TSMO UC1-M1.1 : Vehicles should receive SPaT messages from RSU 
@@ -85,6 +91,53 @@ Approach:
 Plotting: 
 - In addition to the pass/fail criterion plots should be generated of the frequency in the sliding windows at each timestep
 '''
+
+def plot_spat_map_frequency( spat_ts_idx, map_ts_idx,spat_frequency_avg, map_frequency_avg, spat_frequency_sum_avg,map_frequency_sum_avg ):
+    print("Plot SPAT and MAP frequency")
+    fig, ax = plt.subplots()   
+    spat_ds = pd.DataFrame({'Average Frequncy SPAT for every 1s': spat_frequency_avg}, index=spat_ts_idx)
+    map_ds = pd.DataFrame({'Average Frequncy MAP for every 5s': map_frequency_avg}, index=map_ts_idx)    
+
+    df_sum_avg = pd.DataFrame({'Average sum Frequncy SPAT': spat_frequency_sum_avg}, index=spat_ts_idx)
+    map_ds_sum_avg = pd.DataFrame({'Average sum Frequncy MAP': map_frequency_sum_avg}, index=map_ts_idx)
+    
+    styles = ['--','--']
+    colors=['grey','orange', 'green','blue']
+    
+    # Plot sum Avergage frequency
+    df_sum_avg = spat_ds.plot(ax=ax,style=styles[0], color=colors[0])
+    map_ds_sum_avg.plot(ax=ax,style=styles[1], color=colors[1])
+
+    # Sliding window frequency average
+    ax.scatter(map_ds.index, map_ds.values,s=20, color=colors[2],marker='^', label="Average MAP Frequncy for every 5s")
+    ax.scatter(spat_ds.index, spat_ds.values, s=20, color=colors[3], marker='s', label="Average SPAT Frequncy for every 1s")    
+    ax.legend()
+
+    ax.set_title('MAP and SPAT Frequency Profile')
+    ax.set_ylabel('Frequency (HZ)')
+
+def get_spat_map_frequency_profile():
+    timestamp = 1528797322
+    timestamp = 1528797382
+    date_time_5 = datetime.datetime.fromtimestamp(timestamp)
+    date_time_1 = datetime.datetime.fromtimestamp(timestamp)
+    spat_ts_idx = pd.date_range(date_time_1, date_time_5, freq='S')
+    map_ts_idx = pd.date_range(date_time_1, date_time_5, freq='5S')
+    spat_frequency_avg=[]  
+    map_frequency_avg=[]
+    frequency = 1
+
+    for i in spat_ts_idx:
+        spat_frequency_avg.append(frequency)
+
+    spat_frequency_sum_avg = [sum(spat_frequency_avg)/spat_frequency_avg.__len__()] * spat_frequency_avg.__len__()
+
+    for j in map_ts_idx:
+        map_frequency_avg.append(5*frequency)
+
+    map_frequency_sum_avg = [sum(map_frequency_avg)/map_frequency_avg.__len__()] * map_frequency_avg.__len__()
+    plot_spat_map_frequency(spat_ts_idx, map_ts_idx, spat_frequency_avg, map_frequency_avg, spat_frequency_sum_avg,map_frequency_sum_avg )
+
 
 ###########################################################################################################
 # TSMO UC2-M2.1 : Each vehicle should travel sequentially through the lanelets defined in its path.
@@ -225,6 +278,42 @@ Approach:
 - In TSMO UC2 all the speed limits will be the same so a simple conditional while the vehicle is engaged on twist.linear.x will suffice to check if the limit is exceeded
 '''
 
+def plot_vehicle_speed_accel_downtrack_with_tsc(ts_idx, vehicles_data, tsc_start_phase, tsc_start_downtrack, tsc_yellow_duration, tsc_red_duration, tsc_green_duration, tsc_bar_height, max_y_axis, plot_title):
+    print("Plot vehicle speed, accel, downtrack with TSC. Plotting >>  " + plot_title)    
+    fig, ax = plt.subplots()    
+    #https://stackoverflow.com/questions/24425908/matplotlib-how-to-use-timestamps-with-broken-barh
+    df = pd.DataFrame(vehicles_data, index=ts_idx)
+    df.plot(ax = ax)
+    ax.grid(True)
+    ax.legend(loc='upper left')
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Speed (m/s)')
+    ax.set_title(plot_title)
+
+    # Traffic signal with horizontal bars 
+    start_period = ts_idx[0].to_period('S').ordinal
+    period_count = start_period
+    end_period = ts_idx[ts_idx.size-1].to_period('S').ordinal
+    
+    # GREEN(27)->YELLOW(3)-->RED(30)
+    if(tsc_start_phase=='yellow'):  
+        while(period_count < end_period):
+                ax.broken_barh([(period_count,tsc_yellow_duration), (period_count+tsc_yellow_duration,tsc_red_duration),(period_count+tsc_yellow_duration+tsc_red_duration,tsc_green_duration)],(tsc_start_downtrack, tsc_bar_height), facecolors=('yellow', 'red', 'green'))
+                period_count += tsc_yellow_duration + tsc_red_duration + tsc_green_duration
+    elif(tsc_start_phase=='red'):
+        while(period_count < end_period):
+            ax.broken_barh([(period_count,tsc_red_duration), (period_count+tsc_red_duration,tsc_green_duration),(period_count+tsc_red_duration+tsc_green_duration,tsc_yellow_duration)],(tsc_start_downtrack, tsc_bar_height), facecolors=('red', 'green', 'yellow'))
+            period_count += tsc_yellow_duration + tsc_red_duration + tsc_green_duration
+    elif(tsc_start_phase=='green'):
+       while(period_count < end_period):
+            ax.broken_barh([(period_count,tsc_green_duration), (period_count+tsc_green_duration,tsc_yellow_duration), (period_count+tsc_green_duration+tsc_yellow_duration,tsc_red_duration)],(tsc_start_downtrack, tsc_bar_height), facecolors=('green', 'yellow', 'red'))
+            period_count += tsc_yellow_duration + tsc_red_duration + tsc_green_duration
+
+    start = 0
+    end = max_y_axis
+    stepsize = 10
+    ax.set_yticks(np.arange(start, end, stepsize))
+    
 
 ###########################################################################################################
 # Additional Requested Plots: Speed over time with matching signal state shown
@@ -245,26 +334,32 @@ Approach:
 
 NOTE: This plot should be generated in two forms 1 time for the individual vehicles and once as a single plot combing the data from two vehicles
 '''
+def get_vehicle_speed_profile():
+    start_ts = 1528797322
+    end_ts = 1528797382
 
-###########################################################################################################
-# Additional Requested Plots: Downtrack position over time with matching signal state shown
-###########################################################################################################
+    #Current vehicle speed with line
+    date_time_1 = datetime.datetime.fromtimestamp(start_ts)    
+    date_time_5 = datetime.datetime.fromtimestamp(end_ts)
+    
+    ts_idx = pd.date_range(date_time_1, date_time_5, freq='S')
+    start_phase ='green'
+    tsc_yellow_duration, tsc_red_duration, tsc_green_duration = 3,27,30
+    current_vehicle_speed=[]  
+    current_vehicle_speed_other=[]
+    speed = 0
+    for i in ts_idx:
+        speed=np.random.randint(0,10,1)[0]
+        current_vehicle_speed.append(20*speed)
+        current_vehicle_speed_other.append(30*speed)
+        speed +=0.1
+    vehicles_data = {'Current vehicle speed': current_vehicle_speed, 'Other vehicle speeds': current_vehicle_speed_other}
+    max_y_axis = max(current_vehicle_speed_other)
+    plot_title = 'Vehicle Speed Profile'
+    tsc_start_downtrack = 100
+    tsc_bar_height = 10
+    plot_vehicle_speed_accel_downtrack_with_tsc(ts_idx, vehicles_data, start_phase, tsc_start_downtrack, tsc_yellow_duration, tsc_red_duration, tsc_green_duration,tsc_bar_height, max_y_axis, plot_title)
 
-'''
-Required topics
-- Engagement status : /guidance/state
-- Current downtrack data : /guidance/route_state
-- SPaT Data : /message/incoming_spat
-Other Required Data:
-- Intersection id and movement id for the spat message
-
-Approach:
-- While the vehicle is engaged plot the current downtrack distance reported by route_state
-- Identify where the stop bar is in terms of downtrack distance (this might change per run)
-- At the position where the stop bar is (y-axis) draw a set of red/green/yellow rectangles showing the current signal phase
-
-NOTE: This plot should be generated in two forms 1 time for the individual vehicles and once as a single plot combing the data from two vehicles
-'''
 
 ###########################################################################################################
 # Additional Requested Plots: Acceleration over time with matching signal state shown
@@ -286,6 +381,78 @@ Approach:
 NOTE: This plot should be generated in two forms 1 time for the individual vehicles and once as a single plot combing the data from two vehicles
 '''
 
+def get_vehicle_accel_profile():
+    start_ts = 1528797322
+    end_ts = 1528797382
+
+    #Current vehicle speed with line
+    date_time_1 = datetime.datetime.fromtimestamp(start_ts)
+    date_time_5 = datetime.datetime.fromtimestamp(end_ts)
+    
+    ts_idx = pd.date_range(date_time_1, date_time_5, freq='S')
+    tsc_yellow_duration, tsc_red_duration, tsc_green_duration = 3,27,30
+    current_vehicle_speed=[]  
+    current_vehicle_speed_other=[]
+    speed = 0
+    for i in ts_idx:
+        speed=np.random.randint(0,10,1)[0]
+        current_vehicle_speed.append(2*speed)
+        current_vehicle_speed_other.append(3*speed)
+        speed +=0.1
+    vehicles_data = {'Current vehicle Accel': current_vehicle_speed, 'Other vehicle Accel': current_vehicle_speed_other}
+    max_y_axis = max(current_vehicle_speed_other)
+    plot_title = 'Vehicle Acceleration Profile'
+    tsc_start_downtrack = 5
+    tsc_start_phase ='yellow'
+    tsc_bar_height = 2
+    plot_vehicle_speed_accel_downtrack_with_tsc(ts_idx, vehicles_data, tsc_start_phase, tsc_start_downtrack, tsc_yellow_duration, tsc_red_duration, tsc_green_duration,tsc_bar_height, max_y_axis, plot_title)
+
+
+
+###########################################################################################################
+# Additional Requested Plots: Downtrack position over time with matching signal state shown
+###########################################################################################################
+
+'''
+Required topics
+- Engagement status : /guidance/state
+- Current downtrack data : /guidance/route_state
+- SPaT Data : /message/incoming_spat
+Other Required Data:
+- Intersection id and movement id for the spat message
+
+Approach:
+- While the vehicle is engaged plot the current downtrack distance reported by route_state
+- Identify where the stop bar is in terms of downtrack distance (this might change per run)
+- At the position where the stop bar is (y-axis) draw a set of red/green/yellow rectangles showing the current signal phase
+
+NOTE: This plot should be generated in two forms 1 time for the individual vehicles and once as a single plot combing the data from two vehicles
+'''
+def get_vehicle_downtrack_profile():
+    start_ts = 1528797322
+    end_ts = 1528797382
+
+    #Current vehicle speed with line
+    date_time_1 = datetime.datetime.fromtimestamp(start_ts)
+    date_time_5 = datetime.datetime.fromtimestamp(end_ts)
+    
+    ts_idx = pd.date_range(date_time_1, date_time_5, freq='S')
+    tsc_yellow_duration, tsc_red_duration, tsc_green_duration = 3,27,30
+    current_vehicle_speed=[]  
+    current_vehicle_speed_other=[]
+    speed = 0
+    for i in ts_idx:
+        speed=np.random.randint(0,10,1)[0]
+        current_vehicle_speed.append(20*speed)
+        current_vehicle_speed_other.append(30*speed)
+        speed +=0.1
+    vehicles_data = {'Current vehicle downtrack': current_vehicle_speed, 'Other vehicle downtrack': current_vehicle_speed_other}
+    max_y_axis = max(current_vehicle_speed_other)
+    plot_title = 'Vehicle Downtrack Profile'
+    tsc_start_phase ='red'
+    tsc_start_downtrack = 100
+    tsc_bar_height = 10
+    plot_vehicle_speed_accel_downtrack_with_tsc(ts_idx, vehicles_data, tsc_start_phase,tsc_start_downtrack, tsc_yellow_duration, tsc_red_duration, tsc_green_duration, tsc_bar_height,max_y_axis, plot_title)
 
 # Main Function; run all tests from here
 # TODO: The contents of this main function provide some basic structure for loading data, but need not be followed if not applicable
@@ -439,5 +606,13 @@ def main():
     text_log_file_writer.close()
     return
 
+def show_plots():
+    get_vehicle_speed_profile()
+    get_vehicle_accel_profile()
+    get_vehicle_downtrack_profile()
+    get_spat_map_frequency_profile()
+    plt.show()
+
 if __name__ == "__main__":
-    main()
+    # main()
+    show_plots()
