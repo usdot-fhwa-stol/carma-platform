@@ -36,7 +36,7 @@ namespace carma_wm
 
 struct LANE_DIRECTION
 {
-  static const uint8_t INGRESS = 2; //TODO Change this back
+  static const uint8_t INGRESS = 2;
   static const uint8_t EGRESS = 1;
 };
 
