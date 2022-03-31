@@ -161,7 +161,6 @@ ros::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_dista
 
   if (v_hat <= config_.algo_minimum_speed - epsilon_)
   {
-    ROS_ERROR_STREAM("Detected that v_hat is smaller than allowed!!!: " << v_hat);
     ROS_DEBUG_STREAM("Detected that v_hat is smaller than allowed!!!: " << v_hat);
     
     v_hat = config_.algo_minimum_speed;
@@ -169,9 +168,7 @@ ros::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_dista
 
   if (v_hat >= free_flow_speed + epsilon_)
   {
-    ROS_ERROR_STREAM("Detected that v_hat is Bigger than allowed!!!: " << v_hat);
-    ROS_DEBUG_STREAM("Detected that v_hat is Bigger than allowed!!!: " << v_hat);
-    
+    ROS_DEBUG_STREAM("Detected that v_hat is Bigger than allowed!!!: " << v_hat);    
     v_hat = free_flow_speed;
   }
 
@@ -249,8 +246,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCase(double starting_speed, do
   params.is_algorithm_successful = false;
   params.case_num = CASE_1;
 
-  ROS_ERROR_STREAM("HANDLE FAILURE CASE USING ACCEL_OR_DECEL_INCOMPLETE_UPPER"); // TODO
-  ROS_DEBUG_STREAM("HANDLE FAILURE CASE USING ACCEL_OR_DECEL_INCOMPLETE_UPPER");
+  ROS_DEBUG_STREAM("HandleFailureCase: Starting...");
   double modified_remaining_time;
 
   if (starting_speed <= departure_speed)
@@ -286,8 +282,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCase(double starting_speed, do
   if (!isnan(params.modified_departure_speed) && params.modified_departure_speed > epsilon_ &&
       params.modified_departure_speed <  speed_limit ) //80_mph
   {
-    ROS_ERROR_STREAM("Updated!!! : " << params.modified_departure_speed);
-    ROS_DEBUG_STREAM("Updated!!! : " << params.modified_departure_speed);
+    ROS_DEBUG_STREAM("Updated the speed, and using modified_departure_speed: " << params.modified_departure_speed);
     print_params(params);
     return params;
   }
@@ -307,7 +302,6 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCase(double starting_speed, do
   params.modified_departure_speed = params.v1_;
   params.modified_remaining_time = remaining_downtrack / starting_speed;
 
-  ROS_ERROR_STREAM("Cruising!!! at: " << params.modified_departure_speed <<", for sec: " << params.modified_remaining_time << ", where remaining_time: " << remaining_time);
   ROS_DEBUG_STREAM("Cruising!!! at: " << params.modified_departure_speed <<", for sec: " << params.modified_remaining_time << ", where remaining_time: " << remaining_time);
   
   // handle hard failure case such as nan
@@ -337,7 +331,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
   ROS_DEBUG_STREAM("safe_distance_to_stop at max_comfort_decel:  " << safe_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
 
   double desired_distance_to_stop = pow(current_state.speed, 2)/(max_comfort_decel_norm_ / std::max(4.0, (double)config_.deceleration_fraction));
-  ROS_DEBUG_STREAM("desired_distance_to_stop at at config_.deceleration_fraction fraction: max_comfort_decel:  " << desired_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_ / config_.deceleration_fraction);
+  ROS_DEBUG_STREAM("desired_distance_to_stop at: " << desired_distance_to_stop << ", where effective deceleration rate is: " << max_comfort_decel_norm_ / config_.deceleration_fraction / 2);
   
   desired_distance_to_stop = std::max(desired_distance_to_stop, config_.min_approach_distance);
 
@@ -354,7 +348,6 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
   if (safe_distance_to_stop > distance_remaining_to_traffic_light)
   {
     ROS_DEBUG_STREAM("No longer within safe distance to stop! Returning...");
-    ROS_ERROR_STREAM("No longer within safe distance to stop! Returning...");
     return;
   }
   else if (safe_distance_to_stop <= distance_remaining_to_traffic_light && desired_distance_to_stop >= distance_remaining_to_traffic_light)
@@ -370,8 +363,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
     if (state_pair_at_stop.get().second != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
     {
       double decel_rate =  current_state.speed/ min_bound_stop_time; // Kinematic |(v_f - v_i) / t = a|
-      ROS_ERROR_STREAM("22222222: Planning stop and wait maneuver at decel_rate: -" << decel_rate);
-      ROS_DEBUG_STREAM("22222222: Planning stop and wait maneuver at decel_rate: -" << decel_rate);
+      ROS_DEBUG_STREAM("HANDLE_STOPPING: Planning stop and wait maneuver at decel_rate: " << decel_rate);
       
       case_num_ = TSCase::STOPPING;
       
@@ -381,11 +373,14 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
       return;
     }
+    else
+    {
+      ROS_DEBUG_STREAM("Detected that it would have stopped at NON-RED, so skipping...");
+    }
   }
   else if (desired_distance_to_stop < distance_remaining_to_traffic_light)
   {
     ROS_DEBUG_STREAM("Way too early to stop");
-    ROS_ERROR_STREAM("Way too early to stop");
   }
 }
 
@@ -621,7 +616,6 @@ TrajectoryParams LCIStrategicPlugin::ts_case1(double t, double et, double v0, do
 
   if (traj.a1_ <= accel_epsilon_ && traj.a1_ >= -accel_epsilon_)
   {
-    // throw std::invalid_argument("CASE1: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
     ROS_DEBUG_STREAM("CASE1: Received traj.a1_ near zero...");
     traj.t1_ = traj.t0_ + ((dt - tc) * (a_max / (a_min + a_max)));
     traj.x1_ = traj.x0_ + (v_max * (traj.t1_ - traj.t0_));    
@@ -666,7 +660,6 @@ TrajectoryParams LCIStrategicPlugin::ts_case2(double t, double et, double v0, do
 
   if (traj.a1_ <= accel_epsilon_ && traj.a1_ >= -accel_epsilon_)
   {
-    // throw std::invalid_argument("CASE2: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
     ROS_DEBUG_STREAM("CASE2: Received traj.a1_ near zero...");
     traj.t1_ = traj.t0_ + (dt * (a_max / (a_min + a_max)));
     traj.x1_ = traj.x0_ + (v_hat * (traj.t1_ - traj.t0_));        
@@ -682,7 +675,6 @@ TrajectoryParams LCIStrategicPlugin::ts_case2(double t, double et, double v0, do
 
   if (traj.a2_ <= accel_epsilon_ && traj.a2_ >= -accel_epsilon_)
   {
-    // throw std::invalid_argument("CASE2: Received traj.a2_ near zero..." + std::to_string(traj.a2_));
     ROS_DEBUG_STREAM("CASE2: Received traj.a2_ near zero...");
     traj.t2_ = traj.t1_ + (dt * (a_min / (a_min + a_max)));
     traj.x2_ = traj.x1_ + (v_hat * (traj.t2_ - traj.t1_));    
@@ -722,7 +714,6 @@ TrajectoryParams LCIStrategicPlugin::ts_case3(double t, double et, double v0, do
   
   if (traj.a1_ <= accel_epsilon_ && traj.a1_ >= -accel_epsilon_)
   {
-        // throw std::invalid_argument("CASE3: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
     ROS_DEBUG_STREAM("CASE3: Received traj.a1_ near zero...");
     traj.t1_ = traj.t0_ + (dt * (a_max / (a_min + a_max)));
     traj.x1_ = traj.x0_ + (v_hat * (traj.t1_ - traj.t0_));    
@@ -772,7 +763,6 @@ TrajectoryParams LCIStrategicPlugin::ts_case4(double t, double et, double v0, do
 
   if (traj.a1_ <= accel_epsilon_ && traj.a1_ >= -accel_epsilon_)
   {
-    // throw std::invalid_argument("CASE4: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
     ROS_DEBUG_STREAM("CASE4: Received traj.a1_ near zero...");
     traj.t1_ = traj.t0_ + ((dt - tc) * (a_min / (a_min + a_max)));
     traj.x1_ = traj.x0_ + (v_min * (traj.t1_ - traj.t0_));    
@@ -812,9 +802,6 @@ TrajectoryParams LCIStrategicPlugin::ts_case5(double t, double et, double v0, do
   traj.v1_ = v_hat;
   traj.a1_ = a_min;
 
-  // if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
-    // throw std::invalid_argument("CASE5: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
-  
   traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
   traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
 
@@ -844,10 +831,6 @@ TrajectoryParams LCIStrategicPlugin::ts_case6(double t, double et, double v0, do
   traj.v1_ = v_min;
   traj.a1_ = a_min;
   traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
-
-  // if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
-    // throw std::invalid_argument("CASE6: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
-
   traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
 
   double tc;
@@ -888,10 +871,6 @@ TrajectoryParams LCIStrategicPlugin::ts_case7(double t, double et, double v0, do
   traj.v1_ = v_min;
   traj.a1_ = a_min;
   traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
-
-  // if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
-    // throw std::invalid_argument("CASE7: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
-
   traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
 
   double dt = et - t;
@@ -922,10 +901,7 @@ TrajectoryParams LCIStrategicPlugin::ts_case8(double dx, double dx5, TrajectoryP
   if (dx < dx5)
   { 
     traj.is_algorithm_successful = false;
-    ROS_DEBUG_STREAM("!!! Safety error - the vehicle cannot stop at the stop bar ... Cruising...");
-    ROS_DEBUG_STREAM("!!! Safety error - the vehicle cannot stop at the stop bar ... Cruising...");
-    ROS_ERROR_STREAM("!!! Safety error - the vehicle cannot stop at the stop bar ... Cruising...");
-    ROS_ERROR_STREAM("!!! Safety error - the vehicle cannot stop at the stop bar ... Cruising...");
+    ROS_DEBUG_STREAM("CASE8: Not within safe stopping distance! Cruising...");
   }
   return traj;
 }
@@ -1062,7 +1038,6 @@ TrajectoryParams LCIStrategicPlugin::boundary_accel_nocruise_maxspeed_decel(doub
 
   if (traj.a1_ <= accel_epsilon_ && traj.a1_ >= -accel_epsilon_)
   {
-    // throw std::invalid_argument("boundary_accel_nocruise_maxspeed_decel: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
     ROS_DEBUG_STREAM("boundary_accel_nocruise_maxspeed_decel: Received traj.a1_ near zero...");
     traj.t1_ = traj.t0_ + (dt * (a_max / (a_min + a_max)));
     traj.x1_ = traj.x0_ + (v_max * (traj.t1_ - traj.t0_));    
@@ -1313,10 +1288,6 @@ TrajectoryParams LCIStrategicPlugin::boundary_decel_cruise_minspeed_decel(double
 
   traj.v1_ = v_min;
   traj.a1_ = a_min;
-
-  // if (traj.a1_ <= epsilon_ && traj.a1_ >= -epsilon_)
-    // throw std::invalid_argument("boundary_decel_cruise_minspeed_decel: Received traj.a1_ near zero..." + std::to_string(traj.a1_));
-
   traj.t1_ = traj.t0_ + ((traj.v1_ - traj.v0_) / traj.a1_);
   traj.x1_ = traj.x0_ + ((pow(traj.v1_, 2) - pow(traj.v0_, 2)) / (2 * traj.a1_));
 

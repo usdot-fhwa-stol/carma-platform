@@ -277,14 +277,7 @@ TEST_F(LCIStrategicTestFixture, determine_speed_profile_case)
 
   bool is_successful = mvr.lane_following_maneuver.parameters.int_valued_meta_data[1];
   SpeedProfileCase new_case = static_cast<SpeedProfileCase>(mvr.lane_following_maneuver.parameters.int_valued_meta_data[0]);
-  if (is_successful)
-  {
-    ROS_ERROR_STREAM("IT WAS SUCCESSFUL");
-  }
-  else
-  {
-    ROS_ERROR_STREAM("IT WAS NOT SUCCESSFUL");
-  }
+
   ASSERT_EQ(new_case, SpeedProfileCase::ACCEL_DECEL);
   ASSERT_TRUE(false);
 } 

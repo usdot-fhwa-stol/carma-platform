@@ -316,10 +316,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       fabs(distance_remaining_to_traffic_light) < config_.stopping_location_buffer + length_to_front_bumper_)
   {
     transition_table_.signal(TransitEvent::STOPPED);  // The vehicle has come to a stop at the light
-    ROS_ERROR_STREAM("WWWWWWWWWWWWEEEE STOOOOOOOOOOOOOOOOOOOOPPPPED");
-    ROS_ERROR_STREAM("WWWWWWWWWWWWEEEE STOOOOOOOOOOOOOOOOOOOOPPPPED");
-    ROS_ERROR_STREAM("WWWWWWWWWWWWEEEE STOOOOOOOOOOOOOOOOOOOOPPPPED");
-    ROS_DEBUG_STREAM("WWWWWWWWWWWWEEEE STOOOOOOOOOOOOOOOOOOOOPPPPED");
+    ROS_DEBUG_STREAM("CARMA has detected that the vehicle stopped at the stop bar. Transitioning to WAITING STATE");
 
     return;
   }
@@ -371,8 +368,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   if (!nearest_green_entry_time_cached_) 
   {
-    ROS_ERROR_STREAM("APPLIED GREEN BUFFER! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
-    ROS_DEBUG_STREAM("APPLIED GREEN BUFFER! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
+    ROS_DEBUG_STREAM("Applied green_light_buffer for the first time and cached! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
     // save first calculated nearest_green_entry_time + buffer to compare against in the future as nearest_green_entry_time changes with earliest_entry_time
     nearest_green_entry_time_cached_ = nearest_green_entry_time + ros::Duration(config_.green_light_time_buffer);
     nearest_green_entry_time = nearest_green_entry_time_cached_.get();
@@ -384,10 +380,9 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   
   if (nearest_green_entry_time >= nearest_green_entry_time_cached_.get())
   {
-    ROS_ERROR_STREAM("CONSIDERABLY CLOSE TO GREEN BUFFER! nearest_green_entry_time cached:" << std::to_string(nearest_green_entry_time_cached_.get().toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
-    ROS_DEBUG_STREAM("CONSIDERABLY CLOSE TO GREEN BUFFER! nearest_green_entry_time cached:" << std::to_string(nearest_green_entry_time_cached_.get().toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
+    ROS_DEBUG_STREAM("Earliest entry time has gone past the cached green light. nearest_green_entry_time_cached_:" << std::to_string(nearest_green_entry_time_cached_.get().toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
   }
-  ROS_DEBUG_STREAM("nearest_green_entry_time with buffer: " << std::to_string(nearest_green_entry_time.toSec()));
+  ROS_DEBUG_STREAM("Final nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.toSec()));
 
   double remaining_time = nearest_green_entry_time.toSec() - current_state.stamp.toSec();
   // CASE SELECTION START
@@ -402,29 +397,13 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   TrajectoryParams ts_params = get_ts_case(req.header.stamp.toSec(), nearest_green_entry_time.toSec(), current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_, current_state.downtrack, traffic_light_down_track, distance_remaining_to_traffic_light, boundary_distances, boundary_traj_params);
   print_params(ts_params);
 
-  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
-  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
-  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
-  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
-  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
-  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
-  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
-  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
-  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
-  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
-  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
-  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
-  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
-  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
-  ROS_ERROR_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
-  ROS_DEBUG_STREAM("Speed Profile case:" << ts_params.case_num << ts_params.case_num << ts_params.case_num<< ts_params.case_num);
+  ROS_DEBUG_STREAM("SPEED PROFILE CASE:" << ts_params.case_num);
 
   // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
         getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
 
   // CASE SELECTION END
-
 
   // Although algorithm determines nearest_green_time is possible, check if the vehicle can arrive with certainty
   if (ts_params.is_algorithm_successful && ts_params.case_num != TSCase::CASE_8) 
@@ -440,8 +419,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     
     if (can_make_green_optional.get())
     {
-      ROS_ERROR_STREAM("1111111111111: Algorithm successful, and able to make it at green with certainty. Planning traj smooth and intersection transit maneuvers");
-      ROS_DEBUG_STREAM("1111111111111: Algorithm successful, and able to make it at green with certainty. Planning traj smooth and intersection transit maneuvers");
+      ROS_DEBUG_STREAM("HANDLE_SUCCESSFULL: Algorithm successful, and able to make it at green with certainty. Planning traj smooth and intersection transit maneuvers");
       
       resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
                                             current_state_speed, ts_params.v3_, current_state.stamp, light_arrival_time_by_algo, ts_params));
@@ -474,10 +452,9 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   
   if (ts_params.is_algorithm_successful && ts_params.case_num == TSCase::CASE_8)
   {
-    double decel_rate = ts_params.a3_;
+    double decel_rate = std::fabs(ts_params.a3_);
 
-    ROS_ERROR_STREAM("8888888: Planning stop with CASE 88888888888 at decel_rate: -" << decel_rate);
-    ROS_DEBUG_STREAM("8888888: Planning stop with CASE 88888888888 at decel_rate: -" << decel_rate);
+    ROS_DEBUG_STREAM("CASE_8: Planning cruise and stop with decel_rate: " << decel_rate);
     
     ts_params.t3_ = ts_params.t2_;
     ts_params.x3_ = ts_params.x2_;
@@ -502,8 +479,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   }
 
   // 3. if not able to stop nor reach target speed at green, attempt its best to reach the target parameters at the intersection
-  ROS_ERROR_STREAM("44444: >>>>>LAST<<<<<< The vehicle is not able to stop at red/yellow light nor is able to reach target speed at green. Attempting its best to pass through at green!");
-  ROS_DEBUG_STREAM("44444: >>>>>LAST<<<<<< The vehicle is not able to stop at red/yellow light nor is able to reach target speed at green. Attempting its best to pass through at green!");
+  ROS_DEBUG_STREAM("HANDLE_LAST_RESORT: The vehicle is not able to stop at red/yellow light nor is able to reach target speed at green. Attempting its best to pass through at green!");
   
   auto incomplete_traj_params = handleFailureCase(current_state_speed, intersection_speed_.get(), speed_limit, distance_remaining_to_traffic_light, remaining_time, traffic_light_down_track);
 
@@ -601,8 +577,7 @@ void LCIStrategicPlugin::planWhenDEPARTING(const cav_srvs::PlanManeuversRequest&
 
 bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp)
 {
-  ROS_DEBUG("<<<<<<<<<<<<<<<<< STARTING PLAN!!!!!!!!! >>>>>>>>>>>>>>>>");
-  ROS_ERROR("<<<<<<<<<<<<<<<<< STARTING PLAN!!!!!!!!! >>>>>>>>>>>>>>>>");
+  ROS_DEBUG("<<<<<<<<<<<<<<<<< STARTING LCI_STRATEGIC_PLAN!!!!!!!!! >>>>>>>>>>>>>>>>");
 
   if (!wm_->getRoute())
   {
@@ -612,8 +587,6 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   case_num_ = TSCase::UNAVAILABLE;
 
   ROS_DEBUG("Finding car information");
-  ROS_ERROR("Finding car information");
-
 
   // Extract vehicle data from request
   VehicleState current_state = extractInitialState(req);
@@ -624,12 +597,9 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   }
   // Get current traffic light information
   ROS_DEBUG("\n\nFinding traffic_light information");
-  ROS_ERROR("\n\nFinding traffic_light information");
-
 
   auto traffic_list = wm_->getSignalsAlongRoute({ req.veh_x, req.veh_y });
 
-  ROS_ERROR_STREAM("Found traffic lights of size: " << traffic_list.size());
   ROS_DEBUG_STREAM("Found traffic lights of size: " << traffic_list.size());
 
   auto current_lanelets = wm_->getLaneletsFromPoint({ req.veh_x, req.veh_y});
@@ -692,7 +662,7 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     if (nearest_traffic_signal)
     {
       current_light_state_optional = nearest_traffic_signal->predictState(lanelet::time::timeFromSec(current_state.stamp.toSec()));
-      ROS_ERROR_STREAM("CURRENT SIGNAL DETECTED: " << current_light_state_optional.get().second << ", for Id: " << nearest_traffic_signal->id());
+      ROS_DEBUG_STREAM("Real-time current signal: " << current_light_state_optional.get().second << ", for Id: " << nearest_traffic_signal->id());
     }
     switch (transition_table_.getState())
     {
