@@ -41,11 +41,11 @@ cd ${dir}/src
 # clone carma repos
 
 if [[ "$BRANCH" = "develop" ]]; then
-      #git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch $BRANCH
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch $BRANCH	
 else
-      #git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch develop
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch develop
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
 fi
@@ -54,95 +54,12 @@ fi
 # NOTE: The ibeo_msgs package is ignored because on build the cmake files in that package run a sed command 
 #       which can make them incompatible with a new ros version after a source switch
 git clone https://github.com/astuff/astuff_sensor_msgs 
-#
+
 cd astuff_sensor_msgs
 git checkout 41d5ef0c33fb27eb3c9ba808b51332bcce186a83
 
-##Disable ibeo_msgs
+# Disable ibeo_msgs
 cd ibeo_msgs
 echo "" > COLCON_IGNORE
 cd ../astuff_sensor_msgs
 echo "" > COLCON_IGNORE
-#
-
-#cd ../../carma-platform/mock_drivers/rosbag_mock_drivers
-#echo "" > COLCON_IGNORE
-cd ../../carma-platform/mobilitypath_publisher
-echo "" > COLCON_IGNORE
-cd ../mobilitypath_visualizer
-echo "" > COLCON_IGNORE
-cd ../motion_prediction_visualizer
-echo "" > COLCON_IGNORE
-cd ../platooning_control
-echo "" > COLCON_IGNORE
-cd ../platooning_strategic
-echo "" > COLCON_IGNORE
-cd ../platooning_tactical_plugin
-echo "" > COLCON_IGNORE
-cd ../sci_strategic_plugin
-echo "" > COLCON_IGNORE
-cd ../stop_controlled_intersection_tactical_plugin
-echo "" > COLCON_IGNORE
-cd ../unobstructed_lanechange
-echo "" > COLCON_IGNORE
-cd ../wz_strategic_plugin
-echo "" > COLCON_IGNORE
-cd ../yield_plugin
-echo "" > COLCON_IGNORE
-cd ../truck_inspection_client
-echo "" > COLCON_IGNORE
-cd ../port_drayage_plugin
-echo "" > COLCON_IGNORE
-cd ../traffic_incident_parser
-echo "" > COLCON_IGNORE
-cd ../cooperative_lanechange
-echo "" > COLCON_IGNORE
-cd ../bsm_generator
-echo "" > COLCON_IGNORE
-cd ../ns-3_adapter
-echo "" > COLCON_IGNORE
-
-
-cd ../
-
-##Disable ibeo_msgs
-#cd ibeo_msgs
-#echo "" > COLCON_IGNORE
-#cd ../astuff_sensor_msgs
-#echo "" > COLCON_IGNORE
-#
-##NOTE: disable other unused packages in order to save time building.
-#
-##Disable delphi_esr_msgs
-#cd delphi_esr_msgs
-#echo "" > COLCON_IGNORE
-#cd ../astuff_sensor_msgs
-#
-##Disable delphi_srr_msgs
-#cd delphi_srr_msgs
-#echo "" > COLCON_IGNORE
-#cd ../astuff_sensor_msgs
-#
-##Disable kartech_linear_actuator_msgs
-#cd kartech_linear_actuator_msgs
-#echo "" > COLCON_IGNORE
-#cd ../astuff_sensor_msgs
-#
-##Disable mobileye_560_660_msgs
-#cd mobileye_560_660_msgs
-#echo "" > COLCON_IGNORE
-#cd ../astuff_sensor_msgs
-#
-##Disable neobotix_usboard_msgs
-#cd neobotix_usboard_msgs
-#echo "" > COLCON_IGNORE
-#cd ../astuff_sensor_msgs
-#
-##Disable pacmod_msgs
-#cd pacmod_msgs
-#echo "" > COLCON_IGNORE
-#cd ../astuff_sensor_msgs
-#
-#
-#
-#
