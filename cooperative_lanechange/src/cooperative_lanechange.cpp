@@ -551,9 +551,11 @@ namespace cooperative_lanechange
             maneuver_plan.front().lane_change_maneuver.starting_lane_id = original_lc_maneuver_values_[maneuver_id].original_starting_lane_id;
             ROS_DEBUG_STREAM("Updated maneuver id " << maneuver_id << " starting_lane_id to its original value of " << original_lc_maneuver_values_[maneuver_id].original_starting_lane_id);
 
-            // Set the request's vehicle_state.longitudinal_vel to the velocity that the vehicle began this lane change at
-            req.vehicle_state.longitudinal_vel = original_lc_maneuver_values_[maneuver_id].original_longitudinal_vel_ms;
-            ROS_DEBUG_STREAM("Updating vehicle_state.longitudinal_vel to the initial lane change value of " << original_lc_maneuver_values_[maneuver_id].original_longitudinal_vel_ms);
+            // If the vehicle has started this lane change, set the request's vehicle_state.longitudinal_vel to the velocity that the vehicle began this lane change at
+            if(original_lc_maneuver_values_[maneuver_id].has_started) {
+                req.vehicle_state.longitudinal_vel = original_lc_maneuver_values_[maneuver_id].original_longitudinal_vel_ms;
+                ROS_DEBUG_STREAM("Updating vehicle_state.longitudinal_vel to the initial lane change value of " << original_lc_maneuver_values_[maneuver_id].original_longitudinal_vel_ms);
+            }
         }
         else {
             ROS_WARN_STREAM("No original values for lane change maneuver were found!");
