@@ -2,7 +2,7 @@
 #include <carma_v2x_msgs/psm.hpp>
 #include <carma_perception_msgs/external_object.hpp>
 #include <motion_computation/message_conversions.hpp>
-
+#include <motion_computation/impl/psm_to_external_object_helpers.hpp>
 namespace object
 {
 
@@ -120,7 +120,10 @@ namespace object
         const lanelet::projection::LocalFrameProjector& projector, 
         const tf2::Quaternion& ned_in_map_rotation,
         const GPSPoint& gps_point, 
-        const double& heading)
+        const double& heading,
+        const double lat_variance,
+        const double lon_variance,
+        const double heading_variance)
     {
         //// Convert the position information into the map frame using the proj library
         lanelet::BasicPoint3d map_point = projector.forward(gps_point);
@@ -168,8 +171,24 @@ namespace object
                             tf2::Vector3(map_point.x(), map_point.y(), map_point.z()));  // Reported position and orientation
                                                                                             // of sensor frame in map frame
 
-        // TODO handle covariance. This should be doable with the recent changes
-        // HMM We could set the covariance here but it will take some rework
+        tf2::Transform T_m_n_no_heading(R_m_n, 0, 0, 0)); // Used to transform the covariance
+
+        // This covariance represents the covariance of the NED frame N-lat, E-lon, heading- angle east of north
+        // This means that the covariance is in the NED frame, and needs to be transformed to the map frame
+        std::array<double, 36> input_covariance = { 
+          lat_variance, 0, 0,  0, 0, 0,
+          0, lon_variance, 0,  0, 0, 0,
+          0, 0, 0,  0, 0, 0,
+          0,  0,  0,  1,  0, 0,
+          0,  0,  0,  0,  1, 0, 
+          0,  0,  0,  0,  0, heading_variance
+        };
+
+        std::array<double, 36> new_cov = tf2::transformCovariance(
+          input_covariance,
+          // Per the usage of transformCovariance in tf2_geometry_msgs 
+          // this frame should be the transform between the map which the pose is in an the target frame.
+          T_m_n_no_heading); 
 
         // Populate message
         geometry_msgs::PoseWithCovariance pose;
@@ -181,6 +200,8 @@ namespace object
         pose.pose.orientation.y = T_m_s.getRotation().getY();
         pose.pose.orientation.z = T_m_s.getRotation().getZ();
         pose.pose.orientation.w = T_m_s.getRotation().getW();
+
+        pose.covariance = new_cov;
 
         return pose;
     }
@@ -210,14 +231,6 @@ namespace object
       // Additionally, store the id in the bsm_id field
       out_msg.bsm_id = in_msg.id.id;
       out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::BSM_ID_PRESENCE_VECTOR;
-
-      // Compute the pose
-      out_msg.pose = pose_from_gnss(
-        map_projector,
-        ned_in_map_rotation,
-        {in_msg.position.latitude, in_msg.position.longitude, in_msg.position.elevation},
-        in_msg.heading.heading);
-      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::POSE_PRESENCE_VECTOR;
 
       // Compute the timestamp
 
@@ -266,16 +279,16 @@ namespace object
       //     Tracking and associating PSM messages would be an increase in complexity for this conversion which is not warranted without an existing
       //     use case for the velocity covariance. If a use case is presented for it, such an addition can be made at that time.
 
+
       // Compute the position covariance
-      // There is no easy way to convert this to a oriented 3d covariance since the orientation of the map frame is needed.
-      // For now we will use the largest value and assume it applies to all three directions. This should be a pessimistic estimate which is safer in this case.
-      double position_std = std::max(in_msg.accuracy.semi_major, in_msg.accuracy.semi_minor);
+      // For computing confidence we will use the largest provided standard deviation of position
+      double largest_position_std = std::max(in_msg.accuracy.semi_major, in_msg.accuracy.semi_minor);
 
-      double position_variance = position_std * position_std; // variance is standard deviation squared
+      double lat_variance = in_msg.accuracy.semi_minor * in_msg.accuracy.semi_minor;
 
-      double yaw_std = in_msg.accuracy.orientation;
+      double lon_variance = in_msg.accuracy.semi_major * in_msg.accuracy.semi_major;
 
-      double yaw_variance = in_msg.accuracy.orientation * in_msg.accuracy.orientation; // variance is standard deviation squared
+      double heading_variance = in_msg.accuracy.orientation * in_msg.accuracy.orientation;
 
       double position_confidence = 0.1; // Default will be 10% confidence. If the position accuracy is available then this value will be updated
 
@@ -285,44 +298,46 @@ namespace object
 
     if ((in_msg.accuracy.presence_vector | carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE)
       && ((in_msg.accuracy.presence_vector | carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_AVAILABLE)) {
-        // Both accuracies available
-        // Fill out the diagonal
-        out_msg.pose.covariance[0] = position_variance;
-        out_msg.pose.covariance[7] = position_variance;
-        out_msg.pose.covariance[14] = 0;
-        out_msg.pose.covariance[21] = 0;
-        out_msg.pose.covariance[28] = 0;
-        out_msg.pose.covariance[35] = yaw_variance;
+      // Both accuracies available
 
-        // NOTE: ExternalObject.msg does not clearly define what is meant by position confidence
-        //     Here we are providing a linear scale based on the positional accuracy where 0 confidence would denote
-        //     A standard deviation which is larger than the acceptable value to give
-        //     95% confidence interval on fitting the pedestrian within one 3.7m lane
-        // Set the confidence
-        // Without a way of getting the velocity confidence from the PSM we will use the position confidence for both
-        out_msg.confidence = 1.0 - std::min(1.0, fabs(position_std / MAX_POSITION_STD));
-        out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
+      // NOTE: ExternalObject.msg does not clearly define what is meant by position confidence
+      //     Here we are providing a linear scale based on the positional accuracy where 0 confidence would denote
+      //     A standard deviation which is larger than the acceptable value to give
+      //     95% confidence interval on fitting the pedestrian within one 3.7m lane
+      // Set the confidence
+      // Without a way of getting the velocity confidence from the PSM we will use the position confidence for both
+      out_msg.confidence = 1.0 - std::min(1.0, fabs(largest_position_std / MAX_POSITION_STD));
+      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
 
     } else if (in_msg.accuracy.presence_vector | carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE) {
-        // Position accuracy available
+      // Position accuracy available
 
-        out_msg.pose.covariance[0] = position_variance;
-        out_msg.pose.covariance[7] = position_variance;
-        out_msg.pose.covariance[14] = 0;
+      heading_variance = 1.0; // Yaw variance is not available so mark as impossible perfect case
 
-        // Same calculation as shown in above condition. See that for description
-        out_msg.confidence = 1.0 - std::min(1.0, fabs(position_std / MAX_POSITION_STD));
-        out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
+      // Same calculation as shown in above condition. See that for description
+      out_msg.confidence = 1.0 - std::min(1.0, fabs(largest_position_std / MAX_POSITION_STD));
+      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
 
 
     } else if (in_msg.accuracy.presence_vector | carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_AVAILABLE)
       // Orientation accuracy available
 
-      out_msg.pose.covariance[21] = 0;
-      out_msg.pose.covariance[28] = 0;
-      out_msg.pose.covariance[35] = yaw_variance;
+      lat_variance = 1.0;
+      lon_variance = 1.0;
     }
     // Else: No accuracies available
+
+    // Compute the pose
+    out_msg.pose = pose_from_gnss(
+      map_projector,
+      ned_in_map_rotation,
+      {in_msg.position.latitude, in_msg.position.longitude, in_msg.position.elevation},
+      in_msg.heading.heading,
+      lat_variance,
+      lon_variance,
+      heading_variance
+      );
+    out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::POSE_PRESENCE_VECTOR;
 
     // Compute predictions
     // For prediction, if the prediction is available we will sample it
