@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -208,14 +208,8 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
           && last_trajectory_.trajectory_points.back().target_time > req.header.stamp + ros::Duration(1))
     {
       resp.trajectory_plan = last_trajectory_;
-      ROS_DEBUG_STREAM("USING LAST: Target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req.header.stamp);
-      ROS_ERROR_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_.get());
-      ROS_ERROR_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_.get());
-      ROS_ERROR_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_.get());
-      ROS_DEBUG_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_.get());
-      ROS_DEBUG_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_.get());
-      ROS_DEBUG_STREAM("!!!!!! DOES NOT MATTER USING LAST!!! : " << (int)last_case_.get());
-      
+      ROS_DEBUG_STREAM("Last TRAJ's target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req.header.stamp);
+      ROS_DEBUG_STREAM("USING LAST TRAJ: " << (int)last_case_.get());
     }
     else if (is_last_case_successful_ != boost::none && last_case_ != boost::none
             && is_last_case_successful_.get() == true
@@ -226,13 +220,8 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
             && last_trajectory_.trajectory_points.back().target_time > req.header.stamp)
     {
       resp.trajectory_plan = last_trajectory_;
-      ROS_DEBUG_STREAM("USING LAST: Target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req.header.stamp << ", and scheduled: " << std::to_string(last_successful_scheduled_entry_time_));
-      ROS_ERROR_STREAM("!!!!!! EDGE CASE. USING LAST!!! : " << (int)last_case_.get());
-      ROS_ERROR_STREAM("!!!!!! EDGE CASE. USING LAST!!! : " << (int)last_case_.get());
-      ROS_ERROR_STREAM("!!!!!! EDGE CASE. USING LAST!!! : " << (int)last_case_.get());
-      ROS_DEBUG_STREAM("!!!!!! EDGE CASE. USING LAST!!! : " << (int)last_case_.get());
-      ROS_DEBUG_STREAM("!!!!!! EDGE CASE. USING LAST!!! : " << (int)last_case_.get());
-      ROS_DEBUG_STREAM("!!!!!! EDGE CASE. USING LAST!!! : " << (int)last_case_.get());
+      ROS_DEBUG_STREAM("Last Traj's target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req.header.stamp << ", and scheduled: " << std::to_string(last_successful_scheduled_entry_time_));
+      ROS_DEBUG_STREAM("EDGE CASE: USING LAST TRAJ: " << (int)last_case_.get());
     }  
     else
     {
@@ -248,12 +237,7 @@ bool LightControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Pla
         last_successful_scheduled_entry_time_ = GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_time).toSec();  // if algorithm was successful, this is also scheduled entry time (ET in TSMO UC2 Algo)
         ROS_DEBUG_STREAM("last_successful_ending_downtrack_:" << last_successful_ending_downtrack_ << ", last_successful_scheduled_entry_time_: " << std::to_string(last_successful_scheduled_entry_time_));
       }
-      ROS_ERROR_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
-      ROS_ERROR_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
-      ROS_ERROR_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
-      ROS_DEBUG_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
-      ROS_DEBUG_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
-      ROS_DEBUG_STREAM("++++ USING NEW CASE!!! : " << (int)last_case_.get());
+      ROS_DEBUG_STREAM("USING NEW CASE!!! : " << (int)last_case_.get());
       
     }
     ROS_DEBUG_STREAM("Debug: new case:" << (int) new_case << ", is_new_case_successful: " << is_new_case_successful);

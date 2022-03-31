@@ -246,7 +246,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCase(double starting_speed, do
   params.is_algorithm_successful = false;
   params.case_num = CASE_1;
 
-  ROS_DEBUG_STREAM("HandleFailureCase: Starting...");
+  ROS_DEBUG_STREAM("HANDLE_LAST_RESORT_CASE: Starting...");
   double modified_remaining_time;
 
   if (starting_speed <= departure_speed)
@@ -256,7 +256,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCase(double starting_speed, do
 
   if (starting_speed <= departure_speed)
   {
-     params.a1_ = max_comfort_accel_;
+    params.a1_ = max_comfort_accel_;
     params.v1_ = sqrt(pow(starting_speed, 2) + (2 * max_comfort_accel_ * remaining_downtrack));
   }
   else

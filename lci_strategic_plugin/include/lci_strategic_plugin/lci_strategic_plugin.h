@@ -36,6 +36,7 @@
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <std_msgs/Int8.h>
+#include <std_msgs/Float64.h>
 
 namespace lci_strategic_plugin
 {
@@ -124,9 +125,17 @@ public:
   void lookupFrontBumperTransform();
 
    /**
-   * \brief Current speed profile case generated
+   * \brief Useful metrics for LCI Plugin
+   * \param case_num_ Current speed profile case generated
+   * \param distance_remaining_to_tf_ distance_remaining_to_traffic signal meters
+   * \param earliest_entry_time_ earliest_entry_time in sec
+   * \param scheduled_entry_time_ scheduled_entry_time in sec
+   * 
    */
   TSCase case_num_ = TSCase::UNAVAILABLE; 
+  double distance_remaining_to_tf_ = 0.0;
+  double earliest_entry_time_ = 0.0;
+  double scheduled_entry_time_ = 0.0;
 
 private:
   /**
@@ -310,11 +319,12 @@ private:
    *
    * \param starting_speed starting speed
    * \param departure_speed departure_speed originally planned
+   * \param speed_limit speed_limit
    * \param remaining_downtrack remaining_downtrack until the intersection
    * \param remaining_time  remaining_time when vehicle is scheduled to enter
-   * \param traffic_light_downtrack  traffic_light_downtrack when vehicle is scheduled to enter TODO
+   * \param traffic_light_downtrack  traffic_light_downtrack when vehicle is scheduled to enter
    *
-   * \return TSP with parameters that is best available to pass the intersection. Either profile case 3(ACCEL_DECEL) or 2 (DECEL_ACCEL)
+   * \return TSP with parameters that is best available to pass the intersection. Either cruising with starting_speed or sacrifice departure speed to meet time and distance
    */
   TrajectoryParams handleFailureCase(double starting_speed, double departure_speed, double speed_limit, double remaining_downtrack, double remaining_time, double traffic_light_downtrack);
                                         

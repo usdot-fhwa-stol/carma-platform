@@ -32,7 +32,10 @@ int main(int argc, char** argv)
 
   // Create publishers
   ros::Publisher plugin_discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-  ros::Publisher case_pub = nh.advertise<std_msgs::Int8>("ts_case_num", 1);
+  ros::Publisher case_pub = pnh.advertise<std_msgs::Int8>("ts_case_num", 1);
+  ros::Publisher tf_distance_pub = pnh.advertise<std_msgs::Float64>("distance_remaining_to_tf", 1);
+  ros::Publisher earliest_et_pub = pnh.advertise<std_msgs::Float64>("earliest_entry_time", 1);
+  ros::Publisher et_pub = pnh.advertise<std_msgs::Float64>("scheduled_entry_time", 1);
 
   // Initialize world model
   carma_wm::WMListener wml;
@@ -69,11 +72,21 @@ int main(int argc, char** argv)
   lcip.lookupFrontBumperTransform();
   
   ros::Timer discovery_pub_timer =
-      nh.createTimer(ros::Duration(ros::Rate(10.0)), [&lcip, &plugin_discovery_pub, &case_pub](const auto&) {
+      nh.createTimer(ros::Duration(ros::Rate(10.0)), [&lcip, &plugin_discovery_pub, &case_pub, &tf_distance_pub, &earliest_et_pub, &et_pub](const auto&) {
         plugin_discovery_pub.publish(lcip.getDiscoveryMsg());
-        std_msgs::Int8 msg;
-        msg.data = static_cast<int>(lcip.case_num_);
-        case_pub.publish(msg);
+        std_msgs::Int8 case_num_msg;
+        std_msgs::Float64 tf_distance;
+        std_msgs::Float64 earliest_et;
+        std_msgs::Float64 scheduled_et;
+
+        case_num_msg.data = static_cast<int>(lcip.case_num_);
+        tf_distance.data = lcip.distance_remaining_to_tf_;
+        earliest_et.data = lcip.earliest_entry_time_;
+        scheduled_et.data = lcip.scheduled_entry_time_;
+        case_pub.publish(case_num_msg);
+        tf_distance_pub.publish(tf_distance);
+        earliest_et_pub.publish(earliest_et);
+        et_pub.publish(scheduled_et);
       });
 
   // Start

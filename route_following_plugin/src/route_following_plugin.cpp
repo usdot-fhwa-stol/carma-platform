@@ -510,7 +510,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
                 break;
             }  
         }
-        ROS_DEBUG_STREAM("==== ComposeLaneChangeStatus Exiting now");
+        ROS_DEBUG_STREAM("ComposeLaneChangeStatus Exiting now");
         return upcoming_lanechange_status_msg;
     }
 

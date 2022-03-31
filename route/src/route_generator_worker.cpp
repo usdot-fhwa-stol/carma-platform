@@ -484,7 +484,6 @@ namespace route {
         }
         catch (const tf2::TransformException &ex)
         {
-            ROS_DEBUG_STREAM("It did NOT pass");
             ROS_WARN("%s", ex.what());
         }
         

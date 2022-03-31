@@ -203,6 +203,8 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
   ROS_DEBUG_STREAM("distance_remaining_to_traffic_light: " << distance_remaining_to_traffic_light <<
                     ", current_state.downtrack: " << current_state.downtrack);
 
+  distance_remaining_to_tf_ = distance_remaining_to_traffic_light; // performance metric
+
   auto speed_limit = findSpeedLimit(current_lanelet);
 
   current_state_speed = std::min(speed_limit, current_state_speed);
@@ -302,6 +304,8 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack;
 
+  distance_remaining_to_tf_ = distance_remaining_to_traffic_light;
+
   if (distance_remaining_to_traffic_light < 0) // there is small discrepancy between signal's routeTrackPos as well as current
   {                                            // downtrack calculated using veh_x,y from state. Therefore, it may have crossed it 
     ROS_DEBUG("Crossed the bar distance_remaining_to_traffic_light: %f", distance_remaining_to_traffic_light);
@@ -385,6 +389,10 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   ROS_DEBUG_STREAM("Final nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.toSec()));
 
   double remaining_time = nearest_green_entry_time.toSec() - current_state.stamp.toSec();
+  double remaining_time_earliest_entry = earliest_entry_time.toSec() - current_state.stamp.toSec();
+  scheduled_entry_time_ = remaining_time; // performance metric
+  earliest_entry_time_ = remaining_time_earliest_entry; // performance metric
+  
   // CASE SELECTION START
   auto boundary_distances = get_delta_x(current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_);
   print_boundary_distances(boundary_distances); //debug

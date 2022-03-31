@@ -17,12 +17,13 @@ stopping_location_buffer : 7.0
 green_light_time_buffer : 2.0
 
 # Double: Minimum allowable speed in trajectory smoothing algorithm m/s
-algo_minimum_speed : 4.4704 # 5mph 10mph: 4.4704, 6mph: 2.68224, 7mph: 3.12928 TODO
+algo_minimum_speed : 4.4704 
 
 # Double: Minimum allowable speed of the car m/s
-absolute_minimum_speed : 4.4704 # 5mph 10mph: 4.4704, 6mph: 2.68224, 7mph: 3.12928 TODO
+absolute_minimum_speed : 4.4704
 
-# Double: Fraction of max deceleration to start considering to stop. max_decel / X = desired_accel to start stopping. Unit: N/A
+# Double: Number to divide max deceleration to get an acceleration value to start considering to stop at. 
+# a.k.a max_decel / deceleration_fraction = desired_decel to start stopping. Unit: N/A
 deceleration_fraction : 6.0
 
 # Double: The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
