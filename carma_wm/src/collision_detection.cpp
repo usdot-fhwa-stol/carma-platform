@@ -22,11 +22,10 @@ namespace carma_wm {
 
     namespace collision_detection {
 
-        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(const cav_msgs::RoadwayObstacleList& rwol, const cav_msgs::TrajectoryPlan& tp, 
-                                                                        const geometry_msgs::Vector3& size, const geometry_msgs::Twist& velocity, 
-                                                                        const __uint64_t target_time) {
+        //TODO: consider rewriting this method to improve efficiency; it has object_count*prediction_count*trajectory_point sqrt calls!
 
-            ROS_DEBUG_STREAM("WorldCollisionDetection at target_time: " << target_time); //TODO: if target_time won't be needed, remove it from param list
+        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(const cav_msgs::RoadwayObstacleList& rwol, const cav_msgs::TrajectoryPlan& tp, 
+                                                                        const geometry_msgs::Vector3& size, const geometry_msgs::Twist& velocity) {
 
             std::vector<cav_msgs::RoadwayObstacle> rwo_collison;
 

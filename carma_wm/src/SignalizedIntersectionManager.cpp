@@ -191,10 +191,7 @@ namespace carma_wm
     }
   }
 
-  lanelet::Id SignalizedIntersectionManager::matchSignalizedIntersection(const lanelet::Lanelets& entry_llts, const lanelet::Lanelets& exit_llts, 
-                                                                        const std::shared_ptr<lanelet::LaneletMap>& map)
-  //TODO: if map is not going to be needed, remove it from the param list
-
+  lanelet::Id SignalizedIntersectionManager::matchSignalizedIntersection(const lanelet::Lanelets& entry_llts, const lanelet::Lanelets& exit_llts)
   {
     lanelet::Id matching_id = lanelet::InvalId;
 
@@ -306,7 +303,7 @@ namespace carma_wm
         exit_llts.push_back(map->laneletLayer.get(iter->second));  
       }
 
-      lanelet::Id intersection_id = matchSignalizedIntersection(entry_llts, exit_llts, map);
+      lanelet::Id intersection_id = matchSignalizedIntersection(entry_llts, exit_llts);
 
       if (intersection_id == lanelet::InvalId)
       {
@@ -384,7 +381,7 @@ namespace carma_wm
 
     return *this;
   }
-
+  
   SignalizedIntersectionManager::SignalizedIntersectionManager(const SignalizedIntersectionManager& other)
   {
     this->signal_group_to_entry_lanelet_ids_ = other.signal_group_to_entry_lanelet_ids_;

@@ -103,10 +103,9 @@ public:
   *  \brief Returns existing signalized intersection with same entry and exit llts if exists.
   *  \param entry_llts of the intersection
   *  \param exit_llts of the intersection
-  *  \param map lanelet_map to check 
   *  \return id of the matching intersection in the map, or lanelet::InvalId if none exists
   */
-  lanelet::Id matchSignalizedIntersection(const lanelet::Lanelets& entry_llts, const lanelet::Lanelets& exit_llts, const std::shared_ptr<lanelet::LaneletMap>& map);
+  lanelet::Id matchSignalizedIntersection(const lanelet::Lanelets& entry_llts, const lanelet::Lanelets& exit_llts);
   
   /*! 
   *  \brief Saves the georeference string to be used for converting MAP.msg coordinates

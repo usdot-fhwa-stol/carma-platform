@@ -36,11 +36,9 @@ using ::testing::ReturnArg;
 namespace carma_wm
 {
 
-void createTestingWorld(carma_wm::CARMAWorldModel& cmw, std::vector<lanelet::Lanelet>& llts,
-                                          lanelet::LaneletMapPtr& map,  std::vector<cav_msgs::ExternalObject>& obstacles)
+void createTestingWorld(std::vector<lanelet::Lanelet>& llts, lanelet::LaneletMapPtr& map, std::vector<cav_msgs::ExternalObject>& obstacles)
 {
-  //TODO: cmw is not used; if there are no plans to use it soon, remove it from param list
-  //TODO: map is overwritten before it is used, so it has no value as an input param; is it intended to be an output?
+  //Note: all params are outputs provided by this function.
   
   /*
   * Create 2x2 lanelets map by hand
@@ -164,7 +162,7 @@ TEST(CARMAWorldModelTest, getLane)
   lanelet::LaneletMapPtr map;
   std::vector<cav_msgs::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -207,7 +205,7 @@ TEST(CARMAWorldModelTest, getNearestObjInLane)
   lanelet::LaneletMapPtr map;
   std::vector<cav_msgs::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -267,7 +265,7 @@ TEST(CARMAWorldModelTest, nearestObjectBehindInLane)
   std::vector<lanelet::Lanelet> llts;
   lanelet::LaneletMapPtr map;
   std::vector<cav_msgs::ExternalObject> obstacles;
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -313,7 +311,7 @@ TEST(CARMAWorldModelTest, nearestObjectAheadInLane)
   lanelet::LaneletMapPtr map;
   std::vector<cav_msgs::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -362,7 +360,7 @@ TEST(CARMAWorldModelTest, getInLaneObjects)
   lanelet::LaneletMapPtr map;
   std::vector<cav_msgs::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -430,7 +428,7 @@ TEST(CARMAWorldModelTest, distToNearestObjInLane)
   lanelet::LaneletMapPtr map;
   std::vector<cav_msgs::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -1046,7 +1044,7 @@ TEST(CARMAWorldModelTest, getLaneletsFromPoint)
   lanelet::LaneletMapPtr map;
   std::vector<cav_msgs::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
   // Test no map set
   ASSERT_THROW(cmw.getLaneletsFromPoint({1,1}), std::invalid_argument);
   // Create a complete map
@@ -1276,7 +1274,7 @@ TEST(CARMAWorldModelTest, sampleRoutePoints)
   carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
   std::vector<lanelet::BasicPoint2d> points = wm->sampleRoutePoints(0, 10.5, 1);
 
-  int i = 0;
+  size_t i = 0;
   for (auto p : points) {
     ASSERT_NEAR(p.x(), 1.85, 0.001);
     if (i != points.size() - 1) {

@@ -327,6 +327,7 @@ inline void addObstacle(carma_wm::TrackPos tp, lanelet::Id lanelet_id, std::shar
                         std::vector<carma_wm::TrackPos> pred_trackpos_list = {}, int time_step = 100, double width = 3, double length = 3)
 {
   //TODO: width & length are not used; if there are no plans to use them soon, remove them from param list
+  ROS_DEBUG_STREAM("/// the following args are not used: width = " << width << ", length = " << length << ". Logging to avoid compiler warning.");
 
   cav_msgs::RoadwayObstacle rwo;	
 
