@@ -8,7 +8,174 @@ namespace object
 
   namespace conversion
   {
-    
+
+    void convert(
+      const carma_v2x_msgs::msg::PSM &in_msg, 
+      carma_perception_msgs::msg::ExternalObject &out_msg,
+      const std::string& map_frame_id, 
+      double pred_period, 
+      double pred_step_size,
+      const lanelet::projection::LocalFrameProjector& map_projector,
+      tf2::Quaternion ned_in_map_rotation)
+    {
+      /////// Dynamic Object /////////
+      out_msg.dynamic_obj = true; // If a PSM is sent then the object is dynamic since its a living thing
+      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::DYNAMIC_OBJ_PRESENCE;
+
+      /////// Object Id /////////
+      // Generate a unique object id from the psm id
+      out_msg.id = 0;
+      for (int i = in_msg.id.id.size() - 1; i >= 0; i--)
+      { // using signed iterator to handle empty case
+        // each byte of the psm id gets placed in one byte of the object id.
+        // This should result in very large numbers which will be unlikely to conflict with standard detections
+        out_msg.id |= in_msg.id.id[i] << (8 * i);
+      }
+      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::ID_PRESENCE_VECTOR;
+
+      /////// BSM Id /////////
+      // Additionally, store the id in the bsm_id field
+      out_msg.bsm_id = in_msg.id.id;
+      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::BSM_ID_PRESENCE_VECTOR;
+
+      /////// Timestamp /////////
+      // Compute the timestamp
+      out_msg.header.stamp = builtin_interfaces::msg::Time(impl::get_psm_timestamp(in_msg));
+      out_msg.header.frame_id = map_frame_id;
+
+      /////// Object Type and Size /////////
+      // Set the type
+      if (in_msg.basic_type.type == carma_v2x_msgs::PersonalDeviceUserType::A_PEDESTRIAN || in_msg.basic_type.type == carma_v2x_msgs::PersonalDeviceUserType::A_PUBLIC_SAFETY_WORKER || in_msg.basic_type.type == carma_v2x_msgs::PersonalDeviceUserType::AN_ANIMAL) // Treat animals like people since we have no internal class for that
+      {
+        out_msg.object_type = carma_perception_msgs::msg::ExternalObject::PEDESTRIAN;
+
+        // Default pedestrian size
+        // Assume a
+        // ExternalObject dimensions are half actual size
+        // Here we assume 1.0, 1.0, 2.0
+        out_msg.size.x = 0.5;
+        out_msg.size.y = 0.5;
+        out_msg.size.z = 1.0;
+      }
+      else if (in_msg.basic_type.type == carma_v2x_msgs::PersonalDeviceUserType::A_PEDALCYCLIST)
+      {
+
+        out_msg.object_type = carma_perception_msgs::msg::ExternalObject::MOTORCYCLE; // Currently external object cannot represent bicycles, but motor cycle seems like the next best choice
+
+        // Default bicycle size
+        out_msg.size.x = 1.0;
+        out_msg.size.y = 0.5;
+        out_msg.size.z = 1.0;
+      }
+      else
+      {
+
+        out_msg.object_type = carma_perception_msgs::msg::ExternalObject::UNKNOWN;
+
+        // Default pedestrian size
+        out_msg.size.x = 0.5;
+        out_msg.size.y = 0.5;
+        out_msg.size.z = 1.0;
+      }
+      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::SIZE_PRESENCE_VECTOR;
+
+      /////// Velocity /////////
+      // Set the velocity
+      out_msg.velocity.twist.linear.x = in_msg.velocity.velocity;
+      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::VELOCITY_PRESENCE_VECTOR;
+      // NOTE: The velocity covariance is not provided in the PSM. In order to compute it you need at least two PSM messages
+      //     Tracking and associating PSM messages would be an increase in complexity for this conversion which is not warranted without an existing
+      //     use case for the velocity covariance. If a use case is presented for it, such an addition can be made at that time.
+
+
+      /////// Confidences /////////
+      // Compute the position covariance
+      // For computing confidence we will use the largest provided standard deviation of position
+      double largest_position_std = std::max(in_msg.accuracy.semi_major, in_msg.accuracy.semi_minor);
+
+      double lat_variance = in_msg.accuracy.semi_minor * in_msg.accuracy.semi_minor;
+
+      double lon_variance = in_msg.accuracy.semi_major * in_msg.accuracy.semi_major;
+
+      double heading_variance = in_msg.accuracy.orientation * in_msg.accuracy.orientation;
+
+      double position_confidence = 0.1; // Default will be 10% confidence. If the position accuracy is available then this value will be updated
+
+      // A standard deviation which is larger than the acceptable value to give
+      // 95% confidence interval on fitting the pedestrian within one 3.7m lane
+      constexpr double MAX_POSITION_STD = 1.85;
+
+    if ((in_msg.accuracy.presence_vector | carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE)
+      && (in_msg.accuracy.presence_vector | carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_AVAILABLE)) {
+      // Both accuracies available
+
+      // NOTE: ExternalObject.msg does not clearly define what is meant by position confidence
+      //     Here we are providing a linear scale based on the positional accuracy where 0 confidence would denote
+      //     A standard deviation which is larger than the acceptable value to give
+      //     95% confidence interval on fitting the pedestrian within one 3.7m lane
+      // Set the confidence
+      // Without a way of getting the velocity confidence from the PSM we will use the position confidence for both
+      out_msg.confidence = 1.0 - std::min(1.0, fabs(largest_position_std / MAX_POSITION_STD));
+      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
+
+    } else if (in_msg.accuracy.presence_vector | carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE) {
+      // Position accuracy available
+
+      heading_variance = 1.0; // Yaw variance is not available so mark as impossible perfect case
+
+      // Same calculation as shown in above condition. See that for description
+      out_msg.confidence = 1.0 - std::min(1.0, fabs(largest_position_std / MAX_POSITION_STD));
+      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
+
+
+    } else if (in_msg.accuracy.presence_vector | carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_AVAILABLE) {
+      // Orientation accuracy available
+
+      lat_variance = 1.0;
+      lon_variance = 1.0;
+    }
+    // Else: No accuracies available
+
+    /////// Pose and Covariance /////////
+    // Compute the pose
+    out_msg.pose = impl::pose_from_gnss(
+      map_projector,
+      ned_in_map_rotation,
+      {in_msg.position.latitude, in_msg.position.longitude, in_msg.position.elevation},
+      in_msg.heading.heading,
+      lat_variance,
+      lon_variance,
+      heading_variance
+      );
+    out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::POSE_PRESENCE_VECTOR;
+
+    /////// Predictions /////////
+    // Compute predictions
+    // For prediction, if the prediction is available we will sample it
+    // If not then assume linear motion
+
+    std::vector<geometry_msgs::msg::Pose> predicted_poses;
+
+    if (in_msg.presence_vector | carma_v2x_msgs::msg::PSM::HAS_PATH_PREDICTION)
+    {
+
+      // Based on the vehicle frame used in j2735 positive should be to the right and negative to the left
+      predicted_poses = impl::sample_2d_path_from_radius(out_msg.pose.pose, out_msg.velocity.twist.linear.x, -in_msg.path_prediction.radius_of_curvature, pred_period, pred_step_size);
+    }
+    else
+    {
+      predicted_poses = impl::sample_2d_linear_motion(out_msg.pose.pose, out_msg.velocity.twist.linear.x, pred_period, pred_step_size);
+    }
+
+    out_msg.predictions = impl::predicted_poses_to_predicted_state(
+      predicted_poses, rclcpp::Time(out_msg.header.stamp), rclcpp::Duration(step_size * 1e9),
+      out_msg.confidence, out_msg.confidence);
+    out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::PREDICTION_PRESENCE_VECTOR;
+
+  }
+
+  namespace impl
+  {
     std::vector<geometry_msgs::msg::Pose> sample_2d_path_from_radius(
       const geometry_msgs::msg::Pose &pose, double velocity,
       double radius_of_curvature, double period, double step_size)
@@ -115,7 +282,10 @@ namespace object
       return output;
     }
 
-     // NOTE heading will need to be set after calling this
+  namespace impl{
+
+  }
+    // NOTE heading will need to be set after calling this
     geometry_msgs::PoseWithCovariance pose_from_gnss(
         const lanelet::projection::LocalFrameProjector& projector, 
         const tf2::Quaternion& ned_in_map_rotation,
@@ -175,6 +345,7 @@ namespace object
 
         // This covariance represents the covariance of the NED frame N-lat, E-lon, heading- angle east of north
         // This means that the covariance is in the NED frame, and needs to be transformed to the map frame
+        // clang-format off
         std::array<double, 36> input_covariance = { 
           lat_variance, 0, 0,  0, 0, 0,
           0, lon_variance, 0,  0, 0, 0,
@@ -183,6 +354,7 @@ namespace object
           0,  0,  0,  0,  1, 0, 
           0,  0,  0,  0,  0, heading_variance
         };
+        // clang-format
 
         std::array<double, 36> new_cov = tf2::transformCovariance(
           input_covariance,
@@ -205,165 +377,6 @@ namespace object
 
         return pose;
     }
-
-    void convert(
-      const carma_v2x_msgs::msg::PSM &in_msg, 
-      carma_perception_msgs::msg::ExternalObject &out_msg,
-      const std::string& map_frame_id, 
-      double pred_period, 
-      double pred_step_size,
-      const lanelet::projection::LocalFrameProjector& map_projector,
-      tf2::Quaternion ned_in_map_rotation)
-    {
-      out_msg.dynamic_obj = true; // If a PSM is sent then the object is dynamic since its a living thing
-      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::DYNAMIC_OBJ_PRESENCE;
-
-      // Generate a unique object id from the psm id
-      out_msg.id = 0;
-      for (int i = in_msg.id.id.size() - 1; i >= 0; i--)
-      { // using signed iterator to handle empty case
-        // each byte of the psm id gets placed in one byte of the object id.
-        // This should result in very large numbers which will be unlikely to conflict with standard detections
-        out_msg.id |= in_msg.id.id[i] << (8 * i);
-      }
-      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::ID_PRESENCE_VECTOR;
-
-      // Additionally, store the id in the bsm_id field
-      out_msg.bsm_id = in_msg.id.id;
-      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::BSM_ID_PRESENCE_VECTOR;
-
-      // Compute the timestamp
-
-      out_msg.header.stamp = builtin_interfaces::msg::Time(get_psm_timestamp(in_msg));
-      out_msg.header.frame_id = map_frame_id;
-
-      // Set the type
-      if (in_msg.basic_type.type == carma_v2x_msgs::PersonalDeviceUserType::A_PEDESTRIAN || in_msg.basic_type.type == carma_v2x_msgs::PersonalDeviceUserType::A_PUBLIC_SAFETY_WORKER || in_msg.basic_type.type == carma_v2x_msgs::PersonalDeviceUserType::AN_ANIMAL) // Treat animals like people since we have no internal class for that
-      {
-        out_msg.object_type = carma_perception_msgs::msg::ExternalObject::PEDESTRIAN;
-
-        // Default pedestrian size
-        // Assume a
-        // ExternalObject dimensions are half actual size
-        // Here we assume 1.0, 1.0, 2.0
-        out_msg.size.x = 0.5;
-        out_msg.size.y = 0.5;
-        out_msg.size.z = 1.0;
-      }
-      else if (in_msg.basic_type.type == carma_v2x_msgs::PersonalDeviceUserType::A_PEDALCYCLIST)
-      {
-
-        out_msg.object_type = carma_perception_msgs::msg::ExternalObject::MOTORCYCLE; // Currently external object cannot represent bicycles, but motor cycle seems like the next best choice
-
-        // Default bicycle size
-        out_msg.size.x = 1.0;
-        out_msg.size.y = 0.5;
-        out_msg.size.z = 1.0;
-      }
-      else
-      {
-
-        out_msg.object_type = carma_perception_msgs::msg::ExternalObject::UNKNOWN;
-
-        // Default pedestrian size
-        out_msg.size.x = 0.5;
-        out_msg.size.y = 0.5;
-        out_msg.size.z = 1.0;
-      }
-      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::SIZE_PRESENCE_VECTOR;
-
-      // Set the velocity
-      out_msg.velocity.twist.linear.x = in_msg.velocity.velocity;
-      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::VELOCITY_PRESENCE_VECTOR;
-      // NOTE: The velocity covariance is not provided in the PSM. In order to compute it you need at least two PSM messages
-      //     Tracking and associating PSM messages would be an increase in complexity for this conversion which is not warranted without an existing
-      //     use case for the velocity covariance. If a use case is presented for it, such an addition can be made at that time.
-
-
-      // Compute the position covariance
-      // For computing confidence we will use the largest provided standard deviation of position
-      double largest_position_std = std::max(in_msg.accuracy.semi_major, in_msg.accuracy.semi_minor);
-
-      double lat_variance = in_msg.accuracy.semi_minor * in_msg.accuracy.semi_minor;
-
-      double lon_variance = in_msg.accuracy.semi_major * in_msg.accuracy.semi_major;
-
-      double heading_variance = in_msg.accuracy.orientation * in_msg.accuracy.orientation;
-
-      double position_confidence = 0.1; // Default will be 10% confidence. If the position accuracy is available then this value will be updated
-
-      // A standard deviation which is larger than the acceptable value to give
-      // 95% confidence interval on fitting the pedestrian within one 3.7m lane
-      constexpr double MAX_POSITION_STD = 1.85;
-
-    if ((in_msg.accuracy.presence_vector | carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE)
-      && ((in_msg.accuracy.presence_vector | carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_AVAILABLE)) {
-      // Both accuracies available
-
-      // NOTE: ExternalObject.msg does not clearly define what is meant by position confidence
-      //     Here we are providing a linear scale based on the positional accuracy where 0 confidence would denote
-      //     A standard deviation which is larger than the acceptable value to give
-      //     95% confidence interval on fitting the pedestrian within one 3.7m lane
-      // Set the confidence
-      // Without a way of getting the velocity confidence from the PSM we will use the position confidence for both
-      out_msg.confidence = 1.0 - std::min(1.0, fabs(largest_position_std / MAX_POSITION_STD));
-      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
-
-    } else if (in_msg.accuracy.presence_vector | carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE) {
-      // Position accuracy available
-
-      heading_variance = 1.0; // Yaw variance is not available so mark as impossible perfect case
-
-      // Same calculation as shown in above condition. See that for description
-      out_msg.confidence = 1.0 - std::min(1.0, fabs(largest_position_std / MAX_POSITION_STD));
-      out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
-
-
-    } else if (in_msg.accuracy.presence_vector | carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_AVAILABLE)
-      // Orientation accuracy available
-
-      lat_variance = 1.0;
-      lon_variance = 1.0;
-    }
-    // Else: No accuracies available
-
-    // Compute the pose
-    out_msg.pose = pose_from_gnss(
-      map_projector,
-      ned_in_map_rotation,
-      {in_msg.position.latitude, in_msg.position.longitude, in_msg.position.elevation},
-      in_msg.heading.heading,
-      lat_variance,
-      lon_variance,
-      heading_variance
-      );
-    out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::POSE_PRESENCE_VECTOR;
-
-    // Compute predictions
-    // For prediction, if the prediction is available we will sample it
-    // If not then assume linear motion
-
-    double period = 2.0;  // TODO make parameter the same as the existing prediction period
-    double step_size = 0.1; // TODO make parameter the same as current prediction step size
-    std::vector<geometry_msgs::msg::Pose> predicted_poses;
-
-    if (in_msg.presence_vector | carma_v2x_msgs::msg::PSM::HAS_PATH_PREDICTION)
-    {
-
-      // Based on the vehicle frame used in j2735 positive should be to the right and negative to the left
-      predicted_poses = sample_2d_path_from_radius(out_msg.pose.pose, out_msg.velocity.twist.linear.x, -in_msg.path_prediction.radius_of_curvature, period, step_size);
-    }
-    else
-    {
-      predicted_poses = sample_2d_linear_motion(out_msg.pose.pose, out_msg.velocity.twist.linear.x, period, step_size);
-    }
-
-    out_msg.predictions = predicted_poses_to_predicted_state(
-      predicted_poses, rclcpp::Time(out_msg.header.stamp), rclcpp::Duration(step_size * 1e9),
-      out_msg.confidence, out_msg.confidence);
-    out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::PREDICTION_PRESENCE_VECTOR;
-
-  }
 
   std::vector<carma_perception_msgs::PredictedState> predicted_poses_to_predicted_state(
     const std::vector<geometry_msgs::msg::Pose> &poses, double constant_velocity, const rclcpp::Time &start_time, const rclcpp::Duration &step_size, const std::string &frame,
@@ -470,6 +483,8 @@ namespace object
 
     return rclcpp::Time(nsec_since_epoch.total_nanoseconds());
   }
-};
+  } // namespace impl
+  
+
 }
 }
