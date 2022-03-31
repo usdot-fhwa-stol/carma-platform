@@ -1032,7 +1032,6 @@ void WMBroadcaster::externalMapMsgCallback(const cav_msgs::MapData& map_msg)
     {
       if (sim_.intersection_id_to_regem_id_.find(intersection.id.id) == sim_.intersection_id_to_regem_id_.end())
       {
-        ROS_ERROR_STREAM("It was not updated!!!");
         up_to_date = false;
         break;
       }
@@ -1041,12 +1040,7 @@ void WMBroadcaster::externalMapMsgCallback(const cav_msgs::MapData& map_msg)
 
   if(up_to_date)
   {
-    ROS_ERROR_STREAM("It was updated!!! So skipping");
     return;
-  }
-  else
-  {
-    ROS_ERROR_STREAM("In the end, it was not updated, so updating again...");
   }
     
   gf_ptr->map_msg_ = map_msg;
@@ -1909,7 +1903,7 @@ cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geom
 
   if (active_geofence_llt_ids_.size() <= 0 ) 
   {
-    //ROS_INFO_STREAM("No active geofence llt ids are loaded to the WMBroadcaster");
+    ROS_INFO_STREAM("No active geofence llt ids are loaded to the WMBroadcaster");
     return outgoing_geof;
   }
 

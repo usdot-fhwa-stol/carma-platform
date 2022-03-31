@@ -72,11 +72,9 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
     {
       maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
       resp.related_maneuvers.push_back(i);
-      ROS_DEBUG_STREAM("related maneuver pushed back: " << i);
     }
     else
     {
-      ROS_DEBUG_STREAM("We are breaking at: " << i);
       break;
     }
   }
