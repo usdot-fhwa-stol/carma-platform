@@ -877,25 +877,35 @@ namespace basic_autonomy
             ROS_DEBUG_STREAM("Ending state's index before applying buffer (buffer_pt_index): " << buffer_pt_index);
             ROS_DEBUG_STREAM("Corresponding to point: x: " << all_sampling_points[buffer_pt_index].x() << ", y:" << all_sampling_points[buffer_pt_index].y());
 
-            if(nearest_pt_index + 1 = buffer_pt_index){
-                ROS_WARN_STREAM("Returning the two remaining points in the maneuver");
-
-                std::vector<lanelet::BasicPoint2d> remaining_traj_points = {all_sampling_points[nearest_pt_index], all_sampling_points[nearest_pt_index + 1]};
-
-                std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(remaining_traj_points);
-                std::vector<double> speeds = {state.longitudinal_vel, state.longitudinal_vel};//Keep current speed
-                std::vector<double> times;
-                trajectory_utils::conversions::speed_to_time(downtracks, speeds, &times);
-                std::vector<double> yaw = {state.orientation, state.orientation}; //Keep current orientation
+            if(nearest_pt_index + 1 >= buffer_pt_index){
                 
-                std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
-                trajectory_from_points_times_orientations(remaining_traj_points, times, yaw, state_time);
+                lanelet::BasicPoint2d current_pos(state.x_pos_global, state.y_pos_global);
+                lanelet::BasicPoint2d ending_pos(ending_state.x_pos_global, ending_state.y_pos_global);
 
-                return traj_points;
-            }
-            else if(nearest_pt_index + 1 > buffer_pt_index){
-                ROS_WARN_STREAM("Current state is at or past the planned end distance. Couldn't generate trajectory");
-                return {};
+                if( nearest_pt_index > buffer_pt_index ||
+                    (wm->routeTrackPos(ending_pos).downtrack -  wm->routeTrackPos(current_pos).downtrack) < epsilon_ ){
+
+                    ROS_WARN_STREAM("Current state is at or past the planned end distance. Couldn't generate trajectory");
+                    return {};
+                }
+                else{
+                    //Current point is behind the ending state of maneuver and a valid trajectory is possible
+                    ROS_WARN_STREAM("Returning the two remaining points in the maneuver");
+                    
+                    std::vector<lanelet::BasicPoint2d> remaining_traj_points = {current_pos, ending_pos};
+
+                    std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(remaining_traj_points);
+                    std::vector<double> speeds = {state.longitudinal_vel, state.longitudinal_vel};//Keep current speed
+                    std::vector<double> times;
+                    trajectory_utils::conversions::speed_to_time(downtracks, speeds, &times);
+                    std::vector<double> yaw = {state.orientation, state.orientation}; //Keep current orientation
+                    
+                    std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
+                    trajectory_from_points_times_orientations(remaining_traj_points, times, yaw, state_time);
+
+                    return traj_points;
+
+                }
             }
 
             //drop buffer points here
