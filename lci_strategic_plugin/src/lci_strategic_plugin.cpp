@@ -592,7 +592,6 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     ROS_ERROR_STREAM("Could not plan maneuvers as route was not available");
     return true;
   }
-  case_num_ = TSCase::UNAVAILABLE;
 
   ROS_DEBUG("Finding car information");
 
