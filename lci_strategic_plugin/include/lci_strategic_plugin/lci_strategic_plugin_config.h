@@ -46,6 +46,9 @@ struct LCIStrategicPluginConfig
   //! A buffer in seconds around the green phase which will reduce the phase length such that vehicle still considers it non-green
   double green_light_time_buffer = 0.0;
 
+  //! Double: A buffer in seconds starting green phase which is still considered valid stop if safety requires it
+  double stop_light_time_buffer = 0.0;
+
   //! Minimum allowable speed TS algorithm in m/s
   double algo_minimum_speed = 2.2352;
 

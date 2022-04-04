@@ -353,14 +353,19 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
   else if (safe_distance_to_stop <= distance_remaining_to_traffic_light && desired_distance_to_stop >= distance_remaining_to_traffic_light)
   {
     auto state_pair_at_stop = traffic_light->predictState(lanelet::time::timeFromSec(current_state.stamp.toSec() + min_bound_stop_time));
-    
+    auto state_pair_at_stop_buffered = traffic_light->predictState(lanelet::time::timeFromSec(current_state.stamp.toSec() + min_bound_stop_time - config_.stop_light_time_buffer));
     if (!validLightState(state_pair_at_stop, current_state.stamp + ros::Duration(min_bound_stop_time)))
     return;
 
+    if (!validLightState(state_pair_at_stop_buffered, current_state.stamp + ros::Duration(min_bound_stop_time - config_.stop_light_time_buffer)))
+    return;
+
     ROS_DEBUG_STREAM("Checking STOPPING state: " << state_pair_at_stop.get().second << ", at predicted time: " << std::to_string(current_state.stamp.toSec() + min_bound_stop_time));
+    ROS_DEBUG_STREAM("Checking STOPPING(BUFFERED)state: " << state_pair_at_stop_buffered.get().second << ", at predicted time: " << std::to_string(current_state.stamp.toSec() + min_bound_stop_time - config_.stop_light_time_buffer));
 
     // perfectly stop at red/yellow with given distance and constant deceleration 
-    if (state_pair_at_stop.get().second != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+    if (state_pair_at_stop.get().second != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED || 
+    state_pair_at_stop_buffered.get().second != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
     {
       double decel_rate =  current_state.speed/ min_bound_stop_time; // Kinematic |(v_f - v_i) / t = a|
       ROS_DEBUG_STREAM("HANDLE_STOPPING: Planning stop and wait maneuver at decel_rate: " << decel_rate);

@@ -52,6 +52,7 @@ int main(int argc, char** argv)
   pnh.param<double>("trajectory_smoothing_activation_distance",            config.trajectory_smoothing_activation_distance, config.trajectory_smoothing_activation_distance);
   pnh.param<double>("stopping_location_buffer",         config.stopping_location_buffer, config.stopping_location_buffer);
   pnh.param<double>("green_light_time_buffer",          config.green_light_time_buffer, config.green_light_time_buffer);
+  pnh.param<double>("stop_light_time_buffer",          config.stop_light_time_buffer, config.stop_light_time_buffer);
   pnh.param<double>("algo_minimum_speed",                    config.algo_minimum_speed, config.algo_minimum_speed);
   pnh.param<double>("absolute_minimum_speed",                    config.absolute_minimum_speed, config.absolute_minimum_speed);
   pnh.param<double>("deceleration_fraction",                    config.deceleration_fraction, config.deceleration_fraction);
