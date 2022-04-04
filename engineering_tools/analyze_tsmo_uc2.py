@@ -81,80 +81,109 @@ Other Required Data:
 # TSMO UC2-M1.2 : The communication from infrastructure (RSU) to vehicle (OBU) should be within a certain frequency rates
 #
 # Expected: 10 Hz ± 1 Hz for SPaT, 1 Hz ± 0.5 Hz for MA
-# TODO implement
 ###########################################################################################################
-def plot_spats_maps_frequency(
-    spat_ts_idx,
-    map_ts_idx,
-    spat_frequency_avg,
-    map_frequency_avg,
-    spat_frequency_sum_avg,
-    map_frequency_sum_avg,
-):
-    print("Plot SPAT and MAP frequency")
-    fig, ax = plt.subplots()
-    relative_spat_x_axis_idx = []
-    relative_map_x_axis_idx = []
-    for idx in spat_ts_idx:
-        relative_spat_x_axis_idx.append(idx.timestamp() - spat_ts_idx[0].timestamp())
-    spat_ds = pd.DataFrame(
-        {"Average Frequncy SPAT for every 1s": spat_frequency_avg},
-        index=relative_spat_x_axis_idx,
+def plot_spats_maps_frequency(plot_title, vehicles_plot_data_list, y_axis_max):
+    subplot_nums = len(vehicles_plot_data_list)
+    fig, ax = plt.subplots() if subplot_nums == 1 else plt.subplots(subplot_nums)
+    print(
+        "Detected %s numbers of vehicle(s)' profile data. Plotting >>  %s "
+        % (subplot_nums, plot_title)
     )
+    colors = ["blue", "orange", "purple", "cyan", "black", "brown", "gray"]
+    fig.suptitle(plot_title, fontsize=14)
+    i = 0
+    while i < subplot_nums:
+        ax_local = ax if subplot_nums == 1 else ax[i]
 
-    for idx in map_ts_idx:
-        relative_map_x_axis_idx.append(idx.timestamp() - map_ts_idx[0].timestamp())
-    map_ds = pd.DataFrame(
-        {"Average Frequncy MAP for every 5s": map_frequency_avg},
-        index=relative_map_x_axis_idx,
-    )
+        relative_spat_x_axis_idx = []
+        spat_idx = vehicles_plot_data_list[i]["spat_idx"]
+        for idx in spat_idx:
+            relative_spat_x_axis_idx.append(idx.timestamp() - spat_idx[0].timestamp())
 
-    df_sum_avg = pd.DataFrame(
-        {"Average sum Frequncy SPAT": spat_frequency_sum_avg},
-        index=relative_spat_x_axis_idx,
-    )
-    map_ds_sum_avg = pd.DataFrame(
-        {"Average sum Frequncy MAP": map_frequency_sum_avg},
-        index=relative_map_x_axis_idx,
-    )
+        spat_df = pd.DataFrame(
+            {
+                "Average SPAT Frequncy every 1s": vehicles_plot_data_list[i][
+                    "spat_avg_frequency"
+                ]
+            },
+            index=relative_spat_x_axis_idx,
+        )
 
-    styles = ["--", "--"]
-    colors = ["grey", "orange", "green", "blue"]
+        spat_df_sum_avg = pd.DataFrame(
+            {
+                vehicles_plot_data_list[i]["v_name"]
+                + ": Average sum Frequncy SPAT": vehicles_plot_data_list[i][
+                    "spat_sum_avg_frequency"
+                ]
+            },
+            index=relative_spat_x_axis_idx,
+        )
+        relative_map_x_axis_idx = []
+        map_idx = vehicles_plot_data_list[i]["map_idx"]
+        for idx in map_idx:
+            relative_map_x_axis_idx.append(idx.timestamp() - map_idx[0].timestamp())
 
-    # Plot sum Avergage frequency
-    df_sum_avg = spat_ds.plot(ax=ax, style=styles[0], color=colors[0])
-    map_ds_sum_avg.plot(ax=ax, style=styles[1], color=colors[1])
+        map_df = pd.DataFrame(
+            {
+                "Average MAP Frequncy every 5s": vehicles_plot_data_list[i][
+                    "map_avg_frequency"
+                ]
+            },
+            index=relative_map_x_axis_idx,
+        )
+        map_df_sum_avg = pd.DataFrame(
+            {
+                vehicles_plot_data_list[i]["v_name"]
+                + ": Sum Average MAP Sum Frequncy": vehicles_plot_data_list[i][
+                    "map_sum_avg_frequency"
+                ]
+            },
+            index=relative_map_x_axis_idx,
+        )
 
-    # Sliding window frequency average
-    ax.scatter(
-        map_ds.index,
-        map_ds.values,
-        s=20,
-        color=colors[2],
-        marker="^",
-        label="Average MAP Frequncy for every 5s",
-    )
-    ax.scatter(
-        spat_ds.index,
-        spat_ds.values,
-        s=20,
-        color=colors[3],
-        marker="s",
-        label="Average SPAT Frequncy for every 1s",
-    )
-    ax.legend(loc="upper right")
+        styles = ["-", "-"]
+        print(relative_spat_x_axis_idx)
+        print(relative_map_x_axis_idx)
+        print(vehicles_plot_data_list)
 
-    ax.set_ylabel("Frequency (HZ)")
-    ax.set_xlabel("Time (s)")
-    ax.set_ylim(0, 15)
-    fig.suptitle("MAP and SPAT Frequency Profile", fontsize=14)
-    start_x = 0
-    end_x = relative_map_x_axis_idx[len(relative_map_x_axis_idx) - 1]
-    stepsize_x = 10  # unit of second
-    ax.set_xticks(np.arange(start_x, end_x, stepsize_x))
+        # Plot sum Avergage frequency
+        spat_df_sum_avg.plot(ax=ax_local, style=styles[0], color=colors[0])
+        map_df_sum_avg.plot(ax=ax_local, style=styles[1], color=colors[1])
+
+        # Sliding window frequency average
+        ax_local.scatter(
+            map_df.index,
+            map_df.values,
+            s=20,
+            color=colors[2],
+            marker="^",
+            label=vehicles_plot_data_list[i]["v_name"]
+            + ": Average MAP Frequncy every 5s",
+        )
+        ax_local.scatter(
+            spat_df.index,
+            spat_df.values,
+            s=20,
+            color=colors[3],
+            marker="s",
+            label=vehicles_plot_data_list[i]["v_name"]
+            + ": Average SPAT Frequncy every 1s",
+        )
+        ax_local.legend(loc="upper right")
+
+        ax_local.set_ylabel(vehicles_plot_data_list[i]["y_label"])
+        start_x, start_y = 0, 0
+        ax_local.set_xlabel("Time (s)")
+        stepsize_x, stepsize_y = 1, 1
+        end_y = y_axis_max + stepsize_y
+        ax_local.set_ylim(0, end_y)
+        ax_local.set_yticks(np.arange(start_y, end_y, stepsize_y))
+        end_x = max(relative_map_x_axis_idx[len(relative_map_x_axis_idx) - 1] , relative_spat_x_axis_idx[len(relative_spat_x_axis_idx) - 1])
+        ax_local.set_xticks(np.arange(start_x, end_x, stepsize_x))
+        i += 1
 
 
-def get_spats_maps_frequency_profiles():
+def show_spats_maps_frequency_profiles(vehicle_profiles_data):
     """
     Required topics
     - SPaT Data : /message/incoming_spat cav_msgs/SPAT
@@ -170,37 +199,71 @@ def get_spats_maps_frequency_profiles():
     Plotting:
     - In addition to the pass/fail criterion plots should be generated of the frequency in the sliding windows at each timestep
     """
-    start_ts = 1648777543
-    end_ts = 1648777703
-    date_time_1 = datetime.datetime.utcfromtimestamp(start_ts)
-    date_time_5 = datetime.datetime.utcfromtimestamp(end_ts)
-    spat_dt_idx = pd.date_range(date_time_1, date_time_5, freq="S")
-    map_dt_idx = pd.date_range(date_time_1, date_time_5, freq="5S")
-    spat_frequency_avg = []
-    map_frequency_avg = []
-    frequency = 2
+    vehicles_plot_data_list = []
+    for vehicle_profile_data in vehicle_profiles_data:
+        spat_nums_ts = [
+            spat_num_ts for spat_num_ts in vehicle_profile_data.spat_nums_ts.keys()
+        ]
+        date_time_1 = datetime.datetime.utcfromtimestamp(spat_nums_ts[0])
+        date_time_5 = datetime.datetime.utcfromtimestamp(
+            spat_nums_ts[len(spat_nums_ts) - 1]
+        )
+        spat_nums_idx = pd.date_range(date_time_1, date_time_5, freq="S")
 
-    for i in spat_dt_idx:
-        spat_frequency_avg.append(frequency)
+        map_nums_ts = [
+            map_num_ts for map_num_ts in vehicle_profile_data.map_nums_ts.keys()
+        ]
+        date_time_1 = datetime.datetime.utcfromtimestamp(map_nums_ts[0])
+        date_time_5 = datetime.datetime.utcfromtimestamp(
+            map_nums_ts[len(map_nums_ts) - 1]
+        )
+        map_nums_idx = pd.date_range(date_time_1, date_time_5, freq="5S")
+        print(len(map_nums_idx))
+        print(len(spat_nums_idx))
 
-    spat_frequency_sum_avg = [
-        sum(spat_frequency_avg) / spat_frequency_avg.__len__()
-    ] * spat_frequency_avg.__len__()
+        v_name = vehicle_profile_data.vehicle_name
 
-    for j in map_dt_idx:
-        map_frequency_avg.append(5 * frequency)
+        # Calculate average frequency for SPAT in every 1 second
+        spat_nums_ts_list = [
+            spat_num_ts for spat_num_ts in vehicle_profile_data.spat_nums_ts.values()
+        ]
+        map_nums_ts_list = [
+            map_num_ts for map_num_ts in vehicle_profile_data.map_nums_ts.values()
+        ]
+        # Calculate average frequency for SPAT in every 5 second
+        map_avg_freq = []
+        count = 0
+        map_num_sum_ts = 0
+        for map_num_ts in map_nums_ts_list:
+            count += 1
+            map_num_sum_ts += map_num_ts
+            if count % 5 == 0:
+                map_avg_freq.append(map_num_sum_ts / 5)
+                map_num_sum_ts = 0
 
-    map_frequency_sum_avg = [
-        sum(map_frequency_avg) / map_frequency_avg.__len__()
-    ] * map_frequency_avg.__len__()
-    plot_spats_maps_frequency(
-        spat_dt_idx,
-        map_dt_idx,
-        spat_frequency_avg,
-        map_frequency_avg,
-        spat_frequency_sum_avg,
-        map_frequency_sum_avg,
-    )
+        # Calculate total average frequency for SPAT
+        spat_sum_avg_frequency = [sum(spat_nums_ts_list) / spat_nums_ts_list.__len__()]
+        # Calculate total average frequency for SPAT
+        if len(map_avg_freq) == 0:
+            print("ERROR: Map list size = 0")
+            return
+        map_sum_avg_frequency = [sum(map_nums_ts_list) / (map_avg_freq.__len__() * 5)]
+
+        vehicles_plot_data_dict = {
+            "v_name": v_name,
+            "spat_avg_frequency": spat_nums_ts_list,
+            "spat_sum_avg_frequency": spat_sum_avg_frequency,
+            "spat_idx": spat_nums_idx,
+            "map_avg_frequency": map_avg_freq,
+            "map_sum_avg_frequency": map_sum_avg_frequency,
+            "map_idx": map_nums_idx,
+            "y_label": "Frequency (HZ)",
+        }
+        vehicles_plot_data_list.append(vehicles_plot_data_dict)
+
+    plot_title = "MAP and SPAT Frequency Profile"
+    y_axis_max = max(max(spat_nums_ts_list), max(map_avg_freq))
+    plot_spats_maps_frequency(plot_title, vehicles_plot_data_list, y_axis_max)
 
 
 ###########################################################################################################
@@ -307,25 +370,6 @@ Approach:
 - To check the controlling tactical plugin look at the planner_plugin field of the first point on the current plan_trajectory
 """
 
-###########################################################################################################
-# TSMO UC2-M2.3 : The average deceleration\acceleration over any 1-second portion of the test time horizon
-# shall be no greater than 3.0 m/s^2.
-#
-# Expected: acceleration <= 3.0 m/s^2 deceleration >= -3.0 m/s^2
-# TODO implement
-###########################################################################################################
-
-"""
-Required topics
-- Engagement status : /guidance/state cav_msgs/GuidanceState
-- Current_speed : /hardware_interface/vehicle/twist (use to compute accel) geometry_msgs/TwistStamped
-- Vehicle accel : /hardware_interface/velocity_accel_cov (use as alternative source of accel) automotive_platform_msgs/VelocityAccelCov (https://github.com/astuff/automotive_autonomy_msgs/blob/master/automotive_platform_msgs/msg/VelocityAccelCov.msg)
-
-Approach:
-- While the vehicle is engaged, create a 1s sliding window and take the start and end speed for each timestep of the window and compute the average acceleration
-- Additionally, verify that the abs(/hardware_interface/velocity_accel_cov reported value) never exceeds 3.0 for more than 1 timestep at any point during engagement
-"""
-
 ###
 # Mike suggested. Vehicle does not violate speed limit my more than 1 mph
 # Good to confirm as this showed up as an issue multiple times during integration testing
@@ -342,17 +386,34 @@ Approach:
 - In TSMO UC2 all the speed limits will be the same so a simple conditional while the vehicle is engaged on twist.linear.x will suffice to check if the limit is exceeded
 """
 
+TSC_phases_lookup = {
+    0: "gray",
+    1: "red",  # DARK
+    2: "red",  # STOP_THEN_PROCEED
+    3: "red",  # STOP_AND_REMAIN
+    4: "gray",  # PRE_MOVEMENT
+    5: "green",  # PERMISSIVE_MOVEMENT_ALLOWED
+    6: "green",  # PROTECTED_MOVEMENT_ALLOWED
+    7: "yellow",  # PERMISSIVE_CLEARANCE
+    8: "yellow",  # PROTECTED_CLEARANCE
+    9: "yellow",  # CAUTION_CONFLICTING_TRAFFIC
+}
+
 
 class vehicle_profile_data:
     """
     Keep track of relevant vehicle metrics when the vehicle is engaged for plotting purposes. The vehicle profile metrics include:
-    1) vehicle current speed over time during engaged
-    2) vehicle current acceleration over time during engaged
-    3) vehicle current downtrack over time during engaged
+    1) vehicle current speed over time (unit of second) during engaged
+    2) vehicle current acceleration over time (unit of second) during engaged
+    3) vehicle current downtrack over time (unit of second) during engaged
     4) vehicle received spat message every 1 second during engaged
     5) vehicle received map message every 1 second during engaged
     5) Bag name: The name of bag that is generated by the vehicle
-    5) The route the vehicle traversed when engaged
+    6) The route the vehicle traversed when engaged
+    7) Vehicle engaged timestamp
+    8) Vehicle disengaged timestamp
+    9) Vehicle distance to the traffic signal location it faced over time (unit of second) during engaged
+    2) vehicle current deceleration over time (unit of second) during engaged
     """
 
     def __init__(self):
@@ -360,55 +421,73 @@ class vehicle_profile_data:
         self.cur_accels_ts = {}
         self.cur_downtracks_ts = {}
         self.speed_limits_ts = {}
-        self.spat_ts = {}
+        self.spat_phase_ts = {}
         self.spat_nums_ts = {}
         self.map_nums_ts = {}
         self.bag_name = ""
         self.route_name = ""
+        self.vehicle_name = ""
         self.engage_start_ts = 0
         self.engage_end_ts = 0
+        self.ds_tf_ts = {}
+        self.cur_decels_ts = {}
+        self.signal_group_id = 0
+        self.intersection_id = 0
 
     def update_cur_speeds_ts(self, cur_speed, timestamp):
+        """Update the vehicle current latest speed given the timestamp
+
+        Args:
+            cur_speed (double): Vehicle current speed over time
+            timestamp (_type_): unit of nanosecond
+        """
         timestamp_s = math.floor(timestamp.to_sec())
-        if timestamp_s in self.cur_speeds_ts.keys():
-            self.cur_speeds_ts[timestamp_s] = (
-                self.cur_speeds_ts[timestamp_s] + cur_speed
-            ) / 2
-        else:
-            self.cur_speeds_ts[timestamp_s] = cur_speed
+        self.cur_speeds_ts[timestamp_s] = cur_speed
 
     def update_cur_accels_ts(self, cur_accel, timestamp):
+        """Update the vehicle current latest aceleration given the timestamp
+
+        Args:
+            cur_accel (double): Vehicle current acceleration over time
+            timestamp (_type_): unit of nanosecond
+        """
         timestamp_s = math.floor(timestamp.to_sec())
-        if timestamp_s in self.cur_accels_ts.keys():
-            self.cur_accels_ts[timestamp_s] = (
-                self.cur_accels_ts[timestamp_s] + cur_accel
-            ) / 2
-        else:
-            self.cur_accels_ts[timestamp_s] = cur_accel
+        self.cur_accels_ts[timestamp_s] = cur_accel
+
+    def update_cur_decels_ts(self, cur_decel, timestamp):
+        """Update the vehicle current latest decelerations given the timestamp
+
+        Args:
+            cur_decel (double): Vehicle current decelerations over time
+            timestamp (_type_): unit of nanosecond
+        """
+        timestamp_s = math.floor(timestamp.to_sec())
+        self.cur_decels_ts[timestamp_s] = cur_decel
 
     def update_cur_downtracks_ts(self, cur_downtrack, timestamp):
+        """Update the vehicle latest downtrack given the timestamp
+
+        Args:
+            cur_downtrack (double): Vehicle current distance to vehicle starting engagement location
+            timestamp (timestamp): unit of nanosecond
+        """
         timestamp_s = math.floor(timestamp.to_sec())
         self.cur_downtracks_ts[timestamp_s] = cur_downtrack
 
     def update_speed_limit_ts(self, speed_limit, timestamp):
         timestamp_s = math.floor(timestamp.to_sec())
-        if timestamp_s in self.speed_limits_ts.keys():
-            self.speed_limits_ts[timestamp_s] = (
-                self.speed_limits_ts[timestamp_s] + speed_limit
-            ) / 2
-        else:
-            self.speed_limits_ts[timestamp] = speed_limit
+        self.speed_limits_ts[timestamp] = speed_limit
 
-    def update_spat_ts(self, spat_phase, timestamp):
+    def update_spat_phase_ts(self, spat_phase, timestamp):
         """Update the spat phases dictionary given the timestamp
 
         Args:
             spat_phase (_type_): string of 'red','green' or 'yellow'
-            timestamp (_type_): unit of second
+            timestamp (_type_): unit of nanosecond
         """
         timestamp_s = math.floor(timestamp.to_sec())
-        self.spat_ts[timestamp_s] = spat_phase
-    
+        self.spat_phase_ts[timestamp_s] = spat_phase
+
     def update_spat_nums_ts(self, spat_num, timestamp):
         """Update the number of spats given the timestamp
 
@@ -416,7 +495,21 @@ class vehicle_profile_data:
             spat_num (_type_): integer 1
             timestamp (_type_): unit of nanosecond
         """
-        self.spat_nums_ts[timestamp] = spat_num
+        timestamp_ts = math.floor(timestamp.to_sec())
+        if timestamp_ts in self.spat_nums_ts.keys():
+            self.spat_nums_ts[timestamp_ts] = spat_num + self.spat_nums_ts[timestamp_ts]
+        else:
+            self.spat_nums_ts[timestamp_ts] = spat_num
+
+    def update_ds_tf_ts(self, distance2tf, timestamp):
+        """Update the vehicle distance to traffic signal location it faced given the timestamp
+
+        Args:
+            distance2tf (double): _description_
+            timestamp (timestamp): unit of nanosecond
+        """
+        timestamp_ts = math.floor(timestamp.to_sec())
+        self.ds_tf_ts[timestamp_ts] = distance2tf
 
     def update_map_num_ts(self, map_num, timestamp):
         timestamp_s = math.floor(timestamp.to_sec())
@@ -426,7 +519,10 @@ class vehicle_profile_data:
             map_num (_type_): integer between 1
             timestamp (_type_): unit of nanosecond
         """
-        self.map_nums_ts[timestamp_s] = map_num
+        if timestamp_s in self.map_nums_ts.keys():
+            self.spat_nums_ts[timestamp_s] = map_num + self.spat_nums_ts[timestamp_s]
+        else:
+            self.map_nums_ts[timestamp_s] = map_num
 
     def __profile__(self) -> str:
         """This function shows some profile information.
@@ -460,20 +556,22 @@ class vehicle_profile_data:
         return self.__repr__()
 
 
-def load_rosbags_to_vehicles_profile(bag_names):
+def load_rosbags_to_vehicles_profile(bag_vehicle_names):
     """
     Get information about a bag as a vehicle profile object.
     """
     vehicles_profiles = []
     # loop bags to get relevant vehicles information and update the vehicles profile list
-    for bag_name in bag_names:
+    for bag_name in bag_vehicle_names.keys():
         print("Loading bag (name = %s) ..." % bag_name)
         ENGAGED = 4
         is_engaged = False
         engage_start_ts = 0
         engage_end_ts = 0
         bag = Bag(bag_name, "r")
+        # Vehicle engage timestamp
         for topic, msg, t in bag.read_messages(topics=["/guidance/state"]):
+            # print(msg.state)
             if (not is_engaged) and msg.state == ENGAGED and engage_start_ts == 0:
                 print("Vehicle is engaged at timestamp = ", t)
                 engage_start_ts = t
@@ -498,16 +596,29 @@ def load_rosbags_to_vehicles_profile(bag_names):
             and engage_end_ts != 0
             and engage_start_ts <= engage_end_ts
         ):
-            topics = [
-                "/hardware_interface/vehicle/twist",
-                "/message/incoming_spat",
-                "/hardware_interface/velocity_accel_cov",
-                "/guidance/route_state",
-            ]
+
             vpd = vehicle_profile_data()
             vpd.engage_start_ts = engage_start_ts
             vpd.engage_end_ts = engage_end_ts
             vpd.bag_name = bag_name
+            vpd.vehicle_name = bag_vehicle_names[bag_name]
+
+            # Traffic Signal Group and intersection ids
+            for topic, msg, t in bag.read_messages(
+                topics=["/environment/intersection_signal_group_ids"]
+            ):
+                vpd.signal_group_id = msg.data[1]
+                vpd.intersection_id = msg.data[0]
+
+            topics = [
+                "/hardware_interface/vehicle/twist",
+                "/message/incoming_spat",
+                "/message/incoming_map",
+                "/hardware_interface/velocity_accel_cov",
+                "/guidance/route_state",
+                "/guidance/lci_strategic_plugin/distance_remaining_to_tf",
+            ]
+            
             for topic, msg, t in bag.read_messages(topics=topics):
                 if t >= engage_start_ts and t <= engage_end_ts:
                     if topic == "/hardware_interface/vehicle/twist":
@@ -515,12 +626,30 @@ def load_rosbags_to_vehicles_profile(bag_names):
                         timestamp = t
                         vpd.update_cur_speeds_ts(vehicle_cur_speed, timestamp)
                     elif topic == "/message/incoming_spat":
-                        #  print(msg)
-                        pass
+                        spat_phase = 0
+                        for intersection_state in msg.intersection_state_list:
+                            if intersection_state.id.id == vpd.intersection_id:
+                                for movement_list in intersection_state.movement_list:
+                                    if (
+                                        movement_list.signal_group
+                                        == vpd.signal_group_id
+                                    ):
+                                        spat_phase = movement_list.movement_event_list[
+                                            0
+                                        ].event_state.movement_phase_state
+                        vpd.update_spat_nums_ts(1, t)
+                        vpd.update_spat_phase_ts(spat_phase, t)
+                    elif topic == "/message/incoming_map":
+                        vpd.update_map_num_ts(1, t)
                     elif topic == "/hardware_interface/velocity_accel_cov":
                         vehicle_cur_accel = msg.accleration
                         timestamp = t
                         vpd.update_cur_accels_ts(vehicle_cur_accel, timestamp)
+                    elif (
+                        topic
+                        == "/guidance/lci_strategic_plugin/distance_remaining_to_tf"
+                    ):
+                        vpd.update_ds_tf_ts(msg.data, t)
                     elif topic == "/guidance/route_state":
                         vehicle_cur_downtrack = msg.down_track
                         vehicle_cur_speed_limit = msg.speed_limit
@@ -528,10 +657,14 @@ def load_rosbags_to_vehicles_profile(bag_names):
                         vpd.update_cur_downtracks_ts(vehicle_cur_downtrack, timestamp)
                         vpd.update_speed_limit_ts(vehicle_cur_speed_limit, timestamp)
                         vpd.route_name = msg.routeID
-
         # Finished loading bag data into the vehicle profile object. Add the vehicle profile into the list
+        # print(vpd.spat_nums_ts)
+        # print(vpd.spat_phase_ts)
+        # print(vpd.map_nums_ts)
+        # print(vpd.ds_tf_ts)
         vehicles_profiles.append(vpd)
-        return vehicles_profiles
+
+    return vehicles_profiles
 
 
 def plot_vehicle_speed_accel_downtrack_with_tsc(
@@ -544,140 +677,151 @@ def plot_vehicle_speed_accel_downtrack_with_tsc(
     y_axis_stepsize,
     plot_title,
 ):
-    print("Plot vehicle downtrack with TSC. Plotting >>  " + plot_title)
-    fig, ax = plt.subplots(2)
+    subplot_nums = len(vehicles_plot_data)
+    print(
+        "Detected %s numbers of vehicle(s)' profile data. Plot vehicle(s)' profile(s) with TSC. Plotting >>  %s "
+        % (subplot_nums, plot_title)
+    )
+    fig, ax = plt.subplots() if subplot_nums == 1 else plt.subplots(subplot_nums)
+    colors = ["blue", "black", "purple", "cyan", "orange", "brown"]
     fig.suptitle(plot_title, fontsize=14)
-    for i in [0, 1]:
+    i = 0
+    while i < subplot_nums:
         # Vehicle info lines
-        speed_ts_idx = vehicles_plot_data[i][vehicles_plot_data[i]["profile_name"]+"_idx"]
-        df = pd.DataFrame(vehicles_plot_data[i], index=speed_ts_idx)
+        ts_idx = vehicles_plot_data[i][vehicles_plot_data[i]["profile_name"] + "_idx"]
+        df = pd.DataFrame(vehicles_plot_data[i], index=ts_idx)
         relative_x_axis_idx = []
-        for idx in speed_ts_idx:
-            relative_x_axis_idx.append(idx.timestamp() - speed_ts_idx[0].timestamp())
-            
-        ax[i].plot(
+        for idx in ts_idx:
+            relative_x_axis_idx.append(idx.timestamp() - ts_idx[0].timestamp())
+        ax_local = ax if subplot_nums == 1 else ax[i]
+        ax_local.plot(
             relative_x_axis_idx,
             df[vehicles_plot_data[i]["profile_name"]],
-            color="blue" if i == 0 else "black",
-            label = vehicles_plot_data[i]["v_name"],
+            color=colors[i],
+            label=vehicles_plot_data[i]["v_name"],
         )
-        ax[i].legend()
-        tsc_start_phase = vehicles_plot_data[i]["tsc_start_phase"]
+        ax_local.legend()
+        # tsc_start_phase = vehicles_plot_data[i]["tsc_start_phase"]
         tsc_start_y = vehicles_plot_data[i]["tsc_start_y"]
 
-        # Traffic signal with horizontal bars
+        # # Traffic signal with horizontal bars
         period_count_start = relative_x_axis_idx[0]
         period_count_start_end = relative_x_axis_idx[len(relative_x_axis_idx) - 1]
+        start_phase_pos = 0
+        for phase in vehicles_plot_data[i]["tsc_phases"]:
+            print(TSC_phases_lookup[phase])
+            ax_local.broken_barh([(start_phase_pos,1)], (tsc_start_y, tsc_bar_height), facecolors=TSC_phases_lookup[phase] , alpha=vehicles_plot_data[i]["tsc_alpha"])
+            start_phase_pos+=1
         # YELLOW(3)-->RED(30)-->GREEN(27)
-        if tsc_start_phase == "yellow":
-            count = 1
-            while period_count_start < period_count_start_end:
-                ax[i].broken_barh(
-                    [(period_count_start, tsc_yellow_duration)],
-                    (tsc_start_y, tsc_bar_height),
-                    facecolors=("yellow"),
-                    label="Yellow Phase" if count <= 1 else "",
-                    alpha=vehicles_plot_data[i]["tsc_alpha"],
-                )
-                period_count_start += tsc_yellow_duration
+        # if tsc_start_phase == "yellow":
+        #     count = 1
+        #     while period_count_start < period_count_start_end:
+        #         ax_local.broken_barh(
+        #             [(period_count_start, tsc_yellow_duration)],
+        #             (tsc_start_y, tsc_bar_height),
+        #             facecolors=("yellow"),
+        #             label="Yellow Phase" if count <= 1 else "",
+        #             alpha=vehicles_plot_data[i]["tsc_alpha"],
+        #         )
+        #         period_count_start += tsc_yellow_duration
 
-                ax[i].broken_barh(
-                    [(period_count_start, tsc_red_duration)],
-                    (tsc_start_y, tsc_bar_height),
-                    facecolors=("red"),
-                    label="Red Phase" if count <= 1 else "",
-                    alpha=vehicles_plot_data[i]["tsc_alpha"],
-                )
-                period_count_start += tsc_red_duration
+        #         ax_local.broken_barh(
+        #             [(period_count_start, tsc_red_duration)],
+        #             (tsc_start_y, tsc_bar_height),
+        #             facecolors=("red"),
+        #             label="Red Phase" if count <= 1 else "",
+        #             alpha=vehicles_plot_data[i]["tsc_alpha"],
+        #         )
+        #         period_count_start += tsc_red_duration
 
-                ax[i].broken_barh(
-                    [(period_count_start, tsc_green_duration)],
-                    (tsc_start_y, tsc_bar_height),
-                    facecolors=("green"),
-                    label="Green Phase" if count <= 1 else "",
-                    alpha=vehicles_plot_data[i]["tsc_alpha"],
-                )
-                period_count_start += tsc_green_duration
-                count += 1
+        #         ax_local.broken_barh(
+        #             [(period_count_start, tsc_green_duration)],
+        #             (tsc_start_y, tsc_bar_height),
+        #             facecolors=("green"),
+        #             label="Green Phase" if count <= 1 else "",
+        #             alpha=vehicles_plot_data[i]["tsc_alpha"],
+        #         )
+        #         period_count_start += tsc_green_duration
+        #         count += 1
 
-        # RED(30)-->GREEN(27)-->YELLOW(3)
-        elif tsc_start_phase == "red":
-            count = 1
-            while period_count_start < period_count_start_end:
-                ax[i].broken_barh(
-                    [(period_count_start, tsc_red_duration)],
-                    (tsc_start_y, tsc_bar_height),
-                    facecolors=("red"),
-                    label="Red Phase" if count <= 1 else "",
-                    alpha=vehicles_plot_data[i]["tsc_alpha"],
-                )
-                period_count_start += tsc_red_duration
+        # # RED(30)-->GREEN(27)-->YELLOW(3)
+        # elif tsc_start_phase == "red":
+        #     count = 1
+        #     while period_count_start < period_count_start_end:
+        #         ax_local.broken_barh(
+        #             [(period_count_start, tsc_red_duration)],
+        #             (tsc_start_y, tsc_bar_height),
+        #             facecolors=("red"),
+        #             label="Red Phase" if count <= 1 else "",
+        #             alpha=vehicles_plot_data[i]["tsc_alpha"],
+        #         )
+        #         period_count_start += tsc_red_duration
 
-                ax[i].broken_barh(
-                    [(period_count_start, tsc_green_duration)],
-                    (tsc_start_y, tsc_bar_height),
-                    facecolors=("green"),
-                    label="Green Phase" if count <= 1 else "",
-                    alpha=vehicles_plot_data[i]["tsc_alpha"],
-                )
-                period_count_start += tsc_green_duration
+        #         ax_local.broken_barh(
+        #             [(period_count_start, tsc_green_duration)],
+        #             (tsc_start_y, tsc_bar_height),
+        #             facecolors=("green"),
+        #             label="Green Phase" if count <= 1 else "",
+        #             alpha=vehicles_plot_data[i]["tsc_alpha"],
+        #         )
+        #         period_count_start += tsc_green_duration
 
-                ax[i].broken_barh(
-                    [(period_count_start, tsc_yellow_duration)],
-                    (tsc_start_y, tsc_bar_height),
-                    facecolors=("yellow"),
-                    label="Yellow Phase" if count <= 1 else "",
-                    alpha=vehicles_plot_data[i]["tsc_alpha"],
-                )
-                period_count_start += tsc_yellow_duration
-                count += 1
+        #         ax_local.broken_barh(
+        #             [(period_count_start, tsc_yellow_duration)],
+        #             (tsc_start_y, tsc_bar_height),
+        #             facecolors=("yellow"),
+        #             label="Yellow Phase" if count <= 1 else "",
+        #             alpha=vehicles_plot_data[i]["tsc_alpha"],
+        #         )
+        #         period_count_start += tsc_yellow_duration
+        #         count += 1
 
-        # GREEN(27)-->YELLOW(3)-->RED(30)
-        elif tsc_start_phase == "green":
-            count = 1
-            while period_count_start < period_count_start_end:
-                ax[i].broken_barh(
-                    [(period_count_start, tsc_green_duration)],
-                    (tsc_start_y, tsc_bar_height),
-                    facecolors=("green"),
-                    label="Green Phase" if count <= 1 else "",
-                    alpha=vehicles_plot_data[i]["tsc_alpha"],
-                )
-                period_count_start += tsc_green_duration
+        # # GREEN(27)-->YELLOW(3)-->RED(30)
+        # elif tsc_start_phase == "green":
+        #     count = 1
+        #     while period_count_start < period_count_start_end:
+        #         ax_local.broken_barh(
+        #             [(period_count_start, tsc_green_duration)],
+        #             (tsc_start_y, tsc_bar_height),
+        #             facecolors=("green"),
+        #             label="Green Phase" if count <= 1 else "",
+        #             alpha=vehicles_plot_data[i]["tsc_alpha"],
+        #         )
+        #         period_count_start += tsc_green_duration
 
-                ax[i].broken_barh(
-                    [(period_count_start, tsc_yellow_duration)],
-                    (tsc_start_y, tsc_bar_height),
-                    facecolors=("yellow"),
-                    label="Yellow Phase" if count <= 1 else "",
-                    alpha=vehicles_plot_data[i]["tsc_alpha"],
-                )
-                period_count_start += tsc_yellow_duration
+        #         ax_local.broken_barh(
+        #             [(period_count_start, tsc_yellow_duration)],
+        #             (tsc_start_y, tsc_bar_height),
+        #             facecolors=("yellow"),
+        #             label="Yellow Phase" if count <= 1 else "",
+        #             alpha=vehicles_plot_data[i]["tsc_alpha"],
+        #         )
+        #         period_count_start += tsc_yellow_duration
 
-                ax[i].broken_barh(
-                    [(period_count_start, tsc_red_duration)],
-                    (tsc_start_y, tsc_bar_height),
-                    facecolors=("red"),
-                    label="Red Phase" if count <= 1 else "",
-                    alpha=vehicles_plot_data[i]["tsc_alpha"],
-                )
-                period_count_start += tsc_red_duration
-                count += 1
-        ax[i].legend()
+        #         ax_local.broken_barh(
+        #             [(period_count_start, tsc_red_duration)],
+        #             (tsc_start_y, tsc_bar_height),
+        #             facecolors=("red"),
+        #             label="Red Phase" if count <= 1 else "",
+        #             alpha=vehicles_plot_data[i]["tsc_alpha"],
+        #         )
+        #         period_count_start += tsc_red_duration
+        #         count += 1
+        ax_local.legend()
 
-        # x-axis and y-axis        
-        ax[i].grid(True)
-        ax[i].set_xlabel("Time (s)")
-        ax[i].set_ylabel(vehicles_plot_data[i]["y_label"])
+        # x-axis and y-axis
+        ax_local.grid(True)
+        ax_local.set_xlabel("Time (s)")
+        ax_local.set_ylabel(vehicles_plot_data[i]["y_label"])
         start_x, start_y = 0, 0
-        stepsize_y = y_axis_stepsize 
-        stepsize_x = 10  # unit of second
+        stepsize_x = 1  # unit of second
         end_x, end_y = (
-            max( period_count_start, period_count_start_end ) + stepsize_x,
-            max_y_axis + stepsize_y,
+            max(period_count_start, period_count_start_end) + stepsize_x,
+            max_y_axis + y_axis_stepsize,
         )
-        ax[i].set_xticks(np.arange(start_x, end_x, stepsize_x))
-        ax[i].set_yticks(np.arange(start_y, end_y, stepsize_y))
+        ax_local.set_xticks(np.arange(start_x, end_x, stepsize_x))
+        ax_local.set_yticks(np.arange(start_y, end_y, y_axis_stepsize))
+        i += 1
 
 
 ###########################################################################################################
@@ -699,56 +843,91 @@ def show_vehicles_speed_profiles(vehicle_profiles_data):
 
     NOTE: This plot should be generated in two forms 1 time for the individual vehicles and once as a single plot combing the data from two vehicles
     """
-    # start_ts = 1648777543
-    # end_ts = 1648777703
-    cur_speed_idx = [ cur_speed_idx for cur_speed_idx in vehicle_profiles_data[0].cur_speeds_ts.keys()]
-    date_time_1 = datetime.datetime.utcfromtimestamp(cur_speed_idx[0])
-    date_time_5 = datetime.datetime.utcfromtimestamp(cur_speed_idx[len(cur_speed_idx) - 1])
-    cur_speed_ts_idx = pd.date_range(date_time_1, date_time_5, freq="S")
+    vehicles_plot_data_list = []
+    for vehicle_profile_data in vehicle_profiles_data:
+        cur_speed_idx = [
+            cur_speed_idx for cur_speed_idx in vehicle_profile_data.cur_speeds_ts.keys()
+        ]
+        date_time_1 = datetime.datetime.utcfromtimestamp(cur_speed_idx[0])
+        date_time_5 = datetime.datetime.utcfromtimestamp(
+            cur_speed_idx[len(cur_speed_idx) - 1]
+        )
+        cur_speed_ts_idx = pd.date_range(date_time_1, date_time_5, freq="S")
+        cur_speed_list = [
+            cur_speed for cur_speed in vehicle_profile_data.cur_speeds_ts.values()
+        ]
 
-    start_phase = "red"
-    start_phase_other = "yellow"
-    tsc_yellow_duration, tsc_red_duration, tsc_green_duration = 3, 27, 30
-    tsc_start_y = 0
-    tsc_bar_height = 15
-    tsc_alpha = 0.5  # opacity of bars
-    vehicles_plot_data = [
-        {
-            "v_name": vehicle_profiles_data[0].bag_name.split("/")[len(vehicle_profiles_data[0].bag_name.split("/")) - 1][0:9],
+        spat_phases_ts = [
+            spat_phase_ts for spat_phase_ts in vehicle_profile_data.spat_phase_ts.keys()
+        ]
+        date_time_1 = datetime.datetime.utcfromtimestamp(spat_phases_ts[0])
+        date_time_5 = datetime.datetime.utcfromtimestamp(
+            spat_phases_ts[len(spat_phases_ts) - 1]
+        )
+        spat_phases_ts_idx = pd.date_range(date_time_1, date_time_5, freq="S")
+        phase_list = [
+            cur_phase for cur_phase in vehicle_profile_data.spat_phase_ts.values()
+        ]
+
+        ds_tf_ts = [
+            value for value in vehicle_profile_data.ds_tf_ts.values()
+        ]
+
+        v_name = vehicle_profile_data.vehicle_name
+
+        start_phase = "red"
+        tsc_yellow_duration, tsc_red_duration, tsc_green_duration = 3, 27, 30
+        tsc_start_y = 0
+        tsc_bar_height = 15
+        tsc_alpha = 0.5  # opacity of bars
+        vehicles_plot_data_dict = {
+            "v_name": v_name,
             "profile_name": "speed",
-            "speed": [cur_speed for cur_speed in vehicle_profiles_data[0].cur_speeds_ts.values()],
+            "speed": cur_speed_list,
             "speed_idx": cur_speed_ts_idx,
             "y_label": "Speed (m/s)",
-            "tsc_start_phase": start_phase,
+            # "tsc_start_phase": start_phase,
+            "tsc_phases": phase_list,
+            "tsc_phases_idx": spat_phases_ts_idx,
             "tsc_start_y": tsc_start_y,
             "tsc_alpha": tsc_alpha,
-        },
-        {
-            "v_name": vehicle_profiles_data[0].bag_name.split("/")[len(vehicle_profiles_data[0].bag_name.split("/")) - 1][0:9],
-            "profile_name": "speed",
-            "speed": [cur_speed for cur_speed in vehicle_profiles_data[0].cur_speeds_ts.values()],
-            "speed_idx": cur_speed_ts_idx,
-            "y_label": "Speed (m/s)",
-            "tsc_start_phase": start_phase_other,
-            "tsc_start_y": tsc_start_y,
-            "tsc_alpha": tsc_alpha,
-        },
-    ]
+        }
+        vehicles_plot_data_list.append(vehicles_plot_data_dict)
 
-    max_y_axis = max(max(vehicle_profiles_data[0].cur_speeds_ts.values()), tsc_bar_height + tsc_start_y)
+    max_y_axis = max(
+        max(vehicles_plot_data_list[0]["speed"]), tsc_bar_height + tsc_start_y
+    )
     y_axis_stepsize = 1
     plot_title = "Vehicle Speed Profile"
     plot_vehicle_speed_accel_downtrack_with_tsc(
-        vehicles_plot_data,
+        vehicles_plot_data_list,
         tsc_yellow_duration,
         tsc_red_duration,
         tsc_green_duration,
         tsc_bar_height,
         max_y_axis,
         y_axis_stepsize,
-        plot_title
+        plot_title,
     )
 
+
+###########################################################################################################
+# TSMO UC2-M2.3 : The average deceleration\acceleration over any 1-second portion of the test time horizon
+# shall be no greater than 3.0 m/s^2.
+#
+# Expected: acceleration <= 3.0 m/s^2 deceleration >= -3.0 m/s^2
+###########################################################################################################
+
+"""
+Required topics
+- Engagement status : /guidance/state cav_msgs/GuidanceState
+- Current_speed : /hardware_interface/vehicle/twist (use to compute accel) geometry_msgs/TwistStamped
+- Vehicle accel : /hardware_interface/velocity_accel_cov (use as alternative source of accel) automotive_platform_msgs/VelocityAccelCov (https://github.com/astuff/automotive_autonomy_msgs/blob/master/automotive_platform_msgs/msg/VelocityAccelCov.msg)
+
+Approach:
+- While the vehicle is engaged, create a 1s sliding window and take the start and end speed for each timestep of the window and compute the average acceleration
+- Additionally, verify that the abs(/hardware_interface/velocity_accel_cov reported value) never exceeds 3.0 for more than 1 timestep at any point during engagement
+"""
 
 ###########################################################################################################
 # Additional Requested Plots: Acceleration over time with matching signal state shown
@@ -769,49 +948,64 @@ def show_vehicles_accel_profiles(vehicle_profiles_data):
 
     NOTE: This plot should be generated in two forms 1 time for the individual vehicles and once as a single plot combing the data from two vehicles
     """
-    # start_ts = 1648777543
-    # end_ts = 1648777703
-    # date_time_1 = datetime.datetime.utcfromtimestamp(start_ts)
-    # date_time_5 = datetime.datetime.utcfromtimestamp(end_ts)
-    cur_accels_ts = [ cur_accels_ts for cur_accels_ts in vehicle_profiles_data[0].cur_speeds_ts.keys()]
-    date_time_1 = datetime.datetime.utcfromtimestamp(cur_accels_ts[0])
-    date_time_5 = datetime.datetime.utcfromtimestamp(cur_accels_ts[len(cur_accels_ts) - 1])
-    cur_accel_ts_idx = pd.date_range(date_time_1, date_time_5, freq="S")
+    vehicles_plot_data_list = []
+    for vehicle_profile_data in vehicle_profiles_data:
+        cur_accels_ts = [
+            cur_accels_ts for cur_accels_ts in vehicle_profile_data.cur_speeds_ts.keys()
+        ]
+        date_time_1 = datetime.datetime.utcfromtimestamp(cur_accels_ts[0])
+        date_time_5 = datetime.datetime.utcfromtimestamp(
+            cur_accels_ts[len(cur_accels_ts) - 1]
+        )
+        cur_accel_ts_idx = pd.date_range(date_time_1, date_time_5, freq="S")
+        cur_accel_list = [
+            cur_accel for cur_accel in vehicle_profile_data.cur_accels_ts.values()
+        ]
 
-    tsc_yellow_duration, tsc_red_duration, tsc_green_duration = 3, 27, 30
-    tsc_start_y = 0
-    tsc_bar_height = 3
-    tsc_start_phase = "red"
-    tsc_start_phase_other = "green"
-    tsc_alpha = 0.3  # opacity of bars
-    vehicles_plot_data = [
-        {
-            "v_name": vehicle_profiles_data[0].bag_name.split("/")[len(vehicle_profiles_data[0].bag_name.split("/")) - 1][0:9],
+        spat_phases_ts = [
+            spat_phase_ts for spat_phase_ts in vehicle_profile_data.spat_phase_ts.keys()
+        ]
+        date_time_1 = datetime.datetime.utcfromtimestamp(spat_phases_ts[0])
+        date_time_5 = datetime.datetime.utcfromtimestamp(
+            spat_phases_ts[len(spat_phases_ts) - 1]
+        )
+        spat_phases_ts_idx = pd.date_range(date_time_1, date_time_5, freq="S")
+        phase_list = [
+            cur_phase for cur_phase in vehicle_profile_data.spat_phase_ts.values()
+        ]
+
+        ds_tf_ts = [
+            value for value in vehicle_profile_data.ds_tf_ts.values()
+        ]
+
+        v_name = vehicle_profile_data.vehicle_name
+
+        tsc_yellow_duration, tsc_red_duration, tsc_green_duration = 3, 27, 30
+        tsc_start_y = 0
+        tsc_bar_height = 3
+        tsc_start_phase = "red"
+        tsc_start_phase_other = "green"
+        tsc_alpha = 0.3  # opacity of bars
+        vehicles_plot_data_dict = {
+            "v_name": v_name,
             "profile_name": "accel",
-            "accel": [cur_accel for cur_accel in vehicle_profiles_data[0].cur_accels_ts.values()],
+            "accel": cur_accel_list,
             "accel_idx": cur_accel_ts_idx,
             "y_label": "Accel (m/s^2)",
-            "tsc_start_phase": tsc_start_phase,
+            "tsc_phases": phase_list,
+            "tsc_phases_idx": spat_phases_ts_idx,
+            # "tsc_start_phase": tsc_start_phase,
             "tsc_start_y": tsc_start_y,
             "tsc_alpha": tsc_alpha,
-        },
-        {
-            "v_name": vehicle_profiles_data[0].bag_name.split("/")[len(vehicle_profiles_data[0].bag_name.split("/")) - 1][0:9],
-            "profile_name": "accel",
-            "accel": [cur_accel for cur_accel in vehicle_profiles_data[0].cur_accels_ts.values()],
-            "accel_idx": cur_accel_ts_idx,
-            "y_label": "Accel (m/s^2)",
-            "tsc_start_phase": tsc_start_phase_other,
-            "tsc_start_y": tsc_start_y,
-            "tsc_alpha": tsc_alpha,
-        },
-    ]
-
-    max_y_axis = max(max([cur_accel for cur_accel in vehicle_profiles_data[0].cur_accels_ts.values()]), tsc_bar_height + tsc_start_y)
+        }
+        vehicles_plot_data_list.append(vehicles_plot_data_dict)
+    max_y_axis = max(
+        max(vehicles_plot_data_list[0]["accel"]), tsc_bar_height + tsc_start_y
+    )
     y_axis_stepsize = 1
     plot_title = "Vehicle Acceleration Profile"
     plot_vehicle_speed_accel_downtrack_with_tsc(
-        vehicles_plot_data,
+        vehicles_plot_data_list,
         tsc_yellow_duration,
         tsc_red_duration,
         tsc_green_duration,
@@ -846,46 +1040,68 @@ def show_vehicles_downtrack_profiles(vehicle_profiles_data):
     # date_time_1 = datetime.datetime.utcfromtimestamp(start_ts)
     # date_time_5 = datetime.datetime.utcfromtimestamp(end_ts)
     # ts_idx = pd.date_range(date_time_1, date_time_5, freq="S")
-    cur_downtrack_ts = [ cur_downtrack_ts for cur_downtrack_ts in vehicle_profiles_data[0].cur_downtracks_ts.keys()]
-    date_time_1 = datetime.datetime.utcfromtimestamp(cur_downtrack_ts[0])
-    date_time_5 = datetime.datetime.utcfromtimestamp(cur_downtrack_ts[len(cur_downtrack_ts) - 1])
-    cur_downtrack_ts_idx = pd.date_range(date_time_1, date_time_5, freq="S")
+    vehicles_plot_data_list = []
+    for vehicle_profile_data in vehicle_profiles_data:
+        cur_downtrack_ts = [
+            cur_downtrack_ts
+            for cur_downtrack_ts in vehicle_profile_data.cur_downtracks_ts.keys()
+        ]
+        date_time_1 = datetime.datetime.utcfromtimestamp(cur_downtrack_ts[0])
+        date_time_5 = datetime.datetime.utcfromtimestamp(
+            cur_downtrack_ts[len(cur_downtrack_ts) - 1]
+        )
+        cur_downtrack_ts_idx = pd.date_range(date_time_1, date_time_5, freq="S")
+        cur_downtrack_list = [
+            cur_downtrack
+            for cur_downtrack in vehicle_profile_data.cur_downtracks_ts.values()
+        ]
 
-    # Traffic Signal bars config
-    tsc_start_phase = "red"
-    tsc_start_phase_other = "yellow"
-    tsc_start_y = 100
-    tsc_bar_height = 20
-    tsc_alpha = 1  # opacity of bars
-    tsc_yellow_duration, tsc_red_duration, tsc_green_duration = 3, 27, 30
-    vehicles_plot_data = [
-        {
-            "v_name": vehicle_profiles_data[0].bag_name.split("/")[len(vehicle_profiles_data[0].bag_name.split("/")) - 1][0:9],
+        spat_phases_ts = [
+            spat_phase_ts for spat_phase_ts in vehicle_profile_data.spat_phase_ts.keys()
+        ]
+        date_time_1 = datetime.datetime.utcfromtimestamp(spat_phases_ts[0])
+        date_time_5 = datetime.datetime.utcfromtimestamp(
+            spat_phases_ts[len(spat_phases_ts) - 1]
+        )
+        spat_phases_ts_idx = pd.date_range(date_time_1, date_time_5, freq="S")
+        phase_list = [
+            cur_phase for cur_phase in vehicle_profile_data.spat_phase_ts.values()
+        ]
+
+        ds_tf_ts = [
+            value for value in vehicle_profile_data.ds_tf_ts.values()
+        ]
+
+        v_name = vehicle_profile_data.vehicle_name
+
+        # Traffic Signal bars config
+        tsc_start_phase = "red"
+        tsc_start_phase_other = "yellow"
+        tsc_start_y = max(ds_tf_ts)
+        tsc_bar_height = 20
+        tsc_alpha = 1  # opacity of bars
+        tsc_yellow_duration, tsc_red_duration, tsc_green_duration = 3, 27, 30
+        vehicles_plot_data_dict = {
+            "v_name": v_name,
             "profile_name": "downtrack",
-            "downtrack": [cur_downtrack for cur_downtrack in vehicle_profiles_data[0].cur_downtracks_ts.values()],
+            "downtrack": cur_downtrack_list,
             "downtrack_idx": cur_downtrack_ts_idx,
             "y_label": "Downtrack (m)",
-            "tsc_start_phase": tsc_start_phase,
+            "tsc_phases": phase_list,
+            "tsc_phases_idx": spat_phases_ts_idx,
+            # "tsc_start_phase": tsc_start_phase,
             "tsc_start_y": tsc_start_y,
             "tsc_alpha": tsc_alpha,
-        },
-        {
-            "v_name": vehicle_profiles_data[0].bag_name.split("/")[len(vehicle_profiles_data[0].bag_name.split("/")) - 1][0:9],
-            "profile_name": "downtrack",
-            "downtrack": [cur_downtrack for cur_downtrack in vehicle_profiles_data[0].cur_downtracks_ts.values()],
-            "downtrack_idx": cur_downtrack_ts_idx,
-            "y_label": "Downtrack (m)",
-            "tsc_start_phase": tsc_start_phase_other,
-            "tsc_start_y": tsc_start_y,
-            "tsc_alpha": tsc_alpha,
-        },
-    ]
+        }
+        vehicles_plot_data_list.append(vehicles_plot_data_dict)
 
-    max_y_axis = max(max( [cur_downtrack for cur_downtrack in vehicle_profiles_data[0].cur_downtracks_ts.values()] ), tsc_bar_height + tsc_start_y)
-    y_axis_stepsize = 20
-    plot_title = "Vehicle Downtrack Profile"    
+    max_y_axis = max(
+        max(vehicles_plot_data_list[0]["downtrack"]), tsc_bar_height + tsc_start_y
+    )
+    y_axis_stepsize = 100
+    plot_title = "Vehicle Downtrack Profile"
     plot_vehicle_speed_accel_downtrack_with_tsc(
-        vehicles_plot_data,
+        vehicles_plot_data_list,
         tsc_yellow_duration,
         tsc_red_duration,
         tsc_green_duration,
@@ -894,6 +1110,42 @@ def show_vehicles_downtrack_profiles(vehicle_profiles_data):
         y_axis_stepsize,
         plot_title,
     )
+
+
+def show_vehicles_profiles(vehicle_profiles_data):
+    show_vehicles_speed_profiles(vehicle_profiles_data)
+    show_vehicles_accel_profiles(vehicle_profiles_data)
+    show_vehicles_downtrack_profiles(vehicle_profiles_data)
+    show_spats_maps_frequency_profiles(vehicle_profiles_data)
+
+
+def load_bags():
+    """Read the bags given the bags paths. Populate the vehicle profile data python object, and add the object to a list of vehicle profiles.
+
+    Returns:
+        _type_: list of vehicle_profile_data
+    """
+    bag_vehicle_names = {
+        "data/CC-RG_BP_E2_R0_2022-04-01-20-27-13.bag": "DOT-45245",  # Black Pacifica: DOT-45245
+        # "data/DOT-12345_2021-05-25-20-18-52.bag": "DOT-45255"  # Blue Lexus: DOT-45255
+    }
+    print(
+        "Found %d number(s) of engaged vehicle(s) profiles in the bags in TSMO uc2 use case."
+        % len(bag_vehicle_names)
+    )
+    vehicle_profiles_data = load_rosbags_to_vehicles_profile(bag_vehicle_names)
+    return vehicle_profiles_data
+
+
+def show_bags():
+    """
+    Plot the vehicle information from the ROS bags generated by vehicles
+    """
+    vehicle_profiles_data = load_bags()
+    show_vehicles_profiles(vehicle_profiles_data)
+    plt.legend(loc="upper right")
+    plt.show()
+
 
 # Main Function; run all tests from here
 # TODO: The contents of this main function provide some basic structure for loading data, but need not be followed if not applicable
@@ -1129,22 +1381,6 @@ def main():
     return
 
 
-def show_profiles(vehicle_profiles_data):
-    show_vehicles_speed_profiles(vehicle_profiles_data)
-    show_vehicles_accel_profiles(vehicle_profiles_data)
-    show_vehicles_downtrack_profiles(vehicle_profiles_data)
-    # show_spats_maps_frequency_profiles(vehicle_profiles_data)
-    plt.legend(loc="upper right")
-    plt.show()
-
-
 if __name__ == "__main__":
     # main()
-    bag_names = ["data/DOT-12345_2021-05-25-20-18-51.bag"]
-    vehicle_profiles_data = load_rosbags_to_vehicles_profile(bag_names)
-    if len(vehicle_profiles_data) >= 0:
-        print(
-            "Found %d numbers of engaged vehicles profiles in the bags"
-            % len(vehicle_profiles_data)
-        )
-        show_profiles(vehicle_profiles_data)
+    show_bags()
