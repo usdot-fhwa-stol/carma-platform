@@ -264,7 +264,7 @@ namespace basic_autonomy
                                                                    const carma_wm::WorldModelConstPtr &wm,const cav_msgs::VehicleState &state, int downsample_ratio)
         {
             //TODO: state is unused; if there are no plans to use it, then remove from arg list
-            ROS_DEBUG_STREAM("Unused arg state = " << state);
+            //testing sonarcloud... ROS_DEBUG_STREAM("Unused arg state = " << state);
 
             std::vector<lanelet::BasicPoint2d> centerline_points;
 
