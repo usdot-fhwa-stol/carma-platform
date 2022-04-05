@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -453,19 +453,17 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     return;
   }
 
-
+  bool route_invalidated_by_queued_map_update = false; // Flag to indicate whether this new route has been invalidated due to one of the applied queued map updates
   if(rerouting_flag_==true && route_msg->is_rerouted )
-
   {
+    rerouting_flag_ = false; // Reset flag since the route node has finished re-routing
 
     // After setting map evaluate the current update queue to apply any updates that arrived before the map
     bool more_updates_to_apply = true;
     while(!map_update_queue_.empty() && more_updates_to_apply) {
 
       auto update = map_update_queue_.front(); // Get first update
-      map_update_queue_.pop(); // Remove update from queue
-      rerouting_flag_ = false;  // route node has finished routing, allow update
-      update->invalidates_route=false; // do not trigger rerouting for route node again
+      map_update_queue_.pop(); // Remove update from queue     
 
       if (update->map_version < current_map_version_) { // Drop any so far unapplied updates for the current map
         ROS_WARN_STREAM("Apply from reroute: There were unapplied updates in carma_wm when a new map was recieved.");
@@ -473,6 +471,13 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
       }
       if (update->map_version == current_map_version_) { // Current update goes with current map which is also the map used by this route
         ROS_DEBUG_STREAM("Applying queued update after route was recieved. ");
+
+        if (update->invalidates_route == true) {
+          ROS_DEBUG_STREAM("Applied queued map update has invalidated the route.");
+          route_invalidated_by_queued_map_update = true;
+        }
+
+        update->invalidates_route=false; // Do not trigger rerouting for route node in mapUpdateCallback; all necessary rerouting will occur outside of this loop
         mapUpdateCallback(update); // Apply the update
       } else {
         ROS_INFO_STREAM("Apply from reroute: Done applying updates for new map. However, more updates are waiting for a future map.");
@@ -483,15 +488,36 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 
   }
 
-  recompute_route_flag_ = false;
-  rerouting_flag_ = false;
+  //recompute_route_flag_ = false;
+  //rerouting_flag_ = false;
 
   if (!world_model_->getMap()) { // This check is a bit redundant but still useful from a debugging perspective as the alternative is a segfault
     ROS_ERROR_STREAM("WMListener received a route before a map was available. Dropping route message.");
     return;
   }
 
-  auto path = lanelet::ConstLanelets();
+  // If one of the applied queued map updates invalidated the route, then the routing graph must be updated again
+  if (route_invalidated_by_queued_map_update){
+    ROS_DEBUG_STREAM("At least one applied queued map update has invalidated the route. Routing graph will be recomputed.");
+    world_model_->setMap(world_model_->getMutableMap(), current_map_version_, route_invalidated_by_queued_map_update);
+    ROS_DEBUG_STREAM("Finished recomputing the routing graph for the applied queued map update(s)");
+    
+    rerouting_flag_ = true; // Set flag to trigger a route update by the route node due to the updated routing graph
+
+    return;
+  }
+  else {
+    rerouting_flag_ = false; // Reset flag since routing graph has not been updated
+
+    if (route_callback_)
+    {
+      route_callback_(); // Replan maneuvers based on updated map
+    }
+
+    return;
+  }
+
+/*   auto path = lanelet::ConstLanelets();
   for(auto id : route_msg->shortest_path_lanelet_ids)
   {
     auto ll = world_model_->getMap()->laneletLayer.get(id);
@@ -510,10 +536,12 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
   world_model_->setRouteName(route_msg->route_name);
 
   // Call route_callback_
+  // This triggers route_following_plugin maneuvers update based on the updated routing graph
+  // Do it here if no recomputed routing graph; otherwise do it 
   if (route_callback_)
   {
     route_callback_();
-  }
+  } */
 }
 
 void WMListenerWorker::setMapCallback(std::function<void()> callback)
