@@ -55,8 +55,9 @@ struct LCIStrategicPluginConfig
   //! Minimum allowable speed in m/s
   double absolute_minimum_speed = 2.2352;
 
-  //! Double: Fraction of max deceleration to start considering to stop. max_decel / X = desired_accel to start stopping. Unit: N/A
-  double deceleration_fraction = 6.0;
+  //! Double: Safety multiplier of planned allowable vehicle deceleration to use when stopping. This new deceleration makes vehicle decelerate earlier distance.
+  //!      NOTE: Stacks on vehicle_decel_limit_multiplier and stopping uses max_decel; this distance is only used for calculating earlier downtrack
+  double deceleration_fraction = 0.8;
 
   //! The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
   double min_maneuver_planning_period = 15.1;

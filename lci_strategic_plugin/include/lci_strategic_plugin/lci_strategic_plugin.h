@@ -133,6 +133,7 @@ public:
    * 
    */
   TSCase case_num_ = TSCase::UNAVAILABLE; 
+  TSCase last_case_num_ = TSCase::UNAVAILABLE; 
   double distance_remaining_to_tf_ = 0.0;
   double earliest_entry_time_ = 0.0;
   double scheduled_entry_time_ = 0.0;
@@ -314,9 +315,73 @@ private:
                                         double traffic_light_down_track);
 
   /**
+   * \brief This function returns valid maneuvers if the vehicle is able to utilize trajectory smoothing parameters to go through the intersection with certainty
+   *        It utilizes canMakeWithCertainty function to determine if it is able to make it. Corresponds to TSCase 1-7
+   * \param req Plan maneuver request
+   * \param[out] resp Plan maneuver response with a list of maneuver plan
+   * \param current_state Current state of the vehicle
+   * \param current_state_speed The current speed to use when planning
+   * \param traffic_light CarmaTrafficSignalPtr of the relevant signal
+   * \param entry_lanelet Entry lanelet in to the intersection along route
+   * \param exit_lanelet Exit lanelet in to the intersection along route
+   * \param traffic_light_down_track Downtrack to the given traffic_light
+   * \param ts_params trajectory smoothing params
+   *
+   * \return void. if successful, resp is non-empty. Resp is empty if not able to make it with certainty or ts_params.is_successful is false
+   */
+  void handleGreenSignalScenario(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp, 
+                                        const VehicleState& current_state, 
+                                        double current_state_speed,
+                                        const lanelet::CarmaTrafficSignalPtr& traffic_light,
+                                        const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, 
+                                        double traffic_light_down_track, const TrajectoryParams& ts_params);
+  /**
+   * \brief This function returns valid maneuvers if the vehicle is able to utilize trajectory smoothing parameters to go through the intersection with certainty
+   *        It utilizes canMakeWithCertainty function to determine if it is able to make it. Corresponds to TSCase 1-7
+   * \param req Plan maneuver request
+   * \param[out] resp Plan maneuver response with a list of maneuver plan
+   * \param current_state Current state of the vehicle
+   * \param current_state_speed The current speed to use when planning
+   * \param traffic_light CarmaTrafficSignalPtr of the relevant signal
+   * \param traffic_light_down_track Downtrack to the given traffic_light
+   * \param ts_params trajectory smoothing params
+   *
+   * \return void. if successful, resp is non-empty. Resp is empty if not able to make it with certainty or ts_params.is_successful is false
+   */
+  void handleCruisingUntilStop(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp, 
+                                        const VehicleState& current_state, 
+                                        double current_state_speed,
+                                        const lanelet::CarmaTrafficSignalPtr& traffic_light,
+                                        double traffic_light_down_track, const TrajectoryParams& ts_params);
+
+  /**
    * \brief When the vehicle is not able to successfully run the algorithm or not able to stop, this function modifies 
    *        departure speed as close as possible to the original using max comfortable accelerations with given distance.
+   * 
+   * \param req Plan maneuver request
+   * \param[out] resp Plan maneuver response with a list of maneuver plan
+   * \param current_state Current state of the vehicle
+   * \param current_state_speed The current speed to use when planning
+   * \param speed_limit   Speed limit to cap the speed
+   * \param remaining_time  Remaining time until scheduled entry
+   * \param exit_lanelet_id Id of the exit lanelet
+   * \param traffic_light CarmaTrafficSignalPtr of the relevant signal
+   * \param traffic_light_down_track Downtrack to the given traffic_light
+   * \param ts_params trajectory smoothing params
    *
+   * \return void. if successful, resp is non-empty. Resp is empty if not able to make it with certainty or ts_params.is_successful is false
+   */
+  void handleFailureCase(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp, 
+                                        const VehicleState& current_state, 
+                                        double current_state_speed,
+                                        double speed_limit,
+                                        double remaining_time, 
+                                        lanelet::Id exit_lanelet_id,
+                                        const lanelet::CarmaTrafficSignalPtr& traffic_light, 
+                                        double traffic_light_down_track, const TrajectoryParams& ts_params);
+
+  /**
+   * \brief Helper function to handleFailureCase that modifies ts_params to desired new parameters. See handleFailureCase
    * \param starting_speed starting speed
    * \param departure_speed departure_speed originally planned
    * \param speed_limit speed_limit
@@ -326,7 +391,7 @@ private:
    *
    * \return TSP with parameters that is best available to pass the intersection. Either cruising with starting_speed or sacrifice departure speed to meet time and distance
    */
-  TrajectoryParams handleFailureCase(double starting_speed, double departure_speed, double speed_limit, double remaining_downtrack, double remaining_time, double traffic_light_downtrack);
+  TrajectoryParams handleFailureCaseHelper(double starting_speed, double departure_speed, double speed_limit, double remaining_downtrack, double remaining_time, double traffic_light_downtrack);
                                         
   /**
    * \brief Helper method to evaluate if the given traffic light state is supported by this plugin

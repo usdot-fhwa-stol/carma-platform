@@ -128,6 +128,19 @@ LCIStrategicPlugin::VehicleState LCIStrategicPlugin::extractInitialState(const c
   return state;
 }
 
+double LCIStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt) const
+{
+  lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
+  if (traffic_rules)
+  {
+    return (*traffic_rules)->speedLimit(llt).speedLimit.value();
+  }
+  else
+  {
+    throw std::invalid_argument("Valid traffic rules object could not be built");
+  }
+}
+
 bool LCIStrategicPlugin::validLightState(const boost::optional<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>& optional_state,
                                         const ros::Time& source_time) const
 {
@@ -149,6 +162,42 @@ bool LCIStrategicPlugin::validLightState(const boost::optional<std::pair<boost::
   return true;
 }
 
+boost::optional<bool> LCIStrategicPlugin::canArriveAtGreenWithCertainty(const ros::Time& light_arrival_time_by_algo, const lanelet::CarmaTrafficSignalPtr& traffic_light) const
+{
+    ros::Time early_arrival_time_by_algo =
+        light_arrival_time_by_algo - ros::Duration(config_.green_light_time_buffer);
+
+    ros::Time late_arrival_time_by_algo =
+        light_arrival_time_by_algo + ros::Duration(config_.green_light_time_buffer);
+
+    ROS_DEBUG_STREAM("light_arrival_time_by_algo: " << std::to_string(light_arrival_time_by_algo.toSec()));
+    ROS_DEBUG_STREAM("early_arrival_time_by_algo: " << std::to_string(early_arrival_time_by_algo.toSec()));
+    ROS_DEBUG_STREAM("late_arrival_time_by_algo: " << std::to_string(late_arrival_time_by_algo.toSec()));
+
+    auto early_arrival_state_by_algo_optional = traffic_light->predictState(lanelet::time::timeFromSec(early_arrival_time_by_algo.toSec()));
+
+    if (!validLightState(early_arrival_state_by_algo_optional, early_arrival_time_by_algo))
+      return boost::none;
+
+    ROS_DEBUG_STREAM("early_arrival_state_by_algo: " << early_arrival_state_by_algo_optional.get().second);
+
+    auto late_arrival_state_by_algo_optional = traffic_light->predictState(lanelet::time::timeFromSec(late_arrival_time_by_algo.toSec()));
+
+    if (!validLightState(late_arrival_state_by_algo_optional, late_arrival_time_by_algo))
+      return boost::none; 
+
+    ROS_DEBUG_STREAM("late_arrival_state_by_algo: " << late_arrival_state_by_algo_optional.get().second);
+
+    // We will cross the light on the green phase even if we arrive early or late
+    if (early_arrival_state_by_algo_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
+        late_arrival_state_by_algo_optional.get().second ==
+            lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)  // Green light
+      return true;
+    else
+      return false;
+
+}
+
 std::vector<lanelet::ConstLanelet> LCIStrategicPlugin::getLaneletsBetweenWithException(double start_downtrack,
                                                                                       double end_downtrack,
                                                                                       bool shortest_path_only,
@@ -166,6 +215,223 @@ std::vector<lanelet::ConstLanelet> LCIStrategicPlugin::getLaneletsBetweenWithExc
 
   return crossed_lanelets;
 }
+
+void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp, 
+                                        const VehicleState& current_state, 
+                                        const lanelet::CarmaTrafficSignalPtr& traffic_light,
+                                        const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, const lanelet::ConstLanelet& current_lanelet,
+                                        double traffic_light_down_track)
+{
+  double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack;
+
+  // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
+  std::vector<lanelet::ConstLanelet> crossed_lanelets =
+        getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
+
+  double decel_rate =  max_comfort_decel_norm_; // Kinematic |(v_f - v_i) / t = a|
+  ROS_DEBUG_STREAM("HANDLE_STOPPING: Planning stop and wait maneuver at decel_rate: " << decel_rate);
+  
+  case_num_ = TSCase::STOPPING;
+  
+  resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
+    current_state.downtrack, traffic_light_down_track, current_state.speed, crossed_lanelets.front().id(),
+    crossed_lanelets.back().id(), current_state.stamp,
+    current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
+}
+
+
+void LCIStrategicPlugin::handleFailureCase(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp, 
+                                        const VehicleState& current_state, 
+                                        double current_state_speed,
+                                        double speed_limit,
+                                        double remaining_time, 
+                                        lanelet::Id exit_lanelet_id,
+                                        const lanelet::CarmaTrafficSignalPtr& traffic_light, 
+                                        double traffic_light_down_track, const TrajectoryParams& ts_params)
+{
+  double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack;
+
+  // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
+  std::vector<lanelet::ConstLanelet> crossed_lanelets =
+        getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
+
+  auto incomplete_traj_params = handleFailureCaseHelper(current_state_speed, intersection_speed_.get(), speed_limit, distance_remaining_to_traffic_light, remaining_time, traffic_light_down_track);
+
+  resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
+                                          current_state_speed, incomplete_traj_params.modified_departure_speed, current_state.stamp, current_state.stamp + ros::Duration(incomplete_traj_params.modified_remaining_time), incomplete_traj_params));
+
+  double intersection_length = intersection_end_downtrack_.get() - traffic_light_down_track;
+
+  ros::Time intersection_exit_time =
+      current_state.stamp + ros::Duration(incomplete_traj_params.modified_remaining_time) + ros::Duration(intersection_length / incomplete_traj_params.modified_departure_speed);
+
+  resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
+      traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
+      incomplete_traj_params.modified_departure_speed, current_state.stamp + ros::Duration(incomplete_traj_params.modified_remaining_time), intersection_exit_time, crossed_lanelets.back().id(), exit_lanelet_id));
+
+  case_num_ = TSCase::UNAVAILABLE;
+}
+
+void LCIStrategicPlugin::handleCruisingUntilStop(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp, 
+                                        const VehicleState& current_state, 
+                                        double current_state_speed,
+                                        const lanelet::CarmaTrafficSignalPtr& traffic_light, 
+                                        double traffic_light_down_track, const TrajectoryParams& ts_params)
+{
+  if (!ts_params.is_algorithm_successful || ts_params.case_num != TSCase::CASE_8)
+  {
+    ROS_WARN_STREAM("handleCruisingUntilStop is called but it is not case_8");
+    return;
+  }
+
+  auto new_ts_params = ts_params; 
+
+  double decel_rate = std::fabs(ts_params.a3_);
+
+  ROS_DEBUG_STREAM("CASE_8: Planning cruise and stop with decel_rate: " << decel_rate);
+  
+  new_ts_params.t3_ = new_ts_params.t2_;
+  new_ts_params.x3_ = new_ts_params.x2_;
+  new_ts_params.v3_ = new_ts_params.v2_;
+  new_ts_params.a3_ = new_ts_params.a2_;
+
+  resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
+                                          current_state_speed, new_ts_params.v2_, current_state.stamp, ros::Time(new_ts_params.t2_), new_ts_params));
+
+  // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
+  std::vector<lanelet::ConstLanelet> case_8_crossed_lanelets =
+      getLaneletsBetweenWithException(new_ts_params.x2_, traffic_light_down_track, true, true);
+
+  resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
+    new_ts_params.x2_, traffic_light_down_track, new_ts_params.v2_, case_8_crossed_lanelets.front().id(),
+    case_8_crossed_lanelets.back().id(), ros::Time(new_ts_params.t2_),
+    current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
+
+  case_num_ = TSCase::CASE_8;
+
+  return;
+}
+
+void LCIStrategicPlugin::handleGreenSignalScenario(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp, 
+                                        const VehicleState& current_state, 
+                                        double current_state_speed,
+                                        const lanelet::CarmaTrafficSignalPtr& traffic_light,
+                                        const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet,
+                                        double traffic_light_down_track, const TrajectoryParams& ts_params)
+{
+  if (!ts_params.is_algorithm_successful || ts_params.case_num == TSCase::CASE_8) 
+  {
+    return;
+  }
+
+  ros::Time light_arrival_time_by_algo = ros::Time(ts_params.t3_);
+  double remaining_time = light_arrival_time_by_algo.toSec() - req.header.stamp.toSec();
+  ROS_DEBUG_STREAM("Algo initially successful: New light_arrival_time_by_algo: " << std::to_string(light_arrival_time_by_algo.toSec()) << ", with remaining_time: " << std::to_string(remaining_time));
+  auto can_make_green_optional = canArriveAtGreenWithCertainty(light_arrival_time_by_algo, traffic_light);
+
+  // no change for maneuver if invalid light states
+  if (!can_make_green_optional) 
+    return;
+  
+  if (can_make_green_optional.get())
+  {
+    ROS_DEBUG_STREAM("HANDLE_SUCCESSFULL: Algorithm successful, and able to make it at green with certainty. Planning traj smooth and intersection transit maneuvers");
+    
+    resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
+                                          current_state_speed, ts_params.v3_, current_state.stamp, light_arrival_time_by_algo, ts_params));
+
+    double intersection_length = intersection_end_downtrack_.get() - traffic_light_down_track;
+
+    ros::Time intersection_exit_time =
+        light_arrival_time_by_algo + ros::Duration(intersection_length / intersection_speed_.get());
+
+    resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
+        traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
+        intersection_speed_.get(), light_arrival_time_by_algo, intersection_exit_time, entry_lanelet.id(), exit_lanelet.id()));
+    
+    case_num_ = ts_params.case_num; //to print for debugging
+  }
+}
+
+
+TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(double starting_speed, double departure_speed,  double speed_limit, double remaining_downtrack, double remaining_time, double traffic_light_downtrack)
+{
+  //Requested maneuver needs to be modified to meet remaining_dist req
+  //by trying to get close to the target_speed and remaining_time as much as possible
+  TrajectoryParams params;
+
+  params.is_algorithm_successful = false;
+  params.case_num = CASE_1;
+
+  ROS_DEBUG_STREAM("HANDLE_LAST_RESORT_CASE: Starting...");
+  double modified_remaining_time;
+
+  if (starting_speed <= departure_speed)
+    modified_remaining_time = (sqrt(pow(starting_speed, 2) + (2 * max_comfort_accel_ * remaining_downtrack)) - starting_speed)/ max_comfort_accel_;
+  else
+    modified_remaining_time = (sqrt(pow(starting_speed, 2) + (2 * max_comfort_decel_ * remaining_downtrack)) - starting_speed) / max_comfort_decel_;
+
+  if (starting_speed <= departure_speed)
+  {
+    params.a1_ = max_comfort_accel_;
+    params.v1_ = sqrt(pow(starting_speed, 2) + (2 * max_comfort_accel_ * remaining_downtrack));
+  }
+  else
+  {
+    params.a1_ = max_comfort_decel_;
+    params.v1_ = sqrt(pow(starting_speed, 2) + (2 * max_comfort_decel_ * remaining_downtrack));
+  }
+
+  params.x1_ = traffic_light_downtrack;
+
+  params.a2_ = 0;
+  params.v2_ = params.v1_;
+  params.x2_ = params.x1_;
+
+  params.a3_ = 0;
+  params.v3_ = params.v1_;
+  params.x3_ = params.x1_;
+
+  params.modified_departure_speed = params.v1_;
+  params.modified_remaining_time = modified_remaining_time;
+
+  // handle hard failure case such as nan
+  if (!isnan(params.modified_departure_speed) && params.modified_departure_speed > epsilon_ &&
+      params.modified_departure_speed <  speed_limit ) //80_mph
+  {
+    ROS_DEBUG_STREAM("Updated the speed, and using modified_departure_speed: " << params.modified_departure_speed);
+    print_params(params);
+    return params;
+  }
+
+  params.a1_ = 0;
+  params.v1_ = starting_speed;
+  params.x1_ = traffic_light_downtrack;
+
+  params.a2_ = 0;
+  params.v2_ = params.v1_;
+  params.x2_ = params.x1_;
+
+  params.a3_ = 0;
+  params.v3_ = params.v1_;
+  params.x3_ = params.x1_;
+
+  params.modified_departure_speed = params.v1_;
+  params.modified_remaining_time = remaining_downtrack / starting_speed;
+
+  ROS_DEBUG_STREAM("Cruising!!! at: " << params.modified_departure_speed <<", for sec: " << params.modified_remaining_time << ", where remaining_time: " << remaining_time);
+  
+  // handle hard failure case such as nan
+  if (isnan(params.modified_departure_speed) || params.modified_departure_speed < - epsilon_ ||
+      params.modified_departure_speed > 35.7632 ) //80_mph
+  {
+    throw std::invalid_argument("Calculated departure speed is invalid: " + std::to_string(params.modified_departure_speed));
+  }
+  print_params(params);
+  
+  return params;
+}
+
 
 void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversRequest& req,
                                             cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
@@ -237,42 +503,6 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
 
 }
 
-
-boost::optional<bool> LCIStrategicPlugin::canArriveAtGreenWithCertainty(const ros::Time& light_arrival_time_by_algo, const lanelet::CarmaTrafficSignalPtr& traffic_light) const
-{
-    ros::Time early_arrival_time_by_algo =
-        light_arrival_time_by_algo - ros::Duration(config_.green_light_time_buffer);
-
-    ros::Time late_arrival_time_by_algo =
-        light_arrival_time_by_algo + ros::Duration(config_.green_light_time_buffer);
-
-    ROS_DEBUG_STREAM("light_arrival_time_by_algo: " << std::to_string(light_arrival_time_by_algo.toSec()));
-    ROS_DEBUG_STREAM("early_arrival_time_by_algo: " << std::to_string(early_arrival_time_by_algo.toSec()));
-    ROS_DEBUG_STREAM("late_arrival_time_by_algo: " << std::to_string(late_arrival_time_by_algo.toSec()));
-
-    auto early_arrival_state_by_algo_optional = traffic_light->predictState(lanelet::time::timeFromSec(early_arrival_time_by_algo.toSec()));
-
-    if (!validLightState(early_arrival_state_by_algo_optional, early_arrival_time_by_algo))
-      return boost::none;
-
-    ROS_DEBUG_STREAM("early_arrival_state_by_algo: " << early_arrival_state_by_algo_optional.get().second);
-
-    auto late_arrival_state_by_algo_optional = traffic_light->predictState(lanelet::time::timeFromSec(late_arrival_time_by_algo.toSec()));
-
-    if (!validLightState(late_arrival_state_by_algo_optional, late_arrival_time_by_algo))
-      return boost::none; 
-
-    ROS_DEBUG_STREAM("late_arrival_state_by_algo: " << late_arrival_state_by_algo_optional.get().second);
-
-    // We will cross the light on the green phase even if we arrive early or late
-    if (early_arrival_state_by_algo_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
-        late_arrival_state_by_algo_optional.get().second ==
-            lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)  // Green light
-      return true;
-    else
-      return false;
-
-}
 void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest& req,
                                             cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
                                             const lanelet::CarmaTrafficSignalPtr& traffic_light, const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, const lanelet::ConstLanelet& current_lanelet)
@@ -285,7 +515,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     return;
   }
 
-  
   double current_state_speed = std::max(current_state.speed, config_.algo_minimum_speed * 1.001);
 
   auto stop_line = traffic_light->getStopLine(entry_lanelet);
@@ -294,8 +523,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   {
     throw std::invalid_argument("Given entry lanelet doesn't have stop_line...");
   }
-
-
 
   double traffic_light_down_track =
       wm_->routeTrackPos(stop_line.get().front().basicPoint2d()).downtrack;
@@ -312,7 +539,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     transition_table_.signal(TransitEvent::CROSSED_STOP_BAR);
     return;
   }
-
 
   // If the vehicle is at a stop trigger the stopped state
   constexpr double HALF_MPH_IN_MPS = 0.22352;
@@ -397,113 +623,89 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   auto boundary_distances = get_delta_x(current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_);
   print_boundary_distances(boundary_distances); //debug
 
-
-
   auto boundary_traj_params = get_boundary_traj_params(req.header.stamp.toSec(), current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_, current_state.downtrack, traffic_light_down_track, distance_remaining_to_traffic_light, boundary_distances);
-
 
   TrajectoryParams ts_params = get_ts_case(req.header.stamp.toSec(), nearest_green_entry_time.toSec(), current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_, current_state.downtrack, traffic_light_down_track, distance_remaining_to_traffic_light, boundary_distances, boundary_traj_params);
   print_params(ts_params);
 
   ROS_DEBUG_STREAM("SPEED PROFILE CASE:" << ts_params.case_num);
 
-  // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
-  std::vector<lanelet::ConstLanelet> crossed_lanelets =
-        getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
-
   // CASE SELECTION END
 
-  // Although algorithm determines nearest_green_time is possible, check if the vehicle can arrive with certainty
+  // Although algorithm determines nearest_green_time is possible, check if the vehicle can arrive with certainty (Case 1-7)
   if (ts_params.is_algorithm_successful && ts_params.case_num != TSCase::CASE_8) 
   {
-    ros::Time light_arrival_time_by_algo = ros::Time(ts_params.t3_);
-    remaining_time = light_arrival_time_by_algo.toSec() - req.header.stamp.toSec();
-    ROS_DEBUG_STREAM("Algo initially successful: New light_arrival_time_by_algo: " << std::to_string(light_arrival_time_by_algo.toSec()) << ", with remaining_time: " << std::to_string(remaining_time));
-    auto can_make_green_optional = canArriveAtGreenWithCertainty(light_arrival_time_by_algo, traffic_light);
-
-    // no change for maneuver if invalid light states
-    if (!can_make_green_optional) 
-      return;
+    handleGreenSignalScenario(req, resp, current_state, current_state_speed, traffic_light, entry_lanelet, exit_lanelet, traffic_light_down_track, ts_params);
     
-    if (can_make_green_optional.get())
+    if (!resp.new_plan.maneuvers.empty()) // able to pass at green
     {
-      ROS_DEBUG_STREAM("HANDLE_SUCCESSFULL: Algorithm successful, and able to make it at green with certainty. Planning traj smooth and intersection transit maneuvers");
-      
-      resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
-                                            current_state_speed, ts_params.v3_, current_state.stamp, light_arrival_time_by_algo, ts_params));
-
-      double intersection_length = intersection_end_downtrack_.get() - traffic_light_down_track;
-
-      ros::Time intersection_exit_time =
-          light_arrival_time_by_algo + ros::Duration(intersection_length / intersection_speed_.get());
-
-      resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
-          traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
-          intersection_speed_.get(), light_arrival_time_by_algo, intersection_exit_time, entry_lanelet.id(), exit_lanelet.id()));
-      
-      case_num_ = ts_params.case_num; //to print for debugging
-
+      last_case_num_ = ts_params.case_num;
       return;
+    }
+     
+  }
+  
+  ROS_DEBUG_STREAM("Not able to make it with certainty: TSCase: " << ts_params.case_num);
+
+  // if algorithm is NOT successful or if the vehicle cannot make the green light with certainty
+
+  double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_);
+  ROS_DEBUG_STREAM("safe_distance_to_stop at max_comfort_decel:  " << safe_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
+
+  double desired_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_ * config_.deceleration_fraction);
+  ROS_DEBUG_STREAM("desired_distance_to_stop at: " << desired_distance_to_stop << ", where effective deceleration rate is: " << max_comfort_decel_norm_ * config_.deceleration_fraction);
+  
+  desired_distance_to_stop = std::max(desired_distance_to_stop, config_.stopping_location_buffer);
+
+  ROS_DEBUG_STREAM("new desired_distance_to_stop: " << desired_distance_to_stop);
+
+  ROS_DEBUG_STREAM("distance_remaining_to_traffic_light:  " << distance_remaining_to_traffic_light << ", current_state.speed: " << current_state.speed);
+
+  if (desired_distance_to_stop < distance_remaining_to_traffic_light && last_case_num_ != TSCase::STOPPING) // do not switch from STOPPING to case8 again
+  {
+    ROS_DEBUG_STREAM("Way too early to stop. Cruising at CASE8");
+    handleCruisingUntilStop(req, resp, current_state, current_state_speed, traffic_light, traffic_light_down_track, ts_params);
+    
+    if (!resp.new_plan.maneuvers.empty())
+    {
+      last_case_num_ = ts_params.case_num; //case 8
+      return;
+    }
+  }
+
+  if ((safe_distance_to_stop <= distance_remaining_to_traffic_light && desired_distance_to_stop >= distance_remaining_to_traffic_light) || 
+    last_case_num_ == TSCase::STOPPING) // if stopping continue stopping until transition to planwhenWAITING
+  {
+    ROS_DEBUG_STREAM("Planning stopping now. last case:" << static_cast<int>(last_case_num_));
+    handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track); //case_9
+
+    if (!resp.new_plan.maneuvers.empty()) // able to stop
+    {
+      last_case_num_ = TSCase::STOPPING;
+      return;
+    }
+  }
+
+  if (safe_distance_to_stop > distance_remaining_to_traffic_light)
+  {
+    ROS_DEBUG_STREAM("No longer within safe distance to stop! Decide to continue stopping or continue into intersection"); //TODO handle stopping or handle failure
+    
+    if (last_case_num_ != TSCase::STOPPING && last_case_num_ != TSCase::UNAVAILABLE && last_case_num_ != TSCase::CASE_8) //case 1-7
+    {
+      // 3. if not able to stop nor reach target speed at green, attempt its best to reach the target parameters at the intersection
+      ROS_DEBUG_STREAM("HANDLE_LAST_RESORT: The vehicle is not able to stop at red/yellow light nor is able to reach target speed at green. Attempting its best to pass through at green!");
+      
+      handleFailureCase(req, resp, current_state, current_state_speed, speed_limit, remaining_time, 
+                                    exit_lanelet.id(), traffic_light, traffic_light_down_track, ts_params);
     }
     else
     {
-      ROS_DEBUG_STREAM("Not able to make it with certainty: TSCase: " << ts_params.case_num);
+      ROS_DEBUG_STREAM("HANDLE_SAFETY: Planning to keep stopping now. last case:" << static_cast<int>(last_case_num_));
+      handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track); //case_9
     }
   }
-  
-  // if algorithm is NOT successful or if the vehicle cannot make the green light with certainty
-  // Check if we can stop safely on RED
-  handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track);
 
-  if (!resp.new_plan.maneuvers.empty()) // able to stop
-    return;
-  
-  if (ts_params.is_algorithm_successful && ts_params.case_num == TSCase::CASE_8)
-  {
-    double decel_rate = std::fabs(ts_params.a3_);
-
-    ROS_DEBUG_STREAM("CASE_8: Planning cruise and stop with decel_rate: " << decel_rate);
-    
-    ts_params.t3_ = ts_params.t2_;
-    ts_params.x3_ = ts_params.x2_;
-    ts_params.v3_ = ts_params.v2_;
-    ts_params.a3_ = ts_params.a2_;
-
-    resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
-                                            current_state_speed, ts_params.v2_, current_state.stamp, ros::Time(ts_params.t2_), ts_params));
-
-    // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
-    std::vector<lanelet::ConstLanelet> case_8_crossed_lanelets =
-        getLaneletsBetweenWithException(ts_params.x2_, traffic_light_down_track, true, true);
-
-    resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
-      ts_params.x2_, traffic_light_down_track, ts_params.v2_, case_8_crossed_lanelets.front().id(),
-      case_8_crossed_lanelets.back().id(), ros::Time(ts_params.t2_),
-      current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
-
-    case_num_ = TSCase::CASE_8;
-
-    return;
-  }
-
-  // 3. if not able to stop nor reach target speed at green, attempt its best to reach the target parameters at the intersection
-  ROS_DEBUG_STREAM("HANDLE_LAST_RESORT: The vehicle is not able to stop at red/yellow light nor is able to reach target speed at green. Attempting its best to pass through at green!");
-  
-  auto incomplete_traj_params = handleFailureCase(current_state_speed, intersection_speed_.get(), speed_limit, distance_remaining_to_traffic_light, remaining_time, traffic_light_down_track);
-
-  resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
-                                          current_state_speed, incomplete_traj_params.modified_departure_speed, current_state.stamp, current_state.stamp + ros::Duration(incomplete_traj_params.modified_remaining_time), incomplete_traj_params));
-
-  double intersection_length = intersection_end_downtrack_.get() - traffic_light_down_track;
-
-  ros::Time intersection_exit_time =
-      current_state.stamp + ros::Duration(incomplete_traj_params.modified_remaining_time) + ros::Duration(intersection_length / incomplete_traj_params.modified_departure_speed);
-
-  resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
-      traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
-      incomplete_traj_params.modified_departure_speed, current_state.stamp + ros::Duration(incomplete_traj_params.modified_remaining_time), intersection_exit_time, crossed_lanelets.back().id(), exit_lanelet.id()));
-
-  case_num_ = TSCase::UNAVAILABLE;
+ 
 }
 
 void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& req,
@@ -819,19 +1021,6 @@ cav_msgs::Maneuver LCIStrategicPlugin::composeIntersectionTransitMessage(double 
                                                                       << " to end_time: " << end_time);
 
   return maneuver_msg;
-}
-
-double LCIStrategicPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt) const
-{
-  lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
-  if (traffic_rules)
-  {
-    return (*traffic_rules)->speedLimit(llt).speedLimit.value();
-  }
-  else
-  {
-    throw std::invalid_argument("Valid traffic rules object could not be built");
-  }
 }
 
 }  // namespace lci_strategic_plugin
