@@ -54,6 +54,6 @@
   </include>
 	
   <!-- Temporary node to get a ROS2 accel topic into the rosbag -->
-  <node pkg="topic_tools" type="relay" name="relay_vehicle_command" args="/hardware_interface/as/velocity_accel_cov /hardware_interface/velocity_accel_cov"/>
+  <node pkg="topic_tools" type="relay" name="relay_vehicle_accel" args="/hardware_interface/as/velocity_accel_cov /hardware_interface/velocity_accel_cov"/>
 
 </launch>
