@@ -501,7 +501,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     ROS_DEBUG_STREAM("At least one applied queued map update has invalidated the route. Routing graph will be recomputed.");
     world_model_->setMap(world_model_->getMutableMap(), current_map_version_, route_invalidated_by_queued_map_update);
     ROS_DEBUG_STREAM("Finished recomputing the routing graph for the applied queued map update(s)");
-    
+
     rerouting_flag_ = true; // Set flag to trigger a route update by the route node due to the updated routing graph
 
     return;
@@ -509,39 +509,33 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
   else {
     rerouting_flag_ = false; // Reset flag since routing graph has not been updated
 
+    auto path = lanelet::ConstLanelets();
+    for(auto id : route_msg->shortest_path_lanelet_ids)
+    {
+      auto ll = world_model_->getMap()->laneletLayer.get(id);
+      path.push_back(ll);
+    }
+    if(path.empty()) return;
+    auto route_opt = path.size() == 1 ? world_model_->getMapRoutingGraph()->getRoute(path.front(), path.back())
+                                : world_model_->getMapRoutingGraph()->getRouteVia(path.front(), lanelet::ConstLanelets(path.begin() + 1, path.end() - 1), path.back());
+    if(route_opt.is_initialized()) {
+      auto ptr = std::make_shared<lanelet::routing::Route>(std::move(route_opt.get()));
+      world_model_->setRoute(ptr);
+    }
+
+    world_model_->setRouteEndPoint({route_msg->end_point.x,route_msg->end_point.y,route_msg->end_point.z});
+
+    world_model_->setRouteName(route_msg->route_name);
+
+    // Call route_callback_
     if (route_callback_)
     {
-      route_callback_(); // Replan maneuvers based on updated map
+      route_callback_();
     }
 
     return;
   }
 
-/*   auto path = lanelet::ConstLanelets();
-  for(auto id : route_msg->shortest_path_lanelet_ids)
-  {
-    auto ll = world_model_->getMap()->laneletLayer.get(id);
-    path.push_back(ll);
-  }
-  if(path.empty()) return;
-  auto route_opt = path.size() == 1 ? world_model_->getMapRoutingGraph()->getRoute(path.front(), path.back())
-                               : world_model_->getMapRoutingGraph()->getRouteVia(path.front(), lanelet::ConstLanelets(path.begin() + 1, path.end() - 1), path.back());
-  if(route_opt.is_initialized()) {
-    auto ptr = std::make_shared<lanelet::routing::Route>(std::move(route_opt.get()));
-    world_model_->setRoute(ptr);
-  }
-
-  world_model_->setRouteEndPoint({route_msg->end_point.x,route_msg->end_point.y,route_msg->end_point.z});
-
-  world_model_->setRouteName(route_msg->route_name);
-
-  // Call route_callback_
-  // This triggers route_following_plugin maneuvers update based on the updated routing graph
-  // Do it here if no recomputed routing graph; otherwise do it 
-  if (route_callback_)
-  {
-    route_callback_();
-  } */
 }
 
 void WMListenerWorker::setMapCallback(std::function<void()> callback)
