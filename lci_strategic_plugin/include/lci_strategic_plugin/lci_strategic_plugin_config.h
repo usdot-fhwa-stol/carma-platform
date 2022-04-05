@@ -59,6 +59,9 @@ struct LCIStrategicPluginConfig
   //!      NOTE: Stacks on vehicle_decel_limit_multiplier and stopping uses max_decel; this distance is only used for calculating earlier downtrack
   double deceleration_fraction = 0.8;
 
+  //! Double: Desired distance to stop buffer in meters
+  double desired_distance_to_stop_buffer = 10.0;
+
   //! The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
   double min_maneuver_planning_period = 15.1;
 
