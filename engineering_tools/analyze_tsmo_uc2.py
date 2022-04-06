@@ -105,26 +105,26 @@ Route_Paths_lookup = {
 
 class metric_categories_profile:
     def __init__(self):
-        self.metric_category_run_result_sum_dict = {}
-        self.metric_category_run_result_list = []
+        self.metric_category_sum_dict = {}
+        self.metric_category_list = []
         self.bag_count = 0
 
-    def update_metric_category_run_result_list(self, metric_category_dict):
-        self.metric_category_run_result_list.append(metric_category_dict)
+    def update_metric_category_list(self, metric_category_dict):
+        self.metric_category_list.append(metric_category_dict)
 
-    def update_mcp_run_result_sum_dict(self, category_name, run_result):
+    def update_mcp_sum_dict(self, category_name, run_result):
         """Update the metrics dictionary with metric names and its run result
 
         Args:
             category_name (string): Name of the metric category
             run_result (boolean): 1 or 0 to indicate whether the run result is successful or failed
         """
-        if category_name in self.metric_category_run_result_sum_dict.keys():
-            self.metric_category_run_result_sum_dict[category_name] = (
-                self.metric_category_run_result_sum_dict[category_name] + run_result
+        if category_name in self.metric_category_sum_dict.keys():
+            self.metric_category_sum_dict[category_name] = (
+                self.metric_category_sum_dict[category_name] + run_result
             )
         else:
-            self.metric_category_run_result_sum_dict[category_name] = run_result
+            self.metric_category_sum_dict[category_name] = run_result
 
 
 class vehicle_profile_data:
@@ -553,51 +553,53 @@ def show_spats_maps_frequency_profiles(vehicle_profiles_data):
         map_nums_ts = [
             map_num_ts for map_num_ts in vehicle_profile_data.map_nums_ts.keys()
         ]
-
         if len(map_nums_ts) != 0:
             date_time_1 = datetime.datetime.utcfromtimestamp(map_nums_ts[0])
             date_time_5 = datetime.datetime.utcfromtimestamp(
                 map_nums_ts[len(map_nums_ts) - 1]
             )
             map_nums_idx = pd.date_range(date_time_1, date_time_5, freq="5S")
-            map_nums_ts_list = [
+            map_nums_l = [
                 map_num_ts for map_num_ts in vehicle_profile_data.map_nums_ts.values()
             ]
             # Calculate average frequency for MAP in every 5 second
             map_avg_freq = []
-            count = 0
             i = 0
-            map_num_sum_ts = 0
-            while i < len(map_nums_idx):
+            count = 0
+            map_nums_tmp = 0
+            while count < len(map_nums_idx):
+                if i + 4 < len(map_nums_l):
+                    map_nums_tmp = (
+                        map_nums_l[i]
+                        + map_nums_l[i + 1]
+                        + map_nums_l[i + 2]
+                        + map_nums_l[i + 3]
+                        + map_nums_l[i + 4]
+                    )
+                map_avg_freq.append(map_nums_tmp / 5)
                 count += 1
-                map_num_sum_ts += map_nums_ts_list[i]
-                if count % 5 == 0:
-                    map_avg_freq.append(map_num_sum_ts / 5)
-                    map_num_sum_ts = 0
-                i += 1
+                i += 5
             if len(map_avg_freq) == 0:
                 print("ERROR: Map list size = 0")
+                return
+            if len(spat_nums_ts_list) == 0:
+                print("ERROR: SPAT list size = 0")
                 return
 
             # Calculate total average frequency for MAP
             map_sum_avg_frequency = [
-                sum(map_nums_ts_list)
-                / (map_nums_ts[len(map_nums_ts) - 1] - map_nums_ts[0])
+                sum(map_nums_l) / (map_nums_ts[len(map_nums_ts) - 1] - map_nums_ts[0])
             ]
 
         v_name = vehicle_profile_data.vehicle_name
         vehicles_plot_data_dict = {
             "v_name": v_name,
-            "spat_avg_frequency": spat_nums_ts_list if len(spat_nums_ts) != 0 else "",
-            "spat_sum_avg_frequency": spat_sum_avg_frequency
-            if len(spat_nums_ts) != 0
-            else "",
-            "spat_idx": spat_nums_idx if len(spat_nums_ts) != 0 else "",
-            "map_avg_frequency": map_avg_freq if len(map_nums_ts) != 0 else "",
-            "map_sum_avg_frequency": map_sum_avg_frequency
-            if len(map_nums_ts) != 0
-            else "",
-            "map_idx": map_nums_idx if len(map_nums_ts) != 0 else "",
+            "spat_avg_frequency": spat_nums_ts_list,
+            "spat_sum_avg_frequency": spat_sum_avg_frequency,
+            "spat_idx": spat_nums_idx,
+            "map_avg_frequency": map_avg_freq,
+            "map_sum_avg_frequency": map_sum_avg_frequency,
+            "map_idx": map_nums_idx,
             "y_label": "Frequency (HZ)",
         }
         vehicles_plot_data_list.append(vehicles_plot_data_dict)
@@ -1315,19 +1317,19 @@ def load_rosbags_result_to_metric_categories_profile(
     mcp = metric_categories_profile()
     for vpd in vehicle_profiles_data:
         mcp.bag_count += 1
-        mpc_through_lanelets_run_result = get_metric_category_through_lanelets_result(
+        mpc_through_lanelets = get_metric_category_through_lanelets_result(
             vpd,
             vehicle_expected_paths_names[vpd.vehicle_name],
         )
 
-        mcp.update_mcp_run_result_sum_dict(
+        mcp.update_mcp_sum_dict(
             Metric_Category_lookup.UC2_M2_1.name,
-            mpc_through_lanelets_run_result,
+            mpc_through_lanelets,
         )
 
         # metric_category_stoptime2EET_result= get_metric_category_stoptime2EET_result( vpd
         # )
-        # mcp.update_mcp_run_result_sum_dict(
+        # mcp.update_mcp_sum_dict(
         #     Metric_Category_lookup.UC2_M2_2.name, metric_category_stoptime2EET_result
         # )
 
@@ -1335,7 +1337,7 @@ def load_rosbags_result_to_metric_categories_profile(
             get_metric_category_enter_intersection2TSC_result(vpd)
         )
 
-        mcp.update_mcp_run_result_sum_dict(
+        mcp.update_mcp_sum_dict(
             Metric_Category_lookup.UC2_M2_3.name,
             mpc_enter_intersection2tsc_result,
         )
@@ -1344,37 +1346,37 @@ def load_rosbags_result_to_metric_categories_profile(
             get_metric_category_enter_intersection2TSMode_result(vpd)
         )
 
-        mcp.update_mcp_run_result_sum_dict(
+        mcp.update_mcp_sum_dict(
             Metric_Category_lookup.UC2_M2_4.name,
             mpc_enter_intersection2TSMode_result,
         )
 
-        mpc_spats_run_result = get_metric_category_spats_result(vpd)
+        mpc_spats = get_metric_category_spats_result(vpd)
 
-        mcp.update_mcp_run_result_sum_dict(
+        mcp.update_mcp_sum_dict(
             Metric_Category_lookup.UC2_M1_1.name,
-            mpc_spats_run_result,
+            mpc_spats,
         )
 
         mcp_dict = {
             "bag_name": vpd.bag_name,
             "vehicle_name": vpd.vehicle_name,
             "vehicle_alias": vehicle_alias_names[vpd.vehicle_name],
-            Metric_Category_lookup.UC2_M2_1.name: mpc_through_lanelets_run_result,
+            Metric_Category_lookup.UC2_M2_1.name: mpc_through_lanelets,
             # Metric_Category_lookup.UC2_M2_2.name: metric_category_stoptime2EET_result,
             Metric_Category_lookup.UC2_M2_3.name: mpc_enter_intersection2tsc_result,
             Metric_Category_lookup.UC2_M2_4.name: mpc_enter_intersection2TSMode_result,
-            Metric_Category_lookup.UC2_M1_1.name: mpc_spats_run_result,
+            Metric_Category_lookup.UC2_M1_1.name: mpc_spats,
         }
-        mcp.update_metric_category_run_result_list(mcp_dict)
+        mcp.update_metric_category_list(mcp_dict)
 
-    # print(mcp.metric_category_run_result_list)
-    # print(mcp.metric_category_run_result_sum_dict)
+    # print(mcp.metric_category_list)
+    # print(mcp.metric_category_sum_dict)
     return mcp
 
 
 def load_mcp_runs_to_excel(mcp, mc_keys):
-    mpc_rl = mcp.metric_category_run_result_list
+    mpc_rl = mcp.metric_category_list
     if len(mpc_rl) > 0:
         fieldnames = [
             "Metrics Category",
@@ -1389,7 +1391,7 @@ def load_mcp_runs_to_excel(mcp, mc_keys):
             for mc_key in mc_keys:
                 row_item = [
                     mc_key,
-                    mpc_row["vehicle_name"],
+                    mpc_row["vehicle_alias"],
                     mpc_row["bag_name"],
                     mpc_row[mc_key],
                 ]
@@ -1403,7 +1405,7 @@ def load_mcp_runs_to_excel(mcp, mc_keys):
 
 
 def load_mcp_sum_to_excel(mcp, mc_description, bag_vehicle_names):
-    mpc_sum_dict = mcp.metric_category_run_result_sum_dict
+    mpc_sum_dict = mcp.metric_category_sum_dict
     if len(mpc_sum_dict.keys()) > 0:
         fieldnames = [
             "Metrics Category",
@@ -1430,8 +1432,42 @@ def load_mcp_sum_to_excel(mcp, mc_description, bag_vehicle_names):
     else:
         print("EMPTY MPC Dict")
 
-def show_mcp(mcp):
-    pass
+
+def plot_mcp_runs(mcp, metric_categories, vehicle_alias):
+    fig, ax = plt.subplots(len(vehicle_alias))
+    i = 0
+    width = 0.35  # the width of the bars
+    x = np.arange(2)
+    for vehicle_name in vehicle_alias:
+        local_ax = ax[i]
+        mc_ls = plot_mcp_runs_by_vehicle(mcp, metric_categories, vehicle_name)
+        print("Plot for vehicle = %s" % vehicle_name)
+        print(mc_ls)
+        rects2 = local_ax.bar(0, [mc_ls["UC2_M1_1"][0]], width, label="UC2_M1_1")
+        rects1 = local_ax.bar(1, [mc_ls["UC2_M1_1"][1]], width, label="UC2_M1_1")
+        local_ax.set_ylabel('Scores')
+        local_ax.set_title('Scores by group and gender')
+        local_ax.set_xticks(x, metric_categories)
+        local_ax.legend()
+        i += 1
+    plt.show()
+
+
+def plot_mcp_runs_by_vehicle(mcp, metric_categories, vehicle_name):
+    mpc_rl = mcp.metric_category_list
+    is_success = 1
+    is_failed = 0
+    mc_idx = [is_failed, is_success]
+    mc_ls = {}
+    for mc_name in metric_categories:
+        mc_ls[mc_name] = [0, 0]
+        for mpc_r in mpc_rl:
+            if mpc_r["vehicle_alias"] == vehicle_name:
+                if (mpc_r[mc_name]) == is_success:
+                    mc_ls[mc_name][is_success] += 1
+                else:
+                    mc_ls[mc_name][is_failed] += 1
+    return mc_ls
 
 
 def plot_bags():
@@ -1443,7 +1479,7 @@ def plot_bags():
         # "data/CC-RG_BL_E1_R30_2022-04-01-20-27-36.bag": "BL-E1_R30-DOT-45255",                # Blue Lexus: DOT-45255
         # "data/CC-RG_BL_E2_G22_2022-04-01-20-44-10.bag_BADBAG":  "RG_BL_E2_G22-DOT-45255",     # Blue Lexus: DOT-45255
         # "data/CC-RG_BL_E2_R05_2022-04-01-20-59-30.bag": "BL_E2_R05_DOT-45255",  # Blue Lexus: DOT-45255
-        # "data/CC-RG_BP_E1_G2_2022-04-01-21-08-24.bag": "BP_E1_G2_DOT-45245",  # Black Pacifica: DOT-45245
+        "data/CC-RG_BP_E1_G2_2022-04-01-21-08-24.bag": "BP_E1_G2_DOT-45245",  # Black Pacifica: DOT-45245
         "data/CC-RG_BP_E2_G17_2022-04-01-20-14-27.bag": "BP_E2_G17_DOT-45245",  # Black Pacifica: DOT-45245
     }
 
@@ -1465,15 +1501,15 @@ def load_bags_to_excel():
     bag_vehicle_names = {
         # "data/CC-RG_BL_E1_R30_2022-04-01-20-27-36.bag": "BL-E1_R30-DOT-45255",  # Blue Lexus: DOT-45255
         # "data/CC-RG_BL_E2_G22_2022-04-01-20-44-10.bag_BADBAG":  "RG_BL_E2_G22-DOT-45255",     # Blue Lexus: DOT-45255
-        # "data/CC-RG_BL_E2_R05_2022-04-01-20-59-30.bag": "BL_E2_R05_DOT-45255",  # Blue Lexus: DOT-45255
-        "data/CC-RG_BP_E1_G2_2022-04-01-21-08-24.bag": "BP_E1_G2_DOT-45245",  # Black Pacifica: DOT-45245
+        "data/CC-RG_BL_E2_R05_2022-04-01-20-59-30.bag": "BL_E2_R05_DOT-45255",  # Blue Lexus: DOT-45255
+        # "data/CC-RG_BP_E1_G2_2022-04-01-21-08-24.bag": "BP_E1_G2_DOT-45245",  # Black Pacifica: DOT-45245
         "data/CC-RG_BP_E2_G17_2022-04-01-20-14-27.bag": "BP_E2_G17_DOT-45245",  # Black Pacifica: DOT-45245
     }
     vehicle_alias_names = {
-        "BL_E2_R05_DOT-45255": "Blue Lexus",  # Blue Lexus: DOT-45255
-        "BL_E1_R30_DOT-45255": "Blue Lexus",  # Blue Lexus: DOT-45255
-        "BP_E2_G17_DOT-45245": "Black Pacifica",  # Black Pacifica: DOT-45245
-        "BP_E1_G2_DOT-45245": "Black Pacifica",  # Black Pacifica: DOT-45245
+        "BL_E2_R05_DOT-45255": "Blue_Lexus",  # Blue Lexus: DOT-45255
+        "BL_E1_R30_DOT-45255": "Blue_Lexus",  # Blue Lexus: DOT-45255
+        "BP_E2_G17_DOT-45245": "Black_Pacifica",  # Black Pacifica: DOT-45245
+        "BP_E1_G2_DOT-45245": "Black_Pacifica",  # Black Pacifica: DOT-45245
     }
     vehicle_expected_paths_names = {
         "BL_E1_R30_DOT-45255": Route_Paths_lookup[
@@ -1506,9 +1542,11 @@ def load_bags_to_excel():
         Metric_Category_lookup.UC2_M2_3.name: "Vehicles shall not enter the intersection box at yellow or red phases.",
         Metric_Category_lookup.UC2_M2_4.name: "Each vehicle should switch away from the TS mode after entering the intersection box",
     }
-    load_mcp_runs_to_excel(mcp, mc_description.keys())
-    load_mcp_sum_to_excel(mcp, mc_description, bag_vehicle_names)
-    # show_mcp(mcp)
+    # load_mcp_runs_to_excel(mcp, mc_description.keys())
+    # load_mcp_sum_to_excel(mcp, mc_description, bag_vehicle_names)
+    plot_mcp_runs(
+        mcp, mc_description.keys(), set(v for v in vehicle_alias_names.values())
+    )
 
 
 # Main Function; run all tests from here
