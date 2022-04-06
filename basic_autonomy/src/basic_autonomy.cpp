@@ -882,7 +882,7 @@ namespace basic_autonomy
                 lanelet::BasicPoint2d current_pos(state.x_pos_global, state.y_pos_global);
                 lanelet::BasicPoint2d ending_pos(ending_state_before_buffer.x_pos_global, ending_state_before_buffer.y_pos_global);
 
-                if(wm->routeTrackPos(ending_pos).downtrack -  wm->routeTrackPos(current_pos).downtrack < epsilon_ ){
+                if(wm->routeTrackPos(ending_pos).downtrack < wm->routeTrackPos(current_pos).downtrack ){
 
                     ROS_WARN_STREAM("Current state is at or past the planned end distance. Couldn't generate trajectory");
                     return {};
