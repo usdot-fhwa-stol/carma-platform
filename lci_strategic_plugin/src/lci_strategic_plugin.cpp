@@ -642,11 +642,15 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       last_case_num_ = ts_params.case_num;
       return;
     }
-     
+    
+    ROS_DEBUG_STREAM("Not able to make it with certainty: TSCase: " << ts_params.case_num << ", changing it to 8");
+    ts_params = boundary_traj_params[7];
+    ts_params.is_algorithm_successful = false;
+    ts_params.case_num = CASE_8;
+    print_params(ts_params);
   }
   
-  ROS_DEBUG_STREAM("Not able to make it with certainty: TSCase: " << ts_params.case_num);
-
+  ROS_DEBUG_STREAM("Not able to make it with certainty: NEW TSCase: " << ts_params.case_num);
   // if algorithm is NOT successful or if the vehicle cannot make the green light with certainty
 
   double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_);
