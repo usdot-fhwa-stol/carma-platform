@@ -57,10 +57,10 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
   size_t stopping_index = 0;
   for (size_t i = 1; i < times.size(); i++)
   {
-    if (time[i] == times[i - 1]) //if exactly same, it is stopping case
+    if (times[i] == times[i - 1]) //if exactly same, it is stopping case
     {
       ROS_DEBUG_STREAM("Detected a stopping case where times is exactly equal: " << times[i-1]);
-      ROS_DEBUG_STREAM("And index of that is: " << i ", where size is: " << times.size());
+      ROS_DEBUG_STREAM("And index of that is: " << i << ", where size is: " << times.size());
       stopping_index = i;
       break;
     }
