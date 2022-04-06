@@ -348,8 +348,6 @@ void LCIStrategicPlugin::handleGreenSignalScenario(const cav_srvs::PlanManeuvers
     resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
         traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
         intersection_speed_.get(), light_arrival_time_by_algo, intersection_exit_time, entry_lanelet.id(), exit_lanelet.id()));
-    
-    case_num_ = ts_params.case_num; //to print for debugging
   }
 }
 
@@ -640,6 +638,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     if (!resp.new_plan.maneuvers.empty()) // able to pass at green
     {
       last_case_num_ = ts_params.case_num;
+      case_num_ = ts_params.case_num; //to print for debugging
       return;
     }
     
