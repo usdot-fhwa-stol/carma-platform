@@ -407,10 +407,15 @@ void LightControlledIntersectionTacticalPlugin::apply_trajectory_smoothing_algor
       //buffer points that will be cut
       speed_i = prev_speed;
     }
-    double speed_limit = p.speed; //p.speed originally is speed_limit
+
+    if (isnan(speed_i))
+    {
+      speed_i = std::max(config_.minimum_speed, algo_min_speed);
+      ROS_DEBUG_STREAM("Detected nan number from equations. Set to " << speed_i);
+    }
 
     p.speed = std::max({speed_i, config_.minimum_speed, algo_min_speed});
-    p.speed = std::min({p.speed, speed_limit, algo_max_speed}); 
+    p.speed = std::min({p.speed, speed_limit_, algo_max_speed}); 
     ROS_DEBUG_STREAM("Applied speed: " << p.speed << ", at dist: " << total_dist_planned);
 
     prev_point = p;
