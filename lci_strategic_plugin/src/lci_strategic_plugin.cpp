@@ -540,17 +540,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     return;
   }
 
-  // If the vehicle is at a stop trigger the stopped state
-  constexpr double HALF_MPH_IN_MPS = 0.22352;
-  if (current_state.speed < HALF_MPH_IN_MPS &&
-      fabs(distance_remaining_to_traffic_light) < config_.stopping_location_buffer + length_to_front_bumper_)
-  {
-    transition_table_.signal(TransitEvent::STOPPED);  // The vehicle has come to a stop at the light
-    ROS_DEBUG_STREAM("CARMA has detected that the vehicle stopped at the stop bar. Transitioning to WAITING STATE");
-
-    return;
-  }
-
   // At this point we know the vehicle is within the activation distance and we know the current and next light phases
   // All we need to now determine is if we should stop or if we should continue
   lanelet::ConstLanelet intersection_lanelet;
@@ -584,6 +573,17 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       wm_->routeTrackPos(exit_lanelet.centerline2d().front().basicPoint2d()).downtrack;
 
   ROS_DEBUG_STREAM("intersection_end_downtrack_: " << intersection_end_downtrack_.get());
+
+  // If the vehicle is at a stop trigger the stopped state
+  constexpr double HALF_MPH_IN_MPS = 0.22352;
+  if (current_state.speed < HALF_MPH_IN_MPS &&
+      fabs(distance_remaining_to_traffic_light) < config_.stopping_location_buffer)
+  {
+    transition_table_.signal(TransitEvent::STOPPED);  // The vehicle has come to a stop at the light
+    ROS_DEBUG_STREAM("CARMA has detected that the vehicle stopped at the stop bar. Transitioning to WAITING STATE");
+
+    return;
+  }
 
   // Start of TSMO UC2 Algorithm
 
