@@ -411,6 +411,7 @@ public:
   std_msgs::Int32MultiArray upcoming_intersection_ids_;
 
 private:
+  const double MS_TO_MPH = 2.23694; // Conversion factor from m/s to mph
   double error_distance_ = 5; //meters
   lanelet::ConstLanelets route_path_;
   std::unordered_set<lanelet::Id> active_geofence_llt_ids_; 

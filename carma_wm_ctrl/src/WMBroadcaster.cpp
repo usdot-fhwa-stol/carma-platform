@@ -281,7 +281,7 @@ void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) 
   {  
     //Acquire speed limit information from TafficControlDetail msg
-    sL = lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPH()); 
+    sL = lanelet::Velocity(msg_detail.maxspeed * MS_TO_MPH * lanelet::units::MPH()); 
     std::string reason = "";
     if (msg_v01.package.label_exists)
       reason = msg_v01.package.label;
@@ -308,7 +308,7 @@ void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINSPEED_CHOICE) 
   {
     //Acquire speed limit information from TafficControlDetail msg
-    sL = lanelet::Velocity(msg_detail.minspeed * lanelet::units::MPH());
+    sL = lanelet::Velocity(msg_detail.minspeed * MS_TO_MPH * lanelet::units::MPH());
     if(config_limit > 0_mph && config_limit < 80_mph)//Accounting for the configured speed limit, input zero when not in use
         sL = config_limit;
 
