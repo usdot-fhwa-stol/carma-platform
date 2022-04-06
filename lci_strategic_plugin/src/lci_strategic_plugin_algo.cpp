@@ -210,7 +210,7 @@ double LCIStrategicPlugin::get_inflection_speed_value(double x, double x1, doubl
   {
     return free_flow_speed;
   }
-  else if (x1 > x >= x2)
+  else if (x1 > x && x >= x2)
   {
     return std::sqrt(2 * x * max_accel * max_decel + max_decel * std::pow(current_speed, 2) - max_accel * (std::pow(departure_speed, 2))/(max_decel - max_accel));
   }
