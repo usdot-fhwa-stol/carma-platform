@@ -373,8 +373,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   {
     if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
     {  // If the time
-      ROS_WARN_STREAM("Detected non-normal (nan, inf, etc.) time.");
-      times[i] = times[i - 1] + config_.stop_timestep;
+      ROS_WARN_STREAM("Detected non-normal (nan, inf, etc.) time. Making it same as before: " << times[i-1]);
+      // NOTE: overriding the timestamps in assumption that pure_pursuit_wrapper will detect it as stopping case
+      times[i] = times[i - 1];
     }
   }
 
