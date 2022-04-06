@@ -47,9 +47,8 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
   std::vector<double> times;
   std::vector<double> downtracks;
 
-  //Remove trajectory points with duplicated timestamps
-  std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = remove_repeated_timestamps(tp->trajectory_points);
-  ROS_DEBUG_STREAM("Original Trajectory size:"<<tp->trajectory_points.size() <<" Size after removing duplicate timestamps:"<<trajectory_points.size());
+  std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = tp->trajectory_points;
+  ROS_DEBUG_STREAM("Original Trajectory size:"<<trajectory_points.size());
 
   trajectory_utils::conversions::trajectory_to_downtrack_time(trajectory_points, &downtracks, &times);
 
