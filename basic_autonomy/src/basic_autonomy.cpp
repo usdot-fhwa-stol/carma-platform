@@ -880,7 +880,7 @@ namespace basic_autonomy
             if(nearest_pt_index + 1 >= buffer_pt_index){
                 
                 lanelet::BasicPoint2d current_pos(state.x_pos_global, state.y_pos_global);
-                lanelet::BasicPoint2d ending_pos(ending_state.x_pos_global, ending_state.y_pos_global);
+                lanelet::BasicPoint2d ending_pos(ending_state_before_buffer.x_pos_global, ending_state_before_buffer.y_pos_global);
 
                 if(wm->routeTrackPos(ending_pos).downtrack -  wm->routeTrackPos(current_pos).downtrack < epsilon_ ){
 
