@@ -30,7 +30,7 @@ absolute_minimum_speed : 4.4704
 deceleration_fraction : 0.8
 
 # Double: Desired distance to stop buffer in meters
-desired_distance_to_stop_buffer : 10.0
+desired_distance_to_stop_buffer : 15.0
 
 # Double: The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
 min_maneuver_planning_period : 15.1
