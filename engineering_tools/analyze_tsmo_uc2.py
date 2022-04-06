@@ -30,7 +30,7 @@ from defer import return_value
 import matplotlib.dates as mdates
 from dateutil import parser
 from tkinter.tix import LabelEntry
-from turtle import color, left
+from turtle import color, left, width
 from click import style
 import matplotlib.pyplot as plt
 import pytz
@@ -76,6 +76,16 @@ Intersection_Bridge_Lanelet_Ids_list = [
     21311,
     21783,
 ]
+
+
+class Vehicle_Guidance_Status_lookup(enum.Enum):
+    SHUTDOWN = 0
+    STARTUP = 1
+    DRIVERS_READY = 2
+    ACTIVE = 3
+    ENGAGED = 4
+    INACTIVE = 5
+    ENTER_PARK = 6
 
 
 class Route_Key_Name_lookup(enum.Enum):
@@ -142,6 +152,7 @@ class vehicle_profile_data:
     9) Vehicle distance to the traffic signal location it faced over time (unit of second) when engaged
     10) vehicle current lanelet ID over time (unit of second) when engaged
     11) vehicle planner plugin names over timestamp when engaged
+    12) Vehicle engaged status over timestamp
     """
 
     def __init__(self):
@@ -163,6 +174,7 @@ class vehicle_profile_data:
         self.intersection_id = 0
         self.lanelet_ids_ts = {}
         self.planner_plugin_names_ts = {}
+        self.engage_status_ts = {}
 
     def update_cur_speeds_ts(self, cur_speed, timestamp):
         """Update the vehicle current latest speed given the timestamp
@@ -250,6 +262,10 @@ class vehicle_profile_data:
         """
         timestamp_ts = math.floor(timestamp.to_sec())
         self.ds_tf_ts[timestamp_ts] = distance2tf
+
+    def update_engage_status_ts(self, engage_status, timestamp):
+        timestamp_ts = math.floor(timestamp.to_sec())
+        self.engage_status_ts[timestamp_ts] = engage_status
 
     def update_map_num_ts(self, map_num, timestamp):
         timestamp_s = math.floor(timestamp.to_sec())
@@ -793,7 +809,7 @@ def load_rosbags_to_vehicles_profile(bag_vehicle_names):
     # loop bags to get relevant vehicles information and update the vehicles profile list
     for bag_name in bag_vehicle_names.keys():
         print("Loading bag (name = %s) ..." % bag_name)
-        ENGAGED = 4
+        vpd = vehicle_profile_data()
         is_engaged = False
         engage_start_ts = 0
         engage_end_ts = 0
@@ -806,11 +822,18 @@ def load_rosbags_to_vehicles_profile(bag_vehicle_names):
         # Vehicle engage timestamp
         for topic, msg, t in bag.read_messages(topics=["/guidance/state"]):
             # print(msg.state)
-            if (not is_engaged) and msg.state == ENGAGED and engage_start_ts == 0:
+            vpd.update_engage_status_ts(msg.state, t)
+            if (
+                (not is_engaged)
+                and msg.state == Vehicle_Guidance_Status_lookup.ENGAGED.value
+                and engage_start_ts == 0
+            ):
                 print("Vehicle is engaged at timestamp = ", t)
                 engage_start_ts = t
                 is_engaged = True
-            elif is_engaged and msg.state != ENGAGED:
+            elif (
+                is_engaged and msg.state != Vehicle_Guidance_Status_lookup.ENGAGED.value
+            ):
                 print("Vehicle is disengaged at timestamp = ", t)
                 engage_end_ts = t
                 is_engaged = False
@@ -830,8 +853,6 @@ def load_rosbags_to_vehicles_profile(bag_vehicle_names):
             and engage_end_ts != 0
             and engage_start_ts <= engage_end_ts
         ):
-
-            vpd = vehicle_profile_data()
             vpd.engage_start_ts = engage_start_ts
             vpd.engage_end_ts = engage_end_ts
             vpd.bag_name = bag_name
@@ -918,6 +939,8 @@ def load_rosbags_to_vehicles_profile(bag_vehicle_names):
         # print(vpd.spat_phase_ts)
         # print(vpd.map_nums_ts)
         # print(vpd.ds_tf_ts)
+        # print(vpd.engage_status_ts)
+        # print(vpd.cur_downtracks_ts)
         vehicles_profiles.append(vpd)
 
     return vehicles_profiles
@@ -939,23 +962,30 @@ def plot_vehicle_speed_accel_downtrack_with_tsc(
     colors = ["blue", "black", "purple", "cyan", "orange", "brown"]
     fig.suptitle(plot_title, fontsize=14)
     i = 0
-    while i < subplot_nums:
+    relative_x_axis_max = 0
+    tmp = []
+    for vpd in vehicles_plot_data:
+        ts_tmp = vpd[vpd["profile_name"] + "_idx"]
+        tmp.append(ts_tmp[len(ts_tmp) - 1].timestamp() - ts_tmp[0].timestamp())
+    relative_x_axis_max = max(tmp)
+
+    for vpd in vehicles_plot_data:
         # Vehicle info lines
-        ts_idx = vehicles_plot_data[i][vehicles_plot_data[i]["profile_name"] + "_idx"]
-        # print(vehicles_plot_data[i])
-        df = pd.DataFrame(vehicles_plot_data[i], index=ts_idx)
+        ts_idx = vpd[vpd["profile_name"] + "_idx"]
+        # print(vpd)
+        df = pd.DataFrame(vpd, index=ts_idx)
         relative_x_axis_idx = []
         for idx in ts_idx:
             relative_x_axis_idx.append(idx.timestamp() - ts_idx[0].timestamp())
         ax_local = ax if subplot_nums == 1 else ax[i]
         ax_local.plot(
             relative_x_axis_idx,
-            df[vehicles_plot_data[i]["profile_name"]],
+            df[vpd["profile_name"]],
             color=colors[i],
-            label=vehicles_plot_data[i]["v_name"],
+            label=vpd["v_name"],
         )
         ax_local.legend(loc="upper right")
-        tsc_start_y = vehicles_plot_data[i]["tsc_start_y"]
+        tsc_start_y = vpd["tsc_start_y"]
 
         # # Traffic signal with horizontal bars
         period_count_start = relative_x_axis_idx[0]
@@ -964,7 +994,7 @@ def plot_vehicle_speed_accel_downtrack_with_tsc(
         is_green_label_displayed = False
         is_red_label_displayed = False
         is_yellow_label_displayed = False
-        for phase in vehicles_plot_data[i]["tsc_phases"]:
+        for phase in vpd["tsc_phases"]:
             if TSC_phases_lookup[phase] in "yellow" and not is_yellow_label_displayed:
                 is_yellow_label_displayed = True
                 tsc_label = "Yellow Phase = " + str(phase)
@@ -981,7 +1011,7 @@ def plot_vehicle_speed_accel_downtrack_with_tsc(
                 (tsc_start_y, tsc_bar_height),
                 facecolors=TSC_phases_lookup[phase],
                 label=tsc_label if len(tsc_label) != 0 else "",
-                alpha=vehicles_plot_data[i]["tsc_alpha"],
+                alpha=vpd["tsc_alpha"],
             )
             start_phase_pos += 1
         ax_local.legend(loc="upper right")
@@ -989,15 +1019,18 @@ def plot_vehicle_speed_accel_downtrack_with_tsc(
         # x-axis and y-axis
         ax_local.grid(True)
         ax_local.set_xlabel("Time (s)")
-        ax_local.set_ylabel(vehicles_plot_data[i]["y_label"])
+        ax_local.set_ylabel(vpd["y_label"])
         start_x, start_y = 0, 0
         stepsize_x = 1  # unit of second
         end_x, end_y = (
-            max(period_count_start, period_count_start_end) + stepsize_x,
+            # max(period_count_start, period_count_start_end) + stepsize_x,
+            relative_x_axis_max + stepsize_x,
             max_y_axis + y_axis_stepsize,
         )
         ax_local.set_xticks(np.arange(start_x, end_x, stepsize_x))
+        ax_local.xaxis.set_tick_params(width == 2)
         ax_local.set_yticks(np.arange(start_y, end_y, y_axis_stepsize))
+        ax_local.set_xlim(0, end_x)
         i += 1
 
 
@@ -1177,6 +1210,7 @@ def show_vehicles_downtrack_profiles(vehicle_profiles_data):
     NOTE: This plot should be generated in two forms 1 time for the individual vehicles and once as a single plot combing the data from two vehicles
     """
     vehicles_plot_data_list = []
+    # BP = False
     for vehicle_profile_data in vehicle_profiles_data:
         cur_downtrack_ts = [
             cur_downtrack_ts
@@ -1191,7 +1225,11 @@ def show_vehicles_downtrack_profiles(vehicle_profiles_data):
             cur_downtrack
             for cur_downtrack in vehicle_profile_data.cur_downtracks_ts.values()
         ]
-
+        # if BP:
+        #     cur_downtrack_list = [
+        #         cur_downtrack - 290 for cur_downtrack in cur_downtrack_list
+        #     ]
+        # BP = True
         phase_list = [
             cur_phase for cur_phase in vehicle_profile_data.spat_phase_ts.values()
         ]
@@ -1259,6 +1297,9 @@ def show_vehicles_distance2tf_profiles(vehicle_profiles_data):
         )
         ds_tf_ts_idx = pd.date_range(date_time_1, date_time_5, freq="S")
         ds_tf_ts = [value for value in vehicle_profile_data.ds_tf_ts.values()]
+        ds_tf_ts_reverse = [
+            max(ds_tf_ts) - value for value in vehicle_profile_data.ds_tf_ts.values()
+        ]
 
         phase_list = [
             cur_phase for cur_phase in vehicle_profile_data.spat_phase_ts.values()
@@ -1267,13 +1308,13 @@ def show_vehicles_distance2tf_profiles(vehicle_profiles_data):
         v_name = vehicle_profile_data.vehicle_name
 
         # Traffic Signal bars config
-        tsc_start_y = 0
+        tsc_start_y = max(ds_tf_ts)
         tsc_bar_height = round(max(ds_tf_ts) / 10)
         tsc_alpha = 1  # opacity of bars
         vehicles_plot_data_dict = {
             "v_name": v_name,
             "profile_name": "distance2tf",
-            "distance2tf": ds_tf_ts,
+            "distance2tf": ds_tf_ts_reverse,
             "distance2tf_idx": ds_tf_ts_idx,
             "y_label": "Distance (m)",
             "tsc_phases": phase_list if len(phase_list) != 0 else "",
@@ -1286,7 +1327,7 @@ def show_vehicles_distance2tf_profiles(vehicle_profiles_data):
         max(vehicles_plot_data_list[0]["distance2tf"]), tsc_bar_height + tsc_start_y
     )
     y_axis_stepsize = round(max_y_axis / 10)
-    plot_title = "Vehicle Distance to Traffic Signal"
+    plot_title = "Vehicle Distance"
     plot_vehicle_speed_accel_downtrack_with_tsc(
         vehicles_plot_data_list,
         tsc_bar_height,
@@ -1422,7 +1463,7 @@ def load_mcp_sum_to_excel(mcp, mc_description, bag_vehicle_names):
                 mc_key,
                 mc_description[mc_key],
                 "True",
-                mpc_sum_dict[mc_key]/total_bags_nums * 100,
+                mpc_sum_dict[mc_key] / total_bags_nums * 100,
                 ",".join(bag_vehicle_names.keys()),
             ]
             row_list.append(row_item)
@@ -1485,11 +1526,13 @@ def plot_bags():
     """
     # Vehicle and bag names should be unique
     bag_vehicle_names = {
-        # "data/CC-RG_BL_E1_R30_2022-04-01-20-27-36.bag": "BL-E1_R30-DOT-45255",                # Blue Lexus: DOT-45255
-        # "data/CC-RG_BL_E2_G22_2022-04-01-20-44-10.bag_BADBAG":  "RG_BL_E2_G22-DOT-45255",     # Blue Lexus: DOT-45255
-        "data/CC-RG_BL_E2_R05_2022-04-01-20-59-30.bag": "BL_E2_R05_DOT-45255",  # Blue Lexus: DOT-45255
-        # "data/CC-RG_BP_E1_G2_2022-04-01-21-08-24.bag": "BP_E1_G2_DOT-45245",  # Black Pacifica: DOT-45245
-        "data/CC-RG_BP_E2_G17_2022-04-01-20-14-27.bag": "BP_E2_G17_DOT-45245",  # Black Pacifica: DOT-45245
+        "data/CC-RG_BL_E1_R20_2022-04-01-20-17-25.bag": "BL_E1_R20",  # Blue Lexus:   RUN 1
+        # "data/CC-RG_BL_E1_R30_2022-04-01-20-27-36.bag": "BL-E1_R30",  # Blue Lexus: RUN 2
+        # "data/CC-RG_BL_E2_G22_2022-04-01-20-44-10_badbag.bag": "BL_E2_G22",  # Blue Lexus:  RUN 3
+        # "data/CC-RG_BL_E2_R05_2022-04-01-20-59-30.bag": "BL_E2_R05",  # Blue Lexus:
+        # "data/CC-RG_BP_E1_G2_2022-04-01-21-08-24.bag": "BP_E1_G2",  # Black Pacifica:
+        "data/CC-RG_BP_E2_G17_2022-04-01-20-14-27.bag": "BP_E2_G17",  # Black Pacifica: RUN 1
+        # "data/CC-RG_BP_E1_R25_2022-04-01-20-42-45.bag": "BP_E1_R25",  # # Black Pacifica: RUN 3
     }
 
     print(
@@ -1508,31 +1551,27 @@ def load_bags2excel2mcp_plot():
     Summarize and save the vehicle analyze result based on information from the ROS bags generated by vehicles
     """
     bag_vehicle_names = {
-        # "data/CC-RG_BL_E1_R30_2022-04-01-20-27-36.bag": "BL-E1_R30-DOT-45255",  # Blue Lexus: DOT-45255
-        # "data/CC-RG_BL_E2_G22_2022-04-01-20-44-10.bag_BADBAG":  "RG_BL_E2_G22-DOT-45255",     # Blue Lexus: DOT-45255
-        "data/CC-RG_BL_E2_R05_2022-04-01-20-59-30.bag": "BL_E2_R05_DOT-45255",  # Blue Lexus: DOT-45255
-        "data/CC-RG_BP_E1_G2_2022-04-01-21-08-24.bag": "BP_E1_G2_DOT-45245",  # Black Pacifica: DOT-45245
-        "data/CC-RG_BP_E2_G17_2022-04-01-20-14-27.bag": "BP_E2_G17_DOT-45245",  # Black Pacifica: DOT-45245
+        "data/CC-RG_BL_E1_R20_2022-04-01-20-17-25.bag": "BL_E1_R20",  # Blue Lexus:   RUN 1
+        # "data/CC-RG_BL_E1_R30_2022-04-01-20-27-36.bag": "BL-E1_R30",  # Blue Lexus: RUN 2
+        # "data/CC-RG_BL_E2_G22_2022-04-01-20-44-10_badbag.bag": "BL_E2_G22",  # Blue Lexus:  RUN 3
+        # "data/CC-RG_BL_E2_R05_2022-04-01-20-59-30.bag": "BL_E2_R05",  # Blue Lexus:
+        # "data/CC-RG_BP_E1_G2_2022-04-01-21-08-24.bag": "BP_E1_G2",  # Black Pacifica:
+        "data/CC-RG_BP_E2_G17_2022-04-01-20-14-27.bag": "BP_E2_G17",  # Black Pacifica: RUN 1
+        # "data/CC-RG_BP_E1_R25_2022-04-01-20-42-45.bag": "BP_E1_R25",  # # Black Pacifica: RUN 3
     }
     vehicle_alias_names = {
-        "BL_E2_R05_DOT-45255": "Blue_Lexus",  # Blue Lexus: DOT-45255
-        "BL_E1_R30_DOT-45255": "Blue_Lexus",  # Blue Lexus: DOT-45255
-        "BP_E2_G17_DOT-45245": "Black_Pacifica",  # Black Pacifica: DOT-45245
-        "BP_E1_G2_DOT-45245": "Black_Pacifica",  # Black Pacifica: DOT-45245
+        "BL_E2_R05": "Blue_Lexus",  # Blue Lexus:
+        "BL_E1_R30": "Blue_Lexus",  # Blue Lexus:
+        "BL_E1_R20": "Blue_Lexus",  # Blue Lexus:
+        "BP_E2_G17": "Black_Pacifica",  # Black Pacifica:
+        "BP_E1_G2": "Black_Pacifica",  # Black Pacifica:
     }
     vehicle_expected_paths_names = {
-        "BL_E1_R30_DOT-45255": Route_Paths_lookup[
-            Route_Key_Name_lookup.WEST_EAST_STRAIGHT
-        ],
-        "BP_E1_G2_DOT-45245": Route_Paths_lookup[
-            Route_Key_Name_lookup.WEST_EAST_STRAIGHT
-        ],
-        "BP_E2_G17_DOT-45245": Route_Paths_lookup[
-            Route_Key_Name_lookup.NORTH_EAST_STRAIGHT
-        ],
-        "BL_E2_R05_DOT-45255": Route_Paths_lookup[
-            Route_Key_Name_lookup.NORTH_EAST_STRAIGHT
-        ],
+        "BL_E1_R30": Route_Paths_lookup[Route_Key_Name_lookup.WEST_EAST_STRAIGHT],
+        "BL_E1_R20": Route_Paths_lookup[Route_Key_Name_lookup.WEST_EAST_STRAIGHT],
+        "BP_E1_G2": Route_Paths_lookup[Route_Key_Name_lookup.NORTH_EAST_STRAIGHT],
+        "BP_E2_G17": Route_Paths_lookup[Route_Key_Name_lookup.NORTH_EAST_STRAIGHT],
+        "BL_E2_R05": Route_Paths_lookup[Route_Key_Name_lookup.NORTH_EAST_STRAIGHT],
     }
 
     print(
@@ -1794,5 +1833,5 @@ def main():
 
 if __name__ == "__main__":
     # main()
-    # plot_bags()
-    load_bags2excel2mcp_plot()
+    plot_bags()
+    # load_bags2excel2mcp_plot()
