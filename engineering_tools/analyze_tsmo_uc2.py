@@ -1379,8 +1379,8 @@ def load_mcp_runs_to_excel(mcp, mc_keys):
     mpc_rl = mcp.metric_category_list
     if len(mpc_rl) > 0:
         fieldnames = [
-            "Metrics Category",
             "Vehicle Name",
+            "Metrics Category",
             "Bag Name",
             "Run Result (1-success: 0-failure)",
         ]
@@ -1390,8 +1390,8 @@ def load_mcp_runs_to_excel(mcp, mc_keys):
         for mpc_row in mpc_rl:
             for mc_key in mc_keys:
                 row_item = [
-                    mc_key,
                     mpc_row["vehicle_alias"],
+                    mc_key,
                     mpc_row["bag_name"],
                     mpc_row[mc_key],
                 ]
@@ -1406,12 +1406,13 @@ def load_mcp_runs_to_excel(mcp, mc_keys):
 
 def load_mcp_sum_to_excel(mcp, mc_description, bag_vehicle_names):
     mpc_sum_dict = mcp.metric_category_sum_dict
+    total_bags_nums = len(bag_vehicle_names)
     if len(mpc_sum_dict.keys()) > 0:
         fieldnames = [
             "Metrics Category",
             "Metrics Description",
             "Expected Result",
-            "Test Result (Percents of success)",
+            "Test Result (Success Rate %)",
             "Bag Names",
         ]
         row_list = []
@@ -1421,7 +1422,7 @@ def load_mcp_sum_to_excel(mcp, mc_description, bag_vehicle_names):
                 mc_key,
                 mc_description[mc_key],
                 "True",
-                mpc_sum_dict[mc_key],
+                mpc_sum_dict[mc_key]/total_bags_nums * 100,
                 ",".join(bag_vehicle_names.keys()),
             ]
             row_list.append(row_item)
