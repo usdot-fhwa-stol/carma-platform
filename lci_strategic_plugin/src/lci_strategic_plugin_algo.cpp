@@ -254,19 +254,29 @@ double LCIStrategicPlugin::get_inflection_speed_value(double x, double x1, doubl
   }
   else if (x1 > x && x >= x2)
   {
+    ROS_ERROR_STREAM("got here 1: "<< std::sqrt((2 * x * max_accel * max_decel + max_decel * std::pow(current_speed, 2) - max_accel * (std::pow(departure_speed, 2)))/(max_decel - max_accel)));
+    ROS_DEBUG_STREAM("got here 1: " << std::sqrt((2 * x * max_accel * max_decel + max_decel * std::pow(current_speed, 2) - max_accel * (std::pow(departure_speed, 2)))/(max_decel - max_accel)));
+
     return std::sqrt((2 * x * max_accel * max_decel + max_decel * std::pow(current_speed, 2) - max_accel * (std::pow(departure_speed, 2)))/(max_decel - max_accel));
   }
   else if (x2 > x)
   {
     if (current_speed <= departure_speed)
     {
+      ROS_ERROR_STREAM("Got here 2: " << std::sqrt(2 * x * max_accel + std::pow(current_speed, 2)));
+      ROS_DEBUG_STREAM("Got here 2: " << std::sqrt(2 * x * max_accel + std::pow(current_speed, 2)));
+
       return std::sqrt(2 * x * max_accel + std::pow(current_speed, 2));
     }
     else
     {
+      ROS_ERROR_STREAM("Got here 3: " << std::sqrt(2 * x * max_decel + std::pow(current_speed, 2)));
+      ROS_DEBUG_STREAM("Got here 3: " << std::sqrt(2 * x * max_decel + std::pow(current_speed, 2)));
+
       return std::sqrt(2 * x * max_decel + std::pow(current_speed, 2));
     }
   }
+  
 }
 
 double LCIStrategicPlugin::calc_estimated_entry_time_left(double entry_dist, double current_speed, double departure_speed) const
