@@ -746,9 +746,7 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
 
   ROS_DEBUG("traffic_light_down_track %f", traffic_light_down_track);
   
-  auto current_light_state_optional = traffic_light->predictState(lanelet::time::timeFromSec(current_state.stamp.toSec()));
-  
-  auto bool_optional_late_certainty = canArriveAtGreenWithCertainty(current_state.stamp.toSec(), traffic_light, true, false);
+  auto bool_optional_late_certainty = canArriveAtGreenWithCertainty(current_state.stamp, traffic_light, true, false);
   
   if (!bool_optional_late_certainty)
   {
