@@ -188,8 +188,16 @@ ros::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_dista
   }
   else
   {
-    t_decel = ros::Duration((departure_speed - v_hat) / max_decel);
+    if (x < x2)
+    {
+      t_decel = ros::Duration((v_hat - current_speed) / max_decel);
+    }
+    else
+    {
+      t_decel = ros::Duration((departure_speed - v_hat) / max_decel);
+    }
   }
+
   ros::Duration t_cruise;
   if (x1 <= x)
   {
