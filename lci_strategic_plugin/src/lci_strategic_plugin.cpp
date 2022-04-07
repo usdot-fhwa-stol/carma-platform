@@ -758,7 +758,7 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
   if (!bool_optional_late_certainty)
   {
     ROS_ERROR_STREAM("Unable to resolve green light...");
-    return ;
+    return;
   }
 
   if (current_light_state_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
