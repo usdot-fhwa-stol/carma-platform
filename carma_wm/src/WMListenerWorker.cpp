@@ -477,7 +477,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
           route_invalidated_by_queued_map_update = true;
         }
 
-        update->invalidates_route=false; // Do not trigger recomputation of routing graph mapUpdateCallback; recomputation of routing graph will occur outside of this loop
+        update->invalidates_route=false; // Do not trigger recomputation of routing graph in mapUpdateCallback; recomputation of routing graph will occur outside of this loop
         mapUpdateCallback(update); // Apply the update
       } else {
         ROS_INFO_STREAM("Apply from reroute: Done applying updates for new map. However, more updates are waiting for a future map.");
