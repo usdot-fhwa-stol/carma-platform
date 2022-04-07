@@ -746,6 +746,13 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
 
   ROS_DEBUG("traffic_light_down_track %f", traffic_light_down_track);
   
+  auto current_light_state_optional = traffic_light->predictState(lanelet::time::timeFromSec(current_state.stamp.toSec()));
+  ROS_DEBUG_STREAM("WAITING STATE: requested time to check: " << std::to_string(req.header.stamp.toSec()));
+  ROS_DEBUG_STREAM("WAITING STATE: requested time to CURRENT STATE check: " << std::to_string(current_state.stamp.toSec()));
+  
+  if (!validLightState(current_light_state_optional, current_state.stamp))
+    return;
+
   auto bool_optional_late_certainty = canArriveAtGreenWithCertainty(current_state.stamp, traffic_light, true, false);
   
   if (!bool_optional_late_certainty)
@@ -753,13 +760,6 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
     ROS_ERROR_STREAM("Unable to resolve green light...");
     return ;
   }
-
-  auto current_light_state_optional = traffic_light->predictState(lanelet::time::timeFromSec(current_state.stamp.toSec()));
-  ROS_DEBUG_STREAM("WAITING STATE: requested time to check: " << std::to_string(req.header.stamp.toSec()));
-  ROS_DEBUG_STREAM("WAITING STATE: requested time to CURRENT STATE check: " << std::to_string(current_state.stamp.toSec()));
-  
-  if (!validLightState(current_light_state_optional, current_state.stamp))
-    return;
 
   if (current_light_state_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
         bool_optional_late_certainty.get()) // if can make with certainty
