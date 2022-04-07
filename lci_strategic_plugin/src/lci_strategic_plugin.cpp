@@ -750,7 +750,8 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
   
   if (!bool_optional_late_certainty)
   {
-    throw std::invalid_argument("Unable to resolve the green signal...");
+    ROS_ERROR_STREAM("Unable to resolve green light...");
+    return ;
   }
 
   auto current_light_state_optional = traffic_light->predictState(lanelet::time::timeFromSec(current_state.stamp.toSec()));
