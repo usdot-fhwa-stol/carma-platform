@@ -153,6 +153,7 @@ class vehicle_profile_data:
     10) vehicle current lanelet ID over time (unit of second) when engaged
     11) vehicle planner plugin names over timestamp when engaged
     12) Vehicle engaged status over timestamp
+    13) case number over timestamp when vehicle engaged
     """
 
     def __init__(self):
@@ -175,6 +176,7 @@ class vehicle_profile_data:
         self.lanelet_ids_ts = {}
         self.planner_plugin_names_ts = {}
         self.engage_status_ts = {}
+        self.case_nums_ts = {}
 
     def update_cur_speeds_ts(self, cur_speed, timestamp):
         """Update the vehicle current latest speed given the timestamp
@@ -299,6 +301,16 @@ class vehicle_profile_data:
         """
         timestamp_ts = math.floor(timestamp.to_sec())
         self.planner_plugin_names_ts[timestamp_ts] = planner_plugin_name
+
+    def update_case_nums_ts(self, case_num, timestamp):
+        """Update the latest case number given the timestamp (unit of second)
+
+        Args:
+            case_num (int): Case Number
+            timestamp (timestamp): unit of nanosecond
+        """
+        timestamp_ts = math.floor(timestamp.to_sec())
+        self.case_nums_ts[timestamp_ts] = case_num
 
     def __profile__(self) -> str:
         """This function shows some profile information.
@@ -873,6 +885,7 @@ def load_rosbags_to_vehicles_profile(bag_vehicle_names):
                 "/guidance/route_state",
                 "/guidance/lci_strategic_plugin/distance_remaining_to_tf",
                 "/guidance/plan_trajectory",
+                "/guidance/lci_strategic_plugin/ts_case_num",
             ]
 
             # topics_tmp = bag.get_type_and_topic_info()[1].keys()
@@ -934,6 +947,9 @@ def load_rosbags_to_vehicles_profile(bag_vehicle_names):
                             ppn = msg.trajectory_points[0].planner_plugin_name
                             timestamp = t
                             vpd.update_planner_plugin_names_ts(ppn, timestamp)
+                    elif topic == "/guidance/lci_strategic_plugin/ts_case_num":
+                        # print(msg.data)
+                        vpd.update_case_nums_ts(msg.data, t)
         # Finished loading bag data into the vehicle profile object. Add the vehicle profile into the list
         # print(vpd.spat_nums_ts)
         # print(vpd.spat_phase_ts)
@@ -941,6 +957,7 @@ def load_rosbags_to_vehicles_profile(bag_vehicle_names):
         # print(vpd.ds_tf_ts)
         # print(vpd.engage_status_ts)
         # print(vpd.cur_downtracks_ts)
+        # print(vpd.case_nums_ts)
         vehicles_profiles.append(vpd)
 
     return vehicles_profiles
@@ -974,6 +991,7 @@ def plot_vehicle_speed_accel_downtrack_with_tsc(
         ts_idx = vpd[vpd["profile_name"] + "_idx"]
         # print(vpd)
         df = pd.DataFrame(vpd, index=ts_idx)
+        # print(df)
         relative_x_axis_idx = []
         for idx in ts_idx:
             relative_x_axis_idx.append(idx.timestamp() - ts_idx[0].timestamp())
@@ -1014,6 +1032,34 @@ def plot_vehicle_speed_accel_downtrack_with_tsc(
                 alpha=vpd["tsc_alpha"],
             )
             start_phase_pos += 1
+
+        # plot vertical lines for case number (cn)
+        cn_event = 0
+        cn_events = []
+        cn_x = -1
+        if "case_nums_ts" in vpd.keys():
+            case_nums_list = vpd["case_nums_ts"]
+            for cn in case_nums_list:
+                if cn_event != 0 and cn_event != cn:
+                    cn_events.append(cn_event)
+                    ax_local.axvline(
+                        x=cn_x,
+                        color="purple",
+                        linestyle="dotted",
+                        linewidth="3",
+                    )
+                cn_x += 1
+                cn_event = cn
+            cn_events.append(cn_event)
+            label = "->".join(str(e) for e in cn_events)
+            ax_local.axvline(
+                x=cn_x,
+                color="purple",
+                linestyle="dotted",
+                label="Case Nums(" + label + ")",
+                linewidth="3",
+            )
+            # print(",".join(case_nums_list))
         ax_local.legend(loc="upper right")
 
         # x-axis and y-axis
@@ -1071,6 +1117,9 @@ def show_vehicles_speed_profiles(vehicle_profiles_data):
         ]
 
         ds_tf_ts = [value for value in vehicle_profile_data.ds_tf_ts.values()]
+        case_nums_ts = [value for value in vehicle_profile_data.case_nums_ts.values()]
+        # print(vehicle_profile_data.case_nums_ts)
+        # print(vehicle_profile_data.cur_speeds_ts)
 
         v_name = vehicle_profile_data.vehicle_name
 
@@ -1086,6 +1135,7 @@ def show_vehicles_speed_profiles(vehicle_profiles_data):
             "tsc_phases": phase_list if len(phase_list) != 0 else "",
             "tsc_start_y": tsc_start_y,
             "tsc_alpha": tsc_alpha,
+            "case_nums_ts": case_nums_ts,
         }
         vehicles_plot_data_list.append(vehicles_plot_data_dict)
 
@@ -1143,8 +1193,10 @@ def show_vehicles_accel_profiles(vehicle_profiles_data):
     vehicles_plot_data_list = []
     for vehicle_profile_data in vehicle_profiles_data:
         cur_accels_ts = [
-            cur_accels_ts for cur_accels_ts in vehicle_profile_data.cur_speeds_ts.keys()
+            cur_accels_ts for cur_accels_ts in vehicle_profile_data.cur_accels_ts.keys()
         ]
+        if len(cur_accels_ts) == 0:
+            continue
         date_time_1 = datetime.datetime.utcfromtimestamp(cur_accels_ts[0])
         date_time_5 = datetime.datetime.utcfromtimestamp(
             cur_accels_ts[len(cur_accels_ts) - 1]
@@ -1159,12 +1211,15 @@ def show_vehicles_accel_profiles(vehicle_profiles_data):
         ]
 
         ds_tf_ts = [value for value in vehicle_profile_data.ds_tf_ts.values()]
+        case_nums_ts = [value for value in vehicle_profile_data.case_nums_ts.values()]
+        # print(vehicle_profile_data.cur_accels_ts)
 
         v_name = vehicle_profile_data.vehicle_name
 
         tsc_start_y = 0
         tsc_bar_height = 3
         tsc_alpha = 0.3  # opacity of bars
+
         vehicles_plot_data_dict = {
             "v_name": v_name,
             "profile_name": "accel",
@@ -1174,10 +1229,16 @@ def show_vehicles_accel_profiles(vehicle_profiles_data):
             "tsc_phases": phase_list if len(phase_list) != 0 else "",
             "tsc_start_y": tsc_start_y,
             "tsc_alpha": tsc_alpha,
+            "case_nums_ts": case_nums_ts,
         }
         vehicles_plot_data_list.append(vehicles_plot_data_dict)
+    print(len(vehicles_plot_data_list))
+    tmp = 0
+    # if len(vehicle_profile_data[0]["accel"]) > 0:
+    #     tmp = max(vehicles_plot_data_list[0]["accel"])
     max_y_axis = max(
-        max(vehicles_plot_data_list[0]["accel"]), tsc_bar_height + tsc_start_y
+        tmp,
+        tsc_bar_height + tsc_start_y,
     )
     y_axis_stepsize = 1
     plot_title = "Vehicle Acceleration Profile"
@@ -1339,7 +1400,7 @@ def show_vehicles_distance2tf_profiles(vehicle_profiles_data):
 
 def show_vehicles_profiles(vehicle_profiles_data):
     show_vehicles_speed_profiles(vehicle_profiles_data)
-    # show_vehicles_accel_profiles(vehicle_profiles_data)
+    show_vehicles_accel_profiles(vehicle_profiles_data)
     show_vehicles_downtrack_profiles(vehicle_profiles_data)
     show_vehicles_distance2tf_profiles(vehicle_profiles_data)
     show_spats_maps_frequency_profiles(vehicle_profiles_data)
