@@ -355,31 +355,4 @@ namespace motion_computation{
     return output;
     }
 
-    tf2::Vector3 MotionComputationWorker::transform_to_map_frame(const tf2::Vector3& ecef_point) const
-    {
-        if (!map_projector_) {
-            throw std::invalid_argument("No map projector available for ecef conversion");
-        }
-            
-        lanelet::BasicPoint3d map_point = map_projector_->projectECEF( { ecef_point.x(),  ecef_point.y(), ecef_point.z() } , -1); // Input should already be converted to m
-        
-        return tf2::Vector3(map_point.x(), map_point.y(), map_point.z());
-    }
-
-
-    tf2::Vector3 MotionComputationWorker::gnss_to_map(double lat, double lon, double ele) const
-    {
-        if (!map_projector_) {
-            throw std::invalid_argument("No map projector available for gnss conversion");
-        }
-
-        // GPSPoint gps_point;
-        // gps_point.lat = lat; // TODO if possible delete
-
-            
-        lanelet::BasicPoint3d map_point = map_projector_->forward( { lat,  lon, ele } ); // Input should already be converted to m
-        
-        return tf2::Vector3(map_point.x(), map_point.y(), map_point.z());
-    }
-
 } // namespace motion_computation
