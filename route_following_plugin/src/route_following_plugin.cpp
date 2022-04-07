@@ -120,6 +120,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
 
         //set a route callback to update route and calculate maneuver
         wml_->setRouteCallback([this]() {
+            ROS_INFO_STREAM("Recomputing maneuvers due to a route update");
             this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
         });
 
