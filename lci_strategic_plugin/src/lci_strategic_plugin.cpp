@@ -198,7 +198,7 @@ boost::optional<bool> LCIStrategicPlugin::canArriveAtGreenWithCertainty(const ro
       can_make_late_arrival = (late_arrival_state_by_algo_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED);
 
     // We will cross the light on the green phase even if we arrive early or late
-    if (check_early && check_late)  // Green light
+    if (can_make_early_arrival && can_make_late_arrival)  // Green light
       return true;
     else
       return false;
