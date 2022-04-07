@@ -496,8 +496,8 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     return;
   }
 
-  // If one of the applied queued map updates invalidated the route, then the routing graph must be updated again
-  if (route_invalidated_by_queued_map_update){
+  // If one of the applied queued map updates invalidated the route, then the routing graph must be updated again for the route node
+  if (route_invalidated_by_queued_map_update && route_node_flag_){
     ROS_DEBUG_STREAM("At least one applied queued map update has invalidated the route. Routing graph will be recomputed.");
     world_model_->setMap(world_model_->getMutableMap(), current_map_version_, route_invalidated_by_queued_map_update);
     ROS_DEBUG_STREAM("Finished recomputing the routing graph for the applied queued map update(s)");
@@ -519,6 +519,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     auto route_opt = path.size() == 1 ? world_model_->getMapRoutingGraph()->getRoute(path.front(), path.back())
                                 : world_model_->getMapRoutingGraph()->getRouteVia(path.front(), lanelet::ConstLanelets(path.begin() + 1, path.end() - 1), path.back());
     if(route_opt.is_initialized()) {
+      ROS_DEBUG_STREAM("Setting route in world model");
       auto ptr = std::make_shared<lanelet::routing::Route>(std::move(route_opt.get()));
       world_model_->setRoute(ptr);
     }
