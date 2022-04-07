@@ -673,6 +673,8 @@ def get_metric_category_through_lanelets_result(vpd, vehicle_expected_paths):
         if actual_lanelet_id != vehicle_expected_paths[i]:
             is_succeed = 0
         i += 1
+    if not is_entry_lanelet_expected:
+        is_succeed = 0
     return is_succeed
 
 
@@ -1621,16 +1623,19 @@ def load_bags2excel2mcp_plot():
         # "data/CC-RG_BP_E1_R25_2022-04-01-20-42-45.bag": "BP_E1_R25",  # # Black Pacifica: RUN 3
     }
     vehicle_alias_names = {
-        "BL_E2_R05": "Blue_Lexus",  # Blue Lexus:
-        "BL_E1_R30": "Blue_Lexus",  # Blue Lexus:
-        "BL_E1_R20": "Blue_Lexus",  # Blue Lexus:
-        "BP_E2_G17": "Black_Pacifica",  # Black Pacifica:
-        "BP_E1_G2": "Black_Pacifica",  # Black Pacifica:
+        "BL_E2_R05": "Blue_Lexus", 
+        "BL-E1_R30": "Blue_Lexus",
+        "BL_E2_G22": "Blue_Lexus",
+        "BL_E1_R30": "Blue_Lexus",  
+        "BL_E1_R20": "Blue_Lexus", 
+        "BP_E2_G17": "Black_Pacifica",  
+        "BP_E1_G2":  "Black_Pacifica",  
+        "BP_E1_R25": "Black_Pacifica",  
     }
     vehicle_expected_paths_names = {
         "BL_E1_R30": Route_Paths_lookup[Route_Key_Name_lookup.WEST_EAST_STRAIGHT],
         "BL_E1_R20": Route_Paths_lookup[Route_Key_Name_lookup.WEST_EAST_STRAIGHT],
-        "BP_E1_G2": Route_Paths_lookup[Route_Key_Name_lookup.NORTH_EAST_STRAIGHT],
+        "BP_E1_G2":  Route_Paths_lookup[Route_Key_Name_lookup.WEST_EAST_STRAIGHT],
         "BP_E2_G17": Route_Paths_lookup[Route_Key_Name_lookup.NORTH_EAST_STRAIGHT],
         "BL_E2_R05": Route_Paths_lookup[Route_Key_Name_lookup.NORTH_EAST_STRAIGHT],
     }
@@ -1894,5 +1899,5 @@ def main():
 
 if __name__ == "__main__":
     # main()
-    plot_bags()
-    # load_bags2excel2mcp_plot()
+    # plot_bags()
+    load_bags2excel2mcp_plot()
