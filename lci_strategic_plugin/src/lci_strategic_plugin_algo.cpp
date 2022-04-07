@@ -54,13 +54,13 @@ ros::Time LCIStrategicPlugin::get_nearest_green_entry_time(const ros::Time& curr
   boost::posix_time::ptime eet = lanelet::time::timeFromSec(earliest_entry_time.toSec());                        // earliest entry time
 
   auto curr_pair = signal->predictState(t);
-
   if (!curr_pair)
     throw std::invalid_argument("Traffic signal with id:" + std::to_string(signal->id()) + ", does not have any recorded time stamps!");
 
+   ROS_ERROR_STREAM("1g");
   boost::posix_time::time_duration theta =  curr_pair.get().first - t;   // remaining time left in this state
   auto p = curr_pair.get().second;
-
+   ROS_ERROR_STREAM("2g");
   while ( 0.0 < g.total_milliseconds() || p != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED) //green
   {
     if ( p == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
@@ -89,6 +89,9 @@ ros::Time LCIStrategicPlugin::get_nearest_green_entry_time(const ros::Time& curr
     }
   }
 
+   ROS_ERROR_STREAM("3g");
+
+
   if (t <= eet)
   {
     double cycle_duration = signal->fixed_cycle_duration.total_milliseconds()/1000.0;
@@ -112,6 +115,8 @@ ros::Time LCIStrategicPlugin::get_nearest_green_entry_time(const ros::Time& curr
       }
     }
   }
+   ROS_ERROR_STREAM("4g");
+
 
   return ros::Time(lanelet::time::toSec(t));
 }
@@ -157,18 +162,21 @@ ros::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_dista
   double x1 = get_distance_to_accel_or_decel_twice(free_flow_speed, current_speed, departure_speed, max_accel, max_decel);
   double v_hat = get_inflection_speed_value(x, x1, x2, free_flow_speed, current_speed, departure_speed, max_accel, max_decel);
   
-  ROS_DEBUG_STREAM("x: " << x << ", x2: " << x2 << ", x1: " << x1);
+    ROS_DEBUG_STREAM("x: " << x << ", x2: " << x2 << ", x1: " << x1);
+  ROS_ERROR_STREAM("x: " << x << ", x2: " << x2 << ", x1: " << x1);
 
   if (v_hat <= config_.algo_minimum_speed - epsilon_)
   {
-    ROS_DEBUG_STREAM("Detected that v_hat is smaller than allowed!!!: " << v_hat);
+        ROS_DEBUG_STREAM("Detected that v_hat is smaller than allowed!!!: " << v_hat);
+    ROS_ERROR_STREAM("Detected that v_hat is smaller than allowed!!!: " << v_hat);
     
     v_hat = config_.algo_minimum_speed;
   }
 
   if (v_hat >= free_flow_speed + epsilon_)
   {
-    ROS_DEBUG_STREAM("Detected that v_hat is Bigger than allowed!!!: " << v_hat);    
+        ROS_DEBUG_STREAM("Detected that v_hat is Bigger than allowed!!!: " << v_hat);    
+    ROS_ERROR_STREAM("Detected that v_hat is Bigger than allowed!!!: " << v_hat);    
     v_hat = free_flow_speed;
   }
 
@@ -176,37 +184,63 @@ ros::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_dista
   if ( x < x2 && current_speed > departure_speed)
   {
     t_accel = ros::Duration(0.0);
+        ROS_DEBUG_STREAM("1 : t_accel" << t_accel);
+    ROS_ERROR_STREAM("1 : t_accel" << t_accel);
   }
   else
   {
-    t_accel = ros::Duration((v_hat - current_speed) / max_accel);
+    ROS_DEBUG_STREAM("2 : t_accel" << (v_hat - current_speed) / max_accel);
+    ROS_ERROR_STREAM("2 : t_accel" << (v_hat - current_speed) / max_accel);
+    t_accel = ros::Duration(std::max((v_hat - current_speed) / max_accel, 0.0));
+        ROS_DEBUG_STREAM("2 : t_accel" << t_accel);
+    ROS_ERROR_STREAM("2 : t_accel" << t_accel);
   }
   ros::Duration t_decel;
   if ( x < x2 && current_speed < departure_speed)
   {
     t_decel = ros::Duration(0.0);
+        ROS_DEBUG_STREAM("3 : t_decel" << t_decel);
+    ROS_ERROR_STREAM("3 : t_decel" << t_decel);
   }
   else
   {
     if (x < x2)
     {
-      t_decel = ros::Duration((v_hat - current_speed) / max_decel);
+       ROS_DEBUG_STREAM("4 : t_decel" << (v_hat - current_speed) / max_decel);
+      ROS_ERROR_STREAM("4 : t_decel" << (v_hat - current_speed) / max_decel);
+      t_decel = ros::Duration(std::max((v_hat - current_speed) / max_decel, 0.0));
+            ROS_DEBUG_STREAM("4 : t_decel" << t_decel);
+      ROS_ERROR_STREAM("4 : t_decel" << t_decel);
+
     }
     else
     {
-      t_decel = ros::Duration((departure_speed - v_hat) / max_decel);
+       ROS_DEBUG_STREAM("5 : t_decel" << (departure_speed - v_hat) / max_decel);
+      ROS_ERROR_STREAM("5 : t_decel" << (departure_speed - v_hat) / max_decel);
+      t_decel = ros::Duration(std::max((departure_speed - v_hat) / max_decel, 0.0));
+            ROS_DEBUG_STREAM("5 : t_decel" << t_decel);
+      ROS_ERROR_STREAM("5 : t_decel" << t_decel);
     }
   }
 
   ros::Duration t_cruise;
   if (x1 <= x)
   {
-    t_cruise = ros::Duration((x - x1)/v_hat);
+    ROS_DEBUG_STREAM("6 : t_cruise" << (x - x1)/v_hat);
+    ROS_ERROR_STREAM("6 : t_cruise" << (x - x1)/v_hat);
+    
+    t_cruise = ros::Duration(std::max((x - x1)/v_hat, 0.0));
+        ROS_DEBUG_STREAM("6 : t_cruise" << t_cruise);
+    ROS_ERROR_STREAM("6 : t_cruise" << t_cruise);
+  
   }
   else
   {
     t_cruise = ros::Duration(0.0);
+        ROS_DEBUG_STREAM("7 : t_cruise" << t_cruise);
+    ROS_ERROR_STREAM("7 : t_cruise" << t_cruise);
   }
+  ROS_ERROR_STREAM("t_accel: " <<  t_accel << ", t_cruise: " << t_cruise << ", t_decel: " << t_decel);
   ROS_DEBUG_STREAM("t_accel: " <<  t_accel << ", t_cruise: " << t_cruise << ", t_decel: " << t_decel);
   return t_accel + t_cruise + t_decel;
 

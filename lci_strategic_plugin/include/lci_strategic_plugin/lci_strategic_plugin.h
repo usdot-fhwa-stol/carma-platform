@@ -232,11 +232,14 @@ private:
    * \brief Return true if the car can arrive at given arrival time within green light time buffer
    * \param light_arrival_time_by_algo ROS time at green where vehicle arrives
    * \param traffic_light Traffic signal to check time against
-   * \return true (bool optional) if can make it at both bounds of error time. 
+   * \param check_late check late arrival, default true
+   * \param check_early check early arrival, default true
+   * \return true (bool optional) if can make it at both bounds of error time.
+   *  
    * NOTE: internally uses config_.green_light_time_buffer
    * NOTE: boost::none optional if any of the light state was invalid
    */
-  boost::optional<bool> canArriveAtGreenWithCertainty(const ros::Time& light_arrival_time_by_algo, const lanelet::CarmaTrafficSignalPtr& traffic_light) const;
+  boost::optional<bool> canArriveAtGreenWithCertainty(const ros::Time& light_arrival_time_by_algo, const lanelet::CarmaTrafficSignalPtr& traffic_light, bool check_late, bool check_early) const;
 
   /**
    * \brief Compose a trajectory smoothing maneuver msg (sent as transit maneuver message)
