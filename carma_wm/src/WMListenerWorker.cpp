@@ -477,7 +477,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
           route_invalidated_by_queued_map_update = true;
         }
 
-        update->invalidates_route=false; // Do not trigger rerouting for route node in mapUpdateCallback; all necessary rerouting will occur outside of this loop
+        update->invalidates_route=false; // Do not trigger recomputation of routing graph mapUpdateCallback; recomputation of routing graph will occur outside of this loop
         mapUpdateCallback(update); // Apply the update
       } else {
         ROS_INFO_STREAM("Apply from reroute: Done applying updates for new map. However, more updates are waiting for a future map.");
@@ -487,9 +487,6 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     }
 
   }
-
-  //recompute_route_flag_ = false;
-  //rerouting_flag_ = false;
 
   if (!world_model_->getMap()) { // This check is a bit redundant but still useful from a debugging perspective as the alternative is a segfault
     ROS_ERROR_STREAM("WMListener received a route before a map was available. Dropping route message.");
@@ -507,7 +504,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     return;
   }
   else {
-    rerouting_flag_ = false; // Reset flag since routing graph has not been updated
+    rerouting_flag_ = false; // Reset flag since no applied queued map updates invalidated the route for the route node
 
     auto path = lanelet::ConstLanelets();
     for(auto id : route_msg->shortest_path_lanelet_ids)
