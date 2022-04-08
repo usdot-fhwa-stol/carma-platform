@@ -162,7 +162,7 @@ bool LCIStrategicPlugin::validLightState(const boost::optional<std::pair<boost::
   return true;
 }
 
-boost::optional<bool> LCIStrategicPlugin::canArriveAtGreenWithCertainty(const ros::Time& light_arrival_time_by_algo, const lanelet::CarmaTrafficSignalPtr& traffic_light) const
+boost::optional<bool> LCIStrategicPlugin::canArriveAtGreenWithCertainty(const ros::Time& light_arrival_time_by_algo, const lanelet::CarmaTrafficSignalPtr& traffic_light, bool check_late = true, bool check_early = true) const
 {
     ros::Time early_arrival_time_by_algo =
         light_arrival_time_by_algo - ros::Duration(config_.green_light_time_buffer);
@@ -188,10 +188,17 @@ boost::optional<bool> LCIStrategicPlugin::canArriveAtGreenWithCertainty(const ro
 
     ROS_DEBUG_STREAM("late_arrival_state_by_algo: " << late_arrival_state_by_algo_optional.get().second);
 
+    bool can_make_early_arrival = true;
+    bool can_make_late_arrival = true;
+
+    if (check_early)
+      can_make_early_arrival = (early_arrival_state_by_algo_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED);
+    
+    if (check_late)
+      can_make_late_arrival = (late_arrival_state_by_algo_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED);
+
     // We will cross the light on the green phase even if we arrive early or late
-    if (early_arrival_state_by_algo_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
-        late_arrival_state_by_algo_optional.get().second ==
-            lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)  // Green light
+    if (can_make_early_arrival && can_make_late_arrival)  // Green light
       return true;
     else
       return false;
@@ -593,7 +600,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   ros::Time nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
                                           + ros::Duration(0.01); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal
 
-
   if (!nearest_green_entry_time_cached_) 
   {
     ROS_DEBUG_STREAM("Applied green_light_buffer for the first time and cached! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
@@ -741,7 +747,16 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
   if (!validLightState(current_light_state_optional, current_state.stamp))
     return;
 
-  if (current_light_state_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+  auto bool_optional_late_certainty = canArriveAtGreenWithCertainty(current_state.stamp, traffic_light, true, false);
+  
+  if (!bool_optional_late_certainty)
+  {
+    ROS_ERROR_STREAM("Unable to resolve green light...");
+    return;
+  }
+
+  if (current_light_state_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
+        bool_optional_late_certainty.get()) // if can make with certainty
   {
     transition_table_.signal(TransitEvent::RED_TO_GREEN_LIGHT);  // If the light is green send the light transition
                                                                  // signal
