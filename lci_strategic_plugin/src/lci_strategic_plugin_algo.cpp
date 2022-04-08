@@ -157,7 +157,7 @@ ros::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_dista
   
   ROS_DEBUG_STREAM("x: " << x << ", x2: " << x2 << ", x1: " << x1 << ", v_hat: " << v_hat);
 
-  if (v_hat <= config_.algo_minimum_speed - epsilon_ || is_nan(v_hat))
+  if (v_hat <= config_.algo_minimum_speed - epsilon_ || isnan(v_hat))
   {
     ROS_DEBUG_STREAM("Detected that v_hat is smaller than allowed!!!: " << v_hat);
     v_hat = config_.algo_minimum_speed;

@@ -37,6 +37,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <std_msgs/Int8.h>
 #include <std_msgs/Float64.h>
+#include <math.h>
+#include <algorithm>
 
 namespace lci_strategic_plugin
 {
