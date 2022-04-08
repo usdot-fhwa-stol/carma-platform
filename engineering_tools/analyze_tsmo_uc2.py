@@ -88,6 +88,10 @@ class Vehicle_Guidance_Status_lookup(enum.Enum):
     ENTER_PARK = 6
 
 
+class Vehicle_params(enum.Enum):
+    trajectory_smoothing_activation_distance = 140
+
+
 class Route_Key_Name_lookup(enum.Enum):
     WEST_EAST_STRAIGHT = "west_east_straight"
     NORTH_EAST_STRAIGHT = "north_east_straight"
@@ -838,7 +842,7 @@ def load_rosbags_to_vehicles_profile(bag_vehicle_names):
 
         # Vehicle engage timestamp
         for topic, msg, t in bag.read_messages(topics=["/guidance/state"]):
-            # print(msg.state)
+            print(msg.state)
             vpd.update_engage_status_ts(msg.state, t)
             if (
                 (not is_engaged)
@@ -855,6 +859,9 @@ def load_rosbags_to_vehicles_profile(bag_vehicle_names):
                 engage_end_ts = t
                 is_engaged = False
                 break
+            if is_engaged:
+                engage_end_ts = t
+                print("Vehicle stop pub state but is still engaged at timestamp = ", t)
 
         if (
             engage_start_ts == 0
@@ -1239,7 +1246,7 @@ def plot_vehicles_profile_with_tsc(
                     alpha=vpd["tsc_alpha"],
                 )
                 start_phase_pos += GREEN_DURATION - last_phase_secs
-                last_phase = 8 # Yellow after green
+                last_phase = 8  # Yellow after green
             elif last_phase in TSC_color2phases_lookup["red"]:
                 ax_local.broken_barh(
                     [(start_phase_pos, RED_DURATION - last_phase_secs)],
@@ -1248,7 +1255,7 @@ def plot_vehicles_profile_with_tsc(
                     alpha=vpd["tsc_alpha"],
                 )
                 start_phase_pos += RED_DURATION - last_phase_secs
-                last_phase = 5 # Green after red phase
+                last_phase = 5  # Green after red phase
             elif last_phase in TSC_color2phases_lookup["yellow"]:
                 ax_local.broken_barh(
                     [(start_phase_pos, YELLOW_DURATION - last_phase_secs)],
@@ -1257,7 +1264,7 @@ def plot_vehicles_profile_with_tsc(
                     alpha=vpd["tsc_alpha"],
                 )
                 start_phase_pos += YELLOW_DURATION - last_phase_secs
-                last_phase = 1 # Red after yellow phase
+                last_phase = 1  # Red after yellow phase
             last_phase_secs = 0
 
         # plot vertical lines for case number (cn)
@@ -1288,6 +1295,11 @@ def plot_vehicles_profile_with_tsc(
             )
             ax_local.text(cn_x - 0.5, max_y_axis, cn_event, color="purple")
         ax_local.legend(loc="upper right")
+
+        # Plot horizontal line for TS area
+        # print(vpd)
+        # if "tsd_y" in vpd.keys() and len(str(vpd["tsd_y"])) > 0:
+        #     ax_local.axhline(vpd["tsd_y"], color="purple", linestyle="-", linewidth="2")
 
         # x-axis and y-axis
         ax_local.grid(True)
@@ -1469,7 +1481,7 @@ def show_vehicles_accel_profiles(vehicle_profiles_data):
     for vehicle_profile_data in vehicle_profiles_data:
         cur_accel_idx = []
         tmp_ts = [ts for ts in vehicle_profile_data.cur_accels_ts.keys()]
-        if len(tmp_ts)==0: 
+        if len(tmp_ts) == 0:
             continue
         diff_nums = tmp_ts[0] - earliest_timestamp
         num = 0
@@ -1483,7 +1495,7 @@ def show_vehicles_accel_profiles(vehicle_profiles_data):
         # ]
         # if len(cur_accels_ts) == 0:
         #     continue
-        
+
         date_time_1 = datetime.datetime.utcfromtimestamp(cur_accel_idx[0])
         date_time_5 = datetime.datetime.utcfromtimestamp(
             cur_accel_idx[len(cur_accel_idx) - 1]
@@ -1600,7 +1612,7 @@ def show_vehicles_downtrack_profiles(vehicle_profiles_data):
             cur_downtrack_idx[len(cur_downtrack_idx) - 1]
         )
         cur_downtrack_ts_idx = pd.date_range(date_time_1, date_time_5, freq="S")
-        
+
         cur_downtrack_zeros_list = []
         if diff_nums != 0:
             cur_downtrack_zeros_list = [0] * diff_nums
@@ -1608,16 +1620,19 @@ def show_vehicles_downtrack_profiles(vehicle_profiles_data):
         cur_downtrack_list = [
             cur_downtrack
             for cur_downtrack in vehicle_profile_data.cur_downtracks_ts.values()
-        ]              
-        
+        ]
+
         start_downtrack = cur_downtrack_list[0]
+        # Get trajectory smoothing distance y-axis
+        tsd_y = (
+            Vehicle_params.trajectory_smoothing_activation_distance.value
+            - start_downtrack
+        )
         cur_downtrack_list = [
             cur_downtrack - start_downtrack for cur_downtrack in cur_downtrack_list
         ]
         cur_downtrack_list = cur_downtrack_zeros_list + cur_downtrack_list
 
- 
-        
         phase_list = []
         if diff_nums != 0:
             phase_list = [0] * diff_nums
@@ -1647,6 +1662,7 @@ def show_vehicles_downtrack_profiles(vehicle_profiles_data):
             "tsc_phases": phase_list if len(phase_list) != 0 else "",
             "tsc_start_y": tsc_start_y,
             "tsc_alpha": tsc_alpha,
+            "tsd_y": tsd_y if tsd_y > 0 else "",
         }
         vehicles_plot_data_list.append(vehicles_plot_data_dict)
 
@@ -1985,14 +2001,24 @@ def plot_bags():
     """
     # Vehicle and bag names should be unique
     bag_vehicle_names = {
-        "data/CC-RG_BL_E1_R20_2022-04-01-20-17-25.bag": "BL_E1_R20",  # Blue Lexus:   RUN 1
+        # "data/CC-RG_BL_E1_R20_2022-04-01-20-17-25.bag": "BL_E1_R20",  # Blue Lexus:   RUN 1
         # "data/CC-RG_BL_E1_R30_2022-04-01-20-27-36.bag": "BL-E1_R30",  # Blue Lexus: RUN 2
         # "data/CC-RG_BL_E2_G22_2022-04-01-20-44-10_badbag.bag": "BL_E2_G22",  # Blue Lexus:  RUN 3
         # "data/CC-RG_BL_E2_R05_2022-04-01-20-59-30.bag": "BL_E2_R05",  # Blue Lexus:
         # "data/CC-RG_BP_E1_G2_2022-04-01-21-08-24.bag": "BP_E1_G2",  # Black Pacifica:
         # "data/CC-RG_BL_E2_R05_2022-04-01-21-07-05.bag": "RG-BL_E2_R05",
-        "data/CC-RG_BP_E2_G17_2022-04-01-20-14-27.bag": "BP_E2_G17",  # Black Pacifica: RUN 1
+        # "data/CC-RG_BP_E2_G17_2022-04-01-20-14-27.bag": "BP_E2_G17",  # Black Pacifica: RUN 1
+        "data/CC-RG_R1_BP_EL2_G22_2022-04-07-22-42-27.bag":"R1_BP_EL2_G22", # RUN 1
+        # "data/CC-RG_R2_BL_EL1_R30_2022-04-07-22-49-30.bag": "R2_BL_EL1_R30", #Run 2
+        # "data/CC-RG_R3_BL_EL2_R05_2022-04-07-23-00-47.bag": "R3_BL_EL2_R05", #RUN 3
+        # "data/CC-RG_R4_BL_EL2_R02_2022-04-07-23-06-03.bag" : "R4_BL_EL2_R02" , #RUN 4
+        # "data/CC-RG_R5_BL_EL1_Y01_2022-04-07-23-13-25.bag" : "R5_BL_EL1_Y01", #RUN5
+        "data/CC-RG_R1_BL_EL1_R25_2022-04-07-22-43-00.bag": "R1_BL_EL1_R25", # RUN 1
+        # "data/CC-RG_R2_BP_EL2_G27_2022-04-07-22-51-08.bag": "R2_BP_EL2_G27", #RUN2
+        # "data/CC-RG_R3_BP_EL1_G2_2022-04-07-22-59-56.bag": "R3_BP_EL1_G2" #RUN 3
         # "data/CC-RG_BP_E1_R25_2022-04-01-20-42-45.bag": "BP_E1_R25",  # # Black Pacifica: RUN 3
+        # "data/CC-RG_R4_BP_EL1_Y3_2022-04-07-23-05-41.bag" : "R4_BP_EL1_Y3" , #RUN 4
+        # "data/CC-RG_R5_BP_EL2_R1_2022-04-07-23-13-58.bag" : "R5_BP_EL2_R1", #RUN 5
         # "data/CC-RG_BP_E2_R0_2022-04-01-20-27-13.bag": "BP_E2_R0",
     }
 
