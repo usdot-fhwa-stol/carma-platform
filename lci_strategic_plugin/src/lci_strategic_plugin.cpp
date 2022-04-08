@@ -650,7 +650,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     
     ROS_DEBUG_STREAM("Not able to make it with certainty: TSCase: " << ts_params.case_num << ", changing it to 8");
     ts_params = boundary_traj_params[7];
-    ts_params.is_algorithm_successful = false;
+    ts_params.is_algorithm_successful = true; //false correspond to cases when vehicle is beyond safe_distance to stop for case8
     ts_params.case_num = CASE_8;
     print_params(ts_params);
   }
