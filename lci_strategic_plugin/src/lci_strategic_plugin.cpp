@@ -596,13 +596,9 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
                                                   current_state_speed, intersection_speed_.get(), max_comfort_accel_, max_comfort_decel_);
 
   ROS_DEBUG_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));
-  ROS_ERROR_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));
 
   ros::Time nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
                                           + ros::Duration(0.01); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal
-
-  ROS_ERROR_STREAM("123");
-  ROS_DEBUG_STREAM("123");
 
   if (!nearest_green_entry_time_cached_) 
   {
@@ -632,8 +628,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   print_boundary_distances(boundary_distances); //debug
 
   auto boundary_traj_params = get_boundary_traj_params(req.header.stamp.toSec(), current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_, current_state.downtrack, traffic_light_down_track, distance_remaining_to_traffic_light, boundary_distances);
-  ROS_ERROR_STREAM("1212");
-  ROS_DEBUG_STREAM("1212");
 
   TrajectoryParams ts_params = get_ts_case(req.header.stamp.toSec(), nearest_green_entry_time.toSec(), current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_, current_state.downtrack, traffic_light_down_track, distance_remaining_to_traffic_light, boundary_distances, boundary_traj_params);
   print_params(ts_params);
