@@ -981,13 +981,13 @@ def plot_vehicle_speed_accel_downtrack_with_tsc(
     plot_title,
 ):
     subplot_nums = len(vehicle_plot_data["profile_names"])
-    fig, ax = plt.subplots() if subplot_nums == 1 else plt.subplots(subplot_nums)
+    fig, ax = plt.subplots() if subplot_nums == 1 else plt.subplots(subplot_nums,1, figsize = (16,8),  gridspec_kw={'height_ratios': [1, 1, 2]})
     colors = [
         "blue",
         "black",
-        "purple",
-        "cyan",
         "orange",
+        "cyan",
+        "purple",
         "brown",
         "green",
         "gray",
@@ -1064,6 +1064,16 @@ def plot_vehicle_speed_accel_downtrack_with_tsc(
             max(vehicle_plot_data[profile_name]), tsc_bar_height + tsc_start_y
         )
         y_axis_stepsize = round(max_y_axis / 10)
+
+        if "downtrack" == profile_name:
+            ax_local.axhline(
+                vehicle_plot_data["tsc_start_y"],
+                color="purple",
+                linestyle="-",
+                linewidth="2",
+                label="Stop Bar Loc = "
+                + str(round(vehicle_plot_data["tsc_start_y"], 2)),
+            )
         # plot vertical lines for case number (cn)
         cn_event = 0
         cn_events = []
@@ -1227,6 +1237,14 @@ def plot_vehicles_profile_with_tsc(
         # print(last_phase_secs)
         # print(relative_x_axis_max)
         # print(last_phase)
+        if "downtrack" in vpd.keys():
+            ax_local.axhline(
+                vpd["tsc_start_y"],
+                color="purple",
+                linestyle="-",
+                linewidth="2",
+                label="Stop Bar Loc = " + str(round(vpd["tsc_start_y"], 2)),
+            )
 
         # Insert TSC before vehicle engaged if two vehicles engaged at different times
         if start_invalid_phase_duration != 0:
@@ -1299,7 +1317,7 @@ def plot_vehicles_profile_with_tsc(
         # Plot horizontal line for TS area
         # print(vpd)
         # if "tsd_y" in vpd.keys() and len(str(vpd["tsd_y"])) > 0:
-        #     ax_local.axhline(vpd["tsd_y"], color="purple", linestyle="-", linewidth="2")
+        #     ax_local.axhline(vpd["tsc_start_y"], color="purple", linestyle="-", linewidth="2")
 
         # x-axis and y-axis
         ax_local.grid(True)
@@ -2008,17 +2026,17 @@ def plot_bags():
         # "data/CC-RG_BP_E1_G2_2022-04-01-21-08-24.bag": "BP_E1_G2",  # Black Pacifica:
         # "data/CC-RG_BL_E2_R05_2022-04-01-21-07-05.bag": "RG-BL_E2_R05",
         # "data/CC-RG_BP_E2_G17_2022-04-01-20-14-27.bag": "BP_E2_G17",  # Black Pacifica: RUN 1
-        "data/CC-RG_R1_BP_EL2_G22_2022-04-07-22-42-27.bag":"R1_BP_EL2_G22", # RUN 1
+        # "data/CC-RG_R1_BP_EL2_G22_2022-04-07-22-42-27.bag": "R1_BP_EL2_G22",  # RUN 1
         # "data/CC-RG_R2_BL_EL1_R30_2022-04-07-22-49-30.bag": "R2_BL_EL1_R30", #Run 2
         # "data/CC-RG_R3_BL_EL2_R05_2022-04-07-23-00-47.bag": "R3_BL_EL2_R05", #RUN 3
         # "data/CC-RG_R4_BL_EL2_R02_2022-04-07-23-06-03.bag" : "R4_BL_EL2_R02" , #RUN 4
-        # "data/CC-RG_R5_BL_EL1_Y01_2022-04-07-23-13-25.bag" : "R5_BL_EL1_Y01", #RUN5
-        "data/CC-RG_R1_BL_EL1_R25_2022-04-07-22-43-00.bag": "R1_BL_EL1_R25", # RUN 1
+        "data/CC-RG_R5_BL_EL1_Y01_2022-04-07-23-13-25.bag" : "R5_BL_EL1_Y01", #RUN 5
+        # "data/CC-RG_R1_BL_EL1_R25_2022-04-07-22-43-00.bag": "R1_BL_EL1_R25",  # RUN 1
         # "data/CC-RG_R2_BP_EL2_G27_2022-04-07-22-51-08.bag": "R2_BP_EL2_G27", #RUN2
         # "data/CC-RG_R3_BP_EL1_G2_2022-04-07-22-59-56.bag": "R3_BP_EL1_G2" #RUN 3
         # "data/CC-RG_BP_E1_R25_2022-04-01-20-42-45.bag": "BP_E1_R25",  # # Black Pacifica: RUN 3
         # "data/CC-RG_R4_BP_EL1_Y3_2022-04-07-23-05-41.bag" : "R4_BP_EL1_Y3" , #RUN 4
-        # "data/CC-RG_R5_BP_EL2_R1_2022-04-07-23-13-58.bag" : "R5_BP_EL2_R1", #RUN 5
+        "data/CC-RG_R5_BP_EL2_R1_2022-04-07-23-13-58.bag" : "R5_BP_EL2_R1", #RUN 5
         # "data/CC-RG_BP_E2_R0_2022-04-01-20-27-13.bag": "BP_E2_R0",
     }
 
