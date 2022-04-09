@@ -1070,7 +1070,7 @@ namespace platoon_strategic_ihp
                     pm_.targetPlatoonID = platoonId;
                     ROS_DEBUG_STREAM("Storing real neighbor platoon's ID as target: " << pm_.targetPlatoonID);
                 }
-           }
+            }
 
             // step 5. Request cut-in join (front, middle or rear, from adjacent lane)
             else if (isVehicleNearTargetPlatoon(rearVehicleDtd, frontVehicleDtd, frontVehicleCtd) && !config_.test_front_join)
@@ -1393,7 +1393,6 @@ namespace platoon_strategic_ihp
             {
                 pm_.currentPlatoonID = msg.header.plan_id;
             }
-            pm_.current_plan = ActionPlan(true, 0, msg.header.plan_id, msg.header.sender_id);
 
             // Add the joiner to our platoon record
             PlatoonMember newMember = PlatoonMember();
@@ -1412,8 +1411,7 @@ namespace platoon_strategic_ihp
         }
 
         // Indicate the current join activity is complete
-        pm_.current_plan.planId = "";
-        pm_.current_plan.valid = false;
+        pm_.clearActionPlan();
         return response;
     }
     
@@ -1910,12 +1908,12 @@ namespace platoon_strategic_ihp
                     {
                         pm_.currentPlatoonID = "";
                         pm_.platoonLeaderID = "";
-                        pm_.targetPlatoonID = "";
                     }
                 }
 
                 // Clear our current join plan either way
                 pm_.clearActionPlan();
+                pm_.targetPlatoonID = "";
             }
             else
             {
@@ -2501,7 +2499,7 @@ namespace platoon_strategic_ihp
         }
 
         //Task 4: publish platoon status message (as single joiner)
-        if (pm_.current_plan.valid) //don't want to do this until iterations after MobReq message is delivered above
+        if (pm_.current_plan.valid) //don't want to do this until iterations after MobReq message is delivered above so recipient will understand it
         {
             cav_msgs::MobilityOperation status;
             status = composeMobilityOperationCandidateFollower();
