@@ -40,16 +40,18 @@
 namespace platoon_strategic_ihp
 {
     /**
-    * \brief Struct for a platoon plan
+    * \brief Struct for an action plan, which describes a transient joining activity
     */ 
-    struct PlatoonPlan 
+    struct ActionPlan 
     {
-        bool valid;
-        unsigned long planStartTime;
-        std::string planId;
-        std::string peerId;
-        PlatoonPlan():valid(false), planStartTime(0), planId(""), peerId("") {} ;
-        PlatoonPlan(bool valid, unsigned long planStartTime, std::string planId, std::string peerId): 
+        bool            valid;          //is host currently negotiating/executing a join action?
+        unsigned long   planStartTime;  //time that plan was initiated
+        std::string     planId;         //ID of this action
+        std::string     peerId;         //vehicle ID of the candidtate joining vehicle or leader of platoon we are joining
+
+        ActionPlan() : valid(false), planStartTime(0), planId(""), peerId("") {}
+
+        ActionPlan(bool valid, unsigned long planStartTime, std::string planId, std::string peerId): 
             valid(valid), planStartTime(planStartTime), planId(planId), peerId(peerId) {}  
     };
 
@@ -105,7 +107,9 @@ namespace platoon_strategic_ihp
         double vehicleCrossTrack;
         // The local time stamp when the host vehicle update any informations of this member.
         long   timestamp;
+
         PlatoonMember(): staticId(""), commandSpeed(0.0), vehicleSpeed(0.0), vehiclePosition(0.0), vehicleCrossTrack(0.0), timestamp(0) {} 
+
         PlatoonMember(std::string staticId, double commandSpeed, double vehicleSpeed, double vehiclePosition, double vehicleCrossTrack, long timestamp): staticId(staticId),
             commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), vehiclePosition(vehiclePosition), vehicleCrossTrack(vehicleCrossTrack), timestamp(timestamp) {}
     };
@@ -168,6 +172,11 @@ namespace platoon_strategic_ihp
         * \brief Returns total size of the platoon , in number of vehicles.
         */
         int getTotalPlatooningSize();
+
+        /**
+         * \brief Resets necessary variables to indicate that the current ActionPlan is dead.
+         */
+        void clearActionPlan();
 
         /**
         * \brief Returns dynamic leader of the host vehicle.
@@ -286,11 +295,12 @@ namespace platoon_strategic_ihp
         double getCutInGap(const int gap_leading_index, const double joinerDtD);
 
         // Member variables
-        std::string currentPlatoonID = "default_test_id";
-        bool isFollower = false;
+        std::string currentPlatoonID = ""; //empty string indicates not part of a platoon
+        std::string platoonLeaderID = "";  //empty string indicates not part of a platoon
+        std::string targetPlatoonID = "";  //ID of a real platoon that we may be attempting to join (empty if neighbor is a solo vehicle)
         PlatoonState current_platoon_state = PlatoonState::STANDBY;
-        PlatoonPlan current_plan;
-        std::string targetLeaderId = "default_target_leader_id";
+        ActionPlan current_plan = ActionPlan(); //this plan represents a joining activity only, not the platoon itself
+        bool isFollower = false;
 
         // host vehicle's static ID 
         std::string HostMobilityId = "default_host_id";
@@ -305,7 +315,6 @@ namespace platoon_strategic_ihp
         // local copy of configuration file
         PlatoonPluginConfig config_;
 
-        std::string targetPlatoonId;
         std::string OPERATION_INFO_TYPE = "INFO";
         std::string OPERATION_STATUS_TYPE = "STATUS";
         std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
