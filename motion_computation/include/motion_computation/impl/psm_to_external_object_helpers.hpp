@@ -29,7 +29,7 @@ namespace object {
 
 namespace conversion {
 
-namespace impl  // Namespace for functionality not meant to be part of public API but valueable to unit test in
+namespace impl  // Namespace for functionality not meant to be part of public API but valuable to unit test in
                 // isolation
 {
 std::vector<geometry_msgs::msg::Pose> sample_2d_path_from_radius(const geometry_msgs::msg::Pose &pose, double velocity,

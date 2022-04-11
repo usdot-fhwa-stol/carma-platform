@@ -69,9 +69,19 @@ class MotionComputationWorker {
   void setProcessNoiseMax(double noise_max);
   void setConfidenceDropRate(double drop_rate);
   void setExternalObjectPredictionMode(int external_object_prediction_mode);
+  void setDetectionInputFlags( 
+    bool enable_sensor_processing,
+    bool enable_bsm_processing,
+    bool enable_psm_processing,
+    bool enable_mobility_path_processing
+  );
 
   // callbacks
   void mobilityPathCallback(const carma_v2x_msgs::msg::MobilityPath::UniquePtr msg);
+
+  void bsmCallback(const carma_v2x_msgs::msg::BSM::UniquePtr msg);
+
+  void psmCallback(const carma_v2x_msgs::msg::PSM::UniquePtr msg);
 
   /**
    * \brief Callback for map projection string to define lat/lon -> map conversion
@@ -81,21 +91,25 @@ class MotionComputationWorker {
 
   /**
    * \brief Converts from MobilityPath's predicted points in ECEF to local map and other fields in an ExternalObject
-   * object \param msg MobilityPath message to convert \return ExternalObject object
+   * object 
+   * \param msg MobilityPath message to convert 
+   * \return ExternalObject object
    */
   carma_perception_msgs::msg::ExternalObject mobilityPathToExternalObject(
       const carma_v2x_msgs::msg::MobilityPath::UniquePtr& msg) const;
 
   /**
-   * \brief Appends external objects list behind sensor_list. This does not do sensor fusion.
+   * \brief Appends external objects list behind base_objects. This does not do sensor fusion.
    * When doing so, it drops the predictions points that start before the first prediction is sensor list.
-   * And interpolates the remaining predictions points to match the mobility_path_time_step using its average sped
-   * between points \param sensor_list sensor list from object detection \param mobility_path_list list from incoming
-   * mobility path msg from other cars \return append and synchronized list of external objects
+   * And interpolates the remaining predictions points to match the timestep using its average speed
+   * between points 
+   * \param base_objects object detections to append to and synchronize with
+   * \param new_objects new objects to add and be synchronized
+   * \return append and synchronized list of external objects
    */
   carma_perception_msgs::msg::ExternalObjectList synchronizeAndAppend(
-      const carma_perception_msgs::msg::ExternalObjectList& sensor_list,
-      carma_perception_msgs::msg::ExternalObjectList mobility_path_list) const;
+      const carma_perception_msgs::msg::ExternalObjectList& base_objects,
+      carma_perception_msgs::msg::ExternalObjectList new_objects) const;
 
   /*!
    * \brief It cuts ExternalObject's prediction points before the time_to_match. And uses the average
@@ -123,6 +137,13 @@ class MotionComputationWorker {
   double prediction_process_noise_max_ = 1000.0;
   double prediction_confidence_drop_rate_ = 0.9;
 
+  // Flags for the different possible detection inputs
+  bool enable_sensor_processing_ = true;
+  bool enable_bsm_processing_ = false;
+  bool enable_psm_processing_ = false;
+  bool enable_mobility_path_processing_ = false;
+
+
   // Logger interface
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
 
@@ -131,6 +152,8 @@ class MotionComputationWorker {
 
   // Queue for mobility path msgs to synchronize them with sensor msgs
   carma_perception_msgs::msg::ExternalObjectList mobility_path_list_;
+  carma_perception_msgs::msg::ExternalObjectList bsm_list_;
+  carma_perception_msgs::msg::ExternalObjectList psm_list_;
 
   std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 

@@ -32,6 +32,12 @@ std::pair<carma_perception_msgs::msg::PredictedState, double> composePredictedSt
  */
 void calculateAngVelocityOfPredictedStates(carma_perception_msgs::msg::ExternalObject &object);
 
+/**
+ * \brief Gets the yaw angle in degrees described by the provided quaternion
+ * 
+ * \param quaternion The quaternion to extract yaw from
+ * \return The yaw in degrees
+ */ 
 double getYawFromQuaternionMsg(const geometry_msgs::msg::Quaternion &quaternion);
 
 /**
@@ -42,14 +48,6 @@ double getYawFromQuaternionMsg(const geometry_msgs::msg::Quaternion &quaternion)
  */
 tf2::Vector3 transform_to_map_frame(const tf2::Vector3 &ecef_point, const lanelet::projection::LocalFrameProjector &map_projector);
 
-/**
- * \brief Converts a lat/lon GNSS point to map frame using the provided projector
- * \param lat The latitude in degrees
- * \param lon The longitude in degrees
- * \param ele The elevation in degrees
- * \return The 3d point in the map frame
- */ 
-tf2::Vector3 gnss_to_map(double lat, double lon, double ele, const lanelet::projection::LocalFrameProjector &map_projector);
 }  // namespace impl
 }  // namespace conversions
 }  // namespace object

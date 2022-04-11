@@ -40,6 +40,8 @@ class MotionComputationNode : public carma_ros2_utils::CarmaLifecycleNode {
   // Subscribers
   carma_ros2_utils::SubPtr<carma_perception_msgs::msg::ExternalObjectList> motion_comp_sub_;
   carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityPath> mobility_path_sub_;
+  carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::BSM> bsm_sub_;
+  carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::PSM> psm_sub_;
   carma_ros2_utils::SubPtr<std_msgs::msg::String> georeference_sub_;
 
   // Publishers

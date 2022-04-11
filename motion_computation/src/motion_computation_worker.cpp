@@ -89,19 +89,19 @@ namespace motion_computation{
         // MobilityPath
         // TODO add descriptive comments here
         const carma_perception_msgs::msg::ExternalObjectList& synchronization_base_objects;
-        if (enable_sensor_processing) {
+        if (enable_sensor_processing_) {
 
             synchronization_base_objects = sensor_list;
 
-        } else if (enable_bsm_processing) {
+        } else if (enable_bsm_processing_) {
 
-            synchronization_base_objects = bsm_list;
+            synchronization_base_objects = bsm_list_;
 
-        } else if (enable_psm_processing) {
+        } else if (enable_psm_processing_) {
 
-            synchronization_base_objects = psm_list;
+            synchronization_base_objects = psm_list_;
 
-        } else if (enable_mobility_path_processing) {
+        } else if (enable_mobility_path_processing_) {
 
             synchronization_base_objects = mobility_path_list_;
 
@@ -117,25 +117,25 @@ namespace motion_computation{
         carma_perception_msgs::msg::ExternalObjectList current_output; // TODO we need to set the header for this
         current_output.objects.reserve(synchronization_base_objects.objects.size());
 
-        if (enable_sensor_processing) {
+        if (enable_sensor_processing_) {
 
             current_output = synchronizeAndAppend(sensor_list, current_output);
 
         }
         
-        if (enable_bsm_processing) {
+        if (enable_bsm_processing_) {
 
-            current_output = synchronizeAndAppend(bsm_list, current_output);
-
-        } 
-        
-        if (enable_psm_processing) {
-
-            current_output = synchronizeAndAppend(psm_list, current_output);
+            current_output = synchronizeAndAppend(bsm_list_, current_output);
 
         } 
         
-        if (enable_mobility_path_processing) {
+        if (enable_psm_processing_) {
+
+            current_output = synchronizeAndAppend(psm_list_, current_output);
+
+        } 
+        
+        if (enable_mobility_path_processing_) {
             
             current_output = synchronizeAndAppend(mobility_path_list_, current_output);
 
@@ -144,7 +144,9 @@ namespace motion_computation{
         obj_pub_(output_list);
 
         // Clear mobility msg path queue since it is published
-        mobility_path_list_.objects = {};
+        mobility_path_list_.objects.clear();
+        bsm_list_.objects.clear();
+        psm_list_.objects.clear();
     }
 
     void MotionComputationWorker::georeferenceCallback(const std_msgs::msg::String::UniquePtr msg) 
@@ -204,6 +206,19 @@ namespace motion_computation{
         external_object_prediction_mode_ = static_cast<MotionComputationMode>(external_object_prediction_mode);
     }
 
+    void MotionComputationWorker::setDetectionInputFlags( 
+        bool enable_sensor_processing,
+        bool enable_bsm_processing,
+        bool enable_psm_processing,
+        bool enable_mobility_path_processing
+    ) 
+    {
+        enable_sensor_processing_ = enable_sensor_processing;
+        enable_bsm_processing_ = enable_bsm_processing;
+        enable_psm_processing_ = enable_psm_processing;
+        enable_mobility_path_processing_ = enable_mobility_path_processing;
+    }
+
     void MotionComputationWorker::mobilityPathCallback(const carma_v2x_msgs::msg::MobilityPath::UniquePtr msg)
     {
         if (!map_projector_) {
@@ -211,12 +226,14 @@ namespace motion_computation{
             return;
         }
 
-        if (!enable_mobility_path_processing) {
+        if (!enable_mobility_path_processing_) {
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "enable_mobility_path_processing is false so ignoring MobilityPath messages");
             return;
         }
-
-        mobility_path_list_.objects.push_back(mobilityPathToExternalObject(msg));
+        
+        carma_perception_msgs::msg::ExternalObject obj_msg;
+        conversion::convert(msg, obj_msg, map_projector_);
+        mobility_path_list_.objects.push_back(obj_msg);
     }
 
     void MotionComputationWorker::psmCallback(const carma_v2x_msgs::msg::PSM::UniquePtr msg)
@@ -226,12 +243,13 @@ namespace motion_computation{
             return;
         }
 
-        if (!enable_psm_processing) {
+        if (!enable_psm_processing_) {
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "enable_psm_processing is false so ignoring PSM messages");
             return;
         }
 
-        psm_list_.objects.push_back(mobilityPathToExternalObject(msg));
+        // TODO
+        //psm_list_.objects.push_back(mobilityPathToExternalObject(msg));
     }
 
     void MotionComputationWorker::bsmCallback(const carma_v2x_msgs::msg::BSM::UniquePtr msg)
@@ -241,49 +259,30 @@ namespace motion_computation{
             return;
         }
 
-        if (!enable_bsm_processing) {
+        if (!enable_bsm_processing_) {
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "enable_bsm_processing is false so ignoring BSM messages");
             return;
         }
 
-        bsm_list_.objects.push_back(mobilityPathToExternalObject(msg));
-    }
-
-    carma_perception_msgs::msg::ExternalObject MotionComputationWorker::bsmToExternalObject(const carma_v2x_msgs::msg::BSM::UniquePtr& msg) const
-    {
-        carma_perception_msgs::msg::ExternalObject output;
-
-        // Generate a unique object id from the bsm id
-        output.id = 0
-        for (int i = msg->core_data.id.size() - 1; i >= 0; i--) { // using signed iterator to handle empty case
-            output.id |= msg->core_data.id[i] << (8*i);
-        }
-
-        output.bsm_id = msg->core_data.id;
-
-        return output;
+        // TODO
+        //bsm_list_.objects.push_back(mobilityPathToExternalObject(msg));
     }
     
-
-
-
-    
-
-    
-
-    carma_perception_msgs::msg::ExternalObjectList MotionComputationWorker::synchronizeAndAppend(const carma_perception_msgs::msg::ExternalObjectList& sensor_list, carma_perception_msgs::msg::ExternalObjectList mobility_path_list) const
+    carma_perception_msgs::msg::ExternalObjectList MotionComputationWorker::synchronizeAndAppend(const carma_perception_msgs::msg::ExternalObjectList& base_objects, carma_perception_msgs::msg::ExternalObjectList new_objects) const
     {
         carma_perception_msgs::msg::ExternalObjectList output_list;
+        output_list.objects.reserve(base_objects.objects.size() + new_objects.objects.size());
+        
         // Compare time_stamps of first elements of each list as they are guaranteed to be the earliest of the respective lists
         
-        for (auto &path: mobility_path_list.objects)
+        for (auto &path: new_objects.objects)
         {
             // interpolate and match timesteps
-            path = matchAndInterpolateTimeStamp(path, rclcpp::Time(sensor_list.header.stamp));
+            path = matchAndInterpolateTimeStamp(path, rclcpp::Time(base_objects.header.stamp));
         }
         
-        output_list.objects.insert(output_list.objects.begin(),sensor_list.objects.begin(),sensor_list.objects.end());
-        output_list.objects.insert(output_list.objects.end(),mobility_path_list.objects.begin(),mobility_path_list.objects.end());
+        output_list.objects.insert(output_list.objects.begin(),base_objects.objects.begin(),base_objects.objects.end());
+        output_list.objects.insert(output_list.objects.end(),new_objects.objects.begin(),new_objects.objects.end());
         return output_list;
     }
 

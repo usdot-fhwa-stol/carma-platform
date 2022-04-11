@@ -98,11 +98,18 @@ namespace motion_computation
     motion_comp_sub_ = create_subscription<carma_perception_msgs::msg::ExternalObjectList>("external_objects", 1,
                                                               std::bind(&MotionComputationWorker::predictionLogic, &motion_worker_, std_ph::_1));
     
-    mobility_path_sub_ = create_subscription<carma_v2x_msgs::msg::MobilityPath>("incoming_mobility_path", 20,
+    mobility_path_sub_ = create_subscription<carma_v2x_msgs::msg::MobilityPath>("incoming_mobility_path", 100,
                                                               std::bind(&MotionComputationWorker::mobilityPathCallback, &motion_worker_, std_ph::_1));
+
+    bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("incoming_mobility_path", 100,
+                                                              std::bind(&MotionComputationWorker::bsmCallback, &motion_worker_, std_ph::_1));
+
+    psm_sub_ = create_subscription<carma_v2x_msgs::msg::PSM>("incoming_mobility_path", 100,
+                                                              std::bind(&MotionComputationWorker::psmCallback, &motion_worker_, std_ph::_1));
     
     georeference_sub_ = create_subscription<std_msgs::msg::String>("georeference", 1,
                                                               std::bind(&MotionComputationWorker::georeferenceCallback, &motion_worker_, std_ph::_1));
+
 
     // Setup publishers
     carma_obj_pub_ = create_publisher<carma_perception_msgs::msg::ExternalObjectList>("external_object_predictions", 2);
@@ -116,6 +123,12 @@ namespace motion_computation
     motion_worker_.setProcessNoiseMax(config_.prediction_process_noise_max);
     motion_worker_.setConfidenceDropRate(config_.prediction_confidence_drop_rate);
     motion_worker_.setExternalObjectPredictionMode(config_.external_object_prediction_mode);
+    motion_worker_.setDetectionInputFlags( 
+        config_.enable_sensor_processing,
+        config_.enable_bsm_processing,
+        config_.enable_psm_processing,
+        config_.enable_mobility_path_processing
+    );
 
     // Return success if everthing initialized successfully
     return CallbackReturn::SUCCESS;
