@@ -7,6 +7,7 @@ maxAllowedJoinTimeGap: 15.0
 maxAllowedJoinGap: 90.0
 desiredJoinTimeGap: 4.0
 desiredJoinGap: 30.0
+maxLeaderAbortingCalls: 4
 waitingStateTimeout: 25.0
 cmdSpeedMaxAdjustment: 10.0
 minAllowableHeadaway: 1.6

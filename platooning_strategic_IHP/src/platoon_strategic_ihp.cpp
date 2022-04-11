@@ -2567,7 +2567,7 @@ namespace platoon_strategic_ihp
         // Note that pm_ only represents host's platoon members. As the aborting leader, the only vehicle
         // preceding host is the candidate joiner. For this code to work, it depends on the candidate to publish
         // mobility operation STATUS messages so that host can include it in the pm_ platoon membership.
-        double currentGap = pm_.getDistanceToPredVehicle();
+        double currentGap = pm_.getDistanceToPredVehicle(); //returns 0 if we haven't received op STATUS from joiner yet
         ROS_DEBUG_STREAM("Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " m");
         ROS_DEBUG_STREAM("Since we have max allowed gap as " << config_.desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
         ROS_DEBUG_STREAM("The current gap to joiner is " << currentGap << " m");
@@ -2577,12 +2577,14 @@ namespace platoon_strategic_ihp
         // and thereby adds the joiner to the platoon record. This process requires host's mob_req_cb_leader() to ACK the join request, then 
         // the remote vehicle to handle that ACK and broadcast its first op STATUS, then host to receive and process it. All that has to happen
         // before the below code block runs, even though this method starts to spin immediately after we send out the mentioned ACK. To avoid
-        // a race condition, we must wait a few cycles to ensure the 2-way messaging has completed.
+        // a race condition, we must wait a few cycles to ensure the 2-way messaging has completed. The race is that above calculation for
+        // current gap will be returned as 0 until we have received said STATUS message from the joiner, which would prematurely trigger the
+        // process to move forward.
 
         // Check if gap is big enough and if there is no currently active plan and this method has been called several times
         // Add a condition to prevent sending repeated requests (Note: This is a same-lane maneuver, so no need to consider lower bound of joining gap.)
         ++numLeaderAbortingCalls_;
-        if (currentGap <= maxJoinGap  &&  !pm_.current_plan.valid  &&  numLeaderAbortingCalls_ > 4) 
+        if (currentGap <= maxJoinGap  &&  !pm_.current_plan.valid  &&  numLeaderAbortingCalls_ > config_.maxLeaderAbortingCalls) 
         {
             //TODO: this is just a test - remove when satisfied that this var doesn't need to be in the above if statement
             ROS_DEBUG_STREAM("Gap size good & no valid plan. isFirstLeaderAbortRequest = " << isFirstLeaderAbortRequest_);

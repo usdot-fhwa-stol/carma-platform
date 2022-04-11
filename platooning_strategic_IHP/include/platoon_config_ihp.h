@@ -42,6 +42,7 @@ struct PlatoonPluginConfig
   double longitudinalCheckThresold      = 85.0;    // m
   double desiredJoinTimeGap             = 4.0;     // s
   double desiredJoinGap                 = 30.0;    // m
+  int    maxLeaderAbortingCalls         = 4;       // counter
   double waitingStateTimeout            = 25.0;    // s
   double cmdSpeedMaxAdjustment          = 10.0;    // m/s
     
@@ -86,6 +87,7 @@ struct PlatoonPluginConfig
           << "maxAllowedJoinTimeGap: " << c.maxAllowedJoinTimeGap << std::endl
           << "desiredJoinTimeGap: " << c.desiredJoinTimeGap << std::endl
           << "desiredJoinGap: " << c.desiredJoinGap << std::endl
+          << "maxLeaderAbortingCalls: " << c.maxLeaderAbortingCalls << std::endl
           << "waitingStateTimeout: " << c.waitingStateTimeout << std::endl
           << "cmdSpeedMaxAdjustment: " << c.cmdSpeedMaxAdjustment << std::endl
           << "minAllowableHeadaway: " << c.minAllowableHeadaway << std::endl
