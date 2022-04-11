@@ -23,6 +23,8 @@
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
 #include <carma_v2x_msgs/msg/mobility_path.hpp>
+#include <carma_v2x_msgs/msg/bsm.hpp>
+#include <carma_v2x_msgs/msg/psm.hpp>
 #include <functional>
 #include <motion_predict/motion_predict.hpp>
 #include <motion_predict/predict_ctrv.hpp>
@@ -79,12 +81,16 @@ class MotionComputationWorker {
    */
   void georeferenceCallback(const std_msgs::msg::String::UniquePtr msg);
 
+  void bsmCallback(const carma_v2x_msgs::msg::BSM::UniquePtr msg);
+
+  void psmCallback(const carma_v2x_msgs::msg::PSM::UniquePtr msg);
+
   /**
    * \brief Converts from MobilityPath's predicted points in ECEF to local map and other fields in an ExternalObject
    * object \param msg MobilityPath message to convert \return ExternalObject object
    */
-  carma_perception_msgs::msg::ExternalObject mobilityPathToExternalObject(
-      const carma_v2x_msgs::msg::MobilityPath::UniquePtr& msg) const;
+  // carma_perception_msgs::msg::ExternalObject mobilityPathToExternalObject(
+  //     const carma_v2x_msgs::msg::MobilityPath::UniquePtr& msg) const;
 
   /**
    * \brief Appends external objects list behind sensor_list. This does not do sensor fusion.
@@ -109,6 +115,8 @@ class MotionComputationWorker {
   carma_perception_msgs::msg::ExternalObject matchAndInterpolateTimeStamp(
       carma_perception_msgs::msg::ExternalObject path, const rclcpp::Time& time_to_match) const;
 
+  carma_perception_msgs::msg::ExternalObject bsmToExternalObject(const carma_v2x_msgs::msg::BSM::UniquePtr& msg) const;
+
  private:
   
   // Local copy of external object publisher
@@ -129,8 +137,21 @@ class MotionComputationWorker {
   // External object conversion mode
   MotionComputationMode external_object_prediction_mode_ = MOBILITY_PATH_ONLY;
 
+
+  bool enable_sensor_processing_ = false;
+  bool enable_bsm_processing_ = false;
+  bool enable_psm_processing_ = false;
+  bool enable_mobility_path_processing_ = false;
+
+
   // Queue for mobility path msgs to synchronize them with sensor msgs
   carma_perception_msgs::msg::ExternalObjectList mobility_path_list_;
+
+  // Queue for bsm msgs to synchronize them with sensor msgs
+  carma_perception_msgs::msg::ExternalObjectList bsm_list_;
+
+  // Queue for sensor detected objects to synchronize them with sensor msgs
+  carma_perception_msgs::msg::ExternalObjectList sensor_list_;
 
   std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 

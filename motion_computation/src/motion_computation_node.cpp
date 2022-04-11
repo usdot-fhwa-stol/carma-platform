@@ -115,7 +115,7 @@ namespace motion_computation
     motion_worker_.setYAccelerationNoise(config_.cv_y_accel_noise);
     motion_worker_.setProcessNoiseMax(config_.prediction_process_noise_max);
     motion_worker_.setConfidenceDropRate(config_.prediction_confidence_drop_rate);
-    motion_worker_.setExternalObjectPredictionMode(config_.external_object_prediction_mode);
+    // motion_worker_.setExternalObjectPredictionMode(config_.external_object_prediction_mode);
 
     // Return success if everthing initialized successfully
     return CallbackReturn::SUCCESS;

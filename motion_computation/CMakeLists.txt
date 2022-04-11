@@ -62,22 +62,22 @@ target_link_libraries(${node_exec}
 )
 
 # Testing
-if(BUILD_TESTING)  
+#if(BUILD_TESTING)  
+#
+#  find_package(ament_lint_auto REQUIRED)
+#  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+#
+#  ament_add_gtest(test_motion_computation 
+#        test/MotionComputationTest.cpp
+#        test/TestMain.cpp)
+#
+#  ament_target_dependencies(test_motion_computation ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+#
+#  target_link_libraries(test_motion_computation ${node_lib})
 
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
-
-  ament_add_gtest(test_motion_computation 
-        test/MotionComputationTest.cpp
-        test/TestMain.cpp)
-
-  ament_target_dependencies(test_motion_computation ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
-
-  target_link_libraries(test_motion_computation ${node_lib})
-
-endif()
+#endif()
 
 # Install
-ament_auto_package(
-        INSTALL_TO_SHARE config launch
-)
+#ament_auto_package(
+#        INSTALL_TO_SHARE config launch
+#)

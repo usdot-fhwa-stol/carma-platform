@@ -87,20 +87,20 @@ namespace motion_computation{
         // PSM
         // MobilityPath
         // TODO add descriptive comments here
-        const carma_perception_msgs::msg::ExternalObjectList& synchronization_base_objects;
-        if (enable_sensor_processing) {
+        carma_perception_msgs::msg::ExternalObjectList synchronization_base_objects;
+        if (enable_sensor_processing_) {
 
-            synchronization_base_objects = sensor_list;
+            synchronization_base_objects = sensor_list_;
 
-        } else if (enable_bsm_processing) {
+        } else if (enable_bsm_processing_) {
 
-            synchronization_base_objects = bsm_list;
+            synchronization_base_objects = bsm_list_;
 
-        } else if (enable_psm_processing) {
+        } else if (enable_psm_processing_) {
 
-            synchronization_base_objects = psm_list;
+            // synchronization_base_objects = psm_list_;
 
-        } else if (enable_mobility_path_processing) {
+        } else if (enable_mobility_path_processing_) {
 
             synchronization_base_objects = mobility_path_list_;
 
@@ -116,25 +116,25 @@ namespace motion_computation{
         carma_perception_msgs::msg::ExternalObjectList current_output; // TODO we need to set the header for this
         current_output.objects.reserve(synchronization_base_objects.objects.size());
 
-        if (enable_sensor_processing) {
+        if (enable_sensor_processing_) {
 
             current_output = synchronizeAndAppend(sensor_list, current_output);
 
         }
         
-        if (enable_bsm_processing) {
+        if (enable_bsm_processing_) {
 
-            current_output = synchronizeAndAppend(bsm_list, current_output);
-
-        } 
-        
-        if (enable_psm_processing) {
-
-            current_output = synchronizeAndAppend(psm_list, current_output);
+            current_output = synchronizeAndAppend(bsm_list_, current_output);
 
         } 
         
-        if (enable_mobility_path_processing) {
+        if (enable_psm_processing_) {
+
+            // current_output = synchronizeAndAppend(psm_list, current_output);
+
+        } 
+        
+        if (enable_mobility_path_processing_) {
             
             current_output = synchronizeAndAppend(mobility_path_list_, current_output);
 
@@ -151,16 +151,16 @@ namespace motion_computation{
         // Build projector from proj string
         map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str()); 
 
-        
-        std::string axis = wgs84_utils::proj_tools::getAxisFromProjString(msg->data);  // Extract axis for orientation calc
+        //TODO temporary
+        std::string axis;// = wgs84_utils::proj_tools::getAxisFromProjString(msg->data);  // Extract axis for orientation calc
 
-        ROS_INFO_STREAM("Extracted Axis: " << axis);
+        // RCLCPP_INFO_STREAM(logger_->get_logger(), "Extracted Axis: " , axis);
 
-        ned_in_map_rotation_ = wgs84_utils::proj_tools::getRotationOfNEDFromProjAxis(axis);  // Extract map rotation from axis
+        // ned_in_map_rotation_ = wgs84_utils::proj_tools::getRotationOfNEDFromProjAxis(axis);  // Extract map rotation from axis
 
-        ROS_DEBUG_STREAM("Extracted NED in Map Rotation (x,y,z,w) : ( "
-                        << ned_in_map_rotation_.get().x() << ", " << ned_in_map_rotation_.get().y() << ", "
-                        << ned_in_map_rotation_.get().z() << ", " << ned_in_map_rotation_.get().w());
+        // RCLCPP_DEBUG_STREAM("Extracted NED in Map Rotation (x,y,z,w) : ( "
+        //                 , ned_in_map_rotation_.getX() , ", " << ned_in_map_rotation_.getY() , ", "
+        //                 , ned_in_map_rotation_.getZ() , ", " << ned_in_map_rotation_.getW());
     }
     
     void MotionComputationWorker::setPredictionTimeStep(double time_step)
@@ -210,12 +210,12 @@ namespace motion_computation{
             return;
         }
 
-        if (!enable_mobility_path_processing) {
+        if (!enable_mobility_path_processing_) {
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "enable_mobility_path_processing is false so ignoring MobilityPath messages");
             return;
         }
 
-        mobility_path_list_.objects.push_back(mobilityPathToExternalObject(msg));
+        // mobility_path_list_.objects.push_back(mobilityPathToExternalObject(msg));
     }
 
     void MotionComputationWorker::psmCallback(const carma_v2x_msgs::msg::PSM::UniquePtr msg)
@@ -225,12 +225,12 @@ namespace motion_computation{
             return;
         }
 
-        if (!enable_psm_processing) {
+        if (!enable_psm_processing_) {
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "enable_psm_processing is false so ignoring PSM messages");
             return;
         }
 
-        psm_list_.objects.push_back(mobilityPathToExternalObject(msg));
+        // psm_list_.objects.push_back(mobilityPathToExternalObject(msg));
     }
 
     void MotionComputationWorker::bsmCallback(const carma_v2x_msgs::msg::BSM::UniquePtr msg)
@@ -240,12 +240,12 @@ namespace motion_computation{
             return;
         }
 
-        if (!enable_bsm_processing) {
+        if (!enable_bsm_processing_) {
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "enable_bsm_processing is false so ignoring BSM messages");
             return;
         }
 
-        bsm_list_.objects.push_back(mobilityPathToExternalObject(msg));
+        bsm_list_.objects.push_back(bsmToExternalObject(msg));
     }
 
     carma_perception_msgs::msg::ExternalObject MotionComputationWorker::bsmToExternalObject(const carma_v2x_msgs::msg::BSM::UniquePtr& msg) const
@@ -253,7 +253,7 @@ namespace motion_computation{
         carma_perception_msgs::msg::ExternalObject output;
 
         // Generate a unique object id from the bsm id
-        output.id = 0
+        output.id = 0;
         for (int i = msg->core_data.id.size() - 1; i >= 0; i--) { // using signed iterator to handle empty case
             output.id |= msg->core_data.id[i] << (8*i);
         }
