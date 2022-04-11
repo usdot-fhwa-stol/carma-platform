@@ -37,12 +37,19 @@ double getYawFromQuaternionMsg(const geometry_msgs::msg::Quaternion &quaternion)
 /**
  * \brief Transforms ecef point to map frame using internally saved map transform
  * \param ecef_point ecef_point to transform
+ * \param map_projector Projector used for frame conversion
  * \return point in map
  */
-tf2::Vector3 transform_to_map_frame(const tf2::Vector3 &ecef_point);
+tf2::Vector3 transform_to_map_frame(const tf2::Vector3 &ecef_point, const lanelet::projection::LocalFrameProjector &map_projector);
 
-// TODO comment
-tf2::Vector3 gnss_to_map(double lat, double lon, double ele);
+/**
+ * \brief Converts a lat/lon GNSS point to map frame using the provided projector
+ * \param lat The latitude in degrees
+ * \param lon The longitude in degrees
+ * \param ele The elevation in degrees
+ * \return The 3d point in the map frame
+ */ 
+tf2::Vector3 gnss_to_map(double lat, double lon, double ele, const lanelet::projection::LocalFrameProjector &map_projector);
 }  // namespace impl
 }  // namespace conversions
 }  // namespace object

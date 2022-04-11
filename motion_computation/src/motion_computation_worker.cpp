@@ -14,6 +14,7 @@
  * the License.
  */
 #include "motion_computation/motion_computation_worker.hpp"
+#include "motion_computation/message_conversions.hpp"
 
 namespace motion_computation{
 

@@ -11,6 +11,7 @@ void convert(const carma_v2x_msgs::msg::PSM &in_msg, carma_perception_msgs::msg:
 void convert(const carma_v2x_msgs::msg::BSM &in_msg, carma_perception_msgs::msg::ExternalObject &out_msg,
              const std::string &map_frame_id, double pred_period, double pred_step_size);
 
-void convert(const carma_v2x_msgs::msg::MobilityPath &in_msg, carma_perception_msgs::msg::ExternalObject &out_msg);
+void convert(const carma_v2x_msgs::msg::MobilityPath &in_msg, carma_perception_msgs::msg::ExternalObject &out_msg,
+             const lanelet::projection::LocalFrameProjector &map_projector);
 }  // namespace conversion
 }  // namespace object

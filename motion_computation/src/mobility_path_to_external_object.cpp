@@ -6,7 +6,11 @@ namespace object {
 
 namespace conversion {
 
-void convert(const carma_v2x_msgs::msg::MobilityPath &in_msg, carma_perception_msgs::msg::ExternalObject &out_msg) {
+void convert(
+    const carma_v2x_msgs::msg::MobilityPath &in_msg,
+    carma_perception_msgs::msg::ExternalObject &out_msg 
+    const lanelet::projection::LocalFrameProjector &map_projector) 
+{
   out_msg.size.x = 2.5;  // TODO identify better approach for object size in mobility path
   out_msg.size.y = 2.25;
   out_msg.size.z = 2.0;
@@ -17,6 +21,7 @@ void convert(const carma_v2x_msgs::msg::MobilityPath &in_msg, carma_perception_m
   double ecef_z = (double)in_msg.trajectory.location.ecef_z / 100.0;
 
   // Convert general information
+  // clang-off
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::ID_PRESENCE_VECTOR;
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::POSE_PRESENCE_VECTOR;
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::VELOCITY_PRESENCE_VECTOR;
@@ -24,6 +29,8 @@ void convert(const carma_v2x_msgs::msg::MobilityPath &in_msg, carma_perception_m
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::BSM_ID_PRESENCE_VECTOR;
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::DYNAMIC_OBJ_PRESENCE;
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::PREDICTION_PRESENCE_VECTOR;
+  // clang-on
+
   out_msg.object_type = carma_perception_msgs::msg::ExternalObject::SMALL_VEHICLE;
   std::hash<std::string> hasher;
   auto hashed = hasher(
@@ -51,7 +58,7 @@ void convert(const carma_v2x_msgs::msg::MobilityPath &in_msg, carma_perception_m
   carma_perception_msgs::msg::PredictedState prev_state;
   tf2::Vector3 prev_pt_ecef{ecef_x, ecef_y, ecef_z};
 
-  auto prev_pt_map = impl::transform_to_map_frame(prev_pt_ecef);
+  auto prev_pt_map = impl::transform_to_map_frame(prev_pt_ecef, map_projector);
   double prev_yaw = 0.0;
 
   double message_offset_x = 0.0;  // units cm
@@ -68,7 +75,7 @@ void convert(const carma_v2x_msgs::msg::MobilityPath &in_msg, carma_perception_m
     tf2::Vector3 curr_pt_ecef{
         ecef_x + message_offset_x / 100.0, ecef_y + message_offset_y / 100.0,
         ecef_z + message_offset_z / 100.0};  // ecef_x is in m while message_offset_x is in cm. Want m as final result
-    auto curr_pt_map = impl::transform_to_map_frame(curr_pt_ecef);
+    auto curr_pt_map = impl::transform_to_map_frame(curr_pt_ecef, map_projector);
 
     carma_perception_msgs::msg::PredictedState curr_state;
 
@@ -182,31 +189,28 @@ double getYawFromQuaternionMsg(const geometry_msgs::msg::Quaternion &quaternion)
   return yaw;
 }
 
-tf2::Vector3 transform_to_map_frame(const tf2::Vector3& ecef_point)
-{
-    if (!map_projector_) {
-        throw std::invalid_argument("No map projector available for ecef conversion");
-    }
-        
-    lanelet::BasicPoint3d map_point = map_projector_->projectECEF( { ecef_point.x(),  ecef_point.y(), ecef_point.z() } , -1); // Input should already be converted to m
-    
-    return tf2::Vector3(map_point.x(), map_point.y(), map_point.z());
+tf2::Vector3 transform_to_map_frame(const tf2::Vector3 &ecef_point, const lanelet::projection::LocalFrameProjector &map_projector) {
+  if (!map_projector) {
+    throw std::invalid_argument("No map projector available for ecef conversion");
+  }
+
+  lanelet::BasicPoint3d map_point = map_projector->projectECEF({ecef_point.x(), ecef_point.y(), ecef_point.z()},
+                                                                -1);  // Input should already be converted to m
+
+  return tf2::Vector3(map_point.x(), map_point.y(), map_point.z());
 }
 
+tf2::Vector3 gnss_to_map(double lat, double lon, double ele, const lanelet::projection::LocalFrameProjector &map_projector) {
+  if (!map_projector) {
+    throw std::invalid_argument("No map projector available for gnss conversion");
+  }
 
-tf2::Vector3 gnss_to_map(double lat, double lon, double ele)
-{
-    if (!map_projector_) {
-        throw std::invalid_argument("No map projector available for gnss conversion");
-    }
+  // GPSPoint gps_point;
+  // gps_point.lat = lat; // TODO if possible delete
 
-    // GPSPoint gps_point;
-    // gps_point.lat = lat; // TODO if possible delete
+  lanelet::BasicPoint3d map_point = map_projector->forward({lat, lon, ele});  // Input should already be converted to m
 
-        
-    lanelet::BasicPoint3d map_point = map_projector_->forward( { lat,  lon, ele } ); // Input should already be converted to m
-    
-    return tf2::Vector3(map_point.x(), map_point.y(), map_point.z());
+  return tf2::Vector3(map_point.x(), map_point.y(), map_point.z());
 }
 }  // namespace impl
 
