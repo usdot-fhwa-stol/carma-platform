@@ -33,7 +33,7 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 
-FROM usdotfhwastolcandidate/autoware.ai:jetta-gillet AS base-image
+FROM usdotfhwastol/autoware.ai:carma-system-4.0.0 AS base-image
 
 FROM base-image AS source-code
 
