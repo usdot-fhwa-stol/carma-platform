@@ -26,7 +26,7 @@
 namespace traffic
 {
 
-  TrafficIncidentParserWorker::TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm,const PublishTrafficControlCallback &traffic_control_pub) : traffic_control_pub_(traffic_control_pub),wm_(wm){};
+  TrafficIncidentParserWorker::TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm,const PublishTrafficControlCallback &traffic_control_pub) : traffic_control_pub_(traffic_control_pub),wm_(wm){}
 
   void TrafficIncidentParserWorker::mobilityOperationCallback(const cav_msgs::MobilityOperation &mobility_msg)
   {
@@ -43,7 +43,7 @@ namespace traffic
             traffic_control_msg.choice=cav_msgs::TrafficControlMessage::TCMV01;
             for(auto &traffic_msg:composeTrafficControlMesssages())
             {
-              traffic_control_msg.tcmV01=traffic_msg;
+              traffic_control_msg.tcm_v01=traffic_msg;
               geofence_message_queue_.push_back(traffic_control_msg); // Add the message to the geofence_message_queue for publication to new subscribers
               traffic_control_pub_(traffic_control_msg); // Publish the message to existing subscribers
             }

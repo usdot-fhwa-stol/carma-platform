@@ -16,10 +16,9 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(carma_wm)
 
-## Compile as C++14, as it is required by lanelet2
-add_compile_options(-std=c++17)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 ## Set catkin dependencies
 set ( PKG_CATKIN_DEPS 
@@ -135,9 +134,17 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 catkin_add_gmock(${PROJECT_NAME}-test
+  test/GeometryTest.cpp
   test/TestMain.cpp
   test/CARMAWorldModelTest.cpp
+  test/WMListenerWorkerTest.cpp
   test/SignalizedIntersectionManagerTest.cpp
+  test/CollisionDetectionTest.cpp
+  test/IndexedDistanceMapTest.cpp
+  test/MapConformerTest.cpp
+  test/TrafficControlTest.cpp
+  test/WMTestLibForGuidanceTest.cpp
+  test/WorldModelUtilsTest.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 

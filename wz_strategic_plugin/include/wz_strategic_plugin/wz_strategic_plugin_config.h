@@ -29,7 +29,7 @@ struct WzStrategicPluginConfig
   double vehicle_decel_limit_multiplier = 0.75;
 
   //! The length parameter of the participant vehicle used to help calculate the distance before stopping at a red traffic signal
-  double vehicle_length = 5.0;
+  double vehicle_length = 0.0;
 
   //! The minimum distance in meters that the vehicle can be at before requiring a transition to the APPROACH state
   double min_approach_distance = 30.0;

@@ -92,13 +92,13 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
         upcoming_lane_change_status_pub_ = nh_->advertise<cav_msgs::UpcomingLaneChangeStatus>("upcoming_lane_change_status", 1);
         plugin_discovery_msg_.name = planning_strategic_plugin_;
-        plugin_discovery_msg_.versionId = "v1.0";
+        plugin_discovery_msg_.version_id = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = true;
         plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
         plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
 
-        pose_sub_ = nh_->subscribe("current_pose", 1, &RouteFollowingPlugin::pose_cb, this);
+        // pose_sub_ = nh_->subscribe("current_pose", 1, &RouteFollowingPlugin::pose_cb, this);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteFollowingPlugin::twist_cb, this);
 
         // read ros parameters
@@ -120,6 +120,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
 
         //set a route callback to update route and calculate maneuver
         wml_->setRouteCallback([this]() {
+            ROS_INFO_STREAM("Recomputing maneuvers due to a route update");
             this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
         });
 
@@ -130,9 +131,14 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             }
         });
 
+        initializeBumperTransformLookup();
+
+
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
-            [this](const auto &) { plugin_discovery_pub_.publish(plugin_discovery_msg_); });
+            [this](const auto &) { plugin_discovery_pub_.publish(plugin_discovery_msg_); 
+                                    bumper_pose_cb();
+                                    });
     }
 
     void RouteFollowingPlugin::run()
@@ -383,17 +389,30 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             return false;
         }
 
-        double current_downtrack = wm_->routeTrackPos(current_loc_).downtrack;
-
+        double current_downtrack;
+        
+        if (!req.prior_plan.maneuvers.empty())
+        {
+            current_downtrack = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_dist);
+            ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end_dist:"<< current_downtrack);            
+        }
+        else
+        {
+            current_downtrack = req.veh_downtrack;
+            ROS_DEBUG_STREAM("Detected NO prior plan! Using req.veh_downtrack: "<< current_downtrack);
+        }
+        
         //Return the set of maneuvers which intersect with min_plan_duration
         size_t i = 0;
         double planned_time = 0.0;
+
+        std::vector<cav_msgs::Maneuver> new_maneuvers;
 
         while (planned_time < min_plan_duration_ && i < latest_maneuver_plan_.size())
         {
             ROS_DEBUG_STREAM("Checking maneuver id " << i);
             //Ignore plans for distance already covered
-            if (GET_MANEUVER_PROPERTY(latest_maneuver_plan_[i], end_dist) < current_downtrack)
+            if (GET_MANEUVER_PROPERTY(latest_maneuver_plan_[i], end_dist) <= current_downtrack)
             {
                 ROS_DEBUG_STREAM("Skipping maneuver id " << i);
 
@@ -406,21 +425,72 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             }
             planned_time += getManeuverDuration(latest_maneuver_plan_[i], epsilon_).toSec();
 
-            resp.new_plan.maneuvers.push_back(latest_maneuver_plan_[i]);
+            new_maneuvers.push_back(latest_maneuver_plan_[i]);
             ++i;
         }
 
-        if (resp.new_plan.maneuvers.size() == 0)
+        if (new_maneuvers.size() == 0)
         {
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
             return false;
         }
-        //update plan
 
         //Update time progress for maneuvers
-        updateTimeProgress(resp.new_plan.maneuvers, ros::Time::now());
+        if (!req.prior_plan.maneuvers.empty())
+        {
+            updateTimeProgress(new_maneuvers, GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_time));
+            ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end time:"<< std::to_string(GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_time).toSec()));    
+            ROS_DEBUG_STREAM("Where plan_completion_time was:"<< std::to_string(req.prior_plan.planning_completion_time.toSec()));            
+        }
+        else
+        {
+            updateTimeProgress(new_maneuvers, req.header.stamp);
+            ROS_DEBUG_STREAM("Detected NO prior plan! Using ros::Time::now():"<< std::to_string(ros::Time::now().toSec()));   
+        }
+
         //update starting speed of first maneuver
-        updateStartingSpeed(resp.new_plan.maneuvers.front(), current_speed_);
+        if (!req.prior_plan.maneuvers.empty())
+        {
+            double start_speed;
+            switch (req.prior_plan.maneuvers.back().type)
+            {
+                case cav_msgs::Maneuver::LANE_FOLLOWING:
+                    start_speed = req.prior_plan.maneuvers.back().lane_following_maneuver.end_speed;
+                    break;
+                case cav_msgs::Maneuver::LANE_CHANGE:
+                    start_speed = req.prior_plan.maneuvers.back().lane_change_maneuver.end_speed;
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+                    start_speed = req.prior_plan.maneuvers.back().intersection_transit_straight_maneuver.end_speed;
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+                    start_speed = req.prior_plan.maneuvers.back().intersection_transit_left_turn_maneuver.end_speed;
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+                    start_speed = req.prior_plan.maneuvers.back().intersection_transit_right_turn_maneuver.end_speed;
+                    break;
+                default:
+                    throw std::invalid_argument("Invalid maneuver type, cannot update starting speed for maneuver");
+            }
+            
+            updateStartingSpeed(new_maneuvers.front(), start_speed);
+            ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end speed:"<< start_speed);    
+        }
+        else 
+        {
+            updateStartingSpeed(new_maneuvers.front(), req.veh_logitudinal_velocity);
+            ROS_DEBUG_STREAM("Detected NO prior plan! Using req.veh_logitudinal_velocity:"<< req.veh_logitudinal_velocity);    
+        }
+        //update plan
+        resp.new_plan = req.prior_plan;
+        ROS_DEBUG_STREAM("Updating maneuvers before returning... Prior plan size:" << req.prior_plan.maneuvers.size());
+        for (auto mvr : new_maneuvers)
+        {
+            resp.new_plan.maneuvers.push_back(mvr);
+        }
+
+        ROS_DEBUG_STREAM("Returning total of maneuver size: " << resp.new_plan.maneuvers.size());
+        resp.new_plan.planning_completion_time = ros::Time::now();
 
         return true;
     }
@@ -441,20 +511,36 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
                 break;
             }  
         }
-        ROS_DEBUG_STREAM("==== ComposeLaneChangeStatus Exiting now");
+        ROS_DEBUG_STREAM("ComposeLaneChangeStatus Exiting now");
         return upcoming_lanechange_status_msg;
     }
 
-    void RouteFollowingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
+
+    void RouteFollowingPlugin::bumper_pose_cb()
     {
-
         ROS_DEBUG_STREAM("Entering pose_cb");
-        pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
 
+        ROS_DEBUG_STREAM("Looking up front bumper pose...");
+        
+        
+        try
+        {
+            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(1.0)); //save to local copy of transform 1 sec timeout
+            tf2::fromMsg(tf_, frontbumper_transform_);
+        }
+        catch (const tf2::TransformException &ex)
+        {
+            ROS_WARN("%s", ex.what());
+        }
+
+        geometry_msgs::Pose front_bumper_pose;
+        front_bumper_pose.position.x = frontbumper_transform_.getOrigin().getX();
+        front_bumper_pose.position.y = frontbumper_transform_.getOrigin().getY();
+        
         if (!wm_->getRoute())
             return;
 
-        lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
+        lanelet::BasicPoint2d current_loc(front_bumper_pose.position.x, front_bumper_pose.position.y);
         current_loc_ = current_loc;
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         
@@ -707,5 +793,11 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         {
             throw std::invalid_argument("Valid traffic rules object could not be built");
         }
+    }
+
+    void RouteFollowingPlugin::initializeBumperTransformLookup() 
+    {
+        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+        tf2_buffer_.setUsingDedicatedThread(true);
     }
 }

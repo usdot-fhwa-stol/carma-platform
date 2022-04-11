@@ -195,8 +195,8 @@ namespace basic_autonomy
         basic_points.push_back(p.point);
 
         cav_msgs::VehicleState state;
-        state.X_pos_global = 3.3;
-        state.Y_pos_global = 3.3;
+        state.x_pos_global = 3.3;
+        state.y_pos_global = 3.3;
 
         ASSERT_EQ(3, waypoint_generation::get_nearest_point_index(basic_points, state));
         ASSERT_EQ(3, waypoint_generation::get_nearest_point_index(points, state));
@@ -226,8 +226,8 @@ namespace basic_autonomy
         points.push_back(p);
 
         cav_msgs::VehicleState state;
-        state.X_pos_global = 3.3;
-        state.Y_pos_global = 3.3;
+        state.x_pos_global = 3.3;
+        state.y_pos_global = 3.3;
 
         ASSERT_EQ(3, waypoint_generation::get_nearest_point_index(points, state));
     }
@@ -638,8 +638,8 @@ namespace basic_autonomy
         std::vector<cav_msgs::Maneuver> maneuvers;
         maneuvers.push_back(maneuver);
         cav_msgs::VehicleState state;
-        state.X_pos_global = veh_pos.x();
-        state.Y_pos_global = veh_pos.y();
+        state.x_pos_global = veh_pos.x();
+        state.y_pos_global = veh_pos.y();
         state.longitudinal_vel = 8.0;
 
         std::string trajectory_type = "cooperative_lanechange";
@@ -728,8 +728,8 @@ namespace basic_autonomy
         std::vector<cav_msgs::Maneuver> maneuvers;
         maneuvers.push_back(maneuver);
         cav_msgs::VehicleState state;
-        state.X_pos_global = veh_pos.x();
-        state.Y_pos_global = veh_pos.y();
+        state.x_pos_global = veh_pos.x();
+        state.y_pos_global = veh_pos.y();
         state.longitudinal_vel = 8.0;
 
         std::string trajectory_type = "cooperative_lanechange";
@@ -746,7 +746,7 @@ namespace basic_autonomy
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_path(points,
                                                                                                                                                           state, state_time, cmw, ending_state, config);
         EXPECT_TRUE(trajectory_points.size() > 2);
-        basic_autonomy::waypoint_generation::create_lanechange_geometry(start_id, end_id,starting_downtrack, ending_downtrack, cmw, state, 1);
+        basic_autonomy::waypoint_generation::create_lanechange_geometry(start_id, end_id,starting_downtrack, ending_downtrack, cmw, state, 1, 5);
     } 
 
     TEST(BasicAutonomyTest, lanefollow_geometry_visited_lanelets)

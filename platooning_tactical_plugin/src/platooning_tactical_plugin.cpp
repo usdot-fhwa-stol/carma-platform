@@ -45,7 +45,7 @@ PlatooningTacticalPlugin::PlatooningTacticalPlugin(carma_wm::WorldModelConstPtr 
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
 {
   plugin_discovery_msg_.name = "PlatooningTacticalPlugin";
-  plugin_discovery_msg_.versionId = "v1.0";
+  plugin_discovery_msg_.version_id = "v1.0";
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = false;
   plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
@@ -63,7 +63,7 @@ bool PlatooningTacticalPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryReques
 {
   ros::WallTime start_time = ros::WallTime::now(); // Start timeing the execution time for planning so it can be logged
 
-  lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
+  lanelet::BasicPoint2d veh_pos(req.vehicle_state.x_pos_global, req.vehicle_state.y_pos_global);
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
   // Only plan the trajectory for the initial LANE_FOLLOWING maneuver and any immediately sequential maneuvers of the same type
@@ -460,10 +460,10 @@ std::vector<PointSpeedPair> PlatooningTacticalPlugin::maneuvers_to_points(const 
       }
       prev_point = current_point;
     }
-    ending_state_before_buffer.X_pos_global = points_and_target_speeds[unbuffered_idx].point.x();
-    ending_state_before_buffer.Y_pos_global = points_and_target_speeds[unbuffered_idx].point.y();
-    ROS_DEBUG_STREAM("Here ending_state_before_buffer.X_pos_global: " << ending_state_before_buffer.X_pos_global << 
-      ", and Y_pos_global" << ending_state_before_buffer.Y_pos_global);
+    ending_state_before_buffer.x_pos_global = points_and_target_speeds[unbuffered_idx].point.x();
+    ending_state_before_buffer.y_pos_global = points_and_target_speeds[unbuffered_idx].point.y();
+    ROS_DEBUG_STREAM("Here ending_state_before_buffer.x_pos_global: " << ending_state_before_buffer.x_pos_global << 
+      ", and y_pos_global" << ending_state_before_buffer.y_pos_global);
 
     std::vector<PointSpeedPair> constrained_points(points_and_target_speeds.begin(), points_and_target_speeds.begin() + max_i);
     return constrained_points;
@@ -472,7 +472,7 @@ std::vector<PointSpeedPair> PlatooningTacticalPlugin::maneuvers_to_points(const 
 int PlatooningTacticalPlugin::getNearestPointIndex(const std::vector<PointSpeedPair>& points,
                                                const cav_msgs::VehicleState& state)
 {
-  lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
+  lanelet::BasicPoint2d veh_point(state.x_pos_global, state.y_pos_global);
   ROS_DEBUG_STREAM("veh_point: " << veh_point.x() << ", " << veh_point.y());
   double min_distance = std::numeric_limits<double>::max();
   int i = 0;
@@ -527,7 +527,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::compose_tra
     const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time)
 {
   ROS_DEBUG_STREAM("VehicleState: "
-                   << " x: " << state.X_pos_global << " y: " << state.Y_pos_global << " yaw: " << state.orientation
+                   << " x: " << state.x_pos_global << " y: " << state.y_pos_global << " yaw: " << state.orientation
                    << " speed: " << state.longitudinal_vel);
 
   ROS_DEBUG_STREAM("points size: " << points.size());
@@ -635,7 +635,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::compose_tra
 
   nearest_pt_index = get_nearest_index_by_downtrack(all_sampling_points, state);
   ROS_DEBUG_STREAM("Current state's nearest_pt_index: " << nearest_pt_index);
-  ROS_DEBUG_STREAM("Curvature right now: " << better_curvature[nearest_pt_index] << ", at state x: " << state.X_pos_global << ", state y: " << state.Y_pos_global);
+  ROS_DEBUG_STREAM("Curvature right now: " << better_curvature[nearest_pt_index] << ", at state x: " << state.x_pos_global << ", state y: " << state.y_pos_global);
   ROS_DEBUG_STREAM("Corresponding to point: x: " << all_sampling_points[nearest_pt_index].x() << ", y:" << all_sampling_points[nearest_pt_index].y());
 
   int buffer_pt_index = get_nearest_index_by_downtrack(all_sampling_points, ending_state_before_buffer);
@@ -661,7 +661,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::compose_tra
   final_yaw_values = future_yaw;
   ROS_DEBUG_STREAM("Trimmed future points to size: " << future_basic_points.size() );
 
-  lanelet::BasicPoint2d cur_veh_point(state.X_pos_global, state.Y_pos_global);
+  lanelet::BasicPoint2d cur_veh_point(state.x_pos_global, state.y_pos_global);
 
   all_sampling_points.insert(all_sampling_points.begin(),
                              cur_veh_point);  // Add current vehicle position to front of sample points
@@ -720,7 +720,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::compose_tra
 int PlatooningTacticalPlugin::get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points,
                                                const cav_msgs::VehicleState& state) const
 {
-  lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
+  lanelet::BasicPoint2d veh_point(state.x_pos_global, state.y_pos_global);
   double min_distance = std::numeric_limits<double>::max();
   int i = 0;
   int best_index = 0;

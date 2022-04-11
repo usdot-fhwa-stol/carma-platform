@@ -1,7 +1,7 @@
 digraph G {
-0[label="1349" lanelet="1349"];
-1[label="1351" lanelet="1351"];
+0[label="1351" lanelet="1351"];
+1[label="1349" lanelet="1349"];
 2[label="1346" lanelet="1346"];
-0->1 [label="Successor" color="green" weight="6.62915" routingCostId="0"];
-2->0 [label="Successor" color="green" weight="4.41937" routingCostId="0"];
+1->0 [label="Successor" color="green" weight="6.62915" routingCostId="0"];
+2->1 [label="Successor" color="green" weight="4.41937" routingCostId="0"];
 }

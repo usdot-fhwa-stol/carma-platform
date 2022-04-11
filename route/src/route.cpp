@@ -32,7 +32,6 @@ namespace route {
         route_state_pub_ = nh_->advertise<cav_msgs::RouteState>("route_state", 1, true);
         route_marker_pub_= nh_->advertise<visualization_msgs::Marker>("route_marker", 1, true);
         // init subscribers
-        pose_sub_ = nh_->subscribe("current_pose", 1, &RouteGeneratorWorker::pose_cb, &rg_worker_);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteGeneratorWorker::twist_cb, &rg_worker_);
         geo_sub_ = nh_->subscribe("georeference", 1, &RouteGeneratorWorker::georeference_cb, &rg_worker_);
         // init service server
@@ -49,7 +48,7 @@ namespace route {
         int cte_count_max;
         pnh_->getParam("max_crosstrack_error", ct_error);
         pnh_->getParam("destination_downtrack_range", dt_range);
-        pnh_->getParam("cte_count_max", cte_count_max);
+        pnh_->getParam("cte_max_count", cte_count_max);
         rg_worker_.set_ctdt_param(ct_error, dt_range);
         rg_worker_.set_CTE_dist(ct_error);
         rg_worker_.set_CTE_count_max(cte_count_max);
@@ -57,6 +56,7 @@ namespace route {
         pnh_->getParam("route_file_path", route_file_location);
         rg_worker_.set_route_file_path(route_file_location);
         rg_worker_.set_publishers(route_event_pub_, route_state_pub_, route_pub_,route_marker_pub_);
+        rg_worker_.initializeBumperTransformLookup();
     }
 
     void Route::run()

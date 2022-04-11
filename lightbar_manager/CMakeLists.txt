@@ -15,10 +15,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(lightbar_manager)
 
-## Compile as C++14, supported in ROS Noetic and newer
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -80,9 +79,11 @@ add_dependencies(${PROJECT_NAME}_lib
 )
 
 ## Specify libraries to link a library or executable target against
+target_link_libraries(${PROJECT_NAME}_lib
+  ${catkin_LIBRARIES}
+)
 target_link_libraries(${PROJECT_NAME}_node
   ${PROJECT_NAME}_lib
-  ${catkin_LIBRARIES}
 )
 
 #############

@@ -469,12 +469,33 @@ namespace route {
         return true;
     }
 
-    void RouteGeneratorWorker::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
+    void RouteGeneratorWorker::initializeBumperTransformLookup() 
     {
-        vehicle_pose_ = *msg; 
+        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+        tf2_buffer_.setUsingDedicatedThread(true);
+    }
+
+    void RouteGeneratorWorker::bumper_pose_cb()
+    {
+        try
+        {
+            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(1.0)); //save to local copy of transform 0.1 sec timeout
+            tf2::fromMsg(tf_, frontbumper_transform_);
+        }
+        catch (const tf2::TransformException &ex)
+        {
+            ROS_WARN("%s", ex.what());
+        }
+        
+        geometry_msgs::PoseStamped updated_vehicle_pose;
+        updated_vehicle_pose.pose.position.x = frontbumper_transform_.getOrigin().getX();
+        updated_vehicle_pose.pose.position.y = frontbumper_transform_.getOrigin().getY();
+        updated_vehicle_pose.pose.position.z = frontbumper_transform_.getOrigin().getZ();
+        vehicle_pose_ = updated_vehicle_pose; 
+            
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
-            current_loc_ = lanelet::BasicPoint2d(msg->pose.position.x, msg->pose.position.y);
+            current_loc_ = lanelet::BasicPoint2d(vehicle_pose_->pose.position.x, vehicle_pose_->pose.position.y);
             // get dt ct from world model
             carma_wm::TrackPos track(0.0, 0.0);
             try {
@@ -518,8 +539,9 @@ namespace route {
             {
                 ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built.");
             }
+            geometry_msgs::PoseStampedPtr pose_ptr(new geometry_msgs::PoseStamped(*vehicle_pose_));
             // check if we left the seleted route by cross track error
-            bool departed = crosstrack_error_check(msg, current_lanelet);
+            bool departed = crosstrack_error_check(pose_ptr, current_lanelet);
             if (departed)
                 {
                     this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_DEPARTED);
@@ -595,8 +617,12 @@ namespace route {
 
     bool RouteGeneratorWorker::spin_callback()
     {
+        // Update vehicle position
+        bumper_pose_cb();
+
         if(reroutingChecker()==true)
         {
+           ROS_DEBUG_STREAM("Rerouting required");
            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
            publish_route_event(cav_msgs::RouteEvent::ROUTE_INVALIDATION);
            auto route = reroute_after_route_invalidation(destination_points_in_map_);

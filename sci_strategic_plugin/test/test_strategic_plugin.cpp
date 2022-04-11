@@ -34,7 +34,7 @@ TEST(SCIStrategicPluginTest, getDiscoveryMsg)
 
   auto msg = sci.getDiscoveryMsg();
   ASSERT_TRUE(msg.name.compare("test name") == 0);
-  ASSERT_TRUE(msg.versionId.compare("v1.0") == 0);
+  ASSERT_TRUE(msg.version_id.compare("v1.0") == 0);
   ASSERT_TRUE(msg.available);
   ASSERT_TRUE(msg.activated);
   ASSERT_EQ(msg.type, cav_msgs::Plugin::STRATEGIC);
@@ -190,7 +190,7 @@ TEST(SCIStrategicPluginTest, parseStrategyParamstest)
 
   cav_msgs::MobilityOperation outgoing_msg = sci.generateMobilityOperation();
   EXPECT_EQ(outgoing_msg.strategy, "Carma/stop_controlled_intersection");
-  EXPECT_EQ(outgoing_msg.header.sender_id, config.vehicle_id);
+  EXPECT_EQ(outgoing_msg.m_header.sender_id, config.vehicle_id);
   std::cout << "strategy_param: " << outgoing_msg.strategy_params << std::endl;
 }
 
@@ -205,33 +205,33 @@ TEST(SCIStrategicPluginTest, calcEstimatedStopTimetest)
   EXPECT_NEAR(3.84, stop_time, 0.01);
 }
 
-TEST(SCIStrategicPluginTest, calcSpeedBeforeDeceltest)
+TEST(SCIStrategicPluginTest, calc_speed_before_deceltest)
 {
 
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   SCIStrategicPluginConfig config;
   SCIStrategicPlugin sci(wm, config);
 
-  double stop_speed = sci.calcSpeedBeforeDecel(20, 250, 10);
+  double stop_speed = sci.calc_speed_before_decel(20, 250, 10);
 
   EXPECT_NEAR(21.5, stop_speed, 0.2);
 }
 
-TEST(SCIStrategicPluginTest, determineSpeedProfileCasetest)
+TEST(SCIStrategicPluginTest, determine_speed_profile_casetest)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   SCIStrategicPluginConfig config;
   SCIStrategicPlugin sci(wm, config);
 
-  int case_num1 = sci.determineSpeedProfileCase(50, 15, 40, 10);
+  int case_num1 = sci.determine_speed_profile_case(50, 15, 40, 10);
 
   EXPECT_EQ(3, case_num1);
 
-  int case_num2 = sci.determineSpeedProfileCase(100, 13, 11, 10);
+  int case_num2 = sci.determine_speed_profile_case(100, 13, 11, 10);
 
   EXPECT_EQ(2, case_num2);
 
-  int case_num3 = sci.determineSpeedProfileCase(100, 13, 11, 20);
+  int case_num3 = sci.determine_speed_profile_case(100, 13, 11, 20);
 
   EXPECT_EQ(1, case_num3);
 

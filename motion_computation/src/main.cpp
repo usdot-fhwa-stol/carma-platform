@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,14 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "motion_computation_node.h"
-#include "motion_computation_worker.h"
 
+#include <rclcpp/rclcpp.hpp>
+#include "motion_computation/motion_computation_node.hpp"
 
 int main(int argc, char **argv) 
 {
-  ros::init(argc, argv, "motion_computation");
-  object::MotionComputationNode node;
-  node.run(); 
+  rclcpp::init(argc, argv);
+
+  auto node = std::make_shared<motion_computation::MotionComputationNode>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
+
+  rclcpp::shutdown();
+
   return 0;
 }

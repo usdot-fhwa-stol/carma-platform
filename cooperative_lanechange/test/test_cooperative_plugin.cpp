@@ -148,8 +148,8 @@
         maneuvers.push_back(maneuver);
         worker.current_speed_ = maneuver.lane_change_maneuver.start_speed;
         cav_msgs::VehicleState vehicle_state;
-        vehicle_state.X_pos_global = veh_pos.x();
-        vehicle_state.Y_pos_global = veh_pos.y();  
+        vehicle_state.x_pos_global = veh_pos.x();
+        vehicle_state.y_pos_global = veh_pos.y();  
         
 
         /* Test plan lanechange */
@@ -159,8 +159,8 @@
         ros::Time::init();
         req.maneuver_plan.planning_start_time = ros::Time::now();
         req.maneuver_plan.planning_completion_time = req.maneuver_plan.planning_start_time + ros::Duration(10.0);
-        req.vehicle_state.X_pos_global = veh_pos.x();
-        req.vehicle_state.Y_pos_global = veh_pos.y();
+        req.vehicle_state.x_pos_global = veh_pos.x();
+        req.vehicle_state.y_pos_global = veh_pos.y();
         req.vehicle_state.longitudinal_vel = maneuver.lane_change_maneuver.start_speed;
 
         std::vector<cav_msgs::Maneuver> maneuvers_msg;  
@@ -190,8 +190,8 @@
         req.maneuver_plan.planning_completion_time = req.maneuver_plan.planning_start_time + ros::Duration(10.0);
         
         lanelet::BasicPoint2d veh_pos(1.0,1.0);
-        req.vehicle_state.X_pos_global = veh_pos.x();
-        req.vehicle_state.Y_pos_global = veh_pos.y();
+        req.vehicle_state.x_pos_global = veh_pos.x();
+        req.vehicle_state.y_pos_global = veh_pos.y();
         req.vehicle_state.longitudinal_vel = 10.0;
 
         std::vector<cav_msgs::TrajectoryPlanPoint> planned_trajectory ={};
@@ -264,8 +264,8 @@
         maneuvers.push_back(maneuver);
         worker.current_speed_ = maneuver.lane_change_maneuver.start_speed;
         cav_msgs::VehicleState vehicle_state;
-        vehicle_state.X_pos_global = veh_pos.x();
-        vehicle_state.Y_pos_global = veh_pos.y();
+        vehicle_state.x_pos_global = veh_pos.x();
+        vehicle_state.y_pos_global = veh_pos.y();
         
         cav_srvs::PlanTrajectoryRequest req;
         cav_srvs::PlanTrajectoryResponse resp;
@@ -273,8 +273,8 @@
         ros::Time::init();
         req.maneuver_plan.planning_start_time = ros::Time::now();
         req.maneuver_plan.planning_completion_time = req.maneuver_plan.planning_start_time + ros::Duration(10.0);
-        req.vehicle_state.X_pos_global = veh_pos.x();
-        req.vehicle_state.Y_pos_global = veh_pos.y();
+        req.vehicle_state.x_pos_global = veh_pos.x();
+        req.vehicle_state.y_pos_global = veh_pos.y();
         req.vehicle_state.longitudinal_vel = maneuver.lane_change_maneuver.start_speed;
 
         std::vector<cav_msgs::Maneuver> maneuvers_msg;  
@@ -389,8 +389,8 @@
         maneuvers.push_back(maneuver);
         worker.current_speed_ = maneuver.lane_change_maneuver.start_speed;
         cav_msgs::VehicleState vehicle_state;
-        vehicle_state.X_pos_global = veh_pos.x();
-        vehicle_state.Y_pos_global = veh_pos.y();
+        vehicle_state.x_pos_global = veh_pos.x();
+        vehicle_state.y_pos_global = veh_pos.y();
         
         cav_srvs::PlanTrajectoryRequest req;
         cav_srvs::PlanTrajectoryResponse resp;
@@ -398,8 +398,8 @@
         ros::Time::init();
         req.maneuver_plan.planning_start_time = ros::Time::now();
         req.maneuver_plan.planning_completion_time = req.maneuver_plan.planning_start_time + ros::Duration(10.0);
-        req.vehicle_state.X_pos_global = veh_pos.x();
-        req.vehicle_state.Y_pos_global = veh_pos.y();
+        req.vehicle_state.x_pos_global = veh_pos.x();
+        req.vehicle_state.y_pos_global = veh_pos.y();
         req.vehicle_state.longitudinal_vel = maneuver.lane_change_maneuver.start_speed;
 
         std::vector<cav_msgs::Maneuver> maneuvers_msg;  

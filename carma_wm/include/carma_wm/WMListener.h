@@ -37,9 +37,6 @@ class WMListenerWorker;  // Forward declaration of worker class
  * By default this class follows the threading model of the host node, but it can operate in the background if specified
  * in the constructor. When used in a multi-threading case users can ensure threadsafe operation though usage of the
  * getLock function
- *
- * NOTE: At the moment the mechanism of route communication in ROS is not defined therefore it is a TODO: to implement
- * full route support
  */
 class WMListener
 {
@@ -94,8 +91,6 @@ public:
    * \return std::unique_lock for thread safe access to world model data
    */
   std::unique_lock<std::mutex> getLock(bool pre_locked = true);
-
-
 
   /*!
    * \brief Allows user to set a callback to be triggered when a route update is received

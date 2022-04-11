@@ -77,6 +77,13 @@ public:
    * @param active_geof_msg The geofence information to publish
    */
   void publishActiveGeofence(const cav_msgs::CheckActiveGeofence& active_geof_msg);
+
+  /**
+   * @brief Callback to publish traffic control acknowledgement information
+   *
+   * @param mom_msg The acknowledgement information to publish
+   */
+  void publishTCMACK(const cav_msgs::MobilityOperation& mom_msg);
   
 private:
   ros::CARMANodeHandle cnh_;
@@ -92,7 +99,7 @@ private:
   ros::Publisher upcoming_intersection_ids_pub_;
 
   ros::Publisher active_pub_;
-
+  ros::Publisher tcm_ack_pub_;
   ros::Subscriber base_map_sub_;
   
   ros::Subscriber route_callmsg_sub_;
@@ -100,6 +107,7 @@ private:
 
   ros::Subscriber georef_sub_;
   ros::Subscriber geofence_sub_;
+  ros::Subscriber incoming_map_sub_;
   ros::Subscriber curr_location_sub_;
   ros::Subscriber route_cache_sub_;
   ros::Timer timer;

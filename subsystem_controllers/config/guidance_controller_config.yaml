@@ -1,0 +1,33 @@
+/**:
+  ros__parameters:
+    # Long: Timeout for each service to be detected as available in milliseconds
+    # Units: milliseconds
+    service_timeout_ms : 200
+
+    # Long: Timeout for each service call in milliseconds
+    # Units: milliseconds
+    call_timeout_ms : 1000
+
+    # String: The namespace for nodes in this subsystem. All nodes under this namespace will have their lifecycle's managed by this controller
+    subsystem_namespace: /guidance
+
+    # Required subsystem controller nodes for the overall system to be functional and will have their lifecycle's managed
+    required_subsystem_nodes:
+      - /guidance/arbitrator
+      - /guidance/guidance_node
+      - /guidance/plan_delegator
+      - /guidance/trajectory_executor
+      - /guidance/twist_filter
+      - /guidance/twist_gate
+      - /guidance/route_following_plugin # The minimal set of guidance plugins for system operation are route_following/inlane_cruising/pure_pursuit
+      - /guidance/inlanecruising_plugin
+      - /guidance/pure_pursuit_wrapper
+      - /guidance/pure_pursuit
+      - /guidance/yield_plugin
+
+    # List of nodes which will not be directly managed by this subsystem controller 
+    # but which are required to be operational for the subsystem to function
+    unmanaged_required_nodes: [''] # TODO add the controller driver once it is integrated with ROS2
+
+    # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
+    full_subsystem_required: true

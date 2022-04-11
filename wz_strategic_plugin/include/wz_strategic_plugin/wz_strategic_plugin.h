@@ -198,12 +198,12 @@ private:
    * \brief Helper method that checks both if the input optional light state is set and if the state it contains is
    * supported via supportedLightState.
    *
-   * \param optional_state An optional light state. If this is unset the method will retun false
+   * \param optional_state An optional light state and its min_end_time pair. If this is unset the method will return false
    * \param source_time The time used to optain the optional light state. This is used for logging only
    *
-   * \return True if the optional is set and the contained state is supported. False otherwise
+   * \return True if the optional is set and the contained state signal is supported. False otherwise
    */
-  bool validLightState(const boost::optional<lanelet::CarmaTrafficSignalState>& optional_state,
+  bool validLightState(const boost::optional<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>& optional_state,
                        const ros::Time& source_time) const;
 
   /**

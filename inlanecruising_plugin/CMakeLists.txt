@@ -17,10 +17,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(inlanecruising_plugin)
 
-## Compile as C++14, supported in ROS Noetic and newer
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 set( CATKIN_DEPS
   roscpp
@@ -36,7 +35,6 @@ set( CATKIN_DEPS
   tf2
   tf2_geometry_msgs
   carma_debug_msgs
-  basic_autonomy
 )
 
 ## Find catkin macros and libraries

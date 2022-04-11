@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 LEIDOS.
+ * Copyright (C) 2020-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,7 +61,7 @@ namespace carma_wm_ctrl
 TEST(WMBroadcaster, Constructor)
 {
   WMBroadcaster([](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
-   [](const cav_msgs::TrafficControlRequest& control_msg_pub_){}, [](const cav_msgs::CheckActiveGeofence& active_pub_){}, std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check helps
+   [](const cav_msgs::TrafficControlRequest& control_msg_pub_){}, [](const cav_msgs::CheckActiveGeofence& active_pub_){}, std::make_unique<TestTimerFactory>(),[](const cav_msgs::MobilityOperation& tcm_ack_pub_){});  // Create broadcaster with test timers. Having this check helps
                                                         // verify that the timers do not crash on destruction
 }
 TEST(WMBroadcaster, baseMapCallback)
@@ -81,7 +81,7 @@ TEST(WMBroadcaster, baseMapCallback)
         base_map_call_count++;
       }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
   // Get and convert map to binary message
   auto map = carma_wm::getDisjointRouteMap();
@@ -113,7 +113,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
         base_map_call_count++;
       }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
   //////
   // Get and convert map to binary message
@@ -180,7 +180,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
         base_map_call_count++;
       }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
   //////
   // Get and convert map to binary message
@@ -330,7 +330,7 @@ TEST(WMBroadcaster, geofenceCallback)
         last_active_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
  // Get and convert map to binary message
   auto map = carma_wm::getDisjointRouteMap();
@@ -352,7 +352,7 @@ TEST(WMBroadcaster, geofenceCallback)
   wmb.geoReferenceCallback(base_map_proj);
 
   cav_msgs::TrafficControlMessage gf_msg;
-  gf_msg.tcmV01.geometry.datum = "+proj=tmerc +lat_0=39.46645851394806215 +lon_0=-76.16907903057393980 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  gf_msg.tcm_v01.geometry.datum = "+proj=tmerc +lat_0=39.46645851394806215 +lon_0=-76.16907903057393980 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   gf_msg.choice = cav_msgs::TrafficControlMessage::RESERVED;
 
   ASSERT_EQ(0, active_call_count.load());
@@ -376,14 +376,14 @@ TEST(WMBroadcaster, geofenceCallback)
   // create the geofence request
   msg_v01.geometry.proj = geofence_proj_string;
   msg_v01.geometry.datum = geofence_proj_string;
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
 
   // every control message needs associated control request id
   cav_msgs::Route route_msg;
   route_msg.route_path_lanelet_ids.push_back(10000);
   std::shared_ptr<j2735_msgs::Id64b> req_id = std::make_shared<j2735_msgs::Id64b>(j2735_msgs::Id64b());
   wmb.controlRequestFromRoute(route_msg, req_id);
-  gf_msg.tcmV01.reqid = *req_id;
+  gf_msg.tcm_v01.reqid = *req_id;
 
   // check geofence with no applicable points
   ros::Time::setNow(ros::Time(0));
@@ -404,7 +404,7 @@ TEST(WMBroadcaster, geofenceCallback)
   curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(), curr_id.end(), msg_v01.id.id.begin());
   msg_v01.reqid = *req_id;
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
 
   ros::Time::setNow(ros::Time(0));
   // check how many times map_update is called so far
@@ -418,7 +418,7 @@ TEST(WMBroadcaster, geofenceCallback)
   curr_id = boost::uuids::random_generator()(); 
   curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(),  curr_id.end(), msg_v01.id.id.begin());
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
   wmb.geofenceCallback(gf_msg);
 
   // check if different geofence id is working
@@ -449,7 +449,7 @@ TEST(WMBroadcaster, routeCallbackMessage)
         base_map_call_count++;
       }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
  
   
   //Test throw exceptions
@@ -493,7 +493,7 @@ TEST(WMBroadcaster, routeCallbackMessage)
   ///// Test without user defined route callback
   coRe = wmb.controlRequestFromRoute(route_msg);
 
-  ASSERT_TRUE(coRe.tcrV01.bounds.size() > 0);
+  ASSERT_TRUE(coRe.tcr_v01.bounds.size() > 0);
 
 }
 
@@ -515,7 +515,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
         map_update_call_count++;
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
   //////
   // Set up the map (add relevant regulatory elements)
@@ -611,7 +611,7 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
       },
       [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
   
   /////
   // Set up the map (add relevant regulatory elements)
@@ -810,7 +810,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
         last_active_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
  autoware_lanelet2_msgs::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map, &msg);
@@ -847,7 +847,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
 
   // register the geofence
   cav_msgs::TrafficControlMessage gf_msg;
-  gf_msg.tcmV01.geometry.datum = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  gf_msg.tcm_v01.geometry.datum = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   gf_msg.choice = cav_msgs::TrafficControlMessage::TCMV01;
 
   // every control message needs associated control request id
@@ -857,7 +857,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   wmb.controlRequestFromRoute(route_msg, req_id);
   msg_v01.reqid = *req_id;
 
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
   testing_forward_direction = true;
 
   wmb.geofenceCallback(gf_msg);
@@ -879,7 +879,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   msg_v01.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 0.5; pt.z = 0;
   msg_v01.geometry.nodes.push_back(pt);
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
 
   wmb.geofenceCallback(gf_msg);
   ros::Time::setNow(ros::Time(2.1));  // Set current time
@@ -919,7 +919,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
       },
       [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
   autoware_lanelet2_msgs::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map, &msg);
@@ -944,6 +944,25 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   pt.x = 0.5; pt.y = 1.5; pt.z = 0;
   msg_v01.geometry.nodes.push_back(pt);
   msg_v01.params_exists = true;
+
+  // Create geofence pointer that will be used throughout this test case
+  auto gf_ptr = std::make_shared<Geofence>();
+
+  // test restricted lane (trucks and buses will not have access)
+  msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::RESTRICTED_CHOICE;
+  j2735_msgs::TrafficControlVehClass restricted_veh_class1;
+  j2735_msgs::TrafficControlVehClass restricted_veh_class2;
+  restricted_veh_class1.vehicle_class = j2735_msgs::TrafficControlVehClass::TWO_AXLE_SIX_TIRE_SINGLE_UNIT_TRUCK;
+  restricted_veh_class2.vehicle_class = j2735_msgs::TrafficControlVehClass::BUS;
+  msg_v01.params.vclasses.push_back(restricted_veh_class1);
+  msg_v01.params.vclasses.push_back(restricted_veh_class2);
+  wmb.geofenceFromMsg(gf_ptr, msg_v01);
+
+  lanelet::RegionAccessRulePtr region_access_rule = std::dynamic_pointer_cast<lanelet::RegionAccessRule>(gf_ptr->regulatory_element_);
+  ASSERT_EQ(region_access_rule->accessable(lanelet::Participants::VehicleBus), false);   // Bus does not have access
+  ASSERT_EQ(region_access_rule->accessable(lanelet::Participants::VehicleTruck), false); // Truck does not have access
+  ASSERT_EQ(region_access_rule->accessable(lanelet::Participants::VehicleCar), true);    // Car has access
+  msg_v01.params.vclasses = {}; // Clear the set vclasses for msg_v01
   
   // test maxspeed - config limit inactive
   msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
@@ -951,7 +970,6 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
 
   lanelet::Velocity limit = 80_mph;
 
-  auto gf_ptr = std::make_shared<Geofence>();
   wmb.geofenceFromMsg(gf_ptr, msg_v01);
   ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   lanelet::DigitalSpeedLimitPtr max_speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
@@ -1159,7 +1177,7 @@ TEST(WMBroadcaster, distToNearestActiveGeofence)
           last_inactive_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
   // Get and convert map to binary message
   auto map = carma_wm::getDisjointRouteMap();
@@ -1210,7 +1228,7 @@ TEST(WMBroadcaster, distToNearestActiveGeofence)
 
   msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
   msg_v01.params.detail.maxspeed = 50;
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
 
   // Make sure the geofence is active now
   ros::Time::setNow(ros::Time(0));
@@ -1257,7 +1275,7 @@ TEST(WMBroadcaster, addRegionAccessRule)
       [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {},
       [&](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [&](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
   cav_msgs::TrafficControlMessageV01 msg_v01;
   cav_msgs::TrafficControlMessageV01 msg_v02;
@@ -1296,7 +1314,7 @@ TEST(WMBroadcaster, addRegionMinimumGap)
       [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {},
       [&](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [&](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
   cav_msgs::TrafficControlMessageV01 msg_v01;
   cav_msgs::TrafficControlMessageV01 msg_v02;
@@ -1325,7 +1343,7 @@ TEST(WMBroadcaster, invertParticipants)
       [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {},
       [&](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [&](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
   
   ros::V_string participants;
   auto result = wmb.invertParticipants(participants);
@@ -1402,7 +1420,7 @@ TEST(WMBroadcaster, currentLocationCallback)
           last_inactive_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
    //Test throw exceptions
   ASSERT_THROW(wmb.currentLocationCallback(input_msg), lanelet::InvalidObjectStateError);
@@ -1456,7 +1474,7 @@ TEST(WMBroadcaster, currentLocationCallback)
 
   msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
   msg_v01.params.detail.maxspeed = 50;
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
 
   // Make sure the geofence is active now
   ros::Time::setNow(ros::Time(0));
@@ -1527,7 +1545,7 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
           last_active_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
   // Get and convert map to binary message
   auto map = carma_wm::test::buildGuidanceTestMap(3.7, 25);
@@ -1576,63 +1594,63 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
   std::size_t curr_id_hashed_gf1 = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(), curr_id.end(), msg_v01.id.id.begin());
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
 
   // Create geofence 2 with a prescribed minimum gap (Lanelets 1200 and 1201)
   auto gf_msg2 = gf_msg;
-  gf_msg2.tcmV01.params.detail.choice = cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
-  gf_msg2.tcmV01.params.detail.minhdwy = 5;
+  gf_msg2.tcm_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
+  gf_msg2.tcm_v01.params.detail.minhdwy = 5;
 
   // Set the ID for geofence 2
   curr_id = boost::uuids::random_generator()(); 
   std::size_t curr_id_hashed_gf2 = boost::hash<boost::uuids::uuid>()(curr_id);
-  std::copy(curr_id.begin(), curr_id.end(), gf_msg2.tcmV01.id.id.begin());
+  std::copy(curr_id.begin(), curr_id.end(), gf_msg2.tcm_v01.id.id.begin());
 
   // Create geofence 3 with a lane closure (Lanelets 1210 and 1211)
   auto gf_msg3 = gf_msg;
-  gf_msg3.tcmV01.params.detail.choice = cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
-  gf_msg3.tcmV01.params.detail.closed = cav_msgs::TrafficControlDetail::CLOSED;
-  gf_msg3.tcmV01.package.label = "MOVE OVER LAW";
+  gf_msg3.tcm_v01.params.detail.choice = cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
+  gf_msg3.tcm_v01.params.detail.closed = cav_msgs::TrafficControlDetail::CLOSED;
+  gf_msg3.tcm_v01.package.label = "MOVE OVER LAW";
   j2735_msgs::TrafficControlVehClass veh_type;
   veh_type.vehicle_class = j2735_msgs::TrafficControlVehClass::ANY;
-  gf_msg3.tcmV01.params.vclasses.push_back(veh_type);
+  gf_msg3.tcm_v01.params.vclasses.push_back(veh_type);
 
   // Set geofence 3's TrafficControlMessage points for lanelets 1210 and 1211
   pt.x = 4.5; pt.y = 15; pt.z = 0; // Point in lanelet 1210
-  gf_msg3.tcmV01.geometry.nodes[0] = pt;
+  gf_msg3.tcm_v01.geometry.nodes[0] = pt;
   pt.x = 4.5; pt.y = 45; pt.z = 0; // Point in lanelet 1211
-  gf_msg3.tcmV01.geometry.nodes[1] = pt;
+  gf_msg3.tcm_v01.geometry.nodes[1] = pt;
 
   // Set the ID for geofence 3
   curr_id = boost::uuids::random_generator()(); 
   std::size_t curr_id_hashed_gf3 = boost::hash<boost::uuids::uuid>()(curr_id);
-  std::copy(curr_id.begin(), curr_id.end(), gf_msg3.tcmV01.id.id.begin());
+  std::copy(curr_id.begin(), curr_id.end(), gf_msg3.tcm_v01.id.id.begin());
 
   // Create geofence 4 with an advisory speed limit (Lanelets 1220 and 1221)
   auto gf_msg4 = gf_msg;
-  gf_msg4.tcmV01.params.detail.choice = cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
-  gf_msg4.tcmV01.params.detail.maxspeed = 50;
+  gf_msg4.tcm_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
+  gf_msg4.tcm_v01.params.detail.maxspeed = 50;
 
   // Set geofence 4's TrafficControlMessage points for lanelets 1220 and 1221
   pt.x = 10.0; pt.y = 15; pt.z = 0; // Point in lanelet 1220
-  gf_msg4.tcmV01.geometry.nodes[0] = pt;
+  gf_msg4.tcm_v01.geometry.nodes[0] = pt;
   pt.x = 10.0; pt.y = 45; pt.z = 0; // Point in lanelet 1221
-  gf_msg4.tcmV01.geometry.nodes[1] = pt;
+  gf_msg4.tcm_v01.geometry.nodes[1] = pt;
 
   // Set the ID for geofence 4
   curr_id = boost::uuids::random_generator()(); 
   std::size_t curr_id_hashed_gf4 = boost::hash<boost::uuids::uuid>()(curr_id);
-  std::copy(curr_id.begin(), curr_id.end(), gf_msg4.tcmV01.id.id.begin());
+  std::copy(curr_id.begin(), curr_id.end(), gf_msg4.tcm_v01.id.id.begin());
 
   // Create geofence 5 with a prescribed minimum gap (Lanelets 1220 and 1221)
   auto gf_msg5 = gf_msg4;
-  gf_msg5.tcmV01.params.detail.choice = cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
-  gf_msg5.tcmV01.params.detail.minhdwy = 5;
+  gf_msg5.tcm_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
+  gf_msg5.tcm_v01.params.detail.minhdwy = 5;
 
   // Set the ID for geofence 5
   curr_id = boost::uuids::random_generator()(); 
   std::size_t curr_id_hashed_gf5 = boost::hash<boost::uuids::uuid>()(curr_id);
-  std::copy(curr_id.begin(), curr_id.end(), gf_msg5.tcmV01.id.id.begin());
+  std::copy(curr_id.begin(), curr_id.end(), gf_msg5.tcm_v01.id.id.begin());
 
   // Make sure the geofences are active now
   ros::Time::setNow(ros::Time(0.5));
@@ -1805,7 +1823,7 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
         last_active_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
   autoware_lanelet2_msgs::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map, &msg);
@@ -1851,7 +1869,7 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
   wmb.controlRequestFromRoute(route_msg, req_id);
   msg_v01.reqid = *req_id;
 
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
   testing_forward_direction = true;
 
   wmb.geofenceCallback(gf_msg);
@@ -1873,7 +1891,7 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
   msg_v01.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 0.5; pt.z = 0;
   msg_v01.geometry.nodes.push_back(pt);
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
 
   wmb.geofenceCallback(gf_msg);
   ros::Time::setNow(ros::Time(2.1));  // Set current time
@@ -1889,7 +1907,7 @@ TEST(WMBroadcaster, generate32BitId)
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {},
       [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
   std::string label = "TYPE:SIG_WZ,INT_ID:0001,SG_ID:001";
   auto bits = wmb.generate32BitId(label);
@@ -1904,7 +1922,7 @@ TEST(WMBroadcaster, splitLaneletWithRatio)
       [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
   // Get and convert map to binary message with 26 points of 1 meter in-between distances
   auto map = carma_wm::test::buildGuidanceTestMap(5, 25, 25);
@@ -1980,7 +1998,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
       [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
   // Get and convert map to binary message with 26 points of 1 meter in-between distances
   auto map = carma_wm::test::buildGuidanceTestMap(5, 25, 25);
@@ -2033,7 +2051,7 @@ TEST(WMBroadcaster, preprocessWorkzoneGeometry)
       [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
   // create opposite direction road on the left lane
   auto map = carma_wm::test::buildGuidanceTestMap(5, 25, 25);
@@ -2451,7 +2469,7 @@ TEST(WMBroadcaster, createWorkzoneGeometry)
       [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
   // create opposite direction road on the left lane
   auto map = carma_wm::test::buildGuidanceTestMap(5, 25, 25);
@@ -2718,7 +2736,7 @@ carma_wm::CARMAWorldModel wml;
         map_update_call_count++;
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](const cav_msgs::CheckActiveGeofence& active_pub_){},
-      std::make_unique<TestTimerFactory>());
+      std::make_unique<TestTimerFactory>(), [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});
 
 
 /*Test that Vehicle Participation Type Value is added before baseMapCallback*/

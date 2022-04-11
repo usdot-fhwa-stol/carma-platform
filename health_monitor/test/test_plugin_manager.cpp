@@ -28,7 +28,7 @@ namespace health_monitor
         msg1.available = true;
         msg1.activated = false;
         msg1.type = cav_msgs::Plugin::STRATEGIC;
-        msg1.versionId = "1.0.1";
+        msg1.version_id = "1.0.1";
         msg1.capability = "waypoint_following/autoware";
         cav_msgs::PluginConstPtr msg1_pointer(new cav_msgs::Plugin(msg1));
         pm.update_plugin_status(msg1_pointer);
@@ -38,7 +38,7 @@ namespace health_monitor
         msg2.activated = true;
         // this field is not used by plugin manager
         msg2.type = cav_msgs::Plugin::TACTICAL;
-        msg2.versionId = "1.0.0";
+        msg2.version_id = "1.0.0";
         msg2.capability = "lane_change";
         cav_msgs::PluginConstPtr msg2_pointer(new cav_msgs::Plugin(msg2));
         pm.update_plugin_status(msg2_pointer);
@@ -50,13 +50,13 @@ namespace health_monitor
         EXPECT_EQ(true, res.plugins.begin()->available);
         EXPECT_EQ(0, res.plugins.begin()->name.compare("autoware"));
         //EXPECT_EQ(0, res.plugins.begin()->type);
-        //EXPECT_EQ(0, res.plugins.begin()->versionId.compare(""));
+        //EXPECT_EQ(0, res.plugins.begin()->version_id.compare(""));
         // for lane change plugin
         EXPECT_EQ(false, std::prev(res.plugins.end())->activated);
         EXPECT_EQ(true, std::prev(res.plugins.end())->available);
         EXPECT_EQ(0, std::prev(res.plugins.end())->name.compare("lane_change"));
         //EXPECT_EQ(0, std::prev(res.plugins.end())->type);
-        //EXPECT_EQ(0, std::prev(res.plugins.end())->versionId.compare(""));
+        //EXPECT_EQ(0, std::prev(res.plugins.end())->version_id.compare(""));
         // TODO need to handle type and verionID
         cav_srvs::PluginListResponse res2;
         pm.get_active_plugins(res2);

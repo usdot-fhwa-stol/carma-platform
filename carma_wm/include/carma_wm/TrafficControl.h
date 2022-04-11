@@ -31,7 +31,9 @@
 #include <lanelet2_extension/regulatory_elements/DigitalMinimumGap.h>
 #include <carma_wm/SignalizedIntersectionManager.h>
 #include <lanelet2_core/primitives/LaneletOrArea.h>
-
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <autoware_lanelet2_ros_interface/utility/query.h>
 
 namespace carma_wm
 {
@@ -78,13 +80,16 @@ void toBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet
 /**
  * [Converts Geofence binary ROS message to carma_wm::TrafficControl object. Similar implementation to 
  * lanelet2_extension::utility::message_conversion::fromBinMsg]
- * @param msg [ROS message for geofence]
- * @param gf_ptr [Ptr to converted Geofence object]
+ * @param msg         [ROS message for geofence]
+ * @param gf_ptr      [Ptr to converted Geofence object]
+ * @param lanelet_map [Ptr to lanelet map to match incoming objects' memory address with that of 
+ *                    existing objects' with same lanelet id]
  * NOTE: When converting the geofence object, the converter only fills its relevant map update
  * fields (update_list, remove_list) as the ROS msg doesn't hold any other data field in the object.
+ * NOTE: While main map update function needs to use lanelet_map, other utility use cases such as 
+ *       unit test or map update logger does not currently use lanelet_map and can use nullptr as input
  */
-void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl> gf_ptr);
-
+void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl> gf_ptr, lanelet::LaneletMapPtr lanelet_map = nullptr);
 
 }  // namespace carma_wm
 
@@ -156,6 +161,7 @@ inline void load(Archive& ar, carma_wm::TrafficControl& gf, unsigned int /*versi
   // save parts that need to be updated
   size_t update_list_size;
   ar >> update_list_size;
+  
   for (auto i = 0u; i < update_list_size; ++i) 
   {
     std::pair<lanelet::Id, lanelet::RegulatoryElementPtr> update_item;

@@ -49,9 +49,28 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <std_msgs/String.h>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <gtest/gtest_prod.h>
 
 namespace platoon_strategic
 {
+    /**
+     * \brief Macro definition to enable easier access to fields shared across the maneuver types
+     * \param mvr The maneuver object to invoke the accessors on
+     * \param property The name of the field to access on the specific maneuver types. Must be shared by all extant maneuver types
+     * \return Expands to an expression (in the form of chained ternary operators) that evalutes to the desired field
+     */
+    #define GET_MANEUVER_PROPERTY(mvr, property)\
+        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
+            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
+                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
+                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property :\
+                        ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
+                            ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
+                                throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id " + std::to_string((mvr).type)))))))))
+
+
+
     using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
     using MobilityResponseCB = std::function<void(const cav_msgs::MobilityResponse&)>;
     using MobilityRequestCB = std::function<void(const cav_msgs::MobilityRequest&)>;
@@ -220,11 +239,52 @@ namespace platoon_strategic
             */
             void run_follower();
             
+            /**
+            * \brief Checks if the current location is on the rightmost lane.
+            * \param current_location 2d point of current location x and y
+            */
+            void checkForRightMostLane(const lanelet::BasicPoint2d& current_location);
+
+            /**
+            * \brief Gets the local lane index of a provided location. The local lane index is 0 for rightmost lane,
+            * 1 for second rightmost, etc. The local lane index considers only the current travel direction. 
+            * \param current_location 2d point of current location x and y.
+            * \return The local lane index of the provided location.
+            */
+            int getCurrentLaneIndex(const lanelet::BasicPoint2d& current_location);
+
+            /**
+            * \brief Gets the quantity of lanes in the local lane group of a provided location. This includes the
+            * quantity of all side-by-side lanelets including the current lanelet. It considers only the current travel direction.
+            * \param current_location 2d point of current location x and y.
+            * \return Quantity of lanes in the local lane group of the provided location.
+            */
+            int getCurrentLaneGroupSize(const lanelet::BasicPoint2d& current_location);
+
+            /**
+             * \brief Compose a lane change maneuver message based on input params
+             * \param start_dist Start downtrack distance of the current maneuver
+             * \param end_dist End downtrack distance of the current maneuver
+             * \param start_speed Start speed of the current maneuver
+             * \param target_speed Target speed pf the current maneuver, usually it is the lanelet speed limit
+             * \param starting_lane_id starting lane id of the lane change 
+             * \param ending_lane_id starting lane id of the lane change 
+             * \return A lane keeping maneuver message which is ready to be published
+             */
+            cav_msgs::Maneuver composeLaneChangeManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id) const;
+    
+            
             // ECEF position of the host vehicle
             cav_msgs::LocationECEF pose_ecef_point_;
 
+            // variable to show if the vehicle is on the rightmost lane
+            bool in_rightmost_lane_ = true;
+            // variable to show if the vehicle is on a single-lane lane
+            bool single_lane_road_ = false;
+
             // Flag to enable/disable platooning plugin
             bool platooning_enabled_ = false;
+
 
         
         private:
@@ -272,6 +332,15 @@ namespace platoon_strategic
 
             // leader_waiting applicant id
             std::string lw_applicantId_ = "";
+
+            // Current local lane index of host vehicle's local lane group (0 is rightmost, 1 is second rightmost, etc.); considers only the current travel direction
+            int current_lane_index_ = 0;
+            // Current quantity of lanes in the host vehicle's local lane group (side-by-side lanelets including the current lanelet; considers only the current travel direction)
+            int current_lane_group_size_ = 0;
+            // CandidateFollower required local lane index before it can issue PLATOON_FOLLOWER_JOIN MobilityRequest to target leader
+            int cf_target_lane_index_ = 0;
+            // Flag to indicate whether CandidateFollower has received JOIN_REQUIREMENTS MobilityOperation message from target leader
+            bool has_received_join_requirements_ = false;
 
             // ROS Publishers
             ros::Publisher platoon_strategic_plugin_discovery_pub_;
@@ -439,9 +508,11 @@ namespace platoon_strategic
             /**
             * \brief Function to compose mobility operation in leader waiting state
             *
+            * \param type type of mobility operation (status or join_requirements)
+            * 
             * \return mobility operation msg
             */
-            cav_msgs::MobilityOperation composeMobilityOperationLeaderWaiting();
+            cav_msgs::MobilityOperation composeMobilityOperationLeaderWaiting(const std::string& type);
 
             /**
             * \brief Function to compose mobility operation in candidate follower state
@@ -469,13 +540,19 @@ namespace platoon_strategic
             lanelet::BasicPoint2d ecef_to_map_point(cav_msgs::LocationECEF ecef_point);
 
 
+            
+            // flag to check if map is loaded
+            bool map_loaded_ = false;
+            
             // Pointer for map projector
             std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
-            // flag to check if map is loaded
-            bool map_loaded_ = false;
+            // Flag to indicate that Leader must perform a left lane change into a suitable platooning lane before responding ACK to a 'JOIN_PLATOON_AT_REAR' request
+            // Note: Leader must be on a single-lane road or in a non-rightmost-lane (of a given travel direction) before forming an initial platoon
+            bool leader_lane_change_required_ = false;
 
-     
+            // Flag to indicate that CandidateFollower must change lanes into another lane (provided by the target Leader) to join target Leader's platoon
+            bool cf_lane_change_required_ = false;
 
             // ros service servers
             ros::ServiceServer maneuver_srv_;
@@ -502,12 +579,11 @@ namespace platoon_strategic
             const std::string MOBILITY_STRATEGY = "Carma/Platooning";
             const std::string OPERATION_INFO_TYPE = "INFO";
             const std::string OPERATION_STATUS_TYPE = "STATUS";
+            const std::string OPERATION_JOIN_REQUIREMENTS_TYPE = "JOIN_REQUIREMENTS";
             const std::string OPERATION_INFO_PARAMS   = "INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d,DTD:%.2f,ECEFX:%.2f,ECEFY:%.2f,ECEFZ:%.2f";
             const std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,DTD:%2%,SPEED:%3%,ECEFX:%4%,ECEFY:%5%,ECEFZ:%6%";
+            const std::string OPERATION_JOIN_REQUIREMENTS_PARAMS = "JOIN_REQUIREMENTS|LANE_INDEX:%1%,LANE_GROUP_SIZE:%2%"; // 'Join' requirements sent to platoon applicant when in LeaderWaiting state
             const std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%,ECEFX:%4%,ECEFY:%5%,ECEFZ:%6%";
-            
-
-
             
 
             std::string bsmIDtoString(cav_msgs::BSMCoreData bsm_core)
@@ -520,7 +596,9 @@ namespace platoon_strategic
                 return res;
             }
             
-
+            // Unit Tests
+            FRIEND_TEST(PlatoonStrategicPlugin, test_platoon_formation_lane_conditions);
+            FRIEND_TEST(PlatoonStrategicPlugin, test_platoon_lane_change);
 
 
     };

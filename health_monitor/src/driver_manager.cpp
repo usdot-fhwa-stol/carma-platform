@@ -28,6 +28,8 @@ namespace health_monitor
     {
         Entry driver_status(msg->status == cav_msgs::DriverStatus::OPERATIONAL || msg->status == cav_msgs::DriverStatus::DEGRADED,true, msg->name, current_time, 0, "");
         em_.update_entry(driver_status);
+        // NOTE: The following is a temporary hack to allow the lidar driver to be moved to ROS2 which will not use this node
+        Entry fake_entry(msg->status == cav_msgs::DriverStatus::OPERATIONAL,true, msg->name, current_time, 0, "");
     }
 
     void DriverManager::evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout)
@@ -76,6 +78,14 @@ namespace health_monitor
             }
             
         }
+
+        //////////////////////
+        // NOTE: THIS IS A MANUAL DISABLE OF ALL LIDAR AND GPS FAILURE DETECTION FOLLOWING THE ROS2 PORT
+        /////////////////////
+        lidar1=1;
+        lidar2=1;
+        gps=1;
+        /////////////////////
 
         //Decision making 
         if (ssc == 0)
@@ -149,6 +159,13 @@ namespace health_monitor
                 evaluate_sensor(camera,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
         }
+
+        //////////////////////
+        // NOTE: THIS IS A MANUAL DISABLE OF ALL LIDAR FAILURE DETECTION FOLLOWING THE ROS2 PORT
+        /////////////////////
+        lidar=1;
+        gps=1;
+        /////////////////////
 
         //Decision making 
         if(ssc==1)

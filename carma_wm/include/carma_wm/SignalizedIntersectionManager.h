@@ -36,8 +36,8 @@ namespace carma_wm
 
 struct LANE_DIRECTION
 {
-  static const uint8_t INGRESS = 1;
-  static const uint8_t EGRESS = 2;
+  static const uint8_t INGRESS = 2;
+  static const uint8_t EGRESS = 1;
 };
 
 using namespace lanelet::units::literals;
@@ -50,6 +50,22 @@ class SignalizedIntersectionManager
 {
 public:
   SignalizedIntersectionManager(){}
+
+  /*! 
+  *  \brief Copy operator that copies everything except the traffic signal states. 
+            This is to keep the states although the map is updated or a similar event happened
+            NOTE: The function does not update the map with new elements
+  *  \param[out] other manager
+  */
+  SignalizedIntersectionManager& operator=(SignalizedIntersectionManager other);
+
+  /*! 
+  *  \brief Inequality operator that checks if every mapping are same except the traffic signal states. 
+            This is to keep the states although the map is updated or a similar event happened
+            NOTE: The function does not update the map with new elements
+  *  \param[out] rhs manager
+  */
+  bool operator==(const SignalizedIntersectionManager& rhs);
 
   /*! 
   *  \brief Create relevant signalized intersection and carma traffic signals based on the MAP.msg and the lanelet_map
@@ -131,8 +147,13 @@ public:
   // Traffic signal states and their end_time mappings.
   std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>>> traffic_signal_states_; //[intersection_id][signal_group_id]
 
-private:
+  // Last received signal state from SPAT
+  std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>> last_seen_state_; //[intersection_id][signal_group_id]
 
+  // traffic signal state counter
+  std::unordered_map<uint16_t, std::unordered_map<uint8_t,int>> signal_state_counter_; //[intersection_id][signal_group_id]
+
+private:
   // PROJ string of current map
   std::string target_frame_ = "";
 

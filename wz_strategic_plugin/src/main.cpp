@@ -50,7 +50,7 @@ int main(int argc, char** argv)
   pnh.param<std::string>("lane_following_plugin_name",       config.lane_following_plugin_name, config.lane_following_plugin_name);
   pnh.param<std::string>("stop_and_wait_plugin_name",        config.stop_and_wait_plugin_name, config.stop_and_wait_plugin_name);
   pnh.param<std::string>("intersection_transit_plugin_name", config.intersection_transit_plugin_name, config.intersection_transit_plugin_name);
-  pnh.param<double>("/vehicle_length", config.vehicle_length, config.vehicle_length);
+  // pnh.param<double>("/vehicle_length", config.vehicle_length, config.vehicle_length);
   // clang-format on
 
   // Construct plugin
