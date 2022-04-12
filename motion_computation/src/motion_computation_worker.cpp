@@ -123,25 +123,25 @@ namespace motion_computation{
 
         if (enable_sensor_processing_) {
 
-            current_output = synchronizeAndAppend(sensor_list, current_output);
+            current_output = synchronizeAndAppend(synchronization_base_objects, sensor_list);
 
         }
         
         if (enable_bsm_processing_) {
 
-            current_output = synchronizeAndAppend(bsm_list_, current_output);
+            current_output = synchronizeAndAppend(synchronization_base_objects, bsm_list_);
 
         } 
         
         if (enable_psm_processing_) {
 
-            current_output = synchronizeAndAppend(psm_list_, current_output);
+            current_output = synchronizeAndAppend(synchronization_base_objects, psm_list_);
 
         } 
         
         if (enable_mobility_path_processing_) {
             
-            current_output = synchronizeAndAppend(mobility_path_list_, current_output);
+            current_output = synchronizeAndAppend(synchronization_base_objects, mobility_path_list_);
 
         }
 
