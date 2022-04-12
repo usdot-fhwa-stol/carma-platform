@@ -265,7 +265,7 @@ namespace platoon_strategic_ihp
         double getPlatoonFrontDowntrackDistance();
 
         /**
-         * \brief UCLA: Return the time headway summation of all predecessors, in m.
+         * \brief UCLA: Return the time headway summation of all predecessors, in s.
          */
         double getPredecessorTimeHeadwaySum();
         

@@ -1553,7 +1553,6 @@ namespace platoon_strategic_ihp
         bool isRearJoin = plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR;
         bool isCutInJoin = plan_type.type == cav_msgs::PlanType::CUT_IN_FROM_SIDE;
         bool isDepart = (plan_type.type == cav_msgs::PlanType::PLATOON_DEPARTURE);
-        // TODO: Place holder for departure plan type.
 
         // Ignore the request if we are already working with a join process or if no join type was requested (prevents multiple applicants)
         if (isFrontJoin  ||  isRearJoin  ||  isCutInJoin)
@@ -1731,7 +1730,6 @@ namespace platoon_strategic_ihp
         }
         
         // UCLA: conditions for cut-in join; platoon leader --> leading with operation
-        // Use joningID_ to make sure only the leader only interact with the first requesting joining vehicle
         else if (isCutInJoin)
         {
             // Log the request  type
