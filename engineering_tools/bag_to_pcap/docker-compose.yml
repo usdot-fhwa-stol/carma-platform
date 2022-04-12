@@ -1,0 +1,48 @@
+version: '2'
+
+services:
+  roscore:
+    image: usdotfhwastol/carma-base:carma-system-3.9.0
+    network_mode: host
+    container_name: roscore
+    environment:
+      - ROS_IP=127.0.0.1
+    command: roscore
+
+  rosbag-replay:
+    image: usdotfhwastol/carma-cohda-dsrc-driver:carma-system-3.9.0
+    network_mode: host
+    volumes:
+      - ${ROSBAG_PATH}:/home/carma/bag.bag
+    container_name: rosbag-replay
+    environment:
+      - ROS_IP=127.0.0.1
+    command: bash -c 'wait-for-it.sh localhost:11311 -- rosbag play /home/carma/bag.bag'
+
+  dsrc-driver-outbound:
+    image: usdotfhwastol/carma-cohda-dsrc-driver:carma-system-3.9.0
+    network_mode: host
+    volumes:
+      - ./dsrc_node.launch:/opt/carma/install/dsrc_driver/share/dsrc_driver/launch/dsrc_node.launch
+    container_name: dsrc-outbound
+    environment:
+      - ROS_IP=127.0.0.1
+    command: bash -c 'export ROS_NAMESPACE="/hardware_interface" && wait-for-it.sh localhost:11311 -- roslaunch dsrc_driver dsrc_node.launch'
+
+  dsrc-driver-inbound:
+    image: usdotfhwastol/carma-cohda-dsrc-driver:carma-system-3.9.0
+    network_mode: host
+    volumes:
+      - ./dsrc_node2.launch:/opt/carma/install/dsrc_driver/share/dsrc_driver/launch/dsrc_node.launch
+    environment:
+      - ROS_IP=127.0.0.1
+    command: bash -c 'export ROS_NAMESPACE="/hardware_interface" && wait-for-it.sh localhost:11311 -- roslaunch dsrc_driver dsrc_node.launch'
+
+  tcpdump:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: host
+    volumes:
+      - .:/home/carma/output
+    command: sudo tcpdump -i lo udp port 1516 or port 5398 -w /home/carma/output/${OUTPUT_FILENAME}
