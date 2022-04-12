@@ -48,7 +48,7 @@ struct PlatooningControlPluginConfig
   
   friend std::ostream& operator<<(std::ostream& output, const PlatooningControlPluginConfig& c)
   {
-    output << "InLaneCruisingPluginConfig { " << std::endl
+    output << "PlatooningControlPluginConfig { " << std::endl
            << "timeHeadway: " << c.timeHeadway << std::endl
            << "standStillHeadway: " << c.standStillHeadway << std::endl
            << "maxAccel: " << c.maxAccel << std::endl
