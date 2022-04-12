@@ -22,6 +22,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
+#include <carma_v2x_msgs/msg/psm.hpp>
+#include <carma_v2x_msgs/msg/bsm.hpp>
 #include <carma_v2x_msgs/msg/mobility_path.hpp>
 #include <functional>
 #include <motion_predict/motion_predict.hpp>
@@ -29,6 +31,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <tuple>
+#include <gtest/gtest_prod.h>
 
 namespace motion_computation {
 //! @brief Enum describing the possible operational modes of the MotionComputation
@@ -68,7 +71,6 @@ class MotionComputationWorker {
   void setYAccelerationNoise(double noise);
   void setProcessNoiseMax(double noise_max);
   void setConfidenceDropRate(double drop_rate);
-  void setExternalObjectPredictionMode(int external_object_prediction_mode);
   void setDetectionInputFlags( 
     bool enable_sensor_processing,
     bool enable_bsm_processing,
@@ -147,9 +149,6 @@ class MotionComputationWorker {
   // Logger interface
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
 
-  // External object conversion mode
-  MotionComputationMode external_object_prediction_mode_ = MOBILITY_PATH_ONLY;
-
   // Queue for mobility path msgs to synchronize them with sensor msgs
   carma_perception_msgs::msg::ExternalObjectList mobility_path_list_;
   carma_perception_msgs::msg::ExternalObjectList bsm_list_;
@@ -159,6 +158,9 @@ class MotionComputationWorker {
 
   // Rotation of a North East Down frame located on the map origin described in the map frame 
   tf2::Quaternion ned_in_map_rotation_; 
+
+  // Unit Test Accessors
+  FRIEND_TEST(MotionComputationWorker, mobilityPathToExternalObject);
 };
 
 }  // namespace motion_computation

@@ -20,7 +20,9 @@
 #include <thread>
 #include <future>
 
+#include "motion_computation/message_conversions.hpp"
 #include "motion_computation/motion_computation_worker.hpp"
+#include "motion_computation/impl/mobility_path_to_external_object_helpers.hpp"
 
 
 namespace motion_computation
@@ -28,24 +30,27 @@ namespace motion_computation
     TEST(MotionComputationWorker, Constructor)
     {   
         // Create logger object
-        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger;
+        auto node = std::make_shared<rclcpp::Node>("test_node");
+        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
 
         // Create MotionComputationWorker object
-        MotionComputationWorker worker([](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){}, logger);
+        MotionComputationWorker worker([](const carma_perception_msgs::msg::ExternalObjectList&){}, logger);
     }
 
     TEST(MotionComputationWorker, motionPredictionCallback)
     {    
+        std::cerr << "1" << std::endl;
         bool published_data = false;
-        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger;
+        auto node = std::make_shared<rclcpp::Node>("test_node");
+        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
         MotionComputationWorker mcw_sensor_only([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){
             published_data = true;
-            ASSERT_EQ(obj_pub.objects.size(), 1);
+            ASSERT_EQ(obj_pub.objects.size(), 1ul);
 
             bool isFilled = false;
             for(auto item : obj_pub.objects)
             {
-                if(item.predictions.size() > 0);
+                if(item.predictions.size() > 0)
                     isFilled = true;
             }
             ASSERT_EQ(isFilled, true);
@@ -54,18 +59,21 @@ namespace motion_computation
 
         MotionComputationWorker mcw_mobility_only([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){
             published_data = true;
-            ASSERT_EQ(obj_pub.objects.size(), 0);
+            ASSERT_EQ(obj_pub.objects.size(), 0ul);
             }, logger);
 
         MotionComputationWorker mcw_mixed_operation([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){
             published_data = true;
-            ASSERT_EQ(obj_pub.objects.size(), 2);
+            ASSERT_EQ(obj_pub.objects.size(), 2ul);
             }, logger);
 
-        mcw_sensor_only.setExternalObjectPredictionMode(motion_computation::SENSORS_ONLY);
-        mcw_mobility_only.setExternalObjectPredictionMode(motion_computation::MOBILITY_PATH_ONLY);
-        mcw_mixed_operation.setExternalObjectPredictionMode(motion_computation::PATH_AND_SENSORS);
+        std::cerr << "2" << std::endl;
 
+        mcw_sensor_only.setDetectionInputFlags(true, false, false, false); //SENSORS_ONLY
+        mcw_mobility_only.setDetectionInputFlags(false, false, false, true); //MOBILITY_PATH_ONLY
+        mcw_mixed_operation.setDetectionInputFlags(true, false, false, true); //PATH_AND_SENSORS
+
+        std::cerr << "3" << std::endl;
         // 1 to 1 transform
         std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
         std::unique_ptr<std_msgs::msg::String> georeference_ptr1 = std::make_unique<std_msgs::msg::String>();
@@ -74,8 +82,11 @@ namespace motion_computation
         georeference_ptr1->data = base_proj;
         georeference_ptr2->data = base_proj;
         georeference_ptr3->data = base_proj;
+        std::cerr << "4" << std::endl;
         mcw_sensor_only.georeferenceCallback(move(georeference_ptr1));  // Set projection
+        std::cerr << "5" << std::endl;
         mcw_mobility_only.georeferenceCallback(move(georeference_ptr2));  // Set projection
+        std::cerr << "5" << std::endl;
         mcw_mixed_operation.georeferenceCallback(move(georeference_ptr3));  // Set projection
 
         carma_perception_msgs::msg::ExternalObject msg;
@@ -83,18 +94,19 @@ namespace motion_computation
         /*Create test message*/
         msg.presence_vector = 16;
         msg.object_type = 3;
-
+        std::cerr << "7" << std::endl;
         /*Test ExternalObject Presence Vector Values*/
         ASSERT_TRUE(msg.presence_vector > 0);
-        
+        std::cerr << "8" << std::endl;
         bool pvValid = false;
         for(auto i= 0; i<10; i++) //Test whether presence vector values in ExternalObject are valid
         {
             if (msg.presence_vector == pow(2,i))//presence vector is valid if it matches binary value between 1-512
                 pvValid = true;
         }
+        std::cerr << "9" << std::endl;
         ASSERT_EQ(pvValid, true);
-
+        std::cerr << "10" << std::endl;
         /*Test ExternalObject Object Type Values*/
         bool otValid = false;
         for(int i =0; i<=4; i++)
@@ -149,8 +161,9 @@ namespace motion_computation
 
     TEST(MotionComputationWorker, composePredictedState)
     {    
-        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger;
-        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){}, logger);
+        auto node = std::make_shared<rclcpp::Node>("test_node");
+        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
+        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList&){}, logger);
 
         // 1 to 1 transform
         std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
@@ -162,7 +175,7 @@ namespace motion_computation
         tf2::Vector3 curr = {5, 0, 0};
         tf2::Vector3 prev = {4, 0, 0};
 
-        auto res =  mcw.composePredictedState(curr, prev,time_stamp, 0.0);
+        auto res =  conversion::impl::composePredictedState(curr, prev,time_stamp, time_stamp + rclcpp::Duration(100000000), 0.0);
         auto test_result = std::get<0>(res);
 
         ASSERT_NEAR(test_result.predicted_position.position.x, 4.0, 0.0001 );
@@ -176,7 +189,7 @@ namespace motion_computation
         curr = {5, 5, 0};
         prev = {0, 0, 0};
 
-        res =  mcw.composePredictedState(curr, prev,time_stamp, std::get<1>(res));
+        res =  conversion::impl::composePredictedState(curr, prev,time_stamp, time_stamp + rclcpp::Duration(100000000), std::get<1>(res));
         test_result = std::get<0>(res);
 
         ASSERT_NEAR(test_result.predicted_position.position.x, 0.0, 0.0001 );
@@ -189,7 +202,7 @@ namespace motion_computation
     TEST(MotionComputationWorker, mobilityPathToExternalObject)
     {   
         auto node = std::make_shared<rclcpp::Node>("test_node");
-        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){}, node->get_node_logging_interface());
+        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList&){}, node->get_node_logging_interface());
 
         // 1 to 1 transform
         std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
@@ -200,7 +213,9 @@ namespace motion_computation
         // Test no georef
         std::unique_ptr<carma_v2x_msgs::msg::MobilityPath> input_ptr1 = std::make_unique<carma_v2x_msgs::msg::MobilityPath>();
         carma_perception_msgs::msg::ExternalObject output, expected;
-        output = mcw.mobilityPathToExternalObject(move(input_ptr1));
+
+        conversion::convert(*input_ptr1, output, *(mcw.map_projector_));
+
         ASSERT_EQ(output.header.stamp, expected.header.stamp); //empty object returned
 
         // INPUT
@@ -220,7 +235,9 @@ namespace motion_computation
         
         // Test static/dynamic
         std::unique_ptr<carma_v2x_msgs::msg::MobilityPath> input_ptr2 = std::make_unique<carma_v2x_msgs::msg::MobilityPath>(input);
-        output = mcw.mobilityPathToExternalObject(move(input_ptr2));
+    
+        conversion::convert(*input_ptr2, output, *(mcw.map_projector_));
+ 
         ASSERT_FALSE(output.dynamic_obj);
 
         location.offset_x = 500.00; 
@@ -230,7 +247,9 @@ namespace motion_computation
 
         // Test 0th, 1st point predicted state
         std::unique_ptr<carma_v2x_msgs::msg::MobilityPath> input_ptr3 = std::make_unique<carma_v2x_msgs::msg::MobilityPath>(input);
-        output = mcw.mobilityPathToExternalObject(move(input_ptr3));
+
+        conversion::convert(*input_ptr3, output, *(mcw.map_projector_));
+
         ASSERT_NEAR(output.pose.pose.orientation.w, 1.0, 0.0001);
         ASSERT_NEAR(output.pose.pose.position.x, 0.0, 0.005);
         ASSERT_NEAR(output.velocity.twist.linear.x, 0.0, 0.1);
@@ -250,8 +269,9 @@ namespace motion_computation
     TEST(MotionComputationWorker, synchronizeAndAppend)
     {   
         auto node = std::make_shared<rclcpp::Node>("test_node");
-        MotionComputationWorker mcw_mixed_operation([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){}, node->get_node_logging_interface());
-        mcw_mixed_operation.setExternalObjectPredictionMode(motion_computation::PATH_AND_SENSORS);
+        MotionComputationWorker mcw_mixed_operation([&](const carma_perception_msgs::msg::ExternalObjectList&){}, node->get_node_logging_interface());
+
+        mcw_mixed_operation.setDetectionInputFlags(true, false, false, true); //enable sensors and paths
         mcw_mixed_operation.setMobilityPathPredictionTimeStep(0.2); // 0.2 Seconds
 
         // 1 to 1 transform
@@ -302,10 +322,10 @@ namespace motion_computation
         mobility_path_list.objects.push_back(mobility_path_obj);
         auto result = mcw_mixed_operation.synchronizeAndAppend(sensor_list, mobility_path_list);
         
-        ASSERT_EQ(result.objects.size(), 2);
-        ASSERT_EQ(result.objects[1].predictions.size(), 2); // we dropped 2 points
+        ASSERT_EQ(result.objects.size(), 2ul);
+        ASSERT_EQ(result.objects[1].predictions.size(), 2ul); // we dropped 2 points
         ASSERT_EQ(result.objects[1].predictions[0].header.stamp, rclcpp::Time(1.8 * 1e9)); // 1.8 Seconds
-        ASSERT_EQ(result.objects[1].predictions[0].predicted_position.position.x, 700);
+        ASSERT_EQ(result.objects[1].predictions[0].predicted_position.position.x, 700ul);
         ASSERT_EQ(result.objects[1].predictions[1].header.stamp, rclcpp::Time(2.0 * 1e9)); // 2.0 Seconds
         ASSERT_EQ(result.objects[1].predictions[1].predicted_position.position.x, 900);
     }

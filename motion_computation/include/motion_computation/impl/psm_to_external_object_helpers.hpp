@@ -25,7 +25,7 @@
 
 
 
-namespace object {
+namespace motion_computation {
 
 namespace conversion {
 
@@ -52,4 +52,4 @@ rclcpp::Time get_psm_timestamp(const carma_v2x_msgs::msg::PSM &in_msg);
 
 }  // namespace impl
 }  // namespace conversion
-}  // namespace object
+}  // namespace motion_computation

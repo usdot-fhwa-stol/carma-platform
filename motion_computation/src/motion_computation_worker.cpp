@@ -15,11 +15,13 @@
  */
 #include "motion_computation/motion_computation_worker.hpp"
 #include "motion_computation/message_conversions.hpp"
+#include <wgs84_utils/proj_tools.h>
+
 
 namespace motion_computation{
 
     MotionComputationWorker::MotionComputationWorker(const PublishObjectCallback& obj_pub, rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger) 
-        : obj_pub_(obj_pub), logger_(logger) {};
+        : obj_pub_(obj_pub), logger_(logger) {}
 
     void MotionComputationWorker::predictionLogic(carma_perception_msgs::msg::ExternalObjectList::UniquePtr obj_list)
     {
@@ -88,7 +90,7 @@ namespace motion_computation{
         // PSM
         // MobilityPath
         // TODO add descriptive comments here
-        const carma_perception_msgs::msg::ExternalObjectList& synchronization_base_objects;
+        carma_perception_msgs::msg::ExternalObjectList synchronization_base_objects;
         if (enable_sensor_processing_) {
 
             synchronization_base_objects = sensor_list;
@@ -157,13 +159,13 @@ namespace motion_computation{
         
         std::string axis = wgs84_utils::proj_tools::getAxisFromProjString(msg->data);  // Extract axis for orientation calc
 
-        ROS_INFO_STREAM("Extracted Axis: " << axis);
+        RCLCPP_INFO_STREAM(logger_->get_logger(), "Extracted Axis: " << axis);
 
         ned_in_map_rotation_ = wgs84_utils::proj_tools::getRotationOfNEDFromProjAxis(axis);  // Extract map rotation from axis
 
-        ROS_DEBUG_STREAM("Extracted NED in Map Rotation (x,y,z,w) : ( "
-                        << ned_in_map_rotation_.get().x() << ", " << ned_in_map_rotation_.get().y() << ", "
-                        << ned_in_map_rotation_.get().z() << ", " << ned_in_map_rotation_.get().w());
+        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Extracted NED in Map Rotation (x,y,z,w) : ( "
+                        << ned_in_map_rotation_.getX() << ", " << ned_in_map_rotation_.getY() << ", "
+                        << ned_in_map_rotation_.getZ() << ", " << ned_in_map_rotation_.getW());
     }
     
     void MotionComputationWorker::setPredictionTimeStep(double time_step)
@@ -201,11 +203,6 @@ namespace motion_computation{
         prediction_confidence_drop_rate_ = drop_rate;
     }
 
-    void MotionComputationWorker::setExternalObjectPredictionMode(int external_object_prediction_mode)
-    {
-        external_object_prediction_mode_ = static_cast<MotionComputationMode>(external_object_prediction_mode);
-    }
-
     void MotionComputationWorker::setDetectionInputFlags( 
         bool enable_sensor_processing,
         bool enable_bsm_processing,
@@ -232,7 +229,7 @@ namespace motion_computation{
         }
         
         carma_perception_msgs::msg::ExternalObject obj_msg;
-        conversion::convert(msg, obj_msg, map_projector_);
+        conversion::convert(*msg, obj_msg, *map_projector_);
         mobility_path_list_.objects.push_back(obj_msg);
     }
 

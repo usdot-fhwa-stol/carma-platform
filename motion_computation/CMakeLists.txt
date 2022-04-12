@@ -37,7 +37,7 @@ include_directories(
 
 # Build
 
-ament_auto_add_library(${worker_lib}
+ament_auto_add_library(${worker_lib} SHARED
         src/motion_computation_worker.cpp
         src/mobility_path_to_external_object.cpp
 )
