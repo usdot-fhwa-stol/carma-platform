@@ -25,7 +25,6 @@ namespace motion_computation{
 
     void MotionComputationWorker::predictionLogic(carma_perception_msgs::msg::ExternalObjectList::UniquePtr obj_list)
     {
-        carma_perception_msgs::msg::ExternalObjectList output_list;
         carma_perception_msgs::msg::ExternalObjectList sensor_list;
 
         for (auto obj : obj_list->objects)
@@ -112,7 +111,10 @@ namespace motion_computation{
             RCLCPP_WARN_STREAM(logger_->get_logger(), "Not configured to publish any data publishing empty object list. Operating like this is NOT advised.");
             // synchronization_base_objects.header.stamp = now();// TODO get access to clock
             obj_pub_(synchronization_base_objects);
-            // TODO clear queues?
+            bsm_list_.objects.clear();
+            psm_list_.objects.clear();
+            mobility_path_list_.objects.clear();
+
             return;
         }
 
@@ -143,7 +145,7 @@ namespace motion_computation{
 
         }
 
-        obj_pub_(output_list);
+        obj_pub_(current_output);
 
         // Clear mobility msg path queue since it is published
         mobility_path_list_.objects.clear();

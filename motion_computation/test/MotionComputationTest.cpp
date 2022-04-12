@@ -39,7 +39,6 @@ namespace motion_computation
 
     TEST(MotionComputationWorker, motionPredictionCallback)
     {    
-        std::cerr << "1" << std::endl;
         bool published_data = false;
         auto node = std::make_shared<rclcpp::Node>("test_node");
         rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
@@ -67,13 +66,11 @@ namespace motion_computation
             ASSERT_EQ(obj_pub.objects.size(), 2ul);
             }, logger);
 
-        std::cerr << "2" << std::endl;
 
         mcw_sensor_only.setDetectionInputFlags(true, false, false, false); //SENSORS_ONLY
         mcw_mobility_only.setDetectionInputFlags(false, false, false, true); //MOBILITY_PATH_ONLY
         mcw_mixed_operation.setDetectionInputFlags(true, false, false, true); //PATH_AND_SENSORS
 
-        std::cerr << "3" << std::endl;
         // 1 to 1 transform
         std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
         std::unique_ptr<std_msgs::msg::String> georeference_ptr1 = std::make_unique<std_msgs::msg::String>();
@@ -82,11 +79,8 @@ namespace motion_computation
         georeference_ptr1->data = base_proj;
         georeference_ptr2->data = base_proj;
         georeference_ptr3->data = base_proj;
-        std::cerr << "4" << std::endl;
         mcw_sensor_only.georeferenceCallback(move(georeference_ptr1));  // Set projection
-        std::cerr << "5" << std::endl;
         mcw_mobility_only.georeferenceCallback(move(georeference_ptr2));  // Set projection
-        std::cerr << "5" << std::endl;
         mcw_mixed_operation.georeferenceCallback(move(georeference_ptr3));  // Set projection
 
         carma_perception_msgs::msg::ExternalObject msg;
@@ -94,19 +88,15 @@ namespace motion_computation
         /*Create test message*/
         msg.presence_vector = 16;
         msg.object_type = 3;
-        std::cerr << "7" << std::endl;
         /*Test ExternalObject Presence Vector Values*/
         ASSERT_TRUE(msg.presence_vector > 0);
-        std::cerr << "8" << std::endl;
         bool pvValid = false;
         for(auto i= 0; i<10; i++) //Test whether presence vector values in ExternalObject are valid
         {
             if (msg.presence_vector == pow(2,i))//presence vector is valid if it matches binary value between 1-512
                 pvValid = true;
         }
-        std::cerr << "9" << std::endl;
         ASSERT_EQ(pvValid, true);
-        std::cerr << "10" << std::endl;
         /*Test ExternalObject Object Type Values*/
         bool otValid = false;
         for(int i =0; i<=4; i++)
