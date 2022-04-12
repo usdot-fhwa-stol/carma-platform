@@ -2,7 +2,7 @@ version: '2'
 
 services:
   roscore:
-    image: usdotfhwastol/carma-base:carma-system-3.9.0
+    image: usdotfhwastol/carma-base:carma-system-${CARMA_VERSION}
     network_mode: host
     container_name: roscore
     environment:
@@ -10,7 +10,7 @@ services:
     command: roscore
 
   rosbag-replay:
-    image: usdotfhwastol/carma-cohda-dsrc-driver:carma-system-3.9.0
+    image: usdotfhwastol/carma-cohda-dsrc-driver:carma-system-${CARMA_VERSION}
     network_mode: host
     volumes:
       - ${ROSBAG_PATH}:/home/carma/bag.bag
@@ -20,7 +20,7 @@ services:
     command: bash -c 'wait-for-it.sh localhost:11311 -- rosbag play /home/carma/bag.bag'
 
   dsrc-driver-outbound:
-    image: usdotfhwastol/carma-cohda-dsrc-driver:carma-system-3.9.0
+    image: usdotfhwastol/carma-cohda-dsrc-driver:carma-system-${CARMA_VERSION}
     network_mode: host
     volumes:
       - ./dsrc_node.launch:/opt/carma/install/dsrc_driver/share/dsrc_driver/launch/dsrc_node.launch
@@ -30,7 +30,7 @@ services:
     command: bash -c 'export ROS_NAMESPACE="/hardware_interface" && wait-for-it.sh localhost:11311 -- roslaunch dsrc_driver dsrc_node.launch'
 
   dsrc-driver-inbound:
-    image: usdotfhwastol/carma-cohda-dsrc-driver:carma-system-3.9.0
+    image: usdotfhwastol/carma-cohda-dsrc-driver:carma-system-${CARMA_VERSION}
     network_mode: host
     volumes:
       - ./dsrc_node2.launch:/opt/carma/install/dsrc_driver/share/dsrc_driver/launch/dsrc_node.launch

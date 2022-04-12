@@ -1,3 +1,3 @@
-FROM usdotfhwastol/carma-cohda-dsrc-driver:carma-system-3.9.0
+FROM ubuntu:focal
 
 RUN sudo apt-get install -y tcpdump
