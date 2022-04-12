@@ -741,7 +741,7 @@ namespace basic_autonomy
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_path(points,
                                                                                                                                                           state, state_time, cmw, ending_state, config);
         EXPECT_TRUE(trajectory_points.size() > 2);
-        basic_autonomy::waypoint_generation::create_lanechange_geometry(start_id, end_id,starting_downtrack, ending_downtrack, cmw, state, 1);
+        basic_autonomy::waypoint_generation::create_lanechange_geometry(start_id, end_id,starting_downtrack, ending_downtrack, cmw, 1);
     } 
 
     TEST(BasicAutonomyTest, lanefollow_geometry_visited_lanelets)
@@ -777,7 +777,7 @@ namespace basic_autonomy
         
 
         std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, 
-                                                                                    starting_downtrack, wm, ending_state, general_config, detailed_config, visited_lanelets);
+                                                                                    starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
 
         EXPECT_EQ(visited_lanelets.size(), 5);
 

@@ -42,7 +42,7 @@ namespace basic_autonomy
 
                 if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING){
                     ROS_DEBUG_STREAM("Creating Lane Follow Geometry");
-                    std::vector<PointSpeedPair> lane_follow_points = create_lanefollow_geometry(maneuver, starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config, visited_lanelets);
+                    std::vector<PointSpeedPair> lane_follow_points = create_lanefollow_geometry(maneuver, starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
                     points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
                 }
                 else if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE){
@@ -66,12 +66,9 @@ namespace basic_autonomy
         }
 
         std::vector<PointSpeedPair> create_lanefollow_geometry(const cav_msgs::Maneuver &maneuver, double starting_downtrack,
-                                                                const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
-                                                                const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config, std::unordered_set<lanelet::Id> &visited_lanelets)
+                                                                const carma_wm::WorldModelConstPtr &wm, const GeneralTrajConfig &general_config, 
+                                                                const DetailedTrajConfig &detailed_config, std::unordered_set<lanelet::Id> &visited_lanelets)
         {
-            //TODO: ending_state_before_buffer is unused; if there are no plans for it, then remove from arg list
-            ROS_DEBUG_STREAM("Unused argument ending_state_before_buffer = " << ending_state_before_buffer);
-
             if(maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING){
                 throw std::invalid_argument("Create_lanefollow called on a maneuver type which is not LANE_FOLLOW");
             }
@@ -261,11 +258,8 @@ namespace basic_autonomy
         }
 
         std::vector<lanelet::BasicPoint2d> create_lanechange_geometry(lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, double starting_downtrack, double ending_downtrack,
-                                                                   const carma_wm::WorldModelConstPtr &wm,const cav_msgs::VehicleState &state, int downsample_ratio)
+                                                                   const carma_wm::WorldModelConstPtr &wm, int downsample_ratio)
         {
-            //TODO: state is unused; if there are no plans to use it, then remove from arg list
-            ROS_DEBUG_STREAM("Unused arg state = " << state);
-
             std::vector<lanelet::BasicPoint2d> centerline_points;
 
             //Get starting lanelet and ending lanelets
@@ -441,19 +435,18 @@ namespace basic_autonomy
 
             all_sampling_points_line1.reserve(1 + total_point_size * 2);
             std::vector<double> downtracks_raw_line1 = carma_wm::geometry::compute_arc_lengths(line_1);
-            int total_step_along_curve1 = static_cast<int>(downtracks_raw_line1.back() / 2.0);
-            double step_threshold_line1 = (double)total_step_along_curve1 / (double)total_point_size;
+            //int total_step_along_curve1 = static_cast<int>(downtracks_raw_line1.back() / 2.0);
+            //double step_threshold_line1 = (double)total_step_along_curve1 / (double)total_point_size;
             //TODO: are we missing some computation here?  step_threshold_line1 and step_threshold_line2 are not used anywhere
-            //      and these calcs can be deleted.
+            //      and these calcs can be deleted (see below also).
 
             
             all_sampling_points_line2.reserve(1 + total_point_size * 2);
             std::vector<double> downtracks_raw_line2 = carma_wm::geometry::compute_arc_lengths(line_2);
-            int total_step_along_curve2 = static_cast<int>(downtracks_raw_line2.back() / 2.0);
-            double step_threshold_line2 = (double)total_step_along_curve2 / (double)total_point_size;
+            //TODO: unused variable: int total_step_along_curve2 = static_cast<int>(downtracks_raw_line2.back() / 2.0);
+            //TODO: unused variable: double step_threshold_line2 = (double)total_step_along_curve2 / (double)total_point_size;
 
             double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
-            
             
             all_sampling_points_line2.reserve(1 + total_point_size * 2);
             
@@ -496,8 +489,8 @@ namespace basic_autonomy
             }
 
             //get route between starting and ending downtracks - downtracks should be constant for complete length of maneuver
-            std::vector<lanelet::BasicPoint2d> route_geometry = create_lanechange_geometry(std::stoi(lane_change_maneuver.starting_lane_id),std::stoi(lane_change_maneuver.ending_lane_id),
-                                                                                        starting_downtrack, ending_downtrack, wm, state, general_config.default_downsample_ratio);
+            std::vector<lanelet::BasicPoint2d> route_geometry = create_lanechange_geometry(std::stoi(lane_change_maneuver.starting_lane_id), std::stoi(lane_change_maneuver.ending_lane_id),
+                                                                                        starting_downtrack, ending_downtrack, wm, general_config.default_downsample_ratio);
             ROS_DEBUG_STREAM("Route geometry size:"<<route_geometry.size());
 
             lanelet::BasicPoint2d state_pos(state.x_pos_global, state.y_pos_global);
