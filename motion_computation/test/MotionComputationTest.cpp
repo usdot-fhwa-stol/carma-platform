@@ -262,7 +262,6 @@ namespace motion_computation
         MotionComputationWorker mcw_mixed_operation([&](const carma_perception_msgs::msg::ExternalObjectList&){}, node->get_node_logging_interface());
 
         mcw_mixed_operation.setDetectionInputFlags(true, false, false, true); //enable sensors and paths
-        mcw_mixed_operation.setMobilityPathPredictionTimeStep(0.2); // 0.2 Seconds
 
         // 1 to 1 transform
         std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;

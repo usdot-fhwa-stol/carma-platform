@@ -165,7 +165,7 @@ std::pair<carma_perception_msgs::msg::PredictedState, double> composePredictedSt
 
   // Set velocity
   output_state.predicted_velocity.linear.x =
-      vehicle_vector.norm() / (curr_time_stamp - prev_time_stamp).seconds();  // TODO
+      vehicle_vector.norm() / (curr_time_stamp - prev_time_stamp).seconds(); 
 
   // Set timestamp
   output_state.header.stamp = builtin_interfaces::msg::Time(prev_time_stamp);
