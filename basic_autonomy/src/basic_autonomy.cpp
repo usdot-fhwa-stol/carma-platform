@@ -42,7 +42,7 @@ namespace basic_autonomy
 
                 if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING){
                     ROS_DEBUG_STREAM("Creating Lane Follow Geometry");
-                    std::vector<PointSpeedPair> lane_follow_points = create_lanefollow_geometry(maneuver, starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config, visited_lanelets);
+                    std::vector<PointSpeedPair> lane_follow_points = create_lanefollow_geometry(maneuver, starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
                     points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
                 }
                 else if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE){
@@ -66,8 +66,8 @@ namespace basic_autonomy
         }
 
         std::vector<PointSpeedPair> create_lanefollow_geometry(const cav_msgs::Maneuver &maneuver, double starting_downtrack,
-                                                                const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
-                                                                const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config, std::unordered_set<lanelet::Id> &visited_lanelets)
+                                                                const carma_wm::WorldModelConstPtr &wm, const GeneralTrajConfig &general_config, 
+                                                                const DetailedTrajConfig &detailed_config, std::unordered_set<lanelet::Id> &visited_lanelets)
         {
             if(maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING){
                 throw std::invalid_argument("Create_lanefollow called on a maneuver type which is not LANE_FOLLOW");
@@ -94,7 +94,7 @@ namespace basic_autonomy
             //getLaneletsBetween is inclusive of lanelets between its two boundaries
             //which may return lanechange lanelets, so
             //exclude lanechanges and plan for only the straight part
-            int curr_idx = 0;
+            size_t curr_idx = 0;
             auto following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
             lanelet::ConstLanelets straight_lanelets;
 
@@ -258,7 +258,7 @@ namespace basic_autonomy
         }
 
         std::vector<lanelet::BasicPoint2d> create_lanechange_geometry(lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, double starting_downtrack, double ending_downtrack,
-                                                                   const carma_wm::WorldModelConstPtr &wm,const cav_msgs::VehicleState &state, int downsample_ratio)
+                                                                   const carma_wm::WorldModelConstPtr &wm, int downsample_ratio)
         {
             std::vector<lanelet::BasicPoint2d> centerline_points;
 
@@ -435,16 +435,18 @@ namespace basic_autonomy
 
             all_sampling_points_line1.reserve(1 + total_point_size * 2);
             std::vector<double> downtracks_raw_line1 = carma_wm::geometry::compute_arc_lengths(line_1);
-            int total_step_along_curve1 = static_cast<int>(downtracks_raw_line1.back() / 2.0);
-            double step_threshold_line1 = (double)total_step_along_curve1 / (double)total_point_size;
+            //int total_step_along_curve1 = static_cast<int>(downtracks_raw_line1.back() / 2.0);
+            //double step_threshold_line1 = (double)total_step_along_curve1 / (double)total_point_size;
+            //TODO: are we missing some computation here?  step_threshold_line1 and step_threshold_line2 are not used anywhere
+            //      and these calcs can be deleted (see below also).
+
             
             all_sampling_points_line2.reserve(1 + total_point_size * 2);
             std::vector<double> downtracks_raw_line2 = carma_wm::geometry::compute_arc_lengths(line_2);
-            int total_step_along_curve2 = static_cast<int>(downtracks_raw_line2.back() / 2.0);
-            double step_threshold_line2 = (double)total_step_along_curve2 / (double)total_point_size;
+            //TODO: unused variable: int total_step_along_curve2 = static_cast<int>(downtracks_raw_line2.back() / 2.0);
+            //TODO: unused variable: double step_threshold_line2 = (double)total_step_along_curve2 / (double)total_point_size;
 
             double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
-            
             
             all_sampling_points_line2.reserve(1 + total_point_size * 2);
             
@@ -487,9 +489,8 @@ namespace basic_autonomy
             }
 
             //get route between starting and ending downtracks - downtracks should be constant for complete length of maneuver
-            double lanechange_starting_downtrack;
-            std::vector<lanelet::BasicPoint2d> route_geometry = create_lanechange_geometry(std::stoi(lane_change_maneuver.starting_lane_id),std::stoi(lane_change_maneuver.ending_lane_id),
-                                                                                        starting_downtrack, ending_downtrack, wm, state, general_config.default_downsample_ratio);
+            std::vector<lanelet::BasicPoint2d> route_geometry = create_lanechange_geometry(std::stoi(lane_change_maneuver.starting_lane_id), std::stoi(lane_change_maneuver.ending_lane_id),
+                                                                                        starting_downtrack, ending_downtrack, wm, general_config.default_downsample_ratio);
             ROS_DEBUG_STREAM("Route geometry size:"<<route_geometry.size());
 
             lanelet::BasicPoint2d state_pos(state.x_pos_global, state.y_pos_global);
@@ -643,7 +644,7 @@ namespace basic_autonomy
             while (optimize)
             {
                 auto min_pair = min_with_exclusions(curv_speeds, visited_idx);
-                size_t min_idx = std::get<1>(min_pair);
+                int min_idx = std::get<1>(min_pair);
                 if (min_idx == -1)
                 {
                     break;
@@ -697,7 +698,7 @@ namespace basic_autonomy
             std::vector<cav_msgs::TrajectoryPlanPoint> traj;
             traj.reserve(points.size());
 
-            for (int i = 0; i < points.size(); i++)
+            for (size_t i = 0; i < points.size(); i++)
             {
                 cav_msgs::TrajectoryPlanPoint tpp;
                 ros::Duration relative_time(times[i]);
@@ -825,7 +826,7 @@ namespace basic_autonomy
             std::vector<double> better_curvature;
             better_curvature.reserve(1 + curve_points.size() * 2);
 
-            for (size_t steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++) // Resample curve at tighter resolution
+            for (int steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++) // Resample curve at tighter resolution
             {
                 lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
 
@@ -1049,11 +1050,10 @@ namespace basic_autonomy
             std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(future_geom_points);
 
             auto total_step_along_curve = static_cast<int>(downtracks.back() /detailed_config.curve_resample_step_size);
-            size_t total_point_size = future_geom_points.size();
 
             double scaled_steps_along_curve = 0.0; //from 0 (start) to 1 (end) for the whole trajectory
 
-            for(size_t steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++){
+            for(int steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++){
                 lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
 
                 all_sampling_points.push_back(p);
