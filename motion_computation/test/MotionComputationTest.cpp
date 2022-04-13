@@ -297,7 +297,7 @@ namespace motion_computation
         next_state.header.stamp = rclcpp::Time(1.5 * 1e9); // 1.5 Seconds
         next_state.predicted_position.position.x = 400;
         mobility_path_obj.predictions.push_back(next_state); //2
-        next_state.header.stamp = rclcpp::Time(1.7 * 1e9); // 1.7 Seconds
+        next_state.header.stamp = rclcpp::Time(1.7 * 1e9); // 1.7 Seconds 
         next_state.predicted_position.position.x = 600;
         mobility_path_obj.predictions.push_back(next_state); //3
         next_state.header.stamp = rclcpp::Time(1.9 * 1e9); // 1.9 Seconds
@@ -308,16 +308,19 @@ namespace motion_computation
         mobility_path_obj.predictions.push_back(next_state); //5
 
         carma_perception_msgs::msg::ExternalObjectList sensor_list, mobility_path_list;
+        sensor_list.header.stamp = sensor_obj.header.stamp;
         sensor_list.objects.push_back(sensor_obj);
         mobility_path_list.objects.push_back(mobility_path_obj);
         auto result = mcw_mixed_operation.synchronizeAndAppend(sensor_list, mobility_path_list);
         
         ASSERT_EQ(result.objects.size(), 2ul);
         ASSERT_EQ(result.objects[1].predictions.size(), 2ul); // we dropped 2 points
-        ASSERT_EQ(result.objects[1].predictions[0].header.stamp, rclcpp::Time(1.8 * 1e9)); // 1.8 Seconds
-        ASSERT_EQ(result.objects[1].predictions[0].predicted_position.position.x, 700ul);
-        ASSERT_EQ(result.objects[1].predictions[1].header.stamp, rclcpp::Time(2.0 * 1e9)); // 2.0 Seconds
-        ASSERT_EQ(result.objects[1].predictions[1].predicted_position.position.x, 900);
+        ASSERT_EQ(result.objects[1].header.stamp, rclcpp::Time(1.6 * 1e9)); // 1.7 Seconds
+        ASSERT_EQ(result.objects[1].pose.pose.position.x, 500);
+        ASSERT_EQ(result.objects[1].predictions[0].header.stamp, rclcpp::Time(1.9 * 1e9)); // 1.9 Seconds
+        ASSERT_EQ(result.objects[1].predictions[0].predicted_position.position.x, 800);
+        ASSERT_EQ(result.objects[1].predictions[1].header.stamp, rclcpp::Time(2.1 * 1e9)); // 2.1 Seconds
+        ASSERT_EQ(result.objects[1].predictions[1].predicted_position.position.x, 1000);
     }
 
 } // namespace motion_computation

@@ -90,21 +90,29 @@ namespace motion_computation{
         // MobilityPath
         // TODO add descriptive comments here
         carma_perception_msgs::msg::ExternalObjectList synchronization_base_objects;
+        bool sensor_is_base = false;
+        bool mobility_path_is_base = false;
+        bool psm_is_base = false;
+        bool bsm_is_base = false;
         if (enable_sensor_processing_) {
 
             synchronization_base_objects = sensor_list;
+            sensor_is_base = true;
 
         } else if (enable_bsm_processing_) {
 
             synchronization_base_objects = bsm_list_;
+            bsm_is_base = true;
 
         } else if (enable_psm_processing_) {
 
             synchronization_base_objects = psm_list_;
+            psm_is_base = true;
 
         } else if (enable_mobility_path_processing_) {
 
             synchronization_base_objects = mobility_path_list_;
+            mobility_path_is_base = true;
 
         } else {
             
@@ -118,34 +126,31 @@ namespace motion_computation{
             return;
         }
 
-        carma_perception_msgs::msg::ExternalObjectList current_output; // TODO we need to set the header for this
-        current_output.objects.reserve(synchronization_base_objects.objects.size());
+        if (enable_sensor_processing_ && !sensor_is_base) {
 
-        if (enable_sensor_processing_) {
-
-            current_output = synchronizeAndAppend(synchronization_base_objects, sensor_list);
+            synchronization_base_objects = synchronizeAndAppend(synchronization_base_objects, sensor_list);
 
         }
         
-        if (enable_bsm_processing_) {
+        if (enable_bsm_processing_ && !bsm_is_base) {
 
-            current_output = synchronizeAndAppend(synchronization_base_objects, bsm_list_);
-
-        } 
-        
-        if (enable_psm_processing_) {
-
-            current_output = synchronizeAndAppend(synchronization_base_objects, psm_list_);
+            synchronization_base_objects = synchronizeAndAppend(synchronization_base_objects, bsm_list_);
 
         } 
         
-        if (enable_mobility_path_processing_) {
+        if (enable_psm_processing_ && !psm_is_base) {
+
+            synchronization_base_objects = synchronizeAndAppend(synchronization_base_objects, psm_list_);
+
+        } 
+        
+        if (enable_mobility_path_processing_ && !mobility_path_is_base) {
             
-            current_output = synchronizeAndAppend(synchronization_base_objects, mobility_path_list_);
+            synchronization_base_objects = synchronizeAndAppend(synchronization_base_objects, mobility_path_list_);
 
         }
 
-        obj_pub_(current_output);
+        obj_pub_(synchronization_base_objects);
 
         // Clear mobility msg path queue since it is published
         mobility_path_list_.objects.clear();
@@ -232,7 +237,7 @@ namespace motion_computation{
         
         carma_perception_msgs::msg::ExternalObject obj_msg;
         conversion::convert(*msg, obj_msg, *map_projector_);
-        mobility_path_list_.objects.push_back(obj_msg);
+        mobility_path_list_.objects.push_back(obj_msg); // TODO we should really only add a new path if the id is not present in the existing list. If it does exist it should be updated
     }
 
     void MotionComputationWorker::psmCallback(const carma_v2x_msgs::msg::PSM::UniquePtr msg)
@@ -270,14 +275,15 @@ namespace motion_computation{
     carma_perception_msgs::msg::ExternalObjectList MotionComputationWorker::synchronizeAndAppend(const carma_perception_msgs::msg::ExternalObjectList& base_objects, carma_perception_msgs::msg::ExternalObjectList new_objects) const
     {
         carma_perception_msgs::msg::ExternalObjectList output_list;
+        output_list.header = base_objects.header;
         output_list.objects.reserve(base_objects.objects.size() + new_objects.objects.size());
         
         // Compare time_stamps of first elements of each list as they are guaranteed to be the earliest of the respective lists
         
-        for (auto &path: new_objects.objects)
+        for (auto &obj: new_objects.objects)
         {
             // interpolate and match timesteps
-            path = matchAndInterpolateTimeStamp(path, rclcpp::Time(base_objects.header.stamp));
+            obj = matchAndInterpolateTimeStamp(obj, rclcpp::Time(base_objects.header.stamp));
         }
         
         output_list.objects.insert(output_list.objects.begin(),base_objects.objects.begin(),base_objects.objects.end());
@@ -302,6 +308,7 @@ namespace motion_computation{
         path.predictions.insert(path.predictions.begin(), prev_state);
 
         rclcpp::Time curr_time_to_match = time_to_match;
+
         // because of this logic, we would not encounter mobility path
         // that starts later than the time we are trying to match (which is starting time of sensed objects)
         bool is_first_point = true;
@@ -314,26 +321,27 @@ namespace motion_computation{
                 continue;
             }
 
-            // reaching here means curr_state starts later than the time we are trying to match
-            rclcpp::Duration delta_t = rclcpp::Time(curr_state.header.stamp) - curr_time_to_match;
-            double ratio = delta_t.seconds() / mobility_path_prediction_time_step_;
-            double delta_x = curr_state.predicted_position.position.x - prev_state.predicted_position.position.x;
-            double delta_y = curr_state.predicted_position.position.y - prev_state.predicted_position.position.y;
-            double delta_z = curr_state.predicted_position.position.z - prev_state.predicted_position.position.z;
-
-            // copy old unchanged parts
-            new_state.header.stamp = curr_time_to_match;
-            new_state.predicted_velocity = prev_state.predicted_velocity;
-            new_state.predicted_position.orientation = prev_state.predicted_position.orientation;
-
-            // interpolate position
-            // we are "stepping back in time" to match the position
-            new_state.predicted_position.position.x = curr_state.predicted_position.position.x - delta_x * ratio; 
-            new_state.predicted_position.position.y = curr_state.predicted_position.position.y - delta_y * ratio; 
-            new_state.predicted_position.position.z = curr_state.predicted_position.position.z - delta_z * ratio; 
-
             if (is_first_point) // we store in the body if it is the first point, not predictions
             {
+
+                // reaching here means curr_state starts later than the time we are trying to match
+                // copy old unchanged parts
+                new_state.header.stamp = curr_time_to_match;
+                new_state.predicted_velocity = prev_state.predicted_velocity;
+                new_state.predicted_position.orientation = prev_state.predicted_position.orientation;
+
+                // interpolate position
+                rclcpp::Duration delta_t = rclcpp::Time(curr_state.header.stamp) - curr_time_to_match;
+                rclcpp::Duration pred_delta_t = rclcpp::Time(curr_state.header.stamp) - rclcpp::Time(prev_state.header.stamp);
+                double ratio = delta_t.seconds() / pred_delta_t.seconds(); // TODO handle divide by zero
+                double delta_x = curr_state.predicted_position.position.x - prev_state.predicted_position.position.x;
+                double delta_y = curr_state.predicted_position.position.y - prev_state.predicted_position.position.y;
+                double delta_z = curr_state.predicted_position.position.z - prev_state.predicted_position.position.z;
+                // we are "stepping back in time" to match the position
+                new_state.predicted_position.position.x = curr_state.predicted_position.position.x - delta_x * ratio; 
+                new_state.predicted_position.position.y = curr_state.predicted_position.position.y - delta_y * ratio; 
+                new_state.predicted_position.position.z = curr_state.predicted_position.position.z - delta_z * ratio; 
+
                 output.header.stamp = curr_time_to_match;
                 output.pose.pose.orientation = new_state.predicted_position.orientation;
                 output.velocity.twist = new_state.predicted_velocity;
@@ -341,14 +349,13 @@ namespace motion_computation{
                 output.pose.pose.position.y = new_state.predicted_position.position.y;
                 output.pose.pose.position.z = new_state.predicted_position.position.z;
                 is_first_point = false;
+
             }
             else
             {
-                output.predictions.push_back(new_state);
+                output.predictions.push_back(curr_state); 
             }
 
-            prev_state = curr_state;
-            curr_time_to_match += rclcpp::Duration(mobility_path_prediction_time_step_ * 1e9);
         }
 
     return output;
