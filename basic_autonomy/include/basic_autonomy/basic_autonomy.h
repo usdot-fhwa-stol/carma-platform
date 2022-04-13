@@ -271,7 +271,7 @@ namespace basic_autonomy
       * \param starting_downtrack The downtrack distance from which the lane change maneuver starts
       * \param ending_downtrack The downtrack distance at which the lane change maneuver end
       * \param wm Pointer to intialized world model for semantic map access
-      * \param downsample_ratio ???
+      * \param downsample_ratio TODO: add description
       * 
       * \return A vector of geometry points as lanelet::basicpoint2d
       */
