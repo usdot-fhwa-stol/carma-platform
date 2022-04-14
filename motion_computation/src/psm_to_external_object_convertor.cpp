@@ -1,8 +1,9 @@
-#include <carma_perception_msgs/external_object.hpp>
-#include <carma_v2x_msgs/psm.hpp>
+#include <carma_perception_msgs/msg/external_object.hpp>
+#include <carma_v2x_msgs/msg/psm.hpp>
 #include <motion_computation/impl/psm_to_external_object_helpers.hpp>
 #include <motion_computation/message_conversions.hpp>
-#include "message_to_external_object_convertor.h"
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace motion_computation {
 
@@ -39,9 +40,9 @@ void convert(const carma_v2x_msgs::msg::PSM& in_msg, carma_perception_msgs::msg:
 
   /////// Object Type and Size /////////
   // Set the type
-  if (in_msg.basic_type.type == carma_v2x_msgs::PersonalDeviceUserType::A_PEDESTRIAN ||
-      in_msg.basic_type.type == carma_v2x_msgs::PersonalDeviceUserType::A_PUBLIC_SAFETY_WORKER ||
-      in_msg.basic_type.type == carma_v2x_msgs::PersonalDeviceUserType::AN_ANIMAL)  // Treat animals
+  if (in_msg.basic_type.type == carma_v2x_msgs::msg::PersonalDeviceUserType::A_PEDESTRIAN ||
+      in_msg.basic_type.type == carma_v2x_msgs::msg::PersonalDeviceUserType::A_PUBLIC_SAFETY_WORKER ||
+      in_msg.basic_type.type == carma_v2x_msgs::msg::PersonalDeviceUserType::AN_ANIMAL)  // Treat animals
                                                                                     // like people
                                                                                     // since we have
                                                                                     // no internal
@@ -56,7 +57,7 @@ void convert(const carma_v2x_msgs::msg::PSM& in_msg, carma_perception_msgs::msg:
     out_msg.size.x = 0.5;
     out_msg.size.y = 0.5;
     out_msg.size.z = 1.0;
-  } else if (in_msg.basic_type.type == carma_v2x_msgs::PersonalDeviceUserType::A_PEDALCYCLIST) {
+  } else if (in_msg.basic_type.type == carma_v2x_msgs::msg::PersonalDeviceUserType::A_PEDALCYCLIST) {
     out_msg.object_type =
         carma_perception_msgs::msg::ExternalObject::MOTORCYCLE;  // Currently external object cannot represent bicycles,
                                                                  // but motor cycle seems like the next best choice
@@ -271,7 +272,7 @@ std::vector<geometry_msgs::msg::Pose> sample_2d_linear_motion(const geometry_msg
 }
 
 // NOTE heading will need to be set after calling this
-geometry_msgs::PoseWithCovariance pose_from_gnss(const lanelet::projection::LocalFrameProjector& projector,
+geometry_msgs::msg::PoseWithCovariance pose_from_gnss(const lanelet::projection::LocalFrameProjector& projector,
                                                  const tf2::Quaternion& ned_in_map_rotation, const GPSPoint& gps_point,
                                                  const double& heading, const double lat_variance,
                                                  const double lon_variance, const double heading_variance) {
@@ -279,13 +280,13 @@ geometry_msgs::PoseWithCovariance pose_from_gnss(const lanelet::projection::Loca
   /// library
   lanelet::BasicPoint3d map_point = projector.forward(gps_point);
 
-  ROS_DEBUG_STREAM("map_point: " << map_point.x() << ", " << map_point.y() << ", " << map_point.z());
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"), "map_point: " << map_point.x() << ", " << map_point.y() << ", " << map_point.z());
 
   if (fabs(map_point.x()) > 10000.0 ||
       fabs(map_point.y()) > 10000.0) {  // Above 10km from map origin earth curvature will start to have a negative
                                         // impact on system performance
 
-    ROS_WARN_STREAM(
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("motion_computation::conversion"), 
         "Distance from map origin is larger than supported by system "
         "assumptions. Strongly advise "
         "alternative map origin be used. ");
@@ -308,19 +309,19 @@ geometry_msgs::PoseWithCovariance pose_from_gnss(const lanelet::projection::Loca
                                           // distance from map origin is sufficiently small so as to
                                           // ignore local changes in NED orientation
 
-  ROS_DEBUG_STREAM("R_m_n (x,y,z,w) : ( " << R_m_n.x() << ", " << R_m_n.y() << ", " << R_m_n.z() << ", " << R_m_n.w());
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"), "R_m_n (x,y,z,w) : ( " << R_m_n.x() << ", " << R_m_n.y() << ", " << R_m_n.z() << ", " << R_m_n.w());
 
-  ROS_DEBUG_STREAM("R_n_h (x,y,z,w) : ( " << R_n_h.x() << ", " << R_n_h.y() << ", " << R_n_h.z() << ", " << R_n_h.w());
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"), "R_n_h (x,y,z,w) : ( " << R_n_h.x() << ", " << R_n_h.y() << ", " << R_n_h.z() << ", " << R_n_h.w());
 
-  ROS_DEBUG_STREAM("R_h_s (x,y,z,w) : ( " << R_h_s.x() << ", " << R_h_s.y() << ", " << R_h_s.z() << ", " << R_h_s.w());
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"), "R_h_s (x,y,z,w) : ( " << R_h_s.x() << ", " << R_h_s.y() << ", " << R_h_s.z() << ", " << R_h_s.w());
 
-  ROS_DEBUG_STREAM("R_m_s (x,y,z,w) : ( " << R_m_s.x() << ", " << R_m_s.y() << ", " << R_m_s.z() << ", " << R_m_s.w());
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"), "R_m_s (x,y,z,w) : ( " << R_m_s.x() << ", " << R_m_s.y() << ", " << R_m_s.z() << ", " << R_m_s.w());
 
   tf2::Transform T_m_s(R_m_s, tf2::Vector3(map_point.x(), map_point.y(),
                                            map_point.z()));  // Reported position and orientation
                                                              // of sensor frame in map frame
 
-        tf2::Transform T_m_n_no_heading(R_m_n, 0, 0, 0)); // Used to transform the covariance
+        tf2::Transform T_m_n_no_heading(R_m_n,  tf2::Vector3(0, 0, 0)); // Used to transform the covariance
 
         // This covariance represents the covariance of the NED frame N-lat,
         // E-lon, heading- angle east of north This means that the covariance is
@@ -344,7 +345,7 @@ geometry_msgs::PoseWithCovariance pose_from_gnss(const lanelet::projection::Loca
                                      T_m_n_no_heading);
 
         // Populate message
-        geometry_msgs::PoseWithCovariance pose;
+        geometry_msgs::msg::PoseWithCovariance pose;
         pose.pose.position.x = T_m_s.getOrigin().getX();
         pose.pose.position.y = T_m_s.getOrigin().getY();
         pose.pose.position.z = T_m_s.getOrigin().getZ();
@@ -359,18 +360,18 @@ geometry_msgs::PoseWithCovariance pose_from_gnss(const lanelet::projection::Loca
         return pose;
 }
 
-std::vector<carma_perception_msgs::PredictedState> predicted_poses_to_predicted_state(
+std::vector<carma_perception_msgs::msg::PredictedState> predicted_poses_to_predicted_state(
     const std::vector<geometry_msgs::msg::Pose>& poses, double constant_velocity, const rclcpp::Time& start_time,
     const rclcpp::Duration& step_size, const std::string& frame, double initial_pose_confidence,
     double initial_vel_confidence) {
-  std::vector<carma_perception_msgs::PredictedState> output;
+  std::vector<carma_perception_msgs::msg::PredictedState> output;
   output.reserve(poses.size());
 
   rclcpp::Time time(start_time);
 
   for (auto p : poses) {
     time += step_size;
-    s carma_perception_msgs::PredictedState pred_state;
+    s carma_perception_msgs::msg::PredictedState pred_state;
     pred_state.header.stamp = time;
     pred_state.frame_id = frame;
 
@@ -415,7 +416,7 @@ rclcpp::Time get_psm_timestamp(const carma_v2x_msgs::msg::PSM& in_msg) {
         carma_v2x_msgs::msg::FullPositionVector::SECOND) &&
       in_msg.sec_mark.millisecond == in_msg.path_history.initial_position.utc_time.second) {
     // clang-format on
-    RCLCPP_DEBUG_STREAM(get_logger(),
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"),
                         "Using UTC time of path history to determine PSM "
                         "timestamp. Assumed valid since UTC is fully specified "
                         "and sec_mark == utc_time.seconds in this message.");
@@ -432,7 +433,7 @@ rclcpp::Time get_psm_timestamp(const carma_v2x_msgs::msg::PSM& in_msg) {
   } else {  // If the utc time of the path history cannot be used to account for minute
             // change over, then we have to default to the sec mark
 
-    RCLCPP_WARN_STREAM_THROTTLE(get_logger(), get_clock(), rclcpp::Duration(5, 0),
+    RCLCPP_WARN_STREAM_THROTTLE(rclcpp::get_logger("motion_computation::conversion"), get_clock(), rclcpp::Duration(5, 0),
                                 "PSM PathHistory utc timstamp does not match "
                                 "sec_mark. Unable to determine the minute of "
                                 "the year used for PSM data. Assuming local "
@@ -473,9 +474,9 @@ rclcpp::Time get_psm_timestamp(const carma_v2x_msgs::msg::PSM& in_msg) {
   boost::posix_time::time_duration nsec_since_epoch = utc_time_of_current_psm - inception_boost;
 
   if (nsec_since_epoch.is_special()) {
-    RCLCPP_ERROR_STREAM(get_logger(),
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("motion_computation::conversion"),
                         "Computed psm nsec_since_epoch is special (computation "
-                        "failed). Value effectively undefined.")
+                        "failed). Value effectively undefined.");
   }
 
   return rclcpp::Time(nsec_since_epoch.total_nanoseconds());
