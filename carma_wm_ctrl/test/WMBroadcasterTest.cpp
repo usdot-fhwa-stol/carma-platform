@@ -352,7 +352,7 @@ TEST(WMBroadcaster, geofenceCallback)
   wmb.geoReferenceCallback(base_map_proj);
 
   cav_msgs::TrafficControlMessage gf_msg;
-  gf_msg.tcmV01.geometry.datum = "+proj=tmerc +lat_0=39.46645851394806215 +lon_0=-76.16907903057393980 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  gf_msg.tcm_v01.geometry.datum = "+proj=tmerc +lat_0=39.46645851394806215 +lon_0=-76.16907903057393980 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   gf_msg.choice = cav_msgs::TrafficControlMessage::RESERVED;
 
   ASSERT_EQ(0, active_call_count.load());
@@ -376,14 +376,14 @@ TEST(WMBroadcaster, geofenceCallback)
   // create the geofence request
   msg_v01.geometry.proj = geofence_proj_string;
   msg_v01.geometry.datum = geofence_proj_string;
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
 
   // every control message needs associated control request id
   cav_msgs::Route route_msg;
   route_msg.route_path_lanelet_ids.push_back(10000);
   std::shared_ptr<j2735_msgs::Id64b> req_id = std::make_shared<j2735_msgs::Id64b>(j2735_msgs::Id64b());
   wmb.controlRequestFromRoute(route_msg, req_id);
-  gf_msg.tcmV01.reqid = *req_id;
+  gf_msg.tcm_v01.reqid = *req_id;
 
   // check geofence with no applicable points
   ros::Time::setNow(ros::Time(0));
@@ -404,7 +404,7 @@ TEST(WMBroadcaster, geofenceCallback)
   curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(), curr_id.end(), msg_v01.id.id.begin());
   msg_v01.reqid = *req_id;
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
 
   ros::Time::setNow(ros::Time(0));
   // check how many times map_update is called so far
@@ -418,7 +418,7 @@ TEST(WMBroadcaster, geofenceCallback)
   curr_id = boost::uuids::random_generator()(); 
   curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(),  curr_id.end(), msg_v01.id.id.begin());
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
   wmb.geofenceCallback(gf_msg);
 
   // check if different geofence id is working
@@ -493,7 +493,7 @@ TEST(WMBroadcaster, routeCallbackMessage)
   ///// Test without user defined route callback
   coRe = wmb.controlRequestFromRoute(route_msg);
 
-  ASSERT_TRUE(coRe.tcrV01.bounds.size() > 0);
+  ASSERT_TRUE(coRe.tcr_v01.bounds.size() > 0);
 
 }
 
@@ -847,7 +847,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
 
   // register the geofence
   cav_msgs::TrafficControlMessage gf_msg;
-  gf_msg.tcmV01.geometry.datum = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  gf_msg.tcm_v01.geometry.datum = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   gf_msg.choice = cav_msgs::TrafficControlMessage::TCMV01;
 
   // every control message needs associated control request id
@@ -857,7 +857,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   wmb.controlRequestFromRoute(route_msg, req_id);
   msg_v01.reqid = *req_id;
 
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
   testing_forward_direction = true;
 
   wmb.geofenceCallback(gf_msg);
@@ -879,7 +879,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   msg_v01.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 0.5; pt.z = 0;
   msg_v01.geometry.nodes.push_back(pt);
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
 
   wmb.geofenceCallback(gf_msg);
   ros::Time::setNow(ros::Time(2.1));  // Set current time
@@ -1228,7 +1228,7 @@ TEST(WMBroadcaster, distToNearestActiveGeofence)
 
   msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
   msg_v01.params.detail.maxspeed = 50;
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
 
   // Make sure the geofence is active now
   ros::Time::setNow(ros::Time(0));
@@ -1474,7 +1474,7 @@ TEST(WMBroadcaster, currentLocationCallback)
 
   msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
   msg_v01.params.detail.maxspeed = 50;
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
 
   // Make sure the geofence is active now
   ros::Time::setNow(ros::Time(0));
@@ -1594,63 +1594,63 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
   std::size_t curr_id_hashed_gf1 = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(), curr_id.end(), msg_v01.id.id.begin());
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
 
   // Create geofence 2 with a prescribed minimum gap (Lanelets 1200 and 1201)
   auto gf_msg2 = gf_msg;
-  gf_msg2.tcmV01.params.detail.choice = cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
-  gf_msg2.tcmV01.params.detail.minhdwy = 5;
+  gf_msg2.tcm_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
+  gf_msg2.tcm_v01.params.detail.minhdwy = 5;
 
   // Set the ID for geofence 2
   curr_id = boost::uuids::random_generator()(); 
   std::size_t curr_id_hashed_gf2 = boost::hash<boost::uuids::uuid>()(curr_id);
-  std::copy(curr_id.begin(), curr_id.end(), gf_msg2.tcmV01.id.id.begin());
+  std::copy(curr_id.begin(), curr_id.end(), gf_msg2.tcm_v01.id.id.begin());
 
   // Create geofence 3 with a lane closure (Lanelets 1210 and 1211)
   auto gf_msg3 = gf_msg;
-  gf_msg3.tcmV01.params.detail.choice = cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
-  gf_msg3.tcmV01.params.detail.closed = cav_msgs::TrafficControlDetail::CLOSED;
-  gf_msg3.tcmV01.package.label = "MOVE OVER LAW";
+  gf_msg3.tcm_v01.params.detail.choice = cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
+  gf_msg3.tcm_v01.params.detail.closed = cav_msgs::TrafficControlDetail::CLOSED;
+  gf_msg3.tcm_v01.package.label = "MOVE OVER LAW";
   j2735_msgs::TrafficControlVehClass veh_type;
   veh_type.vehicle_class = j2735_msgs::TrafficControlVehClass::ANY;
-  gf_msg3.tcmV01.params.vclasses.push_back(veh_type);
+  gf_msg3.tcm_v01.params.vclasses.push_back(veh_type);
 
   // Set geofence 3's TrafficControlMessage points for lanelets 1210 and 1211
   pt.x = 4.5; pt.y = 15; pt.z = 0; // Point in lanelet 1210
-  gf_msg3.tcmV01.geometry.nodes[0] = pt;
+  gf_msg3.tcm_v01.geometry.nodes[0] = pt;
   pt.x = 4.5; pt.y = 45; pt.z = 0; // Point in lanelet 1211
-  gf_msg3.tcmV01.geometry.nodes[1] = pt;
+  gf_msg3.tcm_v01.geometry.nodes[1] = pt;
 
   // Set the ID for geofence 3
   curr_id = boost::uuids::random_generator()(); 
   std::size_t curr_id_hashed_gf3 = boost::hash<boost::uuids::uuid>()(curr_id);
-  std::copy(curr_id.begin(), curr_id.end(), gf_msg3.tcmV01.id.id.begin());
+  std::copy(curr_id.begin(), curr_id.end(), gf_msg3.tcm_v01.id.id.begin());
 
   // Create geofence 4 with an advisory speed limit (Lanelets 1220 and 1221)
   auto gf_msg4 = gf_msg;
-  gf_msg4.tcmV01.params.detail.choice = cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
-  gf_msg4.tcmV01.params.detail.maxspeed = 50;
+  gf_msg4.tcm_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
+  gf_msg4.tcm_v01.params.detail.maxspeed = 50;
 
   // Set geofence 4's TrafficControlMessage points for lanelets 1220 and 1221
   pt.x = 10.0; pt.y = 15; pt.z = 0; // Point in lanelet 1220
-  gf_msg4.tcmV01.geometry.nodes[0] = pt;
+  gf_msg4.tcm_v01.geometry.nodes[0] = pt;
   pt.x = 10.0; pt.y = 45; pt.z = 0; // Point in lanelet 1221
-  gf_msg4.tcmV01.geometry.nodes[1] = pt;
+  gf_msg4.tcm_v01.geometry.nodes[1] = pt;
 
   // Set the ID for geofence 4
   curr_id = boost::uuids::random_generator()(); 
   std::size_t curr_id_hashed_gf4 = boost::hash<boost::uuids::uuid>()(curr_id);
-  std::copy(curr_id.begin(), curr_id.end(), gf_msg4.tcmV01.id.id.begin());
+  std::copy(curr_id.begin(), curr_id.end(), gf_msg4.tcm_v01.id.id.begin());
 
   // Create geofence 5 with a prescribed minimum gap (Lanelets 1220 and 1221)
   auto gf_msg5 = gf_msg4;
-  gf_msg5.tcmV01.params.detail.choice = cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
-  gf_msg5.tcmV01.params.detail.minhdwy = 5;
+  gf_msg5.tcm_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
+  gf_msg5.tcm_v01.params.detail.minhdwy = 5;
 
   // Set the ID for geofence 5
   curr_id = boost::uuids::random_generator()(); 
   std::size_t curr_id_hashed_gf5 = boost::hash<boost::uuids::uuid>()(curr_id);
-  std::copy(curr_id.begin(), curr_id.end(), gf_msg5.tcmV01.id.id.begin());
+  std::copy(curr_id.begin(), curr_id.end(), gf_msg5.tcm_v01.id.id.begin());
 
   // Make sure the geofences are active now
   ros::Time::setNow(ros::Time(0.5));
@@ -1869,7 +1869,7 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
   wmb.controlRequestFromRoute(route_msg, req_id);
   msg_v01.reqid = *req_id;
 
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
   testing_forward_direction = true;
 
   wmb.geofenceCallback(gf_msg);
@@ -1891,7 +1891,7 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
   msg_v01.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 0.5; pt.z = 0;
   msg_v01.geometry.nodes.push_back(pt);
-  gf_msg.tcmV01 = msg_v01;
+  gf_msg.tcm_v01 = msg_v01;
 
   wmb.geofenceCallback(gf_msg);
   ros::Time::setNow(ros::Time(2.1));  // Set current time
