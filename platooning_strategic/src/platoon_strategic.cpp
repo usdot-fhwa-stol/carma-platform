@@ -842,7 +842,13 @@ namespace platoon_strategic
                 status_msg.leader_cmd_speed = platoon_leader.commandSpeed;
                 status_msg.host_platoon_position = pm_.getNumberOfVehicleInFront();
 
-                status_msg.desired_gap = std::max(config_.standStillHeadway, config_.timeHeadway *  current_speed_);
+                int numOfVehiclesGaps = pm_.getNumberOfVehicleInFront() - pm_.dynamic_leader_index_;
+                ROS_DEBUG_STREAM("The host vehicle have " << numOfVehiclesGaps << " vehicles between itself and its leader (includes the leader)");
+
+                // TODO: currently the average length of the vehicle is obtained from a config parameter. In future, plugin needs to be updated to receive each vehicle's actual length through status or BSM messages for more accuracy.
+                status_msg.desired_gap = std::max(config_.standStillHeadway * numOfVehiclesGaps, config_.timeHeadway * current_speed_* numOfVehiclesGaps) + (numOfVehiclesGaps - 1) * config_.averageVehicleLength;
+                ROS_DEBUG_STREAM("The desired gap with the leader is " << status_msg.desired_gap);
+
                 status_msg.actual_gap = platoon_leader.vehiclePosition - current_downtrack_;
 
             }
@@ -947,6 +953,22 @@ namespace platoon_strategic
         // In the current state, we care about the STATUS message
         bool isPlatoonStatusMsg = (strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0);
         bool isPlatoonInfoMsg = (strategyParams.rfind(OPERATION_INFO_TYPE, 0) == 0);
+        bool isFromCurrentPlatoon = (pm_.currentPlatoonID == msg.header.plan_id);
+
+        // The platoon vector in the platoonManager only keeps track of the vehicles in front of the host. 
+        // In order to have the correct size of the platoon for UI, INFO message from the leader is parsed.
+        if(isPlatoonInfoMsg && isFromCurrentPlatoon)
+        {
+            ROS_DEBUG_STREAM("Received an INFO mobility operation message from the current platoon");
+            std::vector<std::string> inputsParams;
+            boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+
+            std::vector<std::string> platoonSize_parsed;
+            boost::algorithm::split(platoonSize_parsed, inputsParams[3], boost::is_any_of(":"));
+            int platoonSize = std::stoi(platoonSize_parsed[1]);
+            ROS_DEBUG_STREAM("platoonSize obtained from INFO message: " << platoonSize);
+            pm_.platoonSize = platoonSize;
+        }
         // If it is platoon status message, the params string is in format:
         // STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx
         if(isPlatoonStatusMsg) {
@@ -1042,6 +1064,7 @@ namespace platoon_strategic
         bool isPlatoonInfoMsg = (strategyParams.rfind(OPERATION_INFO_TYPE, 0) == 0);
         bool isPlatoonStatusMsg = (strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0);
         bool isNotInNegotiation = (pm_.current_plan.valid == false);
+        
         if(isPlatoonInfoMsg && isNotInNegotiation)
         {
             // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d,DTD:%.2f

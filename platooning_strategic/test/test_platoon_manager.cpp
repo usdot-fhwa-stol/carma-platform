@@ -45,7 +45,7 @@ TEST(PlatoonManagerTest, test_enable_platooning)
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
     PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
-    plugin.pm_.current_platoon_state = PlatoonState::LEADER;
+    plugin.pm_.current_platoon_state = PlatoonState::STANDBY;
     plugin.platooning_enabled_ = false;
     plugin.onSpin();
     EXPECT_EQ(plugin.pm_.current_platoon_state, PlatoonState::STANDBY);
@@ -229,9 +229,12 @@ TEST(PlatoonManagerTest, test2)
     pm.updatesOrAddMemberInfo("2", "2", 2.0, 1.0, 2.5);
 
     EXPECT_EQ(2, pm.platoon.size());
-    EXPECT_EQ("1", pm.platoon[0].staticId);
+    EXPECT_EQ("2", pm.platoon[0].staticId);
+    EXPECT_EQ(1.0, pm.platoon[0].vehiclePosition);
 
 }
+
+
 
 
 TEST(PlatoonManagerTest, test3)
@@ -286,3 +289,54 @@ TEST(PlatoonManagerTest, test4)
 }
 
 
+TEST(PlatoonStrategicPlugin, test_multi_vehicle_platoon_gap)
+{
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::FOLLOWER;
+
+    std::vector<PlatoonMember> cur_pl;
+
+    PlatoonMember member1 = PlatoonMember("1", "1", 1.0, 1.1, 20.0, 100);
+    cur_pl.push_back(member1);
+
+    PlatoonMember member2 = PlatoonMember("2", "2", 1.0, 1.1, 15.0, 100);
+    cur_pl.push_back(member2);
+
+    PlatoonMember member3 = PlatoonMember("3", "3", 1.0, 1.1, 10.0, 100);
+    cur_pl.push_back(member3);
+
+    plugin.pm_.platoon = cur_pl;
+
+    EXPECT_EQ(plugin.pm_.platoon.size(), 3);
+
+    cav_msgs::PlatooningInfo info_msg = plugin.composePlatoonInfoMsg();
+    EXPECT_EQ(plugin.pm_.dynamic_leader_index_, 0);
+    EXPECT_EQ(info_msg.leader_id, "1");
+
+    int numOfVehiclesGaps = plugin.pm_.getNumberOfVehicleInFront() - plugin.pm_.dynamic_leader_index_;
+    EXPECT_EQ(numOfVehiclesGaps, 3);
+
+    // speed is 1 m/s, so standstill gap is used
+    double desired_gap = (numOfVehiclesGaps-1) * config.averageVehicleLength + config.standStillHeadway * numOfVehiclesGaps;
+    EXPECT_EQ(info_msg.desired_gap, desired_gap);  
+}
+
+
+TEST(PlatoonStrategicPlugin, test_INFO_mob_op_cb_follower)
+{
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::FOLLOWER;
+
+    cav_msgs::MobilityOperation incoming_msg;
+    incoming_msg.header.plan_id = "test_plan";
+    plugin.pm_.currentPlatoonID = "test_plan";
+    incoming_msg.strategy_params = "INFO|REAR:'1',LENGTH:5,SPEED:2,SIZE:4,DTD:10,ECEFX:100,ECEFY:100,ECEFZ:100";
+    plugin.mob_op_cb(incoming_msg);
+    EXPECT_EQ(plugin.pm_.platoonSize, 4); 
+}

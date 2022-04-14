@@ -236,6 +236,8 @@ namespace platoon_strategic
 
         std::string HostMobilityId = "default_host_id";
 
+        int dynamic_leader_index_ = 0;
+
 
     private:
 

@@ -50,6 +50,8 @@ struct PlatoonPluginConfig
   double minGap                = 22.0; // m
   double maxGap                = 32.0; // m
   double maxCrosstrackError    = 2.0;  // m
+  double averageVehicleLength    = 5.0;  // average length of a vehicle in meters
+  // TODO: vehicle length should be read from target vehicle's BSM or MOM for more accuracy
 
   std::string vehicleID       = "default_id";
 
@@ -75,6 +77,7 @@ struct PlatoonPluginConfig
           << "kpminGapPID: " << c.minGap << std::endl
           << "maxGap: " << c.maxGap << std::endl
           << "maxCrosstrackError: " << c.maxCrosstrackError << std::endl
+          << "averageVehicleLength: " << c.averageVehicleLength << std::endl
           << "vehicleID: " << c.vehicleID << std::endl
           << "}" << std::endl;
     return output;
