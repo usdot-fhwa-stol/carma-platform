@@ -170,7 +170,7 @@ namespace carma_wm {
 
             // Add future polygons for roadway obstacle
             for (auto i : rwo.object.predictions){
-                std::tuple <__uint64_t,polygon_t> future_object(i.header.stamp.toNSec() / 1000000,ObjectToBoostPolygon<polygon_t>(i.predicted_position, rwo.object.size));
+                std::tuple <__uint64_t,polygon_t> future_object(i.header.stamp.toNSec() / 1000000, ObjectToBoostPolygon<polygon_t>(i.predicted_position, rwo.object.size));
                 
                 mo.fp.push_back(future_object);
             }
@@ -284,7 +284,8 @@ namespace carma_wm {
             polygon_t hull_polygon;
             boost::geometry::convex_hull(union_polygon, hull_polygon);
 
-            collision_detection::MovingObject output_object = {hull_polygon, op.linear_velocity}; //TODO: fix missing initializer for fp element
+            std::vector<std::tuple <__uint64_t, collision_detection::polygon_t>> no_future;
+            collision_detection::MovingObject output_object = {hull_polygon, op.linear_velocity, no_future};
             
             return output_object;
         }
