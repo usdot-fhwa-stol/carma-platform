@@ -1473,7 +1473,6 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
     }
 
     autoware_lanelet2_msgs::MapBin gf_msg;
-    autoware_lanelet2_msgs::RoutingGraph graph_msg;
     
     // If the geofence invalidates the route graph then recompute the routing graph now that the map has been updated
     if (update->invalidate_route_) {
