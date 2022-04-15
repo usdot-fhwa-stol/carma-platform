@@ -52,6 +52,9 @@ function parse_args {
                 shift
                 shift
                 ;;
+            *)
+                shift
+                ;;
         esac
     done
 }
@@ -223,15 +226,26 @@ function release_tool__update_version_numbers {
     parse_args $@
     assert_set $WORK_DIR "Work directory must be specified with -d <WORK_DIR>"
     assert_set $RELEASE_VERSION "Release version must be specified with -v <RELEASE_VERSION>"
+    shift
+    shift
+    shift
+    shift
+    PACKAGES_TO_UPDATE=$@
 
-    cd $WORK_DIR/carma/src
-    pwd
-    for repo in */; do
-        update_version_numbers "$repo" "carma-system-$RELEASE_VERSION" $WORK_DIR/carma/src
-    done
+    cd $WORK_DIR/src
+    local IMAGE_TAG="carma-system-$RELEASE_VERSION"
 
-    cd $WORK_DIR
-    update_version_numbers "autoware.ai/" "carma-system-$RELEASE_VERSION" $WORK_DIR
+    if [[ ! -z "$PACKAGES_TO_UPDATE" ]]; then
+	    echo "Updating version numbers in only $PACKAGES_TO_UPDATE..."
+        for repo in $PACKAGES_TO_UPDATE; do
+            update_version_numbers "$repo" "carma-system-$RELEASE_VERSION" $WORK_DIR/src
+        done
+    else
+        echo "Updating all package version numbers..."
+        for repo in */; do
+            update_version_numbers "$repo" "carma-system-$RELEASE_VERSION" $WORK_DIR/src
+        done
+    fi
 }
 
 function release_tool__diff {
@@ -283,15 +297,24 @@ function commit_version_numbers {
 function release_tool__commit_version_numbers {
     parse_args $@
     assert_set $WORK_DIR "Work directory must be specified with -d <WORK_DIR>"
-    echo "Step #3: Commiting and pushing version number updates on all repositories"
+    shift
+    shift
+    PACKAGES_TO_UPDATE=$@
+    echo "Step #3: Commiting and pushing version number updates on repositories"
 
-    cd $WORK_DIR
-    commit_version_numbers $WORK_DIR/autoware.ai
+    cd $WORK_DIR/src
 
-    cd $WORK_DIR/carma/src
-    for repo in */; do
-        commit_version_numbers $WORK_DIR/carma/src/$repo
-    done
+    if [[ ! -z "$PACKAGES_TO_UPDATE" ]]; then
+	    echo "Committing version numbers in only $PACKAGES_TO_UPDATE..."
+        for repo in $PACKAGES_TO_UPDATE; do
+            commit_version_numbers $WORK_DIR/src/$repo
+        done
+    else
+        echo "Committing all package version numbers..."
+        for repo in */; do
+            commit_version_numbers $WORK_DIR/src/$repo
+        done
+    fi
 }
 
 function release_tool__tag_repos {
@@ -303,10 +326,6 @@ function release_tool__tag_repos {
     cd $WORK_DIR
 
     vcs checkout --git master
-
-    # Handle autoware's use of carma-master
-    cd $WORK_DIR/autoware.ai
-    git checkout carma-master
     
     cd $WORK_DIR
     vcs pull
@@ -314,78 +333,98 @@ function release_tool__tag_repos {
     vcs custom --git --args push --tags
 }
 
-function release_tool__build_images {
-    parse_args $@
+function build_image {
     assert_set $WORK_DIR "Work directory must be specified with -d <WORK_DIR>"
     assert_set $RELEASE_VERSION "Release version must be specified with -v <RELEASE_VERSION>"
+    PACKAGE=$1
 
-    local IMAGE_TAG="carma-system-$RELEASE_VERSION"
-    # Build CARMA base
-    cd $WORK_DIR/carma/src/carma-base
-    echo "Building docker image for carma-base..."
-    ./docker/build-image.sh -v $IMAGE_TAG
+    cd $WORK_DIR/src/$PACKAGE
 
-    # Build Autoware AI
-    cd $WORK_DIR/autoware.ai
-    echo "Building docker image for autoware..."
-    ./docker/build-image.sh -v $IMAGE_TAG
+    # Ensure images aren't build off of non-master branches
+    branch=$(git symbolic-ref --short HEAD)
+    if [[ -z $(echo $branch | grep "master") ]]; then
+        echo "Repo $repo not on master branch, skipping..."
+        continue
+    fi
 
+    if [[ -z $(git describe --exact-match --tags HEAD | grep carma-system) ]]; then
+        echo "Repo $repo not tagged with carma-system version, skipping..."
+        continue
+    fi
 
-    # Build CARMA Messenger
-    cd $WORK_DIR/carma/src/carma-messenger
-    echo "Building CARMA Messenger..."
-    ./carma-messenger-core/docker/build-image.sh -v $IMAGE_TAG
-    ./carma-messenger-ui/docker/build-image.sh -v $IMAGE_TAG
-    cd carma-messenger-config
-    for messenger_config in */; do
-    	cd $WORK_DIR/carma/src/carma-messenger/carma-messenger-config/$messenger_config
-        if [[ -f build-image.sh ]]; then
-            echo "Building config $messenger_config..."
-            ./build-image.sh
-        fi
-    done
-    
-    # Build the rest
-    cd $WORK_DIR/carma/src
-    for repo in */; do
-        if [[ $repo == "carma-base/" || $repo == "autoware.ai/" || $repo == "carma-config/" || $repo == "carma-messenger/" ]]; then
-            # Skip cause we already built this as dependencies
-            continue
-        fi
-
-        cd $WORK_DIR/carma/src
-        cd $repo
-        branch=$(git symbolic-ref --short HEAD)
+    if [[ "$PACKAGE" = "carma-messenger" ]]; then
+        # Build CARMA Messenger
+        echo "Building CARMA Messenger..."
+        ./carma-messenger-core/docker/build-image.sh -v $IMAGE_TAG
+        ./carma-messenger-ui/docker/build-image.sh -v $IMAGE_TAG
+        cd carma-messenger-config
+        for messenger_config in */; do
+    	    cd $WORK_DIR/src/carma-messenger/carma-messenger-config/$messenger_config
+            if [[ -f build-image.sh ]]; then
+                echo "Building config $messenger_config..."
+                ./build-image.sh
+            fi
+        done
+    elif [[ "$PACKAGE" = "carma-config" ]]; then
+        # Build CARMA Config
+        echo "Building CARMA Configs..."
+        for carma_config in */; do
+            cd $WORK_DIR/src/carma-config/$carma_config
+            if [[ -f build-image.sh ]]; then
+                echo "Building config $carma_config..."
+                ./build-image.sh
+            fi
+        done
+    else
         if [[ -f "docker/build-image.sh" ]]; then 
-            # Ensure images aren't build off of non-master branches
-            if [[ -z $(echo $branch | grep "master") ]]; then
-                echo "Repo $repo not on master branch, skipping..."
-                continue
-            fi
-
-            if [[ -z $(git describe --exact-match --tags HEAD | grep carma-system) ]]; then
-                echo "Repo $repo not tagged with carma-system version, skipping..."
-                continue
-            fi
-
             echo "Building docker image for $repo..."
             ./docker/build-image.sh -v $IMAGE_TAG
         else
             echo "No docker build script found for $repo, skipping..."
         fi
-    done
+    fi
+}
 
-    # Build CARMA Config
-    cd $WORK_DIR/carma/src/carma-config
-    echo "Building CARMA Configs..."
-    for carma_config in */; do
-        cd $WORK_DIR/carma/src/carma-config/$carma_config
-        if [[ -f build-image.sh ]]; then
-            echo "Building config $carma_config..."
-            ./build-image.sh
-        fi
-    done
+function release_tool__build_images {
+    parse_args $@
+    assert_set $WORK_DIR "Work directory must be specified with -d <WORK_DIR>"
+    assert_set $RELEASE_VERSION "Release version must be specified with -v <RELEASE_VERSION>"
+    shift
+    shift
+    shift
+    shift
+    PACKAGES_TO_BUILD=$@
 
+    local IMAGE_TAG="carma-system-$RELEASE_VERSION"
+
+    if [[ ! -z "$PACKAGES_TO_BUILD" ]]; then
+	    echo "Building only $PACKAGES_TO_BUILD..."
+       for package in $PACKAGES_TO_BUILD
+	    do
+	        build_image $package
+	    done
+    else
+
+	echo "Building all packages..."
+	# Build dependencies
+	build_image "carma-base"
+	build_image "autoware.ai"
+	build_image "carma-messenger"
+    
+        # Build the rest
+        cd $WORK_DIR/src
+        for repo in */; do
+	    echo $repo
+            if [[ $repo == "carma-base/" || $repo == "autoware.ai/" || $repo == "carma-config/" || $repo == "carma-messenger/" ]]; then
+                # Skip cause we already built this as dependencies
+                continue
+            fi
+	    build_image $repo
+        done
+
+        # Build CARMA Config
+	build_image "carma-config"
+   fi
    echo "==== ALL IMAGES BUILT SUCCESSFULLY ===="
 }
 
@@ -446,21 +485,10 @@ function release_tool__create_release_prs {
 
     echo "Creating Github pull requests for all repositories"
 
-    cd $WORK_DIR/autoware.ai
-    branch=$(git symbolic-ref --short HEAD)
-
-    # Ensure PRs aren't opened for non-release branches
-    if [[ -z $(echo $branch | grep "release") ]]; then
-        echo "$repo not on a release/* branch, exiting."
-        exit -1
-    fi
-
-    ceate_pr_for_repo autoware.ai $branch carma-master $PR_ASSIGNEE
-
-    cd $WORK_DIR/carma/src
+    cd $WORK_DIR/src
     for repo in */; do
         echo $repo
-        cd $WORK_DIR/carma/src
+        cd $WORK_DIR/src
         cd $repo
         branch=$(git symbolic-ref --short HEAD)
 
@@ -482,21 +510,11 @@ function release_tool__create_sync_prs {
     assert_set "$PR_ASSIGNEE" "PR assignee must be specified with --assign <ASSIGNEE>"
 
     echo "Creating Github pull requests for all repositories back into develop"
-    cd $WORK_DIR/autoware.ai
-    branch=$(git symbolic-ref --short HEAD)
 
-    # Ensure PRs aren't opened for non-release branches
-    if [[ -z $(echo $branch | grep "master") ]]; then
-        echo "$repo not on a master branch, exiting."
-        exit -1
-    fi
-
-    create_pr_for_repo autoware.ai carma-master carma-develop $PR_ASSIGNEE
-
-    cd $WORK_DIR/carma/src
+    cd $WORK_DIR/src
     for repo in */; do
         echo $repo
-        cd $WORK_DIR/carma/src
+        cd $WORK_DIR/src
         cd $repo
         branch=$(git symbolic-ref --short HEAD)
 
