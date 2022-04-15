@@ -143,9 +143,21 @@ void convert(const carma_v2x_msgs::msg::BSM& in_msg, carma_perception_msgs::msg:
       (in_msg.core_data.presence_vector & carma_v2x_msgs::msg::BSMCoreData::ELEVATION_AVAILABLE) && 
       (in_msg.core_data.presence_vector & carma_v2x_msgs::msg::BSMCoreData::HEADING_AVAILABLE))
   {
+    double longitude = std::min(in_msg.core_data.longitude * 0.0000001, in_msg.core_data.LONGITUDE_MAX);
+    longitude = std::max(longitude, in_msg.core_data.LONGITUDE_MIN);
+    
+    double latitude =  std::min(in_msg.core_data.latitude * 0.0000001, in_msg.core_data.LATITUDE_MAX);
+    latitude =  std::max(latitude, in_msg.core_data.LATITUDE_MIN);
+    
+    double elev = std::min(in_msg.core_data.elev * 0.1, (double)in_msg.core_data.ELEVATION_MAX);
+    elev = std::max(elev, (double)in_msg.core_data.ELEVATION_MIN);
+
+    double heading = std::min(in_msg.core_data.heading * 0.0125, (double)in_msg.core_data.HEADING_MAX);
+    heading = std::max(heading, (double)in_msg.core_data.HEADING_MIN);
+
     out_msg.pose = impl::pose_from_gnss(map_projector, ned_in_map_rotation,
-                                      {in_msg.core_data.latitude, in_msg.core_data.longitude, in_msg.core_data.elev},
-                                      in_msg.core_data.heading, lat_variance, lon_variance, heading_variance);
+                                      {latitude, longitude, elev},
+                                      heading, lat_variance, lon_variance, heading_variance);
     out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::POSE_PRESENCE_VECTOR;
   }
   // Else: No pose available

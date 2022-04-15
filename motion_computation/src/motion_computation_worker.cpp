@@ -263,8 +263,16 @@ namespace motion_computation{
             return;
         }
 
-        // TODO
-        //bsm_list_.objects.push_back(mobilityPathToExternalObject(msg));
+        carma_perception_msgs::msg::ExternalObject obj_msg;
+        // TODO temporary info
+        std::string map_frame_id = "frame";
+        double pred_period = 10.0;
+        double pred_step_size = 0.1;
+        tf2::Quaternion ned_in_map_rotation;
+
+        conversion::convert(*msg, obj_msg, map_frame_id, pred_period, pred_step_size, *map_projector_, ned_in_map_rotation);
+        bsm_list_.objects.push_back(obj_msg);
+
     }
     
     carma_perception_msgs::msg::ExternalObjectList MotionComputationWorker::synchronizeAndAppend(const carma_perception_msgs::msg::ExternalObjectList& base_objects, carma_perception_msgs::msg::ExternalObjectList new_objects) const

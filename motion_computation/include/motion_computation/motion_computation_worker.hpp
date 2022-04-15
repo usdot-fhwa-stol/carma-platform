@@ -161,6 +161,7 @@ class MotionComputationWorker {
 
   // Unit Test Accessors
   FRIEND_TEST(MotionComputationWorker, mobilityPathToExternalObject);
+  FRIEND_TEST(MotionComputationWorker, BSMtoExternalObject);
 };
 
 }  // namespace motion_computation
