@@ -511,7 +511,7 @@ LaneletRoutingGraphPtr WMListenerWorker::routingGraphFromMsg(const autoware_lane
       lanelet::routing::RelationType relation;
 
       // Get relation
-      switch (vertex.edge_relations[i])
+      switch (vertex.edge_relations[j])
       {
         case autoware_lanelet2_msgs::RoutingGraphVertexAndEdges::RELATION_SUCCESSOR:
           relation = lanelet::routing::RelationType::Successor; break;
@@ -543,14 +543,14 @@ LaneletRoutingGraphPtr WMListenerWorker::routingGraphFromMsg(const autoware_lane
         // Create edge
         graph->addEdge(
           lanelet, 
-          map->laneletLayer.get(vertex.lanelet_or_area_ids[i]), 
-          lanelet::routing::internal::EdgeInfo{vertex.edge_routing_costs[i], vertex.edge_routing_cost_source_ids[i], relation}
+          map->laneletLayer.get(vertex.lanelet_or_area_ids[j]), 
+          lanelet::routing::internal::EdgeInfo{vertex.edge_routing_costs[j], vertex.edge_routing_cost_source_ids[j], relation}
         );
 
       }  catch(const lanelet::NoSuchPrimitiveError& e) {
         
         ROS_ERROR_STREAM("Received routing graph specifies lanelets which do not match the current map version. Not found lanelet or area: " 
-          << vertex.lanelet_or_area_ids[i] << " Actual exception: " << e.what());
+          << vertex.lanelet_or_area_ids[j] << " Actual exception: " << e.what());
 
         return nullptr;
       }
