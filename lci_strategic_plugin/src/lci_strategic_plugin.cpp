@@ -604,7 +604,11 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   {
     ROS_DEBUG_STREAM("Applied green_light_buffer for the first time and cached! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
     // save first calculated nearest_green_entry_time + buffer to compare against in the future as nearest_green_entry_time changes with earliest_entry_time
-    nearest_green_entry_time_cached_ = nearest_green_entry_time + ros::Duration(config_.green_light_time_buffer);
+    if (canArriveAtGreenWithCertainty(nearest_green_entry_time, traffic_light, false, true))
+      nearest_green_entry_time_cached_ = nearest_green_entry_time;  //don't apply buffer if EET is in green
+    else
+      nearest_green_entry_time_cached_ = nearest_green_entry_time + ros::Duration(config_.green_light_time_buffer); 
+
     nearest_green_entry_time = nearest_green_entry_time_cached_.get();
   }
   else if (nearest_green_entry_time_cached_) 
