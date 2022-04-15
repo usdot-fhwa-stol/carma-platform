@@ -284,6 +284,11 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   if (geofence_msg->has_routing_graph) {
 
     LaneletRoutingGraphPtr graph = routingGraphFromMsg(geofence_msg->routing_graph, world_model_->getMutableMap());
+
+    if (!graph) {
+      throw std::invalid_argument("Map updated provided routing graph which could not be applied to the current map.");
+    }
+
     world_model_->setRoutingGraph(graph);
 
   }
@@ -441,7 +446,15 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
 
 LaneletRoutingGraphPtr WMListenerWorker::routingGraphFromMsg(const autoware_lanelet2_msgs::RoutingGraph& msg, lanelet::LaneletMapPtr map) const {
 
-  // TODO add check on map version and participant type
+  if (msg.participant_type.compare(getVehicleParticipationType()) != 0) {
+
+    ROS_ERROR_STREAM("Received routing graph does not have matching vehicle type for world model. WM Type: " 
+      << getVehicleParticipationType() 
+      << " graph type: " << msg.participant_type
+    );
+
+    return nullptr;
+  }
 
   // Get the lists of passable lanelets and areas
   // Both these lists must be populated in the same order as the message to support later logic
@@ -451,14 +464,24 @@ LaneletRoutingGraphPtr WMListenerWorker::routingGraphFromMsg(const autoware_lane
   passable_lanelets.reserve(msg.lanelet_vertices.size());
   passable_areas.reserve(msg.area_vertices.size());
 
-  // All the passable lanelets and areas should be included as a vertext so just iterate over each and store
-  for (auto vertex : msg.lanelet_vertices) {
-    passable_lanelets.emplace_back(map->laneletLayer.get(vertex.lanelet_or_area));
+  try {
+
+    // All the passable lanelets and areas should be included as a vertext so just iterate over each and store
+    for (auto vertex : msg.lanelet_vertices) {
+      passable_lanelets.emplace_back(map->laneletLayer.get(vertex.lanelet_or_area));
+    }
+
+    for (auto vertex : msg.area_vertices) {
+      passable_areas.emplace_back(map->areaLayer.get(vertex.lanelet_or_area));
+    }
+
+  } catch(const lanelet::NoSuchPrimitiveError& e) {
+    
+    ROS_ERROR_STREAM("Received routing graph specifies lanelets which do not match the current map version. Actual exception: " << e.what());
+
+    return nullptr;
   }
 
-  for (auto vertex : msg.area_vertices) {
-    passable_areas.emplace_back(map->areaLayer.get(vertex.lanelet_or_area));
-  }
 
   // Build the submap
   // This operation does increase in time as the number of lanelets and areas increase
@@ -515,12 +538,23 @@ LaneletRoutingGraphPtr WMListenerWorker::routingGraphFromMsg(const autoware_lane
           relation = lanelet::routing::RelationType::None; break;
       }
 
-      // Create edge
-      graph->addEdge(
-        lanelet, 
-        map->laneletLayer.get(vertex.lanelet_or_area_ids[i]), 
-        lanelet::routing::internal::EdgeInfo{vertex.edge_routing_costs[i], vertex.edge_routing_cost_source_ids[i], relation}
-      );
+      try {
+
+        // Create edge
+        graph->addEdge(
+          lanelet, 
+          map->laneletLayer.get(vertex.lanelet_or_area_ids[i]), 
+          lanelet::routing::internal::EdgeInfo{vertex.edge_routing_costs[i], vertex.edge_routing_cost_source_ids[i], relation}
+        );
+
+      }  catch(const lanelet::NoSuchPrimitiveError& e) {
+        
+        ROS_ERROR_STREAM("Received routing graph specifies lanelets which do not match the current map version. Not found lanelet or area: " 
+          << vertex.lanelet_or_area_ids[i] << " Actual exception: " << e.what());
+
+        return nullptr;
+      }
+
     }
   }
 
