@@ -1115,7 +1115,7 @@ namespace platoon_strategic_ihp
                 // Note: remove join_index to info param.
                 request.plan_type.type = cav_msgs::PlanType::CUT_IN_FROM_DIFFERENT_LANE; 
 
-                // note: At this step all cut-in types all start with this request, so the join_index at this point is set to default, -2.
+                // TODO: At this step all cut-in types all start with this request, so the join_index at this point is set to default, -2.
                 // REVISIOn note: At this step a join index is really  not needed until later. The later index were changed to name "target_index". So it is ok to delete cut-in here.
                 int join_index = -2;
                 boost::format fmter(JOIN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
