@@ -273,16 +273,11 @@ namespace platoon_strategic_ihp
 
         ///***** Case Zero *****///
         // If the host vehicle is the second follower of a platoon, it will always follow the platoon leader in the front 
-        if(getNumberOfVehicleInFront() == 1) {
-            if (isFollower){
-                // If the platoon length is 2 and the host is follower, then follow the leader.
-                ROS_DEBUG_STREAM("As the second vehicle in the platoon, it will always follow the leader. Case Zero");
-                return 0;
-            }
-            else{
-                ROS_DEBUG_STREAM("Function getDynamicLeader was called when host is leader, returning zero.");
-                return 0;
-            }
+        if(getNumberOfVehicleInFront() == 1)
+        {
+            // If the host is the second vehicle, then follow the leader.
+            ROS_DEBUG_STREAM("As the second vehicle in the platoon, it will always follow the leader. Case Zero");
+            return 0;
         }
         ///***** Case One *****///
         // If there weren't a leader in the previous time step, follow the first vehicle (i.e., the platoon leader) as default.
