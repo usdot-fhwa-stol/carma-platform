@@ -73,7 +73,7 @@ class RoutingGraphAccessor : public lanelet::routing::RoutingGraph {
 
 
         // Populate the edge info in the message
-        vertex_and_edges.lanelet_or_area_ids.push_back(underlying_graph[source].laneletOrArea.id());
+        vertex_and_edges.lanelet_or_area_ids.push_back(underlying_graph[target].laneletOrArea.id());
 
         vertex_and_edges.edge_routing_costs.push_back(underlying_graph[edge].routingCost);
         vertex_and_edges.edge_routing_cost_source_ids.push_back(underlying_graph[edge].costId);
