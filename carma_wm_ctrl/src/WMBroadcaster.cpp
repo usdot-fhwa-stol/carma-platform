@@ -95,14 +95,14 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   autoware_lanelet2_msgs::MapBin compliant_map_msg;
 
   // Populate the routing graph message
-  ROS_INFO_STREAM("Creating routing graph message");
+  ROS_INFO_STREAM("Creating routing graph message.");
 
   auto readable_graph = std::static_pointer_cast<RoutingGraphAccessor>(current_routing_graph_);
 
   compliant_map_msg.routing_graph = readable_graph->routingGraphToMsg(participant_);
   compliant_map_msg.has_routing_graph = true;
 
-  ROS_INFO_STREAM("Done creating routing graph message");
+  ROS_INFO_STREAM("Done creating routing graph message.");
 
   lanelet::utils::conversion::toBinMsg(current_map_, &compliant_map_msg);
   compliant_map_msg.map_version = current_map_version_;
