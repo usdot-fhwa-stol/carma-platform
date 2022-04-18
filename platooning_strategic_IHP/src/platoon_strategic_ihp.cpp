@@ -3161,12 +3161,11 @@ namespace platoon_strategic_ihp
 
         // ---------------- use IHP platoon trajectory regulation here --------------------
         // Note: The desired gap will be adjusted and send to control plugin (via platoon_info_msg) where gap creation will be handled.
-        double total_maneuver_length; 
         double target_speed;   
         
         // Note: gap regulation has moved to control plug-in, no need to adjust speed here.
         target_speed = findSpeedLimit(current_lanelet);   //get Speed Limit
-        total_maneuver_length = current_progress + config_.time_step * target_speed;
+        double total_maneuver_length = current_progress + config_.time_step * target_speed;
         // ----------------------------------------------------------------
 
         // pick smaller length, accomendate when host is close to the route end
