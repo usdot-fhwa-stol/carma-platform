@@ -38,6 +38,7 @@
 #include <carma_wm/Geometry.h>
 #include <math.h>
 #include <boost/date_time/date_defs.hpp>
+#include "RoutingGraphAccessor.h"
 
 namespace carma_wm_ctrl
 {
@@ -92,6 +93,17 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   current_map_version_ += 1; // Increment the map version. It should always start from 1 for the first map
   map_update_message_queue_.clear(); // Clear the update queue as the map version has changed
   autoware_lanelet2_msgs::MapBin compliant_map_msg;
+
+  // Populate the routing graph message
+  ROS_INFO_STREAM("Creating routing graph message.");
+
+  auto readable_graph = std::static_pointer_cast<RoutingGraphAccessor>(current_routing_graph_);
+
+  compliant_map_msg.routing_graph = readable_graph->routingGraphToMsg(participant_);
+  compliant_map_msg.has_routing_graph = true;
+
+  ROS_INFO_STREAM("Done creating routing graph message.");
+
   lanelet::utils::conversion::toBinMsg(current_map_, &compliant_map_msg);
   compliant_map_msg.map_version = current_map_version_;
   map_pub_(compliant_map_msg);
@@ -1459,6 +1471,8 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
     {
       for (auto pair : update->update_list_) active_geofence_llt_ids_.insert(pair.first);
     }
+
+    autoware_lanelet2_msgs::MapBin gf_msg;
     
     // If the geofence invalidates the route graph then recompute the routing graph now that the map has been updated
     if (update->invalidate_route_) {
@@ -1470,11 +1484,20 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
       current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
 
       ROS_INFO_STREAM("Done rebuilding routing graph after is was invalidated by geofence");
+
+      // Populate routing graph structure
+      ROS_INFO_STREAM("Creating routing graph message");
+
+      auto readable_graph = std::static_pointer_cast<RoutingGraphAccessor>(current_routing_graph_);
+
+      gf_msg.routing_graph = readable_graph->routingGraphToMsg(participant_);
+      gf_msg.has_routing_graph = true;
+
+      ROS_INFO_STREAM("Done creating routing graph message");
     }
     
 
     // Publish
-    autoware_lanelet2_msgs::MapBin gf_msg;
     auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(update->id_, update->update_list_, update->remove_list_, update->lanelet_additions_));
     send_data->traffic_light_id_lookup_ = update->traffic_light_id_lookup_;
 
@@ -1507,6 +1530,28 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   // publish
   autoware_lanelet2_msgs::MapBin gf_msg_revert;
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, {}));
+
+  if (gf_ptr->invalidate_route_) { // If a geofence initially invalidated the route it stands to reason its removal should as well
+
+    ROS_INFO_STREAM("Rebuilding routing graph after is was invalidated by geofence removal");
+
+    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
+      lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant_
+    );
+    current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
+
+    ROS_INFO_STREAM("Done rebuilding routing graph after is was invalidated by geofence removal");
+
+    // Populate routing graph structure
+    ROS_INFO_STREAM("Creating routing graph message for geofence removal");
+
+    auto readable_graph = std::static_pointer_cast<RoutingGraphAccessor>(current_routing_graph_);
+
+    gf_msg_revert.routing_graph = readable_graph->routingGraphToMsg(participant_);
+    gf_msg_revert.has_routing_graph = true;
+
+    ROS_INFO_STREAM("Done creating routing graph message for geofence removal");
+  }
   
   carma_wm::toBinMsg(send_data, &gf_msg_revert);
   update_count_++; // Update the sequence count for geofence messages
