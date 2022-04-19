@@ -31,7 +31,7 @@ void WMBroadcasterNode::publishMap(const autoware_lanelet2_msgs::MapBin& map_msg
 
 void WMBroadcasterNode::publishMapUpdate(const autoware_lanelet2_msgs::MapBin& geofence_msg) const
 {
-  map_update_pub_.publish(geofence_msg);
+  //map_update_pub_.publish(geofence_msg);
 }
 
   
