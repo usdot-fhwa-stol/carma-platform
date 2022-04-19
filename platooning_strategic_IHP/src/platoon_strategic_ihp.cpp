@@ -725,7 +725,7 @@ namespace platoon_strategic_ihp
 
         // read ecef from STATUS
         cav_msgs::LocationECEF ecef_loc = mob_op_find_ecef_from_STATUS_params(strategyParams);
-        ROS_DEBUG_STREAM("ecef_loc = " << ecef_loc);
+        ROS_DEBUG_STREAM("ecef_loc.x = " << ecef_loc.ecef_x);
 
         // read Downtrack 
         lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc);
