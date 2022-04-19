@@ -27,8 +27,8 @@
 #include <carma_v2x_msgs/msg/mobility_path.hpp>
 #include <carma_v2x_msgs/msg/psm.hpp>
 #include <functional>
-#include <motion_predict/motion_predict.hpp>
-#include <motion_predict/predict_ctrv.hpp>
+#include <motion_predict_ros2/motion_predict.hpp>
+#include <motion_predict_ros2/predict_ctrv.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <tuple>
@@ -48,7 +48,8 @@ class MotionComputationWorker {
    * \brief Constructor for MotionComputationWorker
    */
   MotionComputationWorker(const PublishObjectCallback& obj_pub,
-                          rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger);
+                          rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger,
+                          rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock);
 
   /**
    * \brief Function to populate duplicated detected objects along with their velocity, yaw,
@@ -134,6 +135,8 @@ class MotionComputationWorker {
 
   // Logger interface
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
+  //Clock interface - gets the ros simulated clock from Node
+  rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock_;
 
   // Queue for v2x msgs to synchronize them with sensor msgs
   carma_perception_msgs::msg::ExternalObjectList mobility_path_list_;

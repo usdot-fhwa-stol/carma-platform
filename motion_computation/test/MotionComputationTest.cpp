@@ -32,9 +32,10 @@ namespace motion_computation
         // Create logger object
         auto node = std::make_shared<rclcpp::Node>("test_node");
         rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
+        rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock = node->get_node_clock_interface();
 
         // Create MotionComputationWorker object
-        MotionComputationWorker worker([](const carma_perception_msgs::msg::ExternalObjectList&){}, logger);
+        MotionComputationWorker worker([](const carma_perception_msgs::msg::ExternalObjectList&){}, logger, clock);
     }
 
     TEST(MotionComputationWorker, motionPredictionCallback)
@@ -42,6 +43,7 @@ namespace motion_computation
         bool published_data = false;
         auto node = std::make_shared<rclcpp::Node>("test_node");
         rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
+        rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock = node->get_node_clock_interface();
         MotionComputationWorker mcw_sensor_only([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){
             published_data = true;
             ASSERT_EQ(obj_pub.objects.size(), 1ul);
@@ -54,17 +56,17 @@ namespace motion_computation
             }
             ASSERT_EQ(isFilled, true);
 
-            }, logger); 
+            }, logger, clock); 
 
         MotionComputationWorker mcw_mobility_only([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){
             published_data = true;
             ASSERT_EQ(obj_pub.objects.size(), 0ul);
-            }, logger);
+            }, logger, clock);
 
         MotionComputationWorker mcw_mixed_operation([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){
             published_data = true;
             ASSERT_EQ(obj_pub.objects.size(), 2ul);
-            }, logger);
+            }, logger, clock);
 
 
         mcw_sensor_only.setDetectionInputFlags(true, false, false, false); //SENSORS_ONLY
@@ -153,7 +155,8 @@ namespace motion_computation
     {    
         auto node = std::make_shared<rclcpp::Node>("test_node");
         rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
-        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList&){}, logger);
+        rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock = node->get_node_clock_interface();
+        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList&){}, logger, clock);
 
         // 1 to 1 transform
         std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
@@ -192,7 +195,8 @@ namespace motion_computation
     TEST(MotionComputationWorker, mobilityPathToExternalObject)
     {   
         auto node = std::make_shared<rclcpp::Node>("test_node");
-        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList&){}, node->get_node_logging_interface());
+        rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock = node->get_node_clock_interface();
+        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList&){}, node->get_node_logging_interface(), clock);
 
         // 1 to 1 transform
         std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
@@ -259,7 +263,8 @@ namespace motion_computation
     TEST(MotionComputationWorker, synchronizeAndAppend)
     {   
         auto node = std::make_shared<rclcpp::Node>("test_node");
-        MotionComputationWorker mcw_mixed_operation([&](const carma_perception_msgs::msg::ExternalObjectList&){}, node->get_node_logging_interface());
+        rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock = node->get_node_clock_interface();
+        MotionComputationWorker mcw_mixed_operation([&](const carma_perception_msgs::msg::ExternalObjectList&){}, node->get_node_logging_interface(), clock);
 
         mcw_mixed_operation.setDetectionInputFlags(true, false, false, true); //enable sensors and paths
 

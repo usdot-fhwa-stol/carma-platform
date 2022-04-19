@@ -23,7 +23,7 @@ namespace motion_computation
       : carma_ros2_utils::CarmaLifecycleNode(options),
         motion_worker_(
           std::bind(&MotionComputationNode::publishObject, this, std_ph::_1),
-          get_node_logging_interface()
+          get_node_logging_interface(), get_node_clock_interface()
         )
   {
     // Create initial config
