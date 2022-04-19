@@ -1095,7 +1095,7 @@ namespace platoon_strategic_ihp
             }
 
             // step 5. Request cut-in join (front, middle or rear, from adjacent lane)
-            else if (isVehicleNearTargetPlatoon(rearVehicleDtd, frontVehicleDtd, frontVehicleCtd) && !config_.test_front_join)
+            else if (targetPlatoonSize > 1  &&  !config_.test_front_join  &&  isVehicleNearTargetPlatoon(rearVehicleDtd, frontVehicleDtd, frontVehicleCtd))
             {
                 /**
                  * UCLA Implementation note:
@@ -1133,6 +1133,9 @@ namespace platoon_strategic_ihp
                 pm_.current_plan = ActionPlan(true, request.header.timestamp, request.header.plan_id, senderId);
 
                 // If we are asking to join an actual platoon (not a solo vehicle), then save its ID for later use
+
+                //TODO - this comparison needs to be against all-zeros, not empty
+                
                 if (platoonId.length() > 0)
                 {
                     pm_.targetPlatoonID = platoonId;
@@ -1670,7 +1673,7 @@ namespace platoon_strategic_ihp
                 
                 // UCLA: change to read platoon front info
                 double currentFrontDtd = pm_.getPlatoonFrontDowntrackDistance();
-                ROS_DEBUG_STREAM("The current platoon rear dtd is " << currentFrontDtd);
+                ROS_DEBUG_STREAM("The current platoon front dtd is " << currentFrontDtd);
                 // UCLA: adjust for calculating gap between new leader and old leader
                 double currentGap =  applicantCurrentDtd - currentFrontDtd - config_.vehicleLength;
                 double currentTimeGap = currentGap / applicantCurrentSpeed;
