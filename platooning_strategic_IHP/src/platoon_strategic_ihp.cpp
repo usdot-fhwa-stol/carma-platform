@@ -716,9 +716,13 @@ namespace platoon_strategic_ihp
         std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
         ROS_DEBUG_STREAM("statusParams = " << statusParams);
 
+        ROS_DEBUG_STREAM("platoonId = " << platoonId);
+        ROS_DEBUG_STREAM("pm_.currentPlatoonI = " << pm_.currentPlatoonI);
         // if this message is not for our platoon then ignore it
         if (platoonId.compare(pm_.currentPlatoonID) != 0)
         {
+
+            ROS_DEBUG_STREAM("platoonId mismatch");
             ROS_WARN_STREAM("Received mob op for platoon " << platoonId << " that doesn't match our platoon: " << pm_.currentPlatoonID);
             return;
         }
