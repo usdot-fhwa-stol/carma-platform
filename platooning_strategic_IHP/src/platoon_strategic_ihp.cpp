@@ -673,7 +673,7 @@ namespace platoon_strategic_ihp
 
         std::vector<std::string> inputsParams;
         boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
-        ROS_DEBUG_STREAM("inputsParams = " << inputsParams);
+        ROS_DEBUG_STREAM("inputsParams split ");
 
         std::vector<std::string> ecef_x_parsed;
         boost::algorithm::split(ecef_x_parsed, inputsParams[2], boost::is_any_of(":"));
