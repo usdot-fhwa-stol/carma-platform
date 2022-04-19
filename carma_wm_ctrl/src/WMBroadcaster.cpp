@@ -1196,6 +1196,8 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   
     std::chrono::steady_clock::time_point N = std::chrono::steady_clock::now();
 
+    ROS_INFO_STREAM("Time difference at L->M: " << std::chrono::duration_cast<std::chrono::nanoseconds> (M - L).count() << "[ns]" );
+  ROS_INFO_STREAM("Time difference at M->N: " << std::chrono::duration_cast<std::chrono::nanoseconds> (N - M).count() << "[ns]" );
 
     
   }
@@ -1212,8 +1214,6 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
     ROS_INFO_STREAM("Time difference at B->E: " << std::chrono::duration_cast<std::chrono::nanoseconds> (E - B).count() << "[ns]" );
     ROS_INFO_STREAM("Time difference at E->Z: " << std::chrono::duration_cast<std::chrono::nanoseconds> (Z- E).count() << "[ns]" );
     ROS_INFO_STREAM("Time difference at W->L: " << std::chrono::duration_cast<std::chrono::nanoseconds> (L - W).count() << "[ns]" );
-    ROS_INFO_STREAM("Time difference at L->M: " << std::chrono::duration_cast<std::chrono::nanoseconds> (M - L).count() << "[ns]" );
-    ROS_INFO_STREAM("Time difference at M->N: " << std::chrono::duration_cast<std::chrono::nanoseconds> (N - M).count() << "[ns]" );
     ROS_INFO_STREAM("Time difference at O->P: " << std::chrono::duration_cast<std::chrono::nanoseconds> (P - O).count() << "[ns]" );
     ROS_INFO_STREAM("Time difference at I->W: " << std::chrono::duration_cast<std::chrono::nanoseconds> (W - I).count() << "[ns]" );
 
@@ -1227,8 +1227,6 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   ROS_INFO_STREAM("Time difference at B->E: " << std::chrono::duration_cast<std::chrono::nanoseconds> (E - B).count() << "[ns]" );
   ROS_INFO_STREAM("Time difference at E->Z: " << std::chrono::duration_cast<std::chrono::nanoseconds> (Z- E).count() << "[ns]" );
   ROS_INFO_STREAM("Time difference at W->L: " << std::chrono::duration_cast<std::chrono::nanoseconds> (L - W).count() << "[ns]" );
-  ROS_INFO_STREAM("Time difference at L->M: " << std::chrono::duration_cast<std::chrono::nanoseconds> (M - L).count() << "[ns]" );
-  ROS_INFO_STREAM("Time difference at M->N: " << std::chrono::duration_cast<std::chrono::nanoseconds> (N - M).count() << "[ns]" );
   ROS_INFO_STREAM("Time difference at I->W: " << std::chrono::duration_cast<std::chrono::nanoseconds> (W - I).count() << "[ns]" );
 
 };
