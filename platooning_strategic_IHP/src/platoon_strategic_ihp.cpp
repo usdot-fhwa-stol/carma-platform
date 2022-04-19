@@ -3012,7 +3012,7 @@ namespace platoon_strategic_ihp
         }
         else if (pm_.current_platoon_state == PlatoonState::STANDBY)
         {
-            continue; //nothing to do
+            ROS_DEBUG_STREAM("standby state, nothing to do");
         }
         // coding oversight
         else
