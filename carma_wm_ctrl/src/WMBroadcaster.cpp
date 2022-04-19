@@ -1075,6 +1075,7 @@ void WMBroadcaster::externalMapMsgCallback(const cav_msgs::MapData& map_msg)
 void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geofence_msg)
 {
 
+  ROS_INFO("Starting geofence callback ----------");
   std::chrono::steady_clock::time_point A = std::chrono::steady_clock::now();
   
   std::lock_guard<std::mutex> guard(map_mutex_);
@@ -1082,7 +1083,6 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
 
   std::chrono::steady_clock::time_point B = std::chrono::steady_clock::now();
 
-  ROS_INFO_STREAM("Time difference at A->B: " << std::chrono::duration_cast<std::chrono::nanoseconds> (B - A).count() << "[ns]" );
 
   // quickly check if the id has been added
   if (geofence_msg.choice != cav_msgs::TrafficControlMessage::TCMV01) {
@@ -1092,13 +1092,14 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
 
     std::chrono::steady_clock::time_point C = std::chrono::steady_clock::now();
 
-    ROS_INFO_STREAM("Time difference at B->C: " << std::chrono::duration_cast<std::chrono::nanoseconds> (C - B).count() << "[ns]" );
 
     reason_ss << "Dropping received geofence for unsupported TrafficControl version: " << geofence_msg.choice;
     ROS_WARN_STREAM(reason_ss.str());
     pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::REJECTED), reason_ss.str());
     std::chrono::steady_clock::time_point D = std::chrono::steady_clock::now();
 
+    ROS_INFO_STREAM("Time difference at B->C: " << std::chrono::duration_cast<std::chrono::nanoseconds> (C - B).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at A->B: " << std::chrono::duration_cast<std::chrono::nanoseconds> (B - A).count() << "[ns]" );
     ROS_INFO_STREAM("Time difference at C->D: " << std::chrono::duration_cast<std::chrono::nanoseconds> (D - C).count() << "[ns]" );
 
     return;
@@ -1107,7 +1108,6 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
 
   std::chrono::steady_clock::time_point E = std::chrono::steady_clock::now();
 
-    ROS_INFO_STREAM("Time difference at B->E: " << std::chrono::duration_cast<std::chrono::nanoseconds> (E - B).count() << "[ns]" );
 
 
   boost::uuids::uuid id;
@@ -1115,14 +1115,12 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
 
   std::chrono::steady_clock::time_point Z = std::chrono::steady_clock::now();
 
-  ROS_INFO_STREAM("Time difference at E->Z: " << std::chrono::duration_cast<std::chrono::nanoseconds> (Z- E).count() << "[ns]" );
 
 
   if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end()) { 
 
     std::chrono::steady_clock::time_point F = std::chrono::steady_clock::now();
 
-    ROS_INFO_STREAM("Time difference at Z->F: " << std::chrono::duration_cast<std::chrono::nanoseconds> (F - Z).count() << "[ns]" );
 
     reason_ss.str("");
     reason_ss << "Dropping received TrafficControl message with already handled id: " << boost::uuids::to_string(id);
@@ -1130,15 +1128,17 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
     pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::ACKNOWLEDGED), reason_ss.str());
     
     std::chrono::steady_clock::time_point G = std::chrono::steady_clock::now();
-
-      ROS_INFO_STREAM("Time difference at F->G: " << std::chrono::duration_cast<std::chrono::nanoseconds> (G - F).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at A->B: " << std::chrono::duration_cast<std::chrono::nanoseconds> (B - A).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at Z->F: " << std::chrono::duration_cast<std::chrono::nanoseconds> (F - Z).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at F->G: " << std::chrono::duration_cast<std::chrono::nanoseconds> (G - F).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at B->E: " << std::chrono::duration_cast<std::chrono::nanoseconds> (E - B).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at E->Z: " << std::chrono::duration_cast<std::chrono::nanoseconds> (Z- E).count() << "[ns]" );
 
     return;
   }
 
   std::chrono::steady_clock::time_point H = std::chrono::steady_clock::now();
 
-  ROS_INFO_STREAM("Time difference at Z->H: " << std::chrono::duration_cast<std::chrono::nanoseconds> (H - Z).count() << "[ns]" );
 
 
   // convert reqid to string check if it has been seen before
@@ -1150,7 +1150,6 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
 
   std::chrono::steady_clock::time_point I = std::chrono::steady_clock::now();
 
-  ROS_INFO_STREAM("Time difference at H->I: " << std::chrono::duration_cast<std::chrono::nanoseconds> (I - H).count() << "[ns]" );
 
   // drop if the req has never been sent
   if (generated_geofence_reqids_.find(reqid) == generated_geofence_reqids_.end() && reqid.compare("00000000") != 0)
@@ -1158,15 +1157,18 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
 
     std::chrono::steady_clock::time_point J = std::chrono::steady_clock::now();
     ROS_INFO_STREAM("Time difference at I->J: " << std::chrono::duration_cast<std::chrono::nanoseconds> (J - I).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at A->B: " << std::chrono::duration_cast<std::chrono::nanoseconds> (B - A).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at Z->H: " << std::chrono::duration_cast<std::chrono::nanoseconds> (H - Z).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at H->I: " << std::chrono::duration_cast<std::chrono::nanoseconds> (I - H).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at B->E: " << std::chrono::duration_cast<std::chrono::nanoseconds> (E - B).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at E->Z: " << std::chrono::duration_cast<std::chrono::nanoseconds> (Z- E).count() << "[ns]" );
 
-    
     ROS_WARN_STREAM("CARMA_WM_CTRL received a TrafficControlMessage with unknown TrafficControlRequest ID (reqid): " << reqid);
     return;
   }
 
   std::chrono::steady_clock::time_point W = std::chrono::steady_clock::now();
 
-    ROS_INFO_STREAM("Time difference at I->W: " << std::chrono::duration_cast<std::chrono::nanoseconds> (W - I).count() << "[ns]" );
 
     
   checked_geofence_ids_.insert(boost::uuids::to_string(id));
@@ -1178,7 +1180,6 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
 
   std::chrono::steady_clock::time_point L = std::chrono::steady_clock::now();
 
-    ROS_INFO_STREAM("Time difference at W->L: " << std::chrono::duration_cast<std::chrono::nanoseconds> (L - W).count() << "[ns]" );
 
   try
   {
@@ -1190,12 +1191,10 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
     reason_ss << "Successfully processed TCM.";
     std::chrono::steady_clock::time_point M = std::chrono::steady_clock::now();
 
-      ROS_INFO_STREAM("Time difference at L->M: " << std::chrono::duration_cast<std::chrono::nanoseconds> (M - L).count() << "[ns]" );
 
     pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::ACKNOWLEDGED), reason_ss.str());
   
     std::chrono::steady_clock::time_point N = std::chrono::steady_clock::now();
-      ROS_INFO_STREAM("Time difference at M->N: " << std::chrono::duration_cast<std::chrono::nanoseconds> (N - M).count() << "[ns]" );
 
 
     
@@ -1207,11 +1206,31 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
     reason_ss << "Failed to process TCM. " << ex.what();
     pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::REJECTED), reason_ss.str());
     std::chrono::steady_clock::time_point P = std::chrono::steady_clock::now();
+    ROS_INFO_STREAM("Time difference at A->B: " << std::chrono::duration_cast<std::chrono::nanoseconds> (B - A).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at Z->H: " << std::chrono::duration_cast<std::chrono::nanoseconds> (H - Z).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at H->I: " << std::chrono::duration_cast<std::chrono::nanoseconds> (I - H).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at B->E: " << std::chrono::duration_cast<std::chrono::nanoseconds> (E - B).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at E->Z: " << std::chrono::duration_cast<std::chrono::nanoseconds> (Z- E).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at W->L: " << std::chrono::duration_cast<std::chrono::nanoseconds> (L - W).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at L->M: " << std::chrono::duration_cast<std::chrono::nanoseconds> (M - L).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at M->N: " << std::chrono::duration_cast<std::chrono::nanoseconds> (N - M).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at O->P: " << std::chrono::duration_cast<std::chrono::nanoseconds> (P - O).count() << "[ns]" );
+    ROS_INFO_STREAM("Time difference at I->W: " << std::chrono::duration_cast<std::chrono::nanoseconds> (W - I).count() << "[ns]" );
 
-      ROS_INFO_STREAM("Time difference at O->P: " << std::chrono::duration_cast<std::chrono::nanoseconds> (P - O).count() << "[ns]" );
 
     throw; //rethrows the exception object
   }
+
+  ROS_INFO_STREAM("Time difference at Z->H: " << std::chrono::duration_cast<std::chrono::nanoseconds> (H - Z).count() << "[ns]" );
+  ROS_INFO_STREAM("Time difference at H->I: " << std::chrono::duration_cast<std::chrono::nanoseconds> (I - H).count() << "[ns]" );
+  ROS_INFO_STREAM("Time difference at A->B: " << std::chrono::duration_cast<std::chrono::nanoseconds> (B - A).count() << "[ns]" );
+  ROS_INFO_STREAM("Time difference at B->E: " << std::chrono::duration_cast<std::chrono::nanoseconds> (E - B).count() << "[ns]" );
+  ROS_INFO_STREAM("Time difference at E->Z: " << std::chrono::duration_cast<std::chrono::nanoseconds> (Z- E).count() << "[ns]" );
+  ROS_INFO_STREAM("Time difference at W->L: " << std::chrono::duration_cast<std::chrono::nanoseconds> (L - W).count() << "[ns]" );
+  ROS_INFO_STREAM("Time difference at L->M: " << std::chrono::duration_cast<std::chrono::nanoseconds> (M - L).count() << "[ns]" );
+  ROS_INFO_STREAM("Time difference at M->N: " << std::chrono::duration_cast<std::chrono::nanoseconds> (N - M).count() << "[ns]" );
+  ROS_INFO_STREAM("Time difference at I->W: " << std::chrono::duration_cast<std::chrono::nanoseconds> (W - I).count() << "[ns]" );
+
 };
 
 void WMBroadcaster::scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr)
