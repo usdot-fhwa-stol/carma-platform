@@ -3007,6 +3007,10 @@ namespace platoon_strategic_ihp
         {
             run_prepare_to_join();
         }
+        else if (pm_.current_platoon_state == PlatoonState::STANDBY)
+        {
+            continue; //nothing to do
+        }
         // coding oversight
         else
         {
