@@ -1095,7 +1095,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
 
     reason_ss << "Dropping received geofence for unsupported TrafficControl version: " << geofence_msg.choice;
     ROS_WARN_STREAM(reason_ss.str());
-    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::REJECTED), reason_ss.str());
+    //pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::REJECTED), reason_ss.str());
     std::chrono::steady_clock::time_point D = std::chrono::steady_clock::now();
 
     ROS_INFO_STREAM("Time difference at B->C: " << std::chrono::duration_cast<std::chrono::nanoseconds> (C - B).count() << "[ns]" );
@@ -1125,7 +1125,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
     reason_ss.str("");
     reason_ss << "Dropping received TrafficControl message with already handled id: " << boost::uuids::to_string(id);
     ROS_DEBUG_STREAM(reason_ss.str());
-    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::ACKNOWLEDGED), reason_ss.str());
+    //pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::ACKNOWLEDGED), reason_ss.str());
     
     std::chrono::steady_clock::time_point G = std::chrono::steady_clock::now();
     ROS_INFO_STREAM("Time difference at A->B: " << std::chrono::duration_cast<std::chrono::nanoseconds> (B - A).count() << "[ns]" );
@@ -1192,7 +1192,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
     std::chrono::steady_clock::time_point M = std::chrono::steady_clock::now();
 
 
-    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::ACKNOWLEDGED), reason_ss.str());
+    //pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::ACKNOWLEDGED), reason_ss.str());
   
     std::chrono::steady_clock::time_point N = std::chrono::steady_clock::now();
 
@@ -1206,7 +1206,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
     std::chrono::steady_clock::time_point O = std::chrono::steady_clock::now();
     reason_ss.str("");
     reason_ss << "Failed to process TCM. " << ex.what();
-    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::REJECTED), reason_ss.str());
+    //pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::REJECTED), reason_ss.str());
     std::chrono::steady_clock::time_point P = std::chrono::steady_clock::now();
     ROS_INFO_STREAM("Time difference at A->B: " << std::chrono::duration_cast<std::chrono::nanoseconds> (B - A).count() << "[ns]" );
     ROS_INFO_STREAM("Time difference at Z->H: " << std::chrono::duration_cast<std::chrono::nanoseconds> (H - Z).count() << "[ns]" );
