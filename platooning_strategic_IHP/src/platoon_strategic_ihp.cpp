@@ -2166,7 +2166,7 @@ namespace platoon_strategic_ihp
 
         // UCLA: determine joining type 
         bool isCutInJoin = plan_type.type == cav_msgs::PlanType::CUT_IN_FROM_DIFFERENT_LANE         &&  !config_.test_front_join;
-        bool isRearJoin = plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR      &&  !config_.test_front_join;
+        bool isRearJoin = plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR      ||  !config_.test_front_join;
         bool isFrontJoin = plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT  ||  config_.test_front_join;
         ROS_DEBUG_STREAM("Joining type: isRearJoin = " << isRearJoin);
         ROS_DEBUG_STREAM("Joining type: isFrontJoin = " << isFrontJoin);
