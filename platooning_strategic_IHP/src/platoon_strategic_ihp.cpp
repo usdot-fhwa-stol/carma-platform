@@ -717,7 +717,7 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("statusParams = " << statusParams);
 
         ROS_DEBUG_STREAM("platoonId = " << platoonId);
-        ROS_DEBUG_STREAM("pm_.currentPlatoonId = " << pm_.currentPlatoonId);
+        ROS_DEBUG_STREAM("pm_.currentPlatoonID = " << pm_.currentPlatoonID);
         // if this message is not for our platoon then ignore it
         if (platoonId.compare(pm_.currentPlatoonID) != 0)
         {
