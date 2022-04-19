@@ -63,7 +63,7 @@ namespace platoon_control_ihp
 		double angular_velocity_ = 0;
 		double steering_angle_ = 0;
 
-		PlatoonControlIHPPluginConfig config_;
+		PlatooningControlPluginConfigIHP config_;
 
 		/**
         * \brief calculates sin of the heading angle to the target point

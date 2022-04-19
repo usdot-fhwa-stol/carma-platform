@@ -19,9 +19,9 @@
 #include <iostream>
 
 /**
- * \brief Stuct containing the algorithm configuration values for the PlatoonControlIHPPlugin
+ * \brief Stuct containing the algorithm configuration values for the PlatooningControlPlugin
  */
-struct PlatoonControlIHPPluginConfig
+struct PlatooningControlPluginConfigIHP
 {
   double timeHeadway = 6.0;
   double standStillHeadway = 12.0;
@@ -36,19 +36,37 @@ struct PlatoonControlIHPPluginConfig
   int cmdTmestamp = 100;
   double integratorMax = 100;
   double integratorMin = -100;
-  double Kdd = 4.5;                             //coefficient for smooth steering
+  double Kdd = 4.5;                             //coeficient for smooth steering
   double wheelBase = 3.09;
   double lowpassGain = 0.5;
   double lookaheadRatio = 2.0;
   double minLookaheadDist = 6.0;
   std::string vehicleID = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
-  int     shutdownTimeout = 200;                // ms 
-  int     ignoreInitialInputs = 0;              // num inputs to throw away after startup
+  // added for gap regulation
+  double vehicleLength = 5.0;     // m
+
+  // UCLA: Added for IHP control 
+  // ---------------------- UCLA: parameters for IHP platoon trajectory regulation ----------------
+  /**
+  * \brief Parameter sets for IHP platoon trajectory regulation algorithm. 
+  * Please refer to the updated design doc for detailed parameter description.
+  */
+  double ss_theta   = 4.0;    // Stanstill determining threshold, in m/s.
+  double standstill = 2.0;    // Stanstill reaction time adjuster, in s.
+  double inter_tau  = 1.5;    // Inter-platoon time gap, refer to bumper to bumper gap time, in s.
+  double intra_tau  = 0.6;    // Intra-platoon time gao, refer to bumper to bumper gap time, in s.
+  double gap_weight = 0.9;    // Weighted ratio for time-gap based calculation, unitless.
+  double time_step  = 5;      // The time step ga regulation algorithm uses to calculate desired position, in s.
+  bool   test_front_join = false;   //Flag to enable/disable front join functionality with two vehicles.
+                                    // Flag can be set to true, to test front join functionality with two vehicles
+                                    // But in normal operating conditions it should be set to false
+  //------------------------------------------------------------------------------------------------
+
   
   
-  friend std::ostream& operator<<(std::ostream& output, const PlatoonControlIHPPluginConfig& c)
+  friend std::ostream& operator<<(std::ostream& output, const PlatooningControlPluginConfigIHP& c)
   {
-    output << "PlatoonControlIHPPluginConfig { " << std::endl
+    output << "InLaneCruisingPluginConfig { " << std::endl
            << "timeHeadway: " << c.timeHeadway << std::endl
            << "standStillHeadway: " << c.standStillHeadway << std::endl
            << "maxAccel: " << c.maxAccel << std::endl
@@ -68,8 +86,6 @@ struct PlatoonControlIHPPluginConfig
            << "lookaheadRatio: " << c.lookaheadRatio << std::endl
            << "minLookaheadDist: " << c.minLookaheadDist << std::endl
            << "vehicleID: " << c.vehicleID << std::endl
-           << "shutdownTimeout: " << c.shutdownTimeout << std::endl
-           << "ignoreInitialInputs: " << c.ignoreInitialInputs << std::endl
            << "}" << std::endl;
     return output;
   }

@@ -29,7 +29,7 @@ namespace platoon_control_ihp
 
     	PIDController();
 
-        PlatoonControlIHPPluginConfig config_;
+        PlatooningControlPluginConfigIHP config_;
     	
     	// ~PIDController();
 

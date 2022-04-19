@@ -27,7 +27,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <math.h>
 #include <carma_utils/CARMAUtils.h>
-#include "platoon_control_worker_ihp.h"
+#include "platoon_control_ihp_worker.h"
 
 
 
