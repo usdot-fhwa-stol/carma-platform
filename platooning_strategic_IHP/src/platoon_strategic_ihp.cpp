@@ -717,7 +717,7 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("statusParams = " << statusParams);
 
         ROS_DEBUG_STREAM("platoonId = " << platoonId);
-        ROS_DEBUG_STREAM("pm_.currentPlatoonI = " << pm_.currentPlatoonI);
+        ROS_DEBUG_STREAM("pm_.currentPlatoonId = " << pm_.currentPlatoonId);
         // if this message is not for our platoon then ignore it
         if (platoonId.compare(pm_.currentPlatoonID) != 0)
         {
@@ -2074,6 +2074,7 @@ namespace platoon_strategic_ihp
                     // We change to follower state and start to actually follow that leader
                     // The platoon manager also need to change the platoon Id to the one that the target leader is using 
                     pm_.current_platoon_state = PlatoonState::FOLLOWER;
+                    ROS_DEBUG_STREAM("pm_.currentPlatoonID: " << pm_.currentPlatoonID);
                     pm_.changeFromLeaderToFollower(pm_.currentPlatoonID, msg.header.sender_id);
                     ROS_DEBUG_STREAM("The leader " << msg.header.sender_id << " agreed on our join. Change to follower state.");
                     ROS_WARN("changed to follower");
