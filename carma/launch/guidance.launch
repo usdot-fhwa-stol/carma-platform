@@ -121,6 +121,9 @@
   <!-- Platooning Control Plugin -->
   <include file="$(find platoon_control)/launch/platoon_control.launch" />
 
+  <!-- Platooning Control IHP Plugin -->
+  <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" />
+
   <!-- Twist Filter -->
   <group>
     <remap from="/accel_cmd" to="accel_cmd"/>

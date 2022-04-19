@@ -19,9 +19,9 @@
 #include <iostream>
 
 /**
- * \brief Stuct containing the algorithm configuration values for the PlatooningControlPlugin
+ * \brief Stuct containing the algorithm configuration values for the PlatoonControlIHPPlugin
  */
-struct PlatooningControlPluginConfig
+struct PlatoonControlIHPPluginConfig
 {
   double timeHeadway = 6.0;
   double standStillHeadway = 12.0;
@@ -46,9 +46,9 @@ struct PlatooningControlPluginConfig
   int     ignoreInitialInputs = 0;              // num inputs to throw away after startup
   
   
-  friend std::ostream& operator<<(std::ostream& output, const PlatooningControlPluginConfig& c)
+  friend std::ostream& operator<<(std::ostream& output, const PlatoonControlIHPPluginConfig& c)
   {
-    output << "PlatooningControlPluginConfig { " << std::endl
+    output << "PlatoonControlIHPPluginConfig { " << std::endl
            << "timeHeadway: " << c.timeHeadway << std::endl
            << "standStillHeadway: " << c.standStillHeadway << std::endl
            << "maxAccel: " << c.maxAccel << std::endl
