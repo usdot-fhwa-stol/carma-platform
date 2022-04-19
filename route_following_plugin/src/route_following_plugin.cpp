@@ -772,11 +772,20 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
                     interm.push_back(static_cast<lanelet::ConstLanelet>(target_following_lanelet));
                     // a new shortest path, via the target_following_lanelet is calculated and used an alternative shortest path
                     auto new_shortestpath = routing_graph->shortestPathVia(current_lanelet, interm, original_shortestpath.back());
-                    ROS_DEBUG_STREAM("a new shortestpath is generated");
+                    ROS_DEBUG_STREAM("a new shortestpath is generated to return to original shortestpath");
                     // routeCb is called to update latest_maneuver_plan_
                     if (new_shortestpath) this->latest_maneuver_plan_ = routeCb(new_shortestpath.get());
                     break;
                 }
+            }
+            else
+            {
+                // a new shortest path, via the current_lanelet is calculated and used an alternative shortest path
+                auto new_shortestpath = routing_graph->shortestPathVia(current_lanelet, current_lanelet, original_shortestpath.back());
+                ROS_DEBUG_STREAM("Cannot return to the original shortestpath from adjacent lanes, so a new shortestpath is generated");
+                // routeCb is called to update latest_maneuver_plan_
+                if (new_shortestpath) this->latest_maneuver_plan_ = routeCb(new_shortestpath.get());
+                break;
             }
         }
         else
