@@ -265,6 +265,21 @@ namespace platoon_strategic_ihp
         double getPlatoonFrontDowntrackDistance();
 
         /**
+         * \brief UCLA: Return the time headway summation of all predecessors, in s.
+         */
+        double getPredecessorTimeHeadwaySum();
+        
+        /**
+         * \brief UCLA: Return the speed of the preceding vehicle, in m/s.
+         */
+        double getPredecessorSpeed();
+
+        /**
+         * \brief UCLA: Return the position of the preceding vehicle, in m.
+         */
+        double getPredecessorPosition();
+        
+        /**
         * \brief UCLA: Return follower's desired position (i.e., downtrack, in m) that maintains the desired 
         * intra-platoon time gap, based on IHP platoon trajectory regulation algorithm.
         * 

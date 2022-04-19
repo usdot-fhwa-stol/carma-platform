@@ -109,7 +109,7 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("It seems that the current leader is joining another platoon.");
                 ROS_DEBUG_STREAM("So the platoon ID is changed from " << currentPlatoonID << " to " << platoonId);
                 currentPlatoonID = platoonId;
-                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
+                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, ctDistance, curSpeed); 
             } 
             else if (currentPlatoonID == platoonId)
             {
@@ -129,7 +129,7 @@ namespace platoon_strategic_ihp
             if (currentPlatoonID == platoonId)
             {
                 ROS_DEBUG_STREAM("This STATUS messages is from our platoon. Updating the info...");
-                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
+                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, ctDistance, curSpeed); 
             }
             else
             {
@@ -200,6 +200,8 @@ namespace platoon_strategic_ihp
             }
         }
     }
+    
+    // TODO: Place holder for delete member info due to dissovle operation.
 
     // Get the platoon size.
     int PlatoonManager::getTotalPlatooningSize() {
@@ -270,12 +272,13 @@ namespace platoon_strategic_ihp
     int PlatoonManager::allPredecessorFollowing(){
 
         ///***** Case Zero *****///
-        // If the host vehicle is the second vehicle in this platoon,we will always follow the platoon leader in front of host vehicle
-        if(hostPosInPlatoon_ == 1) {
+        // If the host vehicle is the second follower of a platoon, it will always follow the platoon leader in the front 
+        if(getNumberOfVehicleInFront() == 1)
+        {
+            // If the host is the second vehicle, then follow the leader.
             ROS_DEBUG_STREAM("As the second vehicle in the platoon, it will always follow the leader. Case Zero");
             return 0;
         }
-
         ///***** Case One *****///
         // If there weren't a leader in the previous time step, follow the first vehicle (i.e., the platoon leader) as default.
         if(previousFunctionalDynamicLeaderID_ == "") {
@@ -490,9 +493,16 @@ namespace platoon_strategic_ihp
     
     // Find the maximum spacing violation vehicle that closest to the host vehicle. If no violation found, return -1.
     int PlatoonManager::findMaximumSpacingViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const {
+        // UCLA: Add maxAllowableHeadaway adjuster to increase the threshold during gap creating period.
+        double maxAllowableHeadaway_adjusted = config_.maxAllowableHeadaway;
+        if (isCreateGap) {
+            // adjust maximum allowed headway to allow for a bigger gap 
+            maxAllowableHeadaway_adjusted = maxAllowableHeadaway_adjusted*(1 + config_.createGapAdjuster);
+            } 
+        
         //  Due to descending downtrack order, the search starts from the platoon rear, which corresponds to last in list.
         for(int i = timeHeadways.size()-1; i >= 0 ; i--) {
-            if(timeHeadways[i] > config_.maxAllowableHeadaway) // in s
+            if(timeHeadways[i] > maxAllowableHeadaway_adjusted) // in s
             {
                 return i;
             }
@@ -604,8 +614,60 @@ namespace platoon_strategic_ihp
         return platoon[0].vehiclePosition - platoon[platoon.size() - 1].vehiclePosition + config_.vehicleLength; 
     }
 
-
     // ---------------------- UCLA: IHP platoon trajectory regulation --------------------------- //
+    // Calculate the time headway summation of the vehicle in front of the host
+    double PlatoonManager::getPredecessorTimeHeadwaySum()
+    {
+        // 1. read dtd vector 
+        // dtd vector 
+        std::vector<double> downtrackDistance(platoon.size());
+        for (size_t i = 0; i < platoon.size(); i++)
+        {
+            downtrackDistance[i] = platoon[i].vehiclePosition;
+        }
+        // speed vector
+        std::vector<double> speed(platoon.size());
+        for (size_t i = 0; i < platoon.size(); i++)
+        {
+            speed[i] = platoon[i].vehicleSpeed;
+        }
+
+        // 2. find the summation of "veh_len/veh_speed" for all predecessors
+        double tmp_time_hdw = 0.0;
+        double cur_dtd;
+        for (size_t index = 0; index < downtrackDistance.size(); index++)
+        {
+            cur_dtd = downtrackDistance[index];
+            if (cur_dtd > getCurrentDowntrackDistance())
+            {
+                // greater dtd ==> in front of host veh 
+                tmp_time_hdw += config_.vehicleLength / (speed[index] + 0.00001);
+            }
+        }
+
+        // Return the calcualted value
+        return tmp_time_hdw;
+    }
+
+    // Return the predecessor speed 
+    double PlatoonManager::getPredecessorSpeed()
+    {
+        // Read host index. 
+        int host_platoon_index = getNumberOfVehicleInFront();
+
+        // Return speed
+        return platoon[host_platoon_index].vehicleSpeed; // m/s 
+    }
+
+    // Return the predecessor location
+    double PlatoonManager::getPredecessorPosition()
+    {
+        // Read host index. 
+        int host_platoon_index = getNumberOfVehicleInFront();
+
+        // Return speed
+        return platoon[host_platoon_index].vehiclePosition; // m
+    }
 
     // Trajectory based platoon trajectory regulation.
     double PlatoonManager::getIHPDesPosFollower(double time_step)
@@ -694,7 +756,7 @@ namespace platoon_strategic_ihp
         double pos_des = config_.gap_weight*pos_g + (1.0 - config_.gap_weight)*pos_h;
         // double des_spd = (pos_des - ego_pos) / time_step;
 
-        // ---> 4.4 return IHP calculated desired speed
+        // ---> 4.4 return IHP calculated desired location
         return pos_des;
     }
 
