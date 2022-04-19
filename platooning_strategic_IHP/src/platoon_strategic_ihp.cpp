@@ -955,7 +955,7 @@ namespace platoon_strategic_ihp
         // a negotiation, and host also need to care about operation from members in our current platoon.
         bool isPlatoonInfoMsg = strategyParams.rfind(OPERATION_INFO_TYPE, 0) == 0;            // INFO message only broadcast by leader and single CAV.
         bool isPlatoonStatusMsg = strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0;        // STATUS message broadcast by all platoon members.
-        bool isInNegotiation = pm_.current_plan.valid  ||  pm_.currentPlatoonID.length() > 0; // In negotiation indicates host is not available to become a joiner
+        bool isInNegotiation = pm_.current_plan.valid  ||  pm_.currentPlatoonID.compare(pm_.dummyID) != 0; // In negotiation indicates host is not available to become a joiner
                                                                                               // (i.e., not currently in a platoon or trying to join a platoon).
         ROS_DEBUG_STREAM("Top of mob_op_cb_leader, isInNegotiation = " << isInNegotiation);
 
@@ -1052,10 +1052,7 @@ namespace platoon_strategic_ihp
                 pm_.current_plan = ActionPlan(true, request.header.timestamp, request.header.plan_id, senderId);
 
                 // If we are asking to join an actual platoon (not a solo vehicle), then save its ID for later use
-
-
-                //TODO compare against all zeros, not zero length
-                if (platoonId.length() > 0)
+                if (platoonId.compare(pm_.dummyID) != 0)
                 {
                     pm_.targetPlatoonID = platoonId;
                     ROS_DEBUG_STREAM("Detected neighbor as a real platoon & storing its ID: " << platoonId);
@@ -1144,10 +1141,7 @@ namespace platoon_strategic_ihp
                 pm_.current_plan = ActionPlan(true, request.header.timestamp, request.header.plan_id, senderId);
 
                 // If we are asking to join an actual platoon (not a solo vehicle), then save its ID for later use
-
-                //TODO - this comparison needs to be against all-zeros, not empty
-                
-                if (platoonId.length() > 0)
+                if (platoonId.compare(pm_.dummyID) != 0)
                 {
                     pm_.targetPlatoonID = platoonId;
                     ROS_DEBUG_STREAM("Detected neighbor as a real platoon & storing its ID: " << platoonId);
@@ -1511,7 +1505,7 @@ namespace platoon_strategic_ihp
             pm_.current_platoon_state = PlatoonState::LEADER;
 
             // If we are not already in a platoon, then use this activity plan ID for the newly formed platoon
-            if (pm_.currentPlatoonID.length() == 0)
+            if (pm_.currentPlatoonID.compare(pm_.dummyID) == 0)
             {
                 pm_.currentPlatoonID = msg.header.plan_id;
             }
@@ -2669,7 +2663,7 @@ namespace platoon_strategic_ihp
             // which allows us to start sending necessary op STATUS messages
             pm_.current_plan = ActionPlan(true, currentTime, planId, pm_.current_plan.peerId);
             pm_.currentPlatoonID = planId;
-            if (pm_.targetPlatoonID.length() > 0)
+            if (pm_.targetPlatoonID.compare(pm_.dummyID) != 0)
             {
                 pm_.currentPlatoonID = pm_.targetPlatoonID;
                 pm_.targetPlatoonID = "";
