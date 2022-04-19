@@ -59,19 +59,19 @@ file(GLOB_RECURSE headers */*.hpp */*.h)
 add_executable( ${PROJECT_NAME}
   ${headers}
   src/platoon_control_ihp.cpp
-  src/main.cpp)
+  src/main_ihp.cpp)
 
 
-add_library(platoon_control_ihp_plugin_lib
+add_library(platoon_control_plugin_ihp_lib
  src/platoon_control_ihp.cpp
- src/platoon_control_ihp_worker.cpp
- src/pid_controller.cpp
- src/pure_pursuit.cpp
+ src/platoon_control_worker_ihp.cpp
+ src/pid_controller_ihp.cpp
+ src/pure_pursuit_ihp.cpp
 )
 
-add_dependencies(platoon_control_ihp_plugin_lib ${catkin_EXPORTED_TARGETS})
+add_dependencies(platoon_control_plugin_ihp_lib ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME} platoon_control_ihp_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} platoon_control_plugin_ihp_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 
 #############
@@ -86,7 +86,7 @@ install(DIRECTORY include
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} platoon_control_ihp_plugin_lib
+install(TARGETS ${PROJECT_NAME} platoon_control_plugin_ihp_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -111,7 +111,7 @@ catkin_add_gmock(${PROJECT_NAME}-test
   test/test_main.cpp)
 
 if(TARGET ${PROJECT_NAME}-test)
-  target_link_libraries(${PROJECT_NAME}-test platoon_control_ihp_plugin_lib ${catkin_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME}-test platoon_control_plugin_ihp_lib ${catkin_LIBRARIES})
 endif()
 
 if(CATKIN_ENABLE_TESTING)

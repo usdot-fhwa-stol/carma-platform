@@ -19,18 +19,18 @@
 namespace platoon_control_ihp
 {
 // @SONAR_STOP@
-    PlatoonControlIHPPlugin::PlatoonControlIHPPlugin()
+    PlatoonControlPluginIHP::PlatoonControlPluginIHP()
     {
-        pcw_ = PlatoonControlIHPWorker();
+        pcw_ = PlatoonControlWorkerIHP();
     }
     
 
-    void PlatoonControlIHPPlugin::initialize(){
+    void PlatoonControlPluginIHP::initialize(){
 
     	nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
 
-        PlatoonControlIHPPluginConfig config;
+        PlatooningControlPluginConfigIHP config;
 
         pnh_->param<double>("timeHeadway", config.timeHeadway, config.timeHeadway);
         pnh_->param<double>("standStillHeadway", config.standStillHeadway, config.standStillHeadway);
@@ -49,26 +49,20 @@ namespace platoon_control_ihp
         pnh_->param<double>("lowpassGain", config.lowpassGain, config.lowpassGain);
         pnh_->param<double>("lookaheadRatio", config.lookaheadRatio, config.lookaheadRatio);
         pnh_->param<double>("minLookaheadDist", config.minLookaheadDist, config.minLookaheadDist);
-
-        // Global params (from vehicle config)
         pnh_->getParam("/vehicle_id", config.vehicleID);
         pnh_->getParam("/vehicle_wheel_base", config.wheelBase);
-        pnh_->getParam("/control_plugin_shutdown_timeout", config.shutdownTimeout);
-        pnh_->getParam("/control_plugin_ignore_initial_inputs", config.ignoreInitialInputs);
 
         pcw_.updateConfigParams(config);
         config_ = config;
 
 	  	// Trajectory Plan Subscriber
-        //   TODO: update trajectory executor to call this plugin
-		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("PlatoonControlIHPPlugin/plan_trajectory", 1, &PlatoonControlIHPPlugin::trajectoryPlan_cb, this);
+		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("PlatooningControlPlugin/plan_trajectory", 1, &PlatoonControlPluginIHP::trajectoryPlan_cb, this);
         
         // Current Twist Subscriber
-        current_twist_sub_ = nh_->subscribe<geometry_msgs::TwistStamped>("current_velocity", 1, &PlatoonControlIHPPlugin::currentTwist_cb, this);
+        current_twist_sub_ = nh_->subscribe<geometry_msgs::TwistStamped>("current_velocity", 1, &PlatoonControlPluginIHP::currentTwist_cb, this);
 
         // Platoon Info Subscriber
-        // TODO consider changing the topic name so it is specific to ihp plugins (not sure if it is necessary)
-        platoon_info_sub_ = nh_->subscribe<cav_msgs::PlatooningInfo>("platoon_info", 1, &PlatoonControlIHPPlugin::platoonInfo_cb, this);
+        platoon_info_sub_ = nh_->subscribe<cav_msgs::PlatooningInfo>("platoon_info", 1, &PlatoonControlPluginIHP::platoonInfo_cb, this);
 
 		// Control Publisher
 		twist_pub_ = nh_->advertise<geometry_msgs::TwistStamped>("twist_raw", 5, true);
@@ -76,11 +70,11 @@ namespace platoon_control_ihp
         platoon_info_pub_ = nh_->advertise<cav_msgs::PlatooningInfo>("platooning_info", 1, true);
 
 
-        pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlIHPPlugin::pose_cb, this);
+        pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlPluginIHP::pose_cb, this);
 
 		plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-        plugin_discovery_msg_.name = "PlatoonControlIHPPlugin";
-        plugin_discovery_msg_.version_id = "v1.0";
+        plugin_discovery_msg_.name = "PlatooningControlPlugin";
+        plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = true;
         plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
@@ -89,73 +83,35 @@ namespace platoon_control_ihp
 
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
-            [this](const auto&) { plugin_discovery_pub_.publish(plugin_discovery_msg_);
-                                  ROS_DEBUG_STREAM("10hz timer callback called");});
-        
-        ROS_DEBUG_STREAM("discovery timer created");
-        
-        control_pub_timer_ = pnh_->createTimer(
-            ros::Duration(ros::Rate(30.0)),
-            [this](const auto&) { ROS_DEBUG_STREAM("30hz timer callback called"); 
-                                  controlTimerCb();  }); 
-        
-        ROS_DEBUG_STREAM("control timer created ");
+            [this](const auto&) { plugin_discovery_pub_.publish(plugin_discovery_msg_); });
     }
 
                                     
-    void PlatoonControlIHPPlugin::run(){
+    void PlatoonControlPluginIHP::run(){
         initialize();
         ros::CARMANodeHandle::spin();
     }
 
-    bool PlatoonControlIHPPlugin::controlTimerCb()
-    {
-        ROS_DEBUG_STREAM("In control timer callback ");
-        // If it has been a long time since input data has arrived then reset the input counter and return
-        // Note: this quiets the controller after its input stream stops, which is necessary to allow 
-        // the replacement controller to publish on the same output topic after this one is done.
-        long current_time = ros::Time::now().toNSec() / 1000000;
-        ROS_DEBUG_STREAM("current_time = " << current_time << ", prev_input_time_ = " << prev_input_time_ << ", input counter = " << consecutive_input_counter_);
-        if (current_time - prev_input_time_ > config_.shutdownTimeout)
-        {
-            ROS_DEBUG_STREAM("returning due to timeout.");
-            consecutive_input_counter_ = 0;
-            return false;
-        }
 
-        // If there have not been enough consecutive timely inputs then return (waiting for
-        // previous control plugin to time out and stop publishing, since it uses same output topic)
-        if (consecutive_input_counter_ <= config_.ignoreInitialInputs)
-        {
-            ROS_DEBUG_STREAM("returning due to first data input");
-            return false;
-        }
-
-        cav_msgs::TrajectoryPlanPoint second_trajectory_point = latest_trajectory_.trajectory_points[1]; 
-        cav_msgs::TrajectoryPlanPoint lookahead_point = getLookaheadTrajectoryPoint(latest_trajectory_);
-
-        trajectory_speed_ = getTrajectorySpeed(latest_trajectory_.trajectory_points);
+    void  PlatoonControlPluginIHP::trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
         
-        generateControlSignals(second_trajectory_point, lookahead_point); 
-
-        return true;
-    }   
-
-    void  PlatoonControlIHPPlugin::trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp)
-    {
         if (tp->trajectory_points.size() < 2) {
-            ROS_WARN_STREAM("PlatoonControlIHPPlugin cannot execute trajectory as only 1 point was provided");
+            ROS_WARN_STREAM("PlatoonControlPlugin cannot execute trajectory as only 1 point was provided");
             return;
         }
+        cav_msgs::TrajectoryPlanPoint first_trajectory_point = tp->trajectory_points[1]; // TODO this variable appears to be misnamed. It is the second trajectory point
+        cav_msgs::TrajectoryPlanPoint lookahead_point = getLookaheadTrajectoryPoint(*tp);
 
-        latest_trajectory_ = *tp;
-        prev_input_time_ = ros::Time::now().toNSec() / 1000000;
-        ++consecutive_input_counter_;
-        ROS_DEBUG_STREAM("New trajectory plan #" << consecutive_input_counter_ << " at time " << prev_input_time_);
-        ROS_DEBUG_STREAM("tp header time =                " << tp->header.stamp.toNSec() / 1000000);
+        trajectory_speed_ = getTrajectorySpeed(tp->trajectory_points);
+
+    	
+        
+        generateControlSignals(first_trajectory_point, lookahead_point); // TODO this should really be called on a timer against that last trajectory so 30Hz control loop can be achieved
+
+
     }
 
-    cav_msgs::TrajectoryPlanPoint PlatoonControlIHPPlugin::getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan)
+    cav_msgs::TrajectoryPlanPoint PlatoonControlPluginIHP::getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan)
     {   
         cav_msgs::TrajectoryPlanPoint lookahead_point;
 
@@ -201,13 +157,13 @@ namespace platoon_control_ihp
         return lookahead_point;
     }
 
-    void PlatoonControlIHPPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
+    void PlatoonControlPluginIHP::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
         pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
         pcw_.setCurrentPose(pose_msg_);
     }
 
-    void PlatoonControlIHPPlugin::platoonInfo_cb(const cav_msgs::PlatooningInfoConstPtr& msg)
+    void PlatoonControlPluginIHP::platoonInfo_cb(const cav_msgs::PlatooningInfoConstPtr& msg)
     {
         
         platoon_leader_.staticId = msg->leader_id;
@@ -227,19 +183,27 @@ namespace platoon_control_ihp
         pcw_.actual_gap_ = platooing_info_msg.actual_gap;
         pcw_.desired_gap_ = platooing_info_msg.desired_gap;
 
+        // UCLA: Read host platoon position 
+        pcw_.host_platoon_position_ = platooing_info_msg.host_platoon_position;
+        // UCLA: Read the time headway summation of all predecessors   
+        pcw_.current_predecessor_time_headway_sum_ = platooing_info_msg.current_predecessor_time_headway_sum;
+        // UCLA: Read predecessor speed m/s, and DtD position m.
+        pcw_.predecessor_speed_ = platooing_info_msg.predecessor_speed;
+        pcw_.predecessor_position_ = platooing_info_msg.predecessor_position;
+
         platooing_info_msg.host_cmd_speed = pcw_.speedCmd_;
         platoon_info_pub_.publish(platooing_info_msg);
     }
 
 
-    void PlatoonControlIHPPlugin::currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist){
+    void PlatoonControlPluginIHP::currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist){
         current_speed_ = twist->twist.linear.x;
     }
 
 
 // @SONAR_START@
 
-    geometry_msgs::TwistStamped PlatoonControlIHPPlugin::composeTwistCmd(double linear_vel, double angular_vel)
+    geometry_msgs::TwistStamped PlatoonControlPluginIHP::composeTwistCmd(double linear_vel, double angular_vel)
     {
         geometry_msgs::TwistStamped cmd_twist;
         cmd_twist.twist.linear.x = linear_vel;
@@ -248,7 +212,7 @@ namespace platoon_control_ihp
         return cmd_twist;
     }
 
-    autoware_msgs::ControlCommandStamped PlatoonControlIHPPlugin::composeCtrlCmd(double linear_vel, double steering_angle)
+    autoware_msgs::ControlCommandStamped PlatoonControlPluginIHP::composeCtrlCmd(double linear_vel, double steering_angle)
     {
         autoware_msgs::ControlCommandStamped cmd_ctrl;
         cmd_ctrl.header.stamp = ros::Time::now();
@@ -260,9 +224,9 @@ namespace platoon_control_ihp
         return cmd_ctrl;
     }
 
-    void PlatoonControlIHPPlugin::generateControlSignals(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point){
+    void PlatoonControlPluginIHP::generateControlSignals(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point){
 
-        pcw_.setCurrentSpeed(trajectory_speed_); //TODO why this and not the actual vehicle speed?  Method name suggests different use than this.
+        pcw_.setCurrentSpeed(trajectory_speed_);
         // pcw_.setCurrentSpeed(current_speed_);
         pcw_.setLeader(platoon_leader_);
     	pcw_.generateSpeed(first_trajectory_point);
@@ -277,7 +241,7 @@ namespace platoon_control_ihp
     }
 
     // extract maximum speed of trajectory
-    double PlatoonControlIHPPlugin::getTrajectorySpeed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points)
+    double PlatoonControlPluginIHP::getTrajectorySpeed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points)
     {   
         double trajectory_speed = 0;
 
@@ -287,11 +251,9 @@ namespace platoon_control_ihp
         double t1 = (trajectory_points[trajectory_points.size()-1].target_time.toSec() - trajectory_points[0].target_time.toSec());
 
         double avg_speed = d1/t1;
-        ROS_DEBUG_STREAM("trajectory_points size = " << trajectory_points.size() << ", d1 = " << d1 << ", t1 = " << t1 << ", avg_speed = " << avg_speed);
 
         for(size_t i = 0; i < trajectory_points.size() - 2; i++ )
-        {            
-            double dx = trajectory_points[i + 1].x - trajectory_points[i].x;
+        {            double dx = trajectory_points[i + 1].x - trajectory_points[i].x;
             double dy = trajectory_points[i + 1].y - trajectory_points[i].y;
             double d = sqrt(dx*dx + dy*dy); 
             double t = (trajectory_points[i + 1].target_time.toSec() - trajectory_points[i].target_time.toSec());
@@ -305,7 +267,7 @@ namespace platoon_control_ihp
         ROS_DEBUG_STREAM("trajectory speed: " << trajectory_speed);
         ROS_DEBUG_STREAM("avg trajectory speed: " << avg_speed);
 
-        return avg_speed; //TODO: why are 2 speeds being calculated? Which should be returned?
+        return avg_speed;
 
     }
 
