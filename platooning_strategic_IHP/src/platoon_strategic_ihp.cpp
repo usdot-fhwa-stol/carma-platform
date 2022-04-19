@@ -671,10 +671,9 @@ namespace platoon_strategic_ihp
          *              |----------0----------1---------2---------3---------4------|
          */
 
-        std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
-
         std::vector<std::string> inputsParams;
         boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+        ROS_DEBUG_STREAM("inputsParams = " << inputsParams);
 
         std::vector<std::string> ecef_x_parsed;
         boost::algorithm::split(ecef_x_parsed, inputsParams[2], boost::is_any_of(":"));
@@ -708,10 +707,14 @@ namespace platoon_strategic_ihp
          *              |----------0----------1---------2---------3---------4------|
          */
 
+        ROS_DEBUG_STREAM("Entered mob_op_cb_STATUS");
         std::string strategyParams = msg.strategy_params;
         std::string vehicleID = msg.header.sender_id;
         std::string platoonId = msg.header.plan_id;
+        ROS_DEBUG_STREAM("strategyParams = " << strategyParams);
+        ROS_DEBUG_STREAM("platoonId = " << platoonId);
         std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
+        ROS_DEBUG_STREAM("statusParams = " << statusParams);
 
         // if this message is not for our platoon then ignore it
         if (platoonId.compare(pm_.currentPlatoonID) != 0)
@@ -722,6 +725,7 @@ namespace platoon_strategic_ihp
 
         // read ecef from STATUS
         cav_msgs::LocationECEF ecef_loc = mob_op_find_ecef_from_STATUS_params(strategyParams);
+        ROS_DEBUG_STREAM("ecef_loc = " << ecef_loc);
 
         // read Downtrack 
         lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc);
@@ -1044,6 +1048,9 @@ namespace platoon_strategic_ihp
                 pm_.current_plan = ActionPlan(true, request.header.timestamp, request.header.plan_id, senderId);
 
                 // If we are asking to join an actual platoon (not a solo vehicle), then save its ID for later use
+
+
+                //TODO compare against all zeros, not zero length
                 if (platoonId.length() > 0)
                 {
                     pm_.targetPlatoonID = platoonId;
