@@ -1795,6 +1795,8 @@ namespace platoon_strategic_ihp
         double obj_cross_track = wm_->routeTrackPos(incoming_pose).crosstrack;
         bool inTheSameLane = abs(obj_cross_track - current_crosstrack_) < config_.maxCrosstrackError;
         ROS_DEBUG_STREAM("current_cross_track error = " << abs(obj_cross_track - current_crosstrack_));
+        ROS_DEBUG_STREAM("obj_cross_track = " << obj_cross_track);
+        ROS_DEBUG_STREAM("current_crosstrack_ = " << current_crosstrack_);
         ROS_DEBUG_STREAM("inTheSameLane = " << inTheSameLane);
         ROS_DEBUG_STREAM("isTargetVehicle = " << isTargetVehicle);
         ROS_DEBUG_STREAM("isCandidateJoin = " << isCandidateJoin);
