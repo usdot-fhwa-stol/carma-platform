@@ -19,6 +19,7 @@
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_v2x_msgs/msg/psm.hpp>
 #include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/pose_with_covariance.hpp>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/primitives/GPSPoint.h>
 #include <tf2/LinearMath/Quaternion.h>

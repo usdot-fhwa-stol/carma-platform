@@ -2,6 +2,7 @@
 #include <carma_v2x_msgs/msg/psm.hpp>
 #include <motion_computation/impl/psm_to_external_object_helpers.hpp>
 #include <motion_computation/message_conversions.hpp>
+<<<<<<< HEAD
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/logger.hpp>
@@ -11,6 +12,10 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <wgs84_utils/wgs84_utils.h>
 // #include "message_to_external_object_convertor.h"
+=======
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
+>>>>>>> feature/add_psm_to_objects
 
 namespace motion_computation {
 
@@ -49,9 +54,15 @@ void convert(const carma_v2x_msgs::msg::PSM& in_msg, carma_perception_msgs::msg:
 
   /////// Object Type and Size /////////
   // Set the type
+<<<<<<< HEAD
   if (in_msg.basic_type.type == j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PEDESTRIAN ||
       in_msg.basic_type.type == j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PUBLIC_SAFETY_WORKER ||
       in_msg.basic_type.type == j2735_v2x_msgs::msg::PersonalDeviceUserType::AN_ANIMAL)  // Treat animals
+=======
+  if (in_msg.basic_type.type == carma_v2x_msgs::msg::PersonalDeviceUserType::A_PEDESTRIAN ||
+      in_msg.basic_type.type == carma_v2x_msgs::msg::PersonalDeviceUserType::A_PUBLIC_SAFETY_WORKER ||
+      in_msg.basic_type.type == carma_v2x_msgs::msg::PersonalDeviceUserType::AN_ANIMAL)  // Treat animals
+>>>>>>> feature/add_psm_to_objects
                                                                                     // like people
                                                                                     // since we have
                                                                                     // no internal
@@ -66,7 +77,11 @@ void convert(const carma_v2x_msgs::msg::PSM& in_msg, carma_perception_msgs::msg:
     out_msg.size.x = 0.5;
     out_msg.size.y = 0.5;
     out_msg.size.z = 1.0;
+<<<<<<< HEAD
   } else if (in_msg.basic_type.type == j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PEDALCYCLIST) {
+=======
+  } else if (in_msg.basic_type.type == carma_v2x_msgs::msg::PersonalDeviceUserType::A_PEDALCYCLIST) {
+>>>>>>> feature/add_psm_to_objects
     out_msg.object_type =
         carma_perception_msgs::msg::ExternalObject::MOTORCYCLE;  // Currently external object cannot represent bicycles,
                                                                  // but motor cycle seems like the next best choice
@@ -292,7 +307,11 @@ std::vector<geometry_msgs::msg::Pose> sample_2d_linear_motion(const geometry_msg
 
 // NOTE heading will need to be set after calling this
 geometry_msgs::msg::PoseWithCovariance pose_from_gnss(const lanelet::projection::LocalFrameProjector& projector,
+<<<<<<< HEAD
                                                  const tf2::Quaternion& ned_in_map_rotation, const lanelet::GPSPoint& gps_point,
+=======
+                                                 const tf2::Quaternion& ned_in_map_rotation, const GPSPoint& gps_point,
+>>>>>>> feature/add_psm_to_objects
                                                  const double& heading, const double lat_variance,
                                                  const double lon_variance, const double heading_variance) {
   //// Convert the position information into the map frame using the proj
@@ -390,7 +409,11 @@ std::vector<carma_perception_msgs::msg::PredictedState> predicted_poses_to_predi
 
   for (auto p : poses) {
     time += step_size;
+<<<<<<< HEAD
     carma_perception_msgs::msg::PredictedState pred_state;
+=======
+    s carma_perception_msgs::msg::PredictedState pred_state;
+>>>>>>> feature/add_psm_to_objects
     pred_state.header.stamp = time;
     pred_state.header.frame_id = frame;
 
@@ -448,7 +471,11 @@ rclcpp::Time get_psm_timestamp(const carma_v2x_msgs::msg::PSM& in_msg, rclcpp::C
   } else {  // If the utc time of the path history cannot be used to account for minute
             // change over, then we have to default to the sec mark
 
+<<<<<<< HEAD
     RCLCPP_WARN_STREAM_THROTTLE(rclcpp::get_logger("motion_computation::conversion"), *clock.get(), rclcpp::Duration(5, 0).nanoseconds(),
+=======
+    RCLCPP_WARN_STREAM_THROTTLE(rclcpp::get_logger("motion_computation::conversion"), get_clock(), rclcpp::Duration(5, 0),
+>>>>>>> feature/add_psm_to_objects
                                 "PSM PathHistory utc timstamp does not match "
                                 "sec_mark. Unable to determine the minute of "
                                 "the year used for PSM data. Assuming local "
