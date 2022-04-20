@@ -192,6 +192,96 @@ namespace motion_computation
         ASSERT_EQ(test_result.header.stamp, time_stamp);
     }
 
+    TEST(MotionComputationWorker, psmToExternalObject){
+        auto node = std::make_shared<rclcpp::Node>("test_node");
+        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList&){}, node->get_node_logging_interface(), node->get_node_clock_interface());
+
+        // 1 to 1 transform
+        std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
+        std::unique_ptr<std_msgs::msg::String> georeference_ptr = std::make_unique<std_msgs::msg::String>();
+        georeference_ptr->data = base_proj;
+        mcw.georeferenceCallback(move(georeference_ptr));  // Set projection
+
+        std::string map_frame = "map";
+
+        //Test no georef
+        std::unique_ptr<carma_v2x_msgs::msg::PSM> input_ptr1 = std::make_unique<carma_v2x_msgs::msg::PSM>();
+        carma_perception_msgs::msg::ExternalObject output, expected;
+
+        RCLCPP_INFO_STREAM(node->get_logger(), "Running conversion test with empty message");
+        conversion::convert(*input_ptr1, output, map_frame, mcw.prediction_period_, 
+        mcw.prediction_time_step_, *(mcw.map_projector_), mcw.ned_in_map_rotation_,   mcw.node_clock_);
+
+        ASSERT_NEAR(output.header.stamp.sec, builtin_interfaces::msg::Time(node->now()).sec, 60);
+
+        // Test with values assigned
+        //INPUT
+        carma_v2x_msgs::msg::PSM input;
+        input.basic_type.type |= j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PEDESTRIAN;
+        input.sec_mark.millisecond = 60998;
+        input.id.id = {1,2,3,4};
+
+        input.presence_vector |= carma_v2x_msgs::msg::PSM::HAS_PATH_HISTORY;
+        input.path_history.presence_vector |= carma_v2x_msgs::msg::PathHistory::HAS_INITIAL_POSITION;
+        input.path_history.initial_position.presence_vector |= carma_v2x_msgs::msg::FullPositionVector::HAS_UTC_TIME;
+        input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::YEAR;
+        input.path_history.initial_position.utc_time.year.year = 2000;
+        input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::MONTH;
+        input.path_history.initial_position.utc_time.month.month = 10;
+        input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::DAY;
+        input.path_history.initial_position.utc_time.day.day = 2;
+        input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::HOUR;
+        input.path_history.initial_position.utc_time.hour.hour = 20;
+        input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::MINUTE;
+        input.path_history.initial_position.utc_time.minute.minute = 20;
+        input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::SECOND;
+        input.path_history.initial_position.utc_time.second.millisecond = 60998;
+
+        input.speed.velocity = 8.98;
+        // Set Confidence
+        input.accuracy.presence_vector |= carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE;
+        input.accuracy.presence_vector |= carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_AVAILABLE;
+        input.accuracy.semi_major = 217;
+        input.accuracy.semi_minor = 217;
+        input.accuracy.orientation = 60050;
+
+        //Define position
+        input.position.latitude = 0;
+        input.position.longitude = 0;
+        input.position.elevation = 0;
+
+        input.heading.heading = 0;
+
+        input.presence_vector |= carma_v2x_msgs::msg::PSM::HAS_PATH_PREDICTION;
+        input.path_prediction.radius_of_curvature = 50.0;
+        
+        RCLCPP_INFO_STREAM(node->get_logger(), "Running conversion test with defined values");
+
+        std::string projection = "+proj=tmerc +lat_0=0.0 +lon_0=0.0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m "
+                          "+no_defs";
+        std_msgs::msg::String msg;
+        msg.data = projection;
+        lanelet::projection::LocalFrameProjector local_projector(msg.data.c_str());
+
+        carma_perception_msgs::msg::ExternalObject output2;
+        std::unique_ptr<carma_v2x_msgs::msg::PSM> input_ptr2 = std::make_unique<carma_v2x_msgs::msg::PSM>(input);
+        conversion::convert(*input_ptr2, output2, map_frame, mcw.prediction_period_, 
+        mcw.prediction_time_step_, local_projector , mcw.ned_in_map_rotation_,   mcw.node_clock_);
+
+        //compare id
+        int id = 0;
+        for(int i = 0; i < input.id.id.size(); i++){
+            id |= input.id.id[i] << (8 * i);
+        }
+        ASSERT_EQ(id, output2.id);
+        ASSERT_EQ(output2.header.frame_id, map_frame);
+        //check if object size matches pedestrian
+        ASSERT_EQ(output2.size.x, 0.5);
+        ASSERT_EQ(output2.size.y, 0.5);
+        ASSERT_EQ(output2.size.z, 1.0);
+        
+    }
+
     TEST(MotionComputationWorker, mobilityPathToExternalObject)
     {   
         auto node = std::make_shared<rclcpp::Node>("test_node");

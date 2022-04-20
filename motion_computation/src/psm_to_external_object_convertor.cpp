@@ -172,7 +172,7 @@ void convert(const carma_v2x_msgs::msg::PSM& in_msg, carma_perception_msgs::msg:
 
   std::vector<geometry_msgs::msg::Pose> predicted_poses;
 
-  if (in_msg.presence_vector | carma_v2x_msgs::msg::PSM::HAS_PATH_PREDICTION) {
+  if (in_msg.presence_vector & carma_v2x_msgs::msg::PSM::HAS_PATH_PREDICTION) {
     // Based on the vehicle frame used in j2735 positive should be to the right
     // and negative to the left
     predicted_poses =
@@ -331,7 +331,7 @@ geometry_msgs::msg::PoseWithCovariance pose_from_gnss(const lanelet::projection:
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"), "R_m_n (x,y,z,w) : ( " << R_m_n.x() << ", " << R_m_n.y() << ", " << R_m_n.z() << ", " << R_m_n.w());
 
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"), "R_n_h (x,y,z,w) : ( " << R_n_h.x() << ", " << R_n_h.y() << ", " << R_n_h.z() << ", " << R_n_h.w());
-  // TODO: R_h_s not defined, remove or define. Note- its not being used anywhere
+  // TODO: R_h_s not defined, remove or define. Note- its not being used anywhere. In package gnss_to_map_convertor R_h_s is the rotation in sensor frame
   // RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"), "R_h_s (x,y,z,w) : ( " << R_h_s.x() << ", " << R_h_s.y() << ", " << R_h_s.z() << ", " << R_h_s.w());
 
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"), "R_m_s (x,y,z,w) : ( " << R_m_s.x() << ", " << R_m_s.y() << ", " << R_m_s.z() << ", " << R_m_s.w());
@@ -392,7 +392,7 @@ std::vector<carma_perception_msgs::msg::PredictedState> predicted_poses_to_predi
     time += step_size;
     carma_perception_msgs::msg::PredictedState pred_state;
     pred_state.header.stamp = time;
-    // pred_state.frame_id = frame;
+    pred_state.header.frame_id = frame;
 
     pred_state.predicted_position = p;
     pred_state.predicted_position_confidence = 0.9 * initial_pose_confidence;  // Reduce confidence by 10 % per timestep
@@ -405,6 +405,8 @@ std::vector<carma_perception_msgs::msg::PredictedState> predicted_poses_to_predi
 
     output.push_back(pred_state);
   }
+
+  return output;
 }
 
 rclcpp::Time get_psm_timestamp(const carma_v2x_msgs::msg::PSM& in_msg, rclcpp::Clock::SharedPtr clock) {
@@ -421,20 +423,13 @@ rclcpp::Time get_psm_timestamp(const carma_v2x_msgs::msg::PSM& in_msg, rclcpp::C
   // then it can be assumed the initial_position is the same as the PSM data and
   // the utc_time can be used instead of sec_mark
   // clang-format off
-  if ((in_msg.presence_vector & 
-        carma_v2x_msgs::msg::PSM::HAS_PATH_HISTORY) &&
-      (in_msg.path_history.presence_vector & 
-        carma_v2x_msgs::msg::PathHistory::HAS_INITIAL_POSITION) &&
-      (in_msg.path_history.initial_position.presence_vector & 
-        carma_v2x_msgs::msg::FullPositionVector::HAS_UTC_TIME) &&
-      (in_msg.path_history.initial_position.utc_time.presence_vector &
-        j2735_v2x_msgs::msg::DDateTime::YEAR &
-        j2735_v2x_msgs::msg::DDateTime::MONTH &
-        j2735_v2x_msgs::msg::DDateTime::DAY &
-        j2735_v2x_msgs::msg::DDateTime::HOUR &
-        j2735_v2x_msgs::msg::DDateTime::MINUTE &
-        j2735_v2x_msgs::msg::DDateTime::SECOND) &&
-      in_msg.sec_mark.millisecond == in_msg.path_history.initial_position.utc_time.second.millisecond) {
+  if ((in_msg.path_history.initial_position.utc_time.presence_vector & j2735_v2x_msgs::msg::DDateTime::YEAR) &&
+        (in_msg.path_history.initial_position.utc_time.presence_vector & j2735_v2x_msgs::msg::DDateTime::MONTH) &&
+        (in_msg.path_history.initial_position.utc_time.presence_vector & j2735_v2x_msgs::msg::DDateTime::DAY) &&
+        (in_msg.path_history.initial_position.utc_time.presence_vector & j2735_v2x_msgs::msg::DDateTime::HOUR) &&
+        (in_msg.path_history.initial_position.utc_time.presence_vector & j2735_v2x_msgs::msg::DDateTime::MINUTE) &&
+        (in_msg.path_history.initial_position.utc_time.presence_vector & j2735_v2x_msgs::msg::DDateTime::SECOND) &&
+      (in_msg.sec_mark.millisecond == in_msg.path_history.initial_position.utc_time.second.millisecond)) {
     // clang-format on
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"),
                         "Using UTC time of path history to determine PSM "
@@ -452,7 +447,7 @@ rclcpp::Time get_psm_timestamp(const carma_v2x_msgs::msg::PSM& in_msg, rclcpp::C
     utc_time_of_current_psm = boost::posix_time::ptime(utc_day) + time_of_day;
   } else {  // If the utc time of the path history cannot be used to account for minute
             // change over, then we have to default to the sec mark
-    
+
     RCLCPP_WARN_STREAM_THROTTLE(rclcpp::get_logger("motion_computation::conversion"), *clock.get(), rclcpp::Duration(5, 0).nanoseconds(),
                                 "PSM PathHistory utc timstamp does not match "
                                 "sec_mark. Unable to determine the minute of "

@@ -32,7 +32,7 @@
   <depend>std_msgs</depend>
   <depend>carma_perception_msgs</depend>
   <depend>carma_v2x_msgs</depend>
-  <depend>motion_predict_ros2</depend>
+  <depend>motion_predict</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>

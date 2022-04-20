@@ -27,8 +27,8 @@
 #include <carma_v2x_msgs/msg/mobility_path.hpp>
 #include <carma_v2x_msgs/msg/psm.hpp>
 #include <functional>
-#include <motion_predict_ros2/motion_predict.hpp>
-#include <motion_predict_ros2/predict_ctrv.hpp>
+#include <motion_predict/motion_predict.hpp>
+#include <motion_predict/predict_ctrv.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <tuple>
@@ -155,6 +155,7 @@ class MotionComputationWorker {
 
   // Unit Test Accessors
   FRIEND_TEST(MotionComputationWorker, mobilityPathToExternalObject);
+  FRIEND_TEST(MotionComputationWorker, psmToExternalObject);
 };
 
 }  // namespace motion_computation
