@@ -213,8 +213,8 @@ namespace platoon_strategic_ihp
     void PlatoonManager::clearActionPlan()
     {
         current_plan.valid = false;
-        current_plan.planId = "";
-        current_plan.peerId = "";
+        current_plan.planId = dummyID;
+        current_plan.peerId = dummyID;
         // Leave the platoon & leader IDs alone since we might continue to be in one
     }
         

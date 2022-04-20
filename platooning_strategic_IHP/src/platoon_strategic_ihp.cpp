@@ -2081,14 +2081,14 @@ namespace platoon_strategic_ihp
                     // Clear out any platooning plan we don't need
                     if (pm_.getTotalPlatooningSize() == 1)
                     {
-                        pm_.currentPlatoonID = "";
-                        pm_.platoonLeaderID = "";
+                        pm_.currentPlatoonID = pm_.dummyID;
+                        pm_.platoonLeaderID = pm_.dummyID;
                     }
                 }
 
                 // Clear our current join plan either way
                 pm_.clearActionPlan();
-                pm_.targetPlatoonID = "";
+                pm_.targetPlatoonID = pm_.dummyID;
             }
             else
             {
@@ -2242,9 +2242,9 @@ namespace platoon_strategic_ihp
                     pm_.clearActionPlan();
                     if (pm_.getTotalPlatooningSize() == 1)
                     {
-                        pm_.currentPlatoonID = "";
-                        pm_.platoonLeaderID = "";
-                        pm_.targetPlatoonID = "";
+                        pm_.currentPlatoonID = pm_.dummyID;
+                        pm_.platoonLeaderID = pm_.dummyID;
+                        pm_.targetPlatoonID = pm_.dummyID;
                     }
                 }
             }
@@ -2665,7 +2665,7 @@ namespace platoon_strategic_ihp
             if (pm_.targetPlatoonID.compare(pm_.dummyID) != 0)
             {
                 pm_.currentPlatoonID = pm_.targetPlatoonID;
-                pm_.targetPlatoonID = "";
+                pm_.targetPlatoonID = pm_.dummyID;
             }
             pm_.platoonLeaderID = pm_.current_plan.peerId;
         }
@@ -2704,9 +2704,9 @@ namespace platoon_strategic_ihp
 
             //clear plan validity & end
             pm_.clearActionPlan();
-            pm_.currentPlatoonID = "";
-            pm_.platoonLeaderID = "";
-            pm_.targetPlatoonID = "";
+            pm_.currentPlatoonID = pm_.dummyID;
+            pm_.platoonLeaderID = pm_.dummyID;
+            pm_.targetPlatoonID = pm_.dummyID;
             return;
         }
 
@@ -2724,9 +2724,9 @@ namespace platoon_strategic_ihp
 
                 // End the method if time out.
                 pm_.clearActionPlan();
-                pm_.currentPlatoonID = "";
-                pm_.platoonLeaderID = "";
-                pm_.targetPlatoonID = "";
+                pm_.currentPlatoonID = pm_.dummyID;
+                pm_.platoonLeaderID = pm_.dummyID;
+                pm_.targetPlatoonID = pm_.dummyID;
                 return;
             } 
         }
@@ -2821,7 +2821,7 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("CandidateLeader state is timeout, changing back to PlatoonLeaderState.");
             pm_.current_platoon_state = PlatoonState::LEADER;
             pm_.clearActionPlan();
-            pm_.targetPlatoonID = "";
+            pm_.targetPlatoonID = pm_.dummyID;
         }
 
         // Task 2: publish status message
