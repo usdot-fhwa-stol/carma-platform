@@ -179,6 +179,11 @@ namespace platoon_strategic_ihp
         void clearActionPlan();
 
         /**
+         * \brief Resets all platoon variables that might indicate other platoon members; sets the host back to solo vehicle.
+         */
+        void resetPlatoon();
+
+        /**
         * \brief Returns dynamic leader of the host vehicle.
         * 
         * \return The current dynamic leader as a vehcile object. 

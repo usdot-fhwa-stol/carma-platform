@@ -1813,7 +1813,7 @@ namespace platoon_strategic_ihp
         {
             ROS_DEBUG_STREAM("Received platoon request from vehicle id = " << msg.header.sender_id);
             ROS_DEBUG_STREAM("The request type is " << msg.plan_type.type << " and we choose to ignore");
-            return MobilityRequestResponse::NO_RESPONSE;
+            return MobilityRequestResponse::NO_RESPONSE;  //TODO: this should be a NACK
         }
     }
     
@@ -2081,14 +2081,12 @@ namespace platoon_strategic_ihp
                     // Clear out any platooning plan we don't need
                     if (pm_.getTotalPlatooningSize() == 1)
                     {
-                        pm_.currentPlatoonID = pm_.dummyID;
-                        pm_.platoonLeaderID = pm_.dummyID;
+                        pm_.resetPlatoon();
                     }
                 }
 
                 // Clear our current join plan either way
                 pm_.clearActionPlan();
-                pm_.targetPlatoonID = pm_.dummyID;
             }
             else
             {
@@ -2228,7 +2226,7 @@ namespace platoon_strategic_ihp
                 }
 
                 // Current leader of an actual platoon (to be in this method host is in leader state)
-                else if(pm_.platoon.size() >= 2)
+                else if(pm_.getTotalPlatooningSize() >= 2)
                 {
                     //TODO future: add logic here to allow two platoons to join together
 
@@ -2240,12 +2238,7 @@ namespace platoon_strategic_ihp
                     ROS_DEBUG_STREAM("Received negative response for plan id = " << pm_.current_plan.planId);
                     // Forget about the previous plan totally
                     pm_.clearActionPlan();
-                    if (pm_.getTotalPlatooningSize() == 1)
-                    {
-                        pm_.currentPlatoonID = pm_.dummyID;
-                        pm_.platoonLeaderID = pm_.dummyID;
-                        pm_.targetPlatoonID = pm_.dummyID;
-                    }
+                    pm_.resetPlatoon();
                 }
             }
             else
@@ -2702,11 +2695,8 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("The current leader aborting state is timeout. Change back to leader state.");
             pm_.current_platoon_state = PlatoonState::LEADER;
 
-            //clear plan validity & end
+            //clear plan validity & end; leave platoon info alone, as we may still be leading a valid platoon
             pm_.clearActionPlan();
-            pm_.currentPlatoonID = pm_.dummyID;
-            pm_.platoonLeaderID = pm_.dummyID;
-            pm_.targetPlatoonID = pm_.dummyID;
             return;
         }
 
@@ -2722,11 +2712,12 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("The current plan did not receive any response. Abort and change to leader state.");
                 pm_.current_platoon_state = PlatoonState::LEADER;
 
-                // End the method if time out.
+                // Clean out current plan, and platoon info if the joiner would only be the second member
                 pm_.clearActionPlan();
-                pm_.currentPlatoonID = pm_.dummyID;
-                pm_.platoonLeaderID = pm_.dummyID;
-                pm_.targetPlatoonID = pm_.dummyID;
+                if (pm_.getTotalPlatooningSize() == 2)
+                {
+                    pm_.resetPlatoon();
+                })
                 return;
             } 
         }
@@ -2743,7 +2734,6 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " m");
         ROS_DEBUG_STREAM("Since we have max allowed gap as " << config_.desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
         ROS_DEBUG_STREAM("The current gap to joiner is " << currentGap << " m");
-        ROS_DEBUG_STREAM("current_plan valid = " << pm_.current_plan.valid << ", isFirstLeaderAbortRequest = " << isFirstLeaderAbortRequest_);
 
         // NOTE: The front join depends upon the joiner to publish op STATUS messages with this platoon's ID, then host receives at least one
         // and thereby adds the joiner to the platoon record. This process requires host's mob_req_cb_leader() to ACK the join request, then 
@@ -2756,6 +2746,7 @@ namespace platoon_strategic_ihp
         // Check if gap is big enough and if there is no currently active plan and this method has been called several times
         // Add a condition to prevent sending repeated requests (Note: This is a same-lane maneuver, so no need to consider lower bound of joining gap.)
         ++numLeaderAbortingCalls_;
+        ROS_DEBUG_STREAM("numLeaderAbortingCalls = " << numLeaderAbortingCalls_ << ", max = " << config_.maxLeaderAbortingCalls);
         if (currentGap <= maxJoinGap  &&  !pm_.current_plan.valid  &&  numLeaderAbortingCalls_ > config_.maxLeaderAbortingCalls) 
         {
             //TODO: this is just a test - remove when satisfied that this var doesn't need to be in the above if statement
@@ -2821,7 +2812,7 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("CandidateLeader state is timeout, changing back to PlatoonLeaderState.");
             pm_.current_platoon_state = PlatoonState::LEADER;
             pm_.clearActionPlan();
-            pm_.targetPlatoonID = pm_.dummyID;
+            pm_.resetPlatoon();
         }
 
         // Task 2: publish status message

@@ -215,7 +215,23 @@ namespace platoon_strategic_ihp
         current_plan.valid = false;
         current_plan.planId = dummyID;
         current_plan.peerId = dummyID;
+        targetPlatoonID = dummyID;
         // Leave the platoon & leader IDs alone since we might continue to be in one
+    }
+
+    // Reset variables to indicate there is no platoon - host is a solo vehicle again
+    void PlatoonManager::resetPlatoon()
+    {
+        // Remove any elements in the platoon vector other than the host vehicle
+        if (platoon.size() > hostPosInPlatoon_ + 1)
+        {
+            platoon.erase(platoon.begin() + hostPosInPlatoon_ + 1, platoon.end());
+        }
+        platoon.erase(platoon.begin(), platoon.begin() + hostPosInPlatoon_);
+
+        // Clean up other variables
+        currentPlatoonID = dummyID;
+        platoonLeaderID = dummyID;
     }
         
     // Find the downtrack distance of the last vehicle of the platoon, in m.    
