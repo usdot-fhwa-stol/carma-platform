@@ -46,7 +46,6 @@ namespace platoon_strategic_ihp
       platooning_info_publisher_(platooning_info_publisher), wm_(wm), config_(config)
     {
         ROS_DEBUG_STREAM("Top of PlatoonStrategicIHP ctor.");
-        pm_ = PlatoonManager();
         std::string hostStaticId = config_.vehicleID; //static ID for this vehicle
         pm_.HostMobilityId = hostStaticId;
         
