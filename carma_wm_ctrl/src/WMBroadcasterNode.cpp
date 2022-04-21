@@ -95,8 +95,11 @@ int WMBroadcasterNode::run()
   double config_limit;
   double lane_max_width;
   std::string vehicle_id;
+  double traffic_control_request_period;
   pnh_.getParam("max_lane_width", lane_max_width);
   wmb_.setMaxLaneWidth(lane_max_width);
+
+  pnh_.getParam("traffic_control_request_period", traffic_control_request_period);
 
   pnh2_.getParam("/config_speed_limit", config_limit);
   wmb_.setConfigSpeedLimit(config_limit);
@@ -108,7 +111,7 @@ int WMBroadcasterNode::run()
   pnh2_.getParam("/vehicle_participant_type", participant);
   wmb_.setVehicleParticipationType(participant);
   
-    timer = cnh_.createTimer(ros::Duration(10.0), [this](auto){
+    timer = cnh_.createTimer(ros::Duration(traffic_control_request_period), [this](auto){
       tcm_visualizer_pub_.publish(wmb_.tcm_marker_array_);
       tcr_visualizer_pub_.publish(wmb_.tcr_polygon_);
       wmb_.publishLightId();
