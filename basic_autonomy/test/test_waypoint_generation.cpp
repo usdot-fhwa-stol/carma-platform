@@ -298,7 +298,7 @@ namespace basic_autonomy
         // Following logic is written for BSpline library. Switch with appropriate call of the new library if different.
         double parameter = 0.0;
 
-        for (int i = 0; i < points.size(); i++)
+        for (size_t i = 0; i < points.size(); i++)
         {
             auto values = (*fit_curve)(parameter);
 
@@ -309,7 +309,6 @@ namespace basic_autonomy
         }
 
         ASSERT_EQ(spline_points.size(), points.size());
-        int error_count = 0;
 
         tf::Vector3 original_vector_1(points[1].x() - points[0].x(),
                                       points[1].y() - points[0].y(), 0);
@@ -521,7 +520,7 @@ namespace basic_autonomy
         }
         y.push_back(-sqrt(pow(radius, 2) - pow(x_, 2))); // to close the loop with redundant first point
 
-        for (auto i = 0; i < y.size(); i++)
+        for (size_t i = 0; i < y.size(); i++)
         {
             points.push_back({x[i], y[i]});
         }
@@ -530,11 +529,12 @@ namespace basic_autonomy
         double param = 0.0;
         for (int i = 0; i < 40; i++)
         {
-            auto pt = (*fit_circle)(param);
+            (*fit_circle)(param);
             param += 1.0 / 40.0;
         }
-        auto pt = (*fit_circle)(param);
+        (*fit_circle)(param);
 
+        //TODO: what is supposed to be happening here?  The results of this loop are never used (circle_param)
         double circle_param = 0.0;
         for (auto i = 0; i < 50; i++)
         {
@@ -645,13 +645,10 @@ namespace basic_autonomy
         std::string trajectory_type = "cooperative_lanechange";
         waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 1, 1);
         const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0, 0, 0, 0, 0, 5, 0, 0, 20);
-        double maneuver_fraction_completed;
         cav_msgs::VehicleState ending_state;
         
         std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers, 
                                                                                     starting_downtrack, cwm, ending_state, state, general_config, config);
-        ros::Time state_time = ros::Time::now();
-        double target_speed = 11.176;
         
         EXPECT_EQ(points.back().speed, state.longitudinal_vel);
 
@@ -668,12 +665,12 @@ namespace basic_autonomy
         //Test resample linestring
         lanelet::BasicLineString2d line_one = shortest_path.front().centerline2d().basicLineString();
         std::vector<lanelet::BasicPoint2d> line_1;
-        for(int i = 0;i<line_one.size();i++){
+        for(size_t i = 0;i<line_one.size();i++){
             line_1.push_back(line_one[i]);
         }
         lanelet::BasicLineString2d line_two = shortest_path.back().centerline2d().basicLineString();
         std::vector<lanelet::BasicPoint2d> line_2;
-        for(int i = 0;i<line_two.size();i++){
+        for(size_t i = 0;i<line_two.size();i++){
             line_2.push_back(line_two[i]);
         }
         std::vector<std::vector<lanelet::BasicPoint2d>> linestrings = basic_autonomy::waypoint_generation::resample_linestring_pair_to_same_size(line_1, line_2);
@@ -735,18 +732,16 @@ namespace basic_autonomy
         std::string trajectory_type = "cooperative_lanechange";
         waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 1, 1);
         const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0, 1, 0, 0, 0, 5, 0, 0, 20);
-        double maneuver_fraction_completed;
         cav_msgs::VehicleState ending_state;
         
         std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers, 
                                                                                     starting_downtrack, cmw, ending_state, state, general_config, config);
         ros::Time state_time = ros::Time::now();
-        double target_speed = 11.176;
         EXPECT_EQ(points.back().speed, state.longitudinal_vel);
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_path(points,
                                                                                                                                                           state, state_time, cmw, ending_state, config);
         EXPECT_TRUE(trajectory_points.size() > 2);
-        basic_autonomy::waypoint_generation::create_lanechange_geometry(start_id, end_id,starting_downtrack, ending_downtrack, cmw, state, 1);
+        basic_autonomy::waypoint_generation::create_lanechange_geometry(start_id, end_id, starting_downtrack, ending_downtrack, cmw, 1);
     } 
 
     TEST(BasicAutonomyTest, lanefollow_geometry_visited_lanelets)
@@ -782,7 +777,7 @@ namespace basic_autonomy
         
 
         std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, 
-                                                                                    starting_downtrack, wm, ending_state, general_config, detailed_config, visited_lanelets);
+                                                                                    starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
 
         EXPECT_EQ(visited_lanelets.size(), 5);
 
