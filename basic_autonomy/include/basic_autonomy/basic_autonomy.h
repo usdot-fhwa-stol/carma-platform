@@ -205,15 +205,14 @@ namespace basic_autonomy
      * \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to the vehicle position or earlier.
      *                               If the first maneuver exceeds this then it's downtrack will be shifted to this value.
      * \param wm Pointer to intialized world model for semantic map access
-     * \param ending_state_before_buffer reference to Vehicle state, which is state before applying extra points for curvature calculation that are removed later
      * \param general_config Basic autonomy struct defined to load general config parameters from tactical plugins
      * \param detailed_config Basic autonomy struct defined to load detailed config parameters from tactical plugins
      * 
      * \return List of centerline points paired with speed limits
      */
           std::vector<PointSpeedPair> create_lanefollow_geometry(const cav_msgs::Maneuver &maneuver, double max_starting_downtrack,
-                                                                   const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
-                                                                   const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config, std::unordered_set<lanelet::Id>& visited_lanelets);
+                                                                   const carma_wm::WorldModelConstPtr &wm, const GeneralTrajConfig &general_config, 
+                                                                   const DetailedTrajConfig &detailed_config, std::unordered_set<lanelet::Id>& visited_lanelets);
 
      /**
       * \brief Adds extra centerline points beyond required message length to lane follow maneuver points so that there's always enough points to calculate trajectory
@@ -272,12 +271,12 @@ namespace basic_autonomy
       * \param starting_downtrack The downtrack distance from which the lane change maneuver starts
       * \param ending_downtrack The downtrack distance at which the lane change maneuver end
       * \param wm Pointer to intialized world model for semantic map access
-      * \param state The vehicle state at the time the function is called
+      * \param downsample_ratio TODO: add description
       * 
       * \return A vector of geometry points as lanelet::basicpoint2d
       */
      std::vector<lanelet::BasicPoint2d> create_lanechange_geometry(lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, double starting_downtrack, double ending_downtrack,
-                                                            const carma_wm::WorldModelConstPtr &wm,const cav_msgs::VehicleState &state, int downsample_ratio);
+                                                            const carma_wm::WorldModelConstPtr &wm, int downsample_ratio);
    
      
      /**

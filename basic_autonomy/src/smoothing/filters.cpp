@@ -40,7 +40,7 @@ std::vector<double> moving_average_filter(const std::vector<double> input, int w
     output.push_back(input[0]);
   }
 
-  for (int i = start_index; i<input.size(); i++) {
+  for (int i = start_index; i < static_cast<int>(input.size()); i++) {
     
     
     double total = 0;
@@ -60,5 +60,5 @@ std::vector<double> moving_average_filter(const std::vector<double> input, int w
   return output;
 }
 
-};  // namespace smoothing
-};  // namespace basic_autonomy
+}  // namespace smoothing
+}  // namespace basic_autonomy
