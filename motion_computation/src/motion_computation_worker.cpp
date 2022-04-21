@@ -265,12 +265,9 @@ namespace motion_computation{
 
         carma_perception_msgs::msg::ExternalObject obj_msg;
         // TODO temporary info
-        std::string map_frame_id = "frame";
-        double pred_period = 10.0;
-        double pred_step_size = 0.1;
-        tf2::Quaternion ned_in_map_rotation;
+        std::string map_frame_id = "map";
 
-        conversion::convert(*msg, obj_msg, map_frame_id, pred_period, pred_step_size, *map_projector_, ned_in_map_rotation);
+        conversion::convert(*msg, obj_msg, map_frame_id, prediction_period_, prediction_time_step_, *map_projector_, ned_in_map_rotation_);
         bsm_list_.objects.push_back(obj_msg);
 
     }
