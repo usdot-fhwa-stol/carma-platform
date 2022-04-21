@@ -713,9 +713,6 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("strategyParams = " << strategyParams);
         ROS_DEBUG_STREAM("platoonId = " << platoonId);
         std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
-        ROS_DEBUG_STREAM("statusParams = " << statusParams);
-
-        ROS_DEBUG_STREAM("platoonId = " << platoonId);
         ROS_DEBUG_STREAM("pm_.currentPlatoonID = " << pm_.currentPlatoonID);
         // if this message is not for our platoon then ignore it
         if (platoonId.compare(pm_.currentPlatoonID) != 0)
@@ -740,8 +737,6 @@ namespace platoon_strategic_ihp
 
         pm_.memberUpdates(vehicleID, platoonId, statusParams, dtd, ctd);
         ROS_DEBUG_STREAM("Received platoon status message from vehicle: " << msg.header.sender_id);
-
-        return;
     }    
 
     //
@@ -2171,7 +2166,7 @@ namespace platoon_strategic_ihp
 
         // UCLA: determine joining type 
         bool isCutInJoin = plan_type.type == cav_msgs::PlanType::CUT_IN_FROM_DIFFERENT_LANE         &&  !config_.test_front_join;
-        bool isRearJoin = plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR      ||  !config_.test_front_join;
+        bool isRearJoin = plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR      ||  !config_.test_front_join; //TODO change to && once resp msg contains plan type
         bool isFrontJoin = plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT  ||  config_.test_front_join;
         ROS_DEBUG_STREAM("Joining type: isRearJoin = " << isRearJoin);
         ROS_DEBUG_STREAM("Joining type: isFrontJoin = " << isFrontJoin);
@@ -2237,7 +2232,7 @@ namespace platoon_strategic_ihp
                 }
                 else
                 {
-                    ROS_DEBUG_STREAM("Received negative response for plan id = " << pm_.current_plan.planId);
+                    ROS_DEBUG_STREAM("Received negative response for plan id = " << pm_.current_plan.planId << ". Resetting plan & platoon info.");
                     // Forget about the previous plan totally
                     pm_.clearActionPlan();
                     pm_.resetPlatoon();
@@ -2719,7 +2714,7 @@ namespace platoon_strategic_ihp
                 if (pm_.getTotalPlatooningSize() == 2)
                 {
                     pm_.resetPlatoon();
-                })
+                }
                 return;
             } 
         }
