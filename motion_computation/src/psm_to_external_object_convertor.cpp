@@ -223,10 +223,6 @@ std::vector<geometry_msgs::msg::Pose> sample_2d_path_from_radius(const geometry_
 
     tf2::Quaternion quat;
     quat.setRPY(0, 0, turning_angle);
-    // sample_pose.orientation.x = quat.x();
-    // sample_pose.orientation.y = quat.y();
-    // sample_pose.orientation.z = quat.z();
-    // sample_pose.orientation.w = quat.w();
 
     // Convert the position and orientation in the pose frame to the map frame
     tf2::Transform pose_to_sample(quat, position);

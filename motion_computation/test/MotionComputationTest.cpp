@@ -23,6 +23,8 @@
 #include "motion_computation/message_conversions.hpp"
 #include "motion_computation/motion_computation_worker.hpp"
 #include "motion_computation/impl/mobility_path_to_external_object_helpers.hpp"
+#include "boost/date_time/posix_time/posix_time.hpp"
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 
 
 namespace motion_computation
@@ -212,30 +214,39 @@ namespace motion_computation
         conversion::convert(*input_ptr1, output, map_frame, mcw.prediction_period_, 
         mcw.prediction_time_step_, *(mcw.map_projector_), mcw.ned_in_map_rotation_,   mcw.node_clock_);
 
-        ASSERT_NEAR(output.header.stamp.sec, builtin_interfaces::msg::Time(node->now()).sec, 60);
+        
+        boost::posix_time::ptime output1_timestamp = boost::posix_time::from_time_t(output.header.stamp.sec) + boost::posix_time::nanosec(output.header.stamp.nanosec);
+        auto input1_time = builtin_interfaces::msg::Time(node->now());
+        auto input1_timestamp = boost::posix_time::from_time_t(input1_time.sec) + boost::posix_time::nanosec(input1_time.nanosec);
+        boost::posix_time::time_duration duration = output1_timestamp - input1_timestamp;
+        EXPECT_TRUE(duration.seconds() < 60 && duration.seconds() > -60); //Expect that time difference between when test start and ended is not more than 60 seconds
 
         // Test with values assigned
         //INPUT
         carma_v2x_msgs::msg::PSM input;
         input.basic_type.type |= j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PEDESTRIAN;
-        input.sec_mark.millisecond = 60998;
+        input.sec_mark.millisecond = 40998;
         input.id.id = {1,2,3,4};
 
         input.presence_vector |= carma_v2x_msgs::msg::PSM::HAS_PATH_HISTORY;
         input.path_history.presence_vector |= carma_v2x_msgs::msg::PathHistory::HAS_INITIAL_POSITION;
         input.path_history.initial_position.presence_vector |= carma_v2x_msgs::msg::FullPositionVector::HAS_UTC_TIME;
         input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::YEAR;
-        input.path_history.initial_position.utc_time.year.year = 2000;
+        input.path_history.initial_position.utc_time.year.year = 2022;
         input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::MONTH;
-        input.path_history.initial_position.utc_time.month.month = 10;
+        input.path_history.initial_position.utc_time.month.month = 4;
         input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::DAY;
-        input.path_history.initial_position.utc_time.day.day = 2;
+        input.path_history.initial_position.utc_time.day.day = 21;
         input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::HOUR;
-        input.path_history.initial_position.utc_time.hour.hour = 20;
+        input.path_history.initial_position.utc_time.hour.hour = 9;
         input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::MINUTE;
-        input.path_history.initial_position.utc_time.minute.minute = 20;
+        input.path_history.initial_position.utc_time.minute.minute = 21;
         input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::SECOND;
-        input.path_history.initial_position.utc_time.second.millisecond = 60998;
+        input.path_history.initial_position.utc_time.second.millisecond = 40998;
+
+        //Input time as string for posix time
+        std::string input_time_str = "2022-04-21 9:21:40.998";
+        boost::posix_time::ptime input_timestamp = boost::posix_time::time_from_string(input_time_str);
 
         input.speed.velocity = 8.98;
         // Set Confidence
@@ -246,11 +257,11 @@ namespace motion_computation
         input.accuracy.orientation = 60050;
 
         //Define position
-        input.position.latitude = 0;
-        input.position.longitude = 0;
-        input.position.elevation = 0;
+        input.position.latitude = 0.00001;  
+        input.position.longitude = 0.00002;
+        input.position.elevation = 2;
 
-        input.heading.heading = 0;
+        input.heading.heading = 60.0;
 
         input.presence_vector |= carma_v2x_msgs::msg::PSM::HAS_PATH_PREDICTION;
         input.path_prediction.radius_of_curvature = 50.0;
@@ -262,6 +273,10 @@ namespace motion_computation
         std_msgs::msg::String msg;
         msg.data = projection;
         lanelet::projection::LocalFrameProjector local_projector(msg.data.c_str());
+
+        georeference_ptr = std::make_unique<std_msgs::msg::String>();
+        georeference_ptr->data = projection;
+        mcw.georeferenceCallback(move(georeference_ptr));
 
         carma_perception_msgs::msg::ExternalObject output2;
         std::unique_ptr<carma_v2x_msgs::msg::PSM> input_ptr2 = std::make_unique<carma_v2x_msgs::msg::PSM>(input);
@@ -279,7 +294,32 @@ namespace motion_computation
         ASSERT_EQ(output2.size.x, 0.5);
         ASSERT_EQ(output2.size.y, 0.5);
         ASSERT_EQ(output2.size.z, 1.0);
+
+        //check timestamp
+        boost::posix_time::ptime output_timestamp = boost::posix_time::from_time_t(output2.header.stamp.sec) + boost::posix_time::nanosec(output2.header.stamp.nanosec);
+        EXPECT_EQ(boost::posix_time::to_iso_extended_string(output_timestamp), boost::posix_time::to_iso_extended_string(input_timestamp));
+
+        //check position
+        float lat_deg_to_meter_conversion_const = 1.11/0.00001; //unit values from successful conversion check
+        float Long_deg_to_meter_conversion_const = 1.105/0.00001; //unit values from successful conversion check
         
+        EXPECT_NEAR(output2.pose.pose.position.x, input.position.longitude * Long_deg_to_meter_conversion_const, 0.05);
+        EXPECT_NEAR(output2.pose.pose.position.y, input.position.latitude * lat_deg_to_meter_conversion_const, 0.05);
+        
+        //check heading
+        //convert input deg to rad
+        float heading_in_rad = input.heading.heading * 0.0174533;
+        tf2::Quaternion R_n_h;                       // Rotation of sensor heading report in NED frame
+        R_n_h.setRPY(0, 0, heading_in_rad);
+        tf2::Quaternion R_m_n(mcw.ned_in_map_rotation_);
+
+        tf2::Quaternion R_m_s = R_m_n * R_n_h;
+
+        EXPECT_NEAR(output2.pose.pose.orientation.x, std::fabs(R_m_s.getX()), 0.000001);
+        EXPECT_NEAR(output2.pose.pose.orientation.y, std::fabs(R_m_s.getY()), 0.000001);
+        EXPECT_NEAR(output2.pose.pose.orientation.z, std::fabs(R_m_s.getZ()), 0.000001);
+        EXPECT_NEAR(output2.pose.pose.orientation.w, std::fabs(R_m_s.getW()), 0.000001);
+
     }
 
     TEST(MotionComputationWorker, mobilityPathToExternalObject)
