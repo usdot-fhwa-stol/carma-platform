@@ -189,12 +189,9 @@ void MotionComputationWorker::psmCallback(const carma_v2x_msgs::msg::PSM::Unique
     RCLCPP_DEBUG_STREAM(logger_->get_logger(), "enable_psm_processing is false so ignoring PSM messages");
     return;
   }
-
-  // TODO temporary info
-  std::string map_frame_id = "map";
   
   carma_perception_msgs::msg::ExternalObject obj_msg;
-  conversion::convert(*msg, obj_msg, map_frame_id, prediction_period_, prediction_time_step_, *map_projector_, ned_in_map_rotation_, node_clock_);
+  conversion::convert(*msg, obj_msg, map_frame_id_ , prediction_period_, prediction_time_step_, *map_projector_, ned_in_map_rotation_, node_clock_);
 
   // Check if this psm is from an object already being queded.
   // If so then update the existing object, if not add it to the queue

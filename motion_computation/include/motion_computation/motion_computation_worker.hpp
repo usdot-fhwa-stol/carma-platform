@@ -133,6 +133,9 @@ class MotionComputationWorker {
   bool enable_psm_processing_ = false;
   bool enable_mobility_path_processing_ = false;
 
+  //Map frame
+  std::string map_frame_id_ = "map";
+
   // Logger interface
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
   //Clock interface - gets the ros simulated clock from Node
