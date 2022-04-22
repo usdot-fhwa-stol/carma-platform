@@ -41,13 +41,13 @@ cd ${dir}/src
 # clone carma repos
 
 if [[ "$BRANCH" = "develop" ]]; then
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch carma-system-4.0.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch carma-system-4.0.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch carma-system-4.0.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
 else
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch carma-system-4.0.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch carma-system-4.0.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch carma-system-4.0.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
 fi
 
 # add astuff messages
