@@ -224,26 +224,26 @@ std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::create_ge
   ROS_DEBUG_STREAM("VehDowntrack:"<<max_starting_downtrack);
   for(const auto &maneuver : maneuvers)
   {
-      double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
-      
-      starting_downtrack = std::min(starting_downtrack, max_starting_downtrack);
+    double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
+    
+    starting_downtrack = std::min(starting_downtrack, max_starting_downtrack);
 
-      ROS_DEBUG_STREAM("Used downtrack: " << starting_downtrack);
+    ROS_DEBUG_STREAM("Used downtrack: " << starting_downtrack);
 
-      // check if required parameter from strategic planner is present
-      if(GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data).empty())
-      {
-        throw std::invalid_argument("No time_to_schedule_entry is provided in float_valued_meta_data");
-      }
+    // check if required parameter from strategic planner is present
+    if(GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data).empty())
+    {
+      throw std::invalid_argument("No time_to_schedule_entry is provided in float_valued_meta_data");
+    }
 
-      //overwrite maneuver type to use lane follow library function
-      cav_msgs::Maneuver temp_maneuver = maneuver;
-      temp_maneuver.type =cav_msgs::Maneuver::LANE_FOLLOWING;
-      ROS_DEBUG_STREAM("Creating Lane Follow Geometry");
-      std::vector<PointSpeedPair> lane_follow_points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, starting_downtrack, wm, ending_state_before_buffer, general_config, detailed_config, visited_lanelets);
-      points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
-      
-      break; // expected to receive only one maneuver to plan
+    //overwrite maneuver type to use lane follow library function
+    cav_msgs::Maneuver temp_maneuver = maneuver;
+    temp_maneuver.type =cav_msgs::Maneuver::LANE_FOLLOWING;
+    ROS_DEBUG_STREAM("Creating Lane Follow Geometry");
+    std::vector<PointSpeedPair> lane_follow_points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
+    points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
+    
+    break; // expected to receive only one maneuver to plan
   }
 
   return points_and_target_speeds;
