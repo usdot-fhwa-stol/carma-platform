@@ -10,7 +10,6 @@
 #include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <wgs84_utils/wgs84_utils.h>
-// #include "message_to_external_object_convertor.h"
 
 namespace motion_computation {
 
@@ -121,8 +120,6 @@ void convert(const carma_v2x_msgs::msg::PSM& in_msg, carma_perception_msgs::msg:
     lat_variance = in_msg.accuracy.semi_minor * in_msg.accuracy.semi_minor;
     lon_variance = in_msg.accuracy.semi_major * in_msg.accuracy.semi_major;
     heading_variance = in_msg.accuracy.orientation * in_msg.accuracy.orientation;
-    position_confidence = 0.1;  // Default will be 10% confidence. If the position accuracy is
-                                      // available then this value will be updated
 
     // NOTE: ExternalObject.msg does not clearly define what is meant by
     // position confidence
@@ -156,7 +153,11 @@ void convert(const carma_v2x_msgs::msg::PSM& in_msg, carma_perception_msgs::msg:
     lon_variance = 1.0;
     heading_variance = in_msg.accuracy.orientation * in_msg.accuracy.orientation;
   }
-  // Else: No accuracies available
+  else{ //No accuracies available
+    lat_variance = 1.0;
+    lon_variance = 1.0;
+    heading_variance = 1.0;
+  }
 
   /////// Pose and Covariance /////////
   // Compute the pose
@@ -343,7 +344,7 @@ geometry_msgs::msg::PoseWithCovariance pose_from_gnss(const lanelet::projection:
         std::array<double, 36> input_covariance = { 
           lat_variance, 0, 0,  0, 0, 0,
           0, lon_variance, 0,  0, 0, 0,
-          0, 0, 0,  0, 0, 0,
+          0, 0, 1,  0, 0, 0,
           0,  0,  0,  1,  0, 0,
           0,  0,  0,  0,  1, 0, 
           0,  0,  0,  0,  0, heading_variance

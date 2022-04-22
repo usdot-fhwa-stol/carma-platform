@@ -98,10 +98,10 @@ namespace motion_computation
     mobility_path_sub_ = create_subscription<carma_v2x_msgs::msg::MobilityPath>("incoming_mobility_path", 100,
                                                               std::bind(&MotionComputationWorker::mobilityPathCallback, &motion_worker_, std_ph::_1));
 
-    bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("incoming_mobility_path", 100,
+    bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("incoming_bsm", 100,
                                                               std::bind(&MotionComputationWorker::bsmCallback, &motion_worker_, std_ph::_1));
 
-    psm_sub_ = create_subscription<carma_v2x_msgs::msg::PSM>("incoming_mobility_path", 100,
+    psm_sub_ = create_subscription<carma_v2x_msgs::msg::PSM>("incoming_psm", 100,
                                                               std::bind(&MotionComputationWorker::psmCallback, &motion_worker_, std_ph::_1));
     
     georeference_sub_ = create_subscription<std_msgs::msg::String>("georeference", 1,
