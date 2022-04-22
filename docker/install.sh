@@ -33,7 +33,7 @@ sudo chgrp carma /opt/carma # Set group to expose permissions for build
 
 echo "Building ROS1 CARMA Components"
 
-colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release
+colcon build --install-base /opt/carma/install --packages-skip light_controlled_intersection_tactical_plugin --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 echo "Build of ROS1 CARMA Components Complete"
 
@@ -48,6 +48,6 @@ cd ~/carma_ws
 
 echo "Building ROS2 CARMA Components"
 
-colcon build --install-base /opt/carma/install_ros2 --build-base build_ros2 --cmake-args -DCMAKE_BUILD_TYPE=Release
+colcon build --install-base /opt/carma/install_ros2 --packages-skip platoon_control_ihp --build-base build_ros2 --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 echo "Build of ROS2 CARMA Components Complete"

@@ -122,7 +122,7 @@
   <include file="$(find platoon_control)/launch/platoon_control.launch" />
 
   <!-- Platooning Control IHP Plugin -->
-  <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" />
+  <!-- <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" /> -->
 
   <!-- Twist Filter -->
   <group>
