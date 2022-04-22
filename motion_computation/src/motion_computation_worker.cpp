@@ -20,8 +20,9 @@
 namespace motion_computation {
 
 MotionComputationWorker::MotionComputationWorker(const PublishObjectCallback& obj_pub,
-                                                 rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger)
-    : obj_pub_(obj_pub), logger_(logger) {}
+                                                 rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger,
+                                                 rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock)
+    : obj_pub_(obj_pub), logger_(logger), node_clock_(node_clock) {}
 
 void MotionComputationWorker::predictionLogic(carma_perception_msgs::msg::ExternalObjectList::UniquePtr obj_list) {
   carma_perception_msgs::msg::ExternalObjectList sensor_list;
@@ -188,9 +189,21 @@ void MotionComputationWorker::psmCallback(const carma_v2x_msgs::msg::PSM::Unique
     RCLCPP_DEBUG_STREAM(logger_->get_logger(), "enable_psm_processing is false so ignoring PSM messages");
     return;
   }
+  
+  carma_perception_msgs::msg::ExternalObject obj_msg;
+  conversion::convert(*msg, obj_msg, map_frame_id_ , prediction_period_, prediction_time_step_, *map_projector_, ned_in_map_rotation_, node_clock_);
 
-  // TODO Include same conversion and id checking logic as in mobility path
-  // psm_list_.objects.push_back(mobilityPathToExternalObject(msg));
+  // Check if this psm is from an object already being queded.
+  // If so then update the existing object, if not add it to the queue
+  if (psm_obj_id_map_.find(obj_msg.id) != psm_obj_id_map_.end()) {
+    psm_list_.objects[psm_obj_id_map_[obj_msg.id]] = obj_msg;
+
+  } else {
+    // Add the new object to the queue and save its index
+    psm_obj_id_map_[obj_msg.id] = psm_list_.objects.size();
+    psm_list_.objects.push_back(obj_msg);
+  }
+  
 }
 
 void MotionComputationWorker::bsmCallback(const carma_v2x_msgs::msg::BSM::UniquePtr msg) {

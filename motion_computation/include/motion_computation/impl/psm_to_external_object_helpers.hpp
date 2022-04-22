@@ -43,14 +43,15 @@ std::vector<geometry_msgs::msg::Pose> sample_2d_linear_motion(const geometry_msg
 
 geometry_msgs::msg::PoseWithCovariance pose_from_gnss(const lanelet::projection::LocalFrameProjector &projector,
                                                  const tf2::Quaternion &ned_in_map_rotation, const lanelet::GPSPoint &gps_point,
-                                                 const double &heading);
+                                                 const double &heading, const double lat_variance,
+                                                 const double lon_variance, const double heading_variance);
 
 std::vector<carma_perception_msgs::msg::PredictedState> predicted_poses_to_predicted_state(
     const std::vector<geometry_msgs::msg::Pose> &poses, double constant_velocity, const rclcpp::Time &start_time,
     const rclcpp::Duration &step_size, const std::string &frame, double initial_pose_confidence,
     double initial_vel_confidence);
 
-rclcpp::Time get_psm_timestamp(const carma_v2x_msgs::msg::PSM &in_msg);
+rclcpp::Time get_psm_timestamp(const carma_v2x_msgs::msg::PSM &in_msg, rclcpp::Clock::SharedPtr clock);
 
 }  // namespace impl
 }  // namespace conversion

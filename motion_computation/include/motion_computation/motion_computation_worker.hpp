@@ -48,7 +48,8 @@ class MotionComputationWorker {
    * \brief Constructor for MotionComputationWorker
    */
   MotionComputationWorker(const PublishObjectCallback& obj_pub,
-                          rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger);
+                          rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger,
+                          rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock);
 
   /**
    * \brief Function to populate duplicated detected objects along with their velocity, yaw,
@@ -132,8 +133,13 @@ class MotionComputationWorker {
   bool enable_psm_processing_ = false;
   bool enable_mobility_path_processing_ = false;
 
+  //Map frame
+  std::string map_frame_id_ = "map";
+
   // Logger interface
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
+  //Clock interface - gets the ros simulated clock from Node
+  rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock_;
 
   // Queue for v2x msgs to synchronize them with sensor msgs
   carma_perception_msgs::msg::ExternalObjectList mobility_path_list_;
@@ -152,6 +158,7 @@ class MotionComputationWorker {
 
   // Unit Test Accessors
   FRIEND_TEST(MotionComputationWorker, mobilityPathToExternalObject);
+  FRIEND_TEST(MotionComputationWorker, psmToExternalObject);
 };
 
 }  // namespace motion_computation
