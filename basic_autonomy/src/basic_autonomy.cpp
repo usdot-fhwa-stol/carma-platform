@@ -903,7 +903,7 @@ namespace basic_autonomy
                     std::vector<double> yaw = {state.orientation, state.orientation}; //Keep current orientation
                     
                     std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
-                    trajectory_from_points_times_orientations(remaining_traj_points, times, yaw, state_time);
+                    trajectory_from_points_times_orientations(remaining_traj_points, times, yaw, state_time, detailed_config.desired_controller_plugin);
 
                     return traj_points;
 
