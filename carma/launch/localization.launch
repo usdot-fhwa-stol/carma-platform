@@ -130,10 +130,10 @@
   </group>
 
   <!-- GNSS To Map Convertor -->
-  <group>
+  <!-- <group>
     <remap from="georeference" to="map_param_loader/georeference"/>
     <include file="$(find gnss_to_map_convertor)/launch/gnss_to_map_convertor.launch"/>
-  </group>
+  </group> -->
 
   <!-- GNSS/NDT selection localizer-->
   <group>
