@@ -41,5 +41,5 @@ public:
 private:
   Spline2d spline_;
 };
-};  // namespace smoothing
-};  // namespace basic_autonomy
+} // namespace smoothing
+} // namespace basic_autonomy
