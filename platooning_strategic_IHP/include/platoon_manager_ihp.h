@@ -179,6 +179,11 @@ namespace platoon_strategic_ihp
         void clearActionPlan();
 
         /**
+         * \brief Resets all platoon variables that might indicate other platoon members; sets the host back to solo vehicle.
+         */
+        void resetPlatoon();
+
+        /**
         * \brief Returns dynamic leader of the host vehicle.
         * 
         * \return The current dynamic leader as a vehcile object. 
@@ -310,9 +315,10 @@ namespace platoon_strategic_ihp
         double getCutInGap(const int gap_leading_index, const double joinerDtD);
 
         // Member variables
-        std::string currentPlatoonID = ""; //empty string indicates not part of a platoon
-        std::string platoonLeaderID = "";  //empty string indicates not part of a platoon
-        std::string targetPlatoonID = "";  //ID of a real platoon that we may be attempting to join (empty if neighbor is a solo vehicle)
+        const std::string dummyID = "00000000-0000-0000-0000-000000000000";
+        std::string currentPlatoonID = dummyID; //dummy indicates not part of a platoon
+        std::string platoonLeaderID = dummyID;  //dummy indicates not part of a platoon
+        std::string targetPlatoonID = dummyID;  //ID of a real platoon that we may be attempting to join (empty if neighbor is a solo vehicle)
         PlatoonState current_platoon_state = PlatoonState::STANDBY;
         ActionPlan current_plan = ActionPlan(); //this plan represents a joining activity only, not the platoon itself
         bool isFollower = false;
