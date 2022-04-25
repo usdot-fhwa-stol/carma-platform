@@ -20,7 +20,11 @@
 #include <thread>
 #include <future>
 
+#include "motion_computation/message_conversions.hpp"
 #include "motion_computation/motion_computation_worker.hpp"
+#include "motion_computation/impl/mobility_path_to_external_object_helpers.hpp"
+#include "boost/date_time/posix_time/posix_time.hpp"
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 
 
 namespace motion_computation
@@ -28,43 +32,48 @@ namespace motion_computation
     TEST(MotionComputationWorker, Constructor)
     {   
         // Create logger object
-        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger;
+        auto node = std::make_shared<rclcpp::Node>("test_node");
+        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
+        rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock = node->get_node_clock_interface();
 
         // Create MotionComputationWorker object
-        MotionComputationWorker worker([](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){}, logger);
+        MotionComputationWorker worker([](const carma_perception_msgs::msg::ExternalObjectList&){}, logger, clock);
     }
 
     TEST(MotionComputationWorker, motionPredictionCallback)
     {    
         bool published_data = false;
-        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger;
+        auto node = std::make_shared<rclcpp::Node>("test_node");
+        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
+        rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock = node->get_node_clock_interface();
         MotionComputationWorker mcw_sensor_only([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){
             published_data = true;
-            ASSERT_EQ(obj_pub.objects.size(), 1);
+            ASSERT_EQ(obj_pub.objects.size(), 1ul);
 
             bool isFilled = false;
             for(auto item : obj_pub.objects)
             {
-                if(item.predictions.size() > 0);
+                if(item.predictions.size() > 0)
                     isFilled = true;
             }
             ASSERT_EQ(isFilled, true);
 
-            }, logger); 
+            }, logger, clock); 
 
         MotionComputationWorker mcw_mobility_only([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){
             published_data = true;
-            ASSERT_EQ(obj_pub.objects.size(), 0);
-            }, logger);
+            ASSERT_EQ(obj_pub.objects.size(), 0ul);
+            }, logger, clock);
 
         MotionComputationWorker mcw_mixed_operation([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){
             published_data = true;
-            ASSERT_EQ(obj_pub.objects.size(), 2);
-            }, logger);
+            ASSERT_EQ(obj_pub.objects.size(), 2ul);
+            }, logger, clock);
 
-        mcw_sensor_only.setExternalObjectPredictionMode(motion_computation::SENSORS_ONLY);
-        mcw_mobility_only.setExternalObjectPredictionMode(motion_computation::MOBILITY_PATH_ONLY);
-        mcw_mixed_operation.setExternalObjectPredictionMode(motion_computation::PATH_AND_SENSORS);
+
+        mcw_sensor_only.setDetectionInputFlags(true, false, false, false); //SENSORS_ONLY
+        mcw_mobility_only.setDetectionInputFlags(false, false, false, true); //MOBILITY_PATH_ONLY
+        mcw_mixed_operation.setDetectionInputFlags(true, false, false, true); //PATH_AND_SENSORS
 
         // 1 to 1 transform
         std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
@@ -83,10 +92,8 @@ namespace motion_computation
         /*Create test message*/
         msg.presence_vector = 16;
         msg.object_type = 3;
-
         /*Test ExternalObject Presence Vector Values*/
         ASSERT_TRUE(msg.presence_vector > 0);
-        
         bool pvValid = false;
         for(auto i= 0; i<10; i++) //Test whether presence vector values in ExternalObject are valid
         {
@@ -94,7 +101,6 @@ namespace motion_computation
                 pvValid = true;
         }
         ASSERT_EQ(pvValid, true);
-
         /*Test ExternalObject Object Type Values*/
         bool otValid = false;
         for(int i =0; i<=4; i++)
@@ -149,8 +155,10 @@ namespace motion_computation
 
     TEST(MotionComputationWorker, composePredictedState)
     {    
-        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger;
-        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){}, logger);
+        auto node = std::make_shared<rclcpp::Node>("test_node");
+        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
+        rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock = node->get_node_clock_interface();
+        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList&){}, logger, clock);
 
         // 1 to 1 transform
         std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
@@ -162,7 +170,7 @@ namespace motion_computation
         tf2::Vector3 curr = {5, 0, 0};
         tf2::Vector3 prev = {4, 0, 0};
 
-        auto res =  mcw.composePredictedState(curr, prev,time_stamp, 0.0);
+        auto res =  conversion::impl::composePredictedState(curr, prev,time_stamp, time_stamp + rclcpp::Duration(100000000), 0.0);
         auto test_result = std::get<0>(res);
 
         ASSERT_NEAR(test_result.predicted_position.position.x, 4.0, 0.0001 );
@@ -176,7 +184,7 @@ namespace motion_computation
         curr = {5, 5, 0};
         prev = {0, 0, 0};
 
-        res =  mcw.composePredictedState(curr, prev,time_stamp, std::get<1>(res));
+        res =  conversion::impl::composePredictedState(curr, prev,time_stamp, time_stamp + rclcpp::Duration(100000000), std::get<1>(res));
         test_result = std::get<0>(res);
 
         ASSERT_NEAR(test_result.predicted_position.position.x, 0.0, 0.0001 );
@@ -186,10 +194,139 @@ namespace motion_computation
         ASSERT_EQ(test_result.header.stamp, time_stamp);
     }
 
+    TEST(MotionComputationWorker, psmToExternalObject){
+        auto node = std::make_shared<rclcpp::Node>("test_node");
+        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList&){}, node->get_node_logging_interface(), node->get_node_clock_interface());
+
+        // 1 to 1 transform
+        std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
+        std::unique_ptr<std_msgs::msg::String> georeference_ptr = std::make_unique<std_msgs::msg::String>();
+        georeference_ptr->data = base_proj;
+        mcw.georeferenceCallback(move(georeference_ptr));  // Set projection
+
+        std::string map_frame = "map";
+
+        //Test no georef
+        std::unique_ptr<carma_v2x_msgs::msg::PSM> input_ptr1 = std::make_unique<carma_v2x_msgs::msg::PSM>();
+        carma_perception_msgs::msg::ExternalObject output, expected;
+
+        RCLCPP_INFO_STREAM(node->get_logger(), "Running conversion test with empty message");
+        conversion::convert(*input_ptr1, output, map_frame, mcw.prediction_period_, 
+        mcw.prediction_time_step_, *(mcw.map_projector_), mcw.ned_in_map_rotation_,   mcw.node_clock_);
+
+        
+        boost::posix_time::ptime output1_timestamp = boost::posix_time::from_time_t(output.header.stamp.sec) + boost::posix_time::nanosec(output.header.stamp.nanosec);
+        auto input1_time = builtin_interfaces::msg::Time(node->now());
+        auto input1_timestamp = boost::posix_time::from_time_t(input1_time.sec) + boost::posix_time::nanosec(input1_time.nanosec);
+        boost::posix_time::time_duration duration = output1_timestamp - input1_timestamp;
+        EXPECT_TRUE(duration.seconds() < 60 && duration.seconds() > -60); //Expect that time difference between when test start and ended is not more than 60 seconds
+
+        // Test with values assigned
+        //INPUT
+        carma_v2x_msgs::msg::PSM input;
+        input.basic_type.type |= j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PEDESTRIAN;
+        input.sec_mark.millisecond = 40998;
+        input.id.id = {1,2,3,4};
+
+        input.presence_vector |= carma_v2x_msgs::msg::PSM::HAS_PATH_HISTORY;
+        input.path_history.presence_vector |= carma_v2x_msgs::msg::PathHistory::HAS_INITIAL_POSITION;
+        input.path_history.initial_position.presence_vector |= carma_v2x_msgs::msg::FullPositionVector::HAS_UTC_TIME;
+        input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::YEAR;
+        input.path_history.initial_position.utc_time.year.year = 2022;
+        input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::MONTH;
+        input.path_history.initial_position.utc_time.month.month = 4;
+        input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::DAY;
+        input.path_history.initial_position.utc_time.day.day = 21;
+        input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::HOUR;
+        input.path_history.initial_position.utc_time.hour.hour = 9;
+        input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::MINUTE;
+        input.path_history.initial_position.utc_time.minute.minute = 21;
+        input.path_history.initial_position.utc_time.presence_vector |= j2735_v2x_msgs::msg::DDateTime::SECOND;
+        input.path_history.initial_position.utc_time.second.millisecond = 40998;
+
+        //Input time as string for posix time
+        std::string input_time_str = "2022-04-21 9:21:40.998";
+        boost::posix_time::ptime input_timestamp = boost::posix_time::time_from_string(input_time_str);
+
+        input.speed.velocity = 8.98;
+        // Set Confidence
+        input.accuracy.presence_vector |= carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE;
+        input.accuracy.presence_vector |= carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_AVAILABLE;
+        input.accuracy.semi_major = 217;
+        input.accuracy.semi_minor = 217;
+        input.accuracy.orientation = 60050;
+
+        //Define position
+        input.position.latitude = 0.00001;  
+        input.position.longitude = 0.00002;
+        input.position.elevation = 2;
+
+        input.heading.heading = 60.0;
+
+        input.presence_vector |= carma_v2x_msgs::msg::PSM::HAS_PATH_PREDICTION;
+        input.path_prediction.radius_of_curvature = 50.0;
+        
+        RCLCPP_INFO_STREAM(node->get_logger(), "Running conversion test with defined values");
+
+        std::string projection = "+proj=tmerc +lat_0=0.0 +lon_0=0.0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m "
+                          "+no_defs";
+        std_msgs::msg::String msg;
+        msg.data = projection;
+        lanelet::projection::LocalFrameProjector local_projector(msg.data.c_str());
+
+        georeference_ptr = std::make_unique<std_msgs::msg::String>();
+        georeference_ptr->data = projection;
+        mcw.georeferenceCallback(move(georeference_ptr));
+
+        carma_perception_msgs::msg::ExternalObject output2;
+        std::unique_ptr<carma_v2x_msgs::msg::PSM> input_ptr2 = std::make_unique<carma_v2x_msgs::msg::PSM>(input);
+        conversion::convert(*input_ptr2, output2, map_frame, mcw.prediction_period_, 
+        mcw.prediction_time_step_, local_projector , mcw.ned_in_map_rotation_,   mcw.node_clock_);
+
+        //compare id
+        int id = 0;
+        for(int i = 0; i < input.id.id.size(); i++){
+            id |= input.id.id[i] << (8 * i);
+        }
+        ASSERT_EQ(id, output2.id);
+        ASSERT_EQ(output2.header.frame_id, map_frame);
+        //check if object size matches pedestrian
+        ASSERT_EQ(output2.size.x, 0.5);
+        ASSERT_EQ(output2.size.y, 0.5);
+        ASSERT_EQ(output2.size.z, 1.0);
+
+        //check timestamp
+        boost::posix_time::ptime output_timestamp = boost::posix_time::from_time_t(output2.header.stamp.sec) + boost::posix_time::nanosec(output2.header.stamp.nanosec);
+        EXPECT_EQ(boost::posix_time::to_iso_extended_string(output_timestamp), boost::posix_time::to_iso_extended_string(input_timestamp));
+
+        //check position
+        float lat_deg_to_meter_conversion_const = 1.11/0.00001; //unit values from successful conversion check
+        float Long_deg_to_meter_conversion_const = 1.105/0.00001; //unit values from successful conversion check
+        
+        EXPECT_NEAR(output2.pose.pose.position.x, input.position.longitude * Long_deg_to_meter_conversion_const, 0.05);
+        EXPECT_NEAR(output2.pose.pose.position.y, input.position.latitude * lat_deg_to_meter_conversion_const, 0.05);
+        
+        //check heading
+        //convert input deg to rad
+        float heading_in_rad = input.heading.heading * 0.0174533;
+        tf2::Quaternion R_n_h;                       // Rotation of sensor heading report in NED frame
+        R_n_h.setRPY(0, 0, heading_in_rad);
+        tf2::Quaternion R_m_n(mcw.ned_in_map_rotation_);
+
+        tf2::Quaternion R_m_s = R_m_n * R_n_h;
+
+        EXPECT_NEAR(output2.pose.pose.orientation.x, std::fabs(R_m_s.getX()), 0.000001);
+        EXPECT_NEAR(output2.pose.pose.orientation.y, std::fabs(R_m_s.getY()), 0.000001);
+        EXPECT_NEAR(output2.pose.pose.orientation.z, std::fabs(R_m_s.getZ()), 0.000001);
+        EXPECT_NEAR(output2.pose.pose.orientation.w, std::fabs(R_m_s.getW()), 0.000001);
+
+    }
+
     TEST(MotionComputationWorker, mobilityPathToExternalObject)
     {   
         auto node = std::make_shared<rclcpp::Node>("test_node");
-        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){}, node->get_node_logging_interface());
+        rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock = node->get_node_clock_interface();
+        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList&){}, node->get_node_logging_interface(), clock);
 
         // 1 to 1 transform
         std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
@@ -200,7 +337,9 @@ namespace motion_computation
         // Test no georef
         std::unique_ptr<carma_v2x_msgs::msg::MobilityPath> input_ptr1 = std::make_unique<carma_v2x_msgs::msg::MobilityPath>();
         carma_perception_msgs::msg::ExternalObject output, expected;
-        output = mcw.mobilityPathToExternalObject(move(input_ptr1));
+
+        conversion::convert(*input_ptr1, output, *(mcw.map_projector_));
+
         ASSERT_EQ(output.header.stamp, expected.header.stamp); //empty object returned
 
         // INPUT
@@ -220,7 +359,9 @@ namespace motion_computation
         
         // Test static/dynamic
         std::unique_ptr<carma_v2x_msgs::msg::MobilityPath> input_ptr2 = std::make_unique<carma_v2x_msgs::msg::MobilityPath>(input);
-        output = mcw.mobilityPathToExternalObject(move(input_ptr2));
+    
+        conversion::convert(*input_ptr2, output, *(mcw.map_projector_));
+ 
         ASSERT_FALSE(output.dynamic_obj);
 
         location.offset_x = 500.00; 
@@ -230,7 +371,9 @@ namespace motion_computation
 
         // Test 0th, 1st point predicted state
         std::unique_ptr<carma_v2x_msgs::msg::MobilityPath> input_ptr3 = std::make_unique<carma_v2x_msgs::msg::MobilityPath>(input);
-        output = mcw.mobilityPathToExternalObject(move(input_ptr3));
+
+        conversion::convert(*input_ptr3, output, *(mcw.map_projector_));
+
         ASSERT_NEAR(output.pose.pose.orientation.w, 1.0, 0.0001);
         ASSERT_NEAR(output.pose.pose.position.x, 0.0, 0.005);
         ASSERT_NEAR(output.velocity.twist.linear.x, 0.0, 0.1);
@@ -250,9 +393,10 @@ namespace motion_computation
     TEST(MotionComputationWorker, synchronizeAndAppend)
     {   
         auto node = std::make_shared<rclcpp::Node>("test_node");
-        MotionComputationWorker mcw_mixed_operation([&](const carma_perception_msgs::msg::ExternalObjectList& obj_pub){}, node->get_node_logging_interface());
-        mcw_mixed_operation.setExternalObjectPredictionMode(motion_computation::PATH_AND_SENSORS);
-        mcw_mixed_operation.setMobilityPathPredictionTimeStep(0.2); // 0.2 Seconds
+        rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock = node->get_node_clock_interface();
+        MotionComputationWorker mcw_mixed_operation([&](const carma_perception_msgs::msg::ExternalObjectList&){}, node->get_node_logging_interface(), clock);
+
+        mcw_mixed_operation.setDetectionInputFlags(true, false, false, true); //enable sensors and paths
 
         // 1 to 1 transform
         std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
@@ -287,7 +431,7 @@ namespace motion_computation
         next_state.header.stamp = rclcpp::Time(1.5 * 1e9); // 1.5 Seconds
         next_state.predicted_position.position.x = 400;
         mobility_path_obj.predictions.push_back(next_state); //2
-        next_state.header.stamp = rclcpp::Time(1.7 * 1e9); // 1.7 Seconds
+        next_state.header.stamp = rclcpp::Time(1.7 * 1e9); // 1.7 Seconds 
         next_state.predicted_position.position.x = 600;
         mobility_path_obj.predictions.push_back(next_state); //3
         next_state.header.stamp = rclcpp::Time(1.9 * 1e9); // 1.9 Seconds
@@ -298,16 +442,19 @@ namespace motion_computation
         mobility_path_obj.predictions.push_back(next_state); //5
 
         carma_perception_msgs::msg::ExternalObjectList sensor_list, mobility_path_list;
+        sensor_list.header.stamp = sensor_obj.header.stamp;
         sensor_list.objects.push_back(sensor_obj);
         mobility_path_list.objects.push_back(mobility_path_obj);
         auto result = mcw_mixed_operation.synchronizeAndAppend(sensor_list, mobility_path_list);
         
-        ASSERT_EQ(result.objects.size(), 2);
-        ASSERT_EQ(result.objects[1].predictions.size(), 2); // we dropped 2 points
-        ASSERT_EQ(result.objects[1].predictions[0].header.stamp, rclcpp::Time(1.8 * 1e9)); // 1.8 Seconds
-        ASSERT_EQ(result.objects[1].predictions[0].predicted_position.position.x, 700);
-        ASSERT_EQ(result.objects[1].predictions[1].header.stamp, rclcpp::Time(2.0 * 1e9)); // 2.0 Seconds
-        ASSERT_EQ(result.objects[1].predictions[1].predicted_position.position.x, 900);
+        ASSERT_EQ(result.objects.size(), 2ul);
+        ASSERT_EQ(result.objects[1].predictions.size(), 2ul); // we dropped 2 points
+        ASSERT_EQ(result.objects[1].header.stamp, rclcpp::Time(1.6 * 1e9)); // 1.7 Seconds
+        ASSERT_EQ(result.objects[1].pose.pose.position.x, 500);
+        ASSERT_EQ(result.objects[1].predictions[0].header.stamp, rclcpp::Time(1.9 * 1e9)); // 1.9 Seconds
+        ASSERT_EQ(result.objects[1].predictions[0].predicted_position.position.x, 800);
+        ASSERT_EQ(result.objects[1].predictions[1].header.stamp, rclcpp::Time(2.1 * 1e9)); // 2.1 Seconds
+        ASSERT_EQ(result.objects[1].predictions[1].predicted_position.position.x, 1000);
     }
 
 } // namespace motion_computation

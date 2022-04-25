@@ -51,5 +51,5 @@ lanelet::BasicPoint2d  BSpline::second_deriv(double t) const {
   return output;
 }
 
-};  // namespace smoothing
-};  // namespace basic_autonomy
+}  // namespace smoothing
+}  // namespace basic_autonomy
