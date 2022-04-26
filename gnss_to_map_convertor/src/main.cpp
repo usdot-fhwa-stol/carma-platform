@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2018-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,16 +14,20 @@
  * the License.
  */
 
-#include <gnss_to_map_convertor/GNSSToMapNode.h>
-#include <ros/ros.h>
-// Main execution
-int main(int argc, char** argv){
+#include <rclcpp/rclcpp.hpp>
+#include "gnss_to_map_convertor/gnss_to_map_convertor_node.hpp"
 
-  // Initialize node
-  ros::init(argc, argv, "gnss_to_map_convertor");
-  gnss_to_map_convertor::GNSSToMapNode convertor;
+int main(int argc, char **argv) 
+{
+  rclcpp::init(argc, argv);
 
-  // Start execution
-  convertor.run();
+  auto node = std::make_shared<gnss_to_map_convertor::Node>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
+
+  rclcpp::shutdown();
+
   return 0;
-};
+}
