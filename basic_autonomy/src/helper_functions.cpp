@@ -64,12 +64,12 @@ namespace waypoint_generation
 
     int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm, double target_downtrack)
     {
-        int best_index = points.size() - 1;
-        for(int i = 0;i < points.size(); i++){
+        size_t best_index = points.size() - 1;
+        for(size_t i = 0;i < points.size(); i++){
             double downtrack = wm->routeTrackPos(points[i]).downtrack;
             if(downtrack > target_downtrack){
                 //If value is negative, best index should be index 0
-                best_index = std::max(0, i - 1);
+                best_index = std::max((size_t)0, i - 1);
 
                 ROS_DEBUG_STREAM("get_nearest_index_by_downtrack>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y() << ", downtrack: "<< downtrack);
                 break;
@@ -77,7 +77,7 @@ namespace waypoint_generation
         }
         ROS_DEBUG_STREAM("get_nearest_index_by_downtrack>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y());
 
-        return best_index;
+        return static_cast<int>(best_index);
     }
 
     void split_point_speed_pairs(const std::vector<PointSpeedPair>& points,
