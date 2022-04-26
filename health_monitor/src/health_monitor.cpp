@@ -119,7 +119,7 @@ namespace health_monitor
                     shutdown = true;
                 }
                 // If the ROS2 system controller failed we need to shutdown
-                else if (msg->source_node.compare("system_controller") == 0) 
+                else if (msg->source_node.compare("/system_controller") == 0) 
                 {
                     shutdown = true;
                 }

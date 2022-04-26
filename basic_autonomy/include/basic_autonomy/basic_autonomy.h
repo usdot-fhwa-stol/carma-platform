@@ -240,7 +240,7 @@ namespace basic_autonomy
         std::vector<cav_msgs::TrajectoryPlanPoint>
         compose_lanefollow_trajectory_from_path(const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state,
                                                       const ros::Time &state_time, const carma_wm::WorldModelConstPtr &wm, 
-                                                      const cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg,
+                                                      const cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds& debug_msg,
                                                       const DetailedTrajConfig &detailed_config);
 
      //Functions specific to lane change

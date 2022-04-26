@@ -12,12 +12,12 @@
 -->
 
 <launch>
-  <arg name = "max_lane_width"  default = "4" doc= "Max lane width in meters within which geofence points are associated to a lanelet as those points are guaranteed to apply to a single lane"/>
   <node name="carma_wm_broadcaster" pkg="carma_wm_ctrl" type="carma_wm_ctrl_node">
     <remap from="georeference" to="$(optenv CARMA_LOCZ_NS)/map_param_loader/georeference"/>
     <remap from="$(optenv CARMA_ENV_NS)/geofence" to="$(optenv CARMA_MSG_NS)/incoming_geofence_control"/>
     <remap from="$(optenv CARMA_ENV_NS)/incoming_map" to="$(optenv CARMA_MSG_NS)/incoming_map"/>
     <remap from="current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>
-    <param name="max_lane_width" value = "$(arg max_lane_width)" />
+    <remap from="$(optenv CARMA_ENV_NS)/outgoing_geofence_ack" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_operation"/>
+    <rosparam command="load" file="$(find carma_wm_ctrl)/config/parameters.yaml"/>
   </node>
 </launch>

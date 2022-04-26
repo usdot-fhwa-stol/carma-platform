@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -91,6 +91,8 @@ public:
     pnh.param<double>("/vehicle_acceleration_limit", config.vehicle_accel_limit, config.vehicle_accel_limit);
     pnh.param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
     pnh.param<double>("stop_line_buffer", config.stop_line_buffer, config.stop_line_buffer);
+    pnh.param<double>("algorithm_evaluation_distance", config.algorithm_evaluation_distance, config.algorithm_evaluation_distance);
+    pnh.param<double>("algorithm_evaluation_period", config.algorithm_evaluation_period, config.algorithm_evaluation_period);
     pnh.param<double>("minimum_speed", config.minimum_speed, config.minimum_speed);
     
     ROS_INFO_STREAM("LightControlledIntersectionTacticalPlugin Params" << config);

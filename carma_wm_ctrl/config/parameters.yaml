@@ -1,0 +1,7 @@
+#Integer; The number of times it publishes Geofence Acknowledgement.
+ack_pub_times: 1 
+#Double; Max lane width in meters within which geofence points are associated to a lanelet as those points are guaranteed to apply to a single lane
+max_lane_width: 4.0
+
+#Double: Period in seconds between traffic control requests after route selection
+traffic_control_request_period: 1.0

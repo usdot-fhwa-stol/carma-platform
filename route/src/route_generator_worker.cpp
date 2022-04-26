@@ -486,7 +486,7 @@ namespace route {
         {
             ROS_WARN("%s", ex.what());
         }
-
+        
         geometry_msgs::PoseStamped updated_vehicle_pose;
         updated_vehicle_pose.pose.position.x = frontbumper_transform_.getOrigin().getX();
         updated_vehicle_pose.pose.position.y = frontbumper_transform_.getOrigin().getY();
@@ -622,6 +622,7 @@ namespace route {
 
         if(reroutingChecker()==true)
         {
+           ROS_DEBUG_STREAM("Rerouting required");
            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
            publish_route_event(cav_msgs::RouteEvent::ROUTE_INVALIDATION);
            auto route = reroute_after_route_invalidation(destination_points_in_map_);
