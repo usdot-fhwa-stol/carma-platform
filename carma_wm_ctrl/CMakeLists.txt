@@ -113,7 +113,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 )
 
 ## Install Other Resources
-install(DIRECTORY launch
+install(DIRECTORY launch config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -114,8 +114,15 @@ namespace plan_delegator
              * \brief Lookup transfrom from front bumper to base link
              */
             void lookupFrontBumperTransform();
-            
-            void updateManeuverDistances(cav_msgs::Maneuver& maneuver);
+
+            /**
+             * \brief Update the starting downtrack, ending downtrack, and maneuver-specific Lanelet ID parameters associated 
+             * with a given maneuver. These updates are required since the starting and ending downtrack values of each maneuver 
+             * are shifted based on the distance between the base_link frame and the vehicle_front frame.
+             * \param maneuver The maneuver to be updated.
+             */
+            void updateManeuverParameters(cav_msgs::Maneuver& maneuver);
+
         protected:
         
             // ROS params

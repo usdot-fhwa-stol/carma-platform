@@ -239,7 +239,14 @@ namespace cooperative_lanechange
         //get subject vehicle info
         lanelet::BasicPoint2d veh_pos(req.vehicle_state.x_pos_global, req.vehicle_state.y_pos_global);
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
+
+        ROS_DEBUG_STREAM("target_lanelet_id: " << target_lanelet_id);
+        ROS_DEBUG_STREAM("target_downtrack: " << target_downtrack);
+        ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack);
+        ROS_DEBUG_STREAM("Starting CLC downtrack: " << maneuver_plan[0].lane_change_maneuver.start_dist);
+
         if(current_downtrack < maneuver_plan[0].lane_change_maneuver.start_dist - starting_downtrack_range_){
+            ROS_DEBUG_STREAM("Lane change trajectory will not be planned. current_downtrack is more than " << starting_downtrack_range_ << " meters before starting CLC downtrack");
             return true;
         }
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, veh_pos, 10);       
@@ -295,17 +302,31 @@ namespace cooperative_lanechange
 
         //plan lanechange without filling in response
         ROS_DEBUG_STREAM("Planning lane change trajectory");
-        //get constant starting downtrack for lane change
-        if(!is_lanechange_in_progress_){
-            if(current_lanelet_id == stoi(maneuver_plan[0].lane_change_maneuver.starting_lane_id)){
-                is_lanechange_in_progress_ = true;
-                lc_starting_downtrack_ = maneuver_plan[0].lane_change_maneuver.start_dist;
-                ROS_DEBUG_STREAM("Planning lane change from starting downtrack: "<<lc_starting_downtrack_);
+
+        std::string maneuver_id = maneuver_plan[0].lane_change_maneuver.parameters.maneuver_id;
+        if (original_lc_maneuver_values_.find(maneuver_id) == original_lc_maneuver_values_.end()) {
+            // If this lane change maneuver ID is being received for this first time, store its original start_dist and starting_lane_id locally
+            ROS_DEBUG_STREAM("Received maneuver id " << maneuver_id << " for the first time");
+            ROS_DEBUG_STREAM("Original start dist is " << maneuver_plan[0].lane_change_maneuver.start_dist);
+            ROS_DEBUG_STREAM("Original starting_lane_id is " << maneuver_plan[0].lane_change_maneuver.starting_lane_id);
+
+            // Create LaneChangeManeuverOriginalValues object for this lane change maneuver and add it to original_lc_maneuver_values_
+            LaneChangeManeuverOriginalValues original_lc_values;
+            original_lc_values.maneuver_id = maneuver_id;
+            original_lc_values.original_starting_lane_id = maneuver_plan[0].lane_change_maneuver.starting_lane_id;
+            original_lc_values.original_start_dist = maneuver_plan[0].lane_change_maneuver.start_dist;
+
+            original_lc_maneuver_values_[maneuver_id] = original_lc_values;
+        }
+        else {
+            // If the vehicle has just started this lane change, store its initial velocity locally; this velocity will be maintained throughout the lane change
+            if (current_downtrack >= (original_lc_maneuver_values_[maneuver_id]).original_start_dist  && !(original_lc_maneuver_values_[maneuver_id]).has_started) {
+                original_lc_maneuver_values_[maneuver_id].has_started = true;
+                original_lc_maneuver_values_[maneuver_id].original_longitudinal_vel_ms = std::max(req.vehicle_state.longitudinal_vel, minimum_speed_);
+
+                ROS_DEBUG_STREAM("Lane change maneuver " << maneuver_id << " has started, maintaining speed (in m/s): " <<
+                                 original_lc_maneuver_values_[maneuver_id].original_longitudinal_vel_ms << " throughout lane change");
             }
-            else if(current_lanelet_id == stoi(maneuver_plan[0].lane_change_maneuver.ending_lane_id) && current_downtrack >= maneuver_plan[0].lane_change_maneuver.end_dist){
-                is_lanechange_in_progress_ = false;
-            }
-            
         }
 
         std::vector<cav_msgs::TrajectoryPlanPoint> planned_trajectory_points = plan_lanechange(req);
@@ -518,7 +539,30 @@ namespace cooperative_lanechange
                                                                             buffer_ending_downtrack_);
 
         ROS_DEBUG_STREAM("Current downtrack:"<<current_downtrack);
-        double starting_downtrack = std::min(current_downtrack, lc_starting_downtrack_);
+        
+        std::string maneuver_id = maneuver_plan.front().lane_change_maneuver.parameters.maneuver_id;
+        double original_start_dist = current_downtrack; // Initialize so original_start_dist cannot be less than the current downtrack
+        if (original_lc_maneuver_values_.find(maneuver_id) != original_lc_maneuver_values_.end()) {
+            // Obtain the original start_dist associated with this lane change maneuver
+            original_start_dist = original_lc_maneuver_values_[maneuver_id].original_start_dist;
+            ROS_DEBUG_STREAM("Maneuver id " << maneuver_id << " original start_dist is " << original_start_dist);
+
+            // Set this maneuver's starting_lane_id to the original starting_lane_id associated with this lane change maneuver
+            maneuver_plan.front().lane_change_maneuver.starting_lane_id = original_lc_maneuver_values_[maneuver_id].original_starting_lane_id;
+            ROS_DEBUG_STREAM("Updated maneuver id " << maneuver_id << " starting_lane_id to its original value of " << original_lc_maneuver_values_[maneuver_id].original_starting_lane_id);
+
+            // If the vehicle has started this lane change, set the request's vehicle_state.longitudinal_vel to the velocity that the vehicle began this lane change at
+            if(original_lc_maneuver_values_[maneuver_id].has_started) {
+                req.vehicle_state.longitudinal_vel = original_lc_maneuver_values_[maneuver_id].original_longitudinal_vel_ms;
+                ROS_DEBUG_STREAM("Updating vehicle_state.longitudinal_vel to the initial lane change value of " << original_lc_maneuver_values_[maneuver_id].original_longitudinal_vel_ms);
+            }
+        }
+        else {
+            ROS_WARN_STREAM("No original values for lane change maneuver were found!");
+        }
+
+        double starting_downtrack = std::min(current_downtrack, original_start_dist);
+
         auto points_and_target_speeds = basic_autonomy::waypoint_generation::create_geometry_profile(maneuver_plan, starting_downtrack ,wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config);
 
         //Calculate maneuver fraction completed (current_downtrack/(ending_downtrack-starting_downtrack)

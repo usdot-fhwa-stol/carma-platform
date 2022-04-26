@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2021-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -188,6 +188,8 @@ namespace basic_autonomy
             // though this is not likely to be an issue as they are buffer only
             double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack;
 
+            ROS_DEBUG_STREAM("Add lanefollow buffer: ending_downtrack: " << ending_downtrack << ", maneuvers.back().lane_following_maneuver.end_dist: " << maneuvers.back().lane_following_maneuver.end_dist <<
+                            ", detailed_config.buffer_ending_downtrack: " << detailed_config.buffer_ending_downtrack);
 
             size_t max_i = points_and_target_speeds.size() - 1;
             size_t unbuffered_idx = points_and_target_speeds.size() - 1;
@@ -205,10 +207,10 @@ namespace basic_autonomy
                 }
 
                 double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
-                ROS_DEBUG_STREAM("Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() << 
-                "current_point.y():" << current_point.y());
 
                 dist_accumulator += delta_d;
+                ROS_DEBUG_STREAM("Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() << 
+                "current_point.y():" << current_point.y());
                 if (dist_accumulator > maneuvers.back().lane_following_maneuver.end_dist && !found_unbuffered_idx)
                 {
                     unbuffered_idx = i - 1;
@@ -280,14 +282,17 @@ namespace basic_autonomy
             lanelet::ConstLanelet current_lanelet = starting_lanelet;
             reference_centerline.insert(reference_centerline.end(), current_lanelet_centerline.begin(), current_lanelet_centerline.end());
 
+            ROS_DEBUG_STREAM("Searching for shared boundary with starting lanechange lanelet " << std::to_string(current_lanelet.id()) << " and ending lanelet " << std::to_string(ending_lanelet.id()));
             while(!shared_boundary_found){
                 //Assumption- Adjacent lanelets share lane boundary
                 if(current_lanelet.leftBound() == ending_lanelet.rightBound()){   
+                    ROS_DEBUG_STREAM("Lanelet " << std::to_string(current_lanelet.id()) << " shares left boundary with " << std::to_string(ending_lanelet.id()));
                     is_lanechange_left = true;
                     shared_boundary_found = true;
                 }
 
                 else if(current_lanelet.rightBound() == ending_lanelet.leftBound()){
+                    ROS_DEBUG_STREAM("Lanelet " << std::to_string(current_lanelet.id()) << " shares right boundary with " << std::to_string(ending_lanelet.id()));
                     shared_boundary_found = true;
                 }
 
@@ -306,6 +311,7 @@ namespace basic_autonomy
                         //Looped back to starting lanelet
                         throw(std::invalid_argument("No lane change in path"));
                     }
+                    ROS_DEBUG_STREAM("Now checking for shared lane boundary with lanelet " << std::to_string(current_lanelet.id()) << " and ending lanelet " << std::to_string(ending_lanelet.id()));
                     auto current_lanelet_linestring = current_lanelet.centerline2d().basicLineString();   
                     //Concatenate linestring starting from + 1 to avoid overlap 
                     reference_centerline.insert(reference_centerline.end(), current_lanelet_linestring.begin() + 1, current_lanelet_linestring.end());
@@ -313,7 +319,7 @@ namespace basic_autonomy
                 }
             }
 
-            //Find crosstrack distance between starting lane and ending lane
+            // Create the target lane centerline using lanelets adjacent to the lanechange lanelets in the starting lane
             std::vector<lanelet::BasicPoint2d> target_lane_centerline;
             for(size_t i = 0;i<starting_lane.size();++i){
                 lanelet::ConstLanelet curr_end_lanelet;
@@ -321,21 +327,21 @@ namespace basic_autonomy
                 if(is_lanechange_left){
                     
                     //get left lanelet
-                    if(wm->getMapRoutingGraph()->left(starting_lane[0])){
-                        curr_end_lanelet = wm->getMapRoutingGraph()->left(starting_lane[0]).get();
+                    if(wm->getMapRoutingGraph()->left(starting_lane[i])){
+                        curr_end_lanelet = wm->getMapRoutingGraph()->left(starting_lane[i]).get();
                     }
                     else{
-                        curr_end_lanelet = wm->getMapRoutingGraph()->adjacentLeft(starting_lane[0]).get();
+                        curr_end_lanelet = wm->getMapRoutingGraph()->adjacentLeft(starting_lane[i]).get();
                     }
                 }
                 else{
 
                     //get right lanelet
-                    if(wm->getMapRoutingGraph()->right(starting_lane[0])){
-                        curr_end_lanelet = wm->getMapRoutingGraph()->right(starting_lane[0]).get();
+                    if(wm->getMapRoutingGraph()->right(starting_lane[i])){
+                        curr_end_lanelet = wm->getMapRoutingGraph()->right(starting_lane[i]).get();
                     }
                     else{
-                        curr_end_lanelet = wm->getMapRoutingGraph()->adjacentRight(starting_lane[0]).get();
+                        curr_end_lanelet = wm->getMapRoutingGraph()->adjacentRight(starting_lane[i]).get();
                     }
                 }
                 
@@ -397,13 +403,20 @@ namespace basic_autonomy
                 centerline_points.push_back(current_position);
             }
 
-            //Add points from following lanelet to provide sufficient distance for adding buffer
-            auto following_lanelets = wm->getMapRoutingGraph()->following(ending_lanelet, false);
-            if(!following_lanelets.empty()){
-                //Arbitrarily choosing first following lanelet for buffer since points are only being used to fit spline
-                auto following_lanelet_centerline = following_lanelets.front().centerline2d().basicLineString();
-                centerline_points.insert(centerline_points.end(), following_lanelet_centerline.begin(), 
-                                                                            following_lanelet_centerline.end());
+            // Add points from the remaining length of the target lanelet to provide sufficient distance for adding buffer
+            double dist_to_target_lane_end = lanelet::geometry::distance2d(centerline_points.back(), downsampled_target_centerline.back());
+            centerline_points.insert(centerline_points.end(), downsampled_target_centerline.begin() + end_index_target_centerline, downsampled_target_centerline.end());
+            
+            // If the additional distance from the remaining length of the target lanelet does not provide more than the required
+            // buffer_ending_downtrack, then also add points from the lanelet following the target lanelet
+            if (dist_to_target_lane_end < buffer_ending_downtrack) {
+                auto following_lanelets = wm->getMapRoutingGraph()->following(ending_lanelet, false);
+                if(!following_lanelets.empty()){
+                    //Arbitrarily choosing first following lanelet for buffer since points are only being used to fit spline
+                    auto following_lanelet_centerline = following_lanelets.front().centerline2d().basicLineString();
+                    centerline_points.insert(centerline_points.end(), following_lanelet_centerline.begin(), 
+                                                                                following_lanelet_centerline.end());
+                }
             }
 
             return centerline_points;
@@ -489,12 +502,11 @@ namespace basic_autonomy
             }
 
             //get route between starting and ending downtracks - downtracks should be constant for complete length of maneuver
-            std::vector<lanelet::BasicPoint2d> route_geometry = create_lanechange_geometry(std::stoi(lane_change_maneuver.starting_lane_id), std::stoi(lane_change_maneuver.ending_lane_id),
-                                                                                        starting_downtrack, ending_downtrack, wm, general_config.default_downsample_ratio);
-            ROS_DEBUG_STREAM("Route geometry size:"<<route_geometry.size());
+            double lanechange_starting_downtrack;
+            std::vector<lanelet::BasicPoint2d> route_geometry = create_lanechange_geometry(std::stoi(lane_change_maneuver.starting_lane_id),std::stoi(lane_change_maneuver.ending_lane_id),
+                                                                                        starting_downtrack, ending_downtrack, wm, state, general_config.default_downsample_ratio, detailed_config.buffer_ending_downtrack);
 
             lanelet::BasicPoint2d state_pos(state.x_pos_global, state.y_pos_global);
-            double current_downtrack = wm->routeTrackPos(state_pos).downtrack;
             int nearest_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, current_downtrack);
             int ending_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, ending_downtrack);
             ROS_DEBUG_STREAM("Nearest pt index in maneuvers to points: "<< nearest_pt_index);
@@ -769,7 +781,7 @@ namespace basic_autonomy
 
         std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanefollow_trajectory_from_path(
             const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time, const carma_wm::WorldModelConstPtr &wm,
-            const cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg, const DetailedTrajConfig &detailed_config)
+            const cav_msgs::VehicleState &ending_state_before_buffer, carma_debug_msgs::TrajectoryCurvatureSpeeds& debug_msg, const DetailedTrajConfig &detailed_config)
         {
             ROS_DEBUG_STREAM("VehicleState: "
                              << " x: " << state.x_pos_global << " y: " << state.y_pos_global << " yaw: " << state.orientation
@@ -1045,6 +1057,12 @@ namespace basic_autonomy
             std::vector<lanelet::BasicPoint2d> all_sampling_points;
             all_sampling_points.reserve(1 + future_geom_points.size() * 2);
 
+            lanelet::BasicPoint2d current_vehicle_point(state.x_pos_global, state.y_pos_global);
+
+            future_geom_points.insert(future_geom_points.begin(),
+                                       current_vehicle_point); // Add current vehicle position to front of future geometry points
+
+            final_actual_speeds.insert(final_actual_speeds.begin(), state.longitudinal_vel);
         
             //Compute points to local downtracks
             std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(future_geom_points);
@@ -1063,6 +1081,10 @@ namespace basic_autonomy
             ROS_DEBUG_STREAM("Got sampled points with size:" << all_sampling_points.size());
 
             std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(future_geom_points);
+            if(final_yaw_values.size() > 0) {
+                final_yaw_values[0] = state.orientation; // Set the initial yaw value based on the initial state
+            }
+
             final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, detailed_config.speed_moving_average_window_size);
 
             //Convert speeds to time

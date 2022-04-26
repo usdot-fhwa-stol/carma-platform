@@ -68,7 +68,8 @@ TEST(WMBroadcaster, DISABLED_geofenceCallback)
                     [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
                     [](const cav_msgs::TrafficControlRequest& control_msg_pub_) {},
                     [](const cav_msgs::CheckActiveGeofence& active_pub_) {},
-                    std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check
+                    std::make_unique<TestTimerFactory>(),
+                    [](const cav_msgs::MobilityOperation& tcm_ack_pub_){});  // Create broadcaster with test timers. Having this check
                                                             // helps verify that the timers do not crash on destruction
 
   wmb.setConfigSpeedLimit(35.0);

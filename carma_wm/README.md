@@ -212,6 +212,34 @@ TEST(UserTest, someTest)
   // overwrite all the speed limit of the entire road
   setSpeedLimit(25_mph, cmw);
 }
+
+```
+ * add traffic light into the map
+```c++
+using namespace carma_wm::test
+
+TEST(UserTest, someTest)
+{
+  auto cmw = getGuidanceTestMap(mp);
+
+  // Light with default signal timers will be located on lanelet 1200 (entry) and exit at 1203.
+  // Notice that multiple entry and exit lanelets can be given.
+  lanelet::Id traffic_light_id = lanelet::utils::getId();
+  carma_wm::test::addTrafficLight(cmw, traffic_light_id, {1200}, { 1203 });
+  
+  // also timing can be changed:
+  std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>> timing_plan =
+  {
+    std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(0), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED), // Just ended green
+    std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(2.0), lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE), // 2 sec yellow
+    std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(17.0), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN), // 15 sec red
+    std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(32.0), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED) // 15 sec green
+  }
+
+  lanelet::Id traffic_light_id = lanelet::utils::getId();
+  carma_wm::test::addTrafficLight(cmw, traffic_light_id, {1200}, { 1203 }, timing_plan);
+
+}
 ```
 
 
