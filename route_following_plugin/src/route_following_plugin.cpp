@@ -153,6 +153,12 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
 
     std::vector<cav_msgs::Maneuver> RouteFollowingPlugin::routeCb(const lanelet::routing::LaneletPath &route_shortest_path)
     {
+        
+        
+        for (auto ll:route_shortest_path)
+        {
+            shortest_path_set_.insert(ll.id());
+        }
         std::vector<cav_msgs::Maneuver> maneuvers;
         //This function calculates the maneuver plan every time the route is set
         ROS_DEBUG_STREAM("New route created");
@@ -497,6 +503,14 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             ROS_DEBUG_STREAM("upcoming_lane_change_status_msg_map_.front().second.downtrack_until_lanechange: " <<static_cast<double>(upcoming_lane_change_status_msg_map_.front().second.downtrack_until_lanechange));
             upcoming_lane_change_status_pub_.publish(upcoming_lane_change_status_msg_map_.front().second); 
         }
+
+        auto current_lanelet = llts[0];
+        // if the current lanelet is not on the shortest path
+        if (shortest_path_set_.find(current_lanelet.id()) == shortest_path_set_.end())
+        {
+            returnToShortestPath(current_lanelet);
+   
+        }
       
     }
 
@@ -735,4 +749,56 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
         tf2_buffer_.setUsingDedicatedThread(true);
     }
+
+    void RouteFollowingPlugin::returnToShortestPath(const lanelet::ConstLanelet &current_lanelet)
+    {
+        auto original_shortestpath = wm_->getRoute()->shortestPath();
+        ROS_DEBUG_STREAM("The vehicle has left the shortest path");
+        auto routing_graph = wm_->getMapRoutingGraph();
+
+        // In order to return to the shortest path, the closest future lanelet on the shortest path needs to be found.
+        // That is the following lanelet of the adjacent lanelet of the current lanelet.
+        auto adjacent_lanelets = routing_graph->besides(current_lanelet);
+        if (!adjacent_lanelets.empty())
+        {
+            for (auto adjacent:adjacent_lanelets)
+            {
+                if (shortest_path_set_.find(adjacent.id())!=shortest_path_set_.end())
+                {
+                    auto following_lanelets = routing_graph->following(adjacent);
+                    auto target_following_lanelet = following_lanelets[0];
+                    ROS_DEBUG_STREAM("The target_following_lanelet id is: " << target_following_lanelet.id());
+                    lanelet::ConstLanelets interm;
+                    interm.push_back(static_cast<lanelet::ConstLanelet>(target_following_lanelet));
+                    // a new shortest path, via the target_following_lanelet is calculated and used an alternative shortest path
+                    auto new_shortestpath = routing_graph->shortestPathVia(current_lanelet, interm, original_shortestpath.back());
+                    ROS_DEBUG_STREAM("a new shortestpath is generated to return to original shortestpath");
+                    // routeCb is called to update latest_maneuver_plan_
+                    if (new_shortestpath) this->latest_maneuver_plan_ = routeCb(new_shortestpath.get());
+                    break;
+                }
+                else
+                {
+                    // a new shortest path, via the current_lanelet is calculated and used an alternative shortest path
+                    lanelet::ConstLanelets new_interm;
+                    new_interm.push_back(static_cast<lanelet::ConstLanelet>(current_lanelet));
+                    auto new_shortestpath = routing_graph->shortestPathVia(current_lanelet, new_interm, original_shortestpath.back());
+                    ROS_DEBUG_STREAM("Cannot return to the original shortestpath from adjacent lanes, so a new shortestpath is generated");
+                    // routeCb is called to update latest_maneuver_plan_
+                    if (new_shortestpath) this->latest_maneuver_plan_ = routeCb(new_shortestpath.get());
+                }
+            }
+            
+        }
+        else
+        {
+            ROS_WARN_STREAM("Alternative shortest path cannot be generated");
+        }
+
+    }
+    
+
+            
+            
+             
 }

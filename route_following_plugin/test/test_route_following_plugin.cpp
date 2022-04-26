@@ -331,6 +331,60 @@ namespace route_following_plugin
         ASSERT_EQ(start_time_change, 10.0);
     }
 
+
+
+TEST(RouteFollowingPlugin, TestReturnToShortestPath)
+    {
+    //Use Guidance Lib to create map
+        carma_wm::test::MapOptions options;
+        options.lane_length_ = 25;
+        options.lane_width_ = 3.7;
+        options.speed_limit_ = carma_wm::test::MapOptions::SpeedLimit::DEFAULT;
+        options.obstacle_ = carma_wm::test::MapOptions::Obstacle::NONE;
+        std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
+        //create the Semantic Map
+        lanelet::LaneletMapPtr map = carma_wm::test::buildGuidanceTestMap(options.lane_width_, options.lane_length_);
+
+        //set the map with default routingGraph
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
+        carma_wm::test::setRouteByIds({1210, 1213}, cmw);
+
+        lanelet::LaneletMapConstPtr const_map(map);
+        lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
+        lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
+
+        //Compute and print shortest path
+        lanelet::Lanelet start_lanelet = map->laneletLayer.get(1210);
+        lanelet::Lanelet end_lanelet = map->laneletLayer.get(1213);
+        auto route = map_graph->getRoute(start_lanelet, end_lanelet);
+
+        cmw.get()->setConfigSpeedLimit(30.0);
+
+        RouteFollowingPlugin worker;
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
+        worker.wm_ = cmw;
+
+        //RouteFollowing plan maneuver callback
+        ros::Time::init();
+        auto shortest_path = cmw->getRoute()->shortestPath();
+
+        worker.latest_maneuver_plan_ = worker.routeCb(shortest_path);
+
+        // If the vehicle remains on the shortest path, the next maneuver is lane following
+        ASSERT_EQ(worker.latest_maneuver_plan_[0].type, cav_msgs::Maneuver::LANE_FOLLOWING);
+
+        for (auto ll:route->shortestPath())
+        {
+            worker.shortest_path_set_.insert(ll.id());
+            std::cout<<"id added: " << ll.id() << std::endl;
+        }
+
+        lanelet::Lanelet current_lanelet = map->laneletLayer.get(1200);
+        worker.returnToShortestPath(current_lanelet);
+
+        // Since the vehicle is not on the shortest path, the first maneuver is lane change
+        ASSERT_EQ(worker.latest_maneuver_plan_[0].type, cav_msgs::Maneuver::LANE_CHANGE);
+    }
 }
 
 // Run all the tests
