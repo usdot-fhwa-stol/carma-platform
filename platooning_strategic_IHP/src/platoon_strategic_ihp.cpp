@@ -487,13 +487,12 @@ namespace platoon_strategic_ihp
 
             if (pm_.current_platoon_state == PlatoonState::FOLLOWER)
             {
-                ROS_DEBUG_STREAM("pm platoonsize: " << pm_.getTotalPlatooningSize() << ", platoon_leader " << platoon_leader.staticId);
-
                 PlatoonMember platoon_leader = pm_.getDynamicLeader();
                 status_msg.leader_id = platoon_leader.staticId;
                 status_msg.leader_downtrack_distance = platoon_leader.vehiclePosition;
                 status_msg.leader_cmd_speed = platoon_leader.commandSpeed;
                 status_msg.host_platoon_position = pm_.getNumberOfVehicleInFront();
+                ROS_DEBUG_STREAM("pm platoonsize: " << pm_.getTotalPlatooningSize() << ", platoon_leader " << platoon_leader.staticId);
 
                 // UCLA: Add the value of the summation of "veh_len/veh_speed" for all predecessors
                 status_msg.current_predecessor_time_headway_sum = pm_.getPredecessorTimeHeadwaySum();
