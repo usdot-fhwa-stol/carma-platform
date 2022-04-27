@@ -41,8 +41,6 @@ class WMListenerWorker;  // Forward declaration of worker class
  * in the constructor. When used in a multi-threading case users can ensure threadsafe operation though usage of the
  * getLock function
  *
- * NOTE: At the moment the mechanism of route communication in ROS is not defined therefore it is a TODO: to implement
- * full route support
  */
 class WMListener
 {

@@ -249,7 +249,6 @@ TEST(WMListenerWorkerTest, setConfigSpeedLimitTest)
 {
   WMListenerWorker wmlw;
 
-  bool flag = false;
   double cL = 24.0;
   ///// Test without user defined config limit
   wmlw.setConfigSpeedLimit(cL);
@@ -260,14 +259,12 @@ TEST(WMListenerWorkerTest, setConfigSpeedLimitTest)
 
   ASSERT_EQ(cL, current_cl);
   RCLCPP_INFO_STREAM(rclcpp::get_logger("WMListenerWorkerTest"), "config_speed_limit = "<< current_cl);
-
 }
 
 TEST(WMListenerWorkerTest, getVehicleParticipationTypeTest)
 {
   WMListenerWorker wmlw;
 
-  bool flag = false;
   std::string pt = lanelet::Participants::VehicleTruck;
   ///// Test without user defined config limit
   wmlw.setVehicleParticipationType(pt);
@@ -278,7 +275,6 @@ TEST(WMListenerWorkerTest, getVehicleParticipationTypeTest)
 
   ASSERT_EQ(pt, current_pt);
   RCLCPP_INFO_STREAM(rclcpp::get_logger("WMListenerWorkerTest"),"Participant = "<< current_pt);
-
 }
 
 TEST(WMListenerWorkerTest, checkIfReRoutingNeeded1)

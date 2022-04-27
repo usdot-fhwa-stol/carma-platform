@@ -30,9 +30,10 @@
 namespace carma_wm
 {
 
-void createTestingWorld(carma_wm::CARMAWorldModel& cmw, std::vector<lanelet::Lanelet>& llts,
-                                          lanelet::LaneletMapPtr& map,  std::vector<carma_perception_msgs::msg::ExternalObject>& obstacles)
+void createTestingWorld(std::vector<lanelet::Lanelet>& llts, lanelet::LaneletMapPtr& map, std::vector<cav_msgs::ExternalObject>& obstacles)
 {
+  //Note: all params are outputs provided by this function.
+  
   /*
   * Create 2x2 lanelets map by hand
   */
@@ -109,7 +110,7 @@ void createTestingWorld(carma_wm::CARMAWorldModel& cmw, std::vector<lanelet::Lan
   size.y = 2;
   size.z = 1;
 
-  for (int i = 0; i < x_offsets.size(); i++)
+  for (size_t i = 0; i < x_offsets.size(); i++)
   {
       geometry_msgs::msg::Pose pose;
       pose.position.x = x_offsets[i];
@@ -155,7 +156,7 @@ TEST(CARMAWorldModelTest, getLane)
   lanelet::LaneletMapPtr map;
   std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -198,7 +199,7 @@ TEST(CARMAWorldModelTest, getNearestObjInLane)
   lanelet::LaneletMapPtr map;
   std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -258,7 +259,7 @@ TEST(CARMAWorldModelTest, nearestObjectBehindInLane)
   std::vector<lanelet::Lanelet> llts;
   lanelet::LaneletMapPtr map;
   std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -304,7 +305,7 @@ TEST(CARMAWorldModelTest, nearestObjectAheadInLane)
   lanelet::LaneletMapPtr map;
   std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -353,7 +354,7 @@ TEST(CARMAWorldModelTest, getInLaneObjects)
   lanelet::LaneletMapPtr map;
   std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -421,7 +422,7 @@ TEST(CARMAWorldModelTest, distToNearestObjInLane)
   lanelet::LaneletMapPtr map;
   std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -1037,7 +1038,7 @@ TEST(CARMAWorldModelTest, getLaneletsFromPoint)
   lanelet::LaneletMapPtr map;
   std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
   // Test no map set
   ASSERT_THROW(cmw.getLaneletsFromPoint({1,1}), std::invalid_argument);
   // Create a complete map
@@ -1267,7 +1268,7 @@ TEST(CARMAWorldModelTest, sampleRoutePoints)
   carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
   std::vector<lanelet::BasicPoint2d> points = wm->sampleRoutePoints(0, 10.5, 1);
 
-  int i = 0;
+  size_t i = 0;
   for (auto p : points) {
     ASSERT_NEAR(p.x(), 1.85, 0.001);
     if (i != points.size() - 1) {
