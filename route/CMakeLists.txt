@@ -28,7 +28,7 @@ find_package(catkin REQUIRED COMPONENTS
   cav_srvs
   carma_utils
   autoware_msgs
-  wgs84_utils
+  wgs84_utils_ros1
   carma_wm
   tf
   tf2
@@ -43,7 +43,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils autoware_msgs wgs84_utils carma_wm tf tf2 tf2_geometry_msgs
+  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils autoware_msgs wgs84_utils_ros1 carma_wm tf tf2 tf2_geometry_msgs
 )
 
 ###########
