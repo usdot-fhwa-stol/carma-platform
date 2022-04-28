@@ -205,7 +205,6 @@ namespace basic_autonomy
      * \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to the vehicle position or earlier.
      *                               If the first maneuver exceeds this then it's downtrack will be shifted to this value.
      * \param wm Pointer to intialized world model for semantic map access
-     * \param ending_state_before_buffer reference to Vehicle state, which is state before applying extra points for curvature calculation that are removed later
      * \param general_config Basic autonomy struct defined to load general config parameters from tactical plugins
      * \param detailed_config Basic autonomy struct defined to load detailed config parameters from tactical plugins
      * 
