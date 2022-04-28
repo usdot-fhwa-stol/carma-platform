@@ -272,11 +272,12 @@ namespace basic_autonomy
       * \param ending_downtrack The downtrack distance at which the lane change maneuver end
       * \param wm Pointer to intialized world model for semantic map access
       * \param downsample_ratio TODO: add description
+      * \param buffer_ending_downtrack The additional downtrack beyond requested end dist used to fit points along spline
       * 
       * \return A vector of geometry points as lanelet::basicpoint2d
       */
      std::vector<lanelet::BasicPoint2d> create_lanechange_geometry(lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, double starting_downtrack, double ending_downtrack,
-                                                            const carma_wm::WorldModelConstPtr &wm, int downsample_ratio);
+                                                            const carma_wm::WorldModelConstPtr &wm, int downsample_ratio, double buffer_ending_downtrack);
    
      
      /**

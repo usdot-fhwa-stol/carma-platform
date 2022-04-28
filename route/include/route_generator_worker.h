@@ -33,7 +33,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/primitives/Lanelet.h>
-#include <wgs84_utils/wgs84_utils.h>
+#include <wgs84_utils_ros1/wgs84_utils.h>
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include <visualization_msgs/MarkerArray.h>
