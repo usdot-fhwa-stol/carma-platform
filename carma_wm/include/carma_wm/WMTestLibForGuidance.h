@@ -68,9 +68,9 @@ struct MapOptions
                             lane_width_(lane_width), lane_length_(lane_length), obstacle_(obstacle), speed_limit_(speed_limit), seg_num_(seg_num){}
   double lane_width_;
   double lane_length_;
-  int seg_num_;
   Obstacle obstacle_ ;
   SpeedLimit speed_limit_;
+  int seg_num_;
 };
 /**
  * \brief helper function for quickly creating a lanelet::Point3d. random id is assigned
@@ -323,8 +323,12 @@ inline void addObstacle(double x, double y, std::shared_ptr<carma_wm::CARMAWorld
  * \param length length of roadway object, default 3 meters
  * NOTE: This assumes a similar simple shape of the GuidanceTestMap and does not populate cartesian components of the roadway object.
  */
-inline void addObstacle(carma_wm::TrackPos tp, lanelet::Id lanelet_id, std::shared_ptr<carma_wm::CARMAWorldModel> cmw, std::vector<carma_wm::TrackPos> pred_trackpos_list = {}, int time_step = 100, double width = 3, double length = 3)
+inline void addObstacle(carma_wm::TrackPos tp, lanelet::Id lanelet_id, std::shared_ptr<carma_wm::CARMAWorldModel> cmw, 
+                        std::vector<carma_wm::TrackPos> pred_trackpos_list = {}, int time_step = 100, double width = 3, double length = 3)
 {
+  //TODO: width & length are not used; if there are no plans to use them soon, remove them from param list
+  ROS_DEBUG_STREAM("/// the following args are not used: width = " << width << ", length = " << length << ". Logging to avoid compiler warning.");
+
   cav_msgs::RoadwayObstacle rwo;	
 
   if (!cmw->getMap() || cmw->getMap()->laneletLayer.size() == 0)
@@ -482,57 +486,73 @@ inline void setRouteByIds (std::vector<lanelet::Id> lanelet_ids, std::shared_ptr
 
 /**
  * \brief Method adds a traffic light to the provided world model instance
- *        NOTE: The stop line for the light will be located at the end of the owning_lanelet and formed from its two bound end points 
+ *        NOTE: The stop line for the light will be located at the end of the owning_lanelets (in order) and formed from their two bound end points.
+ *        NOTE: Exit lanelet matches the entry lanelets by order. 
  * 
  * \param cmw The world model instance to update
  * \param light_id The lanelet id to use for the generated traffic light regulatory element. This id should NOT be present in the map prior to this method call
- * \param owning_lanelet_id The id of the lanelet which will own thr traffic light element. This id MUST be present in the map prior to this method being called
- * \param controlled_lanelet_ids A list of lanelet ids which the traffic light will control access to. The ids MUST be present in the map. Additionally, they should be listed in order along the direction of travel.
+ * \param entry_lanelet_ids The ids of the lanelet which will own the traffic light element. These ids MUST be present in the map prior to this method being called
+ * \param exit_lanelet_ids The ids of the exit lanelet of this traffic light. These ids MUST be present in the map prior to this method being called
  * \param timeing_plan Optional parameter that is the timing plan to use for the light. The specifications match those of CarmaTrafficSignalState.setStates()
  *                     The default timing plan is 4sec yewllow, 20sec red, 20sec green
+ * \throw if any of the lanelet is not in map, or entry/exit lanelet sizes do not match
  */ 
-inline void addTrafficLight(std::shared_ptr<carma_wm::CARMAWorldModel> cmw, lanelet::Id light_id, lanelet::Id owning_lanelet_id, std::vector<lanelet::Id> controlled_lanelet_ids, 
+inline void addTrafficLight(std::shared_ptr<carma_wm::CARMAWorldModel> cmw, lanelet::Id light_id, std::vector<lanelet::Id> entry_lanelet_ids, std::vector<lanelet::Id> exit_lanelet_ids, 
 std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>> timing_plan =
 {
   std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(0), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED), // Just ended green
   std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(4.0), lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE), // 4 sec yellow
   std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(24.0), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN), // 20 sec red
   std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(44.0), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED) // 20 sec green
-}) {
+}) 
+{
+  if (entry_lanelet_ids.size() != exit_lanelet_ids.size())
+  {
+    throw std::invalid_argument("Provided entry and exit lanelets size do not match!");
+  }
   
-  std::vector<lanelet::Lanelet> controlled_lanelets;
+  lanelet::Lanelets entry_lanelets;
 
-  for (auto id : controlled_lanelet_ids) {
+  for (auto id : entry_lanelet_ids) {
     auto iterator = cmw->getMutableMap()->laneletLayer.find(id);
     
     if (iterator == cmw->getMutableMap()->laneletLayer.end())
       throw std::invalid_argument("Provided with lanelet id not in map: " + std::to_string(id));
 
-    controlled_lanelets.push_back(*iterator);
+    entry_lanelets.push_back(*iterator);
   }
 
-  // Get owning lanelet by id
-  auto iterator = cmw->getMutableMap()->laneletLayer.find(owning_lanelet_id);
+  lanelet::Lanelets exit_lanelets;
+
+  for (auto id : exit_lanelet_ids) {
+    auto iterator = cmw->getMutableMap()->laneletLayer.find(id);
     
-  if (iterator == cmw->getMutableMap()->laneletLayer.end())
-    throw std::invalid_argument("Provided with lanelet id not in map: " + std::to_string(owning_lanelet_id));
+    if (iterator == cmw->getMutableMap()->laneletLayer.end())
+      throw std::invalid_argument("Provided with lanelet id not in map: " + std::to_string(id));
+
+    exit_lanelets.push_back(*iterator);
+  }
+
+  // Create stop line at end of owning lanelet
+  std::vector<lanelet::LineString3d> stop_lines;
+  for (auto llt: entry_lanelets)
+  {
+    lanelet::LineString3d virtual_stop_line(lanelet::utils::getId(), { llt.leftBound().back(), llt.rightBound().back() });
+    stop_lines.push_back(virtual_stop_line);
+  }
   
-  // Add traffic light to owning lanelet
-  auto owning_lanelet = *iterator;
-
-    // Create stop line at end of owning lanelet
-  lanelet::LineString3d virtual_stop_line(lanelet::utils::getId(), { owning_lanelet.leftBound().back(), owning_lanelet.rightBound().back() });
-
   // Build traffic light
-  std::shared_ptr<lanelet::CarmaTrafficSignal> traffic_light(new lanelet::CarmaTrafficSignal(lanelet::CarmaTrafficSignal::buildData(light_id, { virtual_stop_line }, {controlled_lanelets.front()}, {controlled_lanelets.back()} )));
+  std::shared_ptr<lanelet::CarmaTrafficSignal> traffic_light(new lanelet::CarmaTrafficSignal(lanelet::CarmaTrafficSignal::buildData(light_id, stop_lines, entry_lanelets, exit_lanelets )));
   
   // Set the timing plan
   traffic_light->setStates(timing_plan,0);
-  
-  owning_lanelet.addRegulatoryElement(traffic_light);
 
   // Ensure map lookup tables are updated
-  cmw->getMutableMap()->update(owning_lanelet, traffic_light);
+  for (auto llt: entry_lanelets)
+  {
+    cmw->getMutableMap()->update(llt, traffic_light);
+  }
+  
 }
 
 /**

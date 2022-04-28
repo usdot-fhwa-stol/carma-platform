@@ -11,7 +11,8 @@ namespace conversion {
 
 void convert(const carma_v2x_msgs::msg::MobilityPath &in_msg, carma_perception_msgs::msg::ExternalObject &out_msg,
              const lanelet::projection::LocalFrameProjector &map_projector) {
-  constexpr double mobility_path_points_timestep_size = 1.0;
+
+  constexpr double mobility_path_points_timestep_size = 0.1; // Mobility path timestep size per message spec
 
   out_msg.size.x = 2.5;  // TODO identify better approach for object size in mobility path
   out_msg.size.y = 2.25;
@@ -101,7 +102,9 @@ void convert(const carma_v2x_msgs::msg::MobilityPath &in_msg, carma_perception_m
       out_msg.velocity.twist = curr_state.predicted_velocity;  // Velocity derived from first point
 
     } else {
-      rclcpp::Time prev_stamp_as_time = rclcpp::Time(prev_state.header.stamp);
+
+      // NOTE: This is where the time increment happens but it feels incorrect. since the corresponding data is actually from the original prev_state stamp
+      rclcpp::Time prev_stamp_as_time = rclcpp::Time(prev_state.header.stamp) + mobility_path_point_delta_t;
       rclcpp::Time updated_time_step = prev_stamp_as_time + mobility_path_point_delta_t;
 
       auto res = impl::composePredictedState(curr_pt_map, prev_pt_map, prev_stamp_as_time, updated_time_step, prev_yaw);
@@ -163,7 +166,8 @@ std::pair<carma_perception_msgs::msg::PredictedState, double> composePredictedSt
 
   // Set velocity
   output_state.predicted_velocity.linear.x =
-      vehicle_vector.norm() / (curr_time_stamp - prev_time_stamp).seconds();  // TODO
+
+      vehicle_vector.norm() / (curr_time_stamp - prev_time_stamp).seconds(); 
 
   // Set timestamp
   output_state.header.stamp = builtin_interfaces::msg::Time(prev_time_stamp);

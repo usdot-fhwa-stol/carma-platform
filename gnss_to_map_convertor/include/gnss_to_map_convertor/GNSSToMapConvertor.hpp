@@ -16,19 +16,29 @@
  * the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
+#include <functional>
+
+#include <std_msgs/msg/string.hpp>
+#include <std_srvs/srv/empty.hpp>
+
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <sensor_msgs/msg/nav_sat_fix.hpp>
+
 #include <tf2/LinearMath/Transform.h>
-#include <wgs84_utils/wgs84_utils.h>
-#include <sensor_msgs/NavSatFix.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <geometry_msgs/Pose.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TransformStamped.h>
-#include <std_msgs/String.h>
-#include <gps_common/GPSFix.h>
-#include <lanelet2_extension/projection/local_frame_projector.h>
+
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+
 #include <boost/optional.hpp>
 #include <memory>
+
+#include <gps_msgs/msg/gps_fix.hpp>
+#include <wgs84_utils/wgs84_utils.h>
+
+#include <lanelet2_extension/projection/local_frame_projector.h>
 
 /**
  * \class GNSSToMapConvertor
@@ -40,7 +50,7 @@ namespace gnss_to_map_convertor
 class GNSSToMapConvertor
 {
 public:
-  using PosePubCallback = std::function<void(const geometry_msgs::PoseStamped&)>;
+  using PosePubCallback = std::function<void(geometry_msgs::msg::PoseStamped)>;
 
   /**
    * Function which will return the most recent transform between the provided frames
@@ -48,7 +58,7 @@ public:
    * If the transform does not exist or cannot be computed the optional returns false
    */
   using TransformLookupCallback =
-      std::function<boost::optional<geometry_msgs::TransformStamped>(const std::string&, const std::string&)>;
+      std::function<boost::optional<geometry_msgs::msg::TransformStamped>(const std::string&, const std::string&)>;
 
   /**
    * \brief Constructor
@@ -62,7 +72,7 @@ public:
    *
    */
   GNSSToMapConvertor(PosePubCallback pose_pub, TransformLookupCallback tf_lookup, std::string map_frame_id,
-                     std::string base_link_frame_id, std::string heading_frame_id);
+                     std::string base_link_frame_id, std::string heading_frame_id, rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger);
 
   /**
    * \brief GNSS Fix callback which will publish a pose representing that fix in the map frame if the required
@@ -70,7 +80,7 @@ public:
    *
    * \param fix_msg The message to convert to the map frame
    */
-  void gnssFixCb(const gps_common::GPSFixConstPtr& fix_msg);
+  void gnssFixCb(gps_msgs::msg::GPSFix::UniquePtr fix_msg);
 
   /**
    * \brief Map georeference callback
@@ -81,7 +91,7 @@ public:
    * \param geo_ref The proj string which defines the geodetic projection of the map frame which is used to convert
    * between GNSS and Map.
    */
-  void geoReferenceCallback(const std_msgs::String& geo_ref);
+  void geoReferenceCallback(std_msgs::msg::String::UniquePtr geo_ref);
 
   /**
    * \brief Get the rotation computed from the recieved georeference or boost::none if unset
@@ -114,11 +124,11 @@ public:
    * \return A pose message describing the location and orientation of the baselink frame in the map frame. TODO handle
    * covariance which is not currently included
    */
-  geometry_msgs::PoseWithCovarianceStamped poseFromGnss(const tf2::Transform& baselink_in_sensor,
+  geometry_msgs::msg::PoseWithCovarianceStamped poseFromGnss(const tf2::Transform& baselink_in_sensor,
                                                         const tf2::Quaternion& sensor_in_ned_heading_rotation,
                                                         const lanelet::projection::LocalFrameProjector& projector,
                                                         const tf2::Quaternion& ned_in_map_rotation,
-                                                        const gps_common::GPSFixConstPtr& fix_msg);
+                                                        gps_msgs::msg::GPSFix fix_msg);
 
 private:
   PosePubCallback pose_pub_;           // Function which can forward the output from this component
@@ -140,6 +150,10 @@ private:
 
   boost::optional<tf2::Transform> baselink_in_sensor_;  // A transform describing the relation of the baselink frame
                                                         // with the frame provided by the gnss message
+  
+  // Logger interface
+  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
+
 };
 
 };  // namespace gnss_to_map_convertor

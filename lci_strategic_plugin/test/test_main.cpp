@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,16 +14,17 @@
  * the License.
  */
 
-#include <gnss_to_map_convertor/GNSSToMapNode.h>
+#include <gmock/gmock.h>
 #include <ros/ros.h>
-// Main execution
-int main(int argc, char** argv){
 
-  // Initialize node
-  ros::init(argc, argv, "gnss_to_map_convertor");
-  gnss_to_map_convertor::GNSSToMapNode convertor;
-
-  // Start execution
-  convertor.run();
-  return 0;
-};
+int main(int argc, char **argv)
+{
+    testing::InitGoogleTest(&argc, argv);
+    ros::Time::init();
+    ROSCONSOLE_AUTOINIT;
+    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+      ros::console::notifyLoggerLevelsChanged();
+    }
+    auto res = RUN_ALL_TESTS();
+    return res;
+}

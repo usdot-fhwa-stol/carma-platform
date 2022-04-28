@@ -29,6 +29,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <unordered_set>
 
 /**
  * \brief Macro definition to enable easier access to fields shared across the maneuver types
@@ -225,6 +226,14 @@ namespace route_following_plugin
          */ 
         std::string getNewManeuverId() const;
 
+        /**
+         * \brief This method re-routes the vehicle back to the shortest path, if the vehicle has left the shortest path, but is still on the route
+         * Re-routing is performed by generating a new shortest path via the closest lanelet on the original shortest path
+         * 
+         * \param current_lanelet curretn lanelet where the vehicle is at
+         */ 
+        void returnToShortestPath(const lanelet::ConstLanelet &current_lanelet);
+
         // CARMA ROS node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
@@ -236,6 +245,9 @@ namespace route_following_plugin
 
         // ROS service servers
         ros::ServiceServer plan_maneuver_srv_;  
+
+        // unordered set of all the lanelet ids in shortest path
+        std::unordered_set<lanelet::Id> shortest_path_set_;
 
         // Minimal duration of maneuver, loaded from config file
         double min_plan_duration_ = 16.0;
@@ -317,6 +329,7 @@ namespace route_following_plugin
         FRIEND_TEST(RouteFollowingPlugin, TestAssociateSpeedLimit);
         FRIEND_TEST(RouteFollowingPlugin, TestAssociateSpeedLimitusingosm);
         FRIEND_TEST(RouteFollowingPlugin, TestHelperfunctions);
+        FRIEND_TEST(RouteFollowingPlugin, TestReturnToShortestPath);
         FRIEND_TEST(StopAndWaitTestFixture, CaseOne);
         FRIEND_TEST(StopAndWaitTestFixture, CaseTwo);
         FRIEND_TEST(StopAndWaitTestFixture, CaseThree);

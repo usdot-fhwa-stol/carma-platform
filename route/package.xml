@@ -30,7 +30,7 @@
   <depend>cav_srvs</depend>
   <depend>carma_utils</depend>
   <depend>autoware_msgs</depend>
-  <depend>wgs84_utils</depend>
+  <depend>wgs84_utils_ros1</depend>
   <depend>carma_wm</depend>
   <depend>tf</depend>
   <depend>tf2</depend>

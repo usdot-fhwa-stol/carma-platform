@@ -3,13 +3,13 @@
 centerline_sampling_spacing: 1.0
 
 # Trajectory length in seconds
-trajectory_time_length: 6.0 
+trajectory_time_length: 12.0
 
 # Amount to downsample input lanelet centerline data. Value corresponds to saving each nth point.
-default_downsample_ratio: 36 
+default_downsample_ratio: 10  
 
 # Amount to downsample input lanelet centerline data on turns. Value corresponds to saving each nth point.
-turn_downsample_ratio: 20 
+turn_downsample_ratio: 5 
 
 # Curve re-sampling step size in m
 curve_resample_step_size: 1.0 
@@ -21,16 +21,16 @@ curvature_moving_average_window_size: 9
 speed_moving_average_window_size: 5 
 
 # Number of meters behind the first maneuver that need to be included in points for curvature calculation
-back_distance: 20.0 
+back_distance: 20.0
 
 # Additional distance beyond ending downtrack to ensure sufficient points
-buffer_ending_downtrack: 20.0 
+buffer_ending_downtrack: 40.0
 
 # Double: multiplier to apply to the maximum allowable vehicle deceleration limit so we plan under our capabilities
-vehicle_decel_limit_multiplier : 0.50 
+vehicle_decel_limit_multiplier : 1.0
 
 # Double: multiplier to apply to the maximum allowable vehicle acceleration limit so we plan under our capabilities
-vehicle_accel_limit_multiplier : 0.50
+vehicle_accel_limit_multiplier : 1.0
 
 # Multiplier of lat_accel to bring the value under lat_accel
 lat_accel_multiplier: 0.50
@@ -39,4 +39,10 @@ lat_accel_multiplier: 0.50
 stop_line_buffer : 2.0
 
 # Double: Minimum allowable speed in m/s
-minimum_speed : 2.2352
+minimum_speed : 4.4704
+
+# Double: Distance from the nearest traffic light where the vehicle decides whether to run last successful trajectory or accept new one (in meters)
+algorithm_evaluation_distance : 35.0
+
+# Double: Period if scheduled entry time is within which the vehicle decides to run the last successful trajectory smoothing trajectory (in seconds)
+algorithm_evaluation_period : 4.5

@@ -23,7 +23,7 @@ namespace motion_computation
       : carma_ros2_utils::CarmaLifecycleNode(options),
         motion_worker_(
           std::bind(&MotionComputationNode::publishObject, this, std_ph::_1),
-          get_node_logging_interface()
+          get_node_logging_interface(), get_node_clock_interface()
         )
   {
     // Create initial config
@@ -31,7 +31,6 @@ namespace motion_computation
 
     // Declare parameters
     config_.prediction_time_step = declare_parameter<double>("prediction_time_step", config_.prediction_time_step);
-    config_.mobility_path_time_step = declare_parameter<double>("mobility_path_time_step", config_.mobility_path_time_step);
     config_.prediction_period = declare_parameter<double>("prediction_period", config_.prediction_period);
     config_.cv_x_accel_noise = declare_parameter<double>("cv_x_accel_noise", config_.cv_x_accel_noise);
     config_.cv_y_accel_noise = declare_parameter<double>("cv_y_accel_noise", config_.cv_y_accel_noise);
@@ -47,7 +46,6 @@ namespace motion_computation
   {
     auto error = update_params<double>({
         {"prediction_time_step", config_.prediction_time_step},
-        {"mobility_path_time_step", config_.mobility_path_time_step},
         {"prediction_period", config_.prediction_period},
         {"cv_x_accel_noise", config_.cv_x_accel_noise},
         {"cv_y_accel_noise", config_.cv_y_accel_noise},
@@ -78,7 +76,6 @@ namespace motion_computation
 
     // Load parameters
     get_parameter<double>("prediction_time_step", config_.prediction_time_step);
-    get_parameter<double>("mobility_path_time_step", config_.mobility_path_time_step);
     get_parameter<double>("prediction_period", config_.prediction_period);
     get_parameter<double>("cv_x_accel_noise", config_.cv_x_accel_noise);
     get_parameter<double>("cv_y_accel_noise", config_.cv_y_accel_noise);
@@ -101,10 +98,11 @@ namespace motion_computation
     mobility_path_sub_ = create_subscription<carma_v2x_msgs::msg::MobilityPath>("incoming_mobility_path", 100,
                                                               std::bind(&MotionComputationWorker::mobilityPathCallback, &motion_worker_, std_ph::_1));
 
-    bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("incoming_mobility_path", 100,
+
+    bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("incoming_bsm", 100,
                                                               std::bind(&MotionComputationWorker::bsmCallback, &motion_worker_, std_ph::_1));
 
-    psm_sub_ = create_subscription<carma_v2x_msgs::msg::PSM>("incoming_mobility_path", 100,
+    psm_sub_ = create_subscription<carma_v2x_msgs::msg::PSM>("incoming_psm", 100,
                                                               std::bind(&MotionComputationWorker::psmCallback, &motion_worker_, std_ph::_1));
     
     georeference_sub_ = create_subscription<std_msgs::msg::String>("georeference", 1,
@@ -116,7 +114,6 @@ namespace motion_computation
 
     // Set motion_worker_'s prediction parameters
     motion_worker_.setPredictionTimeStep(config_.prediction_time_step);
-    motion_worker_.setMobilityPathPredictionTimeStep(config_.mobility_path_time_step);
     motion_worker_.setPredictionPeriod(config_.prediction_period);
     motion_worker_.setXAccelerationNoise(config_.cv_x_accel_noise);
     motion_worker_.setYAccelerationNoise(config_.cv_y_accel_noise);

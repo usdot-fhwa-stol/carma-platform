@@ -202,7 +202,7 @@ public:
    *
    * \return integer case number
    */
-  int determineSpeedProfileCase(double stop_dist, double current_speed, double schedule_stop_time, double speed_limit);
+  int determine_speed_profile_case(double stop_dist, double current_speed, double schedule_stop_time, double speed_limit);
 
   /**
    * \brief calculate the speed, right before the car starts to decelerate for stopping
@@ -215,7 +215,7 @@ public:
    *
    * \return speed value
    */
-  double calcSpeedBeforeDecel(double stop_time, double stop_dist, double current_speed) const;
+  double calc_speed_before_decel(double stop_time, double stop_dist, double current_speed) const;
 
     /**
    * \brief parse strategy parameters

@@ -35,11 +35,15 @@ include_directories(
   include
 )
 
+# boost::posix_time definition for using nanoseconds
+add_definitions(-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG)
+
 # Build
 
 ament_auto_add_library(${worker_lib} SHARED
         src/motion_computation_worker.cpp
         src/mobility_path_to_external_object.cpp
+        src/psm_to_external_object_convertor.cpp
         src/bsm_to_external_object_convertor.cpp
 )
 

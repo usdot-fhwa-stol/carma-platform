@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@
 #include <lanelet2_extension/regulatory_elements/StopRule.h>
 #include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
 #include <lanelet2_extension/regulatory_elements/SignalizedIntersection.h>
+#include <lanelet2_routing/internal/Graph.h>
 #include "WMListenerWorker.h"
 
 namespace carma_wm
@@ -199,7 +200,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     
     // updating incoming points' memory addresses with local ones of same ids
     // so that lanelet library can recognize they are same objects 
-    for (int i = 0; i < left.size(); i ++)
+    for (size_t i = 0; i < left.size(); i ++)
     {
       if (world_model_->getMutableMap()->pointLayer.exists(left[i].id())) //rewrite the memory address of new pts with that of local
       {
@@ -207,7 +208,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
       }
     }
     auto right = llt.rightBound3d(); //new lanelet coming in
-    for (int i = 0; i < right.size(); i ++)
+    for (size_t i = 0; i < right.size(); i ++)
     {
       if (world_model_->getMutableMap()->pointLayer.exists(right[i].id())) //rewrite the memory address of new pts with that of local
       {
@@ -264,19 +265,34 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     if (regemptr_it != world_model_->getMutableMap()->regulatoryElementLayer.end())  
     {
 
-      ROS_DEBUG_STREAM("Reapplying previously existing element");
+      ROS_DEBUG_STREAM("Reapplying previously existing element for lanelet id:" << parent_llt.id() << ", and regem id: " << regemptr_it->get()->id());
       // again we should use the element with correct data address to be consistent
       world_model_->getMutableMap()->update(parent_llt, *regemptr_it);
     }
     else // Updates are treated as new regulations after the old value was removed. In both cases we enter this block. 
     {
-      ROS_DEBUG_STREAM("New regulatory element " << pair.second->id());
+      ROS_DEBUG_STREAM("New regulatory element at lanelet: " << parent_llt.id() << ", and id: " << pair.second->id());
       newRegemUpdateHelper(parent_llt, pair.second.get());
     }
   }
   
-  // set the Map to trigger a new route graph construction if rerouting was required by the updates. 
-  world_model_->setMap(world_model_->getMutableMap(), current_map_version_, recompute_route_flag_);
+  // set the Map to trigger a new route graph construction if rerouting was required by the updates and a new graph was not provided
+  world_model_->setMap(world_model_->getMutableMap(), current_map_version_, recompute_route_flag_ && !geofence_msg->has_routing_graph );
+
+  // If a new graph was provided then set that graph
+  // recompute_route_flag_ not checked here to support the case of the first map or map version changing
+  if (geofence_msg->has_routing_graph) {
+
+    LaneletRoutingGraphPtr graph = routingGraphFromMsg(geofence_msg->routing_graph, world_model_->getMutableMap());
+
+    if (!graph) {
+      throw std::invalid_argument("Map updated provided routing graph which could not be applied to the current map.");
+    }
+
+    world_model_->setRoutingGraph(graph);
+
+  }
+  
 
   // no need to reroute again unless received invalidated msg again
   if (recompute_route_flag_)
@@ -428,6 +444,125 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
   }
 }
 
+LaneletRoutingGraphPtr WMListenerWorker::routingGraphFromMsg(const autoware_lanelet2_msgs::RoutingGraph& msg, lanelet::LaneletMapPtr map) const {
+
+  if (msg.participant_type.compare(getVehicleParticipationType()) != 0) {
+
+    ROS_ERROR_STREAM("Received routing graph does not have matching vehicle type for world model. WM Type: " 
+      << getVehicleParticipationType() 
+      << " graph type: " << msg.participant_type
+    );
+
+    return nullptr;
+  }
+
+  // Get the lists of passable lanelets and areas
+  // Both these lists must be populated in the same order as the message to support later logic
+  lanelet::ConstLanelets passable_lanelets;
+  lanelet::ConstAreas passable_areas;
+
+  passable_lanelets.reserve(msg.lanelet_vertices.size());
+  passable_areas.reserve(msg.area_vertices.size());
+
+  try {
+
+    // All the passable lanelets and areas should be included as a vertext so just iterate over each and store
+    for (auto vertex : msg.lanelet_vertices) {
+      passable_lanelets.emplace_back(map->laneletLayer.get(vertex.lanelet_or_area));
+    }
+
+    for (auto vertex : msg.area_vertices) {
+      passable_areas.emplace_back(map->areaLayer.get(vertex.lanelet_or_area));
+    }
+
+  } catch(const lanelet::NoSuchPrimitiveError& e) {
+    
+    ROS_ERROR_STREAM("Received routing graph specifies lanelets which do not match the current map version. Actual exception: " << e.what());
+
+    return nullptr;
+  }
+
+
+  // Build the submap
+  // This operation does increase in time as the number of lanelets and areas increase
+  // however testing shows it to less than 1% of the total routing graph build time so this is a reasonable operation to keep
+  auto passable_map = lanelet::utils::createConstSubmap(passable_lanelets, passable_areas);
+
+  // This is the actual graph object which is used to initialize a RoutingGraph
+  auto graph = std::make_unique<lanelet::routing::internal::RoutingGraphGraph>(msg.num_unique_routing_cost_ids);
+
+  // Vertex must be added first then the edge can be added
+  for (auto ll : passable_lanelets) {
+    graph->addVertex(lanelet::routing::internal::VertexInfo{ll});
+  }
+
+  for (auto area : passable_areas) {
+    graph->addVertex(lanelet::routing::internal::VertexInfo{area});
+  }
+
+  // Now we can add edges
+  for (size_t i = 0; i < msg.lanelet_vertices.size(); ++i) {
+
+    auto vertex = msg.lanelet_vertices[i];
+    auto lanelet = passable_lanelets[i]; // passable_lanelets should be in the same order based on how its constructed
+
+    for (size_t j = 0; j < vertex.lanelet_or_area_ids.size(); ++j) {
+
+      lanelet::routing::RelationType relation;
+
+      // Get relation
+      switch (vertex.edge_relations[j])
+      {
+        case autoware_lanelet2_msgs::RoutingGraphVertexAndEdges::RELATION_SUCCESSOR:
+          relation = lanelet::routing::RelationType::Successor; break;
+        
+        case autoware_lanelet2_msgs::RoutingGraphVertexAndEdges::RELATION_LEFT:
+          relation = lanelet::routing::RelationType::Left; break;
+
+        case autoware_lanelet2_msgs::RoutingGraphVertexAndEdges::RELATION_RIGHT:
+          relation = lanelet::routing::RelationType::Right; break;
+
+        case autoware_lanelet2_msgs::RoutingGraphVertexAndEdges::RELATION_ADJACENT_LEFT:
+          relation = lanelet::routing::RelationType::AdjacentLeft; break;
+
+        case autoware_lanelet2_msgs::RoutingGraphVertexAndEdges::RELATION_ADJACENT_RIGHT:
+          relation = lanelet::routing::RelationType::AdjacentRight; break;
+
+        case autoware_lanelet2_msgs::RoutingGraphVertexAndEdges::RELATION_CONFLICTING:
+          relation = lanelet::routing::RelationType::Conflicting; break;
+
+        case autoware_lanelet2_msgs::RoutingGraphVertexAndEdges::RELATION_AREA:
+          relation = lanelet::routing::RelationType::Area; break;
+        
+        default: // Treat default as RELATION_NONE
+          relation = lanelet::routing::RelationType::None; break;
+      }
+
+      try {
+
+        // Create edge
+        graph->addEdge(
+          lanelet, 
+          map->laneletLayer.get(vertex.lanelet_or_area_ids[j]), 
+          lanelet::routing::internal::EdgeInfo{vertex.edge_routing_costs[j], vertex.edge_routing_cost_source_ids[j], relation}
+        );
+
+      }  catch(const lanelet::NoSuchPrimitiveError& e) {
+        
+        ROS_ERROR_STREAM("Received routing graph specifies lanelets which do not match the current map version. Not found lanelet or area: " 
+          << vertex.lanelet_or_area_ids[j] << " Actual exception: " << e.what());
+
+        return nullptr;
+      }
+
+    }
+  }
+
+  // Build and return the final initialized routing graph
+  return std::make_shared<lanelet::routing::RoutingGraph>(std::move(graph), std::move(passable_map));
+
+}
+
 std::string WMListenerWorker::getVehicleParticipationType() const
 {
   return world_model_->getVehicleParticipationType();
@@ -453,19 +588,17 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     return;
   }
 
-
+  bool route_invalidated_by_queued_map_update = false; // Flag to indicate whether this new route has been invalidated due to one of the applied queued map updates
   if(rerouting_flag_==true && route_msg->is_rerouted )
-
   {
+    rerouting_flag_ = false; // Reset flag since the route node has finished re-routing
 
     // After setting map evaluate the current update queue to apply any updates that arrived before the map
     bool more_updates_to_apply = true;
     while(!map_update_queue_.empty() && more_updates_to_apply) {
 
       auto update = map_update_queue_.front(); // Get first update
-      map_update_queue_.pop(); // Remove update from queue
-      rerouting_flag_ = false;  // route node has finished routing, allow update
-      update->invalidates_route=false; // do not trigger rerouting for route node again
+      map_update_queue_.pop(); // Remove update from queue     
 
       if (update->map_version < current_map_version_) { // Drop any so far unapplied updates for the current map
         ROS_WARN_STREAM("Apply from reroute: There were unapplied updates in carma_wm when a new map was recieved.");
@@ -473,6 +606,13 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
       }
       if (update->map_version == current_map_version_) { // Current update goes with current map which is also the map used by this route
         ROS_DEBUG_STREAM("Applying queued update after route was recieved. ");
+
+        if (update->invalidates_route == true) {
+          ROS_DEBUG_STREAM("Applied queued map update has invalidated the route.");
+          route_invalidated_by_queued_map_update = true;
+        }
+
+        update->invalidates_route=false; // Do not trigger recomputation of routing graph in mapUpdateCallback; recomputation of routing graph will occur outside of this loop
         mapUpdateCallback(update); // Apply the update
       } else {
         ROS_INFO_STREAM("Apply from reroute: Done applying updates for new map. However, more updates are waiting for a future map.");
@@ -483,37 +623,52 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 
   }
 
-  recompute_route_flag_ = false;
-  rerouting_flag_ = false;
-
   if (!world_model_->getMap()) { // This check is a bit redundant but still useful from a debugging perspective as the alternative is a segfault
     ROS_ERROR_STREAM("WMListener received a route before a map was available. Dropping route message.");
     return;
   }
 
-  auto path = lanelet::ConstLanelets();
-  for(auto id : route_msg->shortest_path_lanelet_ids)
-  {
-    auto ll = world_model_->getMap()->laneletLayer.get(id);
-    path.push_back(ll);
+  // If one of the applied queued map updates invalidated the route, then the routing graph must be updated again for the route node
+  if (route_invalidated_by_queued_map_update && route_node_flag_){
+    ROS_DEBUG_STREAM("At least one applied queued map update has invalidated the route. Routing graph will be recomputed.");
+    world_model_->setMap(world_model_->getMutableMap(), current_map_version_, route_invalidated_by_queued_map_update);
+    ROS_DEBUG_STREAM("Finished recomputing the routing graph for the applied queued map update(s)");
+
+    rerouting_flag_ = true; // Set flag to trigger a route update by the route node due to the updated routing graph
+
+    return;
   }
-  if(path.empty()) return;
-  auto route_opt = path.size() == 1 ? world_model_->getMapRoutingGraph()->getRoute(path.front(), path.back())
-                               : world_model_->getMapRoutingGraph()->getRouteVia(path.front(), lanelet::ConstLanelets(path.begin() + 1, path.end() - 1), path.back());
-  if(route_opt.is_initialized()) {
-    auto ptr = std::make_shared<lanelet::routing::Route>(std::move(route_opt.get()));
-    world_model_->setRoute(ptr);
+  else {
+    rerouting_flag_ = false; // Reset flag since no applied queued map updates invalidated the route for the route node
+
+    auto path = lanelet::ConstLanelets();
+    for(auto id : route_msg->shortest_path_lanelet_ids)
+    {
+      auto ll = world_model_->getMap()->laneletLayer.get(id);
+      path.push_back(ll);
+    }
+
+    auto route_opt = path.size() == 1 ? world_model_->getMapRoutingGraph()->getRoute(path.front(), path.back())
+                                : world_model_->getMapRoutingGraph()->getRouteVia(path.front(), lanelet::ConstLanelets(path.begin() + 1, path.end() - 1), path.back());
+    if(route_opt.is_initialized()) {
+      ROS_DEBUG_STREAM("Setting route in world model");
+      auto ptr = std::make_shared<lanelet::routing::Route>(std::move(route_opt.get()));
+      world_model_->setRoute(ptr);
+    }
+
+    world_model_->setRouteEndPoint({route_msg->end_point.x,route_msg->end_point.y,route_msg->end_point.z});
+
+    world_model_->setRouteName(route_msg->route_name);
+
+    // Call route_callback_
+    if (route_callback_)
+    {
+      route_callback_();
+    }
+
+    return;
   }
 
-  world_model_->setRouteEndPoint({route_msg->end_point.x,route_msg->end_point.y,route_msg->end_point.z});
-
-  world_model_->setRouteName(route_msg->route_name);
-
-  // Call route_callback_
-  if (route_callback_)
-  {
-    route_callback_();
-  }
 }
 
 void WMListenerWorker::setMapCallback(std::function<void()> callback)

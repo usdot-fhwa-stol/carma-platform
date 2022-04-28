@@ -370,6 +370,17 @@ public:
   virtual std::vector<lanelet::CarmaTrafficSignalPtr> getSignalsAlongRoute(const lanelet::BasicPoint2d& loc) const = 0;
 
   /**
+   * \brief Returns the entry and exit lanelet of the signal along the SHORTEST PATH of route. This is useful if traffic_signal controls
+   *        both directions in an intersection for example. 
+   *
+   * \param traffic_signal traffic signal of interest
+   * \throw std::invalid_argument if nullptr is passed in traffic_signal
+   *
+   * \return pair of entry and exit lanelet of the signal along the route. boost::none if the given signal doesn't have both entry/exit pair along the shortest path route.
+   */
+  virtual boost::optional<std::pair<lanelet::ConstLanelet, lanelet::ConstLanelet>> getEntryExitOfSignalAlongRoute(const lanelet::CarmaTrafficSignalPtr& traffic_signal) const = 0;
+   
+  /**
    * \brief  Return a list of all way stop intersections along the current route.  
    * The tall way stop intersections along a route and the next all way stop intersections ahead of us on the route specifically, 
    * so a sorted list (by downtrack distance) of all way stop intersections on the route ahead of us thus eliminating those behind the vehicle.

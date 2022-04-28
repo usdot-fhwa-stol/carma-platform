@@ -17,29 +17,24 @@
 #ifndef MOTION_COMPUTATION_WORKER_H
 #define MOTION_COMPUTATION_WORKER_H
 
+
+#include <gtest/gtest_prod.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
-#include <carma_v2x_msgs/msg/psm.hpp>
 #include <carma_v2x_msgs/msg/bsm.hpp>
 #include <carma_v2x_msgs/msg/mobility_path.hpp>
+#include <carma_v2x_msgs/msg/psm.hpp>
 #include <functional>
 #include <motion_predict/motion_predict.hpp>
 #include <motion_predict/predict_ctrv.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <tuple>
-#include <gtest/gtest_prod.h>
 
 namespace motion_computation {
-//! @brief Enum describing the possible operational modes of the MotionComputation
-enum MotionComputationMode {
-  MOBILITY_PATH_ONLY = 0,  // MobilityPath used as only source of external object data
-  SENSORS_ONLY = 1,        // Sensors used as only source of external object data (mobility paths dropped)
-  PATH_AND_SENSORS = 2,  // Both MobilityPath and sensors used without fusion but synchronized so the output message contains both
-};
 
 /**
  * \class MotionComputationWorker
@@ -53,9 +48,9 @@ class MotionComputationWorker {
   /*!
    * \brief Constructor for MotionComputationWorker
    */
-  MotionComputationWorker(const PublishObjectCallback& obj_pub,
-                          rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger);
 
+                          rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger,
+                          rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock);
   /**
    * \brief Function to populate duplicated detected objects along with their velocity, yaw,
    * yaw_rate and static/dynamic class to the provided ExternalObjectList message.
@@ -65,18 +60,13 @@ class MotionComputationWorker {
 
   // Setters for the prediction parameters
   void setPredictionTimeStep(double time_step);
-  void setMobilityPathPredictionTimeStep(double time_step);
   void setPredictionPeriod(double period);
   void setXAccelerationNoise(double noise);
   void setYAccelerationNoise(double noise);
   void setProcessNoiseMax(double noise_max);
   void setConfidenceDropRate(double drop_rate);
-  void setDetectionInputFlags( 
-    bool enable_sensor_processing,
-    bool enable_bsm_processing,
-    bool enable_psm_processing,
-    bool enable_mobility_path_processing
-  );
+  void setDetectionInputFlags(bool enable_sensor_processing, bool enable_bsm_processing, bool enable_psm_processing,
+                              bool enable_mobility_path_processing);
 
   // callbacks
   void mobilityPathCallback(const carma_v2x_msgs::msg::MobilityPath::UniquePtr msg);
@@ -93,8 +83,8 @@ class MotionComputationWorker {
 
   /**
    * \brief Converts from MobilityPath's predicted points in ECEF to local map and other fields in an ExternalObject
-   * object 
-   * \param msg MobilityPath message to convert 
+   * object
+   * \param msg MobilityPath message to convert
    * \return ExternalObject object
    */
   carma_perception_msgs::msg::ExternalObject mobilityPathToExternalObject(
@@ -104,7 +94,7 @@ class MotionComputationWorker {
    * \brief Appends external objects list behind base_objects. This does not do sensor fusion.
    * When doing so, it drops the predictions points that start before the first prediction is sensor list.
    * And interpolates the remaining predictions points to match the timestep using its average speed
-   * between points 
+   * between points
    * \param base_objects object detections to append to and synchronize with
    * \param new_objects new objects to add and be synchronized
    * \return append and synchronized list of external objects
@@ -126,14 +116,14 @@ class MotionComputationWorker {
       carma_perception_msgs::msg::ExternalObject path, const rclcpp::Time& time_to_match) const;
 
  private:
-  
+
   // Local copy of external object publisher
   PublishObjectCallback obj_pub_;
 
   // Prediction parameters
-  double prediction_time_step_ = 0.1;                // Seconds
-  double mobility_path_prediction_time_step_ = 0.1;  // Seconds
-  double prediction_period_ = 2.0;                   // Seconds
+
+  double prediction_time_step_ = 0.1;  // Seconds
+  double prediction_period_ = 2.0;     // Seconds
   double cv_x_accel_noise_ = 9.0;
   double cv_y_accel_noise_ = 9.0;
   double prediction_process_noise_max_ = 1000.0;
@@ -146,21 +136,33 @@ class MotionComputationWorker {
   bool enable_mobility_path_processing_ = false;
 
 
+  //Map frame
+  std::string map_frame_id_ = "map";
+
   // Logger interface
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
+  //Clock interface - gets the ros simulated clock from Node
+  rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock_;
 
-  // Queue for mobility path msgs to synchronize them with sensor msgs
+  // Queue for v2x msgs to synchronize them with sensor msgs
   carma_perception_msgs::msg::ExternalObjectList mobility_path_list_;
   carma_perception_msgs::msg::ExternalObjectList bsm_list_;
   carma_perception_msgs::msg::ExternalObjectList psm_list_;
 
+
+  // Maps of external object id to index in synchronization queues
+  std::unordered_map<uint32_t, size_t> mobility_path_obj_id_map_;
+  std::unordered_map<uint32_t, size_t> bsm_obj_id_map_;
+  std::unordered_map<uint32_t, size_t> psm_obj_id_map_;
+
   std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
-  // Rotation of a North East Down frame located on the map origin described in the map frame 
-  tf2::Quaternion ned_in_map_rotation_; 
+  // Rotation of a North East Down frame located on the map origin described in the map frame
+  tf2::Quaternion ned_in_map_rotation_;
 
   // Unit Test Accessors
   FRIEND_TEST(MotionComputationWorker, mobilityPathToExternalObject);
+  FRIEND_TEST(MotionComputationWorker, psmToExternalObject);
   FRIEND_TEST(MotionComputationWorker, BSMtoExternalObject);
 };
 
