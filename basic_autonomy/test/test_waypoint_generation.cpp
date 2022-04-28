@@ -534,6 +534,7 @@ namespace basic_autonomy
         }
         (*fit_circle)(param);
 
+        //TODO: what is supposed to be happening here?  The results of this loop are never used (circle_param)
         double circle_param = 0.0;
         for (auto i = 0; i < 50; i++)
         {
