@@ -534,7 +534,6 @@ namespace basic_autonomy
         }
         (*fit_circle)(param);
 
-        //TODO: what is supposed to be happening here?  The results of this loop are never used (circle_param)
         double circle_param = 0.0;
         for (auto i = 0; i < 50; i++)
         {
@@ -741,7 +740,7 @@ namespace basic_autonomy
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_path(points,
                                                                                                                                                           state, state_time, cmw, ending_state, config);
         EXPECT_TRUE(trajectory_points.size() > 2);
-        basic_autonomy::waypoint_generation::create_lanechange_geometry(start_id, end_id, starting_downtrack, ending_downtrack, cmw, 1);
+        basic_autonomy::waypoint_generation::create_lanechange_geometry(start_id, end_id,starting_downtrack, ending_downtrack, cmw, state, 1, 5);
     } 
 
     TEST(BasicAutonomyTest, lanefollow_geometry_visited_lanelets)

@@ -260,7 +260,7 @@ namespace basic_autonomy
         }
 
         std::vector<lanelet::BasicPoint2d> create_lanechange_geometry(lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, double starting_downtrack, double ending_downtrack,
-                                                                   const carma_wm::WorldModelConstPtr &wm, int downsample_ratio)
+                                                                   const carma_wm::WorldModelConstPtr &wm,const cav_msgs::VehicleState &state, int downsample_ratio, double buffer_ending_downtrack)
         {
             std::vector<lanelet::BasicPoint2d> centerline_points;
 
@@ -448,18 +448,16 @@ namespace basic_autonomy
 
             all_sampling_points_line1.reserve(1 + total_point_size * 2);
             std::vector<double> downtracks_raw_line1 = carma_wm::geometry::compute_arc_lengths(line_1);
-            //int total_step_along_curve1 = static_cast<int>(downtracks_raw_line1.back() / 2.0);
-            //double step_threshold_line1 = (double)total_step_along_curve1 / (double)total_point_size;
-            //TODO: are we missing some computation here?  step_threshold_line1 and step_threshold_line2 are not used anywhere
-            //      and these calcs can be deleted (see below also).
-
+            int total_step_along_curve1 = static_cast<int>(downtracks_raw_line1.back() / 2.0);
+            double step_threshold_line1 = (double)total_step_along_curve1 / (double)total_point_size;
             
             all_sampling_points_line2.reserve(1 + total_point_size * 2);
             std::vector<double> downtracks_raw_line2 = carma_wm::geometry::compute_arc_lengths(line_2);
-            //TODO: unused variable: int total_step_along_curve2 = static_cast<int>(downtracks_raw_line2.back() / 2.0);
-            //TODO: unused variable: double step_threshold_line2 = (double)total_step_along_curve2 / (double)total_point_size;
+            int total_step_along_curve2 = static_cast<int>(downtracks_raw_line2.back() / 2.0);
+            double step_threshold_line2 = (double)total_step_along_curve2 / (double)total_point_size;
 
             double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
+            
             
             all_sampling_points_line2.reserve(1 + total_point_size * 2);
             
@@ -505,8 +503,10 @@ namespace basic_autonomy
             double lanechange_starting_downtrack;
             std::vector<lanelet::BasicPoint2d> route_geometry = create_lanechange_geometry(std::stoi(lane_change_maneuver.starting_lane_id),std::stoi(lane_change_maneuver.ending_lane_id),
                                                                                         starting_downtrack, ending_downtrack, wm, state, general_config.default_downsample_ratio, detailed_config.buffer_ending_downtrack);
+            ROS_DEBUG_STREAM("Route geometry size:"<<route_geometry.size());
 
             lanelet::BasicPoint2d state_pos(state.x_pos_global, state.y_pos_global);
+            double current_downtrack = wm->routeTrackPos(state_pos).downtrack;
             int nearest_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, current_downtrack);
             int ending_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, ending_downtrack);
             ROS_DEBUG_STREAM("Nearest pt index in maneuvers to points: "<< nearest_pt_index);
@@ -656,7 +656,7 @@ namespace basic_autonomy
             while (optimize)
             {
                 auto min_pair = min_with_exclusions(curv_speeds, visited_idx);
-                int min_idx = std::get<1>(min_pair);
+                size_t min_idx = std::get<1>(min_pair);
                 if (min_idx == -1)
                 {
                     break;
@@ -710,7 +710,7 @@ namespace basic_autonomy
             std::vector<cav_msgs::TrajectoryPlanPoint> traj;
             traj.reserve(points.size());
 
-            for (size_t i = 0; i < points.size(); i++)
+            for (int i = 0; i < points.size(); i++)
             {
                 cav_msgs::TrajectoryPlanPoint tpp;
                 ros::Duration relative_time(times[i]);
@@ -838,7 +838,7 @@ namespace basic_autonomy
             std::vector<double> better_curvature;
             better_curvature.reserve(1 + curve_points.size() * 2);
 
-            for (int steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++) // Resample curve at tighter resolution
+            for (size_t steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++) // Resample curve at tighter resolution
             {
                 lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
 
@@ -891,33 +891,8 @@ namespace basic_autonomy
             ROS_DEBUG_STREAM("Corresponding to point: x: " << all_sampling_points[buffer_pt_index].x() << ", y:" << all_sampling_points[buffer_pt_index].y());
 
             if(nearest_pt_index + 1 >= buffer_pt_index){
-                
-                lanelet::BasicPoint2d current_pos(state.x_pos_global, state.y_pos_global);
-                lanelet::BasicPoint2d ending_pos(ending_state_before_buffer.x_pos_global, ending_state_before_buffer.y_pos_global);
-
-                if(wm->routeTrackPos(ending_pos).downtrack < wm->routeTrackPos(current_pos).downtrack ){
-
-                    ROS_WARN_STREAM("Current state is at or past the planned end distance. Couldn't generate trajectory");
-                    return {};
-                }
-                else{
-                    //Current point is behind the ending state of maneuver and a valid trajectory is possible
-                    ROS_WARN_STREAM("Returning the two remaining points in the maneuver");
-                    
-                    std::vector<lanelet::BasicPoint2d> remaining_traj_points = {current_pos, ending_pos};
-
-                    std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(remaining_traj_points);
-                    std::vector<double> speeds = {state.longitudinal_vel, state.longitudinal_vel};//Keep current speed
-                    std::vector<double> times;
-                    trajectory_utils::conversions::speed_to_time(downtracks, speeds, &times);
-                    std::vector<double> yaw = {state.orientation, state.orientation}; //Keep current orientation
-                    
-                    std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
-                    trajectory_from_points_times_orientations(remaining_traj_points, times, yaw, state_time);
-
-                    return traj_points;
-
-                }
+                ROS_WARN_STREAM("Current state is at or past the planned end distance. Couldn't generate trajectory");
+                return {};
             }
 
             //drop buffer points here
@@ -1068,10 +1043,11 @@ namespace basic_autonomy
             std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(future_geom_points);
 
             auto total_step_along_curve = static_cast<int>(downtracks.back() /detailed_config.curve_resample_step_size);
+            size_t total_point_size = future_geom_points.size();
 
             double scaled_steps_along_curve = 0.0; //from 0 (start) to 1 (end) for the whole trajectory
 
-            for(int steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++){
+            for(size_t steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++){
                 lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
 
                 all_sampling_points.push_back(p);
