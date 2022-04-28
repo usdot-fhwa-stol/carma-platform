@@ -80,12 +80,12 @@ namespace gnss_to_map_convertor
     // Fix Subscriber
 
     fix_sub_ = create_subscription<gps_msgs::msg::GPSFix>("gnss_fix_fused", 2,
-                                                          std::bind(&GNSSToMapConvertor::gnssFixCb, std::move(convertor_worker_), std_ph::_1));
+                                                          std::bind(&GNSSToMapConvertor::gnssFixCb, convertor_worker_.get(), std_ph::_1));
 
     // Georeference subsciber
 
     geo_sub = create_subscription<std_msgs::msg::String>("georeference", 1,
-              std::bind(&GNSSToMapConvertor::geoReferenceCallback, std::move(convertor_worker_), std_ph::_1));
+              std::bind(&GNSSToMapConvertor::geoReferenceCallback, convertor_worker_.get(), std_ph::_1));
     
                             
     // Return success if everthing initialized successfully
