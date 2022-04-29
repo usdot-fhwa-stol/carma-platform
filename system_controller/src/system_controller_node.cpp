@@ -15,6 +15,8 @@
  */
 
 #include "system_controller/system_controller_node.hpp"
+#include <chrono>
+#include <thread>
 
 namespace system_controller
 {
@@ -43,10 +45,15 @@ namespace system_controller
           system_alert_topic_, 100,
           std::bind(&SystemControllerNode::on_system_alert, this, std::placeholders::_1));
 
+      system_alert_pub_ = create_publisher<carma_msgs::msg::SystemAlert>(
+        system_alert_topic_, 10);
+
       config_.signal_configure_delay = this->declare_parameter<double>("signal_configure_delay", config_.signal_configure_delay);
       config_.service_timeout_ms = this->declare_parameter<int64_t>("service_timeout_ms", config_.service_timeout_ms);
       config_.call_timeout_ms = this->declare_parameter<int64_t>("call_timeout_ms", config_.call_timeout_ms);
       config_.required_subsystem_nodes = this->declare_parameter<std::vector<std::string>>("required_subsystem_nodes", config_.required_subsystem_nodes);
+
+      RCLCPP_INFO_STREAM(get_logger(), "Config: " << config_);
 
       lifecycle_mgr_.set_managed_nodes(config_.required_subsystem_nodes);
 
@@ -128,6 +135,17 @@ namespace system_controller
     }
   }
 
+  void SystemControllerNode::publish_system_alert(carma_msgs::msg::SystemAlert msg)
+  {
+
+    if (!get_node_base_interface())
+      throw std::runtime_error("get_node_base_interface() returned null pointer. May indicate ROS2 bug.");
+
+    msg.source_node = get_node_base_interface()->get_fully_qualified_name(); // The the source name for the message
+
+    system_alert_pub_->publish(msg); 
+  }
+
   void SystemControllerNode::on_system_alert(const carma_msgs::msg::SystemAlert::UniquePtr msg)
   {
 
@@ -147,6 +165,15 @@ namespace system_controller
        RCLCPP_INFO_STREAM( get_logger(), "Shutting down");
 
        lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
+
+       carma_msgs::msg::SystemAlert shutdown_msg; // Notify ros1 nodes of shutdown
+
+       shutdown_msg.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
+       shutdown_msg.description = "SHUTDOWN " + msg->description;
+
+       publish_system_alert(shutdown_msg);
+
+       std::this_thread::sleep_for(std::chrono::milliseconds(5)); // Add a bit of sleep to allow message publication
 
        rclcpp::shutdown(nullptr, "System Alert requested shutdown"); // Fully shutdown this node
       }

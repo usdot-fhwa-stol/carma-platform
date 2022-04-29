@@ -69,5 +69,5 @@ public:
    */ 
   virtual lanelet::BasicPoint2d second_deriv(double x) const = 0;
 };
-};  // namespace smoothing
-};  // namespace basic_autonomy
+} // namespace smoothing
+} // namespace basic_autonomy

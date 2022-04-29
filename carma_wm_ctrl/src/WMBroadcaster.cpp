@@ -38,14 +38,15 @@
 #include <carma_wm/Geometry.h>
 #include <math.h>
 #include <boost/date_time/date_defs.hpp>
+#include "RoutingGraphAccessor.h"
 
 namespace carma_wm_ctrl
 {
 using std::placeholders::_1;
 
 WMBroadcaster::WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const PublishCtrlRequestCallback& control_msg_pub,
-const PublishActiveGeofCallback& active_pub, std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory)
-  : map_pub_(map_pub), map_update_pub_(map_update_pub), control_msg_pub_(control_msg_pub), active_pub_(active_pub), scheduler_(std::move(timer_factory))
+const PublishActiveGeofCallback& active_pub, std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory, const PublishMobilityOperationCallback& tcm_ack_pub)
+  : map_pub_(map_pub), map_update_pub_(map_update_pub), control_msg_pub_(control_msg_pub), active_pub_(active_pub), scheduler_(std::move(timer_factory)), tcm_ack_pub_(tcm_ack_pub)
 {
   scheduler_.onGeofenceActive(std::bind(&WMBroadcaster::addGeofence, this, _1));
   scheduler_.onGeofenceInactive(std::bind(&WMBroadcaster::removeGeofence, this, _1));
@@ -92,6 +93,17 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   current_map_version_ += 1; // Increment the map version. It should always start from 1 for the first map
   map_update_message_queue_.clear(); // Clear the update queue as the map version has changed
   autoware_lanelet2_msgs::MapBin compliant_map_msg;
+
+  // Populate the routing graph message
+  ROS_INFO_STREAM("Creating routing graph message.");
+
+  auto readable_graph = std::static_pointer_cast<RoutingGraphAccessor>(current_routing_graph_);
+
+  compliant_map_msg.routing_graph = readable_graph->routingGraphToMsg(participant_);
+  compliant_map_msg.has_routing_graph = true;
+
+  ROS_INFO_STREAM("Done creating routing graph message.");
+
   lanelet::utils::conversion::toBinMsg(current_map_, &compliant_map_msg);
   compliant_map_msg.map_version = current_map_version_;
   map_pub_(compliant_map_msg);
@@ -206,7 +218,14 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
   std::vector<std::shared_ptr<lanelet::SignalizedIntersection>> intersections;
   std::vector<std::shared_ptr<lanelet::CarmaTrafficSignal>> traffic_signals;
 
+  auto sim_copy = sim_;
   sim_.createIntersectionFromMapMsg(intersections, traffic_signals, map_msg, current_map_, current_routing_graph_);
+
+  if (sim_ == sim_copy) // if no change
+  {
+    ROS_DEBUG_STREAM(">>> Detected no change from previous, ignoring duplicate message! with gf id: " << gf_ptr->id_);
+    return {};
+  }
 
   for (auto intersection : intersections)
   {
@@ -274,7 +293,7 @@ void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) 
   {  
     //Acquire speed limit information from TafficControlDetail msg
-    sL = lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPH()); 
+    sL = lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPS()); 
     std::string reason = "";
     if (msg_v01.package.label_exists)
       reason = msg_v01.package.label;
@@ -301,7 +320,7 @@ void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINSPEED_CHOICE) 
   {
     //Acquire speed limit information from TafficControlDetail msg
-    sL = lanelet::Velocity(msg_detail.minspeed * lanelet::units::MPH());
+    sL = lanelet::Velocity(msg_detail.minspeed * lanelet::units::MPS());
     if(config_limit > 0_mph && config_limit < 80_mph)//Accounting for the configured speed limit, input zero when not in use
         sL = config_limit;
 
@@ -1009,6 +1028,12 @@ void WMBroadcaster::externalMapMsgCallback(const cav_msgs::MapData& map_msg)
 {
   auto gf_ptr = std::make_shared<Geofence>();
 
+  if (!current_map_ || current_map_->laneletLayer.size() == 0)
+  {
+    ROS_INFO_STREAM("Map is not available yet. Skipping MAP msg");
+    return;
+  }
+
   // check if we have seen this message already
   bool up_to_date = false;
   if (sim_.intersection_id_to_regem_id_.size() == map_msg.intersections.size())
@@ -1020,16 +1045,20 @@ void WMBroadcaster::externalMapMsgCallback(const cav_msgs::MapData& map_msg)
       if (sim_.intersection_id_to_regem_id_.find(intersection.id.id) == sim_.intersection_id_to_regem_id_.end())
       {
         up_to_date = false;
+        break;
       }
     }
   }
 
   if(up_to_date)
+  {
     return;
-
+  }
+    
   gf_ptr->map_msg_ = map_msg;
   gf_ptr->msg_.package.label_exists = true;
   gf_ptr->msg_.package.label = "MAP_MSG";
+  gf_ptr->id_ = boost::uuids::random_generator()(); 
 
   // create dummy traffic Control message to add instant activation schedule
   cav_msgs::TrafficControlMessageV01 traffic_control_msg;
@@ -1046,16 +1075,22 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
 {
   
   std::lock_guard<std::mutex> guard(map_mutex_);
+  std::stringstream reason_ss;
   // quickly check if the id has been added
   if (geofence_msg.choice != cav_msgs::TrafficControlMessage::TCMV01) {
-    ROS_WARN_STREAM("Dropping received geofence for unsupported TrafficControl version: " << geofence_msg.choice);
+    reason_ss << "Dropping received geofence for unsupported TrafficControl version: " << geofence_msg.choice;
+    ROS_WARN_STREAM(reason_ss.str());
+    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::REJECTED), reason_ss.str());
     return;
   }
 
   boost::uuids::uuid id;
   std::copy(geofence_msg.tcm_v01.id.id.begin(), geofence_msg.tcm_v01.id.id.end(), id.begin());
   if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end()) { 
-    ROS_DEBUG_STREAM("Dropping received TrafficControl message with already handled id: " <<  boost::uuids::to_string(id));
+    reason_ss.str("");
+    reason_ss << "Dropping received TrafficControl message with already handled id: " << boost::uuids::to_string(id);
+    ROS_DEBUG_STREAM(reason_ss.str());
+    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::ACKNOWLEDGED), reason_ss.str());
     return;
   }
 
@@ -1078,10 +1113,22 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
 
   gf_ptr->msg_ = geofence_msg.tcm_v01;
 
-  // process schedule from message
-  addScheduleFromMsg(gf_ptr, geofence_msg.tcm_v01);
-  
-  scheduleGeofence(gf_ptr);
+  try
+  {
+    // process schedule from message
+    addScheduleFromMsg(gf_ptr, geofence_msg.tcm_v01);    
+    scheduleGeofence(gf_ptr);
+    reason_ss.str("");
+    reason_ss << "Successfully processed TCM.";
+    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::ACKNOWLEDGED), reason_ss.str());
+  }
+  catch(std::exception& ex)
+  {
+    reason_ss.str("");
+    reason_ss << "Failed to process TCM. " << ex.what();
+    pubTCMACK(geofence_msg.tcm_v01.reqid, geofence_msg.tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::REJECTED), reason_ss.str());
+    throw; //rethrows the exception object
+  }
 };
 
 void WMBroadcaster::scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr)
@@ -1162,6 +1209,14 @@ void WMBroadcaster::setConfigSpeedLimit(double cL)
 {
   /*Logic to change config_lim to Velocity value config_limit*/
   config_limit = lanelet::Velocity(cL * lanelet::units::MPH());
+}
+
+void WMBroadcaster::setConfigVehicleId(const std::string& vehicle_id){
+  vehicle_id_ = vehicle_id;
+}
+
+void WMBroadcaster::setConfigACKPubTimes(int ack_pub_times){
+  ack_pub_times_ = ack_pub_times;
 }
 
 void WMBroadcaster::setVehicleParticipationType(std::string participant)
@@ -1416,6 +1471,8 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
     {
       for (auto pair : update->update_list_) active_geofence_llt_ids_.insert(pair.first);
     }
+
+    autoware_lanelet2_msgs::MapBin gf_msg;
     
     // If the geofence invalidates the route graph then recompute the routing graph now that the map has been updated
     if (update->invalidate_route_) {
@@ -1427,11 +1484,20 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
       current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
 
       ROS_INFO_STREAM("Done rebuilding routing graph after is was invalidated by geofence");
+
+      // Populate routing graph structure
+      ROS_INFO_STREAM("Creating routing graph message");
+
+      auto readable_graph = std::static_pointer_cast<RoutingGraphAccessor>(current_routing_graph_);
+
+      gf_msg.routing_graph = readable_graph->routingGraphToMsg(participant_);
+      gf_msg.has_routing_graph = true;
+
+      ROS_INFO_STREAM("Done creating routing graph message");
     }
     
 
     // Publish
-    autoware_lanelet2_msgs::MapBin gf_msg;
     auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(update->id_, update->update_list_, update->remove_list_, update->lanelet_additions_));
     send_data->traffic_light_id_lookup_ = update->traffic_light_id_lookup_;
 
@@ -1464,6 +1530,28 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   // publish
   autoware_lanelet2_msgs::MapBin gf_msg_revert;
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, {}));
+
+  if (gf_ptr->invalidate_route_) { // If a geofence initially invalidated the route it stands to reason its removal should as well
+
+    ROS_INFO_STREAM("Rebuilding routing graph after is was invalidated by geofence removal");
+
+    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
+      lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant_
+    );
+    current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
+
+    ROS_INFO_STREAM("Done rebuilding routing graph after is was invalidated by geofence removal");
+
+    // Populate routing graph structure
+    ROS_INFO_STREAM("Creating routing graph message for geofence removal");
+
+    auto readable_graph = std::static_pointer_cast<RoutingGraphAccessor>(current_routing_graph_);
+
+    gf_msg_revert.routing_graph = readable_graph->routingGraphToMsg(participant_);
+    gf_msg_revert.has_routing_graph = true;
+
+    ROS_INFO_STREAM("Done creating routing graph message for geofence removal");
+  }
   
   carma_wm::toBinMsg(send_data, &gf_msg_revert);
   update_count_++; // Update the sequence count for geofence messages
@@ -1892,7 +1980,8 @@ cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geom
 
   // Obtain the closest lanelet to the vehicle's current position
   auto current_llt = lanelet::geometry::findNearest(current_map_->laneletLayer, curr_pos, 1)[0].second;
-  
+
+
   /* determine whether or not the vehicle's current position is within an active geofence */
   if (boost::geometry::within(curr_pos, current_llt.polygon2d().basicPolygon()))
   {         
@@ -2052,6 +2141,90 @@ lanelet::Lanelet  WMBroadcaster::createLinearInterpolatingLanelet(const lanelet:
   return lanelet::Lanelet(lanelet::utils::getId(), createLinearInterpolatingLinestring(left_front_pt, left_back_pt, increment_distance), createLinearInterpolatingLinestring(right_front_pt, right_back_pt, increment_distance));
 }
 
+void WMBroadcaster::updateUpcomingSGIntersectionIds()
+{
+  uint16_t map_msg_intersection_id = 0;
+  uint16_t cur_signal_group_id = 0;
+  std::vector<lanelet::CarmaTrafficSignalPtr> traffic_lights;
+  lanelet::Lanelet route_lanelet;
+  lanelet::Ids cur_route_lanelet_ids = current_route.route_path_lanelet_ids;
+  bool isLightFound = false;
+  for(auto id : cur_route_lanelet_ids) 
+  {    
+    route_lanelet= current_map_->laneletLayer.get(id);
+    traffic_lights = route_lanelet.regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
+    if(!traffic_lights.empty())
+    {
+      isLightFound  = true;
+      break;
+    }
+  }
+
+  if(isLightFound)
+  {
+    for(auto itr = sim_.signal_group_to_traffic_light_id_.begin(); itr != sim_.signal_group_to_traffic_light_id_.end(); itr++)
+    {     
+      if(itr->second == traffic_lights.front()->id())
+      {
+        cur_signal_group_id = itr->first;
+      }
+    }
+  }
+  else{
+     ROS_DEBUG_STREAM("NO matching Traffic lights along the route");
+  }//END Traffic signals
+
+  auto intersections = route_lanelet.regulatoryElementsAs<lanelet::SignalizedIntersection>();
+  if (intersections.empty())
+  {
+    // no match if any of the entry lanelet is not part of any intersection.
+    ROS_DEBUG_STREAM("NO matching intersection for current lanelet. lanelet id = " << route_lanelet.id());
+  }
+  else
+  {
+    //Currently, each lanelet has only one intersection
+    lanelet::Id intersection_id = intersections.front()->id();    
+    if(intersection_id != lanelet::InvalId)
+    {
+      for(auto itr = sim_.intersection_id_to_regem_id_.begin(); itr != sim_.intersection_id_to_regem_id_.end(); itr++)
+      {
+        if(itr->second == intersection_id)
+        {
+          map_msg_intersection_id = itr->first;
+        }
+      }
+    }
+  } //END intersections
+
+  ROS_DEBUG_STREAM("MAP msg: Intersection ID = " <<  map_msg_intersection_id << ", Signal Group ID =" << cur_signal_group_id );
+  if(map_msg_intersection_id != 0 && cur_signal_group_id != 0)
+  { 
+    upcoming_intersection_ids_.data.clear();
+    upcoming_intersection_ids_.data.push_back(static_cast<int>(map_msg_intersection_id));
+    upcoming_intersection_ids_.data.push_back(static_cast<int>(cur_signal_group_id));
+  }
+}
+
+void WMBroadcaster::pubTCMACK(j2735_msgs::Id64b tcm_req_id, uint16_t msgnum, int ack_status, const std::string& ack_reason)
+{
+  cav_msgs::MobilityOperation mom_msg;
+  mom_msg.m_header.timestamp = ros::Time::now().toNSec()/1000000;
+  mom_msg.m_header.sender_id = vehicle_id_;
+  mom_msg.strategy = geofence_ack_strategy_;
+  std::stringstream ss;
+  for(size_t i=0; i < tcm_req_id.id.size(); i++)
+  {
+    ss << std::setfill('0') << std::setw(2) << std::hex << (unsigned) tcm_req_id.id.at(i);
+  }
+	std::string tcmv01_req_id_hex = ss.str();	
+  ss.str("");
+  ss << "traffic_control_id:" << tcmv01_req_id_hex << ", msgnum:"<< msgnum << ", acknowledgement:" << ack_status << ", reason:" << ack_reason;
+  mom_msg.strategy_params = ss.str();
+  for(int i = 0; i < ack_pub_times_; i++)
+  {
+    tcm_ack_pub_(mom_msg);
+  }
+}
 
 const uint8_t WorkZoneSection::OPEN = 0;
 const uint8_t WorkZoneSection::CLOSED = 1;

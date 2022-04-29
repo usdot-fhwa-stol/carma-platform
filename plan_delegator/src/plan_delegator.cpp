@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,111 @@
 
 namespace plan_delegator
 {
+
+    namespace 
+    {
+        /**
+         * \brief Anonymous function to set the starting_lane_id for all maneuver types except lane following. This
+         * maneuver parameter cannot be set with SET_MANEUVER_PROPERTY calls since it is not included in
+         * LANE_FOLLOW maneuvers.
+         */ 
+        void setManeuverStartingLaneletId(cav_msgs::Maneuver& mvr, lanelet::Id start_id) {
+            ROS_DEBUG_STREAM("Updating maneuver starting_lane_id to " << start_id);
+
+            switch(mvr.type) {
+                case cav_msgs::Maneuver::LANE_CHANGE:
+                    mvr.lane_change_maneuver.starting_lane_id = std::to_string(start_id);
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+                    mvr.intersection_transit_straight_maneuver.starting_lane_id = std::to_string(start_id);
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+                    mvr.intersection_transit_left_turn_maneuver.starting_lane_id = std::to_string(start_id);
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+                    mvr.intersection_transit_right_turn_maneuver.starting_lane_id = std::to_string(start_id);
+                    break;
+                case cav_msgs::Maneuver::STOP_AND_WAIT:
+                    mvr.stop_and_wait_maneuver.starting_lane_id = std::to_string(start_id);
+                    break;
+                default:
+                    throw std::invalid_argument("Maneuver type does not have starting and ending lane ids");
+            }
+        }
+
+        /**
+         * \brief Anonymous function to set the ending_lane_id for all maneuver types except lane following. This
+         * maneuver parameter cannot be set with SET_MANEUVER_PROPERTY calls since it is not included in
+         * LANE_FOLLOW maneuvers.
+         */ 
+        void setManeuverEndingLaneletId(cav_msgs::Maneuver& mvr, lanelet::Id end_id) {
+            ROS_DEBUG_STREAM("Updating maneuver ending_lane_id to " << end_id);
+
+            switch(mvr.type) {
+                case cav_msgs::Maneuver::LANE_CHANGE:
+                    mvr.lane_change_maneuver.ending_lane_id = std::to_string(end_id);
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+                    mvr.intersection_transit_straight_maneuver.ending_lane_id = std::to_string(end_id);
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+                    mvr.intersection_transit_left_turn_maneuver.ending_lane_id = std::to_string(end_id);
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+                    mvr.intersection_transit_right_turn_maneuver.ending_lane_id = std::to_string(end_id);
+                    break;
+                case cav_msgs::Maneuver::STOP_AND_WAIT:
+                    mvr.stop_and_wait_maneuver.ending_lane_id = std::to_string(end_id);
+                    break;
+                default:
+                    throw std::invalid_argument("Maneuver type does not have starting and ending lane ids");
+            }
+        }
+    
+        /**
+         * \brief Anonymous function to get the starting lanelet id for all maneuver types except lane following. This
+         * maneuver parameters cannot be obtained with GET_MANEUVER_PROPERTY calls since they are not included in
+         * LANE_FOLLOW maneuvers.
+         */ 
+        std::string getManeuverStartingLaneletId(cav_msgs::Maneuver mvr) {
+            switch(mvr.type) {
+                case cav_msgs::Maneuver::LANE_CHANGE:
+                    return mvr.lane_change_maneuver.starting_lane_id;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+                    return mvr.intersection_transit_straight_maneuver.starting_lane_id;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+                    return mvr.intersection_transit_left_turn_maneuver.starting_lane_id;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+                    return mvr.intersection_transit_right_turn_maneuver.starting_lane_id;
+                case cav_msgs::Maneuver::STOP_AND_WAIT:
+                    return mvr.stop_and_wait_maneuver.starting_lane_id;
+                default:
+                    throw std::invalid_argument("Maneuver type does not have starting and ending lane ids");
+            }
+        }
+
+        /**
+         * \brief Anonymous function to get the ending lanelet id for all maneuver types except lane following. This
+         * maneuver parameters cannot be obtained with GET_MANEUVER_PROPERTY calls since they are not included in
+         * LANE_FOLLOW maneuvers.
+         */ 
+        std::string getManeuverEndingLaneletId(cav_msgs::Maneuver mvr) {
+            switch(mvr.type) {
+                case cav_msgs::Maneuver::LANE_CHANGE:
+                    return mvr.lane_change_maneuver.ending_lane_id;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+                    return mvr.intersection_transit_straight_maneuver.ending_lane_id;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+                    return mvr.intersection_transit_left_turn_maneuver.ending_lane_id;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+                    return mvr.intersection_transit_right_turn_maneuver.ending_lane_id;
+                case cav_msgs::Maneuver::STOP_AND_WAIT:
+                    return mvr.stop_and_wait_maneuver.ending_lane_id;
+                default:
+                    throw std::invalid_argument("Maneuver type does not have starting and ending lane ids");
+            }
+        }
+    }
     
     void PlanDelegator::init()
     {
@@ -71,10 +176,12 @@ namespace plan_delegator
         if (isManeuverPlanValid(plan))
         {
             latest_maneuver_plan_ = *plan;
+
+            ROS_DEBUG_STREAM("Received plan with " << latest_maneuver_plan_.maneuvers.size() << " maneuvers");
             
-            // Update the starting and ending downtracks associated with each maneuver 
+            // Update the parameters associated with each maneuver
             for (auto& maneuver : latest_maneuver_plan_.maneuvers) {
-                updateManeuverDistances(maneuver);
+                updateManeuverParameters(maneuver);
             }
         }
         else {
@@ -155,10 +262,12 @@ namespace plan_delegator
         return time_diff.toSec() >= max_trajectory_duration_;
     }
 
-    void PlanDelegator::updateManeuverDistances(cav_msgs::Maneuver& maneuver)
+    void PlanDelegator::updateManeuverParameters(cav_msgs::Maneuver& maneuver)
     {
+        // Update maneuver starting and ending downtrack distances
         double original_start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
         double original_end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
+        ROS_DEBUG_STREAM("Changing maneuver distances for planner: " << GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin));
         double adjusted_start_dist = original_start_dist - length_to_front_bumper_;
         ROS_DEBUG_STREAM("original_start_dist:" << original_start_dist);
         ROS_DEBUG_STREAM("adjusted_start_dist:" << adjusted_start_dist);
@@ -167,6 +276,101 @@ namespace plan_delegator
         ROS_DEBUG_STREAM("adjusted_end_dist:" << adjusted_end_dist);
         SET_MANEUVER_PROPERTY(maneuver, start_dist, adjusted_start_dist);
         SET_MANEUVER_PROPERTY(maneuver, end_dist, adjusted_end_dist);
+
+        // Get the lanelets crossed by the updated maneuver (considers full route; not just shortest path)
+        std::vector<lanelet::ConstLanelet> adjusted_crossed_lanelets = wm_->getLaneletsBetween(adjusted_start_dist, adjusted_end_dist, false, false);
+        
+        if (adjusted_crossed_lanelets.size() == 0) {
+            throw std::invalid_argument("The adjusted maneuver does not cross any lanelets going from: " + std::to_string(adjusted_start_dist) + " to " + std::to_string(adjusted_end_dist));
+        }
+
+        // Update maneuver-specific lanelet ID parameters
+        // Note: Assumes that the maneuver start and end distances are adjusted by a distance less than the length of a lanelet. 
+        if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING && !maneuver.lane_following_maneuver.lane_ids.empty()) 
+        {
+            // Obtain the original starting lanelet from the maneuver's lane_ids
+            lanelet::Id original_starting_lanelet_id = std::stoi(maneuver.lane_following_maneuver.lane_ids.front());
+            lanelet::ConstLanelet original_starting_lanelet = wm_->getMap()->laneletLayer.get(original_starting_lanelet_id);
+
+            // Obtain the original ending lanelet from the maneuver's lane_ids
+            lanelet::Id original_ending_lanelet_id = std::stoi(maneuver.lane_following_maneuver.lane_ids.back());
+            lanelet::ConstLanelet original_ending_lanelet = wm_->getMap()->laneletLayer.get(original_ending_lanelet_id);
+
+            // Check whether the updated maneuver crosses a new starting lanelet and whether it still crosses the original ending lanelet
+            bool found_lanelet_before_starting_lanelet = false;
+            bool crosses_original_ending_lanelet = false;
+            for(auto lanelet : adjusted_crossed_lanelets) {
+                auto starting_relation = wm_->getMapRoutingGraph()->routingRelation(lanelet, original_starting_lanelet);
+
+                // Lanelet preceeding the original starting lanelet is crossed by the updated maneuver, so it is added to the beginning of lane_ids
+                if (starting_relation == lanelet::routing::RelationType::Successor && !found_lanelet_before_starting_lanelet) {
+                    ROS_DEBUG_STREAM("Lanelet " << lanelet.id() << " inserted at the front of maneuver's lane_ids");
+
+                    // lane_ids array is ordered by increasing downtrack, so this new starting lanelet is inserted at the front
+                    maneuver.lane_following_maneuver.lane_ids.insert(maneuver.lane_following_maneuver.lane_ids.begin(), std::to_string(lanelet.id()));
+
+                    found_lanelet_before_starting_lanelet = true;
+                }
+                else if (lanelet == original_ending_lanelet) {
+                    crosses_original_ending_lanelet = true;
+                }
+            }
+
+            // If the updated maneuver does not cross the original ending lanelet, remove that lanelet from the end of the maneuver's lane_ids
+            if (!crosses_original_ending_lanelet) {
+                ROS_DEBUG_STREAM("Original ending lanelet " << original_ending_lanelet.id() << " removed from lane_ids since the updated maneuver no longer crosses it");
+                
+                // lane_ids array is ordered by increasing downtrack, so the last element in the array corresponds to the original ending lanelet
+                maneuver.lane_following_maneuver.lane_ids.pop_back();
+            }
+        } 
+        else if (maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING)
+        {
+            // Obtain the original starting lanelet from the maneuver
+            lanelet::Id original_starting_lanelet_id = std::stoi(getManeuverStartingLaneletId(maneuver));
+            lanelet::ConstLanelet original_starting_lanelet = wm_->getMap()->laneletLayer.get(original_starting_lanelet_id);
+
+            // Obtain the original ending lanelet from the maneuver
+            lanelet::Id original_ending_lanelet_id = std::stoi(getManeuverEndingLaneletId(maneuver));
+            lanelet::ConstLanelet original_ending_lanelet = wm_->getMap()->laneletLayer.get(original_ending_lanelet_id);
+
+            // Check whether the updated maneuver crosses a new starting lanelet and whether it still crosses the original ending lanelet
+            bool found_lanelet_before_starting_lanelet = false;
+            bool found_lanelet_before_ending_lanelet = false;
+            bool crosses_original_ending_lanelet = false;
+            lanelet::ConstLanelet lanelet_before_original_ending_lanelet;
+            for(auto lanelet : adjusted_crossed_lanelets) {
+                auto starting_relation = wm_->getMapRoutingGraph()->routingRelation(lanelet, original_starting_lanelet);
+                auto ending_relation = wm_->getMapRoutingGraph()->routingRelation(lanelet, original_ending_lanelet);
+
+                // Lanelet preceeding the original starting lanelet is crossed by the updated maneuver, so maneuver's starting_lanelet_id must be updated
+                if (starting_relation == lanelet::routing::RelationType::Successor && !found_lanelet_before_starting_lanelet) {
+                    setManeuverStartingLaneletId(maneuver, lanelet.id());
+                    found_lanelet_before_starting_lanelet = true;
+                }
+                // Lanelet preceeding the original ending lanelet is found
+                else if (ending_relation == lanelet::routing::RelationType::Successor && !found_lanelet_before_ending_lanelet) {
+                    lanelet_before_original_ending_lanelet = lanelet;
+                    found_lanelet_before_ending_lanelet = true;
+                }
+
+                if (lanelet == original_ending_lanelet) {
+                    crosses_original_ending_lanelet = true;
+                }
+            }
+
+            // If the updated maneuver does not cross the original ending lanelet, update the ending lanelet to its preceeding lanelet
+            if (!crosses_original_ending_lanelet) {
+                if (found_lanelet_before_ending_lanelet){
+                    setManeuverEndingLaneletId(maneuver, lanelet_before_original_ending_lanelet.id());
+                }
+                else {
+                    throw std::invalid_argument("Updated maneuver has unknown ending lanelet.");
+                }
+            }
+
+        }
+
     }
 
     cav_msgs::TrajectoryPlan PlanDelegator::planTrajectory()
@@ -198,7 +402,6 @@ namespace plan_delegator
                 ++current_maneuver_index;
                 continue;
             }
-            
             lanelet::BasicPoint2d current_loc(latest_pose_.pose.position.x, latest_pose_.pose.position.y);
             double current_downtrack = wm_->routeTrackPos(current_loc).downtrack;
             ROS_DEBUG_STREAM("current_downtrack" << current_downtrack);
@@ -218,6 +421,8 @@ namespace plan_delegator
             // get corresponding ros service client for plan trajectory
             auto maneuver_planner = GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin);
             auto client = getPlannerClientByName(maneuver_planner);
+            
+            ROS_DEBUG_STREAM("Current planner: " << maneuver_planner);
 
             // compose service request
             auto plan_req = composePlanTrajectoryRequest(latest_trajectory_plan, current_maneuver_index);
@@ -234,13 +439,16 @@ namespace plan_delegator
                 if(latest_trajectory_plan.trajectory_points.size() !=0){
                     
                     if(latest_trajectory_plan.trajectory_points.back().target_time == plan_req.response.trajectory_plan.trajectory_points.front().target_time){
-                        ROS_DEBUG_STREAM("Removing duplicate point");
+                        ROS_DEBUG_STREAM("Removing duplicate point for planner: " << maneuver_planner);
                         plan_req.response.trajectory_plan.trajectory_points.erase(plan_req.response.trajectory_plan.trajectory_points.begin());
+                        ROS_DEBUG_STREAM("plan_req.response.trajectory_plan size: " << plan_req.response.trajectory_plan.trajectory_points.size());
+
                     }
                 }
                 latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
                                                                 plan_req.response.trajectory_plan.trajectory_points.begin(),
                                                                 plan_req.response.trajectory_plan.trajectory_points.end());
+                ROS_DEBUG_STREAM("new latest_trajectory_plan size: " << latest_trajectory_plan.trajectory_points.size());
                 
                 // Assign the trajectory plan's initial longitudinal velocity based on the first tactical plugin's response
                 if(first_trajectory_plan == true)

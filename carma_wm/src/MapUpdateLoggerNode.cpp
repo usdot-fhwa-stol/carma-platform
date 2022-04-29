@@ -163,4 +163,4 @@ int main(int argc, char** argv)
   ros::Subscriber update_sub = nh.subscribe("/environment/map_update", 100, &CallbackHolder::raw_callback, &ch);
 
   ros::CARMANodeHandle::spin();
-};
+}

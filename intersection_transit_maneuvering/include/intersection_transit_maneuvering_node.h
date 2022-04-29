@@ -50,7 +50,7 @@ class IntersectionTransitManeuveringNode
             plugin_discovery_pub_ = nh_.advertise<cav_msgs::Plugin>("plugin_discovery",1);
                         
             std::shared_ptr<intersection_transit_maneuvering::Servicer> srv = std::make_shared<intersection_transit_maneuvering::Servicer>();
-            ros::ServiceClient trajectory_client = nh_.serviceClient<cav_srvs::PlanTrajectory>("plugins/InLaneCruisingPlugin/plan_trajectory", true);
+            ros::ServiceClient trajectory_client = nh_.serviceClient<cav_srvs::PlanTrajectory>("plugins/InLaneCruisingPlugin/plan_trajectory");
             srv->set_client(trajectory_client);
             IntersectionTransitManeuvering worker([&plugin_discovery_pub_](const auto& msg) {plugin_discovery_pub_.publish(msg);}, srv);
             trajectory_srv_ = nh_.advertiseService("plugins/IntersectionTransitPlugin/plan_trajectory",&IntersectionTransitManeuvering::plan_trajectory_cb, &worker);           
