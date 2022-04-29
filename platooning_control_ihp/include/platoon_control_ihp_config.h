@@ -21,7 +21,7 @@
 /**
  * \brief Stuct containing the algorithm configuration values for the PlatooningControlPlugin
  */
-struct PlatooningControlPluginConfigIHP
+struct PlatooningControlIHPPluginConfig
 {
   double timeHeadway = 6.0;
   double standStillHeadway = 12.0;
@@ -64,7 +64,7 @@ struct PlatooningControlPluginConfigIHP
 
   
   
-  friend std::ostream& operator<<(std::ostream& output, const PlatooningControlPluginConfigIHP& c)
+  friend std::ostream& operator<<(std::ostream& output, const PlatooningControlIHPPluginConfig& c)
   {
     output << "InLaneCruisingPluginConfig { " << std::endl
            << "timeHeadway: " << c.timeHeadway << std::endl

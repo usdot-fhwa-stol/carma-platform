@@ -34,12 +34,12 @@
 
 namespace platoon_control_ihp
 {
-    class PlatoonControlPluginIHP
+    class PlatoonControlIHPPlugin
     {
         public:
             
 			// Default constructor for PlatoonControlPlugin class
-			PlatoonControlPluginIHP();
+			PlatoonControlIHPPlugin();
 
 			void initialize();
 
@@ -76,7 +76,7 @@ namespace platoon_control_ihp
         	PlatoonControlWorkerIHP pcw_;
 
 			// platooning config object
-			PlatooningControlPluginConfigIHP config_;
+			PlatooningControlIHPPluginConfig config_;
 
 
 			// Variables

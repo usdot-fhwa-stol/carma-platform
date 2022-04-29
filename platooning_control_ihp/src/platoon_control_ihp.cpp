@@ -19,18 +19,18 @@
 namespace platoon_control_ihp
 {
 // @SONAR_STOP@
-    PlatoonControlPluginIHP::PlatoonControlPluginIHP()
+    PlatoonControlIHPPlugin::PlatoonControlIHPPlugin()
     {
         pcw_ = PlatoonControlWorkerIHP();
     }
     
 
-    void PlatoonControlPluginIHP::initialize(){
+    void PlatoonControlIHPPlugin::initialize(){
 
     	nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
 
-        PlatooningControlPluginConfigIHP config;
+        PlatooningControlIHPPluginConfig config;
 
         pnh_->param<double>("timeHeadway", config.timeHeadway, config.timeHeadway);
         pnh_->param<double>("standStillHeadway", config.standStillHeadway, config.standStillHeadway);
@@ -56,13 +56,13 @@ namespace platoon_control_ihp
         config_ = config;
 
 	  	// Trajectory Plan Subscriber
-		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("PlatooningControlPlugin/plan_trajectory", 1, &PlatoonControlPluginIHP::trajectoryPlan_cb, this);
+		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("PlatooningControlPlugin/plan_trajectory", 1, &PlatoonControlIHPPlugin::trajectoryPlan_cb, this);
         
         // Current Twist Subscriber
-        current_twist_sub_ = nh_->subscribe<geometry_msgs::TwistStamped>("current_velocity", 1, &PlatoonControlPluginIHP::currentTwist_cb, this);
+        current_twist_sub_ = nh_->subscribe<geometry_msgs::TwistStamped>("current_velocity", 1, &PlatoonControlIHPPlugin::currentTwist_cb, this);
 
         // Platoon Info Subscriber
-        platoon_info_sub_ = nh_->subscribe<cav_msgs::PlatooningInfo>("platoon_info", 1, &PlatoonControlPluginIHP::platoonInfo_cb, this);
+        platoon_info_sub_ = nh_->subscribe<cav_msgs::PlatooningInfo>("platoon_info", 1, &PlatoonControlIHPPlugin::platoonInfo_cb, this);
 
 		// Control Publisher
 		twist_pub_ = nh_->advertise<geometry_msgs::TwistStamped>("twist_raw", 5, true);
@@ -70,7 +70,7 @@ namespace platoon_control_ihp
         platoon_info_pub_ = nh_->advertise<cav_msgs::PlatooningInfo>("platooning_info", 1, true);
 
 
-        pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlPluginIHP::pose_cb, this);
+        pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlIHPPlugin::pose_cb, this);
 
 		plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
         plugin_discovery_msg_.name = "PlatooningControlPlugin";
@@ -87,13 +87,13 @@ namespace platoon_control_ihp
     }
 
                                     
-    void PlatoonControlPluginIHP::run(){
+    void PlatoonControlIHPPlugin::run(){
         initialize();
         ros::CARMANodeHandle::spin();
     }
 
 
-    void  PlatoonControlPluginIHP::trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
+    void  PlatoonControlIHPPlugin::trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
         
         if (tp->trajectory_points.size() < 2) {
             ROS_WARN_STREAM("PlatoonControlPlugin cannot execute trajectory as only 1 point was provided");
@@ -111,7 +111,7 @@ namespace platoon_control_ihp
 
     }
 
-    cav_msgs::TrajectoryPlanPoint PlatoonControlPluginIHP::getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan)
+    cav_msgs::TrajectoryPlanPoint PlatoonControlIHPPlugin::getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan)
     {   
         cav_msgs::TrajectoryPlanPoint lookahead_point;
 
@@ -157,13 +157,13 @@ namespace platoon_control_ihp
         return lookahead_point;
     }
 
-    void PlatoonControlPluginIHP::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
+    void PlatoonControlIHPPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
         pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
         pcw_.setCurrentPose(pose_msg_);
     }
 
-    void PlatoonControlPluginIHP::platoonInfo_cb(const cav_msgs::PlatooningInfoConstPtr& msg)
+    void PlatoonControlIHPPlugin::platoonInfo_cb(const cav_msgs::PlatooningInfoConstPtr& msg)
     {
         
         platoon_leader_.staticId = msg->leader_id;
@@ -196,14 +196,14 @@ namespace platoon_control_ihp
     }
 
 
-    void PlatoonControlPluginIHP::currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist){
+    void PlatoonControlIHPPlugin::currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist){
         current_speed_ = twist->twist.linear.x;
     }
 
 
 // @SONAR_START@
 
-    geometry_msgs::TwistStamped PlatoonControlPluginIHP::composeTwistCmd(double linear_vel, double angular_vel)
+    geometry_msgs::TwistStamped PlatoonControlIHPPlugin::composeTwistCmd(double linear_vel, double angular_vel)
     {
         geometry_msgs::TwistStamped cmd_twist;
         cmd_twist.twist.linear.x = linear_vel;
@@ -212,7 +212,7 @@ namespace platoon_control_ihp
         return cmd_twist;
     }
 
-    autoware_msgs::ControlCommandStamped PlatoonControlPluginIHP::composeCtrlCmd(double linear_vel, double steering_angle)
+    autoware_msgs::ControlCommandStamped PlatoonControlIHPPlugin::composeCtrlCmd(double linear_vel, double steering_angle)
     {
         autoware_msgs::ControlCommandStamped cmd_ctrl;
         cmd_ctrl.header.stamp = ros::Time::now();
@@ -224,7 +224,7 @@ namespace platoon_control_ihp
         return cmd_ctrl;
     }
 
-    void PlatoonControlPluginIHP::generateControlSignals(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point){
+    void PlatoonControlIHPPlugin::generateControlSignals(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point){
 
         pcw_.setCurrentSpeed(trajectory_speed_);
         // pcw_.setCurrentSpeed(current_speed_);
@@ -241,7 +241,7 @@ namespace platoon_control_ihp
     }
 
     // extract maximum speed of trajectory
-    double PlatoonControlPluginIHP::getTrajectorySpeed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points)
+    double PlatoonControlIHPPlugin::getTrajectorySpeed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points)
     {   
         double trajectory_speed = 0;
 

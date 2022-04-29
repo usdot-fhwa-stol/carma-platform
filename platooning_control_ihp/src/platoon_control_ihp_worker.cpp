@@ -29,7 +29,7 @@ namespace platoon_control_ihp
 
     }
 
-    void PlatoonControlWorkerIHP::updateConfigParams(PlatooningControlPluginConfigIHP new_config)
+    void PlatoonControlWorkerIHP::updateConfigParams(PlatooningControlIHPPluginConfig new_config)
     {
         ctrl_config_ = new_config;
         pid_ctrl_.config_ = new_config;

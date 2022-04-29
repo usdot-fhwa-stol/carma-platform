@@ -72,7 +72,7 @@ namespace platoon_control_ihp
         /**
         * \brief Update configurations
         */
-        void updateConfigParams(PlatooningControlPluginConfigIHP new_config);
+        void updateConfigParams(PlatooningControlIHPPluginConfig new_config);
 
         /**
         * \brief Returns latest speed command
@@ -136,7 +136,7 @@ namespace platoon_control_ihp
 
     private:
         // config parameters
-        PlatooningControlPluginConfigIHP ctrl_config_;
+        PlatooningControlIHPPluginConfig ctrl_config_;
 
         // pid controller object
         PIDController pid_ctrl_;

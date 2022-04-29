@@ -23,8 +23,8 @@
 int main(int argc, char** argv)
 {
     
-    ros::init(argc, argv, "platoon_control");
-    platoon_control_ihp::PlatoonControlPluginIHP node;
+    ros::init(argc, argv, "platoon_control_ihp");
+    platoon_control_ihp::PlatoonControlIHPPlugin node;
     node.run();
     return 0;
 };
