@@ -560,7 +560,7 @@ namespace carma_wm
 
   void CARMAWorldModel::setRoutingGraph(LaneletRoutingGraphPtr graph) {
 
-    ROS_INFO_STREAM("Setting the routing graph with user or listener provided graph");
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::CARMAWorldModel"), "Setting the routing graph with user or listener provided graph");
 
     map_routing_graph_ = graph;
   }

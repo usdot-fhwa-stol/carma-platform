@@ -23,7 +23,7 @@ namespace carma_wm {
     namespace collision_detection {
 
         //TODO: consider rewriting this method to improve efficiency; it has object_count*prediction_count*trajectory_point sqrt calls!
-        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(const carma_perception_msgs::msg::RoadwayObstacleList& rwol, const carma_planning_msgs::msg::TrajectoryPlan& tp, 
+        std::vector<carma_perception_msgs::msg::RoadwayObstacle> WorldCollisionDetection(const carma_perception_msgs::msg::RoadwayObstacleList& rwol, const carma_planning_msgs::msg::TrajectoryPlan& tp, 
                                                                         const geometry_msgs::msg::Vector3& size, const geometry_msgs::msg::Twist& velocity) {
 
 

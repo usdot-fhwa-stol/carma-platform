@@ -263,12 +263,9 @@ inline lanelet::LaneletMapPtr buildGuidanceTestMap(double width, double length, 
  * \param length length of roadway object, default 3 meters
  * NOTE: x,y is the center of your object
  */
-inline void addObstacle(carma_wm::TrackPos tp, lanelet::Id lanelet_id, std::shared_ptr<carma_wm::CARMAWorldModel> cmw, 
-                        std::vector<carma_wm::TrackPos> pred_trackpos_list = {}, int time_step = 100, double width = 3, double length = 3)
+inline void addObstacle(double x, double y, std::shared_ptr<carma_wm::CARMAWorldModel> cmw, std::vector<std::pair<double,double>> pred_coords = {}, 
+  int time_step = 100, double width = 3, double length = 3)
 {
-    //TODO: width & length are not used; if there are no plans to use them soon, remove them from param list
-    ROS_DEBUG_STREAM("/// the following args are not used: width = " << width << ", length = " << length << ". Logging to avoid compiler warning.");
-
     carma_perception_msgs::msg::RoadwayObstacle rwo;	
 
     tf2::Quaternion tf_orientation;	
@@ -331,6 +328,9 @@ inline void addObstacle(carma_wm::TrackPos tp, lanelet::Id lanelet_id, std::shar
  */
 inline void addObstacle(carma_wm::TrackPos tp, lanelet::Id lanelet_id, std::shared_ptr<carma_wm::CARMAWorldModel> cmw, std::vector<carma_wm::TrackPos> pred_trackpos_list = {}, int time_step = 100, double width = 3, double length = 3)
 {
+  //TODO: width & length are not used; if there are no plans to use them soon, remove them from param list
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMTestLibForGuidance"), "/// the following args are not used: width = " << width << ", length = " << length << ". Logging to avoid compiler warning.");
+
   carma_perception_msgs::msg::RoadwayObstacle rwo;	
 
   if (!cmw->getMap() || cmw->getMap()->laneletLayer.size() == 0)
@@ -528,10 +528,11 @@ std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState
   for (auto id : exit_lanelet_ids) {
     auto iterator = cmw->getMutableMap()->laneletLayer.find(id);
     
-  if (iterator == cmw->getMutableMap()->laneletLayer.end())
+    if (iterator == cmw->getMutableMap()->laneletLayer.end())
       throw std::invalid_argument("Provided with lanelet id not in map: " + std::to_string(id));
 
-      exit_lanelets.push_back(*iterator);
+    exit_lanelets.push_back(*iterator);
+  
   }
 
     // Create stop line at end of owning lanelet

@@ -45,7 +45,7 @@ namespace carma_wm {
         //TODO: verify correctness of descriptions for each of these elements
         struct MovingObject {
             polygon_t                                       object_polygon; //current exterior outline of the object in the x-y plane
-            geometry_msgs::Vector3                          linear_velocity;//current velocity vector of the object's centroid, m/s
+            geometry_msgs::msg::Vector3                     linear_velocity;//current velocity vector of the object's centroid, m/s
             std::vector<std::tuple <__uint64_t, polygon_t>> fp;             //zero or more predicted future outline polygons; each
                                                                             // element is (t, polygon), where t is time in future, ms
         };
@@ -63,9 +63,9 @@ namespace carma_wm {
         * \param velocity of the host vehicle m/s
         * \return A list of obstacles the provided trajectory plan collides with
         */
-        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(const cav_msgs::RoadwayObstacleList& rwol, 
-                                                                    const cav_msgs::TrajectoryPlan& tp, const geometry_msgs::Vector3& size, 
-                                                                    const geometry_msgs::Twist& velocity);
+        std::vector<carma_perception_msgs::msg::RoadwayObstacle> WorldCollisionDetection(const carma_perception_msgs::msg::RoadwayObstacleList& rwol, 
+                                                                    const carma_planning_msgs::msg::TrajectoryPlan& tp, const geometry_msgs::msg::Vector3& size, 
+                                                                    const geometry_msgs::msg::Twist& velocity);
         
         /*! \brief Convert RodwayObstable object to the collision_detection::MovingObject 
         * \param rwo A RoadwayObstacle

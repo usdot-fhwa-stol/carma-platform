@@ -69,7 +69,7 @@ TEST(SignalizedIntersectionManger, convertLaneToLaneletId)
   intersection.id.id = 9001;
 
   cav_msgs::GenericLane lane;
-  lane.lane_id = 1210;
+  lane.lane_id = (uint8_t)1210;
   lane.lane_attributes.directional_use.lane_direction = 2u; //ingress
   j2735_msgs::Connection connection;
   connection.signal_group = 1;
@@ -90,7 +90,7 @@ TEST(SignalizedIntersectionManger, convertLaneToLaneletId)
 
   intersection.lane_list.push_back(lane);
 
-  lane.lane_id = 1211;
+  lane.lane_id = (uint8_t)1211;
   lane.lane_attributes.directional_use.lane_direction = 1u; // egress imagining intersection 
                                                             // entering 1210 from left and out through 1220
   lane.node_list = {};
@@ -146,7 +146,7 @@ TEST(SignalizedIntersectionManger, createIntersectionFromMapMsg)
   intersection.id.id = 9001;
 
   cav_msgs::GenericLane lane;
-  lane.lane_id = 1210;
+  lane.lane_id = (uint8_t)1210;
   lane.lane_attributes.directional_use.lane_direction = 2u; //ingress
   j2735_msgs::Connection connection;
   connection.signal_group = 1;
@@ -167,7 +167,7 @@ TEST(SignalizedIntersectionManger, createIntersectionFromMapMsg)
 
   intersection.lane_list.push_back(lane);
 
-  lane.lane_id = 1220;
+  lane.lane_id = (uint8_t)1220;
   lane.lane_attributes.directional_use.lane_direction = 1u; // egress imagining intersection 
                                                             // entering 1210 from left and out through 1220
   lane.node_list = {};

@@ -375,7 +375,7 @@ namespace carma_wm
 
     rwol.roadway_obstacles = {rwo_1};
 
-    std::vector<cav_msgs::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, velocity);
+    std::vector<carma_perception_msgs::msg::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, velocity);
 
     ASSERT_EQ(result.size(),1);
 
@@ -387,7 +387,7 @@ namespace carma_wm
     carma_perception_msgs::msg::RoadwayObstacleList rwol;
     carma_planning_msgs::msg::TrajectoryPlan tp;
 
-    geometry_msgs::Twist velocity;
+    geometry_msgs::msg::Twist velocity;
 
     geometry_msgs::msg::Vector3 linear_velocity;
     linear_velocity.x = 0;
@@ -489,7 +489,7 @@ namespace carma_wm
 
     rwol.roadway_obstacles = {rwo_1};
 
-    std::vector<cav_msgs::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, velocity);
+    std::vector<carma_perception_msgs::msg::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, velocity);
 
     ASSERT_EQ(result.size(),0);
 

@@ -128,7 +128,7 @@ TEST(WMListenerWorkerTest, routeCallback)
   autoware_lanelet2_msgs::msg::MapBin geofence_msg;
   geofence_msg.invalidates_route=true;
 
-  wmlw.mapUpdateCallback(geofence_msg);
+  wmlw.mapUpdateCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(geofence_msg));
   wmlw.enableUpdatesWithoutRoute();
   wmlw.routeCallback(std::make_unique<carma_planning_msgs::msg::Route>(route_msg));
   
@@ -186,7 +186,7 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
             wmlw.getWorldModel()->getMap()->regulatoryElementLayer.end());
 
   // test the MapUpdateCallback
-  wmlw.mapUpdateCallback(gf_obj_msg);
+  wmlw.mapUpdateCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(gf_obj_msg));
   
   // check if the map has the new speed limit now
   regems = wmlw.getWorldModel()->getMap()->laneletLayer.get(ll_1.id()).regulatoryElements();
@@ -226,8 +226,8 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   // test the MapUpdateCallback reverse
   auto gf_rev_msg_ptr =  boost::make_shared<autoware_lanelet2_msgs::msg::MapBin>(gf_reverse_msg);
   gf_obj_msg.seq_id ++;
-  EXPECT_THROW(wmlw.mapUpdateCallback(gf_obj_msg), lanelet::InvalidInputError); // because we are trying update the exact same llt and regem relationship again
-  wmlw.mapUpdateCallback(gf_reverse_msg);
+  EXPECT_THROW(wmlw.mapUpdateCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(gf_obj_msg)), lanelet::InvalidInputError); // because we are trying update the exact same llt and regem relationship again
+  wmlw.mapUpdateCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(gf_reverse_msg));
 
   // check above conditions again on old speed
   regems = wmlw.getWorldModel()->getMap()->laneletLayer.get(ll_1.id()).regulatoryElements();
@@ -305,7 +305,7 @@ TEST(WMListenerWorkerTest, checkIfReRoutingNeeded2)
   autoware_lanelet2_msgs::msg::MapBin geofence_msg;
   geofence_msg.invalidates_route=true;
 
-  wmlw.mapUpdateCallback(geofence_msg);
+  wmlw.mapUpdateCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(geofence_msg));
   ASSERT_EQ(true, wmlw.checkIfReRoutingNeeded());
 }
 

@@ -22,6 +22,7 @@
 #include <carma_wm_ros2/TrafficControl.hpp>
 #include <queue>
 #include <carma_wm_ros2/SignalizedIntersectionManager.hpp>
+#include <utility>
 
 namespace carma_wm
 {
@@ -54,7 +55,7 @@ public:
    *
    * \param geofence_msg The new map update messages to generate the map edits from
    */
-  void mapUpdateCallback(const autoware_lanelet2_msgs::msg::MapBin geofence_msg);
+  void mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::UniquePtr geofence_msg);
 
   /*!
    * \brief Callback for route message.
@@ -128,7 +129,7 @@ public:
    * 
    * \return nullptr if the graph could not be constructed or the provided graph does not match the map
    */ 
-  LaneletRoutingGraphPtr routingGraphFromMsg(const autoware_lanelet2_msgs::RoutingGraph& msg, lanelet::LaneletMapPtr map) const;
+  LaneletRoutingGraphPtr routingGraphFromMsg(const autoware_lanelet2_msgs::msg::RoutingGraph& msg, lanelet::LaneletMapPtr map) const;
 
   /**
    *  \brief incoming spat message
@@ -144,7 +145,7 @@ private:
   double config_speed_limit_;
 
   size_t current_map_version_ = 0; // Current map version based on recived map messages
-  std::queue<autoware_lanelet2_msgs::msg::MapBin> map_update_queue_; // Update queue used to cache map updates when they cannot be immeadiatly applied due to waiting for rerouting
+  std::queue<autoware_lanelet2_msgs::msg::MapBin::UniquePtr> map_update_queue_; // Update queue used to cache map updates when they cannot be immeadiatly applied due to waiting for rerouting
   boost::optional<carma_planning_msgs::msg::Route> delayed_route_msg_;
 
   bool recompute_route_flag_=false; // indicates whether if this node should recompute its route based on invalidated msg
