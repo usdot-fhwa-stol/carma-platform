@@ -86,8 +86,11 @@ void MotionComputationWorker::predictionLogic(carma_perception_msgs::msg::Extern
 
     obj_pub_(synchronization_base_objects);
     bsm_list_.objects.clear();
+    bsm_obj_id_map_.clear();
     psm_list_.objects.clear();
+    psm_obj_id_map_.clear();
     mobility_path_list_.objects.clear();
+    mobility_path_obj_id_map_.clear();
 
     return;
   }
@@ -109,11 +112,13 @@ void MotionComputationWorker::predictionLogic(carma_perception_msgs::msg::Extern
   }
 
   obj_pub_(synchronization_base_objects);
-
-  // Clear mobility msg path queue since it is published
+  // Clear msg queue since it is published
   mobility_path_list_.objects.clear();
+  mobility_path_obj_id_map_.clear();
   bsm_list_.objects.clear();
+  bsm_obj_id_map_.clear();
   psm_list_.objects.clear();
+  psm_obj_id_map_.clear();
 }
 
 void MotionComputationWorker::georeferenceCallback(const std_msgs::msg::String::UniquePtr msg) {

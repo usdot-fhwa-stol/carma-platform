@@ -22,7 +22,7 @@ enable_bsm_processing: false
 
 # Boolean: If true then PSM messages will be converted to ExternalObjects. 
 #          If other object sources are enabled, they will be synchronized but no fusion will occur (objects may be duplicated)
-enable_psm_processing: false
+enable_psm_processing: true
 
 # Boolean: If true then MobilityPath messages will be converted to ExternalObjects. 
 #          If other object sources are enabled, they will be synchronized but no fusion will occur (objects may be duplicated)
