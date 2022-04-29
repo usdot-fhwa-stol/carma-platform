@@ -380,11 +380,11 @@ namespace motion_computation
 
         ASSERT_NEAR(output.predictions[0].predicted_position.orientation.w, 1.0, 0.0001);
         ASSERT_NEAR(output.predictions[0].predicted_position.position.x, 0.0, 0.03);
-        ASSERT_NEAR(output.predictions[0].predicted_velocity.linear.x, 5.0, 0.1); // TODO VELOCITY ISSUE it really doesn't make sense that we can not move but suddenly have 50m/s velocity. Discuss with reviewer
+        ASSERT_NEAR(output.predictions[0].predicted_velocity.linear.x, 50.0, 0.1); // TODO VELOCITY ISSUE it really doesn't make sense that we can not move but suddenly have 50m/s velocity. Discuss with reviewer
 
         ASSERT_NEAR(output.predictions[1].predicted_position.orientation.w, 1.0, 0.0001);
         ASSERT_NEAR(output.predictions[1].predicted_position.position.x, 5.0, 0.03);
-        ASSERT_NEAR(output.predictions[1].predicted_velocity.linear.x, 5.0, 0.1);
+        ASSERT_NEAR(output.predictions[1].predicted_velocity.linear.x, 50.0, 0.1);
 
         ASSERT_EQ(output.header.stamp, rclcpp::Time(1, 0));
         ASSERT_EQ(output.predictions[0].header.stamp, rclcpp::Time(1, 0.1*1e9));
@@ -461,7 +461,8 @@ namespace motion_computation
     TEST(MotionComputationWorker, BSMtoExternalObject)
     {   
         auto node = std::make_shared<rclcpp::Node>("test_node");
-        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList&){}, node->get_node_logging_interface());
+        rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock = node->get_node_clock_interface();
+        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList&){}, node->get_node_logging_interface(), clock);
 
         // 1 to 1 transform
         std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
@@ -516,15 +517,15 @@ namespace motion_computation
  
         ASSERT_TRUE(output.dynamic_obj);
         ASSERT_NEAR(output.pose.pose.orientation.w, 1.0, 0.0001);
-        ASSERT_NEAR(output.velocity.twist.linear.x, 20.0, 0.1);
+        ASSERT_NEAR(output.velocity.twist.linear.x, 163.8, 0.1);
 
         ASSERT_NEAR(output.predictions[0].predicted_position.orientation.w, 1.0, 0.0001);
-        ASSERT_NEAR(output.predictions[0].predicted_position.position.x, 2.0, 0.03);
-        ASSERT_NEAR(output.predictions[0].predicted_velocity.linear.x, 20.0, 0.1); 
+        ASSERT_NEAR(output.predictions[0].predicted_position.position.x, 16.38, 0.03);
+        ASSERT_NEAR(output.predictions[0].predicted_velocity.linear.x, 163.8, 0.1); 
 
         ASSERT_NEAR(output.predictions[1].predicted_position.orientation.w, 1.0, 0.0001);
-        ASSERT_NEAR(output.predictions[1].predicted_position.position.x, 4.0, 0.03);
-        ASSERT_NEAR(output.predictions[1].predicted_velocity.linear.x, 20.0, 0.1); 
+        ASSERT_NEAR(output.predictions[1].predicted_position.position.x, 32.76, 0.03);
+        ASSERT_NEAR(output.predictions[1].predicted_velocity.linear.x, 163.8, 0.1); 
 
 
     }

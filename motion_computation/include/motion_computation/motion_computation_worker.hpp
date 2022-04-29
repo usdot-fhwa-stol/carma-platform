@@ -48,7 +48,7 @@ class MotionComputationWorker {
   /*!
    * \brief Constructor for MotionComputationWorker
    */
-
+   MotionComputationWorker(const PublishObjectCallback& obj_pub,
                           rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger,
                           rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock);
   /**
