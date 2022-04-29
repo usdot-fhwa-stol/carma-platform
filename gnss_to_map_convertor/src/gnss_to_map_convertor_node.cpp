@@ -58,7 +58,7 @@ namespace gnss_to_map_convertor
     map_pose_pub = create_publisher<geometry_msgs::msg::PoseStamped>("gnss_pose", 10);
 
     // Initialize primary worker object 
-    GNSSToMapConvertor convertor(
+    convertor_worker_ = std::make_shared<GNSSToMapConvertor>(
         [this](const auto& msg) { map_pose_pub->publish(msg); },  // Lambda representing publication
 
         [this](const auto& target, const auto& source) -> boost::optional<geometry_msgs::msg::TransformStamped> {  // Lambda representing transform lookup
@@ -80,12 +80,12 @@ namespace gnss_to_map_convertor
     // Fix Subscriber
 
     fix_sub_ = create_subscription<gps_msgs::msg::GPSFix>("gnss_fix_fused", 2,
-                                                          std::bind(&GNSSToMapConvertor::gnssFixCb, &convertor, std_ph::_1));
+                                                          std::bind(&GNSSToMapConvertor::gnssFixCb, convertor_worker_.get(), std_ph::_1));
 
     // Georeference subsciber
 
     geo_sub = create_subscription<std_msgs::msg::String>("georeference", 1,
-              std::bind(&GNSSToMapConvertor::geoReferenceCallback, &convertor, std_ph::_1));
+              std::bind(&GNSSToMapConvertor::geoReferenceCallback, convertor_worker_.get(), std_ph::_1));
     
                             
     // Return success if everthing initialized successfully
