@@ -1494,6 +1494,7 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("Received platoon request with vehicle id = " << msg.header.sender_id);
             ROS_DEBUG_STREAM("The request type is " << msg.plan_type.type << " and we choose to ignore");
             response = MobilityRequestResponse::NACK;
+            pm_.resetPlatoon(); //ASSUMES host is a solo joiner (can't handle merging two platoons yet)
         }
 
         // Indicate the current join activity is complete
@@ -1786,6 +1787,8 @@ namespace platoon_strategic_ihp
         {
             ROS_DEBUG_STREAM("Received platoon request from vehicle id = " << msg.header.sender_id);
             ROS_DEBUG_STREAM("The request type is " << msg.plan_type.type << " and we choose to ignore");
+            pm_.clearActionPlan();
+            pm_.resetPlatoon(); //ASSUMES host is a solo joiner
             return MobilityRequestResponse::NACK;
         }
     }
@@ -2290,7 +2293,12 @@ namespace platoon_strategic_ihp
                     // We change back to normal leader state
                     ROS_DEBUG_STREAM("The new leader " << msg.header.sender_id << " does not agree on the frontal join. Change back to leader state.");
                     pm_.current_platoon_state = PlatoonState::LEADER;
-                    // We were already leading a platoon, so don't erase any of that info
+                    // We were already leading a platoon, so don't erase any of that info. But we need to remove the erstwhile candidate
+                    // leader from our platoon roster; we know it is in position 0, so just remove that element
+                    if (!pm_.removeMember(0))
+                    {
+                        ROS_DEBUG_STREAM("Failed to remove candidate leader from the platoon!");
+                    }
                 }
 
                 // Clean up the joining plan

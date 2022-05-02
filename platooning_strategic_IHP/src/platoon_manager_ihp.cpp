@@ -232,6 +232,24 @@ namespace platoon_strategic_ihp
         // Clean up other variables
         currentPlatoonID = dummyID;
         platoonLeaderID = dummyID;
+        hostPosInPlatoon_ = 0;
+    }
+
+    bool PlatoonManager::removeMember(const size_t mem)
+    {
+        // Don't remove ourselves!
+        if (hostPosInPlatoon_ == mem)
+        {
+            return false;
+        }
+
+        // Don't remove a member that isn't there
+        else if (platoon.size() <= 1  ||  mem >= platoon.size())
+        {
+            return false;
+        }
+
+        platoon.erase(platoon.begin() + mem, platoon.begin() + mem + 1);
     }
         
     // Find the downtrack distance of the last vehicle of the platoon, in m.    
