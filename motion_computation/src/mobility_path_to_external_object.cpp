@@ -102,6 +102,7 @@ void convert(const carma_v2x_msgs::msg::MobilityPath &in_msg, carma_perception_m
       out_msg.velocity.twist = curr_state.predicted_velocity;  // Velocity derived from first point
 
     } else {
+
       // NOTE: This is where the time increment happens but it feels incorrect. since the corresponding data is actually from the original prev_state stamp
       rclcpp::Time prev_stamp_as_time = rclcpp::Time(prev_state.header.stamp) + mobility_path_point_delta_t;
       rclcpp::Time updated_time_step = prev_stamp_as_time + mobility_path_point_delta_t;
@@ -165,6 +166,7 @@ std::pair<carma_perception_msgs::msg::PredictedState, double> composePredictedSt
 
   // Set velocity
   output_state.predicted_velocity.linear.x =
+
       vehicle_vector.norm() / (curr_time_stamp - prev_time_stamp).seconds(); 
 
   // Set timestamp
