@@ -558,6 +558,13 @@ namespace carma_wm
     }
   }
 
+  void CARMAWorldModel::setRoutingGraph(LaneletRoutingGraphPtr graph) {
+
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::CARMAWorldModel"), "Setting the routing graph with user or listener provided graph");
+
+    map_routing_graph_ = graph;
+  }
+
   size_t CARMAWorldModel::getMapVersion() const
   {
     return map_version_;
@@ -1198,6 +1205,7 @@ namespace carma_wm
         {
           double light_downtrack = routeTrackPos(stop_line.get().front().basicPoint2d()).downtrack;
           double distance_remaining_to_traffic_light = light_downtrack - curr_downtrack;
+
           if (distance_remaining_to_traffic_light < 0)
           {
             continue;
@@ -1426,12 +1434,10 @@ namespace carma_wm
           auto inception_boost(boost::posix_time::time_from_string("1970-01-01 00:00:00.000")); // inception of epoch
           auto duration_since_inception(lanelet::time::durationFromSec(rclcpp::Time(0.0,0.0,RCL_SYSTEM_TIME).seconds()));
           auto curr_time_boost = inception_boost + duration_since_inception;
-          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::CARMAWorldModel"), "Calculated current time: " << boost::posix_time::to_simple_string(curr_time_boost));
 
           int curr_year = curr_time_boost.date().year();
           auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year)+ "-01-01 00:00:00.000"));
 
-          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::CARMAWorldModel"), "MOY extracted: " << (int)curr_intersection.moy);
           auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)curr_intersection.moy);
 
           int hours_of_day = curr_minute_stamp_boost.time_of_day().hours();
@@ -1442,7 +1448,6 @@ namespace carma_wm
           auto curr_hour_boost = curr_day_boost + boost::posix_time::hours(hours_of_day);
 
           min_end_time += lanelet::time::durationFromSec(lanelet::time::toSec(curr_hour_boost));
-          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::CARMAWorldModel"), "New min_end_time: " << std::to_string(lanelet::time::toSec(min_end_time)));
         }
 
         auto last_time_difference = sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first - min_end_time;  
@@ -1454,7 +1459,7 @@ namespace carma_wm
             sim_.last_seen_state_[curr_intersection.id.id].find(current_movement_state.signal_group) != sim_.last_seen_state_[curr_intersection.id.id].end() && 
             is_duplicate)
         {
-          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::CARMAWorldModel"), "Duplicate as last time! : " << std::to_string(lanelet::time::toSec(min_end_time)));
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::CARMAWorldModel"), "Duplicate as last time! : id: " << curr_light->id() << ", time: " << std::to_string(lanelet::time::toSec(min_end_time)));
           continue;
         }
 
@@ -1465,7 +1470,7 @@ namespace carma_wm
             sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].second == received_state &&
             sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first < min_end_time)
         {
-          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::CARMAWorldModel"), "Updated time for state: " << received_state << ", with time: "
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::CARMAWorldModel"), "Updated time for id: " << curr_light->id()  << " with state: " << received_state << ", with time: "
                                                       << std::to_string(lanelet::time::toSec(min_end_time)));
           sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first = min_end_time;
           continue;

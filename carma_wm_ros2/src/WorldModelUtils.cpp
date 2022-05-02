@@ -34,7 +34,7 @@ std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMa
   if (nearestLanelets.size() == 0)
     return {};
 
-  int id = 0;  // closest ones are in the back
+  size_t id = 0;  // closest ones are in the back
   // loop through until the point is no longer geometrically in the lanelet
 
   while (boost::geometry::within(point, nearestLanelets[id].second.polygon2d()))

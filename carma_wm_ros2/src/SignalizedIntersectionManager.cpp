@@ -180,8 +180,10 @@ namespace carma_wm
             connecting_llts = current_routing_graph->previous(llt.lanelet().get());
           }
 
-          if (!connecting_llts.empty())
+          if (!connecting_llts.empty()) 
+          {
             corresponding_lanelet_id = connecting_llts[0].id();
+          }
           else
           {
             RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Interestingly, did not detect here");
@@ -205,8 +207,6 @@ namespace carma_wm
         exit[lane.lane_id] = corresponding_lanelet_id;
       }
       // ignoring types that are neither ingress nor egress 
-
-      node_list = {}; 
     }
 
     // convert and save exit lane ids into lanelet ids with their corresponding signal group ids
@@ -248,7 +248,7 @@ namespace carma_wm
     }
   }
 
-  lanelet::Id SignalizedIntersectionManager::matchSignalizedIntersection(const lanelet::Lanelets& entry_llts, const lanelet::Lanelets& exit_llts, const std::shared_ptr<lanelet::LaneletMap>& map)
+  lanelet::Id SignalizedIntersectionManager::matchSignalizedIntersection(const lanelet::Lanelets& entry_llts, const lanelet::Lanelets& exit_llts)
   {
     lanelet::Id matching_id = lanelet::InvalId;
 
@@ -360,7 +360,7 @@ namespace carma_wm
         exit_llts.push_back(map->laneletLayer.get(iter->second));  
       }
 
-      lanelet::Id intersection_id = matchSignalizedIntersection(entry_llts, exit_llts, map);
+      lanelet::Id intersection_id = matchSignalizedIntersection(entry_llts, exit_llts);
 
       if (intersection_id == lanelet::InvalId)
       {
@@ -437,5 +437,13 @@ namespace carma_wm
     this->signal_group_to_traffic_light_id_ = other.signal_group_to_traffic_light_id_;
 
     return *this;
+  }
+
+  SignalizedIntersectionManager::SignalizedIntersectionManager(const SignalizedIntersectionManager& other)
+  {
+    this->signal_group_to_entry_lanelet_ids_ = other.signal_group_to_entry_lanelet_ids_;
+    this->signal_group_to_exit_lanelet_ids_ = other.signal_group_to_exit_lanelet_ids_;
+    this->intersection_id_to_regem_id_ = other.intersection_id_to_regem_id_;
+    this->signal_group_to_traffic_light_id_ = other.signal_group_to_traffic_light_id_;
   }
 }  // namespace carma_wm
