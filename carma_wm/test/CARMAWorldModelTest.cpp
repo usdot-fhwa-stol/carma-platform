@@ -1383,7 +1383,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // partial state 3
-  EXPECT_EQ(lanelet::time::durationFromSec(45), lights1[0]->fixed_cycle_duration);
+  EXPECT_EQ(lanelet::time::durationFromSec(44.5), lights1[0]->fixed_cycle_duration); // NOTE: 44.5 hear instead of 45 because of the intentional subtraction of 0.5s inside the implementation
   
   // call the processSpatFromMsg with that msg 4.b
   event.event_state.movement_phase_state = 5;
@@ -1395,7 +1395,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
-  EXPECT_EQ(lanelet::time::durationFromSec(45), lights1[0]->fixed_cycle_duration);
+  EXPECT_EQ(lanelet::time::durationFromSec(44.5), lights1[0]->fixed_cycle_duration); // NOTE: 44.5 hear instead of 45 because of the intentional subtraction of 0.5s inside the implementation
 
   // call the processSpatFromMsg with that msg 5
   event.event_state.movement_phase_state = 3;

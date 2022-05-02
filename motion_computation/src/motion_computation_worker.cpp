@@ -71,6 +71,7 @@ void MotionComputationWorker::predictionLogic(carma_perception_msgs::msg::Extern
   carma_perception_msgs::msg::ExternalObjectList synchronization_base_objects;
   synchronization_base_objects.header = sensor_list.header; // Use the current sensing stamp as the sync point even if sensor data is not used
 
+
   if (enable_sensor_processing_) { // If using sensor data add it to the base synchronization list since it already is at the desired time
 
     synchronization_base_objects.objects = sensor_list.objects;
