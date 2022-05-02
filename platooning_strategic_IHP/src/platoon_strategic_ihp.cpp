@@ -1493,7 +1493,7 @@ namespace platoon_strategic_ihp
         {
             ROS_DEBUG_STREAM("Received platoon request with vehicle id = " << msg.header.sender_id);
             ROS_DEBUG_STREAM("The request type is " << msg.plan_type.type << " and we choose to ignore");
-            response = MobilityRequestResponse::NO_RESPONSE; //TODO: may be better to NACK of target vehicle is correct
+            response = MobilityRequestResponse::NACK;
         }
 
         // Indicate the current join activity is complete
@@ -1786,7 +1786,7 @@ namespace platoon_strategic_ihp
         {
             ROS_DEBUG_STREAM("Received platoon request from vehicle id = " << msg.header.sender_id);
             ROS_DEBUG_STREAM("The request type is " << msg.plan_type.type << " and we choose to ignore");
-            return MobilityRequestResponse::NO_RESPONSE;  //TODO: this should be a NACK
+            return MobilityRequestResponse::NACK;  //TODO: this should be a NACK
         }
     }
     
@@ -2480,7 +2480,7 @@ namespace platoon_strategic_ihp
         unsigned long tsStart = ros::Time::now().toNSec() / 1000000;
 
         // If vehicle is not rolling then return
-        if (current_speed_ <= STOPPED_SPEED)
+        if (current_speed_ <= config_.minPlatooningSpeed)
         {
             return;
         }
