@@ -254,6 +254,7 @@ namespace platoon_strategic_ihp
             --hostPosInPlatoon_;
         }
         platoon.erase(platoon.begin() + mem, platoon.begin() + mem + 1);
+        return true;
     }
         
     // Find the downtrack distance of the last vehicle of the platoon, in m.    
