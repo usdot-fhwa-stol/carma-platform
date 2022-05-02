@@ -249,6 +249,10 @@ namespace platoon_strategic_ihp
             return false;
         }
 
+        if (mem < hostPosInPlatoon_)
+        {
+            --hostPosInPlatoon_;
+        }
         platoon.erase(platoon.begin() + mem, platoon.begin() + mem + 1);
     }
         
