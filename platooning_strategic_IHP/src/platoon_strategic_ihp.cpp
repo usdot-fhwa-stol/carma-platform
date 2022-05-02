@@ -1504,11 +1504,6 @@ namespace platoon_strategic_ihp
     // UCLA: add condition to handle frontal join request
     MobilityRequestResponse PlatoonStrategicIHPPlugin::mob_req_cb_leader(const cav_msgs::MobilityRequest& msg)
     {   
-        // If vehicle is not rolling then return
-        if (current_speed_ <= config_.minPlatooningSpeed)
-        {
-            return MobilityRequestResponse::NO_RESPONSE; // Ignore any incoming requests before platooning speed is reached.
-        }
         /**
          *   UCLA implementation note: 
          *   1. Here the mobility requests of joining platoon (front and rear) get processed and responded.
@@ -2415,9 +2410,9 @@ namespace platoon_strategic_ihp
     void PlatoonStrategicIHPPlugin::mob_req_cb(const cav_msgs::MobilityRequest& msg)
     {
         // Ignore messages as long as host vehicle is stopped
-        if (current_speed_ < STOPPED_SPEED)
+        if (current_speed_ < config_.minPlatooningSpeed)
         {
-            ROS_DEBUG_STREAM("Ignoring message since host is stopped.");
+            ROS_DEBUG_STREAM("Ignoring message since host speed is below platooning speed.");
             return;
         }
         
