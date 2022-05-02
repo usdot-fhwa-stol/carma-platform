@@ -17,6 +17,7 @@
 #ifndef MOTION_COMPUTATION_WORKER_H
 #define MOTION_COMPUTATION_WORKER_H
 
+
 #include <gtest/gtest_prod.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <tf2/LinearMath/Transform.h>
@@ -47,10 +48,9 @@ class MotionComputationWorker {
   /*!
    * \brief Constructor for MotionComputationWorker
    */
-  MotionComputationWorker(const PublishObjectCallback& obj_pub,
+   MotionComputationWorker(const PublishObjectCallback& obj_pub,
                           rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger,
                           rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock);
-
   /**
    * \brief Function to populate duplicated detected objects along with their velocity, yaw,
    * yaw_rate and static/dynamic class to the provided ExternalObjectList message.
@@ -116,10 +116,12 @@ class MotionComputationWorker {
       carma_perception_msgs::msg::ExternalObject path, const rclcpp::Time& time_to_match) const;
 
  private:
+
   // Local copy of external object publisher
   PublishObjectCallback obj_pub_;
 
   // Prediction parameters
+
   double prediction_time_step_ = 0.1;  // Seconds
   double prediction_period_ = 2.0;     // Seconds
   double cv_x_accel_noise_ = 9.0;
@@ -132,6 +134,7 @@ class MotionComputationWorker {
   bool enable_bsm_processing_ = false;
   bool enable_psm_processing_ = false;
   bool enable_mobility_path_processing_ = false;
+
 
   //Map frame
   std::string map_frame_id_ = "map";
@@ -146,6 +149,7 @@ class MotionComputationWorker {
   carma_perception_msgs::msg::ExternalObjectList bsm_list_;
   carma_perception_msgs::msg::ExternalObjectList psm_list_;
 
+
   // Maps of external object id to index in synchronization queues
   std::unordered_map<uint32_t, size_t> mobility_path_obj_id_map_;
   std::unordered_map<uint32_t, size_t> bsm_obj_id_map_;
@@ -159,6 +163,7 @@ class MotionComputationWorker {
   // Unit Test Accessors
   FRIEND_TEST(MotionComputationWorker, mobilityPathToExternalObject);
   FRIEND_TEST(MotionComputationWorker, psmToExternalObject);
+  FRIEND_TEST(MotionComputationWorker, BSMtoExternalObject);
 };
 
 }  // namespace motion_computation
