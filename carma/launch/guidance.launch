@@ -115,8 +115,8 @@
     <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
   </group>
 
-   <!-- Workzone Strategic Plugin -->
-  <include file="$(find wz_strategic_plugin)/launch/wz_strategic_plugin.launch" />
+   <!-- Workzone Strategic Plugin >
+  <include file="$(find wz_strategic_plugin)/launch/wz_strategic_plugin.launch" /-->
 
   <!-- Platooning Control Plugin -->
   <include file="$(find platoon_control)/launch/platoon_control.launch" />
@@ -226,9 +226,17 @@
     <include file="$(find sci_strategic_plugin)/launch/sci_strategic_plugin.launch" />
   </group>
 
+  <!-- Light Controlled Intersection Strategic Plugin -->
+  <group>
+    <include file="$(find lci_strategic_plugin)/launch/lci_strategic_plugin.launch" />
+  </group>
+
   <!-- Stop Controlled Intersection Tactical Plugin -->
   <include file="$(find stop_controlled_intersection_tactical_plugin)/launch/stop_controlled_intersection_tactical_plugin.launch" />
 
+  <!-- Light Controlled Intersection Tactical Plugin -->
+  <include file="$(find light_controlled_intersection_tactical_plugin)/launch/light_controlled_intersection_tactical_plugin.launch" />
+  
   <!-- Guidance Plugin Validator -->
   <group>
     <remap from="plugin_discovery" to="$(optenv CARMA_GUIDE_NS)/plugin_discovery"/>

@@ -129,12 +129,6 @@
     </include>
   </group>
 
-  <!-- GNSS To Map Convertor -->
-  <group>
-    <remap from="georeference" to="map_param_loader/georeference"/>
-    <include file="$(find gnss_to_map_convertor)/launch/gnss_to_map_convertor.launch"/>
-  </group>
-
   <!-- GNSS/NDT selection localizer-->
   <group>
     <include file="$(find localization_manager)/launch/localization_manager.launch"/>

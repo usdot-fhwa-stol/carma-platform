@@ -33,6 +33,7 @@ jobs:
         environment:
           TERM: xterm
           INIT_ENV: /home/carma/.base-image/init-env.sh
+          ROS_2_ENV: /opt/autoware.ai/ros/install_ros2/setup.bash
     resource_class: xlarge      
     # Set working directory
     working_directory: "/opt/carma/"
@@ -57,20 +58,39 @@ jobs:
             cd ${PWD}
             sudo apt-get update
       - run:
-          name: Build CARMA
+          name: Build CARMA ROS 1
           command: |
             source ${INIT_ENV}
             export ROS_PARALLEL_JOBS='-j4 -l4' # Try to reduce memory consumption on build
             build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output bash make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
       - run:
-          name: Run C++ Tests
+          name: Run C++ Tests ROS 1
           command: |
             source ${INIT_ENV}
             export ROS_PARALLEL_JOBS='-j4 -l4' # Try to reduce memory consumption on build
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
+      - run:
+          name: Cleanup before ROS 2 build
+          # Clear the build and install folders before building ROS 2 
+          # but leave the build-wrapper output intact
+          command: |
+            rm -rf /opt/carma/install
+            rm -rf /opt/carma/build
+      - run:
+          name: Build CARMA ROS 2
+          command: |
+            source ${INIT_ENV}
+            source ${ROS_2_ENV}
+            build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output bash make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
+      - run:
+          name: Run C++ Tests ROS 2
+          command: |
+            source ${INIT_ENV}
+            source ${ROS_2_ENV}
+            bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
           
       # Run SonarCloud analysis
-      # PR Branchs and number extracted from Circle variables and github api
+      # PR Branches and number extracted from Circle variables and github api
       # Circle CI seems to make a change to the base branch, so we must fetch --force to ensure correct git file change stats
       # SONAR_SCANNER_TOKEN MUST be secured as an environment variable in Circle CI NOT in this file. 
       # The following sonar settings MUST be set in SonarCloud UI NOT in this file

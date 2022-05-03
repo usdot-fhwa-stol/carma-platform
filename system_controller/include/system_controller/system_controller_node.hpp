@@ -73,11 +73,21 @@ namespace system_controller
      */ 
     void on_error(const std::exception &e);
 
+    /**
+     * \brief Publishes a SystemAlert message to the rest of the carma-platform system.
+     *        NOTE: This callback will automatically populate the msg.source_node field based on this node name.
+     * \param msg The message to publish
+     */
+    void publish_system_alert(carma_msgs::msg::SystemAlert msg);
+
     //! The default topic name for the system alert topic
     const std::string system_alert_topic_{"/system_alert"};
 
     //! The subscriber for the system alert topic
     rclcpp::Subscription<carma_msgs::msg::SystemAlert>::SharedPtr system_alert_sub_;
+
+    //! System alert publisher
+    std::shared_ptr<rclcpp::Publisher<carma_msgs::msg::SystemAlert>> system_alert_pub_;
 
     //! Lifecycle Manager which will track the managed nodes and call their lifecycle services on request
     ros2_lifecycle_manager::Ros2LifecycleManager lifecycle_mgr_;

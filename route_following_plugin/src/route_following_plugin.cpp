@@ -120,6 +120,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
 
         //set a route callback to update route and calculate maneuver
         wml_->setRouteCallback([this]() {
+            ROS_INFO_STREAM("Recomputing maneuvers due to a route update");
             this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
         });
 
@@ -153,6 +154,12 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
 
     std::vector<cav_msgs::Maneuver> RouteFollowingPlugin::routeCb(const lanelet::routing::LaneletPath &route_shortest_path)
     {
+        
+        
+        for (auto ll:route_shortest_path)
+        {
+            shortest_path_set_.insert(ll.id());
+        }
         std::vector<cav_msgs::Maneuver> maneuvers;
         //This function calculates the maneuver plan every time the route is set
         ROS_DEBUG_STREAM("New route created");
@@ -388,17 +395,30 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             return false;
         }
 
-        double current_downtrack = wm_->routeTrackPos(current_loc_).downtrack;
-
+        double current_downtrack;
+        
+        if (!req.prior_plan.maneuvers.empty())
+        {
+            current_downtrack = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_dist);
+            ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end_dist:"<< current_downtrack);            
+        }
+        else
+        {
+            current_downtrack = req.veh_downtrack;
+            ROS_DEBUG_STREAM("Detected NO prior plan! Using req.veh_downtrack: "<< current_downtrack);
+        }
+        
         //Return the set of maneuvers which intersect with min_plan_duration
         size_t i = 0;
         double planned_time = 0.0;
+
+        std::vector<cav_msgs::Maneuver> new_maneuvers;
 
         while (planned_time < min_plan_duration_ && i < latest_maneuver_plan_.size())
         {
             ROS_DEBUG_STREAM("Checking maneuver id " << i);
             //Ignore plans for distance already covered
-            if (GET_MANEUVER_PROPERTY(latest_maneuver_plan_[i], end_dist) < current_downtrack)
+            if (GET_MANEUVER_PROPERTY(latest_maneuver_plan_[i], end_dist) <= current_downtrack)
             {
                 ROS_DEBUG_STREAM("Skipping maneuver id " << i);
 
@@ -411,21 +431,72 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             }
             planned_time += getManeuverDuration(latest_maneuver_plan_[i], epsilon_).toSec();
 
-            resp.new_plan.maneuvers.push_back(latest_maneuver_plan_[i]);
+            new_maneuvers.push_back(latest_maneuver_plan_[i]);
             ++i;
         }
 
-        if (resp.new_plan.maneuvers.size() == 0)
+        if (new_maneuvers.size() == 0)
         {
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
             return false;
         }
-        //update plan
 
         //Update time progress for maneuvers
-        updateTimeProgress(resp.new_plan.maneuvers, ros::Time::now());
+        if (!req.prior_plan.maneuvers.empty())
+        {
+            updateTimeProgress(new_maneuvers, GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_time));
+            ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end time:"<< std::to_string(GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_time).toSec()));    
+            ROS_DEBUG_STREAM("Where plan_completion_time was:"<< std::to_string(req.prior_plan.planning_completion_time.toSec()));            
+        }
+        else
+        {
+            updateTimeProgress(new_maneuvers, req.header.stamp);
+            ROS_DEBUG_STREAM("Detected NO prior plan! Using ros::Time::now():"<< std::to_string(ros::Time::now().toSec()));   
+        }
+
         //update starting speed of first maneuver
-        updateStartingSpeed(resp.new_plan.maneuvers.front(), current_speed_);
+        if (!req.prior_plan.maneuvers.empty())
+        {
+            double start_speed;
+            switch (req.prior_plan.maneuvers.back().type)
+            {
+                case cav_msgs::Maneuver::LANE_FOLLOWING:
+                    start_speed = req.prior_plan.maneuvers.back().lane_following_maneuver.end_speed;
+                    break;
+                case cav_msgs::Maneuver::LANE_CHANGE:
+                    start_speed = req.prior_plan.maneuvers.back().lane_change_maneuver.end_speed;
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+                    start_speed = req.prior_plan.maneuvers.back().intersection_transit_straight_maneuver.end_speed;
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+                    start_speed = req.prior_plan.maneuvers.back().intersection_transit_left_turn_maneuver.end_speed;
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+                    start_speed = req.prior_plan.maneuvers.back().intersection_transit_right_turn_maneuver.end_speed;
+                    break;
+                default:
+                    throw std::invalid_argument("Invalid maneuver type, cannot update starting speed for maneuver");
+            }
+            
+            updateStartingSpeed(new_maneuvers.front(), start_speed);
+            ROS_DEBUG_STREAM("Detected a prior plan! Using back maneuver's end speed:"<< start_speed);    
+        }
+        else 
+        {
+            updateStartingSpeed(new_maneuvers.front(), req.veh_logitudinal_velocity);
+            ROS_DEBUG_STREAM("Detected NO prior plan! Using req.veh_logitudinal_velocity:"<< req.veh_logitudinal_velocity);    
+        }
+        //update plan
+        resp.new_plan = req.prior_plan;
+        ROS_DEBUG_STREAM("Updating maneuvers before returning... Prior plan size:" << req.prior_plan.maneuvers.size());
+        for (auto mvr : new_maneuvers)
+        {
+            resp.new_plan.maneuvers.push_back(mvr);
+        }
+
+        ROS_DEBUG_STREAM("Returning total of maneuver size: " << resp.new_plan.maneuvers.size());
+        resp.new_plan.planning_completion_time = ros::Time::now();
 
         return true;
     }
@@ -446,7 +517,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
                 break;
             }  
         }
-        ROS_DEBUG_STREAM("==== ComposeLaneChangeStatus Exiting now");
+        ROS_DEBUG_STREAM("ComposeLaneChangeStatus Exiting now");
         return upcoming_lanechange_status_msg;
     }
 
@@ -496,6 +567,14 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             upcoming_lane_change_status_msg_map_.front().second.downtrack_until_lanechange=upcoming_lane_change_status_msg_map_.front().first-current_progress;
             ROS_DEBUG_STREAM("upcoming_lane_change_status_msg_map_.front().second.downtrack_until_lanechange: " <<static_cast<double>(upcoming_lane_change_status_msg_map_.front().second.downtrack_until_lanechange));
             upcoming_lane_change_status_pub_.publish(upcoming_lane_change_status_msg_map_.front().second); 
+        }
+
+        auto current_lanelet = llts[0];
+        // if the current lanelet is not on the shortest path
+        if (shortest_path_set_.find(current_lanelet.id()) == shortest_path_set_.end())
+        {
+            returnToShortestPath(current_lanelet);
+   
         }
       
     }
@@ -735,4 +814,56 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
         tf2_buffer_.setUsingDedicatedThread(true);
     }
+
+    void RouteFollowingPlugin::returnToShortestPath(const lanelet::ConstLanelet &current_lanelet)
+    {
+        auto original_shortestpath = wm_->getRoute()->shortestPath();
+        ROS_DEBUG_STREAM("The vehicle has left the shortest path");
+        auto routing_graph = wm_->getMapRoutingGraph();
+
+        // In order to return to the shortest path, the closest future lanelet on the shortest path needs to be found.
+        // That is the following lanelet of the adjacent lanelet of the current lanelet.
+        auto adjacent_lanelets = routing_graph->besides(current_lanelet);
+        if (!adjacent_lanelets.empty())
+        {
+            for (auto adjacent:adjacent_lanelets)
+            {
+                if (shortest_path_set_.find(adjacent.id())!=shortest_path_set_.end())
+                {
+                    auto following_lanelets = routing_graph->following(adjacent);
+                    auto target_following_lanelet = following_lanelets[0];
+                    ROS_DEBUG_STREAM("The target_following_lanelet id is: " << target_following_lanelet.id());
+                    lanelet::ConstLanelets interm;
+                    interm.push_back(static_cast<lanelet::ConstLanelet>(target_following_lanelet));
+                    // a new shortest path, via the target_following_lanelet is calculated and used an alternative shortest path
+                    auto new_shortestpath = routing_graph->shortestPathVia(current_lanelet, interm, original_shortestpath.back());
+                    ROS_DEBUG_STREAM("a new shortestpath is generated to return to original shortestpath");
+                    // routeCb is called to update latest_maneuver_plan_
+                    if (new_shortestpath) this->latest_maneuver_plan_ = routeCb(new_shortestpath.get());
+                    break;
+                }
+                else
+                {
+                    // a new shortest path, via the current_lanelet is calculated and used an alternative shortest path
+                    lanelet::ConstLanelets new_interm;
+                    new_interm.push_back(static_cast<lanelet::ConstLanelet>(current_lanelet));
+                    auto new_shortestpath = routing_graph->shortestPathVia(current_lanelet, new_interm, original_shortestpath.back());
+                    ROS_DEBUG_STREAM("Cannot return to the original shortestpath from adjacent lanes, so a new shortestpath is generated");
+                    // routeCb is called to update latest_maneuver_plan_
+                    if (new_shortestpath) this->latest_maneuver_plan_ = routeCb(new_shortestpath.get());
+                }
+            }
+            
+        }
+        else
+        {
+            ROS_WARN_STREAM("Alternative shortest path cannot be generated");
+        }
+
+    }
+    
+
+            
+            
+             
 }

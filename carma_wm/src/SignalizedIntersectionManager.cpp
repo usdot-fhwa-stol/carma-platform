@@ -31,6 +31,29 @@ namespace carma_wm
     max_lane_width_ = max_lane_width;
   }
 
+  bool SignalizedIntersectionManager::operator==(const SignalizedIntersectionManager& rhs)
+  {
+    bool is_same = true;
+    if (rhs.intersection_id_to_regem_id_ != this->intersection_id_to_regem_id_)
+    {
+      is_same = false;
+    }
+    if (rhs.signal_group_to_entry_lanelet_ids_ != this->signal_group_to_entry_lanelet_ids_)
+    {
+      is_same = false;
+    }
+    if (rhs.signal_group_to_exit_lanelet_ids_ != this->signal_group_to_exit_lanelet_ids_)
+    {
+      is_same = false;
+    }
+    if (rhs.signal_group_to_traffic_light_id_ != this->signal_group_to_traffic_light_id_)
+    {
+      is_same = false;
+    }
+
+    return is_same;
+  }
+
   void SignalizedIntersectionManager::convertLaneToLaneletId(std::unordered_map<uint8_t, lanelet::Id>& entry, std::unordered_map<uint8_t, lanelet::Id>& exit, const cav_msgs::IntersectionGeometry& intersection, 
                                                               const std::shared_ptr<lanelet::LaneletMap>& map, std::shared_ptr<const lanelet::routing::RoutingGraph> current_routing_graph) 
   {
@@ -52,8 +75,6 @@ namespace carma_wm
     auto ref_node  = local_projector.forward(gps_point);
 
     ROS_DEBUG_STREAM("Reference node in map frame x: " << ref_node.x() << ", y: " << ref_node.y());
-    
-    std::vector<lanelet::Point3d> node_list;
 
     for (auto lane : intersection.lane_list)
     {
@@ -62,21 +83,24 @@ namespace carma_wm
         ROS_DEBUG_STREAM("Lane id: " << (int)lane.lane_id << ", is not a lane for vehicle. Only vehicle road is currently supported. Skipping..." );
         continue;
       }
+      std::vector<lanelet::Point3d> node_list;
       
       double curr_x = ref_node.x();
       double curr_y = ref_node.y();
 
       ROS_DEBUG_STREAM("Processing Lane id: " << (int)lane.lane_id);
       
-      size_t min_number_of_points = 2; // only two points are sufficient to get corresponding lanelets
+      size_t min_number_of_points = 2; // two points minimum are required
 
-      if (lane.node_list.nodes.node_set_xy.size() < min_number_of_points)
+      size_t size_of_available_points = lane.node_list.nodes.node_set_xy.size();
+      
+      if (size_of_available_points < min_number_of_points)
       {
         ROS_WARN_STREAM("Not enough points are provided to match a lane. Skipping... ");
         continue;
       }
 
-      for (size_t i = 0; i < min_number_of_points; i ++ )
+      for (size_t i = 0; i < size_of_available_points; i ++ )
       {
         curr_x = lane.node_list.nodes.node_set_xy[i].delta.x + curr_x;
         curr_y = lane.node_list.nodes.node_set_xy[i].delta.y + curr_y;
@@ -100,7 +124,7 @@ namespace carma_wm
       {
         ROS_DEBUG_STREAM("x: " << node.x() << ", y: " << node.y());
       }
-
+      
       // save which signal group connect to which exit lanes
       for (auto connection : lane.connect_to_list)
       {
@@ -117,22 +141,53 @@ namespace carma_wm
       {
         // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593 
         // Open issue TODO on how this error is handled
-        ROS_WARN_STREAM("Given offset points are not inside the map...");
+        ROS_WARN_STREAM("Given offset points are not inside the map for lane: " << (int)lane.lane_id);
         continue;
       }
 
-      lanelet::Id corresponding_lanelet_id = affected_llts.front().id(); 
+      lanelet::Id corresponding_lanelet_id;
+      if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::EGRESS)
+      {        
+        corresponding_lanelet_id = affected_llts.front().id(); 
+        ROS_DEBUG_STREAM("Default corresponding_lanelet_id: " << corresponding_lanelet_id <<", in EGRESS");
+
+      }
+      else //ingress
+      {        
+        corresponding_lanelet_id = affected_llts.back().id(); 
+        ROS_DEBUG_STREAM("Default corresponding_lanelet_id: " << corresponding_lanelet_id <<", in INGRESS");
+      }
 
       for (auto llt : affected_llts) // filter out intersection lanelets
       {
-        if (llt.lanelet().get().hasAttribute("turn_direction"))
-        {
-          ROS_DEBUG_STREAM("lanelet " << llt.id() << " is actually part of the intersection. Skipping...");
-          continue;
-        }
-        corresponding_lanelet_id = llt.id();
+        ROS_DEBUG_STREAM("Checking if we can get entry/exit from lanelet " << llt.id());
 
-        break;
+        if (llt.lanelet().get().hasAttribute("turn_direction") && 
+            (llt.lanelet().get().attribute("turn_direction").value().compare("left") == 0 ||
+            llt.lanelet().get().attribute("turn_direction").value().compare("right") == 0))
+        {
+          std::vector<lanelet::ConstLanelet> connecting_llts;
+          if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::EGRESS)
+          {
+            ROS_DEBUG_STREAM("lanelet " << llt.id() << " is actually part of the intersecion. Trying to detect EGRESS...");
+            connecting_llts = current_routing_graph->following(llt.lanelet().get());
+          }
+          else
+          {
+            ROS_DEBUG_STREAM("lanelet " << llt.id() << " is actually part of the intersecion. Trying to detect INGRESS...");
+            connecting_llts = current_routing_graph->previous(llt.lanelet().get());
+          }
+
+          if (!connecting_llts.empty())
+            corresponding_lanelet_id = connecting_llts[0].id();
+          else
+          {
+            ROS_WARN_STREAM("Interestingly, did not detect here");
+            continue;
+          }
+
+          break;
+        }
       }
 
       ROS_DEBUG_STREAM("Found existing lanelet id: " << corresponding_lanelet_id);
@@ -148,8 +203,6 @@ namespace carma_wm
         exit[lane.lane_id] = corresponding_lanelet_id;
       }
       // ignoring types that are neither ingress nor egress 
-
-      node_list = {}; 
     }
 
     // convert and save exit lane ids into lanelet ids with their corresponding signal group ids
@@ -191,7 +244,7 @@ namespace carma_wm
     }
   }
 
-  lanelet::Id SignalizedIntersectionManager::matchSignalizedIntersection(const lanelet::Lanelets& entry_llts, const lanelet::Lanelets& exit_llts, const std::shared_ptr<lanelet::LaneletMap>& map)
+  lanelet::Id SignalizedIntersectionManager::matchSignalizedIntersection(const lanelet::Lanelets& entry_llts, const lanelet::Lanelets& exit_llts)
   {
     lanelet::Id matching_id = lanelet::InvalId;
 
@@ -303,7 +356,7 @@ namespace carma_wm
         exit_llts.push_back(map->laneletLayer.get(iter->second));  
       }
 
-      lanelet::Id intersection_id = matchSignalizedIntersection(entry_llts, exit_llts, map);
+      lanelet::Id intersection_id = matchSignalizedIntersection(entry_llts, exit_llts);
 
       if (intersection_id == lanelet::InvalId)
       {
@@ -380,5 +433,13 @@ namespace carma_wm
     this->signal_group_to_traffic_light_id_ = other.signal_group_to_traffic_light_id_;
 
     return *this;
+  }
+  
+  SignalizedIntersectionManager::SignalizedIntersectionManager(const SignalizedIntersectionManager& other)
+  {
+    this->signal_group_to_entry_lanelet_ids_ = other.signal_group_to_entry_lanelet_ids_;
+    this->signal_group_to_exit_lanelet_ids_ = other.signal_group_to_exit_lanelet_ids_;
+    this->intersection_id_to_regem_id_ = other.intersection_id_to_regem_id_;
+    this->signal_group_to_traffic_light_id_ = other.signal_group_to_traffic_light_id_;
   }
 }  // namespace carma_wm

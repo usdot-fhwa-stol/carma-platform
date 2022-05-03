@@ -234,11 +234,11 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   autoware_lanelet2_msgs::MapBin gf_reverse_msg;
   auto reverse_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, {}));
   carma_wm::toBinMsg(reverse_data, &gf_reverse_msg);
-  gf_reverse_msg.header.seq +=2;
+  gf_reverse_msg.seq_id +=2;
 
   // test the MapUpdateCallback reverse
   auto gf_rev_msg_ptr =  boost::make_shared<autoware_lanelet2_msgs::MapBin>(gf_reverse_msg);
-  gf_obj_msg.header.seq ++;
+  gf_obj_msg.seq_id ++;
   gf_msg_ptr =  boost::make_shared<autoware_lanelet2_msgs::MapBin>(gf_obj_msg);
   EXPECT_THROW(wmlw.mapUpdateCallback(gf_msg_ptr), lanelet::InvalidInputError); // because we are trying update the exact same llt and regem relationship again
   wmlw.mapUpdateCallback(gf_rev_msg_ptr);
@@ -262,7 +262,6 @@ TEST(WMListenerWorkerTest, setConfigSpeedLimitTest)
 {
   WMListenerWorker wmlw;
 
-  bool flag = false;
   double cL = 24.0;
   ///// Test without user defined config limit
   wmlw.setConfigSpeedLimit(cL);
@@ -273,14 +272,12 @@ TEST(WMListenerWorkerTest, setConfigSpeedLimitTest)
 
   ASSERT_EQ(cL, current_cl);
   ROS_INFO_STREAM("config_speed_limit = "<< current_cl);
-
 }
 
 TEST(WMListenerWorkerTest, getVehicleParticipationTypeTest)
 {
   WMListenerWorker wmlw;
 
-  bool flag = false;
   std::string pt = lanelet::Participants::VehicleTruck;
   ///// Test without user defined config limit
   wmlw.setVehicleParticipationType(pt);
@@ -291,7 +288,6 @@ TEST(WMListenerWorkerTest, getVehicleParticipationTypeTest)
 
   ASSERT_EQ(pt, current_pt);
   ROS_INFO_STREAM("Participant = "<< current_pt);
-
 }
 
 TEST(WMListenerWorkerTest, checkIfReRoutingNeeded1)
