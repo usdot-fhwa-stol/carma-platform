@@ -16,7 +16,7 @@
  */
 
 #include <iostream>
-#include <cav_msgs/LocalizationStatusReport.h>
+#include <carma_localization_msgs/msg/localization_status_report.hpp>
 
 namespace localization_manager
 {
@@ -56,7 +56,7 @@ std::ostream& operator<<(std::ostream& os, LocalizationState s);
  * 
  * \return The initialized report message
  */ 
-cav_msgs::LocalizationStatusReport stateToMsg(LocalizationState state, const ros::Time& stamp);
+carma_localization_msgs::msg::LocalizationStatusReport stateToMsg(LocalizationState state, const ros::Time& stamp);
 
 
 //! @brief Enum describing the possible signals to change the current LocalizationState

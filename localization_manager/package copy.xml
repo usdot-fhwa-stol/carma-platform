@@ -33,6 +33,6 @@
   <depend>tf2_geometry_msgs</depend>
   <depend>autoware_msgs</depend>
   <depend>carma_utils</depend>
-  <depend>cav_msgs</depend>
+  <depend>carma_localization_msgs</depend>
   <build_depend>carma_cmake_common</build_depend>
 </package>

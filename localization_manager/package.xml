@@ -29,7 +29,10 @@
   <depend>rclcpp</depend>
   <depend>carma_ros2_utils</depend>
   <depend>rclcpp_components</depend>
-  <depend>std_srvs</depend>
+  <depend>carma_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>carma_localization_msgs</depend>
+  <depend>autoware_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>

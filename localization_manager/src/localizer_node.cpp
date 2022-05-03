@@ -21,24 +21,24 @@ namespace localization_manager
 {
 namespace std_ph = std::placeholders;  // Make alias for std placeholders to differentiate from boost.
 
-void Localizer::publishPoseStamped(const geometry_msgs::PoseStamped& msg) const
+void Localizer::publishPoseStamped(const geometry_msgs::msg::PoseStamped& msg) const
 {
   pose_pub_.publish(msg);
 }
 
-void Localizer::publishStatus(const cav_msgs::LocalizationStatusReport& msg) const
+void Localizer::publishStatus(const carma_localization_msgs::msg::LocalizationStatusReport& msg) const
 {
   state_pub_.publish(msg);
 }
 
 
-void Localizer::publishManagedInitialPose(const geometry_msgs::PoseWithCovarianceStamped& msg) const
+void Localizer::publishManagedInitialPose(const geometry_msgs::msg::PoseWithCovarianceStamped& msg) const
 {
   managed_initial_pose_pub_.publish(msg);
 }
 
-void Localizer::poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose,
-                                     const autoware_msgs::NDTStatConstPtr& stats) const
+void Localizer::poseAndStatsCallback(const geometry_msgs::msg::PoseStampedConstPtr& pose,
+                                     const autoware_msgs::msg::NDTStatConstPtr& stats) const
 {
   try
   {
@@ -92,8 +92,8 @@ void Localizer::run()
   initialpose_sub_ = nh_.subscribe("initialpose", 1, &LocalizationManager::initialPoseCallback, manager_.get());
 
   // Setup synchronized message_filters subscribers
-  message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub(nh_, "ndt_pose", 5);
-  message_filters::Subscriber<autoware_msgs::NDTStat> stats_sub(nh_, "ndt_stat", 5);
+  message_filters::Subscriber<geometry_msgs::msg::PoseStamped> pose_sub(nh_, "ndt_pose", 5);
+  message_filters::Subscriber<autoware_msgs::msg::NDTStat> stats_sub(nh_, "ndt_stat", 5);
 
   PoseStatsSynchronizer pose_stats_synchronizer(PoseStatsSyncPolicy(5), pose_sub, stats_sub);
 
@@ -102,9 +102,9 @@ void Localizer::run()
   ros::CARMANodeHandle::setSystemAlertCallback(std::bind(&LocalizationManager::systemAlertCallback, manager_.get(), std_ph::_1));
 
   // initialize publishers
-  managed_initial_pose_pub_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("managed_initialpose", 1, true);
-  pose_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("selected_pose", 5);
-  state_pub_ = nh_.advertise<cav_msgs::LocalizationStatusReport>("localization_status", 1);
+  managed_initial_pose_pub_ = nh_.advertise<geometry_msgs::msg::PoseWithCovarianceStamped>("managed_initialpose", 1, true);
+  pose_pub_ = nh_.advertise<geometry_msgs::msg::PoseStamped>("selected_pose", 5);
+  state_pub_ = nh_.advertise<carma_localization_msgs::msg::LocalizationStatusReport>("localization_status", 1);
 
   // spin
   pose_timer_ = nh_.createTimer(

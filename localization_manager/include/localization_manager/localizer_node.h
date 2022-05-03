@@ -26,7 +26,7 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/exact_time.h>
-#include <cav_msgs/LocalizationStatusReport.h>
+#include <carma_localization_msgs/msg/localization_status_report.h>
 #include "LocalizationTypes.h"
 #include "LocalizationManagerConfig.h"
 #include "LocalizationManager.h"
@@ -53,19 +53,19 @@ public:
    * \brief Callback to publish the selected pose
    * \param msg The pose to publish
    */
-  void publishPoseStamped(const geometry_msgs::PoseStamped& msg) const;
+  void publishPoseStamped(const geometry_msgs::msg::PoseStamped& msg) const;
 
   /**
    * \brief Callback to publish the provided localization status report
    * \param msg The report to publish
    */
-  void publishStatus(const cav_msgs::LocalizationStatusReport& msg) const;
+  void publishStatus(const carma_localization_msgs::msg::LocalizationStatusReport& msg) const;
 
   /**
    * \brief Callback to publish the initial pose deemed suitable to intialize NDT
    * \param msg The msg to publish
    */
-  void publishManagedInitialPose(const geometry_msgs::PoseWithCovarianceStamped& msg) const;
+  void publishManagedInitialPose(const geometry_msgs::msg::PoseWithCovarianceStamped& msg) const;
 
 
   /**
@@ -74,8 +74,8 @@ public:
    * \param pose The received pose message
    * \param stats The received stats message
    */ 
-  void poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose,
-                            const autoware_msgs::NDTStatConstPtr& stats) const;
+  void poseAndStatsCallback(const geometry_msgs::msg::PoseStampedConstPtr& pose,
+                            const autoware_msgs::msg::NDTStatConstPtr& stats) const;
 
 private:
   // node handles
@@ -97,7 +97,7 @@ private:
   std::unique_ptr<LocalizationManager> manager_; // Worker object
 
   // Message filters policies
-  typedef message_filters::sync_policies::ExactTime<geometry_msgs::PoseStamped, autoware_msgs::NDTStat>
+  typedef message_filters::sync_policies::ExactTime<geometry_msgs::msg::PoseStamped, autoware_msgs::msg::NDTStat>
       PoseStatsSyncPolicy;
   typedef message_filters::Synchronizer<PoseStatsSyncPolicy> PoseStatsSynchronizer;
 };

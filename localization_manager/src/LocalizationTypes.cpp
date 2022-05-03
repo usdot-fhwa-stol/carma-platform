@@ -64,31 +64,31 @@ std::ostream& operator<<(std::ostream& os, LocalizationSignal s)
   return os;
 }
 
-cav_msgs::LocalizationStatusReport stateToMsg(LocalizationState state, const ros::Time& stamp)
+carma_localization_msgs::msg::LocalizationStatusReport stateToMsg(LocalizationState state, const ros::Time& stamp)
 {
-  cav_msgs::LocalizationStatusReport msg;
+  carma_localization_msgs::msg::LocalizationStatusReport msg;
   switch (state)
   {
     case LocalizationState::UNINITIALIZED:
-      msg.status = cav_msgs::LocalizationStatusReport::UNINITIALIZED;
+      msg.status = carma_localization_msgs::msg::LocalizationStatusReport::UNINITIALIZED;
       break;
     case LocalizationState::INITIALIZING:
-      msg.status = cav_msgs::LocalizationStatusReport::INITIALIZING;
+      msg.status = carma_localization_msgs::msg::LocalizationStatusReport::INITIALIZING;
       break;
     case LocalizationState::OPERATIONAL:
-      msg.status = cav_msgs::LocalizationStatusReport::OPERATIONAL;
+      msg.status = carma_localization_msgs::msg::LocalizationStatusReport::OPERATIONAL;
       break;
     case LocalizationState::DEGRADED:
-      msg.status = cav_msgs::LocalizationStatusReport::DEGRADED;
+      msg.status = carma_localization_msgs::msg::LocalizationStatusReport::DEGRADED;
       break;
     case LocalizationState::DEGRADED_NO_LIDAR_FIX:
-      msg.status = cav_msgs::LocalizationStatusReport::DEGRADED_NO_LIDAR_FIX;
+      msg.status = carma_localization_msgs::msg::LocalizationStatusReport::DEGRADED_NO_LIDAR_FIX;
       break;
     case LocalizationState::AWAIT_MANUAL_INITIALIZATION:
-      msg.status = cav_msgs::LocalizationStatusReport::AWAIT_MANUAL_INITIALIZATION;
+      msg.status = carma_localization_msgs::msg::LocalizationStatusReport::AWAIT_MANUAL_INITIALIZATION;
       break;
     default:
-      throw std::invalid_argument("LocalizationStates do not match cav_msgs::LocalizationStatusReport "
+      throw std::invalid_argument("LocalizationStates do not match carma_localization_msgs::msg::LocalizationStatusReport "
                                   "states");
       break;
   }

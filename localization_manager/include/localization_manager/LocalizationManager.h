@@ -15,16 +15,16 @@
  * the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <boost/shared_ptr.hpp>
-#include <geometry_msgs/TransformStamped.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/pose_stamped.h>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <boost/optional.hpp>
-#include <autoware_msgs/NDTStat.h>
+#include <autoware_msgs/msg/ndt_stat.hpp>
 #include <tf2/LinearMath/Vector3.h>
-#include <cav_msgs/SystemAlert.h>
-#include <cav_msgs/LocalizationStatusReport.h>
+#include <carma_msgs/msg/system_alert.hpp>
+#include <carma_localization_msgs/msg/localization_status_report.hpp>
 #include <functional>
 #include <unordered_set>
 #include <carma_utils/timers/Timer.h>
@@ -41,9 +41,9 @@ namespace localization_manager
 class LocalizationManager
 {
 public:
-  using PosePublisher = std::function<void(const geometry_msgs::PoseStamped&)>;
-  using ManagedInitialPosePublisher = std::function<void(const geometry_msgs::PoseWithCovarianceStamped&)>;
-  using StatePublisher = std::function<void(const cav_msgs::LocalizationStatusReport&)>;
+  using PosePublisher = std::function<void(const geometry_msgs::msg::PoseStamped&)>;
+  using ManagedInitialPosePublisher = std::function<void(const geometry_msgs::msg::PoseWithCovarianceStamped&)>;
+  using StatePublisher = std::function<void(const carma_localization_msgs::msg::LocalizationStatusReport&)>;
   using TimerUniquePtr = std::unique_ptr<carma_utils::timers::Timer>;
 
 
@@ -67,7 +67,7 @@ public:
    *
    * \param msg The pose of vehicle in map frame provided by GNSS
    */
-  void gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+  void gnssPoseCallback(const geometry_msgs::msg::PoseStampedConstPtr& msg);
 
   /**
    * \brief Synced callback for the NDT reported pose and status messages
@@ -75,22 +75,22 @@ public:
    * \param pose The pose reported by NDT matching of the vehicle in the map frame
    * \param stats The stats reported by NDT matching for the accuracy of the provided pose
    */
-  void poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose,
-                            const autoware_msgs::NDTStatConstPtr& stats);
+  void poseAndStatsCallback(const geometry_msgs::msg::PoseStampedConstPtr& pose,
+                            const autoware_msgs::msg::NDTStatConstPtr& stats);
 
   /**
    * \brief Callback for SystemAlert data. Used to check for lidar failure
    *
    * \param alert The alert message to evaluate
    */
-  void systemAlertCallback(const cav_msgs::SystemAlertConstPtr& alert);
+  void systemAlertCallback(const carma_msgs::msg::SystemAlertConstPtr& alert);
 
   /**
    * \brief Callback for the initial pose provided by Rviz or some external localization initializer
    *
    * \param msg The initial pose message
    */
-  void initialPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
+  void initialPoseCallback(const geometry_msgs::msg::PoseWithCovarianceStampedConstPtr& msg);
 
   /**
    * \brief Timer callback that controls the publication of the selected pose and status report
@@ -142,9 +142,9 @@ private:
   int lidar_init_sequential_timesteps_counter_ = 0;
   bool is_sequential_ = false;
   std::vector<TimerUniquePtr> expired_timers_;
-  boost::optional<geometry_msgs::PoseStamped> last_raw_gnss_value_;
+  boost::optional<geometry_msgs::msg::PoseStamped> last_raw_gnss_value_;
   boost::optional<tf2::Vector3> gnss_offset_;
-  boost::optional<geometry_msgs::PoseStamped> current_pose_;
+  boost::optional<geometry_msgs::msg::PoseStamped> current_pose_;
 
   /**
    * \brief Helper function to both compute the NDT Frequency and update the previous pose timestamp

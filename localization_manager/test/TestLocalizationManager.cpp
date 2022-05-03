@@ -17,7 +17,7 @@
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 #include <boost/optional.hpp>
-#include <cav_msgs/LocalizationStatusReport.h>
+#include <carma_localization_msgs/msg/localization_status_report.hpp>
 #include <carma_utils/timers/testing/TestTimer.h>
 #include <carma_utils/timers/testing/TestTimerFactory.h>
 #include <carma_utils/testing/TestHelpers.h>
@@ -53,7 +53,7 @@ TEST(LocalizationManager, testSpin)
 {
   LocalizationManagerConfig config = getDefaultConfigForTest();
 
-  boost::optional<cav_msgs::LocalizationStatusReport> status_msg;
+  boost::optional<carma_localization_msgs::msg::LocalizationStatusReport> status_msg;
   LocalizationManager manager([](auto pose) {}, [&](auto status) { status_msg = status; }, [](auto pose_with_cov) {}, config,
                               std::make_unique<carma_utils::timers::testing::TestTimerFactory>());
 
@@ -65,7 +65,7 @@ TEST(LocalizationManager, testSpin)
   manager.posePubTick(e);
   ASSERT_TRUE(!!status_msg);
 
-  ASSERT_EQ(cav_msgs::LocalizationStatusReport::UNINITIALIZED, status_msg.get().status);
+  ASSERT_EQ(carma_localization_msgs::msg::LocalizationStatusReport::UNINITIALIZED, status_msg.get().status);
   ASSERT_EQ(ros::Time::now().toSec(), status_msg.get().header.stamp.toSec());
 }
 
@@ -74,7 +74,7 @@ TEST(LocalizationManager, testGNSSTimeout)
   LocalizationManagerConfig config = getDefaultConfigForTest();
   config.localization_mode = LocalizerMode::GNSS;
 
-  boost::optional<cav_msgs::LocalizationStatusReport> status_msg;
+  boost::optional<carma_localization_msgs::msg::LocalizationStatusReport> status_msg;
   LocalizationManager manager([](auto pose) {}, [&](auto status) { status_msg = status; }, [](auto pose_with_cov) {}, config,
                               std::make_unique<carma_utils::timers::testing::TestTimerFactory>());
 
@@ -82,16 +82,16 @@ TEST(LocalizationManager, testGNSSTimeout)
 
   ros::Time::setNow(ros::Time(1.0));
 
-  geometry_msgs::PoseWithCovarianceStamped msg;
+  geometry_msgs::msg::PoseWithCovarianceStamped msg;
   msg.header.seq = 1;
   msg.header.stamp = ros::Time::now();
-  geometry_msgs::PoseWithCovarianceStampedConstPtr msg_ptr(new geometry_msgs::PoseWithCovarianceStamped(msg));
+  geometry_msgs::msg::PoseWithCovarianceStampedConstPtr msg_ptr(new geometry_msgs::msg::PoseWithCovarianceStamped(msg));
   manager.initialPoseCallback(msg_ptr);
 
-  geometry_msgs::PoseStamped msg_2;
+  geometry_msgs::msg::PoseStamped msg_2;
   msg_2.header.seq = 1;
   msg_2.header.stamp = ros::Time::now();
-  geometry_msgs::PoseStampedConstPtr msg_ptr_2(new geometry_msgs::PoseStamped(msg_2));
+  geometry_msgs::msg::PoseStampedConstPtr msg_ptr_2(new geometry_msgs::msg::PoseStamped(msg_2));
   manager.gnssPoseCallback(msg_ptr_2);
 
 
@@ -99,7 +99,7 @@ TEST(LocalizationManager, testGNSSTimeout)
   manager.posePubTick(e);
   ASSERT_TRUE(!!status_msg);
 
-  ASSERT_EQ(cav_msgs::LocalizationStatusReport::DEGRADED_NO_LIDAR_FIX, status_msg.get().status);
+  ASSERT_EQ(carma_localization_msgs::msg::LocalizationStatusReport::DEGRADED_NO_LIDAR_FIX, status_msg.get().status);
   ASSERT_EQ(ros::Time::now().toSec(), status_msg.get().header.stamp.toSec());
 
   ros::Time::setNow(ros::Time(1.1)); // Still no timeout
@@ -107,7 +107,7 @@ TEST(LocalizationManager, testGNSSTimeout)
   manager.posePubTick(e);
   ASSERT_TRUE(!!status_msg);
 
-  ASSERT_EQ(cav_msgs::LocalizationStatusReport::DEGRADED_NO_LIDAR_FIX, status_msg.get().status);
+  ASSERT_EQ(carma_localization_msgs::msg::LocalizationStatusReport::DEGRADED_NO_LIDAR_FIX, status_msg.get().status);
   ASSERT_EQ(ros::Time::now().toSec(), status_msg.get().header.stamp.toSec());
 
   ros::Time::setNow(ros::Time(1.6)); // timout
@@ -122,8 +122,8 @@ TEST(LocalizationManager, testSignals)
   config.auto_initialization_timeout = 1000;
   config.gnss_only_operation_timeout = 2000;
 
-  boost::optional<geometry_msgs::PoseStamped> published_pose;
-  boost::optional<geometry_msgs::PoseWithCovarianceStamped> published_initial_pose;
+  boost::optional<geometry_msgs::msg::PoseStamped> published_pose;
+  boost::optional<geometry_msgs::msg::PoseWithCovarianceStamped> published_initial_pose;
 
   LocalizationManager manager([&](auto pose) { published_pose = pose; },
                               [](auto status) {}, [&](auto initial) { published_initial_pose = initial; }, config,
@@ -133,9 +133,9 @@ TEST(LocalizationManager, testSignals)
 
   ASSERT_EQ(LocalizationState::UNINITIALIZED, manager.getState());
 
-  geometry_msgs::PoseWithCovarianceStamped msg;
+  geometry_msgs::msg::PoseWithCovarianceStamped msg;
   msg.header.seq = 1;
-  geometry_msgs::PoseWithCovarianceStampedConstPtr msg_ptr(new geometry_msgs::PoseWithCovarianceStamped(msg));
+  geometry_msgs::msg::PoseWithCovarianceStampedConstPtr msg_ptr(new geometry_msgs::msg::PoseWithCovarianceStamped(msg));
   manager.initialPoseCallback(msg_ptr);
 
   ASSERT_EQ(LocalizationState::INITIALIZING, manager.getState());
@@ -155,13 +155,13 @@ TEST(LocalizationManager, testSignals)
 
   ASSERT_EQ(LocalizationState::INITIALIZING, manager.getState());
 
-  geometry_msgs::PoseStamped pose_msg;
+  geometry_msgs::msg::PoseStamped pose_msg;
   pose_msg.header.stamp = ros::Time::now();
-  geometry_msgs::PoseStampedConstPtr pose_msg_ptr(new geometry_msgs::PoseStamped(pose_msg));
+  geometry_msgs::msg::PoseStampedConstPtr pose_msg_ptr(new geometry_msgs::msg::PoseStamped(pose_msg));
 
-  autoware_msgs::NDTStat stat_msg;
+  autoware_msgs::msg::NDTStat stat_msg;
   stat_msg.score = 0.1;
-  autoware_msgs::NDTStatConstPtr stat_msg_ptr(new autoware_msgs::NDTStat(stat_msg));
+  autoware_msgs::msg::NDTStatConstPtr stat_msg_ptr(new autoware_msgs::msg::NDTStat(stat_msg));
 
   manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
 
@@ -172,9 +172,9 @@ TEST(LocalizationManager, testSignals)
 
   ros::Time::setNow(ros::Time(3.2));
   pose_msg.header.stamp = ros::Time::now();
-  pose_msg_ptr = geometry_msgs::PoseStampedConstPtr(new geometry_msgs::PoseStamped(pose_msg));
+  pose_msg_ptr = geometry_msgs::msg::PoseStampedConstPtr(new geometry_msgs::msg::PoseStamped(pose_msg));
   stat_msg.score = 1.1;
-  stat_msg_ptr = autoware_msgs::NDTStatConstPtr(new autoware_msgs::NDTStat(stat_msg));
+  stat_msg_ptr = autoware_msgs::msg::NDTStatConstPtr(new autoware_msgs::msg::NDTStat(stat_msg));
 
   manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
 
@@ -182,9 +182,9 @@ TEST(LocalizationManager, testSignals)
 
   ros::Time::setNow(ros::Time(3.3));
   pose_msg.header.stamp = ros::Time::now();
-  pose_msg_ptr = geometry_msgs::PoseStampedConstPtr(new geometry_msgs::PoseStamped(pose_msg));
+  pose_msg_ptr = geometry_msgs::msg::PoseStampedConstPtr(new geometry_msgs::msg::PoseStamped(pose_msg));
   stat_msg.score = 0.1;
-  stat_msg_ptr = autoware_msgs::NDTStatConstPtr(new autoware_msgs::NDTStat(stat_msg));
+  stat_msg_ptr = autoware_msgs::msg::NDTStatConstPtr(new autoware_msgs::msg::NDTStat(stat_msg));
 
   manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
 
@@ -192,7 +192,7 @@ TEST(LocalizationManager, testSignals)
 
   ros::Time::setNow(ros::Time(3.415));
   pose_msg.header.stamp = ros::Time::now();
-  pose_msg_ptr = geometry_msgs::PoseStampedConstPtr(new geometry_msgs::PoseStamped(pose_msg));
+  pose_msg_ptr = geometry_msgs::msg::PoseStampedConstPtr(new geometry_msgs::msg::PoseStamped(pose_msg));
 
   manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
 
@@ -200,7 +200,7 @@ TEST(LocalizationManager, testSignals)
 
   ros::Time::setNow(ros::Time(3.5));
   pose_msg.header.stamp = ros::Time::now();
-  pose_msg_ptr = geometry_msgs::PoseStampedConstPtr(new geometry_msgs::PoseStamped(pose_msg));
+  pose_msg_ptr = geometry_msgs::msg::PoseStampedConstPtr(new geometry_msgs::msg::PoseStamped(pose_msg));
 
   manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
 
@@ -208,7 +208,7 @@ TEST(LocalizationManager, testSignals)
 
   ros::Time::setNow(ros::Time(3.7));
   pose_msg.header.stamp = ros::Time::now();
-  pose_msg_ptr = geometry_msgs::PoseStampedConstPtr(new geometry_msgs::PoseStamped(pose_msg));
+  pose_msg_ptr = geometry_msgs::msg::PoseStampedConstPtr(new geometry_msgs::msg::PoseStamped(pose_msg));
 
   manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
 
@@ -235,7 +235,7 @@ TEST(LocalizationManager, testSignals)
 
   ros::Time::setNow(ros::Time(3.8));
   pose_msg.header.stamp = ros::Time::now();
-  pose_msg_ptr = geometry_msgs::PoseStampedConstPtr(new geometry_msgs::PoseStamped(pose_msg));
+  pose_msg_ptr = geometry_msgs::msg::PoseStampedConstPtr(new geometry_msgs::msg::PoseStamped(pose_msg));
 
   manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
 
@@ -259,14 +259,14 @@ TEST(LocalizationManager, testSignals)
   ASSERT_EQ(LocalizationState::INITIALIZING, manager.getState());
 
   pose_msg.header.stamp = ros::Time::now();
-  pose_msg_ptr = geometry_msgs::PoseStampedConstPtr(new geometry_msgs::PoseStamped(pose_msg));
+  pose_msg_ptr = geometry_msgs::msg::PoseStampedConstPtr(new geometry_msgs::msg::PoseStamped(pose_msg));
 
   manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
 
   ros::Time::setNow(ros::Time(6.1));
 
   pose_msg.header.stamp = ros::Time::now();
-  pose_msg_ptr = geometry_msgs::PoseStampedConstPtr(new geometry_msgs::PoseStamped(pose_msg));
+  pose_msg_ptr = geometry_msgs::msg::PoseStampedConstPtr(new geometry_msgs::msg::PoseStamped(pose_msg));
 
   manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
 
@@ -284,14 +284,14 @@ TEST(LocalizationManager, testSignals)
 
   ros::Time::setNow(ros::Time(6.3));
   pose_msg.header.stamp = ros::Time::now();
-  pose_msg_ptr = geometry_msgs::PoseStampedConstPtr(new geometry_msgs::PoseStamped(pose_msg));
+  pose_msg_ptr = geometry_msgs::msg::PoseStampedConstPtr(new geometry_msgs::msg::PoseStamped(pose_msg));
 
   manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
 
   ros::Time::setNow(ros::Time(6.4));
 
   pose_msg.header.stamp = ros::Time::now();
-  pose_msg_ptr = geometry_msgs::PoseStampedConstPtr(new geometry_msgs::PoseStamped(pose_msg));
+  pose_msg_ptr = geometry_msgs::msg::PoseStampedConstPtr(new geometry_msgs::msg::PoseStamped(pose_msg));
 
   manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
 
@@ -313,8 +313,8 @@ TEST(LocalizationManager, testGNSSCorrection)
   config.auto_initialization_timeout = 1000;
   config.gnss_only_operation_timeout = 2000;
 
-  boost::optional<geometry_msgs::PoseStamped> published_pose;
-  boost::optional<geometry_msgs::PoseWithCovarianceStamped> published_initial_pose;
+  boost::optional<geometry_msgs::msg::PoseStamped> published_pose;
+  boost::optional<geometry_msgs::msg::PoseWithCovarianceStamped> published_initial_pose;
 
   LocalizationManager manager([&](auto pose) { published_pose = pose; },
                               [](auto status) {}, [&](auto initial) { published_initial_pose = initial; }, config,
@@ -324,9 +324,9 @@ TEST(LocalizationManager, testGNSSCorrection)
 
   ASSERT_EQ(LocalizationState::UNINITIALIZED, manager.getState());
 
-  geometry_msgs::PoseStamped msg;
+  geometry_msgs::msg::PoseStamped msg;
   msg.header.seq = 1;
-  geometry_msgs::PoseStampedConstPtr msg_ptr(new geometry_msgs::PoseStamped(msg));
+  geometry_msgs::msg::PoseStampedConstPtr msg_ptr(new geometry_msgs::msg::PoseStamped(msg));
   manager.gnssPoseCallback(msg_ptr);
 
   ASSERT_EQ(LocalizationState::INITIALIZING, manager.getState());

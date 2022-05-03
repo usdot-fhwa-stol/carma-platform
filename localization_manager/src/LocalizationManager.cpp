@@ -64,8 +64,8 @@ double LocalizationManager::computeNDTFreq(const ros::Time& new_stamp)
   return computeFreq(prev_ndt_stamp_.get(), new_stamp);  // Convert delta to frequency (Hz = 1/s)
 }
 
-void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose,
-                                               const autoware_msgs::NDTStatConstPtr& stats)
+void LocalizationManager::poseAndStatsCallback(const geometry_msgs::msg::PoseStampedConstPtr& pose,
+                                               const autoware_msgs::msg::NDTStatConstPtr& stats)
 {
   double ndt_freq = computeNDTFreq(pose->header.stamp);
   ROS_DEBUG_STREAM("Received pose resulting in frequency value of " << ndt_freq << " with score of " << stats->score);
@@ -137,7 +137,7 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
 }
 
 
-void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
+void LocalizationManager::gnssPoseCallback(const geometry_msgs::msg::PoseStampedConstPtr& msg)
 {
   last_raw_gnss_value_ = *msg;
   // Just like ndt_matching the gnss pose is treated as an initialize signal if the system is not yet intialized
@@ -145,7 +145,7 @@ void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConst
     lidar_init_sequential_timesteps_counter_ = 0;
     transition_table_.signal(LocalizationSignal::INITIAL_POSE);
     
-    geometry_msgs::PoseWithCovarianceStamped new_initial_pose;
+    geometry_msgs::msg::PoseWithCovarianceStamped new_initial_pose;
     new_initial_pose.header = msg->header;
     new_initial_pose.pose.pose = msg->pose;
 
@@ -154,7 +154,7 @@ void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConst
 
   if (transition_table_.getState() == LocalizationState::DEGRADED_NO_LIDAR_FIX)
   {
-    geometry_msgs::PoseStamped corrected_pose = *msg;
+    geometry_msgs::msg::PoseStamped corrected_pose = *msg;
     if (gnss_offset_) {
       corrected_pose.pose.position.x = corrected_pose.pose.position.x + gnss_offset_->x();
       corrected_pose.pose.position.y = corrected_pose.pose.position.y + gnss_offset_->y();
@@ -165,7 +165,7 @@ void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConst
   }
 }
 
-void LocalizationManager::initialPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
+void LocalizationManager::initialPoseCallback(const geometry_msgs::msg::PoseWithCovarianceStampedConstPtr& msg)
 {
   lidar_init_sequential_timesteps_counter_ = 0;
   transition_table_.signal(LocalizationSignal::INITIAL_POSE);
@@ -173,7 +173,7 @@ void LocalizationManager::initialPoseCallback(const geometry_msgs::PoseWithCovar
   initialpose_pub_(*msg); // Forward the initial pose to the rest of the system
 }
 
-void LocalizationManager::systemAlertCallback(const cav_msgs::SystemAlertConstPtr& alert)
+void LocalizationManager::systemAlertCallback(const carma_msgs::msg::SystemAlertConstPtr& alert)
 {
   if (LIDAR_FAILURE_STRINGS.find(alert->description) != LIDAR_FAILURE_STRINGS.end())
   {
@@ -264,7 +264,7 @@ void LocalizationManager::posePubTick(const ros::TimerEvent& te)
   }
 
   // Create and publish status report message
-  cav_msgs::LocalizationStatusReport msg = stateToMsg(transition_table_.getState(), ros::Time::now());
+  carma_localization_msgs::msg::LocalizationStatusReport msg = stateToMsg(transition_table_.getState(), ros::Time::now());
   state_pub_(msg);
 
 }

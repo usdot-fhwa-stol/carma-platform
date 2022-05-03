@@ -50,37 +50,37 @@ TEST(LocalizationState, testStream)
 
 TEST(LocalizationState, testStateToMsg)
 {
-  cav_msgs::LocalizationStatusReport msg;
+  carma_localization_msgs::msg::LocalizationStatusReport msg;
   ros::Time stamp = ros::Time(1.0);
   LocalizationState state = LocalizationState::UNINITIALIZED;
 
   msg = stateToMsg(state, stamp);
-  ASSERT_EQ(msg.status, cav_msgs::LocalizationStatusReport::UNINITIALIZED);
+  ASSERT_EQ(msg.status, carma_localization_msgs::msg::LocalizationStatusReport::UNINITIALIZED);
   ASSERT_EQ(msg.header.stamp.toSec(), stamp.toSec());
 
   state = LocalizationState::INITIALIZING;
   msg = stateToMsg(state, stamp);
-  ASSERT_EQ(msg.status, cav_msgs::LocalizationStatusReport::INITIALIZING);
+  ASSERT_EQ(msg.status, carma_localization_msgs::msg::LocalizationStatusReport::INITIALIZING);
   ASSERT_EQ(msg.header.stamp.toSec(), stamp.toSec());
 
   state = LocalizationState::OPERATIONAL;
   msg = stateToMsg(state, stamp);
-  ASSERT_EQ(msg.status, cav_msgs::LocalizationStatusReport::OPERATIONAL);
+  ASSERT_EQ(msg.status, carma_localization_msgs::msg::LocalizationStatusReport::OPERATIONAL);
   ASSERT_EQ(msg.header.stamp.toSec(), stamp.toSec());
 
   state = LocalizationState::DEGRADED;
   msg = stateToMsg(state, stamp);
-  ASSERT_EQ(msg.status, cav_msgs::LocalizationStatusReport::DEGRADED);
+  ASSERT_EQ(msg.status, carma_localization_msgs::msg::LocalizationStatusReport::DEGRADED);
   ASSERT_EQ(msg.header.stamp.toSec(), stamp.toSec());
 
   state = LocalizationState::DEGRADED_NO_LIDAR_FIX;
   msg = stateToMsg(state, stamp);
-  ASSERT_EQ(msg.status, cav_msgs::LocalizationStatusReport::DEGRADED_NO_LIDAR_FIX);
+  ASSERT_EQ(msg.status, carma_localization_msgs::msg::LocalizationStatusReport::DEGRADED_NO_LIDAR_FIX);
   ASSERT_EQ(msg.header.stamp.toSec(), stamp.toSec());
 
   state = LocalizationState::AWAIT_MANUAL_INITIALIZATION;
   msg = stateToMsg(state, stamp);
-  ASSERT_EQ(msg.status, cav_msgs::LocalizationStatusReport::AWAIT_MANUAL_INITIALIZATION);
+  ASSERT_EQ(msg.status, carma_localization_msgs::msg::LocalizationStatusReport::AWAIT_MANUAL_INITIALIZATION);
   ASSERT_EQ(msg.header.stamp.toSec(), stamp.toSec());
 }
 
