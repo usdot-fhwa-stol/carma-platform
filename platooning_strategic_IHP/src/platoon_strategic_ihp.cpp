@@ -1789,6 +1789,8 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("The request type is " << msg.plan_type.type << " and we choose to ignore");
             pm_.clearActionPlan();
             pm_.resetPlatoon(); //ASSUMES host is a solo joiner
+            // return to leader state as a solo vehicle
+            pm_.current_platoon_state = PlatoonState::LEADER;
             return MobilityRequestResponse::NACK;
         }
     }
