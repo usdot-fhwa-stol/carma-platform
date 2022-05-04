@@ -70,7 +70,6 @@ namespace motion_computation
             ASSERT_EQ(obj_pub.objects.size(), 2ul);
             }, logger, clock);
 
-
         mcw_sensor_only.setDetectionInputFlags(true, false, false, false); //SENSORS_ONLY
         mcw_mobility_only.setDetectionInputFlags(false, false, false, true); //MOBILITY_PATH_ONLY
         mcw_mixed_operation.setDetectionInputFlags(true, false, false, true); //PATH_AND_SENSORS
@@ -325,6 +324,7 @@ namespace motion_computation
     TEST(MotionComputationWorker, mobilityPathToExternalObject)
     {   
         auto node = std::make_shared<rclcpp::Node>("test_node");
+
         rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock = node->get_node_clock_interface();
         MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList&){}, node->get_node_logging_interface(), clock);
 
@@ -448,6 +448,7 @@ namespace motion_computation
         auto result = mcw_mixed_operation.synchronizeAndAppend(sensor_list, mobility_path_list);
         
         ASSERT_EQ(result.objects.size(), 2ul);
+
         ASSERT_EQ(result.objects[1].predictions.size(), 2ul); // we dropped 2 points
         ASSERT_EQ(result.objects[1].header.stamp, rclcpp::Time(1.6 * 1e9)); // 1.7 Seconds
         ASSERT_EQ(result.objects[1].pose.pose.position.x, 500);
@@ -455,6 +456,78 @@ namespace motion_computation
         ASSERT_EQ(result.objects[1].predictions[0].predicted_position.position.x, 800);
         ASSERT_EQ(result.objects[1].predictions[1].header.stamp, rclcpp::Time(2.1 * 1e9)); // 2.1 Seconds
         ASSERT_EQ(result.objects[1].predictions[1].predicted_position.position.x, 1000);
+    }
+
+    TEST(MotionComputationWorker, BSMtoExternalObject)
+    {   
+        auto node = std::make_shared<rclcpp::Node>("test_node");
+        rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock = node->get_node_clock_interface();
+        MotionComputationWorker mcw([&](const carma_perception_msgs::msg::ExternalObjectList&){}, node->get_node_logging_interface(), clock);
+
+        // 1 to 1 transform
+        std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
+        std::unique_ptr<std_msgs::msg::String> georeference_ptr = std::make_unique<std_msgs::msg::String>();
+        georeference_ptr->data = base_proj;
+        mcw.georeferenceCallback(move(georeference_ptr));  // Set projection
+
+        // Test no georef
+        std::unique_ptr<carma_v2x_msgs::msg::MobilityPath> input_ptr1 = std::make_unique<carma_v2x_msgs::msg::MobilityPath>();
+        carma_perception_msgs::msg::ExternalObject output, expected;
+
+        conversion::convert(*input_ptr1, output, *(mcw.map_projector_));
+
+        ASSERT_EQ(output.header.stamp, expected.header.stamp); //empty object returned
+
+        // INPUT
+        carma_v2x_msgs::msg::BSM input;
+        
+        // input.header.stamp = 1000;
+        input.core_data.id = {0, 0, 0, 0, 0, 0, 0, 0};
+        input.core_data.presence_vector |= carma_v2x_msgs::msg::BSMCoreData::LATITUDE_AVAILABLE;
+        input.core_data.presence_vector |= carma_v2x_msgs::msg::BSMCoreData::LONGITUDE_AVAILABLE;
+        input.core_data.presence_vector |= carma_v2x_msgs::msg::BSMCoreData::ELEVATION_AVAILABLE;
+
+        input.core_data.latitude = 100000000;
+        input.core_data.longitude = 1000000000;
+        input.core_data.elev = 51000;
+
+        input.core_data.presence_vector |= carma_v2x_msgs::msg::BSMCoreData::SPEED_AVAILABLE;
+        input.core_data.speed = 1000;
+
+        input.core_data.accuracy.semi_major = 100;
+        input.core_data.accuracy.semi_minor = 0;
+        input.core_data.accuracy.orientation = 0;
+
+        input.core_data.size.vehicle_width = 3;
+        input.core_data.size.vehicle_length = 2;
+
+        input.core_data.size.presence_vector |= carma_v2x_msgs::msg::VehicleSize::VEHICLE_WIDTH_AVAILABLE;
+        input.core_data.size.presence_vector |= carma_v2x_msgs::msg::VehicleSize::VEHICLE_LENGTH_AVAILABLE;
+         
+        // Test static/dynamic
+        std::unique_ptr<carma_v2x_msgs::msg::BSM> input_ptr2 = std::make_unique<carma_v2x_msgs::msg::BSM>(input);
+    
+        // TODO temporary info
+        std::string map_frame_id = "map";
+        double pred_period = 10.0;
+        double pred_step_size = 0.1;
+        tf2::Quaternion ned_in_map_rotation;
+
+        conversion::convert(*input_ptr2, output, map_frame_id, pred_period, pred_step_size, *(mcw.map_projector_), ned_in_map_rotation);
+ 
+        ASSERT_TRUE(output.dynamic_obj);
+        ASSERT_NEAR(output.pose.pose.orientation.w, 1.0, 0.0001);
+        ASSERT_NEAR(output.velocity.twist.linear.x, 163.8, 0.1);
+
+        ASSERT_NEAR(output.predictions[0].predicted_position.orientation.w, 1.0, 0.0001);
+        ASSERT_NEAR(output.predictions[0].predicted_position.position.x, 16.38, 0.03);
+        ASSERT_NEAR(output.predictions[0].predicted_velocity.linear.x, 163.8, 0.1); 
+
+        ASSERT_NEAR(output.predictions[1].predicted_position.orientation.w, 1.0, 0.0001);
+        ASSERT_NEAR(output.predictions[1].predicted_position.position.x, 32.76, 0.03);
+        ASSERT_NEAR(output.predictions[1].predicted_velocity.linear.x, 163.8, 0.1); 
+
+
     }
 
 } // namespace motion_computation

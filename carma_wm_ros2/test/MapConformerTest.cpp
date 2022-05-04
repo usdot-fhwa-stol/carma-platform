@@ -48,9 +48,9 @@ TEST(MapConformer, ensureCompliance)
   
   lanelet::Velocity con_lim = 0_mph;
 
-  ASSERT_EQ(4, map->laneletLayer.size());
-  ASSERT_EQ(1, map->areaLayer.size());
-  ASSERT_EQ(0, map->regulatoryElementLayer.size()) << "There should be no regulations in the map at this point";
+  ASSERT_EQ(4u, map->laneletLayer.size());
+  ASSERT_EQ(1u, map->areaLayer.size());
+  ASSERT_EQ(0u, map->regulatoryElementLayer.size()) << "There should be no regulations in the map at this point";
 
   lanelet::MapConformer::ensureCompliance(map, con_lim);
 
@@ -58,10 +58,10 @@ TEST(MapConformer, ensureCompliance)
   for (auto ll : map->laneletLayer)
   {
     auto control_lines = ll.regulatoryElementsAs<lanelet::PassingControlLine>();
-    ASSERT_EQ(2, control_lines.size());
+    ASSERT_EQ(2u, control_lines.size());
 
     auto access_rules = ll.regulatoryElementsAs<lanelet::RegionAccessRule>();
-    ASSERT_EQ(1, access_rules.size());
+    ASSERT_EQ(1u, access_rules.size());
 
     if (ll.id() == 10000)
     {  // First lanelet in disjoint route
@@ -122,14 +122,14 @@ TEST(MapConformer, ensureCompliance)
   for (auto area : map->areaLayer)
   {
     auto control_lines = area.regulatoryElementsAs<lanelet::PassingControlLine>();
-    ASSERT_EQ(1, control_lines.size());
+    ASSERT_EQ(1u, control_lines.size());
 
     auto access_rules = area.regulatoryElementsAs<lanelet::RegionAccessRule>();
-    ASSERT_EQ(1, access_rules.size());
+    ASSERT_EQ(1u, access_rules.size());
 
     if (area.id() == 10004)
     {  // First lanelet in disjoint route
-      ASSERT_EQ(1, area.outerBound().size());
+      ASSERT_EQ(1u, area.outerBound().size());
       ASSERT_TRUE(lanelet::PassingControlLine::boundPassable(area.outerBound()[0], control_lines, false,
                                                              lanelet::Participants::Vehicle));
 
@@ -145,9 +145,9 @@ TEST(MapConformer, ensureCompliance)
     }
   }
 
-  ASSERT_EQ(1, map->areaLayer.size());
-  ASSERT_EQ(4, map->laneletLayer.size());
-  ASSERT_EQ(18, map->regulatoryElementLayer.size());  // New map should contain 7 passing control lines and 4 region
+  ASSERT_EQ(1u, map->areaLayer.size());
+  ASSERT_EQ(4u, map->laneletLayer.size());
+  ASSERT_EQ(18u, map->regulatoryElementLayer.size());  // New map should contain 7 passing control lines and 4 region
                                                       // access rules and 1 direction of travel rule
                                                       // 4 DigitalSpeedLimits
   // Then verify that routing can still be done properly over this map
@@ -166,7 +166,7 @@ TEST(MapConformer, ensureCompliance)
   auto shortest_path = (*optional_route).shortestPath();
 
   // Verify resulting route
-  ASSERT_EQ(3, shortest_path.size());
+  ASSERT_EQ(3u, shortest_path.size());
 
   lanelet::Id count = 10000;
   for (auto ll : shortest_path)
@@ -233,7 +233,7 @@ lanelet::Areas areas;
         lanelet::utils::getId(), 39_mph, llts, {}, {lanelet::Participants::Vehicle})));
         llts.back().addRegulatoryElement(dsl2);
 
-  ASSERT_EQ(2, llts.size());//Assert that there are 2 lanelets
+  ASSERT_EQ(2u, llts.size());//Assert that there are 2 lanelets
   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::MapConformerTest"),"There are "<<llts.size()<<" lanelets.");
 
 
@@ -246,12 +246,12 @@ lanelet::Areas areas;
  for (auto ll: map2->laneletLayer)
  {
   auto speed_limit = ll.regulatoryElementsAs<lanelet::DigitalSpeedLimit>();
-  ASSERT_EQ(1, speed_limit.size()); //Assert that there is only one digital speed limit in each lanelet
+  ASSERT_EQ(1u, speed_limit.size()); //Assert that there is only one digital speed limit in each lanelet
   ASSERT_LE(speed_limit.back().get()->speed_limit_ , 80_mph);//Assert that the speed_limit in each lanelet is less than or equal to the maximum 80mph
 
  }
- ASSERT_EQ(2,map2->laneletLayer.size()); //Test that there are only two lanelets in the map.
- ASSERT_EQ(7, map2->regulatoryElementLayer.size());//Test that there are only 7 regulatory elements: 2 access rules, 2 PassingControlLines
+ ASSERT_EQ(2u,map2->laneletLayer.size()); //Test that there are only two lanelets in the map.
+ ASSERT_EQ(7u, map2->regulatoryElementLayer.size());//Test that there are only 7 regulatory elements: 2 access rules, 2 PassingControlLines
                                                   //+ 1 direction of travel route + 2 digital speed limits
 
 
@@ -264,26 +264,26 @@ std::vector<lanelet::Lanelet> llt2;
   llt2.push_back(carma_wm::getLanelet(left_2, mid_2, lanelet::AttributeValueString::SolidSolid, lanelet::AttributeValueString::Dashed));
 
 
-  ASSERT_EQ(1, llt2.size());
+  ASSERT_EQ(1u, llt2.size());
   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::MapConformerTest"), "Number of lanelets: "<< llt2.size());
 
   lanelet::LaneletMapPtr map3;
   map3 = lanelet::utils::createMap(llt2, {});
   lanelet::Velocity config_limit = 55_mph;
 
-  ASSERT_EQ(0, map3->regulatoryElementLayer.size());
+  ASSERT_EQ(0u, map3->regulatoryElementLayer.size());
 
 
   lanelet::MapConformer::ensureCompliance(map3, config_limit);
   for(auto ll: map3->laneletLayer)
   {
     auto digital_speed_limit = ll.regulatoryElementsAs<lanelet::DigitalSpeedLimit>();
-    ASSERT_EQ(1, digital_speed_limit.size());//Assert that there is only 1 DigitalSpeedLimit
+    ASSERT_EQ(1u, digital_speed_limit.size());//Assert that there is only 1 DigitalSpeedLimit
     ASSERT_EQ(config_limit, digital_speed_limit.back().get()->speed_limit_);//Assrt that the config_limit has been applied to the lanelet.
 
   }
 
-    ASSERT_EQ(4, map3->regulatoryElementLayer.size());//The new map should have 4 regulatory elements: 1 access rule,
+    ASSERT_EQ(4u, map3->regulatoryElementLayer.size());//The new map should have 4 regulatory elements: 1 access rule,
                                                       //1 Direction of Travel Rule, 1 DigitalSpeedLimit, 1 PassingControlLine
 
 

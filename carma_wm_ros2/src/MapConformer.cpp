@@ -569,5 +569,5 @@ void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit
     addInferredPassingControlLine(area, map);
   }
 }
-};  // namespace MapConformer
+}  // namespace MapConformer
 }  // namespace lanelet

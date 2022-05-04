@@ -63,7 +63,7 @@ namespace MapConformer
 void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit=80_mph);
 
 
-};  // namespace MapConformer
+}  // namespace MapConformer
 }  // namespace lanelet
 
 #endif

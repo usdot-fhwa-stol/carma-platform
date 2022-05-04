@@ -42,10 +42,12 @@ namespace carma_wm {
         typedef boost::geometry::model::point<double, 2, boost::geometry::cs::cartesian> point_t;
         typedef boost::geometry::model::polygon<point_t> polygon_t;
 
+        //TODO: verify correctness of descriptions for each of these elements
         struct MovingObject {
-            polygon_t object_polygon;
-            geometry_msgs::msg::Vector3 linear_velocity;
-            std::vector<std::tuple <__uint64_t,polygon_t>> fp;
+            polygon_t                                       object_polygon; //current exterior outline of the object in the x-y plane
+            geometry_msgs::msg::Vector3                     linear_velocity;//current velocity vector of the object's centroid, m/s
+            std::vector<std::tuple <__uint64_t, polygon_t>> fp;             //zero or more predicted future outline polygons; each
+                                                                            // element is (t, polygon), where t is time in future, ms
         };
 
         /*!
@@ -58,11 +60,12 @@ namespace carma_wm {
         * \param rwol The list of Roadway Obstacle
         * \param tp The TrajectoryPlan of the host vehicle
         * \param size The size of the host vehicle defined in meters
-        * \param veloctiy of the host vehicle m/s
-        * \param target_time amount of unit of time in future to look for collision in milisecounds
+        * \param velocity of the host vehicle m/s
         * \return A list of obstacles the provided trajectory plan collides with
         */
-        std::vector<carma_perception_msgs::msg::RoadwayObstacle> WorldCollisionDetection(const carma_perception_msgs::msg::RoadwayObstacleList& rwol, const carma_planning_msgs::msg::TrajectoryPlan& tp, const geometry_msgs::msg::Vector3& size, const geometry_msgs::msg::Twist& veloctiy,const __uint64_t target_time);
+        std::vector<carma_perception_msgs::msg::RoadwayObstacle> WorldCollisionDetection(const carma_perception_msgs::msg::RoadwayObstacleList& rwol, 
+                                                                    const carma_planning_msgs::msg::TrajectoryPlan& tp, const geometry_msgs::msg::Vector3& size, 
+                                                                    const geometry_msgs::msg::Twist& velocity);
         
         /*! \brief Convert RodwayObstable object to the collision_detection::MovingObject 
         * \param rwo A RoadwayObstacle

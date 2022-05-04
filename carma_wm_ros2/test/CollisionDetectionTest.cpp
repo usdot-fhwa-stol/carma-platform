@@ -46,8 +46,9 @@ namespace carma_wm
     boost::geometry::read_wkt(
     "POLYGON((1.0 1.0, 3.0 1.0, 2.0 1.0, 3.0 2.0))", ob2);
 
-    collision_detection::MovingObject mo1 = {ob1, linear_velocity};
-    collision_detection::MovingObject mo2 = {ob2, linear_velocity};
+    std::vector<std::tuple <__uint64_t, collision_detection::polygon_t>> no_future;
+    collision_detection::MovingObject mo1 = {ob1, linear_velocity, no_future};
+    collision_detection::MovingObject mo2 = {ob2, linear_velocity, no_future};
 
     ASSERT_TRUE(collision_detection::CheckPolygonIntersection(mo1, mo2));
 
@@ -60,8 +61,8 @@ namespace carma_wm
     boost::geometry::read_wkt(
     "POLYGON((10 10, 10 20, 20 20, 20 10))", ob2);
 
-    mo1 = {ob1, linear_velocity};
-    mo2 = {ob2, linear_velocity};
+    mo1 = {ob1, linear_velocity, no_future};
+    mo2 = {ob2, linear_velocity, no_future};
 
     ASSERT_FALSE(collision_detection::CheckPolygonIntersection(mo1, mo2));
   }
@@ -266,14 +267,13 @@ namespace carma_wm
     carma_planning_msgs::msg::TrajectoryPlan tp;
 
     
-    geometry_msgs::msg::Twist veloctiy;
-    __uint64_t target_time = 3;
+    geometry_msgs::msg::Twist velocity;
 
     geometry_msgs::msg::Vector3 linear_velocity;
     linear_velocity.x = 0;
     linear_velocity.y = 0;
 
-    veloctiy.linear = linear_velocity;
+    velocity.linear = linear_velocity;
 
     
     geometry_msgs::msg::Vector3 size;
@@ -375,7 +375,7 @@ namespace carma_wm
 
     rwol.roadway_obstacles = {rwo_1};
 
-    std::vector<carma_perception_msgs::msg::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, veloctiy, target_time);
+    std::vector<carma_perception_msgs::msg::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, velocity);
 
     ASSERT_EQ(result.size(),1);
 
@@ -387,14 +387,13 @@ namespace carma_wm
     carma_perception_msgs::msg::RoadwayObstacleList rwol;
     carma_planning_msgs::msg::TrajectoryPlan tp;
 
-    geometry_msgs::msg::Twist veloctiy;
-    const __uint64_t target_time = 3;
+    geometry_msgs::msg::Twist velocity;
 
     geometry_msgs::msg::Vector3 linear_velocity;
     linear_velocity.x = 0;
     linear_velocity.y = 1;
 
-    veloctiy.linear = linear_velocity;
+    velocity.linear = linear_velocity;
 
     geometry_msgs::msg::Vector3 size;
     size.x = 1;
@@ -490,7 +489,7 @@ namespace carma_wm
 
     rwol.roadway_obstacles = {rwo_1};
 
-    std::vector<carma_perception_msgs::msg::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, veloctiy, target_time);
+    std::vector<carma_perception_msgs::msg::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, velocity);
 
     ASSERT_EQ(result.size(),0);
 
