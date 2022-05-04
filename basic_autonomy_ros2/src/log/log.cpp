@@ -46,7 +46,7 @@ void printDoublesPerLineWithPrefix(const std::string& prefix, const std::vector<
 {
   for (const auto& value : values)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("basic_autonomy::log"), prefix << value);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), prefix << value);
   }
 }
 

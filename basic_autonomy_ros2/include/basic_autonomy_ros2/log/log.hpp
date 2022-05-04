@@ -19,6 +19,8 @@
 
 namespace basic_autonomy
 {
+    static const std::string BASIC_AUTONOMY_LOGGER = "basic_autonomy";
+
     namespace log
     {
     /**
@@ -39,7 +41,7 @@ namespace basic_autonomy
     {
         for (const auto& value : values)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("basic_autonomy::log"), func(value));
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), func(value));
         }
     }
 

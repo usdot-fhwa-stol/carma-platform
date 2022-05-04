@@ -58,6 +58,7 @@ namespace basic_autonomy
 {
     namespace waypoint_generation
     {
+        static const std::string BASIC_AUTONOMY_LOGGER = "basic_autonomy";
 
         struct PointSpeedPair
         {

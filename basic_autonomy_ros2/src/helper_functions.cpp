@@ -45,7 +45,7 @@ namespace waypoint_generation
                                                  const carma_planning_msgs::msg::VehicleState& state)
     {
         lanelet::BasicPoint2d veh_point(state.x_pos_global, state.y_pos_global);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("basic_autonomy::waypoint_generation"), "veh_point: " << veh_point.x() << ", " << veh_point.y());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "veh_point: " << veh_point.x() << ", " << veh_point.y());
         double min_distance = std::numeric_limits<double>::max();
         int i = 0;
         int best_index = 0;
@@ -71,11 +71,11 @@ namespace waypoint_generation
                 //If value is negative, best index should be index 0
                 best_index = std::max((size_t)0, i - 1);
 
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("basic_autonomy::waypoint_generation"), "get_nearest_index_by_downtrack>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y() << ", downtrack: "<< downtrack);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "get_nearest_index_by_downtrack>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y() << ", downtrack: "<< downtrack);
                 break;
             }
         }
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("basic_autonomy::waypoint_generation"), "get_nearest_index_by_downtrack>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "get_nearest_index_by_downtrack>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y());
 
         return static_cast<int>(best_index);
     }
