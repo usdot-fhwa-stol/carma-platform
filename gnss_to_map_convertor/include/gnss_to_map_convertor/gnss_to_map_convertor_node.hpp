@@ -55,6 +55,9 @@ namespace gnss_to_map_convertor
     // tf2 listeners. Subscribes to the /tf and /tf_static topics
     tf2_ros::TransformListener tfListener_ {tfBuffer_};
 
+    //worker for GNSSToMapConvertor
+    std::shared_ptr <GNSSToMapConvertor> convertor_worker_;
+
   public:
     /**
      * \brief Node constructor 

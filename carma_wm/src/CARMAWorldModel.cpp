@@ -557,6 +557,13 @@ namespace carma_wm
     }
   }
 
+  void CARMAWorldModel::setRoutingGraph(LaneletRoutingGraphPtr graph) {
+
+    ROS_INFO_STREAM("Setting the routing graph with user or listener provided graph");
+
+    map_routing_graph_ = graph;
+  }
+
   size_t CARMAWorldModel::getMapVersion() const
   {
     return map_version_;
@@ -1190,19 +1197,73 @@ namespace carma_wm
         auto stop_line = light->getStopLine(ll);
         if (!stop_line)
         {
+          ROS_WARN_STREAM("No stop line");
           continue;
         }
         else
         {
           double light_downtrack = routeTrackPos(stop_line.get().front().basicPoint2d()).downtrack;
           double distance_remaining_to_traffic_light = light_downtrack - curr_downtrack;
+
           if (distance_remaining_to_traffic_light < 0)
+          {
             continue;
+          }
           light_list.push_back(light);
         }
       }
     }
     return light_list;
+  }
+
+  boost::optional<std::pair<lanelet::ConstLanelet, lanelet::ConstLanelet>> CARMAWorldModel::getEntryExitOfSignalAlongRoute(const lanelet::CarmaTrafficSignalPtr& traffic_signal) const
+  {
+    if (!traffic_signal)
+    {
+      throw std::invalid_argument("Empty traffic signal pointer has been passed!");
+    }
+
+    std::pair<lanelet::ConstLanelet, lanelet::ConstLanelet> entry_exit;
+    bool found_entry = false;
+    bool found_exit = false;
+    auto entry_lanelets = traffic_signal->getControlStartLanelets();
+    auto exit_lanelets = traffic_signal->getControlEndLanelets();
+
+    // get entry and exit lane along route for the nearest given signal
+    for (const auto& ll: route_->shortestPath())
+    {
+      if (!found_entry)
+      {
+        for (const auto& entry: entry_lanelets)
+        {
+          if (ll.id() == entry.id())
+          {
+            entry_exit.first = entry;
+            found_entry = true;
+            break;
+          }
+        }
+      }
+
+      if (!found_exit)
+      {
+        for (const auto& exit: exit_lanelets)
+        {
+          if (ll.id() == exit.id())
+          {
+            entry_exit.second = exit;
+            found_exit = true;
+            break;
+          }
+        }
+      }
+
+      if (found_entry && found_exit)
+        return entry_exit;
+    }
+
+    // was not able to find entry and exit for this signal along route
+    return boost::none;
   }
 
   std::vector<std::shared_ptr<lanelet::AllWayStop>> CARMAWorldModel::getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const
@@ -1366,18 +1427,16 @@ namespace carma_wm
         // raw min_end_time in seconds measured from the most recent full hour
         boost::posix_time::ptime min_end_time = lanelet::time::timeFromSec(current_movement_state.movement_event_list[0].timing.min_end_time);
         auto received_state = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state);
-
+        
         if (curr_intersection.moy_exists) //account for minute of the year
         {
           auto inception_boost(boost::posix_time::time_from_string("1970-01-01 00:00:00.000")); // inception of epoch
           auto duration_since_inception(lanelet::time::durationFromSec(ros::Time::now().toSec()));
           auto curr_time_boost = inception_boost + duration_since_inception;
-          ROS_DEBUG_STREAM("Calculated current time: " << boost::posix_time::to_simple_string(curr_time_boost));
 
           int curr_year = curr_time_boost.date().year();
           auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year)+ "-01-01 00:00:00.000"));
 
-          ROS_DEBUG_STREAM("MOY extracted: " << (int)curr_intersection.moy);
           auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)curr_intersection.moy);
 
           int hours_of_day = curr_minute_stamp_boost.time_of_day().hours();
@@ -1388,11 +1447,10 @@ namespace carma_wm
           auto curr_hour_boost = curr_day_boost + boost::posix_time::hours(hours_of_day);
 
           min_end_time += lanelet::time::durationFromSec(lanelet::time::toSec(curr_hour_boost));
-          ROS_DEBUG_STREAM("New min_end_time: " << std::to_string(lanelet::time::toSec(min_end_time)));
         }
 
         auto last_time_difference = sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first - min_end_time;  
-        bool is_duplicate = last_time_difference.total_milliseconds() >= -30 && last_time_difference.total_milliseconds() <= 30;
+        bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
 
         //if same data as last time (duplicate or outdated message):
         //where state is same and timestamp is equal or less, skip
@@ -1400,7 +1458,7 @@ namespace carma_wm
             sim_.last_seen_state_[curr_intersection.id.id].find(current_movement_state.signal_group) != sim_.last_seen_state_[curr_intersection.id.id].end() && 
             is_duplicate)
         {
-          ROS_DEBUG_STREAM("Duplicate as last time! : " << std::to_string(lanelet::time::toSec(min_end_time)));
+          ROS_DEBUG_STREAM("Duplicate as last time! : id: " << curr_light->id() << ", time: " << std::to_string(lanelet::time::toSec(min_end_time)));
           continue;
         }
 
@@ -1411,7 +1469,7 @@ namespace carma_wm
             sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].second == received_state &&
             sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first < min_end_time)
         {
-          ROS_DEBUG_STREAM("Updated time for state: " << received_state << ", with time: "
+          ROS_DEBUG_STREAM("Updated time for id: " << curr_light->id()  << " with state: " << received_state << ", with time: "
                                                       << std::to_string(lanelet::time::toSec(min_end_time)));
           sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first = min_end_time;
           continue;
@@ -1425,9 +1483,10 @@ namespace carma_wm
         
         if (!curr_light->recorded_time_stamps.empty())
         {
-          boost::posix_time::time_duration time_difference = curr_light->predictState(min_end_time).get().first - min_end_time;
+          boost::posix_time::time_duration time_difference = curr_light->predictState(min_end_time - lanelet::time::durationFromSec(0.5)).get().first - min_end_time; //0.5s to account for error
           ROS_DEBUG_STREAM("Initial time_difference: " << (double)(time_difference.total_milliseconds() / 1000.0));
-          if (curr_light->predictState(min_end_time).get().second !=  received_state)
+          
+          if (curr_light->predictState(min_end_time - lanelet::time::durationFromSec(0.5)).get().second !=  received_state)
           {
             // shift to same state's end
             boost::posix_time::time_duration shift_to_match_state = curr_light->fixed_cycle_duration - curr_light->signal_durations[received_state];
@@ -1435,11 +1494,11 @@ namespace carma_wm
             ROS_DEBUG_STREAM("Time_difference new: " << (double)(time_difference.total_milliseconds() / 1000.0));
           }
           
-          // if |time difference| is less than 0.1 sec
-          bool same_time_stamp_as_last = time_difference.total_milliseconds() >= -30 && time_difference.total_milliseconds() <= 30;
+          // if |time difference| is less than 0.5 sec
+          bool same_time_stamp_as_last = time_difference.total_milliseconds() >= -500 && time_difference.total_milliseconds() <= 500;
         
           // Received same cycle info while signal already has full cycle, then skip
-          if (curr_light->predictState(min_end_time).get().second == received_state &&
+          if (curr_light->predictState(min_end_time - lanelet::time::durationFromSec(0.5)).get().second == received_state &&
               same_time_stamp_as_last &&
               sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] > 4 )  // checking >4 because: 3 unique + 1 more state to 
                                                                                                               // complete cycle. And last state (e.g. 4th) is updated on next (e.g 5th)
@@ -1452,13 +1511,14 @@ namespace carma_wm
           {
             for ( auto pair : sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group])
             {
-              pair.first = pair.first - time_difference;
+              pair.first = pair.first - time_difference ;
             }
             
             sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group] = {};
             sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time, received_state));
             sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] = 1;
             ROS_DEBUG_STREAM("Detected new cycle info! Shifted everything! : " << std::to_string(lanelet::time::toSec(min_end_time)) << ", time_difference sec:" << time_difference.total_seconds());
+            
             continue;
           }
         }

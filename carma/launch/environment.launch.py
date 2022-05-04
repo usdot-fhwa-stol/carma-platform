@@ -228,6 +228,9 @@ def generate_launch_description():
                         {'use_intra_process_comms': True},
                         {'--log-level' : GetLogLevel('object_visualizer', env_log_levels) }
                     ],
+                    remappings=[
+                        ("external_objects", "external_object_predictions"),
+                    ],
                     parameters=[ object_visualizer_param_file ]
             ),
             ComposableNode(
@@ -240,6 +243,8 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
+                    ("incoming_psm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_psm" ] ),
+                    ("incoming_bsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_bsm" ] ),
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] )
                 ],
                 parameters=[ 
