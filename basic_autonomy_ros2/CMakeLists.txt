@@ -44,7 +44,6 @@ ament_auto_add_library(${node_lib} SHARED
 
 target_link_libraries(
         ${node_lib}
-        ${Boost_LIBRARIES}
 )
 
 
