@@ -95,6 +95,8 @@ WMListener::WMListener(
   
 }
 
+WMListener::~WMListener() {}
+
 void WMListener::enableUpdatesWithoutRouteWL()
 {
   const std::lock_guard<std::mutex> lock(mw_mutex_);

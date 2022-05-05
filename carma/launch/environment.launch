@@ -48,12 +48,6 @@
     <include file="$(find carma_wm_ctrl)/launch/carma_wm_broadcaster.launch"/>
   </group>
 
-  <!-- CARMA Roadway Objects Node -->
-  <group>
-    <remap from= "external_objects" to= "external_object_predictions"/>
-    <include file="$(find roadway_objects)/launch/roadway_objects.launch"/>
-  </group>
-
   <!-- Traffic Incident Parser -->
   <group>
     <remap from="georeference" to="$(optenv CARMA_LOCZ_NS)/map_param_loader/georeference"/>
