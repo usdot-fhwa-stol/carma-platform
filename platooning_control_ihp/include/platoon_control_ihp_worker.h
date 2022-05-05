@@ -60,14 +60,14 @@ namespace platoon_control_ihp
         // Leader info: platoonmember + leader index + number of vehicles in front
 
 
-    class PlatoonControlWorkerIHP
+    class PlatoonControlIHPWorker
     {
     public:
 
         /**
         * \brief Default constructor for platooning control worker
         */
-        PlatoonControlWorkerIHP();
+        PlatoonControlIHPWorker();
 
         /**
         * \brief Update configurations
@@ -128,6 +128,7 @@ namespace platoon_control_ihp
         // Platoon Leader
         PlatoonLeaderInfo platoon_leader;
 
+        
         void setCurrentPose(const geometry_msgs::PoseStamped msg);
 
 		// geometry pose

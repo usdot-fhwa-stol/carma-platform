@@ -22,31 +22,31 @@
 namespace platoon_control_ihp
 {
    
-	PlatoonControlWorkerIHP::PlatoonControlWorkerIHP()
+	PlatoonControlIHPWorker::PlatoonControlIHPWorker()
     {
         pid_ctrl_ = PIDController();
         pp_ = PurePursuit();
 
     }
 
-    void PlatoonControlWorkerIHP::updateConfigParams(PlatooningControlIHPPluginConfig new_config)
+    void PlatoonControlIHPWorker::updateConfigParams(PlatooningControlIHPPluginConfig new_config)
     {
         ctrl_config_ = new_config;
         pid_ctrl_.config_ = new_config;
         pp_.config_ = new_config;
     }
 
-	double PlatoonControlWorkerIHP::getLastSpeedCommand() const {
+	double PlatoonControlIHPWorker::getLastSpeedCommand() const {
         return speedCmd_;
     }
 
-    void PlatoonControlWorkerIHP::setCurrentPose(const geometry_msgs::PoseStamped msg)
+    void PlatoonControlIHPWorker::setCurrentPose(const geometry_msgs::PoseStamped msg)
 	{
 		current_pose_ = msg.pose;
 	}
 
     // UCLA: Put the IHP gap regulation at low level control plug-in
-    double PlatoonControlWorkerIHP::getIHPDesPosFollower(double leaderCurrentPosition)
+    double PlatoonControlIHPWorker::getIHPDesPosFollower(double leaderCurrentPosition)
     {
         /**
          * Calculate desired position based on previous vehicle's trajectory for followers.
@@ -113,7 +113,7 @@ namespace platoon_control_ihp
     }
     
 
-    void PlatoonControlWorkerIHP::generateSpeed(const cav_msgs::TrajectoryPlanPoint& point)
+    void PlatoonControlIHPWorker::generateSpeed(const cav_msgs::TrajectoryPlanPoint& point)
     {
         double speed_cmd = 0;
 
@@ -143,7 +143,6 @@ namespace platoon_control_ihp
             ROS_DEBUG_STREAM("hostVehiclePosition = " << hostVehiclePosition);
 
 	        // UCLA: Replace desiredPosition with desiredPosition_IHP here.
-            // controllerOutput = pid_ctrl_.calculate(desiredHostPosition, hostVehiclePosition);
             controllerOutput = pid_ctrl_.calculate(desiredHostPosition_IHP, hostVehiclePosition);
 
 		    double adjSpeedCmd = controllerOutput + leader.commandSpeed;
@@ -215,7 +214,7 @@ namespace platoon_control_ihp
 
     }
 
-    void PlatoonControlWorkerIHP::generateSteer(const cav_msgs::TrajectoryPlanPoint& point)
+    void PlatoonControlIHPWorker::generateSteer(const cav_msgs::TrajectoryPlanPoint& point)
     {
         pp_.current_pose_ = current_pose_;
         pp_.velocity_ = currentSpeed;
@@ -226,11 +225,11 @@ namespace platoon_control_ihp
     }
 
     // TODO get the actual leader from strategic plugin
-    void PlatoonControlWorkerIHP::setLeader(const PlatoonLeaderInfo& leader){
+    void PlatoonControlIHPWorker::setLeader(const PlatoonLeaderInfo& leader){
     	platoon_leader = leader;
     }
 
-    void  PlatoonControlWorkerIHP::setCurrentSpeed(double speed){
+    void  PlatoonControlIHPWorker::setCurrentSpeed(double speed){
     	currentSpeed = speed;
         
     }

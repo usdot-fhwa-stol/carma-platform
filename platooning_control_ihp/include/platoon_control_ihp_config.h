@@ -36,23 +36,25 @@ struct PlatooningControlIHPPluginConfig
   int cmdTmestamp = 100;
   double integratorMax = 100;
   double integratorMin = -100;
-  double Kdd = 4.5;                             //coeficient for smooth steering
+  double Kdd = 4.5;                             //coefficient for smooth steering
   double wheelBase = 3.09;
   double lowpassGain = 0.5;
   double lookaheadRatio = 2.0;
   double minLookaheadDist = 6.0;
   std::string vehicleID = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
+  int     shutdownTimeout = 200;                // ms 
+  int     ignoreInitialInputs = 0;              // num inputs to throw away after startup
+
   // added for gap regulation
   double vehicleLength = 5.0;     // m
-
   // UCLA: Added for IHP control 
   // ---------------------- UCLA: parameters for IHP platoon trajectory regulation ----------------
   /**
   * \brief Parameter sets for IHP platoon trajectory regulation algorithm. 
   * Please refer to the updated design doc for detailed parameter description.
   */
-  double ss_theta   = 4.0;    // Stanstill determining threshold, in m/s.
-  double standstill = 2.0;    // Stanstill reaction time adjuster, in s.
+  double ss_theta   = 4.0;    // Minimum speed to be considered as moving, in mph.
+  double standstill = 2.0;    // Extra time needed to reacte to traffic sceanrios when vehicle is standstill (not moving), in s.
   double inter_tau  = 1.5;    // Inter-platoon time gap, refer to bumper to bumper gap time, in s.
   double intra_tau  = 0.6;    // Intra-platoon time gao, refer to bumper to bumper gap time, in s.
   double gap_weight = 0.9;    // Weighted ratio for time-gap based calculation, unitless.
@@ -62,11 +64,9 @@ struct PlatooningControlIHPPluginConfig
                                     // But in normal operating conditions it should be set to false
   //------------------------------------------------------------------------------------------------
 
-  
-  
   friend std::ostream& operator<<(std::ostream& output, const PlatooningControlIHPPluginConfig& c)
   {
-    output << "InLaneCruisingPluginConfig { " << std::endl
+    output << "PlatoonControlIHPPluginConfig { " << std::endl
            << "timeHeadway: " << c.timeHeadway << std::endl
            << "standStillHeadway: " << c.standStillHeadway << std::endl
            << "maxAccel: " << c.maxAccel << std::endl
@@ -86,6 +86,8 @@ struct PlatooningControlIHPPluginConfig
            << "lookaheadRatio: " << c.lookaheadRatio << std::endl
            << "minLookaheadDist: " << c.minLookaheadDist << std::endl
            << "vehicleID: " << c.vehicleID << std::endl
+           << "shutdownTimeout: " << c.shutdownTimeout << std::endl
+           << "ignoreInitialInputs: " << c.ignoreInitialInputs << std::endl
            << "}" << std::endl;
     return output;
   }

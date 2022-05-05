@@ -57,6 +57,10 @@ namespace platoon_control_ihp
 
 			// find the point correspoding to the lookahead distance
 			cav_msgs::TrajectoryPlanPoint getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan);
+
+			// timer callback for control signal publishers
+			// returns true if control signals are correctly calculated.
+			bool controlTimerCb();
 			
 			// local copy of pose
         	geometry_msgs::PoseStamped pose_msg_;
@@ -65,7 +69,9 @@ namespace platoon_control_ihp
 			double current_speed_ = 0.0;
 			double trajectory_speed_ = 0.0;
 
+			cav_msgs::TrajectoryPlan latest_trajectory_;
         
+
         private:
 
 
@@ -73,7 +79,7 @@ namespace platoon_control_ihp
         	std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
 			// platoon control worker object
-        	PlatoonControlWorkerIHP pcw_;
+        	PlatoonControlIHPWorker pcw_;
 
 			// platooning config object
 			PlatooningControlIHPPluginConfig config_;
@@ -81,6 +87,8 @@ namespace platoon_control_ihp
 
 			// Variables
 			PlatoonLeaderInfo platoon_leader_;
+			long prev_input_time_ = 0;				//timestamp of the previous trajectory plan input received
+			long consecutive_input_counter_ = 0;	//num inputs seen without a timeout
 
 			// callback function for pose
 			void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
@@ -96,11 +104,8 @@ namespace platoon_control_ihp
 
 			double getTrajectorySpeed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points);
 
-			
-
         	// Plugin discovery message
         	cav_msgs::Plugin plugin_discovery_msg_;
-
 
         	// ROS Subscriber
         	ros::Subscriber trajectory_plan_sub;
@@ -113,12 +118,6 @@ namespace platoon_control_ihp
         	ros::Publisher plugin_discovery_pub_;
 			ros::Publisher platoon_info_pub_;
 			ros::Timer discovery_pub_timer_;
-			
-			
-
-
-
-
-    
+			ros::Timer control_pub_timer_;
     };
 }
