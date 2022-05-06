@@ -640,7 +640,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       
       // nearest_green_signal_start_time = normal_arrival_signal_end_time (green guaranteed) - green_signal_duration
       ros::Time nearest_green_signal_start_time = ros::Time(lanelet::time::toSec(normal_arrival_state_green_et_optional.get().first - traffic_light->signal_durations[lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED]));
-      ros::Time early_arrival_signal_end_time = ros::Time(lanelet::time::toSec(early_arrival_state_green_et_optional.get().first));
 
       if (early_arrival_time_green_et.toSec() - nearest_green_signal_start_time.toSec() < config_.green_light_time_buffer)
       {
