@@ -25,4 +25,4 @@ default_control_plugin: "Pure Pursuit"
 
 # String: Full path to default control plugin's trajectory input topic
 # Units: N/a
-default_control_plugin_topic: /guidance/pure_pursuit/plan_trajectory
+default_control_plugin_topic: /guidance/PlatooningControlPlugin/plan_trajectory
