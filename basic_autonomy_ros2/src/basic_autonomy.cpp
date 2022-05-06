@@ -424,8 +424,7 @@ namespace basic_autonomy
 
        std::vector<std::vector<lanelet::BasicPoint2d>> resample_linestring_pair_to_same_size(std::vector<lanelet::BasicPoint2d>& line_1, std::vector<lanelet::BasicPoint2d>& line_2){
             
-            rclcpp::Clock clock;
-            rclcpp::Time start_time = clock.now(); // Start timing the execution time for planning so it can be logged
+            auto start_time = std::chrono::high_resolution_clock::now(); // Start timing the execution time for planning so it can be logged
 
             std::vector<std::vector<lanelet::BasicPoint2d>> output;
             
@@ -477,10 +476,10 @@ namespace basic_autonomy
             output.push_back(all_sampling_points_line1);
             output.push_back(all_sampling_points_line2);
 
-            rclcpp::Time end_time = clock.now(); // Planning complete
-
-            rclcpp::Duration duration = end_time - start_time;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for resample lane change centerlines: " << duration.seconds());
+            auto end_time = std::chrono::high_resolution_clock::now();
+            
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for resample lane change centerlines: " << duration.count() << " milliseconds");
 
             return output;
         }
