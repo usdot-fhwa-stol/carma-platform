@@ -85,6 +85,7 @@ public:
     pnh.param<double>("maxGap", config.maxGap, config.maxGap);
     pnh.param<double>("maxCrosstrackError", config.maxCrosstrackError, config.maxCrosstrackError);
     pnh.param<bool>("test_front_join", config.test_front_join, config.test_front_join);
+    pnh.param<double>("minPlatooningSpeed", config.minPlatooningSpeed, config.minPlatooningSpeed);
     pnh.getParam("/vehicle_length", config.vehicleLength);
     pnh.getParam("/vehicle_id", config.vehicleID);
     

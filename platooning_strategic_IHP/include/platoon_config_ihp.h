@@ -63,6 +63,9 @@ struct PlatoonPluginConfig
 
   std::string vehicleID       = "default_id";
 
+  // min speed to start platooning negotiations
+  double minPlatooningSpeed   = 7.0;   // m/s
+
   // ---------------------- UCLA: parameters for IHP platoon trajectory regulation ----------------
   /**
   * \brief Parameter sets for IHP platoon trajectory regulation algorithm. 
@@ -102,6 +105,7 @@ struct PlatoonPluginConfig
           << "maxGap: " << c.maxGap << std::endl
           << "maxCrosstrackError: " << c.maxCrosstrackError << std::endl
           << "vehicleID: " << c.vehicleID << std::endl
+          << "minPlatooningSpeed: " << c.minPlatooningSpeed << std::endl
           << "}" << std::endl;
     return output;
   }

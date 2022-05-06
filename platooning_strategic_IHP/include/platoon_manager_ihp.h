@@ -184,6 +184,15 @@ namespace platoon_strategic_ihp
         void resetPlatoon();
 
         /**
+         * \brief Removes a single member from the internal record of platoon members
+         * 
+         * \param mem index of the member to be removed (zero-based)
+         * 
+         * \return true if removal was successful, false otherwise
+         */
+        bool removeMember(const size_t mem);
+        
+        /**
         * \brief Returns dynamic leader of the host vehicle.
         * 
         * \return The current dynamic leader as a vehcile object. 
