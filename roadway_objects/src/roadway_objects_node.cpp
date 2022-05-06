@@ -29,7 +29,7 @@ namespace roadway_objects
 
   carma_ros2_utils::CallbackReturn RoadwayObjectsNode::handle_on_configure(const rclcpp_lifecycle::State &)
   {
-    RCLCPP_INFO_STREAM(get_logger(), "MotionComputationNode trying to configure");
+    RCLCPP_INFO_STREAM(get_logger(), "RoadwayObjectsNode trying to configure");
     
     // Setup subscribers
     external_objects_sub_ = create_subscription<carma_perception_msgs::msg::ExternalObjectList>("external_objects", 10,
