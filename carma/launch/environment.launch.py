@@ -266,7 +266,7 @@ def generate_launch_description():
             ComposableNode( 
                     package='roadway_objects',
                     plugin='roadway_objects::RoadwayObjectsNode',
-                    name='roadway_objects',
+                    name='roadway_objects_node',
                     extra_arguments=[
                         {'use_intra_process_comms': True}, 
                         {'--log-level' : GetLogLevel('roadway_objects', env_log_levels) }
