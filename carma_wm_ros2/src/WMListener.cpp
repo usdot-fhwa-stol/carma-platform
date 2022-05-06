@@ -113,13 +113,13 @@ WorldModelConstPtr WMListener::getWorldModel()
   return worker_->getWorldModel();
 }
 
-void WMListener::mapUpdateCallback(const autoware_lanelet2_msgs::msg::MapBin::UniquePtr geofence_msg)
+void WMListener::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::UniquePtr geofence_msg)
 {
   const std::lock_guard<std::mutex> lock(mw_mutex_);
 
   RCLCPP_INFO_STREAM(node_logging_->get_logger(), "New Map Update Received. SeqNum: " << geofence_msg->seq_id);
 
-  worker_->mapUpdateCallback(*geofence_msg);
+  worker_->mapUpdateCallback(std::move(geofence_msg));
 }
 
 void WMListener::setMapCallback(std::function<void()> callback)

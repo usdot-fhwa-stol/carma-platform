@@ -26,6 +26,7 @@ MotionComputationWorker::MotionComputationWorker(const PublishObjectCallback& ob
 
 void MotionComputationWorker::predictionLogic(carma_perception_msgs::msg::ExternalObjectList::UniquePtr obj_list) {
   carma_perception_msgs::msg::ExternalObjectList sensor_list;
+  sensor_list.header = obj_list->header;
 
   for (auto obj : obj_list->objects) {
     // Header contains the frame rest of the fields will use
@@ -68,7 +69,8 @@ void MotionComputationWorker::predictionLogic(carma_perception_msgs::msg::Extern
 
   //// Synchronize all data to the current sensor data timestamp
   carma_perception_msgs::msg::ExternalObjectList synchronization_base_objects;
-  synchronization_base_objects.header.stamp = sensor_list.header.stamp; // Use the current sensing stamp as the sync point even if sensor data is not used
+  synchronization_base_objects.header = sensor_list.header; // Use the current sensing stamp as the sync point even if sensor data is not used
+
 
   if (enable_sensor_processing_) { // If using sensor data add it to the base synchronization list since it already is at the desired time
 

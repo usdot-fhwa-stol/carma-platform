@@ -228,6 +228,9 @@ def generate_launch_description():
                         {'use_intra_process_comms': True},
                         {'--log-level' : GetLogLevel('object_visualizer', env_log_levels) }
                     ],
+                    remappings=[
+                        ("external_objects", "external_object_predictions"),
+                    ],
                     parameters=[ object_visualizer_param_file ]
             ),
             ComposableNode(
