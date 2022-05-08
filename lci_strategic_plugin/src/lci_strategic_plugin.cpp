@@ -803,6 +803,128 @@ void LCIStrategicPlugin::planWhenDEPARTING(const cav_srvs::PlanManeuversRequest&
       current_state.stamp, intersection_exit_time, crossed_lanelets.front().id(), crossed_lanelets.back().id()));
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void LCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationConstPtr& msg)
+{
+  if (msg->strategy == stop_controlled_intersection_strategy_)
+  {
+    ROS_DEBUG_STREAM("Received Schedule message with id: " << msg->m_header.plan_id);
+    approaching_stop_controlled_interction_ = true;
+    ROS_DEBUG_STREAM("Approaching Stop Controlled Intersection: " << approaching_stop_controlled_interction_);
+
+    if (msg->m_header.recipient_id == config_.vehicle_id)
+      {
+        street_msg_timestamp_ = msg->m_header.timestamp;
+        ROS_DEBUG_STREAM("street_msg_timestamp_: " << street_msg_timestamp_);
+        parseStrategyParams(msg->strategy_params);
+      }
+    previous_strategy_params_ = msg->strategy_params;
+  }
+  
+}
+
+void LCIStrategicPlugin::BSMCb(const cav_msgs::BSMConstPtr& msg)
+{
+  std::vector<uint8_t> bsm_id_vec = msg->core_data.id;
+  bsm_id_ = BSMHelper::BSMHelper::bsmIDtoString(bsm_id_vec);
+  bsm_msg_count_ = msg->core_data.msg_count;
+  bsm_sec_mark_ = msg->core_data.sec_mark;
+}
+
+void LCIStrategicPlugin::parseStrategyParams(const std::string& strategy_params)
+{
+  // sample strategy_params: "st:1634067044,et:1634067059, dt:1634067062.3256602,dp:2,,access: 0"
+  std::string params = strategy_params;
+  std::vector<std::string> inputsParams;
+  boost::algorithm::split(inputsParams, params, boost::is_any_of(","));
+
+  std::vector<std::string> st_parsed;
+  boost::algorithm::split(st_parsed, inputsParams[0], boost::is_any_of(":"));
+  scheduled_stop_time_ = std::stoull(st_parsed[1]);
+  ROS_DEBUG_STREAM("scheduled_stop_time_: " << scheduled_stop_time_);
+
+  std::vector<std::string> et_parsed;
+  boost::algorithm::split(et_parsed, inputsParams[1], boost::is_any_of(":"));
+  scheduled_enter_time_ = std::stoull(et_parsed[1]);
+  ROS_DEBUG_STREAM("scheduled_enter_time_: " << scheduled_enter_time_);
+
+  std::vector<std::string> dt_parsed;
+  boost::algorithm::split(dt_parsed, inputsParams[2], boost::is_any_of(":"));
+  scheduled_depart_time_ = std::stoull(dt_parsed[1]);
+  ROS_DEBUG_STREAM("scheduled_depart_time_: " << scheduled_depart_time_);
+
+
+  std::vector<std::string> dp_parsed;
+  boost::algorithm::split(dp_parsed, inputsParams[3], boost::is_any_of(":"));
+  scheduled_departure_position_ = std::stoi(dp_parsed[1]);
+  ROS_DEBUG_STREAM("scheduled_departure_position_: " << scheduled_departure_position_);
+
+  std::vector<std::string> access_parsed;
+  boost::algorithm::split(access_parsed, inputsParams[4], boost::is_any_of(":"));
+  int access = std::stoi(access_parsed[1]);
+  is_allowed_int_ = (access == 1);
+  ROS_DEBUG_STREAM("is_allowed_int_: " << is_allowed_int_);
+
+}
+
+cav_msgs::MobilityOperation LCIStrategicPlugin::generateMobilityOperation()
+{
+    cav_msgs::MobilityOperation mo_;
+    mo_.m_header.timestamp = ros::Time::now().toNSec()/1000000;
+    mo_.m_header.sender_id = config_.vehicle_id;
+    mo_.m_header.sender_bsm_id = bsm_id_;
+    mo_.strategy = stop_controlled_intersection_strategy_;
+
+    double vehicle_acceleration_limit_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
+    double vehicle_deceleration_limit_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+
+    std::string intersection_turn_direction = "straight";
+    if (intersection_turn_direction_ == TurnDirection::Right) intersection_turn_direction = "right";
+    if (intersection_turn_direction_ == TurnDirection::Left) intersection_turn_direction = "left";
+
+
+    mo_.strategy_params = "access: " +  std::to_string(is_allowed_int_) + ", max_accel: " + std::to_string(vehicle_acceleration_limit_) + 
+                        ", max_decel: " + std::to_string(vehicle_deceleration_limit_) + ", react_time: " + std::to_string(config_.reaction_time) +
+                        ", min_gap: " + std::to_string(config_.min_gap) + ", depart_pos: " + std::to_string(scheduled_departure_position_) + 
+                        ", turn_direction: " + intersection_turn_direction + ", msg_count: " + std::to_string(bsm_msg_count_) + ", sec_mark: " + std::to_string(bsm_sec_mark_);
+    
+
+    return mo_;
+}
+
+TurnDirection LCIStrategicPlugin::getTurnDirectionAtIntersection(std::vector<lanelet::ConstLanelet> lanelets_list)
+{
+  TurnDirection turn_direction = TurnDirection::Straight;
+  for (auto l:lanelets_list)
+  {
+    if(l.hasAttribute("turn_direction")) {
+      std::string direction_attribute = l.attribute("turn_direction").value();
+      if (direction_attribute == "right")
+      {
+        turn_direction = TurnDirection::Right;
+        break;
+      }
+      else if (direction_attribute == "left")
+      {
+        turn_direction = TurnDirection::Left;
+        break;
+      }
+      else turn_direction = TurnDirection::Straight;
+      ROS_DEBUG_STREAM("intersection crossed lanelet direction is: " << turn_direction);
+    }
+    else
+    {
+      // if there is no attribute, assumption is straight
+      turn_direction = TurnDirection::Straight;
+    }
+
+  }
+  return turn_direction;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp)
 {
   ROS_DEBUG("<<<<<<<<<<<<<<<<< STARTING LCI_STRATEGIC_PLAN!!!!!!!!! >>>>>>>>>>>>>>>>");

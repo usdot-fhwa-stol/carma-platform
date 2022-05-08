@@ -35,6 +35,12 @@ desired_distance_to_stop_buffer : 15.0
 # Double: The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
 min_maneuver_planning_period : 15.1
 
+# Double: Update time interval of carma streets. Units in s
+delta_t : 1.0
+
+# Double: Minimum vehicle reaction time. Units in s
+reaction_time : 5.0
+
 # String: The name to use for this plugin during comminications with the arbitrator
 strategic_plugin_name : LCIStrategicPlugin
 
