@@ -100,6 +100,10 @@ int WMBroadcasterNode::run()
   wmb_.setMaxLaneWidth(lane_max_width);
 
   pnh_.getParam("traffic_control_request_period", traffic_control_request_period);
+  
+  std::vector<double> intersection_coord_correction;
+  pnh_.getParam("intersection_coord_correction", intersection_coord_correction);
+  wmb_.setIntersectionCoordCorrection(intersection_coord_correction);
 
   pnh2_.getParam("/config_speed_limit", config_limit);
   wmb_.setConfigSpeedLimit(config_limit);

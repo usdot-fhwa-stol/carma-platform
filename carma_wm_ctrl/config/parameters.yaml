@@ -5,3 +5,6 @@ max_lane_width: 4.0
 
 #Double: Period in seconds between traffic control requests after route selection
 traffic_control_request_period: 1.0
+
+#List of Double: Every 3 element describes coordinate correction where it's [intersection_id, delta_x, delta_y]
+intersection_coord_correction: [9945.0, 2.5, -2.5]
