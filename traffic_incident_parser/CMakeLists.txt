@@ -1,93 +1,80 @@
-cmake_minimum_required(VERSION 3.0.2)
+
+# Copyright (C) 2020-2022 LEIDOS.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+
+cmake_minimum_required(VERSION 3.5)
 project(traffic_incident_parser)
 
+# Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
+carma_check_ros_version(2)
 carma_package()
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  carma_utils
-  cav_msgs
-  roscpp
-  lanelet2_extension
-  carma_wm 
-  lanelet2_core
-  autoware_lanelet2_ros_interface
-)
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED)
+# Name build targets
+set(worker_lib traffic_incident_parser_worker_lib)
+set(node_exec traffic_incident_parser_node_exec)
+set(node_lib traffic_incident_parser_node)
 
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if your package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES traffic_incident_parser
-  CATKIN_DEPENDS carma_utils cav_msgs roscpp lanelet2_extension carma_wm lanelet2_core autoware_lanelet2_ros_interface
-#  DEPENDS system_lib
-)
-
-###########
-## Build ##
-###########
-
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
+# Includes
 include_directories(
- include
-  ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
+  include
 )
 
-add_executable(traffic_incident_parser_node src/main.cpp src/traffic_incident_parser_node.cpp)
-
-add_library(traffic_incident_parser_worker_lib src/traffic_incident_parser_worker.cpp)
-add_dependencies(traffic_incident_parser_worker_lib ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(traffic_incident_parser_worker_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-target_link_libraries(traffic_incident_parser_node traffic_incident_parser_worker_lib)
-
-#############
-## Install ##
-#############
-
-## Mark executables for installation
-install(TARGETS traffic_incident_parser_node traffic_incident_parser_worker_lib
-        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# Build
+ament_auto_add_library(${worker_lib}
+        src/traffic_incident_parser_worker.cpp
+)
+ament_auto_add_library(${node_lib} SHARED
+        src/traffic_incident_parser_node.cpp
 )
 
-## Mark cpp header files for installation
-install(DIRECTORY include/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
 )
 
-## Mark other files for installation (e.g. launch and bag files, etc.)
-install(DIRECTORY
-        launch
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# Register component
+rclcpp_components_register_nodes(${node_lib} "traffic_incident_parser::TrafficIncidentParserNode")
+
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_lib}
+        ${worker_lib}
 )
 
-#############
-## Testing ##
-#############
-
-## Add gtest based cpp test target and link libraries
-catkin_add_gmock(${PROJECT_NAME}-test 
-  test/main.cpp 
-  test/test_traffic_parser.cpp
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
+target_link_libraries(${node_exec}
+        ${node_lib}
 )
-target_link_libraries(${PROJECT_NAME}-test traffic_incident_parser_worker_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+# Testing
+if(BUILD_TESTING)  
+
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+
+  ament_add_gtest(test_traffic_incident_parser test/test_traffic_parser.cpp)
+
+  ament_target_dependencies(test_traffic_incident_parser ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+
+  target_link_libraries(test_traffic_incident_parser ${node_lib})
+
+endif()
+
+# Install
+ament_auto_package(
+        INSTALL_TO_SHARE launch
+)
