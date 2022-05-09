@@ -18,15 +18,15 @@ prediction_confidence_drop_rate: 0.95
 
 # Boolean: If true then BSM messages will be converted to ExternalObjects. 
 #          If other object sources are enabled, they will be synchronized but no fusion will occur (objects may be duplicated)
-enable_bsm_processing: false
+enable_bsm_processing: true
 
 # Boolean: If true then PSM messages will be converted to ExternalObjects. 
 #          If other object sources are enabled, they will be synchronized but no fusion will occur (objects may be duplicated)
-enable_psm_processing: true
+enable_psm_processing: false
 
 # Boolean: If true then MobilityPath messages will be converted to ExternalObjects. 
 #          If other object sources are enabled, they will be synchronized but no fusion will occur (objects may be duplicated)
-enable_mobility_path_processing: true
+enable_mobility_path_processing: false
 
 # Boolean: If true then ExternalObjects generated from sensor data will be processed.  
 #          If other object sources are enabled, they will be synchronized but no fusion will occur (objects may be duplicated)

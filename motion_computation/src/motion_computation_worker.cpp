@@ -224,6 +224,12 @@ void MotionComputationWorker::bsmCallback(const carma_v2x_msgs::msg::BSM::Unique
     return;
   }
 
+  carma_perception_msgs::msg::ExternalObject obj_msg;
+  conversion::convert(*msg, obj_msg, map_frame_id_ , prediction_period_, prediction_time_step_, *map_projector_, ned_in_map_rotation_);
+
+  bsm_list_.objects.push_back(obj_msg);
+
+
   // TODO Include same conversion and id checking logic as in mobility path
   // bsm_list_.objects.push_back(mobilityPathToExternalObject(msg));
 }
