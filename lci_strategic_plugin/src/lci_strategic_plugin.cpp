@@ -559,6 +559,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   if (intersection_lanelet.id() != lanelet::InvalId)
   {
     intersection_speed_ = findSpeedLimit(intersection_lanelet); 
+    intersection_turn_direction_ = getTurnDirectionAtIntersection({intersection_lanelet});
   }
   else
   {
@@ -596,10 +597,18 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
                                                   current_state_speed, intersection_speed_.get(), max_comfort_accel_, max_comfort_decel_);
 
   ROS_DEBUG_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));
+  ros::Time nearest_green_entry_time;
 
-  ros::Time nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
-                                          + ros::Duration(0.01); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal
-
+  if (config_.case_switch ==false)
+    {
+     nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
+                                          + ros::Duration(0.01); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehcile Estimation
+    }
+       else if(config_.case_switch ==true)
+       {
+          nearest_green_entry_time = ros::Time(std::max(earliest_entry_time.toSec(), (scheduled_enter_time_)/1000.0)) + ros::Duration(0.01); //Carma Street
+       }
+  
   if (!nearest_green_entry_time_cached_) 
   {
     ROS_DEBUG_STREAM("Applied green_light_buffer for the first time and cached! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
@@ -807,11 +816,11 @@ void LCIStrategicPlugin::planWhenDEPARTING(const cav_srvs::PlanManeuversRequest&
 
 void LCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationConstPtr& msg)
 {
-  if (msg->strategy == stop_controlled_intersection_strategy_)
+  if (msg->strategy == light_controlled_intersection_strategy_)
   {
     ROS_DEBUG_STREAM("Received Schedule message with id: " << msg->m_header.plan_id);
-    approaching_stop_controlled_interction_ = true;
-    ROS_DEBUG_STREAM("Approaching Stop Controlled Intersection: " << approaching_stop_controlled_interction_);
+    approaching_light_controlled_interction_ = true;
+    ROS_DEBUG_STREAM("Approaching light Controlled Intersection: " << approaching_light_controlled_interction_);
 
     if (msg->m_header.recipient_id == config_.vehicle_id)
       {
@@ -874,7 +883,7 @@ cav_msgs::MobilityOperation LCIStrategicPlugin::generateMobilityOperation()
     mo_.m_header.timestamp = ros::Time::now().toNSec()/1000000;
     mo_.m_header.sender_id = config_.vehicle_id;
     mo_.m_header.sender_bsm_id = bsm_id_;
-    mo_.strategy = stop_controlled_intersection_strategy_;
+    mo_.strategy = light_controlled_intersection_strategy_;
 
     double vehicle_acceleration_limit_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
     double vehicle_deceleration_limit_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
@@ -923,6 +932,17 @@ TurnDirection LCIStrategicPlugin::getTurnDirectionAtIntersection(std::vector<lan
   return turn_direction;
 }
 
+
+bool LCIStrategicPlugin::onSpin()
+{
+  if (approaching_light_controlled_interction_)
+  {
+    cav_msgs::MobilityOperation status_msg = generateMobilityOperation();
+    mobility_operation_pub.publish(status_msg);
+  }
+  return true;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp)
@@ -933,6 +953,24 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   {
     ROS_ERROR_STREAM("Could not plan maneuvers as route was not available");
     return true;
+  }
+
+  if(config_.case_switch ==true)
+  {
+  if (!approaching_light_controlled_interction_)
+  {
+    resp.new_plan.maneuvers = {};
+    ROS_WARN_STREAM("Not approaching light-controlled intersection so no maneuvers");
+    return true;
+  }
+
+  bool is_empty_schedule_msg = (scheduled_depart_time_ == 0 && scheduled_stop_time_ == 0 && scheduled_enter_time_ == 0);
+  if (is_empty_schedule_msg)
+  {
+    resp.new_plan.maneuvers = {};
+    ROS_WARN_STREAM("Receiving empty schedule message");
+    return true;
+  }
   }
 
   ROS_DEBUG("Finding car information");

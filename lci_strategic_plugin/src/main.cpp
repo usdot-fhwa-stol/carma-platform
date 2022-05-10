@@ -65,6 +65,7 @@ int main(int argc, char** argv)
   pnh.param<std::string>("intersection_transit_plugin_name", config.intersection_transit_plugin_name, config.intersection_transit_plugin_name);
   pnh.param<double>("delta_t",   config.delta_t, config.delta_t);
   pnh.param<double>("reaction_time",   config.reaction_time, config.reaction_time);
+  pnh.param<bool>("case_switch",config.case_switch, config.case_switch);
   pnh.getParam("/vehicle_id", config.vehicle_id);
   // clang-format on
   
@@ -101,6 +102,8 @@ int main(int argc, char** argv)
         tf_distance_pub.publish(tf_distance);
         earliest_et_pub.publish(earliest_et);
         et_pub.publish(scheduled_et);
+
+        lcip.onSpin(); 
       });
 
   // Start

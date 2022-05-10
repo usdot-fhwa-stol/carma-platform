@@ -71,6 +71,12 @@ struct LCIStrategicPluginConfig
   //! Double: Vehicle reaction time to a received schedule in seconds (approximate value, only used for communication with the schedule)
   double reaction_time = 5.0;
 
+  //! Double: Minimum inter-vehicle gap
+  double min_gap = 10.0;
+
+  //! Double: Minimum inter-vehicle gap
+  bool case_switch = false;
+
   //! License plate of the vehicle.
   std::string vehicle_id = "default_id";
 

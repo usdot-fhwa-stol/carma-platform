@@ -25,6 +25,7 @@
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
 #include <carma_utils/CARMAUtils.h>
+#include <bsm_helper/bsm_helper.h>
 #include <carma_wm/Geometry.h>
 #include <lanelet2_core/Forward.h>
 #include <gtest/gtest_prod.h>
@@ -170,12 +171,21 @@ public:
    *
    */
   TurnDirection getTurnDirectionAtIntersection(std::vector<lanelet::ConstLanelet> lanelets_list);
+
+  /**
+   * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery and mobility operation msgs.
+   * 
+   * \return True if the node should continue running. False otherwise
+   */ 
+  bool onSpin();
+
+
   ros::Publisher mobility_operation_pub;
   
   ////////// VARIABLES ///////////
 
   TurnDirection intersection_turn_direction_ = TurnDirection::Straight;
-  bool approaching_stop_controlled_interction_ = false;
+  bool approaching_light_controlled_interction_ = false;
 
   // CARMA Streets Variakes
   // timestamp for msg received from carma streets
@@ -715,8 +725,6 @@ private:
   
   ////////// VARIABLES ///////////
   
-  // strategy for stop controlled intersection
-  std::string stop_controlled_intersection_strategy_ = "Carma/stop_controlled_intersection";
   std::string previous_strategy_params_ = "";  
 
   double max_comfort_accel_ = 2.0;  // acceleration rates after applying miltiplier

@@ -41,6 +41,9 @@ delta_t : 1.0
 # Double: Minimum vehicle reaction time. Units in s
 reaction_time : 5.0
 
+#Int: Switch case for usecase 2 and usecase 3; 0 for UC2 and 1 for UC3
+case_switch : 0
+
 # String: The name to use for this plugin during comminications with the arbitrator
 strategic_plugin_name : LCIStrategicPlugin
 
