@@ -602,9 +602,57 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   if (!nearest_green_entry_time_cached_) 
   {
-    ROS_DEBUG_STREAM("Applied green_light_buffer for the first time and cached! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
+    ROS_DEBUG_STREAM("Applying green_light_buffer for the first time and caching! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
     // save first calculated nearest_green_entry_time + buffer to compare against in the future as nearest_green_entry_time changes with earliest_entry_time
-    nearest_green_entry_time_cached_ = nearest_green_entry_time + ros::Duration(config_.green_light_time_buffer);
+    ros::Time early_arrival_time_green_et =
+        nearest_green_entry_time - ros::Duration(config_.green_light_time_buffer);
+
+    ROS_DEBUG_STREAM("early_arrival_time_green_et: " << std::to_string(early_arrival_time_green_et.toSec()));
+
+    auto early_arrival_state_green_et_optional = traffic_light->predictState(lanelet::time::timeFromSec(early_arrival_time_green_et.toSec()));
+
+    if (!validLightState(early_arrival_state_green_et_optional, early_arrival_time_green_et))
+    {
+      ROS_ERROR_STREAM("Unable to resolve give signal...");
+      return;
+    }
+
+    ROS_DEBUG_STREAM("early_arrival_state_green_et: " << early_arrival_state_green_et_optional.get().second);
+
+    bool can_make_early_arrival  = (early_arrival_state_green_et_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED);
+   
+    // nearest_green_entry_time is by definition on green, so only check early_arrival
+    if (can_make_early_arrival)  // Green light with Certainty
+    {
+      nearest_green_entry_time_cached_ = nearest_green_entry_time;  //don't apply buffer if ET is in green
+    }  
+    else
+    {
+      auto normal_arrival_state_green_et_optional = traffic_light->predictState(lanelet::time::timeFromSec(nearest_green_entry_time.toSec()));
+
+      if (!validLightState(normal_arrival_state_green_et_optional, nearest_green_entry_time))
+      {
+        ROS_ERROR_STREAM("Unable to resolve give signal...");
+        return;
+      }
+
+      ROS_DEBUG_STREAM("normal_arrival_signal_end_time: " << std::to_string(lanelet::time::toSec(normal_arrival_state_green_et_optional.get().first)));
+      
+      // nearest_green_signal_start_time = normal_arrival_signal_end_time (green guaranteed) - green_signal_duration
+      ros::Time nearest_green_signal_start_time = ros::Time(lanelet::time::toSec(normal_arrival_state_green_et_optional.get().first - traffic_light->signal_durations[lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED]));
+
+      if (early_arrival_time_green_et.toSec() - nearest_green_signal_start_time.toSec() < config_.green_light_time_buffer)
+      {
+        nearest_green_entry_time_cached_ = nearest_green_signal_start_time + ros::Duration(config_.green_light_time_buffer);
+      }
+      else
+      {
+        nearest_green_entry_time_cached_ = nearest_green_entry_time + ros::Duration(config_.green_light_time_buffer);
+        // NOTE: around ending time of green signal duration, this buffer addition might push ET out of green phase.
+        // However, that is okay because those timestamps that fit this criteria is treated non-green by later late/early arrival checks
+      }
+    }
+
     nearest_green_entry_time = nearest_green_entry_time_cached_.get();
   }
   else if (nearest_green_entry_time_cached_) 
