@@ -1,5 +1,5 @@
 
-# Copyright (C) 2019-2022 LEIDOS.
+# Copyright (C) 2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
 # the License.
 
 cmake_minimum_required(VERSION 3.5)
-project(roadway_objects)
+project(basic_autonomy_ros2)
 
 # Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
@@ -26,9 +26,7 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 # Name build targets
-set(worker_lib roadway_objects_worker_lib)
-set(node_exec roadway_objects_node_exec)
-set(node_lib roadway_objects_node)
+set(node_lib basic_autonomy_ros2_lib)
 
 # Includes
 include_directories(
@@ -36,31 +34,18 @@ include_directories(
 )
 
 # Build
-
-ament_auto_add_library(${worker_lib} SHARED
-        src/roadway_objects_worker.cpp
-)
-
 ament_auto_add_library(${node_lib} SHARED
-        src/roadway_objects_node.cpp
+        src/basic_autonomy.cpp
+        src/helper_functions.cpp
+        src/log/log.cpp
+        src/smoothing/BSpline.cpp
+        src/smoothing/filters.cpp
 )
 
-ament_auto_add_executable(${node_exec} 
-        src/main.cpp 
-)
-
-# Register component
-rclcpp_components_register_nodes(${node_lib} "roadway_objects::RoadwayObjectsNode")
-
-# All locally created targets will need to be manually linked
-# ament auto will handle linking of external dependencies
-target_link_libraries(${node_lib}
-        ${worker_lib}
-)
-
-target_link_libraries(${node_exec}
+target_link_libraries(
         ${node_lib}
 )
+
 
 # Testing
 if(BUILD_TESTING)  
@@ -68,18 +53,15 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_roadway_objects 
-        test/TestRoadwayObjectsWorker.cpp
-        test/TestHelpers.hpp
-  )
+  ament_add_gtest(test_basic_autonomy_ros2 test/test_waypoint_generation.cpp)
 
-  ament_target_dependencies(test_roadway_objects ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+  ament_target_dependencies(test_basic_autonomy_ros2 ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
-  target_link_libraries(test_roadway_objects ${node_lib})
+  target_link_libraries(test_basic_autonomy_ros2 ${node_lib})
 
 endif()
 
 # Install
 ament_auto_package(
-        INSTALL_TO_SHARE launch
+        INSTALL_TO_SHARE resource
 )
