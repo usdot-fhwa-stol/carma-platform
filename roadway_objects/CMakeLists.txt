@@ -26,7 +26,7 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 # Name build targets
-set(worker lib roadway_objects_worker_lib)
+set(worker_lib roadway_objects_worker_lib)
 set(node_exec roadway_objects_node_exec)
 set(node_lib roadway_objects_node)
 
