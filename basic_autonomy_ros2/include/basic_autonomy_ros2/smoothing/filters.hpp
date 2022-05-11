@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (C) 2019-2022 LEIDOS.
  *
@@ -14,20 +16,25 @@
  * the License.
  */
 
-#include <rclcpp/rclcpp.hpp>
-#include "roadway_objects/roadway_objects_node.hpp"
-
-int main(int argc, char **argv) 
+#include <vector>
+#include <deque>
+#include <algorithm>
+#include <stdexcept>
+namespace basic_autonomy
 {
-  rclcpp::init(argc, argv);
+namespace smoothing
+{
 
-  auto node = std::make_shared<roadway_objects::RoadwayObjectsNode>(rclcpp::NodeOptions());
-  
-  rclcpp::executors::MultiThreadedExecutor executor;
-  executor.add_node(node->get_node_base_interface());
-  executor.spin();
 
-  rclcpp::shutdown();
+/**
+ * \brief Extremely simplie moving average filter
+ * 
+ * \param input The points to be filtered
+ * \param window_size The number of points to use in the moving window for averaging
+ * 
+ * \return The filterted points
+ */
+std::vector<double> moving_average_filter(const std::vector<double> input, int window_size, bool ignore_first_point=true);
 
-  return 0;
-}
+}  // namespace smoothing
+}  // namespace basic_autonomy

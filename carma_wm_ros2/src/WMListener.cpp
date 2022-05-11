@@ -84,7 +84,7 @@ WMListener::WMListener(
   map_sub_ = rclcpp::create_subscription<autoware_lanelet2_msgs::msg::MapBin>(node_topics_, "semantic_map", 2, 
                                   std::bind(&WMListenerWorker::mapCallback, worker_.get(), std::placeholders::_1), map_options);
 
-  route_sub_ = rclcpp::create_subscription<carma_planning_msgs::msg::Route>(node_topics_, "roadway_objects", 1, 
+  route_sub_ = rclcpp::create_subscription<carma_planning_msgs::msg::Route>(node_topics_, "route", 1, 
                                   std::bind(&WMListenerWorker::routeCallback, worker_.get(), std::placeholders::_1), route_options);
 
   roadway_objects_sub_ = rclcpp::create_subscription<carma_perception_msgs::msg::RoadwayObstacleList>(node_topics_, "roadway_objects", 1,
@@ -94,6 +94,8 @@ WMListener::WMListener(
                                   std::bind(&WMListenerWorker::incomingSpatCallback, worker_.get(), std::placeholders::_1), traffic_spat_options); 
   
 }
+
+WMListener::~WMListener() {}
 
 void WMListener::enableUpdatesWithoutRouteWL()
 {
