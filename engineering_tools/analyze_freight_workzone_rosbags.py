@@ -116,7 +116,7 @@ def generate_crosstrack_plot(bag, time_start_engagement, time_end_engagement):
     first = True
     crosstrack_errors = []
     crosstrack_error_times = []
-    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_start_engagement, end_time = time_end_engagement): # time_start_engagement+time_duration):
+    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_start_engagement + rospy.Duration(45.0), end_time = time_end_engagement - rospy.Duration(55.0)): # time_start_engagement+time_duration):
         if first:
             time_start = t
             first = False
@@ -530,8 +530,9 @@ def check_tcm_acknowledgements(bag, time_start_engagement, time_end_engagement, 
 #         shall successfully update its active route in less than 3 seconds to avoid the Work Zone.
 ###########################################################################################################
 def check_reroute_duration(bag, time_start_engagement, time_end_engagement):
-    max_duration_before_reroute = 3.0 # (seconds) Maximum duration between receiving a closed/restricted lane TCM and rerouting
+    # Note: Implementation assumes 1 closed lane TCM and 1 restricted lane TCM are received
 
+    max_duration_before_reroute = 3.0 # (seconds) Maximum duration between receiving a closed/restricted lane TCM and rerouting
 
     # Obtain timestamps of each closed/restricted lane TCM
     closed_lane_tcm_receive_time = None
@@ -552,17 +553,93 @@ def check_reroute_duration(bag, time_start_engagement, time_end_engagement):
             if is_restricted_lane:
                 if restricted_lane_tcm_receive_time is None:
                     restricted_lane_tcm_receive_time = t
-                    print("Received restricted lane TCM")
+                    print("FWZ-12 (DEBUG): Received restricted lane TCM at " + str(t))
             else:
                 if closed_lane_tcm_receive_time is None:
                     closed_lane_tcm_receive_time = t
-                    print("Received closed lane TCM")
+                    print("FWZ-12 (DEBUG): Received closed lane TCM at " + str(t))
+    
+    if closed_lane_tcm_receive_time <= restricted_lane_tcm_receive_time:
+        closed_lane_tcm_received_first = True
+
+    # Get the time of each re-route
+    route_generation_times = []
+    first = True
+    for topic, msg, t in bag.read_messages(topics=['/guidance/route']): 
+        print("FWZ-12 (DEBUG): Generated route at " + str(t))
+        route_generation_times.append(t)
+
+    if closed_lane_tcm_received_first:
+        duration_reroute_after_closed_lane_tcm_received = (route_generation_times[1] - closed_lane_tcm_receive_time).to_sec()
+        duration_reroute_after_restricted_lane_tcm_received = (route_generation_times[2] - restricted_lane_tcm_receive_time).to_sec()
+    else:
+        duration_reroute_after_closed_lane_tcm_received = (route_generation_times[2] - closed_lane_tcm_receive_time).to_sec()
+        duration_reroute_after_restricted_lane_tcm_received = (route_generation_times[1] - restricted_lane_tcm_receive_time).to_sec()
 
     is_successful = True
+    if duration_reroute_after_closed_lane_tcm_received <= max_duration_before_reroute:
+        print("FWZ-12 succeeded; rerouted " + str(duration_reroute_after_closed_lane_tcm_received) + " sec after receiving closed lane TCM")
+    else:
+        print("FWZ-12 failed; rerouted " + str(duration_reroute_after_closed_lane_tcm_received) + " sec after receiving closed lane TCM")
+        is_successful = False
+
+    if duration_reroute_after_restricted_lane_tcm_received <= max_duration_before_reroute:
+        print("FWZ-12 succeeded; rerouted " + str(duration_reroute_after_restricted_lane_tcm_received) + " sec after receiving restricted lane TCM")
+    else:
+        print("FWZ-12 failed; rerouted " + str(duration_reroute_after_restricted_lane_tcm_received) + " sec after receiving restricted lane TCM")
+        is_successful = False
 
     return is_successful
 
+###########################################################################################################
+# FWZ-14: The vehicle lateral velocity during a lane change remains between 0.5 m/s and 1.25 m/s.
+###########################################################################################################
+def check_lanechange_lateral_acceleration(bag, time_start_engagement, time_end_engagement, num_expected_lanechanges):
+    return
 
+###########################################################################################################
+# FWZ-15: After changing lanes, the vehicle will achieve steady-state (i.e. truck is driving within the lane) 
+#         within 5 seconds. 
+###########################################################################################################
+def check_lanechange_duration(bag, time_start_engagement, time_end_engagement, num_expected_lanechanges):
+    max_lanechange_duration = 5.0
+    crosstrack_end_lanechange = 3.2 # (meters) Distance from original lane center for lane change to be considered complete
+
+    # Get each timestamp of the first trajectory plan point being planned by CLC
+    first = True
+    is_in_lanechange = False
+    num = 0
+    times_start_lanechange = []
+    for topic, msg, t in bag.read_messages(topics=['/guidance/plan_trajectory'], start_time = time_start_engagement + rospy.Duration(45.0)):
+        if msg.trajectory_points[0].planner_plugin_name == "StopAndWaitPlugin":
+            break
+
+        if not is_in_lanechange:
+            if msg.trajectory_points[0].planner_plugin_name != "InLaneCruisingPlugin":
+                is_in_lanechange = True
+                times_start_lanechange.append(t)
+        
+        if is_in_lanechange:
+            if msg.trajectory_points[0].planner_plugin_name == "InLaneCruisingPlugin":
+                is_in_lanechange = False
+    
+    print("FWZ-15 (DEBUG): Found starting time of " + str(len(times_start_lanechange)) + " lane changes")
+    lanechange_durations = []
+    for time in times_start_lanechange:
+        for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time):
+            if abs(msg.cross_track) >= crosstrack_end_lanechange:
+                lanechange_durations.append((t-time).to_sec())
+                break
+    
+    is_successful = True
+    for i in range(0, len(lanechange_durations)):
+        if lanechange_durations[i] <= max_lanechange_duration:
+            print("FWZ-15 (LC " + str(i + 1) + ") succeeded; lane change completed in " + str(lanechange_durations[i]) + " seconds")
+        else:
+            print("FWZ-15 (LC " + str(i + 1) + ") failed; lane change completed in " + str(lanechange_durations[i]) + " seconds")
+            is_successful = False
+
+    return is_successful
 
 ###########################################################################################################
 # Port Drayage 1: Vehicle achieves its target speed (+/- 2 mph of speed limit).
@@ -1141,6 +1218,9 @@ def main():
         fwz_10_result = check_tcm_acknowledgements(bag, time_test_start_engagement, time_test_end_engagement, expected_number_tcms)
 
         fwz_12_result = check_reroute_duration(bag, time_test_start_engagement, time_test_end_engagement)
+
+        num_expected_lanechanges = 4
+        fwz_15_result = check_lanechange_duration(bag, time_test_start_engagement, time_test_end_engagement, num_expected_lanechanges)
         return
 
         # Metric FPD-1 (Vehicle reaches +/- 2 mph of speed limit)
