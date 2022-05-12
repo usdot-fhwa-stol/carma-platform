@@ -134,33 +134,33 @@ namespace carma_wm
       
       for (auto node : node_list)
       {
-        if (lane.lane_id == 3)
-          ROS_DEBUG_STREAM("x: " << node.x() << ", y: " << node.y());
+        if (lane.lane_id == 1)
+          ROS_DEBUG_STREAM(node.x() << ", " << node.y());
 
        
       }
-      if (lane.lane_id == 3)
+      if (lane.lane_id == 1)
       {
           //DEBUG
         std::vector<lanelet::Lanelet> llts_debug;
-        llts_debug.push_back(map->laneletLayer.get(13775));
+        llts_debug.push_back(map->laneletLayer.get(14881));
         //llts_debug.push_back(map->laneletLayer.get(14329));
         
         
-        //for (auto llt_debug : llts_debug)
-        //{
-        //  
-        //  for  (auto pt : llt_debug.leftBound2d())
-        //  {
-        //    ROS_ERROR_STREAM("left pt x: " << pt.x() << ", y: " << pt.y() );
-        //  }
-        //  for  (auto pt : llt_debug.rightBound2d())
-        //  {
-        //    ROS_ERROR_STREAM("right pt x: " << pt.x() << ", y: " << pt.y() );
-        //  }
-        //  
-        //}
-        //throw lanelet::InvalidInputError("STOPPED");
+        for (auto llt_debug : llts_debug)
+        {
+          
+          //for  (auto pt : llt_debug.leftBound2d())
+          //{
+          //  ROS_ERROR_STREAM("left " << pt.x() << ", " << pt.y() );
+          //}
+          for  (auto pt : llt_debug.rightBound2d())
+          {
+            ROS_ERROR_STREAM("right " << pt.x() << ", " << pt.y() );
+          }
+          
+        }
+        throw lanelet::InvalidInputError("STOPPED");
 
         
       }
