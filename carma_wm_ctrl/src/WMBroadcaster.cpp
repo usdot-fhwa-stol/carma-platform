@@ -220,10 +220,6 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
 
   auto sim_copy = sim_;
 
-
-  // TODO sim_.intersection_coord_correction_[]
-
-
   sim_.createIntersectionFromMapMsg(intersections, traffic_signals, map_msg, current_map_, current_routing_graph_);
 
   if (sim_ == sim_copy) // if no change

@@ -151,7 +151,6 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
 
         // Check if the point is inside this lanelet
         if(dist == 0.0) { // boost geometry uses a distance of 0 to indicate a point is within a polygon
-          ROS_DEBUG_STREAM("Detected inside!");
           possible_lanelets.insert(ll);
         }
 
