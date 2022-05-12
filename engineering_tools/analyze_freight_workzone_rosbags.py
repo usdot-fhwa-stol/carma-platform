@@ -642,6 +642,200 @@ def check_lanechange_duration(bag, time_start_engagement, time_end_engagement, n
     return is_successful
 
 ###########################################################################################################
+# FWZ-23: Upon entering the geofenced area with an advisory speed limit, the vehicle will initiate the 
+#         deceleration command to the advisory speed limit within less than 10 meters.
+###########################################################################################################
+def check_time_to_begin_deceleration(bag, time_start_engagement, time_end_engagement, advisory_speed_limit_ms):
+    max_distance_before_decel = 10.0 # meters
+
+    speed_limit_threshold_ms = 0.05
+    min_speed_limit_ms = advisory_speed_limit_ms - speed_limit_threshold_ms
+    max_speed_limit_ms = advisory_speed_limit_ms + speed_limit_threshold_ms
+    time_enter_geofence = None
+    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_start_engagement, end_time = time_end_engagement):
+        # Obtain the time that the vehicle enters a lanelet with the advisory speed limit
+        if (min_speed_limit_ms <= msg.speed_limit <= max_speed_limit_ms):
+            time_enter_geofence = t
+            break
+
+    num_consecutive_decel_required = 10 # Arbitrarily select that topic must show vehicle slowing down for this many consecutive messages to be considered the start of deceleration
+    found_start_of_decel = False
+    duration_before_decel = rospy.Duration(0.0)
+    time_begin_deceleration_in_geofence = rospy.Time(0.0)
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_enter_geofence, end_time = time_end_engagement): # time_start_engagement+time_duration):
+        time_start = t
+
+        num_consecutive_decel = 0
+        first = True
+        for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_start, end_time = time_end_engagement): # time_start_engagement+time_duration):
+            if first:
+                prev_speed = msg.twist.linear.x
+                first = False
+                speed_enter_geofence_ms = msg.twist.linear.x
+                continue
+
+            speed_start_decel_ms = msg.twist.linear.x
+            if msg.twist.linear.x - prev_speed < 0:
+                num_consecutive_decel +=1
+                if num_consecutive_decel == num_consecutive_decel_required:
+                    duration_before_decel = (time_start - time_enter_geofence).to_sec()
+                    time_begin_deceleration_in_geofence = time_start
+                    found_start_of_decel = True
+            else:
+                break
+            
+            prev_speed = msg.twist.linear.x
+
+        if found_start_of_decel:
+            break
+
+    avg_speed_before_decel = (speed_enter_geofence_ms + speed_start_decel_ms) / 2.0
+    distance_before_decel = avg_speed_before_decel * duration_before_decel
+    
+    is_successful = False
+    if distance_before_decel <= max_distance_before_decel:
+        print("FWZ-23 succeeded; vehicle began decelerating " + str(distance_before_decel) + " after entering geofence (" + str(duration_before_decel) + " seconds)")
+        is_successful = True
+    else:
+        print("FWZ-23 failed; vehicle began decelerating " + str(distance_before_decel) + " after entering geofence (" + str(duration_before_decel) + " seconds)")
+
+
+    return is_successful, time_begin_deceleration_in_geofence
+
+###########################################################################################################
+# FWZ-24: The vehicle will decelerate and achieve the advisory speed limit prior to reaching the work zone.
+###########################################################################################################
+def check_speed_before_workzone(bag, time_start_engagement, time_end_engagement, workzone_lanelet_id, advisory_speed_limit_ms):
+    speed_limit_threshold_ms = 0.89408 # 0.89408 m/s is 2 mph
+    min_speed_limit_ms = advisory_speed_limit_ms - speed_limit_threshold_ms
+    max_speed_limit_ms = advisory_speed_limit_ms + speed_limit_threshold_ms
+
+    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_start_engagement, end_time = time_end_engagement):
+        if msg.lanelet_id == workzone_lanelet_id:
+            time_enter_workzone = t 
+
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_enter_workzone, end_time = time_end_engagement): # time_start_engagement+time_duration):
+        vehicle_speed_workzone_entrance_ms = msg.twist.linear.x 
+        break
+    
+    is_successful = False
+    if (min_speed_limit_ms <= vehicle_speed_workzone_entrance_ms <= max_speed_limit_ms):
+        print("FWZ-24 succeeded: Vehicle travelling at " + str(vehicle_speed_workzone_entrance_ms) + " m/s when entering the workzone")
+        is_successful = True
+    else:
+        print("FWZ-24 failed: Vehicle travelling at " + str(vehicle_speed_workzone_entrance_ms) + " m/s when entering the workzone")
+
+    return is_successful
+
+###########################################################################################################
+# FWZ-25: Upon entering the geofenced area with an advisory speed limit, the actual trajectory to the reduced 
+#         speed operations will include an acceleration section. The average deceleration over the entire 
+#         section shall be no greater than 2 m/s^2.
+###########################################################################################################
+def check_deceleration_for_geofence(bag, time_start_engagement, time_end_engagement, time_begin_deceleration_in_geofence, advisory_speed_limit_ms):
+    max_avg_deceleration = 2.0 # m/s^2
+
+    # Obtain timestamp associated with the end of the deceleration section 
+    # Note: This is the moment when the vehicle's speed reaches the advisory speed limit
+    first = True
+    time_end_decel = rospy.Time()
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_begin_deceleration_in_geofence):
+        # Obtain the speed at the start of the deceleration section
+        if first:
+            speed_start_decel_ms = msg.twist.linear.x
+            first = False
+
+            # Print Debug Line
+            speed_start_decel_mph = msg.twist.linear.x * 2.2639 # 2.2369 mph is 1 m/s
+            print("FWZ-25 (DEBUG): Speed at start of deceleration section: " + str(speed_start_decel_mph) + " mph")
+            continue
+
+        current_speed_ms = msg.twist.linear.x
+        if (current_speed_ms <= advisory_speed_limit_ms):
+            time_end_decel = t
+            speed_end_decel_ms = current_speed_ms
+
+            # Print Debug Line
+            speed_end_decel_mph = speed_end_decel_ms * 2.2369 # 2.2369 mph is 1 m/s
+            print("FWZ-25 (DEBUG): Speed at end of deceleration section: " + str(speed_end_decel_mph) + " mph")
+            break
+
+
+    # Calculate the average deceleration across the full deceleration section
+    total_average_decel = (speed_start_decel_ms - speed_end_decel_ms) / (time_end_decel - time_begin_deceleration_in_geofence).to_sec()
+    
+    is_successful = False
+    if total_average_decel <= max_avg_deceleration:
+        print("FWZ-25 succeeded: average deceleration after entering geofence was " + str(total_average_decel) + " m/s^2")
+        is_successful = True
+    else:
+        print("FWZ-25 succeeded: average deceleration after entering geofence was " + str(total_average_decel) + " m/s^2")
+
+    return is_successful
+
+
+###########################################################################################################
+# FWZ-26: After exiting the geofenced area with an advisory speed limit, the vehicle will begin accelerating
+#         back to the original speed limit within less than 10 meters.
+###########################################################################################################
+def check_time_to_begin_acceleration(bag, time_enter_geofence, time_end_engagement, original_speed_limit_ms):
+    max_distance_before_accel = 10.0 # meters
+
+    # Obtain the time that the CMV enters a lanelet with the original speed limit (this indicates it has exited the geofenced area)
+    speed_limit_threshold_ms = 0.05
+    min_speed_limit_ms = original_speed_limit_ms - speed_limit_threshold_ms
+    max_speed_limit_ms = original_speed_limit_ms + speed_limit_threshold_ms
+    time_exit_geofence = None
+    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_enter_geofence, end_time = time_end_engagement):
+        # Obtain the time that the vehicle enters a lanelet with the advisory speed limit
+        if (min_speed_limit_ms <= msg.speed_limit <= max_speed_limit_ms):
+            time_exit_geofence = t
+            break
+
+    num_consecutive_accel_required = 20 # Arbitrarily select that topic must show vehicle speeding up for this many consecutive messages to be considered the start of acceleration
+    found_start_of_accel = False
+    duration_before_accel = rospy.Duration(0.0)
+    time_begin_acceleration_in_geofence = rospy.Time(0.0)
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_exit_geofence, end_time = time_end_engagement): # time_start_engagement+time_duration):
+        time_start = t
+
+        num_consecutive_accel = 0
+        first = True
+        for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_start, end_time = time_end_engagement): # time_start_engagement+time_duration):
+            if first:
+                prev_speed = msg.twist.linear.x
+                first = False
+                speed_exit_geofence_ms = msg.twist.linear.x
+                continue
+
+            speed_start_accel_ms = msg.twist.linear.x
+            if msg.twist.linear.x - prev_speed > 0:
+                num_consecutive_accel +=1
+                if num_consecutive_accel == num_consecutive_accel_required:
+                    duration_before_accel = (time_start - time_exit_geofence).to_sec()
+                    time_begin_acceleration_in_geofence = time_start
+                    found_start_of_accel = True
+            else:
+                break
+            
+            prev_speed = msg.twist.linear.x
+
+        if found_start_of_accel:
+            break
+
+    avg_speed_before_accel = (speed_exit_geofence_ms + speed_start_accel_ms) / 2.0
+    distance_before_accel = avg_speed_before_accel * duration_before_accel
+    
+    is_successful = False
+    if distance_before_accel <= max_distance_before_accel:
+        print("FWZ-26 succeeded; vehicle began accelerating " + str(distance_before_accel) + " after exiting geofence (" + str(duration_before_accel) + " seconds)")
+        is_successful = True
+    else:
+        print("FWZ-26 failed; vehicle began accelerating " + str(distance_before_accel) + " after exiting geofence (" + str(duration_before_accel) + " seconds)")
+
+    return is_successful
+
+###########################################################################################################
 # Port Drayage 1: Vehicle achieves its target speed (+/- 2 mph of speed limit).
 ###########################################################################################################
 def check_vehicle_reaches_steady_state(bag, engagement_times, speed_limit_ms):
@@ -1192,8 +1386,8 @@ def main():
         
         print("Spent " + str((time_test_end_engagement - time_test_start_engagement).to_sec()) + " seconds engaged.")
 
-        original_speed_limit = get_route_original_speed_limit(bag, time_test_start_engagement) # Units: m/s
-        print("Original Speed Limit is " + str(original_speed_limit) + " m/s")
+        original_speed_limit_ms = get_route_original_speed_limit(bag, time_test_start_engagement) # Units: m/s
+        print("Original Speed Limit is " + str(original_speed_limit_ms) + " m/s")
 
         # Optional: Generate vehicle speed plot for the rosbag
         #generate_speed_plot(bag, time_test_start_engagement, time_test_end_engagement)
@@ -1206,7 +1400,7 @@ def main():
         closed_lanelets = [10801, 10802]
         fwz_1_result, fwz_8_result = check_geofence_in_initial_route(bag, closed_lanelets)
 
-        fwz_2_result, time_start_steady_state_before_geofence = check_start_steady_state_before_geofence(bag, time_test_start_engagement, time_enter_geofence, original_speed_limit)
+        fwz_2_result, time_start_steady_state_before_geofence = check_start_steady_state_before_geofence(bag, time_test_start_engagement, time_enter_geofence, original_speed_limit_ms)
 
         advisory_speed_limit_ms = 11.176 # 11.176 m/s is 25 mph
         fwz_7_result = check_in_geofence_speed_limits(bag, time_enter_geofence, time_exit_geofence, advisory_speed_limit_ms)
@@ -1221,6 +1415,16 @@ def main():
 
         num_expected_lanechanges = 4
         fwz_15_result = check_lanechange_duration(bag, time_test_start_engagement, time_test_end_engagement, num_expected_lanechanges)
+        
+        fwz_23_result, time_begin_deceleration_in_geofence = check_time_to_begin_deceleration(bag, time_test_start_engagement, time_test_end_engagement, advisory_speed_limit_ms)
+        
+        workzone_lanelet_id = 30801
+        fwz_24_result = check_speed_before_workzone(bag, time_test_start_engagement, time_test_end_engagement, workzone_lanelet_id, advisory_speed_limit_ms)
+
+        fwz_25_result = check_deceleration_for_geofence(bag, time_test_start_engagement, time_test_end_engagement, time_begin_deceleration_in_geofence, advisory_speed_limit_ms)
+
+        fwz_26_result = check_time_to_begin_acceleration(bag, time_begin_deceleration_in_geofence, time_test_end_engagement, original_speed_limit_ms)
+
         return
 
         # Metric FPD-1 (Vehicle reaches +/- 2 mph of speed limit)
