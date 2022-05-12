@@ -22,6 +22,7 @@
 #include <carma_wm_ros2/TrafficControl.hpp>
 #include <queue>
 #include <carma_wm_ros2/SignalizedIntersectionManager.hpp>
+#include <utility>
 
 namespace carma_wm
 {
@@ -54,7 +55,7 @@ public:
    *
    * \param geofence_msg The new map update messages to generate the map edits from
    */
-  void mapUpdateCallback(const autoware_lanelet2_msgs::msg::MapBin geofence_msg);
+  void mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::UniquePtr geofence_msg);
 
   /*!
    * \brief Callback for route message.
@@ -87,11 +88,11 @@ public:
    * \param config_lim A callback function that will be triggered after the world model receives a new map update
    */
   void setConfigSpeedLimit(double config_lim);
-  
-/**
- *  \brief Returns the current configured speed limit value
- * 
-*/
+
+  /**
+   *  \brief Returns the current configured speed limit value
+   * 
+   */
   double getConfigSpeedLimit() const;
 
 
@@ -102,27 +103,38 @@ public:
    */
   void setVehicleParticipationType(std::string participant);
 
-/**
- * @brief Returns the Vehicle Participation Type value
- * 
- */
+  /**
+   * @brief Returns the Vehicle Participation Type value
+   * 
+   */
   std::string getVehicleParticipationType() const;
 
 
-/**
- *  \brief Check if re-routing is needed and returns re-routing flag
- * 
-*/
+  /**
+   *  \brief Check if re-routing is needed and returns re-routing flag
+   * 
+   */
   bool checkIfReRoutingNeeded() const;
-/**
- *  \brief Enable updates without route and set route_node_flag_ as true
- * 
-*/
+  /**
+   *  \brief Enable updates without route and set route_node_flag_ as true
+   * 
+   */
   void enableUpdatesWithoutRoute();
-/**
- *  \brief incoming spat message
- * 
-*/
+
+  /**
+   * \brief Helper function to convert a routing graph message into a actual RoutingGraph object
+   * 
+   * \param msg The graph message to convert
+   * \param map The base map this graph applies to 
+   * 
+   * \return nullptr if the graph could not be constructed or the provided graph does not match the map
+   */ 
+  LaneletRoutingGraphPtr routingGraphFromMsg(const autoware_lanelet2_msgs::msg::RoutingGraph& msg, lanelet::LaneletMapPtr map) const;
+
+  /**
+   *  \brief incoming spat message
+   * 
+   */
   void incomingSpatCallback(const carma_v2x_msgs::msg::SPAT::UniquePtr spat_msg);
 
 private:
@@ -133,7 +145,7 @@ private:
   double config_speed_limit_;
 
   size_t current_map_version_ = 0; // Current map version based on recived map messages
-  std::queue<autoware_lanelet2_msgs::msg::MapBin> map_update_queue_; // Update queue used to cache map updates when they cannot be immeadiatly applied due to waiting for rerouting
+  std::queue<autoware_lanelet2_msgs::msg::MapBin::UniquePtr> map_update_queue_; // Update queue used to cache map updates when they cannot be immeadiatly applied due to waiting for rerouting
   boost::optional<carma_planning_msgs::msg::Route> delayed_route_msg_;
 
   bool recompute_route_flag_=false; // indicates whether if this node should recompute its route based on invalidated msg

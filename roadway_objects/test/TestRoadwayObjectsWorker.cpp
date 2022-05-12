@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,11 @@
  * the License.
  */
 
-#include <roadway_objects/RoadwayObjectsWorker.h>
-#include <carma_wm/CARMAWorldModel.h>
-#include <tf2/LinearMath/Transform.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <roadway_objects/roadway_objects_worker.hpp>
 #include <gtest/gtest.h>
-#include "TestHelpers.h"
+#include "TestHelpers.hpp"
 
-namespace objects
+namespace roadway_objects
 {
 TEST(RoadwayObjectsWorkerTest, testExternalObjectCallback)
 {
@@ -38,7 +35,7 @@ TEST(RoadwayObjectsWorkerTest, testExternalObjectCallback)
   lanelet::LaneletMapPtr map = lanelet::utils::createMap({ ll_1 }, {});
 
   // Build external object
-  geometry_msgs::Pose pose;
+  geometry_msgs::msg::Pose pose;
   pose.position.x = 6;
   pose.position.y = 5;
   pose.position.z = 0;
@@ -51,18 +48,18 @@ TEST(RoadwayObjectsWorkerTest, testExternalObjectCallback)
   pose.orientation.z = tf_orientation.getZ();
   pose.orientation.w = tf_orientation.getW();
 
-  geometry_msgs::Vector3 size;
+  geometry_msgs::msg::Vector3 size;
   size.x = 4;
   size.y = 2;
   size.z = 1;
 
-  cav_msgs::ExternalObject obj;
+  carma_perception_msgs::msg::ExternalObject obj;
   obj.id = 1;
-  obj.object_type = cav_msgs::ExternalObject::SMALL_VEHICLE;
+  obj.object_type = carma_perception_msgs::msg::ExternalObject::SMALL_VEHICLE;
   obj.pose.pose = pose;
   obj.velocity.twist.linear.x = 1.0;
 
-  cav_msgs::PredictedState pred;
+  carma_perception_msgs::msg::PredictedState pred;
   auto pred_pose = obj.pose.pose;
   pred_pose.position.y += 1;
   pred.predicted_position = pred_pose;
@@ -71,20 +68,22 @@ TEST(RoadwayObjectsWorkerTest, testExternalObjectCallback)
   obj.predictions.push_back(pred);
 
   // Build roadway objects worker to test
-  cav_msgs::RoadwayObstacleList resulting_objs;
+  carma_perception_msgs::msg::RoadwayObstacleList resulting_objs;
+  auto node = std::make_shared<rclcpp::Node>("test_node");
+  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
 
   RoadwayObjectsWorker row(std::static_pointer_cast<const carma_wm::WorldModel>(cmw),
-                           [&](const cav_msgs::RoadwayObstacleList& objs) -> void { resulting_objs = objs; });
+                           [&](const carma_perception_msgs::msg::RoadwayObstacleList& objs) -> void { resulting_objs = objs; }, logger);
 
   ASSERT_EQ(resulting_objs.roadway_obstacles.size(), 0);  // Verify resulting_objs is empty
 
   // Build external object list
-  cav_msgs::ExternalObjectList obj_list;
+  carma_perception_msgs::msg::ExternalObjectList obj_list;
   obj_list.objects.push_back(obj);
-  cav_msgs::ExternalObjectListConstPtr obj_list_msg_ptr(new cav_msgs::ExternalObjectList(obj_list));
 
   // Test with no map set
-  row.externalObjectsCallback(obj_list_msg_ptr);  // Call function under test
+  std::unique_ptr<carma_perception_msgs::msg::ExternalObjectList> obj_list_msg_ptr1 = std::make_unique<carma_perception_msgs::msg::ExternalObjectList>(obj_list);
+  row.externalObjectsCallback(move(obj_list_msg_ptr1));  // Call function under test
 
   ASSERT_EQ(resulting_objs.roadway_obstacles.size(), 0);
 
@@ -93,24 +92,26 @@ TEST(RoadwayObjectsWorkerTest, testExternalObjectCallback)
 
   cmw->setMap(empty_map);
 
-  row.externalObjectsCallback(obj_list_msg_ptr);  // Call function under test
+  std::unique_ptr<carma_perception_msgs::msg::ExternalObjectList> obj_list_msg_ptr2 = std::make_unique<carma_perception_msgs::msg::ExternalObjectList>(obj_list);
+  row.externalObjectsCallback(move(obj_list_msg_ptr2));  // Call function under test
 
   ASSERT_EQ(resulting_objs.roadway_obstacles.size(), 0);
 
   // Test with regular map
   cmw->setMap(map);
 
-  row.externalObjectsCallback(obj_list_msg_ptr);  // Call function under test
+  std::unique_ptr<carma_perception_msgs::msg::ExternalObjectList> obj_list_msg_ptr3 = std::make_unique<carma_perception_msgs::msg::ExternalObjectList>(obj_list);
+  row.externalObjectsCallback(move(obj_list_msg_ptr3));  // Call function under test
 
   ASSERT_EQ(resulting_objs.roadway_obstacles.size(), 1);
 
-  cav_msgs::RoadwayObstacle obs = resulting_objs.roadway_obstacles[0];
+  carma_perception_msgs::msg::RoadwayObstacle obs = resulting_objs.roadway_obstacles[0];
 
   ASSERT_EQ(obs.object.id, obj.id);  // Check that the object was coppied
 
   ASSERT_EQ(obs.lanelet_id, ll_1.id());
 
-  ASSERT_EQ(obs.connected_vehicle_type.type, cav_msgs::ConnectedVehicleType::NOT_CONNECTED);
+  ASSERT_EQ(obs.connected_vehicle_type.type, carma_perception_msgs::msg::ConnectedVehicleType::NOT_CONNECTED);
 
   ASSERT_NEAR(obs.cross_track, 0.5, 0.00001);
 
@@ -136,3 +137,18 @@ TEST(RoadwayObjectsWorkerTest, testExternalObjectCallback)
 }
 
 }  // namespace objects
+
+// Run all the tests
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+
+    //Initialize ROS
+    rclcpp::init(argc, argv);
+
+    bool success = RUN_ALL_TESTS();
+
+    //shutdown ROS
+    rclcpp::shutdown();
+
+    return success;
+}

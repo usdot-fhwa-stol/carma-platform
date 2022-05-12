@@ -26,6 +26,7 @@ MotionComputationWorker::MotionComputationWorker(const PublishObjectCallback& ob
 
 void MotionComputationWorker::predictionLogic(carma_perception_msgs::msg::ExternalObjectList::UniquePtr obj_list) {
   carma_perception_msgs::msg::ExternalObjectList sensor_list;
+  sensor_list.header = obj_list->header;
 
   for (auto obj : obj_list->objects) {
     // Header contains the frame rest of the fields will use
@@ -68,7 +69,7 @@ void MotionComputationWorker::predictionLogic(carma_perception_msgs::msg::Extern
 
   //// Synchronize all data to the current sensor data timestamp
   carma_perception_msgs::msg::ExternalObjectList synchronization_base_objects;
-  synchronization_base_objects.header.stamp = sensor_list.header.stamp; // Use the current sensing stamp as the sync point even if sensor data is not used
+  synchronization_base_objects.header = sensor_list.header; // Use the current sensing stamp as the sync point even if sensor data is not used
 
 
   if (enable_sensor_processing_) { // If using sensor data add it to the base synchronization list since it already is at the desired time
@@ -223,8 +224,20 @@ void MotionComputationWorker::bsmCallback(const carma_v2x_msgs::msg::BSM::Unique
     return;
   }
 
-  // TODO Include same conversion and id checking logic as in mobility path
-  // bsm_list_.objects.push_back(mobilityPathToExternalObject(msg));
+  carma_perception_msgs::msg::ExternalObject obj_msg;
+  conversion::convert(*msg, obj_msg, map_frame_id_ , prediction_period_, prediction_time_step_, *map_projector_, ned_in_map_rotation_);
+
+  // Check if this bsm is from an object already being queded.
+  // If so then update the existing object, if not add it to the queue
+  if (bsm_obj_id_map_.find(obj_msg.id) != bsm_obj_id_map_.end()) {
+    bsm_list_.objects[bsm_obj_id_map_[obj_msg.id]] = obj_msg;
+
+  } else {
+    // Add the new object to the queue and save its index
+    bsm_obj_id_map_[obj_msg.id] = bsm_list_.objects.size();
+    bsm_list_.objects.push_back(obj_msg);
+  }
+
 }
 
 carma_perception_msgs::msg::ExternalObjectList MotionComputationWorker::synchronizeAndAppend(
