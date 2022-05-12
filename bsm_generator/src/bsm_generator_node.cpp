@@ -186,6 +186,7 @@ namespace bsm_generator
   void BSMGenerator::headingCallback(const gps_msgs::msg::GPSFix::UniquePtr msg)
   {
     bsm_.core_data.heading = worker.getHeadingInRange(static_cast<float>(msg->track));
+    bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.HEADING_AVAILABLE;
   }
 
   void BSMGenerator::generateBSM()

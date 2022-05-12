@@ -84,7 +84,7 @@ WMListener::WMListener(
   map_sub_ = rclcpp::create_subscription<autoware_lanelet2_msgs::msg::MapBin>(node_topics_, "semantic_map", 2, 
                                   std::bind(&WMListenerWorker::mapCallback, worker_.get(), std::placeholders::_1), map_options);
 
-  route_sub_ = rclcpp::create_subscription<carma_planning_msgs::msg::Route>(node_topics_, "roadway_objects", 1, 
+  route_sub_ = rclcpp::create_subscription<carma_planning_msgs::msg::Route>(node_topics_, "route", 1, 
                                   std::bind(&WMListenerWorker::routeCallback, worker_.get(), std::placeholders::_1), route_options);
 
   roadway_objects_sub_ = rclcpp::create_subscription<carma_perception_msgs::msg::RoadwayObstacleList>(node_topics_, "roadway_objects", 1,
@@ -94,6 +94,8 @@ WMListener::WMListener(
                                   std::bind(&WMListenerWorker::incomingSpatCallback, worker_.get(), std::placeholders::_1), traffic_spat_options); 
   
 }
+
+WMListener::~WMListener() {}
 
 void WMListener::enableUpdatesWithoutRouteWL()
 {
@@ -113,13 +115,13 @@ WorldModelConstPtr WMListener::getWorldModel()
   return worker_->getWorldModel();
 }
 
-void WMListener::mapUpdateCallback(const autoware_lanelet2_msgs::msg::MapBin::UniquePtr geofence_msg)
+void WMListener::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::UniquePtr geofence_msg)
 {
   const std::lock_guard<std::mutex> lock(mw_mutex_);
 
   RCLCPP_INFO_STREAM(node_logging_->get_logger(), "New Map Update Received. SeqNum: " << geofence_msg->seq_id);
 
-  worker_->mapUpdateCallback(*geofence_msg);
+  worker_->mapUpdateCallback(std::move(geofence_msg));
 }
 
 void WMListener::setMapCallback(std::function<void()> callback)

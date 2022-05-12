@@ -228,6 +228,9 @@ def generate_launch_description():
                         {'use_intra_process_comms': True},
                         {'--log-level' : GetLogLevel('object_visualizer', env_log_levels) }
                     ],
+                    remappings=[
+                        ("external_objects", "external_object_predictions"),
+                    ],
                     parameters=[ object_visualizer_param_file ]
             ),
             ComposableNode(
@@ -258,6 +261,18 @@ def generate_launch_description():
                     ],
                     remappings=[
                         ("external_objects", "external_object_predictions" ),
+                    ]
+            ),
+            ComposableNode( 
+                    package='roadway_objects',
+                    plugin='roadway_objects::RoadwayObjectsNode',
+                    name='roadway_objects_node',
+                    extra_arguments=[
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('roadway_objects', env_log_levels) }
+                    ],
+                    remappings=[
+                        ("external_objects", "external_object_predictions"),
                     ]
             ),
         ]
