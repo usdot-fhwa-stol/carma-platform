@@ -1208,7 +1208,7 @@ void WMBroadcaster::setMaxLaneWidth(double max_lane_width)
 
 void WMBroadcaster::setIntersectionCoordCorrection(const std::vector<int>& intersection_ids_for_correction, const std::vector<double>& intersection_correction)
 {
-  if (intersection_correction.size() % 2 != 0)
+  if (intersection_correction.size() % 2 != 0 || intersection_ids_for_correction.size() != intersection_correction.size() / 2)
   {
     throw std::invalid_argument("Some of intersection coordinate correction parameters are not fully set!");
   }
