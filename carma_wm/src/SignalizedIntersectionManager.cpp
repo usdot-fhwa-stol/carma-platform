@@ -114,15 +114,11 @@ namespace carma_wm
         curr_y = lane.node_list.nodes.node_set_xy[i].delta.y + curr_y;
         lanelet::Point3d curr_node{map->pointLayer.uniqueId(), curr_x, curr_y, 0};
 
-        //ROS_DEBUG_STREAM("Current node x: " << curr_x << ", y: " << curr_y);
+        ROS_DEBUG_STREAM("Current node x: " << curr_x << ", y: " << curr_y);
 
         node_list.push_back(curr_node);
       }
 
-     
-      
-      //
-      
       ROS_DEBUG_STREAM("Lane directions: " << (int)lane.lane_attributes.directional_use.lane_direction); 
       
       if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::INGRESS)
@@ -134,35 +130,7 @@ namespace carma_wm
       
       for (auto node : node_list)
       {
-        if (lane.lane_id == 1)
-          ROS_DEBUG_STREAM(node.x() << ", " << node.y());
-
-       
-      }
-      if (lane.lane_id == 1)
-      {
-          //DEBUG
-        std::vector<lanelet::Lanelet> llts_debug;
-        llts_debug.push_back(map->laneletLayer.get(14881));
-        //llts_debug.push_back(map->laneletLayer.get(14329));
-        
-        
-        for (auto llt_debug : llts_debug)
-        {
-          
-          //for  (auto pt : llt_debug.leftBound2d())
-          //{
-          //  ROS_ERROR_STREAM("left " << pt.x() << ", " << pt.y() );
-          //}
-          for  (auto pt : llt_debug.rightBound2d())
-          {
-            ROS_ERROR_STREAM("right " << pt.x() << ", " << pt.y() );
-          }
-          
-        }
-        throw lanelet::InvalidInputError("STOPPED");
-
-        
+        ROS_DEBUG_STREAM(node.x() << ", " << node.y());
       }
       
       // save which signal group connect to which exit lanes
