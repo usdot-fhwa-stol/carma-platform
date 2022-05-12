@@ -119,28 +119,8 @@ namespace carma_wm
         node_list.push_back(curr_node);
       }
 
-      //DEBUG
-      std::vector<lanelet::Lanelet> llts_debug;
-      llts_debug.push_back(map->laneletLayer.get(14881));
-      //llts_debug.push_back(map->laneletLayer.get(14329));
+     
       
-      /*
-      for (auto llt_debug : llts_debug)
-      {
-        
-        for  (auto pt : llt_debug.leftBound2d())
-        {
-          ROS_ERROR_STREAM("left pt x: " << pt.x() << ", y: " << pt.y() );
-        }
-        for  (auto pt : llt_debug.rightBound2d())
-        {
-          ROS_ERROR_STREAM("right pt x: " << pt.x() << ", y: " << pt.y() );
-        }
-        
-      }
-      
-      throw lanelet::InvalidInputError("STOPPED");
-      */
       //
       
       ROS_DEBUG_STREAM("Lane directions: " << (int)lane.lane_attributes.directional_use.lane_direction); 
@@ -154,8 +134,35 @@ namespace carma_wm
       
       for (auto node : node_list)
       {
-        if (lane.lane_id == 8)
+        if (lane.lane_id == 3)
           ROS_DEBUG_STREAM("x: " << node.x() << ", y: " << node.y());
+
+       
+      }
+      if (lane.lane_id == 3)
+      {
+          //DEBUG
+        std::vector<lanelet::Lanelet> llts_debug;
+        llts_debug.push_back(map->laneletLayer.get(13775));
+        //llts_debug.push_back(map->laneletLayer.get(14329));
+        
+        
+        //for (auto llt_debug : llts_debug)
+        //{
+        //  
+        //  for  (auto pt : llt_debug.leftBound2d())
+        //  {
+        //    ROS_ERROR_STREAM("left pt x: " << pt.x() << ", y: " << pt.y() );
+        //  }
+        //  for  (auto pt : llt_debug.rightBound2d())
+        //  {
+        //    ROS_ERROR_STREAM("right pt x: " << pt.x() << ", y: " << pt.y() );
+        //  }
+        //  
+        //}
+        //throw lanelet::InvalidInputError("STOPPED");
+
+        
       }
       
       // save which signal group connect to which exit lanes

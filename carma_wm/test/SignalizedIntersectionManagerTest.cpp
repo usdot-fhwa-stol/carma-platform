@@ -42,7 +42,7 @@ namespace carma_wm
 
 {
 
-TEST(SignalizedIntersectionManger, convertLaneToLaneletId)
+TEST(SignalizedIntersectionManger, DISABLED_convertLaneToLaneletId9945)
 {
   
   // File to process. Path is relative to test folder
@@ -559,6 +559,377 @@ TEST(SignalizedIntersectionManger, convertLaneToLaneletId)
   EXPECT_EQ(entry.size(), 1);
   EXPECT_EQ(exit.size(), 1);
 }
+
+
+TEST(SignalizedIntersectionManger, convertLaneToLaneletId9709)
+{
+  
+  // File to process. Path is relative to test folder
+  std::string file = "resource/TFHRC_03.10.22.xodr.osm";
+  // Id of lanelet to start combing from
+  lanelet::Id starting_id = 113;
+  // Side to combine. If LEFT than the left lanelet left edge will be used for the left edge of the right lanelet
+  // (intially the starting_id lanelet). Vice-versa for RIGHT.
+
+  ///////////
+  // START OF LOGIC
+  ///////////
+
+  // Write new map to file
+  int projector_type = 0;
+  std::string target_frame;
+  lanelet::ErrorMessages load_errors;
+  // Parse geo reference info from the original lanelet map (.osm)
+  lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+
+  lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+
+  lanelet::LaneletMapPtr lanelet_map = lanelet::load(file, local_projector, &load_errors);
+
+  if (lanelet_map->laneletLayer.size() == 0)
+  {
+    FAIL() << "Input map does not contain any lanelets";
+  }
+
+  carma_wm::CARMAWorldModel cwm;
+  cwm.setMap(lanelet_map);
+  auto routing_graph = cwm.getMapRoutingGraph();
+
+  carma_wm::SignalizedIntersectionManager sim;
+  
+  ROS_ERROR_STREAM("2");
+  //std::string georeference = "+proj=tmerc +lat_0=38.95197911150576 +lon_0=-77.14835128349988 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  sim.setTargetFrame(target_frame);
+    
+  std::unordered_map<uint8_t, lanelet::Id> entry;
+  std::unordered_map<uint8_t, lanelet::Id> exit;
+
+  cav_msgs::IntersectionGeometry intersection; //ref_point lat, lon, el = 0;
+  intersection.id.id = 9709;
+  std::pair<double, double> correction = {-0.5, -1.0};
+  sim.intersection_coord_correction_[intersection.id.id] = correction;
+
+  cav_msgs::GenericLane lane;
+  lane.lane_id = 1;
+  j2735_msgs::Connection connection;
+  connection.signal_group = 1;
+  connection.connecting_lane.lane = 181;
+
+  lane.connect_to_list.push_back(connection);
+
+  cav_msgs::NodeXY node;
+  
+  // lane 1
+  lane.lane_id = 1;
+  lane.node_list = {};
+  lane.connect_to_list = {};
+
+  lane.lane_attributes.directional_use.lane_direction = 2u; //ingress
+  node.delta.x = -5.23;
+  node.delta.y = -12.94;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = -3.60; //offset from previous
+  node.delta.y = -7.24;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = -6.224; //offset from previous
+  node.delta.y = -11.11;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = -2.09; //offset from previous
+  node.delta.y = -6.54;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 0.76; //offset from previous
+  node.delta.y = -5.79;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 3.66; //offset from previous
+  node.delta.y = -5.09;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  intersection.lane_list.push_back(lane);
+
+  // lane 8 14329
+  lane.lane_id = 5;
+  lane.node_list = {};
+  lane.connect_to_list = {};
+
+  lane.lane_attributes.directional_use.lane_direction = 1u; //ingress
+  node.delta.x = -2.5;
+  node.delta.y = -5.27;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = -3.78; //offset from previous
+  node.delta.y = -7.81;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = -2.44; //offset from previous
+  node.delta.y = -6.19;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = -1.74; //offset from previous
+  node.delta.y = -4.28;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 0.29; //offset from previous
+  node.delta.y = -7.29;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  intersection.lane_list.push_back(lane);
+
+  // lane 5 EGRESS, 4663 but MISSES! 
+  lane.lane_id = 6;
+  lane.node_list = {};
+  lane.connect_to_list = {};
+
+  lane.lane_attributes.directional_use.lane_direction = 1u; //ingress
+
+  node.delta.x = 15.23;
+  node.delta.y = -5.18;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 5.81; //offset from previous
+  node.delta.y = -1.33;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 10.35; //offset from previous
+  node.delta.y = -1.62;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 9.53; //offset from previous
+  node.delta.y = -1.22;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 7.09; //offset from previous
+  node.delta.y = -0.41;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 13.60; //offset from previous
+  node.delta.y = -0.98;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  intersection.lane_list.push_back(lane);
+
+  // lane 4 6703
+
+  lane.lane_id = 2;
+  lane.node_list = {};
+  lane.connect_to_list = {};
+  lane.lane_attributes.directional_use.lane_direction = 2u; //ingress
+
+  node.delta.x = 16.04;
+  node.delta.y = -1.82;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 5.93; //offset from previous
+  node.delta.y = -1.39;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 9.24; //offset from previous
+  node.delta.y = -1.39;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 8.37; //offset from previous
+  node.delta.y = -1.10;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 8.72; //offset from previous
+  node.delta.y = -0.93;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 13.48; //offset from previous
+  node.delta.y = -0.64;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  intersection.lane_list.push_back(lane);
+  
+  // lane 7 LANELET: 9135, but misses!
+  lane.lane_id = 7;
+  lane.node_list = {};
+  lane.connect_to_list = {};
+
+  lane.lane_attributes.directional_use.lane_direction = 1u; //ingress
+
+  node.delta.x = 8.72;
+  node.delta.y = 13.63;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 2.32; //offset from previous
+  node.delta.y = 4.98;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 3.08; //offset from previous
+  node.delta.y = 8.05;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 3.31; //offset from previous
+  node.delta.y = 7.41;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 2.5; //offset from previous
+  node.delta.y = 7.12;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  intersection.lane_list.push_back(lane);
+
+  // lane 3  // LANELET 12121
+  lane.lane_id = 3;
+  lane.node_list = {};
+  lane.connect_to_list = {};
+
+  lane.lane_attributes.directional_use.lane_direction = 2u; //ingress
+
+  node.delta.x = 5.06;
+  node.delta.y = 14.67;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 3.49; //offset from previous
+  node.delta.y = 7.35;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 3.72; //offset from previous
+  node.delta.y = 8.97;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 2.85; //offset from previous
+  node.delta.y = 6.83;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = 2.15; //offset from previous
+  node.delta.y = 4.80;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  
+  intersection.lane_list.push_back(lane);
+
+  // lane 8
+  lane.lane_id = 8;
+  lane.node_list = {};
+  lane.connect_to_list = {};
+
+  lane.lane_attributes.directional_use.lane_direction = 1u; //ingress
+
+  node.delta.x = -15.40;
+  node.delta.y = 7.03;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = -7.15; //offset from previous
+  node.delta.y = 2.14;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = -8.08; //offset from previous
+  node.delta.y = 3.59;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = -5.11; //offset from previous
+  node.delta.y =  2.55;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  intersection.lane_list.push_back(lane);
+  
+   // lane 4
+  lane.lane_id = 4;
+  lane.node_list = {};
+  lane.connect_to_list = {};
+
+  lane.lane_attributes.directional_use.lane_direction = 2u; //ingress
+
+  node.delta.x = -16.54;
+  node.delta.y = 3.68;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = -4.65; //offset from previous
+  node.delta.y = 3.68;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = -4.65; //offset from previous
+  node.delta.y = 1.39;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = -6.51; //offset from previous
+  node.delta.y =  2.08;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = -6.39; //offset from previous
+  node.delta.y = 2.32;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = -7.50; //offset from previous
+  node.delta.y = 3.13;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  node.delta.x = -7.61; //offset from previous
+  node.delta.y = 4.92;
+
+  lane.node_list.nodes.node_set_xy.push_back(node);
+
+  intersection.lane_list.push_back(lane);
+
+  intersection.ref_point.latitude = 38.9549844;
+  intersection.ref_point.longitude = -77.1493239;
+
+
+  sim.convertLaneToLaneletId(entry, exit, intersection, lanelet_map, cwm.getMapRoutingGraph());
+  //for (auto iter = sim.signal_group_to_entry_lanelet_ids_.begin(); iter != sim.signal_group_to_entry_lanelet_ids_.end(); iter ++)
+  //{
+  //  ROS_ERROR_STREAM("Entry lanelet: " << iter->second);
+  //}
+
+
+  EXPECT_EQ(sim.signal_group_to_entry_lanelet_ids_.size(), 1);
+  EXPECT_EQ(sim.signal_group_to_exit_lanelet_ids_.size(), 1);
+
+  EXPECT_EQ(sim.signal_group_to_entry_lanelet_ids_[1].size(), 1);
+  EXPECT_EQ(sim.signal_group_to_exit_lanelet_ids_[1].size(), 1);
+  EXPECT_EQ(entry.size(), 1);
+  EXPECT_EQ(exit.size(), 1);
+}
+
 
 TEST(SignalizedIntersectionManger, DISABLED_createIntersectionFromMapMsg)
 {
