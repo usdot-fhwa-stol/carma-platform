@@ -103,7 +103,10 @@ int WMBroadcasterNode::run()
   
   std::vector<double> intersection_coord_correction;
   pnh_.getParam("intersection_coord_correction", intersection_coord_correction);
-  wmb_.setIntersectionCoordCorrection(intersection_coord_correction);
+  std::vector<int> intersection_ids_for_correction;
+  pnh_.getParam("intersection_ids_for_correction", intersection_ids_for_correction);
+ 
+  wmb_.setIntersectionCoordCorrection(intersection_ids_for_correction, intersection_coord_correction);
 
   pnh2_.getParam("/config_speed_limit", config_limit);
   wmb_.setConfigSpeedLimit(config_limit);

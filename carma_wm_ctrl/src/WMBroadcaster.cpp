@@ -1206,17 +1206,17 @@ void WMBroadcaster::setMaxLaneWidth(double max_lane_width)
   sim_.setMaxLaneWidth(max_lane_width_);
 }
 
-void WMBroadcaster::setIntersectionCoordCorrection(const std::vector<double>& intersection_correction)
+void WMBroadcaster::setIntersectionCoordCorrection(const std::vector<int>& intersection_ids_for_correction, const std::vector<double>& intersection_correction)
 {
-  if (intersection_correction.size() % 3 != 0)
+  if (intersection_correction.size() % 2 != 0)
   {
     throw std::invalid_argument("Some of intersection coordinate correction parameters are not fully set!");
   }
 
-  for (auto i = 0; i != intersection_correction.size(); i+3)
+  for (auto i = 0; i != intersection_correction.size(); i+2)
   {
-    sim_.intersection_coord_correction_[(int)intersection_correction[i]].first =  intersection_correction[i + 1]; //x
-    sim_.intersection_coord_correction_[(int)intersection_correction[i]].second = intersection_correction[i + 2]; //y
+    sim_.intersection_coord_correction_[intersection_ids_for_correction[i/2]].first =  intersection_correction[i]; //x
+    sim_.intersection_coord_correction_[intersection_ids_for_correction[i/2]].second = intersection_correction[i + 1]; //y
   }
 }
 
