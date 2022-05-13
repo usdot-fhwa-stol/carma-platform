@@ -219,6 +219,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
   std::vector<std::shared_ptr<lanelet::CarmaTrafficSignal>> traffic_signals;
 
   auto sim_copy = sim_;
+
   sim_.createIntersectionFromMapMsg(intersections, traffic_signals, map_msg, current_map_, current_routing_graph_);
 
   if (sim_ == sim_copy) // if no change
@@ -1203,6 +1204,20 @@ void WMBroadcaster::setMaxLaneWidth(double max_lane_width)
 {
   max_lane_width_ = max_lane_width;
   sim_.setMaxLaneWidth(max_lane_width_);
+}
+
+void WMBroadcaster::setIntersectionCoordCorrection(const std::vector<int>& intersection_ids_for_correction, const std::vector<double>& intersection_correction)
+{
+  if (intersection_correction.size() % 2 != 0 || intersection_ids_for_correction.size() != intersection_correction.size() / 2)
+  {
+    throw std::invalid_argument("Some of intersection coordinate correction parameters are not fully set!");
+  }
+
+  for (auto i = 0; i != intersection_correction.size(); i+2)
+  {
+    sim_.intersection_coord_correction_[intersection_ids_for_correction[i/2]].first =  intersection_correction[i]; //x
+    sim_.intersection_coord_correction_[intersection_ids_for_correction[i/2]].second = intersection_correction[i + 1]; //y
+  }
 }
 
 void WMBroadcaster::setConfigSpeedLimit(double cL)
