@@ -93,6 +93,15 @@ namespace object_visualizer
     }
 
     visualization_msgs::msg::MarkerArray viz_msg;
+    //Send delete all markers before adding new ones
+    visualization_msgs::msg::Marker marker;
+    marker.id = 0;
+    marker.action = visualization_msgs::msg::Marker::DELETEALL;
+    viz_msg.markers.push_back(marker);
+    external_objects_viz_pub_->publish(viz_msg);
+
+    viz_msg.markers.clear();
+    
     viz_msg.markers.reserve(msg->objects.size());
 
     
