@@ -115,13 +115,6 @@ class TrafficIncidentParserWorker
   void getAdjacentReverseCenterlines(const lanelet::ConstLanelets& adjacentSet,
     const lanelet::BasicPoint2d& start_point, double uptrack, std::vector<std::vector<lanelet::BasicPoint2d>>* reverse_lanes);
 
-  /*!
-   * \brief Callback for new connections for geofence publication
-   *        Forwards the full set of traffic controls describing the current received geofence.
-   * \param single_sub_pub A publisher which connects directly to the new subscriber. 
-   */ 
-  //void newGeofenceSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const;
-
   double latitude = 0.0;
   double longitude = 0.0;
   double down_track = 0.0;
@@ -144,13 +137,6 @@ class TrafficIncidentParserWorker
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
 
   rclcpp::Clock::SharedPtr clock_;
-  
-  /**
-   * Queue which stores the current set of geofence messages to forward to any new connections
-   * This queue is implemented as a vector because it gets reused by each new subscriber connection
-   * NOTE: This queue should be cleared each time the geofence mesages change
-   */
-  std::vector<carma_v2x_msgs::msg::TrafficControlMessage> geofence_message_queue_; 
 };
 
 } // namespace traffic_incident_parser

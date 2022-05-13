@@ -36,7 +36,14 @@ namespace traffic_incident_parser
                                                               std::bind(&TrafficIncidentParserWorker::mobilityOperationCallback, &traffic_parser_worker_, std_ph::_1));
 
     // Setup publishers
-    traffic_control_msg_pub_ = create_publisher<carma_v2x_msgs::msg::TrafficControlMessage>("geofence", 100);
+    rclcpp::PublisherOptions publisher_options_no_ipc; // Initial a PublisherOptions object that will have intra-process comms disabled
+    publisher_options_no_ipc.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for this PublisherOptions object
+
+    auto publisher_qos_transient_local = rclcpp::QoS(rclcpp::KeepAll()); // A publisher with this QoS will store all messages that it has sent on the topic
+    publisher_qos_transient_local.transient_local();  // A publisher with this QoS will re-send all (when KeepAll is used) messages to all late-joining subscribers 
+
+    // Create a publisher that will send all previously published messages to late-joining subscribers ONLY If the subscriber is transient_local too
+    traffic_control_msg_pub_ = create_publisher<carma_v2x_msgs::msg::TrafficControlMessage>("geofence", publisher_qos_transient_local, publisher_options_no_ipc);
 
     // Return success if everthing initialized successfully
     return CallbackReturn::SUCCESS;

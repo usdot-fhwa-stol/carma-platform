@@ -39,14 +39,12 @@ namespace traffic_incident_parser
 
             if(valid_msg && event_type=="CLOSED")
             {
-                geofence_message_queue_.clear(); // Clear the previous geofence message queue since the geofence set will now be updated
                 previous_strategy_params=mobility_msg->strategy_params;
                 carma_v2x_msgs::msg::TrafficControlMessage traffic_control_msg;
                 traffic_control_msg.choice = carma_v2x_msgs::msg::TrafficControlMessage::TCMV01;
                 for(auto &traffic_msg:composeTrafficControlMesssages())
                 {
                     traffic_control_msg.tcm_v01=traffic_msg;
-                    geofence_message_queue_.push_back(traffic_control_msg); // Add the message to the geofence_message_queue for publication to new subscribers
                     traffic_control_pub_(traffic_control_msg); // Publish the message to existing subscribers
                 }
             }
@@ -478,12 +476,5 @@ namespace traffic_incident_parser
         return output_msg;
     
     }
-    
-    //void TrafficIncidentParserWorker::newGeofenceSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const {
-    //
-    //    for (const auto& msg : geofence_message_queue_) {
-    //        single_sub_pub.publish(msg); // For each applied update for the current map version publish the update to the new subscriber
-    //    }
-    //}
 
 } // traffic_incident_parser

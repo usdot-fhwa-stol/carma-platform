@@ -48,12 +48,4 @@
     <include file="$(find carma_wm_ctrl)/launch/carma_wm_broadcaster.launch"/>
   </group>
 
-  <!-- Traffic Incident Parser -->
-  <group>
-    <remap from="georeference" to="$(optenv CARMA_LOCZ_NS)/map_param_loader/georeference"/>
-    <remap from="geofence" to="$(optenv CARMA_MSG_NS)/incoming_geofence_control"/>
-    <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
-    <include file="$(find traffic_incident_parser)/launch/traffic_incident_parser.launch"/>
-  </group>
-
 </launch>

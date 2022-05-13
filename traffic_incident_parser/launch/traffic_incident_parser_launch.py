@@ -34,11 +34,6 @@ def generate_launch_description():
     log_level = LaunchConfiguration('log_level')
     declare_log_level_arg = DeclareLaunchArgument(
         name ='log_level', default_value='WARN')
-    
-    # Get parameter file path
-    param_file_path = os.path.join(
-        get_package_share_directory('traffic_incident_parser'), 'config/parameters.yaml')
-
         
     # Launch node(s) in a carma container to allow logging to be configured
     container = ComposableNodeContainer(
@@ -51,13 +46,12 @@ def generate_launch_description():
             # Launch the core node(s)
             ComposableNode(
                     package='traffic_incident_parser',
-                    plugin='traffic_incident_parser::Node',
+                    plugin='traffic_incident_parser::TrafficIncidentParserNode',
                     name='traffic_incident_parser_node',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
                         {'--log-level' : log_level }
                     ],
-                    parameters=[ param_file_path ]
             ),
         ]
     )
