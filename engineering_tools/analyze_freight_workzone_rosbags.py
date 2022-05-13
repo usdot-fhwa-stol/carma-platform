@@ -116,7 +116,7 @@ def generate_crosstrack_plot(bag, time_start_engagement, time_end_engagement):
     first = True
     crosstrack_errors = []
     crosstrack_error_times = []
-    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_start_engagement + rospy.Duration(45.0), end_time = time_end_engagement - rospy.Duration(55.0)): # time_start_engagement+time_duration):
+    for topic, msg, t in bag.read_messages(topics=['/guidance/route_state'], start_time = time_start_engagement + rospy.Duration(0.0), end_time = time_end_engagement - rospy.Duration(0.0)): # time_start_engagement+time_duration):
         if first:
             time_start = t
             first = False
@@ -132,10 +132,10 @@ def generate_crosstrack_plot(bag, time_start_engagement, time_end_engagement):
     ax.plot(crosstrack_error_times, crosstrack_errors, 'g', label='Cross-track Error (Meters)')
 
     # Optional: Plot a horizontal bar at a positive value for reference
-    ax.axhline(y = 0.8, color = 'r', label = '+/- 0.8 Meters (For Reference)')
+    ax.axhline(y = 0.65, color = 'r', label = '+/- 0.65 Meters (For Reference)')
 
     # Optional: Plot a horizontal bar at a negative value for reference
-    ax.axhline(y = -0.8, color = 'r')
+    ax.axhline(y = -0.65, color = 'r')
 
     plt.rc('axes', labelsize=12)  # fontsize of the axes labels
     plt.rc('legend', fontsize=10)  # fontsize of the legend text
@@ -795,7 +795,7 @@ def check_time_to_begin_acceleration(bag, time_enter_geofence, time_end_engageme
     num_consecutive_accel_required = 20 # Arbitrarily select that topic must show vehicle speeding up for this many consecutive messages to be considered the start of acceleration
     found_start_of_accel = False
     duration_before_accel = rospy.Duration(0.0)
-    time_begin_acceleration_in_geofence = rospy.Time(0.0)
+    time_begin_acceleration_after_geofence = rospy.Time(0.0)
     for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_exit_geofence, end_time = time_end_engagement): # time_start_engagement+time_duration):
         time_start = t
 
@@ -813,7 +813,7 @@ def check_time_to_begin_acceleration(bag, time_enter_geofence, time_end_engageme
                 num_consecutive_accel +=1
                 if num_consecutive_accel == num_consecutive_accel_required:
                     duration_before_accel = (time_start - time_exit_geofence).to_sec()
-                    time_begin_acceleration_in_geofence = time_start
+                    time_begin_acceleration_after_geofence = time_start
                     found_start_of_accel = True
             else:
                 break
@@ -833,7 +833,128 @@ def check_time_to_begin_acceleration(bag, time_enter_geofence, time_end_engageme
     else:
         print("FWZ-26 failed; vehicle began accelerating " + str(distance_before_accel) + " after exiting geofence (" + str(duration_before_accel) + " seconds)")
 
+    return is_successful, time_begin_acceleration_after_geofence
+
+###########################################################################################################
+# FWZ-27: After exiting the geofenced area with an advisory speed limit, the actual trajectory back to 
+#         normal operations will include an acceleration section. The average acceleration over the entire 
+#         section shall be no less than 1 m/s^2, and the average acceleration over any 1-second portion 
+#         of the section shall be no greater than 2.0 m/s^2.
+###########################################################################################################
+def check_acceleration_after_geofence(bag, time_begin_acceleration_after_geofence, time_end_engagement, target_speed_limit_ms):
+    min_average_accel_rate = 1.0 # m/s^2
+    max_one_second_accel_rate = 2.0 # m/s^2
+
+    # Set target speed (an offset below the target speed limit, since acceleration rate will decrease after this point)
+    speed_limit_offset_ms = 0.89 # 0.89 m/s is 2 mph
+    target_speed_ms = target_speed_limit_ms - speed_limit_offset_ms
+
+    # Obtain timestamp associated with the end of the acceleration section 
+    # Note: This is either the first deceleration after the start of the accel section or the moment 
+    #       when the vehicle's speed reaches some offset of the speed limit.
+    prev_speed = 0.0
+    first = True
+    time_end_accel = rospy.Time()
+    speed_start_accel_ms = 0.0
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_begin_acceleration_after_geofence):
+        if first:
+            prev_speed = msg.twist.linear.x
+            speed_start_accel_ms = msg.twist.linear.x
+            first = False
+            continue
+
+        delta_speed = msg.twist.linear.x - prev_speed
+        current_speed_ms = msg.twist.linear.x
+        if (current_speed_ms >= target_speed_ms):
+            time_end_accel = t
+            speed_end_accel_ms = current_speed_ms
+
+            # Debug Line
+            speed_end_accel_mph = speed_end_accel_ms * 2.2369
+            print("FWZ-27 (DEBUG): Speed at end of acceleration section: " + str(speed_end_accel_mph) + " mph")
+            break
+
+        prev_speed = msg.twist.linear.x
+
+    # Check the total average acceleration rate
+    total_avg_accel = (speed_end_accel_ms - speed_start_accel_ms) / (time_end_accel-time_begin_acceleration_after_geofence).to_sec()
+    #print("Total average accel: " + str(total_avg_accel) + " m/s^2")
+
+    # Check the 1-second window averages
+    # Obtain average decelation over all 1-second windows in acceleration section
+    one_second_duration = rospy.Duration(1.0)
+    all_one_second_windows_successful = True
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_begin_acceleration_after_geofence, end_time = (time_end_accel-one_second_duration)):
+        speed_initial_ms = msg.twist.linear.x
+        time_initial = t
+
+        speed_final_ms = 0.0
+        for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = (time_initial+one_second_duration)):
+            speed_final_ms = msg.twist.linear.x
+            t_final = t
+            break
+        
+        one_second_accel = (speed_final_ms - speed_initial_ms) / (t_final - time_initial).to_sec()
+
+        if one_second_accel > max_one_second_accel_rate:
+            print("Failure: 1-second window accel rate was " + str(one_second_accel) + " m/s^2; end time was " + str((t_final - t_final).to_sec()) + " seconds after start of engagement.")
+            all_one_second_windows_successful = False
+        #else:
+        #    print("Success: 1-second window has accel rate at " + str(one_second_decel) + " m/s^2")
+
+    # Print success/failure statements
+    total_acceleration_rate_successful = False
+    if total_avg_accel >= min_average_accel_rate:
+        print("FWZ-27 (avg accel after geofence) Succeeded; total average acceleration was " + str(total_avg_accel) + " m/s^2")
+        total_acceleration_rate_successful = True
+    else:
+        print("FWZ-27 (avg accel at start) Failed; total average acceleration was " + str(total_avg_accel) + " m/s^2")
+    
+    if all_one_second_windows_successful:
+        print("FWZ-27 (1-second accel windows) Succeeded; no occurrences of 1-second average acceleration above 2.0 m/s^2")
+    else:
+        print("FWZ-27 (1-second accel windows) Failed; at least one occurrence of 1-second average acceleration above 2.0 m/s^2")
+
+    is_successful = False
+    if total_acceleration_rate_successful and all_one_second_windows_successful:
+        is_successful = True
+
     return is_successful
+
+###########################################################################################################
+# FWZ-29: After exiting the geofenced area, the planned route must end with the vehicle having been at 
+#         steady state for at least 5 seconds. 
+###########################################################################################################
+def check_steady_state_after_geofence(bag, time_begin_acceleration_after_geofence, time_end_engagement, original_speed_limit_ms):
+    min_time_at_steady_state = 5.0 # Seconds
+
+    # (m/s) Threshold offset of vehicle speed to speed limit to be considered at steady state
+    threshold_speed_limit_offset = 0.89408 # 0.89408 m/s is 2 mph
+    min_steady_state_speed = original_speed_limit_ms - threshold_speed_limit_offset
+    max_steady_state_speed = original_speed_limit_ms + threshold_speed_limit_offset
+
+    has_reached_steady_state = False
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_begin_acceleration_after_geofence, end_time = time_end_engagement):
+        if (min_steady_state_speed <= msg.twist.linear.x <= max_steady_state_speed) and not has_reached_steady_state:
+            time_start_steady_state = t
+            has_reached_steady_state = True
+        
+        if not (min_steady_state_speed <= msg.twist.linear.x <= max_steady_state_speed) and has_reached_steady_state:
+            time_end_steady_state =t
+            has_reached_steady_state = False
+            break
+    
+    time_at_steady_state = (time_end_steady_state - time_start_steady_state).to_sec()
+
+    is_successful = False
+    if time_at_steady_state >= min_time_at_steady_state:
+        print("FWZ-29 succeeded: Vehicle was at steady state for " + str(time_at_steady_state) + " seconds after exiting the geofence")
+        is_successful = True
+    else:
+        print("FWZ-29 failed: Vehicle was at steady state for " + str(time_at_steady_state) + " seconds after exiting the geofence")
+
+    return is_successful
+
 
 ###########################################################################################################
 # Port Drayage 1: Vehicle achieves its target speed (+/- 2 mph of speed limit).
@@ -1390,10 +1511,10 @@ def main():
         print("Original Speed Limit is " + str(original_speed_limit_ms) + " m/s")
 
         # Optional: Generate vehicle speed plot for the rosbag
-        #generate_speed_plot(bag, time_test_start_engagement, time_test_end_engagement)
+        generate_speed_plot(bag, time_test_start_engagement, time_test_end_engagement)
 
         # Optional: Generate cross-track error plot for the rosbag
-        #generate_crosstrack_plot(bag, time_test_start_engagement, time_test_end_engagement)
+        generate_crosstrack_plot(bag, time_test_start_engagement, time_test_end_engagement)
 
         # Metric FWZ-1 (geofenced area is a part of the initial route)
         # Metric FWZ-8 (final route does not include the closed lanelets))
@@ -1423,7 +1544,11 @@ def main():
 
         fwz_25_result = check_deceleration_for_geofence(bag, time_test_start_engagement, time_test_end_engagement, time_begin_deceleration_in_geofence, advisory_speed_limit_ms)
 
-        fwz_26_result = check_time_to_begin_acceleration(bag, time_begin_deceleration_in_geofence, time_test_end_engagement, original_speed_limit_ms)
+        fwz_26_result, time_begin_acceleration_after_geofence = check_time_to_begin_acceleration(bag, time_begin_deceleration_in_geofence, time_test_end_engagement, original_speed_limit_ms)
+
+        fwz_27_result = check_acceleration_after_geofence(bag, time_begin_acceleration_after_geofence, time_test_end_engagement, original_speed_limit_ms)
+
+        fwz_29_result = check_steady_state_after_geofence(bag, time_begin_acceleration_after_geofence, time_test_end_engagement, original_speed_limit_ms)
 
         return
 
