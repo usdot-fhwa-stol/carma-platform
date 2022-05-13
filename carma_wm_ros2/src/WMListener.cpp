@@ -102,7 +102,7 @@ WMListener::WMListener(
   map_sub_qos.transient_local();  // If it is possible that this node is a late-joiner to its topic, it must be set to transient_local to receive earlier messages that were missed.
                                   // NOTE: The publisher's QoS must be set to transisent_local() as well for earlier messages to be resent to this later-joiner.
 
-  // Create semantic ubscriber that will receive earlier messages that were missed ONLY if the publisher is transient_local too
+  // Create semantic mab subscriber that will receive earlier messages that were missed ONLY if the publisher is transient_local too
   map_sub_ = rclcpp::create_subscription<autoware_lanelet2_msgs::msg::MapBin>(node_topics_, "semantic_map", map_sub_qos,
                                   std::bind(&WMListenerWorker::mapCallback, worker_.get(), std::placeholders::_1), map_options);
 }
