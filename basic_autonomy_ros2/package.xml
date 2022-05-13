@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--  
- Copyright (C) 2019-2022 LEIDOS.
+ Copyright (C) 2021-2022 LEIDOS.
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  use this file except in compliance with the License. You may obtain a copy of
  the License at
@@ -14,9 +14,9 @@
 -->
 
 <package format="3">
-  <name>roadway_objects</name>
+  <name>basic_autonomy_ros2</name>
   <version>4.0.0</version>
-  <description>The roadway_objects package</description>
+  <description>The basic_autonomy_ros2 package</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
 
@@ -29,17 +29,15 @@
   <depend>rclcpp</depend>
   <depend>carma_ros2_utils</depend>
   <depend>rclcpp_components</depend>
-  <depend>carma_perception_msgs</depend>
-  <depend>carma_wm_ros2</depend>
+  <depend>carma_planning_msgs</depend>
+  <depend>carma_debug_ros2_msgs</depend>
   <depend>lanelet2_core</depend>
+  <depend>trajectory_utils_ros2</depend>
+  <depend>carma_wm_ros2</depend>
   <depend>tf2</depend>
-  <depend>tf2_geometry_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
-
-  <exec_depend>launch</exec_depend>
-  <exec_depend>launch_ros</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
