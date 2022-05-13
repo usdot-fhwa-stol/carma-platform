@@ -63,7 +63,7 @@ int main(int argc, char** argv)
   pnh.param<std::string>("lane_following_plugin_name",       config.lane_following_plugin_name, config.lane_following_plugin_name);
   pnh.param<std::string>("stop_and_wait_plugin_name",        config.stop_and_wait_plugin_name, config.stop_and_wait_plugin_name);
   pnh.param<std::string>("intersection_transit_plugin_name", config.intersection_transit_plugin_name, config.intersection_transit_plugin_name);
-  pnh.param<double>("delta_t",   config.delta_t, config.delta_t);
+  pnh.param<double>("carma_streets_update_interval",   config.carma_streets_update_interval, config.carma_streets_update_interval);
   pnh.param<double>("reaction_time",   config.reaction_time, config.reaction_time);
   pnh.param<bool>("case_switch",config.case_switch, config.case_switch);
   pnh.getParam("/vehicle_id", config.vehicle_id);

@@ -46,7 +46,7 @@
 namespace lci_strategic_plugin
 {
 
-  enum TurnDirection {
+  enum class TurnDirection {
             Straight,
             Right,
             Left

@@ -66,10 +66,10 @@ struct LCIStrategicPluginConfig
   double min_maneuver_planning_period = 15.1;
 
   //! Double: Approximate update time interval of carma streets
-  double delta_t = 1.0;
-
+  double carma_streets_update_interval = 1.0;
+  
   //! Double: Vehicle reaction time to a received schedule in seconds (approximate value, only used for communication with the schedule)
-  double reaction_time = 5.0;
+  double reaction_time = 2.0;
 
   //! Double: Minimum inter-vehicle gap
   double min_gap = 10.0;
