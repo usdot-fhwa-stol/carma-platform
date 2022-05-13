@@ -36,7 +36,7 @@ namespace traffic_incident_parser
                                                               std::bind(&TrafficIncidentParserWorker::mobilityOperationCallback, &traffic_parser_worker_, std_ph::_1));
 
     // Setup publishers
-    rclcpp::PublisherOptions publisher_options_no_ipc; // Initial a PublisherOptions object that will have intra-process comms disabled
+    rclcpp::PublisherOptions publisher_options_no_ipc; // Initialize a PublisherOptions object with intra-process comms disabled
     publisher_options_no_ipc.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for this PublisherOptions object
 
     auto publisher_qos_transient_local = rclcpp::QoS(rclcpp::KeepAll()); // A publisher with this QoS will store all messages that it has sent on the topic
