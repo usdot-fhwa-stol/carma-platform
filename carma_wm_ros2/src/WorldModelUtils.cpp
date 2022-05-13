@@ -168,6 +168,26 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
       std::unordered_set<lanelet::Lanelet> filtered = filterSuccessorLanelets(possible_lanelets, affected_lanelets, lanelet_map, routing_graph);
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "Got successor lanelets of size: " << filtered.size());
       affected_lanelets.insert(filtered.begin(), filtered.end());
+
+
+      if (affected_lanelets.empty() && !possible_lanelets.empty())
+      {
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "Checking if it is the edge case where only last point falls on a valid (correct direction) lanelet");
+        for (auto llt: possible_lanelets)
+        {
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "Evaluating lanelet: " << llt.id());
+          lanelet::BasicLineString2d gf_dir_line({gf_pts[idx - 1].basicPoint2d(), gf_pts[idx].basicPoint2d()});
+          lanelet::BasicLineString2d llt_boundary({(llt.leftBound2d().begin())->basicPoint2d(), (llt.rightBound2d().begin())->basicPoint2d()});
+
+          // record the llts that are on the same dir
+          if (boost::geometry::intersects(llt_boundary, gf_dir_line))
+          {
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "Overlaps starting line... Picking llt: " << llt.id());
+            affected_lanelets.insert(llt);
+          }  
+        }
+      }
+
       break;
     } 
 
@@ -214,7 +234,8 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "interior_angle: " << interior_angle);
         // Save the lanelet if the direction of two points inside aligns with that of the lanelet
 
-        if (interior_angle < M_PI_2 && interior_angle >= 0) affected_lanelets.insert(llt); 
+        if (interior_angle < M_PI_2 && interior_angle >= 0) 
+          affected_lanelets.insert(llt); 
       }
       else
       {
