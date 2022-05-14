@@ -599,12 +599,12 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   ROS_DEBUG_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));
   ros::Time nearest_green_entry_time;
 
-  if (config_.case_switch ==false)
+  if (config_.case_switch ==false || scheduled_enter_time_ == 0 )
     {
      nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
                                           + ros::Duration(0.01); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehcile Estimation
     }
-       else if(config_.case_switch ==true)
+       else if(config_.case_switch ==true && scheduled_enter_time_ != 0 )
        {
           nearest_green_entry_time = ros::Time(std::max(earliest_entry_time.toSec(), (scheduled_enter_time_)/1000.0)) + ros::Duration(0.01); //Carma Street
        }
@@ -875,8 +875,9 @@ void LCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
         street_msg_timestamp_ = msg->m_header.timestamp;
         ROS_DEBUG_STREAM("street_msg_timestamp_: " << street_msg_timestamp_);
         parseStrategyParams(msg->strategy_params);
+        previous_strategy_params_ = msg->strategy_params;
       }
-    previous_strategy_params_ = msg->strategy_params;
+    
   }
   
 }
@@ -968,7 +969,6 @@ TurnDirection LCIStrategicPlugin::getTurnDirectionAtIntersection(std::vector<lan
         break;
       }
       else turn_direction = TurnDirection::Straight;
-      ROS_DEBUG_STREAM("intersection crossed lanelet direction is: " << turn_direction);
     }
     else
     {
@@ -981,7 +981,7 @@ TurnDirection LCIStrategicPlugin::getTurnDirectionAtIntersection(std::vector<lan
 }
 
 
-bool LCIStrategicPlugin::onSpin()
+bool LCIStrategicPlugin::mobilityPubSpin()
 {
   if (approaching_light_controlled_interction_)
   {

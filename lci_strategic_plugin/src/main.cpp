@@ -66,6 +66,7 @@ int main(int argc, char** argv)
   pnh.param<double>("carma_streets_update_interval",   config.carma_streets_update_interval, config.carma_streets_update_interval);
   pnh.param<double>("reaction_time",   config.reaction_time, config.reaction_time);
   pnh.param<bool>("case_switch",config.case_switch, config.case_switch);
+  pnh.param<double>("mobility_rate",config.mobility_rate, config.mobility_rate);
   pnh.getParam("/vehicle_id", config.vehicle_id);
   // clang-format on
   
@@ -102,9 +103,9 @@ int main(int argc, char** argv)
         tf_distance_pub.publish(tf_distance);
         earliest_et_pub.publish(earliest_et);
         et_pub.publish(scheduled_et);
-
-        lcip.onSpin(); 
       });
+
+      ros::Timer mobility_pub_timer = nh.createTimer(ros::Duration(ros::Rate(config.mobility_rate)), [&lcip](const auto&) {lcip.mobilityPubSpin(); });
 
   // Start
   ros::CARMANodeHandle::spin();

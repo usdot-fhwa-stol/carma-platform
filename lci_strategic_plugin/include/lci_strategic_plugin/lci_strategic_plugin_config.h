@@ -74,8 +74,11 @@ struct LCIStrategicPluginConfig
   //! Double: Minimum inter-vehicle gap
   double min_gap = 10.0;
 
-  //! Double: Minimum inter-vehicle gap
+  //! Bool: Minimum inter-vehicle gap
   bool case_switch = false;
+
+  //! Double: Mobility operation rate
+  double mobility_rate = 10.0;
 
   //! License plate of the vehicle.
   std::string vehicle_id = "default_id";

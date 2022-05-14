@@ -177,10 +177,11 @@ public:
    * 
    * \return True if the node should continue running. False otherwise
    */ 
-  bool onSpin();
+  bool mobilityPubSpin();
 
 
   ros::Publisher mobility_operation_pub;
+  
   
   ////////// VARIABLES ///////////
 
