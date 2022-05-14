@@ -178,6 +178,13 @@ public:
   void setMaxLaneWidth(double max_lane_width);
 
   /*!
+   * \brief Sets the coordinate correction for intersection
+     \param list of intersection_ids corresponding to every two elements in correction list
+     \param list of intersection coord correction parameters in double in every 2 elements: delta_x, delta_y
+   */
+  void setIntersectionCoordCorrection(const std::vector<int>& intersection_ids_for_correction, const std::vector<double>& intersection_correction);
+
+  /*!
    * \brief Sets the configured speed limit. 
    */
   void setConfigSpeedLimit(double cL);
