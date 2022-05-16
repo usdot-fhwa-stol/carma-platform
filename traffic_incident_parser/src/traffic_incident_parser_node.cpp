@@ -53,7 +53,7 @@ namespace traffic_incident_parser
     return CallbackReturn::SUCCESS;
   }
 
-  void TrafficIncidentParserNode::publishTrafficControlMessage(const carma_v2x_msgs::msg::TrafficControlMessage& traffic_control_msg)
+  void TrafficIncidentParserNode::publishTrafficControlMessage(const carma_v2x_msgs::msg::TrafficControlMessage& traffic_control_msg) const
   {
     traffic_control_msg_pub_->publish(traffic_control_msg);
   }

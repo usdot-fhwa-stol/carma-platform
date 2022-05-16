@@ -66,7 +66,7 @@ namespace traffic_incident_parser
     /**
      * \brief Publish traffic control message 
      */
-    void publishTrafficControlMessage(const carma_v2x_msgs::msg::TrafficControlMessage& traffic_control_msg);
+    void publishTrafficControlMessage(const carma_v2x_msgs::msg::TrafficControlMessage& traffic_control_msg) const;
   };
 
 } // traffic_incident_parser

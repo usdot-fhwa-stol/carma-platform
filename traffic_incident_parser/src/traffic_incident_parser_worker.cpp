@@ -32,7 +32,7 @@ namespace traffic_incident_parser
     void TrafficIncidentParserWorker::mobilityOperationCallback(carma_v2x_msgs::msg::MobilityOperation::UniquePtr mobility_msg)
     {
 
-        if((mobility_msg->strategy=="carma3/Incident_Use_Case"))
+        if(mobility_msg->strategy=="carma3/Incident_Use_Case")
         { 
 
             bool valid_msg = mobilityMessageParser(mobility_msg->strategy_params);
@@ -42,7 +42,7 @@ namespace traffic_incident_parser
                 previous_strategy_params=mobility_msg->strategy_params;
                 carma_v2x_msgs::msg::TrafficControlMessage traffic_control_msg;
                 traffic_control_msg.choice = carma_v2x_msgs::msg::TrafficControlMessage::TCMV01;
-                for(auto &traffic_msg:composeTrafficControlMesssages())
+                for(const auto &traffic_msg : composeTrafficControlMesssages())
                 {
                     traffic_control_msg.tcm_v01=traffic_msg;
                     traffic_control_pub_(traffic_control_msg); // Publish the message to existing subscribers
@@ -139,7 +139,7 @@ namespace traffic_incident_parser
     std::string TrafficIncidentParserWorker::stringParserHelper(std::string str, unsigned long str_index) const
     {
         std::string str_temp="";
-        for(int i=str_index+1;i<str.length();i++)
+        for(size_t i=str_index+1;i<str.length();i++)
         {
             str_temp+=str[i];
         }
@@ -168,23 +168,23 @@ namespace traffic_incident_parser
         size_t best_index = 0;
         for (const auto& p : points)
         {
-        double distance = lanelet::geometry::distance2d(p, point);
-        if (distance < min_distance)
-        {
-            best_index = i;
-            min_distance = distance;
-        }
-        i++;
+            double distance = lanelet::geometry::distance2d(p, point);
+            if (distance < min_distance)
+            {
+                best_index = i;
+                min_distance = distance;
+            }
+            i++;
         }
 
         return best_index;
     }
 
     void TrafficIncidentParserWorker::getAdjacentForwardCenterlines(const lanelet::ConstLanelets& adjacentSet,
-        const lanelet::BasicPoint2d& start_point, double downtrack, std::vector<std::vector<lanelet::BasicPoint2d>>* forward_lanes)
+        const lanelet::BasicPoint2d& start_point, double downtrack, std::vector<std::vector<lanelet::BasicPoint2d>>* forward_lanes) const
     {
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "getAdjacentForwardCenterlines");
-        for (auto ll : adjacentSet) {
+        for (const auto& ll : adjacentSet) {
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Processing adjacent lanelet: " << ll.id());
             std::vector<lanelet::BasicPoint2d> following_lane;
             auto cur_ll = ll;
@@ -205,11 +205,11 @@ namespace traffic_incident_parser
                 RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Accumulating lanelet: " << cur_ll.id());
                 if (p_idx == cur_ll.centerline().size()) {
                     auto next_lls = wm_->getMapRoutingGraph()->following(cur_ll, false);
-                    if (next_lls.size() == 0) {
+                    if (next_lls.empty()) {
                         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "No followers");
                         break;
                     }
-                    auto next = next_lls[0];
+                    const auto& next = next_lls[0];
                     RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Getting next lanelet: " << next.id());
                     cur_ll = next;
                     p_idx = 0;
@@ -228,17 +228,17 @@ namespace traffic_incident_parser
     }
 
     void TrafficIncidentParserWorker::getAdjacentReverseCenterlines(const lanelet::ConstLanelets& adjacentSet,
-        const lanelet::BasicPoint2d& start_point, double uptrack, std::vector<std::vector<lanelet::BasicPoint2d>>* reverse_lanes)
+        const lanelet::BasicPoint2d& start_point, double uptrack, std::vector<std::vector<lanelet::BasicPoint2d>>* reverse_lanes) const
     {
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "getAdjacentReverseCenterlines");
-        for (auto ll : adjacentSet) {
+        for (const auto& ll : adjacentSet) {
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Processing adjacent lanelet: " << ll.id());
             std::vector<lanelet::BasicPoint2d> previous_lane;
             auto cur_ll = ll;
             double dist = 0;
             
             // Identify the point to start the accumulation from
-            int p_idx = getNearestPointIndex(cur_ll.centerline(), start_point); // Get the index of the nearest point
+            size_t p_idx = getNearestPointIndex(cur_ll.centerline(), start_point); // Get the index of the nearest point
 
             lanelet::BasicPoint2d prev_point = cur_ll.centerline()[p_idx].basicPoint2d();
 
@@ -251,11 +251,11 @@ namespace traffic_incident_parser
                 RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Accumulating lanelet: " << cur_ll.id());
                 if (p_idx == 0) {
                     auto next_lls = wm_->getMapRoutingGraph()->previous(cur_ll, false);
-                    if (next_lls.size() == 0) {
+                    if (next_lls.empty()) {
                         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "No previous lanelets");
                         break;
                     }
-                    auto next = next_lls[0];
+                    const auto& next = next_lls[0];
                     RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Getting next lanelet: " << next.id());
                     cur_ll = next;
                     p_idx = cur_ll.centerline().size() - 1;
@@ -285,7 +285,7 @@ namespace traffic_incident_parser
         local_point_=getIncidentOriginPoint();
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Responder point in map frame: " << local_point_.x() << ", " << local_point_.y());
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, 1); 
-        if (current_lanelets.size() == 0) {
+        if (current_lanelets.empty()) {
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "No nearest lanelet to responder vehicle in map point: " << local_point_.x() << ", " << local_point_.y());
             return {};
         }
@@ -301,12 +301,13 @@ namespace traffic_incident_parser
         }
         
         lanelet::ConstLanelets rights = wm_->getMapRoutingGraph()->rights(current_lanelet);
-        for (auto l : rights) {
+        for (const auto& l : rights) {
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Right lanelet: " << l.id());
         }
 
         // Assume that if there are more lanelets to the left than the right then the tahoe is on the left
-        std::vector<std::vector<lanelet::BasicPoint2d>> forward_lanes, reverse_lanes;
+        std::vector<std::vector<lanelet::BasicPoint2d>> forward_lanes;
+        std::vector<std::vector<lanelet::BasicPoint2d>> reverse_lanes;
 
         if (lefts.size() >=  rights.size()) {
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Emergency vehicle on the right ");
@@ -353,7 +354,7 @@ namespace traffic_incident_parser
         ////
         std::string common_frame = "WGS84"; // Common frame to use for lat/lon definition. This will populate the datum field of the message. A more complex CRS should not be used here
 
-        PJ* common_to_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, common_frame.c_str(), projection_msg_.c_str() , NULL); // Create transformation between map frame and common frame. Reverse here takes map->latlon. Froward is latlon->map
+        PJ* common_to_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, common_frame.c_str(), projection_msg_.c_str() , nullptr); // Create transformation between map frame and common frame. Reverse here takes map->latlon. Froward is latlon->map
 
         if (common_to_map_proj == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
         
@@ -385,7 +386,7 @@ namespace traffic_incident_parser
         // This is needed to match the TrafficControlMessage specification
         std::string local_tmerc_enu_proj = "+proj=tmerc +datum=WGS84 +h_0=0 +lat_0=" + lat_string.str() + " +lon_0=" + lon_string.str() + " +k=1 +x_0=0 +y_0=0 +units=m +vunits=m +no_defs";
 
-        PJ* map_to_tmerc_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, projection_msg_.c_str(), local_tmerc_enu_proj.c_str() , NULL); // Create transformation between the common frame and the local ENU oriented frame
+        PJ* map_to_tmerc_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, projection_msg_.c_str(), local_tmerc_enu_proj.c_str() , nullptr); // Create transformation between the common frame and the local ENU oriented frame
         
         if (map_to_tmerc_proj == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
         

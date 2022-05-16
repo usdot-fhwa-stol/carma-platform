@@ -103,7 +103,7 @@ class TrafficIncidentParserWorker
    *  \param forward_lanes Ouput parameter which will be populated with the centerlines for each lane up to the downtrack distance
    */
   void getAdjacentForwardCenterlines(const lanelet::ConstLanelets& adjacentSet,
-    const lanelet::BasicPoint2d& start_point, double downtrack, std::vector<std::vector<lanelet::BasicPoint2d>>* forward_lanes);
+    const lanelet::BasicPoint2d& start_point, double downtrack, std::vector<std::vector<lanelet::BasicPoint2d>>* forward_lanes) const;
 
   /*! 
    *  \brief Helper method that is identical to getAdjacentForwardCenterlines except it works in reverse using uptrack distance
@@ -113,7 +113,7 @@ class TrafficIncidentParserWorker
    *  \param forward_lanes Ouput parameter which will be populated with the centerlines for each lane up to the downtrack distance
    */
   void getAdjacentReverseCenterlines(const lanelet::ConstLanelets& adjacentSet,
-    const lanelet::BasicPoint2d& start_point, double uptrack, std::vector<std::vector<lanelet::BasicPoint2d>>* reverse_lanes);
+    const lanelet::BasicPoint2d& start_point, double uptrack, std::vector<std::vector<lanelet::BasicPoint2d>>* reverse_lanes) const;
 
   double latitude = 0.0;
   double longitude = 0.0;
