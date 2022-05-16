@@ -81,6 +81,7 @@ MapUpdateLogger::MapUpdateLogger(const rclcpp::NodeOptions& options)
 {
     // Setup publishers
 
+    // NOTE: Currently, intra-process comms must be disabled for publishers that are transient_local: https://github.com/ros2/rclcpp/issues/1753
     rclcpp::PublisherOptions readable_pub_options; 
     readable_pub_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for the map update debug publisher
 
@@ -93,7 +94,8 @@ MapUpdateLogger::MapUpdateLogger(const rclcpp::NodeOptions& options)
 
     // Setup subscribers
 
-    rclcpp::SubscriptionOptions update_sub_options; // Initialize a SubscriptionOptions object with intra-process comms disabled
+    // NOTE: Currently, intra-process comms must be disabled for subcribers that are transient_local: https://github.com/ros2/rclcpp/issues/1753
+    rclcpp::SubscriptionOptions update_sub_options; 
     update_sub_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for this SubscriptionOptions object
 
     auto update_sub_qos = rclcpp::QoS(rclcpp::KeepLast(100)); // Set the queue size for a subscriber with this QoS
