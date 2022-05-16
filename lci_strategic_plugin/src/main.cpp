@@ -65,7 +65,7 @@ int main(int argc, char** argv)
   pnh.param<std::string>("intersection_transit_plugin_name", config.intersection_transit_plugin_name, config.intersection_transit_plugin_name);
   pnh.param<double>("carma_streets_update_interval",   config.carma_streets_update_interval, config.carma_streets_update_interval);
   pnh.param<double>("reaction_time",   config.reaction_time, config.reaction_time);
-  pnh.param<bool>("case_switch",config.case_switch, config.case_switch);
+  pnh.param<bool>("enable_carma_streets_connection",config.enable_carma_streets_connection, config.enable_carma_streets_connection);
   pnh.param<double>("mobility_rate",config.mobility_rate, config.mobility_rate);
   pnh.getParam("/vehicle_id", config.vehicle_id);
   // clang-format on

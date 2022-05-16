@@ -74,8 +74,8 @@ struct LCIStrategicPluginConfig
   //! Double: Minimum inter-vehicle gap
   double min_gap = 10.0;
 
-  //! Bool: Minimum inter-vehicle gap
-  bool case_switch = false;
+  //! Bool: Enable carma streets connection
+  bool  enable_carma_streets_connection = false;
 
   //! Double: Mobility operation rate
   double mobility_rate = 10.0;
