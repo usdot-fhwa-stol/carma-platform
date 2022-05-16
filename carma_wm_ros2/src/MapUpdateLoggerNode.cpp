@@ -79,10 +79,32 @@ class MapUpdateLogger : public rclcpp::Node
 MapUpdateLogger::MapUpdateLogger(const rclcpp::NodeOptions& options)
   : Node("map_update_logger")
 {
-    
-    readable_pub_ = this->create_publisher<carma_debug_ros2_msgs::msg::MapUpdateReadable>("map_update_debug", 100);
-    update_sub_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>("/environment/map_update", 100,
-                                                          std::bind(&MapUpdateLogger::raw_callback, this, std::placeholders::_1));
+    // Setup publishers
+
+    // NOTE: Currently, intra-process comms must be disabled for publishers that are transient_local: https://github.com/ros2/rclcpp/issues/1753
+    rclcpp::PublisherOptions readable_pub_options; 
+    readable_pub_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for the map update debug publisher
+
+    auto readable_pub_qos = rclcpp::QoS(rclcpp::KeepAll()); // A publisher with this QoS will store all messages that it has sent on the topic
+    readable_pub_qos.transient_local();  // A publisher with this QoS will re-send all (when KeepAll is used) messages to all late-joining subscribers 
+                                         // NOTE: The subscriber's QoS must be set to transisent_local() as well for earlier messages to be resent to the later-joiner.
+
+    // Create map update debug publisher, which will send all previously published messages to late-joining subscribers ONLY If the subscriber is transient_local too
+    readable_pub_ = this->create_publisher<carma_debug_ros2_msgs::msg::MapUpdateReadable>("map_update_debug", readable_pub_qos, readable_pub_options);
+
+    // Setup subscribers
+
+    // NOTE: Currently, intra-process comms must be disabled for subcribers that are transient_local: https://github.com/ros2/rclcpp/issues/1753
+    rclcpp::SubscriptionOptions update_sub_options; 
+    update_sub_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for this SubscriptionOptions object
+
+    auto update_sub_qos = rclcpp::QoS(rclcpp::KeepLast(100)); // Set the queue size for a subscriber with this QoS
+    update_sub_qos.transient_local();  // If it is possible that this node is a late-joiner to its topic, it must be set to transient_local to receive earlier messages that were missed.
+                                   // NOTE: The publisher's QoS must be set to transisent_local() as well for earlier messages to be resent to this later-joiner.
+
+    // Create map update subscriber that will receive earlier messages that were missed ONLY if the publisher is transient_local too
+    update_sub_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>("/environment/map_update", update_sub_qos,
+                                                          std::bind(&MapUpdateLogger::raw_callback, this, std::placeholders::_1), update_sub_options);
 }
 
 carma_debug_ros2_msgs::msg::LaneletIdRegulatoryElementPair MapUpdateLogger::pairToDebugMessage(const std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>& id_reg_pair) {
