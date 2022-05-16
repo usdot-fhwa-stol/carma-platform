@@ -92,11 +92,9 @@ if [[ ! -z "$ROS1_PACKAGES$ROS2_PACKAGES" ]]; then
     echo Using $MOST_RECENT_IMAGE_TAG $MOST_RECENT_IMAGE_HASH $MOST_RECENT_IMAGE_DATE as base for partial build...
 
     sed -i "s|^FROM[[:space:]]*[^[:space:]]*|FROM $MOST_RECENT_IMAGE_HASH|I" ../Dockerfile
-    #sed -i "s|usdotfhwastol|$MOST_RECENT_IMAGE_ORG|; s|usdotfhwastoldev|$MOST_RECENT_IMAGE_ORG|; s|usdotfhwastolcandidate|$MOST_RECENT_IMAGE_ORG|" ../Dockerfile
-    #sed -i "s|carma-base|$NEW_BASE|; s|autoware.ai|$NEW_BASE|" ../Dockerfile
-    #sed -i "s|$IMAGE:[^[:space:]]*|$NEW_BASE |" ../Dockerfile
 
     COMPONENT_VERSION_STRING="SNAPSHOT"
+    USERNAME="local"
 fi
 
 if [[ -z "$COMPONENT_VERSION_STRING" ]]; then
