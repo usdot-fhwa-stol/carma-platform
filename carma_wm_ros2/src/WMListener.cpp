@@ -78,12 +78,6 @@ WMListener::WMListener(
   }  
 
   // Setup subscribers
-  map_update_sub_ = rclcpp::create_subscription<autoware_lanelet2_msgs::msg::MapBin>(node_topics_, "map_update", 10, 
-                  std::bind(&WMListener::mapUpdateCallback, this, std::placeholders::_1), map_update_options);
-
-  map_sub_ = rclcpp::create_subscription<autoware_lanelet2_msgs::msg::MapBin>(node_topics_, "semantic_map", 2, 
-                                  std::bind(&WMListenerWorker::mapCallback, worker_.get(), std::placeholders::_1), map_options);
-
   route_sub_ = rclcpp::create_subscription<carma_planning_msgs::msg::Route>(node_topics_, "route", 1, 
                                   std::bind(&WMListenerWorker::routeCallback, worker_.get(), std::placeholders::_1), route_options);
 
@@ -92,7 +86,25 @@ WMListener::WMListener(
 
   traffic_spat_sub_ = rclcpp::create_subscription<carma_v2x_msgs::msg::SPAT>(node_topics_, "incoming_spat", 1,
                                   std::bind(&WMListenerWorker::incomingSpatCallback, worker_.get(), std::placeholders::_1), traffic_spat_options); 
-  
+
+  // NOTE: Currently, intra-process comms must be disabled for subscribers that are transient_local: https://github.com/ros2/rclcpp/issues/1753
+  map_update_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for the map update subscriber
+  auto map_update_sub_qos = rclcpp::QoS(rclcpp::KeepLast(10)); // Set the queue size for the map update subscriber
+  map_update_sub_qos.transient_local();  // If it is possible that this node is a late-joiner to its topic, it must be set to transient_local to receive earlier messages that were missed.
+                                         // NOTE: The publisher's QoS must be set to transisent_local() as well for earlier messages to be resent to this later-joiner.
+
+  // Create map update ubscriber that will receive earlier messages that were missed ONLY if the publisher is transient_local too
+  map_update_sub_ = rclcpp::create_subscription<autoware_lanelet2_msgs::msg::MapBin>(node_topics_, "map_update", map_update_sub_qos, 
+                  std::bind(&WMListener::mapUpdateCallback, this, std::placeholders::_1), map_update_options);
+
+  map_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for the semantic map subscriber
+  auto map_sub_qos = rclcpp::QoS(rclcpp::KeepLast(2)); // Set the queue size for the semantic map subscriber
+  map_sub_qos.transient_local();  // If it is possible that this node is a late-joiner to its topic, it must be set to transient_local to receive earlier messages that were missed.
+                                  // NOTE: The publisher's QoS must be set to transisent_local() as well for earlier messages to be resent to this later-joiner.
+
+  // Create semantic mab subscriber that will receive earlier messages that were missed ONLY if the publisher is transient_local too
+  map_sub_ = rclcpp::create_subscription<autoware_lanelet2_msgs::msg::MapBin>(node_topics_, "semantic_map", map_sub_qos,
+                                  std::bind(&WMListenerWorker::mapCallback, worker_.get(), std::placeholders::_1), map_options);
 }
 
 WMListener::~WMListener() {}
