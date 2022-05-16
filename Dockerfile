@@ -47,6 +47,10 @@ RUN ~/src/carma-platform/docker/checkout.bash
 
 
 FROM base-image AS install
+ARG ROS1_PACKAGES=""
+ENV ROS1_PACKAGES=${ROS1_PACKAGES}
+ARG ROS2_PACKAGES=""
+ENV ROS2_PACKAGES=${ROS2_PACKAGES}
 
 # Copy the source files from the previous stage and build/install
 RUN mkdir ~/carma_ws
