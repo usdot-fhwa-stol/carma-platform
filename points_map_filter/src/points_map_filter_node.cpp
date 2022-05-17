@@ -95,7 +95,7 @@ namespace points_map_filter
                                     // NOTE: The publisher's QoS must be set to transisent_local() as well for earlier messages to be resent to this later-joiner.
 
     map_sub_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>("lanelet2_map", map_sub_qos,
-                                                                        std::bind(&Node::map_callback, this, std_ph::_1));
+                                                                        std::bind(&Node::map_callback, this, std_ph::_1), map_sub_options);
 
     // Setup publishers
     filtered_points_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("filtered_points", 10);
