@@ -939,7 +939,7 @@ def load_rosbags_to_vehicles_profile(bag_vehicle_names):
                         topic
                         == "/guidance/lci_strategic_plugin/distance_remaining_to_tf"
                     ):
-                        # print(msg)
+                        print(msg)
                         vpd.update_ds_tf_ts(msg.data, t)
                     elif topic == "/guidance/route_state":
                         # print(msg.down_track)
@@ -1039,6 +1039,16 @@ def plot_vehicle_speed_accel_downtrack_with_tsc(
             tsc_bar_height = 6
             vehicle_plot_data["tsc_alpha"] = 0.5
 
+        last_phase = 0
+        last_phase_secs = 0
+        GREEN_DURATION = 27
+        YELLOW_DURATION = 3
+        RED_DURATION = 30
+        start_invalid_phase = 0
+        start_invalid_phase_duration = 0
+        first_valid_phase = 0
+        first_valid_phase_duration = 0
+        # print(vehicle_plot_data["tsc_phases"])
         for phase in vehicle_plot_data["tsc_phases"]:
             if TSC_phases_lookup[phase] in "yellow" and not is_yellow_label_displayed:
                 is_yellow_label_displayed = True
@@ -1051,6 +1061,8 @@ def plot_vehicle_speed_accel_downtrack_with_tsc(
                 tsc_label = "Green Phase = " + str(phase)
             else:
                 tsc_label = ""
+            if last_phase in TSC_color2phases_lookup["yellow"] and last_phase_secs >= 3:
+                continue
             ax_local.broken_barh(
                 [(start_phase_pos, 1)],
                 (tsc_start_y, tsc_bar_height),
@@ -1058,7 +1070,21 @@ def plot_vehicle_speed_accel_downtrack_with_tsc(
                 label=tsc_label if len(tsc_label) != 0 else "",
                 alpha=vehicle_plot_data["tsc_alpha"],
             )
+            if start_invalid_phase == phase:
+                start_invalid_phase_duration += 1
+            elif first_valid_phase == 0:
+                first_valid_phase = phase
+            if first_valid_phase == phase:
+                first_valid_phase_duration += 1
             start_phase_pos += 1
+            if last_phase != phase:
+                last_phase_secs = 0
+            last_phase = phase
+            last_phase_secs += 1
+        # print(start_phase_pos)
+        # print(last_phase_secs)
+        # print(relative_x_axis_max)
+        # print(last_phase)        
 
         max_y_axis = max(
             max(vehicle_plot_data[profile_name]), tsc_bar_height + tsc_start_y
@@ -1202,7 +1228,7 @@ def plot_vehicles_profile_with_tsc(
         start_invalid_phase_duration = 0
         first_valid_phase = 0
         first_valid_phase_duration = 0
-        # print(vpd["tsc_phases"])
+        print(vpd["tsc_phases"])
         for phase in vpd["tsc_phases"]:
             if TSC_phases_lookup[phase] in "yellow" and not is_yellow_label_displayed:
                 is_yellow_label_displayed = True
@@ -1215,6 +1241,8 @@ def plot_vehicles_profile_with_tsc(
                 tsc_label = "Green Phase = " + str(phase)
             else:
                 tsc_label = ""
+            if last_phase in TSC_color2phases_lookup["yellow"] and last_phase_secs >= 3:
+                continue
             ax_local.broken_barh(
                 [(start_phase_pos, 1)],
                 (tsc_start_y, tsc_bar_height),
@@ -1275,14 +1303,16 @@ def plot_vehicles_profile_with_tsc(
                 start_phase_pos += RED_DURATION - last_phase_secs
                 last_phase = 5  # Green after red phase
             elif last_phase in TSC_color2phases_lookup["yellow"]:
-                ax_local.broken_barh(
-                    [(start_phase_pos, YELLOW_DURATION - last_phase_secs)],
-                    (tsc_start_y, tsc_bar_height),
-                    facecolors=TSC_phases_lookup[last_phase],
-                    alpha=vpd["tsc_alpha"],
-                )
-                start_phase_pos += YELLOW_DURATION - last_phase_secs
-                last_phase = 1  # Red after yellow phase
+                # print("last phase is yellow last %d seconds" %last_phase_secs)
+                if last_phase_secs != YELLOW_DURATION:
+                    ax_local.broken_barh(
+                        [(start_phase_pos, YELLOW_DURATION - last_phase_secs)],
+                        (tsc_start_y, tsc_bar_height),
+                        facecolors=TSC_phases_lookup[last_phase],
+                        alpha=vpd["tsc_alpha"],
+                    )
+                    start_phase_pos += YELLOW_DURATION - last_phase_secs
+                last_phase = 3  # Red after yellow phase
             last_phase_secs = 0
 
         # plot vertical lines for case number (cn)
@@ -2030,14 +2060,22 @@ def plot_bags():
         # "data/CC-RG_R2_BL_EL1_R30_2022-04-07-22-49-30.bag": "R2_BL_EL1_R30", #Run 2
         # "data/CC-RG_R3_BL_EL2_R05_2022-04-07-23-00-47.bag": "R3_BL_EL2_R05", #RUN 3
         # "data/CC-RG_R4_BL_EL2_R02_2022-04-07-23-06-03.bag" : "R4_BL_EL2_R02" , #RUN 4
-        "data/CC-RG_R5_BL_EL1_Y01_2022-04-07-23-13-25.bag" : "R5_BL_EL1_Y01", #RUN 5
+        # "data/CC-RG_R5_BL_EL1_Y01_2022-04-07-23-13-25.bag" : "R5_BL_EL1_Y01", #RUN 5
         # "data/CC-RG_R1_BL_EL1_R25_2022-04-07-22-43-00.bag": "R1_BL_EL1_R25",  # RUN 1
         # "data/CC-RG_R2_BP_EL2_G27_2022-04-07-22-51-08.bag": "R2_BP_EL2_G27", #RUN2
         # "data/CC-RG_R3_BP_EL1_G2_2022-04-07-22-59-56.bag": "R3_BP_EL1_G2" #RUN 3
         # "data/CC-RG_BP_E1_R25_2022-04-01-20-42-45.bag": "BP_E1_R25",  # # Black Pacifica: RUN 3
         # "data/CC-RG_R4_BP_EL1_Y3_2022-04-07-23-05-41.bag" : "R4_BP_EL1_Y3" , #RUN 4
-        "data/CC-RG_R5_BP_EL2_R1_2022-04-07-23-13-58.bag" : "R5_BP_EL2_R1", #RUN 5
+        # "data/CC-RG_R5_BP_EL2_R1_2022-04-07-23-13-58.bag" : "R5_BP_EL2_R1", #RUN 5
         # "data/CC-RG_BP_E2_R0_2022-04-01-20-27-13.bag": "BP_E2_R0",
+        # "data/CC-RG_R2_BL_EL1_R30_2022-04-07-22-49-30.bag": "R2_BL_EL1_R30", #RUN 2
+        # "data/CC-RG_R2_BP_EL2_G27_2022-04-07-22-51-08.bag": "R2_BP_EL2_G27", #RUN 2
+        # "data/CC-GYR_R4_BP_EL1_G19_2022-04-08-14-00-47.bag": "R4_BP_EL1_G19", #RUN 4
+        # "data/CC-GYR_R4_BL_EL2_R22_2022-04-08-14-01-19.bag": "R4_BL_EL2_R22", #RUN 4
+        # "data/FC-RG_R4_BL_EL1_G04_2022-04-08-15-01-11.bag": "R4_BL_EL1_G04", #RUN 4
+        # "data/FC-RC_R4_BP_EL2_R7_2022-04-08-15-01-02.bag": "R4_BP_EL2_R7", #RUN 4 
+        "data/FC-GYR_R3_BL_EL1_R03_2022-04-08-18-54-17.bag": "R3_BL_EL1_R03", #RUN 3
+        "data/FC-GYR_R3_BP_EL2_Y3_2022-04-08-18-55-11.bag": "R3_BP_EL2_Y3", #RUN 3
     }
 
     print(
