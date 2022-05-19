@@ -1827,7 +1827,7 @@ namespace platoon_strategic_ihp
         int req_sender_join_index = std::stoi(join_index_parsed[1]);
         ROS_DEBUG_STREAM("Requesting join_index parsed: " << req_sender_join_index);
 
-        if (plan_type.type == cav_msgs::PlanType::PLATOON_CUTIN_JOIN) 
+        if (plan_type.type == cav_msgs::PlanType::PLATOON_CUT_IN_JOIN) 
         {
             // task 1. slow down to create gap 
             // determine if joining vehicle in position for cut-in front
@@ -1884,7 +1884,7 @@ namespace platoon_strategic_ihp
                 request.m_header.sender_id = config_.vehicleID;
                 request.m_header.timestamp = ros::Time::now().toNSec() / 1000000;;
                 // UCLA: add plan type, add this in cav_mwgs/plan_type
-                request.plan_type.type = cav_msgs::PlanType::PLATOON_CUTIN_JOIN;
+                request.plan_type.type = cav_msgs::PlanType::PLATOON_CUT_IN_JOIN;
                 request.strategy = PLATOONING_STRATEGY;
 
                 double platoon_size = pm_.getTotalPlatooningSize();
@@ -2335,8 +2335,8 @@ namespace platoon_strategic_ihp
             start to check the gap and change lane when gap is large enough 
         */
 
-        cav_msgs::PlanType planType = msg.planType;
-        bool isCreatingGap = plan_type.type == cav_msgs::PlanType::PLATOON_CUTIN_JOIN;
+        cav_msgs::PlanType plan_type = msg.planType;
+        bool isCreatingGap = plan_type.type == cav_msgs::PlanType::PLATOON_CUT_IN_JOIN;
         bool isFinishLaneChangeFront = plan_type.type == cav_msgs::PlanType::CUT_IN_FRONT_DONE; 
         bool isFinishLaneChangeMidorRear = plan_type.type == cav_msgs::PlanType::CUT_IN_MID_OR_REAR_DONE;
 
@@ -2916,7 +2916,7 @@ namespace platoon_strategic_ihp
         request.m_header.sender_id = config_.vehicleID;
         request.m_header.timestamp = currentTime;
         // UCLA: assign a new plan type
-        request.plan_type.type = cav_msgs::PlanType::PLATOON_CUTIN_JOIN;
+        request.plan_type.type = cav_msgs::PlanType::PLATOON_CUT_IN_JOIN;
         request.strategy = PLATOONING_STRATEGY;
         request.urgency = 50;
         request.location = pose_to_ecef(pose_msg_);
