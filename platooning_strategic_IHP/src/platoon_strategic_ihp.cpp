@@ -494,11 +494,12 @@ namespace platoon_strategic_ihp
                 status_msg.host_platoon_position = pm_.getNumberOfVehicleInFront();
                 ROS_DEBUG_STREAM("pm platoonsize: " << pm_.getTotalPlatooningSize() << ", platoon_leader " << platoon_leader.staticId);
 
+                // TODO: To uncomment the following lines, platooninfo msg must be updated
                 // UCLA: Add the value of the summation of "veh_len/veh_speed" for all predecessors
-                status_msg.current_predecessor_time_headway_sum = pm_.getPredecessorTimeHeadwaySum();
+                // status_msg.current_predecessor_time_headway_sum = pm_.getPredecessorTimeHeadwaySum();
                 // UCLA: preceding vehicle info 
-                status_msg.predecessor_speed = pm_.getPredecessorSpeed();
-                status_msg.predecessor_position = pm_.getPredecessorPosition();
+                // status_msg.predecessor_speed = pm_.getPredecessorSpeed();
+                // status_msg.predecessor_position = pm_.getPredecessorPosition();
 
                 // Note: use isCreateGap to adjust the desired gap send to control plugin 
                 double regular_gap = std::max(config_.standStillHeadway, config_.timeHeadway * current_speed_);
