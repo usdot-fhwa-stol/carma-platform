@@ -49,10 +49,13 @@ namespace platoon_control
         pnh_->param<double>("lowpassGain", config.lowpassGain, config.lowpassGain);
         pnh_->param<double>("lookaheadRatio", config.lookaheadRatio, config.lookaheadRatio);
         pnh_->param<double>("minLookaheadDist", config.minLookaheadDist, config.minLookaheadDist);
+        pnh_->param<double>("wheelBase", config.wheelBase, config.wheelBase);
+        pnh_->param<double>("correctionAngle", config.correctionAngle, config.correctionAngle);
+        
 
         // Global params (from vehicle config)
         pnh_->getParam("/vehicle_id", config.vehicleID);
-        pnh_->getParam("/vehicle_wheel_base", config.wheelBase);
+        // pnh_->getParam("/vehicle_wheel_base", config.wheelBase);
         pnh_->getParam("/control_plugin_shutdown_timeout", config.shutdownTimeout);
         pnh_->getParam("/control_plugin_ignore_initial_inputs", config.ignoreInitialInputs);
 
