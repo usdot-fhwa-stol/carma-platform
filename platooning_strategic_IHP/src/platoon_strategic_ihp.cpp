@@ -2105,7 +2105,7 @@ namespace platoon_strategic_ihp
          */ 
 
         // UCLA: read plan type 
-        cav_msgs::PlanType plan_type = msg.planType;
+        cav_msgs::PlanType plan_type = msg.plan_type;
         
         // UCLA: determine joining type 
         bool isFrontJoin = (plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT);
@@ -2143,7 +2143,7 @@ namespace platoon_strategic_ihp
          */
 
         // UCLA: read plan type 
-        cav_msgs::PlanType plan_type = msg.planType;
+        cav_msgs::PlanType plan_type = msg.plan_type;
         ROS_DEBUG_STREAM("plan_type = " << plan_type);
         ROS_DEBUG_STREAM("plan_type.type = " << plan_type.type);
         
@@ -2253,16 +2253,16 @@ namespace platoon_strategic_ihp
         if (pm_.current_plan.valid)
         {
             bool isForCurrentPlan = msg.m_header.plan_id == pm_.current_plan.planId;
-            bool isForFrontJoin = msg.planType.type == cav_msgs::PlanType::PLATOON_FRONT_JOIN;
+            bool isForFrontJoin = msg.plan_type.type == cav_msgs::PlanType::PLATOON_FRONT_JOIN;
 
 
             //TODO remove these diagnostics
             isForFrontJoin = true; //once MobilityResponse msg structure includes plan type, this line can be removed
-            if (msg.planType.type == cav_msgs::PlanType::UNKNOWN){
+            if (msg.plan_type.type == cav_msgs::PlanType::UNKNOWN){
                 ROS_DEBUG_STREAM("*** plan type UNKNOWN");
-            }else if (msg.planType.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT){
+            }else if (msg.plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT){
                 ROS_DEBUG_STREAM("*** plan type JOIN_PLATOON_FROM_FRONT");
-            }else if (msg.planType.type == cav_msgs::PlanType::PLATOON_CUT_IN_JOIN){
+            }else if (msg.plan_type.type == cav_msgs::PlanType::PLATOON_CUT_IN_JOIN){
                 ROS_DEBUG_STREAM("*** plan type PLATOON_CUT_IN_JOIN");
             }else {
                 ROS_DEBUG_STREAM("*** plan type not captured.");
@@ -2270,7 +2270,7 @@ namespace platoon_strategic_ihp
 
             bool isFromTargetVehicle = msg.m_header.sender_id == pm_.current_plan.peerId;
             ROS_DEBUG_STREAM("msg.header.sender_id " << msg.m_header.sender_id);
-            ROS_DEBUG_STREAM("Plan Type " << msg.planType.type);
+            ROS_DEBUG_STREAM("Plan Type " << msg.plan_type.type);
             ROS_DEBUG_STREAM("isForFrontJoin " << isForFrontJoin);
             ROS_DEBUG_STREAM("isForCurrentPlan " << isForCurrentPlan);
             ROS_DEBUG_STREAM("isFromTargetVehicle " << isFromTargetVehicle);
@@ -2336,7 +2336,7 @@ namespace platoon_strategic_ihp
             start to check the gap and change lane when gap is large enough 
         */
 
-        cav_msgs::PlanType plan_type = msg.planType;
+        cav_msgs::PlanType plan_type = msg.plan_type;
         bool isCreatingGap = plan_type.type == cav_msgs::PlanType::PLATOON_CUT_IN_JOIN;
         bool isFinishLaneChangeFront = plan_type.type == cav_msgs::PlanType::CUT_IN_FRONT_DONE; 
         bool isFinishLaneChangeMidorRear = plan_type.type == cav_msgs::PlanType::CUT_IN_MID_OR_REAR_DONE;
@@ -2442,7 +2442,7 @@ namespace platoon_strategic_ihp
         response.m_header.timestamp = ros::Time::now().toNSec() / 1000000;
 
        // UCLA: add plantype in response 
-        response.planType.type = msg.plan_type.type;
+        response.plan_type.type = msg.plan_type.type;
         
         MobilityRequestResponse req_response = handle_mob_req(msg);
         if (req_response == MobilityRequestResponse::ACK)
