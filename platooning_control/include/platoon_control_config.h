@@ -44,6 +44,7 @@ struct PlatooningControlPluginConfig
   std::string vehicleID = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
   int     shutdownTimeout = 200;                // ms 
   int     ignoreInitialInputs = 0;              // num inputs to throw away after startup
+  double correctionAngle = 0.0;
   
   
   friend std::ostream& operator<<(std::ostream& output, const PlatooningControlPluginConfig& c)
@@ -70,6 +71,7 @@ struct PlatooningControlPluginConfig
            << "vehicleID: " << c.vehicleID << std::endl
            << "shutdownTimeout: " << c.shutdownTimeout << std::endl
            << "ignoreInitialInputs: " << c.ignoreInitialInputs << std::endl
+           << "correctionAngle: " << c.correctionAngle << std::endl
            << "}" << std::endl;
     return output;
   }
