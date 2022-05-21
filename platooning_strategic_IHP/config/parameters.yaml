@@ -26,4 +26,4 @@ gap_weight: 0.9
 test_front_join: false
 slowDownAdjuster: 0.75
 createGapAdjuster: 0.3
-minPlatooningSpeed: 7.0
+minPlatooningSpeed: 2.0

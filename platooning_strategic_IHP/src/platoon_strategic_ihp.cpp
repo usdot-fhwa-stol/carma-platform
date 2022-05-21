@@ -494,11 +494,12 @@ namespace platoon_strategic_ihp
                 status_msg.host_platoon_position = pm_.getNumberOfVehicleInFront();
                 ROS_DEBUG_STREAM("pm platoonsize: " << pm_.getTotalPlatooningSize() << ", platoon_leader " << platoon_leader.staticId);
 
+                // TODO: To uncomment the following lines, platooninfo msg must be updated
                 // UCLA: Add the value of the summation of "veh_len/veh_speed" for all predecessors
-                status_msg.current_predecessor_time_headway_sum = pm_.getPredecessorTimeHeadwaySum();
+                // status_msg.current_predecessor_time_headway_sum = pm_.getPredecessorTimeHeadwaySum();
                 // UCLA: preceding vehicle info 
-                status_msg.predecessor_speed = pm_.getPredecessorSpeed();
-                status_msg.predecessor_position = pm_.getPredecessorPosition();
+                // status_msg.predecessor_speed = pm_.getPredecessorSpeed();
+                // status_msg.predecessor_position = pm_.getPredecessorPosition();
 
                 // Note: use isCreateGap to adjust the desired gap send to control plugin 
                 double regular_gap = std::max(config_.standStillHeadway, config_.timeHeadway * current_speed_);
@@ -1091,7 +1092,7 @@ namespace platoon_strategic_ihp
                 // Note: Request conposed outside of if conditions
                 // UCLA: Desired joining index for cut-in join, indicate the index of gap-leading vehicle. -1 indicate cut-in from front.
                 // Note: remove join_index to info param.
-                request.plan_type.type = cav_msgs::PlanType::CUT_IN_FROM_DIFFERENT_LANE; 
+                request.plan_type.type = cav_msgs::PlanType::PLATOON_CUT_IN_JOIN; 
 
                 // TODO: At this step all cut-in types all start with this request, so the join_index at this point is set to default, -2.
                 // REVISIOn note: At this step a join index is really  not needed until later. The later index were changed to name "target_index". So it is ok to delete cut-in here.
@@ -1387,7 +1388,7 @@ namespace platoon_strategic_ihp
         std::string reqSenderID = msg.m_header.sender_id;
 
         // Check joining plan type.
-        bool isCutInJoin = plan_type.type == cav_msgs::PlanType::CUT_IN_FROM_DIFFERENT_LANE;
+        bool isCutInJoin = plan_type.type == cav_msgs::PlanType::PLATOON_CUT_IN_JOIN;
         bool isGapCreated = plan_type.type == cav_msgs::PlanType::STOP_CREATE_GAP;
         // TODO: Place holder for departure
 
@@ -1427,7 +1428,7 @@ namespace platoon_strategic_ihp
             // 3. Abnormal join index
             else
             {
-                // Note: Leader will abort plan if reponse is not ACK for plantype "CUT_IN_FROM_DIFFERENT_LANE".
+                // Note: Leader will abort plan if reponse is not ACK for plantype "PLATOON_CUT_IN_JOIN".
                 ROS_DEBUG_STREAM("Abnormal cut-in index, abort operation.");
                 return MobilityRequestResponse::NACK;
             }
@@ -1523,11 +1524,11 @@ namespace platoon_strategic_ihp
          *  Note:
          *      JOIN_FROM_FRONT indicate a same-lane front join.
          *      JOIN_PLATOON_AT_REAR indicate a same-lane rear join.
-         *      CUT_IN_FROM_DIFFERENT_LANE indicate a cut-in join, which include three cut-in methods: cut-in front, cut-in middle, and cut-in rear.
+         *      PLATOON_CUT_IN_JOIN indicate a cut-in join, which include three cut-in methods: cut-in front, cut-in middle, and cut-in rear.
          */
         bool isFrontJoin = plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT;
         bool isRearJoin = plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR;
-        bool isCutInJoin = plan_type.type == cav_msgs::PlanType::CUT_IN_FROM_DIFFERENT_LANE;
+        bool isCutInJoin = plan_type.type == cav_msgs::PlanType::PLATOON_CUT_IN_JOIN;
         bool isDepart = (plan_type.type == cav_msgs::PlanType::PLATOON_DEPARTURE);
 
         // Ignore the request if we are already working with a join/departure process or if no join type was requested (prevents multiple applicants)
@@ -1827,7 +1828,7 @@ namespace platoon_strategic_ihp
         int req_sender_join_index = std::stoi(join_index_parsed[1]);
         ROS_DEBUG_STREAM("Requesting join_index parsed: " << req_sender_join_index);
 
-        if (plan_type.type == cav_msgs::PlanType::PLATOON_CUTIN_JOIN) 
+        if (plan_type.type == cav_msgs::PlanType::PLATOON_CUT_IN_JOIN) 
         {
             // task 1. slow down to create gap 
             // determine if joining vehicle in position for cut-in front
@@ -1884,7 +1885,7 @@ namespace platoon_strategic_ihp
                 request.m_header.sender_id = config_.vehicleID;
                 request.m_header.timestamp = ros::Time::now().toNSec() / 1000000;;
                 // UCLA: add plan type, add this in cav_mwgs/plan_type
-                request.plan_type.type = cav_msgs::PlanType::PLATOON_CUTIN_JOIN;
+                request.plan_type.type = cav_msgs::PlanType::PLATOON_CUT_IN_JOIN;
                 request.strategy = PLATOONING_STRATEGY;
 
                 double platoon_size = pm_.getTotalPlatooningSize();
@@ -2149,7 +2150,7 @@ namespace platoon_strategic_ihp
         //TODO: this logic requires that MobilityResponseMessage be updated to include a plan_type field!
 
         // UCLA: determine joining type 
-        bool isCutInJoin = plan_type.type == cav_msgs::PlanType::CUT_IN_FROM_DIFFERENT_LANE         &&  !config_.test_front_join;
+        bool isCutInJoin = plan_type.type == cav_msgs::PlanType::PLATOON_CUT_IN_JOIN         &&  !config_.test_front_join;
         bool isRearJoin = plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR      ||  !config_.test_front_join; //TODO change to && once resp msg contains plan type
         bool isFrontJoin = plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT  ||  config_.test_front_join;
         ROS_DEBUG_STREAM("Joining type: isRearJoin = " << isRearJoin);
@@ -2261,8 +2262,8 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("*** plan type UNKNOWN");
             }else if (msg.plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT){
                 ROS_DEBUG_STREAM("*** plan type JOIN_PLATOON_FROM_FRONT");
-            }else if (msg.plan_type.type == cav_msgs::PlanType::CUT_IN_FROM_DIFFERENT_LANE){
-                ROS_DEBUG_STREAM("*** plan type CUT_IN_FROM_DIFFERENT_LANE");
+            }else if (msg.plan_type.type == cav_msgs::PlanType::PLATOON_CUT_IN_JOIN){
+                ROS_DEBUG_STREAM("*** plan type PLATOON_CUT_IN_JOIN");
             }else {
                 ROS_DEBUG_STREAM("*** plan type not captured.");
             }
@@ -2336,7 +2337,7 @@ namespace platoon_strategic_ihp
         */
 
         cav_msgs::PlanType plan_type = msg.plan_type;
-        bool isCreatingGap = plan_type.type == cav_msgs::PlanType::PLATOON_CUTIN_JOIN;
+        bool isCreatingGap = plan_type.type == cav_msgs::PlanType::PLATOON_CUT_IN_JOIN;
         bool isFinishLaneChangeFront = plan_type.type == cav_msgs::PlanType::CUT_IN_FRONT_DONE; 
         bool isFinishLaneChangeMidorRear = plan_type.type == cav_msgs::PlanType::CUT_IN_MID_OR_REAR_DONE;
 
@@ -2916,7 +2917,7 @@ namespace platoon_strategic_ihp
         request.m_header.sender_id = config_.vehicleID;
         request.m_header.timestamp = currentTime;
         // UCLA: assign a new plan type
-        request.plan_type.type = cav_msgs::PlanType::PLATOON_CUTIN_JOIN;
+        request.plan_type.type = cav_msgs::PlanType::PLATOON_CUT_IN_JOIN;
         request.strategy = PLATOONING_STRATEGY;
         request.urgency = 50;
         request.location = pose_to_ecef(pose_msg_);
