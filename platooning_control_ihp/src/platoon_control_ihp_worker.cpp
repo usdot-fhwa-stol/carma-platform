@@ -26,7 +26,6 @@ namespace platoon_control_ihp
     {
         pid_ctrl_ = PIDController();
         pp_ = PurePursuit();
-
     }
 
     void PlatoonControlIHPWorker::updateConfigParams(PlatooningControlIHPPluginConfig new_config)
@@ -36,7 +35,8 @@ namespace platoon_control_ihp
         pp_.config_ = new_config;
     }
 
-	double PlatoonControlIHPWorker::getLastSpeedCommand() const {
+	double PlatoonControlIHPWorker::getLastSpeedCommand() const 
+    {
         return speedCmd_;
     }
 
@@ -45,8 +45,7 @@ namespace platoon_control_ihp
 		current_pose_ = msg.pose;
 	}
 
-    // UCLA: Put the IHP gap regulation at low level control plug-in
-    double PlatoonControlIHPWorker::getIHPDesPosFollower(double leaderCurrentPosition)
+    double PlatoonControlIHPWorker::getIHPTargetPositionFollower(double leaderCurrentPosition)
     {
         /**
          * Calculate desired position based on previous vehicle's trajectory for followers.
@@ -138,7 +137,7 @@ namespace platoon_control_ihp
 
             // --------- conisder use IHP here instead to regualte gap ----------
             // Call IHP gap regulation function to re-calculate desired Host position based on entire platoon's info
-            double desiredHostPosition_IHP = getIHPDesPosFollower(leaderCurrentPosition);
+            double desiredHostPosition_IHP = getIHPTargetPositionFollower(leaderCurrentPosition);
             double hostVehiclePosition = leaderCurrentPosition - actual_gap_;
             ROS_DEBUG_STREAM("hostVehiclePosition = " << hostVehiclePosition);
 
@@ -195,17 +194,17 @@ namespace platoon_control_ihp
         
         
         // Third: we allow do not a large gap between two consecutive speed commands
-        if(enableMaxAccelFilter) {
-                
-                double max = lastCmdSpeed + (ctrl_config_.maxAccel * (ctrl_config_.cmdTmestamp / 1000.0));
-                double min = lastCmdSpeed - (ctrl_config_.maxAccel * (ctrl_config_.cmdTmestamp / 1000.0));
-                if(speed_cmd > max) {
-                    speed_cmd = max; 
-                } else if (speed_cmd < min) {
-                    speed_cmd = min;
-                }
-                lastCmdSpeed = speed_cmd;
-                ROS_DEBUG_STREAM("The speed command after max accel cap is: " << speed_cmd << " m/s");
+        if(enableMaxAccelFilter) 
+        {        
+            double max = lastCmdSpeed + (ctrl_config_.maxAccel * (ctrl_config_.cmdTmestamp / 1000.0));
+            double min = lastCmdSpeed - (ctrl_config_.maxAccel * (ctrl_config_.cmdTmestamp / 1000.0));
+            if(speed_cmd > max) {
+                speed_cmd = max; 
+            } else if (speed_cmd < min) {
+                speed_cmd = min;
+            }
+            lastCmdSpeed = speed_cmd;
+            ROS_DEBUG_STREAM("The speed command after max accel cap is: " << speed_cmd << " m/s");
         }
 
         speedCmd_ = speed_cmd;

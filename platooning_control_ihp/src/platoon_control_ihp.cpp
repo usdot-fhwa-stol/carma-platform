@@ -25,8 +25,8 @@ namespace platoon_control_ihp
     }
     
 
-    void PlatoonControlIHPPlugin::initialize(){
-
+    void PlatoonControlIHPPlugin::initialize()
+    {
     	nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
 
@@ -99,15 +99,16 @@ namespace platoon_control_ihp
                                   controlTimerCb();  }); 
         
         ROS_DEBUG_STREAM("control timer created ");    
-        }
+    }
 
                                     
-    void PlatoonControlIHPPlugin::run(){
+    void PlatoonControlIHPPlugin::run()
+    {
         initialize();
         ros::CARMANodeHandle::spin();
     }
 
-bool PlatoonControlIHPPlugin::controlTimerCb()
+    bool PlatoonControlIHPPlugin::controlTimerCb()
     {
         ROS_DEBUG_STREAM("In control timer callback ");
         // If it has been a long time since input data has arrived then reset the input counter and return
@@ -140,10 +141,10 @@ bool PlatoonControlIHPPlugin::controlTimerCb()
         return true;
     } 
 
-    void  PlatoonControlIHPPlugin::trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
-        
+    void  PlatoonControlIHPPlugin::trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp)
+    {
         if (tp->trajectory_points.size() < 2) {
-            ROS_WARN_STREAM("PlatoonControlPlugin cannot execute trajectory as only 1 point was provided");
+            ROS_WARN_STREAM("PlatoonControlIHPPlugin cannot execute trajectory as only 1 point was provided");
             return;
         }
 
@@ -239,7 +240,8 @@ bool PlatoonControlIHPPlugin::controlTimerCb()
     }
 
 
-    void PlatoonControlIHPPlugin::currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist){
+    void PlatoonControlIHPPlugin::currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist)
+    {
         current_speed_ = twist->twist.linear.x;
     }
 
@@ -267,7 +269,8 @@ bool PlatoonControlIHPPlugin::controlTimerCb()
         return cmd_ctrl;
     }
 
-    void PlatoonControlIHPPlugin::generateControlSignals(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point){
+    void PlatoonControlIHPPlugin::generateControlSignals(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point)
+    {
 
         // setting a speed baseline according to the trajectory speed profile. PID will calculate additional speed changes in addition to this value. 
         pcw_.setCurrentSpeed(trajectory_speed_); //TODO why this and not the actual vehicle speed?  Method name suggests different use than this.

@@ -100,12 +100,12 @@ namespace platoon_control_ihp
         void setCurrentSpeed(double speed);
 
         /**
-         * \brief UCLA: Put the IHP gap regulation at low level control plug-in
+         * \brief UCLA: HP gap regulation that calculate the deisred position (Dtd, in m) for the platoon members. 
          */
-        double getIHPDesPosFollower(double leaderCurrentPosition);
+        double getIHPTargetPositionFollower(double leaderCurrentPosition);
 
         // Member Variables
-        double speedCmd = 0;
+        double speedCmd = 0;    
         double currentSpeed = 0;
         double lastCmdSpeed = 0.0;
         double speedCmd_ = 0;

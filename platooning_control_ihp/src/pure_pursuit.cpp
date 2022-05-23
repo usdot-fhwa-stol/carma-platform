@@ -26,7 +26,8 @@ namespace platoon_control_ihp
 {
 	PurePursuit::PurePursuit(){}
 
-	double PurePursuit::getLookaheadDist(const cav_msgs::TrajectoryPlanPoint& tp) const{
+	double PurePursuit::getLookaheadDist(const cav_msgs::TrajectoryPlanPoint& tp) const
+	{
 		double x_diff = (tp.x - current_pose_.position.x);
 		double y_diff = (tp.y - current_pose_.position.y);
 		double dist = std::sqrt(x_diff * x_diff + y_diff * y_diff);
@@ -35,12 +36,14 @@ namespace platoon_control_ihp
 	}
 
 
-	double PurePursuit::getYaw(const cav_msgs::TrajectoryPlanPoint& tp) const{
+	double PurePursuit::getYaw(const cav_msgs::TrajectoryPlanPoint& tp) const
+	{
 		double yaw = atan2(tp.y - current_pose_.position.y, tp.x - current_pose_.position.x);
 		return yaw;
 	}
 
-	int PurePursuit::getSteeringDirection(std::vector<double> v1, std::vector<double> v2) const{
+	int PurePursuit::getSteeringDirection(std::vector<double> v1, std::vector<double> v2) const
+	{
 		double corss_prod = v1[0]*v2[1] - v1[1]*v2[0];
         if (corss_prod >= 0.0){
 			 return -1;
