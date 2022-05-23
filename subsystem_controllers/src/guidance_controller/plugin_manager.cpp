@@ -16,7 +16,7 @@
 
 #include "plugin_manager.h"
 
-namespace health_monitor
+namespace subsystem_controllers
 {
 
     PluginManager::PluginManager(const std::vector<std::string>& require_plugin_names,
@@ -29,13 +29,13 @@ namespace health_monitor
                                    em_(EntryManager(require_plugin_names))
     {}
 
-    void PluginManager::get_registered_plugins(cav_srvs::PluginListResponse& res)
+    void PluginManager::get_registered_plugins(carma_planning_msgs::srv::PluginListResponse& res)
     {
         std::vector<Entry> plugins = em_.get_entries();
         // convert to plugin list
         for(auto i = plugins.begin(); i < plugins.end(); ++i)
         {
-            cav_msgs::Plugin plugin;
+            carma_planning_msgs::msg::Plugin plugin;
             plugin.activated = i->active_;
             plugin.available = i->available_;
             plugin.name = i->name_;
@@ -44,7 +44,7 @@ namespace health_monitor
         }
     }
 
-    void PluginManager::get_active_plugins(cav_srvs::PluginListResponse& res)
+    void PluginManager::get_active_plugins(carma_planning_msgs::srv::PluginListResponse& res)
     {
         std::vector<Entry> plugins = em_.get_entries();
         // convert to plugin list
@@ -52,7 +52,7 @@ namespace health_monitor
         {
             if(i->active_)
             {
-                cav_msgs::Plugin plugin;
+                carma_planning_msgs::msg::Plugin plugin;
                 plugin.activated = true;
                 plugin.available = i->available_;
                 plugin.name = i->name_;
@@ -75,7 +75,7 @@ namespace health_monitor
         return false;
     }
 
-    void PluginManager::update_plugin_status(const cav_msgs::PluginConstPtr& msg)
+    void PluginManager::update_plugin_status(const carma_planning_msgs::msg::PluginConstPtr& msg)
     {
         ROS_DEBUG_STREAM("received status from: " << msg->name);
         boost::optional<Entry> requested_plugin = em_.get_entry_by_name(msg->name);
@@ -92,11 +92,11 @@ namespace health_monitor
         em_.update_entry(plugin);
     }
 
-    bool PluginManager::get_tactical_plugins_by_capability(cav_srvs::GetPluginApiRequest& req, cav_srvs::GetPluginApiResponse& res)
+    bool PluginManager::get_tactical_plugins_by_capability(carma_planning_msgs::srv::GetPluginApiRequest& req, carma_planning_msgs::srv::GetPluginApiResponse& res)
     {
         for(const auto& plugin : em_.get_entries())
         {
-            if(plugin.type_ == cav_msgs::Plugin::TACTICAL &&
+            if(plugin.type_ == carma_planning_msgs::msg::Plugin::TACTICAL &&
                (req.capability.size() == 0 || (plugin.capability_.compare(0, req.capability.size(), req.capability) == 0 && plugin.active_ && plugin.available_)))
             {
                 res.plan_service.push_back(service_prefix_ + plugin.name_ + tactical_service_suffix_);
@@ -105,11 +105,11 @@ namespace health_monitor
         return true;
     }
 
-    bool PluginManager::get_strategic_plugins_by_capability(cav_srvs::GetPluginApiRequest& req, cav_srvs::GetPluginApiResponse& res)
+    bool PluginManager::get_strategic_plugins_by_capability(carma_planning_msgs::srv::GetPluginApiRequest& req, carma_planning_msgs::srv::GetPluginApiResponse& res)
     {
         for(const auto& plugin : em_.get_entries())
         {
-            if(plugin.type_ == cav_msgs::Plugin::STRATEGIC && 
+            if(plugin.type_ == carma_planning_msgs::msg::Plugin::STRATEGIC && 
                 (req.capability.size() == 0 || (plugin.capability_.compare(0, req.capability.size(), req.capability) == 0 && plugin.active_ && plugin.available_)))
             {
                 ROS_DEBUG_STREAM("discovered strategic plugin: " << plugin.name_);

@@ -16,16 +16,16 @@
  * the License.
  */
 
-#include <cav_msgs/Plugin.h>
-#include <cav_srvs/PluginListRequest.h>
-#include <cav_srvs/PluginListResponse.h>
-#include <cav_srvs/GetPluginApi.h>
+#include <carma_planning_msgs/msg/plugin.hpp>
+#include <carma_planning_msgs/srv/plugin_list_request.hpp>
+#include <carma_planning_msgs/srv/plugin_list_response.hpp>
+#include <carma_planning_msgs/srv/get_plugin_api.hpp>
 #include "entry_manager.h"
 #include <ros/console.h>
 #include <sstream>
 
 
-namespace health_monitor
+namespace subsystem_controllers
 {
     class PluginManager
     {
@@ -47,12 +47,12 @@ namespace health_monitor
             /**
              * \brief Get a list of registered plugins
              */
-            void get_registered_plugins(cav_srvs::PluginListResponse& res);
+            void get_registered_plugins(carma_planning_msgs::PluginListResponse& res);
 
             /**
              * \brief Get a list of active plugins
              */
-            void get_active_plugins(cav_srvs::PluginListResponse& res);
+            void get_active_plugins(carma_planning_msgs::PluginListResponse& res);
 
             /**
              * \brief Activate or deactivate a certain plugin
@@ -62,17 +62,17 @@ namespace health_monitor
             /**
              * \brief Update the status of a certain plugin
              */
-            void update_plugin_status(const cav_msgs::PluginConstPtr& msg);
+            void update_plugin_status(const carma_planning_msgs::PluginConstPtr& msg);
 
             /**
              * \brief Get strategic plugins by capability
              */
-            bool get_strategic_plugins_by_capability(cav_srvs::GetPluginApiRequest& req, cav_srvs::GetPluginApiResponse& res);
+            bool get_strategic_plugins_by_capability(carma_planning_msgs::GetPluginApiRequest& req, carma_planning_msgs::GetPluginApiResponse& res);
 
             /**
              * \brief Get tactical plugins by capability
              */
-            bool get_tactical_plugins_by_capability(cav_srvs::GetPluginApiRequest& req, cav_srvs::GetPluginApiResponse& res);
+            bool get_tactical_plugins_by_capability(carma_planning_msgs::GetPluginApiRequest& req, carma_planning_msgs::GetPluginApiResponse& res);
 
         private:
         
