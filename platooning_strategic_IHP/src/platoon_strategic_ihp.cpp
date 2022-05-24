@@ -503,6 +503,9 @@ namespace platoon_strategic_ihp
 
                 // Note: use isCreateGap to adjust the desired gap send to control plugin 
                 double regular_gap = std::max(config_.standStillHeadway, config_.timeHeadway * current_speed_);
+                ROS_DEBUG_STREAM("regular_gap: " << regular_gap);
+                ROS_DEBUG_STREAM("current_speed_: " << current_speed_);
+                ROS_DEBUG_STREAM("speed based gap: " << config_.timeHeadway * current_speed_);
                 if (pm_.isCreateGap){
                     // enlarged desired gap for gap creation
                     status_msg.desired_gap = regular_gap*(1 + config_.createGapAdjuster);
@@ -512,7 +515,7 @@ namespace platoon_strategic_ihp
                     status_msg.desired_gap = regular_gap;
                 }
                 status_msg.actual_gap = platoon_leader.vehiclePosition - current_downtrack_;
-                
+                ROS_DEBUG_STREAM("status_msg.actual_gap: " << status_msg.actual_gap);
             }
             else
             {
