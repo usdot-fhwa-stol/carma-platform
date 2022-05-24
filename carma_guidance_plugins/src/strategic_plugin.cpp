@@ -14,14 +14,15 @@
  * the License.
  */
 
-#include "carma_guidance_plugin/strategic_plugin.hpp"
+#include <functional>
+#include "carma_guidance_plugins/strategic_plugin.hpp"
 
-namespace carma_guidance_plugin
+namespace carma_guidance_plugins
 {
   namespace std_ph = std::placeholders;
 
   StrategicPlugin::StrategicPlugin(const rclcpp::NodeOptions &options)
-      : carma_ros2_utils::PluginBaseNode(options)
+      : PluginBaseNode(options)
   {}
 
   std::string StrategicPlugin::get_capability()
@@ -37,8 +38,13 @@ namespace carma_guidance_plugin
   carma_ros2_utils::CallbackReturn StrategicPlugin::handle_on_configure(const rclcpp_lifecycle::State &prev_state)
   {
     // Initialize plan maneuvers service
-    plan_maneuvers_service_ = create_service<carma_planning_msgs::msg::PlanManeuvers>(get_name() + "/plan_maneuvers", 
-      std::bind(&StrategicPlugin::plan_maneuvers_callback, this, std_ph::_1, std_ph::_2, std_ph::_3));
+    plan_maneuvers_service_ = create_service<carma_planning_msgs::srv::PlanManeuvers>(get_name() + "/plan_maneuvers", 
+      [this] (auto header, auto req, auto resp) {
+        if (this->get_activation_status()) // Only trigger when activated
+        {
+          this->plan_maneuvers_callback(header, req, resp);
+        }
+      });
     
     return PluginBaseNode::handle_on_configure(prev_state);
   }
@@ -53,15 +59,20 @@ namespace carma_guidance_plugin
     return PluginBaseNode::handle_on_deactivate(prev_state);
   }
 
+  carma_ros2_utils::CallbackReturn StrategicPlugin::handle_on_cleanup(const rclcpp_lifecycle::State &prev_state)
+  {
+    return PluginBaseNode::handle_on_cleanup(prev_state);
+  }
+
   carma_ros2_utils::CallbackReturn StrategicPlugin::handle_on_shutdown(const rclcpp_lifecycle::State &prev_state)
   {
     return PluginBaseNode::handle_on_shutdown(prev_state);
   }
 
-  carma_ros2_utils::CallbackReturn StrategicPlugin::handle_on_error(const rclcpp_lifecycle::State &prev_state)
+  carma_ros2_utils::CallbackReturn StrategicPlugin::handle_on_error(const rclcpp_lifecycle::State &prev_state, const std::string &exception_string)
   {
-    return PluginBaseNode::handle_on_error(prev_state);
+    return PluginBaseNode::handle_on_error(prev_state, exception_string);
   }
 
-} // carma_guidance_plugin
+} // carma_guidance_plugins
 

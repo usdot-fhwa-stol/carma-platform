@@ -13,26 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+#include <functional>
 #include <rclcpp/create_publisher.hpp>
 
-#include "carma_guidance_plugin/plugin_base_node.hpp"
+#include "carma_guidance_plugins/plugin_base_node.hpp"
 
-namespace carma_guidance_plugin
+namespace carma_guidance_plugins
 {
   namespace std_ph = std::placeholders;
 
   PluginBaseNode::PluginBaseNode(const rclcpp::NodeOptions &options)
       : carma_ros2_utils::CarmaLifecycleNode(options)
   {
-    // Setup plugin publisher discovery which should bypass lifecycle behavior to ensure plugins are found
-    // prior to them needing to be activated.
-    // NOTE: Any other topics which need to be setup in the future should use handle_on_configure and the default this->create_publisher method to get a lifecycle publisher instead
-    plugin_discovery_pub_ = rclcpp::create_publisher<carma_planning_msgs::msg::Plugin>(this, "plugin_discovery",1);
 
     // Setup discovery timer to publish onto the plugin_discovery_pub
     discovert_timer_ = create_timer(
         get_clock(),
-        std::chrono::milliseconds(1000), // TODO double check frequency of update. Seems like it should be at least 500ms to hit nyquist frequency for arbitration calls
+        std::chrono::milliseconds(500), // 2 Hz frequency to account for 1Hz maneuver planning frequency
         std::bind(&PluginBaseNode::discovery_timer_callback, this));
   }
 
@@ -42,31 +39,60 @@ namespace carma_guidance_plugin
     return get_current_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE;
   }
 
+  carma_ros2_utils::CallbackReturn PluginBaseNode::on_activate_plugin()
+  {
+    return carma_ros2_utils::CallbackReturn::SUCCESS;
+  }
+
+  carma_ros2_utils::CallbackReturn PluginBaseNode::on_deactivate_plugin()
+  {
+    return carma_ros2_utils::CallbackReturn::SUCCESS;
+  }
+
+  carma_ros2_utils::CallbackReturn PluginBaseNode::on_cleanup_plugin()
+  {
+    return carma_ros2_utils::CallbackReturn::SUCCESS;
+  }
+
+  carma_ros2_utils::CallbackReturn PluginBaseNode::on_shutdown_plugin()
+  {
+    return carma_ros2_utils::CallbackReturn::SUCCESS;
+  }
+
+  carma_ros2_utils::CallbackReturn PluginBaseNode::on_error_plugin(const std::string &)
+  {
+    // On error should default to failure so user must explicitly implement error handling to get any other behavior
+    return carma_ros2_utils::CallbackReturn::FAILURE; 
+  }
+
   carma_ros2_utils::CallbackReturn PluginBaseNode::handle_on_configure(const rclcpp_lifecycle::State &)
   {
-    return configure_plugin();
+    return on_configure_plugin();
   }
+  
   carma_ros2_utils::CallbackReturn PluginBaseNode::handle_on_activate(const rclcpp_lifecycle::State &)
   {
-    return activate_plugin();
+    return on_activate_plugin();
   }
+  
   carma_ros2_utils::CallbackReturn PluginBaseNode::handle_on_deactivate(const rclcpp_lifecycle::State &)
   {
-    return deactivate_plugin();
+    return on_deactivate_plugin();
   }
+  
+  carma_ros2_utils::CallbackReturn PluginBaseNode::handle_on_cleanup(const rclcpp_lifecycle::State &)
+  {
+    return on_cleanup_plugin();
+  }
+  
   carma_ros2_utils::CallbackReturn PluginBaseNode::handle_on_shutdown(const rclcpp_lifecycle::State &)
   {
-    if (get_activation_status())
-      deactivate_plugin(); // Try to deactivate first on shutdown
-
-    return CallbackReturn::SUCCESS;
+    return on_shutdown_plugin();
   }
-  carma_ros2_utils::CallbackReturn PluginBaseNode::handle_on_error(const rclcpp_lifecycle::State &)
+  
+  carma_ros2_utils::CallbackReturn PluginBaseNode::handle_on_error(const rclcpp_lifecycle::State &, const std::string &exception_string)
   {
-    if (get_activation_status())
-      deactivate_plugin(); // Try to deactivate first on error
-
-    return CallbackReturn::SUCCESS;
+    return on_error_plugin(exception_string);
   }
 
   uint8_t PluginBaseNode::get_type() 
@@ -78,6 +104,17 @@ namespace carma_guidance_plugin
 
   void PluginBaseNode::discovery_timer_callback()
   {
+
+    if (!plugin_discovery_pub_) // If the publisher has not been initalized then initialize it. 
+    {
+      // Setup plugin publisher discovery which should bypass lifecycle behavior to ensure plugins are found
+      // prior to them needing to be activated.
+      // NOTE: Any other topics which need to be setup in the future should use handle_on_configure and the default this->create_publisher method to get a lifecycle publisher instead
+      auto this_shared = shared_from_this(); // Usage of shared_from_this() means this cannot be done in the constructor thus it is delegated to the timer callback
+      plugin_discovery_pub_ = rclcpp::create_publisher<carma_planning_msgs::msg::Plugin>(this_shared, "plugin_discovery", 1);
+
+    }
+
     carma_planning_msgs::msg::Plugin msg;
     msg.name = get_name();
     msg.version_id = get_version_id();
@@ -89,5 +126,5 @@ namespace carma_guidance_plugin
     plugin_discovery_pub_->publish(msg);
   }
 
-} // carma_guidance_plugin
+} // carma_guidance_plugins
 

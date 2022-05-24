@@ -14,9 +14,9 @@
 -->
 
 <package format="3">
-  <name>carma_guidance_plugin</name>
+  <name>carma_guidance_plugins</name>
   <version>1.0.0</version>
-  <description>The carma_guidance_plugin package</description>
+  <description>This package provides a set of base classes to implement CARMA Platform Guidance Plugins API</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
 
@@ -28,14 +28,11 @@
 
   <depend>rclcpp</depend>
   <depend>carma_ros2_utils</depend>
-  <depend>rclcpp_components</depend>
-  <depend>std_srvs</depend>
+  <depend>carma_planning_msgs</depend>
+  <depend>autoware_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
-
-  <exec_depend>launch</exec_depend>
-  <exec_depend>launch_ros</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

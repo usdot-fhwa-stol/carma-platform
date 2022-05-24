@@ -14,7 +14,7 @@
 # the License.
 
 cmake_minimum_required(VERSION 3.5)
-project(carma_guidance_plugin)
+project(carma_guidance_plugins)
 
 # Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
@@ -26,8 +26,7 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 # Name build targets
-set(node_exec carma_guidance_plugin_node_exec)
-set(node_lib carma_guidance_plugin_node)
+set(node_lib carma_guidance_plugins_node)
 
 # Includes
 include_directories(
@@ -36,20 +35,10 @@ include_directories(
 
 # Build
 ament_auto_add_library(${node_lib} SHARED
-        src/carma_guidance_plugin_node.cpp
-)
-
-ament_auto_add_executable(${node_exec} 
-        src/main.cpp 
-)
-
-# Register component
-rclcpp_components_register_nodes(${node_lib} "carma_guidance_plugin::PluginBaseNode")
-
-# All locally created targets will need to be manually linked
-# ament auto will handle linking of external dependencies
-target_link_libraries(${node_exec}
-        ${node_lib}
+        src/plugin_base_node.cpp
+        src/strategic_plugin.cpp
+        src/tactical_plugin.cpp
+        src/control_plugin.cpp
 )
 
 # Testing
@@ -58,15 +47,13 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_carma_guidance_plugin test/node_test.cpp)
+  ament_add_gtest(test_carma_guidance_plugins test/node_test.cpp)
 
-  ament_target_dependencies(test_carma_guidance_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+  ament_target_dependencies(test_carma_guidance_plugins ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
-  target_link_libraries(test_carma_guidance_plugin ${node_lib})
+  target_link_libraries(test_carma_guidance_plugins ${node_lib})
 
 endif()
 
 # Install
-ament_auto_package(
-        INSTALL_TO_SHARE config launch
-)
+ament_auto_package()
