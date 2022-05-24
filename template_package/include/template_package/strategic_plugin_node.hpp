@@ -21,7 +21,7 @@
 #include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/empty.hpp>
 
-<SUB><base_node_header>
+#include <carma_guidance_plugins/strategic_plugin.hpp>
 #include "<SUB><package_name>/<SUB><package_name>_config.hpp"
 
 namespace <SUB><package_name>
@@ -31,7 +31,7 @@ namespace <SUB><package_name>
    * \brief TODO for USER: Add class description
    * 
    */
-  class Node : public <SUB><base_node>
+  class Node : public carma_guidance_plugins::StrategicPlugin
   {
 
   private:
@@ -85,7 +85,32 @@ namespace <SUB><package_name>
     ////
     // Overrides
     ////
-    <SUB><base_node_overrides>
+    void plan_maneuvers_callback(
+      std::shared_ptr<rmw_request_id_t>, 
+      carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr, 
+      carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr) override;
+
+    bool get_availability() override;
+
+    std::string get_name() override;
+
+    std::string get_version_id() override;
+
+    std::string get_capability() override;
+    
+    /**
+     * \brief This method should be used to load parameters and will be called no the configure state transition.
+     */ 
+    carma_ros2_utils::CallbackReturn on_configure_plugin();
+
+    /**
+     * TODO for USER: The following lifecycle overrides are also available if needed
+     * on_activate_plugin
+     * on_deactivate_plugin
+     * on_cleanup_plugin
+     * on_shutdown_plugin
+     * on_error_plugin
+     */
   };
 
 } // <SUB><package_name>
