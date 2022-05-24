@@ -23,7 +23,7 @@ standstill: 2.0
 inter_tau: 1.5
 intra_tau: 0.6
 gap_weight: 0.9
-test_front_join: true
+test_front_join: false
 slowDownAdjuster: 0.75
 createGapAdjuster: 0.3
 minPlatooningSpeed: 2.0
