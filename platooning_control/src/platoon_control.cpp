@@ -223,6 +223,15 @@ namespace platoon_control
         ROS_DEBUG_STREAM("Platoon leader leader cmd speed:  " << platoon_leader_.commandSpeed);
 
         cav_msgs::PlatooningInfo platooing_info_msg = *msg;
+
+        ROS_DEBUG_STREAM("platooing_info_msg.actual_gap:  " << platooing_info_msg.actual_gap);
+
+        if (platooing_info_msg.actual_gap > 5.0)
+        {
+            platooing_info_msg.actual_gap -= 5.0; // TODO: temporary: should be vehicle length
+        }
+        
+        ROS_DEBUG_STREAM("platooing_info_msg.actual_gap:  " << platooing_info_msg.actual_gap);
         // platooing_info_msg.desired_gap = pcw_.desired_gap_;
         // platooing_info_msg.actual_gap = pcw_.actual_gap_;
         pcw_.actual_gap_ = platooing_info_msg.actual_gap;
