@@ -52,7 +52,7 @@ fi
 
 plugin_type=$4
 
-if [ "$plugin_type" = "strategic" ] || [ "$plugin_type" = "tactical" ] || [ "$plugin_type" = "control" ]
+if [ "$plugin_type" = "strategic" ] || [ "$plugin_type" = "tactical" ] || [ "$plugin_type" = "control" ]; then
    
     echo "Making plugin of type: $plugin_type"
     
@@ -79,94 +79,91 @@ if [[ $PWD != $(realpath ${target_path}) ]]; then
     exit 2
 fi
 
-plugin_base_overrides = "bool get_availability() override;
+plugin_base_overrides="bool get_availability() override;\
+\
+    std::string get_name() override;\
+\
+    std::string get_version_id() override;\
+\
+    std::string get_capability() override;\
+    \
+    /**\
+     * \brief This method should be used to load parameters and will be called no the configure state transition.\
+     */ \
+    carma_ros2_utils::CallbackReturn on_configure_plugin();\
+\
+    /**\
+     * TODO for USER: The following lifecycle overrides are also available if needed\
+     * on_activate_plugin\
+     * on_deactivate_plugin\
+     * on_cleanup_plugin\
+     * on_shutdown_plugin\
+     * on_error_plugin\
+     */\
+    "
 
-    std::string get_name() override;
+if [ "$plugin_type" = "strategic" ]; then
 
-    std::string get_version_id() override;
-
-    std::string get_capability() override;
-    
-    /**
-     * \brief This method should be used to load parameters and will be called no the configure state transition.
-     */ 
-    carma_ros2_utils::CallbackReturn on_configure_plugin();
-
-    /**
-     * TODO for USER: The following lifecycle overrides are also available if needed
-     * on_activate_plugin
-     * on_deactivate_plugin
-     * on_cleanup_plugin
-     * on_shutdown_plugin
-     * on_error_plugin
-     */"
-
-if [ "$plugin_type" = "strategic" ]
-
-base_node_overrides = "    void plan_maneuvers_callback(
-      std::shared_ptr<rmw_request_id_t>, 
-      carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr, 
-      carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr) override;
-
+base_node_overrides="void plan_maneuvers_callback(\
+      std::shared_ptr<rmw_request_id_t>, \
+      carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr, \
+      carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr) override;\
+\
     $plugin_base_overrides
     "
 
-base_node = "carma_guidance_plugins::StrategicPlugin"
-base_node_header = "#include <carma_guidance_plugins/strategic_plugin.hpp>"
+base_node='carma_guidance_plugins::StrategicPlugin'
+base_node_header='#include <carma_guidance_plugins/strategic_plugin.hpp>'
 
-elif [ "$plugin_type" = "tactical" ]
+elif [ "$plugin_type" = "tactical" ]; then
 
-base_node_overrides = "    void plan_trajectory_callback(
-      std::shared_ptr<rmw_request_id_t>, 
-      carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr, 
-      carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr) override;
-
+base_node_overrides="void plan_trajectory_callback(\
+      std::shared_ptr<rmw_request_id_t>, \
+      carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr, \
+      carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr) override;\
+\
     $plugin_base_overrides
     "
 
-base_node = "carma_guidance_plugins::TacticalPlugin"
-base_node_header = "#include <carma_guidance_plugins/tactical_plugin.hpp>"
+base_node='carma_guidance_plugins::TacticalPlugin'
+base_node_header='#include <carma_guidance_plugins/tactical_plugin.hpp>'
 
-elif [ "$plugin_type" = "control" ]
+elif [ "$plugin_type" = "control" ]; then
 
-base_node_overrides = "    autoware_msgs::msg::ControlCommandStamped generate_command() override;
-
+base_node_overrides="autoware_msgs::msg::ControlCommandStamped generate_command() override;\
+\
     $plugin_base_overrides
     "
 
-base_node = "carma_guidance_plugins::ControlPlugin"
-base_node_header = "#include <carma_guidance_plugins/control_plugin.hpp>"
+base_node='carma_guidance_plugins::ControlPlugin'
+base_node_header='#include <carma_guidance_plugins/control_plugin.hpp>'
 
 else
 
 ### Non-Plugin Base Node Substitutions ###
-base_node_overrides = "    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
+base_node_overrides='carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State \&prev_state);\
+\
+    /**\
+     * TODO for USER: The following lifecycle overrides are also available if needed\
+     * handle_on_activate\
+     * handle_on_deactivate\
+     * handle_on_cleanup\
+     * handle_on_shutdown\
+     * handle_on_error\
+     */\
+    '
 
-    /**
-     * TODO for USER: The following lifecycle overrides are also available if needed
-     * handle_on_activate
-     * handle_on_deactivate
-     * handle_on_cleanup
-     * handle_on_shutdown
-     * handle_on_error
-     */
-    "
-
-base_node = "carma_ros2_utils::CarmaLifecycleNode"
-base_node_header = "#include <carma_ros2_utils/carma_lifecycle_node.hpp>"
+base_node='carma_ros2_utils::CarmaLifecycleNode'
+base_node_header='#include <carma_ros2_utils/carma_lifecycle_node.hpp>'
 
 fi
-
-
-
-
 
 # Perform substitutions
 find . -type f -exec sed -i "s/<SUB><package_name>/${package_name}/g" {} \;
 find . -type f -exec sed -i "s/<SUB><year>/${current_year}/g" {} \;
-find . -type f -exec sed -i "s/<SUB><base_node_overrides>/${base_node_overrides}/g" {} \;
-find . -type f -exec sed -i "s/<SUB><base_node_header>/${base_node_header}/g" {} \;
-find . -type f -exec sed -i "s/<SUB><base_node>/${base_node}/g" {} \;
+find . -type f -exec sed -i "s|<SUB><base_node_overrides>|${base_node_overrides}|g" {} \;
+find . -type f -exec sed -i "s|<SUB><base_node_header>|${base_node_header}|g" {} \;
+find . -type f -exec sed -i "s|<SUB><base_node>|${base_node}|g" {} \;
 
 # Update file names for new package
 shopt -s globstar
