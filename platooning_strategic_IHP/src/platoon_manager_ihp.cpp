@@ -283,6 +283,7 @@ namespace platoon_strategic_ihp
             if (algorithmType_ == "APF_ALGORITHM"){
                 size_t newLeaderIndex = allPredecessorFollowing();
                 dynamic_leader_index_ = (int)newLeaderIndex;
+                ROS_DEBUG_STREAM("dynamic_leader_index_: " << dynamic_leader_index_);
                 if(newLeaderIndex < platoon.size() && newLeaderIndex >= 0) { //this must always be true!
                     dynamicLeader = platoon[newLeaderIndex];
                     ROS_DEBUG_STREAM("APF output: " << dynamicLeader.staticId);
@@ -329,8 +330,8 @@ namespace platoon_strategic_ihp
         //***** Formulate speed and downtrack vector *****//
         // Update host vehicle info when update member info, so platoon list include host vehicle, direct use platoon size for downtrack/speed vector.
         // Record downtrack distance (m) of each member
-        std::vector<double> downtrackDistance(platoon.size());
-        for(size_t i = 0; i < platoon.size(); i++) {
+        std::vector<double> downtrackDistance(hostPosInPlatoon_);
+        for(size_t i = 0; i < hostPosInPlatoon_; i++) {
             downtrackDistance[i] = platoon[i].vehiclePosition; // m
         }
         // Record speed (m/s) of each member
@@ -344,11 +345,11 @@ namespace platoon_strategic_ihp
         // If the distance headway between the subject vehicle and its predecessor is an issue
         // according to the "min_gap" and "max_gap" thresholds, then it should follow its predecessor
         // The following line will not throw exception because the length of downtrack array is larger than two in this case
-        double distHeadwayWithPredecessor = downtrackDistance[downtrackDistance.size() - 2] - downtrackDistance[downtrackDistance.size() - 1];
+        double distHeadwayWithPredecessor = downtrackDistance[hostPosInPlatoon_ - 2] - downtrackDistance[hostPosInPlatoon_ - 1];
         gapWithPred_ = distHeadwayWithPredecessor;
         if(insufficientGapWithPredecessor(distHeadwayWithPredecessor)) {
             ROS_DEBUG_STREAM("APF algorithm decides there is an issue with the gap with preceding vehicle: " << distHeadwayWithPredecessor << " m. Case Two");
-            return platoon.size() - 1;
+            return hostPosInPlatoon_ - 1;
         }
         else{
             // implementation of the main part of APF algorithm
@@ -608,10 +609,12 @@ namespace platoon_strategic_ihp
             if (platoon[i].vehiclePosition <= getCurrentDowntrackDistance() + 1.0) //allow for some uncertainty to count host also
             {
                 num = i;
+                
                 break;
             }
         }
-        return num;
+        // return num;
+        return hostPosInPlatoon_;
     }
 
     // Return the distance (m) to the predecessor vehicle.
