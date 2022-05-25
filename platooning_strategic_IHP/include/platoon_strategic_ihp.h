@@ -844,26 +844,6 @@ namespace platoon_strategic_ihp
              */
             const std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%";
             
-            /**
-             * index = 0, SIZE, number of members.
-             * index = 1, SPEED, in m/s.
-             * index = 2, ECEFX, in cm.
-             * index = 3, ECEFY, in cm.
-             * index = 4, ECEFZ, in cm.
-             */
-            // Merge front join and rear join to use sasme params for sending request. 
-            const std::string SAME_LANE_JOIN_PARAMS = "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%"; 
-            
-            // UCLA: add for cut-in join
-            /**
-             * index = 0, SIZE, number of members.
-             * index = 1, SPEED, in m/s.
-             * index = 2, ECEFX, in cm.
-             * index = 3, ECEFY, in cm.
-             * index = 4, ECEFZ, in cm.
-             */
-            const std::string JOIN_CUT_IN_PARAMS = "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%";
-
             // JOIN Strategy Params
             /**
              * index = 0, SIZE, number of members.
