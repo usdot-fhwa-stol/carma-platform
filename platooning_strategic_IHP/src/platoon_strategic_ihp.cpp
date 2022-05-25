@@ -1488,7 +1488,9 @@ namespace platoon_strategic_ihp
             PlatoonMember newMember = PlatoonMember();
             newMember.staticId = msg.m_header.sender_id;
             newMember.vehiclePosition = wm_->routeTrackPos(incoming_pose).downtrack;
+            ROS_DEBUG_STREAM("New member being added to platoon vector whose size is currently " << pm_.platoon.size());
             pm_.platoon.push_back(newMember);
+            ROS_DEBUG_STREAM("pm_ now thinks platoon size is " << pm_.getTotalPlatooningSize());
 
             // Send approval of the request
             response = MobilityRequestResponse::ACK;
