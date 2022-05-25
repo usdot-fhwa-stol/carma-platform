@@ -21,7 +21,7 @@
 #include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/empty.hpp>
 
-<SUB><base_node_header>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include "<SUB><package_name>/<SUB><package_name>_config.hpp"
 
 namespace <SUB><package_name>
@@ -31,7 +31,7 @@ namespace <SUB><package_name>
    * \brief TODO for USER: Add class description
    * 
    */
-  class Node : public <SUB><base_node>
+  class Node : public carma_ros2_utils::CarmaLifecycleNode
   {
 
   private:
@@ -85,7 +85,16 @@ namespace <SUB><package_name>
     ////
     // Overrides
     ////
-    <SUB><base_node_overrides>
+    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
+
+    /**
+     * TODO for USER: The following lifecycle overrides are also available if needed
+     * handle_on_activate
+     * handle_on_deactivate
+     * handle_on_cleanup
+     * handle_on_shutdown
+     * handle_on_error
+     */
   };
 
 } // <SUB><package_name>
