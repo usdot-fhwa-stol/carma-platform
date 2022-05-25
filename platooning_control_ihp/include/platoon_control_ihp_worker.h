@@ -101,6 +101,9 @@ namespace platoon_control_ihp
 
         /**
          * \brief UCLA: HP gap regulation that calculate the deisred position (Dtd, in m) for the platoon members. 
+         * 
+         * \params leaderCurrentPosition: The current position (dtd) of the leader, in m.
+         * 
          */
         double getIHPTargetPositionFollower(double leaderCurrentPosition);
 
