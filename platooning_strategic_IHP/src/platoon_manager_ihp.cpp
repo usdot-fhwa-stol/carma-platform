@@ -282,6 +282,7 @@ namespace platoon_strategic_ihp
             dynamicLeader = platoon[0];
             if (algorithmType_ == "APF_ALGORITHM"){
                 size_t newLeaderIndex = allPredecessorFollowing();
+                dynamic_leader_index_ = (int)newLeaderIndex;
                 if(newLeaderIndex < platoon.size() && newLeaderIndex >= 0) { //this must always be true!
                     dynamicLeader = platoon[newLeaderIndex];
                     ROS_DEBUG_STREAM("APF output: " << dynamicLeader.staticId);
