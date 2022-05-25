@@ -1398,18 +1398,17 @@ namespace platoon_strategic_ihp
         // Check if host is intended recipient 
         bool isHostRecipent = pm_.getHostStaticID() == reccipientID;
 
-        // Read requesting vehicle's joining index
-        std::string strategyParams = msg.strategy_params;
-        std::vector<std::string> inputsParams;
-        boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
-
-        std::vector<std::string> join_index_parsed;
-        boost::algorithm::split(join_index_parsed, inputsParams[5], boost::is_any_of(":"));
-        int req_sender_join_index = std::stoi(join_index_parsed[1]);
-        ROS_DEBUG_STREAM("Requesting join_index parsed: " << req_sender_join_index);
-        
         if (isCutInJoin && isHostRecipent)
         {
+            // Read requesting vehicle's joining index
+            std::string strategyParams = msg.strategy_params;
+            std::vector<std::string> inputsParams;
+            boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+            std::vector<std::string> join_index_parsed;
+            boost::algorithm::split(join_index_parsed, inputsParams[5], boost::is_any_of(":"));
+            int req_sender_join_index = std::stoi(join_index_parsed[1]);
+            ROS_DEBUG_STREAM("Requesting join_index parsed: " << req_sender_join_index);
+        
             // Control vehicle speed based on cut-in type
             // 1. cut-in from rear
             if (static_cast<size_t>(req_sender_join_index) == pm_.platoon.size()-1)
@@ -2636,7 +2635,7 @@ namespace platoon_strategic_ihp
 
             request.plan_type.type = cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
             request.strategy = PLATOONING_STRATEGY;
-            request.strategy_params = "";
+            request.strategy_params = ""; //params will not be read by receiver since this is 2nd msg in sequence
             request.urgency = 50;
             request.location = pose_to_ecef(pose_msg_);
             mobility_request_publisher_(request);
@@ -2758,6 +2757,7 @@ namespace platoon_strategic_ihp
             
             boost::format fmter(SAME_LANE_JOIN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
             // note: leader aborting is same-lane operation, hence using SAME_LANE_JOIN_PARAMS, no need to include join index.
+            int dummy_join_index = -2; //leader aborting doesn't need join_index so use default value
             fmter %platoon_size;                //  index = 0
             fmter %current_speed_;              //  index = 1, in m/s
             fmter %pose_ecef_point_.ecef_x;     //  index = 2
