@@ -798,6 +798,9 @@ namespace platoon_strategic_ihp
             // Number of calls to the run_leader_aborting() method
             int numLeaderAbortingCalls_ = 0;
 
+            // Number of calls to run_candidate_follower() method after MobReq message sent
+            int candidate_follower_delay_count_ = 0;
+
             double maxAllowedJoinTimeGap_ = 15.0;
             double maxAllowedJoinGap_ = 90;
             int maxPlatoonSize_ = 10;

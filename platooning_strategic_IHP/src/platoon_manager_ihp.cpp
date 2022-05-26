@@ -79,18 +79,14 @@ namespace platoon_strategic_ihp
         std::vector<std::string> cmd_parsed;
         boost::algorithm::split(cmd_parsed, inputsParams[0], boost::is_any_of(":"));
         double cmdSpeed = std::stod(cmd_parsed[1]);
-        ROS_DEBUG_STREAM("Command Speed: " << cmdSpeed);
         // get DtD directly instead of parsing message, m
         double dtDistance = DtD;
         // get CtD directly 
         double ctDistance = CtD;
-        ROS_DEBUG_STREAM("Downtrack Distance ecef: " << dtDistance);
-        ROS_DEBUG_STREAM("CrossTrack Distance ecef: " <<ctDistance);
         // read current speed, m/s
         std::vector<std::string> cur_parsed;
         boost::algorithm::split(cur_parsed, inputsParams[1], boost::is_any_of(":"));
         double curSpeed = std::stod(cur_parsed[1]);
-        ROS_DEBUG_STREAM("Current Speed Speed: " << curSpeed);
 
         // If we are currently in a follower state:
         // 1. We will update platoon ID based on leader's STATUS
@@ -254,7 +250,37 @@ namespace platoon_strategic_ihp
             --hostPosInPlatoon_;
         }
         platoon.erase(platoon.begin() + mem, platoon.begin() + mem + 1);
+
+        // If host is the only remaining member then clean up the other platoon data
+        if (platoon.size() == 1)
+        {
+            currentPlatoonID = dummyID;
+            platoonLeaderID = dummyID;
+            hostPosInPlatoon_ = 0;
+        }
+
         return true;
+    }
+
+    bool PlatoonManager::removeMemberById(const std::string id)
+    {
+        // Don't remove ourselves!
+        if (id.compare(HostMobilityId) == 0)
+        {
+            return false;
+        }
+
+        // Search for the member with a matching ID and remove it
+        for (size_t m = 0;  m < platoon.size();  ++m)
+        {
+            if (id.compare(platoon[m].staticId) == 0)
+            {
+                return removeMember(m);
+            }
+        }
+
+        // Indicate the member was not found
+        return false;
     }
         
     // Find the downtrack distance of the last vehicle of the platoon, in m.    

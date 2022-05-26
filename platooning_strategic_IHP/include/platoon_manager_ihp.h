@@ -191,6 +191,15 @@ namespace platoon_strategic_ihp
          * \return true if removal was successful, false otherwise
          */
         bool removeMember(const size_t mem);
+
+        /**
+         * \brief Removes a single member from the internal record of platoon members
+         * 
+         * \param id the vehicle ID of the member to be removed
+         * 
+         * \return true if removal was successful, false otherwise
+         */
+        bool removeMemberById(const std::string id);
         
         /**
         * \brief Returns dynamic leader of the host vehicle.
