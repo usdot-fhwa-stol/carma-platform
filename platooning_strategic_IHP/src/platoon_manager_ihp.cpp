@@ -198,7 +198,7 @@ namespace platoon_strategic_ihp
                     hostPosInPlatoon_ = i;
                     hostFlag = "Host";
                 }
-                ROS_DEBUG_STREAM("    " << platoon[i].staticId << " " << hostFlag);
+                ROS_DEBUG_STREAM("    " << platoon[i].staticId << "its DTD: " << platoon[i].vehiclePosition << " " << hostFlag);
             }
         }
 
@@ -221,7 +221,7 @@ namespace platoon_strategic_ihp
                     hostPosInPlatoon_ = i;
                     hostFlag = "Host";
                 }
-                ROS_DEBUG_STREAM("    " << platoon[i].staticId << " " << hostFlag);
+                ROS_DEBUG_STREAM("    " << platoon[i].staticId << "its DTD: " << platoon[i].vehiclePosition << " " << hostFlag);
             }
         }
     }
