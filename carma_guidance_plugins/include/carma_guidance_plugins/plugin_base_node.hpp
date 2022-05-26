@@ -19,6 +19,8 @@
 #include <gtest/gtest_prod.h>
 #include <rclcpp/rclcpp.hpp>
 #include <carma_planning_msgs/msg/plugin.hpp>
+#include <carma_wm_ros2/WMListener.hpp>
+#include <carma_wm_ros2/WorldModel.hpp>
 
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 
@@ -45,6 +47,12 @@ namespace carma_guidance_plugins
     // Timers
     //! Timer to trigger publication of the plugin discovery message at a fixed frequency 
     rclcpp::TimerBase::SharedPtr discovert_timer_;
+
+    // WorldModel listener
+    carma_wm::WMListener wm_listener_;
+
+    // World Model populated by the listener at runtime
+    carma_wm::WorldModelConstPtr wm_;
 
     /**
      * \brief Callback for the plugin discovery timer which will publish the plugin discovery message
