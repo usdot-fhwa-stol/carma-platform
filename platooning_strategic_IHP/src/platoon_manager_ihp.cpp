@@ -453,13 +453,13 @@ namespace platoon_strategic_ihp
     bool PlatoonManager::insufficientGapWithPredecessor(double distanceToPredVehicle) {
         
         // For normal operation, gap > minGap is necessary. 
-        bool frontGapIsTooSmall = distanceToPredVehicle < config_.minGap; 
+        bool frontGapIsTooSmall = distanceToPredVehicle < config_.minCutinGap; 
         
         // Host vehicle was following predecessor vehicle. --> The predecessor vehicle was violating gap threshold.
         bool previousLeaderIsPredecessor = previousFunctionalDynamicLeaderID_ == platoon[platoon.size() - 1].staticId; 
         
         // Gap greater than maxGap_ is necessary for host to stop choosing predecessor as dynamic leader. 
-        bool frontGapIsNotLargeEnough = distanceToPredVehicle < config_.maxGap && previousLeaderIsPredecessor;
+        bool frontGapIsNotLargeEnough = distanceToPredVehicle < config_.maxCutinGap && previousLeaderIsPredecessor;
 
         return (frontGapIsTooSmall || frontGapIsNotLargeEnough);
     }

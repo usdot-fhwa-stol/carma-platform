@@ -1863,7 +1863,7 @@ namespace platoon_strategic_ihp
             }
 
             // ----- CUT-IN rear -----
-            else if (static_cast<size_t>(req_sender_join_index) == pm_.platoon.size()-1  &&  isRearJoinerInPosition)
+            else if (static_cast<size_t>(req_sender_join_index) == pm_.platoon.size()-1)
             {
                 // determine if joining vehicle in position for cut-in rear
                 // To pass, the joining vehicle need to be behind the last member, within three vehicle length.
@@ -1886,7 +1886,7 @@ namespace platoon_strategic_ihp
                 }
             }
             // ----- CUT-IN middle -----
-            else if (isMidJoinerInPosition)
+            else //any other join_index value
             {
                 // determine if joining vehicle in position for cut-in mid
                 // To pass, the joining vehicle should be in front of the gap following vehicle, within three vehicle length.  
