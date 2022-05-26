@@ -345,7 +345,7 @@ namespace platoon_strategic_ihp
         // If the distance headway between the subject vehicle and its predecessor is an issue
         // according to the "min_gap" and "max_gap" thresholds, then it should follow its predecessor
         // The following line will not throw exception because the length of downtrack array is larger than two in this case
-        double distHeadwayWithPredecessor = downtrackDistance[hostPosInPlatoon_ - 2] - downtrackDistance[hostPosInPlatoon_ - 1];
+        double distHeadwayWithPredecessor = downtrackDistance[hostPosInPlatoon_ - 1] - downtrackDistance[hostPosInPlatoon_];
         gapWithPred_ = distHeadwayWithPredecessor;
         if(insufficientGapWithPredecessor(distHeadwayWithPredecessor)) {
             ROS_DEBUG_STREAM("APF algorithm decides there is an issue with the gap with preceding vehicle: " << distHeadwayWithPredecessor << " m. Case Two");

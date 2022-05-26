@@ -340,7 +340,7 @@ namespace platoon_strategic_ihp
         // UCLA: add indicator of lane change 
         bool safeToLaneChange = false;
 
-        int dynamic_leader_index_ = 0;
+        size_t dynamic_leader_index_ = 0;
         
     private:
 
