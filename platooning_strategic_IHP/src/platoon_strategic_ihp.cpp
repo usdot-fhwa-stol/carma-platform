@@ -1091,6 +1091,14 @@ namespace platoon_strategic_ihp
             // step 5. Request cut-in join (front, middle or rear, from adjacent lane)
             else if (targetPlatoonSize > 1  &&  !config_.test_front_join  &&  isVehicleNearTargetPlatoon(rearVehicleDtd, frontVehicleDtd, frontVehicleCtd))
             {
+
+                carma_wm::TrackPos target_trackpose(rearVehicleDtd - 10.0, rearVehicleCtd);
+                auto target_pose = wm_->pointFromRouteTrackPos(target_trackpose);
+                if (target_pose)
+                {
+                    target_cutin_pose_ = target_pose.get();
+                }
+                else ROS_DEBUG_STREAM("No target pose is found");
                 /**
                  * UCLA Implementation note:
                  *  1. isVehicleNearTargetPlatoon --> determine if the platoon is next to host vehicle
@@ -2372,7 +2380,9 @@ namespace platoon_strategic_ihp
             double joinerDtD = current_downtrack_;
             double cut_in_gap = pm_.getCutInGap(target_join_index_, joinerDtD);   
             ROS_DEBUG_STREAM("Start loop to check cut-in gap, start lane change when gap allows");
-            while (cut_in_gap < config_.minGap)  // TODO: use min gap as "safe to cut-in" gap, may need to adjust change later
+            
+            // temporary disable safety checks
+            while (false)//(cut_in_gap < config_.minGap)  // TODO: use min gap as "safe to cut-in" gap, may need to adjust change later
             {   
                 // Use LANE_CHANGE_TIMEOUT to bond the "creat gap"
                 bool isCurrentPlanTimeout = ((ros::Time::now().toNSec()/1000000  - pm_.current_plan.planStartTime) > LANE_CHANGE_TIMEOUT);
@@ -3206,15 +3216,19 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("Starting Loop");
         ROS_DEBUG_STREAM("total_maneuver_length: " << total_maneuver_length << " route_length: " << route_length);
         
+
+        ROS_DEBUG_STREAM("in mvr  callback safeToLaneChange: " << pm_.safeToLaneChange);
         // lane change maneuver 
         if (pm_.safeToLaneChange)
         {   
             ROS_DEBUG_STREAM("pm_.safeToLaneChange: " << pm_.safeToLaneChange);
             // for testing purpose only, check lane change status
-            double start_crosstrack = 0.5*findLaneWidth();// Assume vehicle start at left lane when testing.
-            double crosstrackDiff = current_crosstrack_ - start_crosstrack; 
-            bool isLaneChangeFinished = crosstrackDiff >= findLaneWidth()*0.85; // Use 85% of lane width to account for noise.
-             
+            double target_crosstrack = wm_->routeTrackPos(target_cutin_pose_).crosstrack;
+            ROS_DEBUG_STREAM("target_crosstrack: " << target_crosstrack);
+            double crosstrackDiff = current_crosstrack_ - target_crosstrack; 
+            bool isLaneChangeFinished = abs(crosstrackDiff) <= findLaneWidth()*0.5; // Use 85% of lane width to account for noise.
+            ROS_DEBUG_STREAM("crosstrackDiff: " << crosstrackDiff);
+            ROS_DEBUG_STREAM("isLaneChangeFinished: " << isLaneChangeFinished);
             /**  
              * Note: The function "find_target_lanelet_id" was used to test the IHP platooning logic and is only a pre-written scenario. 
              *       We re-use the existing lane change maneuver for route-following, and followed the data flow just to compile the code. 
@@ -3258,8 +3272,8 @@ namespace platoon_strategic_ihp
                         break;
                     }
                     // Update lane change status to stop the while loop when langchange finshed.
-                    crosstrackDiff = current_crosstrack_ - start_crosstrack;  // Assume vehicle start at left lane when testing.
-                    if (crosstrackDiff >= findLaneWidth()*0.85) // Use 85% of lane width to account for noise.
+                    crosstrackDiff = current_crosstrack_ - target_crosstrack;  // Assume vehicle start at left lane when testing.
+                    if (crosstrackDiff <= findLaneWidth()*0.5) // Use 85% of lane width to account for noise.
                     {
                         break; 
                     }
@@ -3279,12 +3293,16 @@ namespace platoon_strategic_ihp
                     lanelet::BasicPoint2d next_loc(pose_msg_.pose.position.x+current_speed_*config_.time_step, 
                                                    pose_msg_.pose.position.y);
 
+                    
+                    double lc_end_dist = wm_->routeTrackPos(target_cutin_pose_).downtrack;
+                    
+
                     // get the actually closest lanelets, 
-                    auto next_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, next_loc, 10);  
+                    auto next_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, target_cutin_pose_, 10);  
 
                     // note: Since lanelet ID is not important for arbitrary lanechange, just use first lanelet's Id to create a maneuver msg.
-                    resp.new_plan.maneuvers.push_back(composeLaneChangeManeuverMessage(lane_change_dtd, end_dist,  
-                                            speed_progress, target_speed, next_lanelets[0].second.id(), target_lanelet_id, time_progress));
+                    resp.new_plan.maneuvers.push_back(composeLaneChangeManeuverMessage(current_downtrack_, lc_end_dist,  
+                                            speed_progress, target_speed, current_lanelet_id, next_lanelets[0].second.id() , time_progress));
 
                     current_progress += dist_diff;
                     // read lane change maneuver end time as time progress
