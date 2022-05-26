@@ -53,8 +53,8 @@ struct PlatoonPluginConfig
   double maxAllowableHeadaway    = 4.0;   // s
   double headawayStableUpperBond = 3.9;   // s
   
-  double minGap                  = 22.0;  // m
-  double maxGap                  = 32.0;  // m
+  double minCutinGap             = 22.0;  // m
+  double maxCutinGap             = 22.0;  // m
   double maxCrosstrackError      = 2.0;   // m
 
   // Speed adjuster to slow down platoon memebr to create gap
@@ -103,8 +103,8 @@ struct PlatoonPluginConfig
           << "maxAllowableHeadaway: " << c.maxAllowableHeadaway << std::endl
           << "headawayStableLowerBond: " << c.headawayStableLowerBond << std::endl
           << "headawayStableUpperBond: " << c.headawayStableUpperBond << std::endl
-          << "kpminGapPID: " << c.minGap << std::endl
-          << "maxGap: " << c.maxGap << std::endl
+          << "minCutinGap: " << c.minCutinGap << std::endl
+          << "maxCutinGap: " << c.maxCutinGap << std::endl
           << "maxCrosstrackError: " << c.maxCrosstrackError << std::endl
           << "vehicleID: " << c.vehicleID << std::endl
           << "minPlatooningSpeed: " << c.minPlatooningSpeed << std::endl

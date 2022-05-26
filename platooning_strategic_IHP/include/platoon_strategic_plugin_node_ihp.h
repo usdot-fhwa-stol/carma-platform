@@ -81,8 +81,8 @@ public:
     pnh.param<double>("maxAllowableHeadaway", config.maxAllowableHeadaway, config.maxAllowableHeadaway);
     pnh.param<double>("headawayStableLowerBond", config.headawayStableLowerBond, config.headawayStableLowerBond);
     pnh.param<double>("headawayStableUpperBond", config.headawayStableUpperBond, config.headawayStableUpperBond);
-    pnh.param<double>("minGap", config.minGap, config.minGap);
-    pnh.param<double>("maxGap", config.maxGap, config.maxGap);
+    pnh.param<double>("minCutinGap", config.minCutinGap, config.minCutinGap);
+    pnh.param<double>("maxCutinGap", config.maxCutinGap, config.maxCutinGap);
     pnh.param<double>("maxCrosstrackError", config.maxCrosstrackError, config.maxCrosstrackError);
     pnh.param<bool>("test_front_join", config.test_front_join, config.test_front_join);
     pnh.param<double>("minPlatooningSpeed", config.minPlatooningSpeed, config.minPlatooningSpeed);

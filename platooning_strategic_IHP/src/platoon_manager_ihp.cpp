@@ -333,9 +333,10 @@ namespace platoon_strategic_ihp
             dynamicLeader = platoon[0];
             if (algorithmType_ == "APF_ALGORITHM"){
                 size_t newLeaderIndex = allPredecessorFollowing();
+
                 dynamic_leader_index_ = (int)newLeaderIndex;
                 ROS_DEBUG_STREAM("dynamic_leader_index_: " << dynamic_leader_index_);
-                if(newLeaderIndex < platoon.size() && newLeaderIndex >= 0) { //this must always be true!
+                if(newLeaderIndex < platoon.size()) { //this must always be true!
                     dynamicLeader = platoon[newLeaderIndex];
                     ROS_DEBUG_STREAM("APF output: " << dynamicLeader.staticId);
                     previousFunctionalDynamicLeaderIndex_ = newLeaderIndex;
@@ -506,13 +507,13 @@ namespace platoon_strategic_ihp
     bool PlatoonManager::insufficientGapWithPredecessor(double distanceToPredVehicle) {
         
         // For normal operation, gap > minGap is necessary. 
-        bool frontGapIsTooSmall = distanceToPredVehicle < config_.minGap; 
+        bool frontGapIsTooSmall = distanceToPredVehicle < config_.minCutinGap; 
         
         // Host vehicle was following predecessor vehicle. --> The predecessor vehicle was violating gap threshold.
         bool previousLeaderIsPredecessor = previousFunctionalDynamicLeaderID_ == platoon[platoon.size() - 1].staticId; 
         
         // Gap greater than maxGap_ is necessary for host to stop choosing predecessor as dynamic leader. 
-        bool frontGapIsNotLargeEnough = distanceToPredVehicle < config_.maxGap && previousLeaderIsPredecessor;
+        bool frontGapIsNotLargeEnough = distanceToPredVehicle < config_.maxCutinGap && previousLeaderIsPredecessor;
 
         return (frontGapIsTooSmall || frontGapIsNotLargeEnough);
     }
