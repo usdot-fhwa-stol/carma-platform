@@ -192,8 +192,9 @@ namespace platoon_strategic_ihp
             for (size_t i = 0;  i < platoon.size();  ++i)
             {
                 std::string hostFlag = " ";
-                if (i == hostPosInPlatoon_)
+                if (platoon[i].staticId == getHostStaticID)
                 {
+                    hostPosInPlatoon_ = i;
                     hostFlag = "Host";
                 }
                 ROS_DEBUG_STREAM("    " << platoon[i].staticId << " " << hostFlag);
