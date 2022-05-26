@@ -88,6 +88,14 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
 
   ROS_DEBUG_STREAM("planning state x:" << req.vehicle_state.x_pos_global << ", y: " << req.vehicle_state.y_pos_global << ", speed: " << req.vehicle_state.longitudinal_vel);
 
+  if (req.vehicle_state.longitudinal_vel < epsilon_)
+  {
+    ROS_WARN_STREAM("Detected that car is already stopped! Ignoring the request to plan Stop&Wait");
+    ROS_DEBUG_STREAM("Detected that car is already stopped! Ignoring the request to plan Stop&Wait");
+    
+    return true;
+  }
+
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
   ROS_DEBUG_STREAM("Current_downtrack" << current_downtrack);
@@ -136,13 +144,15 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
     throw std::invalid_argument("stop and wait maneuver message missing required float meta data");
   }
 
+  double initial_speed = req.vehicle_state.longitudinal_vel; //will be modified after compose_trajectory_from_centerline 
+
   trajectory.trajectory_points = compose_trajectory_from_centerline(
       points_and_target_speeds, current_downtrack, req.vehicle_state.longitudinal_vel,
-      maneuver_plan[0].stop_and_wait_maneuver.end_dist, stop_location_buffer, req.header.stamp, stopping_accel);
+      maneuver_plan[0].stop_and_wait_maneuver.end_dist, stop_location_buffer, req.header.stamp, stopping_accel, initial_speed);
 
   ROS_DEBUG_STREAM("Trajectory points size:" << trajectory.trajectory_points.size());
 
-  trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
+  trajectory.initial_longitudinal_velocity = initial_speed;
 
   resp.trajectory_plan = trajectory;
 
@@ -217,7 +227,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::trajectory_from_points_t
 
 std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_centerline(
     const std::vector<PointSpeedPair>& points, double starting_downtrack, double starting_speed, double stop_location,
-    double stop_location_buffer, ros::Time start_time, double stopping_acceleration)
+    double stop_location_buffer, ros::Time start_time, double stopping_acceleration, double& initial_speed)
 {
   std::vector<cav_msgs::TrajectoryPlanPoint> plan;
   if (points.size() == 0)
@@ -363,8 +373,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   {
     if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
     {  // If the time
-      ROS_WARN_STREAM("Detected non-normal (nan, inf, etc.) time.");
-      times[i] = times[i - 1] + config_.stop_timestep;
+      ROS_WARN_STREAM("Detected non-normal (nan, inf, etc.) time. Making it same as before: " << times[i-1]);
+      // NOTE: overriding the timestamps in assumption that pure_pursuit_wrapper will detect it as stopping case
+      times[i] = times[i - 1];
     }
   }
 
@@ -384,6 +395,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
     new_point.target_time = new_point.target_time + ros::Duration(config_.stop_timestep);
     traj.push_back(new_point);
   }
+
+  if (!filtered_speeds.empty())
+    initial_speed = filtered_speeds.front(); //modify initial_speed variable passed by reference
 
   return traj;
 }

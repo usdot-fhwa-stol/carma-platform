@@ -30,9 +30,10 @@
 namespace carma_wm
 {
 
-void createTestingWorld(carma_wm::CARMAWorldModel& cmw, std::vector<lanelet::Lanelet>& llts,
-                                          lanelet::LaneletMapPtr& map,  std::vector<carma_perception_msgs::msg::ExternalObject>& obstacles)
+void createTestingWorld(std::vector<lanelet::Lanelet>& llts, lanelet::LaneletMapPtr& map, std::vector<carma_perception_msgs::msg::ExternalObject>& obstacles)
 {
+  //Note: all params are outputs provided by this function.
+  
   /*
   * Create 2x2 lanelets map by hand
   */
@@ -109,7 +110,7 @@ void createTestingWorld(carma_wm::CARMAWorldModel& cmw, std::vector<lanelet::Lan
   size.y = 2;
   size.z = 1;
 
-  for (int i = 0; i < x_offsets.size(); i++)
+  for (size_t i = 0; i < x_offsets.size(); i++)
   {
       geometry_msgs::msg::Pose pose;
       pose.position.x = x_offsets[i];
@@ -155,7 +156,7 @@ TEST(CARMAWorldModelTest, getLane)
   lanelet::LaneletMapPtr map;
   std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -174,16 +175,16 @@ TEST(CARMAWorldModelTest, getLane)
   }
 
   // Test left lane
-  ASSERT_EQ(cmw.getLane(llts[0], LANE_FULL).size(), 3);
+  ASSERT_EQ(cmw.getLane(llts[0], LANE_FULL).size(), 3u);
 
   // Test right lane
-  ASSERT_EQ(cmw.getLane(llts[3], LANE_FULL).size(), 3);
+  ASSERT_EQ(cmw.getLane(llts[3], LANE_FULL).size(), 3u);
 
   // Test lane ahead (always inclde itself)
-  ASSERT_EQ(cmw.getLane(llts[2], LANE_AHEAD).size(), 1);
+  ASSERT_EQ(cmw.getLane(llts[2], LANE_AHEAD).size(), 1u);
 
   // Test lane behind
-  ASSERT_EQ(cmw.getLane(llts[5], LANE_BEHIND).size(), 3);
+  ASSERT_EQ(cmw.getLane(llts[5], LANE_BEHIND).size(), 3u);
 
 }
 
@@ -198,7 +199,7 @@ TEST(CARMAWorldModelTest, getNearestObjInLane)
   lanelet::LaneletMapPtr map;
   std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -258,7 +259,7 @@ TEST(CARMAWorldModelTest, nearestObjectBehindInLane)
   std::vector<lanelet::Lanelet> llts;
   lanelet::LaneletMapPtr map;
   std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -304,7 +305,7 @@ TEST(CARMAWorldModelTest, nearestObjectAheadInLane)
   lanelet::LaneletMapPtr map;
   std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -353,7 +354,7 @@ TEST(CARMAWorldModelTest, getInLaneObjects)
   lanelet::LaneletMapPtr map;
   std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -376,7 +377,7 @@ TEST(CARMAWorldModelTest, getInLaneObjects)
   std::vector<carma_perception_msgs::msg::RoadwayObstacle> in_lane_objects;
   in_lane_objects = cmw.getInLaneObjects(llts[0], LANE_FULL);
 
-  ASSERT_EQ(in_lane_objects.size(), 0);
+  ASSERT_EQ(in_lane_objects.size(), 0u);
 
   // Set roadway objects
   cmw.setRoadwayObjects(roadway_objects);
@@ -395,18 +396,18 @@ TEST(CARMAWorldModelTest, getInLaneObjects)
   // check left lane, all should return 2 objects as they are on one lane
   for (int i = 0; i < 3; i++)
   {
-    ASSERT_EQ(cmw.getInLaneObjects(llts[i], LANE_FULL).size(), 2);
+    ASSERT_EQ(cmw.getInLaneObjects(llts[i], LANE_FULL).size(), 2u);
   }
   // check right lane, all should return 3 objects as 1 is across linestring
   for (int i = 3; i < 6; i++)
   {
-    ASSERT_EQ(cmw.getInLaneObjects(llts[i], LANE_FULL).size(), 4);
+    ASSERT_EQ(cmw.getInLaneObjects(llts[i], LANE_FULL).size(), 4u);
   }
   // check right lane ahead of middle section
-  ASSERT_EQ(cmw.getInLaneObjects(llts[4], LANE_AHEAD).size(), 3);
+  ASSERT_EQ(cmw.getInLaneObjects(llts[4], LANE_AHEAD).size(), 3u);
 
   // check right lane behind of middle section
-  ASSERT_EQ(cmw.getInLaneObjects(llts[4], LANE_BEHIND).size(), 3);
+  ASSERT_EQ(cmw.getInLaneObjects(llts[4], LANE_BEHIND).size(), 3u);
 
 }
 
@@ -421,7 +422,7 @@ TEST(CARMAWorldModelTest, distToNearestObjInLane)
   lanelet::LaneletMapPtr map;
   std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
 
   /*
   * TEST
@@ -807,36 +808,36 @@ TEST(CARMAWorldModelTest, getLaneletsBetween) // HERE
   ASSERT_TRUE((bool)cmw.getRoute());
   ASSERT_TRUE((bool)cmw.getMapRoutingGraph());
 
-  ASSERT_EQ(2, cmw.getMap()->laneletLayer.size());
-  ASSERT_EQ(2, cmw.getRoute()->laneletMap()->laneletLayer.size());
+  ASSERT_EQ(2u, cmw.getMap()->laneletLayer.size());
+  ASSERT_EQ(2u, cmw.getRoute()->laneletMap()->laneletLayer.size());
 
   ///// Test 0 range
   auto result = cmw.getLaneletsBetween(0, 0);
-  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(1u, result.size());
   ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
 
   result = cmw.getLaneletsBetween(0, 0, true, true);
-  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(1u, result.size());
   ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
 
   result = cmw.getLaneletsBetween(0, 0, false, true);
-  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(1u, result.size());
   ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
 
   result = cmw.getLaneletsBetween(1.0, 1.0, false, true);
-  ASSERT_EQ(2, result.size());
+  ASSERT_EQ(2u, result.size());
   ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
   ASSERT_EQ(result[1].id(),(cmw.getRoute()->shortestPath().begin() + 1)->id());
 
   result = cmw.getLaneletsBetween(1.0, 1.0, true, false);
-  ASSERT_EQ(0, result.size());
+  ASSERT_EQ(0u, result.size());
   
   result = cmw.getLaneletsBetween(0.1, 0.2, false, false); // FAIL This fails when the bounds are not inclusive
-  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(1u, result.size());
   ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
 
   result = cmw.getLaneletsBetween(0.1, 0.2, true, false); // FAIL
-  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(1u, result.size());
   ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
 
   ///// Test negative range
@@ -844,31 +845,31 @@ TEST(CARMAWorldModelTest, getLaneletsBetween) // HERE
 
   ///// Test lanelet after range
   result = cmw.getLaneletsBetween(2.5, 3.1);
-  ASSERT_EQ(0, result.size());
+  ASSERT_EQ(0u, result.size());
 
   ///// Test lanelet before range
   result = cmw.getLaneletsBetween(-1.0, -0.1);
-  ASSERT_EQ(0, result.size());
+  ASSERT_EQ(0u, result.size());
 
   ///// Test 1 lanelet in range
   result = cmw.getLaneletsBetween(-1.0, 0.5);
-  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(1u, result.size());
   ASSERT_NEAR(result[0].id(), cmw.getRoute()->shortestPath().begin()->id(), 0.000001);
 
   ///// Test both lanelets in range
   result = cmw.getLaneletsBetween(-1.0, 1.5);
-  ASSERT_EQ(2, result.size());
+  ASSERT_EQ(2u, result.size());
   ASSERT_NEAR(result[0].id(), cmw.getRoute()->shortestPath().begin()->id(), 0.000001);
   ASSERT_NEAR(result[1].id(), (cmw.getRoute()->shortestPath().begin() + 1)->id(), 0.000001);
 
   ///// Test 1 point overlap front
   result = cmw.getLaneletsBetween(-1.0, 0.0);
-  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(1u, result.size());
   ASSERT_NEAR(result[0].id(), cmw.getRoute()->shortestPath().begin()->id(), 0.000001);
 
   ///// Test 1 point overlap back
   result = cmw.getLaneletsBetween(2.0, 2.5);
-  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(1u, result.size());
   ASSERT_NEAR(result[0].id(), (cmw.getRoute()->shortestPath().begin() + 1)->id(), 0.000001);
 }
 
@@ -1002,22 +1003,22 @@ TEST(CARMAWorldModelTest, toRoadwayObstacle)
 
   ASSERT_NEAR(obs.down_track, 5.0, 0.00001);
 
-  ASSERT_EQ(obs.predicted_lanelet_ids.size(), 1);
+  ASSERT_EQ(obs.predicted_lanelet_ids.size(), 1u);
   ASSERT_EQ(obs.predicted_lanelet_ids[0], ll_1.id());
 
-  ASSERT_EQ(obs.predicted_lanelet_id_confidences.size(), 1);
+  ASSERT_EQ(obs.predicted_lanelet_id_confidences.size(), 1u);
   ASSERT_NEAR(obs.predicted_lanelet_id_confidences[0], 0.9, 0.00001);
 
-  ASSERT_EQ(obs.predicted_cross_tracks.size(), 1);
+  ASSERT_EQ(obs.predicted_cross_tracks.size(), 1u);
   ASSERT_NEAR(obs.predicted_cross_tracks[0], 0.5, 0.00001);
 
-  ASSERT_EQ(obs.predicted_cross_track_confidences.size(), 1);
+  ASSERT_EQ(obs.predicted_cross_track_confidences.size(), 1u);
   ASSERT_NEAR(obs.predicted_cross_track_confidences[0], 0.9, 0.00001);
 
-  ASSERT_EQ(obs.predicted_down_tracks.size(), 1);
+  ASSERT_EQ(obs.predicted_down_tracks.size(), 1u);
   ASSERT_NEAR(obs.predicted_down_tracks[0], 6.0, 0.00001);
 
-  ASSERT_EQ(obs.predicted_down_track_confidences.size(), 1);
+  ASSERT_EQ(obs.predicted_down_track_confidences.size(), 1u);
   ASSERT_NEAR(obs.predicted_down_track_confidences[0], 0.9, 0.00001);
 
   // Alternate object off the roadway
@@ -1037,21 +1038,21 @@ TEST(CARMAWorldModelTest, getLaneletsFromPoint)
   lanelet::LaneletMapPtr map;
   std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
-  createTestingWorld(cmw, llts, map, obstacles);
+  createTestingWorld(llts, map, obstacles);
   // Test no map set
   ASSERT_THROW(cmw.getLaneletsFromPoint({1,1}), std::invalid_argument);
   // Create a complete map
   test::MapOptions mp(1,1);
   auto cmw_ptr = test::getGuidanceTestMap(mp);
   auto underlyings = cmw_ptr->getLaneletsFromPoint({0.5,0.5});
-  ASSERT_EQ(underlyings.size(), 1);
+  ASSERT_EQ(underlyings.size(), 1u);
   ASSERT_EQ(underlyings.front().id(), 1200);
 
   auto ll_1500 = test::getLanelet(1500, {getPoint(0.0,0.1, 0),getPoint(0.0,1.1, 0)}, 
                          {getPoint(1.0,0.1, 0),getPoint(1.0,1.1, 0)}); // another lanelet the point is in
   cmw_ptr->getMutableMap()->add(ll_1500);
   underlyings = cmw_ptr->getLaneletsFromPoint({0.5,0.5});
-  ASSERT_EQ(underlyings.size(), 2);
+  ASSERT_EQ(underlyings.size(), 2u);
   ASSERT_EQ(underlyings.front().id(), 1500);
   ASSERT_EQ(underlyings.back().id(), 1200);
 }
@@ -1267,7 +1268,7 @@ TEST(CARMAWorldModelTest, sampleRoutePoints)
   carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
   std::vector<lanelet::BasicPoint2d> points = wm->sampleRoutePoints(0, 10.5, 1);
 
-  int i = 0;
+  size_t i = 0;
   for (auto p : points) {
     ASSERT_NEAR(p.x(), 1.85, 0.001);
     if (i != points.size() - 1) {
@@ -1376,7 +1377,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // partial state 3
-  EXPECT_EQ(lanelet::time::durationFromSec(45), lights1[0]->fixed_cycle_duration);
+  EXPECT_EQ(lanelet::time::durationFromSec(44.5), lights1[0]->fixed_cycle_duration); // NOTE: 44.5 here instead of 45 because of the intentional subtraction of 0.5s inside the implementation
   
   // call the processSpatFromMsg with that msg 4.b
   event.event_state.movement_phase_state = 5;
@@ -1388,7 +1389,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
-  EXPECT_EQ(lanelet::time::durationFromSec(45), lights1[0]->fixed_cycle_duration);
+  EXPECT_EQ(lanelet::time::durationFromSec(44.5), lights1[0]->fixed_cycle_duration); // NOTE: 44.5 here instead of 45 because of the intentional subtraction of 0.5s inside the implementation
 
   // call the processSpatFromMsg with that msg 5
   event.event_state.movement_phase_state = 3;
@@ -1491,7 +1492,7 @@ TEST(CARMAWorldModelTest, getSignalsAlongRoute)
 
   auto lights = cmw_ptr->getSignalsAlongRoute({0.5, 0});
   
-  EXPECT_EQ(lights.size(), 2);
+  EXPECT_EQ(lights.size(), 2u);
   EXPECT_EQ(lights[0]->id(), traffic_light_id1);
   EXPECT_EQ(lights[1]->id(), traffic_light_id2);
 
@@ -1533,7 +1534,7 @@ TEST(CARMAWorldModelTest, getIntersectionAlongRoute)
 
   auto ints = cmw_ptr->getIntersectionsAlongRoute({0.5, 0});
   
-  EXPECT_EQ(ints.size(), 1);
+  EXPECT_EQ(ints.size(), 1u);
   EXPECT_EQ(ints[0]->id(), int_id);
 
 }

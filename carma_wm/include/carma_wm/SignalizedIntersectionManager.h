@@ -36,8 +36,8 @@ namespace carma_wm
 
 struct LANE_DIRECTION
 {
-  static const uint8_t INGRESS = 1;
-  static const uint8_t EGRESS = 2;
+  static const uint8_t INGRESS = 2;
+  static const uint8_t EGRESS = 1;
 };
 
 using namespace lanelet::units::literals;
@@ -50,18 +50,36 @@ class SignalizedIntersectionManager
 {
 public:
   SignalizedIntersectionManager(){}
+  
+ /*! 
+  *
+  *  \brief Copy constructor that copies everything except the traffic signal states. 
+  *         This is to keep the states although the map is updated or a similar event happened
+  *         NOTE: The function does not update the map with new elements
+  *  \param[out] other manager
+  */
+  SignalizedIntersectionManager(const SignalizedIntersectionManager& other);
 
-  /*! 
-  *  \brief Copy operator that copies everything except the traffic signal states. 
-            This is to keep the states although the map is updated or a similar event happened
-            NOTE: The function does not update the map with new elements
+ /*! 
+  *  \brief Assignment operator that copies everything except the traffic signal states. 
+  *         This is to keep the states although the map is updated or a similar event happened
+  *         NOTE: The function does not update the map with new elements
   *  \param[out] other manager
   */
   SignalizedIntersectionManager& operator=(SignalizedIntersectionManager other);
 
+ /*!
+  *  \brief Equality operator that checks if every mapping are same except the traffic signal states. 
+  *         This is to keep the states although the map is updated or a similar event happened
+  *         NOTE: The function does not update the map with new elements
+  *  \param[out] rhs manager
+  */
+  bool operator==(const SignalizedIntersectionManager& rhs);
+
+
   /*! 
   *  \brief Create relevant signalized intersection and carma traffic signals based on the MAP.msg and the lanelet_map
-            NOTE: The function does not update the map with new elements
+  *         NOTE: The function does not update the map with new elements
   *  \param[out] intersections to return
   *  \param[out] traffic_signals to return
   *  \param map_msg MAP.msg that consists all static data portion of the intersection
@@ -95,10 +113,9 @@ public:
   *  \brief Returns existing signalized intersection with same entry and exit llts if exists.
   *  \param entry_llts of the intersection
   *  \param exit_llts of the intersection
-  *  \param map lanelet_map to check 
   *  \return id of the matching intersection in the map, or lanelet::InvalId if none exists
   */
-  lanelet::Id matchSignalizedIntersection(const lanelet::Lanelets& entry_llts, const lanelet::Lanelets& exit_llts, const std::shared_ptr<lanelet::LaneletMap>& map);
+  lanelet::Id matchSignalizedIntersection(const lanelet::Lanelets& entry_llts, const lanelet::Lanelets& exit_llts);
   
   /*! 
   *  \brief Saves the georeference string to be used for converting MAP.msg coordinates
@@ -123,6 +140,9 @@ public:
   *  \return traffic signal corresponding to the signal group
   */
   lanelet::Lanelets identifyInteriorLanelets(const lanelet::Lanelets& entry_llts, const std::shared_ptr<lanelet::LaneletMap>& map);
+
+  // SignalizedIntersection's reference point correction pair of (x, y) for each intersection_id
+  std::unordered_map<uint16_t, std::pair<double, double>> intersection_coord_correction_;
 
   // SignalizedIntersection quick id lookup
   std::unordered_map<uint16_t, lanelet::Id> intersection_id_to_regem_id_;
@@ -151,6 +171,8 @@ private:
 
   // Max width of lane in meters
   double max_lane_width_ = 4;
+
+
 };
 
 }  // namespace carma_wm

@@ -1,5 +1,5 @@
 
-# Copyright (C) 2020-2021 LEIDOS.
+# Copyright (C) 2019-2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -13,95 +13,73 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(roadway_objects)
 
+# Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
+carma_check_ros_version(2)
 carma_package()
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-set(DEPS 
-  cav_msgs
-  roscpp
-  carma_utils
-  carma_wm
-  lanelet2_core
-  lanelet2_routing
-  lanelet2_traffic_rules
-  tf2
-  tf2_geometry_msgs
-)
-find_package(catkin REQUIRED COMPONENTS
-  ${DEPS}
-)
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
+# Name build targets
+set(worker_lib roadway_objects_worker_lib)
+set(node_exec roadway_objects_node_exec)
+set(node_lib roadway_objects_node)
 
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if your package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS ${DEPS}
-)
-
-###########
-## Build ##
-###########
-
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
+# Includes
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
 )
 
+# Build
 
-add_executable(roadway_objects_node src/main.cpp src/RoadwayObjectsNode.cpp)
-
-add_library(roadway_objects_worker src/RoadwayObjectsWorker.cpp)
-add_dependencies(roadway_objects_worker ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(roadway_objects_worker ${catkin_LIBRARIES})
-target_link_libraries(roadway_objects_node roadway_objects_worker)
-
-
-#############
-## Install ##
-#############
-
-## Mark executables for installation
-install(TARGETS roadway_objects_node roadway_objects_worker
-        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ament_auto_add_library(${worker_lib} SHARED
+        src/roadway_objects_worker.cpp
 )
 
-## Mark cpp header files for installation
-install(DIRECTORY include/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+ament_auto_add_library(${node_lib} SHARED
+        src/roadway_objects_node.cpp
 )
 
-## Mark other files for installation (e.g. launch and bag files, etc.)
-install(DIRECTORY
-        launch
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
 )
 
+# Register component
+rclcpp_components_register_nodes(${node_lib} "roadway_objects::RoadwayObjectsNode")
 
-#############
-## Testing ##
-#############
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_lib}
+        ${worker_lib}
+)
 
-## Add gtest based cpp test target and link libraries
-catkin_add_gmock(${PROJECT_NAME}-test test/TestRoadwayObjectsWorker.cpp test/TestMain.cpp)
-target_link_libraries(${PROJECT_NAME}-test roadway_objects_worker ${catkin_LIBRARIES})
+target_link_libraries(${node_exec}
+        ${node_lib}
+)
+
+# Testing
+if(BUILD_TESTING)  
+
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+
+  ament_add_gtest(test_roadway_objects 
+        test/TestRoadwayObjectsWorker.cpp
+        test/TestHelpers.hpp
+  )
+
+  ament_target_dependencies(test_roadway_objects ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+
+  target_link_libraries(test_roadway_objects ${node_lib})
+
+endif()
+
+# Install
+ament_auto_package(
+        INSTALL_TO_SHARE launch
+)

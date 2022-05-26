@@ -57,6 +57,7 @@
 #include <std_msgs/Int32MultiArray.h>
 #include <cav_msgs/MapData.h>
 #include <carma_wm/SignalizedIntersectionManager.h>
+#include <cav_msgs/MobilityOperation.h>
 
 
 namespace carma_wm_ctrl
@@ -79,6 +80,7 @@ public:
   using PublishMapUpdateCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
   using PublishCtrlRequestCallback = std::function<void(const cav_msgs::TrafficControlRequest&)>;
   using PublishActiveGeofCallback = std::function<void(const cav_msgs::CheckActiveGeofence&)>;
+  using PublishMobilityOperationCallback  = std::function<void(const cav_msgs::MobilityOperation&)>;
   
 
   /*!
@@ -86,7 +88,7 @@ public:
    */
 
   WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const PublishCtrlRequestCallback& control_msg_pub,
-  const PublishActiveGeofCallback& active_pub, std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory);
+  const PublishActiveGeofCallback& active_pub, std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory, const PublishMobilityOperationCallback& tcm_ack_pub);
 
   /*!
    * \brief Callback to set the base map when it has been loaded
@@ -174,6 +176,13 @@ public:
    *        within this distance to a lanelet as geofence points are guaranteed to apply to a single lane
    */
   void setMaxLaneWidth(double max_lane_width);
+
+  /*!
+   * \brief Sets the coordinate correction for intersection
+     \param list of intersection_ids corresponding to every two elements in correction list
+     \param list of intersection coord correction parameters in double in every 2 elements: delta_x, delta_y
+   */
+  void setIntersectionCoordCorrection(const std::vector<int>& intersection_ids_for_correction, const std::vector<double>& intersection_correction);
 
   /*!
    * \brief Sets the configured speed limit. 
@@ -381,6 +390,28 @@ public:
   /*! \brief helps to populate upcoming_intersection_ids_ from local traffic lanelet ids
    */
   void publishLightId();
+  
+  /*!
+   * \brief Retrieve the vehicle ID from global vehicle parameters, and set instance memeber vehicle id
+   @param vehicle_id Vehicle ID from UniqueVehicleParams.yaml 
+   */
+  void setConfigVehicleId(const std::string& vehicle_id);
+
+   /*!
+   * \brief Sets the TCM Acknowledgement publish times. 
+   @param ack_pub_times the number of times it publishes TCM Acknowledgement 
+   */
+  void setConfigACKPubTimes(int ack_pub_times);
+
+  /*!
+  * \brief Construct TCM acknowledgement object and populate it with params. Publish the object for a configured number of times.
+  */
+  void pubTCMACK(j2735_msgs::Id64b tcm_req_id, uint16_t msgnum, int ack_status, const std::string& ack_reason);
+
+
+  /*! \brief populate upcoming_intersection_ids_ from local traffic lanelet ids
+   */
+  void updateUpcomingSGIntersectionIds();
 
   visualization_msgs::MarkerArray tcm_marker_array_;
   cav_msgs::TrafficControlRequestPolygon tcr_polygon_;
@@ -419,6 +450,7 @@ private:
   PublishCtrlRequestCallback control_msg_pub_;
   PublishActiveGeofCallback active_pub_;
   GeofenceScheduler scheduler_;
+  PublishMobilityOperationCallback tcm_ack_pub_;
   std::string base_map_georef_;
   double max_lane_width_;
   std::vector<cav_msgs::TrafficControlMessageV01> workzone_remaining_msgs_;
@@ -437,9 +469,16 @@ private:
    */
   std::vector<autoware_lanelet2_msgs::MapBin> map_update_message_queue_; 
 
-  size_t update_count_ = 0; // Records the total number of sent map updates. Used as the set value for update.seq_id
+  size_t update_count_ = -1; // Records the total number of sent map updates. Used as the set value for update.seq_id
 
   carma_wm::SignalizedIntersectionManager sim_;
+  enum class AcknowledgementStatus {
+    ACKNOWLEDGED = 1,
+    REJECTED = 2
+  };
+  const std::string geofence_ack_strategy_ = "carma3/Geofence_Acknowledgement";
+  int ack_pub_times_ = 1;
+  std::string vehicle_id_;
 };
 
 
