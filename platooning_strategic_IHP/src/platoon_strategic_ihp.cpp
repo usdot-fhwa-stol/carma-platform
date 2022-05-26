@@ -2374,7 +2374,7 @@ namespace platoon_strategic_ihp
             double joinerDtD = current_downtrack_;
             double cut_in_gap = pm_.getCutInGap(target_join_index_, joinerDtD);   
             ROS_DEBUG_STREAM("Start loop to check cut-in gap, start lane change when gap allows");
-            while (cut_in_gap < config_.minGCutinap)
+            while (cut_in_gap < config_.minCutinGap)
             {   
                 // Use LANE_CHANGE_TIMEOUT to bond the "creat gap"
                 bool isCurrentPlanTimeout = ((ros::Time::now().toNSec()/1000000  - pm_.current_plan.planStartTime) > LANE_CHANGE_TIMEOUT);
