@@ -153,10 +153,17 @@ namespace platoon_strategic_ihp
     {
 
         bool isExisted = false;
+        bool sortNeeded = false;
 
         // update/add this info into the list
         for (size_t i = 0;  i < platoon.size();  ++i){
             if(platoon[i].staticId == senderId) {
+                if ((dtDistance - platoon[i].vehiclePosition)/platoon[i].vehiclePosition > config_.significantDTDchange)
+                {
+                    ROS_DEBUG_STREAM( "DTD of member " << platoon[i].staticId << " is changed significantly, so a new sort is needed");
+
+                    sortNeeded = true;
+                }
                 platoon[i].commandSpeed = cmdSpeed;         // m/s
                 platoon[i].vehiclePosition = dtDistance;    // m 
                 platoon[i].vehicleCrossTrack = ctDistance;  // m
@@ -174,7 +181,24 @@ namespace platoon_strategic_ihp
                     ROS_DEBUG_STREAM("    This is the HOST vehicle");
                 }
                 isExisted = true;
-                break;
+            }
+        }
+
+        if (sortNeeded)
+        {
+            // sort the platoon member based on dowtrack distance (m) in an descending order.
+            std::sort(std::begin(platoon), std::end(platoon), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition > b.vehiclePosition;});
+            ROS_DEBUG_STREAM("Platoon is re-sorted due to large difference in dtd update.");
+            ROS_DEBUG_STREAM("    Platoon order is now:");
+            for (size_t i = 0;  i < platoon.size();  ++i)
+            {
+                std::string hostFlag = " ";
+                if (platoon[i].staticId == getHostStaticID())
+                {
+                    hostPosInPlatoon_ = i;
+                    hostFlag = "Host";
+                }
+                ROS_DEBUG_STREAM("    " << platoon[i].staticId << " " << hostFlag);
             }
         }
 
@@ -192,7 +216,7 @@ namespace platoon_strategic_ihp
             for (size_t i = 0;  i < platoon.size();  ++i)
             {
                 std::string hostFlag = " ";
-                if (platoon[i].staticId == getHostStaticID)
+                if (platoon[i].staticId == getHostStaticID())
                 {
                     hostPosInPlatoon_ = i;
                     hostFlag = "Host";

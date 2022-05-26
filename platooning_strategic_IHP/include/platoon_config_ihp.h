@@ -80,6 +80,8 @@ struct PlatoonPluginConfig
                                 // Flag can be set to true, to test front join functionality with two vehicles
                                 // But in normal operating conditions it should be set to false
   //------------------------------------------------------------------------------------------------
+  bool allowCutinJoin = true;    //Flag to enable/disable cut-in joins
+  double significantDTDchange = 0.2;   // Ratio of dtd that is considered a significant change and triggers a new sort of platoon vector
 
 
   friend std::ostream& operator<<(std::ostream& output, const PlatoonPluginConfig& c)
@@ -106,6 +108,8 @@ struct PlatoonPluginConfig
           << "maxCrosstrackError: " << c.maxCrosstrackError << std::endl
           << "vehicleID: " << c.vehicleID << std::endl
           << "minPlatooningSpeed: " << c.minPlatooningSpeed << std::endl
+          << "allowCutinJoin: " << c.allowCutinJoin << std::endl
+          << "significantDTDchange: " << c.significantDTDchange << std::endl
           << "}" << std::endl;
     return output;
   }
