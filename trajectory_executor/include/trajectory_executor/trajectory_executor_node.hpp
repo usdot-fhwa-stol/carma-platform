@@ -106,9 +106,6 @@ namespace trajectory_executor
     ////
     carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
     carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &);
-
-    // Unit Test Accessors
-    FRIEND_TEST(TrajectoryExecutorTest, test_emit_multiple);
   };
 
 } // trajectory_executor

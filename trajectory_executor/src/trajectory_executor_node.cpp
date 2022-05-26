@@ -157,7 +157,6 @@ namespace trajectory_executor
 
   void TrajectoryExecutor::onNewTrajectoryPlan(carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg)
   {
-    RCLCPP_INFO_STREAM(get_logger(), "Received new trajectory plan!");
     std::unique_lock<std::mutex> lock(cur_traj_mutex_); // Acquire lock until end of this function scope
     RCLCPP_DEBUG_STREAM(get_logger(), "Received new trajectory plan!");
     RCLCPP_DEBUG_STREAM(get_logger(), "New Trajectory plan ID: " << msg->trajectory_id);

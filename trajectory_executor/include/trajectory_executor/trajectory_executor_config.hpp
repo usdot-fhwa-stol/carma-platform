@@ -20,7 +20,7 @@ namespace trajectory_executor
 {
 
   /**
-   * \brief Stuct containing the algorithm configuration values for trajectory_executor
+   * \brief Struct containing the algorithm configuration values for trajectory_executor
    */
   struct Config
   {

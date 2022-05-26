@@ -1,4 +1,4 @@
-# Integer: Publish rate for the outbound trajectories to the control plugins.
+# Double: Publish rate for the outbound trajectories to the control plugins.
 # Should be matched to timestep size in TrajectoryPlan inputs
 # Units: Hz
 trajectory_publish_rate: 10
