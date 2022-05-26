@@ -158,7 +158,7 @@ namespace platoon_strategic_ihp
         // update/add this info into the list
         for (size_t i = 0;  i < platoon.size();  ++i){
             if(platoon[i].staticId == senderId) {
-                if ((dtDistance - platoon[i].vehiclePosition)/platoon[i].vehiclePosition > config_.significantDTDchange)
+                if (abs(dtDistance - platoon[i].vehiclePosition)/(platoon[i].vehiclePosition + 0.01) > config_.significantDTDchange)
                 {
                     ROS_DEBUG_STREAM( "DTD of member " << platoon[i].staticId << " is changed significantly, so a new sort is needed");
 
