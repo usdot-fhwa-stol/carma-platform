@@ -3210,7 +3210,7 @@ namespace platoon_strategic_ihp
             double target_crosstrack = wm_->routeTrackPos(target_cutin_pose_).crosstrack;
             ROS_DEBUG_STREAM("target_crosstrack: " << target_crosstrack);
             double crosstrackDiff = current_crosstrack_ - target_crosstrack; 
-            bool isLaneChangeFinished = abs(crosstrackDiff) >= findLaneWidth()*0.5; // Use 85% of lane width to account for noise.
+            bool isLaneChangeFinished = abs(crosstrackDiff) <= findLaneWidth()*0.5; // Use 85% of lane width to account for noise.
             ROS_DEBUG_STREAM("crosstrackDiff: " << crosstrackDiff);
             ROS_DEBUG_STREAM("isLaneChangeFinished: " << isLaneChangeFinished);
             /**  
@@ -3257,7 +3257,7 @@ namespace platoon_strategic_ihp
                     }
                     // Update lane change status to stop the while loop when langchange finshed.
                     crosstrackDiff = current_crosstrack_ - target_crosstrack;  // Assume vehicle start at left lane when testing.
-                    if (crosstrackDiff >= findLaneWidth()*0.85) // Use 85% of lane width to account for noise.
+                    if (crosstrackDiff <= findLaneWidth()*0.5) // Use 85% of lane width to account for noise.
                     {
                         break; 
                     }
