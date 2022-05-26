@@ -1891,7 +1891,7 @@ namespace platoon_strategic_ihp
                 // determine if joining vehicle in position for cut-in mid
                 // To pass, the joining vehicle should be in front of the gap following vehicle, within three vehicle length.  
                 double gapFollowingVehicleDtd = pm_.platoon[req_sender_join_index].vehiclePosition;
-                gapFollowerDiff = applicantCurrentDtd - gapFollowingVehicleDtd;
+                double gapFollowerDiff = applicantCurrentDtd - gapFollowingVehicleDtd;
                 bool isMidJoinerInPosition = gapFollowerDiff >=0  &&  gapFollowerDiff <= 3*config_.vehicleLength; 
             
                 // Task 4: send request to index member to slow down (i.e., set isCreateGap to true) 
