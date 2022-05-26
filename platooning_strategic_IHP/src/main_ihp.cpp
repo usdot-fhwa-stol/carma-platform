@@ -30,4 +30,4 @@ int main(int argc, char** argv)
     platoon_strategic_ihp::PlatoonStrategicIHPPluginNode node;
     node.run();
     return 0;
-};
+}
