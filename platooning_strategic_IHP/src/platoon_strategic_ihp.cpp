@@ -2165,8 +2165,8 @@ namespace platoon_strategic_ihp
         //TODO: this logic requires that MobilityResponseMessage be updated to include a plan_type field!
 
         // UCLA: determine joining type 
-        bool isCutInJoin = plan_type.type == cav_msgs::PlanType::PLATOON_CUT_IN_JOIN         &&  !config_.test_front_join;
-        bool isRearJoin = plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR      ||  !config_.test_front_join; //TODO change to && once resp msg contains plan type
+        bool isCutInJoin = plan_type.type == cav_msgs::PlanType::PLATOON_CUT_IN_JOIN      &&  !config_.test_front_join;
+        bool isRearJoin = plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_AT_REAR      &&  !config_.test_front_join; //TODO change to && once resp msg contains plan type
         bool isFrontJoin = plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT  ||  config_.test_front_join;
         ROS_DEBUG_STREAM("Joining type: isRearJoin = " << isRearJoin);
         ROS_DEBUG_STREAM("Joining type: isFrontJoin = " << isFrontJoin);
