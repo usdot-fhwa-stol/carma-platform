@@ -31,7 +31,7 @@ namespace <SUB><package_name>
    * \brief TODO for USER: Add class description
    * 
    */
-  class Node : public carma_guidance_plugins::TacticalPlugin
+  class Node : public carma_guidance_plugins::StrategicPlugin
   {
 
   private:
@@ -87,24 +87,23 @@ namespace <SUB><package_name>
     ////
     void plan_maneuvers_callback(
       std::shared_ptr<rmw_request_id_t>, 
-      carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr, 
-      carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr) override;
+      carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+      carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp) override;
 
     bool get_availability() override;
 
     std::string get_name() override;
 
     std::string get_version_id() override;
-
-    std::string get_capability() override;
     
     /**
-     * \brief This method should be used to load parameters and will be called no the configure state transition.
+     * \brief This method should be used to load parameters and will be called on the configure state transition.
      */ 
     carma_ros2_utils::CallbackReturn on_configure_plugin();
 
     /**
      * TODO for USER: The following lifecycle overrides are also available if needed
+     * get_capability
      * on_activate_plugin
      * on_deactivate_plugin
      * on_cleanup_plugin
