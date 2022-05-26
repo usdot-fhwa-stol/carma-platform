@@ -1007,17 +1007,19 @@ namespace platoon_strategic_ihp
                 request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_AT_REAR;
 
                 /*
-                 * SAME_LANE_JOIN_PARAMS format: 
-                 *       SAME_LANE_JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%"
-                 *                            |-------0------ --1---------2---------3---------4------|
+                 * JOIN_PARAMS format: 
+         *        JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%"
+         *                   |-------0------ --1---------2---------3---------4----------5-------|  
                  */
 
-                boost::format fmter(SAME_LANE_JOIN_PARAMS);
+                boost::format fmter(JOIN_PARAMS);
+                int dummy_join_index = -2; //not used for this message, but message spec requires it
                 fmter %platoon_size;                //  index = 0
                 fmter %current_speed_;              //  index = 1, in m/s
                 fmter %pose_ecef_point_.ecef_x;     //  index = 2, in cm.
                 fmter %pose_ecef_point_.ecef_y;     //  index = 3, in cm.
                 fmter %pose_ecef_point_.ecef_z;     //  index = 4, in cm.
+                fmter %dummy_join_index;            //  index = 5
                 request.strategy_params = fmter.str();
                 mobility_request_publisher_(request);
                 ROS_DEBUG_STREAM("Publishing request to leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.m_header.plan_id);
@@ -1045,16 +1047,18 @@ namespace platoon_strategic_ihp
                 request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT;
 
                 /**
-                 * SAME_LANE_JOIN_PARAMS format: 
-                 *       SAME_LANE_JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%"
-                 *                            |-------0------ --1---------2---------3---------4------|
+                 * JOIN_PARAMS format: 
+         *        JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%"
+         *                   |-------0------ --1---------2---------3---------4----------5-------|  
                  */
-                boost::format fmter(SAME_LANE_JOIN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
+                boost::format fmter(JOIN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
+                int dummy_join_index = -2; //not used for this message, but message spec requires it
                 fmter %platoon_size;                //  index = 0
                 fmter %current_speed_;              //  index = 1, in m/s
                 fmter %pose_ecef_point_.ecef_x;     //  index = 2, in cm.
                 fmter %pose_ecef_point_.ecef_y;     //  index = 3, in cm.
                 fmter %pose_ecef_point_.ecef_z;     //  index = 4, in cm.
+                fmter %dummy_join_index;            //  index = 5
                 request.strategy_params = fmter.str();
                 mobility_request_publisher_(request);
                 ROS_DEBUG_STREAM("Publishing front join request to the leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.m_header.plan_id);
@@ -1398,18 +1402,17 @@ namespace platoon_strategic_ihp
         // Check if host is intended recipient 
         bool isHostRecipent = pm_.getHostStaticID() == reccipientID;
 
-        // Read requesting vehicle's joining index
-        std::string strategyParams = msg.strategy_params;
-        std::vector<std::string> inputsParams;
-        boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
-
-        std::vector<std::string> join_index_parsed;
-        boost::algorithm::split(join_index_parsed, inputsParams[5], boost::is_any_of(":"));
-        int req_sender_join_index = std::stoi(join_index_parsed[1]);
-        ROS_DEBUG_STREAM("Requesting join_index parsed: " << req_sender_join_index);
-        
         if (isCutInJoin && isHostRecipent)
         {
+            // Read requesting vehicle's joining index
+            std::string strategyParams = msg.strategy_params;
+            std::vector<std::string> inputsParams;
+            boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+            std::vector<std::string> join_index_parsed;
+            boost::algorithm::split(join_index_parsed, inputsParams[5], boost::is_any_of(":"));
+            int req_sender_join_index = std::stoi(join_index_parsed[1]);
+            ROS_DEBUG_STREAM("Requesting join_index parsed: " << req_sender_join_index);
+        
             // Control vehicle speed based on cut-in type
             // 1. cut-in from rear
             if (static_cast<size_t>(req_sender_join_index) == pm_.platoon.size()-1)
@@ -1488,7 +1491,9 @@ namespace platoon_strategic_ihp
             PlatoonMember newMember = PlatoonMember();
             newMember.staticId = msg.m_header.sender_id;
             newMember.vehiclePosition = wm_->routeTrackPos(incoming_pose).downtrack;
+            ROS_DEBUG_STREAM("New member being added to platoon vector whose size is currently " << pm_.platoon.size());
             pm_.platoon.push_back(newMember);
+            ROS_DEBUG_STREAM("pm_ now thinks platoon size is " << pm_.getTotalPlatooningSize());
 
             // Send approval of the request
             response = MobilityRequestResponse::ACK;
@@ -1516,9 +1521,9 @@ namespace platoon_strategic_ihp
          *    3. Request sender is the joiner.
          *    4. when two single vehicle meet, only allow backjoin.
          *
-         *   Note: For front and rear jon, the SAME_LANE_JOIN_PARAMS format: 
-         *        SAME_LANE_JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%"
-         *                             |-------0------ --1---------2---------3---------4------|  
+         *   Note: For front and rear jon, the JOIN_PARAMS format: 
+         *        JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%"
+         *                   |-------0------ --1---------2---------3---------4----------5-------|  
          */
         
         // Check joining plan type.
@@ -1899,8 +1904,7 @@ namespace platoon_strategic_ihp
                 fmter %pose_ecef_point_.ecef_x;     //  index = 2
                 fmter %pose_ecef_point_.ecef_y;     //  index = 3
                 fmter %pose_ecef_point_.ecef_z;     //  index = 4     
-                // note: The member needs target join index info to determine whether to create gap
-                fmter %req_sender_join_index;          //  index = 5
+                fmter %req_sender_join_index;       //  index = 5
 
                 request.strategy_params = fmter.str();
                 request.urgency = 50;
@@ -2634,7 +2638,7 @@ namespace platoon_strategic_ihp
 
             request.plan_type.type = cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
             request.strategy = PLATOONING_STRATEGY;
-            request.strategy_params = "";
+            request.strategy_params = ""; //params will not be read by receiver since this is 2nd msg in sequence
             request.urgency = 50;
             request.location = pose_to_ecef(pose_msg_);
             mobility_request_publisher_(request);
@@ -2750,18 +2754,17 @@ namespace platoon_strategic_ihp
             request.m_header.recipient_id = pm_.platoonLeaderID; //the new joiner
             request.m_header.sender_id = config_.vehicleID;
             request.m_header.timestamp = currentTime;
-            // UCLA added for cut-in, not used for other cases
-            //TODO: do we need this?  int join_index = -1; // Note: not used by same-lane functions.
+
             int platoon_size = pm_.getTotalPlatooningSize(); //depends on joiner to send op STATUS messages while joining
             
-            boost::format fmter(SAME_LANE_JOIN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
-            // note: leader aborting is same-lane operation, hence using SAME_LANE_JOIN_PARAMS, no need to include join index.
+            boost::format fmter(JOIN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
+            int dummy_join_index = -2; //leader aborting doesn't need join_index so use default value
             fmter %platoon_size;                //  index = 0
             fmter %current_speed_;              //  index = 1, in m/s
             fmter %pose_ecef_point_.ecef_x;     //  index = 2
             fmter %pose_ecef_point_.ecef_y;     //  index = 3
             fmter %pose_ecef_point_.ecef_z;     //  index = 4   
-            
+            fmter %dummy_join_index;            //  index = 5
             request.strategy_params = fmter.str();
 
             // assign a new plan type 
