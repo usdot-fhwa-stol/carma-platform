@@ -798,6 +798,9 @@ namespace platoon_strategic_ihp
             // Number of calls to the run_leader_aborting() method
             int numLeaderAbortingCalls_ = 0;
 
+            // Number of calls to run_candidate_follower() method after MobReq message sent
+            int candidate_follower_delay_count_ = 0;
+
             double maxAllowedJoinTimeGap_ = 15.0;
             double maxAllowedJoinGap_ = 90;
             int maxPlatoonSize_ = 10;
@@ -812,6 +815,8 @@ namespace platoon_strategic_ihp
             double waitingStateTimeout = 25.0; // s
             double desiredJoinGap = 30.0; // m
             double desiredJoinTimeGap = 4.0; // s
+
+            lanelet::BasicPoint2d target_cutin_pose_;
 
             // Speed below which platooning will not be attempted; non-zero value allows for sensor noise
             const double STOPPED_SPEED = 0.5; // m/s

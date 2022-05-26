@@ -86,6 +86,8 @@ public:
     pnh.param<double>("maxCrosstrackError", config.maxCrosstrackError, config.maxCrosstrackError);
     pnh.param<bool>("test_front_join", config.test_front_join, config.test_front_join);
     pnh.param<double>("minPlatooningSpeed", config.minPlatooningSpeed, config.minPlatooningSpeed);
+    pnh.param<bool>("allowCutinJoin", config.allowCutinJoin, config.allowCutinJoin);
+    pnh.param<double>("significantDTDchange", config.significantDTDchange, config.significantDTDchange);
     pnh.getParam("/vehicle_length", config.vehicleLength);
     pnh.getParam("/vehicle_id", config.vehicleID);
     
