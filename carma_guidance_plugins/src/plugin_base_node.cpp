@@ -23,7 +23,9 @@ namespace carma_guidance_plugins
   namespace std_ph = std::placeholders;
 
   PluginBaseNode::PluginBaseNode(const rclcpp::NodeOptions &options)
-      : carma_ros2_utils::CarmaLifecycleNode(options), wm_(wm_listener_.getWorldModel())
+      : carma_ros2_utils::CarmaLifecycleNode(options),  
+      wm_listener_(this->get_node_base_interface(), this->get_node_logging_interface(), this->get_node_topics_interface(), this->get_node_parameters_interface()),
+      wm_(wm_listener_.getWorldModel())
   {
 
     // Setup discovery timer to publish onto the plugin_discovery_pub
