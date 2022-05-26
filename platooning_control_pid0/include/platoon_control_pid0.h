@@ -34,12 +34,12 @@
 
 namespace platoon_control_pid0
 {
-    class PlatoonControlPlugin
+    class PlatoonControlPid0Plugin
     {
         public:
             
-			// Default constructor for PlatoonControlPlugin class
-			PlatoonControlPlugin();
+			// Default constructor for the class
+			PlatoonControlPid0Plugin();
 
 			void initialize();
 
