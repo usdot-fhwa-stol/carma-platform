@@ -839,7 +839,7 @@ namespace platoon_strategic_ihp
         */
 
         double min_diff = 99999.000;
-        int cut_in_index = -1;
+        int cut_in_index = 1; //TODO TEMPORARY
         // Loop through all platoon members  
         for(size_t i = 0; i < platoon.size(); i++) 
         {

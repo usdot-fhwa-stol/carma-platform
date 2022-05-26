@@ -813,6 +813,8 @@ namespace platoon_strategic_ihp
             double desiredJoinGap = 30.0; // m
             double desiredJoinTimeGap = 4.0; // s
 
+            lanelet::BasicPoint2d target_cutin_pose_;
+
             // Speed below which platooning will not be attempted; non-zero value allows for sensor noise
             const double STOPPED_SPEED = 0.5; // m/s
 
