@@ -2023,8 +2023,8 @@ namespace platoon_strategic_ihp
         bool isFromTargetVehicle = msg.m_header.sender_id == pm_.current_plan.peerId;  // Check if expected peer ID and sender ID matches.
         ROS_DEBUG_STREAM("mob_resp_cb: isCurrPlanValid = " << isCurrPlanValid << ", isForCurrentPlan = " << 
                         isForCurrentPlan << ", isFromTargetVehicle = " << isFromTargetVehicle);
-        ROS_DEBUG_STREAM("current plan ID = " << pm_.current_plan.planId << ", peer ID = " << pm_.current_plan.peerId);
-        ROS_DEBUG_STREAM("isCurrPlanValid && isForCurrentPlan initial check = " << isCurrPlanValid && isForCurrentPlan);
+        ROS_DEBUG_STREAM("sender ID = " << msg.m_header.sender_id << ", current peer ID = " << pm_.current_plan.peerId);
+        ROS_DEBUG_STREAM("incoming plan ID = " << msg.m_header.plan_id << "current plan ID = " << pm_.current_plan.planId);
 
         if (!(isCurrPlanValid && isForCurrentPlan && isFromTargetVehicle)) 
         {
@@ -2931,9 +2931,11 @@ namespace platoon_strategic_ihp
         *         2. Once it is safe to lane change, the updated plan will send-out in "plan_maneuver_cb"
         */
 
-        // Task 1: compose mobility operation (status)
+        // Task 1: compose mobility operation (status)  TODO: should this be below the timeout checks?
         cav_msgs::MobilityOperation status;
         status = composeMobilityOperationPrepareToJoin();
+        mobility_operation_publisher_(status);
+        ROS_DEBUG_STREAM("Published platoon STATUS operation message");
 
         long tsStart = ros::Time::now().toNSec() / 1000000;
         // Task 2.1: state timeout
@@ -2976,12 +2978,11 @@ namespace platoon_strategic_ihp
         request.m_header.sender_id = config_.vehicleID;
         request.m_header.timestamp = currentTime;
         // UCLA: assign a new plan type
-        request.plan_type.type = cav_msgs::PlanType::PLATOON_CUT_IN_JOIN;
+        request.plan_type.type = cav_msgs::PlanType::PLATOON_CUT_IN_JOIN; //TODO: should this be a different type?  It is the 2nd request to leader.
         request.strategy = PLATOONING_STRATEGY;
         request.urgency = 50;
         request.location = pose_to_ecef(pose_msg_);
         double platoon_size = pm_.getTotalPlatooningSize(); 
-
 
         boost::format fmter(JOIN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
         fmter %platoon_size;                //  index = 0
@@ -2990,12 +2991,9 @@ namespace platoon_strategic_ihp
         fmter %pose_ecef_point_.ecef_y;     //  index = 3
         fmter %pose_ecef_point_.ecef_z;     //  index = 4
         fmter %target_join_index_;          //  index = 5
-
         request.strategy_params = fmter.str();
-        
         mobility_request_publisher_(request); 
-        ROS_DEBUG_STREAM("Published Mobility cut-in join request to the leader");
-        ROS_WARN("Published Mobility cut-in join request to the leader");
+        ROS_DEBUG_STREAM("Published Mobility cut-in join request to the leader with planId = " << planId);
 
         // Create a new join action plan
         pm_.current_plan = ActionPlan(true, currentTime, planId, pm_.platoonLeaderID);
