@@ -1882,8 +1882,8 @@ namespace platoon_strategic_ihp
                 }
                 else
                 {
-                    ROS_DEBUG_STREAM("Front join geometry violation. No response.  cutinDtdDifference = " << cutinDtdDifference);
-                    return MobilityRequestResponse::NO_RESPONSE;
+                    ROS_DEBUG_STREAM("Front join geometry violation. NACK.  cutinDtdDifference = " << cutinDtdDifference);
+                    return MobilityRequestResponse::NACK;
                 }
             }
 
@@ -1894,7 +1894,7 @@ namespace platoon_strategic_ihp
                 // To pass, the joining vehicle need to be behind the last member, within three vehicle length.
                 double platoonEndVehicleDtd = pm_.platoon[pm_.platoon.size()-1].vehiclePosition - config_.vehicleLength;
                 double rearGap = platoonEndVehicleDtd - applicantCurrentDtd;
-                bool isRearJoinerInPosition = rearGap >= 0  &&  rearGap <= maxCutinGap;//3*config_.vehicleLength; TODO: temporary increase
+                bool isRearJoinerInPosition = rearGap >= 0  &&  rearGap <= config_.maxCutinGap;//3*config_.vehicleLength; TODO: temporary increase
                         
                 // Task 4: send request to last member to slow down (i.e., set isCreateGap to true) 
                 // Note: There is no need to notify the last member of the platoon as there is no action needed.  
@@ -1906,7 +1906,7 @@ namespace platoon_strategic_ihp
                 }
                 else
                 {
-                    ROS_DEBUG_STREAM("Rear join geometry violation. No response. rearGap = " << rearGap);
+                    ROS_DEBUG_STREAM("Rear join geometry violation. NACK. rearGap = " << rearGap);
                     return MobilityRequestResponse::NACK;
                 }
             }
@@ -1993,6 +1993,7 @@ namespace platoon_strategic_ihp
         else
         {
             ROS_DEBUG_STREAM("CUT-IN join maneuver is already in operation, NACK incoming join requests from other candidates.");
+            ROS_DEBUG_STREAM("Plan Type: " << plan_type.type );
             return MobilityRequestResponse::NACK;
         }
 
