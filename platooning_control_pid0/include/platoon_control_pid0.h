@@ -29,8 +29,7 @@
 #include <carma_utils/CARMAUtils.h>
 #include "platoon_control_worker.h"
 
-
-
+//TODO: look for any lines tagged as JOHN also!
 
 namespace platoon_control_pid0
 {
@@ -46,72 +45,63 @@ namespace platoon_control_pid0
 			// general starting point of this node
 			void run();
 
+			//JOHN I suspect all these can be made private:
+
 			// Compose twist message by calculating speed and steering commands.
-			void generateControlSignals(const cav_msgs::TrajectoryPlanPoint& point0, const cav_msgs::TrajectoryPlanPoint& point_end);
+			void generate_control_signals(const cav_msgs::TrajectoryPlanPoint& point0, const cav_msgs::TrajectoryPlanPoint& point_end);
 			
 			// Compose twist message by calculating speed and steering commands.
-			geometry_msgs::TwistStamped composeTwistCmd(double linear_vel, double angular_vel);
+			geometry_msgs::TwistStamped compose_twist_cmd(double linear_vel, double angular_vel);
 
 			// Compose control message by calculating speed and steering commands.
-			autoware_msgs::ControlCommandStamped composeCtrlCmd(double linear_vel, double steering_angle);
+			autoware_msgs::ControlCommandStamped compose_ctrl_cmd(double linear_vel, double steering_angle);
 
 			// find the point correspoding to the lookahead distance
 			cav_msgs::TrajectoryPlanPoint getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan);
-			
-			// local copy of pose
-        	geometry_msgs::PoseStamped pose_msg_;
-
-			// current speed (in m/s)
-			double current_speed_ = 0.0;
-			double trajectory_speed_ = 0.0;
 
         
         private:
 
+			// member variables
+        	std::shared_ptr<ros::CARMANodeHandle>	nh_, pnh_;					//ROS1 node handles
+			PlatooningControlPluginConfig			config_;					//holds the plugin config params
+        	PlatoonControlWorker					pcw_;						//platoon control worker object
+        	cav_msgs::Plugin						plugin_discovery_msg_;		//holds ~constant info to publish for discovery
+        	geometry_msgs::PoseStamped				pose_msg_;					//local copy of current vehicle pose
+			double									current_speed_ = 0.0;		//vehicle speed, m/s
+			double									trajectory_speed_ = 0.0;	//???
+			PlatoonLeaderInfo						platoon_leader_;			//???
 
-        	// CARMA ROS node handles
-        	std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
+        	// ROS Subscribers
+        	ros::Subscriber							trajectory_plan_sub_;
+			ros::Subscriber							current_twist_sub_;
+			ros::Subscriber							pose_sub_;
+			ros::Subscriber 						platoon_info_sub_;
 
-			// platoon control worker object
-        	PlatoonControlWorker pcw_;
+        	// ROS Publishers
+        	ros::Publisher 							twist_pub_;
+			ros::Publisher							ctrl_pub_;
+			ros::Publisher 							platoon_info_pub_;		//TODO check diffs between platoon_info and platooning_info topics
+        	ros::Publisher 							plugin_discovery_pub_;
+			ros::Timer 								discovery_pub_timer_;
 
-			// platooning config object
-			PlatooningControlPluginConfig config_;
 
-
-			// Variables
-			PlatoonLeaderInfo platoon_leader_;
+			// internal methods
 
 			// callback function for pose
 			void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
 
 			// callback function for platoon info
-			void platoonInfo_cb(const cav_msgs::PlatooningInfoConstPtr& msg);
-
-			// callback function for trajectory plan
-        	void trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
+			void platoon_info_cb(const cav_msgs::PlatooningInfoConstPtr& msg);
 
 			// callback function for current twist
-			void currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist);
+			void current_twist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist);
 
-			double getTrajectorySpeed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points);
-
-			
-
-        	// Plugin discovery message
-        	cav_msgs::Plugin plugin_discovery_msg_;
+			// callback function for trajectory plan
+        	void trajectory_plan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
 
 
-        	// ROS Subscriber
-        	ros::Subscriber trajectory_plan_sub;
-			ros::Subscriber current_twist_sub_;
-			ros::Subscriber pose_sub_;
-			ros::Subscriber platoon_info_sub_;
-        	// ROS Publisher
-        	ros::Publisher twist_pub_;
-			ros::Publisher ctrl_pub_;
-        	ros::Publisher plugin_discovery_pub_;
-			ros::Publisher platoon_info_pub_;
-			ros::Timer discovery_pub_timer_;
+
+			double get_trajectory_speed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points);
     };
 }

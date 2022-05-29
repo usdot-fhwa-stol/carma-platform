@@ -18,55 +18,66 @@
 
 #include <iostream>
 
-/**
- * \brief Stuct containing the algorithm configuration values for the PlatooningControlPlugin
- */
-struct PlatooningControlPluginConfig
-{
-  double timeHeadway = 6.0;
-  double standStillHeadway = 12.0;
-  double maxAccel = 2.5;
-  double Kp = 0.5;
-  double Kd = -0.5;
-  double Ki = 0.0;
-  double maxValue = 100;
-  double minValue = -100;
-  double dt = 0.1;
-  double adjustmentCap = 10;
-  int cmdTmestamp = 100;
-  double integratorMax = 100;
-  double integratorMin = -100;
-  double Kdd = 4.5;                             //coeficient for smooth steering
-  double wheelBase = 3.09;
-  double lowpassGain = 0.5;
-  double lookaheadRatio = 2.0;
-  double minLookaheadDist = 6.0;
-  std::string vehicleID = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
-  
-  
-  friend std::ostream& operator<<(std::ostream& output, const PlatooningControlPluginConfig& c)
-  {
-    output << "InLaneCruisingPluginConfig { " << std::endl
-           << "timeHeadway: " << c.timeHeadway << std::endl
-           << "standStillHeadway: " << c.standStillHeadway << std::endl
-           << "maxAccel: " << c.maxAccel << std::endl
-           << "Kp: " << c.Kp << std::endl
-           << "Kd: " << c.Kd << std::endl
-           << "Ki: " << c.Ki << std::endl
-           << "maxValue: " << c.maxValue << std::endl
-           << "minValue: " << c.minValue << std::endl
-           << "dt: " << c.dt << std::endl
-           << "adjustmentCap: " << c.adjustmentCap << std::endl
-           << "cmdTmestamp: " << c.cmdTmestamp << std::endl
-           << "integratorMax: " << c.integratorMax << std::endl
-           << "integratorMin: " << c.integratorMin << std::endl
-           << "Kdd: " << c.Kdd << std::endl
-           << "wheelBase: " << c.wheelBase << std::endl
-           << "lowpassGain: " << c.lowpassGain << std::endl
-           << "lookaheadRatio: " << c.lookaheadRatio << std::endl
-           << "minLookaheadDist: " << c.minLookaheadDist << std::endl
-           << "vehicleID: " << c.vehicleID << std::endl
-           << "}" << std::endl;
-    return output;
-  }
-};
+namespace platoon_control_pid0 {
+
+    /**
+     * \brief Stuct containing the algorithm configuration values for the PlatooningControlPlugin
+     */
+    struct PlatoonControlPluginConfig {
+
+        // TODO: the PID-related variables may need to come from vehicle-specific configs, rather than package params
+
+        double  pid_h_deadband = 0.0;
+        double  pid_h_slope_break = 0.0;
+        double  pid_h_kp1 = -0.1;
+        double  pid_h_kp2 = -0.1;
+        double  pid_h_ki = 0.0;
+        double  pid_h_kd = 0.0;
+        double  pid_h_integral_min = -1.0;
+        double  pid_h_integral_max = 1.0;
+
+        double  pid_c_deadband = 0.0;
+        double  pid_c_slope_break = 0.0;
+        double  pid_c_kp1 = 0.001;
+        double  pid_c_kp2 = 0.001;
+        double  pid_c_ki = 0.0;
+        double  pid_c_kd = 0.0;
+        double  pid_c_integral_min = -1.0;
+        double  pid_c_integral_max = 1.0;
+
+        double  time_step = 0.1;
+        double  gamma_h = 1.0;
+        double  max_steering_angle = 1.05;
+
+        //TODO: which of these do we still need?
+        double  timeHeadway = 6.0;
+        double  standStillHeadway = 12.0;
+        double  maxAccel = 2.5;
+        int     cmdTmestamp = 100;
+        double  adjustmentCap = 10;
+        double  wheelBase = 3.09;
+        double  lowpassGain = 0.5;
+        double  lookaheadRatio = 2.0;
+        double  minLookaheadDist = 6.0;
+        double  Kdd = 4.5; // coeficient for smooth steering TODO: need this?
+
+        std::string vehicleID = "DEFAULT_VEHICLE_ID"; //TODO get the real thing, if we even need it
+
+        friend std::ostream &operator<<(std::ostream &output, const PlatooningControlPluginConfig &c)
+        {
+            output << "PlatoonControlPluginConfig { " << std::endl
+                << "timeHeadway: " << c.timeHeadway << std::endl
+                << "standStillHeadway: " << c.standStillHeadway << std::endl
+                << "maxAccel: " << c.maxAccel << std::endl
+                << "cmdTmestamp: " << c.cmdTmestamp << std::endl
+                << "adjustmentCap: " << c.adjustmentCap << std::endl
+                << "wheelBase: " << c.wheelBase << std::endl
+                << "lowpassGain: " << c.lowpassGain << std::endl
+                << "lookaheadRatio: " << c.lookaheadRatio << std::endl
+                << "minLookaheadDist: " << c.minLookaheadDist << std::endl
+                << "Kdd: " << c.Kdd << std::endl
+                << "}" << std::endl;
+            return output;
+        }
+    };
+}

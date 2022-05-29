@@ -1,17 +1,76 @@
+#-----Heading PID constants
+# deadband where control error is ignored, rad
+pid_h_deadband: 0.0
+
+# breakpoint where p value changes from kp1 to kp2, rad
+pid_h_slope_break: 1.6 #large enough that kp2 will never be needed
+
+# first proportional gain, rad/rad
+pid_h_kp1: -0.1 #initial guess NOT TUNED!
+
+# second proportional gain, rad/rad
+pid_h_kp2: -0.1 #initial guess NOT TUNED!
+
+# integral gain, rad/rad
+pid_h_ki: 0.0 #initial guess NOT TUNED!
+
+# derivative gain, rad/rad
+pid_h_kd: 0.0 #initial guess NOT TUNED!
+
+# min value allowed for integral term
+pid_h_integral_min: -0.1 #initial guess NOT TUNED!
+
+# max value allowed for integral term
+pid_h_integral_max: 0.1 #initial guess NOT TUNED!
+
+
+#-----CTE PID constants
+# deadband where control error is ignored, m
+pid_c_deadband: 0.3 #initial guess NOT TUNED!
+
+# breakpoint where p value changes from kp1 to kp2, m
+pid_c_slope_break: 1.2 #initial guess NOT TUNED!
+
+# first proportional gain, rad/m
+pid_c_kp1: 0.001 #initial guess NOT TUNED!
+
+# second proportional gain, rad/m
+pid_c_kp2: 0.003 #initial guess NOT TUNED!
+
+# integral gain, rad/m
+pid_c_ki: 0.0 #initial guess NOT TUNED!
+
+# derivative gain, rad/m
+pid_c_kd: 0.0 #initial guess NOT TUNED!
+
+# min value allowed for integral term
+pid_c_integral_min: -1.0 #initial guess NOT TUNED!
+
+# max value allowed for integral term
+pid_c_integral_max: 1.0 #initial guess NOT TUNED!
+
+
+#-----Common PID constants
+# expected time elapsed between calls to PID controllers, s
+time_step: 0.1
+
+# Fraction of weight applied to heading PID instead of CTE PID.
+# Value must be in [0, 1], where 0 only uses CTE and 1 only uses heading
+gamma_h: 1.0
+
+# max absolute value of steering angle output, rad
+max_steering_angle: 1.05 #approx 60 deg
+
+
+#-----Non-PID values
+
 timeHeadway: 3.5
 standStillHeadway: 22.0
 maxAccel: 1.5
-Kp: 0.4
-Kd: 0.05 #0.1
-Ki: 0.0 #0.035
-maxValue: 2.0
-minValue: -10.0
 cmdTmestamp: 100
 adjustmentCap: 11.0
-dt: 0.1
-integratorMax: 100
-integratorMin: -100
 wheelBase: 3.09
 lowpassGain: 1.0
 lookaheadRatio: 1.6
 minLookaheadDist: 15.0
+Kdd: 4.5

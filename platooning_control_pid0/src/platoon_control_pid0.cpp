@@ -55,25 +55,19 @@ namespace platoon_control_pid0
         pcw_.updateConfigParams(config);
         config_ = config;
 
-	  	// Trajectory Plan Subscriber
-		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("PlatooningControlPlugin/plan_trajectory", 1, &PlatoonControlPlugin::trajectoryPlan_cb, this);
-        
-        // Current Twist Subscriber
+	  	// Define the topic subscribers
+		trajectory_plan_sub_ = nh_->subscribe<cav_msgs::TrajectoryPlan>("PlatooningControlPlugin/plan_trajectory", 1, &PlatoonControlPlugin::trajectoryPlan_cb, this);
         current_twist_sub_ = nh_->subscribe<geometry_msgs::TwistStamped>("current_velocity", 1, &PlatoonControlPlugin::currentTwist_cb, this);
-
-        // Platoon Info Subscriber
         platoon_info_sub_ = nh_->subscribe<cav_msgs::PlatooningInfo>("platoon_info", 1, &PlatoonControlPlugin::platoonInfo_cb, this);
+        pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlPlugin::pose_cb, this);
 
-		// Control Publisher
+		// Define the topic publishers
 		twist_pub_ = nh_->advertise<geometry_msgs::TwistStamped>("twist_raw", 5, true);
         ctrl_pub_ = nh_->advertise<autoware_msgs::ControlCommandStamped>("ctrl_raw", 5, true);
         platoon_info_pub_ = nh_->advertise<cav_msgs::PlatooningInfo>("platooning_info", 1, true);
-
-
-        // JOHN why are we both subscribing to and publishing this topic?
-        pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlPlugin::pose_cb, this);
-
 		plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+
+        // Populate the default content to be published for plugin discovery (most of this will never change)
         plugin_discovery_msg_.name = "PlatooningControlPid0Plugin";
         plugin_discovery_msg_.version_id = "v1.0";
         plugin_discovery_msg_.available = true;
@@ -81,7 +75,7 @@ namespace platoon_control_pid0
         plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
         plugin_discovery_msg_.capability = "control/trajectory_control";
 
-
+        // Set up the discovery info to be published at 10 Hz
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
             [this](const auto&) { plugin_discovery_pub_.publish(plugin_discovery_msg_); });
@@ -94,19 +88,57 @@ namespace platoon_control_pid0
     }
 
 
-    void  PlatoonControlPid0Plugin::trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
+    void PlatoonControlPid0Plugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
+    {
+        pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
+        pcw_.setCurrentPose(pose_msg_);
+    }
+
+    void PlatoonControlPid0Plugin::platoon_info_cb(const cav_msgs::PlatooningInfoConstPtr& msg)
+    {
+        platoon_leader_.staticId = msg->leader_id;
+        platoon_leader_.vehiclePosition = msg->leader_downtrack_distance;
+        platoon_leader_.commandSpeed = msg->leader_cmd_speed;
+        // TODO: index is 0 temp to test the leader state
+        platoon_leader_.NumberOfVehicleInFront = msg->host_platoon_position;
+        platoon_leader_.leaderIndex = 0;
+
+        ROS_DEBUG_STREAM("Platoon leader id:  " << platoon_leader_.staticId);
+        ROS_DEBUG_STREAM("Platoon leader pose:  " << platoon_leader_.vehiclePosition);
+        ROS_DEBUG_STREAM("Platoon leader cmd speed:  " << platoon_leader_.commandSpeed);
+
+        cav_msgs::PlatooningInfo platooing_info_msg = *msg;
+        // platooing_info_msg.desired_gap = pcw_.desired_gap_;
+        // platooing_info_msg.actual_gap = pcw_.actual_gap_;
+        pcw_.actual_gap_ = platooing_info_msg.actual_gap;
+        pcw_.desired_gap_ = platooing_info_msg.desired_gap;
+
+        platooing_info_msg.host_cmd_speed = pcw_.speedCmd_;
+        platoon_info_pub_.publish(platooing_info_msg);
+    }
+
+
+    void PlatoonControlPid0Plugin::current_twist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist){
+        current_speed_ = twist->twist.linear.x;
+    }
+
+
+    void  PlatoonControlPid0Plugin::trajectory_plan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
         
         if (tp->trajectory_points.size() < 2) {
             ROS_WARN_STREAM("PlatoonControlPid0Plugin cannot execute trajectory as only 1 point was provided");
             return;
         }
+
+
+
+
+        //JOHN figure out what to do here
         cav_msgs::TrajectoryPlanPoint first_trajectory_point = tp->trajectory_points[0];
         cav_msgs::TrajectoryPlanPoint lookahead_point = getLookaheadTrajectoryPoint(*tp); // JOHN probably don't need this var or trajectory_speed_
         trajectory_speed_ = getTrajectorySpeed(tp->trajectory_points);
         
-        generateControlSignals(first_trajectory_point, lookahead_point); // TODO this should really be called on a timer against that last trajectory so 30Hz control loop can be achieved
-
-
+        generate_control_signals(first_trajectory_point, lookahead_point); // TODO this should really be called on a timer against that last trajectory so 30Hz control loop can be achieved
     }
 
     //JOHN probably don't need this method
@@ -156,45 +188,14 @@ namespace platoon_control_pid0
         return lookahead_point;
     }
 
-    void PlatoonControlPid0Plugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
-    {
-        pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
-        pcw_.setCurrentPose(pose_msg_);
-    }
-
-    void PlatoonControlPid0Plugin::platoonInfo_cb(const cav_msgs::PlatooningInfoConstPtr& msg)
-    {
-        
-        platoon_leader_.staticId = msg->leader_id;
-        platoon_leader_.vehiclePosition = msg->leader_downtrack_distance;
-        platoon_leader_.commandSpeed = msg->leader_cmd_speed;
-        // TODO: index is 0 temp to test the leader state
-        platoon_leader_.NumberOfVehicleInFront = msg->host_platoon_position;
-        platoon_leader_.leaderIndex = 0;
-
-        ROS_DEBUG_STREAM("Platoon leader id:  " << platoon_leader_.staticId);
-        ROS_DEBUG_STREAM("Platoon leader pose:  " << platoon_leader_.vehiclePosition);
-        ROS_DEBUG_STREAM("Platoon leader cmd speed:  " << platoon_leader_.commandSpeed);
-
-        cav_msgs::PlatooningInfo platooing_info_msg = *msg;
-        // platooing_info_msg.desired_gap = pcw_.desired_gap_;
-        // platooing_info_msg.actual_gap = pcw_.actual_gap_;
-        pcw_.actual_gap_ = platooing_info_msg.actual_gap;
-        pcw_.desired_gap_ = platooing_info_msg.desired_gap;
-
-        platooing_info_msg.host_cmd_speed = pcw_.speedCmd_;
-        platoon_info_pub_.publish(platooing_info_msg);
-    }
-
-
-    void PlatoonControlPid0Plugin::currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist){
-        current_speed_ = twist->twist.linear.x;
-    }
-
 
 // @SONAR_START@
 
-    geometry_msgs::TwistStamped PlatoonControlPid0Plugin::composeTwistCmd(double linear_vel, double angular_vel)
+
+//JOHN - reorder methods once I determine which ones need to be kept
+
+    //JOHN - can these 2 methods be combined?
+    geometry_msgs::TwistStamped PlatoonControlPid0Plugin::compose_twist_cmd(double linear_vel, double angular_vel)
     {
         geometry_msgs::TwistStamped cmd_twist;
         cmd_twist.twist.linear.x = linear_vel;
@@ -203,7 +204,7 @@ namespace platoon_control_pid0
         return cmd_twist;
     }
 
-    autoware_msgs::ControlCommandStamped PlatoonControlPid0Plugin::composeCtrlCmd(double linear_vel, double steering_angle)
+    autoware_msgs::ControlCommandStamped PlatoonControlPid0Plugin::compose_ctrl_cmd(double linear_vel, double steering_angle)
     {
         autoware_msgs::ControlCommandStamped cmd_ctrl;
         cmd_ctrl.header.stamp = ros::Time::now();
@@ -215,7 +216,9 @@ namespace platoon_control_pid0
         return cmd_ctrl;
     }
 
-    void PlatoonControlPid0Plugin::generateControlSignals(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point){
+    void PlatoonControlPid0Plugin::generate_control_signals(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, 
+                                                            const cav_msgs::TrajectoryPlanPoint& lookahead_point)
+    {
 
         pcw_.setCurrentSpeed(trajectory_speed_);
         // pcw_.setCurrentSpeed(current_speed_);
@@ -231,8 +234,10 @@ namespace platoon_control_pid0
         ctrl_pub_.publish(ctrl_msg);
     }
 
+
+    // JOHN not sure I need this one
     // extract maximum speed of trajectory
-    double PlatoonControlPid0Plugin::getTrajectorySpeed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points)
+    double PlatoonControlPid0Plugin::get_trajectory_speed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points)
     {   
         double trajectory_speed = 0;
 
@@ -259,7 +264,5 @@ namespace platoon_control_pid0
         ROS_DEBUG_STREAM("avg trajectory speed: " << avg_speed);
 
         return avg_speed;
-
     }
-
 }

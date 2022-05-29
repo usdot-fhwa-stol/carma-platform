@@ -20,58 +20,102 @@
 
 namespace platoon_control_pid0
 {
-	PIDController::PIDController(){}
+	PIDController::PIDController(double deadband, double slope_break, double kp1, double kp2,
+								 double ki, double kd, double time_step, double integral_min,
+								 double integral_max, double output_min, double output_max) :
+								 deadband_(deadband), slope_break_(slope_break), kp1_(kp1),
+								 kp2_(kp2), ki_(ki), kd_(kd), time_step_(time_step),
+								 integral_min_(integral_min), integral_max_(integral_max),
+								 output_min_(output_min), output_max_(output_max) {
+		
+		// Need to ensure that time step > 0 to avoid a division exception
+		if (time_step < 0.0001){
+			time_step_ = 0.0001;
+			ROS_WARN_STREAM("PID Controller creates with time step of " << time_step);
+		}
+
+		// Other sanity checks
+		if (deadband < 0.0){
+			deadband_ = 0.0;
+			ROS_WARN_STREAM("PID Controller illegal deadband specified: " << deadband);
+		}
+		if (slope_break < deadband){
+			slope_break_ = deadband_;
+			ROS_WARN_STREAM("PID Controller slope_break specified < deadband: " << slope_break);
+		}
+		if (integral_min >= integral_max){
+			integral_max_ = integral_min + 0.00001;
+			ROS_WARN_STREAM("PID Controller specified invalid pair of integral limits: " << integral_min << ", " << integral_max);
+		}
+		if (output_min >= output_max){
+			output_max_ = output_min + 0.00001;
+			ROS_WARN_STREAM("PID Controller specified invalid pair of output limits: " << output_min << ", " << output_max);
+		}
+
+		ROS_DEBUG_STREAM("PIDController created with:");
+		ROS_DEBUG_STREAM("    deadband = " << deadband_);
+		ROS_DEBUG_STREAM("    slope_break = " << slope_break_);
+		ROS_DEBUG_STREAM("    kp1 = " << kp1_);
+		ROS_DEBUG_STREAM("    kp2 = " << kp2_);
+		ROS_DEBUG_STREAM("    ki  = " << ki_);
+		ROS_DEBUG_STREAM("    kd  = " << kd_);
+		ROS_DEBUG_STREAM("    time_step = " << time_step_);
+		ROS_DEBUG_STREAM("    integral_min = " << integral_min_);
+		ROS_DEBUG_STREAM("    integral max = " << integral_max_);
+		ROS_DEBUG_STREAM("    output_min = " << output_min_);
+		ROS_DEBUG_STREAM("    output_max = " << output_max_);
+	}
 	
-	double PIDController::calculate( double setpoint, double pv ){
+    void PIDController::reset(){
+        integral_ = 0.0;
+        prev_error_ = 0.0;
+    }
+
+	double PIDController::calculate(const double setpoint, const double pv){
 
 		// Calculate error
 	    double error = setpoint - pv;
-		ROS_DEBUG_STREAM("PID error: " << error);
 
 	    // Proportional term
-	    double Pout = config_.Kp * error;
-		ROS_DEBUG_STREAM("Proportional term: " << Pout);
+		double p_out = 0.0;
+		if (error > slope_break_){
+			double y1 = kp1_*(slope_break_ - deadband_);
+			double x_intercept = slope_break_ - y1/kp2_;
+			p_out = kp2_ * (error - x_intercept);
+		}else if (error > deadband_){
+			p_out = kp1_ * (error - deadband_);
+		}else if (error < -slope_break_){
+			double y1 = kp1_*(-slope_break_ + deadband_);
+			double x_intercept = -slope_break_ + y1/kp2_;
+			p_out = kp2_ * (error - x_intercept);
+		}
 
 	    // Integral term
-	    _integral += error * config_.dt;
-		ROS_DEBUG_STREAM("Integral term: " << _integral);
-
-		if (_integral > config_.integratorMax){
-			 _integral = config_.integratorMax;
+	    integral_ += error * time_step_;
+		if (integral_ > integral_max_){
+			 integral_ = integral_max_;
+		}else if (integral_ < integral_min_){
+			integral_ = integral_min_;
 		}
-		else if (_integral < config_.integratorMin){
-			_integral = config_.integratorMin;
-		}
-	    double Iout = config_.Ki * _integral;
-		ROS_DEBUG_STREAM("Iout: " << Iout);
+	    double i_out = ki_ * integral_;
 
 	    // Derivative term
-	    double derivative = (error - _pre_error) / config_.dt;
-		ROS_DEBUG_STREAM("derivative term: " << derivative);
-	    double Dout = config_.Kd * derivative;
-		ROS_DEBUG_STREAM("Dout: " << Dout);
+	    double derivative = (error - prev_error_) / time_step_;
+	    double d_out = kd_ * derivative;
 
 	    // Calculate total output
-	    double output = Pout + Iout + Dout;
-		ROS_DEBUG_STREAM("total controller output: " << output);
+	    double output = p_out + i_out + d_out;
 
 	    // Restrict to max/min
-	    if( output > config_.maxValue )
-	        output = config_.maxValue;
-	    else if( output < config_.minValue )
-	        output = config_.minValue;
+	    if (output > output_max_){
+	        output = output_max_;
+		}else if (output < output_min_){
+	        output = output_min_;
+		}
+
 	    // Save error to previous error
-	    _pre_error = error;
+	    prev_error_ = error;
 
 	    return output;
-
 	}
-
-
-
-    void PIDController::reset() {
-        _integral = 0.0;
-        _pre_error = 0.0;
-    }
-
 }

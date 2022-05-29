@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 {
     
     ros::init(argc, argv, "platoon_control");
-    platoon_control_pid0::PlatoonControlPlugin node;
+    platoon_control_pid0::PlatoonControlPid0Plugin node;
     node.run();
     return 0;
 };
