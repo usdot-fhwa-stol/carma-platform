@@ -55,22 +55,24 @@ TEST(PIDControllerTest, test2) //testing output limiter
 
 TEST(PIDControllerTest, test3) //testing integral term & limiters
 {
-    platoon_control_pid0::PIDController pid(4.0, 10.0, 1.0, 2.0, 0.1, 0.0, 0.5, -5.0, 15.0, -50.0, 50.0);
+    platoon_control_pid0::PIDController pid(4.0, 10.0, 1.0, 2.0, 0.1, 0.0, 0.5, -5.0, 12.0, -50.0, 50.0);
     double res;
     res = pid.calculate(40.0, 20.0); //kp2 positive error, integral no history
-    EXPECT_EQ(27.3, res);
-    res = pid.calculate(40.0, 31.0); //kp1 positive error, integral limited
-    EXPECT_EQ(6.5, res);
+    EXPECT_EQ(27.0, res);
+    res = pid.calculate(40.0, 31.0); //kp1 positive error, integral positive limited
+    EXPECT_EQ(6.2, res);
     res = pid.calculate(40.0, 39.0); //deadband, integral limited
-    EXPECT_EQ(2.5, res);
-    res = pid.calculate(40.0, 43.0); //deadband
     EXPECT_EQ(1.2, res);
+    res = pid.calculate(40.0, 43.0); //deadband
+    EXPECT_EQ(1.05, res);
     res = pid.calculate(40.0, 45.0); //kp1 negative error
-    EXPECT_EQ(-0.3, res);
+    EXPECT_EQ(-0.2, res);
     res = pid.calculate(40.0, 50.0); //kp1 negative error
-    EXPECT_EQ(-6.3, res);
-    res = pid.calculate(40.0, 50.0); //kp1 negative error, integral limited
-    EXPECT_EQ(-6.5);
+    EXPECT_EQ(-5.7, res);
+    res = pid.calculate(40.0, 60.0); //kp2 negative error
+    EXPECT_EQ(-26.2, res);
+    res = pid.calculate(40.0, 60.0); //kp2 negatvie error, integral negative limited
+    EXPECT_EQ(-26.5, res);
 }
 
 TEST(PIDControllerTest, test4) //testing derivative term
@@ -78,11 +80,23 @@ TEST(PIDControllerTest, test4) //testing derivative term
     platoon_control_pid0::PIDController pid(4.0, 10.0, 1.0, 2.0, 0.0, 0.2, 0.5, -50.0, 50.0, -50.0, 50.0);
     double res;
     res = pid.calculate(40.0, 45.0); //kp1 negative error, prev error initialized to zero
-    EXPECT_EQ(-7.0, res);
+    EXPECT_EQ(-3.0, res);
     res = pid.calculate(40.0, 48.0); //kp1 negative error
-    EXPECT_EQ(-9.2, res);
+    EXPECT_EQ(-5.2, res);
     res = pid.calculate(40.0, 48.0); //kp1 negative error, zero derivative
-    EXPECT_EQ(-8.0, res);
+    EXPECT_EQ(-4.0, res);
     res = pid.calculate(40.0, 42.0); //deadband, positive derivative
     EXPECT_EQ(2.4, res);
+}
+
+TEST(PIDControllerTest, test5) //both derivative & integral terms active
+{
+    platoon_control_pid0::PIDController pid(4.0, 10.0, 1.0, 2.0, 0.1, 0.2, 0.5, -50.0, 50.0, -50.0, 50.0);
+    double res;
+    res = pid.calculate(40.0, 45.0); //kp1 negative error, integral negative, deriv negative
+    EXPECT_EQ(-3.25, res);
+    res = pid.calculate(40.0, 39.0); //deadband, integral still negative, deriv positive
+    EXPECT_EQ(2.2, res);
+    res = pid.calculate(40.0, 32.0); //kp1 positive error, integral positive, deriv positive
+    EXPECT_EQ(7.0, res);
 }

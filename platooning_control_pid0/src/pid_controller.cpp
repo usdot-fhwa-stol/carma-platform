@@ -93,7 +93,7 @@ namespace platoon_control_pid0
 	    // Integral term
 	    integral_ += error * time_step_;
 		if (integral_ > integral_max_){
-			 integral_ = integral_max_;
+			integral_ = integral_max_;
 		}else if (integral_ < integral_min_){
 			integral_ = integral_min_;
 		}
