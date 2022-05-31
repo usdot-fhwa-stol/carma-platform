@@ -53,12 +53,13 @@ public:
                  id_(id), update_list_(update_list), remove_list_(remove_list), lanelet_additions_(lanelet_addition){}  
 
   boost::uuids::uuid id_;  // Unique id of this geofence
-  // lanelets additions needed or broadcasting to the rest of map users
-  std::vector<lanelet::Lanelet> lanelet_additions_;
 
   // elements needed for broadcasting to the rest of map users
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;
+
+  // lanelets additions needed or broadcasting to the rest of map users
+  std::vector<lanelet::Lanelet> lanelet_additions_;
 
   // traffic light id lookup
   std::vector<std::pair<uint32_t, lanelet::Id>> traffic_light_id_lookup_;
@@ -320,5 +321,5 @@ void serialize(Archive& ar, std::pair<uint32_t, lanelet::Id>& p, unsigned int /*
 } // namespace serialization
 } // namespace boost
 
-BOOST_SERIALIZATION_SPLIT_FREE(carma_wm::TrafficControl);
-BOOST_SERIALIZATION_SPLIT_FREE(carma_wm::SignalizedIntersectionManager);
+BOOST_SERIALIZATION_SPLIT_FREE(carma_wm::TrafficControl)
+BOOST_SERIALIZATION_SPLIT_FREE(carma_wm::SignalizedIntersectionManager)

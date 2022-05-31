@@ -69,8 +69,8 @@ TEST(SignalizedIntersectionManger, convertLaneToLaneletId)
   intersection.id.id = 9001;
 
   cav_msgs::GenericLane lane;
-  lane.lane_id = 1210;
-  lane.lane_attributes.directional_use.lane_direction = 1u; //ingress
+  lane.lane_id = (uint8_t)1210;
+  lane.lane_attributes.directional_use.lane_direction = 2u; //ingress
   j2735_msgs::Connection connection;
   connection.signal_group = 1;
   connection.connecting_lane.lane = 1211;
@@ -90,8 +90,8 @@ TEST(SignalizedIntersectionManger, convertLaneToLaneletId)
 
   intersection.lane_list.push_back(lane);
 
-  lane.lane_id = 1211;
-  lane.lane_attributes.directional_use.lane_direction = 2u; // egress imagining intersection 
+  lane.lane_id = (uint8_t)1211;
+  lane.lane_attributes.directional_use.lane_direction = 1u; // egress imagining intersection 
                                                             // entering 1210 from left and out through 1220
   lane.node_list = {};
   lane.connect_to_list = {};
@@ -146,8 +146,8 @@ TEST(SignalizedIntersectionManger, createIntersectionFromMapMsg)
   intersection.id.id = 9001;
 
   cav_msgs::GenericLane lane;
-  lane.lane_id = 1210;
-  lane.lane_attributes.directional_use.lane_direction = 1u; //ingress
+  lane.lane_id = (uint8_t)1210;
+  lane.lane_attributes.directional_use.lane_direction = 2u; //ingress
   j2735_msgs::Connection connection;
   connection.signal_group = 1;
   connection.connecting_lane.lane = 1220;
@@ -167,8 +167,8 @@ TEST(SignalizedIntersectionManger, createIntersectionFromMapMsg)
 
   intersection.lane_list.push_back(lane);
 
-  lane.lane_id = 1220;
-  lane.lane_attributes.directional_use.lane_direction = 2u; // egress imagining intersection 
+  lane.lane_id = (uint8_t)1220;
+  lane.lane_attributes.directional_use.lane_direction = 1u; // egress imagining intersection 
                                                             // entering 1210 from left and out through 1220
   lane.node_list = {};
   lane.connect_to_list = {};
@@ -229,7 +229,7 @@ TEST(SignalizedIntersectionManger, matchSignalizedIntersection)
   
   lanelet_map->update({lanelet_map->laneletLayer.get(1210)}, intersection);
 
-  lanelet::Id queried_id = sim.matchSignalizedIntersection({lanelet_map->laneletLayer.get(1210)}, {lanelet_map->laneletLayer.get(1220)}, lanelet_map);
+  lanelet::Id queried_id = sim.matchSignalizedIntersection({lanelet_map->laneletLayer.get(1210)}, {lanelet_map->laneletLayer.get(1220)});
 
   EXPECT_EQ(queried_id, intersection_id);
 

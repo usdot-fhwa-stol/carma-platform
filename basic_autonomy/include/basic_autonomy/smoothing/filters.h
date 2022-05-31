@@ -36,5 +36,5 @@ namespace smoothing
  */
 std::vector<double> moving_average_filter(const std::vector<double> input, int window_size, bool ignore_first_point=true);
 
-};  // namespace smoothing
-};  // namespace basic_autonomy
+}  // namespace smoothing
+}  // namespace basic_autonomy
