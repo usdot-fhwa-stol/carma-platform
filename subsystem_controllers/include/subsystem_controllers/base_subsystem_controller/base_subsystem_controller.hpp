@@ -94,6 +94,17 @@ namespace subsystem_controllers
 
     //! The configuration struct
     BaseSubSystemControllerConfig base_config_;
+
+    //! Collection of flags which, if true, will cause the base class to make lifecycle service calls to managed nodes
+    //  when ever the respective handle_on_<event> methods (ie. handle_on_configure) are called. 
+    //  by setting these flags to false an extending class chooses to implement that call itself. 
+    //  flags for on_shutdown and on_error are explicitly not provided since either should always result in subsystem shutdown.
+    //  Overriding the respective methods without calling the base version will achieve the same external behavior but will also result in some internal variables not being populated.
+    //  For correct behavior these flags should be set in the constructor 
+    bool trigger_managed_nodes_configure_from_base_class_ = true;
+    bool trigger_managed_nodes_activate_from_base_class_ = true;
+    bool trigger_managed_nodes_deactivate_from_base_class_ = true;
+    bool trigger_managed_nodes_cleanup_from_base_class_ = true;
   };
 
 } // namespace subsystem_controllers

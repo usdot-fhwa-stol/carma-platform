@@ -19,15 +19,38 @@
 namespace subsystem_controllers
 {
 
-    PluginManager::PluginManager(const std::vector<std::string>& require_plugin_names,
-                                 const std::string& service_prefix,
-                                 const std::string& strategic_service_suffix,
-                                 const std::string& tactical_service_suffix)
-                                 : service_prefix_(service_prefix),
-                                   strategic_service_suffix_(strategic_service_suffix),
-                                   tactical_service_suffix_(tactical_service_suffix),
-                                   em_(EntryManager(require_plugin_names))
+    PluginManager::PluginManager(const std::vector<std::string>& required_plugins,
+                          const std::vector<std::string>& auto_activated_plugins, 
+                          ros2_lifecycle_manager::Ros2LifecycleManager plugin_lifecycle_mgr) // TODO should we pass pointer instead?
+        : required_plugins_(required_plugins), auto_activated_plugins_(auto_activated_plugins), plugin_lifecycle_mgr_(plugin_lifecycle_mgr_)
     {}
+
+    void add_plugin(const std::string plugin)
+    {
+        plugin_lifecycle_mgr_.add_managed_node(plugin); 
+        // TODO need to bringup to inactive state here 
+    }
+
+    bool configure(std::vector<std::string> plugins)
+    {
+        
+    }
+    bool activate(std::vector<std::string> plugins)
+    {
+
+    }
+    bool deactivate(std::vector<std::string> plugins)
+    {
+
+    }
+    bool cleanup(std::vector<std::string> plugins)
+    {
+
+    }
+    bool shutdown(std::vector<std::string> plugins)
+    {
+
+    }
 
     void PluginManager::get_registered_plugins(carma_planning_msgs::srv::PluginListResponse& res)
     {

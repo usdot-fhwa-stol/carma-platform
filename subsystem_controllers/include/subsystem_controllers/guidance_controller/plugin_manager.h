@@ -39,25 +39,16 @@ namespace subsystem_controllers
             /**
              * \brief Constructor for PluginManager takes in require_plugin_names and service names
              */
-            PluginManager(const std::vector<std::string>& require_plugin_names,
-                          const std::string& service_prefix,
-                          const std::string& strategic_service_suffix,
-                          const std::string& tactical_service_suffix);
+            PluginManager(const std::vector<std::string>& required_plugins,
+                          const std::vector<std::string>& auto_activated_plugins);
 
-            /**
-             * \brief Get a list of registered plugins
-             */
-            void get_registered_plugins(carma_planning_msgs::PluginListResponse& res);
+            void add_plugin(const std::string plugin);
 
-            /**
-             * \brief Get a list of active plugins
-             */
-            void get_active_plugins(carma_planning_msgs::PluginListResponse& res);
-
-            /**
-             * \brief Activate or deactivate a certain plugin
-             */
-            bool activate_plugin(const std::string& name, const bool activate);
+            bool configure(std::vector<std::string> plugins); 
+            bool activate(std::vector<std::string> plugins); 
+            bool deactivate(std::vector<std::string> plugins); 
+            bool cleanup(std::vector<std::string> plugins); 
+            bool shutdown(std::vector<std::string> plugins); 
 
             /**
              * \brief Update the status of a certain plugin
@@ -75,11 +66,11 @@ namespace subsystem_controllers
             bool get_tactical_plugins_by_capability(carma_planning_msgs::GetPluginApiRequest& req, carma_planning_msgs::GetPluginApiResponse& res);
 
         private:
+
+            //! Lifecycle Manager which will track the plugin nodes and call their lifecycle services on request
+            ros2_lifecycle_manager::Ros2LifecycleManager plugin_lifecycle_mgr_;
         
-            std::string service_prefix_;
-            std::string strategic_service_suffix_;
-            std::string tactical_service_suffix_;
-            EntryManager em_;
+            
 
     };
 }

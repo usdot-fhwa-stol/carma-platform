@@ -54,6 +54,9 @@ namespace subsystem_controllers
     //! Plugin manager to handle all the plugin specific discovery and reporting
     std::shared_ptr<PluginManager> plugin_manager_; 
 
+    //! Config for user provided parameters
+    GuidanceControllerConfig config_;
+
     //! ROS handles
 
     cr2::SubPtr<carma_planning_msgs::msg::Plugin> plugin_discovery_sub_;
