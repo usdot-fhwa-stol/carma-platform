@@ -40,7 +40,7 @@ namespace trajectory_executor
 
     rcl_interfaces::msg::SetParametersResult result;
 
-    result.successful = !error && error_2;
+    result.successful = !error && !error_2;
 
     return result;
   }
