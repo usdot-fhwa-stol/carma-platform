@@ -64,13 +64,15 @@ namespace platoon_control_pid0
 
 			// member variables
         	std::shared_ptr<ros::CARMANodeHandle>	nh_, pnh_;					//ROS1 node handles
-			PlatooningControlPluginConfig			config_;					//holds the plugin config params
+			PlatoonControlPluginConfig				config_;					//holds the plugin config params
         	PlatoonControlWorker					pcw_;						//platoon control worker object
         	cav_msgs::Plugin						plugin_discovery_msg_;		//holds ~constant info to publish for discovery
         	geometry_msgs::PoseStamped				pose_msg_;					//local copy of current vehicle pose
-			double									current_speed_ = 0.0;		//vehicle speed, m/s
 			double									trajectory_speed_ = 0.0;	//???
 			PlatoonLeaderInfo						platoon_leader_;			//???
+			ros::Timer 								discovery_pub_timer_;		//timer for publishing discovery messages
+			ros::Timer								control_timer_;				//timer for running the control loop
+			long									consecutive_input_ctr_ = 0;	//number of consecutive timely trajectory inputs since restart
 
         	// ROS Subscribers
         	ros::Subscriber							trajectory_plan_sub_;
@@ -83,7 +85,6 @@ namespace platoon_control_pid0
 			ros::Publisher							ctrl_pub_;
 			ros::Publisher 							platoon_info_pub_;		//TODO check diffs between platoon_info and platooning_info topics
         	ros::Publisher 							plugin_discovery_pub_;
-			ros::Timer 								discovery_pub_timer_;
 
 
 			// internal methods
@@ -99,6 +100,8 @@ namespace platoon_control_pid0
 
 			// callback function for trajectory plan
         	void trajectory_plan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
+
+			bool control_timer_cb();
 
 
 

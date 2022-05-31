@@ -45,7 +45,7 @@ namespace platoon_control_pid0 {
         double  pid_c_integral_min = -1.0;
         double  pid_c_integral_max = 1.0;
 
-        double  time_step = 0.1;
+        double  time_step = 0.03333;
         double  gamma_h = 1.0;
         double  max_steering_angle = 1.05;
 
@@ -66,6 +66,17 @@ namespace platoon_control_pid0 {
         friend std::ostream &operator<<(std::ostream &output, const PlatooningControlPluginConfig &c)
         {
             output << "PlatoonControlPluginConfig { " << std::endl
+//JOHN
+
+
+
+
+
+                << "shutdown_timeout: " << c.shutdown_timeout << std::endl
+
+
+
+
                 << "timeHeadway: " << c.timeHeadway << std::endl
                 << "standStillHeadway: " << c.standStillHeadway << std::endl
                 << "maxAccel: " << c.maxAccel << std::endl

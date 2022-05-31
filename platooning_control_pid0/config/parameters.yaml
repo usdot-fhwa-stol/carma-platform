@@ -52,7 +52,7 @@ pid_c_integral_max: 1.0 #initial guess NOT TUNED!
 
 #-----Common PID constants
 # expected time elapsed between calls to PID controllers, s
-time_step: 0.1
+time_step: 0.03333
 
 # Fraction of weight applied to heading PID instead of CTE PID.
 # Value must be in [0, 1], where 0 only uses CTE and 1 only uses heading
