@@ -2991,7 +2991,7 @@ namespace platoon_strategic_ihp
             fmter %target_join_index_;          //  index = 5
             request.strategy_params = fmter.str();
             mobility_request_publisher_(request); 
-            ROS_DEBUG_STREAM("Published Mobility cut-in join request to leader " << pm_.plaoonLeaderID << " with planId = " << planId);
+            ROS_DEBUG_STREAM("Published Mobility cut-in join request to leader " << pm_.platoonLeaderID << " with planId = " << planId);
 
             // Create a new join action plan
             pm_.current_plan = ActionPlan(true, currentTime, planId, pm_.platoonLeaderID);
