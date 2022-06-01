@@ -346,8 +346,6 @@ namespace platoon_strategic_ihp
 
         // UCLA: add indicator of creating gap
         bool isCreateGap = false;
-        // UCLA: add indicator of lane change 
-        bool safeToLaneChange = false;
 
         size_t dynamic_leader_index_ = 0;
         

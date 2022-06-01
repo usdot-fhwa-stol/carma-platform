@@ -889,9 +889,21 @@ namespace platoon_strategic_ihp
         /*
             Locate the target cut-in join gap size based on the index.   
         */
+
+        
+        
+        //TODO: this method assumes platoon represents tgt platoon structure, which it does not!
+
+
+
+
         // Initiate variables 
         double gap_size = -0.999;
-        size_t index = static_cast<size_t>(gap_leading_index);
+        size_t index = 0;
+        if (gap_leading_index >= 0)
+        {
+            index = static_cast<size_t>(gap_leading_index);
+        }
 
         // cut-in from front 
         if (gap_leading_index == -1)
