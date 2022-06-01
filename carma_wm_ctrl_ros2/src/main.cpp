@@ -22,16 +22,11 @@ int main(int argc, char** argv)
 {
   // Initialize node
   rclcpp::init(argc, argv);
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl::main"), "ENTERED MAIN!!!");
   
   auto node = std::make_shared<carma_wm_ctrl::WMBroadcasterNode>(rclcpp::NodeOptions());
-  
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl::main"), "we are done constructing!");
 
   node->initializeWorker(node);
   
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl::main"), "we are done initializing! counter:" << node.use_count());
-
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(node->get_node_base_interface());
   executor.spin();

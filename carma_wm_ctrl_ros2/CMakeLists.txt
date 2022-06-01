@@ -83,9 +83,9 @@ if(BUILD_TESTING)
   ament_add_gtest(${PROJECT_NAME}-test 
         test/TestMain.cpp
         test/GeofenceSchedulerTest.cpp
-        #test/GeofenceScheduleTest.cpp
-        #test/WMBroadcasterTest.cpp
-        #test/MapToolsTest.cpp
+        test/GeofenceScheduleTest.cpp
+        test/WMBroadcasterTest.cpp
+        test/MapToolsTest.cpp
   )
 
   ament_target_dependencies(${PROJECT_NAME}-test ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})

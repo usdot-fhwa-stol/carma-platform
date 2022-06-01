@@ -45,8 +45,8 @@ namespace carma_wm_ctrl
 using std::placeholders::_1;
 
 WMBroadcaster::WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const PublishCtrlRequestCallback& control_msg_pub,
-const PublishActiveGeofCallback& active_pub, std::unique_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory, const PublishMobilityOperationCallback& tcm_ack_pub)
-  : map_pub_(map_pub), map_update_pub_(map_update_pub), control_msg_pub_(control_msg_pub), active_pub_(active_pub), scheduler_(std::move(timer_factory)), tcm_ack_pub_(tcm_ack_pub)
+const PublishActiveGeofCallback& active_pub, std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory, const PublishMobilityOperationCallback& tcm_ack_pub)
+  : map_pub_(map_pub), map_update_pub_(map_update_pub), control_msg_pub_(control_msg_pub), active_pub_(active_pub), scheduler_(timer_factory), tcm_ack_pub_(tcm_ack_pub)
 {
   scheduler_.onGeofenceActive(std::bind(&WMBroadcaster::addGeofence, this, _1));
   scheduler_.onGeofenceInactive(std::bind(&WMBroadcaster::removeGeofence, this, _1));
@@ -118,8 +118,10 @@ void WMBroadcaster::addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const c
 {
   // Handle schedule processing
   carma_v2x_msgs::msg::TrafficControlSchedule msg_schedule = msg_v01.params.schedule;
+  double ns_to_sec = 1.0e9;
+  auto clock_type = scheduler_.getClockType();
   
-  rclcpp::Time end_time = msg_schedule.end;
+  rclcpp::Time end_time = {msg_schedule.end, clock_type};
   if (!msg_schedule.end_exists) {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl::WMBroadcaster"), "No end time for geofence, using rclcpp::Time::max()");
     end_time = rclcpp::Time::max(); // If there is no end time use the max time
@@ -166,7 +168,7 @@ void WMBroadcaster::addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const c
     for (auto daily_schedule : msg_schedule.between)
     {
       if (msg_schedule.repeat_exists) {
-        gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+        gf_ptr->schedules.push_back(GeofenceSchedule({msg_schedule.start, clock_type},  
                                     end_time,
                                     rclcpp::Duration(daily_schedule.begin),     
                                     rclcpp::Duration(daily_schedule.duration),
@@ -175,7 +177,7 @@ void WMBroadcaster::addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const c
                                     rclcpp::Duration(msg_schedule.repeat.period),
                                     week_day_set));
       } else {
-        gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+        gf_ptr->schedules.push_back(GeofenceSchedule({msg_schedule.start, clock_type},  
                                   end_time,
                                   rclcpp::Duration(daily_schedule.begin),     
                                   rclcpp::Duration(daily_schedule.duration),
@@ -189,22 +191,22 @@ void WMBroadcaster::addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const c
   }
   else {
     if (msg_schedule.repeat_exists) {
-      gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+      gf_ptr->schedules.push_back(GeofenceSchedule({msg_schedule.start, clock_type},  
                                   end_time,
                                   rclcpp::Duration(0.0),     
-                                  rclcpp::Duration(86400.0), // 24 hr daily application
-                                  msg_schedule.repeat.offset,
-                                  msg_schedule.repeat.span,   
-                                  msg_schedule.repeat.period,
+                                  rclcpp::Duration(86400.0e9), // 24 hr daily application
+                                  rclcpp::Duration(msg_schedule.repeat.offset),
+                                  rclcpp::Duration(msg_schedule.repeat.span),   
+                                  rclcpp::Duration(msg_schedule.repeat.period),
                                   week_day_set)); 
     } else {
-      gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+      gf_ptr->schedules.push_back(GeofenceSchedule({msg_schedule.start, clock_type},  
                                   end_time,
                                   rclcpp::Duration(0.0),     
-                                  rclcpp::Duration(86400.0), // 24 hr daily application
+                                  rclcpp::Duration(86400.0e9), // 24 hr daily application
                                   rclcpp::Duration(0.0),     // No offset
-                                  rclcpp::Duration(86400.0), // Applied for full lenth of 24 hrs
-                                  rclcpp::Duration(86400.0), // No repetition
+                                  rclcpp::Duration(86400.0e9), // Applied for full lenth of 24 hrs
+                                  rclcpp::Duration(86400.0e9), // No repetition
                                   week_day_set)); 
     }
    
@@ -1475,9 +1477,12 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   }
 
   for (auto update : updates_to_send)
-  {
+  {    
     // add marker to rviz
     tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(update->gf_pts)); // create visualizer in rviz
+
+    if (update->affected_parts_.empty())
+      continue;
 
     // Process the geofence object to populate update remove lists
     addGeofenceHelper(update);
@@ -1526,7 +1531,6 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
     gf_msg.seq_id = update_count_;
     gf_msg.invalidates_route=update->invalidate_route_; 
     gf_msg.map_version = current_map_version_;
-
     map_update_pub_(gf_msg);
   }
   
@@ -1538,6 +1542,9 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl::WMBroadcaster"), "Removing inactive geofence from the map with geofence id: " << gf_ptr->id_);
   
   // Process the geofence object to populate update remove lists
+  if (gf_ptr->affected_parts_.empty())
+    return;
+
   removeGeofenceHelper(gf_ptr);
 
   for (auto pair : gf_ptr->remove_list_) active_geofence_llt_ids_.erase(pair.first);
@@ -1572,7 +1579,7 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   update_count_++; // Update the sequence count for geofence messages
   gf_msg_revert.seq_id = update_count_;
   gf_msg_revert.map_version = current_map_version_;
-  
+
   map_update_pub_(gf_msg_revert);
 
 
@@ -1835,7 +1842,6 @@ double WMBroadcaster::distToNearestActiveGeofence(const lanelet::BasicPoint2d& c
     if (active_geofence_llt_ids_.find(llt.id()) != active_geofence_llt_ids_.end()) 
       active_geofence_on_route.push_back(llt.id());
   }
-  
   // Get the lanelet of this point
   auto curr_lanelet = lanelet::geometry::findNearest(current_map_->laneletLayer, curr_pos, 1)[0].second;
 

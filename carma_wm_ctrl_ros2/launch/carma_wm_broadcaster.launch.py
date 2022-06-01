@@ -42,10 +42,10 @@ def generate_launch_description():
     
     # Launch node(s) in a carma container to allow logging to be configured
     container = ComposableNodeContainer(
-        package='carma_wm_ctrl_ros2',
+        package='carma_ros2_utils',
         name='carma_wm_ctrl_container',
         namespace=GetCurrentNamespace(),
-        executable='carma_wm_ctrl_ros2_node_exec',
+        executable='carma_component_container_mt',
         composable_node_descriptions=[
             
             # Launch the core node(s)

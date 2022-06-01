@@ -101,7 +101,7 @@ std::pair<bool, ros::Time> GeofenceSchedule::getNextInterval(const ros::Time& ti
     ROS_DEBUG_STREAM("Geofence schedule beyond end time");
     return std::make_pair(time_in_active_period, ros::Time(0));
   }
-
+  
   // At this point we should have the next start time which is still within the schedule and day
   return std::make_pair(time_in_active_period, abs_day_start + cur_start);
 }

@@ -44,6 +44,7 @@ GeofenceSchedule::GeofenceSchedule(rclcpp::Time schedule_start, rclcpp::Time sch
 
 bool GeofenceSchedule::scheduleExpired(const rclcpp::Time& time) const
 {
+  
   return schedule_end_ < time;
 }
 
@@ -59,48 +60,36 @@ std::pair<bool, rclcpp::Time> GeofenceSchedule::getNextInterval(const rclcpp::Ti
   if (scheduleExpired(time))
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl::GeofenceSchedule"), "Geofence schedule expired");
-    std::cerr<<"here1"<<std::endl;
     return std::make_pair(false, rclcpp::Time(0));  // If the schedule has expired or was never started
   }
 
-    std::cerr<<"1111: " << time.seconds()<<std::endl;
-
-
   boost::posix_time::ptime boost_time = boost::posix_time::from_time_t(time.seconds());
+  boost_time += boost::posix_time::microseconds((int)((time.seconds()-std::floor(time.seconds()))*1e6));
   boost::gregorian::date date = boost_time.date();
 
   if (week_day_set_.find(date.day_of_week()) == week_day_set_.end())
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl::GeofenceSchedule"), "Geofence wrong day of the week");
-    std::cerr<<"here2"<<std::endl;
     return std::make_pair(false, rclcpp::Time(0));  // This geofence is not active on this day
   }
 
   auto time_of_day = boost_time.time_of_day();
 
-  std::cerr << "boost_time" << boost::posix_time::to_time_t(boost_time) << std::endl;
-  std::cerr << "time_of_day" << time_of_day << std::endl;
 
   // Convert schedule into workable components
   boost::posix_time::ptime ptime_start_of_day(date, boost::posix_time::hours(0));  // Get absolute start time of the day
   
-  std::cerr<<"here9: " << std::to_string(toSec(time_of_day)) <<std::endl;
 
 
   rclcpp::Time ros_time_of_day = rclcpp::Time(toSec(time_of_day) * 1e9);
-  std::cerr<<"here9: " << (ros_time_of_day).seconds() <<std::endl;
 
   rclcpp::Time abs_day_start = rclcpp::Time(toSec(ptime_start_of_day) * 1e9);
   rclcpp::Duration cur_start = control_start_ + control_offset_; // accounting for the shift of repetition start
-  std::cerr<<"here8" << (cur_start).seconds() <<std::endl;
-  std::cerr<<"here8" << (control_start_).seconds() <<std::endl;
-  std::cerr<<"here8" << (control_offset_).seconds() <<std::endl;
 
   // Check if current time is after end of control
   if (ros_time_of_day > rclcpp::Time((control_start_ + control_duration_).seconds() * 1e9))
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl::GeofenceSchedule"), "Geofence schedule too late in the day");
-    std::cerr<<"here3"<<std::endl;
     // The requested time is after control end so there will not be another interval
     return std::make_pair(false, rclcpp::Time(0));
   }
@@ -123,20 +112,15 @@ std::pair<bool, rclcpp::Time> GeofenceSchedule::getNextInterval(const rclcpp::Ti
     cur_start = cur_start + control_period_;
 
   }
-    std::cerr<<"here4: "<< full_day.seconds()<<std::endl;
-    std::cerr<<"here4: "<< schedule_end_.seconds()<<std::endl;
-    std::cerr<<"here4: "<< (abs_day_start + cur_start).seconds()<<std::endl;
 
 
   // check if the only next interval is after the schedule end or past the end of the day
   if (abs_day_start + cur_start > schedule_end_ || cur_start > full_day || cur_start > (control_start_ + control_duration_))
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl::GeofenceSchedule"), "Geofence schedule beyond end time");
-    std::cerr<<"here5"<<std::endl;
     return std::make_pair(time_in_active_period, rclcpp::Time(0));
   }
 
-  std::cerr<<"here6" << (abs_day_start + cur_start).seconds() <<std::endl;
   // At this point we should have the next start time which is still within the schedule and day
   return std::make_pair(time_in_active_period, abs_day_start + cur_start);
 }

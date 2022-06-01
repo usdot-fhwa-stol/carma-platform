@@ -15,7 +15,7 @@
  * the License.
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/LineString.h>

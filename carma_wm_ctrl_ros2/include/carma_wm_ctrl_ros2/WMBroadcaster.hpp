@@ -84,7 +84,7 @@ public:
    */
 
   WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const PublishCtrlRequestCallback& control_msg_pub,
-  const PublishActiveGeofCallback& active_pub, std::unique_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory, const PublishMobilityOperationCallback& tcm_ack_pub);
+  const PublishActiveGeofCallback& active_pub, std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory, const PublishMobilityOperationCallback& tcm_ack_pub);
 
   /*!
    * \brief Callback to set the base map when it has been loaded

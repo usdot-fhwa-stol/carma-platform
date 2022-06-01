@@ -18,7 +18,7 @@
  * This file contains unit tests which can be used like scripts to convert lanelet2 map files.
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <carma_wm_ros2/MapConformer.hpp>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>
@@ -33,13 +33,6 @@
 #include "TestHelpers.hpp"
 #include <iostream>
 #include <fstream>
-
-using ::testing::_;
-using ::testing::A;
-using ::testing::DoAll;
-using ::testing::InSequence;
-using ::testing::Return;
-using ::testing::ReturnArg;
 
 namespace carma_wm_ctrl
 {

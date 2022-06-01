@@ -50,23 +50,11 @@ void WMBroadcasterNode::publishTCMACK(const carma_v2x_msgs::msg::MobilityOperati
 }
 
 WMBroadcasterNode::WMBroadcasterNode(const rclcpp::NodeOptions &options)
-  : carma_ros2_utils::CarmaLifecycleNode(options) {
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl::WMBroadcasterNode"), "WE ARE CONSTRUCTING!");
-};
+  : carma_ros2_utils::CarmaLifecycleNode(options) 
+{};
 
 void WMBroadcasterNode::initializeWorker(std::weak_ptr<carma_ros2_utils::CarmaLifecycleNode> weak_node_pointer)
 {
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl::WMBroadcasterNode"),"INITIALIZED WORKER!!");
-  
-  if (!weak_node_pointer.expired()) {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl::WMBroadcasterNode"),"NOT EXPIRED!!!!!");
-	  
-    }
-    else {
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl::WMBroadcasterNode"),"EXPIREDDDD!!!!!");
-    }
-
-
   wmb_ = std::make_unique<carma_wm_ctrl::WMBroadcaster>(std::bind(&WMBroadcasterNode::publishMap, this, std_ph::_1), std::bind(&WMBroadcasterNode::publishMapUpdate, this, std_ph::_1), 
   std::bind(&WMBroadcasterNode::publishCtrlReq, this, std_ph::_1), std::bind(&WMBroadcasterNode::publishActiveGeofence, this, std_ph::_1),
     std::make_unique<carma_ros2_utils::timers::ROSTimerFactory>(weak_node_pointer), 
@@ -75,19 +63,15 @@ void WMBroadcasterNode::initializeWorker(std::weak_ptr<carma_ros2_utils::CarmaLi
 
 carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rclcpp_lifecycle::State &)
 {
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl::WMBroadcasterNode"),"WE ARE ARRIVING HERE!");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl::WMBroadcasterNode"),"Starting configuration!");
 
-  //RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl::WMBroadcasterNode"),"DONE INITIALIZING WORKER! COUNTR: " << ptr.use_count());
+  initializeWorker(shared_from_this());
 
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl::WMBroadcasterNode"),"DONE INITIALIZING WORKER!");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl::WMBroadcasterNode"),"Done initializing worker!");
 
-  declare_parameter("ack_pub_times", 1);
-
-  //int ack_pub_times = 1;
-  rclcpp::Parameter int_param;
-  get_parameter("ack_pub_times", int_param);
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl::WMBroadcasterNode"),"Got the parameter!!: " << int_param.as_int());
-  wmb_->setConfigACKPubTimes(int_param.as_int());
+  int ack_pub_times = 1;
+  get_parameter("ack_pub_times", ack_pub_times);
+  wmb_->setConfigACKPubTimes(ack_pub_times);
   
   double lane_max_width = 4.0;
   get_parameter<double>("max_lane_width", lane_max_width);
@@ -96,8 +80,6 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   double traffic_control_request_period_ = 1.0;
   get_parameter<double>("traffic_control_request_period", traffic_control_request_period_);
   
-  // TODO, fix why yaml is not working with main.cpp in the launch.py
-  /*
   rclcpp::Parameter intersection_coord_correction_param = get_parameter("intersection_coord_correction");
   std::vector<double> intersection_coord_correction = intersection_coord_correction_param.as_double_array();
 
@@ -105,7 +87,6 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   std::vector<int64_t> intersection_ids_for_correction = intersection_ids_for_correction_param.as_integer_array();
 
   wmb_->setIntersectionCoordCorrection(intersection_ids_for_correction, intersection_coord_correction);
-  */
 
   double config_limit = 6.67;
   get_parameter<double>("/config_speed_limit", config_limit);
@@ -145,7 +126,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   active_pub_ = create_publisher<carma_perception_msgs::msg::CheckActiveGeofence>("active_geofence", 200);
 
   //publish TCM acknowledgement after processing TCM
-  tcm_ack_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityOperation>("outgoing_geofence_ack", 2 * int_param.as_int() ); //TODO
+  tcm_ack_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityOperation>("outgoing_geofence_ack", 2 * ack_pub_times );
 
   //TCM Visualizer pub
   tcm_visualizer_pub_= create_publisher<visualization_msgs::msg::MarkerArray>("tcm_visualizer",1);
@@ -178,7 +159,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   //Current Location Sub
   curr_location_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>("current_pose", 1, std::bind(&WMBroadcaster::currentLocationCallback, wmb_.get(), std_ph::_1));
   
-  // Return success if everthing initialized successfully
+  // Return success if everything initialized successfully
   
   return CallbackReturn::SUCCESS;
 }

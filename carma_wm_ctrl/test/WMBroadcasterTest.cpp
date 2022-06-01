@@ -300,6 +300,9 @@ TEST(WMBroadcaster, geofenceCallback)
   msg_v01.params.schedule.repeat.offset =  gf->schedules[0].control_offset_;
   msg_v01.params.schedule.repeat.span =  gf->schedules[0].control_span_;
   msg_v01.params.schedule.repeat.period =  gf->schedules[0].control_period_;
+  msg_v01.params.schedule.end_exists = true;
+  msg_v01.params.schedule.between_exists = true;
+  msg_v01.params.schedule.repeat_exists = true;
 
   ros::Time::setNow(ros::Time(0));  // Set current time
 
@@ -569,19 +572,20 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   gf_msg.geometry.nodes.push_back(pt);
   gf_ptr->gf_pts = wmb.getPointsInLocalFrame(gf_msg);
   gf_ptr->affected_parts_ = wmb.getAffectedLaneletOrAreas(gf_ptr->gf_pts);
+  gf_ptr->msg_ = gf_msg;
 
-  ASSERT_EQ(gf_ptr->affected_parts_.size(), 2);
-  ASSERT_EQ(gf_ptr->affected_parts_[1].id(), 10000);
-  ASSERT_EQ(gf_ptr->affected_parts_[1].regulatoryElements()[0]->id(), old_speed_limit->id()); // old speed limit
-  ASSERT_EQ(gf_ptr->affected_parts_[1].regulatoryElements().size(), 4); // old speed limit and other map conforming regulations
+  ASSERT_EQ(gf_ptr->affected_parts_.size(), 3);
+  ASSERT_EQ(gf_ptr->affected_parts_[0].id(), 10000);
+  ASSERT_EQ(gf_ptr->affected_parts_[0].regulatoryElements()[0]->id(), old_speed_limit->id()); // old speed limit
+  ASSERT_EQ(gf_ptr->affected_parts_[0].regulatoryElements().size(), 4); // old speed limit and other map conforming regulations
   // process the geofence and change the map
 
   wmb.addGeofence(gf_ptr);
   ASSERT_EQ(map_update_call_count, 1);
   /*Analyze prev_regems_.size()*/
-  ASSERT_EQ(gf_ptr->prev_regems_.size(), 2);
-  ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10007);
-  ASSERT_EQ(gf_ptr->prev_regems_[1].second->id(), old_speed_limit->id());
+  ASSERT_EQ(gf_ptr->prev_regems_.size(), 3);
+  ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10000);
+  ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());
 
   // now suppose the geofence is finished being used, we have to revert the changes
   wmb.removeGeofence(gf_ptr);
@@ -591,9 +595,9 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   // we can check if the removeGeofence worked, by using addGeofence again and if the original is there again
   wmb.addGeofence(gf_ptr);
   ASSERT_EQ(map_update_call_count, 3);
-  ASSERT_EQ(gf_ptr->prev_regems_.size(), 2);
-  ASSERT_EQ(gf_ptr->prev_regems_[1].first, 10000);
-  ASSERT_EQ(gf_ptr->prev_regems_[1].second->id(), old_speed_limit->id());
+  ASSERT_EQ(gf_ptr->prev_regems_.size(), 3);
+  ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10000);
+  ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());
 
 }
 
@@ -741,6 +745,9 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   msg_v01.params.schedule.repeat.offset =  gf_ptr->schedules[0].control_offset_;
   msg_v01.params.schedule.repeat.span =  gf_ptr->schedules[0].control_span_;
   msg_v01.params.schedule.repeat.period =  gf_ptr->schedules[0].control_period_;
+  msg_v01.params.schedule.end_exists = true;
+  msg_v01.params.schedule.between_exists = true;
+  msg_v01.params.schedule.repeat_exists = true;
 
   ros::Time::setNow(ros::Time(0));  // Set current time
 
@@ -904,7 +911,10 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   msg_v01.params.schedule.repeat.offset =  ros::Duration(0);  // 0 offset for repetition start, so still starts at 2
   msg_v01.params.schedule.repeat.span = ros::Duration(1);     // Duration of 1 and interval of two so active durations are (2-3)
   msg_v01.params.schedule.repeat.period =  ros::Duration(2);
-
+  msg_v01.params.schedule.end_exists = true;
+  msg_v01.params.schedule.between_exists = true;
+  msg_v01.params.schedule.repeat_exists = true;
+  
   // Get map and convert map to binary message
   auto map = carma_wm::getBroadcasterTestMap();
 
@@ -1150,6 +1160,9 @@ TEST(WMBroadcaster, distToNearestActiveGeofence)
   msg_v01.params.schedule.repeat.offset =  gf->schedules[0].control_offset_;
   msg_v01.params.schedule.repeat.span =  gf->schedules[0].control_span_;
   msg_v01.params.schedule.repeat.period =  gf->schedules[0].control_period_;
+  msg_v01.params.schedule.end_exists = true;
+  msg_v01.params.schedule.between_exists = true;
+  msg_v01.params.schedule.repeat_exists = true;
 
   ros::Time::setNow(ros::Time(0));  // Set current time
 
@@ -1379,6 +1392,9 @@ TEST(WMBroadcaster, currentLocationCallback)
   msg_v01.params.schedule.repeat.offset =  gf->schedules[0].control_offset_;
   msg_v01.params.schedule.repeat.span =  gf->schedules[0].control_span_;
   msg_v01.params.schedule.repeat.period =  gf->schedules[0].control_period_;
+  msg_v01.params.schedule.end_exists = true;
+  msg_v01.params.schedule.between_exists = true;
+  msg_v01.params.schedule.repeat_exists = true;
 
   ros::Time::setNow(ros::Time(0));  // Set current time
 
@@ -1523,6 +1539,9 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   msg_v01.params.schedule.repeat.offset =  gf->schedules[0].control_offset_;
   msg_v01.params.schedule.repeat.span =  gf->schedules[0].control_span_;
   msg_v01.params.schedule.repeat.period =  gf->schedules[0].control_period_;
+  msg_v01.params.schedule.end_exists = true;
+  msg_v01.params.schedule.between_exists = true;
+  msg_v01.params.schedule.repeat_exists = true;
 
   // Initialize variables required for this test
   std::atomic<uint32_t> map_update_call_count(0);
@@ -1760,6 +1779,9 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
   msg_v01.params.schedule.repeat.offset =  gf_ptr->schedules[0].control_offset_;
   msg_v01.params.schedule.repeat.span =  gf_ptr->schedules[0].control_span_;
   msg_v01.params.schedule.repeat.period =  gf_ptr->schedules[0].control_period_;
+  msg_v01.params.schedule.end_exists = true;
+  msg_v01.params.schedule.between_exists = true;
+  msg_v01.params.schedule.repeat_exists = true;
 
   ros::Time::setNow(ros::Time(0));  // Set current time
 
@@ -2803,12 +2825,6 @@ ASSERT_EQ(value, p1);
 
   ASSERT_EQ(test_map_elem->speed_limit_.value(), new_speed_limit->speed_limit_.value());
   ASSERT_EQ(test_map_elem->participants_.begin()->data(), new_speed_limit->participants_.begin()->data());
-
-  // Set the map
-  wmb.baseMapCallback(map_msg_ptr);
-
-  sample_proj_string.data = proj_string;
-  wmb.geoReferenceCallback(sample_proj_string);
 
   ROS_INFO_STREAM("Map Vehicle Participation Type Test Complete.");
 

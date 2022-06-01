@@ -170,7 +170,7 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
       affected_lanelets.insert(filtered.begin(), filtered.end());
 
 
-      if (affected_lanelets.empty() && !possible_lanelets.empty())
+      if (affected_lanelets.empty() && !possible_lanelets.empty() && idx !=0 )
       {
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "Checking if it is the edge case where only last point falls on a valid (correct direction) lanelet");
         for (auto llt: possible_lanelets)

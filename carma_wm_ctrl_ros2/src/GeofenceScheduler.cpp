@@ -20,18 +20,24 @@ namespace carma_wm_ctrl
 {
 using std::placeholders::_1;
 
-GeofenceScheduler::GeofenceScheduler(std::unique_ptr<TimerFactory> timerFactory)
-  : timerFactory_(std::move(timerFactory))
+GeofenceScheduler::GeofenceScheduler(std::shared_ptr<TimerFactory> timerFactory)
+  : timerFactory_(timerFactory)
 {
   // Create repeating loop to clear geofence timers which are no longer needed
   deletion_timer_ =
       timerFactory_->buildTimer(nextId(), rclcpp::Duration(1), std::bind(&GeofenceScheduler::clearTimers, this));
+  clock_type_ = timerFactory_->now().get_clock_type();
 }
 
 uint32_t GeofenceScheduler::nextId()
 {
   next_id_++;
   return next_id_;
+}
+
+rcl_clock_type_t GeofenceScheduler::getClockType()
+{
+  return clock_type_;
 }
 
 void GeofenceScheduler::clearTimers()
@@ -65,7 +71,7 @@ void GeofenceScheduler::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   // Create timer for next start time
   for (size_t schedule_idx = 0; schedule_idx < gf_ptr->schedules.size(); schedule_idx++)
   {
-    auto interval_info = gf_ptr->schedules[schedule_idx].getNextInterval(rclcpp::Time(0.0,0.0,RCL_SYSTEM_TIME));
+    auto interval_info = gf_ptr->schedules[schedule_idx].getNextInterval(timerFactory_->now());
     rclcpp::Time startTime = interval_info.second;
     if (!interval_info.first && startTime == rclcpp::Time(0))
     {
@@ -77,14 +83,14 @@ void GeofenceScheduler::addGeofence(std::shared_ptr<Geofence> gf_ptr)
     // If this geofence is currently active set the start time to now
     if (interval_info.first)
     {
-      startTime = rclcpp::Time(0.0,0.0,RCL_SYSTEM_TIME);
+      startTime = timerFactory_->now();
     }
 
     int32_t timer_id = nextId();
 
     // Build timer to trigger when this geofence becomes active
     TimerPtr timer = timerFactory_->buildTimer(
-        timer_id, startTime - rclcpp::Time(0.0,0.0,RCL_SYSTEM_TIME),
+        timer_id, startTime - timerFactory_->now(),
         std::bind(&GeofenceScheduler::startGeofenceCallback, this, gf_ptr, schedule_idx, timer_id), true, true);
 
     timers_[timer_id] = std::make_pair(std::move(timer), false);  // Add start timer to map by Id
@@ -95,16 +101,16 @@ void GeofenceScheduler::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 void GeofenceScheduler::startGeofenceCallback(std::shared_ptr<Geofence> gf_ptr, const unsigned int schedule_id, const int32_t timer_id)
 {
   std::lock_guard<std::mutex> guard(mutex_);
-  rclcpp::Time endTime = rclcpp::Time(0.0,0.0,RCL_SYSTEM_TIME) + gf_ptr->schedules[schedule_id].control_span_;
+  rclcpp::Time endTime = timerFactory_->now() + gf_ptr->schedules[schedule_id].control_span_;
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl::GeofenceScheduler"), "Activating Geofence with Id: " << gf_ptr->id_);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl::GeofenceScheduler"), "Activating Geofence with Id: " << gf_ptr->id_ << ", which will end at:" << endTime.seconds());
 
   active_callback_(gf_ptr);
 
   // Build timer to trigger when this geofence becomes inactive
   int32_t ending_timer_id = nextId();
   TimerPtr timer = timerFactory_->buildTimer(
-      ending_timer_id, endTime - rclcpp::Time(0.0,0.0,RCL_SYSTEM_TIME),
+      ending_timer_id, endTime - timerFactory_->now(),
       std::bind(&GeofenceScheduler::endGeofenceCallback, this, gf_ptr, schedule_id, ending_timer_id), true, true);
   timers_[ending_timer_id] = std::make_pair(std::move(timer), false);  // Add end timer to map by Id
 
@@ -121,13 +127,13 @@ void GeofenceScheduler::endGeofenceCallback(std::shared_ptr<Geofence> gf_ptr, co
   timers_[timer_id].second = true;  // Mark timer for deletion
 
   // Determine if a new timer is needed for this geofence
-  auto interval_info = gf_ptr->schedules[schedule_id].getNextInterval(rclcpp::Time(0.0,0.0,RCL_SYSTEM_TIME));
+  auto interval_info = gf_ptr->schedules[schedule_id].getNextInterval(timerFactory_->now());
   rclcpp::Time startTime = interval_info.second;
 
   // If this geofence should currently be active set the start time to now
   if (interval_info.first)
   {
-    startTime = rclcpp::Time(0.0,0.0,RCL_SYSTEM_TIME);
+    startTime = timerFactory_->now();
   }
 
   if (!interval_info.first && startTime == rclcpp::Time(0))
@@ -136,11 +142,12 @@ void GeofenceScheduler::endGeofenceCallback(std::shared_ptr<Geofence> gf_ptr, co
     return;
   }
 
+  std::cerr << "Here comes another timer being created for :" << gf_ptr->id_ << std::endl;
   // Build timer to trigger when this geofence becomes active
   int32_t start_timer_id = nextId();
 
   TimerPtr timer = timerFactory_->buildTimer(
-      start_timer_id, startTime - rclcpp::Time(0.0,0.0,RCL_SYSTEM_TIME),
+      start_timer_id, startTime - timerFactory_->now(),
       std::bind(&GeofenceScheduler::startGeofenceCallback, this, gf_ptr, schedule_id, start_timer_id), true, true);
 
   timers_[start_timer_id] = std::make_pair(std::move(timer), false);  // Add start timer to map by Id
