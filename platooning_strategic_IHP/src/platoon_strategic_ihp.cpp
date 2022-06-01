@@ -852,6 +852,7 @@ namespace platoon_strategic_ihp
     
     void PlatoonStrategicIHPPlugin::mob_op_cb_standby(const cav_msgs::MobilityOperation& msg)
     {
+        ROS_DEBUG_STREAM("STANDBY state doing nothing with message from " << msg.m_header.sender_id);
         // In standby state, it will ignore operation message since it is not actively operating
     }
 
@@ -1323,7 +1324,7 @@ namespace platoon_strategic_ihp
     //------- 3. Mobility Request Callback -------
     MobilityRequestResponse PlatoonStrategicIHPPlugin::handle_mob_req(const cav_msgs::MobilityRequest& msg)
     {
-        MobilityRequestResponse mobility_response;
+        MobilityRequestResponse mobility_response = MobilityRequestResponse::NO_RESPONSE;
 
         // Check that this is a message about platooning (could be from some other Carma activity nearby)
         std::string strategy = msg.strategy;
@@ -1383,6 +1384,7 @@ namespace platoon_strategic_ihp
     MobilityRequestResponse PlatoonStrategicIHPPlugin::mob_req_cb_standby(const cav_msgs::MobilityRequest& msg)
     {
         // In standby state, the plugin is not responsible for replying to any request messages
+        ROS_DEBUG_STREAM("STANDBY state does nothing with msg from " << msg.m_header.sender_id);
         return MobilityRequestResponse::NO_RESPONSE;
     }
 
@@ -2085,6 +2087,7 @@ namespace platoon_strategic_ihp
     void PlatoonStrategicIHPPlugin::mob_resp_cb_standby(const cav_msgs::MobilityResponse& msg)
     {
         // In standby state, it will not send out any requests so it will also ignore all responses
+        ROS_DEBUG_STREAM("STANDBY state does nothing with msg from " << msg.m_header.sender_id);
     }
 
     void PlatoonStrategicIHPPlugin::mob_resp_cb_candidatefollower(const cav_msgs::MobilityResponse& msg)
@@ -2144,6 +2147,7 @@ namespace platoon_strategic_ihp
          * and to prevent platoon leader from receiving messages from other CAVs in leader state. 
          * There was no response involved in this state, hence no action needed in this section.  
          */ 
+        ROS_DEBUG_STREAM("LEADERWAITING state does nothing with msg from " << msg.m_header.sender_id);
     }
 
     void PlatoonStrategicIHPPlugin::mob_resp_cb_follower(const cav_msgs::MobilityResponse& msg)
@@ -2374,11 +2378,13 @@ namespace platoon_strategic_ihp
     // UCLA: response for candidate leader (inherited from leader waiting)
     void PlatoonStrategicIHPPlugin::mob_resp_cb_candidateleader(const cav_msgs::MobilityResponse& msg)
     {
+        ROS_DEBUG_STREAM("CANDIDATELEADER state does nothing with msg from " << msg.m_header.sender_id);
     }
 
     // UCLA: response callback for lead with operation
     void PlatoonStrategicIHPPlugin::mob_resp_cb_leadwithoperation(const cav_msgs::MobilityResponse& msg)
     { 
+        ROS_DEBUG_STREAM("LEADWITHOPERATION state does nothing with msg from " << msg.m_header.sender_id);
     }
 
     // UCLA: response callback for prepare to join (inherited from leader waiting)
@@ -3280,7 +3286,7 @@ namespace platoon_strategic_ihp
 
                     // note: This is just mock info to compile the code. 
                     // TODO: This should be updated according to arbitrary lane change requirements. 
-                    int target_lanelet_id = current_lanelet_id;
+                    //int target_lanelet_id = current_lanelet_id;
 
                     // ----------------------------------------------------------------------------------------------------------
                     if (end_dist < current_progress)
@@ -3295,10 +3301,10 @@ namespace platoon_strategic_ihp
                     }
                     
                     /**
-                     * note: the lane change should use a future position as the start of lane change plan. 
+                     * TODO: the lane change should use a future position as the start of lane change plan. 
                      *       time_step is the planning horizon that sends future maneuver plan.
                      */
-                    double lane_change_dtd = current_downtrack_ + current_speed_*config_.time_step; 
+                    //double lane_change_dtd = current_downtrack_ + current_speed_*config_.time_step; 
 
                     // use future position to find lanelet ID
                     /**
