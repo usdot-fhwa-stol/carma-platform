@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<route::Node>(rclcpp::NodeOptions());
+  auto node = std::make_shared<route::Route>(rclcpp::NodeOptions());
   
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(node->get_node_base_interface());

@@ -29,7 +29,9 @@ namespace route
   {
     double max_crosstrack_error = 2.0; // (Meters) Max cross track tolerance error
     double destination_downtrack_range = 10.0; // (Meters) Tracks how far a stop must be from the end to be accepted as a completed route
+    double route_spin_rate = 10.0; // (Hz) Spin rate of the Route node
     int cte_max_count = 4; // Max number of consecutive timesteps outside of the route allowable before triggering a LEFT_ROUTE event
+    std::string route_file_path = "NULL"; // Path to the directory that contains the route file(s) for CARMA
 
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)
@@ -37,7 +39,9 @@ namespace route
       output << "route::Config { " << std::endl
            << "max_crosstrack_error: " << c.max_crosstrack_error << std::endl
            << "destination_downtrack_range: " << c.destination_downtrack_range << std::endl
+           << "route_spin_rate: " << c.route_spin_rate << std::endl
            << "cte_max_count: " << c.cte_max_count << std::endl
+           << "route_file_path: " << c.route_file_path << std::endl
            << "}" << std::endl;
       return output;
     }

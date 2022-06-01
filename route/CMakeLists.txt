@@ -27,7 +27,9 @@ ament_auto_find_build_dependencies()
 
 # Name build targets
 set(node_exec route_node_exec)
-set(node_lib route_node)
+set(node_lib route_node_lib)
+set(generator_worker_lib route_worker_lib)
+set(state_worker_lib route_state_lib)
 
 # Includes
 include_directories(
@@ -35,6 +37,14 @@ include_directories(
 )
 
 # Build
+ament_auto_add_library(${generator_worker_lib} 
+        src/route_generator_worker.cpp
+)
+
+ament_auto_add_library(${state_worker_lib} 
+        src/route_state_worker.cpp
+)
+
 ament_auto_add_library(${node_lib} SHARED
         src/route_node.cpp
 )
@@ -44,10 +54,18 @@ ament_auto_add_executable(${node_exec}
 )
 
 # Register component
-rclcpp_components_register_nodes(${node_lib} "route::Node")
+rclcpp_components_register_nodes(${node_lib} "route::Route")
 
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies
+target_link_libraries(${node_lib}
+        ${generator_worker_lib}
+)
+
+target_link_libraries(${node_lib}
+        ${state_worker_lib}
+)
+
 target_link_libraries(${node_exec}
         ${node_lib}
 )

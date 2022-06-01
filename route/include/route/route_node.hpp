@@ -19,7 +19,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <functional>
 #include <std_msgs/msg/string.hpp>
-#include <std_srvs/srv/empty.hpp>
 #include <carma_planning_msgs/msg/route.hpp>
 #include <carma_planning_msgs/msg/route_state.hpp>
 #include <carma_planning_msgs/msg/route_event.hpp>
@@ -27,12 +26,15 @@
 #include <carma_planning_msgs/srv/get_available_routes.hpp>
 #include <carma_planning_msgs/srv/set_active_route.hpp>
 #include <carma_planning_msgs/srv/abort_active_route.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
 
 #include <carma_wm_ros2/WMListener.hpp>
 #include <carma_wm_ros2/WorldModel.hpp>
+#include <tf2_ros/transform_listener.h>
 
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include "route/route_config.hpp"
+#include "route/route_generator_worker.hpp"
 
 namespace route
 {
@@ -70,6 +72,9 @@ namespace route
     // Node configuration
     Config config_;
 
+    // tf2 buffer holds the tree of transforms
+    tf2_ros::Buffer tf2_buffer_;
+
     // wm listener and pointer to the actual wm object
     carma_wm::WMListener wml_;
     carma_wm::WorldModelConstPtr wm_;
@@ -89,31 +94,11 @@ namespace route
     rcl_interfaces::msg::SetParametersResult 
     parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
 
-    /**
-     * \brief Example timer callback
-     */
-    void timer_callback();
-
-    /**
-      * \brief Example service callback
-      */
-    void example_service_callback(const std::shared_ptr<rmw_request_id_t> header,
-                                  const std::shared_ptr<std_srvs::srv::Empty::Request> request,
-                                  std::shared_ptr<std_srvs::srv::Empty::Response> response);
-
     ////
     // Overrides
     ////
     carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
-
-    /**
-     * TODO for USER: The following lifecycle overrides are also available if needed
-     * handle_on_activate
-     * handle_on_deactivate
-     * handle_on_cleanup
-     * handle_on_shutdown
-     * handle_on_error
-     */
+    carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &);
   };
 
 } // route
