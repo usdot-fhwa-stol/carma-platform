@@ -52,7 +52,7 @@ namespace platoon_strategic_ihp
         // construct platoon member for host vehicle as the first element in the vector, since it starts life as a solo vehicle
         long cur_t = ros::Time::now().toNSec()/1000000; // time in millisecond
         PlatoonMember hostVehicleMember = PlatoonMember(hostStaticId, 0.0, 0.0, 0.0, 0.0, cur_t); 
-        pm_.platoon.push_back(hostVehicleMember);
+        pm_.host_platoon_.push_back(hostVehicleMember);
 
         plugin_discovery_msg_.name = "PlatooningStrategicIHPPlugin";
         plugin_discovery_msg_.version_id = "v1.0";
@@ -114,7 +114,7 @@ namespace platoon_strategic_ihp
     // Update platoon list (Unit Test function)
     void PlatoonStrategicIHPPlugin::updatePlatoonList(std::vector<PlatoonMember> platoon_list)
     {
-        pm_.platoon = platoon_list;
+        pm_.host_platoon_ = platoon_list;
     }
 
     // Callback to calculate downtrack based on pose message.
@@ -362,8 +362,8 @@ namespace platoon_strategic_ihp
         double frontVehicleDtd = current_downtrack_;
         double frontVehicleCtd = current_crosstrack_;
         // platoon rear positions
-        int lastVehicleIndex = pm_.platoon.size()-1;
-        double rearVehicleDtd = pm_.platoon[lastVehicleIndex].vehiclePosition;
+        int lastVehicleIndex = pm_.host_platoon_.size()-1;
+        double rearVehicleDtd = pm_.host_platoon_[lastVehicleIndex].vehiclePosition;
         
         // lateral error for two lanes (lane width was calculated based on current lanelet)
         double two_lane_cross_error = 2*config_.maxCrosstrackError + findLaneWidth(); 
@@ -1245,8 +1245,8 @@ namespace platoon_strategic_ihp
             double frontVehicleCtd = wm_->routeTrackPos(incoming_pose).crosstrack;
 
             // Use pm_ to find platoon end vehicle and its downtrack in m. TODO: this assumes pm_.platoon represents tgt platoon, which it does not!
-            int rearVehicleIndex = pm_.platoon.size() - 1;
-            double rearVehicleDtd = pm_.platoon[rearVehicleIndex].vehiclePosition; 
+            int rearVehicleIndex = pm_.host_platoon_.size() - 1;
+            double rearVehicleDtd = pm_.host_platoon_[rearVehicleIndex].vehiclePosition; 
             ROS_DEBUG_STREAM("rearVehicleDtd from ecef: " << rearVehicleDtd);
 
             // If lane change has not yet been authorized, stop here (this method will be running before the negotiations
@@ -1431,7 +1431,7 @@ namespace platoon_strategic_ihp
         
             // Control vehicle speed based on cut-in type
             // 1. cut-in from rear
-            if (static_cast<size_t>(req_sender_join_index) == pm_.platoon.size()-1)
+            if (static_cast<size_t>(req_sender_join_index) == pm_.host_platoon_.size()-1)
             {
                 // Accept plan and idle (becasue rear join, gap leading vehicle do not need to slow down).
                 ROS_WARN("Requested cut-in from rear, start approve cut-in and wait for lane change.");
@@ -1440,7 +1440,7 @@ namespace platoon_strategic_ihp
 
             }
             // 2. cut-in from middle 
-            else if (req_sender_join_index >= 0  &&  static_cast<size_t>(req_sender_join_index) < pm_.platoon.size()-1)
+            else if (req_sender_join_index >= 0  &&  static_cast<size_t>(req_sender_join_index) < pm_.host_platoon_.size()-1)
             {   
                 // Accept plan and slow down to create gap.
                 pm_.isCreateGap = true;
@@ -1510,8 +1510,8 @@ namespace platoon_strategic_ihp
                 PlatoonMember newMember = PlatoonMember();
                 newMember.staticId = msg.m_header.sender_id;
                 newMember.vehiclePosition = wm_->routeTrackPos(incoming_pose).downtrack;
-                ROS_DEBUG_STREAM("New member being added to platoon vector whose size is currently " << pm_.platoon.size());
-                pm_.platoon.push_back(newMember);
+                ROS_DEBUG_STREAM("New member being added to platoon vector whose size is currently " << pm_.host_platoon_.size());
+                pm_.host_platoon_.push_back(newMember);
                 ROS_DEBUG_STREAM("pm_ now thinks platoon size is " << pm_.getTotalPlatooningSize());
 
                 // Send approval of the request
@@ -1891,12 +1891,12 @@ namespace platoon_strategic_ihp
             }
 
             // ----- CUT-IN rear -----
-            else if (static_cast<size_t>(req_sender_join_index) == pm_.platoon.size()-1)
+            else if (static_cast<size_t>(req_sender_join_index) == pm_.host_platoon_.size()-1)
             {
                 // determine if joining vehicle in position for cut-in rear
                 // To pass, the joining vehicle need to be behind the last member, within three vehicle length.
                 //TODO: should it also test CTE to ensure vehicle is in same lane?
-                double platoonEndVehicleDtd = pm_.platoon[pm_.platoon.size()-1].vehiclePosition - config_.vehicleLength;
+                double platoonEndVehicleDtd = pm_.host_platoon_[pm_.host_platoon_.size()-1].vehiclePosition - config_.vehicleLength;
                 double rearGap = platoonEndVehicleDtd - applicantCurrentDtd;
                 bool isRearJoinerInPosition = rearGap >= 0  &&  rearGap <= config_.maxCutinGap;//3*config_.vehicleLength; TODO: temporary increase
                         
@@ -1917,7 +1917,7 @@ namespace platoon_strategic_ihp
             {
                 // determine if joining vehicle in position for cut-in mid
                 // To pass, the joining vehicle should be in front of the gap following vehicle, within three vehicle length.  
-                double gapFollowingVehicleDtd = pm_.platoon[req_sender_join_index].vehiclePosition;
+                double gapFollowingVehicleDtd = pm_.host_platoon_[req_sender_join_index].vehiclePosition;
                 double gapFollowerDiff = applicantCurrentDtd - gapFollowingVehicleDtd;
                 bool isMidJoinerInPosition = gapFollowerDiff >=0  &&  gapFollowerDiff <= 3*config_.vehicleLength; 
             
@@ -1929,7 +1929,7 @@ namespace platoon_strategic_ihp
                     cav_msgs::MobilityRequest request;
                     request.m_header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
                     // Note: For cut-in mid, notify gap rear member to create/increase gap.
-                    std::string recipient_ID = pm_.platoon[req_sender_join_index+1].staticId;
+                    std::string recipient_ID = pm_.host_platoon_[req_sender_join_index+1].staticId;
                     request.m_header.sender_id = config_.vehicleID;
                     request.m_header.timestamp = ros::Time::now().toNSec() / 1000000;;
                     // UCLA: add plan type, add this in cav_mwgs/plan_type
@@ -1949,7 +1949,7 @@ namespace platoon_strategic_ihp
                     request.strategy_params = fmter.str();
                     request.urgency = 50;
                     request.location = pose_to_ecef(pose_msg_);
-                    // note: for rear join, cut-in index == platoon.size()-1; for join from front, index == -1
+                    // note: for rear join, cut-in index == host_platoon_.size()-1; for join from front, index == -1
                     //       for cut-in in middle, index indicate the gap leading vehicle's index
                     mobility_request_publisher_(request); 
                     ROS_DEBUG_STREAM("Published Mobility cut-in-mid-Join request to relavent platoon members to signal gap creation, host is leader.");

@@ -125,7 +125,7 @@ namespace platoon_strategic_ihp
         PlatoonManager();
 
         // Platoon List (initialized empty)
-        std::vector<PlatoonMember> platoon{};
+        std::vector<PlatoonMember> host_platoon_{};
 
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;

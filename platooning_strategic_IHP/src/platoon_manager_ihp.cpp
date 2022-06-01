@@ -58,15 +58,15 @@ namespace platoon_strategic_ihp
     void PlatoonManager::updateHostPose(const double downtrack, const double crosstrack)
     {
         ROS_DEBUG_STREAM("Host (index " << hostPosInPlatoon_ << "): downtrack = " << downtrack << ", crosstrack = " << crosstrack);
-        platoon[hostPosInPlatoon_].vehiclePosition = downtrack;
-        platoon[hostPosInPlatoon_].vehicleCrossTrack = crosstrack;
+        host_platoon_[hostPosInPlatoon_].vehiclePosition = downtrack;
+        host_platoon_[hostPosInPlatoon_].vehicleCrossTrack = crosstrack;
     }
 
     // Update the speed info of the host in the vector of platoon members
     void PlatoonManager::updateHostSpeeds(const double cmdSpeed, const double actualSpeed)
     {
-        platoon[hostPosInPlatoon_].commandSpeed = cmdSpeed;
-        platoon[hostPosInPlatoon_].vehicleSpeed = actualSpeed;
+        host_platoon_[hostPosInPlatoon_].commandSpeed = cmdSpeed;
+        host_platoon_[hostPosInPlatoon_].vehicleSpeed = actualSpeed;
     }
 
     // Update/add one member's information from STATUS messages, update platoon ID if needed. Ignore if message is from other platoons. 
@@ -94,7 +94,7 @@ namespace platoon_strategic_ihp
         if (isFollower) 
         {
             // read message status        
-            bool isFromLeader = platoon[0].staticId == senderId;
+            bool isFromLeader = host_platoon_[0].staticId == senderId;
             bool needPlatoonIdChange = isFromLeader && (currentPlatoonID != platoonId);
 
             if(needPlatoonIdChange)
@@ -111,7 +111,7 @@ namespace platoon_strategic_ihp
             {
                 ROS_DEBUG_STREAM("This STATUS messages is from our platoon. Updating the info...");
                 updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
-                ROS_DEBUG_STREAM("The first vehicle in our list is now " << platoon[0].staticId);
+                ROS_DEBUG_STREAM("The first vehicle in our list is now " << host_platoon_[0].staticId);
             } 
             else //sender is in a different platoon
             {
@@ -152,24 +152,24 @@ namespace platoon_strategic_ihp
         bool sortNeeded = false;
 
         // update/add this info into the list
-        for (size_t i = 0;  i < platoon.size();  ++i){
-            if(platoon[i].staticId == senderId) {
-                if (abs(dtDistance - platoon[i].vehiclePosition)/(platoon[i].vehiclePosition + 0.01) > config_.significantDTDchange)
+        for (size_t i = 0;  i < host_platoon_.size();  ++i){
+            if(host_platoon_[i].staticId == senderId) {
+                if (abs(dtDistance - host_platoon_[i].vehiclePosition)/(host_platoon_[i].vehiclePosition + 0.01) > config_.significantDTDchange)
                 {
-                    ROS_DEBUG_STREAM( "DTD of member " << platoon[i].staticId << " is changed significantly, so a new sort is needed");
+                    ROS_DEBUG_STREAM( "DTD of member " << host_platoon_[i].staticId << " is changed significantly, so a new sort is needed");
 
                     sortNeeded = true;
                 }
-                platoon[i].commandSpeed = cmdSpeed;         // m/s
-                platoon[i].vehiclePosition = dtDistance;    // m 
-                platoon[i].vehicleCrossTrack = ctDistance;  // m
-                platoon[i].vehicleSpeed = curSpeed;         // m/s
-                platoon[i].timestamp = ros::Time::now().toNSec()/1000000;
-                ROS_DEBUG_STREAM("Receive and update platooning info on member " << i << ", ID:" << platoon[i].staticId);
-                ROS_DEBUG_STREAM("    CommandSpeed       = " << platoon[i].commandSpeed);
-                ROS_DEBUG_STREAM("    Actual Speed       = " << platoon[i].vehicleSpeed);
-                ROS_DEBUG_STREAM("    Downtrack Location = " << platoon[i].vehiclePosition);
-                ROS_DEBUG_STREAM("    Crosstrack dist    = " << platoon[i].vehicleCrossTrack);
+                host_platoon_[i].commandSpeed = cmdSpeed;         // m/s
+                host_platoon_[i].vehiclePosition = dtDistance;    // m 
+                host_platoon_[i].vehicleCrossTrack = ctDistance;  // m
+                host_platoon_[i].vehicleSpeed = curSpeed;         // m/s
+                host_platoon_[i].timestamp = ros::Time::now().toNSec()/1000000;
+                ROS_DEBUG_STREAM("Receive and update platooning info on member " << i << ", ID:" << host_platoon_[i].staticId);
+                ROS_DEBUG_STREAM("    CommandSpeed       = " << host_platoon_[i].commandSpeed);
+                ROS_DEBUG_STREAM("    Actual Speed       = " << host_platoon_[i].vehicleSpeed);
+                ROS_DEBUG_STREAM("    Downtrack Location = " << host_platoon_[i].vehiclePosition);
+                ROS_DEBUG_STREAM("    Crosstrack dist    = " << host_platoon_[i].vehicleCrossTrack);
 
                 if (senderId == HostMobilityId)
                 {
@@ -183,18 +183,18 @@ namespace platoon_strategic_ihp
         if (sortNeeded)
         {
             // sort the platoon member based on dowtrack distance (m) in an descending order.
-            std::sort(std::begin(platoon), std::end(platoon), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition > b.vehiclePosition;});
+            std::sort(std::begin(host_platoon_), std::end(host_platoon_), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition > b.vehiclePosition;});
             ROS_DEBUG_STREAM("Platoon is re-sorted due to large difference in dtd update.");
             ROS_DEBUG_STREAM("    Platoon order is now:");
-            for (size_t i = 0;  i < platoon.size();  ++i)
+            for (size_t i = 0;  i < host_platoon_.size();  ++i)
             {
                 std::string hostFlag = " ";
-                if (platoon[i].staticId == getHostStaticID())
+                if (host_platoon_[i].staticId == getHostStaticID())
                 {
                     hostPosInPlatoon_ = i;
                     hostFlag = "Host";
                 }
-                ROS_DEBUG_STREAM("    " << platoon[i].staticId << "its DTD: " << platoon[i].vehiclePosition << " " << hostFlag);
+                ROS_DEBUG_STREAM("    " << host_platoon_[i].staticId << "its DTD: " << host_platoon_[i].vehiclePosition << " " << hostFlag);
             }
         }
 
@@ -203,21 +203,21 @@ namespace platoon_strategic_ihp
             long cur_t = ros::Time::now().toNSec()/1000000; // time in millisecond
 
             PlatoonMember newMember = PlatoonMember(senderId, cmdSpeed, curSpeed, dtDistance, ctDistance, cur_t);
-            platoon.push_back(newMember);
+            host_platoon_.push_back(newMember);
             // sort the platoon member based on dowtrack distance (m) in an descending order.
-            std::sort(std::begin(platoon), std::end(platoon), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition > b.vehiclePosition;});
+            std::sort(std::begin(host_platoon_), std::end(host_platoon_), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition > b.vehiclePosition;});
 
-            ROS_DEBUG_STREAM("Add a new vehicle into our platoon list " << newMember.staticId << " platoon.size now = " << platoon.size());
+            ROS_DEBUG_STREAM("Add a new vehicle into our platoon list " << newMember.staticId << " host_platoon_.size now = " << host_platoon_.size());
             ROS_DEBUG_STREAM("    Platoon order is now:");
-            for (size_t i = 0;  i < platoon.size();  ++i)
+            for (size_t i = 0;  i < host_platoon_.size();  ++i)
             {
                 std::string hostFlag = " ";
-                if (platoon[i].staticId == getHostStaticID())
+                if (host_platoon_[i].staticId == getHostStaticID())
                 {
                     hostPosInPlatoon_ = i;
                     hostFlag = "Host";
                 }
-                ROS_DEBUG_STREAM("    " << platoon[i].staticId << "its DTD: " << platoon[i].vehiclePosition << " " << hostFlag);
+                ROS_DEBUG_STREAM("    " << host_platoon_[i].staticId << "its DTD: " << host_platoon_[i].vehiclePosition << " " << hostFlag);
             }
         }
     }
@@ -226,8 +226,8 @@ namespace platoon_strategic_ihp
 
     // Get the platoon size.
     int PlatoonManager::getTotalPlatooningSize() {
-        ROS_DEBUG_STREAM("platoonSize: " << platoon.size());
-        return platoon.size();
+        ROS_DEBUG_STREAM("platoonSize: " << host_platoon_.size());
+        return host_platoon_.size();
     }
 
     // Reset variables to indicate there is no current action in work
@@ -244,11 +244,11 @@ namespace platoon_strategic_ihp
     void PlatoonManager::resetPlatoon()
     {
         // Remove any elements in the platoon vector other than the host vehicle
-        if (platoon.size() > hostPosInPlatoon_ + 1)
+        if (host_platoon_.size() > hostPosInPlatoon_ + 1)
         {
-            platoon.erase(platoon.begin() + hostPosInPlatoon_ + 1, platoon.end());
+            host_platoon_.erase(host_platoon_.begin() + hostPosInPlatoon_ + 1, host_platoon_.end());
         }
-        platoon.erase(platoon.begin(), platoon.begin() + hostPosInPlatoon_);
+        host_platoon_.erase(host_platoon_.begin(), host_platoon_.begin() + hostPosInPlatoon_);
 
         // Clean up other variables
         currentPlatoonID = dummyID;
@@ -265,7 +265,7 @@ namespace platoon_strategic_ihp
         }
 
         // Don't remove a member that isn't there
-        else if (platoon.size() <= 1  ||  mem >= platoon.size())
+        else if (host_platoon_.size() <= 1  ||  mem >= host_platoon_.size())
         {
             return false;
         }
@@ -274,10 +274,10 @@ namespace platoon_strategic_ihp
         {
             --hostPosInPlatoon_;
         }
-        platoon.erase(platoon.begin() + mem, platoon.begin() + mem + 1);
+        host_platoon_.erase(host_platoon_.begin() + mem, host_platoon_.begin() + mem + 1);
 
         // If host is the only remaining member then clean up the other platoon data
-        if (platoon.size() == 1)
+        if (host_platoon_.size() == 1)
         {
             currentPlatoonID = dummyID;
             platoonLeaderID = dummyID;
@@ -296,9 +296,9 @@ namespace platoon_strategic_ihp
         }
 
         // Search for the member with a matching ID and remove it
-        for (size_t m = 0;  m < platoon.size();  ++m)
+        for (size_t m = 0;  m < host_platoon_.size();  ++m)
         {
-            if (id.compare(platoon[m].staticId) == 0)
+            if (id.compare(host_platoon_[m].staticId) == 0)
             {
                 return removeMember(m);
             }
@@ -312,32 +312,32 @@ namespace platoon_strategic_ihp
     double PlatoonManager::getPlatoonRearDowntrackDistance(){
         // due to downtrack descending order, the 1ast vehicle in list is the platoon rear vehicle.
         // Even if host is solo, platoon size is 1 so this works.
-        return platoon[platoon.size()-1].vehiclePosition;
+        return host_platoon_[host_platoon_.size()-1].vehiclePosition;
     }
 
     // Find the downtrack distance of the first vehicle of the platoon, in m.
     double PlatoonManager::getPlatoonFrontDowntrackDistance(){
         // due to downtrack descending order, the firest vehicle in list is the platoon front vehicle. 
-        return platoon[0].vehiclePosition;
+        return host_platoon_[0].vehiclePosition;
     }
 
     // Return the dynamic leader (i.e., the vehicle to follow) of the host vehicle.
     PlatoonMember PlatoonManager::getDynamicLeader(){
         PlatoonMember dynamicLeader;
-        ROS_DEBUG_STREAM("platoon size: " << platoon.size());
+        ROS_DEBUG_STREAM("host_platoon_ size: " << host_platoon_.size());
         if(isFollower) 
         {
             ROS_DEBUG_STREAM("Leader initially set as first vehicle in platoon");
             // return the first vehicle in the platoon as default if no valid algorithm applied
             // due to downtrack descending order, the platoon front veihcle is the first in list. 
-            dynamicLeader = platoon[0];
+            dynamicLeader = host_platoon_[0];
             if (algorithmType_ == "APF_ALGORITHM"){
                 size_t newLeaderIndex = allPredecessorFollowing();
 
                 dynamic_leader_index_ = (int)newLeaderIndex;
                 ROS_DEBUG_STREAM("dynamic_leader_index_: " << dynamic_leader_index_);
-                if(newLeaderIndex < platoon.size()) { //this must always be true!
-                    dynamicLeader = platoon[newLeaderIndex];
+                if(newLeaderIndex < host_platoon_.size()) { //this must always be true!
+                    dynamicLeader = host_platoon_[newLeaderIndex];
                     ROS_DEBUG_STREAM("APF output: " << dynamicLeader.staticId);
                     previousFunctionalDynamicLeaderIndex_ = newLeaderIndex;
                     previousFunctionalDynamicLeaderID_ = dynamicLeader.staticId;
@@ -349,7 +349,7 @@ namespace platoon_strategic_ihp
                      * it might happened when the subject vehicle gets far away from the preceding vehicle, 
                      * in which case the host vehicle will follow the one in front.
                      */
-                    dynamicLeader = platoon[getNumberOfVehicleInFront() - 1];
+                    dynamicLeader = host_platoon_[getNumberOfVehicleInFront() - 1];
                     // update index and ID 
                     previousFunctionalDynamicLeaderIndex_ = getNumberOfVehicleInFront()-1;
                     previousFunctionalDynamicLeaderID_ = dynamicLeader.staticId;
@@ -384,12 +384,12 @@ namespace platoon_strategic_ihp
         // Record downtrack distance (m) of each member
         std::vector<double> downtrackDistance(hostPosInPlatoon_);
         for(size_t i = 0; i < hostPosInPlatoon_; i++) {
-            downtrackDistance[i] = platoon[i].vehiclePosition; // m
+            downtrackDistance[i] = host_platoon_[i].vehiclePosition; // m
         }
         // Record speed (m/s) of each member
-        std::vector<double> speed(platoon.size());
-        for(size_t i = 0; i < platoon.size(); i++) {
-            speed[i] = platoon[i].vehicleSpeed; // m/s
+        std::vector<double> speed(host_platoon_.size());
+        for(size_t i = 0; i < host_platoon_.size(); i++) {
+            speed[i] = host_platoon_[i].vehicleSpeed; // m/s
         }
         
 
@@ -510,7 +510,7 @@ namespace platoon_strategic_ihp
         bool frontGapIsTooSmall = distanceToPredVehicle < config_.minCutinGap; 
         
         // Host vehicle was following predecessor vehicle. --> The predecessor vehicle was violating gap threshold.
-        bool previousLeaderIsPredecessor = previousFunctionalDynamicLeaderID_ == platoon[platoon.size() - 1].staticId; 
+        bool previousLeaderIsPredecessor = previousFunctionalDynamicLeaderID_ == host_platoon_[host_platoon_.size() - 1].staticId; 
         
         // Gap greater than maxGap_ is necessary for host to stop choosing predecessor as dynamic leader. 
         bool frontGapIsNotLargeEnough = distanceToPredVehicle < config_.maxCutinGap && previousLeaderIsPredecessor;
@@ -609,15 +609,15 @@ namespace platoon_strategic_ihp
     void PlatoonManager::changeFromFollowerToLeader() {
         
         // Get current host info - assumes departing leader or front of platoon hasn't already been removed from the vector
-        PlatoonMember hostInfo = platoon[hostPosInPlatoon_];
+        PlatoonMember hostInfo = host_platoon_[hostPosInPlatoon_];
         
         // Clear the front part of the platoon info, since we are splitting off from it; leaves host as element 0
         if (hostPosInPlatoon_ > 0)
         {
-            platoon.erase(platoon.begin(), platoon.begin() + hostPosInPlatoon_);
+            host_platoon_.erase(host_platoon_.begin(), host_platoon_.begin() + hostPosInPlatoon_);
         }else
         {
-            ROS_WARN("### Host becoming leader, but is already at index 0 in platoon vector!  Vector unchanged.");
+            ROS_WARN("### Host becoming leader, but is already at index 0 in host_platoon_ vector!  Vector unchanged.");
         }
 
         hostPosInPlatoon_ = 0;
@@ -636,15 +636,15 @@ namespace platoon_strategic_ihp
     void PlatoonManager::changeFromLeaderToFollower(std::string newPlatoonId, std::string newLeaderId) {
         
         // Save the current host info
-        PlatoonMember hostInfo = platoon[hostPosInPlatoon_];
+        PlatoonMember hostInfo = host_platoon_[hostPosInPlatoon_];
         
         // Clear contents of the platoon vector and rebuild it with the two known members at this time, leader & host.
         // Remaining leader info and info about any other members will get populated as messages come in.
         PlatoonMember newLeader = PlatoonMember();
         newLeader.staticId = newLeaderId;
-        platoon.clear();
-        platoon.push_back(newLeader); //can get location info updated later with a STATUS or INFO message
-        platoon.push_back(hostInfo);
+        host_platoon_.clear();
+        host_platoon_.push_back(newLeader); //can get location info updated later with a STATUS or INFO message
+        host_platoon_.push_back(hostInfo);
  
         hostPosInPlatoon_ = 1; //since host was previously leader it is now guaranteed to be 2nd in the line (index 1)
         isFollower = true;
@@ -655,10 +655,10 @@ namespace platoon_strategic_ihp
     // Return the number of vehicles in the front of the host vehicle. If host is leader or a single vehicle, return 0.
     int PlatoonManager::getNumberOfVehicleInFront() {
         
-        int num = platoon.size() - 1;
-        for (size_t i = 0;  i < platoon.size();  ++i)
+        int num = host_platoon_.size() - 1;
+        for (size_t i = 0;  i < host_platoon_.size();  ++i)
         {
-            if (platoon[i].vehiclePosition <= getCurrentDowntrackDistance() + 1.0) //allow for some uncertainty to count host also
+            if (host_platoon_[i].vehiclePosition <= getCurrentDowntrackDistance() + 1.0) //allow for some uncertainty to count host also
             {
                 num = i;
                 
@@ -676,25 +676,25 @@ namespace platoon_strategic_ihp
 
     // Return the current host vehicle speed in m/s.
     double PlatoonManager::getCurrentSpeed() const {
-        return platoon[hostPosInPlatoon_].vehicleSpeed;
+        return host_platoon_[hostPosInPlatoon_].vehicleSpeed;
     }
 
     // Return the current command speed of host vehicle in m/s.
     double PlatoonManager::getCommandSpeed() const
     {
-        return platoon[hostPosInPlatoon_].commandSpeed;
+        return host_platoon_[hostPosInPlatoon_].commandSpeed;
     }
 
     // Return the current downtrack distance in m.
     double PlatoonManager::getCurrentDowntrackDistance() const
     {
-        return platoon[hostPosInPlatoon_].vehiclePosition;
+        return host_platoon_[hostPosInPlatoon_].vehiclePosition;
     }
 
     // Return the current crosstrack distance, in m.
     double PlatoonManager::getCurrentCrosstrackDistance() const
     {
-        return platoon[hostPosInPlatoon_].vehicleCrossTrack;
+        return host_platoon_[hostPosInPlatoon_].vehicleCrossTrack;
     }
 
     // UCLA: return the host vehicle static ID.
@@ -706,7 +706,7 @@ namespace platoon_strategic_ihp
     // Return the physical length from platoon front vehicle (front bumper) to platoon rear vehicle (rear bumper) in m.
     double PlatoonManager::getCurrentPlatoonLength() {
         //this works even if platoon size is 1 (can't be 0)
-        return platoon[0].vehiclePosition - platoon[platoon.size() - 1].vehiclePosition + config_.vehicleLength; 
+        return host_platoon_[0].vehiclePosition - host_platoon_[host_platoon_.size() - 1].vehiclePosition + config_.vehicleLength; 
     }
 
     // ---------------------- UCLA: IHP platoon trajectory regulation --------------------------- //
@@ -715,16 +715,16 @@ namespace platoon_strategic_ihp
     {
         // 1. read dtd vector 
         // dtd vector 
-        std::vector<double> downtrackDistance(platoon.size());
-        for (size_t i = 0; i < platoon.size(); i++)
+        std::vector<double> downtrackDistance(host_platoon_.size());
+        for (size_t i = 0; i < host_platoon_.size(); i++)
         {
-            downtrackDistance[i] = platoon[i].vehiclePosition;
+            downtrackDistance[i] = host_platoon_[i].vehiclePosition;
         }
         // speed vector
-        std::vector<double> speed(platoon.size());
-        for (size_t i = 0; i < platoon.size(); i++)
+        std::vector<double> speed(host_platoon_.size());
+        for (size_t i = 0; i < host_platoon_.size(); i++)
         {
-            speed[i] = platoon[i].vehicleSpeed;
+            speed[i] = host_platoon_[i].vehicleSpeed;
         }
 
         // 2. find the summation of "veh_len/veh_speed" for all predecessors
@@ -747,11 +747,7 @@ namespace platoon_strategic_ihp
     // Return the predecessor speed 
     double PlatoonManager::getPredecessorSpeed()
     {
-        // Read host index. 
-        int host_platoon_index = getNumberOfVehicleInFront();
-
-        // Return speed
-        return platoon[host_platoon_index].vehicleSpeed; // m/s 
+        return host_platoon_[hostPosInPlatoon_].vehicleSpeed; // m/s 
     }
 
     // Return the predecessor location
@@ -761,7 +757,7 @@ namespace platoon_strategic_ihp
         int host_platoon_index = getNumberOfVehicleInFront();
 
         // Return speed
-        return platoon[host_platoon_index].vehiclePosition; // m
+        return host_platoon_[host_platoon_index].vehiclePosition; // m
     }
 
     // Trajectory based platoon trajectory regulation.
@@ -777,16 +773,16 @@ namespace platoon_strategic_ihp
 
         // 1. read dtd vector 
         // dtd vector 
-        std::vector<double> downtrackDistance(platoon.size());
-        for (size_t i = 0; i < platoon.size(); i++)
+        std::vector<double> downtrackDistance(host_platoon_.size());
+        for (size_t i = 0; i < host_platoon_.size(); i++)
         {
-            downtrackDistance[i] = platoon[i].vehiclePosition;
+            downtrackDistance[i] = host_platoon_[i].vehiclePosition;
         }
         // speed vector
-        std::vector<double> speed(platoon.size());
-        for (size_t i = 0; i < platoon.size(); i++)
+        std::vector<double> speed(host_platoon_.size());
+        for (size_t i = 0; i < host_platoon_.size(); i++)
         {
-            speed[i] = platoon[i].vehicleSpeed;
+            speed[i] = host_platoon_[i].vehicleSpeed;
         }
 
         // 2. find the summation of "veh_len/veh_speed" for all predecessors
@@ -868,9 +864,9 @@ namespace platoon_strategic_ihp
         double min_diff = 99999.000;
         int cut_in_index = 1; //TODO TEMPORARY
         // Loop through all platoon members  
-        for(size_t i = 0; i < platoon.size(); i++) 
+        for(size_t i = 0; i < host_platoon_.size(); i++) 
         {
-            double current_member_dtd = platoon[i].vehiclePosition; 
+            double current_member_dtd = host_platoon_[i].vehiclePosition; 
             double curent_dtd_diff = current_member_dtd - joinerDtD;
             // update min index
             if (curent_dtd_diff > 0 && curent_dtd_diff < min_diff)
@@ -908,20 +904,20 @@ namespace platoon_strategic_ihp
         // cut-in from front 
         if (gap_leading_index == -1)
         {
-            double gap_rear_dtd = platoon[0].vehiclePosition;
+            double gap_rear_dtd = host_platoon_[0].vehiclePosition;
             gap_size = joinerDtD - gap_rear_dtd - config_.vehicleLength;
         }
         // cut-in from behind 
-        else if (index == platoon.size() - 1)
+        else if (index == host_platoon_.size() - 1)
         {    
-            double gap_leading_dtd = platoon[index].vehiclePosition;
+            double gap_leading_dtd = host_platoon_[index].vehiclePosition;
             gap_size = gap_leading_dtd - joinerDtD - config_.vehicleLength;;
         }
         // cut-in in the middle
         else
         {
-            double gap_leading_dtd = platoon[index].vehiclePosition;
-            double gap_rear_dtd = platoon[index + 1].vehiclePosition;
+            double gap_leading_dtd = host_platoon_[index].vehiclePosition;
+            double gap_rear_dtd = host_platoon_[index + 1].vehiclePosition;
             gap_size = gap_leading_dtd - gap_rear_dtd - config_.vehicleLength;
         }
 
