@@ -792,9 +792,6 @@ namespace platoon_strategic_ihp
             // Plugin discovery message
             cav_msgs::Plugin plugin_discovery_msg_;
 
-            // Latch to allow only one request from aborting leader to a front joiner
-            bool isFirstLeaderAbortRequest_ = true;
-
             // Number of calls to the run_leader_aborting() method
             int numLeaderAbortingCalls_ = 0;
 
@@ -823,6 +820,9 @@ namespace platoon_strategic_ihp
 
             // UCLA: add member variable for state prepare to join (default -2, front join -1, mid/rear join other integer)
             int target_join_index_ = -2;
+            
+            // Is there a sufficient gap open in the platoon for a cut-in join?
+            bool safeToLaneChange_ = false;
 
             // Strategy types
             const std::string PLATOONING_STRATEGY = "Carma/Platooning";
