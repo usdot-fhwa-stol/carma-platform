@@ -1892,6 +1892,7 @@ namespace platoon_strategic_ihp
             {
                 // determine if joining vehicle in position for cut-in rear
                 // To pass, the joining vehicle need to be behind the last member, within three vehicle length.
+                //TODO: should it also test CTE to ensure vehicle is in same lane?
                 double platoonEndVehicleDtd = pm_.platoon[pm_.platoon.size()-1].vehiclePosition - config_.vehicleLength;
                 double rearGap = platoonEndVehicleDtd - applicantCurrentDtd;
                 bool isRearJoinerInPosition = rearGap >= 0  &&  rearGap <= config_.maxCutinGap;//3*config_.vehicleLength; TODO: temporary increase
