@@ -67,7 +67,6 @@ namespace platoon_control_pid0
 			PlatoonControlPluginConfig				config_;					//holds the plugin config params
         	PlatoonControlWorker					pcw_;						//platoon control worker object
         	cav_msgs::Plugin						plugin_discovery_msg_;		//holds ~constant info to publish for discovery
-        	geometry_msgs::PoseStamped				pose_msg_;					//local copy of current vehicle pose
 			double									trajectory_speed_ = 0.0;	//???
 			PlatoonLeaderInfo						platoon_leader_;			//???
 			ros::Timer 								discovery_pub_timer_;		//timer for publishing discovery messages
