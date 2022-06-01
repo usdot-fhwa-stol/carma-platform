@@ -88,21 +88,19 @@ namespace platoon_control_pid0
     }
 
                                     
-    void PlatoonControlPid0Plugin::run(){
+    void PlatoonControlPid0Plugin::run() {
         initialize();
         ros::CARMANodeHandle::spin();
     }
 
 
-    void PlatoonControlPid0Plugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
-    {
-        pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
-        pcw_.setCurrentPose(pose_msg_);
+    void PlatoonControlPid0Plugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg) {
+        geometry_msgs::PoseStamped pose_msg = geometry_msgs::PoseStamped(*msg.get());
+        pcw_.setCurrentPose(pose_msg);
     }
 
 
-    void PlatoonControlPid0Plugin::platoon_info_cb(const cav_msgs::PlatooningInfoConstPtr& msg)
-    {
+    void PlatoonControlPid0Plugin::platoon_info_cb(const cav_msgs::PlatooningInfoConstPtr& msg) {
         // Copy the incoming message content to a new message for publishing
         cav_msgs::PlatooningInfo output_msg = *msg;
 
@@ -126,12 +124,12 @@ namespace platoon_control_pid0
     }
 
 
-    void PlatoonControlPid0Plugin::current_twist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist){
+    void PlatoonControlPid0Plugin::current_twist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist) {
         pcw_.set_current_speed(twist->twist.linear.x);
     }
 
 
-    void PlatoonControlPid0Plugin::trajectory_plan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
+    void PlatoonControlPid0Plugin::trajectory_plan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp) {
         
         // Ensure we have enough remaining trajectory to do our work
         if (tp->trajectory_points.size() < 2) {
@@ -147,7 +145,7 @@ namespace platoon_control_pid0
     }
 
 
-    bool PlatoonControlPid0Plugin::control_timer_cb(){
+    bool PlatoonControlPid0Plugin::control_timer_cb() {
 
         ROS_DEBUG_STREAM("In control timer callback ");
         // If it has been a long time since input data has arrived then reset the input counter and return
@@ -170,7 +168,7 @@ namespace platoon_control_pid0
             return false;
         }
 
-        // Generate the control signal, publish outputs & return
+        // Generate the control signal, publish outputs
         pcw_.generate_control_signal();
         double speed_cmd = pcw_.get_speed_cmd();
         double steer_cmd = pcw_.get_steering_cmd();
@@ -185,8 +183,7 @@ namespace platoon_control_pid0
     }
 
 
-    geometry_msgs::TwistStamped PlatoonControlPid0Plugin::compose_twist_cmd(double linear_vel, double angular_vel)
-    {
+    geometry_msgs::TwistStamped PlatoonControlPid0Plugin::compose_twist_cmd(double linear_vel, double angular_vel) {
         geometry_msgs::TwistStamped cmd_twist;
         cmd_twist.twist.linear.x = linear_vel;
         cmd_twist.twist.angular.z = angular_vel;
@@ -195,8 +192,7 @@ namespace platoon_control_pid0
     }
 
 
-    autoware_msgs::ControlCommandStamped PlatoonControlPid0Plugin::compose_ctrl_cmd(double linear_vel, double steering_angle)
-    {
+    autoware_msgs::ControlCommandStamped PlatoonControlPid0Plugin::compose_ctrl_cmd(double linear_vel, double steering_angle) {
         autoware_msgs::ControlCommandStamped cmd_ctrl;
         cmd_ctrl.header.stamp = ros::Time::now();
         cmd_ctrl.cmd.linear_velocity = linear_vel;

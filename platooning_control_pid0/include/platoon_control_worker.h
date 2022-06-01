@@ -50,8 +50,8 @@ namespace platoon_control_pid0
     };
 
 
-    class PlatoonControlWorker
-    {
+    class PlatoonControlWorker {
+
     public:
 
         /**
@@ -96,14 +96,15 @@ namespace platoon_control_pid0
                               const int leader_pos, const int host_pos);
 
         /**
+         * \brief Performs calculations to generate the three required command outputs:
+         * speed command, angular rate command, steering command
+         */
+        void generate_control_signal();
+
+        /**
          * \brief Returns the newly calculated speed command, m/s
          */
         double get_speed_cmd();
-
-        /**
-         * \brief Returns the newly calculated angular velocity command, rad/s
-         */
-        double get_angular_vel_cmd();
 
         /**
          * \brief Returns the newly calculated steering angle command, rad
@@ -111,10 +112,9 @@ namespace platoon_control_pid0
         double get_steering_cmd();
 
         /**
-         * \brief Performs calculations to generate the three required command outputs:
-         * speed command, angular rate command, steering command
+         * \brief Returns the newly calculated angular velocity command, rad/s
          */
-        void generate_control_signal();
+        double get_angular_vel_cmd();
 
 
     private:
@@ -123,21 +123,26 @@ namespace platoon_control_pid0
         PIDController *     pid_c_ = nullptr;               //PID controller for cross-track error
 
         double              time_step_;                     //time between control loop iterations, s
-        geometry_msgs::Pose current_pose_;                  //current location of the host vehicle, m offsets in map frame
+        double              gamma_h_;                       //steering command mixing ratio between heading & CTE PIDs
+        double              host_x_;                        //current x coordinate of host vehicle location, m offset in map frame
+        double              host_y_;                        //current y coordinate of host vehicle location, m offset in map frame
+        double              host_heading_;                  //current heading angle of host vehicle, rad N of E in [0, 2pi)
         double              current_speed_;                 //current host forward speed, m/s
         std::vector<cav_msgs::TrajectoryPlanPoint> traj_;   //the set of points forming the current trajectory
+        size_t              tp_index_;                      //index of the nearest trajectory point in front of vehicle
         std::string         leader_id_;                     //ID of the dynamic leader for this host
         double              leader_loc_;                    //downtrack distance of the leader wrt host's route, m
         double              leader_spd_cmd_;                //speed command that the leader is controlling to, m/s
         int                 leader_pos_;                    //position of the dynamic leader in the platoon (zero-indexed)
         int                 host_pos_;                      //position of the host vehicle in the platoon (zero-indexed)
-        double              gamma_h_;                       //steering command mixing ratio between heading & CTE PIDs
-        int                 tp_index_;                      //index of the nearest trajectory point in front of vehicle
+        double              steering_cmd_;                  //output command for front wheel steering angle, rad (left is positive)
+        double              angular_vel_cmd_;               //output command for angular velocity of the vehicle, rad/s (around +Z axis)
+        double              speed_cmd_;                     //output command for forward speed, m/s
 
 
         /**
          * \brief Given a sorted array of trajectory points (indicating direction of travel), finds the
-         *          nearest point to the vehicle that is still in front of the vehicle.  It is assumed that
+         *          nearest point to the vehicle that is in front of the vehicle.  It is assumed that
          *          trajectories will be long enough and populated frequently enough that they will always
          *          be close to the vehicle, so that a meaningfully close point will always be found.
          *          Stores resulting identified point index in member variable tp_index_.
@@ -147,8 +152,8 @@ namespace platoon_control_pid0
         /**
          * \brief Returns the smallest delta angle between two heading values, accounting for the possibility that
          *          they may be on opposite sides of the zero cardinal heading.
-         * \param h1 first heading, rad east of north in [0, 2*pi)
-         * \param h2 second heading, rad east of north in [0, 2*pi)
+         * \param h1 first heading, rad north of east in [0, 2*pi)
+         * \param h2 second heading, rad north of east in [0, 2*pi)
          * \return delta angle, rad in (-pi, pi], positive if h1 > h2
          */
         double subtract_headings(const double h1, const double h2);
@@ -159,6 +164,13 @@ namespace platoon_control_pid0
          * \return cross-track error, m, with positive values being left of trajectory
          */
         double calculate_cross_track();
+
+        /**
+         * \brief Normalizes the given yaw angle to the range [0, 2pi).
+         * \param yaw the raw yaw angle, rad, which could be outside the desired range on either side.
+         * \return equivalent angle, rad in [0, 2pi)
+         */
+        double normalize_yaw(const double yaw);
 
 
 

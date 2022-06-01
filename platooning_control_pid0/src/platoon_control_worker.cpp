@@ -42,11 +42,7 @@ namespace platoon_control_pid0
 
         // Store the params we need for future operations
         time_step_ = config.time_step;
-
-
-
-
-
+        gamma_h_ = config.gamma_h;
 
         // Create the PID controllers
         pid_h_ = new PIDController(config.pid_h_deadband, config.pid_h_slope_break, config.pid_h_kp1,
@@ -60,8 +56,16 @@ namespace platoon_control_pid0
     }
 
 
-    void PlatoonControlWorker::set_current_pose(const geometry_msgs::PoseStamped msg) {
-		current_pose_ = msg.pose;
+    void PlatoonControlWorker::set_current_pose(const geometry_msgs::PoseStamped p) {
+		host_x_ = p.pose.position.x;
+        host_y_ = p.pose.position.y;
+
+        // Extract the vehicle's heading
+        tf2::Quaternion q(p.pose.orientation.x, p.pose.orientation.y, p.pose.orientation.z, p.pose.orientation.w);
+        tf2::Matrix3x3 mat(q);
+        double roll, pitch, yaw;
+        mat.getRPY(roll, pitch, yaw);
+        host_heading_ = normalize_yaw(yaw);
 	}
 
 
@@ -84,30 +88,9 @@ namespace platoon_control_pid0
     }
 
 
-    double PlatoonControlWorker::get_speed_cmd() {
+    void PlatoonControlWorker::generate_control_signal() {
 
-        //TODO fill in
-
-
-
-
-
-
-
-    }
-
-
-    double PlatoonControlWorker::get_angular_velocity_cmd() {
-
-        //TODO fill in
-
-
-
-
-    }
-
-
-    double PlatoonControlWorker::get_steering_cmd() {
+        //---------- Steering command
 
         // Find the trajectory point nearest the vehicle but in front of it
         // TODO: may need to consider choosing a point a little farther forward (there may be multiple points
@@ -115,13 +98,13 @@ namespace platoon_control_pid0
         find_nearest_point();
 
         // Find the heading of that trajectory point
-        double tp_heading = traj_[tp_index_].yaw;
+        double tp_heading = normalize_yaw(traj_[tp_index_].yaw);
 
         // Calculate the heading error (desired - actual), as a delta angle, accounting for the possibility
         // of crossing over the zero-heading cardinal direction
         double heading_error = subtract_headings(tp_heading, vehicle_heading);
 
-        // Pass trajectory heading and vehicle heading to the heading PID
+        // Pass heading error to the heading PID
         double out_h = pid_h_->calculate(0.0, heading_error);
 
         // Find the cross-track error (lateral diff between vehicle position and nearest point
@@ -134,32 +117,72 @@ namespace platoon_control_pid0
         double out_c = pid_c_->calculate(0.0, cte);
 
         // Combine the PID outputs according to the mixing factor
-        double out = gamma_h_*out_h + (1.0 - gamma_h_)*out_c;
+        steering_cmd_ = gamma_h_*out_h + (1.0 - gamma_h_)*out_c;
+
+
+        //---------- Angular velocity command
+
+        
+
+
+        //---------- Speed command
+
+    }
+
+
+    double PlatoonControlWorker::get_speed_cmd() {
+        return speed_cmd_;
+    }
+
+
+    double PlatoonControlWorker::get_steering_cmd() {
+        return steering_cmd_;
+    }
+
+
+    double PlatoonControlWorker::get_angular_vel_cmd() {
+        return angular_vel_cmd_;
     }
 
 
     ////////////////// PRIVATE METHODS ////////////////////
 
-    int PlatoonControlWorker::find_nearest_point() {
+    void PlatoonControlWorker::find_nearest_point() {
 
-        // Initialize default return value to first trajectory point
-        int res = 0;
+        // Initialize default result value to first trajectory point
+        size_t res = 0;
+        double best_dist = 99999.0; //meters
 
         // Build a vector that represents the vehicle's direction of travel
+        double vhx = std::cos(host_heading_);
+        double vhy = std::sin(host_heading_); 
 
         // Loop through all points
+        for (size_t index = 0;  index < traj_.size();  ++index) {
 
             // Calculate dist between this point and the vehicle
+            double dx = current_pose_.position.x - iter->x;
+            double dy = current_pose_.position.y - iter->y;
+            double dist = std::sqrt(dx*dx + dy*dy);
 
             // If this distance is smaller than the best so far then
+            if (dist < best_dist) {
 
                 // Build a vector from the vehicle to this trajectory point
+                double vtx = iter->x - host_x_;
+                double vty = iter->y - host_y_;
 
                 // Find the dot product between vehicle heading vector and this vector
+                double dot = vhx*vtx + vhy*vty;
 
                 // If dot product >= 0 then the traj point is in front of the vehicle, so save it
+                if (dot >= 0.0) {
+                    res = index;
+                }
+            }
+        }
 
-        return res;
+        tp_index_ = res;
     }
 
 
@@ -225,6 +248,22 @@ namespace platoon_control_pid0
         }
 
         return dist;
+    }
+
+
+    double PlatoonControlWorker::normalize_yaw(const double yaw) {
+        double res = yaw;
+
+        if (yaw < 0.0) {
+            do {
+                res += TWO_PI;
+            }while (res < 0.0);
+        }else if (yaw >= TWO_PI) {
+            do {
+                res -= TWO_PI;
+            }while (res >= TWO_PI);
+        }
+        return res;
     }
 
 
