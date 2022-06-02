@@ -124,12 +124,6 @@ namespace platoon_strategic_ihp
         */
         PlatoonManager();
 
-        // Platoon List (initialized empty)
-        std::vector<PlatoonMember> platoon{};
-
-        // Current vehicle pose in map
-        geometry_msgs::PoseStamped pose_msg_;
-
         /**
          * \brief Stores the latest info on location of the host vehicle.
          * 
@@ -147,31 +141,49 @@ namespace platoon_strategic_ihp
         void updateHostSpeeds(const double cmdSpeed, const double actualSpeed);
 
         /**
-        * \brief Update platoon members information
+        * \brief Update information for members of the host's platoon based on a mobility operation STATUS message
         * 
         * \param senderId static id of the broadcasting vehicle
         * \param platoonId platoon id
-        * \param params strategy parameters
-        * \param Dtd downtrack distance
+        * \param params message strategy parameters
+        * \param DtD downtrack distance along host's route, m
+        * \param CtD crosstrack distance in roadway at host's location, m
         */
-        void memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, const double& DtD, const double& CtD);
+        void hostMemberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params,
+                               const double& DtD, const double& CtD);
 
         /**
-         * \brief Given any valid platooning mobility STATUS operation parameters and sender staticId,
-         * in leader state this method will add/updates the information of platoon member if it is using
-         * the same platoon ID, in follower state this method will updates the vehicle information who
-         * is in front of the subject vehicle or update platoon id if the leader is join another platoon
+        * \brief Update information for members of a neighboring platoon based on a mobility operation STATUS message
+        * 
+        * \param senderId static id of the broadcasting vehicle
+        * \param platoonId platoon id
+        * \param params message strategy parameters
+        * \param DtD downtrack distance along host's route, m
+        * \param CtD crosstrack distance in roadway at host's location, m
+        */
+        void neighborMemberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params,
+                                   const double& DtD, const double& CtD);
+
+        /**
+         * \brief Updates the list of vehicles in the specified platoon, based on info available from a
+         * mobility operation STATUS message from one of that platoon's vehicles.  It ensures the list of vehicles
+         * is properly sorted in order of appearance from front to rear in the platoon.  If the host is in the
+         * platoon, it will update host info as well.
          * 
-         * \param senderId sender ID for the current info
-         * \param platoonId sender platoon id
-         * \param params strategy params from STATUS message in the format of "CMDSPEED:xx,DOWNTRACK:xx,SPEED:xx"
+         * \param platoon the list of vehicles in the platoon in question
+         * \param senderId vehicle ID that sent the current info
+         * \param cmdSpeed the commanded speed of the sending vehicle
+         * \param dtDistance the downtrack location (from beginning of host's route) of the sending vehicle, m
+         * \param ctDistance the crosstrack location (from center of roadway at host's current route location) of sending vehicle, m
+         * \param curSpeed the current actual speed of the sending vehicle, m/s
          **/
-        void updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double ctDistance, double curSpeed);
+        void updatesOrAddMemberInfo(std::vector<PlatoonMember>& platoon, std::string senderId, double cmdSpeed,
+                                    double dtDistance, double ctDistance, double curSpeed);
         
         /**
         * \brief Returns total size of the platoon , in number of vehicles.
         */
-        int getTotalPlatooningSize();
+        int getHostPlatoonSize();
 
         /**
          * \brief Resets necessary variables to indicate that the current ActionPlan is dead.
@@ -179,9 +191,14 @@ namespace platoon_strategic_ihp
         void clearActionPlan();
 
         /**
-         * \brief Resets all platoon variables that might indicate other platoon members; sets the host back to solo vehicle.
+         * \brief Resets all  variables that might indicate other members of the host's platoon; sets the host back to solo vehicle.
          */
-        void resetPlatoon();
+        void resetHostPlatoon();
+
+        /**
+         * \brief Resets all variables that describe a neighbor platoon, so that no neighbor is known.
+         */
+        void resetNeighborPlatoon();
 
         /**
          * \brief Removes a single member from the internal record of platoon members
@@ -313,33 +330,67 @@ namespace platoon_strategic_ihp
         double getIHPDesPosFollower(double dt);
 
         /**
-         * \brief UCLA: Return joiner's desired position in terms of platoon index to cut into the platoon. 
+         * \brief UCLA: Return joiner's desired position in terms of target platoon index to cut into the platoon. 
          * 
-         * \params joinerDtD: The current downtrack distance (with regards to host vehicle) of the joiner vehicle.
+         * \param joinerDtD: The current downtrack distance (with regards to host vehicle) of the joiner vehicle.
          * 
          * \return: cut-in index: The index of the gap-leading vehicle within the platoon. If front join, return -1.
          */
         int getClosestIndex(double joinerDtD);
 
         /**
-         * \brief UCLA: Return the desired gap size for cut-in join, in m.
+         * \brief UCLA: Return the current actual gap size in the target platoon for cut-in join, in m.
          *        Note: The origin of the vehicle (for downtrack distance calculation) is located at the rear axle. 
          * 
-         * \params gap_leading_index: The platoon index of the  gap-leading vehicle. 
-         *         joinerDtD: The current downtrack distance (with regards to host vehicle) of the joiner vehicle.
+         * \param gap_leading_index: The platoon index of the  gap-leading vehicle. 
+         * \param joinerDtD: The current downtrack distance (with regards to host vehicle route) of the joiner vehicle.
          * 
          * \return: cut-in gap: The desired gap size for cut-in join, in m.
          */
         double getCutInGap(const int gap_leading_index, const double joinerDtD);
 
-        // Member variables
         const std::string dummyID = "00000000-0000-0000-0000-000000000000";
+
+        // List of members in the host's own platoon (host will always be represented, so size is never zero)
+        std::vector<PlatoonMember> host_platoon_;
+
+        // Platoon ID of the host's platoon
         std::string currentPlatoonID = dummyID; //dummy indicates not part of a platoon
+
+        // Vehicle ID of the host's platoon leader (host may be the leader)
         std::string platoonLeaderID = dummyID;  //dummy indicates not part of a platoon
-        std::string targetPlatoonID = dummyID;  //ID of a real platoon that we may be attempting to join (empty if neighbor is a solo vehicle)
+
+        // Current platooning state of the host vehicle
         PlatoonState current_platoon_state = PlatoonState::STANDBY;
-        ActionPlan current_plan = ActionPlan(); //this plan represents a joining activity only, not the platoon itself
+
+        //index to the host_platoon_ vector that represents the host vehicle
+        size_t hostPosInPlatoon_ = 0;
+
+         // Plan that represents a joining activity only, it is NOT the ID of the platoon itself
+        ActionPlan current_plan = ActionPlan();
+
+        // Is the host a follower in its platoon?
         bool isFollower = false;
+
+        // List of members in a detected neighbor platoon, which may be empty
+        // CAUTION: we can only represent one neighbor platoon in this version, so if multiple platoons are nearby,
+        //          code will get very confused and results are unpredictable.
+        std::vector<PlatoonMember> neighbor_platoon_;
+
+        // Num vehicles in the neighbor platoon, as indicated by the size field in the INFO message
+        size_t neighbor_platoon_info_size_ = 0;
+
+        // Platoon ID of the neighboring platoon
+        std::string targetPlatoonID = dummyID;  //ID of a real platoon that we may be attempting to join (dummy if neighbor is a solo vehicle)
+
+        // Vehicle ID of the neighbor platoon's leader
+        std::string neighbor_platoon_leader_id_ = dummyID; //dummy indicates unknown
+
+        // Is the record of neighbor platoon members complete (does it contain a record for every member)?
+        bool is_neighbor_record_complete_ = false;
+
+        // Current vehicle pose in map
+        geometry_msgs::PoseStamped pose_msg_;
 
         // host vehicle's static ID 
         std::string HostMobilityId = "default_host_id";
@@ -366,9 +417,7 @@ namespace platoon_strategic_ihp
         std::string previousFunctionalDynamicLeaderID_ = "";
         int previousFunctionalDynamicLeaderIndex_ = -1;
 
-        size_t hostPosInPlatoon_ = 0;  //index to the platoon vector that represents the host vehicle
-
-        // note: APF related parameters are in config.h.
+       // note: APF related parameters are in config.h.
 
         double vehicleLength_ = 5.0;                            // the length of the vehicle, in m.
         double gapWithPred_ = 0.0;                              // time headway with predecessor, in s.
