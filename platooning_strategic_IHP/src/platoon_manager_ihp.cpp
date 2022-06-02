@@ -70,9 +70,10 @@ namespace platoon_strategic_ihp
     }
 
     // Update/add one member's information from STATUS messages, update platoon ID if needed. Ignore if message is from other platoons. 
-    void PlatoonManager::memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, const double& DtD, const double& CtD){
+    void PlatoonManager::memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, 
+                                       const double& DtD, const double& CtD){
 
-        // parase params, read member data
+        // parse params, read member data
         std::vector<std::string> inputsParams;
         boost::algorithm::split(inputsParams, params, boost::is_any_of(","));
         // read command speed, m/s
@@ -94,7 +95,7 @@ namespace platoon_strategic_ihp
         if (isFollower) 
         {
             // read message status        
-            bool isFromLeader = host_platoon_[0].staticId == senderId;
+            bool isFromLeader = platoonLeaderID == senderId;
             bool needPlatoonIdChange = isFromLeader && (currentPlatoonID != platoonId);
 
             if(needPlatoonIdChange)
@@ -147,7 +148,6 @@ namespace platoon_strategic_ihp
     // Check a new vehicle's existence; add its info to the platoon if not in list, update info if already existed. 
     void PlatoonManager::updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double ctDistance, double curSpeed)
     {
-
         bool isExisted = false;
         bool sortNeeded = false;
 
@@ -225,7 +225,7 @@ namespace platoon_strategic_ihp
     // TODO: Place holder for delete member info due to dissovle operation.
 
     // Get the platoon size.
-    int PlatoonManager::getTotalPlatooningSize() {
+    int PlatoonManager::getHostPlatoonSize() {
         ROS_DEBUG_STREAM("platoonSize: " << host_platoon_.size());
         return host_platoon_.size();
     }
@@ -241,7 +241,7 @@ namespace platoon_strategic_ihp
     }
 
     // Reset variables to indicate there is no platoon - host is a solo vehicle again
-    void PlatoonManager::resetPlatoon()
+    void PlatoonManager::resetHostPlatoon()
     {
         // Remove any elements in the platoon vector other than the host vehicle
         if (host_platoon_.size() > hostPosInPlatoon_ + 1)
@@ -254,6 +254,18 @@ namespace platoon_strategic_ihp
         currentPlatoonID = dummyID;
         platoonLeaderID = dummyID;
         hostPosInPlatoon_ = 0;
+        isCreateGap = false;
+        dynamic_leader_index_ = 0;
+    }
+
+    // Reset variables to indicate there is no known neighbor platoon
+    void PlatoonManager::resetNeighborPlatoon()
+    {
+        neighbor_platoon_.clear();
+        neighbor_platoon_info_size_ = 0;
+        targetPlatoonID = dummyID;
+        neighbor_platoon_leader_id_ = dummyID;
+        is_neighbor_record_complete_ = false;
     }
 
     bool PlatoonManager::removeMember(const size_t mem)
@@ -654,18 +666,6 @@ namespace platoon_strategic_ihp
 
     // Return the number of vehicles in the front of the host vehicle. If host is leader or a single vehicle, return 0.
     int PlatoonManager::getNumberOfVehicleInFront() {
-        
-        int num = host_platoon_.size() - 1;
-        for (size_t i = 0;  i < host_platoon_.size();  ++i)
-        {
-            if (host_platoon_[i].vehiclePosition <= getCurrentDowntrackDistance() + 1.0) //allow for some uncertainty to count host also
-            {
-                num = i;
-                
-                break;
-            }
-        }
-        // return num;
         return hostPosInPlatoon_;
     }
 

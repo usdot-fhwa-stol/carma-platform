@@ -124,12 +124,6 @@ namespace platoon_strategic_ihp
         */
         PlatoonManager();
 
-        // Platoon List (initialized empty)
-        std::vector<PlatoonMember> host_platoon_{};
-
-        // Current vehicle pose in map
-        geometry_msgs::PoseStamped pose_msg_;
-
         /**
          * \brief Stores the latest info on location of the host vehicle.
          * 
@@ -171,7 +165,7 @@ namespace platoon_strategic_ihp
         /**
         * \brief Returns total size of the platoon , in number of vehicles.
         */
-        int getTotalPlatooningSize();
+        int getHostPlatoonSize();
 
         /**
          * \brief Resets necessary variables to indicate that the current ActionPlan is dead.
@@ -179,9 +173,14 @@ namespace platoon_strategic_ihp
         void clearActionPlan();
 
         /**
-         * \brief Resets all platoon variables that might indicate other platoon members; sets the host back to solo vehicle.
+         * \brief Resets all  variables that might indicate other members of the host's platoon; sets the host back to solo vehicle.
          */
-        void resetPlatoon();
+        void resetHostPlatoon();
+
+        /**
+         * \brief Resets all variables that describe a neighbor platoon, so that no neighbor is known.
+         */
+        void resetNeighborPlatoon();
 
         /**
          * \brief Removes a single member from the internal record of platoon members
@@ -332,14 +331,48 @@ namespace platoon_strategic_ihp
          */
         double getCutInGap(const int gap_leading_index, const double joinerDtD);
 
-        // Member variables
         const std::string dummyID = "00000000-0000-0000-0000-000000000000";
+
+        // List of members in the host's own platoon (host will always be represented, so size is never zero)
+        std::vector<PlatoonMember> host_platoon_;
+
+        // Platoon ID of the host's platoon
         std::string currentPlatoonID = dummyID; //dummy indicates not part of a platoon
+
+        // Vehicle ID of the host's platoon leader (host may be the leader)
         std::string platoonLeaderID = dummyID;  //dummy indicates not part of a platoon
-        std::string targetPlatoonID = dummyID;  //ID of a real platoon that we may be attempting to join (empty if neighbor is a solo vehicle)
+
+        // Current platooning state of the host vehicle
         PlatoonState current_platoon_state = PlatoonState::STANDBY;
-        ActionPlan current_plan = ActionPlan(); //this plan represents a joining activity only, not the platoon itself
+
+        //index to the host_platoon_ vector that represents the host vehicle
+        size_t hostPosInPlatoon_ = 0;
+
+         // Plan that represents a joining activity only, it is NOT the ID of the platoon itself
+        ActionPlan current_plan = ActionPlan();
+
+        // Is the host a follower in its platoon?
         bool isFollower = false;
+
+        // List of members in a detected neighbor platoon, which may be empty
+        // CAUTION: we can only represent one neighbor platoon in this version, so if multiple platoons are nearby,
+        //          code will get very confused and results are unpredictable.
+        std::vector<PlatoonMember> neighbor_platoon_;
+
+        // Num vehicles in the neighbor platoon, as indicated by the size field in the INFO message
+        int neighbor_platoon_info_size_ = 0;
+
+        // Platoon ID of the neighboring platoon
+        std::string targetPlatoonID = dummyID;  //ID of a real platoon that we may be attempting to join (dummy if neighbor is a solo vehicle)
+
+        // Vehicle ID of the neighbor platoon's leader
+        std::string neighbor_platoon_leader_id_ = dummyID; //dummy indicates unknown
+
+        // Is the record of neighbor platoon members complete (does it contain a record for every member)?
+        bool is_neighbor_record_complete_ = false;
+
+        // Current vehicle pose in map
+        geometry_msgs::PoseStamped pose_msg_;
 
         // host vehicle's static ID 
         std::string HostMobilityId = "default_host_id";
@@ -366,9 +399,7 @@ namespace platoon_strategic_ihp
         std::string previousFunctionalDynamicLeaderID_ = "";
         int previousFunctionalDynamicLeaderIndex_ = -1;
 
-        size_t hostPosInPlatoon_ = 0;  //index to the platoon vector that represents the host vehicle
-
-        // note: APF related parameters are in config.h.
+       // note: APF related parameters are in config.h.
 
         double vehicleLength_ = 5.0;                            // the length of the vehicle, in m.
         double gapWithPred_ = 0.0;                              // time headway with predecessor, in s.
