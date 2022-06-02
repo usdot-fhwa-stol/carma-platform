@@ -21,7 +21,7 @@
 #include <carma_v2x_msgs/msg/traffic_control_request.hpp>
 #include <carma_ros2_utils/carma_ros2_utils.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
-#include <carma_wm_ctrl_ros2/WMBroadcaster.hpp>
+#include <carma_wm_ctrl/WMBroadcaster.hpp>
 #include <std_msgs/msg/int32_multi_array.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>

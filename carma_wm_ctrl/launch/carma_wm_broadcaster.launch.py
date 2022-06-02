@@ -35,8 +35,8 @@ def generate_launch_description():
     declare_log_level_arg = DeclareLaunchArgument(
         name ='log_level', default_value='WARN')
     
-    carma_wm_ctrl_ros2_param_file = os.path.join(
-        get_package_share_directory('carma_wm_ctrl_ros2'), 'config', 'parameters.yaml')
+    carma_wm_ctrl_param_file = os.path.join(
+        get_package_share_directory('carma_wm_ctrl'), 'config', 'parameters.yaml')
     
     print(GetCurrentNamespace())
     
@@ -50,14 +50,14 @@ def generate_launch_description():
             
             # Launch the core node(s)
             ComposableNode(
-                    package='carma_wm_ctrl_ros2',
+                    package='carma_wm_ctrl',
                     plugin='carma_wm_ctrl::WMBroadcasterNode',
                     name='carma_wm_broadcaster',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
                         {'--log-level' : log_level }
                     ],
-                    parameters=[ carma_wm_ctrl_ros2_param_file ]
+                    parameters=[ carma_wm_ctrl_param_file ]
             ),
         ]
     )
