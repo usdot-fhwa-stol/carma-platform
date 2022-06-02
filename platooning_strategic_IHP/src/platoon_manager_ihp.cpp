@@ -661,6 +661,10 @@ namespace platoon_strategic_ihp
         hostPosInPlatoon_ = 1; //since host was previously leader it is now guaranteed to be 2nd in the line (index 1)
         isFollower = true;
         currentPlatoonID = newPlatoonId;
+
+        // Clear the record of neighbor platoon, since we likely just joined it
+        resetNeighborPlatoon();
+        
         ROS_DEBUG_STREAM("The platoon manager is changed from leader state to follower state. Platoon vector re-initialized. Plan ID = " << newPlatoonId);
     }
 
