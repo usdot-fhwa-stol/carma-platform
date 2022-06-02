@@ -147,7 +147,7 @@ namespace trajectory_executor
     } else {
       RCLCPP_DEBUG_STREAM(get_logger(), "Awaiting initial trajectory publication...");
     }
-    
+
     RCLCPP_DEBUG_STREAM(get_logger(), "TrajectoryExecutor tick completed succesfully!");
 
   }
@@ -166,10 +166,10 @@ namespace trajectory_executor
 
   void TrajectoryExecutor::guidanceStateMonitor(carma_planning_msgs::msg::GuidanceState::UniquePtr msg)
   {
-    std::unique_lock<std::mutex> lock(cur_traj_mutex_); // Acquire lock until end of this function scope
     // TODO need to handle control handover once alernative planner system is finished
     if(msg->state != carma_planning_msgs::msg::GuidanceState::ENGAGED)
     {
+      std::unique_lock<std::mutex> lock(cur_traj_mutex_); // Acquire lock until end of this function scope
     	cur_traj_= nullptr;
     }
   }
