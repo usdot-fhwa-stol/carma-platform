@@ -703,7 +703,7 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("strategyParams = " << strategyParams);
         ROS_DEBUG_STREAM("platoonId = " << platoonId << ", sender ID = " << vehicleID);
         std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
-        ROS_DEBUG_STREAM("pm_.currentPlatoonID = " << pm_.currentPlatoonID, ", targetPlatoonID = " << pm_.targetPlatoonID);
+        ROS_DEBUG_STREAM("pm_.currentPlatoonID = " << pm_.currentPlatoonID << ", targetPlatoonID = " << pm_.targetPlatoonID);
 
         // read Downtrack 
         cav_msgs::LocationECEF ecef_loc = mob_op_find_ecef_from_STATUS_params(strategyParams);
@@ -2369,6 +2369,7 @@ namespace platoon_strategic_ihp
         bool isCreatingGap = plan_type.type == cav_msgs::PlanType::PLATOON_CUT_IN_JOIN;
         bool isFinishLaneChangeFront = plan_type.type == cav_msgs::PlanType::CUT_IN_FRONT_DONE; 
         bool isFinishLaneChangeMidorRear = plan_type.type == cav_msgs::PlanType::CUT_IN_MID_OR_REAR_DONE;
+        ROS_DEBUG_STREAM("isCreatingGap = " << isCreatingGap << ", is_neighbor_record_complete = " << pm_.is_neighbor_record_complete_);
 
         if (!msg.is_accepted)
         {
@@ -2376,14 +2377,13 @@ namespace platoon_strategic_ihp
             return;
         }
 
-        // UCLA: Creat Gap or perform a rear join (no gap creation necessary)
-        if (isCreatingGap)
+        // UCLA: Create Gap or perform a rear join (no gap creation necessary)
+        if (isCreatingGap  &&  pm_.is_neighbor_record_complete_)
         {
             // task 1: check gap 
             double cut_in_gap = pm_.getCutInGap(target_join_index_, current_downtrack_);   
             ROS_DEBUG_STREAM("Start loop to check cut-in gap, start lane change when gap allows");
-            // temporary disable safety checks
-            while (false)//(cut_in_gap < config_.minCutinGap) // TODO: use min gap as "safe to cut-in" gap, may need to adjust change later
+            while (cut_in_gap < config_.minCutinGap) // TODO: use min gap as "safe to cut-in" gap, may need to adjust change later
             {   
                 // Use LANE_CHANGE_TIMEOUT to bond the "creat gap"
                 bool isCurrentPlanTimeout = ros::Time::now().toNSec()/1000000  - pm_.current_plan.planStartTime > LANE_CHANGE_TIMEOUT;
@@ -2913,6 +2913,7 @@ namespace platoon_strategic_ihp
             pm_.current_platoon_state = PlatoonState::LEADER;
             pm_.clearActionPlan();
             pm_.resetHostPlatoon();
+            // Leave neighbor platoon info in place, as we may retry the join later
         }
 
         // Task 2.2: plan timeout
@@ -2928,6 +2929,7 @@ namespace platoon_strategic_ihp
                 pm_.current_platoon_state = PlatoonState::LEADER;
                 pm_.clearActionPlan();
                 pm_.resetHostPlatoon();
+                // Leave neighbor platoon info in place, as we may retry the join later
             }
         }
 

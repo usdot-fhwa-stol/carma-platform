@@ -330,20 +330,20 @@ namespace platoon_strategic_ihp
         double getIHPDesPosFollower(double dt);
 
         /**
-         * \brief UCLA: Return joiner's desired position in terms of platoon index to cut into the platoon. 
+         * \brief UCLA: Return joiner's desired position in terms of target platoon index to cut into the platoon. 
          * 
-         * \params joinerDtD: The current downtrack distance (with regards to host vehicle) of the joiner vehicle.
+         * \param joinerDtD: The current downtrack distance (with regards to host vehicle) of the joiner vehicle.
          * 
          * \return: cut-in index: The index of the gap-leading vehicle within the platoon. If front join, return -1.
          */
         int getClosestIndex(double joinerDtD);
 
         /**
-         * \brief UCLA: Return the desired gap size for cut-in join, in m.
+         * \brief UCLA: Return the current actual gap size in the target platoon for cut-in join, in m.
          *        Note: The origin of the vehicle (for downtrack distance calculation) is located at the rear axle. 
          * 
-         * \params gap_leading_index: The platoon index of the  gap-leading vehicle. 
-         *         joinerDtD: The current downtrack distance (with regards to host vehicle) of the joiner vehicle.
+         * \param gap_leading_index: The platoon index of the  gap-leading vehicle. 
+         * \param joinerDtD: The current downtrack distance (with regards to host vehicle route) of the joiner vehicle.
          * 
          * \return: cut-in gap: The desired gap size for cut-in join, in m.
          */

@@ -891,8 +891,8 @@ namespace platoon_strategic_ihp
         return pos_des;
     }
 
-    // UCLA: find the index of the closest vehicle that is in front of the host vehicle (cut-in joiner).
-    // Note: The joiner will cut-in at the back of this vehcile, which make this index points to the vehicle that is leading the cut-in gap.
+    // UCLA: find the index of the closest vehicle in the target platoon that is in front of the host vehicle (cut-in joiner).
+    // Note: The joiner will cut-in at the back of this vehicle, which make this index points to the vehicle that is leading the cut-in gap.
     int PlatoonManager::getClosestIndex(double joinerDtD)
     {   
         /*
@@ -901,12 +901,13 @@ namespace platoon_strategic_ihp
                   If the joiner is already in front of the platoon leader, this function will return -1 (i.e., cut-in front).
         */
 
-        double min_diff = 99999.000;
-        int cut_in_index = 1; //TODO TEMPORARY
-        // Loop through all platoon members  
-        for(size_t i = 0; i < host_platoon_.size(); i++) 
+        double min_diff = 99999.0;
+        int cut_in_index = -2; //-2 is meaningless default
+
+        // Loop through all target platoon members  
+        for(size_t i = 0; i < neighbor_platoon_.size(); i++) 
         {
-            double current_member_dtd = host_platoon_[i].vehiclePosition; 
+            double current_member_dtd = neighbor_platoon_[i].vehiclePosition; 
             double curent_dtd_diff = current_member_dtd - joinerDtD;
             // update min index
             if (curent_dtd_diff > 0 && curent_dtd_diff < min_diff)
@@ -919,19 +920,12 @@ namespace platoon_strategic_ihp
         return cut_in_index;
     }
 
-    // UCLA: find the cut-in join target gap size in downtrack distance (m). The origin of the vehicle when calculating DtD is locate at the rear axle. 
+    // UCLA: find the current cut-in join gap size in downtrack distance (m). The origin of the vehicle when calculating DtD is locate at the rear axle. 
     double PlatoonManager::getCutInGap(const int gap_leading_index, const double joinerDtD)
     {
         /*
             Locate the target cut-in join gap size based on the index.   
         */
-
-        
-        
-        //TODO: this method assumes platoon represents tgt platoon structure, which it does not!
-
-
-
 
         // Initiate variables 
         double gap_size = -0.999;
@@ -944,20 +938,20 @@ namespace platoon_strategic_ihp
         // cut-in from front 
         if (gap_leading_index == -1)
         {
-            double gap_rear_dtd = host_platoon_[0].vehiclePosition;
+            double gap_rear_dtd = neighbor_platoon_[0].vehiclePosition;
             gap_size = joinerDtD - gap_rear_dtd - config_.vehicleLength;
         }
         // cut-in from behind 
         else if (index == host_platoon_.size() - 1)
         {    
-            double gap_leading_dtd = host_platoon_[index].vehiclePosition;
+            double gap_leading_dtd = neighbor_platoon_[index].vehiclePosition;
             gap_size = gap_leading_dtd - joinerDtD - config_.vehicleLength;;
         }
         // cut-in in the middle
         else
         {
-            double gap_leading_dtd = host_platoon_[index].vehiclePosition;
-            double gap_rear_dtd = host_platoon_[index + 1].vehiclePosition;
+            double gap_leading_dtd = neighbor_platoon_[index].vehiclePosition;
+            double gap_rear_dtd = neighbor_platoon_[index + 1].vehiclePosition;
             gap_size = gap_leading_dtd - gap_rear_dtd - config_.vehicleLength;
         }
 
