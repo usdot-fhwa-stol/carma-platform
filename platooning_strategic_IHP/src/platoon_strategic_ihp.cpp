@@ -2977,7 +2977,7 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("Published Mobility cut-in join request to leader " << pm_.platoonLeaderID << " with planId = " << planId);
 
             // Create a new join action plan
-            pm_.current_plan = ActionPlan(true, currentTime, planId, pm_.platoonLeaderID);
+            pm_.current_plan = ActionPlan(true, currentTime, planId, pm_.neighbor_platoon_leader_id_);
         }
     }
 
