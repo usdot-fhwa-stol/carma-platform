@@ -46,7 +46,7 @@ namespace carma_guidance_plugins
 
     // Timers
     //! Timer to trigger publication of the plugin discovery message at a fixed frequency 
-    rclcpp::TimerBase::SharedPtr discovert_timer_;
+    rclcpp::TimerBase::SharedPtr discovery_timer_;
 
     // WorldModel listener
     carma_wm::WMListener wm_listener_;

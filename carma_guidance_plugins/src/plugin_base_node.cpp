@@ -29,7 +29,7 @@ namespace carma_guidance_plugins
   {
 
     // Setup discovery timer to publish onto the plugin_discovery_pub
-    discovert_timer_ = create_timer(
+    discovery_timer_ = create_timer(
         get_clock(),
         std::chrono::milliseconds(500), // 2 Hz frequency to account for 1Hz maneuver planning frequency
         std::bind(&PluginBaseNode::discovery_timer_callback, this));
