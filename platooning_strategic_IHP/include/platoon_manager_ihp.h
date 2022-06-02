@@ -177,7 +177,7 @@ namespace platoon_strategic_ihp
          * \param ctDistance the crosstrack location (from center of roadway at host's current route location) of sending vehicle, m
          * \param curSpeed the current actual speed of the sending vehicle, m/s
          **/
-        void updatesOrAddMemberInfo(std::vector<PlatoonMember> platoon, std::string senderId, double cmdSpeed,
+        void updatesOrAddMemberInfo(std::vector<PlatoonMember>& platoon, std::string senderId, double cmdSpeed,
                                     double dtDistance, double ctDistance, double curSpeed);
         
         /**

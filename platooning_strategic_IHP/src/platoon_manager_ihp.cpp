@@ -95,6 +95,13 @@ namespace platoon_strategic_ihp
         // 2. We will update platoon members info based on platoon ID for all members
         if (isFollower) 
         {
+            // Sanity check
+            if (platoonLeaderID.compare(host_platoon_[0].staticId) != 0)
+            {
+                ROS_DEBUG_STREAM("///// platoonLeaderID NOT PROPERLY ASSIGNED! Value = " << platoonLeaderID
+                                << ", host_platoon_[0].staticId = " << host_platoon_[0].staticId);
+            }
+
             // read message status        
             bool isFromLeader = platoonLeaderID == senderId;
             bool needPlatoonIdChange = isFromLeader && (currentPlatoonID != platoonId);
@@ -181,7 +188,7 @@ namespace platoon_strategic_ihp
     }
     
     // Check a new vehicle's existence; add its info to the platoon if not in list, update info if already existed. 
-    void PlatoonManager::updatesOrAddMemberInfo(std::vector<PlatoonMember> platoon, std::string senderId, double cmdSpeed,
+    void PlatoonManager::updatesOrAddMemberInfo(std::vector<PlatoonMember>& platoon, std::string senderId, double cmdSpeed,
                                                 double dtDistance, double ctDistance, double curSpeed)
     {
         bool isExisted = false;
@@ -262,7 +269,7 @@ namespace platoon_strategic_ihp
 
     // Get the platoon size.
     int PlatoonManager::getHostPlatoonSize() {
-        ROS_DEBUG_STREAM("platoonSize: " << host_platoon_.size());
+        ROS_DEBUG_STREAM("host platoon size: " << host_platoon_.size());
         return host_platoon_.size();
     }
 
@@ -942,7 +949,7 @@ namespace platoon_strategic_ihp
             gap_size = joinerDtD - gap_rear_dtd - config_.vehicleLength;
         }
         // cut-in from behind 
-        else if (index == host_platoon_.size() - 1)
+        else if (index == neighbor_platoon_.size() - 1)
         {    
             double gap_leading_dtd = neighbor_platoon_[index].vehiclePosition;
             gap_size = gap_leading_dtd - joinerDtD - config_.vehicleLength;;
