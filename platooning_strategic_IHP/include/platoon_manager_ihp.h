@@ -141,26 +141,44 @@ namespace platoon_strategic_ihp
         void updateHostSpeeds(const double cmdSpeed, const double actualSpeed);
 
         /**
-        * \brief Update platoon members information
+        * \brief Update information for members of the host's platoon based on a mobility operation STATUS message
         * 
         * \param senderId static id of the broadcasting vehicle
         * \param platoonId platoon id
-        * \param params strategy parameters
-        * \param Dtd downtrack distance
+        * \param params message strategy parameters
+        * \param DtD downtrack distance along host's route, m
+        * \param CtD crosstrack distance in roadway at host's location, m
         */
-        void memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, const double& DtD, const double& CtD);
+        void hostMemberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params,
+                               const double& DtD, const double& CtD);
 
         /**
-         * \brief Given any valid platooning mobility STATUS operation parameters and sender staticId,
-         * in leader state this method will add/updates the information of platoon member if it is using
-         * the same platoon ID, in follower state this method will updates the vehicle information who
-         * is in front of the subject vehicle or update platoon id if the leader is join another platoon
+        * \brief Update information for members of a neighboring platoon based on a mobility operation STATUS message
+        * 
+        * \param senderId static id of the broadcasting vehicle
+        * \param platoonId platoon id
+        * \param params message strategy parameters
+        * \param DtD downtrack distance along host's route, m
+        * \param CtD crosstrack distance in roadway at host's location, m
+        */
+        void neighborMemberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params,
+                                   const double& DtD, const double& CtD);
+
+        /**
+         * \brief Updates the list of vehicles in the specified platoon, based on info available from a
+         * mobility operation STATUS message from one of that platoon's vehicles.  It ensures the list of vehicles
+         * is properly sorted in order of appearance from front to rear in the platoon.  If the host is in the
+         * platoon, it will update host info as well.
          * 
-         * \param senderId sender ID for the current info
-         * \param platoonId sender platoon id
-         * \param params strategy params from STATUS message in the format of "CMDSPEED:xx,DOWNTRACK:xx,SPEED:xx"
+         * \param platoon the list of vehicles in the platoon in question
+         * \param senderId vehicle ID that sent the current info
+         * \param cmdSpeed the commanded speed of the sending vehicle
+         * \param dtDistance the downtrack location (from beginning of host's route) of the sending vehicle, m
+         * \param ctDistance the crosstrack location (from center of roadway at host's current route location) of sending vehicle, m
+         * \param curSpeed the current actual speed of the sending vehicle, m/s
          **/
-        void updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double ctDistance, double curSpeed);
+        void updatesOrAddMemberInfo(std::vector<PlatoonMember> platoon, std::string senderId, double cmdSpeed,
+                                    double dtDistance, double ctDistance, double curSpeed);
         
         /**
         * \brief Returns total size of the platoon , in number of vehicles.
@@ -360,7 +378,7 @@ namespace platoon_strategic_ihp
         std::vector<PlatoonMember> neighbor_platoon_;
 
         // Num vehicles in the neighbor platoon, as indicated by the size field in the INFO message
-        int neighbor_platoon_info_size_ = 0;
+        size_t neighbor_platoon_info_size_ = 0;
 
         // Platoon ID of the neighboring platoon
         std::string targetPlatoonID = dummyID;  //ID of a real platoon that we may be attempting to join (dummy if neighbor is a solo vehicle)

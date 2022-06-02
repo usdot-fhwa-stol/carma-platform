@@ -69,9 +69,10 @@ namespace platoon_strategic_ihp
         host_platoon_[hostPosInPlatoon_].vehicleSpeed = actualSpeed;
     }
 
-    // Update/add one member's information from STATUS messages, update platoon ID if needed. Ignore if message is from other platoons. 
-    void PlatoonManager::memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, 
-                                       const double& DtD, const double& CtD){
+    // Update/add one member's information from STATUS messages, update platoon ID if needed.  
+    void PlatoonManager::hostMemberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, 
+                                           const double& DtD, const double& CtD)
+    {
 
         // parse params, read member data
         std::vector<std::string> inputsParams;
@@ -106,12 +107,12 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("It seems that the current leader is joining another platoon.");
                 ROS_DEBUG_STREAM("So the platoon ID is changed from " << currentPlatoonID << " to " << platoonId);
                 currentPlatoonID = platoonId;
-                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, ctDistance, curSpeed); 
+                updatesOrAddMemberInfo(host_platoon_, senderId, cmdSpeed, dtDistance, ctDistance, curSpeed); 
             } 
             else if (currentPlatoonID == platoonId)
             {
                 ROS_DEBUG_STREAM("This STATUS messages is from our platoon. Updating the info...");
-                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
+                updatesOrAddMemberInfo(host_platoon_, senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
                 ROS_DEBUG_STREAM("The first vehicle in our list is now " << host_platoon_[0].staticId);
             } 
             else //sender is in a different platoon
@@ -126,7 +127,7 @@ namespace platoon_strategic_ihp
             if (currentPlatoonID == platoonId)
             {
                 ROS_DEBUG_STREAM("This STATUS messages is from our platoon. Updating the info...");
-                updatesOrAddMemberInfo(senderId, cmdSpeed, dtDistance, ctDistance, curSpeed); 
+                updatesOrAddMemberInfo(host_platoon_, senderId, cmdSpeed, dtDistance, ctDistance, curSpeed); 
             }
             else
             {
@@ -142,34 +143,69 @@ namespace platoon_strategic_ihp
         double hostDtD = getCurrentDowntrackDistance();
         double hostCtD = getCurrentCrosstrackDistance();
         double hostCurSpeed = getCurrentSpeed();
-        updatesOrAddMemberInfo(hostStaticId, hostcmdSpeed, hostDtD, hostCtD, hostCurSpeed);
+        updatesOrAddMemberInfo(host_platoon_, hostStaticId, hostcmdSpeed, hostDtD, hostCtD, hostCurSpeed);
+    }
+    
+    // Update/add one member's information from STATUS messages, update platoon ID if needed.  
+    void PlatoonManager::neighborMemberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, 
+                                               const double& DtD, const double& CtD)
+    {
+
+        // parse params, read member data
+        std::vector<std::string> inputsParams;
+        boost::algorithm::split(inputsParams, params, boost::is_any_of(","));
+        // read command speed, m/s
+        std::vector<std::string> cmd_parsed;
+        boost::algorithm::split(cmd_parsed, inputsParams[0], boost::is_any_of(":"));
+        double cmdSpeed = std::stod(cmd_parsed[1]);
+        // get DtD directly instead of parsing message, m
+        double dtDistance = DtD;
+        // get CtD directly 
+        double ctDistance = CtD;
+        // read current speed, m/s
+        std::vector<std::string> cur_parsed;
+        boost::algorithm::split(cur_parsed, inputsParams[1], boost::is_any_of(":"));
+        double curSpeed = std::stod(cur_parsed[1]);
+
+        if (targetPlatoonID == platoonId)
+        {
+            ROS_DEBUG_STREAM("This STATUS messages is from the target platoon. Updating the info...");
+            updatesOrAddMemberInfo(neighbor_platoon_, senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
+            ROS_DEBUG_STREAM("The first vehicle in that platoon is now " << neighbor_platoon_[0].staticId);
+        } 
+        else //sender is in a different platoon
+        {
+            ROS_DEBUG_STREAM("This STATUS message is not from a vehicle we care about. Ignore this message from sender: " 
+                            << senderId << " about platoon: " << platoonId);
+        }
     }
     
     // Check a new vehicle's existence; add its info to the platoon if not in list, update info if already existed. 
-    void PlatoonManager::updatesOrAddMemberInfo(std::string senderId, double cmdSpeed, double dtDistance, double ctDistance, double curSpeed)
+    void PlatoonManager::updatesOrAddMemberInfo(std::vector<PlatoonMember> platoon, std::string senderId, double cmdSpeed,
+                                                double dtDistance, double ctDistance, double curSpeed)
     {
         bool isExisted = false;
         bool sortNeeded = false;
 
         // update/add this info into the list
-        for (size_t i = 0;  i < host_platoon_.size();  ++i){
-            if(host_platoon_[i].staticId == senderId) {
-                if (abs(dtDistance - host_platoon_[i].vehiclePosition)/(host_platoon_[i].vehiclePosition + 0.01) > config_.significantDTDchange)
+        for (size_t i = 0;  i < platoon.size();  ++i){
+            if(platoon[i].staticId == senderId) {
+                if (abs(dtDistance - platoon[i].vehiclePosition)/(platoon[i].vehiclePosition + 0.01) > config_.significantDTDchange)
                 {
-                    ROS_DEBUG_STREAM( "DTD of member " << host_platoon_[i].staticId << " is changed significantly, so a new sort is needed");
+                    ROS_DEBUG_STREAM( "DTD of member " << platoon[i].staticId << " is changed significantly, so a new sort is needed");
 
                     sortNeeded = true;
                 }
-                host_platoon_[i].commandSpeed = cmdSpeed;         // m/s
-                host_platoon_[i].vehiclePosition = dtDistance;    // m 
-                host_platoon_[i].vehicleCrossTrack = ctDistance;  // m
-                host_platoon_[i].vehicleSpeed = curSpeed;         // m/s
-                host_platoon_[i].timestamp = ros::Time::now().toNSec()/1000000;
-                ROS_DEBUG_STREAM("Receive and update platooning info on member " << i << ", ID:" << host_platoon_[i].staticId);
-                ROS_DEBUG_STREAM("    CommandSpeed       = " << host_platoon_[i].commandSpeed);
-                ROS_DEBUG_STREAM("    Actual Speed       = " << host_platoon_[i].vehicleSpeed);
-                ROS_DEBUG_STREAM("    Downtrack Location = " << host_platoon_[i].vehiclePosition);
-                ROS_DEBUG_STREAM("    Crosstrack dist    = " << host_platoon_[i].vehicleCrossTrack);
+                platoon[i].commandSpeed = cmdSpeed;         // m/s
+                platoon[i].vehiclePosition = dtDistance;    // m 
+                platoon[i].vehicleCrossTrack = ctDistance;  // m
+                platoon[i].vehicleSpeed = curSpeed;         // m/s
+                platoon[i].timestamp = ros::Time::now().toNSec()/1000000;
+                ROS_DEBUG_STREAM("Receive and update platooning info on member " << i << ", ID:" << platoon[i].staticId);
+                ROS_DEBUG_STREAM("    CommandSpeed       = " << platoon[i].commandSpeed);
+                ROS_DEBUG_STREAM("    Actual Speed       = " << platoon[i].vehicleSpeed);
+                ROS_DEBUG_STREAM("    Downtrack Location = " << platoon[i].vehiclePosition);
+                ROS_DEBUG_STREAM("    Crosstrack dist    = " << platoon[i].vehicleCrossTrack);
 
                 if (senderId == HostMobilityId)
                 {
@@ -183,18 +219,18 @@ namespace platoon_strategic_ihp
         if (sortNeeded)
         {
             // sort the platoon member based on dowtrack distance (m) in an descending order.
-            std::sort(std::begin(host_platoon_), std::end(host_platoon_), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition > b.vehiclePosition;});
+            std::sort(std::begin(platoon), std::end(platoon), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition > b.vehiclePosition;});
             ROS_DEBUG_STREAM("Platoon is re-sorted due to large difference in dtd update.");
             ROS_DEBUG_STREAM("    Platoon order is now:");
-            for (size_t i = 0;  i < host_platoon_.size();  ++i)
+            for (size_t i = 0;  i < platoon.size();  ++i)
             {
                 std::string hostFlag = " ";
-                if (host_platoon_[i].staticId == getHostStaticID())
+                if (platoon[i].staticId == getHostStaticID())
                 {
                     hostPosInPlatoon_ = i;
                     hostFlag = "Host";
                 }
-                ROS_DEBUG_STREAM("    " << host_platoon_[i].staticId << "its DTD: " << host_platoon_[i].vehiclePosition << " " << hostFlag);
+                ROS_DEBUG_STREAM("    " << platoon[i].staticId << "its DTD: " << platoon[i].vehiclePosition << " " << hostFlag);
             }
         }
 
@@ -203,26 +239,26 @@ namespace platoon_strategic_ihp
             long cur_t = ros::Time::now().toNSec()/1000000; // time in millisecond
 
             PlatoonMember newMember = PlatoonMember(senderId, cmdSpeed, curSpeed, dtDistance, ctDistance, cur_t);
-            host_platoon_.push_back(newMember);
+            platoon.push_back(newMember);
             // sort the platoon member based on dowtrack distance (m) in an descending order.
-            std::sort(std::begin(host_platoon_), std::end(host_platoon_), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition > b.vehiclePosition;});
+            std::sort(std::begin(platoon), std::end(platoon), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition > b.vehiclePosition;});
 
-            ROS_DEBUG_STREAM("Add a new vehicle into our platoon list " << newMember.staticId << " host_platoon_.size now = " << host_platoon_.size());
+            ROS_DEBUG_STREAM("Add a new vehicle into our platoon list " << newMember.staticId << " platoon.size now = " << platoon.size());
             ROS_DEBUG_STREAM("    Platoon order is now:");
-            for (size_t i = 0;  i < host_platoon_.size();  ++i)
+            for (size_t i = 0;  i < platoon.size();  ++i)
             {
                 std::string hostFlag = " ";
-                if (host_platoon_[i].staticId == getHostStaticID())
+                if (platoon[i].staticId == getHostStaticID())
                 {
                     hostPosInPlatoon_ = i;
                     hostFlag = "Host";
                 }
-                ROS_DEBUG_STREAM("    " << host_platoon_[i].staticId << "its DTD: " << host_platoon_[i].vehiclePosition << " " << hostFlag);
+                ROS_DEBUG_STREAM("    " << platoon[i].staticId << "its DTD: " << platoon[i].vehiclePosition << " " << hostFlag);
             }
         }
     }
     
-    // TODO: Place holder for delete member info due to dissovle operation.
+    // TODO: Place holder for delete member info due to dissolve operation.
 
     // Get the platoon size.
     int PlatoonManager::getHostPlatoonSize() {
@@ -664,7 +700,7 @@ namespace platoon_strategic_ihp
 
         // Clear the record of neighbor platoon, since we likely just joined it
         resetNeighborPlatoon();
-        
+
         ROS_DEBUG_STREAM("The platoon manager is changed from leader state to follower state. Platoon vector re-initialized. Plan ID = " << newPlatoonId);
     }
 

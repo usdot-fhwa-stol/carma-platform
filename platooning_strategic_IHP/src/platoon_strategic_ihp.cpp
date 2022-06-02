@@ -687,7 +687,7 @@ namespace platoon_strategic_ihp
         return ecef_loc;
     }
 
-    // UCLA: Handle STATUS operation messagesmob
+    // UCLA: Handle STATUS operation messages
     void PlatoonStrategicIHPPlugin::mob_op_cb_STATUS(const cav_msgs::MobilityOperation& msg)
     {
         /**
@@ -703,7 +703,7 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("strategyParams = " << strategyParams);
         ROS_DEBUG_STREAM("platoonId = " << platoonId << ", sender ID = " << vehicleID);
         std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
-        ROS_DEBUG_STREAM("pm_.currentPlatoonID = " << pm_.currentPlatoonID);
+        ROS_DEBUG_STREAM("pm_.currentPlatoonID = " << pm_.currentPlatoonID, ", targetPlatoonID = " << pm_.targetPlatoonID);
 
         // read Downtrack 
         cav_msgs::LocationECEF ecef_loc = mob_op_find_ecef_from_STATUS_params(strategyParams);
@@ -718,20 +718,7 @@ namespace platoon_strategic_ihp
         if (platoonId.compare(pm_.targetPlatoonID) == 0)
         {
             // Update this member's status (or add if it's unknown to us)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            pm_.neighborMemberUpdates(vehicleID, platoonId, statusParams, dtd, ctd);
 
             // If we have data on all members of a neighboring platoon, set a complete record flag
             if (pm_.neighbor_platoon_info_size_ > 1  &&
@@ -744,13 +731,13 @@ namespace platoon_strategic_ihp
         // else if this message is for our platoon then store its info
         else if (platoonId.compare(pm_.currentPlatoonID) == 0)
         {
-            pm_.memberUpdates(vehicleID, platoonId, statusParams, dtd, ctd);
+            pm_.hostMemberUpdates(vehicleID, platoonId, statusParams, dtd, ctd);
         }
 
         // else it represents an uninteresting platoon
         {
             ROS_DEBUG_STREAM("Received mob op for platoon " << platoonId << " that doesn't match our platoon: " << pm_.currentPlatoonID
-                             " or known neighbor platoon: " << pm_.targetPlatoonID);
+                             << " or known neighbor platoon: " << pm_.targetPlatoonID);
         }
     }    
 
@@ -856,8 +843,8 @@ namespace platoon_strategic_ihp
                 // leader (only leaders send INFO)
                 pm_.resetNeighborPlatoon();
                 pm_.targetPlatoonID = msg.m_header.plan_id;
-                pm_.neighbor_platoon_leader_id_ = senderId;
-                pm_.neighbor_platoon_size_ = platoon_size;
+                pm_.neighbor_platoon_leader_id_ = msg.m_header.sender_id;
+                pm_.neighbor_platoon_info_size_ = platoon_size;
             }
         }
 
@@ -963,7 +950,6 @@ namespace platoon_strategic_ihp
         // In the current state, host vehicle care about the INFO heart-beat operation message if we are not currently in
         // a negotiation, and host also need to care about operation from members in our current platoon.
         bool isPlatoonInfoMsg = strategyParams.rfind(OPERATION_INFO_TYPE, 0) == 0;            // INFO message only broadcast by leader and single CAV.
-        bool isPlatoonStatusMsg = strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0;        // STATUS message broadcast by all platoon members.
         bool isInNegotiation = pm_.current_plan.valid  ||  pm_.currentPlatoonID.compare(pm_.dummyID) != 0; // In negotiation indicates host is not available to become a joiner
                                                                                               // (i.e., not currently in a platoon or trying to join a platoon).
         ROS_DEBUG_STREAM("Top of mob_op_cb_leader, isInNegotiation = " << isInNegotiation);
@@ -1807,7 +1793,7 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("The request type is " << msg.plan_type.type << " and we choose to ignore");
             pm_.clearActionPlan();
             pm_.resetHostPlatoon(); //ASSUMES host is a solo joiner
-            
+
             // return to leader state as a solo vehicle
             pm_.current_platoon_state = PlatoonState::LEADER;
             return MobilityRequestResponse::NACK;
@@ -2693,7 +2679,7 @@ namespace platoon_strategic_ihp
             if (pm_.targetPlatoonID.compare(pm_.dummyID) != 0)
             {
                 pm_.currentPlatoonID = pm_.targetPlatoonID;
-                pm_.targetPlatoonID = pm_.dummyID;
+                pm_.resetNeighborPlatoon();
             }
             pm_.platoonLeaderID = pm_.current_plan.peerId;
 
