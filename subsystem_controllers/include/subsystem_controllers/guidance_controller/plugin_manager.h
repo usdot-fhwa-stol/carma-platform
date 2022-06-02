@@ -81,7 +81,8 @@ namespace subsystem_controllers
             //! Lifecycle Manager which will track the plugin nodes and call their lifecycle services on request
             ros2_lifecycle_manager::Ros2LifecycleManager plugin_lifecycle_mgr_;
 
-            std::unordered_map<std::string, Plugin> plugin_name_map_;
+            std::unordered_set<std::string> required_plugins_;
+            std::unordered_set<std::string> auto_activated_plugins_;
         
             
 

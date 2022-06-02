@@ -22,7 +22,9 @@ namespace subsystem_controllers
     PluginManager::PluginManager(const std::vector<std::string>& required_plugins,
                           const std::vector<std::string>& auto_activated_plugins, 
                           ros2_lifecycle_manager::Ros2LifecycleManager plugin_lifecycle_mgr) // TODO should we pass pointer instead?
-        : required_plugins_(required_plugins), auto_activated_plugins_(auto_activated_plugins), plugin_lifecycle_mgr_(plugin_lifecycle_mgr_)
+        : required_plugins_(required_plugins.begin(), required_plugins_.end()),
+            auto_activated_plugins_(auto_activated_plugins.begin(), auto_activated_plugins.end()),
+            plugin_lifecycle_mgr_(plugin_lifecycle_mgr_)
     {}
 
 
@@ -34,61 +36,90 @@ namespace subsystem_controllers
 
         em_.update_entry(plugin);
 
+        Entry deactivated_entry = plugin;
+
+
         // TODO we don't actually have a current state, do we need a callback???
         // If this node is not in the active or inactive states then move the plugin to unconfigured
         if (get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE
             && get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE) 
         {
+
+            deactivated_entry.active_ = false;
+
             // Move plugin to unconfigured
             auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED, plugin.name);
 
             if(result_state != lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED) 
-            {
-                // TODO it would be nice to handle this more eloquently where only failure of required plugins causes exceptions but I'm not sure the best way to do that yet
-                
+            {                
 
-                // TODO need to check if plugin is required
-                if (plugin is required)
+                // If this plugin was required then trigger exception
+                if (required_plugins_.find(plugin.name) != required_plugins_.end())
                 {
                     throw std::runtime_error("Newly discovered required plugin " + plugin.name + " could not be brought to unconfigured state.")
                 }
 
                 // If this plugin was not required log an error and mark it is unavailable and deactivated               
-                RCLCPP_ERROR_STREAM(rclccp::get_logger("subsystem_controllers", "Failed to configure newly discovered non-required plugin: " 
-                    << plugin.name << " Marking as deactivated and unavailable!")); // TODO should we be tracking this so it doesn't get reset?
+                RCLCPP_ERROR_STREAM(rclccp::get_logger("subsystem_controllers", "Failed to cleanup newly discovered non-required plugin: " 
+                    << plugin.name << " Marking as deactivated and unavailable!")); 
             
-                Entry deactivated_entry = plugin;
-                deactivated_entry.active = false;
-                deactivated_entry.available = false;
-                em_.update_entry(deactivated_entry);
+                deactivated_entry.available_ = false;
 
-                return 
             }
 
-            Entry deactivated_entry = plugin;
-            deactivated_entry.active = false;
             em_.update_entry(deactivated_entry);
             return;
         }
         
         
-        // If the node is active or inactive then 
-        // when adding a plugin it should be brought to the inactive state
+        // If the node is active or inactive then, 
+        // when adding a plugin, it should be brought to the inactive state
         // We do not need transition it beyond inactive in this function as that will be managed by the plugin activation process via UI or parameters
         auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, plugin.name);
 
         if(result_state != lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE) 
         {
-            // TODO it would be nice to handle this more eloquently where only failure of required plugins causes exceptions but I'm not sure the best way to do that yet
-            throw std::runtime_error("Newly discovered plugin " + plugin.name + " could not be brought to inactive state.")
+            // If this plugin was required then trigger exception
+            if (required_plugins_.find(plugin.name) != required_plugins_.end())
+            {
+                throw std::runtime_error("Newly discovered required plugin " + plugin.name + " could not be brought to inactive state.")
+            }
+
+            // If this plugin was not required log an error and mark it is unavailable and deactivated               
+            RCLCPP_ERROR_STREAM(rclccp::get_logger("subsystem_controllers", "Failed to configure newly discovered non-required plugin: " 
+                << plugin.name << " Marking as deactivated and unavailable!")); 
+
+            deactivated_entry.available_ = false;
         }
-                
+
+        deactivated_entry.active = false;
+        em_.update_entry(deactivated_entry);
+
     }
 
     bool configure()
     {
         std::vector<std::string> plugins_to_transition;
         plugins_to_transition.reserve(required_plugins_.size() + auto_activated_plugins_.size());
+        plugins_to_transition.insert(plugins_to_transition.begin(), required_plugins_.begin(), required_plugins_.end());
+        plugins_to_transition.insert(plugins_to_transition.begin(), auto_activated_plugins_.begin(), auto_activated_plugins_.end());
+
+
+        auto failed_plugins = plugin_lifecycle_mgr_->configure(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms), false, plugins_to_transition);
+
+        for (const auto& p : failed_plugins) 
+        {
+            if (required_plugins_.find(p) != required_plugins_.end())
+            {
+                throw std::runtime_error("Failed to trigger configure transition for required plugin: " + p);
+            }
+
+            if (auto_activated_plugins_.find(p) != auto_activated_plugins_.end()
+                && )
+            {
+
+            }
+        }
 
 
     }
@@ -167,14 +198,14 @@ namespace subsystem_controllers
         ROS_DEBUG_STREAM("received status from: " << msg->name);
         boost::optional<Entry> requested_plugin = em_.get_entry_by_name(msg->name);
 
-        bool activation = msg->activated;
         if (!requested_plugin) // This is a new plugin so we need to add it
         {
-            Entry plugin(msg->available_, activated, msg->name_, msg->type_, msg->capability_);
+            Entry plugin(msg->available_, msg->activated_, msg->name_, msg->type_, msg->capability_);
             add_plugin(plugin);
+            return;
         }
 
-        Entry plugin(msg->available, activation, msg->name, msg->type, msg->capability);
+        Entry plugin(msg->available, msg->activated_, msg->name, msg->type, msg->capability);
 
         em_.update_entry(plugin);
     }
