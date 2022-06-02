@@ -1621,10 +1621,12 @@ namespace platoon_strategic_ihp
                 {
                     ROS_DEBUG_STREAM("The applicant is close enough and we will allow it to try to join");
                     ROS_DEBUG_STREAM("Change to LeaderWaitingState and waiting for " << msg.m_header.sender_id << " to join");
+
                     // change state to leaderwaiting !
                     pm_.current_platoon_state = PlatoonState::LEADERWAITING;
                     waitingStartTime = ros::Time::now().toNSec() / 1000000;
                     pm_.current_plan = ActionPlan(true, waitingStartTime, msgHeader.plan_id, applicantId);
+                    pm_.platoonLeaderID = pm_.HostMobilityId;
                     return MobilityRequestResponse::ACK;
                 }
                 else 
@@ -1726,10 +1728,9 @@ namespace platoon_strategic_ihp
                 pm_.current_platoon_state = PlatoonState::LEADWITHOPERATION;
                 waitingStartTime = ros::Time::now().toNSec() / 1000000;
                 pm_.current_plan = ActionPlan(true, waitingStartTime, msgHeader.plan_id, applicantId);
-
+                pm_.platoonLeaderID = pm_.HostMobilityId;
                 return MobilityRequestResponse::ACK;
             }
-            
             else
             {   
                 ROS_DEBUG_STREAM("The current platoon does not have enough room or the applicant is too far away from us. NACK the request.");
@@ -1738,7 +1739,6 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("The applicant crosstrack is: " << current_crosstrack_ << ".");
                 return MobilityRequestResponse::NACK;
             }
-
         }
         
         // TODO: Place holder for deaprture.
@@ -3400,8 +3400,6 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("change the state from standby to leader at start-up");
         }
 
-        // pm_.current_downtrack_distance_ = current_downtrack_;
-        pm_.HostMobilityId = config_.vehicleID;
         ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
         
         return true;
