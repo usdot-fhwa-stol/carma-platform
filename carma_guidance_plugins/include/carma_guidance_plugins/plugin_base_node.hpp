@@ -34,6 +34,8 @@ namespace carma_guidance_plugins
    * Extending classes must implement the on_configure_plugin method to load parameters, and my override the other state transitions methods on_<state>_plugin if desired.
    * Additionally, extending classes must implement the methods such as get_name() which are used to populate the plugin discovery message.
    * 
+   * NOTE: At the moment, this class and all extending classes are setup to support only single threading.
+   * 
    */
   class PluginBaseNode : public carma_ros2_utils::CarmaLifecycleNode
   {
