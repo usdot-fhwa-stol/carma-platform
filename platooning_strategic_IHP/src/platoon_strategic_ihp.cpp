@@ -701,22 +701,12 @@ namespace platoon_strategic_ihp
         std::string vehicleID = msg.m_header.sender_id;
         std::string platoonId = msg.m_header.plan_id;
         ROS_DEBUG_STREAM("strategyParams = " << strategyParams);
-        ROS_DEBUG_STREAM("platoonId = " << platoonId);
+        ROS_DEBUG_STREAM("platoonId = " << platoonId << ", sender ID = " << vehicleID);
         std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
         ROS_DEBUG_STREAM("pm_.currentPlatoonID = " << pm_.currentPlatoonID);
-        // if this message is not for our platoon then ignore it
-        if (platoonId.compare(pm_.currentPlatoonID) != 0)
-        {
-
-            ROS_DEBUG_STREAM("platoonId mismatch");
-            ROS_WARN_STREAM("Received mob op for platoon " << platoonId << " that doesn't match our platoon: " << pm_.currentPlatoonID);
-            return;
-        }
-
-        // read ecef from STATUS
-        cav_msgs::LocationECEF ecef_loc = mob_op_find_ecef_from_STATUS_params(strategyParams);
 
         // read Downtrack 
+        cav_msgs::LocationECEF ecef_loc = mob_op_find_ecef_from_STATUS_params(strategyParams);
         lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc);
         double dtd = wm_->routeTrackPos(incoming_pose).downtrack;
         ROS_DEBUG_STREAM("DTD calculated from ecef is: " << dtd);
@@ -724,8 +714,44 @@ namespace platoon_strategic_ihp
         double ctd = wm_->routeTrackPos(incoming_pose).crosstrack;
         ROS_DEBUG_STREAM("CTD calculated from ecef is: " << ctd);
 
-        pm_.memberUpdates(vehicleID, platoonId, statusParams, dtd, ctd);
-        ROS_DEBUG_STREAM("Received platoon status message from vehicle: " << msg.m_header.sender_id);
+        // If it comes from a member of an identified neighbor platoon, then
+        if (platoonId.compare(pm_.targetPlatoonID) == 0)
+        {
+            // Update this member's status (or add if it's unknown to us)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            // If we have data on all members of a neighboring platoon, set a complete record flag
+            if (pm_.neighbor_platoon_info_size_ > 1  &&
+                pm_.neighbor_platoon_.size() == pm_.neighbor_platoon_info_size_)
+            {
+                pm_.is_neighbor_record_complete_ = true;
+            }
+        }
+
+        // else if this message is for our platoon then store its info
+        else if (platoonId.compare(pm_.currentPlatoonID) == 0)
+        {
+            pm_.memberUpdates(vehicleID, platoonId, statusParams, dtd, ctd);
+        }
+
+        // else it represents an uninteresting platoon
+        {
+            ROS_DEBUG_STREAM("Received mob op for platoon " << platoonId << " that doesn't match our platoon: " << pm_.currentPlatoonID
+                             " or known neighbor platoon: " << pm_.targetPlatoonID);
+        }
     }    
 
     //
@@ -805,6 +831,37 @@ namespace platoon_strategic_ihp
             return;
         }
 
+        // Perform common operations that apply to all states
+        std::string strategyParams = msg.strategy_params;
+        bool isPlatoonStatusMsg = strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0;
+        bool isPlatoonInfoMsg = strategyParams.rfind(OPERATION_INFO_TYPE, 0) == 0;
+        if (isPlatoonStatusMsg) 
+        {
+            mob_op_cb_STATUS(msg);
+        }
+        else if (isPlatoonInfoMsg)
+        {
+            // Note: this is where confusion will reign if multiple neighbor platoons are discovered; need more sophisticated
+            //       logic to handle that situation
+
+            // If it is a legitimate platoon (2 or more members) other than our own then
+            std::vector<std::string> inputsParams;
+            boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+            std::vector<std::string> p_size;
+            boost::algorithm::split(p_size, inputsParams[2], boost::is_any_of(":"));
+            int platoon_size = std::stod(p_size[1]);
+            if (platoon_size > 1  &&  msg.m_header.plan_id.compare(pm_.currentPlatoonID) != 0)
+            {
+               // Clear any old neighbor platoon info and record the platoon ID and the sender as the 
+                // leader (only leaders send INFO)
+                pm_.resetNeighborPlatoon();
+                pm_.targetPlatoonID = msg.m_header.plan_id;
+                pm_.neighbor_platoon_leader_id_ = senderId;
+                pm_.neighbor_platoon_size_ = platoon_size;
+            }
+        }
+
+        // Perform state-specific additional actions
         if (pm_.current_platoon_state == PlatoonState::LEADER)
         {
             mob_op_cb_leader(msg);
@@ -846,65 +903,38 @@ namespace platoon_strategic_ihp
             mob_op_cb_preparetojoin(msg);
         }
         // TODO: Place holder for prepare to depart
+
         // TODO: If needed (with large size platoons), add a queue for status messages
-        // INFO messages always processed, STATUS messages if saved in que
+        //       INFO messages always processed, STATUS messages if saved in que
     }
     
     void PlatoonStrategicIHPPlugin::mob_op_cb_standby(const cav_msgs::MobilityOperation& msg)
     {
-        ROS_DEBUG_STREAM("STANDBY state doing nothing with message from " << msg.m_header.sender_id);
         // In standby state, it will ignore operation message since it is not actively operating
+        ROS_DEBUG_STREAM("STANDBY state no further action on message from " << msg.m_header.sender_id);
     }
 
     // Handle STATUS operation message 
     void PlatoonStrategicIHPPlugin::mob_op_cb_candidatefollower(const cav_msgs::MobilityOperation& msg)
     {
-        std::string strategyParams = msg.strategy_params;
-        bool isPlatoonStatusMsg = strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0;
-        if (isPlatoonStatusMsg) 
-        {
-            mob_op_cb_STATUS(msg);
-            ROS_DEBUG_STREAM("Platoon STATUS operation message processed in candidatefollower state.");
-        }
-        else 
-        {
-            ROS_DEBUG_STREAM("Received a mobility operation message with params " << msg.strategy_params << " but ignored.");
-        }
+        ROS_DEBUG_STREAM("CANDIDATEFOLLOWER state no further action on message from " << msg.m_header.sender_id);
     }
 
     // Handle STATUS operation message 
     void PlatoonStrategicIHPPlugin::mob_op_cb_follower(const cav_msgs::MobilityOperation& msg)
     {
-        std::string strategyParams = msg.strategy_params;
-        bool isPlatoonStatusMsg = (strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0);
+        //std::string strategyParams = msg.strategy_params;
+        //bool isPlatoonStatusMsg = (strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0);
+
         // TODO: Place holder for prepare to depart
 
-        if(isPlatoonStatusMsg) 
-        {
-            mob_op_cb_STATUS(msg);
-            ROS_DEBUG_STREAM("Platoon STATUS operation message processed in follower state.");
-        }
-        // TODO: Place holder for prepare to depart (else if isDepart)
-        else 
-        {
-            ROS_DEBUG_STREAM("Received a mobility operation message with params " << msg.strategy_params << " but ignored.");
-        }
+        ROS_DEBUG_STREAM("FOLLOWER state no further action on message from " << msg.m_header.sender_id);
     }
 
     // Handle STATUS operation message 
     void PlatoonStrategicIHPPlugin::mob_op_cb_leaderwaiting(const cav_msgs::MobilityOperation& msg)
     {
-        std::string strategyParams = msg.strategy_params;
-        bool isPlatoonStatusMsg = (strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0);
-        if(isPlatoonStatusMsg) 
-        {
-            mob_op_cb_STATUS(msg);
-            ROS_DEBUG_STREAM("Platoon STATUS operation message processed in leaderwaiting state.");
-        } 
-        else 
-        {
-            ROS_DEBUG_STREAM("Received a mobility operation message with params " << msg.strategy_params << " but ignored.");
-        }
+        ROS_DEBUG_STREAM("LEADERWAITING state no further action on message from " << msg.m_header.sender_id);
     }
 
     // UCLA: Handle both STATUS and INFO operation message. Front join and rear join are all handled if incoming operation message have INFO param. 
@@ -1013,8 +1043,8 @@ namespace platoon_strategic_ihp
 
                 /*
                  * JOIN_PARAMS format: 
-         *        JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%"
-         *                   |-------0------ --1---------2---------3---------4----------5-------|  
+                 *        JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%"
+                 *                   |-------0------ --1---------2---------3---------4----------5-------|  
                  */
 
                 boost::format fmter(JOIN_PARAMS);
@@ -1053,8 +1083,8 @@ namespace platoon_strategic_ihp
 
                 /**
                  * JOIN_PARAMS format: 
-         *        JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%"
-         *                   |-------0------ --1---------2---------3---------4----------5-------|  
+                 *        JOIN_PARAMS| --> "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%"
+                 *                   |-------0------ --1---------2---------3---------4----------5-------|  
                  */
                 boost::format fmter(JOIN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
                 int dummy_join_index = -2; //not used for this message, but message spec requires it
@@ -1150,68 +1180,26 @@ namespace platoon_strategic_ihp
             }
         }
         
-        // Condition 2. If host vehicle receives STATUS params, just update the condition.
-        else if(isPlatoonStatusMsg) 
-        {
-            mob_op_cb_STATUS(msg);
-            ROS_DEBUG_STREAM("Platoon STATUS operation message processed in leader state.");
-        }
-
         // TODO: Place holder for prepare to depart (else if isdepart)
 
-        // Condition 3.error/time out
-        else
-        {
-            ROS_DEBUG_STREAM("Receive operation message but ignore it because isPlatoonInfoMsg = " << isPlatoonInfoMsg << 
-            ", isInNegotiation = " << isInNegotiation << " and isPlatoonStatusMsg = " << isPlatoonStatusMsg);
-        }
     }
 
     // UCLA: mob_op_cb for the new leader aborting state (inherited from candidate follower), handle STATUS message.
     void PlatoonStrategicIHPPlugin::mob_op_cb_leaderaborting(const cav_msgs::MobilityOperation& msg)
     {   
-        std::string strategyParams = msg.strategy_params;
-        bool isPlatoonStatusMsg = strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0;
-        if(isPlatoonStatusMsg) 
-        {
-            mob_op_cb_STATUS(msg);
-            ROS_DEBUG_STREAM("Platoon STATUS operation message processed in leaderaborting state.");
-        }
-        else 
-        {
-            ROS_DEBUG_STREAM("Received a mobility operation message with params " << msg.strategy_params << " but ignored.");
-        }
+        ROS_DEBUG_STREAM("LEADERABORTING state no further action on message from " << msg.m_header.sender_id);
     }
     
     // UCLA: mob_op_candidateleader for the new candidate leader state (inherited from leader waiting), handle STATUS message.
     void PlatoonStrategicIHPPlugin::mob_op_cb_candidateleader(const cav_msgs::MobilityOperation& msg)
     {   
-        std::string strategyParams = msg.strategy_params;
-        bool isPlatoonStatusMsg = (strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0);
-        if(isPlatoonStatusMsg) 
-        {
-            mob_op_cb_STATUS(msg);
-            ROS_DEBUG_STREAM("Platoon STATUS operation message processed in candidateleader state.");
-        }
-        else {
-            ROS_DEBUG_STREAM("Received a mobility operation message with params " << msg.strategy_params << " but ignored.");
-        }
+        ROS_DEBUG_STREAM("CANDIDATELEADER state no further action on message from " << msg.m_header.sender_id);
     }
 
     // UCLA: Mobility operation callback for lead_with_operation state (cut-in join).
     void PlatoonStrategicIHPPlugin::mob_op_cb_leadwithoperation(const cav_msgs::MobilityOperation& msg)
     {
-        std::string strategyParams = msg.strategy_params;
-        bool isPlatoonStatusMsg = (strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0);
-        if (isPlatoonStatusMsg) 
-        {
-            mob_op_cb_STATUS(msg);
-            ROS_DEBUG_STREAM("Platoon STATUS operation message processed in Lead with Operation state.");
-        } 
-        else 
-        {
-            ROS_DEBUG_STREAM("Received a mobility operation message with params " << msg.strategy_params << " but ignored.");
-        }
+        ROS_DEBUG_STREAM("LEADWITHOPERATION state no further action on message from " << msg.m_header.sender_id);
     }
 
     // UCLA: Mobility operation callback for prepare to join state (cut-in join).
@@ -1229,65 +1217,9 @@ namespace platoon_strategic_ihp
         
         // locate INFO type
         bool isPlatoonInfoMsg = strategyParams.rfind(OPERATION_INFO_TYPE, 0) == 0;
-        bool isPlatoonStatusMsg = strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0;
 
-
-
-
-        //JOHN - move this to mob_op_cb() ?
-        
-        // If message is INFO then
-        if (isPlatoonInfoMsg)
-        {
-            // Note: this is where confusion will reign if multiple neighbor platoons are discovered; need more sophisticated
-            //       logic to handle that situation
-
-            // If it is a legitimate platoon (2 or more members) then
-            std::vector<std::string> inputsParams;
-            boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
-            std::vector<std::string> p_size;
-            boost::algorithm::split(p_size, inputsParams[2], boost::is_any_of(":"));
-            int platoon_size = std::stod(p_size[1]);
-            if (platoon_size > 1)
-            {
-               // Clear any old neighbor platoon info and record the platoon ID and the sender as the 
-                // leader (only leaders send INFO)
-                pm_.resetNeighborPlatoon();
-                pm_.targetPlatoonID = msg.m_header.plan_id;
-                pm_.neighbor_platoon_leader_id_ = senderId;
-                pm_.neighbor_platoon_size_ = platoon_size;
-            }
-        }
-
-        // Else if message is STATUS then
-        else if (isPlatoonStatusMsg)
-        {
-            // If it comes from a member of an identified neighbor platoon, then
-            if (msg.m_header.plan_id.compare(pm_targetPlatoonID) == 0)
-            {
-                // Update this member's status (or add if it's unknown to us)
-
-
-
-
-
-            }            
-
-            // If we have data on all members set a complete record flag
-            if (pm_.neighbor_platoon_.size() == pm_.neighbor_platoon_info_size_)
-            {
-                pm_.is_neighbor_record_complete_ = true;
-            }
-
-        }
-        // Else error
-        else
-        {
-            ROS_DEBUG_STREAM("Receive operation message but ignore it because status params indicates unknown type.");
-        }
-
-        // If our record of the neighbor platoon is complete then
-        if (pm_.is_neighbor_record_complete_)
+        // If this is an INFO message and our record of the neighbor platoon is complete then
+        if (isPlatoonInfoMsg  &&  pm_.is_neighbor_record_complete_)
         {
 
             //TODO: would be good to have a timeout here; if a neighbor platoon has been identified, and no INFO messages
@@ -1364,17 +1296,10 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("Lane Change not completed");
             }
         }
-        
-        // STATUS params
-        else if(isPlatoonStatusMsg) 
-        {
-            mob_op_cb_STATUS(msg);
-            ROS_DEBUG_STREAM("Platoon STATUS operation message ignored in Prepare to Join state.");
-        }
-        
     }
     
     // TODO: Place holder for prepare to depart (mob_op_cb_depart)
+
     //------- 3. Mobility Request Callback -------
     MobilityRequestResponse PlatoonStrategicIHPPlugin::handle_mob_req(const cav_msgs::MobilityRequest& msg)
     {
