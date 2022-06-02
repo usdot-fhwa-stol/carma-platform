@@ -27,6 +27,17 @@
 
 namespace subsystem_controllers
 {
+
+    struct Plugin
+    {
+        std::string name;
+        long timestamp;
+        std::string capability;
+
+        Entry(const std::string& p_name, long p_timestamp, const std::string& p_capability)
+         : name(p_name), timestamp(p_timestamp), capability(p_capability) {}
+    };
+
     class PluginManager
     {
         public:
@@ -40,7 +51,7 @@ namespace subsystem_controllers
              * \brief Constructor for PluginManager takes in require_plugin_names and service names
              */
             PluginManager(const std::vector<std::string>& required_plugins,
-                          const std::vector<std::string>& auto_activated_plugins);
+                          const std::vector<std::string>& auto_activated_plugins); // TODO take in pointe to lifecycle interface so we can unit test
 
             void add_plugin(const std::string plugin);
 
@@ -69,6 +80,8 @@ namespace subsystem_controllers
 
             //! Lifecycle Manager which will track the plugin nodes and call their lifecycle services on request
             ros2_lifecycle_manager::Ros2LifecycleManager plugin_lifecycle_mgr_;
+
+            std::unordered_map<std::string, Plugin> plugin_name_map_;
         
             
 

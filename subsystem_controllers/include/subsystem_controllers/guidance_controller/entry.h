@@ -26,10 +26,10 @@ namespace subsystem_controllers
         bool available_;
         bool active_;
         std::string name_;
-        long timestamp_;
         uint8_t type_;
         std::string capability_;
 
-        Entry(bool available, bool active, const std::string& name, long timestamp, uint8_t type, const std::string& capability);
+        Entry(bool available, bool active, const std::string& name, uint8_t type, const std::string& capability)
+            : available_(available), active_(active), name_(name), type_(type), capability_(capability) {}
     };
 }

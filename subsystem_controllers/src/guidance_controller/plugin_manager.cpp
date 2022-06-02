@@ -25,17 +25,74 @@ namespace subsystem_controllers
         : required_plugins_(required_plugins), auto_activated_plugins_(auto_activated_plugins), plugin_lifecycle_mgr_(plugin_lifecycle_mgr_)
     {}
 
-    void add_plugin(const std::string plugin)
+
+    // Expected behavior
+
+    void PluginManager::add_plugin(const Entry& plugin)
     {
-        plugin_lifecycle_mgr_.add_managed_node(plugin); 
-        // TODO need to bringup to inactive state here 
+        plugin_lifecycle_mgr_->add_managed_node(plugin.name); 
+
+        em_.update_entry(plugin);
+
+        // TODO we don't actually have a current state, do we need a callback???
+        // If this node is not in the active or inactive states then move the plugin to unconfigured
+        if (get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE
+            && get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE) 
+        {
+            // Move plugin to unconfigured
+            auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED, plugin.name);
+
+            if(result_state != lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED) 
+            {
+                // TODO it would be nice to handle this more eloquently where only failure of required plugins causes exceptions but I'm not sure the best way to do that yet
+                
+
+                // TODO need to check if plugin is required
+                if (plugin is required)
+                {
+                    throw std::runtime_error("Newly discovered required plugin " + plugin.name + " could not be brought to unconfigured state.")
+                }
+
+                // If this plugin was not required log an error and mark it is unavailable and deactivated               
+                RCLCPP_ERROR_STREAM(rclccp::get_logger("subsystem_controllers", "Failed to configure newly discovered non-required plugin: " 
+                    << plugin.name << " Marking as deactivated and unavailable!")); // TODO should we be tracking this so it doesn't get reset?
+            
+                Entry deactivated_entry = plugin;
+                deactivated_entry.active = false;
+                deactivated_entry.available = false;
+                em_.update_entry(deactivated_entry);
+
+                return 
+            }
+
+            Entry deactivated_entry = plugin;
+            deactivated_entry.active = false;
+            em_.update_entry(deactivated_entry);
+            return;
+        }
+        
+        
+        // If the node is active or inactive then 
+        // when adding a plugin it should be brought to the inactive state
+        // We do not need transition it beyond inactive in this function as that will be managed by the plugin activation process via UI or parameters
+        auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, plugin.name);
+
+        if(result_state != lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE) 
+        {
+            // TODO it would be nice to handle this more eloquently where only failure of required plugins causes exceptions but I'm not sure the best way to do that yet
+            throw std::runtime_error("Newly discovered plugin " + plugin.name + " could not be brought to inactive state.")
+        }
+                
     }
 
-    bool configure(std::vector<std::string> plugins)
+    bool configure()
     {
-        
+        std::vector<std::string> plugins_to_transition;
+        plugins_to_transition.reserve(required_plugins_.size() + auto_activated_plugins_.size());
+
+
     }
-    bool activate(std::vector<std::string> plugins)
+    bool activate()
     {
 
     }
@@ -52,11 +109,11 @@ namespace subsystem_controllers
 
     }
 
-    void PluginManager::get_registered_plugins(carma_planning_msgs::srv::PluginListResponse& res)
+    void PluginManager::get_registered_plugins(carma_planning_msgs::srv::PluginListRequest&, carma_planning_msgs::srv::PluginListResponse& res)
     {
         std::vector<Entry> plugins = em_.get_entries();
         // convert to plugin list
-        for(auto i = plugins.begin(); i < plugins.end(); ++i)
+        for(const auto& plugin :  plugin_map_)
         {
             carma_planning_msgs::msg::Plugin plugin;
             plugin.activated = i->active_;
@@ -67,7 +124,7 @@ namespace subsystem_controllers
         }
     }
 
-    void PluginManager::get_active_plugins(carma_planning_msgs::srv::PluginListResponse& res)
+    void PluginManager::get_active_plugins(carma_planning_msgs::srv::PluginListRequest&, carma_planning_msgs::srv::PluginListResponse& res)
     {
         std::vector<Entry> plugins = em_.get_entries();
         // convert to plugin list
@@ -76,7 +133,7 @@ namespace subsystem_controllers
             if(i->active_)
             {
                 carma_planning_msgs::msg::Plugin plugin;
-                plugin.activated = true;
+                plugin.activated = i->active_;
                 plugin.available = i->available_;
                 plugin.name = i->name_;
                 plugin.type = i->type_;
@@ -85,33 +142,40 @@ namespace subsystem_controllers
         }
     }
 
-    bool PluginManager::activate_plugin(const std::string& name, const bool activate)
+    void PluginManager::activate_plugin(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res)
     {
-        boost::optional<Entry> requested_plugin = em_.get_entry_by_name(name);
-        if(requested_plugin)
+        boost::optional<Entry> requested_plugin = em_.get_entry_by_name(req.plugin_name);
+        
+        if(!requested_plugin) // If not a plugin then obviously not activated. Though really it would be better to have an indication of name failure in the message
         {
-            // params: bool available, bool active, std::string name, long timestamp, uint8_t type
-            Entry updated_entry(requested_plugin->available_, activate, requested_plugin->name_, 0, requested_plugin->type_, requested_plugin->capability_);
-            em_.update_entry(updated_entry);
-            return true;
+            res.newstate = false;
+            return;
         }
-        return false;
+
+        auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE, req.plugin_name);
+
+        bool activated = (result_state == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE);
+
+        Entry updated_entry(requested_plugin->available_, activated, requested_plugin->name_, requested_plugin->type_, requested_plugin->capability_);
+        em_.update_entry(updated_entry);
+
+        res.newstate = activated;
     }
 
     void PluginManager::update_plugin_status(const carma_planning_msgs::msg::PluginConstPtr& msg)
     {
         ROS_DEBUG_STREAM("received status from: " << msg->name);
         boost::optional<Entry> requested_plugin = em_.get_entry_by_name(msg->name);
-        // params: bool available, bool active, std::string name, long timestamp, uint8_t type
-        Entry plugin(msg->available, msg->activated, msg->name, 0, msg->type, msg->capability);
-        // if it already exists, we do not change its activation status
-        if(requested_plugin)
+
+        bool activation = msg->activated;
+        if (!requested_plugin) // This is a new plugin so we need to add it
         {
-            plugin.active_ = requested_plugin->active_;
-        } else if(em_.is_entry_required(msg->name))
-        {
-            plugin.active_ = true;
+            Entry plugin(msg->available_, activated, msg->name_, msg->type_, msg->capability_);
+            add_plugin(plugin);
         }
+
+        Entry plugin(msg->available, activation, msg->name, msg->type, msg->capability);
+
         em_.update_entry(plugin);
     }
 

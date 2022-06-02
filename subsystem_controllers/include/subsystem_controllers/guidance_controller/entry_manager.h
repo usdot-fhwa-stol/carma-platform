@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <boost/optional.hpp>
+#include <unordered_map>
 #include "entry.h"
 
 namespace subsystem_controllers
@@ -30,10 +31,6 @@ namespace subsystem_controllers
              * \brief Default constructor for EntryManager.
              */
             EntryManager();
-            /*!
-             * \brief Constructor for EntryManager to set required entries.
-             */
-            EntryManager(std::vector<std::string> required_entries);
 
             /*!
              * \brief Add a new entry if the given name does not exist.
@@ -56,18 +53,10 @@ namespace subsystem_controllers
              */
             void delete_entry(const std::string& name);
 
-            /*!
-             * \brief Check if the entry is required
-             */
-            bool is_entry_required(const std::string& name) const;
-
         private:
 
-            // private list to keep track of all entries
-            std::vector<Entry> entry_list_;
-
-            // list of required entries
-            std::vector<std::string> required_entries_;
+            // private map by entry name to keep track of all entries
+            std::unordered_map<std::string, Entry> entry_map_;
 
     };
 }

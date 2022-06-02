@@ -22,66 +22,38 @@ namespace subsystem_controllers
 
     EntryManager::EntryManager() {}
 
-    EntryManager::EntryManager(std::vector<std::string> required_entries):required_entries_(required_entries) {} 
-
     void EntryManager::update_entry(const Entry& entry)
     {
-        for(auto i = entry_list_.begin(); i < entry_list_.end(); ++i)
-        {
-            if(i->name_.compare(entry.name_) == 0)
-            {
-                // name and type of the entry wont change
-                i->active_ = entry.active_;
-                i->available_ = entry.available_;
-                i->timestamp_ = entry.timestamp_;
-                return;
-            }
-        }
-        entry_list_.push_back(entry);
+        entry_map_[entry.name_] = entry;
     }
 
 
     std::vector<Entry> EntryManager::get_entries() const
     {
-        // returns the copy of the original list
-        return std::vector<Entry>(entry_list_);
+        // returns the copy of the original data
+        std::vector<Entry> entries;
+        entries.reserve(entry_map_.size());
+
+        for (const auto& e : entry_map_)
+            entries.push_back(e.second);
+
+        return entries;
     }
 
     void EntryManager::delete_entry(const std::string& name)
     {
-        for(auto i = entry_list_.begin(); i < entry_list_.end(); ++i)
-        {
-            if(i->name_.compare(name) == 0)
-            {
-                entry_list_.erase(i);
-                return;
-            }
-        }
+        if (entry_map_.find(name) != entry_map_.end())
+            entry_map_.erase(name);
     }
 
     boost::optional<Entry> EntryManager::get_entry_by_name(const std::string&  name) const
     {
-        for(auto i = entry_list_.begin(); i < entry_list_.end(); ++i)
-        {
-            if(i->name_.compare(name) == 0)
-            {
-                return *i;
-            }
-        }
+        if (entry_map_.find(name) != entry_map_.end())
+            return entry_map_[name];
+
+
         // use boost::optional because requested entry might not exist
         return boost::none;
-    }
-
-    bool EntryManager::is_entry_required(const std::string&  name) const
-    {
-        for(auto i = required_entries_.begin(); i < required_entries_.end(); ++i)
-        {
-            if(i->compare(name) == 0)
-            {
-                return true;
-            }
-        }
-        return false;
     }
 
 }
