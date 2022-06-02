@@ -2933,8 +2933,9 @@ namespace platoon_strategic_ihp
             }
         }
 
-        // If we aren't already waiting on a response to one of these plans, create one
-        if (!pm_.current_plan.valid)
+        // If we aren't already waiting on a response to one of these plans, create one once neighbor info is available
+        ROS_DEBUG_STREAM("current_plan.valid = " << pm_.current_plan.valid << ", is_neighbor_record_complete = " << pm_.is_neighbor_record_complete_);
+        if (!pm_.current_plan.valid  &&  pm_.is_neighbor_record_complete_)
         {
             // Task 1: compose mobility operation (status)
             cav_msgs::MobilityOperation status;
@@ -2945,7 +2946,7 @@ namespace platoon_strategic_ihp
             // Task 3: Calculate proper cut_in index 
             // Note: The cut-in index is zero-based and points to the gap-leading vehicle's index. For cut-in from front, the join index = -1.
             double joinerDtD = current_downtrack_;
-            target_join_index_ = pm_.getClosestIndex(joinerDtD);  //TODO: this will not work! It assumes platoon vector represents tgt platoon, but it does not.
+            target_join_index_ = pm_.getClosestIndex(joinerDtD);
 
             // Task 4: Send out request to leader about cut-in position
             cav_msgs::MobilityRequest request;
