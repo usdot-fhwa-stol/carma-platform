@@ -48,6 +48,9 @@ def generate_launch_description():
     mobilitypath_visualizer_param_file = os.path.join(
         get_package_share_directory('mobilitypath_visualizer'), 'config/params.yaml')
     
+    route_param_file = os.path.join(
+        get_package_share_directory('route'), 'config/parameters.yaml')
+    
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
@@ -82,6 +85,23 @@ def generate_launch_description():
                 parameters=[
                     vehicle_characteristics_param_file,
                     mobilitypath_visualizer_param_file
+                ]
+            ),
+            ComposableNode(
+                package='route',
+                plugin='route::Route',
+                name='route_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('route', env_log_levels) }
+                ],
+                remappings = [
+                    ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NZ', default_value=''), "/map_param_loader/georeference"])
+                ],
+                parameters=[
+                    {'route_file_path': route_file_folder},
+                    route_param_file
                 ]
             ),
         ]

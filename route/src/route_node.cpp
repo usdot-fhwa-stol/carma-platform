@@ -67,6 +67,8 @@ namespace route
     get_parameter<int>("cte_max_count", config_.cte_max_count);
     get_parameter<std::string>("route_file_path", config_.route_file_path);
 
+    RCLCPP_INFO_STREAM(get_logger(), "Loaded params: " << config_);
+
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&Route::parameter_update_callback, this, std_ph::_1));
 
