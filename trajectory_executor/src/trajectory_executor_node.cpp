@@ -124,33 +124,30 @@ namespace trajectory_executor
     RCLCPP_DEBUG_STREAM(get_logger(), "TrajectoryExecutor tick start!");
 
     if (cur_traj_ != nullptr) {
-      if (!cur_traj_->trajectory_points.empty()) {
-        // Determine the relevant control plugin for the current timestep
-        std::string control_plugin = cur_traj_->trajectory_points[0].controller_plugin_name;
-        // if it instructed to use default control_plugin
-        if (control_plugin == "default" || control_plugin =="") {
-          control_plugin = config_.default_control_plugin;
-        }
-
-        std::map<std::string, carma_ros2_utils::PubPtr<carma_planning_msgs::msg::TrajectoryPlan>>::iterator it = traj_publisher_map_.find(control_plugin);
-        if (it != traj_publisher_map_.end()) {
-          RCLCPP_DEBUG_STREAM(get_logger(), "Found match for control plugin " << control_plugin.c_str() << " at point " << timesteps_since_last_traj_ << " in current trajectory!");
-          it->second->publish(*cur_traj_);
-        } else {
-          std::ostringstream description_builder;
-                description_builder << "No match found for control plugin " 
-                << control_plugin << " at point " 
-                << timesteps_since_last_traj_ << " in current trajectory!";
-
-          throw std::invalid_argument(description_builder.str());
-        }
-        timesteps_since_last_traj_++;
-      } else {
-        throw std::out_of_range("Ran out of trajectory data to consume!");
+      // Determine the relevant control plugin for the current timestep
+      std::string control_plugin = cur_traj_->trajectory_points[0].controller_plugin_name;
+      // if it instructed to use default control_plugin
+      if (control_plugin == "default" || control_plugin =="") {
+        control_plugin = config_.default_control_plugin;
       }
+
+      std::map<std::string, carma_ros2_utils::PubPtr<carma_planning_msgs::msg::TrajectoryPlan>>::iterator it = traj_publisher_map_.find(control_plugin);
+      if (it != traj_publisher_map_.end()) {
+        RCLCPP_DEBUG_STREAM(get_logger(), "Found match for control plugin " << control_plugin.c_str() << " at point " << timesteps_since_last_traj_ << " in current trajectory!");
+        it->second->publish(*cur_traj_);
+      } else {
+        std::ostringstream description_builder;
+              description_builder << "No match found for control plugin " 
+              << control_plugin << " at point " 
+              << timesteps_since_last_traj_ << " in current trajectory!";
+
+        throw std::invalid_argument(description_builder.str());
+      }
+      timesteps_since_last_traj_++; 
     } else {
       RCLCPP_DEBUG_STREAM(get_logger(), "Awaiting initial trajectory publication...");
     }
+    
     RCLCPP_DEBUG_STREAM(get_logger(), "TrajectoryExecutor tick completed succesfully!");
 
   }
