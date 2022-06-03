@@ -51,7 +51,7 @@ bool has_subscriber(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node, 
     return found;
 }
 
-bool has_service(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node, const std::string& service_name, const std::string& type)
+bool has_service(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node, std::string_view service_name, std::string_view type)
 {
     bool found = false;
     for (const auto& [service_k, type_v] : node->get_service_names_and_types_by_node(node->get_name(), "")) {
