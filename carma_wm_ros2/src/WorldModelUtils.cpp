@@ -122,7 +122,6 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
   for (size_t idx = 0; idx < gf_pts.size(); idx ++)
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "Index: " << idx << " Point: " << gf_pts[idx].x() << ", " << gf_pts[idx].y());
-    std::cerr <<"Index: " << idx << " Point: " << gf_pts[idx].x() << ", " << gf_pts[idx].y() << std::endl;
     std::unordered_set<lanelet::Lanelet> possible_lanelets;
 
     // This loop identifes the lanelets which this point lies within that could be impacted by the geofence

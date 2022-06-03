@@ -22,9 +22,11 @@
 #include <carma_ros2_utils/carma_ros2_utils.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <carma_wm_ctrl/WMBroadcaster.hpp>
+#include <carma_wm_ctrl/WMBroadcasterConfig.hpp>
 #include <std_msgs/msg/int32_multi_array.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
+
 #include <memory>
 
 namespace carma_wm_ctrl
@@ -102,7 +104,9 @@ private:
   * \brief Spin callback, which will be called frequently based on the configured spin rate
   */
   bool spin_callback();
-  double traffic_control_request_period_ = 1.0;
+
+  // Node configuration
+  Config config_;
 
   carma_ros2_utils::PubPtr<autoware_lanelet2_msgs::msg::MapBin> map_pub_;
   carma_ros2_utils::PubPtr<autoware_lanelet2_msgs::msg::MapBin> map_update_pub_;

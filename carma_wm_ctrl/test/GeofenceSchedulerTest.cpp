@@ -38,7 +38,7 @@ using namespace std::chrono_literals;
 namespace carma_wm_ctrl
 {
 
-TEST(GeofenceScheduler, DISABLED_Constructor)
+TEST(GeofenceScheduler, Constructor)
 {
   auto timer = std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>();
 

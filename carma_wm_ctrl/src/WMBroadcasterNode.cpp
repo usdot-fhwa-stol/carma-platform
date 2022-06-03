@@ -51,7 +51,19 @@ void WMBroadcasterNode::publishTCMACK(const carma_v2x_msgs::msg::MobilityOperati
 
 WMBroadcasterNode::WMBroadcasterNode(const rclcpp::NodeOptions &options)
   : carma_ros2_utils::CarmaLifecycleNode(options) 
-{};
+{
+  // Create initial config
+  config_ = Config();
+  
+  config_.ack_pub_times = declare_parameter<int>("ack_pub_times", config_.ack_pub_times);
+  config_.max_lane_width = declare_parameter<double>("max_lane_width", config_.max_lane_width);
+  config_.traffic_control_request_period = declare_parameter<double>("traffic_control_request_period", config_.traffic_control_request_period);
+  config_.vehicle_id = declare_parameter<std::string>("/vehicle_id", config_.vehicle_id);
+  config_.participant = declare_parameter<std::string>("/vehicle_participant_type", config_.participant);
+  
+  declare_parameter("intersection_ids_for_correction");
+  declare_parameter("intersection_coord_correction");
+};
 
 void WMBroadcasterNode::initializeWorker(std::weak_ptr<carma_ros2_utils::CarmaLifecycleNode> weak_node_pointer)
 {
@@ -65,23 +77,26 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
 {
   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Starting configuration!");
 
+  // Reset config
+  config_ = Config();
+
   initializeWorker(shared_from_this());
 
   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Done initializing worker!");
 
-  int ack_pub_times = 1;
-  get_parameter("ack_pub_times", ack_pub_times);
-  wmb_->setConfigACKPubTimes(ack_pub_times);
+  get_parameter<int>("ack_pub_times", config_.ack_pub_times);
+  get_parameter<double>("max_lane_width", config_.max_lane_width);
+  get_parameter<double>("traffic_control_request_period", config_.traffic_control_request_period);
+  get_parameter<std::string>("/vehicle_id", config_.vehicle_id);
+  get_parameter<std::string>("/vehicle_participant_type", config_.participant);
+  get_parameter<double>("/config_speed_limit", config_.config_limit);
   
-  double lane_max_width = 4.0;
-  get_parameter<double>("max_lane_width", lane_max_width);
-  wmb_->setMaxLaneWidth(lane_max_width);
-  std::cerr << "UPDATED PARAMETER: " << lane_max_width << std::endl;
+  wmb_->setConfigACKPubTimes(config_.ack_pub_times);
+  wmb_->setMaxLaneWidth(config_.max_lane_width);
+  wmb_->setConfigSpeedLimit(config_.config_limit);
+  wmb_->setConfigVehicleId(config_.vehicle_id);
+  wmb_->setVehicleParticipationType(config_.participant);
 
-  double traffic_control_request_period_ = 1.0;
-  get_parameter<double>("traffic_control_request_period", traffic_control_request_period_);
-  
-  /*
   rclcpp::Parameter intersection_coord_correction_param = get_parameter("intersection_coord_correction");
   std::vector<double> intersection_coord_correction = intersection_coord_correction_param.as_double_array();
 
@@ -89,19 +104,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   std::vector<int64_t> intersection_ids_for_correction = intersection_ids_for_correction_param.as_integer_array();
   
   wmb_->setIntersectionCoordCorrection(intersection_ids_for_correction, intersection_coord_correction);
-  */
-  double config_limit = 6.67;
-  get_parameter<double>("/config_speed_limit", config_limit);
-  wmb_->setConfigSpeedLimit(config_limit);
-    
-  std::string vehicle_id = "CARMA";
-  get_parameter<std::string>("/vehicle_id", vehicle_id);
-  wmb_->setConfigVehicleId(vehicle_id);
   
-  std::string participant = "vehicle:car";
-  get_parameter<std::string>("/vehicle_participant_type", participant);
-  wmb_->setVehicleParticipationType(participant);
-
   /////////////
   // PUBLISHERS
   /////////////
@@ -128,7 +131,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   active_pub_ = create_publisher<carma_perception_msgs::msg::CheckActiveGeofence>("active_geofence", 200);
 
   //publish TCM acknowledgement after processing TCM
-  tcm_ack_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityOperation>("outgoing_geofence_ack", 2 * ack_pub_times );
+  tcm_ack_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityOperation>("outgoing_geofence_ack", 2 * config_.ack_pub_times );
 
   //TCM Visualizer pub
   tcm_visualizer_pub_= create_publisher<visualization_msgs::msg::MarkerArray>("tcm_visualizer",1);
@@ -170,7 +173,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_activate(const rcl
 {
   // Timer setup
   timer_ = create_timer(get_clock(),
-                          std::chrono::milliseconds((int)(traffic_control_request_period_ * 1000)),
+                          std::chrono::milliseconds((int)(config_.traffic_control_request_period * 1000)),
                           std::bind(&WMBroadcasterNode::spin_callback, this));
   return CallbackReturn::SUCCESS;
 }

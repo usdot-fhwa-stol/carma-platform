@@ -86,6 +86,7 @@ if(BUILD_TESTING)
         test/GeofenceScheduleTest.cpp
         test/WMBroadcasterTest.cpp
         test/MapToolsTest.cpp
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
   )
 
   ament_target_dependencies(${PROJECT_NAME}-test ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})

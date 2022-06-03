@@ -1215,10 +1215,10 @@ void WMBroadcaster::setIntersectionCoordCorrection(const std::vector<int64_t>& i
     throw std::invalid_argument("Some of intersection coordinate correction parameters are not fully set!");
   }
 
-  for (auto i = 0; i != intersection_correction.size(); i+2)
+  for (auto i = 0; i < intersection_correction.size(); i = i + 2)
   {
-    sim_.intersection_coord_correction_[(int)intersection_ids_for_correction[i/2]].first =  intersection_correction[i]; //x
-    sim_.intersection_coord_correction_[(int)intersection_ids_for_correction[i/2]].second = intersection_correction[i + 1]; //y
+    sim_.intersection_coord_correction_[(uint16_t)intersection_ids_for_correction[i/2]].first =  intersection_correction[i]; //x
+    sim_.intersection_coord_correction_[(uint16_t)intersection_ids_for_correction[i/2]].second = intersection_correction[i + 1]; //y
   }
 }
 
