@@ -19,6 +19,7 @@
 #include <boost/date_time/gregorian/greg_date.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/duration.hpp>
+#include <lanelet2_extension/time/TimeConversion.h>
 
 namespace carma_wm_ctrl
 {
@@ -68,7 +69,7 @@ public:
    *
    * @return True if time > schedule_end
    */
-  bool scheduleExpired(const rclcpp::Time& time = rclcpp::Time(0.0,0.0,RCL_SYSTEM_TIME)) const;
+  bool scheduleExpired(const rclcpp::Time& time) const;
 
   /**
    * @brief Returns true if the schedule has started by the provided time
@@ -77,7 +78,7 @@ public:
    *
    * @return True if time > schedule_start
    */
-  bool scheduleStarted(const rclcpp::Time& time = rclcpp::Time(0.0,0.0,RCL_SYSTEM_TIME)) const;
+  bool scheduleStarted(const rclcpp::Time& time) const;
 
   /**
    * @brief Returns the start time of the next active interval defined by this schedule

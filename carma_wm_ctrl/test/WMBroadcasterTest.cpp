@@ -345,7 +345,7 @@ TEST(WMBroadcaster, geofenceCallback)
   std::string base_map_proj_string, geofence_proj_string;
   std_msgs::msg::String base_map_proj;
   base_map_proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
-  geofence_proj_string = base_map_proj_string;
+  geofence_proj_string = "+proj=tmerc +lat_0=39.46645851394806215 +lon_0=-76.16907903057393980 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs"; //different proj
   base_map_proj.data = base_map_proj_string;
   wmb.geoReferenceCallback(std::make_unique<std_msgs::msg::String>(base_map_proj));
 
@@ -395,9 +395,9 @@ TEST(WMBroadcaster, geofenceCallback)
   // set the points
   carma_v2x_msgs::msg::PathNode pt;
   // check points that are inside lanelets
-  pt.x = 1.5; pt.y = 0.5; pt.z = 0; // straight geofence line across 2 lanelets
+  pt.x = -8.5; pt.y = -9.5; pt.z = 0; // straight geofence line across 2 lanelets
   msg_v01.geometry.nodes.push_back(pt);
-  pt.x = 0.0; pt.y = 1.0; pt.z = 0;
+  pt.x = 0.0; pt.y = 1.0; pt.z = 0; // offset from last point
   msg_v01.geometry.nodes.push_back(pt);
   // update id to continue testing
   curr_id = boost::uuids::random_generator()(); 
@@ -435,7 +435,7 @@ TEST(WMBroadcaster, routeCallbackMessage)
   route_msg.route_path_lanelet_ids.push_back(1346);
   route_msg.route_path_lanelet_ids.push_back(1349);
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl::WMBroadcasterTest"), "This is a test: ");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "This is a test: ");
   
   size_t base_map_call_count = 0;
   WMBroadcaster wmb(
@@ -454,10 +454,10 @@ TEST(WMBroadcaster, routeCallbackMessage)
   
   //Test throw exceptions
   ASSERT_THROW(wmb.routeCallbackMessage(std::make_unique<carma_planning_msgs::msg::Route>(route_msg)), lanelet::InvalidObjectStateError);
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl::WMBroadcasterTest"), "Throw Exceptions Test Passed.");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Throw Exceptions Test Passed.");
   
   // Load vector map from a file start 
-  std::string file = "/workspaces/carma/src/carma-platform/carma_wm_ctrl/test/resource/test_vector_map1.osm";
+  std::string file = "resource/test_vector_map1.osm";
   int projector_type = 0;
   std::string target_frame;
   lanelet::ErrorMessages load_errors;
@@ -984,7 +984,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
 
   ASSERT_NEAR(max_speed->speed_limit_.value(), limit.value(),0.0001) ;//Check that the maximum speed limit is not larger than 80_mph
   ASSERT_GE(max_speed->speed_limit_, 0_mph);//Check that the maximum speed limit is not smaller than 0_mph
-  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl::WMBroadcasterTest"), "Maximum speed limit is valid (1).");
+  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Maximum speed limit is valid (1).");
 
   msg_v01.params.detail.maxspeed = -4;
 
@@ -992,7 +992,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   max_speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
   ASSERT_GE(max_speed->speed_limit_, 0_mph);//Check that the maximum speed limit is not smaller than 0_mph
-  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl::WMBroadcasterTest"), "Maximum speed limit is valid(2).");
+  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Maximum speed limit is valid(2).");
 
 
   // test minspeed - config limit inactive
@@ -1004,7 +1004,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   lanelet::DigitalSpeedLimitPtr min_speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
   ASSERT_GE(min_speed->speed_limit_, 0_mph);
-  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl::WMBroadcasterTest"), "Minimum speed limit is valid.(1)");
+  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Minimum speed limit is valid.(1)");
 
 
    msg_v01.params.detail.minspeed = 99.0;
@@ -1015,7 +1015,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   min_speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
   ASSERT_NEAR(min_speed->speed_limit_.value(), limit.value(), 0.0001) ;//Check that the minimum speed limit is not larger than 80_mph
   ASSERT_GE(min_speed->speed_limit_, 0_mph);
-  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl::WMBroadcasterTest"), "Minimum speed limit is valid.(2)");
+  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Minimum speed limit is valid.(2)");
 
   
 
@@ -1030,7 +1030,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   //ASSERT_NEAR(max_speed->speed_limit_.value(), 22.352, 0.00001);
   ASSERT_LE(max_speed_cL->speed_limit_, 80_mph);//Check that the maximum speed limit is not larger than 80_mph
   ASSERT_EQ(max_speed_cL->speed_limit_, 55_mph);//Check that the maximum speed limit is equal to the configured limit
-  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl::WMBroadcasterTest"), "Maximum speed limit (config_limit enabled) is valid.");
+  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Maximum speed limit (config_limit enabled) is valid.");
 
    // test minspeed - config limit active
   wmb.setConfigSpeedLimit(55.0);//Set the config speed limit
@@ -1043,7 +1043,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   ASSERT_LE(min_speed_cL->speed_limit_, 80_mph);//Check that the maximum speed limit is not larger than 80_mph
   ASSERT_GE(min_speed_cL->speed_limit_, 0_mph);
   ASSERT_EQ(min_speed_cL->speed_limit_, 55_mph);
-  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl::WMBroadcasterTest"), "Minimum speed limit (config_limit enabled) is valid.");
+  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Minimum speed limit (config_limit enabled) is valid.");
 
 
 
@@ -1432,7 +1432,7 @@ TEST(WMBroadcaster, currentLocationCallback)
       [](const carma_perception_msgs::msg::CheckActiveGeofence& active_pub_){},
       timer, [](const carma_v2x_msgs::msg::MobilityOperation& tcm_ack_pub_){});
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl::WMBroadcasterTest"), "Throw Exceptions Test Passed.");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Throw Exceptions Test Passed.");
 
   // Get and convert map to binary message
   auto map = carma_wm::getDisjointRouteMap();
@@ -1952,7 +1952,7 @@ TEST(WMBroadcaster, splitLaneletWithRatio)
   autoware_lanelet2_msgs::msg::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map, &msg);
   autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg_ptr(new autoware_lanelet2_msgs::msg::MapBin(msg));
-  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl::WMBroadcasterTest"), "Error messages below are expected...");
+  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Error messages below are expected...");
   // Trigger basemap callback
   wmb.baseMapCallback(std::move(map_msg_ptr));
   auto first_lanelet = map->laneletLayer.get(1200);
@@ -2032,7 +2032,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
   // Trigger basemap callback
   wmb.baseMapCallback(std::move(map_msg_ptr));
   auto first_lanelet = map->laneletLayer.get(1200);
-  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl::WMBroadcasterTest"), "Error messages below are expected...");
+  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Error messages below are expected...");
   EXPECT_THROW(wmb.splitLaneletWithPoint({}, first_lanelet, 0.5), lanelet::InvalidInputError);
 
   // check front ratio TOO CLOSE (0.5 meter error for 25 meter lanelet)
@@ -2674,7 +2674,7 @@ TEST(WMBroadcaster, createWorkzoneGeometry)
   // update the map with new lanelets (mapUpdateCallback should follow this pattern as well)
   for(auto llt : gf_ptr->lanelet_additions_)
   {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl::WMBroadcasterTest"), "Adding llt with id:" << llt.id());
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Adding llt with id:" << llt.id());
     auto left = llt.leftBound3d(); //new lanelet coming in
     for (int i = 0; i < left.size(); i ++)
     {
@@ -2742,7 +2742,6 @@ TEST(WMBroadcaster, WMBroadcaster_VehicleParticipation_Test)
   using namespace lanelet::units::literals;
 
 carma_wm::CARMAWorldModel wml;
-
 
   // Set the environment  
   size_t base_map_call_count = 0;
@@ -2824,8 +2823,18 @@ ASSERT_EQ(value, p1);
   ASSERT_EQ(test_map_elem->speed_limit_.value(), new_speed_limit->speed_limit_.value());
   ASSERT_EQ(test_map_elem->participants_.begin()->data(), new_speed_limit->participants_.begin()->data());
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl::WMBroadcasterTest"), "Map Vehicle Participation Type Test Complete.");
+  // Set the map
+  autoware_lanelet2_msgs::msg::MapBin msg1;
+  lanelet::utils::conversion::toBinMsg(map, &msg1);
+  autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg_ptr1(new autoware_lanelet2_msgs::msg::MapBin(msg1));
+  wmb.baseMapCallback(std::move(map_msg_ptr1));
 
+  sample_proj_string.data = proj_string;
+  wmb.geoReferenceCallback(std::make_unique<std_msgs::msg::String>(sample_proj_string));
+
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Map Vehicle Participation Type Test Complete.");
+
+  
 
 }
 

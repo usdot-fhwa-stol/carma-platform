@@ -63,11 +63,11 @@ void WMBroadcasterNode::initializeWorker(std::weak_ptr<carma_ros2_utils::CarmaLi
 
 carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rclcpp_lifecycle::State &)
 {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl::WMBroadcasterNode"),"Starting configuration!");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Starting configuration!");
 
   initializeWorker(shared_from_this());
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl::WMBroadcasterNode"),"Done initializing worker!");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Done initializing worker!");
 
   int ack_pub_times = 1;
   get_parameter("ack_pub_times", ack_pub_times);
@@ -76,6 +76,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   double lane_max_width = 4.0;
   get_parameter<double>("max_lane_width", lane_max_width);
   wmb_->setMaxLaneWidth(lane_max_width);
+  std::cerr << "UPDATED PARAMETER: " << lane_max_width << std::endl;
 
   double traffic_control_request_period_ = 1.0;
   get_parameter<double>("traffic_control_request_period", traffic_control_request_period_);

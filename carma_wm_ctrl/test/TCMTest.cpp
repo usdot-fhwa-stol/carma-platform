@@ -97,7 +97,7 @@ TEST(WMBroadcaster, DISABLED_geofenceCallback)
 
   std_msgs::msg::String str_msg;
   str_msg.data = target_frame;
-  RCLCPP_WARN_STREAM(rclcpp::get_logger("TCMTest"), "Projection: " << target_frame);
+  RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Projection: " << target_frame);
   wmb.geoReferenceCallback(str_msg);
 
   autoware_lanelet2_msgs::msg::MapBin msg;

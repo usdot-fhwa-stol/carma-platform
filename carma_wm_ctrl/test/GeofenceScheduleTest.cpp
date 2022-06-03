@@ -49,40 +49,40 @@ TEST(GeofenceSchedule, getNextInterval)
 {
   // Test before start
 
-  GeofenceSchedule sch(rclcpp::Time(1e10 * 1), rclcpp::Time(1e10 * 6), rclcpp::Duration(1e10 * 2), rclcpp::Duration(1e10 * 1), rclcpp::Duration(1e10 * 0), rclcpp::Duration(1e10 * 1),
-                       rclcpp::Duration(1e10 * 2)  // This means the next schedule is a 4 (2+2)
+  GeofenceSchedule sch(rclcpp::Time(1e9 * 1), rclcpp::Time(1e9 * 6), rclcpp::Duration(1e9 * 2), rclcpp::Duration(1e9 * 1), rclcpp::Duration(1e9 * 0), rclcpp::Duration(1e9 * 1),
+                       rclcpp::Duration(1e9 * 2)  // This means the next schedule is a 4 (2+2)
   );
 
   // Test before control start
-  ASSERT_NEAR(20, sch.getNextInterval(rclcpp::Time(1e10 * 0)).second.seconds(), 0.00001);
-  ASSERT_FALSE(sch.getNextInterval(rclcpp::Time(1e10 * 0)).first);
+  ASSERT_NEAR(2, sch.getNextInterval(rclcpp::Time(1e9 * 0)).second.seconds(), 0.00001);
+  ASSERT_FALSE(sch.getNextInterval(rclcpp::Time(1e9 * 0)).first);
   // Test after start but before control_start
-  ASSERT_NEAR(20, sch.getNextInterval(rclcpp::Time(1e10 * 1.5)).second.seconds(), 0.00001);
-  ASSERT_FALSE(sch.getNextInterval(rclcpp::Time(1e10 * 1.5)).first);
+  ASSERT_NEAR(2, sch.getNextInterval(rclcpp::Time(1e9 * 1.5)).second.seconds(), 0.00001);
+  ASSERT_FALSE(sch.getNextInterval(rclcpp::Time(1e9 * 1.5)).first);
   // Test between first control_start and control_end
-  ASSERT_NEAR(0.0, sch.getNextInterval(rclcpp::Time(1e10 * 2.5)).second.seconds(), 0.00001);
-  ASSERT_TRUE(sch.getNextInterval(rclcpp::Time(1e10 * 2.5)).first);
+  ASSERT_NEAR(0.0, sch.getNextInterval(rclcpp::Time(1e9 * 2.5)).second.seconds(), 0.00001);
+  ASSERT_TRUE(sch.getNextInterval(rclcpp::Time(1e9 * 2.5)).first);
   // Test after control ends
-  ASSERT_NEAR(0.0, sch.getNextInterval(rclcpp::Time(1e10 * 3.5)).second.seconds(), 0.00001);
-  ASSERT_FALSE(sch.getNextInterval(rclcpp::Time(1e10 * 3.5)).first);
+  ASSERT_NEAR(0.0, sch.getNextInterval(rclcpp::Time(1e9 * 3.5)).second.seconds(), 0.00001);
+  ASSERT_FALSE(sch.getNextInterval(rclcpp::Time(1e9 * 3.5)).first);
 
-  sch = GeofenceSchedule(rclcpp::Time(1e10 * 1), rclcpp::Time(1e10 * 6), rclcpp::Duration(1e10 * 2), rclcpp::Duration(1e10 * 3), rclcpp::Duration(1e10 * 0), rclcpp::Duration(1e10 * 1),
-                         rclcpp::Duration(1e10 * 2)  // This means the next schedule is a 4 (2+2)
+  sch = GeofenceSchedule(rclcpp::Time(1e9 * 1), rclcpp::Time(1e9 * 6), rclcpp::Duration(1e9 * 2), rclcpp::Duration(1e9 * 3), rclcpp::Duration(1e9 * 0), rclcpp::Duration(1e9 * 1),
+                         rclcpp::Duration(1e9 * 2)  // This means the next schedule is a 4 (2+2)
   );
   // Test between end of first control and start of second
-  ASSERT_NEAR(40, sch.getNextInterval(rclcpp::Time(1e10 * 3.5)).second.seconds(), 0.00001);
-  ASSERT_FALSE(sch.getNextInterval(rclcpp::Time(1e10 * 3.5)).first);
+  ASSERT_NEAR(4, sch.getNextInterval(rclcpp::Time(1e9 * 3.5)).second.seconds(), 0.00001);
+  ASSERT_FALSE(sch.getNextInterval(rclcpp::Time(1e9 * 3.5)).first);
   // Test between 2nd control start and control end
-  ASSERT_NEAR(0.0, sch.getNextInterval(rclcpp::Time(1e10 * 4.5)).second.seconds(), 0.00001);
-  ASSERT_TRUE(sch.getNextInterval(rclcpp::Time(1e10 * 4.5)).first);
+  ASSERT_NEAR(0.0, sch.getNextInterval(rclcpp::Time(1e9 * 4.5)).second.seconds(), 0.00001);
+  ASSERT_TRUE(sch.getNextInterval(rclcpp::Time(1e9 * 4.5)).first);
   // Test after control_end
-  ASSERT_NEAR(0.0, sch.getNextInterval(rclcpp::Time(1e10 * 5.5)).second.seconds(), 0.00001);
-  ASSERT_FALSE(sch.getNextInterval(rclcpp::Time(1e10 * 5.5)).first);
+  ASSERT_NEAR(0.0, sch.getNextInterval(rclcpp::Time(1e9 * 5.5)).second.seconds(), 0.00001);
+  ASSERT_FALSE(sch.getNextInterval(rclcpp::Time(1e9 * 5.5)).first);
   // Test other day of the week
-  ASSERT_NEAR(0.0, sch.getNextInterval(rclcpp::Time(1e10 * 90000)).second.seconds(), 0.00001);
-  ASSERT_FALSE(sch.getNextInterval(rclcpp::Time(1e10 * 90000)).first);
+  ASSERT_NEAR(0.0, sch.getNextInterval(rclcpp::Time(1e9 * 90000)).second.seconds(), 0.00001);
+  ASSERT_FALSE(sch.getNextInterval(rclcpp::Time(1e9 * 90000)).first);
   // Test after schedule end
-  ASSERT_NEAR(0.0, sch.getNextInterval(rclcpp::Time(1e10 * 7.0)).second.seconds(), 0.00001);
-  ASSERT_FALSE(sch.getNextInterval(rclcpp::Time(1e10 * 7.0)).first);
+  ASSERT_NEAR(0.0, sch.getNextInterval(rclcpp::Time(1e9 * 7.0)).second.seconds(), 0.00001);
+  ASSERT_FALSE(sch.getNextInterval(rclcpp::Time(1e9 * 7.0)).first);
 }
 }  // namespace carma_wm_ctrl

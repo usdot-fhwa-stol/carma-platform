@@ -26,7 +26,7 @@ int main(int argc, char ** argv)
   //Initialize ROS
   rclcpp::init(argc, argv);
   auto ret = rcutils_logging_set_logger_level(
-        rclcpp::get_logger("carma_wm_ctrl::GeofenceSchedule").get_name(), RCUTILS_LOG_SEVERITY_DEBUG);
+        rclcpp::get_logger("carma_wm_ctrl").get_name(), RCUTILS_LOG_SEVERITY_DEBUG);
 
   bool success = RUN_ALL_TESTS();
 

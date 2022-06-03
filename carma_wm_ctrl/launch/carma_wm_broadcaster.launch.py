@@ -36,7 +36,7 @@ def generate_launch_description():
         name ='log_level', default_value='WARN')
     
     carma_wm_ctrl_param_file = os.path.join(
-        get_package_share_directory('carma_wm_ctrl'), 'config', 'parameters.yaml')
+        get_package_share_directory('carma_wm_ctrl'), 'config/parameters.yaml')
     
     print(GetCurrentNamespace())
     
