@@ -1105,11 +1105,14 @@ namespace platoon_strategic_ihp
             else if (targetPlatoonSize > 1  &&  !config_.test_front_join  &&  isVehicleNearTargetPlatoon(rearVehicleDtd, frontVehicleDtd, frontVehicleCtd))
             {
 
-                carma_wm::TrackPos target_trackpose(rearVehicleDtd - 10.0, rearVehicleCtd);
+                carma_wm::TrackPos target_trackpose(rearVehicleDtd - config_.minCutinGap, rearVehicleCtd);
                 auto target_pose = wm_->pointFromRouteTrackPos(target_trackpose);
                 if (target_pose)
                 {
                     target_cutin_pose_ = target_pose.get();
+                    // TODO: temporary confirm the pose is valid, remove later
+                    ROS_DEBUG_STREAM("target_cutin_pose_ x" << target_cutin_pose_.x());
+                    ROS_DEBUG_STREAM("target_cutin_pose_ y" << target_cutin_pose_.y());
                 }
                 else
                 {
@@ -2974,7 +2977,7 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("Published Mobility cut-in join request to leader " << pm_.platoonLeaderID << " with planId = " << planId);
 
             // Create a new join action plan
-            pm_.current_plan = ActionPlan(true, currentTime, planId, pm_.platoonLeaderID);
+            pm_.current_plan = ActionPlan(true, currentTime, planId, pm_.neighbor_platoon_leader_id_);
         }
     }
 
@@ -3257,47 +3260,31 @@ namespace platoon_strategic_ihp
                     // Note: Use current_lanlet list (which was determined based on vehicle pose) to find current lanelet ID. 
                     long current_lanelet_id = current_lanelets[0].second.id();
 
-                    // note: This is just mock info to compile the code. 
-                    // TODO: This should be updated according to arbitrary lane change requirements. 
-                    //int target_lanelet_id = current_lanelet_id;
+                    // note: This is just mock info to compile the code.                     
 
                     // ----------------------------------------------------------------------------------------------------------
                     if (end_dist < current_progress)
                     {
                         break;
                     }
-                    // Update lane change status to stop the while loop when langchange finshed.
-                    crosstrackDiff = current_crosstrack_ - target_crosstrack;  // Assume vehicle start at left lane when testing.
-                    if (crosstrackDiff <= findLaneWidth()*0.5) // Use 85% of lane width to account for noise.
-                    {
-                        break; 
-                    }
-                    
-                    /**
-                     * TODO: the lane change should use a future position as the start of lane change plan. 
-                     *       time_step is the planning horizon that sends future maneuver plan.
-                     */
-                    //double lane_change_dtd = current_downtrack_ + current_speed_*config_.time_step; 
-
-                    // use future position to find lanelet ID
-                    /**
-                     * note: 
-                     * The current speed's direction is along x axis. (current_speed_ = msg->twist.linear.x;)
-                     * Hence: next_point.x = current.x + current_speed_*dt
-                     */
-                    lanelet::BasicPoint2d next_loc(pose_msg_.pose.position.x+current_speed_*config_.time_step, 
-                                                   pose_msg_.pose.position.y);
-
-                    
+                                
                     double lc_end_dist = wm_->routeTrackPos(target_cutin_pose_).downtrack;
+                    ROS_DEBUG_STREAM("lc_end_dist: " << lc_end_dist);
                     
 
                     // get the actually closest lanelets, 
-                    auto next_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, target_cutin_pose_, 10);  
+                    auto target_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, target_cutin_pose_, 1); 
+                    if (target_lanelets.empty())
+                    {
+                        ROS_DEBUG_STREAM("The target cutin pose is not on a valid lanelet. So no lanechane!");
+                        break;
+                    } 
+                    int target_lanelet_id = target_lanelets[0].second.id();
+                    ROS_DEBUG_STREAM("target_lanelet_id: " << target_lanelet_id);
 
                     // note: Since lanelet ID is not important for arbitrary lanechange, just use first lanelet's Id to create a maneuver msg.
                     resp.new_plan.maneuvers.push_back(composeLaneChangeManeuverMessage(current_downtrack_, lc_end_dist,  
-                                            speed_progress, target_speed, current_lanelet_id, next_lanelets[0].second.id() , time_progress));
+                                            speed_progress, target_speed, current_lanelet_id, target_lanelet_id , time_progress));
 
                     current_progress += dist_diff;
                     // read lane change maneuver end time as time progress
