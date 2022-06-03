@@ -3267,14 +3267,7 @@ namespace platoon_strategic_ihp
                     {
                         break;
                     }
-                    // Update lane change status to stop the while loop when langchange finshed.
-                    crosstrackDiff = current_crosstrack_ - target_crosstrack;  // Assume vehicle start at left lane when testing.
-                    if (crosstrackDiff <= findLaneWidth()*0.5) // Use 85% of lane width to account for noise.
-                    {
-                        break; 
-                    }
-
-                    
+                                
                     double lc_end_dist = wm_->routeTrackPos(target_cutin_pose_).downtrack;
                     ROS_DEBUG_STREAM("lc_end_dist: " << lc_end_dist);
                     
