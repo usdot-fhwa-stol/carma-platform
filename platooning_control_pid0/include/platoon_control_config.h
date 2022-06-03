@@ -48,6 +48,7 @@ namespace platoon_control_pid0 {
         double  time_step = 0.03333;
         double  gamma_h = 1.0;
         double  max_steering_angle = 1.05;
+        double  wheelbase = 3.09;
 
         //TODO: which of these do we still need?
         double  timeHeadway = 6.0;
@@ -55,7 +56,6 @@ namespace platoon_control_pid0 {
         double  maxAccel = 2.5;
         int     cmdTmestamp = 100;
         double  adjustmentCap = 10;
-        double  wheelBase = 3.09;
         double  lowpassGain = 0.5;
         double  lookaheadRatio = 2.0;
         double  minLookaheadDist = 6.0;

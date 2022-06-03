@@ -64,12 +64,14 @@ max_steering_angle: 1.05 #approx 60 deg
 
 #-----Non-PID values
 
+wheelbase: 3.09
+
+##### DO WE STILL NEED THESE JOHN?
 timeHeadway: 3.5
 standStillHeadway: 22.0
 maxAccel: 1.5
 cmdTmestamp: 100
 adjustmentCap: 11.0
-wheelBase: 3.09
 lowpassGain: 1.0
 lookaheadRatio: 1.6
 minLookaheadDist: 15.0

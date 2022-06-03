@@ -32,21 +32,27 @@ namespace platoon_control_pid0
     /**
     * \brief Platoon Leader Struct
     */
-	struct PlatoonLeaderInfo{
+	struct PlatoonLeaderInfo {
         // Static ID is permanent ID for each vehicle
         std::string staticId;
+
         // Vehicle real time command speed in m/s
-        double commandSpeed;
+        double      commandSpeed;
+
         // Actual vehicle speed in m/s
-        double vehicleSpeed;
+        double      vehicleSpeed;
+
         // Vehicle current down track distance on the current route in m
-        double vehiclePosition;
+        double      vehiclePosition;
+
         // The local time stamp when the host vehicle update any informations of this member
-        long   timestamp;
+        long        timestamp;
+
         // leader index in the platoon
-        int leaderIndex;
-        // Number of vehicles in front
-        int NumberOfVehicleInFront;
+        int         leaderIndex;
+
+        // Number of vehicles in front of the host vehicle
+        int         NumberOfVehicleInFront;
     };
 
 
@@ -124,6 +130,8 @@ namespace platoon_control_pid0
 
         double              time_step_;                     //time between control loop iterations, s
         double              gamma_h_;                       //steering command mixing ratio between heading & CTE PIDs
+        double              wheelbase_;                     //wheelbase of the vehicle, m
+        double              max_steering_angle_;            //upper limit on steering angle, rad
         double              host_x_;                        //current x coordinate of host vehicle location, m offset in map frame
         double              host_y_;                        //current y coordinate of host vehicle location, m offset in map frame
         double              host_heading_;                  //current heading angle of host vehicle, rad N of E in [0, 2pi)

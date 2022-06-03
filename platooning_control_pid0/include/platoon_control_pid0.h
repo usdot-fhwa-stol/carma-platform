@@ -104,6 +104,10 @@ namespace platoon_control_pid0
 
 
 
+
+
+
+
 			double get_trajectory_speed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points);
     };
 }

@@ -61,17 +61,15 @@ add_executable( ${PROJECT_NAME}
   src/main.cpp)
 
 
-add_library(platoon_control_plugin_lib
+add_library(platoon_control_pid0_plugin_lib
  src/platoon_control_pid0.cpp
  src/platoon_control_worker.cpp
  src/pid_controller.cpp
- src/pure_pursuit.cpp
 )
 
-add_dependencies(platoon_control_plugin_lib ${catkin_EXPORTED_TARGETS})
+add_dependencies(platoon_control_pid0_plugin_lib ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(platoon_control_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} platoon_control_plugin_lib)
+target_link_libraries(${PROJECT_NAME} platoon_control_pid0_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 
 #############
@@ -86,7 +84,7 @@ install(DIRECTORY include
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} platoon_control_plugin_lib
+install(TARGETS ${PROJECT_NAME} platoon_control_pid0_plugin_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -105,19 +103,18 @@ install(DIRECTORY
 
 catkin_add_gmock(${PROJECT_NAME}-test
   test/test_pid.cpp
-  test/test_pure.cpp
   test/test_worker.cpp
   test/test_control.cpp
   test/test_main.cpp)
 
 if(TARGET ${PROJECT_NAME}-test)
-  target_link_libraries(${PROJECT_NAME}-test platoon_control_plugin_lib ${catkin_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME}-test platoon_control_pid0_plugin_lib ${catkin_LIBRARIES})
 endif()
 
 if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
-  add_rostest_gtest(test_platoon_control test/mynode.test test/test_mynode.cpp)
-  target_link_libraries(test_platoon_control ${catkin_LIBRARIES})
+  add_rostest_gtest(test_platoon_control_pid0 test/mynode.test test/test_mynode.cpp)
+  target_link_libraries(test_platoon_control_pid0 ${catkin_LIBRARIES})
 endif()
 
 

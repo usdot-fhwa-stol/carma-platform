@@ -43,6 +43,8 @@ namespace platoon_control_pid0
         // Store the params we need for future operations
         time_step_ = config.time_step;
         gamma_h_ = config.gamma_h;
+        wheelbase_ = config.wheelbase;
+        max_steering_angle_ = config.max_steering_angle;
 
         // Create the PID controllers
         pid_h_ = new PIDController(config.pid_h_deadband, config.pid_h_slope_break, config.pid_h_kp1,
@@ -90,12 +92,37 @@ namespace platoon_control_pid0
 
     void PlatoonControlWorker::generate_control_signal() {
 
-        //---------- Steering command
-
         // Find the trajectory point nearest the vehicle but in front of it
         // TODO: may need to consider choosing a point a little farther forward (there may be multiple points
         //       between rear axle (vehicle origin) and front bumper!)
         find_nearest_point();
+        ROS_DEBUG_STREAM("Nearest forward tp = " << tp_index_);
+
+
+        //---------- Speed command
+
+        // CAUTION: a vehicle running this code can only be a solo vehicle or platoon leader!
+        ROS_WARN_STREAM("///// SPEED CONTROL FOR SOLO/LEAD VEHICLE ONLY!");
+
+        // For now, just drive the speeds indicated by the trajectory, i.e. no gap control.  Once the
+        // plugin is basically proven out, this section can be enhanced for platoon gap control.
+
+        // Get the distance between current closest trajectory points
+        size_t tpi = tp_index_;
+        if (tpi == 0) {
+            tpi = 1;
+        }
+        double x0 = traj_[tpi-1].x;
+        double y0 = traj_[tpi-1].y;
+        double x1 = traj_[tpi].x;
+        double y1 = traj_[tpi].y;
+        double tp_dist = std::sqrt(x*x + y*y);
+        double delta_time = traj_[tpi].target_time - traj_[tpi-1].target_time;
+        speed_cmd_ = tp_dist / (delta_time + 0.0001);
+        ROS_DEBUG_STREAM("speed cmd = " << speed_cmd_ << ", tp_dist = " << tp_dist << ", delta_time = " << delta_time);
+
+
+        //---------- Steering command
 
         // Find the heading of that trajectory point
         double tp_heading = normalize_yaw(traj_[tp_index_].yaw);
@@ -118,15 +145,33 @@ namespace platoon_control_pid0
 
         // Combine the PID outputs according to the mixing factor
         steering_cmd_ = gamma_h_*out_h + (1.0 - gamma_h_)*out_c;
+        if (steering_cmd_ < -max_steering_angle_) {
+            steering_cmd_ = -max_steering_angle_;
+        }else if (steering_cmd_ > max_steering_angle_) {
+            steering_cmd_ = max_steering_angle_;
+        }
+        ROS_DEBUG_STREAM("heading_error = " << heading_error << ", out_h = " << out_h << ", cte = " << cte << ", out_c = " << out_c);
+        ROS_DEBUG_STREAM("steering cmd = " << steering_cmd_ << ", gamma = " << gamma_h_);
 
 
         //---------- Angular velocity command
 
-        
+        // Note that pure pursuit calculates its radius (i.e. kappa, which is 1/radius) based on the desired
+        // trajectory.  It is independent of the steering command.  We could do a similar thing here,
+        // computing radius of the trajectory arc in its next 3 points from 
+        // https://stackoverflow.com/questions/22791951/algorithm-to-find-an-arc-its-center-radius-and-angles-given-3-points.
+        // But it doesn't seem that is appropriate.  Rather, for controller to work correctly, angular rate cmd
+        // should be intimately connected to the steering angle cmd. Therefore...
 
-
-        //---------- Speed command
-
+        // Radius of the immediate future trajectory of the vehicle (regardless of the path that was laid out) is
+        // from bicycle model, using the rear axle as vehicle reference point, as described in
+        // https://dingyan89.medium.com/simple-understanding-of-kinematic-bicycle-model-81cac6420357.
+        double radius = 999999.7;
+        if (abs(steering_cmd_) > 1.0e-9) {
+            radius = wheelbase_ / std::tan(steering_cmd_);
+        }
+        angular_vel_cmd_ = speed_cmd_ / radius;
+        ROS_DEBUG_STREAM("ang vel cmd = " << angular_vel_cmd_ << "radius = " << radius << ", wheelbase = " << wheelbase_);
     }
 
 
@@ -204,13 +249,13 @@ namespace platoon_control_pid0
         //CAUTION:  ASSUMES that find_nearest_point() has been called previously, to store an
         //          accurate value of tp_index_.
 
-        // Find the perpendicluar distance between the trajectory segment preceding the nearest
+        // Find the perpendicular distance between the trajectory segment preceding the nearest
         // point and the vehicle.  There may be some cases where the closest approach is on the
         // previous or next segment and is slightly closer than this calc will give, but that
         // would only happen if there is a large heading error, which is much more problematic
         // than the slight inaccuracy of this assumption.
 
-        // Create a vector for the line (define an infintely long line from the two given points)
+        // Create a vector for the line (define an infinitely long line from the two given points)
         int id = tp_index_;
         if (id == 0) {
             ++id;

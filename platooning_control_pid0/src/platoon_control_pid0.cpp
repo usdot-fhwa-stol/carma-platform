@@ -68,7 +68,7 @@ namespace platoon_control_pid0
 
         // Populate the default content to be published for plugin discovery (most of this will never change)
         plugin_discovery_msg_.name = "PlatooningControlPid0Plugin";
-        plugin_discovery_msg_.version_id = "v0.1"; //TODO set this when done testing
+        plugin_discovery_msg_.version_id = "v0.1"; //TODO set this when done testing; sync with package.xml
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = true;
         plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
@@ -105,19 +105,19 @@ namespace platoon_control_pid0
         cav_msgs::PlatooningInfo output_msg = *msg;
 
         // Add speed command to the output message and publish
-        platooing_info_msg.host_cmd_speed = pcw_.speedCmd_; // JOHN don't allow direct access
+        output_msg.host_cmd_speed = pcw_.get_speed_cmd();
         platoon_info_pub_.publish(output_msg);
  
         // Grab a few items to update our internal knowledge - JOHN fix all these for accessors
-        platoon_leader_.staticId = msg->leader_id;
-        platoon_leader_.vehiclePosition = msg->leader_downtrack_distance;
-        platoon_leader_.commandSpeed = msg->leader_cmd_speed;
+        platoon_leader_.staticId = msg.leader_id;
+        platoon_leader_.vehiclePosition = msg.leader_downtrack_distance;
+        platoon_leader_.commandSpeed = msg.leader_cmd_speed;
         // TODO: index is 0 temp to test the leader state
-        platoon_leader_.NumberOfVehicleInFront = msg->host_platoon_position;
+        platoon_leader_.NumberOfVehicleInFront = msg.host_platoon_position;
         platoon_leader_.leaderIndex = 0;
 
-        pcw_.actual_gap_ = platooing_info_msg.actual_gap;
-        pcw_.desired_gap_ = platooing_info_msg.desired_gap;
+        pcw_.actual_gap_ = msg.actual_gap; //TODO use accessors
+        pcw_.desired_gap_ = msg.desired_gap;
         ROS_DEBUG_STREAM("Platoon leader id:  " << platoon_leader_.staticId);
         ROS_DEBUG_STREAM("Platoon leader pose:  " << platoon_leader_.vehiclePosition);
         ROS_DEBUG_STREAM("Platoon leader cmd speed:  " << platoon_leader_.commandSpeed);
