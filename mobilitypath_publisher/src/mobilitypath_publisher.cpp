@@ -49,9 +49,13 @@ namespace mobilitypath_publisher
     // Reset config
     config_ = Config();
 
+    std::cerr << " default" << config_ << std::endl;
+
     // Load parameters
     get_parameter<double>("path_pub_rate", config_.path_pub_rate);
     get_parameter<std::string>("vehicle_id", config_.vehicle_id);
+
+    std::cerr << "==================== config_.path_pub_rate: " << config_.path_pub_rate << std::endl;
 
     RCLCPP_INFO_STREAM(get_logger(), "Loaded params: " << config_);
 

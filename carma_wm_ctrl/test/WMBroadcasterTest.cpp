@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <lanelet2_extension/time/TimeConversion.h>
 #include <carma_wm_ctrl/GeofenceSchedule.hpp>
 #include <carma_wm_ctrl/Geofence.hpp>
 #include <carma_wm_ros2/TrafficControl.hpp>

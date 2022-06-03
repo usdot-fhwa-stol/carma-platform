@@ -38,8 +38,6 @@ def generate_launch_description():
     carma_wm_ctrl_param_file = os.path.join(
         get_package_share_directory('carma_wm_ctrl'), 'config/parameters.yaml')
     
-    print(GetCurrentNamespace())
-    
     # Launch node(s) in a carma container to allow logging to be configured
     container = ComposableNodeContainer(
         package='carma_ros2_utils',

@@ -81,14 +81,15 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   double traffic_control_request_period_ = 1.0;
   get_parameter<double>("traffic_control_request_period", traffic_control_request_period_);
   
+  /*
   rclcpp::Parameter intersection_coord_correction_param = get_parameter("intersection_coord_correction");
   std::vector<double> intersection_coord_correction = intersection_coord_correction_param.as_double_array();
 
   rclcpp::Parameter intersection_ids_for_correction_param = get_parameter("intersection_ids_for_correction");
   std::vector<int64_t> intersection_ids_for_correction = intersection_ids_for_correction_param.as_integer_array();
-
+  
   wmb_->setIntersectionCoordCorrection(intersection_ids_for_correction, intersection_coord_correction);
-
+  */
   double config_limit = 6.67;
   get_parameter<double>("/config_speed_limit", config_limit);
   wmb_->setConfigSpeedLimit(config_limit);

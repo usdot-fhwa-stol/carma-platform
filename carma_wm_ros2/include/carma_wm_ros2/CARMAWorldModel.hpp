@@ -28,7 +28,7 @@
 #include <carma_v2x_msgs/msg/spat.hpp>
 #include "carma_wm_ros2/TrackPos.hpp"
 #include "carma_wm_ros2/WorldModelUtils.hpp"
-
+#include <lanelet2_extension/time/TimeConversion.h>
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "carma_wm_ros2/SignalizedIntersectionManager.hpp"
 
