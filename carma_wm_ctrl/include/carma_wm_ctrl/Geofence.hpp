@@ -43,8 +43,6 @@ const std::string MAP_MSG_TF_SIGNAL = "MAP_MSG_TF_SIGNAL";
 
 /**
  * @brief An object representing a geofence use for communications with CARMA Cloud
- *
- * TODO: This is currently a place holder class which needs to be updated based on the final geofence specification
  */
 class Geofence
 {

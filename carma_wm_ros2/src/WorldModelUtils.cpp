@@ -122,6 +122,7 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
   for (size_t idx = 0; idx < gf_pts.size(); idx ++)
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "Index: " << idx << " Point: " << gf_pts[idx].x() << ", " << gf_pts[idx].y());
+    std::cerr <<"Index: " << idx << " Point: " << gf_pts[idx].x() << ", " << gf_pts[idx].y() << std::endl;
     std::unordered_set<lanelet::Lanelet> possible_lanelets;
 
     // This loop identifes the lanelets which this point lies within that could be impacted by the geofence
@@ -243,7 +244,6 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
       }
 
     }
-  
   }
   
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "affected_lanelets size: " << affected_lanelets.size());
@@ -252,6 +252,7 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
   lanelet::ConstLaneletOrAreas affected_parts;
   // return results in ascending downtrack order from the first point of geofence
   std::vector<std::pair<double, lanelet::Lanelet>> sorted_parts;
+
   for (auto llt : affected_lanelets)
   {
     sorted_parts.push_back(std::make_pair(carma_wm::geometry::trackPos(llt, gf_pts.front().basicPoint2d()).downtrack, llt));
@@ -262,7 +263,7 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
   {
     affected_parts.push_back(pair.second);
   }
-
+  
   return affected_parts;
 }
 

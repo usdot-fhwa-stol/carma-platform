@@ -329,6 +329,8 @@ TEST(WMBroadcaster, geofenceCallback)
       [](const carma_perception_msgs::msg::CheckActiveGeofence& active_pub_){},
       timer, [](const carma_v2x_msgs::msg::MobilityOperation& tcm_ack_pub_){});
 
+  // Verify that nothing is happening when reserved
+
  // Get and convert map to binary message
   auto map = carma_wm::getDisjointRouteMap();
   autoware_lanelet2_msgs::msg::MapBin msg;
@@ -361,7 +363,8 @@ TEST(WMBroadcaster, geofenceCallback)
   ASSERT_EQ(0, last_active_gf.load());
 
 
-  // Verify that nothing is happening when reserved
+
+
   timer->setNow(rclcpp::Time(2.1e9));// Geofence should have started by now
   wmb.geofenceCallback(std::make_unique<carma_v2x_msgs::msg::TrafficControlMessage>(gf_msg)); 
 
@@ -392,9 +395,9 @@ TEST(WMBroadcaster, geofenceCallback)
   // set the points
   carma_v2x_msgs::msg::PathNode pt;
   // check points that are inside lanelets
-  pt.x = 0.5; pt.y = 0.5; pt.z = 0; // straight geofence line across 2 lanelets
+  pt.x = 1.5; pt.y = 0.5; pt.z = 0; // straight geofence line across 2 lanelets
   msg_v01.geometry.nodes.push_back(pt);
-  pt.x = 1.5; pt.y = 1.5; pt.z = 0;
+  pt.x = 0.0; pt.y = 1.0; pt.z = 0;
   msg_v01.geometry.nodes.push_back(pt);
   // update id to continue testing
   curr_id = boost::uuids::random_generator()(); 
@@ -657,16 +660,16 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   gf_msg.geometry.nodes = {};
   pt.x = 0.5; pt.y = 0.5; pt.z = 0;
   gf_msg.geometry.nodes.push_back(pt);
-  pt.x = 0.5; pt.y = 1.5; pt.z = 0;
+  pt.x = 0.0; pt.y = 1.0; pt.z = 0;
   gf_msg.geometry.nodes.push_back(pt);
   gf_ptr->gf_pts = wmb.getPointsInLocalFrame(gf_msg);
   gf_ptr->affected_parts_ = wmb.getAffectedLaneletOrAreas(gf_ptr->gf_pts);
   gf_ptr->msg_ = gf_msg;
 
   ASSERT_EQ(gf_ptr->affected_parts_.size(), 3);
-  ASSERT_EQ(gf_ptr->affected_parts_[1].id(), 10000);
-  ASSERT_EQ(gf_ptr->affected_parts_[1].regulatoryElements()[0]->id(), old_speed_limit->id()); // old speed limit
-  ASSERT_EQ(gf_ptr->affected_parts_[1].regulatoryElements().size(), 4); // old speed limit and other map conforming regulations
+  ASSERT_EQ(gf_ptr->affected_parts_[0].id(), 10000);
+  ASSERT_EQ(gf_ptr->affected_parts_[0].regulatoryElements()[0]->id(), old_speed_limit->id()); // old speed limit
+  ASSERT_EQ(gf_ptr->affected_parts_[0].regulatoryElements().size(), 4); // old speed limit and other map conforming regulations
   // process the geofence and change the map
 
   // flow for adding geofence to the map
@@ -680,16 +683,16 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   auto data_received = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   carma_wm::fromBinMsg(gf_obj_msg, data_received);
   ASSERT_EQ(data_received->id_, gf_ptr->id_);
-  ASSERT_EQ(gf_ptr->remove_list_.size(), 2);
-  ASSERT_EQ(data_received->remove_list_.size(), 2); // old_speed_limit
+  ASSERT_EQ(gf_ptr->remove_list_.size(), 3);
+  ASSERT_EQ(data_received->remove_list_.size(), 3); // old_speed_limit
   ASSERT_TRUE(data_received->remove_list_[0].second->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) ==0 );
-  ASSERT_EQ(data_received->update_list_.size(), 2); // geofence tags 2 lanelets
-  ASSERT_EQ(data_received->update_list_[1].first, 10000);
+  ASSERT_EQ(data_received->update_list_.size(), 3); // geofence tags 2 lanelets
+  ASSERT_EQ(data_received->update_list_[0].first, 10000);
 
   // we can see that the gf_ptr->now would have the prev speed limit of 5_mph that affected llt 10000
-  ASSERT_EQ(gf_ptr->prev_regems_.size(), 2);
-  ASSERT_EQ(gf_ptr->prev_regems_[1].first, 10000);
-  ASSERT_EQ(gf_ptr->prev_regems_[1].second->id(), old_speed_limit->id());
+  ASSERT_EQ(gf_ptr->prev_regems_.size(), 3);
+  ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10000);
+  ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());
 
   // now suppose the geofence is finished being used, we have to revert the changes
   wmb.removeGeofence(gf_ptr);
@@ -703,12 +706,12 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   carma_wm::fromBinMsg(gf_msg_revert, rec_data_revert);
 
   // previously added update_list_ should be tagged for removal, vice versa
-  ASSERT_EQ(rec_data_revert->remove_list_.size(), 2);
+  ASSERT_EQ(rec_data_revert->remove_list_.size(), 3);
   ASSERT_EQ(rec_data_revert->remove_list_.size(), data_received->update_list_.size());
   ASSERT_EQ(rec_data_revert->update_list_.size(), data_received->remove_list_.size());
-  ASSERT_EQ(rec_data_revert->update_list_.size(), 2);
-  ASSERT_EQ(rec_data_revert->update_list_[1].first, 10000);
-  ASSERT_EQ(rec_data_revert->update_list_[1].second->id(), old_speed_limit->id());
+  ASSERT_EQ(rec_data_revert->update_list_.size(), 3);
+  ASSERT_EQ(rec_data_revert->update_list_[0].first, 10000);
+  ASSERT_EQ(rec_data_revert->update_list_[0].second->id(), old_speed_limit->id());
   
 }
 
@@ -1019,7 +1022,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
 // test maxspeed - config limit active
   wmb.setConfigSpeedLimit(55.0);//Set the config speed limit
   msg_v01.params.detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::MAXSPEED_CHOICE;
-  msg_v01.params.detail.maxspeed = 0;
+  msg_v01.params.detail.maxspeed = 100.0;
   auto gf_ptr2 = std::make_shared<Geofence>();
   wmb.geofenceFromMsg(gf_ptr2, msg_v01);
   ASSERT_TRUE(gf_ptr2->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
@@ -1592,12 +1595,12 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   carma_v2x_msgs::msg::PathNode pt;
   pt.x = 1.5; pt.y = 15; pt.z = 0; // Point in lanelet 1200
   msg_v01.geometry.nodes.push_back(pt);
-  pt.x = 1.5; pt.y = 45; pt.z = 0; // Point in lanelet 1201
+  pt.x = 0.0; pt.y = 30; pt.z = 0; // Point in lanelet 1201
   msg_v01.geometry.nodes.push_back(pt);
 
   // Set an advisory speed limit for geofence 1 (Lanelets 1200 and 1201)
   msg_v01.params.detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::MAXSPEED_CHOICE;
-  msg_v01.params.detail.maxspeed = 50;
+  msg_v01.params.detail.maxspeed = 22.352; // 50 mph
 
   // Set the ID for geofence 1
   boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
@@ -1627,7 +1630,7 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   // Set geofence 3's TrafficControlMessage points for lanelets 1210 and 1211
   pt.x = 4.5; pt.y = 15; pt.z = 0; // Point in lanelet 1210
   gf_msg3.tcm_v01.geometry.nodes[0] = pt;
-  pt.x = 4.5; pt.y = 45; pt.z = 0; // Point in lanelet 1211
+  pt.x = 0.0; pt.y = 30; pt.z = 0; // Point in lanelet 1211
   gf_msg3.tcm_v01.geometry.nodes[1] = pt;
 
   // Set the ID for geofence 3
@@ -1638,12 +1641,12 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   // Create geofence 4 with an advisory speed limit (Lanelets 1220 and 1221)
   auto gf_msg4 = gf_msg;
   gf_msg4.tcm_v01.params.detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::MAXSPEED_CHOICE;
-  gf_msg4.tcm_v01.params.detail.maxspeed = 50;
+  gf_msg4.tcm_v01.params.detail.maxspeed = 22.352; // 50 mph
 
   // Set geofence 4's TrafficControlMessage points for lanelets 1220 and 1221
   pt.x = 10.0; pt.y = 15; pt.z = 0; // Point in lanelet 1220
   gf_msg4.tcm_v01.geometry.nodes[0] = pt;
-  pt.x = 10.0; pt.y = 45; pt.z = 0; // Point in lanelet 1221
+  pt.x = 0.0; pt.y = 30; pt.z = 0; // Point in lanelet 1221
   gf_msg4.tcm_v01.geometry.nodes[1] = pt;
 
   // Set the ID for geofence 4
@@ -1662,36 +1665,40 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   std::copy(curr_id.begin(), curr_id.end(), gf_msg5.tcm_v01.id.id.begin());
 
   // Make sure the geofences are active now
-  timer->setNow(rclcpp::Time(0.5e9));
+  timer->setNow(rclcpp::Time(2.1e9));
   activated = true;
 
   // Set callback for geofence 1 
   wmb.geofenceCallback(std::make_unique<carma_v2x_msgs::msg::TrafficControlMessage>(gf_msg));
-  timer->setNow(rclcpp::Time(100.0e9));
+
   ASSERT_TRUE(carma_ros2_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed_gf1, last_active_gf));
   ASSERT_EQ(1, map_update_call_count.load());
 
   // Set callback for geofence 2
+  timer->setNow(rclcpp::Time(2.1e9));
   wmb.geofenceCallback(std::make_unique<carma_v2x_msgs::msg::TrafficControlMessage>(gf_msg2));
-  timer->setNow(rclcpp::Time(100.0e9));
+
   ASSERT_TRUE(carma_ros2_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed_gf2, last_active_gf));
   ASSERT_EQ(2, map_update_call_count.load());
 
   // Set callback for geofence 3
+  timer->setNow(rclcpp::Time(2.1e9));
   wmb.geofenceCallback(std::make_unique<carma_v2x_msgs::msg::TrafficControlMessage>(gf_msg3));
-  timer->setNow(rclcpp::Time(100.0e9));
+
   ASSERT_TRUE(carma_ros2_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed_gf3, last_active_gf));
   ASSERT_EQ(3, map_update_call_count.load());
 
   // Set callback for geofence 4
+  timer->setNow(rclcpp::Time(2.1e9));
   wmb.geofenceCallback(std::make_unique<carma_v2x_msgs::msg::TrafficControlMessage>(gf_msg4));
-  timer->setNow(rclcpp::Time(100.0e9));
+
   ASSERT_TRUE(carma_ros2_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed_gf4, last_active_gf));
   ASSERT_EQ(4, map_update_call_count.load());
 
   // Set callback for geofence 5
+  timer->setNow(rclcpp::Time(2.1e9));
   wmb.geofenceCallback(std::make_unique<carma_v2x_msgs::msg::TrafficControlMessage>(gf_msg5));
-  timer->setNow(rclcpp::Time(100.0e9));
+
   ASSERT_TRUE(carma_ros2_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed_gf5, last_active_gf));
   ASSERT_EQ(5, map_update_call_count.load());
 
@@ -1709,7 +1716,7 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   ASSERT_NEAR(check.advisory_speed, 22.352, 0.0001); // 50 mph in m/s
   ASSERT_EQ(check.minimum_gap, 5);
   ASSERT_EQ(check.type, 2); // Type 2 is "LANE_CLOSED" since adjacent right lane is closed
-  ASSERT_EQ(check.reason, "MOVE OVER LAW");
+  ASSERT_EQ(check.reason, "");  // does not have reason for 1220 lanelet
 
   // Update current vehicle pose message for Lanelet 1210
   current_vehicle_pose.pose.position.x = 4.5;
@@ -1722,7 +1729,7 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   ASSERT_NEAR(check.advisory_speed, 35.7632, 0.00001); // Matches original map speed limit
   ASSERT_EQ(check.minimum_gap, 0); // Not populated
   ASSERT_EQ(check.type, 2); // Type 2 is "LANE_CLOSED"
-  ASSERT_EQ(check.reason, "MOVE OVER LAW");
+  ASSERT_EQ(check.reason, "MOVE OVER LAW"); // set in gf_msg3
 
   // Create current vehicle pose message for Lanelet 1220
   current_vehicle_pose.pose.position.x = 10.0;
@@ -1735,7 +1742,7 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   ASSERT_NEAR(check.advisory_speed, 22.352, 0.0001); // 50 mph in m/s
   ASSERT_EQ(check.minimum_gap, 5);
   ASSERT_EQ(check.type, 2); // Type 2 is "LANE_CLOSED" since adjacent left lane is closed
-  ASSERT_EQ(check.reason, "MOVE OVER LAW");
+  ASSERT_EQ(check.reason, ""); // 1220 lanelet was not set reason as copied from gf_msg
 
   // Create current vehicle pose message for Lanelet 1203 
   current_vehicle_pose.pose.position.x = 1.5;

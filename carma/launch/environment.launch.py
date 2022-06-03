@@ -73,33 +73,6 @@ def generate_launch_description():
     carma_wm_ctrl_ros2_param_file = os.path.join(
         get_package_share_directory('carma_wm_ctrl_ros2'), 'config/parameters.yaml')
 
-    carma_wm_ctrl_container = ComposableNodeContainer(
-        package='carma_ros2_utils', # rclcpp_components
-        name='carma_wm_ctrl_container',
-        executable='carma_component_container_mt',
-        namespace=GetCurrentNamespace(),
-        composable_node_descriptions=[
-            ComposableNode(
-                package='carma_wm_ctrl_ros2',
-                plugin='carma_wm_ctrl::WMBroadcasterNode',
-                name='carma_wm_broadcaster',
-                extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('carma_wm_ctrl_ros2', env_log_levels) }
-                    ],
-                remappings=[
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
-                    ("geofence", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_geofence_control" ] ),
-                    ("incoming_map", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_map" ] ),
-                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
-                    ("outgoing_geofence_ack", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),
-                    ("outgoing_geofence_request", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_geofence_request" ] )
-                ],
-                parameters=[ carma_wm_ctrl_ros2_param_file ]
-            ),
-        ]
-    )
-
 
     # lidar_perception_container contains all nodes for lidar based object perception
     # a failure in any one node in the chain would invalidate the rest of it, so they can all be 
@@ -237,7 +210,24 @@ def generate_launch_description():
         executable='carma_component_container_mt',
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
- 
+             ComposableNode(
+                package='carma_wm_ctrl_ros2',
+                plugin='carma_wm_ctrl::WMBroadcasterNode',
+                name='carma_wm_broadcaster',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('carma_wm_ctrl_ros2', env_log_levels) }
+                    ],
+                remappings=[
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                    ("geofence", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_geofence_control" ] ),
+                    ("incoming_map", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_map" ] ),
+                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                    ("outgoing_geofence_ack", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),
+                    ("outgoing_geofence_request", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_geofence_request" ] )
+                ],
+                parameters=[ carma_wm_ctrl_ros2_param_file ]
+            ),
             ComposableNode(
                     package='object_detection_tracking',
                     plugin='object::ObjectDetectionTrackingNode',
@@ -336,7 +326,6 @@ def generate_launch_description():
     return LaunchDescription([
         declare_subsystem_controller_param_file_arg,
         lidar_perception_container,
-        carma_wm_ctrl_container,
         carma_external_objects_container,
         subsystem_controller
     ])

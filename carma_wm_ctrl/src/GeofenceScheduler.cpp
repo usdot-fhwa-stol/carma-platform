@@ -71,9 +71,11 @@ void GeofenceScheduler::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   // Create timer for next start time
   for (size_t schedule_idx = 0; schedule_idx < gf_ptr->schedules.size(); schedule_idx++)
   {
+    // resolve clock type
     auto interval_info = gf_ptr->schedules[schedule_idx].getNextInterval(timerFactory_->now());
     rclcpp::Time startTime = interval_info.second;
-    if (!interval_info.first && startTime == rclcpp::Time(0))
+
+    if (!interval_info.first && startTime == rclcpp::Time(0, 0, clock_type_))
     {
       RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl::GeofenceScheduler"), 
           "Failed to add geofence as its schedule did not contain an active or upcoming control period. GF Id: "
@@ -136,13 +138,12 @@ void GeofenceScheduler::endGeofenceCallback(std::shared_ptr<Geofence> gf_ptr, co
     startTime = timerFactory_->now();
   }
 
-  if (!interval_info.first && startTime == rclcpp::Time(0))
+  if (!interval_info.first && startTime == rclcpp::Time(0, 0, clock_type_))
   {
     // No more active periods for this geofence so return
     return;
   }
 
-  std::cerr << "Here comes another timer being created for :" << gf_ptr->id_ << std::endl;
   // Build timer to trigger when this geofence becomes active
   int32_t start_timer_id = nextId();
 
