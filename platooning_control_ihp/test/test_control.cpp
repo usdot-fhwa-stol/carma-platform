@@ -16,13 +16,13 @@
 
 ------------------------------------------------------------------------------*/
 
-#include "platoon_control.h"
+#include "platoon_control_ihp.h"
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 
 
 
-TEST(PlatoonControlPluginTest, test2)
+TEST(PlatoonControlIHPPluginTest, test2)
 {
     cav_msgs::TrajectoryPlan tp;
     cav_msgs::TrajectoryPlanPoint point1;
@@ -42,7 +42,7 @@ TEST(PlatoonControlPluginTest, test2)
 
 
 
-    platoon_control::PlatoonControlPlugin pc;
+    platoon_control_ihp::PlatoonControlIHPPlugin pc;
     pc.current_speed_ = 5;
     cav_msgs::TrajectoryPlanPoint out = pc.getLookaheadTrajectoryPoint(tp);
     EXPECT_EQ(out.x, 10.0);

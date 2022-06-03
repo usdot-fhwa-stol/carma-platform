@@ -23,7 +23,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <thread>
 #include <chrono>
-#include "platoon_control.h"
+#include "platoon_control_ihp.h"
 
 
 
