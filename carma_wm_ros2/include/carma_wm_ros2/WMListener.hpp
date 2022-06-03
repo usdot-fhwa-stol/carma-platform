@@ -60,6 +60,10 @@ public:
     rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_params_,
     bool multi_thread = false);
 
+  /*! \brief Destructor
+   */
+  ~WMListener();
+
   /*!
    * \brief Returns a pointer to an intialized world model instance
    *

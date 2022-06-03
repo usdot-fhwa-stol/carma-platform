@@ -1,4 +1,4 @@
-# Copyright (C) 2021 LEIDOS.
+# Copyright (C) 2021-2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -261,6 +261,32 @@ def generate_launch_description():
                     ],
                     remappings=[
                         ("external_objects", "external_object_predictions" ),
+                    ]
+            ),
+            ComposableNode( 
+                    package='roadway_objects',
+                    plugin='roadway_objects::RoadwayObjectsNode',
+                    name='roadway_objects_node',
+                    extra_arguments=[
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('roadway_objects', env_log_levels) }
+                    ],
+                    remappings=[
+                        ("external_objects", "external_object_predictions"),
+                    ]
+            ),
+            ComposableNode( 
+                    package='traffic_incident_parser',
+                    plugin='traffic_incident_parser::TrafficIncidentParserNode',
+                    name='traffic_incident_parser_node',
+                    extra_arguments=[
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('traffic_incident_parser', env_log_levels) }
+                    ],
+                    remappings=[
+                        ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                        ("geofence", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_geofence_control" ] ),
+                        ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_operation" ] )
                     ]
             ),
         ]

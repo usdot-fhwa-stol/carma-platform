@@ -168,6 +168,24 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
       std::unordered_set<lanelet::Lanelet> filtered = filterSuccessorLanelets(possible_lanelets, affected_lanelets, lanelet_map, routing_graph);
       ROS_DEBUG_STREAM("Got successor lanelets of size: " << filtered.size());
       affected_lanelets.insert(filtered.begin(), filtered.end());
+
+      if (affected_lanelets.empty() && !possible_lanelets.empty())
+      {
+        ROS_DEBUG_STREAM("Checking if it is the edge case where only last point falls on a valid (correct direction) lanelet");
+        for (auto llt: possible_lanelets)
+        {
+          ROS_DEBUG_STREAM("Evaluating lanelet: " << llt.id());
+          lanelet::BasicLineString2d gf_dir_line({gf_pts[idx - 1].basicPoint2d(), gf_pts[idx].basicPoint2d()});
+          lanelet::BasicLineString2d llt_boundary({(llt.leftBound2d().begin())->basicPoint2d(), (llt.rightBound2d().begin())->basicPoint2d()});
+          
+          // record the llts that are on the same dir
+          if (boost::geometry::intersects(llt_boundary, gf_dir_line))
+          {
+            ROS_DEBUG_STREAM("Overlaps starting line... Picking llt: " << llt.id());
+            affected_lanelets.insert(llt);
+          }  
+        }
+      }
       break;
     } 
 
@@ -214,7 +232,8 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
         ROS_DEBUG_STREAM("interior_angle: " << interior_angle);
         // Save the lanelet if the direction of two points inside aligns with that of the lanelet
 
-        if (interior_angle < M_PI_2 && interior_angle >= 0) affected_lanelets.insert(llt); 
+        if (interior_angle < M_PI_2 && interior_angle >= 0) 
+          affected_lanelets.insert(llt); 
       }
       else
       {

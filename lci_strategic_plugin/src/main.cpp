@@ -36,7 +36,8 @@ int main(int argc, char** argv)
   ros::Publisher tf_distance_pub = pnh.advertise<std_msgs::Float64>("distance_remaining_to_tf", 1);
   ros::Publisher earliest_et_pub = pnh.advertise<std_msgs::Float64>("earliest_entry_time", 1);
   ros::Publisher et_pub = pnh.advertise<std_msgs::Float64>("scheduled_entry_time", 1);
-
+  
+  
   // Initialize world model
   carma_wm::WMListener wml;
 
@@ -62,10 +63,23 @@ int main(int argc, char** argv)
   pnh.param<std::string>("lane_following_plugin_name",       config.lane_following_plugin_name, config.lane_following_plugin_name);
   pnh.param<std::string>("stop_and_wait_plugin_name",        config.stop_and_wait_plugin_name, config.stop_and_wait_plugin_name);
   pnh.param<std::string>("intersection_transit_plugin_name", config.intersection_transit_plugin_name, config.intersection_transit_plugin_name);
+  pnh.param<double>("carma_streets_update_interval",   config.carma_streets_update_interval, config.carma_streets_update_interval);
+  pnh.param<double>("reaction_time",   config.reaction_time, config.reaction_time);
+  pnh.param<bool>("enable_carma_streets_connection",config.enable_carma_streets_connection, config.enable_carma_streets_connection);
+  pnh.param<double>("mobility_rate",config.mobility_rate, config.mobility_rate);
+  pnh.getParam("/vehicle_id", config.vehicle_id);
   // clang-format on
   
   // Construct plugin
   lci_strategic_plugin::LCIStrategicPlugin lcip(wml.getWorldModel(), config);
+
+  // Create subscribers
+  // Mobility Operation Subscriber
+  ros::Subscriber mob_operation_sub = nh.subscribe("incoming_mobility_operation", 1, &lci_strategic_plugin::LCIStrategicPlugin::mobilityOperationCb, &lcip); 
+  ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &lci_strategic_plugin::LCIStrategicPlugin::BSMCb, &lcip);
+  
+  //Publisher
+  lcip.mobility_operation_pub = nh.advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 1);
 
   // Setup callback connections
   ros::ServiceServer plan_maneuver_srv =
@@ -90,6 +104,8 @@ int main(int argc, char** argv)
         earliest_et_pub.publish(earliest_et);
         et_pub.publish(scheduled_et);
       });
+
+      ros::Timer mobility_pub_timer = nh.createTimer(ros::Duration(ros::Rate(config.mobility_rate)), [&lcip](const auto&) {lcip.mobilityPubSpin(); });
 
   // Start
   ros::CARMANodeHandle::spin();
