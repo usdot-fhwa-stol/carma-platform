@@ -16,13 +16,13 @@
 
 ------------------------------------------------------------------------------*/
 
-#include "platoon_control_ihp_worker.h"
+#include "platoon_control_worker.h"
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 
-TEST(PlatoonControlIHPWorkerTest, test1)
+TEST(PlatoonControlWorkerTest, test1)
 {
-    platoon_control_ihp::PlatoonControlIHPWorker pcw;
+    platoon_control::PlatoonControlWorker pcw;
     cav_msgs::TrajectoryPlanPoint point;
     point.x = 1.0;
     point.y = 2.0;
@@ -30,10 +30,10 @@ TEST(PlatoonControlIHPWorkerTest, test1)
     EXPECT_NEAR(0, pcw.speedCmd_, 0.1);
 }
 
-TEST(PlatoonControlIHPWorkerTest, test11)
+TEST(PlatoonControlWorkerTest, test11)
 {
-    platoon_control_ihp::PlatoonLeaderInfo leader;
-    platoon_control_ihp::PlatoonControlIHPWorker pcw;
+    platoon_control::PlatoonLeaderInfo leader;
+    platoon_control::PlatoonControlWorker pcw;
     leader.staticId = "";
     leader.leaderIndex = 0;
     leader.NumberOfVehicleInFront = 1;
@@ -47,11 +47,11 @@ TEST(PlatoonControlIHPWorkerTest, test11)
     EXPECT_NEAR(10.0, pcw.getLastSpeedCommand(), 0.5);
 }
 
-TEST(PlatoonControlIHPWorkerTest, test2)
+TEST(PlatoonControlWorkerTest, test2)
 {
 
-    platoon_control_ihp::PlatoonControlIHPWorker pcw;
-    platoon_control_ihp::PlatoonLeaderInfo leader;
+    platoon_control::PlatoonControlWorker pcw;
+    platoon_control::PlatoonLeaderInfo leader;
     leader.commandSpeed = 10;
     leader.vehicleSpeed = 10;
     leader.vehiclePosition = 50;
@@ -83,11 +83,11 @@ TEST(PlatoonControlIHPWorkerTest, test2)
 
 }
 
-TEST(PlatoonControlIHPWorkerTest, test3)
+TEST(PlatoonControlWorkerTest, test3)
 {
 
-    platoon_control_ihp::PlatoonControlIHPWorker pcw;
-    platoon_control_ihp::PlatoonLeaderInfo leader;
+    platoon_control::PlatoonControlWorker pcw;
+    platoon_control::PlatoonLeaderInfo leader;
     leader.commandSpeed = 10;
     leader.vehicleSpeed = 10;
     leader.vehiclePosition = 50;
@@ -121,9 +121,9 @@ TEST(PlatoonControlIHPWorkerTest, test3)
 
     }
 
-TEST(PlatoonControlIHPWorkerTest, test_steer)
+TEST(PlatoonControlWorkerTest, test_steer)
 {
-    platoon_control_ihp::PlatoonControlIHPWorker pcw;
+    platoon_control::PlatoonControlWorker pcw;
     cav_msgs::TrajectoryPlanPoint point;
     point.x = 1.0;
     point.y = 2.0;

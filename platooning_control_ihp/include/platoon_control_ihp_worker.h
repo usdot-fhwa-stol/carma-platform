@@ -65,14 +65,14 @@ namespace platoon_control_ihp
     public:
 
         /**
-        * \brief Default constructor for platooning control IHP worker
+        * \brief Default constructor for platooning control worker
         */
         PlatoonControlIHPWorker();
 
         /**
         * \brief Update configurations
         */
-        void updateConfigParams(PlatoonControlIHPPluginConfig new_config);
+        void updateConfigParams(PlatooningControlIHPPluginConfig new_config);
 
         /**
         * \brief Returns latest speed command
@@ -99,21 +99,39 @@ namespace platoon_control_ihp
         */
         void setCurrentSpeed(double speed);
 
+        /**
+         * \brief UCLA: HP gap regulation that calculate the deisred position (Dtd, in m) for the platoon members. 
+         * 
+         * \params leaderCurrentPosition: The current position (dtd) of the leader, in m.
+         * 
+         */
+        double getIHPTargetPositionFollower(double leaderCurrentPosition);
+
         // Member Variables
-        double speedCmd = 0;
+        double speedCmd = 0;    
         double currentSpeed = 0;
         double lastCmdSpeed = 0.0;
         double speedCmd_ = 0;
         double steerCmd_ = 0;
         double angVelCmd_ = 0;
+
+        // Note: the standstill headway is an initial value, a desired gap was extracted from platooing_info_msg
         double desired_gap_ = ctrl_config_.standStillHeadway;
+
         double actual_gap_ = 0.0;
         bool last_cmd_set_ = false;
+        // UCLA: Read host platoon position as member variable 
+        int host_platoon_position_ = 0;
+        // UCLA: Read the time headway summation of all predecessors 
+        double current_predecessor_time_headway_sum_ = 0.0;
+        // UCLA: Read predecessor speed m/s, and DtD position m.
+        double predecessor_speed_ = 0.0;
+        double predecessor_position_ = 0.0; 
 
         // Platoon Leader
         PlatoonLeaderInfo platoon_leader;
 
-
+        
         void setCurrentPose(const geometry_msgs::PoseStamped msg);
 
 		// geometry pose
@@ -122,7 +140,7 @@ namespace platoon_control_ihp
 
     private:
         // config parameters
-        PlatoonControlIHPPluginConfig ctrl_config_;
+        PlatooningControlIHPPluginConfig ctrl_config_;
 
         // pid controller object
         PIDController pid_ctrl_;
