@@ -105,6 +105,8 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   
   wmb_->setIntersectionCoordCorrection(intersection_ids_for_correction, intersection_coord_correction);
   
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Done loading parameters: " << config_);
+
   /////////////
   // PUBLISHERS
   /////////////
