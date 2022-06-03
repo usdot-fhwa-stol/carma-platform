@@ -142,7 +142,7 @@ namespace carma_guidance_plugins
     }
 
     carma_planning_msgs::msg::Plugin msg;
-    msg.name = get_name();
+    msg.name = get_plugin_name();
     msg.version_id = get_version_id();
     msg.type = get_type();
     msg.available = get_availability();

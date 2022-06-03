@@ -32,7 +32,7 @@ namespace carma_guidance_plugins
    *        This includes basic state machine management (largely delegated to ROS2 lifecycle behavior), required interfaces, and plugin discovery
    * 
    * Extending classes must implement the on_configure_plugin method to load parameters, and my override the other state transitions methods on_<state>_plugin if desired.
-   * Additionally, extending classes must implement the methods such as get_name() which are used to populate the plugin discovery message.
+   * Additionally, extending classes must implement the methods such as get_plugin_name() which are used to populate the plugin discovery message.
    * 
    * NOTE: At the moment, this class and all extending classes are setup to support only single threading.
    * 
@@ -138,7 +138,7 @@ namespace carma_guidance_plugins
      * 
      * \return Name of this plugin
      */ 
-    virtual std::string get_name() = 0;
+    virtual std::string get_plugin_name() = 0;
 
     /**
      * \brief Returns the version id of this plugin.
