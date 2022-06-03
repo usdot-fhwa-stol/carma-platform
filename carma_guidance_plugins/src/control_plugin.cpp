@@ -38,16 +38,19 @@ namespace carma_guidance_plugins
 
   void ControlPlugin::current_pose_callback(geometry_msgs::msg::PoseStamped::UniquePtr msg)
   {
+    RCLCPP_DEBUG(rclcpp::get_logger("carma_guidance_plugins"), "Received pose message");
     current_pose_ = *msg;
   }
 
   void ControlPlugin::current_twist_callback(geometry_msgs::msg::TwistStamped::UniquePtr msg)
   {
+    RCLCPP_DEBUG(rclcpp::get_logger("carma_guidance_plugins"), "Received twist message");
     current_twist_ = *msg;
   }
 
   void ControlPlugin::current_trajectory_callback(carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg)
   {
+    RCLCPP_DEBUG(rclcpp::get_logger("carma_guidance_plugins"), "Received trajectory message");
     current_trajectory_ = *msg;
   }
 
