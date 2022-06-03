@@ -23,7 +23,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <thread>
 #include <chrono>
-#include "platoon_control_ihp.h"
+#include "platoon_control.h"
 
 
 
@@ -32,7 +32,7 @@
 TEST(TestSuite, testCase1)
 {
     ros::NodeHandle nh = ros::NodeHandle();
-    ros::Publisher traj_pub_ = nh.advertise<cav_msgs::TrajectoryPlan>("PlatooningControlPluginIHP/plan_trajectory", 5);
+    ros::Publisher traj_pub_ = nh.advertise<cav_msgs::TrajectoryPlan>("PlatooningControlPlugin/plan_trajectory", 5);
     cav_msgs::TrajectoryPlan tp;
     traj_pub_.publish(tp);
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));

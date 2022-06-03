@@ -22,8 +22,8 @@ namespace platoon_control_ihp
 {
 	PIDController::PIDController(){}
 	
-	double PIDController::calculate( double setpoint, double pv ){
-
+	double PIDController::calculate( double setpoint, double pv )
+	{
 		// Calculate error
 	    double error = setpoint - pv;
 		ROS_DEBUG_STREAM("PID error: " << error);
@@ -69,7 +69,8 @@ namespace platoon_control_ihp
 
 
 
-    void PIDController::reset() {
+    void PIDController::reset() 
+	{
         _integral = 0.0;
         _pre_error = 0.0;
     }

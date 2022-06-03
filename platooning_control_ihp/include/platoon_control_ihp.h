@@ -38,7 +38,7 @@ namespace platoon_control_ihp
     {
         public:
             
-			// Default constructor for PlatoonControlIHPPlugin class
+			// Default constructor for PlatoonControlPlugin class
 			PlatoonControlIHPPlugin();
 
 			void initialize();
@@ -70,8 +70,8 @@ namespace platoon_control_ihp
 			double trajectory_speed_ = 0.0;
 
 			cav_msgs::TrajectoryPlan latest_trajectory_;
-
         
+
         private:
 
 
@@ -81,8 +81,8 @@ namespace platoon_control_ihp
 			// platoon control worker object
         	PlatoonControlIHPWorker pcw_;
 
-			// IHP platooning config object
-			PlatoonControlIHPPluginConfig config_;
+			// platooning config object
+			PlatooningControlIHPPluginConfig config_;
 
 
 			// Variables

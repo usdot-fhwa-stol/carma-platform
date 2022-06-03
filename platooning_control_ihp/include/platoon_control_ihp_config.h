@@ -19,9 +19,9 @@
 #include <iostream>
 
 /**
- * \brief Stuct containing the algorithm configuration values for the PlatoonControlIHPPlugin
+ * \brief Stuct containing the algorithm configuration values for the PlatooningControlPlugin
  */
-struct PlatoonControlIHPPluginConfig
+struct PlatooningControlIHPPluginConfig
 {
   double timeHeadway = 6.0;
   double standStillHeadway = 12.0;
@@ -44,9 +44,27 @@ struct PlatoonControlIHPPluginConfig
   std::string vehicleID = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
   int     shutdownTimeout = 200;                // ms 
   int     ignoreInitialInputs = 0;              // num inputs to throw away after startup
-  
-  
-  friend std::ostream& operator<<(std::ostream& output, const PlatoonControlIHPPluginConfig& c)
+
+  // added for gap regulation
+  double vehicleLength = 5.0;     // m
+  // UCLA: Added for IHP control 
+  // ---------------------- UCLA: parameters for IHP platoon trajectory regulation ----------------
+  /**
+  * \brief Parameter sets for IHP platoon trajectory regulation algorithm. 
+  * Please refer to the updated design doc for detailed parameter description.
+  */
+  double ss_theta   = 4.0;    // Minimum speed to be considered as moving, in mph.
+  double standstill = 2.0;    // Extra time needed to reacte to traffic sceanrios when vehicle is standstill (not moving), in s.
+  double inter_tau  = 1.5;    // Inter-platoon time gap, refer to bumper to bumper gap time, in s.
+  double intra_tau  = 0.6;    // Intra-platoon time gao, refer to bumper to bumper gap time, in s.
+  double gap_weight = 0.9;    // Weighted ratio for time-gap based calculation, unitless.
+  double time_step  = 5;      // The time step ga regulation algorithm uses to calculate desired position, in s.
+  bool   test_front_join = false;   //Flag to enable/disable front join functionality with two vehicles.
+                                    // Flag can be set to true, to test front join functionality with two vehicles
+                                    // But in normal operating conditions it should be set to false
+  //------------------------------------------------------------------------------------------------
+
+  friend std::ostream& operator<<(std::ostream& output, const PlatooningControlIHPPluginConfig& c)
   {
     output << "PlatoonControlIHPPluginConfig { " << std::endl
            << "timeHeadway: " << c.timeHeadway << std::endl
