@@ -16,7 +16,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+ 
 #include "carma_wm/WorldModel.h"
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
@@ -160,6 +160,13 @@ public:
    */
   lanelet::CarmaTrafficSignalPtr getTrafficSignal(const lanelet::Id& id) const;
 
+  /*! \brief update minimum end time to account for minute of the year
+   */
+  boost::posix_time::ptime min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists);
+  
+  /*! \brief for cheking previous rate to avoid repetation.
+   */
+  bool check_if_seen_before_movement_state(const boost::posix_time::ptime& min_end_time_dynamic,const auto& received_state_dynamic,const int& mov_id, const int& mov_signal_group) const;
   /**
    * \brief (non-const version) Gets the underlying lanelet, given the cartesian point on the map 
    *
