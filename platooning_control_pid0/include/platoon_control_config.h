@@ -48,45 +48,44 @@ namespace platoon_control_pid0 {
         double  time_step = 0.03333;
         double  gamma_h = 1.0;
         double  max_steering_angle = 1.05;
+        double  max_accel = 2.5;
+        double  speed_adjustment_cap = 10.0;
+
+        // The following come from global vehicle params, not the local param file
+        std::string vehicle_id = "DEFAULT_VEHICLE_ID";
         double  wheelbase = 3.09;
-
-        //TODO: which of these do we still need?
-        double  timeHeadway = 6.0;
-        double  standStillHeadway = 12.0;
-        double  maxAccel = 2.5;
-        int     cmdTmestamp = 100;
-        double  adjustmentCap = 10;
-        double  lowpassGain = 0.5;
-        double  lookaheadRatio = 2.0;
-        double  minLookaheadDist = 6.0;
-        double  Kdd = 4.5; // coeficient for smooth steering TODO: need this?
-
-        std::string vehicleID = "DEFAULT_VEHICLE_ID"; //TODO get the real thing, if we even need it
+        int     shutdown_timeout = 400;
+        int     ignore_initial_inputs = 0;
 
         friend std::ostream &operator<<(std::ostream &output, const PlatooningControlPluginConfig &c)
         {
             output << "PlatoonControlPluginConfig { " << std::endl
-//JOHN
-
-
-
-
-
-                << "shutdown_timeout: " << c.shutdown_timeout << std::endl
-
-
-
-
-                << "timeHeadway: " << c.timeHeadway << std::endl
-                << "standStillHeadway: " << c.standStillHeadway << std::endl
-                << "maxAccel: " << c.maxAccel << std::endl
-                << "cmdTmestamp: " << c.cmdTmestamp << std::endl
-                << "adjustmentCap: " << c.adjustmentCap << std::endl
-                << "wheelBase: " << c.wheelBase << std::endl
-                << "lowpassGain: " << c.lowpassGain << std::endl
-                << "lookaheadRatio: " << c.lookaheadRatio << std::endl
-                << "minLookaheadDist: " << c.minLookaheadDist << std::endl
-                << "Kdd: " << c.Kdd << std::endl
+                << "pid_h_deadband:     " << c.pid_h_deadband       << std::endl
+                << "pid_h_slope_break:  " << c.pid_h_slope_break    << std::endl
+                << "pid_h_kp1:          " << c.pid_h_kp1            << std::endl
+                << "pid_h_kp2:          " << c.pid_h_kp2            << std::endl
+                << "pid_h_ki:           " << c.pid_h_ki             << std::endl
+                << "pid_h_kd:           " << c.pid_h_kd             << std::endl
+                << "pid_h_integral_min: " << c.pid_h_integral_min   << std::endl
+                << "pid_h_integral_max: " << c.pid_h_integral_max   << std::endl
+                << "pid_c_deadband      " << c.pid_c_deadband       << std::endl
+                << "pid_c_slope_break:  " << c.pid_c_slope_break    << std::endl
+                << "pid_c_kp1:          " << c.pid_c_kp1            << std::endl
+                << "pid_c_kp2:          " << c.pid_c_kp2            << std::endl
+                << "pid_c_ki:           " << c.pid_c_ki             << std::endl
+                << "pid_c_kd:           " << c.pid_c_kd             << std::endl
+                << "pid_c_integral_min: " << c.pid_c_integral_min   << std::endl
+                << "pid_c_integral_max: " << c.pid_c_integral_max   << std::endl
+                << "time_step:          " << c.time_step            << std::endl
+                << "gamma_h:            " << c.gamma_h              << std::endl
+                << "max_steering_angle: " << c.max_steering_angle   << std::endl
+                << "max_accel:          " << c.max_accel            << std::endl
+                << "speed_adjustment_cap:" << c.speed_adjustment_cap    << std::endl
+                << "From global vehicle config:"                    << std::endl
+                << "vehicle_id:         " << c.vehicle_id           << std::endl
+                << "wheelbase:          " << c.wheelbase            << std::endl
+                << "shutdown_timeout:   " << c.shutdown_timeout     << std::endl
+                << "ignore_initial_inputs:" << c.ignore_initial_inputs  << std::endl
                 << "}" << std::endl;
             return output;
         }

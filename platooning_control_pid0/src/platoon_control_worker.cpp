@@ -81,12 +81,11 @@ namespace platoon_control_pid0
     }
 
 
-    void void PlatoonControlWorker::set_platoon_info(const std::string leader_id, const double leader_loc, const double leader_spd_cmd,
-                                                     const int leader_pos, const int host_pos) {
-        leader_loc_ = leader_loc;
-        leader_spd_cmd_ = leader_spd_cmd;
-        leader_pos_ = leader_pos;
-        host_pos_ = host_pos;
+    void set_lead_info(const PlatoonLeader& pl, const double tgt_gap, const double act_gap) {
+        leader_ = pl;
+        desired_gap_ = tgt_gap;
+        actual_gap_ = act_gap;
+        ROS_DEBUG_STREAM("desired gap = " << desired_gap_ << ", actual gap = " << actual_gap_);
     }
 
 
@@ -117,6 +116,8 @@ namespace platoon_control_pid0
         double x1 = traj_[tpi].x;
         double y1 = traj_[tpi].y;
         double tp_dist = std::sqrt(x*x + y*y);
+
+        // Find the average speed implied by the target times on each point
         double delta_time = traj_[tpi].target_time - traj_[tpi-1].target_time;
         speed_cmd_ = tp_dist / (delta_time + 0.0001);
         ROS_DEBUG_STREAM("speed cmd = " << speed_cmd_ << ", tp_dist = " << tp_dist << ", delta_time = " << delta_time);
@@ -124,19 +125,19 @@ namespace platoon_control_pid0
 
         //---------- Steering command
 
-        // Find the heading of that trajectory point
+        // Find the heading of the next downtrack trajectory point
         double tp_heading = normalize_yaw(traj_[tp_index_].yaw);
 
         // Calculate the heading error (desired - actual), as a delta angle, accounting for the possibility
         // of crossing over the zero-heading cardinal direction
-        double heading_error = subtract_headings(tp_heading, vehicle_heading);
+        double heading_error = subtract_headings(tp_heading, host_heading_);
 
         // Pass heading error to the heading PID
         double out_h = pid_h_->calculate(0.0, heading_error);
 
         // Find the cross-track error (lateral diff between vehicle position and nearest point
         // on the trajectory, which may be different from the global CTE normally discussed in
-        // larger Carma contexts, as that typcially references to the roadway centerline, not the
+        // larger Carma contexts, as that typically references to the roadway centerline, not the
         // planned trajectory).
         double cte = calculate_cross_track();
 
@@ -163,10 +164,10 @@ namespace platoon_control_pid0
         // But it doesn't seem that is appropriate.  Rather, for controller to work correctly, angular rate cmd
         // should be intimately connected to the steering angle cmd. Therefore...
 
-        // Radius of the immediate future trajectory of the vehicle (regardless of the path that was laid out) is
+        // Radius of the immediate future trajectory of the vehicle (regardless of the path that was laid out) is,
         // from bicycle model, using the rear axle as vehicle reference point, as described in
         // https://dingyan89.medium.com/simple-understanding-of-kinematic-bicycle-model-81cac6420357.
-        double radius = 999999.7;
+        double radius = 1.0e9;
         if (abs(steering_cmd_) > 1.0e-9) {
             radius = wheelbase_ / std::tan(steering_cmd_);
         }
@@ -310,138 +311,4 @@ namespace platoon_control_pid0
         }
         return res;
     }
-
-
-
-
-
-
-
-
-    //JOHN all below may be throwaway
-
-	double PlatoonControlWorker::getLastSpeedCommand() const {
-        return speedCmd_;
-    }
-
-    void PlatoonControlWorker::generateSpeed(const cav_msgs::TrajectoryPlanPoint& point)
-    {
-        double speed_cmd = 0;
-
-        if (!last_cmd_set_)
-        {
-            // last speed command for smooth speed transition
-            lastCmdSpeed = currentSpeed;
-            last_cmd_set_ = true;
-        }
-
-        PlatoonLeaderInfo leader = platoon_leader;
-    	if(leader.staticId != "" && leader.staticId != ctrl_config_.vehicleID)
-        {
-            double controllerOutput = 0.0;
-
-
-	        double leaderCurrentPosition = leader.vehiclePosition;
-	        ROS_DEBUG_STREAM("The current leader position is " << leaderCurrentPosition);
-
-            double desiredHostPosition = leaderCurrentPosition - desired_gap_;
-            ROS_DEBUG_STREAM("desiredHostPosition = " << desiredHostPosition);
-
-            double hostVehiclePosition = leaderCurrentPosition - actual_gap_;
-            ROS_DEBUG_STREAM("hostVehiclePosition = " << hostVehiclePosition);
-	        
-	        controllerOutput = pid_ctrl_.calculate(desiredHostPosition, hostVehiclePosition);
-
-		    double adjSpeedCmd = controllerOutput + leader.commandSpeed;
-	        ROS_DEBUG_STREAM("Adjusted Speed Cmd = " << adjSpeedCmd << "; Controller Output = " << controllerOutput
-	        	<< "; Leader CmdSpeed= " << leader.commandSpeed << "; Adjustment Cap " << ctrl_config_.adjustmentCap);
-	            // After we get a adjSpeedCmd, we apply three filters on it if the filter is enabled
-	            // First: we do not allow the difference between command speed of the host vehicle and the leader's commandSpeed higher than adjustmentCap
-	        
-            speed_cmd = adjSpeedCmd;
-            ROS_DEBUG_STREAM("A speed command is generated from command generator: " << speed_cmd << " m/s");
-
-            if(enableMaxAdjustmentFilter)
-            {
-                if(speed_cmd > leader.commandSpeed + ctrl_config_.adjustmentCap) {
-                    speed_cmd = leader.commandSpeed + ctrl_config_.adjustmentCap;
-                } else if(speed_cmd < leader.commandSpeed - ctrl_config_.adjustmentCap) {
-                    speed_cmd = leader.commandSpeed - ctrl_config_.adjustmentCap;
-                }
-                ROS_DEBUG_STREAM("The adjusted cmd speed after max adjustment cap is " << speed_cmd << " m/s");
-            }
-
-        }
-
-        else if (leader.staticId == ctrl_config_.vehicleID)
-        {
-            ROS_DEBUG_STREAM("Host vehicle is the leader");
-            speed_cmd = currentSpeed;
-
-            if(enableMaxAdjustmentFilter) 
-            {
-                if(speed_cmd > ctrl_config_.adjustmentCap)
-                {
-                    speed_cmd = ctrl_config_.adjustmentCap;
-                } 
-
-                ROS_DEBUG_STREAM("The adjusted leader cmd speed after max adjustment cap is " << speed_cmd << " m/s");
-            }   
-
-            pid_ctrl_.reset();
-        }
-
-        else 
-        {
-            // If there is no leader available, the vehicle will stop. This means there is a mis-communication between platooning strategic and control plugins.
-            ROS_DEBUG_STREAM("There is no leader available");
-            speed_cmd = 0.0;
-            pid_ctrl_.reset();
-        }
-
-        
-        
-        // Third: we allow do not a large gap between two consecutive speed commands
-        if(enableMaxAccelFilter) {
-                
-                double max = lastCmdSpeed + (ctrl_config_.maxAccel * (ctrl_config_.cmdTmestamp / 1000.0));
-                double min = lastCmdSpeed - (ctrl_config_.maxAccel * (ctrl_config_.cmdTmestamp / 1000.0));
-                if(speed_cmd > max) {
-                    speed_cmd = max; 
-                } else if (speed_cmd < min) {
-                    speed_cmd = min;
-                }
-                lastCmdSpeed = speed_cmd;
-                ROS_DEBUG_STREAM("The speed command after max accel cap is: " << speed_cmd << " m/s");
-        }
-
-        speedCmd_ = speed_cmd;
-
-        lastCmdSpeed = speedCmd_;
-
-    }
-
-    void PlatoonControlWorker::generateSteer(const cav_msgs::TrajectoryPlanPoint& point)
-    {
-        pp_.current_pose_ = current_pose_;
-        pp_.velocity_ = currentSpeed;
-
-        pp_.calculateSteer(point);
-    	steerCmd_ = pp_.getSteeringAngle(); 
-        angVelCmd_ = pp_.getAngularVelocity();
-    }
-
-    // TODO get the actual leader from strategic plugin
-    void PlatoonControlWorker::setLeader(const PlatoonLeaderInfo& leader){
-    	platoon_leader = leader;
-    }
-
-    void  PlatoonControlWorker::setCurrentSpeed(double speed){
-    	currentSpeed = speed;
-        
-    }
-
-
-
-
 }

@@ -27,32 +27,36 @@ namespace platoon_control_pid0
     	nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
 
-        //JOHN rebuild all this
-        pnh_->param<double>("timeHeadway", config.timeHeadway, config.timeHeadway);
-        pnh_->param<double>("standStillHeadway", config.standStillHeadway, config.standStillHeadway);
-        pnh_->param<double>("maxAccel", config.maxAccel, config.maxAccel);
-        pnh_->param<double>("Kp", config.Kp, config.Kp);
-        pnh_->param<double>("Kd", config.Kd, config.Kd);
-        pnh_->param<double>("Ki", config.Ki, config.Ki);
-        pnh_->param<double>("maxValue", config.maxValue, config.maxValue);
-        pnh_->param<double>("minValue", config.minValue, config.minValue);
-        pnh_->param<double>("dt", config.dt, config.dt);
-        pnh_->param<double>("adjustmentCap", config.adjustmentCap, config.adjustmentCap);
-        pnh_->param<double>("integratorMax", config.integratorMax, config.integratorMax);
-        pnh_->param<double>("integratorMin", config.integratorMin, config.integratorMin);
-        pnh_->param<double>("Kdd", config.Kdd, config.Kdd);
-        pnh_->param<int>("cmdTmestamp", config.cmdTmestamp, config.cmdTmestamp);
-        pnh_->param<double>("lowpassGain", config.lowpassGain, config.lowpassGain);
-        pnh_->param<double>("lookaheadRatio", config.lookaheadRatio, config.lookaheadRatio);
-        pnh_->param<double>("minLookaheadDist", config.minLookaheadDist, config.minLookaheadDist);
+        pnh_->param<double>("pid_h_deadband",       config_.pid_h_deadband,     config_.pid_h_deadband);
+        pnh_->param<double>("pid_h_slope_break",    config_.pid_h_slope_break,  config_.pid_h_slope_break);
+        pnh_->param<double>("pid_h_kp1",            config_.pid_h_kp1,          config_.pid_h_kp1);
+        pnh_->param<double>("pid_h_kp2",            config_.pid_h_kp2,          config_.pid_h_kp2);
+        pnh_->param<double>("pid_h_ki",             config_.pid_h_ki,           config_.pid_h_ki);
+        pnh_->param<double>("pid_h_kd",             config_.pid_h_kd,           config_.pid_h_kd);
+        pnh_->param<double>("pid_h_integral_min",   config_.pid_h_integral_min, config_.pid_h_integral_min);
+        pnh_->param<double>("pid_h_integral_max",   config_.pid_h_integral_max, config_.pid_h_integral_max);
+        pnh_->param<double>("pid_c_deadband",       config_.pid_c_deadband,     config_.pid_c_deadband);
+        pnh_->param<double>("pid_c_slope_break",    config_.pid_c_slope_break,  config_.pid_c_slope_break);
+        pnh_->param<double>("pid_c_kp1",            config_.pid_c_kp1,          config_.pid_c_kp1);
+        pnh_->param<double>("pid_c_kp2",            config_.pid_c_kp2,          config_.pid_c_kp2);
+        pnh_->param<double>("pid_c_ki",             config_.pid_c_ki,           config_.pid_c_ki);
+        pnh_->param<double>("pid_c_kd",             config_.pid_c_kd,           config_.pid_c_kd);
+        pnh_->param<double>("pid_c_integral_min",   config_.pid_c_integral_min, config_.pid_c_integral_min);
+        pnh_->param<double>("pid_c_integral_max",   config_.pid_c_integral_max, config_.pid_c_integral_max);
+        pnh_->param<double>("time_step",            config_.time_step,          config_.time_step);
+        pnh_->param<double>("gamma_h",              config_.gamma_h,            config_.gamma_h);
+        pnh_->param<double>("max_steering_angle",   config_.max_steering_angle, config_.max_steering_angle);
+        pnh_->param<double>("max_accel",            config_.max_accel,          config_.max_accel);
+        pnh_->param<double>("speed_adjustment_cap", config_.speed_adjustment_cap, config_.speed_adjustment_cap);
 
         // Global params (from vehicle config)
-        pnh_->getParam("/vehicle_id", config.vehicleID); //TODO: need this?
-        pnh_->getParam("/vehicle_wheel_base", config.wheelBase); //TODO: need this?
-        pnh_->getParam("/control_plugin_shutdown_timeout", config.shutdownTimeout);
-        pnh_->getParam("/control_plugin_ignore_initial_inputs", config.ignoreInitialInputs);
+        pnh_->getParam("/vehicle_id", config_.vehicleID);
+        pnh_->getParam("/vehicle_wheel_base", config_.wheelbase);
+        pnh_->getParam("/control_plugin_shutdown_timeout", config_.shutdownTimeout);
+        pnh_->getParam("/control_plugin_ignore_initial_inputs", config_.ignoreInitialInputs);
+        ROS_DEBUG_STREAM("Configuration settings:\n" << config_)
 
-        pcw_.updateConfigParams(config_);
+        pcw_.set_config_params(config_);
 
 	  	// Define the topic subscribers
 		trajectory_plan_sub_ = nh_->subscribe<cav_msgs::TrajectoryPlan>("PlatooningControlPlugin/plan_trajectory", 1, &PlatoonControlPlugin::trajectoryPlan_cb, this);
@@ -82,7 +86,7 @@ namespace platoon_control_pid0
 
         // Set up a timer to run the control loop at 30 Hz
         control_timer_ = pnh_->createTimer(
-            ros::Duration(ros::Rate(30.0)),
+            ros::Duration(ros::Rate(30.0)), //CAUTION: config param time_step must change if this value changes
             [this](const auto&) { control_timer_cb(); }
         );
     }
@@ -96,7 +100,7 @@ namespace platoon_control_pid0
 
     void PlatoonControlPid0Plugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg) {
         geometry_msgs::PoseStamped pose_msg = geometry_msgs::PoseStamped(*msg.get());
-        pcw_.setCurrentPose(pose_msg);
+        pcw_.set_current_pose(pose_msg);
     }
 
 
@@ -108,19 +112,15 @@ namespace platoon_control_pid0
         output_msg.host_cmd_speed = pcw_.get_speed_cmd();
         platoon_info_pub_.publish(output_msg);
  
-        // Grab a few items to update our internal knowledge - JOHN fix all these for accessors
-        platoon_leader_.staticId = msg.leader_id;
-        platoon_leader_.vehiclePosition = msg.leader_downtrack_distance;
-        platoon_leader_.commandSpeed = msg.leader_cmd_speed;
-        // TODO: index is 0 temp to test the leader state
-        platoon_leader_.NumberOfVehicleInFront = msg.host_platoon_position;
-        platoon_leader_.leaderIndex = 0;
-
-        pcw_.actual_gap_ = msg.actual_gap; //TODO use accessors
-        pcw_.desired_gap_ = msg.desired_gap;
-        ROS_DEBUG_STREAM("Platoon leader id:  " << platoon_leader_.staticId);
-        ROS_DEBUG_STREAM("Platoon leader pose:  " << platoon_leader_.vehiclePosition);
-        ROS_DEBUG_STREAM("Platoon leader cmd speed:  " << platoon_leader_.commandSpeed);
+        // Grab a few items to update our internal knowledge
+        DynamicLeaderInfo dl;
+        dl.staticId = msg.leader_id;
+        dl.vehiclePosition = msg.leader_downtrack_distance;
+        dl.commandSpeed = msg.leader_cmd_speed;
+        pcw_.set_lead_info(dl, msg.desired_gap, msg.actual_gap);
+        ROS_DEBUG_STREAM("leader id:  " << dl.staticId);
+        ROS_DEBUG_STREAM("leader pose:  " << dl.vehiclePosition);
+        ROS_DEBUG_STREAM("leader cmd speed:  " << dl.commandSpeed);
     }
 
 
@@ -147,7 +147,6 @@ namespace platoon_control_pid0
 
     bool PlatoonControlPid0Plugin::control_timer_cb() {
 
-        ROS_DEBUG_STREAM("In control timer callback ");
         // If it has been a long time since input data has arrived then reset the input counter and return
         // Note: this quiets the controller after its input stream stops, which is necessary to allow 
         // the replacement controller to publish on the same output topic after this one is done.
@@ -185,9 +184,9 @@ namespace platoon_control_pid0
 
     geometry_msgs::TwistStamped PlatoonControlPid0Plugin::compose_twist_cmd(double linear_vel, double angular_vel) {
         geometry_msgs::TwistStamped cmd_twist;
+        cmd_twist.header.stamp = ros::Time::now();
         cmd_twist.twist.linear.x = linear_vel;
         cmd_twist.twist.angular.z = angular_vel;
-        cmd_twist.header.stamp = ros::Time::now();
         return cmd_twist;
     }
 
@@ -202,52 +201,4 @@ namespace platoon_control_pid0
 
 
 // @SONAR_START@
-
-
-//JOHN - reorder methods once I determine which ones need to be kept
-
-    void PlatoonControlPid0Plugin::generate_control_signals(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, 
-                                                            const cav_msgs::TrajectoryPlanPoint& lookahead_point)
-    {
-
-        pcw_.setCurrentSpeed(trajectory_speed_);
-        // pcw_.setCurrentSpeed(current_speed_);
-        pcw_.setLeader(platoon_leader_);
-    	pcw_.generateSpeed(first_trajectory_point);
-    	pcw_.generateSteer(lookahead_point);
-
-
-    }
-
-
-    // JOHN not sure I need this one
-    // extract maximum speed of trajectory
-    double PlatoonControlPid0Plugin::get_trajectory_speed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points)
-    {   
-        double trajectory_speed = 0;
-
-        double dx1 = trajectory_points[trajectory_points.size()-1].x - trajectory_points[0].x;
-        double dy1 = trajectory_points[trajectory_points.size()-1].y - trajectory_points[0].y;
-        double d1 = sqrt(dx1*dx1 + dy1*dy1); 
-        double t1 = (trajectory_points[trajectory_points.size()-1].target_time.toSec() - trajectory_points[0].target_time.toSec());
-
-        double avg_speed = d1/t1;
-
-        for(size_t i = 0; i < trajectory_points.size() - 2; i++ )
-        {            double dx = trajectory_points[i + 1].x - trajectory_points[i].x;
-            double dy = trajectory_points[i + 1].y - trajectory_points[i].y;
-            double d = sqrt(dx*dx + dy*dy); 
-            double t = (trajectory_points[i + 1].target_time.toSec() - trajectory_points[i].target_time.toSec());
-            double v = d/t;
-            if(v > trajectory_speed)
-            {
-                trajectory_speed = v;
-            }
-        }
-
-        ROS_DEBUG_STREAM("trajectory speed: " << trajectory_speed);
-        ROS_DEBUG_STREAM("avg trajectory speed: " << avg_speed);
-
-        return avg_speed;
-    }
 }

@@ -32,28 +32,16 @@ namespace platoon_control_pid0
     /**
     * \brief Platoon Leader Struct
     */
-	struct PlatoonLeaderInfo {
+	struct DynamicLeaderInfo {
         // Static ID is permanent ID for each vehicle
         std::string staticId;
 
         // Vehicle real time command speed in m/s
         double      commandSpeed;
 
-        // Actual vehicle speed in m/s
-        double      vehicleSpeed;
-
         // Vehicle current down track distance on the current route in m
         double      vehiclePosition;
-
-        // The local time stamp when the host vehicle update any informations of this member
-        long        timestamp;
-
-        // leader index in the platoon
-        int         leaderIndex;
-
-        // Number of vehicles in front of the host vehicle
-        int         NumberOfVehicleInFront;
-    };
+   };
 
 
     class PlatoonControlWorker {
@@ -91,15 +79,12 @@ namespace platoon_control_pid0
         void set_trajectory(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
 
         /**
-         * \brief Stores info about the current platoon situation
-         * \param leader_id         ID of the host's dynamic leader (the one we are controlling gap to)  //TODO: needed?
-         * \param leader_loc        leader's downtrack distance relative to host's route, m
-         * \param leader_spd_cmd    speed command the dynamic leader is trying to follow, m/s
-         * \param leader_pos        position of the dynamic leader in the platoon (zero-indexed)
-         * \param host_pos          position of the host vehicle in the platon (zero-indexed)
+         * \brief Stores info needed for forward gap management.
+         * \param pl A struct containing data about the forward vehicle whose speed host is trying to control to
+         * \param tgt_gap The distance we would like to be from that forward vehicle, m
+         * \param act_gap The distance we actually are from that forward vehicle, m
          */
-        void set_platoon_info(const std::string leader_id, const double leader_loc, const double leader_spd_cmd,
-                              const int leader_pos, const int host_pos);
+        void set_lead_info(const PlatoonLeader& pl, const double tgt_gap, const double act_gap);
 
         /**
          * \brief Performs calculations to generate the three required command outputs:
@@ -138,11 +123,10 @@ namespace platoon_control_pid0
         double              current_speed_;                 //current host forward speed, m/s
         std::vector<cav_msgs::TrajectoryPlanPoint> traj_;   //the set of points forming the current trajectory
         size_t              tp_index_;                      //index of the nearest trajectory point in front of vehicle
-        std::string         leader_id_;                     //ID of the dynamic leader for this host
-        double              leader_loc_;                    //downtrack distance of the leader wrt host's route, m
-        double              leader_spd_cmd_;                //speed command that the leader is controlling to, m/s
-        int                 leader_pos_;                    //position of the dynamic leader in the platoon (zero-indexed)
+        DynamicLeader       leader_;                        //holds data about the dynamic leader that host is trying to follow
         int                 host_pos_;                      //position of the host vehicle in the platoon (zero-indexed)
+        double              desired_gap_;                   //distance to dynamic leader that we would like to have, m
+        double              actual_gap_;                    //actual distance to dynamic leader, m
         double              steering_cmd_;                  //output command for front wheel steering angle, rad (left is positive)
         double              angular_vel_cmd_;               //output command for angular velocity of the vehicle, rad/s (around +Z axis)
         double              speed_cmd_;                     //output command for forward speed, m/s
@@ -179,82 +163,5 @@ namespace platoon_control_pid0
          * \return equivalent angle, rad in [0, 2pi)
          */
         double normalize_yaw(const double yaw);
-
-
-
-
-
-        /**
-        * \brief Update configurations
-        */
-        void updateConfigParams(PlatooningControlPluginConfig new_config);
-
-        /**
-        * \brief Returns latest speed command
-        */
-        double getLastSpeedCommand() const;
-
-        /**
-        * \brief Generates speed commands based on the trajectory point
-        */
-        void generateSpeed(const cav_msgs::TrajectoryPlanPoint& point);
-        
-        /**
-        * \brief Generates steering commands based on lookahead trajectory point
-        */
-        void generateSteer(const cav_msgs::TrajectoryPlanPoint& point);
-
-        /**
-        * \brief set platoon leader
-        */
-        void setLeader(const PlatoonLeaderInfo& leader);
-        
-        /**
-        * \brief set current speed
-        */
-        void setCurrentSpeed(double speed);
-
-        // Member Variables
-        double speedCmd = 0;
-        double currentSpeed = 0;
-        double lastCmdSpeed = 0.0;
-        double speedCmd_ = 0;
-        double steerCmd_ = 0;
-        double angVelCmd_ = 0;
-        double desired_gap_ = ctrl_config_.standStillHeadway;
-        double actual_gap_ = 0.0;
-        bool last_cmd_set_ = false;
-
-        // Platoon Leader
-        PlatoonLeaderInfo platoon_leader;
-
-
-        void setCurrentPose(const geometry_msgs::PoseStamped msg);
-
-		// geometry pose
-
-
-    private:
-        // config parameters
-        PlatooningControlPluginConfig ctrl_config_;
-
-        // pid controller object
-        PIDController pid_ctrl_;
-
-        // pure pursuit controller object
-        PurePursuit pp_;
-
-        double dist_to_front_vehicle;
-
-        bool leaderSpeedCapEnabled = true;
-        bool enableMaxAdjustmentFilter = true;
-        
-        bool speedLimitCapEnabled = true;
-        bool enableLocalSpeedLimitFilter = true;
-        
-        bool maxAccelCapEnabled = true;
-        bool enableMaxAccelFilter = true;
-        
-
     };
 }

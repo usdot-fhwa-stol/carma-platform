@@ -52,6 +52,7 @@ pid_c_integral_max: 1.0 #initial guess NOT TUNED!
 
 #-----Common PID constants
 # expected time elapsed between calls to PID controllers, s
+# This value needs to be 1/control_timer frequency that is set at bottom of initialize()
 time_step: 0.03333
 
 # Fraction of weight applied to heading PID instead of CTE PID.
@@ -59,20 +60,16 @@ time_step: 0.03333
 gamma_h: 1.0
 
 # max absolute value of steering angle output, rad
+# TODO this needs to come from global vehicle config
 max_steering_angle: 1.05 #approx 60 deg
 
 
 #-----Non-PID values
 
-wheelbase: 3.09
+# Max allowed longitudinal acceleration, m/s^2
+# TODO better to get this from global vehicle config
+max_accel: 1.5
 
-##### DO WE STILL NEED THESE JOHN?
-timeHeadway: 3.5
-standStillHeadway: 22.0
-maxAccel: 1.5
-cmdTmestamp: 100
-adjustmentCap: 11.0
-lowpassGain: 1.0
-lookaheadRatio: 1.6
-minLookaheadDist: 15.0
-Kdd: 4.5
+# Max allowed speed to adjust the gap (this needs to be >= config speed limit), m/s
+# TODO better to make this a delta above the vehicle's config max speed
+speed_adjustment_cap: 12.0
