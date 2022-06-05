@@ -68,6 +68,7 @@ namespace platoon_control_pid0
         	cav_msgs::Plugin						plugin_discovery_msg_;		//holds ~constant info to publish for discovery
 			ros::Timer 								discovery_pub_timer_;		//timer for publishing discovery messages
 			ros::Timer								control_timer_;				//timer for running the control loop
+			long									prev_input_time_;			//time stamp of the most recent trajectory plan receipt, ms
 			long									consecutive_input_ctr_ = 0;	//number of consecutive timely trajectory inputs since restart
 
         	// ROS Subscribers

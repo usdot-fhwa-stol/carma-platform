@@ -30,7 +30,7 @@ TEST(PIDControllerTest, test1) //unlimited integral & outputs with no i & d term
     res = pid.calculate(40.0, 33.0); //exercise k1 with positive error
     EXPECT_EQ(3.0, res);
     res = pid.calculate(40.0, 39.1); //exercise deadband with positive error
-    EXPEC_EQ(0.0, res);
+    EXPECT_EQ(0.0, res);
     res = pid.calculate(40.0, 44.0); //exercise deadband with negative error
     EXPECT_EQ(0.0, res);
     res = pid.calculate(40.0, 46.6); //exercise k1 with negative error
@@ -45,7 +45,7 @@ TEST(PIDControllerTest, test2) //testing output limiter
     double res;
     res = pid.calculate(40.0, 55.9); //negative not limited
     EXPECT_EQ(-17.8, res);
-    res pid.calculate(40.0, 80.0); //negative limited
+    res = pid.calculate(40.0, 80.0); //negative limited
     EXPECT_EQ(-20.0, res);
     res = pid.calculate(40.0, 26.2); //positive not limited
     EXPECT_EQ(13.6, res);

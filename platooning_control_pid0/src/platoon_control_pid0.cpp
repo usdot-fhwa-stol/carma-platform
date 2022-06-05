@@ -50,19 +50,20 @@ namespace platoon_control_pid0
         pnh_->param<double>("speed_adjustment_cap", config_.speed_adjustment_cap, config_.speed_adjustment_cap);
 
         // Global params (from vehicle config)
-        pnh_->getParam("/vehicle_id", config_.vehicleID);
+        pnh_->getParam("/vehicle_id", config_.vehicle_id);
         pnh_->getParam("/vehicle_wheel_base", config_.wheelbase);
-        pnh_->getParam("/control_plugin_shutdown_timeout", config_.shutdownTimeout);
-        pnh_->getParam("/control_plugin_ignore_initial_inputs", config_.ignoreInitialInputs);
-        ROS_DEBUG_STREAM("Configuration settings:\n" << config_)
+        pnh_->getParam("/control_plugin_shutdown_timeout", config_.shutdown_timeout);
+        pnh_->getParam("/control_plugin_ignore_initial_inputs", config_.ignore_initial_inputs);
+        //ROS_DEBUG_STREAM("Configuration settings:\n" << config_);
 
         pcw_.set_config_params(config_);
 
 	  	// Define the topic subscribers
-		trajectory_plan_sub_ = nh_->subscribe<cav_msgs::TrajectoryPlan>("PlatooningControlPlugin/plan_trajectory", 1, &PlatoonControlPlugin::trajectoryPlan_cb, this);
-        current_twist_sub_ = nh_->subscribe<geometry_msgs::TwistStamped>("current_velocity", 1, &PlatoonControlPlugin::currentTwist_cb, this);
-        platoon_info_sub_ = nh_->subscribe<cav_msgs::PlatooningInfo>("platoon_info", 1, &PlatoonControlPlugin::platoonInfo_cb, this);
-        pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlPlugin::pose_cb, this);  //TODO: why this form of subscribe?
+		trajectory_plan_sub_ = nh_->subscribe<cav_msgs::TrajectoryPlan>("PlatooningControlPlugin/plan_trajectory", 1, 
+                                                                        &PlatoonControlPid0Plugin::trajectory_plan_cb, this);
+        current_twist_sub_ = nh_->subscribe<geometry_msgs::TwistStamped>("current_velocity", 1, &PlatoonControlPid0Plugin::current_twist_cb, this);
+        platoon_info_sub_ = nh_->subscribe<cav_msgs::PlatooningInfo>("platoon_info", 1, &PlatoonControlPid0Plugin::platoon_info_cb, this);
+        pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlPid0Plugin::pose_cb, this);  //TODO: why this form of subscribe?
 
 		// Define the topic publishers
 		twist_pub_ = nh_->advertise<geometry_msgs::TwistStamped>("twist_raw", 5, true);
@@ -114,10 +115,10 @@ namespace platoon_control_pid0
  
         // Grab a few items to update our internal knowledge
         DynamicLeaderInfo dl;
-        dl.staticId = msg.leader_id;
-        dl.vehiclePosition = msg.leader_downtrack_distance;
-        dl.commandSpeed = msg.leader_cmd_speed;
-        pcw_.set_lead_info(dl, msg.desired_gap, msg.actual_gap);
+        dl.staticId = msg->leader_id;
+        dl.vehiclePosition = msg->leader_downtrack_distance;
+        dl.commandSpeed = msg->leader_cmd_speed;
+        pcw_.set_lead_info(dl, msg->desired_gap, msg->actual_gap);
         ROS_DEBUG_STREAM("leader id:  " << dl.staticId);
         ROS_DEBUG_STREAM("leader pose:  " << dl.vehiclePosition);
         ROS_DEBUG_STREAM("leader cmd speed:  " << dl.commandSpeed);
@@ -173,10 +174,10 @@ namespace platoon_control_pid0
         double steer_cmd = pcw_.get_steering_cmd();
         double angle_cmd = pcw_.get_angular_vel_cmd();
 
-        geometry_msgs::TwistStamped twist_msg = composeTwistCmd(speed_cmd, angle_cmd);
+        geometry_msgs::TwistStamped twist_msg = compose_twist_cmd(speed_cmd, angle_cmd);
         twist_pub_.publish(twist_msg);
 
-        autoware_msgs::ControlCommandStamped ctrl_msg = composeCtrlCmd(speed_cmd, steer_cmd);
+        autoware_msgs::ControlCommandStamped ctrl_msg = compose_ctrl_cmd(speed_cmd, steer_cmd);
         ctrl_pub_.publish(ctrl_msg);
         return true;
     }

@@ -57,7 +57,7 @@ namespace platoon_control_pid0 {
         int     shutdown_timeout = 400;
         int     ignore_initial_inputs = 0;
 
-        friend std::ostream &operator<<(std::ostream &output, const PlatooningControlPluginConfig &c)
+        friend std::ostream &operator<<(std::ostream &output, const PlatoonControlPluginConfig &c)
         {
             output << "PlatoonControlPluginConfig { " << std::endl
                 << "pid_h_deadband:     " << c.pid_h_deadband       << std::endl

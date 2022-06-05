@@ -15,16 +15,16 @@
 * the License.
 ------------------------------------------------------------------------------*/
 
+#include <boost/optional.hpp>
 #include <ros/ros.h>
 #include <cav_msgs/MobilityOperation.h>
 #include <cav_msgs/MobilityRequest.h>
 #include <cav_msgs/MobilityResponse.h>
+#include <cav_msgs/TrajectoryPlan.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <cav_msgs/PlanType.h>
 #include "pid_controller.h"
-#include "pure_pursuit.h"
 #include "platoon_control_config.h"
-#include <boost/optional.hpp>
 
 
 namespace platoon_control_pid0
@@ -61,7 +61,7 @@ namespace platoon_control_pid0
         /**
          * \brief Stores the needed config params for this plugin
          */
-        void set_config_params(PlatoonControlPluginConfig configs);
+        void set_config_params(const PlatoonControlPluginConfig config);
 
         /**
          * \brief Stores the current vehicle pose (x-y-z location in map frame, m)
@@ -84,7 +84,7 @@ namespace platoon_control_pid0
          * \param tgt_gap The distance we would like to be from that forward vehicle, m
          * \param act_gap The distance we actually are from that forward vehicle, m
          */
-        void set_lead_info(const PlatoonLeader& pl, const double tgt_gap, const double act_gap);
+        void set_lead_info(const DynamicLeaderInfo& dl, const double tgt_gap, const double act_gap);
 
         /**
          * \brief Performs calculations to generate the three required command outputs:
@@ -123,7 +123,7 @@ namespace platoon_control_pid0
         double              current_speed_;                 //current host forward speed, m/s
         std::vector<cav_msgs::TrajectoryPlanPoint> traj_;   //the set of points forming the current trajectory
         size_t              tp_index_;                      //index of the nearest trajectory point in front of vehicle
-        DynamicLeader       leader_;                        //holds data about the dynamic leader that host is trying to follow
+        DynamicLeaderInfo   leader_;                        //holds data about the dynamic leader that host is trying to follow
         int                 host_pos_;                      //position of the host vehicle in the platoon (zero-indexed)
         double              desired_gap_;                   //distance to dynamic leader that we would like to have, m
         double              actual_gap_;                    //actual distance to dynamic leader, m

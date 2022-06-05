@@ -27,6 +27,4 @@ int main(int argc, char** argv)
     platoon_control_pid0::PlatoonControlPid0Plugin node;
     node.run();
     return 0;
-};
-
-
+}

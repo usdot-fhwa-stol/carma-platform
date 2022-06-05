@@ -16,13 +16,15 @@
 
 ------------------------------------------------------------------------------*/
 
-#include <boost/math.h>
+#include <boost/math/constants/constants.hpp>
 #include "platoon_control_worker.h"
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
 
 
 namespace platoon_control_pid0
 {
-    const double PI = boost::math::constants::pi<double>();
+    const double PI = boost::math::double_constants::pi;
     const double TWO_PI = 2.0*PI;
 
 	PlatoonControlWorker::PlatoonControlWorker() {}
@@ -38,7 +40,7 @@ namespace platoon_control_pid0
     }
 
 
-    void PlatoonControlWorker::set_config_params(PlatooningControlPluginConfig config) {
+    void PlatoonControlWorker::set_config_params(const PlatoonControlPluginConfig config) {
 
         // Store the params we need for future operations
         time_step_ = config.time_step;
@@ -81,8 +83,8 @@ namespace platoon_control_pid0
     }
 
 
-    void set_lead_info(const PlatoonLeader& pl, const double tgt_gap, const double act_gap) {
-        leader_ = pl;
+    void PlatoonControlWorker::set_lead_info(const DynamicLeaderInfo& dl, const double tgt_gap, const double act_gap) {
+        leader_ = dl;
         desired_gap_ = tgt_gap;
         actual_gap_ = act_gap;
         ROS_DEBUG_STREAM("desired gap = " << desired_gap_ << ", actual gap = " << actual_gap_);
@@ -115,10 +117,13 @@ namespace platoon_control_pid0
         double y0 = traj_[tpi-1].y;
         double x1 = traj_[tpi].x;
         double y1 = traj_[tpi].y;
-        double tp_dist = std::sqrt(x*x + y*y);
+        double dx = x0 - x1;
+        double dy = y0 - y1;
+        double tp_dist = std::sqrt(dx*dx + dy*dy);
 
         // Find the average speed implied by the target times on each point
-        double delta_time = traj_[tpi].target_time - traj_[tpi-1].target_time;
+        ros::Duration time_diff = traj_[tpi].target_time - traj_[tpi-1].target_time;
+        double delta_time = time_diff.toSec();
         speed_cmd_ = tp_dist / (delta_time + 0.0001);
         ROS_DEBUG_STREAM("speed cmd = " << speed_cmd_ << ", tp_dist = " << tp_dist << ", delta_time = " << delta_time);
 
@@ -207,16 +212,16 @@ namespace platoon_control_pid0
         for (size_t index = 0;  index < traj_.size();  ++index) {
 
             // Calculate dist between this point and the vehicle
-            double dx = current_pose_.position.x - iter->x;
-            double dy = current_pose_.position.y - iter->y;
+            double dx = host_x_ - traj_[index].x;
+            double dy = host_y_ - traj_[index].y;
             double dist = std::sqrt(dx*dx + dy*dy);
 
             // If this distance is smaller than the best so far then
             if (dist < best_dist) {
 
                 // Build a vector from the vehicle to this trajectory point
-                double vtx = iter->x - host_x_;
-                double vty = iter->y - host_y_;
+                double vtx = traj_[index].x - host_x_;
+                double vty = traj_[index].y - host_y_;
 
                 // Find the dot product between vehicle heading vector and this vector
                 double dot = vhx*vtx + vhy*vty;
@@ -269,8 +274,8 @@ namespace platoon_control_pid0
         double lvy = p2y - p1y;
 
         // Create a vector between base of line and the vehicle
-        double vvx = current_pose_.x - p1x;
-        double vvy = current_pose_.y - p1y;
+        double vvx = host_x_ - p1x;
+        double vvy = host_y_ - p1y;
 
         // Calculate the dot product between the two vectors (ignore the magnitude)
         double dot = lvx*vvx + lvy*vvy;
