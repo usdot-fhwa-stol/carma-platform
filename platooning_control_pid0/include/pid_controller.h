@@ -76,7 +76,8 @@ namespace platoon_control_pid0
         double                          output_min_;        
         double                          output_max_;        
 
-        // historical values used in internal calcs
+        // intermediate values used in internal calcs
+        double                          x2_intercept_ = 0.0;//x axis intercept for the positive kp2 line
         double                          prev_error_ = 0.0;  //error from previous iteration
         double                          integral_ = 0.0;    //integrated error experience thus far
     };

@@ -49,10 +49,12 @@ namespace platoon_control_pid0
         max_steering_angle_ = config.max_steering_angle;
 
         // Create the PID controllers
+        ROS_DEBUG_STREAM("Creating heading PID");
         pid_h_ = new PIDController(config.pid_h_deadband, config.pid_h_slope_break, config.pid_h_kp1,
                                    config.pid_h_kp2, config.pid_h_ki, config.pid_h_kd, config.time_step,
                                    config.pid_h_integral_min, config.pid_h_integral_max,
                                    -config.max_steering_angle, config.max_steering_angle);
+        ROS_DEBUG_STREAM("Creating CTE PID");
         pid_c_ = new PIDController(config.pid_c_deadband, config.pid_c_slope_break, config.pid_c_kp1,
                                    config.pid_c_kp2, config.pid_c_ki, config.pid_c_kd, config.time_step,
                                    config.pid_c_integral_min, config.pid_c_integral_max,

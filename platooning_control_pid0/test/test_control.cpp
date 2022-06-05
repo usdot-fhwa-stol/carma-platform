@@ -1,4 +1,3 @@
-
 /*------------------------------------------------------------------------------
 * Copyright (C) 2020-2021 LEIDOS.
 *
@@ -13,14 +12,11 @@
 * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 * License for the specific language governing permissions and limitations under
 * the License.
-
 ------------------------------------------------------------------------------*/
 
 #include "platoon_control_pid0.h"
 #include <gtest/gtest.h>
 #include <ros/ros.h>
-
-
 
 TEST(PlatoonControlPluginTest, test2)
 {
@@ -28,7 +24,6 @@ TEST(PlatoonControlPluginTest, test2)
     cav_msgs::TrajectoryPlanPoint point1;
     point1.x = 1.0;
     point1.y = 1.0;
-    
 
     cav_msgs::TrajectoryPlanPoint point2;
     point2.x = 10.0;
@@ -40,13 +35,9 @@ TEST(PlatoonControlPluginTest, test2)
 
     tp.trajectory_points = {point1, point2, point3};
 
-
-
-    platoon_control_pid0::PlatoonControlPlugin pc;
-    pc.current_speed_ = 5;
+    platoon_control_pid0::PlatoonControlPid0Plugin pc;
+/*JOHN
     cav_msgs::TrajectoryPlanPoint out = pc.getLookaheadTrajectoryPoint(tp);
     EXPECT_EQ(out.x, 10.0);
+*/
 }
-
-
-

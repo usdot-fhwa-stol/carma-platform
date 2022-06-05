@@ -20,6 +20,14 @@
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 
+bool approx_equal(const double a, const double b) {
+    double diff = abs(a - b);
+    if (diff < 0.001){
+        return true;
+    }else {
+        return false;
+    }
+}
 
 TEST(PIDControllerTest, test1) //unlimited integral & outputs with no i & d terms
 {
@@ -34,9 +42,9 @@ TEST(PIDControllerTest, test1) //unlimited integral & outputs with no i & d term
     res = pid.calculate(40.0, 44.0); //exercise deadband with negative error
     EXPECT_EQ(0.0, res);
     res = pid.calculate(40.0, 46.6); //exercise k1 with negative error
-    EXPECT_EQ(-2.6, res);
+    EXPECT_TRUE(approx_equal(-2.6, res));
     res = pid.calculate(40.0, 55.9); //exercise k2 with negative error
-    EXPECT_EQ(-17.8, res);
+    EXPECT_TRUE(approx_equal(-17.8, res));
 }
 
 TEST(PIDControllerTest, test2) //testing output limiter
@@ -44,11 +52,11 @@ TEST(PIDControllerTest, test2) //testing output limiter
     platoon_control_pid0::PIDController pid(4.0, 10.0, 1.0, 2.0, 0.0, 0.0, 0.5, -20.0, 20.0, -20.0, 20.0);
     double res;
     res = pid.calculate(40.0, 55.9); //negative not limited
-    EXPECT_EQ(-17.8, res);
+    EXPECT_TRUE(approx_equal(-17.8, res));
     res = pid.calculate(40.0, 80.0); //negative limited
-    EXPECT_EQ(-20.0, res);
+    EXPECT_TRUE(approx_equal(-20.0, res));
     res = pid.calculate(40.0, 26.2); //positive not limited
-    EXPECT_EQ(13.6, res);
+    EXPECT_TRUE(approx_equal(13.6, res));
     res = pid.calculate(40.0, 22.9); //positive limited
     EXPECT_EQ(20.0, res);
 }
@@ -62,17 +70,17 @@ TEST(PIDControllerTest, test3) //testing integral term & limiters
     res = pid.calculate(40.0, 31.0); //kp1 positive error, integral positive limited
     EXPECT_EQ(6.2, res);
     res = pid.calculate(40.0, 39.0); //deadband, integral limited
-    EXPECT_EQ(1.2, res);
+    EXPECT_TRUE(approx_equal(1.2, res));
     res = pid.calculate(40.0, 43.0); //deadband
     EXPECT_EQ(1.05, res);
     res = pid.calculate(40.0, 45.0); //kp1 negative error
-    EXPECT_EQ(-0.2, res);
+    EXPECT_TRUE(approx_equal(-0.2, res));
     res = pid.calculate(40.0, 50.0); //kp1 negative error
-    EXPECT_EQ(-5.7, res);
-    res = pid.calculate(40.0, 60.0); //kp2 negative error
-    EXPECT_EQ(-26.2, res);
+    EXPECT_TRUE(approx_equal(-5.7, res));
+    res = pid.calculate(40.0, 60.0); //kp2 negative error, integral negative limited
+    EXPECT_TRUE(approx_equal(-26.5, res));
     res = pid.calculate(40.0, 60.0); //kp2 negatvie error, integral negative limited
-    EXPECT_EQ(-26.5, res);
+    EXPECT_TRUE(approx_equal(-26.5, res));
 }
 
 TEST(PIDControllerTest, test4) //testing derivative term
@@ -80,13 +88,13 @@ TEST(PIDControllerTest, test4) //testing derivative term
     platoon_control_pid0::PIDController pid(4.0, 10.0, 1.0, 2.0, 0.0, 0.2, 0.5, -50.0, 50.0, -50.0, 50.0);
     double res;
     res = pid.calculate(40.0, 45.0); //kp1 negative error, prev error initialized to zero
-    EXPECT_EQ(-3.0, res);
+    EXPECT_TRUE(approx_equal(-3.0, res));
     res = pid.calculate(40.0, 48.0); //kp1 negative error
-    EXPECT_EQ(-5.2, res);
+    EXPECT_TRUE(approx_equal(-5.2, res));
     res = pid.calculate(40.0, 48.0); //kp1 negative error, zero derivative
-    EXPECT_EQ(-4.0, res);
+    EXPECT_TRUE(approx_equal(-4.0, res));
     res = pid.calculate(40.0, 42.0); //deadband, positive derivative
-    EXPECT_EQ(2.4, res);
+    EXPECT_TRUE(approx_equal(2.4, res));
 }
 
 TEST(PIDControllerTest, test5) //both derivative & integral terms active
@@ -94,7 +102,7 @@ TEST(PIDControllerTest, test5) //both derivative & integral terms active
     platoon_control_pid0::PIDController pid(4.0, 10.0, 1.0, 2.0, 0.1, 0.2, 0.5, -50.0, 50.0, -50.0, 50.0);
     double res;
     res = pid.calculate(40.0, 45.0); //kp1 negative error, integral negative, deriv negative
-    EXPECT_EQ(-3.25, res);
+    EXPECT_TRUE(approx_equal(-3.25, res));
     res = pid.calculate(40.0, 39.0); //deadband, integral still negative, deriv positive
     EXPECT_EQ(2.2, res);
     res = pid.calculate(40.0, 32.0); //kp1 positive error, integral positive, deriv positive

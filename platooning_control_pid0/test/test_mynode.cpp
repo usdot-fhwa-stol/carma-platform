@@ -25,9 +25,6 @@
 #include <chrono>
 #include "platoon_control_pid0.h"
 
-
-
-
 // Declare a test
 TEST(TestSuite, testCase1)
 {
@@ -38,7 +35,6 @@ TEST(TestSuite, testCase1)
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     auto num = traj_pub_.getNumSubscribers();
     EXPECT_EQ(1, num);
-
 }
 
 TEST(TestSuite, testCase2)
@@ -51,11 +47,7 @@ TEST(TestSuite, testCase2)
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     auto num = twist_pub_.getNumSubscribers();
     EXPECT_EQ(1, num);
-
 }
-
-
-
 
 int main (int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);

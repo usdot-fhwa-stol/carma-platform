@@ -90,6 +90,8 @@ namespace platoon_control_pid0
             ros::Duration(ros::Rate(30.0)), //CAUTION: config param time_step must change if this value changes
             [this](const auto&) { control_timer_cb(); }
         );
+        
+        ROS_INFO_STREAM("///// PlatoonControlPid0Plugin initialized.");
     }
 
                                     
@@ -143,6 +145,7 @@ namespace platoon_control_pid0
         // Update timing info
         prev_input_time_ = ros::Time::now().toNSec() / 1000000;
         ++consecutive_input_ctr_;
+        ROS_DEBUG_STREAM("Trajectory " << consecutive_input_ctr_ << " received.");
     }
 
 

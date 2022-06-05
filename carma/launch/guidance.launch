@@ -118,8 +118,8 @@
    <!-- Workzone Strategic Plugin >
   <include file="$(find wz_strategic_plugin)/launch/wz_strategic_plugin.launch" /-->
 
-  <!-- Platooning Control Plugin -->
-  <include file="$(find platoon_control)/launch/platoon_control.launch" />
+  <!-- Platoon Control Plugin -->
+  <include file="$(find platoon_control_pid0)/launch/platoon_control_pid0.launch" />
 
   <!-- Platooning Control IHP Plugin -->
   <!-- <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" /> -->

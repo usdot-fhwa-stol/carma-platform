@@ -52,6 +52,10 @@ namespace platoon_control_pid0
 			ROS_WARN_STREAM("PID Controller specified invalid pair of output limits: " << output_min << ", " << output_max);
 		}
 
+		// Pre-compute intermediate kp information to save cpu cycles later
+		double y1 = kp1_*(slope_break_ - deadband_);
+		x2_intercept_ = slope_break_ - y1/kp2_;
+
 		ROS_DEBUG_STREAM("PIDController created with:");
 		ROS_DEBUG_STREAM("    deadband = " << deadband_);
 		ROS_DEBUG_STREAM("    slope_break = " << slope_break_);
@@ -69,25 +73,25 @@ namespace platoon_control_pid0
     void PIDController::reset(){
         integral_ = 0.0;
         prev_error_ = 0.0;
+		ROS_DEBUG_STREAM("PID reset.");
     }
 
 	double PIDController::calculate(const double setpoint, const double pv){
 
 		// Calculate error
 	    double error = setpoint - pv;
+		ROS_DEBUG_STREAM("setpoint = " << setpoint << ", pv = " << pv << ", error = " << error << ", prev error = " << prev_error_);
 
 	    // Proportional term
 		double p_out = 0.0;
 		if (error > slope_break_){
-			double y1 = kp1_*(slope_break_ - deadband_);
-			double x_intercept = slope_break_ - y1/kp2_;
-			p_out = kp2_ * (error - x_intercept);
+			p_out = kp2_ * (error - x2_intercept_);
 		}else if (error > deadband_){
 			p_out = kp1_ * (error - deadband_);
 		}else if (error < -slope_break_){
-			double y1 = kp1_*(-slope_break_ + deadband_);
-			double x_intercept = -slope_break_ + y1/kp2_;
-			p_out = kp2_ * (error - x_intercept);
+			p_out = kp2_ * (error + x2_intercept_);
+		}else if (error < -deadband_){
+			p_out = kp1_ * (error + deadband_);
 		}
 
 	    // Integral term
@@ -105,6 +109,7 @@ namespace platoon_control_pid0
 
 	    // Calculate total output
 	    double output = p_out + i_out + d_out;
+		ROS_DEBUG_STREAM("p_out = " << p_out << ", i_out = " << i_out << ", d_out = " << d_out << ", raw output = " << output);
 
 	    // Restrict to max/min
 	    if (output > output_max_){
@@ -112,6 +117,7 @@ namespace platoon_control_pid0
 		}else if (output < output_min_){
 	        output = output_min_;
 		}
+		ROS_DEBUG_STREAM("Limited output = " << output);
 
 	    // Save error to previous error
 	    prev_error_ = error;
