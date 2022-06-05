@@ -1487,7 +1487,7 @@ namespace carma_wm
 ​
 	    	    if (!recorded)
 		        {
-              sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time, received_state));
+              sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time_dynamic, received_state_dynamic));
     		    }		
 	        }
         } 
