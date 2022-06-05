@@ -1419,6 +1419,10 @@ namespace carma_wm
           min_end_time += lanelet::time::durationFromSec(lanelet::time::toSec(curr_hour_boost));
           return min_end_time;
         }
+        else
+        {
+          return min_end_time; // return unchanged
+        }
     }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////

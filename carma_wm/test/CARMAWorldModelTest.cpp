@@ -1544,6 +1544,41 @@ TEST(CARMAWorldModelTest, getIntersectionAlongRoute)
   EXPECT_EQ(ints[0]->id(), int_id);
 
 }
+///////////////////////////////////////////////////////////////// 
+/*
+TEST(CARMAWorldModelTest, checkIfSeenBeforeMovementState)
+{
+  carma_wm::CARMAWorldModel cmw;
+
+  boost::posix_time::ptime min_end_time_dynamic=;
+  auto received_state_dynamic=;
+  int mov_id=;
+  int mov_signal_group=;
+ 
+  ASSERT_EQ(cmw.check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,mov_id,mov_signal_group), 1);
+
+  min_end_time_dynamic=;
+  received_state_dynamic=;
+  mov_id=;
+  mov_signal_group=;
+
+  ASSERT_EQ(cmw.check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,mov_id,mov_signal_group), 0);
+}
+
+TEST(CARMAWorldModelTest, minEndTimeConverterMinuteOfYear)
+{
+  carma_wm::CARMAWorldModel cmw;
+  boost::posix_time::ptime min_end_time=;
+  bool moy_exists=;
+  
+  ASSERT_EQ(cmw.min_end_time_converter_minute_of_year(min_end_time,moy_exists), 111);
+
+  min_end_time=;
+  moy_exists=;
+
+  ASSERT_EQ(cmw.min_end_time_converter_minute_of_year(min_end_time,moy_exists), 1);
+}*/
+////////////////////////
 
 
 }  // namespace carma_wm
