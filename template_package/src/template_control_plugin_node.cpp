@@ -20,7 +20,7 @@ namespace <SUB><package_name>
   namespace std_ph = std::placeholders;
 
   Node::Node(const rclcpp::NodeOptions &options)
-      : carma_ros2_utils::CarmaLifecycleNode(options)
+      : carma_guidance_plugins::ControlPlugin(options)
   {
     // Create initial config
     config_ = Config();
@@ -41,7 +41,7 @@ namespace <SUB><package_name>
     return result;
   }
 
-  carma_ros2_utils::CallbackReturn Node::handle_on_configure(const rclcpp_lifecycle::State &)
+  carma_ros2_utils::CallbackReturn Node::on_configure_plugin()
   {
     // Reset config
     config_ = Config();
@@ -74,7 +74,7 @@ namespace <SUB><package_name>
         std::chrono::milliseconds(1000),
         std::bind(&Node::example_timer_callback, this));
 
-    // Return success if everything initialized successfully
+    // Return success if everthing initialized successfully
     return CallbackReturn::SUCCESS;
   }
 
@@ -97,6 +97,25 @@ namespace <SUB><package_name>
   void Node::example_callback(std_msgs::msg::String::UniquePtr msg)
   {
     RCLCPP_INFO_STREAM(  get_logger(), "example_sub_ callback called with value: " << msg->data);
+  }
+
+  autoware_msgs::msg::ControlCommandStamped Node::generate_command()
+  {
+    autoware_msgs::msg::ControlCommandStamped msg;
+    // TODO for user: Implement logic to generate control commands here
+    return msg;
+  }
+
+  bool Node::get_availability() {
+    return true; // TODO for user implement actual check on availability if applicable to plugin
+  }
+
+  std::string Node::get_plugin_name() {
+    return "TODO for user specify plugin name here";
+  }
+
+  std::string Node::get_version_id() {
+    return "TODO for user specify plugin version id here";
   }
 
 } // <SUB><package_name>
