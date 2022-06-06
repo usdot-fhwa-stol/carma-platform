@@ -1508,7 +1508,7 @@ namespace carma_wm
         boost::posix_time::ptime min_end_time = lanelet::time::timeFromSec(current_movement_state.movement_event_list[0].timing.min_end_time);
         auto received_state = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state);
         
-        min_end_time=min_end_time_converter_minute_of_year(min_end_time,curr_intersection.moy_exists);
+        min_end_time=min_end_time_converter_minute_of_year(min_end_time,curr_intersection.moy_exists,curr_intersection.moy);
 
         auto last_time_difference = sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first - min_end_time;  
         bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
