@@ -19,6 +19,104 @@
 #include "platoon_control_worker.h"
 #include <gtest/gtest.h>
 #include <ros/ros.h>
+#include <boost/math/constants/constants.hpp>
+
+const double PI = boost::math::double_constants::pi;
+const double TWO_PI = 2.0*PI;
+
+
+TEST(PlatoonControlWorkerTest, test_find_nearest_point)
+{
+    platoon_control_pid0::PlatoonControlWorker pcw;
+    std::vector<cav_msgs::TrajectoryPlanPoint> traj;
+
+    cav_msgs::TrajectoryPlanPoint p0, p1, p2;
+    p0.x = 1.0;
+    p0.y = 2.0;
+    traj.push_back(p0);
+    p1.x = 1.0;
+    p1.y = 3.0;
+    traj.push_back(p1);
+    p2.x = 1.0;
+    p2.y = 4.0;
+    traj.push_back(p2);
+    pcw.unit_test_set_traj(traj);
+    EXPECT_NEAR(3.0, pcw.unit_test_get_traj_py(1), 0.01);
+
+    pcw.unit_test_set_pose(1.5, 0.0, 1.04*PI/2.0);
+    pcw.find_nearest_point();
+    EXPECT_EQ(0, pcw.get_tp_index());
+
+    pcw.unit_test_set_pose(1.6, 2.2, 0.98*PI/2.0);
+    pcw.find_nearest_point();
+    EXPECT_EQ(1, pcw.get_tp_index());
+
+    pcw.unit_test_set_pose(0.82, 3.9, 0.85*PI/2.0);
+    pcw.find_nearest_point();
+    EXPECT_EQ(2, pcw.get_tp_index());
+}
+
+TEST(PlatoonControlWorkerTest, test_calculate_cross_track1)
+{
+    platoon_control_pid0::PlatoonControlWorker pcw;
+    std::vector<cav_msgs::TrajectoryPlanPoint> traj;
+
+    cav_msgs::TrajectoryPlanPoint p0, p1, p2;
+    p0.x = 1.0;
+    p0.y = 2.0;
+    traj.push_back(p0);
+    p1.x = 1.0;
+    p1.y = 3.0;
+    traj.push_back(p1);
+    p2.x = 1.0;
+    p2.y = 4.0;
+    traj.push_back(p2);
+    pcw.unit_test_set_traj(traj);
+    EXPECT_NEAR(3.0, pcw.unit_test_get_traj_py(1), 0.01);
+    
+    pcw.unit_test_set_pose(1.5, 0.0, 1.04*PI/2.0);
+    pcw.find_nearest_point();
+    EXPECT_EQ(0, pcw.get_tp_index());
+    double cte = pcw.calculate_cross_track();
+    EXPECT_NEAR(-0.5, cte, 0.01);
+
+    pcw.unit_test_set_pose(1.6, 2.2, 0.98*PI/2.0);
+    pcw.find_nearest_point();
+    EXPECT_EQ(1, pcw.get_tp_index());
+    cte = pcw.calculate_cross_track();
+    EXPECT_NEAR(-0.6, cte, 0.01);
+
+    pcw.unit_test_set_pose(0.82, 3.9, 0.85*PI/2.0);
+    pcw.find_nearest_point();
+    EXPECT_EQ(2, pcw.get_tp_index());
+    cte = pcw.calculate_cross_track();
+    EXPECT_NEAR(0.18, cte, 0.01);
+}
+
+TEST(PlatoonControlWorkerTest, test_calculate_cross_track2)
+{
+    platoon_control_pid0::PlatoonControlWorker pcw;
+    std::vector<cav_msgs::TrajectoryPlanPoint> traj;
+
+    cav_msgs::TrajectoryPlanPoint p0, p1, p2;
+    p0.x = -1.0;
+    p0.y = -2.0;
+    traj.push_back(p0);
+    p1.x = 0.0;
+    p1.y = -1.0;
+    traj.push_back(p1);
+    p2.x = 1.0;
+    p2.y = 0.0;
+    traj.push_back(p2);
+    pcw.unit_test_set_traj(traj);
+    EXPECT_NEAR(-1.0, pcw.unit_test_get_traj_py(1), 0.01);
+    
+    pcw.unit_test_set_pose(-0.9, -0.2, 0.3*PI/2.0); //left of track, heading toward right side of track
+    pcw.find_nearest_point();
+    EXPECT_EQ(1, pcw.get_tp_index());
+    double cte = pcw.calculate_cross_track();
+    EXPECT_NEAR(1.20, cte, 0.01);
+}
 
 /*
 TEST(PlatoonControlWorkerTest, test1)

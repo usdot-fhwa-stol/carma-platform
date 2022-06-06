@@ -107,6 +107,45 @@ namespace platoon_control_pid0
          */
         double get_angular_vel_cmd();
 
+        /**
+         * \brief Returns the index of the nearest trajectory point downtrack of the vehicle
+         */
+        size_t get_tp_index();
+
+        /**
+         * SHOULD BE PRIVATE!
+         * \brief Given a sorted array of trajectory points (indicating direction of travel), finds the
+         *          nearest point to the vehicle that is in front of the vehicle.  It is assumed that
+         *          trajectories will be long enough and populated frequently enough that they will always
+         *          be close to the vehicle, so that a meaningfully close point will always be found.
+         *          Stores resulting identified point index in member variable tp_index_.
+         */
+        void find_nearest_point();
+
+
+        /**
+         * SHOULD BE PRIVATE!
+         * \brief Calculates the distance from the vehicle's origin to the trajectory path, moving
+         *          perpendicularly to the vehicle's heading.
+         * \return cross-track error, m, with positive values being left of trajectory
+         */
+        double calculate_cross_track();
+
+
+        /**
+         * \brief FOR UNIT TESTING ONLY - allows direct injection of relevant pose data
+         */
+        void unit_test_set_pose(const double x, const double y, const double heading);
+
+        /**
+         * \brief FOR UNIT TESTING ONLY - allows direct injection of a sample trajectory
+         */
+        void unit_test_set_traj(const std::vector<cav_msgs::TrajectoryPlanPoint> tr);
+
+        double unit_test_get_traj_px(const size_t index);
+
+        double unit_test_get_traj_py(const size_t index);
+
 
     private:
 
@@ -133,15 +172,6 @@ namespace platoon_control_pid0
 
 
         /**
-         * \brief Given a sorted array of trajectory points (indicating direction of travel), finds the
-         *          nearest point to the vehicle that is in front of the vehicle.  It is assumed that
-         *          trajectories will be long enough and populated frequently enough that they will always
-         *          be close to the vehicle, so that a meaningfully close point will always be found.
-         *          Stores resulting identified point index in member variable tp_index_.
-         */
-        void find_nearest_point();
-
-        /**
          * \brief Returns the smallest delta angle between two heading values, accounting for the possibility that
          *          they may be on opposite sides of the zero cardinal heading.
          * \param h1 first heading, rad north of east in [0, 2*pi)
@@ -149,13 +179,6 @@ namespace platoon_control_pid0
          * \return delta angle, rad in (-pi, pi], positive if h1 > h2
          */
         double subtract_headings(const double h1, const double h2);
-
-        /**
-         * \brief Calculates the distance from the vehicle's origin to the trajectory path, moving
-         *          perpendicularly to the vehicle's heading.
-         * \return cross-track error, m, with positive values being left of trajectory
-         */
-        double calculate_cross_track();
 
         /**
          * \brief Normalizes the given yaw angle to the range [0, 2pi).

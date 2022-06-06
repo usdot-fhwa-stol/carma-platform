@@ -198,6 +198,32 @@ namespace platoon_control_pid0
     }
 
 
+    size_t PlatoonControlWorker::get_tp_index() {
+        return tp_index_;
+    }
+
+    ////////////////// UNIT TEST SUPPORT ////////////////// TODO - redo all this
+
+    void PlatoonControlWorker::unit_test_set_pose(const double x, const double y, const double heading) {
+        host_x_ = x;
+        host_y_ = y;
+        host_heading_ = heading;
+    }
+
+    void PlatoonControlWorker::unit_test_set_traj(const std::vector<cav_msgs::TrajectoryPlanPoint> tr) {
+        traj_ = tr;
+    }
+
+    double PlatoonControlWorker::unit_test_get_traj_px(const size_t index) {
+        return traj_[index].x;
+    }
+
+    double PlatoonControlWorker::unit_test_get_traj_py(const size_t index) {
+        return traj_[index].y;
+    }
+
+
+
     ////////////////// PRIVATE METHODS ////////////////////
 
     void PlatoonControlWorker::find_nearest_point() {
@@ -228,9 +254,10 @@ namespace platoon_control_pid0
                 // Find the dot product between vehicle heading vector and this vector
                 double dot = vhx*vtx + vhy*vty;
 
-                // If dot product >= 0 then the traj point is in front of the vehicle, so save it
+                // If dot product >= 0 then the traj point is in front of the vehicle, so save it as best so far
                 if (dot >= 0.0) {
                     res = index;
+                    best_dist = dist;
                 }
             }
         }
@@ -289,8 +316,8 @@ namespace platoon_control_pid0
         double pby = p1y + b*lvy;
 
         // Calculate the distance between this pb point and the vehicle (always positive)
-        double dx = pbx - vvx;
-        double dy = pby - vvy;
+        double dx = pbx - host_x_;
+        double dy = pby - host_y_;
         double dist = std::sqrt(dx*dx + dy*dy);
 
         // Determine which side of the trajectory the vehicle is on; sign of this result
