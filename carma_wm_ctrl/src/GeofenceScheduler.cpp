@@ -90,9 +90,11 @@ void GeofenceScheduler::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 
     int32_t timer_id = nextId();
 
+    rclcpp::Duration control_duration = rclcpp::Duration(std::max((startTime - timerFactory_->now()).seconds() * 1e9, 0.0)); //guard for negative value
+
     // Build timer to trigger when this geofence becomes active
     TimerPtr timer = timerFactory_->buildTimer(
-        timer_id, startTime - timerFactory_->now(),
+        timer_id, control_duration,
         std::bind(&GeofenceScheduler::startGeofenceCallback, this, gf_ptr, schedule_idx, timer_id), true, true);
 
     timers_[timer_id] = std::make_pair(std::move(timer), false);  // Add start timer to map by Id
@@ -111,8 +113,11 @@ void GeofenceScheduler::startGeofenceCallback(std::shared_ptr<Geofence> gf_ptr, 
 
   // Build timer to trigger when this geofence becomes inactive
   int32_t ending_timer_id = nextId();
+
+  rclcpp::Duration control_duration = rclcpp::Duration(std::max((endTime - timerFactory_->now()).seconds() * 1e9, 0.0)); //guard for negative value
+
   TimerPtr timer = timerFactory_->buildTimer(
-      ending_timer_id, endTime - timerFactory_->now(),
+      ending_timer_id, control_duration,
       std::bind(&GeofenceScheduler::endGeofenceCallback, this, gf_ptr, schedule_id, ending_timer_id), true, true);
   timers_[ending_timer_id] = std::make_pair(std::move(timer), false);  // Add end timer to map by Id
 
@@ -147,8 +152,10 @@ void GeofenceScheduler::endGeofenceCallback(std::shared_ptr<Geofence> gf_ptr, co
   // Build timer to trigger when this geofence becomes active
   int32_t start_timer_id = nextId();
 
+  rclcpp::Duration control_duration = rclcpp::Duration(std::max((startTime - timerFactory_->now()).seconds() * 1e9, 0.0)); //guard for negative value
+
   TimerPtr timer = timerFactory_->buildTimer(
-      start_timer_id, startTime - timerFactory_->now(),
+      start_timer_id, control_duration,
       std::bind(&GeofenceScheduler::startGeofenceCallback, this, gf_ptr, schedule_id, start_timer_id), true, true);
 
   timers_[start_timer_id] = std::make_pair(std::move(timer), false);  // Add start timer to map by Id

@@ -144,9 +144,21 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   //Upcoming intersection and group id of traffic light 
   upcoming_intersection_ids_pub_ = create_publisher<std_msgs::msg::Int32MultiArray>("intersection_signal_group_ids", 1);
   
+  // Return success if everything initialized successfully
+  
+  return CallbackReturn::SUCCESS;
+}
+
+carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_activate(const rclcpp_lifecycle::State &prev_state)
+{
+  // Timer setup
+  timer_ = create_timer(get_clock(),
+                          std::chrono::milliseconds((int)(config_.traffic_control_request_period * 1000)),
+                          std::bind(&WMBroadcasterNode::spin_callback, this));
+  
   /////////////
   //SUBSCRIBERS
-  /////////////
+  ///////////// NOTE: subscriber declaration delayed until here so that when map is received, publisher is already activated to immediately publish back
 
   // Base Map Sub
   base_map_sub_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>("base_map", 1, std::bind(&WMBroadcaster::baseMapCallback, wmb_.get(), std_ph::_1));
@@ -166,17 +178,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   //Current Location Sub
   curr_location_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>("current_pose", 1, std::bind(&WMBroadcaster::currentLocationCallback, wmb_.get(), std_ph::_1));
   
-  // Return success if everything initialized successfully
   
-  return CallbackReturn::SUCCESS;
-}
-
-carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_activate(const rclcpp_lifecycle::State &prev_state)
-{
-  // Timer setup
-  timer_ = create_timer(get_clock(),
-                          std::chrono::milliseconds((int)(config_.traffic_control_request_period * 1000)),
-                          std::bind(&WMBroadcasterNode::spin_callback, this));
   return CallbackReturn::SUCCESS;
 }
 
