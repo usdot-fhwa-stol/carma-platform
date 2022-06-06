@@ -120,7 +120,6 @@ namespace trajectory_executor
 
   void TrajectoryExecutor::onTrajEmitTick()
   {
-    std::unique_lock<std::mutex> lock(cur_traj_mutex_);
     RCLCPP_DEBUG_STREAM(get_logger(), "TrajectoryExecutor tick start!");
 
     if (cur_traj_ != nullptr) {
@@ -154,7 +153,6 @@ namespace trajectory_executor
 
   void TrajectoryExecutor::onNewTrajectoryPlan(carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg)
   {
-    std::unique_lock<std::mutex> lock(cur_traj_mutex_); // Acquire lock until end of this function scope
     RCLCPP_DEBUG_STREAM(get_logger(), "Received new trajectory plan!");
     RCLCPP_DEBUG_STREAM(get_logger(), "New Trajectory plan ID: " << msg->trajectory_id);
     RCLCPP_DEBUG_STREAM(get_logger(), "New plan contains " << msg->trajectory_points.size() << " points");
@@ -169,7 +167,6 @@ namespace trajectory_executor
     // TODO need to handle control handover once alernative planner system is finished
     if(msg->state != carma_planning_msgs::msg::GuidanceState::ENGAGED)
     {
-      std::unique_lock<std::mutex> lock(cur_traj_mutex_); // Acquire lock until end of this function scope
     	cur_traj_= nullptr;
     }
   }

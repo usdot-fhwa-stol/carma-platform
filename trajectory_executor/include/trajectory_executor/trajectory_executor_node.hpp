@@ -18,7 +18,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <functional>
-#include <mutex>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <carma_planning_msgs/msg/guidance_state.hpp>
 #include <gtest/gtest_prod.h>
@@ -52,10 +51,9 @@ namespace trajectory_executor
     // Node configuration
     Config config_;
 
-    // Trajectory plan tracking data. Synchronized on cur_traj_mutex_
+    // Trajectory plan tracking data
     std::unique_ptr<carma_planning_msgs::msg::TrajectoryPlan> cur_traj_; 
     int timesteps_since_last_traj_ {0};
-    std::mutex cur_traj_mutex_;
 
   protected:
     /*!

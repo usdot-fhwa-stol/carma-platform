@@ -18,7 +18,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <functional>
-#include <mutex>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
