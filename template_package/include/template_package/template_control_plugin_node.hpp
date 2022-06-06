@@ -21,7 +21,7 @@
 #include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/empty.hpp>
 
-#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include <carma_guidance_plugins/control_plugin.hpp>
 #include "<SUB><package_name>/<SUB><package_name>_config.hpp"
 
 namespace <SUB><package_name>
@@ -31,7 +31,7 @@ namespace <SUB><package_name>
    * \brief TODO for USER: Add class description
    * 
    */
-  class Node : public carma_ros2_utils::CarmaLifecycleNode
+  class Node : public carma_guidance_plugins::ControlPlugin
   {
 
   private:
@@ -85,15 +85,27 @@ namespace <SUB><package_name>
     ////
     // Overrides
     ////
-    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &prev_state);
+    autoware_msgs::msg::ControlCommandStamped generate_command() override;
+
+    bool get_availability() override;
+
+    std::string get_plugin_name() override;
+
+    std::string get_version_id() override;
+    
+    /**
+     * \brief This method should be used to load parameters and will be called on the configure state transition.
+     */ 
+    carma_ros2_utils::CallbackReturn on_configure_plugin();
 
     /**
      * TODO for USER: The following lifecycle overrides are also available if needed
-     * handle_on_activate
-     * handle_on_deactivate
-     * handle_on_cleanup
-     * handle_on_shutdown
-     * handle_on_error
+     * get_capability
+     * on_activate_plugin
+     * on_deactivate_plugin
+     * on_cleanup_plugin
+     * on_shutdown_plugin
+     * on_error_plugin
      */
   };
 
