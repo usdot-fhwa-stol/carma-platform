@@ -31,7 +31,6 @@
 #include <boost/geometry/geometries/polygon.hpp>
 #include <carma_wm/Geometry.h>
 #include <queue>
- #include <stdint.h>
 #include <boost/math/special_functions/sign.hpp>
 
 namespace carma_wm
@@ -1384,24 +1383,29 @@ namespace carma_wm
 
       if(sim_.traffic_signal_states_[mov_id][mov_signal_group].empty())
       {
-          return 0;
+          return false;
       }
+
+      std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>> temp_signal_states;
 
       for(auto mov_check:sim_.traffic_signal_states_[mov_id][mov_signal_group])
       {
-
+         if (lanelet::time::timeFromSec(ros::Time::now().toSec()) > mov_check.first)
+         {
+           temp_signal_states.push_back(std::make_pair(mov_check.first, mov_check.second ));
+         }
+        
         auto last_time_difference = mov_check.first - min_end_time_dynamic;  
         bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
 
         if(received_state_dynamic == mov_check.second && is_duplicate)
         {
-          return 1;
+          return true;
         }
-        else
-        {
-          return 0;
-        }
+ 
       } 
+      sim_.traffic_signal_states_[mov_id][mov_signal_group]=temp_signal_states;
+      return false;
       
     }
 
@@ -1504,7 +1508,7 @@ namespace carma_wm
         boost::posix_time::ptime min_end_time = lanelet::time::timeFromSec(current_movement_state.movement_event_list[0].timing.min_end_time);
         auto received_state = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state);
         
-      // min_end_time=min_end_time_converter_minute_of_year(min_end_time,curr_intersection.moy_exists);
+        min_end_time=min_end_time_converter_minute_of_year(min_end_time,curr_intersection.moy_exists);
 
         auto last_time_difference = sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first - min_end_time;  
         bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
