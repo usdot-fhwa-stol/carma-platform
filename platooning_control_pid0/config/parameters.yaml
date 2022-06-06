@@ -6,7 +6,7 @@ pid_h_deadband: 0.0
 pid_h_slope_break: 1.6 #large enough that kp2 will never be needed
 
 # first proportional gain, rad/rad
-pid_h_kp1: -0.5 #initial guess NOT TUNED!
+pid_h_kp1: -1.01 #initial guess NOT TUNED!
 
 # second proportional gain, rad/rad
 pid_h_kp2: -0.1 #initial guess NOT TUNED!
@@ -26,16 +26,16 @@ pid_h_integral_max: 0.1 #initial guess NOT TUNED!
 
 #-----CTE PID constants
 # deadband where control error is ignored, m
-pid_c_deadband: 0.3 #initial guess NOT TUNED!
+pid_c_deadband: 0.1 #initial guess NOT TUNED!
 
 # breakpoint where p value changes from kp1 to kp2, m
-pid_c_slope_break: 1.2 #initial guess NOT TUNED!
+pid_c_slope_break: 5.0 #initial guess NOT TUNED!
 
 # first proportional gain, rad/m
-pid_c_kp1: 0.001 #initial guess NOT TUNED!
+pid_c_kp1: 0.02 #initial guess NOT TUNED!
 
 # second proportional gain, rad/m
-pid_c_kp2: 0.003 #initial guess NOT TUNED!
+pid_c_kp2: 0.05 #initial guess NOT TUNED!
 
 # integral gain, rad/m
 pid_c_ki: 0.0 #initial guess NOT TUNED!
@@ -57,7 +57,7 @@ time_step: 0.03333
 
 # Fraction of weight applied to heading PID instead of CTE PID.
 # Value must be in [0, 1], where 0 only uses CTE and 1 only uses heading
-gamma_h: 1.0
+gamma_h: 0.1
 
 # max absolute value of steering angle output, rad
 # TODO this needs to come from global vehicle config

@@ -47,6 +47,7 @@ namespace platoon_control_pid0
         gamma_h_ = config.gamma_h;
         wheelbase_ = config.wheelbase;
         max_steering_angle_ = config.max_steering_angle;
+        ROS_DEBUG_STREAM("gamma_h = " << gamma_h_ << ", max_steering_angle = " << max_steering_angle_);
 
         // Create the PID controllers
         ROS_DEBUG_STREAM("Creating heading PID");
