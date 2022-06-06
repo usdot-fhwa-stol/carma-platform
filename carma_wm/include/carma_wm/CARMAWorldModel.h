@@ -29,6 +29,7 @@
 #include <cav_msgs/SPAT.h>
 #include "TrackPos.h"
 #include <carma_wm/WorldModelUtils.h>
+ #include <stdint.h>
 #include "boost/date_time/posix_time/posix_time.hpp"
 
 #include <carma_wm/SignalizedIntersectionManager.h>
@@ -160,6 +161,13 @@ public:
    */
   lanelet::CarmaTrafficSignalPtr getTrafficSignal(const lanelet::Id& id) const;
 
+  /*! \brief update minimum end time to account for minute of the year
+   */
+  boost::posix_time::ptime min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy);
+  
+  /*! \brief for cheking previous rate to avoid repetation.
+   */
+  bool check_if_seen_before_movement_state(boost::posix_time::ptime min_end_time_dynamic,lanelet::CarmaTrafficSignalState received_state_dynamic,uint16_t mov_id, uint8_t mov_signal_group);
   /**
    * \brief (non-const version) Gets the underlying lanelet, given the cartesian point on the map 
    *
