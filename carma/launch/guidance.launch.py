@@ -47,6 +47,9 @@ def generate_launch_description():
 
     mobilitypath_visualizer_param_file = os.path.join(
         get_package_share_directory('mobilitypath_visualizer'), 'config/params.yaml')
+
+    trajectory_executor_param_file = os.path.join(
+        get_package_share_directory('trajectory_executor'), 'config/parameters.yaml')
     
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
@@ -82,6 +85,21 @@ def generate_launch_description():
                 parameters=[
                     vehicle_characteristics_param_file,
                     mobilitypath_visualizer_param_file
+                ]
+            ),
+            ComposableNode(
+                package='trajectory_executor',
+                plugin='trajectory_executor::TrajectoryExecutor',
+                name='trajectory_executor_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('trajectory_executor', env_log_levels) }
+                ],
+                remappings = [
+                    ("trajectory", "trajectory_plan"),
+                ],
+                parameters=[
+                    trajectory_executor_param_file
                 ]
             ),
         ]
