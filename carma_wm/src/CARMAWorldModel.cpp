@@ -1378,7 +1378,7 @@ namespace carma_wm
     return curr_light;
   }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    bool CARMAWorldModel::check_if_seen_before_movement_state(const boost::posix_time::ptime& min_end_time_dynamic,const auto& received_state_dynamic,const int& mov_id, const int& mov_signal_group) const
+    bool CARMAWorldModel::check_if_seen_before_movement_state(const boost::posix_time::ptime& min_end_time_dynamic,const lanelet::CarmaTrafficSignalState& received_state_dynamic,const int& mov_id, const int& mov_signal_group) const
     {
 
       if(sim_.traffic_signal_states_[mov_id][mov_signal_group].empty())
@@ -1389,10 +1389,18 @@ namespace carma_wm
       for(auto mov_check:sim_.traffic_signal_states_[mov_id][mov_signal_group])
       {
 
-      if(received_state_dynamic == check.second && min_end_time_dynamic == check.first)
-      {
+        auto last_time_difference = mov_check.first - min_end_time;  
+        bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
+
+        if(received_state_dynamic == mov_check.second && is_duplicate)
+        {
           return 1;
-      }
+        }
+        else
+        {
+          return 0;
+        }
+      } 
       
     }
 

@@ -166,7 +166,7 @@ public:
   
   /*! \brief for cheking previous rate to avoid repetation.
    */
-  bool check_if_seen_before_movement_state(const boost::posix_time::ptime& min_end_time_dynamic,const auto& received_state_dynamic,const int& mov_id, const int& mov_signal_group) const;
+  bool check_if_seen_before_movement_state(const boost::posix_time::ptime& min_end_time_dynamic,const lanelet::CarmaTrafficSignalState& received_state_dynamic,const int& mov_id, const int& mov_signal_group) const;
   /**
    * \brief (non-const version) Gets the underlying lanelet, given the cartesian point on the map 
    *
