@@ -6,7 +6,7 @@ pid_h_deadband: 0.0
 pid_h_slope_break: 1.6 #large enough that kp2 will never be needed
 
 # first proportional gain, rad/rad
-pid_h_kp1: -0.1 #initial guess NOT TUNED!
+pid_h_kp1: -0.5 #initial guess NOT TUNED!
 
 # second proportional gain, rad/rad
 pid_h_kp2: -0.1 #initial guess NOT TUNED!

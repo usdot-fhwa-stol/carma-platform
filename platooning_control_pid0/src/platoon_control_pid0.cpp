@@ -55,6 +55,7 @@ namespace platoon_control_pid0
         pnh_->getParam("/control_plugin_shutdown_timeout", config_.shutdown_timeout);
         pnh_->getParam("/control_plugin_ignore_initial_inputs", config_.ignore_initial_inputs);
         //ROS_DEBUG_STREAM("Configuration settings:\n" << config_);
+        ROS_DEBUG_STREAM("Config pid_h_kp1 = " << config_.pid_h_kp1 << ", pid_h_kd = " << config_.pid_h_kd);
 
         pcw_.set_config_params(config_);
 
