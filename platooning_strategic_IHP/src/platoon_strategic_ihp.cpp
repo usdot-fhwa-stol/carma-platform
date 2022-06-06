@@ -1102,7 +1102,8 @@ namespace platoon_strategic_ihp
             }
 
             // step 5. Request cut-in join (front, middle or rear, from adjacent lane)
-            else if (targetPlatoonSize > 1  &&  !config_.test_front_join  &&  isVehicleNearTargetPlatoon(rearVehicleDtd, frontVehicleDtd, frontVehicleCtd))
+            else if ((targetPlatoonSize > 1  ||  config_.test_cutin_join)  &&  !config_.test_front_join  
+                        &&  isVehicleNearTargetPlatoon(rearVehicleDtd, frontVehicleDtd, frontVehicleCtd))
             {
 
                 carma_wm::TrackPos target_trackpose(rearVehicleDtd - config_.minCutinGap, rearVehicleCtd);
@@ -2234,6 +2235,7 @@ namespace platoon_strategic_ihp
 
                     // Change to candidate leader and idle
                     pm_.current_platoon_state = PlatoonState::PREPARETOJOIN;
+                    pm_.neighbor_platoon_leader_id_ = msg.m_header.sender_id;
                     candidatestateStartTime = ros::Time::now().toNSec() / 1000000;
                     pm_.current_plan.valid = false; //but leave peerId intact for use in second request
                 }
@@ -2377,6 +2379,7 @@ namespace platoon_strategic_ihp
         if (!msg.is_accepted)
         {
             ROS_DEBUG_STREAM("Request " << msg.m_header.plan_id << " was rejected by leader.");
+            pm_.current_platoon_state = PlatoonState::LEADER;
             return;
         }
 
@@ -2557,7 +2560,7 @@ namespace platoon_strategic_ihp
         }
 
         // Task 4: STATUS msgs
-        bool hasFollower = pm_.getHostPlatoonSize() > 1;
+        bool hasFollower = pm_.getHostPlatoonSize() > 1  ||  config_.test_cutin_join;
         ROS_DEBUG_STREAM("hasFollower" << hasFollower);
         // if has follower, publish platoon message as STATUS mob_op
         if (hasFollower)
@@ -2877,7 +2880,7 @@ namespace platoon_strategic_ihp
         }
 
         // Task 4: STATUS msgs
-        bool hasFollower = pm_.getHostPlatoonSize() > 1;
+        bool hasFollower = pm_.getHostPlatoonSize() > 1  ||  config_.test_cutin_join;
         // if has follower, publish platoon message as STATUS mob_op
         if (hasFollower) 
         {
@@ -2938,6 +2941,9 @@ namespace platoon_strategic_ihp
 
         // If we aren't already waiting on a response to one of these plans, create one once neighbor info is available
         ROS_DEBUG_STREAM("current_plan.valid = " << pm_.current_plan.valid << ", is_neighbor_record_complete = " << pm_.is_neighbor_record_complete_);
+        // TODO temporaty
+        pm_.is_neighbor_record_complete_ = true;
+        
         if (!pm_.current_plan.valid  &&  pm_.is_neighbor_record_complete_)
         {
             // Task 1: compose mobility operation (status)
@@ -2956,7 +2962,7 @@ namespace platoon_strategic_ihp
             std::string planId = boost::uuids::to_string(boost::uuids::random_generator()());
             long currentTime = ros::Time::now().toNSec() / 1000000;
             request.m_header.plan_id = planId;
-            request.m_header.recipient_id = pm_.platoonLeaderID;
+            request.m_header.recipient_id = pm_.neighbor_platoon_leader_id_;
             request.m_header.sender_id = config_.vehicleID;
             request.m_header.timestamp = currentTime;
             request.plan_type.type = cav_msgs::PlanType::PLATOON_CUT_IN_JOIN; //TODO: should this be a different type?  It is the 2nd request to leader.
@@ -2974,7 +2980,7 @@ namespace platoon_strategic_ihp
             fmter %target_join_index_;          //  index = 5
             request.strategy_params = fmter.str();
             mobility_request_publisher_(request); 
-            ROS_DEBUG_STREAM("Published Mobility cut-in join request to leader " << pm_.platoonLeaderID << " with planId = " << planId);
+            ROS_DEBUG_STREAM("Published Mobility cut-in join request to leader " << request.m_header.recipient_id << " with planId = " << planId);
 
             // Create a new join action plan
             pm_.current_plan = ActionPlan(true, currentTime, planId, pm_.neighbor_platoon_leader_id_);

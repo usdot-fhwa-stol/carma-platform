@@ -88,6 +88,7 @@ public:
     pnh.param<double>("minPlatooningSpeed", config.minPlatooningSpeed, config.minPlatooningSpeed);
     pnh.param<bool>("allowCutinJoin", config.allowCutinJoin, config.allowCutinJoin);
     pnh.param<double>("significantDTDchange", config.significantDTDchange, config.significantDTDchange);
+    pnh.param<bool>("test_cutin_join", config.test_cutin_join, config.test_cutin_join);
     pnh.getParam("/vehicle_length", config.vehicleLength);
     pnh.getParam("/vehicle_id", config.vehicleID);
     

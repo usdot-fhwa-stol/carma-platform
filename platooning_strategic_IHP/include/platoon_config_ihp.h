@@ -79,6 +79,8 @@ struct PlatoonPluginConfig
   bool test_front_join = false;  //Flag to enable/disable front join functionality with two vehicles.
                                 // Flag can be set to true, to test front join functionality with two vehicles
                                 // But in normal operating conditions it should be set to false
+  bool test_cutin_join = false; //Flag to enable/disable front/rear cutin join functionality with only 2 vehicles
+                                //Normal operations it should be false, but true allows a cutin to a single-car platoon
   //------------------------------------------------------------------------------------------------
   bool allowCutinJoin = true;    //Flag to enable/disable cut-in joins
   double significantDTDchange = 0.2;   // Ratio of dtd that is considered a significant change and triggers a new sort of platoon vector
