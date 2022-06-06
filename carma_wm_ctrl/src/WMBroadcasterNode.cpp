@@ -98,12 +98,12 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   wmb_->setVehicleParticipationType(config_.participant);
 
   rclcpp::Parameter intersection_coord_correction_param = get_parameter("intersection_coord_correction");
-  std::vector<double> intersection_coord_correction = intersection_coord_correction_param.as_double_array();
+  config_.intersection_coord_correction = intersection_coord_correction_param.as_double_array();
 
   rclcpp::Parameter intersection_ids_for_correction_param = get_parameter("intersection_ids_for_correction");
-  std::vector<int64_t> intersection_ids_for_correction = intersection_ids_for_correction_param.as_integer_array();
+  config_.intersection_ids_for_correction = intersection_ids_for_correction_param.as_integer_array();
   
-  wmb_->setIntersectionCoordCorrection(intersection_ids_for_correction, intersection_coord_correction);
+  wmb_->setIntersectionCoordCorrection(config_.intersection_ids_for_correction, config_.intersection_coord_correction);
   
   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Done loading parameters: " << config_);
 
@@ -115,10 +115,10 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   rclcpp::PublisherOptions intra_proc_disabled; 
   intra_proc_disabled.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for this PublisherOptions object
 
+  // Create a publisher that will send all previously published messages to late-joining subscribers ONLY If the subscriber is transient_local too
   auto pub_qos_transient_local = rclcpp::QoS(rclcpp::KeepAll()); // A publisher with this QoS will store all messages that it has sent on the topic
   pub_qos_transient_local.transient_local();  // A publisher with this QoS will re-send all (when KeepAll is used) messages to all late-joining subscribers 
                                          // NOTE: The subscriber's QoS must be set to transient_local() as well for earlier messages to be resent to the later-joiner.
-  // Create a publisher that will send all previously published messages to late-joining subscribers ONLY If the subscriber is transient_local too
   
   // Map Update Publisher
   map_update_pub_ = create_publisher<autoware_lanelet2_msgs::msg::MapBin>("map_update", pub_qos_transient_local, intra_proc_disabled);

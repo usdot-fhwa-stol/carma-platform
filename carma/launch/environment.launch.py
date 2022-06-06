@@ -210,7 +210,7 @@ def generate_launch_description():
         executable='carma_component_container_mt',
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
-             ComposableNode(
+            ComposableNode(
                 package='carma_wm_ctrl',
                 plugin='carma_wm_ctrl::WMBroadcasterNode',
                 name='carma_wm_broadcaster',
