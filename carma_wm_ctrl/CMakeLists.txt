@@ -1,5 +1,5 @@
 
-# Copyright (C) 2020-2021 LEIDOS.
+# Copyright (C) 2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -13,44 +13,20 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(carma_wm_ctrl)
 
 find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
+carma_check_ros_version(2)
 carma_package()
 
-## Set catkin dependencies
-set ( PKG_CATKIN_DEPS 
-  autoware_lanelet2_msgs
-  lanelet2_core
-  lanelet2_maps
-  lanelet2_routing
-  lanelet2_traffic_rules
-  lanelet2_extension
-  carma_utils
-  carma_wm
-  cav_msgs
-  roscpp
-  autoware_lanelet2_ros_interface
-)
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-## Find required catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  ${PKG_CATKIN_DEPS}
-)
-
-## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3 REQUIRED)
 
-## Catkin export configuration
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS ${PKG_CATKIN_DEPS}
-  DEPENDS Boost EIGEN3
-)
 
 ###########
 ## Build ##
@@ -63,93 +39,63 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
 )
 
-## Declare C++ library
-add_library(${PROJECT_NAME}
-  src/WMBroadcaster.cpp
-  src/GeofenceScheduler.cpp
-  src/GeofenceSchedule.cpp
+# Name build targets
+set(node_lib carma_wm_ctrl_node_lib)
+set(worker_lib carma_wm_ctrl_worker_lib)
+set(node_exec carma_wm_ctrl_node_exec)
+
+# Build
+
+ament_auto_add_library(${worker_lib} SHARED
+        src/WMBroadcaster.cpp
+        src/GeofenceScheduler.cpp
+        src/GeofenceSchedule.cpp
 )
 
-## Add cmake target dependencies of the library
-add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
+ament_auto_add_library(${node_lib} SHARED
+        src/WMBroadcasterNode.cpp
 )
 
-message(INFO "LIBS: " ${catkin_LIBRARIES})
-
-## Create C++ Node Executable
-add_executable(${PROJECT_NAME}_node 
-  src/main.cpp 
-  src/WMBroadcasterNode.cpp
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
 )
 
-target_link_libraries(${PROJECT_NAME}_node
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
+# Register component
+rclcpp_components_register_nodes(${node_lib} "carma_wm_ctrl::WMBroadcasterNode")
+
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_lib}
+        ${worker_lib}
 )
 
-add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-
-#############
-## Install ##
-#############
-
-# Mark libraries for installation
-# See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+target_link_libraries(${node_exec}
+        ${node_lib}
 )
 
-# Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
-)
 
-## Install Other Resources
-install(DIRECTORY launch config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+# Testing
+if(BUILD_TESTING)  
 
-#############
-## Testing ##
-#############
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-catkin_add_gmock(${PROJECT_NAME}-test
- test/TestMain.cpp
- test/GeofenceSchedulerTest.cpp
- test/GeofenceScheduleTest.cpp
- test/WMBroadcasterTest.cpp
- test/MapToolsTest.cpp
- WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
-)
+  ament_add_gtest(${PROJECT_NAME}-test 
+        test/TestMain.cpp
+        test/GeofenceSchedulerTest.cpp
+        test/GeofenceScheduleTest.cpp
+        test/WMBroadcasterTest.cpp
+        test/MapToolsTest.cpp
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
+  )
 
-catkin_add_gmock(map-tools
- test/TestMain.cpp
- test/MapToolsTest.cpp
- WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
-)
+  ament_target_dependencies(${PROJECT_NAME}-test ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
-catkin_add_gmock(tcm-test
- test/TestMain.cpp
- test/TCMTest.cpp
- WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
-)
-
-if(TARGET ${PROJECT_NAME}-test)
- target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME}-test ${node_lib})
+  
 endif()
 
-if(TARGET map-tools)
- target_link_libraries(map-tools ${PROJECT_NAME} ${catkin_LIBRARIES})
-endif()
-
-if(TARGET tcm-test)
- target_link_libraries(tcm-test ${PROJECT_NAME} ${catkin_LIBRARIES})
-endif()
+# Install
+ament_auto_package(
+        INSTALL_TO_SHARE config launch
+)

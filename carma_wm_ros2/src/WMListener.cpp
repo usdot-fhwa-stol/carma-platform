@@ -93,7 +93,7 @@ WMListener::WMListener(
   map_update_sub_qos.transient_local();  // If it is possible that this node is a late-joiner to its topic, it must be set to transient_local to receive earlier messages that were missed.
                                          // NOTE: The publisher's QoS must be set to transisent_local() as well for earlier messages to be resent to this later-joiner.
 
-  // Create map update ubscriber that will receive earlier messages that were missed ONLY if the publisher is transient_local too
+  // Create map update subscriber that will receive earlier messages that were missed ONLY if the publisher is transient_local too
   map_update_sub_ = rclcpp::create_subscription<autoware_lanelet2_msgs::msg::MapBin>(node_topics_, "map_update", map_update_sub_qos, 
                   std::bind(&WMListener::mapUpdateCallback, this, std::placeholders::_1), map_update_options);
 
