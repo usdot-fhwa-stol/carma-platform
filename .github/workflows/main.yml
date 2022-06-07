@@ -22,5 +22,4 @@ jobs:
         uses: hossainemruz/linked-issues@main
         with:
           pr_url: ${{github.event.pull_request.html_url}}
-          attr_val: issue-link
           format: IssueNumber
