@@ -1877,6 +1877,9 @@ namespace platoon_strategic_ihp
                         
                 if (isRearJoinerInPosition)
                 {
+                    // Indicate that we are creating gap, since joiner will send a STOP_CREATE_GAP anyway
+                    pm_.isCreateGap = true;
+                    
                     ROS_DEBUG_STREAM("Acknowledged Mobility cut-in-rear-Join request to relavent platoon member, host is leader.");
                     return MobilityRequestResponse::ACK;
                 }
@@ -1941,6 +1944,8 @@ namespace platoon_strategic_ihp
         // task 2: For cut-in from front, the leader need to stop creating gap when gap is big enough
         else if (plan_type.type == cav_msgs::PlanType::STOP_CREATE_GAP && pm_.isCreateGap) 
         {
+            ROS_DEBUG_STREAM("Received STOP_CREATE_GAP; no response needed.");
+
             // reset create gap indicator
             pm_.isCreateGap = false;
             // no need to response, simple reset the indicator
