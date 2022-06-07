@@ -32,7 +32,9 @@ namespace carma_guidance_plugins
    *        This includes basic state machine management (largely delegated to ROS2 lifecycle behavior), required interfaces, and plugin discovery
    * 
    * Extending classes must implement the on_configure_plugin method to load parameters, and my override the other state transitions methods on_<state>_plugin if desired.
-   * Additionally, extending classes must implement the methods such as get_name() which are used to populate the plugin discovery message.
+   * Additionally, extending classes must implement the methods such as get_plugin_name() which are used to populate the plugin discovery message.
+   * 
+   * NOTE: At the moment, this class and all extending classes are setup to support only single threading.
    * 
    */
   class PluginBaseNode : public carma_ros2_utils::CarmaLifecycleNode
@@ -46,18 +48,27 @@ namespace carma_guidance_plugins
 
     // Timers
     //! Timer to trigger publication of the plugin discovery message at a fixed frequency 
-    rclcpp::TimerBase::SharedPtr discovert_timer_;
+    rclcpp::TimerBase::SharedPtr discovery_timer_;
 
     // WorldModel listener
-    carma_wm::WMListener wm_listener_;
+    // This variable is intentionally private, so that is can be lazily initialized 
+    // when the extending class calls get_world_model_listener(); or get_world_model();
+    std::shared_ptr<carma_wm::WMListener> wm_listener_;
 
     // World Model populated by the listener at runtime
+    // This variable is intentionally private, so that is can be lazily initialized 
+    // when the extending class calls get_world_model_listener(); or get_world_model();
     carma_wm::WorldModelConstPtr wm_;
 
     /**
      * \brief Callback for the plugin discovery timer which will publish the plugin discovery message
      */
     void discovery_timer_callback();
+
+    /**
+     * \brief Helper function for lazy initialization of wm_listener_. If already initialized method returns (ie. not a reset)
+     */ 
+    void lazy_wm_initialization();
 
   public:
     /**
@@ -67,6 +78,24 @@ namespace carma_guidance_plugins
 
     //! Virtual destructor for safe deletion
     virtual ~PluginBaseNode() = default;
+
+    /**
+     * \brief Method to return the default world model listener provided as a convience by this base class
+     *        If this method or get_world_model() are not called then the world model remains uninitialized and 
+     *        will not create unnecessary subscriptions. 
+     * 
+     * \return Pointer to an initialized world model listener
+     */ 
+    virtual std::shared_ptr<carma_wm::WMListener> get_world_model_listener() final;
+
+    /**
+     * \brief Method to return the default world model provided as a convience by this base class
+     *        If this method or get_world_model_listener() are not called then the world model remains uninitialized and 
+     *        will not create unnecessary subscriptions. 
+     * 
+     * \return Pointer to an initialized world model. Returned instance is that same as get_world_model_listener()->getWorldModel();
+     */ 
+    virtual carma_wm::WorldModelConstPtr get_world_model() final;
 
     /**
      * \brief Returns the activation status of this plugin.
@@ -109,7 +138,7 @@ namespace carma_guidance_plugins
      * 
      * \return Name of this plugin
      */ 
-    virtual std::string get_name() = 0;
+    virtual std::string get_plugin_name() = 0;
 
     /**
      * \brief Returns the version id of this plugin.

@@ -51,14 +51,14 @@ bool has_subscriber(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node, 
     return found;
 }
 
-bool has_service(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node, const std::string& service_name, const std::string& type)
+bool has_service(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node, std::string_view service_name, std::string_view type)
 {
     bool found = false;
-    for (const auto& map_item : node->get_service_names_and_types_by_node(node->get_name(), "")) {
+    for (const auto& [service_k, type_v] : node->get_service_names_and_types_by_node(node->get_name(), "")) {
         
-        std::cerr << "service: " << map_item.first << " type: " << map_item.second[0] << std::endl;
+        std::cerr << "service: " << service_k << " type: " << type_v[0] << std::endl;
 
-        if ( map_item.first == service_name && map_item.second[0] == type)
+        if ( service_k == service_name && type_v[0] == type)
             found = true;
     }
 
@@ -95,9 +95,9 @@ TEST(carma_guidance_plugins_test, connections_test) {
     ASSERT_TRUE(tactical_plugin->get_availability());
     ASSERT_TRUE(control_plugin->get_availability());
 
-    ASSERT_EQ(strategic_plugin->get_name(), "TestStrategicPlugin");
-    ASSERT_EQ(tactical_plugin->get_name(), "TestTacticalPlugin");
-    ASSERT_EQ(control_plugin->get_name(), "TestControlPlugin");
+    ASSERT_EQ(strategic_plugin->get_plugin_name(), "TestStrategicPlugin");
+    ASSERT_EQ(tactical_plugin->get_plugin_name(), "TestTacticalPlugin");
+    ASSERT_EQ(control_plugin->get_plugin_name(), "TestControlPlugin");
 
     ASSERT_EQ(strategic_plugin->get_version_id(), "1.0");
     ASSERT_EQ(tactical_plugin->get_version_id(), "1.1");

@@ -19,7 +19,7 @@ if [[ "${BASH_VERSION:0:1}" -lt 4 ]]; then
 fi
 
 
-if [[ "$#" -ne 3 ]]; then
+if [[ "$#" -ne 3 && "$#" -ne 4 ]]; then
     echo "Incorrect inputs: Input must be of form <this template_package path> <package name> <path to new package parent folder> <optional plugin type>. If set, <optional plugin type> should be one of strategic, tactical, or control. If unset, then not a plugin"
     exit 2
 fi
@@ -85,44 +85,28 @@ if [[ $PWD != $(realpath ${target_path}) ]]; then
 fi
 
 # Cleanup alternative node files based on user specified type befoe substitutions
-if [ "$plugin_type" = "strategic" ]; then
+if [ ! "$plugin_type"  = "none" ]; then
 
     rm include/template_package/template_package_node.hpp
-    rm include/template_package/template_tactical_plugin_node.hpp
-    rm include/template_package/template_control_plugin_node.hpp
-
     rm src/template_package_node.cpp
-    rm src/template_tactical_plugin_node.cpp
-    rm src/template_control_plugin_node.cpp
 
-elif [ "$plugin_type" = "tactical" ]; then
-
-    rm include/template_package/template_package_node.hpp
-    rm include/template_package/template_strategic_plugin_node.hpp
-    rm include/template_package/template_control_plugin_node.hpp
-
-    rm src/template_package_node.cpp
-    rm src/template_strategic_plugin_node.cpp
-    rm src/template_control_plugin_node.cpp
-
-elif [ "$plugin_type" = "control" ]; then
-
-    rm include/template_package/template_package_node.hpp
-    rm include/template_package/template_strategic_plugin_node.hpp
-    rm include/template_package/template_tactical_plugin_node.hpp
-
-    rm src/template_package_node.cpp
-    rm src/template_strategic_plugin_node.cpp
-    rm src/template_tactical_plugin_node.cpp
-
-else
+fi
+    
+if [ ! "$plugin_type" = "strategic" ]; then
 
     rm include/template_package/template_strategic_plugin_node.hpp
-    rm include/template_package/template_tactical_plugin_node.hpp
-    rm include/template_package/template_control_plugin_node.hpp
-
     rm src/template_strategic_plugin_node.cpp
+fi
+
+if [ ! "$plugin_type" = "tactical" ]; then
+    
+    rm include/template_package/template_tactical_plugin_node.hpp
     rm src/template_tactical_plugin_node.cpp
+fi
+
+if [ ! "$plugin_type" = "control" ]; then
+
+    rm include/template_package/template_control_plugin_node.hpp
     rm src/template_control_plugin_node.cpp
 
 fi
@@ -131,8 +115,6 @@ fi
 find . -type f -exec sed -i "s/<SUB><package_name>/${package_name}/g" {} \;
 find . -type f -exec sed -i "s/<SUB><year>/${current_year}/g" {} \;
 find . -type f -exec sed -i "s/<SUB><base_node_dep>/${base_node_dep}/g" {} \;
-#find . -type f -exec sed -i "s/<SUB><world_model_dep>/${world_model_dep}/g" {} \;
-#find . -type f -exec sed -i "s/<SUB><autonomy_lib_dep>/${autonomy_lib_dep}/g" {} \;
 
 
 # Update file names for new package

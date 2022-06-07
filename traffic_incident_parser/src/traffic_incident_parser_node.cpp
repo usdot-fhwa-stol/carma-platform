@@ -43,7 +43,7 @@ namespace traffic_incident_parser
 
     auto traffic_control_msg_pub_qos = rclcpp::QoS(rclcpp::KeepAll()); // A publisher with this QoS will store all messages that it has sent on the topic
     traffic_control_msg_pub_qos.transient_local();  // A publisher with this QoS will re-send all (when KeepAll is used) messages to all late-joining subscribers 
-                                                    // NOTE: The subscriber's QoS must be set to transisent_local() as well for earlier messages to be resent to the later-joiner.
+                                                    // NOTE: The subscriber's QoS must be set to transient_local() as well for earlier messages to be resent to the later-joiner.
 
 
     // Create a publisher that will send all previously published messages to late-joining subscribers ONLY If the subscriber is transient_local too

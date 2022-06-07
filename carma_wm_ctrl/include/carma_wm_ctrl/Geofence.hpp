@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2020-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  * the License.
  */
 #include <lanelet2_core/primitives/Point.h>
-#include "GeofenceSchedule.h"
+#include "GeofenceSchedule.hpp"
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -28,8 +28,8 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/uuid_generators.hpp>
-#include <cav_msgs/TrafficControlMessageV01.h>
-#include <cav_msgs/MapData.h>
+#include <carma_v2x_msgs/msg/traffic_control_message.hpp>
+#include <carma_v2x_msgs/msg/map_data.hpp>
 
 
 namespace carma_wm_ctrl
@@ -43,8 +43,6 @@ const std::string MAP_MSG_TF_SIGNAL = "MAP_MSG_TF_SIGNAL";
 
 /**
  * @brief An object representing a geofence use for communications with CARMA Cloud
- *
- * TODO: This is currently a place holder class which needs to be updated based on the final geofence specification
  */
 class Geofence
 {
@@ -84,10 +82,10 @@ specific type of regulatory element (such as digital speed limit, passing contro
   lanelet::ConstLaneletOrAreas affected_parts_;
 
   // original traffic control message for this geofence
-  cav_msgs::TrafficControlMessageV01 msg_;
+  carma_v2x_msgs::msg::TrafficControlMessageV01 msg_;
 
   // original MAP message for this geofence
-  cav_msgs::MapData map_msg_;
+  carma_v2x_msgs::msg::MapData map_msg_;
   
   // Helper member for PassingControlLine type regulatory geofence
   bool pcl_affects_left_ = false;

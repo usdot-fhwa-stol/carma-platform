@@ -26,11 +26,9 @@ namespace carma_guidance_plugins
   {
   public:
 
-    explicit TestStrategicPlugin(const rclcpp::NodeOptions &options) 
-      : StrategicPlugin(options)
-      {}
+    using StrategicPlugin::StrategicPlugin;
 
-    ~TestStrategicPlugin() = default;
+    ~TestStrategicPlugin() override = default;
 
 
     void plan_maneuvers_callback(
@@ -38,14 +36,14 @@ namespace carma_guidance_plugins
       carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr, 
       carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr) override
     {
-
+       // Intentionally unimplemented...
     }
 
     bool get_availability() override {
       return true;
     }
 
-    std::string get_name() override {
+    std::string get_plugin_name() override {
       return "TestStrategicPlugin";
     }
 
@@ -69,11 +67,9 @@ namespace carma_guidance_plugins
   {
   public:
 
-    explicit TestTacticalPlugin(const rclcpp::NodeOptions &options) 
-      : TacticalPlugin(options)
-      {}
+    using TacticalPlugin::TacticalPlugin;
 
-    ~TestTacticalPlugin() = default;
+    ~TestTacticalPlugin() override = default;
 
 
     void plan_trajectory_callback(
@@ -81,14 +77,14 @@ namespace carma_guidance_plugins
       carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr, 
       carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr) override
     {
-
+       // Intentionally unimplemented...
     }
 
     bool get_availability() override {
       return true;
     }
 
-    std::string get_name() override {
+    std::string get_plugin_name() override {
       return "TestTacticalPlugin";
     }
 
@@ -112,11 +108,9 @@ namespace carma_guidance_plugins
   {
   public:
 
-    explicit TestControlPlugin(const rclcpp::NodeOptions &options) 
-      : ControlPlugin(options)
-      {}
+    using ControlPlugin::ControlPlugin;
 
-    ~TestControlPlugin() = default;
+    ~TestControlPlugin() override = default;
 
 
     autoware_msgs::msg::ControlCommandStamped generate_command() override
@@ -129,7 +123,7 @@ namespace carma_guidance_plugins
       return true;
     }
 
-    std::string get_name() override {
+    std::string get_plugin_name() override {
       return "TestControlPlugin";
     }
 

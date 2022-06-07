@@ -23,16 +23,40 @@ namespace carma_guidance_plugins
   namespace std_ph = std::placeholders;
 
   PluginBaseNode::PluginBaseNode(const rclcpp::NodeOptions &options)
-      : carma_ros2_utils::CarmaLifecycleNode(options),  
-      wm_listener_(this->get_node_base_interface(), this->get_node_logging_interface(), this->get_node_topics_interface(), this->get_node_parameters_interface()),
-      wm_(wm_listener_.getWorldModel())
+      : carma_ros2_utils::CarmaLifecycleNode(options)
   {
 
     // Setup discovery timer to publish onto the plugin_discovery_pub
-    discovert_timer_ = create_timer(
+    discovery_timer_ = create_timer(
         get_clock(),
         std::chrono::milliseconds(500), // 2 Hz frequency to account for 1Hz maneuver planning frequency
         std::bind(&PluginBaseNode::discovery_timer_callback, this));
+  }
+
+  void PluginBaseNode::lazy_wm_initialization()
+  {
+    if (wm_listener_)
+      return; // Already initialized
+    
+
+    wm_listener_ = std::make_shared<carma_wm::WMListener>(
+        this->get_node_base_interface(), this->get_node_logging_interface(),
+       this->get_node_topics_interface(), this->get_node_parameters_interface()
+      );
+
+    wm_ = wm_listener_->getWorldModel();
+  }
+
+  std::shared_ptr<carma_wm::WMListener> PluginBaseNode::get_world_model_listener()
+  {
+    lazy_wm_initialization();
+    return wm_listener_;
+  }
+
+  carma_wm::WorldModelConstPtr PluginBaseNode::get_world_model()
+  {
+    lazy_wm_initialization();
+    return wm_;
   }
 
   bool PluginBaseNode::get_activation_status() {
@@ -118,7 +142,7 @@ namespace carma_guidance_plugins
     }
 
     carma_planning_msgs::msg::Plugin msg;
-    msg.name = get_name();
+    msg.name = get_plugin_name();
     msg.version_id = get_version_id();
     msg.type = get_type();
     msg.available = get_availability();

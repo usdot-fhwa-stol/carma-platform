@@ -42,10 +42,4 @@
     <remap from="/lanelet_map_bin" to="semantic_map"/>
   </node>
 
-  <!-- World Model Updater -->
-  <group>
-    <remap from="outgoing_geofence_request" to="$(optenv CARMA_MSG_NS)/outgoing_geofence_request"/>
-    <include file="$(find carma_wm_ctrl)/launch/carma_wm_broadcaster.launch"/>
-  </group>
-
 </launch>
