@@ -73,23 +73,25 @@ namespace platoon_control_pid0
     void PIDController::reset(){
         integral_ = 0.0;
         prev_error_ = 0.0;
-		ROS_DEBUG_STREAM("PID reset:" << name_);
+		ROS_DEBUG_STREAM("PID reset: " << name_);
     }
 
 	double PIDController::calculate(const double setpoint, const double pv){
 
 		// Calculate error
 	    double error = setpoint - pv;
-		ROS_DEBUG_STREAM(name_ << "setpoint = " << setpoint << ", pv = " << pv << ", error = " << error << ", prev error = " << prev_error_);
+		ROS_DEBUG_STREAM(name_ << " setpoint = " << setpoint << ", pv = " << pv << ", error = " << error << ", prev error = " << prev_error_);
 
 	    // Proportional term
 		double p_out = 0.0;
 		if (error > slope_break_){
 			p_out = kp2_ * (error - x2_intercept_);
+			ROS_DEBUG_STREAM("*** Applied kp2 to error " << error << ", x2_intercept = " << x2_intercept_);
 		}else if (error > deadband_){
 			p_out = kp1_ * (error - deadband_);
 		}else if (error < -slope_break_){
 			p_out = kp2_ * (error + x2_intercept_);
+			ROS_DEBUG_STREAM("*** Applied kp2 to error " << error << ", x2_intercept = " << x2_intercept_);
 		}else if (error < -deadband_){
 			p_out = kp1_ * (error + deadband_);
 		}
@@ -105,7 +107,10 @@ namespace platoon_control_pid0
 
 	    // Derivative term
 	    double derivative = (error - prev_error_) / time_step_;
-	    double d_out = kd_ * derivative;
+		double d_out = 0.0;
+		if (abs(error) > deadband_) {
+		    d_out = kd_ * derivative;
+		}
 
 	    // Calculate total output
 	    double output = p_out + i_out + d_out;

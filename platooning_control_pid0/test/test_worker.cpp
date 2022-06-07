@@ -25,6 +25,11 @@ const double PI = boost::math::double_constants::pi;
 const double TWO_PI = 2.0*PI;
 
 
+TEST(PlatonControlWorkerTest, test_set_config)
+{
+    
+}
+
 TEST(PlatoonControlWorkerTest, test_find_nearest_point)
 {
     platoon_control_pid0::PlatoonControlWorker pcw;
