@@ -170,7 +170,7 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
       affected_lanelets.insert(filtered.begin(), filtered.end());
 
 
-      if (affected_lanelets.empty() && !possible_lanelets.empty())
+      if (affected_lanelets.empty() && !possible_lanelets.empty() && idx !=0 )
       {
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "Checking if it is the edge case where only last point falls on a valid (correct direction) lanelet");
         for (auto llt: possible_lanelets)
@@ -243,7 +243,6 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
       }
 
     }
-  
   }
   
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "affected_lanelets size: " << affected_lanelets.size());
@@ -252,6 +251,7 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
   lanelet::ConstLaneletOrAreas affected_parts;
   // return results in ascending downtrack order from the first point of geofence
   std::vector<std::pair<double, lanelet::Lanelet>> sorted_parts;
+
   for (auto llt : affected_lanelets)
   {
     sorted_parts.push_back(std::make_pair(carma_wm::geometry::trackPos(llt, gf_pts.front().basicPoint2d()).downtrack, llt));
@@ -262,7 +262,7 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
   {
     affected_parts.push_back(pair.second);
   }
-
+  
   return affected_parts;
 }
 

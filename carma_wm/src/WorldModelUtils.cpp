@@ -169,7 +169,7 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
       ROS_DEBUG_STREAM("Got successor lanelets of size: " << filtered.size());
       affected_lanelets.insert(filtered.begin(), filtered.end());
 
-      if (affected_lanelets.empty() && !possible_lanelets.empty())
+      if (affected_lanelets.empty() && !possible_lanelets.empty() && idx != 0)
       {
         ROS_DEBUG_STREAM("Checking if it is the edge case where only last point falls on a valid (correct direction) lanelet");
         for (auto llt: possible_lanelets)
