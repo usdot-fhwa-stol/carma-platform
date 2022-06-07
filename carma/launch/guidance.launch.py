@@ -80,7 +80,7 @@ def generate_launch_description():
                 remappings = [
                     ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/mobility_path_msg" ] ),
                     ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NZ', default_value=''), "/map_param_loader/georeference"])
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference"])
                 ],
                 parameters=[
                     vehicle_characteristics_param_file,
@@ -97,7 +97,11 @@ def generate_launch_description():
                 ],
                 remappings = [
                     ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NZ', default_value=''), "/map_param_loader/georeference"])
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
+                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
+                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
+                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] )
                 ],
                 parameters=[
                     {'route_file_path': route_file_folder},
