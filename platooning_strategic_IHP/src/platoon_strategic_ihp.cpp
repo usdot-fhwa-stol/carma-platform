@@ -1212,6 +1212,7 @@ namespace platoon_strategic_ihp
     // UCLA: Mobility operation callback for prepare to join state (cut-in join).
     void PlatoonStrategicIHPPlugin::mob_op_cb_preparetojoin(const cav_msgs::MobilityOperation& msg)
     {
+        ROS_DEBUG_STREAM("in mob_op_cb_preparetojoin");
         /*
          * If same lane with leader, then send request to do same lane join. 
          * Otherwise, just send status params.
@@ -1226,7 +1227,7 @@ namespace platoon_strategic_ihp
         bool isPlatoonInfoMsg = strategyParams.rfind(OPERATION_INFO_TYPE, 0) == 0;
 
         // If this is an INFO message and our record of the neighbor platoon is complete then
-        if (isPlatoonInfoMsg  &&  pm_.is_neighbor_record_complete_)
+        if (false)// (isPlatoonInfoMsg  &&  pm_.is_neighbor_record_complete_)
         {
 
             //TODO: would be good to have a timeout here; if a neighbor platoon has been identified, and no INFO messages
@@ -1304,6 +1305,8 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("Lane Change not completed");
             }
         }
+
+        ROS_DEBUG_STREAM("finished mob_op_cb_preparetojoin");
     }
     
     // TODO: Place holder for prepare to depart (mob_op_cb_depart)
@@ -3143,7 +3146,9 @@ namespace platoon_strategic_ihp
         } 
         else 
         {
-            maneuver_msg.lane_change_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * cur_plus_target));
+            // maneuver_msg.lane_change_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * cur_plus_target));
+            maneuver_msg.lane_change_maneuver.end_time = current_time + ros::Duration(20.0);
+
         }
 
         // UCLA: need both start laneID and end laneID  for lane change
@@ -3249,11 +3254,9 @@ namespace platoon_strategic_ihp
         
 
         ROS_DEBUG_STREAM("in mvr  callback safeToLaneChange: " << safeToLaneChange_);
-        std::cerr << "safeToLaneChange" << safeToLaneChange_ << std::endl;
         // lane change maneuver 
         if (safeToLaneChange_)
         {   
-            std::cerr << "Lanechange!!!!" << std::endl;
             // for testing purpose only, check lane change status
             double target_crosstrack = wm_->routeTrackPos(target_cutin_pose_).crosstrack;
             ROS_DEBUG_STREAM("target_crosstrack: " << target_crosstrack);
@@ -3293,6 +3296,7 @@ namespace platoon_strategic_ihp
                     ROS_DEBUG_STREAM("dist_diff: " << dist_diff);
                     // Note: Use current_lanlet list (which was determined based on vehicle pose) to find current lanelet ID. 
                     long current_lanelet_id = current_lanelets[0].second.id();
+                    ROS_DEBUG_STREAM("current_lanelet_id: " << current_lanelet_id);
 
                     // note: This is just mock info to compile the code.                     
 
@@ -3303,7 +3307,9 @@ namespace platoon_strategic_ihp
                     }
                                 
                     double lc_end_dist = wm_->routeTrackPos(target_cutin_pose_).downtrack;
-                    ROS_DEBUG_STREAM("lc_end_dist: " << lc_end_dist);
+                    ROS_DEBUG_STREAM("lc_end_dist before buffer: " << lc_end_dist);
+                    lc_end_dist = std::max(lc_end_dist, current_progress + config_.maxCutinGap);
+                    ROS_DEBUG_STREAM("lc_end_dist after buffer: " << lc_end_dist);
                     
 
                     // get the actually closest lanelets, 
