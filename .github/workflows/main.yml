@@ -1,0 +1,27 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "develop" branch
+  pull_request:
+    branches: [ "develop" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  linked_issues:
+    runs-on: ubuntu-latest
+    name: A job to say hello
+    steps:
+      - name: Find Linked Issues
+        id: links
+        uses: hossainemruz/linked-issues@main
+        with:
+          pr_url: ${{github.event.pull_request.html_url}}
+          format: IssueNumber
+
+      - name: Output linked Issue list
+        run: [ -z "${{ steps.links.outputs.issues }}" ] && exit 1
