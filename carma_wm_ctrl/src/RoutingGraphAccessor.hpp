@@ -41,10 +41,10 @@ class RoutingGraphAccessor : public lanelet::routing::RoutingGraph {
    * 
    * \return The ros message which can be used to regenerate this routing graph structure. 
    */ 
-  autoware_lanelet2_msgs::RoutingGraph routingGraphToMsg(const std::string& participant) {
+  autoware_lanelet2_msgs::msg::RoutingGraph routingGraphToMsg(const std::string& participant) {
 
 
-    autoware_lanelet2_msgs::RoutingGraph msg; // output message
+    autoware_lanelet2_msgs::msg::RoutingGraph msg; // output message
 
     // Assign base fields
     msg.num_unique_routing_cost_ids = this->graph_->numRoutingCosts();
@@ -60,7 +60,7 @@ class RoutingGraphAccessor : public lanelet::routing::RoutingGraph {
     
     for(boost::tie(vi, vi_end) = boost::vertices(underlying_graph); vi != vi_end; ++vi) {
        
-      autoware_lanelet2_msgs::RoutingGraphVertexAndEdges vertex_and_edges;
+      autoware_lanelet2_msgs::msg::RoutingGraphVertexAndEdges vertex_and_edges;
 
       lanelet::routing::internal::GraphType::vertex_descriptor source = *vi;
       
@@ -81,21 +81,21 @@ class RoutingGraphAccessor : public lanelet::routing::RoutingGraph {
         uint8_t relation = 0;
         switch(underlying_graph[edge].relation) {
           case lanelet::routing::RelationType::Successor:
-            relation = autoware_lanelet2_msgs::RoutingGraphVertexAndEdges::RELATION_SUCCESSOR; break;
+            relation = autoware_lanelet2_msgs::msg::RoutingGraphVertexAndEdges::RELATION_SUCCESSOR; break;
           case lanelet::routing::RelationType::Left:
-            relation = autoware_lanelet2_msgs::RoutingGraphVertexAndEdges::RELATION_LEFT; break;
+            relation = autoware_lanelet2_msgs::msg::RoutingGraphVertexAndEdges::RELATION_LEFT; break;
           case lanelet::routing::RelationType::Right:
-            relation = autoware_lanelet2_msgs::RoutingGraphVertexAndEdges::RELATION_RIGHT; break;
+            relation = autoware_lanelet2_msgs::msg::RoutingGraphVertexAndEdges::RELATION_RIGHT; break;
           case lanelet::routing::RelationType::AdjacentLeft:
-            relation = autoware_lanelet2_msgs::RoutingGraphVertexAndEdges::RELATION_ADJACENT_LEFT; break;
+            relation = autoware_lanelet2_msgs::msg::RoutingGraphVertexAndEdges::RELATION_ADJACENT_LEFT; break;
           case lanelet::routing::RelationType::AdjacentRight:
-            relation = autoware_lanelet2_msgs::RoutingGraphVertexAndEdges::RELATION_ADJACENT_RIGHT; break;
+            relation = autoware_lanelet2_msgs::msg::RoutingGraphVertexAndEdges::RELATION_ADJACENT_RIGHT; break;
           case lanelet::routing::RelationType::Conflicting:
-            relation = autoware_lanelet2_msgs::RoutingGraphVertexAndEdges::RELATION_CONFLICTING; break;
+            relation = autoware_lanelet2_msgs::msg::RoutingGraphVertexAndEdges::RELATION_CONFLICTING; break;
           case lanelet::routing::RelationType::Area:
-            relation = autoware_lanelet2_msgs::RoutingGraphVertexAndEdges::RELATION_AREA; break;
+            relation = autoware_lanelet2_msgs::msg::RoutingGraphVertexAndEdges::RELATION_AREA; break;
           default: // None relation will be default
-            relation = autoware_lanelet2_msgs::RoutingGraphVertexAndEdges::RELATION_NONE; break;
+            relation = autoware_lanelet2_msgs::msg::RoutingGraphVertexAndEdges::RELATION_NONE; break;
         }
 
         vertex_and_edges.edge_relations.push_back(relation);
