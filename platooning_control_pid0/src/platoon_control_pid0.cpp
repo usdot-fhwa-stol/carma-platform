@@ -27,10 +27,11 @@ namespace platoon_control_pid0
     	nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
 
-        pnh_->param<double>("pid_h_deadband",       config_.pid_h_deadband,     config_.pid_h_deadband);
-        pnh_->param<double>("pid_h_slope_break",    config_.pid_h_slope_break,  config_.pid_h_slope_break);
-        pnh_->param<double>("pid_h_kp1",            config_.pid_h_kp1,          config_.pid_h_kp1);
-        pnh_->param<double>("pid_h_kp2",            config_.pid_h_kp2,          config_.pid_h_kp2);
+        ROS_DEBUG_STREAM("Attempting to initialize configs from file - * indicates failed items:");
+        if (!pnh_->param<double>("pid_h_deadband",       config_.pid_h_deadband,     config_.pid_h_deadband))   ROS_DEBUG_STREAM("*pid_h_deadband");
+        if (!pnh_->param<double>("pid_h_slope_break",    config_.pid_h_slope_break,  config_.pid_h_slope_break)) ROS_DEBUG_STREAM("*pid_h_slope_break");
+        if (!pnh_->param<double>("pid_h_kp1",            config_.pid_h_kp1,          config_.pid_h_kp1))        ROS_DEBUG_STREAM("*pid_h_kp1");
+        if (!pnh_->param<double>("pid_h_kp2",            config_.pid_h_kp2,          config_.pid_h_kp2))        ROS_DEBUG_STREAM("*pid_h_kp2");
         pnh_->param<double>("pid_h_ki",             config_.pid_h_ki,           config_.pid_h_ki);
         pnh_->param<double>("pid_h_kd",             config_.pid_h_kd,           config_.pid_h_kd);
         pnh_->param<double>("pid_h_integral_min",   config_.pid_h_integral_min, config_.pid_h_integral_min);
@@ -48,6 +49,7 @@ namespace platoon_control_pid0
         pnh_->param<double>("max_steering_angle",   config_.max_steering_angle, config_.max_steering_angle);
         pnh_->param<double>("max_accel",            config_.max_accel,          config_.max_accel);
         pnh_->param<double>("speed_adjustment_cap", config_.speed_adjustment_cap, config_.speed_adjustment_cap);
+        ROS_DEBUG_STREAM("Done setting package-specific config params.");
 
         // Global params (from vehicle config)
         pnh_->getParam("/vehicle_id", config_.vehicle_id);
@@ -184,6 +186,11 @@ namespace platoon_control_pid0
         autoware_msgs::ControlCommandStamped ctrl_msg = compose_ctrl_cmd(speed_cmd, steer_cmd);
         ctrl_pub_.publish(ctrl_msg);
         return true;
+    }
+
+
+    PlatoonControlPluginConfig PlatoonControlPid0Plugin::get_config() const {
+        return config_;
     }
 
 

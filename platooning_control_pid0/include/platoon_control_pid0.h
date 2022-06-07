@@ -58,12 +58,16 @@ namespace platoon_control_pid0
 
 			bool control_timer_cb();
 
+
+			////////// FOR UNIT TEST SUPPORT //////////
+			PlatoonControlPluginConfig get_config() const;
+
         
         private:
 
 			// member variables
         	std::shared_ptr<ros::CARMANodeHandle>	nh_, pnh_;					//ROS1 node handles
-			PlatoonControlPluginConfig				config_;					//holds the plugin config params
+			PlatoonControlPluginConfig				config_;					//struct that holds the plugin config params
         	PlatoonControlWorker					pcw_;						//platoon control worker object does all the math
         	cav_msgs::Plugin						plugin_discovery_msg_;		//holds ~constant info to publish for discovery
 			ros::Timer 								discovery_pub_timer_;		//timer for publishing discovery messages

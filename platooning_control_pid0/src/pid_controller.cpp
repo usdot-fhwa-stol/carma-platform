@@ -20,10 +20,10 @@
 
 namespace platoon_control_pid0
 {
-	PIDController::PIDController(double deadband, double slope_break, double kp1, double kp2,
+	PIDController::PIDController(std::string name, double deadband, double slope_break, double kp1, double kp2,
 								 double ki, double kd, double time_step, double integral_min,
 								 double integral_max, double output_min, double output_max) :
-								 deadband_(deadband), slope_break_(slope_break), kp1_(kp1),
+								 name_(name), deadband_(deadband), slope_break_(slope_break), kp1_(kp1),
 								 kp2_(kp2), ki_(ki), kd_(kd), time_step_(time_step),
 								 integral_min_(integral_min), integral_max_(integral_max),
 								 output_min_(output_min), output_max_(output_max) {
@@ -56,7 +56,7 @@ namespace platoon_control_pid0
 		double y1 = kp1_*(slope_break_ - deadband_);
 		x2_intercept_ = slope_break_ - y1/kp2_;
 
-		ROS_DEBUG_STREAM("PIDController created with:");
+		ROS_DEBUG_STREAM("PIDController '" << name_ << "' created with:");
 		ROS_DEBUG_STREAM("    deadband = " << deadband_);
 		ROS_DEBUG_STREAM("    slope_break = " << slope_break_);
 		ROS_DEBUG_STREAM("    kp1 = " << kp1_);
@@ -73,14 +73,14 @@ namespace platoon_control_pid0
     void PIDController::reset(){
         integral_ = 0.0;
         prev_error_ = 0.0;
-		ROS_DEBUG_STREAM("PID reset.");
+		ROS_DEBUG_STREAM("PID reset:" << name_);
     }
 
 	double PIDController::calculate(const double setpoint, const double pv){
 
 		// Calculate error
 	    double error = setpoint - pv;
-		ROS_DEBUG_STREAM("setpoint = " << setpoint << ", pv = " << pv << ", error = " << error << ", prev error = " << prev_error_);
+		ROS_DEBUG_STREAM(name_ << "setpoint = " << setpoint << ", pv = " << pv << ", error = " << error << ", prev error = " << prev_error_);
 
 	    // Proportional term
 		double p_out = 0.0;

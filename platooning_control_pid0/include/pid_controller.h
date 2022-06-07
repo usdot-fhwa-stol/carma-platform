@@ -33,6 +33,7 @@ namespace platoon_control_pid0
 
         /**
          * \brief Constructor that takes all operating constants
+         * \param name          arbitrary tag to help distinguish one PID object from another, esp in log statements
          * \param deadband      abs value of process value deadband, within which proportional gain will be zero
          * \param slope_break   abs value of breakpoint in proportional gain where it changes from kp1 to kp2
          * \param kp1           lower proportional gain, applies to pv between deadband_width and slope_break
@@ -45,7 +46,7 @@ namespace platoon_control_pid0
          * \param output_min    min limit of output value
          * \param output_max    max limit of output value
          */
-    	PIDController(double deadband, double slope_break, double kp1, double kp2,
+    	PIDController(std::string name, double deadband, double slope_break, double kp1, double kp2,
 					  double ki, double kd, double time_step, double integral_min,
 					  double integral_max, double output_min, double output_max);
 
@@ -64,6 +65,7 @@ namespace platoon_control_pid0
 
     private:
         // values set in constructor (act as constants) - see constructor brief for description of each of these similarly named vars
+        std::string                     name_;
         double                          deadband_;          
         double                          slope_break_;       
         double                          kp1_;               

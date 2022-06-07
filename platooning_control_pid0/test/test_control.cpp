@@ -15,29 +15,19 @@
 ------------------------------------------------------------------------------*/
 
 #include "platoon_control_pid0.h"
+#include "platoon_control_config.h"
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 
-TEST(PlatoonControlPluginTest, test2)
+TEST(PlatoonControlPluginTest, test_config)
 {
-    cav_msgs::TrajectoryPlan tp;
-    cav_msgs::TrajectoryPlanPoint point1;
-    point1.x = 1.0;
-    point1.y = 1.0;
-
-    cav_msgs::TrajectoryPlanPoint point2;
-    point2.x = 10.0;
-    point2.y = 10.0;
-
-    cav_msgs::TrajectoryPlanPoint point3;
-    point3.x = 20.0;
-    point3.y = 20.0;
-
-    tp.trajectory_points = {point1, point2, point3};
-
+    /***
+    ros::Time::init();
     platoon_control_pid0::PlatoonControlPid0Plugin pc;
-/*JOHN
-    cav_msgs::TrajectoryPlanPoint out = pc.getLookaheadTrajectoryPoint(tp);
-    EXPECT_EQ(out.x, 10.0);
-*/
+    pc.initialize();
+    platoon_control_pid0::PlatoonControlPluginConfig c = pc.get_config();
+    EXPECT_NEAR(0.1, c.gamma_h, 0.01);
+    EXPECT_NEAR(-1.01, c.pid_h_kp1, 0.01);
+    EXPECT_NEAR(0.02, c.pid_c_kp1, 0.01);
+    ***/
 }
