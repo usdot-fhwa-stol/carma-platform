@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,20 +14,20 @@
  * the License.
  */
 
-#include <ros/ros.h>
-#include "trajectory_executor/trajectory_executor.hpp"
+#include <rclcpp/rclcpp.hpp>
+#include "trajectory_executor/trajectory_executor_node.hpp"
 
-/**
- * Main application entry point for TrajectoryExecutor Node
- */
-int main(int argc, char** argv) 
+int main(int argc, char **argv) 
 {
-  ros::init(argc, argv, "trajectory_executor");
-  ROS_DEBUG("Entered main function for Trajectory executor, starting node...");
-  trajectory_executor::TrajectoryExecutor te;
+  rclcpp::init(argc, argv);
 
-  te.init();
-  te.run();
+  auto node = std::make_shared<trajectory_executor::TrajectoryExecutor>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
+
+  rclcpp::shutdown();
 
   return 0;
 }

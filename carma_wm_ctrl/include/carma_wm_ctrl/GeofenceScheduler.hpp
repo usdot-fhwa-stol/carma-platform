@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2020-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,13 +15,15 @@
  * the License.
  */
 #include <functional>
-#include <ros/time.h>
 #include <mutex>
 #include <memory>
 #include <unordered_map>
-#include <carma_wm_ctrl/Geofence.h>
-#include <carma_utils/timers/Timer.h>
-#include <carma_utils/timers/TimerFactory.h>
+#include <carma_wm_ctrl/Geofence.hpp>
+#include <carma_ros2_utils/timers/Timer.hpp>
+#include <carma_ros2_utils/timers/TimerFactory.hpp>
+#include <carma_ros2_utils/timers/ROSTimerFactory.hpp>
+#include <gtest/gtest_prod.h>
+
 
 namespace carma_wm_ctrl
 {
@@ -31,17 +33,19 @@ namespace carma_wm_ctrl
  */
 class GeofenceScheduler
 {
-  using Timer = carma_utils::timers::Timer;
-  using TimerFactory = carma_utils::timers::TimerFactory;
+  using Timer = carma_ros2_utils::timers::Timer;
+  using TimerFactory = carma_ros2_utils::timers::TimerFactory;
+  using ROSTimerFactory = carma_ros2_utils::timers::ROSTimerFactory;
   using TimerPtr = std::unique_ptr<Timer>;
 
   std::mutex mutex_;
-  std::unique_ptr<TimerFactory> timerFactory_;
+  std::shared_ptr<TimerFactory> timerFactory_;
   std::unordered_map<uint32_t, std::pair<TimerPtr, bool>> timers_;  // Pairing of timers with their Id and valid status
   std::unique_ptr<Timer> deletion_timer_;
   std::function<void(std::shared_ptr<Geofence>)> active_callback_;
   std::function<void(std::shared_ptr<Geofence>)> inactive_callback_;
   uint32_t next_id_ = 0;  // Timer id counter
+  rcl_clock_type_t clock_type_ = RCL_SYSTEM_TIME;
 
 public:
   /**
@@ -50,7 +54,7 @@ public:
    *
    * @param timerFactory A pointer to a TimerFactory which can be used to generate timers for geofence triggers.
    */
-  GeofenceScheduler(std::unique_ptr<TimerFactory> timerFactory);
+  GeofenceScheduler(std::shared_ptr<TimerFactory> timerFactory);
 
   /**
    * @brief Add a geofence to the scheduler. This will cause it to trigger an event when it becomes active or goes
@@ -78,6 +82,16 @@ public:
    */
   void clearTimers();
 
+  /**
+   * @brief Get the clock type of the clock being created by the timer factory
+   */
+  rcl_clock_type_t getClockType();
+
+  /**
+   * @brief Get current time used by scheduler
+   */
+  rclcpp::Time now();
+  
 private:
   /**
    * @brief Generates the next id to be used for a timer
@@ -95,7 +109,7 @@ private:
    * @param schedule_id index number of the schedule being used corresponding to this geofence
    * @param timer_id The id of the timer which caused this callback to occur
    */
-  void startGeofenceCallback(const ros::TimerEvent& event, std::shared_ptr<Geofence> gf_ptr, const unsigned int schedule_id, const int32_t timer_id);
+  void startGeofenceCallback(std::shared_ptr<Geofence> gf_ptr, const unsigned int schedule_id, const int32_t timer_id);
   /**
    * @brief The callback which is triggered when a geofence becomes in-active
    *        This will call the user set inactive_callback set from the onGeofenceInactive function
@@ -105,6 +119,7 @@ private:
    * @param schedule_id index number of the schedule being used corresponding to this geofence
    * @param timer_id The id of the timer which caused this callback to occur
    */
-  void endGeofenceCallback(const ros::TimerEvent& event, std::shared_ptr<Geofence> gf_ptr, const unsigned int schedule_id, const int32_t timer_id);
+  void endGeofenceCallback(std::shared_ptr<Geofence> gf_ptr, const unsigned int schedule_id, const int32_t timer_id);
+
 };
 }  // namespace carma_wm_ctrl
