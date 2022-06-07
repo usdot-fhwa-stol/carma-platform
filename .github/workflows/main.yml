@@ -22,6 +22,9 @@ jobs:
         with:
           pr_url: ${{github.event.pull_request.html_url}}
           format: IssueNumber
-
       - name: Output linked Issue list
-        run: [ -z "${{ steps.links.outputs.issues }}" ] && exit 1
+        run: |
+          if [ -z "${{ steps.links.outputs.issues }}" ]
+          then
+            exit 1
+          fi
