@@ -14,17 +14,11 @@ on:
 jobs:
   linked_issues:
     runs-on: ubuntu-latest
-    name: A job to say hello
+    name: Check for linked issue
     steps:
-      - name: Find Linked Issues
+      - name: Check for linked issue
         id: links
         uses: hossainemruz/linked-issues@main
         with:
           pr_url: ${{github.event.pull_request.html_url}}
           format: IssueNumber
-      - name: Output linked Issue list
-        run: |
-          if [ -z "${{ steps.links.outputs.issues }}" ]
-          then
-            exit 1
-          fi
