@@ -29,6 +29,11 @@ GeofenceScheduler::GeofenceScheduler(std::shared_ptr<TimerFactory> timerFactory)
   clock_type_ = timerFactory_->now().get_clock_type();
 }
 
+rclcpp::Time GeofenceScheduler::now()
+{
+  return timerFactory_->now();
+}
+
 uint32_t GeofenceScheduler::nextId()
 {
   next_id_++;

@@ -86,6 +86,11 @@ public:
    * @brief Get the clock type of the clock being created by the timer factory
    */
   rcl_clock_type_t getClockType();
+
+  /**
+   * @brief Get current time used by scheduler
+   */
+  rclcpp::Time now();
   
 private:
   /**

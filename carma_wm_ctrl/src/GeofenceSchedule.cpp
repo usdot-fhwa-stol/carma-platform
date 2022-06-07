@@ -33,45 +33,6 @@ GeofenceSchedule::GeofenceSchedule(rclcpp::Time schedule_start, rclcpp::Time sch
 
 bool GeofenceSchedule::scheduleExpired(const rclcpp::Time& time) const
 {
-  if (time.get_clock_type() == RCL_ROS_TIME)
-  {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "scheduleExpired, input RCL_ROS_TIME"); 
-  }
-  else if (time.get_clock_type() == RCL_SYSTEM_TIME)
-  {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "scheduleExpired, input RCL_SYSTEM_TIME"); 
-  }
-  else
-  {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "scheduleExpired, input DIFF"); 
-  }
-  
-  if (schedule_end_.get_clock_type() == RCL_ROS_TIME)
-  {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "scheduleExpired, schedule_end_ RCL_ROS_TIME"); 
-  }
-  else if (schedule_end_.get_clock_type() == RCL_SYSTEM_TIME)
-  {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "scheduleExpired, schedule_end_ RCL_SYSTEM_TIME"); 
-  }
-  else
-  {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "scheduleExpired, schedule_end_ DIFF"); 
-  }
-
-  if (rclcpp::Time(0).get_clock_type() == RCL_ROS_TIME)
-  {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "scheduleExpired, rclcpp::Time(0) RCL_ROS_TIME"); 
-  }
-  else if (rclcpp::Time(0).get_clock_type() == RCL_SYSTEM_TIME)
-  {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "scheduleExpired, rclcpp::Time(0) RCL_SYSTEM_TIME"); 
-  }
-  else
-  {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "scheduleExpired, rclcpp::Time(0) DIFF"); 
-  }
-
   return schedule_end_ < time;
 }
 

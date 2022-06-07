@@ -2222,7 +2222,7 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds()
 void WMBroadcaster::pubTCMACK(j2735_v2x_msgs::msg::Id64b tcm_req_id, uint16_t msgnum, int ack_status, const std::string& ack_reason)
 {
   carma_v2x_msgs::msg::MobilityOperation mom_msg;
-  mom_msg.m_header.timestamp = rclcpp::Time(0.0,0.0,RCL_SYSTEM_TIME).nanoseconds()/1000000;
+  mom_msg.m_header.timestamp = scheduler_.now().nanoseconds()/1000000;
   mom_msg.m_header.sender_id = vehicle_id_;
   mom_msg.strategy = geofence_ack_strategy_;
   std::stringstream ss;
