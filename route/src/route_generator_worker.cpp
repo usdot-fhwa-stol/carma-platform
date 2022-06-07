@@ -101,7 +101,7 @@ namespace route {
                         if(!std::isdigit(dest_name.substr(last_comma + 1).at(0)))
                         {
                             route_msg.route_name = dest_name.substr(last_comma + 1);
-                            resp.availableRoutes.push_back(route_msg);
+                            resp.available_routes.push_back(route_msg);
                         }
                      }
                 }
