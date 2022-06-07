@@ -15,7 +15,7 @@ headawayStableLowerBond: 1.7
 maxAllowableHeadaway: 4.0
 headawayStableUpperBond: 3.9
 minCutinGap: 22.0
-maxCutinGap: 32.0
+maxCutinGap: 99.0
 maxCrosstrackError: 0.8
 vehicleLength: 5.0
 ss_theta: 4.0

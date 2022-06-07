@@ -1833,7 +1833,7 @@ namespace platoon_strategic_ihp
         std::vector<std::string> join_index_parsed;
         boost::algorithm::split(join_index_parsed, inputsParams[5], boost::is_any_of(":"));
         int req_sender_join_index = std::stoi(join_index_parsed[1]);
-        ROS_DEBUG_STREAM("Requesting join_index parsed: " << req_sender_join_index);
+        ROS_DEBUG_STREAM("Request plan ID " << msg.m_header.plan_id << ", join_index parsed: " << req_sender_join_index);
 
         if (plan_type.type == cav_msgs::PlanType::PLATOON_CUT_IN_JOIN) 
         {
@@ -1877,8 +1877,7 @@ namespace platoon_strategic_ihp
                         
                 if (isRearJoinerInPosition)
                 {
-                    ROS_DEBUG_STREAM("Published Mobility cut-in-rear-Join request to relavent platoon member, host is leader.");
-                    ROS_WARN("Published Mobility cut-in-rear-Join request to relavent platoon members to signal gap creation.");
+                    ROS_DEBUG_STREAM("Acknowledged Mobility cut-in-rear-Join request to relavent platoon member, host is leader.");
                     return MobilityRequestResponse::ACK;
                 }
                 else
@@ -1928,7 +1927,6 @@ namespace platoon_strategic_ihp
                     //       for cut-in in middle, index indicate the gap leading vehicle's index
                     mobility_request_publisher_(request); 
                     ROS_DEBUG_STREAM("Published Mobility cut-in-mid-Join request to relavent platoon members to signal gap creation, host is leader.");
-                    ROS_WARN("Published Mobility cut-in-mid-Join request to relavent platoon members to signal gap creation.");
                     ROS_DEBUG_STREAM("The joining vehicle is cutting in at index: "<< req_sender_join_index <<". Notify gap rear vehicle with ID: " << recipient_ID << " to slow down");
                     return MobilityRequestResponse::ACK;
                 }
