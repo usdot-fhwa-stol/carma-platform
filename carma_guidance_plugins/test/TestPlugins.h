@@ -43,10 +43,6 @@ namespace carma_guidance_plugins
       return true;
     }
 
-    std::string get_plugin_name() override {
-      return "TestStrategicPlugin";
-    }
-
     std::string get_version_id() override {
       return "1.0";
     }
@@ -84,10 +80,6 @@ namespace carma_guidance_plugins
       return true;
     }
 
-    std::string get_plugin_name() override {
-      return "TestTacticalPlugin";
-    }
-
     std::string get_version_id() override {
       return "1.1";
     }
@@ -121,10 +113,6 @@ namespace carma_guidance_plugins
 
     bool get_availability() override {
       return true;
-    }
-
-    std::string get_plugin_name() override {
-      return "TestControlPlugin";
     }
 
     std::string get_version_id() override {
