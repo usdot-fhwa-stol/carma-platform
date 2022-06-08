@@ -1126,7 +1126,7 @@ namespace platoon_strategic_ihp
                 auto target_pose = wm_->pointFromRouteTrackPos(target_trackpose);
                 if (target_pose)
                 {
-                    target_cutin_pose_ = target_pose.get();
+                    target_cutin_pose_ = incoming_pose;// TODO temporary should be target_pose.get();
                     ROS_DEBUG_STREAM("got the target pose");
                     // TODO: temporary confirm the pose is valid, remove later
                     ROS_DEBUG_STREAM("target_cutin_pose_ x" << target_cutin_pose_.x());
@@ -1252,11 +1252,10 @@ namespace platoon_strategic_ihp
 
             // If lane change has not yet been authorized, stop here (this method will be running before the negotiations
             // with the platoon leader are complete)
-            // TODO TEMPORARY
-            // if (!safeToLaneChange_)
-            // {
-            //     return;
-            // }
+            if (!safeToLaneChange_)
+            {
+                return;
+            }
 
             // determine if the lane change is finished
             bool isSameLaneWithPlatoon = abs(frontVehicleCtd - current_crosstrack_) <= config_.maxCrosstrackError;
@@ -1878,6 +1877,7 @@ namespace platoon_strategic_ihp
                     
                     ROS_DEBUG_STREAM("The joining vehicle is cutting in from front. Notify platoon leader to slow down");
                     ROS_DEBUG_STREAM("Slow down notified, joining vehicle can prepare to join");
+
                     return MobilityRequestResponse::ACK;
                 }
                 else
@@ -1901,6 +1901,7 @@ namespace platoon_strategic_ihp
                 {
                     ROS_DEBUG_STREAM("Published Mobility cut-in-rear-Join request to relavent platoon member, host is leader.");
                     ROS_WARN("Published Mobility cut-in-rear-Join request to relavent platoon members to signal gap creation.");
+                    pm_.isCreateGap = true;
                     return MobilityRequestResponse::ACK;
                 }
                 else
@@ -3319,7 +3320,7 @@ namespace platoon_strategic_ihp
                         ROS_DEBUG_STREAM("The target cutin pose is not on a valid lanelet. So no lanechane!");
                         break;
                     } 
-                    int target_lanelet_id = target_lanelets[0].second.id();
+                    int target_lanelet_id = target_lanelets[0].second.id(); //12301
                     ROS_DEBUG_STREAM("target_lanelet_id: " << target_lanelet_id);
 
                     // note: Since lanelet ID is not important for arbitrary lanechange, just use first lanelet's Id to create a maneuver msg.
