@@ -71,7 +71,7 @@ namespace route {
         /**
          * \brief setReroutingChecker function to set the rerouting flag
          */
-        void setReroutingChecker(std::function<bool()> inputFunction);
+        void setReroutingChecker(const std::function<bool()>& inputFunction);
         
         /**
          * \brief Dependency injection for world model pointer.
@@ -110,8 +110,8 @@ namespace route {
          * \param req An empty carma_planning_msgs::srv::GetAvailableRoutes::Request
          * \param resp A carma_planning_msgs::srv::GetAvailableRoutes::Response msg contains a list of empty Route messages with only route name populated
          */
-        bool getAvailableRouteCb(const std::shared_ptr<rmw_request_id_t> request_header,
-                                const std::shared_ptr<carma_planning_msgs::srv::GetAvailableRoutes::Request> req,
+        bool getAvailableRouteCb(const std::shared_ptr<rmw_request_id_t>,
+                                const std::shared_ptr<carma_planning_msgs::srv::GetAvailableRoutes::Request>,
                                 std::shared_ptr<carma_planning_msgs::srv::GetAvailableRoutes::Response> resp);
         
         /**
@@ -120,7 +120,7 @@ namespace route {
          *            an array of carma_v2x_msgs::msg::Position3D destination points to generate a route from.
          * \param resp A carma_planning_msgs::srv::SetActiveRoute::Response msg contains error status indicating whether the routing succeeded
          */
-        bool setActiveRouteCb(const std::shared_ptr<rmw_request_id_t> request_header,
+        bool setActiveRouteCb(const std::shared_ptr<rmw_request_id_t>,
                                 const std::shared_ptr<carma_planning_msgs::srv::SetActiveRoute::Request> req,
                                 std::shared_ptr<carma_planning_msgs::srv::SetActiveRoute::Response> resp);
 
@@ -129,8 +129,8 @@ namespace route {
          * \param req A carma_planning_msgs::srv::AbortActiveRoute::Request msg which contains the route name user wants to stop following
          * \param resp A carma_planning_msgs::srv::AbortActiveRoute::Response msg contains error status showing if there is an active route
          */
-        bool abortActiveRouteCb(const std::shared_ptr<rmw_request_id_t> request_header,
-                                const std::shared_ptr<carma_planning_msgs::srv::AbortActiveRoute::Request> req,
+        bool abortActiveRouteCb(const std::shared_ptr<rmw_request_id_t>,
+                                const std::shared_ptr<carma_planning_msgs::srv::AbortActiveRoute::Request>,
                                 std::shared_ptr<carma_planning_msgs::srv::AbortActiveRoute::Response> resp);
 
         /**
@@ -197,7 +197,7 @@ namespace route {
          * \brief Helper function to generate a CARMA route message based on planned lanelet route
          * \param route Route object from lanelet2 lib routing function
          */
-        carma_planning_msgs::msg::Route composeRouteMsg(const lanelet::Optional<lanelet::routing::Route>& route);
+        carma_planning_msgs::msg::Route composeRouteMsg(const lanelet::Optional<lanelet::routing::Route>& route) const;
 
         /**
          * \brief Spin callback which will be called frequently based on spin rate
