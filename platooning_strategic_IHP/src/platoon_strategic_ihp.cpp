@@ -219,7 +219,7 @@ namespace platoon_strategic_ihp
         // Position info of the host vehcile
         double currentDtd = current_downtrack_;
         double currentCtd = current_crosstrack_;
-        bool samelane = abs(currentCtd-crosstrack) <= findLaneWidth();
+        bool samelane = abs(currentCtd-crosstrack) <= config_.maxCrosstrackError;
 
         if (downtrack > currentDtd && samelane)
         {
@@ -776,17 +776,17 @@ namespace platoon_strategic_ihp
         std::vector<std::string> ecef_x_parsed;
         boost::algorithm::split(ecef_x_parsed, inputsParams[3], boost::is_any_of(":"));
         double ecef_x = std::stod(ecef_x_parsed[1]);
-        std::cerr << "ecef_x_parsed: " << ecef_x << std::endl;
+        ROS_DEBUG_STREAM("ecef_x_parsed: " << ecef_x);
 
         std::vector<std::string> ecef_y_parsed;
         boost::algorithm::split(ecef_y_parsed, inputsParams[4], boost::is_any_of(":"));
         double ecef_y = std::stod(ecef_y_parsed[1]);
-        std::cerr << "ecef_y_parsed: " << ecef_y << std::endl;
+        ROS_DEBUG_STREAM("ecef_y_parsed: " << ecef_y);
 
         std::vector<std::string> ecef_z_parsed;
         boost::algorithm::split(ecef_z_parsed, inputsParams[5], boost::is_any_of(":"));
         double ecef_z = std::stod(ecef_z_parsed[1]);
-        std::cerr << "ecef_z_parsed: " << ecef_z << std::endl;
+        ROS_DEBUG_STREAM("ecef_z_parsed: " << ecef_z);
         
         cav_msgs::LocationECEF ecef_loc;
         ecef_loc.ecef_x = ecef_x;
@@ -1133,8 +1133,20 @@ namespace platoon_strategic_ihp
                     ROS_DEBUG_STREAM("incoming_pose x: " << incoming_pose.x());
 
                     ROS_DEBUG_STREAM("target_cutin_pose_ y: " << target_pose.get().y());
-                    ROS_DEBUG_STREAM("incoming_pose x: " << incoming_pose.y());
+                    ROS_DEBUG_STREAM("incoming_pose y: " << incoming_pose.y());
+
+                    auto target_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, target_pose.get(), 1);  
+                    if (!target_lanelets.empty())
+                    {
+                        long target_pose_lanelet_id = target_lanelets[0].second.id();
+                        ROS_DEBUG_STREAM("target_pose_lanelet_id: " << target_pose_lanelet_id);
+                    }
+                    else
+                    {
+                        ROS_DEBUG_STREAM("target_pose_lanelet not found!!");
+                    }
                 }
+                    
                 else
                 {
                     ROS_DEBUG_STREAM("No target pose is found, so we cannot prodeed with a cutin join request.");
@@ -1234,6 +1246,7 @@ namespace platoon_strategic_ihp
         if (isPlatoonInfoMsg  &&  pm_.is_neighbor_record_complete_)
         {
 
+            ROS_DEBUG_STREAM("in the info loop");
             //TODO: would be good to have a timeout here; if a neighbor platoon has been identified, and no INFO messages
             //      from it are received in a while, then its record should be erased, and any in-work joining should be
             //      aborted.
@@ -1241,13 +1254,17 @@ namespace platoon_strategic_ihp
             // read ecef location from strategy params.
             cav_msgs::LocationECEF ecef_loc;
             ecef_loc = mob_op_find_ecef_from_INFO_params(strategyParams);
-            
+            ROS_DEBUG_STREAM("got the incoming pose");
             // use ecef_loc to calculate front Dtd in m.
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc);
+            ROS_DEBUG_STREAM("got the incoming pose in map");
+
             double frontVehicleDtd = wm_->routeTrackPos(incoming_pose).downtrack;
+            ROS_DEBUG_STREAM("frontVehicleDtd: " << frontVehicleDtd);
 
             // use ecef_loc to calculate front Ctd in m.
             double frontVehicleCtd = wm_->routeTrackPos(incoming_pose).crosstrack;
+            ROS_DEBUG_STREAM("frontVehicleCtd: " << frontVehicleCtd);
 
             // // Find neighbor platoon end vehicle and its downtrack in m
             // TODO temporary
@@ -1265,7 +1282,7 @@ namespace platoon_strategic_ihp
             // determine if the lane change is finished
             bool isSameLaneWithPlatoon = abs(frontVehicleCtd - current_crosstrack_) <= config_.maxCrosstrackError;
             ROS_DEBUG_STREAM("Lane change has been authorized. isSameLaneWithPlatoon = " << isSameLaneWithPlatoon);
-
+            ROS_DEBUG_STREAM("crosstrack diff" << abs(frontVehicleCtd - current_crosstrack_));
             if (isSameLaneWithPlatoon)
             {
                 // request 1. reset the safeToChangLane indicators if lane change is finished
@@ -3261,6 +3278,10 @@ namespace platoon_strategic_ihp
         
 
         ROS_DEBUG_STREAM("in mvr  callback safeToLaneChange: " << safeToLaneChange_);
+
+        // Note: Use current_lanlet list (which was determined based on vehicle pose) to find current lanelet ID. 
+        long current_lanelet_id = current_lanelets[0].second.id();
+        ROS_DEBUG_STREAM("current_lanelet_id: " << current_lanelet_id);
         // lane change maneuver 
         if (safeToLaneChange_)
         {   
@@ -3268,7 +3289,7 @@ namespace platoon_strategic_ihp
             double target_crosstrack = wm_->routeTrackPos(target_cutin_pose_).crosstrack;
             ROS_DEBUG_STREAM("target_crosstrack: " << target_crosstrack);
             double crosstrackDiff = current_crosstrack_ - target_crosstrack; 
-            bool isLaneChangeFinished = abs(crosstrackDiff) <= findLaneWidth()*0.5; // Use 85% of lane width to account for noise.
+            bool isLaneChangeFinished = abs(crosstrackDiff) <= config_.maxCrosstrackError; // Use 85% of lane width to account for noise.
             ROS_DEBUG_STREAM("crosstrackDiff: " << crosstrackDiff);
             ROS_DEBUG_STREAM("isLaneChangeFinished: " << isLaneChangeFinished);
             /**  
@@ -3301,9 +3322,7 @@ namespace platoon_strategic_ihp
                     // consider calculate dtd_diff and ctd_diff
                     double dist_diff = end_dist - current_progress;
                     ROS_DEBUG_STREAM("dist_diff: " << dist_diff);
-                    // Note: Use current_lanlet list (which was determined based on vehicle pose) to find current lanelet ID. 
-                    long current_lanelet_id = current_lanelets[0].second.id();
-                    ROS_DEBUG_STREAM("current_lanelet_id: " << current_lanelet_id);
+                    
 
                     // note: This is just mock info to compile the code.                     
 
@@ -3344,8 +3363,8 @@ namespace platoon_strategic_ihp
 
                     ++last_lanelet_index;
 
-                    resp.new_plan.maneuvers.push_back(composeManeuverMessage(lc_end_dist, lc_end_dist + 30,  
-                                            speed_progress, target_speed,target_lanelet_id, time_progress));
+                    // resp.new_plan.maneuvers.push_back(composeManeuverMessage(lc_end_dist, lc_end_dist + 200,  
+                    //                         speed_progress, target_speed, target_lanelet_id, time_progress));
                     
 
 
@@ -3377,8 +3396,8 @@ namespace platoon_strategic_ihp
                     }
                     // Note: The previous plan was generated at the beginning of the trip. It is necessary to update 
                     //       it as the lane ID and lanelet Index are different.
-                    resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist,  
-                                            speed_progress, target_speed,shortest_path[last_lanelet_index].id(), time_progress));
+                    resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_downtrack_, end_dist,  
+                                            speed_progress, target_speed, current_lanelet_id, time_progress));
                     
                     current_progress += dist_diff;
                     time_progress = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
@@ -3418,6 +3437,10 @@ namespace platoon_strategic_ihp
                 resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist,  
                                         speed_progress, target_speed,shortest_path[last_lanelet_index].id(), time_progress));
                 
+                // resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_downtrack_, end_dist,  
+                //                             speed_progress, target_speed,current_lanelet_id, time_progress));
+                    
+
                 current_progress += dist_diff;
                 time_progress = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
                 speed_progress = target_speed;
