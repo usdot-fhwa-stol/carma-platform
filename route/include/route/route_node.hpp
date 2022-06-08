@@ -89,10 +89,9 @@ namespace route
     explicit Route(const rclcpp::NodeOptions &);
 
     /**
-     * \brief Example callback for dynamic parameter updates
+     * \brief Function callback for dynamic parameter updates
      */
-    rcl_interfaces::msg::SetParametersResult 
-    parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
+    rcl_interfaces::msg::SetParametersResult parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
 
     ////
     // Overrides

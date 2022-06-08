@@ -1,5 +1,5 @@
 
-# Copyright (C) 2022 LEIDOS.
+# Copyright (C) 2018-2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -76,7 +76,7 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_route test/node_test.cpp)
+  ament_add_gtest(test_route test/test_route_generator.cpp)
 
   ament_target_dependencies(test_route ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
