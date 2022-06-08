@@ -219,7 +219,7 @@ namespace platoon_strategic_ihp
         // Position info of the host vehcile
         double currentDtd = current_downtrack_;
         double currentCtd = current_crosstrack_;
-        bool samelane = abs(currentCtd-crosstrack) <= findLaneWidth();
+        bool samelane = abs(currentCtd-crosstrack) <= 0.5*findLaneWidth();
 
         if (downtrack > currentDtd && samelane)
         {
