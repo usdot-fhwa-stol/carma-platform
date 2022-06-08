@@ -3,19 +3,19 @@
 pid_h_deadband: 0.0
 
 # breakpoint where p value changes from kp1 to kp2, rad
-pid_h_slope_break: 0.035 #2 deg
+pid_h_slope_break: 0.070 #4 deg
 
 # first proportional gain, rad/rad
-pid_h_kp1: -0.7
+pid_h_kp1: -0.8
 
 # second proportional gain, rad/rad
 pid_h_kp2: -1.0
 
 # integral gain, rad/rad
-pid_h_ki: 0.0 # -0.0005 maybe a good starting point?
+pid_h_ki: -0.0008 # -0.0008 getting kinda large at 30 mph
 
 # derivative gain, rad/rad
-pid_h_kd: 0.02 #0.02 works well at 30 mph
+pid_h_kd: 0.015 #0.02 works well at 30 mph
 
 # min value allowed for integral term
 pid_h_integral_min: -0.1 #initial guess NOT TUNED!
@@ -57,7 +57,7 @@ gamma_h: 0.4 #last=0.4 #0.3 best so far; 0.5 not enough CTE control
 
 # Number of trajectory points ahead of nearest at which to look for curvature
 # (must be >= 0)
-heading_lookahead: 12 #12 reasonably good for Suntrax curves @30 mph
+heading_lookahead: 8 #12 reasonably good for Suntrax curves @30 mph
 
 # expected time elapsed between calls to PID controllers, s
 # This value needs to be 1/control_timer frequency that is set at bottom of initialize()
