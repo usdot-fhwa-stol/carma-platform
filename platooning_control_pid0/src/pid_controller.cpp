@@ -107,10 +107,7 @@ namespace platoon_control_pid0
 
 	    // Derivative term
 	    double derivative = (error - prev_error_) / time_step_;
-		double d_out = 0.0;
-		if (abs(error) > deadband_) {
-		    d_out = kd_ * derivative;
-		}
+		double d_out = kd_ * derivative;
 
 	    // Calculate total output
 	    double output = p_out + i_out + d_out;
