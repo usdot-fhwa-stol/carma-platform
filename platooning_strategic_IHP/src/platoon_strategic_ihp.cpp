@@ -1122,15 +1122,18 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("rearVehicleDtd" << rearVehicleDtd);
                 ROS_DEBUG_STREAM("rearVehicleCtd" << rearVehicleCtd);
                 
-                carma_wm::TrackPos target_trackpose(rearVehicleDtd - 10.0, rearVehicleCtd);
+                carma_wm::TrackPos target_trackpose(rearVehicleDtd, rearVehicleCtd);
                 auto target_pose = wm_->pointFromRouteTrackPos(target_trackpose);
                 if (target_pose)
                 {
                     target_cutin_pose_ = incoming_pose;// TODO temporary should be target_pose.get();
                     ROS_DEBUG_STREAM("got the target pose");
                     // TODO: temporary confirm the pose is valid, remove later
-                    ROS_DEBUG_STREAM("target_cutin_pose_ x" << target_cutin_pose_.x());
-                    ROS_DEBUG_STREAM("target_cutin_pose_ y" << target_cutin_pose_.y());
+                    ROS_DEBUG_STREAM("target_cutin_pose_ x: " << target_pose.get().x());
+                    ROS_DEBUG_STREAM("incoming_pose x: " << incoming_pose.x());
+
+                    ROS_DEBUG_STREAM("target_cutin_pose_ y: " << target_pose.get().y());
+                    ROS_DEBUG_STREAM("incoming_pose x: " << incoming_pose.y());
                 }
                 else
                 {
