@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,16 +20,28 @@
 
 namespace subsystem_controllers
 {
+    /**
+     * \brief An entry represents a plugins details for the purposes of tracking
+     */ 
     struct Entry
     {
-        /* data */
+        //! Availability flag of a plugin
         bool available_;
+        //! Activation flag of a plugin
         bool active_;
+        //! Fully specified node name of a plugin
         std::string name_;
+        //! Type of the plugin from the message enum in carma_planning_msgs::Plugin
         uint8_t type_;
+        //! The capability string of the plugin
         std::string capability_;
+        //! Flag indicating if the user requested this plugin be activated
+        bool user_requested_activation_;
 
-        Entry(bool available, bool active, const std::string& name, uint8_t type, const std::string& capability)
-            : available_(available), active_(active), name_(name), type_(type), capability_(capability) {}
+        /**
+         * \brief All fields constructor
+         */ 
+        Entry(bool available, bool active, const std::string& name, uint8_t type, const std::string& capability, bool user_requested_activation)
+            : available_(available), active_(active), name_(name), type_(type), capability_(capability), user_requested_activation_(user_requested_activation) {}
     };
 }

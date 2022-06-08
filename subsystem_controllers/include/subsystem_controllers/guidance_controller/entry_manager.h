@@ -23,6 +23,9 @@
 
 namespace subsystem_controllers
 {
+    /**
+     * \brief An entry manager keeps track of the set of entries and makes it easy to add or remove entries
+     */ 
     class EntryManager
     {
         public:
@@ -34,12 +37,14 @@ namespace subsystem_controllers
 
             /*!
              * \brief Add a new entry if the given name does not exist.
-             * Update an existing entry if the given name exists.
+            *         Update an existing entry if the given name exists.
+            * 
+            * \param entry The entry to update or add
              */
             void update_entry(const Entry& entry);
 
             /*!
-             * \brief Get all registed entries as a list.
+             * \brief Get all entries as a list.
              */
             std::vector<Entry> get_entries() const;
 
@@ -55,7 +60,7 @@ namespace subsystem_controllers
 
         private:
 
-            // private map by entry name to keep track of all entries
+            //! private map by entry name to keep track of all entries
             std::unordered_map<std::string, Entry> entry_map_;
 
     };

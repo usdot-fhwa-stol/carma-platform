@@ -69,9 +69,9 @@ namespace subsystem_controllers
 
     cr2::ServicePtr<carma_planning_msgs::srv::GetPluginApi> get_strategic_plugin_by_capability_server_;
 
-    cr2::ServicePtr<carma_planning_msgs::srv::GetPluginApi>get_tactical_plugin_by_capability_server_;
+    cr2::ServicePtr<carma_planning_msgs::srv::GetPluginApi> get_tactical_plugin_by_capability_server_;
 
-    std::unordered_set<std::string> auto_activated_plugins_;
+    cr2::ServicePtr<carma_planning_msgs::srv::GetPluginApi> get_control_plugin_by_capability_server_;
 
   };
 

@@ -55,45 +55,13 @@ namespace subsystem_controllers
     get_parameter<std::vector<std::string>>("required_plugins", config_.required_plugins); 
     get_parameter<std::vector<std::string>>("auto_activated_plugins", config_.auto_activated_plugins); 
 
-    
+    RCLCPP_INFO_STREAM(get_logger(), "Config: " << config_);
+
     // The core need is that plugins need to be managed separately from guidance nodes
-    // Specifically every time a plugin is added it needs to be brought to the inactive state
-    // If the plugin is inactive it needs to be made active
-    plugin_lifecycle_mgr_.set_managed_nodes();
+    auto plugin_lifecycle_manager = std::make_shared<Ros2LifecycleManager>(
+      get_node_base_interface(), get_node_graph_interface(), get_node_logging_interface(), get_node_services_interface());
 
-    // Bringup method
-    // On deactivate we don't want to cause failure if its already deactivated
-
-
-
-    // With all of our non-plugin managed nodes now being tracked we can execute their configure operations
-    bool success = lifecycle_mgr_.configure(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms)).empty();
-
-    if (success)
-    {
-
-      RCLCPP_INFO_STREAM(get_logger(), "Subsystem able to configure");
-      return CallbackReturn::SUCCESS;
-    }
-    else
-    {
-
-      RCLCPP_INFO_STREAM(get_logger(), "Subsystem unable to configure");
-      return CallbackReturn::FAILURE;
-    }
-
-
-    // The core process for the guidance controller should be as follows
-    // On startup identify all nodes in the guidance namespace
-    // All nodes which are in guidance but NOT under /guidance/plugins will be managed by base_subsystem_controller
-    // All nodes under the /guidance/plugins/ namespace will be managed by the plugin manager 
-    // - Only plugins listed as required or auto-start will be activated along with the controller
-    // - All other plugins will be identified via the plugin_discovery and tracked  
-
-    // TODO also in the system_controller or base_subsystem_controller we need to publish a system alert on startup failure so we can see the exception in the UI
-    // TODO load parameters
-
-    plugin_manager_ = std::make_shared<PluginManager>(required_plugins_, plugin_service_prefix_, strategic_plugin_service_suffix_, tactical_plugin_service_suffix_);
+    plugin_manager_ = std::make_shared<PluginManager>(config_.required_plugins, config_.auto_activated_plugins, plugin_lifecycle_manager, [this](){ return get_current_state().id(); });
 
     plugin_discovery_sub_ = create_subscription<carma_planning_msgs::msg::Plugin>(
       "plugin_discovery", 50,
@@ -108,8 +76,8 @@ namespace subsystem_controllers
         std::bind(&PluginManager::get_active_plugins, plugin_manager_, std::placeholders::_1, std::placeholders::_2));
 
     activate_plugin_server_ = create_service(
-        "plugins/get_active_plugins",
-        std::bind(&PluginManager::get_active_plugins, plugin_manager_, std::placeholders::_1, std::placeholders::_2)); // TODO this points to the wrong function
+        "plugins/activate_plugin", // TODO check topic name
+        std::bind(&PluginManager::activate_plugin, plugin_manager_, std::placeholders::_1, std::placeholders::_2));
 
     get_strategic_plugin_by_capability_server_ = create_service(
         "plugins/get_strategic_plugin_by_capability",
@@ -119,6 +87,31 @@ namespace subsystem_controllers
         "plugins/get_tactical_plugin_by_capability",
         std::bind(&PluginManager::get_tactical_plugin_by_capability, plugin_manager_, std::placeholders::_1, std::placeholders::_2));
 
+    get_control_plugin_by_capability_server_ = create_service(
+        "plugins/get_control_plugin_by_capability",
+        std::bind(&PluginManager::get_control_plugin_by_capability, plugin_manager_, std::placeholders::_1, std::placeholders::_2));
+
+
+
+    // With all of our non-plugin managed nodes now being tracked we can execute their configure operations
+    bool success = lifecycle_mgr_.configure(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms)).empty();
+
+    // Configure our plugins
+    plugin_manager_->configure(); // TODO callback returns for this
+
+
+    if (success)
+    {
+
+      RCLCPP_INFO_STREAM(get_logger(), "Subsystem able to configure");
+      return CallbackReturn::SUCCESS;
+    }
+    else
+    {
+
+      RCLCPP_INFO_STREAM(get_logger(), "Subsystem unable to configure");
+      return CallbackReturn::FAILURE;
+    }
 
     return cr2::CallbackReturn::SUCCESS;
   }
@@ -132,11 +125,7 @@ namespace subsystem_controllers
       return base_return;
     }
 
-    // In activate we want to activate all plugins which are required if they haven't already been activated by base class
-    // We want to skip all plugins which are not required
-    // TODO it seems like we may want some sort of start activated configuration for plugins as well
-
-    plugin_manager_->
+    plugin_manager_->activate(); // TODO callback return
 
   }
 
@@ -149,8 +138,31 @@ namespace subsystem_controllers
       return base_return;
     }
 
-    // Iterate over all plugins to deactivate them
-    plugin_manager_.get_registered_plugins();
+    plugin_manager_->deactivate(); // TODO callback return
+  }
+
+  cr2::CallbackReturn handle_on_cleanup(const rclcpp_lifecycle::State &)
+  {
+    auto base_return = BaseSubsystemController::handle_on_deactivate(prev_state);
+
+    if (base_return != cr2::CallbackReturn::SUCCESS) {
+      RCLCPP_ERROR(get_logger(), "Guidance Controller could not deactivate");
+      return base_return;
+    }
+
+    plugin_manager_->cleanup(); // TODO callback return
+  }
+
+  cr2::CallbackReturn handle_on_shutdown(const rclcpp_lifecycle::State &)
+  {
+    auto base_return = BaseSubsystemController::handle_on_deactivate(prev_state);
+
+    if (base_return != cr2::CallbackReturn::SUCCESS) {
+      RCLCPP_ERROR(get_logger(), "Guidance Controller could not deactivate");
+      return base_return;
+    }
+
+    plugin_manager_->shutdown(); // TODO callback return
   }
 
 
