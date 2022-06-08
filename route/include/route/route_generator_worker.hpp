@@ -239,7 +239,7 @@ namespace route {
          * 
          *  \param position the current position of the vehicle
         */
-        lanelet::ConstLanelet getClosestLaneletFromRouteLanelets(lanelet::BasicPoint2d position);
+        lanelet::ConstLanelet getClosestLaneletFromRouteLanelets(lanelet::BasicPoint2d position) const;
 
         // Added for Unit Testing
         void addLanelet(lanelet::ConstLanelet llt);
@@ -249,7 +249,7 @@ namespace route {
          * \param destination_points_in_map vector of destination points
          * \note Destination points will be removed if the current pose is past those points.
         */
-        lanelet::Optional<lanelet::routing::Route> rerouteAfterRouteInvalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map);
+        lanelet::Optional<lanelet::routing::Route> rerouteAfterRouteInvalidation(const std::vector<lanelet::BasicPoint2d>& destination_points_in_map);
 
         /**
          * \brief Initialize transform lookup from front bumper to map

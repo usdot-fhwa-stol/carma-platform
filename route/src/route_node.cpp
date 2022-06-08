@@ -21,9 +21,9 @@ namespace route
 
   Route::Route(const rclcpp::NodeOptions &options)
       : carma_ros2_utils::CarmaLifecycleNode(options),
+        tf2_buffer_(this->get_clock()),
         wml_(this->get_node_base_interface(), this->get_node_logging_interface(),
              this->get_node_topics_interface(), this->get_node_parameters_interface()),
-        tf2_buffer_(this->get_clock()),
         rg_worker_(tf2_buffer_)
   {
     // Create initial config
@@ -116,7 +116,7 @@ namespace route
     rg_worker_.setRouteFilePath(config_.route_file_path);
 
     // Timer for route generator worker's spin callback
-    int rg_worker_spin_period_ms = (1 / config_.route_spin_rate) * 1000; // Conversion from frequency (Hz) to milliseconds time period
+    int rg_worker_spin_period_ms = int ((1 / config_.route_spin_rate) * 1000); // Conversion from frequency (Hz) to milliseconds time period
     spin_timer_ = create_timer(get_clock(),
                           std::chrono::milliseconds(rg_worker_spin_period_ms),
                           std::bind(&RouteGeneratorWorker::spinCallback, &rg_worker_));

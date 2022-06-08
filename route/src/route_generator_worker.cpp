@@ -384,7 +384,7 @@ namespace route {
         double end_point_downtrack = carma_wm::geometry::trackPos(last_ll, {end_point_3d.x(), end_point_3d.y()}).downtrack;
         double lanelet_downtrack = carma_wm::geometry::trackPos(last_ll, last_ll.centerline().back().basicPoint2d()).downtrack;
         // get number of points to display using ratio of the downtracks
-        int points_until_end_point = last_ll.centerline().size() * std::floor(end_point_downtrack / lanelet_downtrack);
+        int points_until_end_point = int (last_ll.centerline().size() * (end_point_downtrack / lanelet_downtrack));
   
         for(const auto& ll : route.get().shortestPath())
         {
@@ -551,9 +551,9 @@ namespace route {
                 RCLCPP_ERROR_STREAM(logger_->get_logger(), "Failed to set the current speed limit. Valid traffic rules object could not be built.");
             }
             std::shared_ptr<geometry_msgs::msg::PoseStamped> pose_ptr(new geometry_msgs::msg::PoseStamped(*vehicle_pose_));
+            
             // check if we left the seleted route by cross track error
-            bool departed = crosstrackErrorCheck(pose_ptr, current_lanelet);
-            if (departed)
+            if (crosstrackErrorCheck(pose_ptr, current_lanelet))
             {
                 this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_DEPARTED);
                 publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_DEPARTED);
@@ -600,7 +600,7 @@ namespace route {
         route_event_queue.push(event_type);
     }
     
-    lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::rerouteAfterRouteInvalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map)
+    lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::rerouteAfterRouteInvalidation(const std::vector<lanelet::BasicPoint2d>& destination_points_in_map)
     {
         std::vector<lanelet::BasicPoint2d> destination_points_in_map_temp;
         
@@ -743,11 +743,11 @@ namespace route {
 
 
 
-    lanelet::ConstLanelet RouteGeneratorWorker::getClosestLaneletFromRouteLanelets(lanelet::BasicPoint2d position)
+    lanelet::ConstLanelet RouteGeneratorWorker::getClosestLaneletFromRouteLanelets(lanelet::BasicPoint2d position) const
     {
         double min = std::numeric_limits<double>::infinity();
         lanelet::ConstLanelet min_llt;
-        for (auto i: route_llts)
+        for (const auto& i: route_llts)
          {
             double dist = boost::geometry::distance(position, i.polygon2d());
             if (dist < min)
