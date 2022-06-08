@@ -1227,7 +1227,8 @@ namespace platoon_strategic_ihp
         bool isPlatoonInfoMsg = strategyParams.rfind(OPERATION_INFO_TYPE, 0) == 0;
 
         // If this is an INFO message and our record of the neighbor platoon is complete then
-        if (false)// (isPlatoonInfoMsg  &&  pm_.is_neighbor_record_complete_)
+        pm_.is_neighbor_record_complete_ = true;
+        if (isPlatoonInfoMsg  &&  pm_.is_neighbor_record_complete_)
         {
 
             //TODO: would be good to have a timeout here; if a neighbor platoon has been identified, and no INFO messages
@@ -1245,10 +1246,11 @@ namespace platoon_strategic_ihp
             // use ecef_loc to calculate front Ctd in m.
             double frontVehicleCtd = wm_->routeTrackPos(incoming_pose).crosstrack;
 
-            // Find neighbor platoon end vehicle and its downtrack in m
-            int rearVehicleIndex = pm_.neighbor_platoon_.size() - 1;
-            double rearVehicleDtd = pm_.neighbor_platoon_[rearVehicleIndex].vehiclePosition; 
-            ROS_DEBUG_STREAM("Neighbor rearVehicleDtd from ecef: " << rearVehicleDtd);
+            // // Find neighbor platoon end vehicle and its downtrack in m
+            // TODO temporary
+            // int rearVehicleIndex = pm_.neighbor_platoon_.size() - 1;
+            // double rearVehicleDtd = pm_.neighbor_platoon_[rearVehicleIndex].vehiclePosition; 
+            // ROS_DEBUG_STREAM("Neighbor rearVehicleDtd from ecef: " << rearVehicleDtd);
 
             // If lane change has not yet been authorized, stop here (this method will be running before the negotiations
             // with the platoon leader are complete)
