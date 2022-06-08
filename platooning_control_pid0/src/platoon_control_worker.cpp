@@ -45,6 +45,7 @@ namespace platoon_control_pid0
         // Store the params we need for future operations
         time_step_ = config.time_step;
         gamma_h_ = config.gamma_h;
+        heading_lookahead_ = config.heading_lookahead;
         wheelbase_ = config.wheelbase;
         max_steering_angle_ = config.max_steering_angle;
         ROS_DEBUG_STREAM("gamma_h = " << gamma_h_ << ", max_steering_angle = " << max_steering_angle_);
@@ -131,8 +132,9 @@ namespace platoon_control_pid0
 
         //---------- Steering command
 
-        // Find the heading of the next downtrack trajectory point
-        double tp_heading = normalize_yaw(traj_[tp_index_].yaw);
+        // Find the heading that we want to steer to, based on some number of trajectory points downtrack of vehicle
+        // (looking ahead into a changing road radius may accommodate some dynamic lag in the steering hardware)
+        double tp_heading = calc_desired_heading();
 
         // Calculate the heading error (desired - actual), as a delta angle, accounting for the possibility
         // of crossing over the zero-heading cardinal direction
@@ -219,6 +221,10 @@ namespace platoon_control_pid0
 
     double PlatoonControlWorker::unit_test_get_traj_py(const size_t index) {
         return traj_[index].y;
+    }
+
+    void PlatoonControlWorker::unit_test_set_heading_lookahead(const int lookahead) {
+        heading_lookahead_ = lookahead;
     }
 
 
@@ -343,5 +349,20 @@ namespace platoon_control_pid0
             }while (res >= TWO_PI);
         }
         return res;
+    }
+
+
+    double PlatoonControlWorker::calc_desired_heading() {
+
+        // Get the TP index at the lookahead index ahead of the vehicle
+        size_t index1 = tp_index_ + static_cast<size_t>(heading_lookahead_);
+
+        // If there is no TP defined that far out, then use the last TP that is defined
+        if (index1 >= traj_.size()) {
+            index1 = traj_.size() - 1;
+        }
+        
+        // Return the heading of that lookahead point
+        return normalize_yaw(traj_[index1].yaw);
     }
 }

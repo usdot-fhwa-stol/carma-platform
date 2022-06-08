@@ -85,7 +85,7 @@ TEST(PIDControllerTest, test4) //testing derivative term
     res = pid.calculate(40.0, 48.0); //kp1 negative error, zero derivative
     EXPECT_NEAR(-4.0, res, 0.001);
     res = pid.calculate(40.0, 42.0); //deadband, positive derivative
-    EXPECT_NEAR(2.4, res, 0.001);
+    EXPECT_NEAR(0.0, res, 0.001);
 }
 
 TEST(PIDControllerTest, test5) //both derivative & integral terms active
@@ -95,7 +95,7 @@ TEST(PIDControllerTest, test5) //both derivative & integral terms active
     res = pid.calculate(40.0, 45.0); //kp1 negative error, integral negative, deriv negative
     EXPECT_NEAR(-3.25, res, 0.001);
     res = pid.calculate(40.0, 39.0); //deadband, integral still negative, deriv positive
-    EXPECT_EQ(2.2, res);
+    EXPECT_EQ(-0.2, res);
     res = pid.calculate(40.0, 32.0); //kp1 positive error, integral positive, deriv positive
     EXPECT_EQ(7.0, res);
 }

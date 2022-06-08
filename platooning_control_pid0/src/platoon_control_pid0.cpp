@@ -27,11 +27,10 @@ namespace platoon_control_pid0
     	nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
 
-        ROS_DEBUG_STREAM("Attempting to initialize configs from file - * indicates failed items:");
-        if (!pnh_->param<double>("pid_h_deadband",       config_.pid_h_deadband,     config_.pid_h_deadband))   ROS_DEBUG_STREAM("*pid_h_deadband");
-        if (!pnh_->param<double>("pid_h_slope_break",    config_.pid_h_slope_break,  config_.pid_h_slope_break)) ROS_DEBUG_STREAM("*pid_h_slope_break");
-        if (!pnh_->param<double>("pid_h_kp1",            config_.pid_h_kp1,          config_.pid_h_kp1))        ROS_DEBUG_STREAM("*pid_h_kp1");
-        if (!pnh_->param<double>("pid_h_kp2",            config_.pid_h_kp2,          config_.pid_h_kp2))        ROS_DEBUG_STREAM("*pid_h_kp2");
+        pnh_->param<double>("pid_h_deadband",       config_.pid_h_deadband,     config_.pid_h_deadband);
+        pnh_->param<double>("pid_h_slope_break",    config_.pid_h_slope_break,  config_.pid_h_slope_break);
+        pnh_->param<double>("pid_h_kp1",            config_.pid_h_kp1,          config_.pid_h_kp1);
+        pnh_->param<double>("pid_h_kp2",            config_.pid_h_kp2,          config_.pid_h_kp2);
         pnh_->param<double>("pid_h_ki",             config_.pid_h_ki,           config_.pid_h_ki);
         pnh_->param<double>("pid_h_kd",             config_.pid_h_kd,           config_.pid_h_kd);
         pnh_->param<double>("pid_h_integral_min",   config_.pid_h_integral_min, config_.pid_h_integral_min);
@@ -46,6 +45,7 @@ namespace platoon_control_pid0
         pnh_->param<double>("pid_c_integral_max",   config_.pid_c_integral_max, config_.pid_c_integral_max);
         pnh_->param<double>("time_step",            config_.time_step,          config_.time_step);
         pnh_->param<double>("gamma_h",              config_.gamma_h,            config_.gamma_h);
+        pnh_->param<int>(   "heading_lookahead",    config_.heading_lookahead,  config_.heading_lookahead);
         pnh_->param<double>("max_steering_angle",   config_.max_steering_angle, config_.max_steering_angle);
         pnh_->param<double>("max_accel",            config_.max_accel,          config_.max_accel);
         pnh_->param<double>("speed_adjustment_cap", config_.speed_adjustment_cap, config_.speed_adjustment_cap);
@@ -57,7 +57,6 @@ namespace platoon_control_pid0
         pnh_->getParam("/control_plugin_shutdown_timeout", config_.shutdown_timeout);
         pnh_->getParam("/control_plugin_ignore_initial_inputs", config_.ignore_initial_inputs);
         //ROS_DEBUG_STREAM("Configuration settings:\n" << config_);
-        ROS_DEBUG_STREAM("Config pid_h_kp1 = " << config_.pid_h_kp1 << ", pid_h_kd = " << config_.pid_h_kd);
 
         pcw_.set_config_params(config_);
 

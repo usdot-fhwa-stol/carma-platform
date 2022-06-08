@@ -132,6 +132,16 @@ namespace platoon_control_pid0
         double calculate_cross_track();
 
 
+        /** SHOULD BE PRIVATE!
+         * \brief Calculates the heading we want to steer to, based on the given trajectory plan.  If a heading_lookahead
+         *          is specified, then it will consider the heading that number of TPs in front of the vehicle as well as
+         *          the nearest TP.  It then uses whichever of these has the largest magnitude difference from current
+         *          vehicle heading as the result.
+         * \return desired heading, rad in [0, 2pi)
+         */
+        double calc_desired_heading();
+
+
         /**
          * \brief FOR UNIT TESTING ONLY - allows direct injection of relevant pose data
          */
@@ -146,6 +156,8 @@ namespace platoon_control_pid0
 
         double unit_test_get_traj_py(const size_t index);
 
+        void unit_test_set_heading_lookahead(const int lookahead);
+
 
     private:
 
@@ -154,6 +166,7 @@ namespace platoon_control_pid0
 
         double              time_step_;                     //time between control loop iterations, s
         double              gamma_h_;                       //steering command mixing ratio between heading & CTE PIDs
+        int                 heading_lookahead_;             //num TPs downtrack to consider for determining trajectory heading
         double              wheelbase_;                     //wheelbase of the vehicle, m
         double              max_steering_angle_;            //upper limit on steering angle, rad
         double              host_x_;                        //current x coordinate of host vehicle location, m offset in map frame

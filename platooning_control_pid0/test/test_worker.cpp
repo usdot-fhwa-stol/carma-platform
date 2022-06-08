@@ -123,6 +123,62 @@ TEST(PlatoonControlWorkerTest, test_calculate_cross_track2)
     EXPECT_NEAR(1.20, cte, 0.01);
 }
 
+TEST(PlatoonControlWorkerTest, test_calc_desired_heading)
+{
+    platoon_control_pid0::PlatoonControlWorker pcw;
+    std::vector<cav_msgs::TrajectoryPlanPoint> traj;
+
+    cav_msgs::TrajectoryPlanPoint p0, p1, p2, p3;
+    p0.x = -1.0;
+    p0.y = -2.0;
+    p0.yaw = 0.7854;
+    traj.push_back(p0);
+    p1.x = 0.0;
+    p1.y = -1.0;
+    p1.yaw = 0.7854;
+    traj.push_back(p1);
+    p2.x = 1.0;
+    p2.y = 0.0;
+    p2.yaw = 0.7854;
+    traj.push_back(p2);
+    p3.x = 3.0;
+    p3.y = 0.8;
+    p3.yaw = 0.6111;
+    traj.push_back(p3);
+    pcw.unit_test_set_traj(traj);
+    EXPECT_NEAR(-1.0, pcw.unit_test_get_traj_py(1), 0.01);
+    EXPECT_NEAR(0.0, pcw.unit_test_get_traj_py(2), 0.01);
+    EXPECT_NEAR(0.8, pcw.unit_test_get_traj_py(3), 0.01);
+
+    // first test - vehicle heading almost same as TP1, no lookahead
+    pcw.unit_test_set_heading_lookahead(0);
+    pcw.unit_test_set_pose(-0.9, -0.2, 0.79);
+    pcw.find_nearest_point();
+    EXPECT_EQ(1, pcw.get_tp_index());
+    EXPECT_NEAR(0.785, pcw.calc_desired_heading(), 0.01);
+
+    // 2nd test - vehicle heading almost same as TP1, lookahead defined
+    pcw.unit_test_set_heading_lookahead(2);
+    pcw.unit_test_set_pose(-0.9, -0.2, 0.79);
+    pcw.find_nearest_point();
+    EXPECT_EQ(1, pcw.get_tp_index());
+    EXPECT_NEAR(0.611, pcw.calc_desired_heading(), 0.01);
+
+    // 3rd test - vehicle heading farther right, no lookahead
+    pcw.unit_test_set_heading_lookahead(0);
+    pcw.unit_test_set_pose(-0.9, -0.2, 0.6);
+    pcw.find_nearest_point();
+    EXPECT_EQ(1, pcw.get_tp_index());
+    EXPECT_NEAR(0.785, pcw.calc_desired_heading(), 0.01);
+
+    // 4th test - vehicle heading farther right, lookahead defined
+    pcw.unit_test_set_heading_lookahead(2);
+    pcw.unit_test_set_pose(-0.9, -0.2, 0.6);
+    pcw.find_nearest_point();
+    EXPECT_EQ(1, pcw.get_tp_index());
+    EXPECT_NEAR(0.611, pcw.calc_desired_heading(), 0.01);
+}
+
 /*
 TEST(PlatoonControlWorkerTest, test1)
 {
