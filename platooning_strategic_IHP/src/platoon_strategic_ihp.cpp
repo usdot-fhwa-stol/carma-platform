@@ -3134,7 +3134,7 @@ namespace platoon_strategic_ihp
         maneuver_msg.type = cav_msgs::Maneuver::LANE_CHANGE;
         maneuver_msg.lane_change_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::PLATOONING;
         maneuver_msg.lane_change_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
-        maneuver_msg.lane_change_maneuver.parameters.planning_tactical_plugin = "PlatooningTacticalPlugin";
+        maneuver_msg.lane_change_maneuver.parameters.planning_tactical_plugin = "CooperativeLaneChangePlugin";
         maneuver_msg.lane_change_maneuver.parameters.planning_strategic_plugin = "PlatooningStrategicIHPPlugin";
         maneuver_msg.lane_change_maneuver.start_dist = current_dist;
         maneuver_msg.lane_change_maneuver.start_speed = current_speed;
@@ -3221,7 +3221,8 @@ namespace platoon_strategic_ihp
         }
 
         // Raise error is not on shortest path.
-        if(last_lanelet_index == -1)
+        
+        if(last_lanelet_index == -1 && !safeToLaneChange_)
         {
             ROS_ERROR_STREAM("Current position is not on the shortest path! Returning an empty maneuver");
             return true;
@@ -3340,7 +3341,14 @@ namespace platoon_strategic_ihp
                     {
                         break;
                     }
+
                     ++last_lanelet_index;
+
+                    resp.new_plan.maneuvers.push_back(composeManeuverMessage(lc_end_dist, lc_end_dist + 30,  
+                                            speed_progress, target_speed,target_lanelet_id, time_progress));
+                    
+
+
                 }
             }
 
