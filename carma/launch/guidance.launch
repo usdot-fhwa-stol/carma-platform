@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  Copyright (C) 2018-2021 LEIDOS.
+  Copyright (C) 2018-2022 LEIDOS.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -174,12 +174,6 @@
     <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
     <include file = "$(find cooperative_lanechange)/launch/cooperative_lanechange.launch"/>
   </group>
-
-  <!-- Route Node -->
-  <include file="$(find route)/launch/route.launch">
-    <arg name="route_file_folder" value="$(arg route_file_folder)"/>
-  </include>
-
 
   <!-- Trajectory Plan Speed Visualizer -->
   <group>

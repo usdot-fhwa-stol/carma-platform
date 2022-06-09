@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2020-2021 LEIDOS.
+ * Copyright (C) 2020-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
  * the License.
  */
 
+#include <rclcpp/rclcpp.hpp>
 #include <stdexcept>
 
 namespace route {
@@ -66,18 +67,22 @@ namespace route {
              * \brief Process route event based on designed state machine diagram
              * \param event Incoming route event
              */
-            void on_route_event(RouteEvent event);
+            void onRouteEvent(RouteEvent event);
 
             /**
              * \brief Get current route state machine state
              */
-            RouteState get_route_state() const;
+            RouteState getRouteState() const;
+
+            void setLoggerInterface(rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger);
 
         private:
 
             // private local variable tracks the current route satte
             RouteState state_ = RouteState::LOADING;
 
+            // Logger interface
+            rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
     };
 
 }
