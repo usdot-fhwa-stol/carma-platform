@@ -143,7 +143,7 @@ namespace platoon_control_pid0
 
         // Pass heading error to the heading PID; allow for a fixed bias that can't be steered out, which might
         // occur if the vehicle's wheels are out of alignment or IMU is mounted at a slight angle to the body axis.
-        double out_h = pid_h_->calculate(0.0, heading_error - heading_bias_);
+        double out_h = pid_h_->calculate(heading_bias_, heading_error);
 
         // Find the cross-track error (lateral diff between vehicle position and nearest point
         // on the trajectory, which may be different from the global CTE normally discussed in
@@ -154,7 +154,7 @@ namespace platoon_control_pid0
         // Pass CTE to the CTE PID
         double out_c = pid_c_->calculate(0.0, cte);
 
-        // Combine the PID outputs according to the mixing factor
+        // Combine the PID outputs according to the mixing factor. Output is a steering angle, where positive is to the left.
         steering_cmd_ = gamma_h_*out_h + (1.0 - gamma_h_)*out_c;
         if (steering_cmd_ < -max_steering_angle_) {
             steering_cmd_ = -max_steering_angle_;

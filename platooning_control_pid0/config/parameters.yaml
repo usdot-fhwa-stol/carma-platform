@@ -3,7 +3,7 @@
 pid_h_deadband: 0.0
 
 # breakpoint where p value changes from kp1 to kp2, rad
-pid_h_slope_break: 0.070 #4 deg
+pid_h_slope_break: 0.070 #0.07 rad = 4 deg
 
 # first proportional gain, rad/rad
 pid_h_kp1: -0.8
@@ -15,7 +15,7 @@ pid_h_kp2: -1.0
 pid_h_ki: -0.0008 # -0.0008 getting kinda large at 30 mph
 
 # derivative gain, rad/rad
-pid_h_kd: 0.015 #0.02 works well at 30 mph
+pid_h_kd: 0.015 #last=0.015 #0.02 works well at 30 mph NEEDS TO BE < 0!
 
 # min value allowed for integral term
 pid_h_integral_min: -0.1 #initial guess NOT TUNED!
@@ -41,7 +41,7 @@ pid_c_kp2: 0.04 #last=0.04
 pid_c_ki: 0.0080 #last=0.01 #0.0025 works well at 25 mph
 
 # derivative gain, rad/m
-pid_c_kd: 0.030 #last=0.03
+pid_c_kd: 0.030 #last=0.03; NEEDS TO BE > 0
 
 # min value allowed for integral term
 pid_c_integral_min: -10.0 #10 good at 30 mph, 50 too large

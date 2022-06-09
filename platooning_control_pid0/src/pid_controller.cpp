@@ -80,7 +80,7 @@ namespace platoon_control_pid0
 
 		// Calculate error
 	    double error = setpoint - pv;
-		ROS_DEBUG_STREAM(name_ << " setpoint = " << setpoint << ", pv = " << pv << ", error = " << error << ", prev error = " << prev_error_);
+		ROS_DEBUG_STREAM(name_ << " error = " << error << ", prev error = " << prev_error_);
 
 	    // Proportional term
 		double p_out = 0.0;
