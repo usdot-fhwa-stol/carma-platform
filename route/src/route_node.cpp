@@ -116,7 +116,7 @@ namespace route
     rg_worker_.setRouteFilePath(config_.route_file_path);
 
     // Timer for route generator worker's spin callback
-    int rg_worker_spin_period_ms = int ((1 / config_.route_spin_rate) * 1000); // Conversion from frequency (Hz) to milliseconds time period
+    auto rg_worker_spin_period_ms = int ((1 / config_.route_spin_rate) * 1000); // Conversion from frequency (Hz) to milliseconds time period
     spin_timer_ = create_timer(get_clock(),
                           std::chrono::milliseconds(rg_worker_spin_period_ms),
                           std::bind(&RouteGeneratorWorker::spinCallback, &rg_worker_));

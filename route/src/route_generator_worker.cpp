@@ -77,50 +77,55 @@ namespace route {
                                 const std::shared_ptr<carma_planning_msgs::srv::GetAvailableRoutes::Request>,
                                 std::shared_ptr<carma_planning_msgs::srv::GetAvailableRoutes::Response> resp)
     {   
-        // Verify that the directory specified by route_file_path_ exists
+        // Return if the the directory specified by route_file_path_ does not exist
         if(!boost::filesystem::exists(boost::filesystem::path(this->route_file_path_)))
         {
             RCLCPP_ERROR_STREAM(logger_->get_logger(), "No directory exists at " << route_file_path_);
             return true;
         }
  
-        // read all route files in the given directory
+        // Read all route files in the given directory
         boost::filesystem::directory_iterator end_point;
         for(boost::filesystem::directory_iterator itr(boost::filesystem::path(this->route_file_path_)); itr != end_point; ++itr)
         {
-            if(!boost::filesystem::is_directory(itr->status()))
+            // Skip if the iterator has landed on a folder
+            if(boost::filesystem::is_directory(itr->status()))
             {
-                auto full_file_name = itr->path().filename().generic_string();
-                carma_planning_msgs::msg::Route route_msg;
+                continue;
+            }
 
-                //Include logic that sorts out invalid route files based on their ending*/
-                if(full_file_name.find(".csv") != std::string::npos)
-                { 
-                    // assume route files ending with ".csv", before that is the actual route name
-                    route_msg.route_id = full_file_name.substr(0, full_file_name.find(".csv"));
-                    std::ifstream fin(itr->path().generic_string());
-                    std::string dest_name;
-                    if(fin.is_open())
-                    {
-                        while (!fin.eof())
-                        {
-                            std::string temp;
-                            std::getline(fin, temp);
-                            if(temp != "") dest_name = temp;
-                        }
-                        fin.close();
-                    } 
-                    else
-                    {
-                        RCLCPP_ERROR_STREAM(logger_->get_logger(), "File open failed...");
-                    }
-                    auto last_comma = dest_name.find_last_of(',');
-                    if(!std::isdigit(dest_name.substr(last_comma + 1).at(0)))
-                    {
-                        route_msg.route_name = dest_name.substr(last_comma + 1);
-                        resp->available_routes.push_back(move(route_msg));
-                    }
+            auto full_file_name = itr->path().filename().generic_string();
+            carma_planning_msgs::msg::Route route_msg;
+
+            // Skip if '.csv' is not found in the file name
+            if(full_file_name.find(".csv") == std::string::npos)
+            { 
+                continue;
+            }          
+
+            // Assume route files ending with ".csv", before that is the actual route name
+            route_msg.route_id = full_file_name.substr(0, full_file_name.find(".csv"));
+            std::ifstream fin(itr->path().generic_string());
+            std::string dest_name;
+            if(fin.is_open())
+            {
+                while (!fin.eof())
+                {
+                    std::string temp;
+                    std::getline(fin, temp);
+                    if(temp != "") dest_name = temp;
                 }
+                fin.close();
+            } 
+            else
+            {
+                RCLCPP_ERROR_STREAM(logger_->get_logger(), "File open failed...");
+            }
+            auto last_comma = dest_name.find_last_of(',');
+            if(!std::isdigit(dest_name.substr(last_comma + 1).at(0)))
+            {
+                route_msg.route_name = dest_name.substr(last_comma + 1);
+                resp->available_routes.push_back(move(route_msg));
             }
         }
             
@@ -384,7 +389,7 @@ namespace route {
         double end_point_downtrack = carma_wm::geometry::trackPos(last_ll, {end_point_3d.x(), end_point_3d.y()}).downtrack;
         double lanelet_downtrack = carma_wm::geometry::trackPos(last_ll, last_ll.centerline().back().basicPoint2d()).downtrack;
         // get number of points to display using ratio of the downtracks
-        int points_until_end_point = int (last_ll.centerline().size() * (end_point_downtrack / lanelet_downtrack));
+        auto points_until_end_point = int (last_ll.centerline().size() * (end_point_downtrack / lanelet_downtrack));
   
         for(const auto& ll : route.get().shortestPath())
         {
