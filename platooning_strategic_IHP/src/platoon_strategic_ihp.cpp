@@ -1959,6 +1959,13 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("Cut-in from front lane change finished, leader revert to same-lane maneuver.");
             pm_.current_platoon_state = PlatoonState::LEADERABORTING;
             candidatestateStartTime = ros::Time::now().toNSec() / 1000000;
+            // if testing with two vehicles, use plan id as platoon id
+            if (config_.allowCutinJoin)
+            {
+                pm_.currentPlatoonID = msg.m_header.plan_id;
+            }
+            // Store the leader ID as that of the joiner to allow run_leader_aborting to work correctly
+            pm_.platoonLeaderID = msg.m_header.sender_id;
             return MobilityRequestResponse::ACK;
         }
 
