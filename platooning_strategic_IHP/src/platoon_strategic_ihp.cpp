@@ -1121,6 +1121,8 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("starting cut-in join process");
                 ROS_DEBUG_STREAM("rearVehicleDtd" << rearVehicleDtd);
                 ROS_DEBUG_STREAM("rearVehicleCtd" << rearVehicleCtd);
+
+                pm_.targetPlatoonID = platoonId;
                 
                 carma_wm::TrackPos target_trackpose(rearVehicleDtd, rearVehicleCtd);
                 auto target_pose = wm_->pointFromRouteTrackPos(target_trackpose);
@@ -1524,22 +1526,23 @@ namespace platoon_strategic_ihp
 
                 // Send approval of the request
                 response = MobilityRequestResponse::ACK;
+                // Indicate the current join activity is complete
+                pm_.clearActionPlan();
             }
             else //correct vehicle and intent, but it's in the wrong lane
             {
                 ROS_DEBUG_STREAM("Received platoon request with vehicle id = " << msg.m_header.sender_id << " but in wrong lane. NACK");
                 response = MobilityRequestResponse::NACK;
 
-                // Remove the candidate joiner from the platoon structure
-                if (!pm_.removeMemberById(msg.m_header.sender_id))
-                {
-                    ROS_DEBUG_STREAM("Failed to remove candidate joiner from platoon record: " << msg.m_header.sender_id);
-                }
+                // // Remove the candidate joiner from the platoon structure
+                // if (!pm_.removeMemberById(msg.m_header.sender_id))
+                // {
+                //     ROS_DEBUG_STREAM("Failed to remove candidate joiner from platoon record: " << msg.m_header.sender_id);
+                // }
             }
         }
 
-        // Indicate the current join activity is complete
-        pm_.clearActionPlan();
+        
         return response;
     }
     
@@ -1994,6 +1997,7 @@ namespace platoon_strategic_ihp
         {
             ROS_DEBUG_STREAM("Cut-in from front lane change finished, leader revert to same-lane maneuver.");
             pm_.current_platoon_state = PlatoonState::LEADERABORTING;
+            candidatestateStartTime = ros::Time::now().toNSec() / 1000000;
             return MobilityRequestResponse::ACK;
         }
 
@@ -2002,6 +2006,7 @@ namespace platoon_strategic_ihp
         {
             ROS_DEBUG_STREAM("Cut-in from mid/rear lane change finished, leader revert to same-lane maneuver.");
             pm_.current_platoon_state = PlatoonState::LEADERWAITING;
+            waitingStartTime = ros::Time::now().toNSec() / 1000000;
             return MobilityRequestResponse::ACK;
         }
 
@@ -2125,12 +2130,16 @@ namespace platoon_strategic_ihp
                     pm_.changeFromLeaderToFollower(pm_.currentPlatoonID, msg.m_header.sender_id);
                     ROS_DEBUG_STREAM("The leader " << msg.m_header.sender_id << " agreed on our join. Change to follower state.");
                     ROS_WARN("changed to follower");
+                    pm_.clearActionPlan();
                 }
                 else
                 {
                     // We change back to normal leader state and try to join other platoons
                     ROS_DEBUG_STREAM("The leader " << msg.m_header.sender_id << " does not agree on our join. Change back to leader state.");
-                    pm_.current_platoon_state = PlatoonState::LEADER;
+                    ROS_DEBUG_STREAM("Trying again..");
+                    // pm_.current_platoon_state = PlatoonState::LEADER;
+                    // join plan failed, but we still need the peerid
+                    pm_.current_plan.valid = false;
 
                     // Clear out any platooning plan we don't need
                     if (pm_.getHostPlatoonSize() == 1)
@@ -2140,7 +2149,7 @@ namespace platoon_strategic_ihp
                 }
 
                 // Clear our current join plan either way
-                pm_.clearActionPlan();
+                // pm_.clearActionPlan();
             }
             else
             {
@@ -2486,6 +2495,7 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("Cut-in from front lane change finished, the joining vehicle revert to same-lane maneuver.");
             pm_.current_platoon_state = PlatoonState::CANDIDATELEADER;
             candidatestateStartTime = ros::Time::now().toNSec() / 1000000;
+            pm_.currentPlatoonID = pm_.targetPlatoonID;
             pm_.current_plan.valid = false; //but leave peerId intact for use in second request
         }
 
@@ -3006,7 +3016,7 @@ namespace platoon_strategic_ihp
             // Task 3: Calculate proper cut_in index 
             // Note: The cut-in index is zero-based and points to the gap-leading vehicle's index. For cut-in from front, the join index = -1.
             double joinerDtD = current_downtrack_;
-            target_join_index_ = 0;//pm_.getClosestIndex(joinerDtD);
+            target_join_index_ = -1;//pm_.getClosestIndex(joinerDtD);
 
             // Task 4: Send out request to leader about cut-in position
             cav_msgs::MobilityRequest request;
@@ -3457,7 +3467,7 @@ namespace platoon_strategic_ihp
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
         }  
 
-        if (!safeToLaneChange_)
+        if (true)//(!safeToLaneChange_)
         {
             
             if (pm_.getHostPlatoonSize() < 2)

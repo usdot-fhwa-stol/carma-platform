@@ -8,7 +8,7 @@ maxAllowedJoinGap: 90.0
 desiredJoinTimeGap: 4.0
 desiredJoinGap: 30.0
 maxLeaderAbortingCalls: 2
-waitingStateTimeout: 25.0
+waitingStateTimeout: 10.0
 cmdSpeedMaxAdjustment: 10.0
 minAllowableHeadaway: 1.6
 headawayStableLowerBond: 1.7
@@ -16,7 +16,7 @@ maxAllowableHeadaway: 4.0
 headawayStableUpperBond: 3.9
 minCutinGap: 22.0
 maxCutinGap: 100.0
-maxCrosstrackError: 0.8
+maxCrosstrackError: 1.5
 vehicleLength: 5.0
 ss_theta: 4.0
 standstill: 2.0

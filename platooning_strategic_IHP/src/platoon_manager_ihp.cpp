@@ -909,7 +909,7 @@ namespace platoon_strategic_ihp
         */
 
         double min_diff = 99999.0;
-        int cut_in_index = 0; //-2 is meaningless default
+        int cut_in_index = -1; //-2 is meaningless default
 
         ROS_DEBUG_STREAM("neighbor_platoon_.size(): " << neighbor_platoon_.size());
 
