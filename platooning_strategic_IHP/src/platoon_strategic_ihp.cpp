@@ -1246,7 +1246,6 @@ namespace platoon_strategic_ihp
         if (isPlatoonInfoMsg  &&  pm_.is_neighbor_record_complete_)
         {
 
-            ROS_DEBUG_STREAM("in the info loop");
             //TODO: would be good to have a timeout here; if a neighbor platoon has been identified, and no INFO messages
             //      from it are received in a while, then its record should be erased, and any in-work joining should be
             //      aborted.
@@ -1254,17 +1253,13 @@ namespace platoon_strategic_ihp
             // read ecef location from strategy params.
             cav_msgs::LocationECEF ecef_loc;
             ecef_loc = mob_op_find_ecef_from_INFO_params(strategyParams);
-            ROS_DEBUG_STREAM("got the incoming pose");
             // use ecef_loc to calculate front Dtd in m.
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc);
-            ROS_DEBUG_STREAM("got the incoming pose in map");
 
             double frontVehicleDtd = wm_->routeTrackPos(incoming_pose).downtrack;
-            ROS_DEBUG_STREAM("frontVehicleDtd: " << frontVehicleDtd);
 
             // use ecef_loc to calculate front Ctd in m.
             double frontVehicleCtd = wm_->routeTrackPos(incoming_pose).crosstrack;
-            ROS_DEBUG_STREAM("frontVehicleCtd: " << frontVehicleCtd);
 
             // // Find neighbor platoon end vehicle and its downtrack in m
             // TODO temporary
@@ -1319,6 +1314,8 @@ namespace platoon_strategic_ihp
                 request.urgency = 50;
 
                 mobility_request_publisher_(request); 
+
+                pm_.current_plan = ActionPlan(true, request.m_header.timestamp, request.m_header.plan_id, senderId);
                 ROS_DEBUG_STREAM("Published Mobility request to revert to same-lane operation"); 
             }
             else
@@ -1326,8 +1323,6 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("Lane Change not completed");
             }
         }
-
-        ROS_DEBUG_STREAM("finished mob_op_cb_preparetojoin");
     }
     
     // TODO: Place holder for prepare to depart (mob_op_cb_depart)
@@ -2490,6 +2485,8 @@ namespace platoon_strategic_ihp
         {
             ROS_DEBUG_STREAM("Cut-in from front lane change finished, the joining vehicle revert to same-lane maneuver.");
             pm_.current_platoon_state = PlatoonState::CANDIDATELEADER;
+            candidatestateStartTime = ros::Time::now().toNSec() / 1000000;
+            pm_.current_plan.valid = false; //but leave peerId intact for use in second request
         }
 
         // UCLA: Revert to same-lane operation for cut-in from middle/rear 
@@ -2497,6 +2494,8 @@ namespace platoon_strategic_ihp
         {
             ROS_DEBUG_STREAM("Cut-in from mid or rear, the lane change finished, the joining vehicle revert to same-lane maneuver.");
             pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
+            candidatestateStartTime = ros::Time::now().toNSec() / 1000000;
+            pm_.current_plan.valid = false; //but leave peerId intact for use in second request
         } 
 
         else
