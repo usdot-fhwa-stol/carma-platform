@@ -147,7 +147,8 @@ namespace platoon_control_pid0
         // Update timing info
         prev_input_time_ = ros::Time::now().toNSec() / 1000000;
         ++consecutive_input_ctr_;
-        ROS_DEBUG_STREAM("Trajectory " << consecutive_input_ctr_ << " received.");
+        ROS_DEBUG_STREAM("Trajectory " << consecutive_input_ctr_ << " received with " 
+                            << tp->trajectory_points.size() << " points.");
     }
 
 
