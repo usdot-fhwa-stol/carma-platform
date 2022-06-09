@@ -68,7 +68,7 @@ namespace route {
         return graph_pointer->getRouteVia(start_lanelet, via_lanelets_vector, end_lanelet);
     }
 
-    void RouteGeneratorWorker::setReroutingChecker(const std::function<bool()>& inputFunction)
+    void RouteGeneratorWorker::setReroutingChecker(const std::function<bool()> inputFunction)
     {
         reroutingChecker=inputFunction;
     }

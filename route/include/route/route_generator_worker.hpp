@@ -71,7 +71,7 @@ namespace route {
         /**
          * \brief setReroutingChecker function to set the rerouting flag
          */
-        void setReroutingChecker(const std::function<bool()>& inputFunction);
+        void setReroutingChecker(const std::function<bool()> inputFunction);
         
         /**
          * \brief Dependency injection for world model pointer.
