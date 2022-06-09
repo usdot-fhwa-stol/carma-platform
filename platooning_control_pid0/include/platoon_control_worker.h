@@ -169,6 +169,7 @@ namespace platoon_control_pid0
         int                 heading_lookahead_;             //num TPs downtrack to consider for determining trajectory heading
         double              wheelbase_;                     //wheelbase of the vehicle, m
         double              max_steering_angle_;            //upper limit on steering angle, rad
+        double              heading_bias_;                  //fixed error in vehicle heading measurement that can't be steered out, rad
         double              host_x_;                        //current x coordinate of host vehicle location, m offset in map frame
         double              host_y_;                        //current y coordinate of host vehicle location, m offset in map frame
         double              host_heading_;                  //current heading angle of host vehicle, rad N of E in [0, 2pi)

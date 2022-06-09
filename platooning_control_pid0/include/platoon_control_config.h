@@ -49,6 +49,7 @@ namespace platoon_control_pid0 {
         double  gamma_h = 1.0;
         int     heading_lookahead = 0;
         double  max_steering_angle = 1.05;
+        double  heading_bias = 0.0;
         double  max_accel = 2.5;
         double  speed_adjustment_cap = 10.0;
 
@@ -81,6 +82,7 @@ namespace platoon_control_pid0 {
                 << "gamma_h:            " << c.gamma_h              << std::endl
                 << "heading_lookahead   " << c.heading_lookahead    << std::endl
                 << "max_steering_angle: " << c.max_steering_angle   << std::endl
+                << "heading_bias:       " << c.heading_bias         << std::endl
                 << "max_accel:          " << c.max_accel            << std::endl
                 << "speed_adjustment_cap:" << c.speed_adjustment_cap    << std::endl
                 << "From global vehicle config:"                    << std::endl

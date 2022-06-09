@@ -67,6 +67,10 @@ time_step: 0.03333
 # TODO this needs to come from global vehicle config
 max_steering_angle: 1.05 #approx 60 deg
 
+# fixed heading error that can't be steered out, rad
+# TODO this needs to come from global vehicle config, as it is vehicle-specific
+heading_bias: -0.01
+
 
 #-----Non-PID values
 

@@ -48,7 +48,7 @@ namespace platoon_control_pid0
         heading_lookahead_ = config.heading_lookahead;
         wheelbase_ = config.wheelbase;
         max_steering_angle_ = config.max_steering_angle;
-        ROS_DEBUG_STREAM("gamma_h = " << gamma_h_ << ", max_steering_angle = " << max_steering_angle_);
+        heading_bias_ = config.heading_bias;
 
         // Create the PID controllers
         pid_h_ = new PIDController("Heading", config.pid_h_deadband, config.pid_h_slope_break, config.pid_h_kp1,
@@ -105,6 +105,7 @@ namespace platoon_control_pid0
         //---------- Speed command
 
         // CAUTION: a vehicle running this code can only be a solo vehicle or platoon leader!
+        ROS_DEBUG_STREAM("///// SPEED CONTROL FOR SOLO/LEAD VEHICLE ONLY!");
         ROS_WARN_STREAM("///// SPEED CONTROL FOR SOLO/LEAD VEHICLE ONLY!");
 
         // For now, just drive the speeds indicated by the trajectory, i.e. no gap control.  Once the
@@ -140,8 +141,9 @@ namespace platoon_control_pid0
         // of crossing over the zero-heading cardinal direction
         double heading_error = subtract_headings(tp_heading, host_heading_);
 
-        // Pass heading error to the heading PID
-        double out_h = pid_h_->calculate(0.0, heading_error);
+        // Pass heading error to the heading PID; allow for a fixed bias that can't be steered out, which might
+        // occur if the vehicle's wheels are out of alignment or IMU is mounted at a slight angle to the body axis.
+        double out_h = pid_h_->calculate(0.0, heading_error - heading_bias_);
 
         // Find the cross-track error (lateral diff between vehicle position and nearest point
         // on the trajectory, which may be different from the global CTE normally discussed in
