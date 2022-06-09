@@ -1958,6 +1958,7 @@ namespace platoon_strategic_ihp
         {
             ROS_DEBUG_STREAM("Cut-in from front lane change finished, leader revert to same-lane maneuver.");
             pm_.current_platoon_state = PlatoonState::LEADERABORTING;
+            candidatestateStartTime = ros::Time::now().toNSec() / 1000000;
             return MobilityRequestResponse::ACK;
         }
 
@@ -1966,6 +1967,7 @@ namespace platoon_strategic_ihp
         {
             ROS_DEBUG_STREAM("Cut-in from mid/rear lane change finished, leader revert to same-lane maneuver.");
             pm_.current_platoon_state = PlatoonState::LEADERWAITING;
+            waitingStartTime = ros::Time::now().toNSec() / 1000000;
             return MobilityRequestResponse::ACK;
         }
 
