@@ -1122,7 +1122,6 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("rearVehicleDtd" << rearVehicleDtd);
                 ROS_DEBUG_STREAM("rearVehicleCtd" << rearVehicleCtd);
 
-                pm_.targetPlatoonID = platoonId;
                 
                 carma_wm::TrackPos target_trackpose(rearVehicleDtd, rearVehicleCtd);
                 auto target_pose = wm_->pointFromRouteTrackPos(target_trackpose);
@@ -1318,6 +1317,8 @@ namespace platoon_strategic_ihp
                 mobility_request_publisher_(request); 
 
                 pm_.current_plan = ActionPlan(true, request.m_header.timestamp, request.m_header.plan_id, senderId);
+                // TODO: Temporaty
+                pm_.currentPlatoonID = request.m_header.plan_id;
                 ROS_DEBUG_STREAM("Published Mobility request to revert to same-lane operation"); 
             }
             else
@@ -1998,6 +1999,13 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("Cut-in from front lane change finished, leader revert to same-lane maneuver.");
             pm_.current_platoon_state = PlatoonState::LEADERABORTING;
             candidatestateStartTime = ros::Time::now().toNSec() / 1000000;
+            // if testing with two vehicles, use plan id as platoon id
+            if (config_.allowCutinJoin)
+            {
+                pm_.currentPlatoonID = msg.m_header.plan_id;
+            }
+            // Store the leader ID as that of the joiner to allow run_leader_aborting to work correctly
+            pm_.platoonLeaderID = msg.m_header.sender_id;
             return MobilityRequestResponse::ACK;
         }
 
@@ -2272,7 +2280,7 @@ namespace platoon_strategic_ihp
                     // Set the platoon ID to that of the target platoon even though we haven't yet joined;
                     // for front join this is necessary for the aborting leader to recognize us as an incoming
                     // member (via our published op STATUS messages)
-                    pm_.currentPlatoonID = pm_.targetPlatoonID;
+                    // pm_.currentPlatoonID = pm_.targetPlatoonID;
                 }
 
                 // UCLA: CutIn join 
