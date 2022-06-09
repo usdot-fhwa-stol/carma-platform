@@ -1484,6 +1484,9 @@ namespace platoon_strategic_ihp
                 pm_.host_platoon_.push_back(newMember);
                 ROS_DEBUG_STREAM("pm_ now thinks platoon size is " << pm_.getHostPlatoonSize());
 
+                // Indicate the current join activity is complete
+                pm_.clearActionPlan();
+
                 // Send approval of the request
                 response = MobilityRequestResponse::ACK;
             }
@@ -1493,15 +1496,13 @@ namespace platoon_strategic_ihp
                 response = MobilityRequestResponse::NACK;
 
                 // Remove the candidate joiner from the platoon structure
-                if (!pm_.removeMemberById(msg.m_header.sender_id))
-                {
-                    ROS_DEBUG_STREAM("Failed to remove candidate joiner from platoon record: " << msg.m_header.sender_id);
-                }
+                //if (!pm_.removeMemberById(msg.m_header.sender_id))
+                //{
+                //    ROS_DEBUG_STREAM("Failed to remove candidate joiner from platoon record: " << msg.m_header.sender_id);
+                //}
             }
         }
 
-        // Indicate the current join activity is complete
-        pm_.clearActionPlan();
         return response;
     }
     
