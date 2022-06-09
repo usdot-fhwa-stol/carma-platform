@@ -42,9 +42,6 @@ namespace subsystem_controllers
     {
       
       output << "GuidanceControllerConfig { " << std::endl
-             << "required_plugins: " << c.required_plugins << std::endl
-             << "auto_activated_plugins: " << c.auto_activated_plugins << std::endl
-
              << "required_plugins: [ " << std::endl;
             
       for (auto node : c.required_plugins)
@@ -56,7 +53,7 @@ namespace subsystem_controllers
         output << node << " ";
 
       output << "] " << std::endl
-             << "}" << std::endl;
+        << "}" << std::endl;
       return output;
     }
   };

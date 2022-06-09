@@ -17,10 +17,14 @@
  */
 
 #include <carma_planning_msgs/msg/plugin.hpp>
-#include <carma_planning_msgs/srv/plugin_list_request.hpp>
-#include <carma_planning_msgs/srv/plugin_list_response.hpp>
 #include <carma_planning_msgs/srv/get_plugin_api.hpp>
+#include <carma_planning_msgs/srv/plugin_list.hpp>
+#include <carma_planning_msgs/srv/plugin_activation.hpp>
 #include <ros2_lifecycle_manager/lifecycle_manager_interface.hpp>
+#include <unordered_set>
+#include <functional>
+#include <vector>
+#include <memory>
 #include "entry_manager.h"
 #include "entry.h"
 
@@ -67,7 +71,31 @@ namespace subsystem_controllers
              * 
              * \param msg A plugin status message
              */
-            void update_plugin_status(const carma_planning_msgs::PluginConstPtr& msg);
+            void update_plugin_status(carma_planning_msgs::msg::Plugin::UniquePtr msg);
+
+            /**
+             * \brief Returns the list of known plugins
+             * 
+             * \param req The req details
+             * \param[out] res The response containing the list of known plugins
+             */ 
+            void get_registered_plugins(carma_planning_msgs::srv::PluginList::Request::SharedPtr req, carma_planning_msgs::srv::PluginList::Response::SharedPtr res);
+
+            /**
+             * \brief Get the list of currently active plugins
+             * 
+             * \param req The req details
+             * \param[out] res The response containing the list of active plugins
+             */ 
+            void get_active_plugins(carma_planning_msgs::srv::PluginList::Request::SharedPtr req, carma_planning_msgs::srv::PluginList::Response::SharedPtr res);
+            
+            /**
+             * \brief Activate the specified plugin
+             * 
+             * \param req The req details containing the plugin to activate
+             * \param[out] res The response containing the success flag
+             */ 
+            void activate_plugin(carma_planning_msgs::srv::PluginActivation::Request::SharedPtr req, carma_planning_msgs::srv::PluginActivation::Response::SharedPtr res);
 
             /**
              * \brief Get strategic plugins by capability
@@ -75,7 +103,7 @@ namespace subsystem_controllers
              * \param req The req which identifies which capability is required
              * \param res The res which identifies the strategic plugins with the requested capability
              */
-            void get_strategic_plugins_by_capability(carma_planning_msgs::GetPluginApiRequest& req, carma_planning_msgs::GetPluginApiResponse& res);
+            void get_strategic_plugins_by_capability(carma_planning_msgs::srv::GetPluginApi::Request::SharedPtr req, carma_planning_msgs::srv::GetPluginApi::Response::SharedPtr res);
 
             /**
              * \brief Get tactical plugins by capability
@@ -83,7 +111,7 @@ namespace subsystem_controllers
              * \param req The req which identifies which capability is required
              * \param res The res which identifies the tactical plugins with the requested capability
              */
-            void get_tactical_plugins_by_capability(carma_planning_msgs::GetPluginApiRequest& req, carma_planning_msgs::GetPluginApiResponse& res);
+            void get_tactical_plugins_by_capability(carma_planning_msgs::srv::GetPluginApi::Request::SharedPtr req, carma_planning_msgs::srv::GetPluginApi::Response::SharedPtr res);
 
             /**
              * \brief Get control plugins by capability
@@ -91,7 +119,7 @@ namespace subsystem_controllers
              * \param req The req which identifies which capability is required
              * \param res The res which identifies the control plugins with the requested capability
              */
-            void get_control_plugins_by_capability(carma_planning_msgs::GetPluginApiRequest& req, carma_planning_msgs::GetPluginApiResponse& res);
+            void get_control_plugins_by_capability(carma_planning_msgs::srv::GetPluginApi::Request::SharedPtr req, carma_planning_msgs::srv::GetPluginApi::Response::SharedPtr res);
 
         protected:
 
@@ -126,7 +154,7 @@ namespace subsystem_controllers
              * 
              * \return True if base_capability_levels supports compared_capability_levels
              */ 
-            bool matching_capability(const std::vector<std::string>& base_capability_levels, const std::vector<std::string>& compared_capability_levels)
+            bool matching_capability(const std::vector<std::string>& base_capability_levels, const std::vector<std::string>& compared_capability_levels);
 
             //! Set of required plugins a failure of which necessitates system shutdown
             std::unordered_set<std::string> required_plugins_;

@@ -20,14 +20,20 @@
 
 #include <memory>
 
-#include "carma_msgs/msg/system_alert.hpp"
-#include "ros2_lifecycle_manager/ros2_lifecycle_manager.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include <carma_msgs/msg/system_alert.hpp>
+#include <carma_planning_msgs/msg/plugin.hpp>
+#include <carma_planning_msgs/srv/get_plugin_api.hpp>
+#include <carma_planning_msgs/srv/plugin_list.hpp>
+#include <carma_planning_msgs/srv/plugin_activation.hpp>
+#include <ros2_lifecycle_manager/ros2_lifecycle_manager.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include "subsystem_controllers/base_subsystem_controller/base_subsystem_controller.hpp"
+#include "plugin_manager.h"
+#include "guidance_controller_config.hpp"
 
 namespace subsystem_controllers
 {
-  using cr2 = carma_ros2_utils
+  namespace cr2 = carma_ros2_utils;
 
   class GuidanceControllerNode : public BaseSubsystemController
   {
@@ -44,11 +50,15 @@ namespace subsystem_controllers
      */
     explicit GuidanceControllerNode(const rclcpp::NodeOptions &options);
 
-    cr2::CallbackReturn GuidanceControllerNode::handle_on_configure(const rclcpp_lifecycle::State &);
+    cr2::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
 
     cr2::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &);
 
     cr2::CallbackReturn handle_on_deactivate(const rclcpp_lifecycle::State &);
+
+    cr2::CallbackReturn handle_on_cleanup(const rclcpp_lifecycle::State &);
+
+    cr2::CallbackReturn handle_on_shutdown(const rclcpp_lifecycle::State &);
 
   private:
     //! Plugin manager to handle all the plugin specific discovery and reporting

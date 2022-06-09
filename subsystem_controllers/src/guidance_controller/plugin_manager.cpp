@@ -15,6 +15,7 @@
  */
 
 #include <boost/algorithm/string.hpp>
+#include <chrono>
 #include "plugin_manager.h"
 
 namespace subsystem_controllers
@@ -63,7 +64,7 @@ namespace subsystem_controllers
             deactivated_entry.active_ = false;
 
             // Move plugin to match this nodes state
-            auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(parent_node_state, plugin.name);
+            auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(parent_node_state, plugin.name, std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
 
             if(result_state != parent_node_state) 
             {                
@@ -75,8 +76,8 @@ namespace subsystem_controllers
                 }
 
                 // If this plugin was not required log an error and mark it is unavailable and deactivated               
-                RCLCPP_ERROR_STREAM(rclccp::get_logger("subsystem_controllers", "Failed to transition newly discovered non-required plugin: " 
-                    << plugin.name << " Marking as deactivated and unavailable!")); 
+                RCLCPP_ERROR_STREAM(rclccp::get_logger("subsystem_controllers"), "Failed to transition newly discovered non-required plugin: " 
+                    << plugin.name << " Marking as deactivated and unavailable!"); 
             
                 deactivated_entry.available_ = false;
 
@@ -90,7 +91,7 @@ namespace subsystem_controllers
         // If the node is active or inactive then, 
         // when adding a plugin, it should be brought to the inactive state
         // We do not need transition it beyond inactive in this function as that will be managed by the plugin activation process via UI or parameters
-        auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, plugin.name);
+        auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, plugin.name, std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
 
         if(result_state != lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE) 
         {
@@ -101,8 +102,8 @@ namespace subsystem_controllers
             }
 
             // If this plugin was not required log an error and mark it is unavailable and deactivated               
-            RCLCPP_ERROR_STREAM(rclccp::get_logger("subsystem_controllers", "Failed to configure newly discovered non-required plugin: " 
-                << plugin.name << " Marking as deactivated and unavailable!")); 
+            RCLCPP_ERROR_STREAM(rclccp::get_logger("subsystem_controllers"), "Failed to configure newly discovered non-required plugin: " 
+                << plugin.name << " Marking as deactivated and unavailable!"); 
 
             deactivated_entry.available_ = false;
         }
@@ -112,13 +113,13 @@ namespace subsystem_controllers
 
     }
 
-    void configure()
+    void PluginManager::configure()
     {
         
         // Bring all known plugins to the inactive state
         for (auto plugin : em_.get_entries())
         {
-            auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, plugin.name_);
+            auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, plugin.name_, std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
 
             if(result_state != lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE) 
             {
@@ -129,8 +130,8 @@ namespace subsystem_controllers
                 }
 
                 // If this plugin was not required log an error and mark it is unavailable and deactivated               
-                RCLCPP_ERROR_STREAM(rclccp::get_logger("subsystem_controllers", "Failed to configure newly discovered non-required plugin: " 
-                    << plugin.name << " Marking as deactivated and unavailable!")); 
+                RCLCPP_ERROR_STREAM(rclccp::get_logger("subsystem_controllers"), "Failed to configure newly discovered non-required plugin: " 
+                    << plugin.name << " Marking as deactivated and unavailable!"); 
 
                 Entry deactivated_entry = plugin;
                 deactivated_entry.active = false;
@@ -143,7 +144,7 @@ namespace subsystem_controllers
 
     }
     
-    void activate()
+    void PluginManager::activate()
     {
         // Bring all required or auto activated plugins to the active state
         for (auto plugin : em_.get_entries())
@@ -152,7 +153,7 @@ namespace subsystem_controllers
             if (!plugin.user_requested_activation_)
                 continue;
             
-            auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE, plugin.name_);
+            auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE, plugin.name_, std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
 
             if(result_state != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) 
             {
@@ -163,8 +164,8 @@ namespace subsystem_controllers
                 }
 
                 // If this plugin was not required log an error and mark it is unavailable and deactivated               
-                RCLCPP_ERROR_STREAM(rclccp::get_logger("subsystem_controllers", "Failed to activate newly discovered non-required plugin: " 
-                    << plugin.name << " Marking as deactivated and unavailable!")); 
+                RCLCPP_ERROR_STREAM(rclccp::get_logger("subsystem_controllers"), "Failed to activate newly discovered non-required plugin: " 
+                    << plugin.name << " Marking as deactivated and unavailable!"); 
 
                 Entry deactivated_entry = plugin;
                 deactivated_entry.active = false;
@@ -186,13 +187,13 @@ namespace subsystem_controllers
         }
     }
     
-    void deactivate()
+    void PluginManager::deactivate()
     {
         // Bring all required or auto activated plugins to the active state
         for (auto plugin : em_.get_entries())
         {
             
-            auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, plugin.name_);
+            auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, plugin.name_, std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
 
             if(result_state != lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE) 
             {
@@ -203,8 +204,8 @@ namespace subsystem_controllers
                 }
 
                 // If this plugin was not required log an error and mark it is unavailable and deactivated               
-                RCLCPP_ERROR_STREAM(rclccp::get_logger("subsystem_controllers", "Failed to deactivate non-required plugin: " 
-                    << plugin.name << " Marking as deactivated and unavailable!")); 
+                RCLCPP_ERROR_STREAM(rclccp::get_logger("subsystem_controllers"), "Failed to deactivate non-required plugin: " 
+                    << plugin.name << " Marking as deactivated and unavailable!"); 
 
                 Entry deactivated_entry = plugin;
                 deactivated_entry.active = false;
@@ -216,13 +217,13 @@ namespace subsystem_controllers
         }
     }
     
-    void cleanup()
+    void PluginManager::cleanup()
     {
         // Bring all required or auto activated plugins to the unconfigured state
         for (auto plugin : em_.get_entries())
         {
             
-            auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED, plugin.name_);
+            auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED, plugin.name_, std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
 
             if(result_state != lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED) 
             {
@@ -233,8 +234,8 @@ namespace subsystem_controllers
                 }
 
                 // If this plugin was not required log an error and mark it is unavailable and deactivated               
-                RCLCPP_ERROR_STREAM(rclccp::get_logger("subsystem_controllers", "Failed to cleanup non-required plugin: " 
-                    << plugin.name << " Marking as deactivated and unavailable!")); 
+                RCLCPP_ERROR_STREAM(rclccp::get_logger("subsystem_controllers"), "Failed to cleanup non-required plugin: " 
+                    << plugin.name << " Marking as deactivated and unavailable!"); 
 
                 Entry deactivated_entry = plugin;
                 deactivated_entry.active = false;
@@ -246,25 +247,25 @@ namespace subsystem_controllers
         }
     }
     
-    void shutdown()
+    void PluginManager::shutdown()
     {
         bool success = plugin_lifecycle_mgr_.shutdown(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms), false, em_.get_entries()).empty();
 
         if (success)
         {
 
-            RCLCPP_INFO_STREAM(get_logger(), "Subsystem able to shutdown");
+            RCLCPP_INFO_STREAM(rclccp::get_logger("subsystem_controllers"), "Subsystem able to shutdown");
             return CallbackReturn::SUCCESS;
         }
         else
         {
 
-            RCLCPP_INFO_STREAM(get_logger(), "Subsystem unable to shutdown cleanly");
+            RCLCPP_INFO_STREAM(rclccp::get_logger("subsystem_controllers"), "Subsystem unable to shutdown cleanly");
             return CallbackReturn::FAILURE;
         }
     }
 
-    void PluginManager::get_registered_plugins(carma_planning_msgs::srv::PluginListRequest&, carma_planning_msgs::srv::PluginListResponse& res)
+    void PluginManager::get_registered_plugins(carma_planning_msgs::srv::PluginList::Request::SharedPtr, carma_planning_msgs::srv::PluginList::Response::SharedPtr res)
     {
         std::vector<Entry> plugins = em_.get_entries();
         // convert to plugin list
@@ -279,7 +280,7 @@ namespace subsystem_controllers
         }
     }
 
-    void PluginManager::get_active_plugins(carma_planning_msgs::srv::PluginListRequest&, carma_planning_msgs::srv::PluginListResponse& res)
+    void PluginManager::get_active_plugins(carma_planning_msgs::srv::PluginList::Request::SharedPtr, carma_planning_msgs::srv::PluginList::Response::SharedPtr res)
     {
         std::vector<Entry> plugins = em_.get_entries();
         // convert to plugin list
@@ -297,7 +298,7 @@ namespace subsystem_controllers
         }
     }
 
-    void PluginManager::activate_plugin(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res)
+    void PluginManager::activate_plugin(carma_planning_msgs::srv::PluginActivation::Request::SharedPtr req, carma_planning_msgs::srv::PluginActivation::Response::SharedPtr res)
     {
         boost::optional<Entry> requested_plugin = em_.get_entry_by_name(req.plugin_name);
         
@@ -307,7 +308,7 @@ namespace subsystem_controllers
             return;
         }
 
-        auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE, req.plugin_name);
+        auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE, req.plugin_name, std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms));
 
         bool activated = (result_state == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE);
 
@@ -317,7 +318,7 @@ namespace subsystem_controllers
         res.newstate = activated;
     }
 
-    void PluginManager::update_plugin_status(const carma_planning_msgs::msg::PluginConstPtr& msg)
+    void PluginManager::update_plugin_status(carma_planning_msgs::msg::Plugin::UniquePtr msg)
     {
         ROS_DEBUG_STREAM("received status from: " << msg->name);
         boost::optional<Entry> requested_plugin = em_.get_entry_by_name(msg->name);
@@ -345,10 +346,10 @@ namespace subsystem_controllers
         return true;
     }
 
-    void PluginManager::get_control_plugins_by_capability(carma_planning_msgs::srv::GetPluginApiRequest& req, carma_planning_msgs::srv::GetPluginApiResponse& res)
+    void PluginManager::get_control_plugins_by_capability(carma_planning_msgs::srv::GetPluginApi::Request::SharedPtr req, carma_planning_msgs::srv::GetPluginApi::Response::SharedPtr res)
     {
         std::vector<std::string> req_capability_levels;
-        boost::split(capability_levels, req.capability, boost::is_any_of("/"))
+        boost::split(capability_levels, req->capability, boost::is_any_of("/"))
 
         for(const auto& plugin : em_.get_entries())
         {
@@ -357,10 +358,10 @@ namespace subsystem_controllers
             boost::split(plugin_capability_levels, plugin.capability_, boost::is_any_of("/"))
 
             if(plugin.type_ == carma_planning_msgs::msg::Plugin::CONTROL && 
-                (req.capability.size() == 0 || (match_capability(plugin_capability_levels, req_capability_levels) == 0 && plugin.active_ && plugin.available_)))
+                (req->capability.size() == 0 || (match_capability(plugin_capability_levels, req_capability_levels) == 0 && plugin.active_ && plugin.available_)))
             {
                 ROS_DEBUG_STREAM("discovered control plugin: " << plugin.name_);
-                res.plan_service.push_back(plugin.name_ + plugin.capability_);
+                res->plan_service.push_back(plugin.name_ + plugin.capability_);
             }
             else
             {
@@ -369,10 +370,10 @@ namespace subsystem_controllers
         }
     }
 
-    void PluginManager::get_tactical_plugins_by_capability(carma_planning_msgs::srv::GetPluginApiRequest& req, carma_planning_msgs::srv::GetPluginApiResponse& res)
+    void PluginManager::get_tactical_plugins_by_capability(carma_planning_msgs::srv::GetPluginApi::Request::SharedPtr req, carma_planning_msgs::srv::GetPluginApi::Response::SharedPtr res)
     {
         std::vector<std::string> req_capability_levels;
-        boost::split(capability_levels, req.capability, boost::is_any_of("/"))
+        boost::split(capability_levels, req->capability, boost::is_any_of("/"))
 
         for(const auto& plugin : em_.get_entries())
         {
@@ -381,10 +382,10 @@ namespace subsystem_controllers
             boost::split(plugin_capability_levels, plugin.capability_, boost::is_any_of("/"))
 
             if(plugin.type_ == carma_planning_msgs::msg::Plugin::TACTICAL && 
-                (req.capability.size() == 0 || (match_capability(plugin_capability_levels, req_capability_levels) == 0 && plugin.active_ && plugin.available_)))
+                (req->capability.size() == 0 || (match_capability(plugin_capability_levels, req_capability_levels) == 0 && plugin.active_ && plugin.available_)))
             {
                 ROS_DEBUG_STREAM("discovered tactical plugin: " << plugin.name_);
-                res.plan_service.push_back(plugin.name_ + plugin.capability_);
+                res->plan_service.push_back(plugin.name_ + plugin.capability_);
             }
             else
             {
@@ -393,10 +394,10 @@ namespace subsystem_controllers
         }
     }
 
-    void PluginManager::get_strategic_plugins_by_capability(carma_planning_msgs::srv::GetPluginApiRequest& req, carma_planning_msgs::srv::GetPluginApiResponse& res)
+    void PluginManager::get_strategic_plugins_by_capability(carma_planning_msgs::srv::GetPluginApi::Request::SharedPtr req, carma_planning_msgs::srv::GetPluginApi::Response::SharedPtr res)
     {
         std::vector<std::string> req_capability_levels;
-        boost::split(capability_levels, req.capability, boost::is_any_of("/"))
+        boost::split(capability_levels, req->capability, boost::is_any_of("/"))
 
         for(const auto& plugin : em_.get_entries())
         {
@@ -405,10 +406,10 @@ namespace subsystem_controllers
             boost::split(plugin_capability_levels, plugin.capability_, boost::is_any_of("/"))
 
             if(plugin.type_ == carma_planning_msgs::msg::Plugin::STRATEGIC && 
-                (req.capability.size() == 0 || (match_capability(plugin_capability_levels, req_capability_levels) == 0 && plugin.active_ && plugin.available_)))
+                (req->capability.size() == 0 || (match_capability(plugin_capability_levels, req_capability_levels) == 0 && plugin.active_ && plugin.available_)))
             {
                 ROS_DEBUG_STREAM("discovered strategic plugin: " << plugin.name_);
-                res.plan_service.push_back(plugin.name_ + plugin.capability_);
+                res->plan_service.push_back(plugin.name_ + plugin.capability_);
             }
             else
             {

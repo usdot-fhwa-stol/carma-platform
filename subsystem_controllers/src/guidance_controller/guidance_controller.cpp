@@ -15,18 +15,20 @@
  * the License.
  */
 
+#include <chrono>
 #include "subsystem_controllers/guidance_controller/guidance_controller.hpp"
 
 namespace subsystem_controllers
 {
   GuidanceControllerNode::GuidanceControllerNode(const rclcpp::NodeOptions &options)
       : BaseSubsystemController(options),
+  {
       // Don't automatically trigger state transitions from base class on configure
       // In this class the managed nodes list first needs to be modified then the transition will be triggered manually
       trigger_managed_nodes_configure_from_base_class_ = false;
-  {}
+  }
 
-  cr2::CallbackReturn GuidanceControllerNode::handle_on_configure(const rclcpp_lifecycle::State &) {
+  cr2::CallbackReturn GuidanceControllerNode::handle_on_configure(const rclcpp_lifecycle::State &prev_state) {
     auto base_return = BaseSubsystemController::handle_on_configure(prev_state);
 
     if (base_return != cr2::CallbackReturn::SUCCESS) {
@@ -34,18 +36,18 @@ namespace subsystem_controllers
       return base_return;
     }
 
-    config_ = Config();
+    config_ = GuidanceControllerConfig();
 
     auto base_managed_nodes = lifecycle_mgr_.get_managed_nodes();
 
-    std::string plugin_namespace = base_config_.subsystem_namespace + "/plugins/"
+    std::string plugin_namespace = base_config_.subsystem_namespace + "/plugins/";
 
 
     std::vector<std::string> guidance_plugin_nodes;
     // Extract the nodes under the plugin namespaces (ie. /guidance/plugins/)
     std::copy_if(base_managed_nodes.begin(), base_managed_nodes.end(),
       std::back_inserter(guidance_plugin_nodes),
-      [](const std::string& s) { return s.rfind(plugin_namespace, 0) == 0; });
+      [plugin_namespace](const std::string& s) { return s.rfind(plugin_namespace, 0) == 0; });
 
     std::vector<std::string> non_plugin_guidance_nodes = get_non_intersecting_set(base_managed_nodes, guidance_plugin_nodes);
 
@@ -58,7 +60,7 @@ namespace subsystem_controllers
     RCLCPP_INFO_STREAM(get_logger(), "Config: " << config_);
 
     // The core need is that plugins need to be managed separately from guidance nodes
-    auto plugin_lifecycle_manager = std::make_shared<Ros2LifecycleManager>(
+    auto plugin_lifecycle_manager = std::make_shared<ros2_lifecycle_manager::Ros2LifecycleManager>(
       get_node_base_interface(), get_node_graph_interface(), get_node_logging_interface(), get_node_services_interface());
 
     plugin_manager_ = std::make_shared<PluginManager>(config_.required_plugins, config_.auto_activated_plugins, plugin_lifecycle_manager, [this](){ return get_current_state().id(); });
@@ -67,27 +69,27 @@ namespace subsystem_controllers
       "plugin_discovery", 50,
       std::bind(&PluginManager::update_plugin_status, plugin_manager_, std::placeholders::_1));
 
-    get_registered_plugins_server_ = create_service(
+    get_registered_plugins_server_ = create_service<carma_planning_msgs::srv::PluginList>(
         "plugins/get_registered_plugins",
         std::bind(&PluginManager::get_registered_plugins, plugin_manager_, std::placeholders::_1, std::placeholders::_2));
 
-    get_active_plugins_server_ = create_service(
+    get_active_plugins_server_ = create_service<carma_planning_msgs::srv::PluginList>(
         "plugins/get_active_plugins",
         std::bind(&PluginManager::get_active_plugins, plugin_manager_, std::placeholders::_1, std::placeholders::_2));
 
-    activate_plugin_server_ = create_service(
+    activate_plugin_server_ = create_service<carma_planning_msgs::srv::PluginActivation>(
         "plugins/activate_plugin", // TODO check topic name
         std::bind(&PluginManager::activate_plugin, plugin_manager_, std::placeholders::_1, std::placeholders::_2));
 
-    get_strategic_plugin_by_capability_server_ = create_service(
+    get_strategic_plugin_by_capability_server_ = create_service<carma_planning_msgs::srv::GetPluginApi>(
         "plugins/get_strategic_plugin_by_capability",
         std::bind(&PluginManager::get_strategic_plugin_by_capability, plugin_manager_, std::placeholders::_1, std::placeholders::_2));
 
-    get_tactical_plugin_by_capability_server_ = create_service(
+    get_tactical_plugin_by_capability_server_ = create_service<carma_planning_msgs::srv::GetPluginApi>(
         "plugins/get_tactical_plugin_by_capability",
         std::bind(&PluginManager::get_tactical_plugin_by_capability, plugin_manager_, std::placeholders::_1, std::placeholders::_2));
 
-    get_control_plugin_by_capability_server_ = create_service(
+    get_control_plugin_by_capability_server_ = create_service<carma_planning_msgs::srv::GetPluginApi>(
         "plugins/get_control_plugin_by_capability",
         std::bind(&PluginManager::get_control_plugin_by_capability, plugin_manager_, std::placeholders::_1, std::placeholders::_2));
 
@@ -116,7 +118,7 @@ namespace subsystem_controllers
     return cr2::CallbackReturn::SUCCESS;
   }
 
-  cr2::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &)
+  cr2::CallbackReturn GuidanceControllerNode::handle_on_activate(const rclcpp_lifecycle::State &prev_state)
   {
     auto base_return = BaseSubsystemController::handle_on_activate(prev_state); // This will activate all nodes in the namespace TODO what about the plugins?
 
@@ -129,7 +131,7 @@ namespace subsystem_controllers
 
   }
 
-  cr2::CallbackReturn handle_on_deactivate(const rclcpp_lifecycle::State &)
+  cr2::CallbackReturn GuidanceControllerNode::handle_on_deactivate(const rclcpp_lifecycle::State &prev_state)
   {
     auto base_return = BaseSubsystemController::handle_on_deactivate(prev_state);
 
@@ -141,7 +143,7 @@ namespace subsystem_controllers
     plugin_manager_->deactivate(); // TODO callback return
   }
 
-  cr2::CallbackReturn handle_on_cleanup(const rclcpp_lifecycle::State &)
+  cr2::CallbackReturn GuidanceControllerNode::handle_on_cleanup(const rclcpp_lifecycle::State &prev_state)
   {
     auto base_return = BaseSubsystemController::handle_on_deactivate(prev_state);
 
@@ -153,7 +155,7 @@ namespace subsystem_controllers
     plugin_manager_->cleanup(); // TODO callback return
   }
 
-  cr2::CallbackReturn handle_on_shutdown(const rclcpp_lifecycle::State &)
+  cr2::CallbackReturn GuidanceControllerNode::handle_on_shutdown(const rclcpp_lifecycle::State &prev_state)
   {
     auto base_return = BaseSubsystemController::handle_on_deactivate(prev_state);
 
