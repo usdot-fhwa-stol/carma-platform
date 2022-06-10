@@ -3,25 +3,25 @@
 pid_h_deadband: 0.0
 
 # breakpoint where p value changes from kp1 to kp2, rad
-pid_h_slope_break: 0.070 #0.07 rad = 4 deg
+pid_h_slope_break: 0.035 #2 deg
 
 # first proportional gain, rad/rad
-pid_h_kp1: -0.4 #last = -0.4; best -0.3 to -0.5
+pid_h_kp1: -0.6
 
 # second proportional gain, rad/rad
-pid_h_kp2: -0.4
+pid_h_kp2: -1.0
 
 # integral gain, rad/rad
-pid_h_ki: -0.0080 # last good= -0.007; -0.008 too high
+pid_h_ki: 0.0 #initial guess NOT TUNED!
 
 # derivative gain, rad/rad
-pid_h_kd: 0.014 #last=0.015 #0.02 works well at 30 mph
+pid_h_kd: 0.0 #initial guess NOT TUNED!
 
 # min value allowed for integral term
-pid_h_integral_min: -1.0 #initial guess NOT TUNED!
+pid_h_integral_min: -0.1 #initial guess NOT TUNED!
 
 # max value allowed for integral term
-pid_h_integral_max: 1.0 #initial guess NOT TUNED!
+pid_h_integral_max: 0.1 #initial guess NOT TUNED!
 
 
 #-----CTE PID constants
@@ -29,35 +29,35 @@ pid_h_integral_max: 1.0 #initial guess NOT TUNED!
 pid_c_deadband: 0.0 #initial guess NOT TUNED!
 
 # breakpoint where p value changes from kp1 to kp2, m
-pid_c_slope_break: 10.0 #initial guess NOT TUNED!
+pid_c_slope_break: 2.0 #initial guess NOT TUNED!
 
 # first proportional gain, rad/m
-pid_c_kp1: 0.020 #last=0.020 #0.04 good at 15mph; 0.015 good at 25
+pid_c_kp1: 0.010 #0.04 good at 15mph; 0.015 good at 25
 
 # second proportional gain, rad/m
-pid_c_kp2: 0.04 #last=0.04
+pid_c_kp2: 0.04
 
 # integral gain, rad/m
-pid_c_ki: 0.0130 #last=0.01 #0.0025 works well at 25 mph
+pid_c_ki: 0.0008 #0.0025 works well at 25 mph
 
 # derivative gain, rad/m
-pid_c_kd: 0.030 #last=0.03; NEEDS TO BE > 0
+pid_c_kd: 0.03 #0.03 seems optimum up to 25 mph
 
 # min value allowed for integral term
-pid_c_integral_min: -8.0 #10 good at 30 mph, 50 too large
+pid_c_integral_min: -10.0
 
 # max value allowed for integral term
-pid_c_integral_max: 8.0 #1.0 good for 15 mph
+pid_c_integral_max: 10.0 #1.0 good for 15 mph
 
 
 #-----Common PID constants
 # Fraction of weight applied to heading PID instead of CTE PID.
 # Value must be in [0, 1], where 0 only uses CTE and 1 only uses heading
-gamma_h: 0.8 #last=0.4 #0.3 best so far w/no hdg bias; working down from 0.9
+gamma_h: 0.3 #0.2 good for 10 mph, 0.8 causes too much drift
 
 # Amount of future time projected onto trajectory to find the target curvature, sec
 # (must be >= 0)
-lookahead_time: 0.5 #1.0 reasonably good for Suntrax curves @30 mph
+lookahead_time: 0.0
 
 # expected time elapsed between calls to PID controllers, s
 # This value needs to be 1/control_timer frequency that is set at bottom of initialize()
@@ -67,16 +67,12 @@ time_step: 0.033333
 # TODO this needs to come from global vehicle config
 max_steering_angle: 1.05 #approx 60 deg
 
-# fixed heading error that can't be steered out, rad
-# TODO this needs to come from global vehicle config, as it is vehicle-specific
-heading_bias: -0.011 # Lexus observed to be -0.011
-
 
 #-----Non-PID values
 
 # Max allowed longitudinal acceleration, m/s^2
 # TODO better to get this from global vehicle config
-max_accel: 2.5
+max_accel: 1.5
 
 # Max allowed speed to adjust the gap (this needs to be >= config speed limit), m/s
 # TODO better to make this a delta above the vehicle's config max speed
