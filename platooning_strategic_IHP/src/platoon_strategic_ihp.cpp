@@ -1127,14 +1127,7 @@ namespace platoon_strategic_ihp
                 auto target_pose = wm_->pointFromRouteTrackPos(target_trackpose);
                 if (target_pose)
                 {
-                    target_cutin_pose_ = incoming_pose;// TODO temporary should be target_pose.get();
-                    ROS_DEBUG_STREAM("got the target pose");
-                    // TODO: temporary confirm the pose is valid, remove later
-                    ROS_DEBUG_STREAM("target_cutin_pose_ x: " << target_pose.get().x());
-                    ROS_DEBUG_STREAM("incoming_pose x: " << incoming_pose.x());
-
-                    ROS_DEBUG_STREAM("target_cutin_pose_ y: " << target_pose.get().y());
-                    ROS_DEBUG_STREAM("incoming_pose y: " << incoming_pose.y());
+                    target_cutin_pose_ = incoming_pose;
 
                     auto target_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, target_pose.get(), 1);  
                     if (!target_lanelets.empty())
@@ -1188,12 +1181,12 @@ namespace platoon_strategic_ihp
                 // Create a new join plan
                 pm_.current_plan = ActionPlan(true, request.m_header.timestamp, request.m_header.plan_id, senderId);
 
-                // If we are asking to join an actual platoon (not a solo vehicle), then save its ID for later use
-                if (platoonId.compare(pm_.dummyID) != 0)
-                {
-                    pm_.targetPlatoonID = platoonId;
-                    ROS_DEBUG_STREAM("Detected neighbor as a real platoon & storing its ID: " << platoonId);
-                }
+                // // If we are asking to join an actual platoon (not a solo vehicle), then save its ID for later use
+                // if (platoonId.compare(pm_.dummyID) != 0)
+                // {
+                //     pm_.targetPlatoonID = platoonId;
+                //     ROS_DEBUG_STREAM("Detected neighbor as a real platoon & storing its ID: " << platoonId);
+                // }
             }
 
             // step 6. Return none if no platoon nearby
@@ -1315,10 +1308,10 @@ namespace platoon_strategic_ihp
                 request.urgency = 50;
 
                 mobility_request_publisher_(request); 
-
+                // temp
+                pm_.currentPlatoonID = msg.m_header.plan_id;
                 pm_.current_plan = ActionPlan(true, request.m_header.timestamp, request.m_header.plan_id, senderId);
-                // TODO: Temporaty
-                pm_.currentPlatoonID = request.m_header.plan_id;
+                
                 ROS_DEBUG_STREAM("Published Mobility request to revert to same-lane operation"); 
             }
             else
@@ -2280,7 +2273,7 @@ namespace platoon_strategic_ihp
                     // Set the platoon ID to that of the target platoon even though we haven't yet joined;
                     // for front join this is necessary for the aborting leader to recognize us as an incoming
                     // member (via our published op STATUS messages)
-                    // pm_.currentPlatoonID = pm_.targetPlatoonID;
+                    pm_.currentPlatoonID = pm_.targetPlatoonID;
                 }
 
                 // UCLA: CutIn join 
@@ -2503,7 +2496,9 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("Cut-in from front lane change finished, the joining vehicle revert to same-lane maneuver.");
             pm_.current_platoon_state = PlatoonState::CANDIDATELEADER;
             candidatestateStartTime = ros::Time::now().toNSec() / 1000000;
-            pm_.currentPlatoonID = pm_.targetPlatoonID;
+            ROS_DEBUG_STREAM("pm_.currentPlatoonID: " << pm_.currentPlatoonID);
+            ROS_DEBUG_STREAM("pm_.targetPlatoonID: " << pm_.targetPlatoonID);
+            // pm_.currentPlatoonID = pm_.targetPlatoonID;
             pm_.current_plan.valid = false; //but leave peerId intact for use in second request
         }
 
