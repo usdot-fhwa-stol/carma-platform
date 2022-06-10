@@ -1309,7 +1309,8 @@ namespace platoon_strategic_ihp
 
                 mobility_request_publisher_(request); 
                 // temp
-                pm_.currentPlatoonID = msg.m_header.plan_id;
+                pm_.currentPlatoonID = request.m_header.plan_id;
+                ROS_DEBUG_STREAM("new platoon id: " << pm_.currentPlatoonID);
                 pm_.current_plan = ActionPlan(true, request.m_header.timestamp, request.m_header.plan_id, senderId);
                 
                 ROS_DEBUG_STREAM("Published Mobility request to revert to same-lane operation"); 
@@ -3019,7 +3020,7 @@ namespace platoon_strategic_ihp
             // Task 3: Calculate proper cut_in index 
             // Note: The cut-in index is zero-based and points to the gap-leading vehicle's index. For cut-in from front, the join index = -1.
             double joinerDtD = current_downtrack_;
-            target_join_index_ = -1;//pm_.getClosestIndex(joinerDtD);
+            target_join_index_ = 0;//pm_.getClosestIndex(joinerDtD);
 
             // Task 4: Send out request to leader about cut-in position
             cav_msgs::MobilityRequest request;
