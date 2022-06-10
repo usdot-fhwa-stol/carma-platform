@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 LEIDOS.
+ * Copyright (C) 2020-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,17 +13,28 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include <limits>
-#include <math.h>
-#include "route_generator_worker.h"
-#include <functional>
-#include <lanelet2_core/utility/Utilities.h>
+
+#include "route/route_generator_worker.hpp"
 
 namespace route {
+
+    RouteGeneratorWorker::RouteGeneratorWorker(tf2_ros::Buffer& tf2_buffer)
+        : tf2_buffer_(tf2_buffer) {}
     
     void RouteGeneratorWorker::setWorldModelPtr(carma_wm::WorldModelConstPtr wm)
     {
         this->world_model_ = wm;
+    }
+
+    void RouteGeneratorWorker::setLoggerInterface(rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger)
+    {
+        this->logger_ = logger;
+        this->rs_worker_.setLoggerInterface(logger);
+    }
+
+    void RouteGeneratorWorker::setClock(rclcpp::Clock::SharedPtr clock)
+    {
+        this->clock_ = clock;
     }
 
     lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::routing(const lanelet::BasicPoint2d start,
@@ -37,7 +48,7 @@ namespace route {
         // check if there are any lanelets in the map
         if(start_lanelet_vector.empty())
         {
-            ROS_ERROR_STREAM("Found no lanelets in the map. Routing cannot be done.");
+            RCLCPP_ERROR_STREAM(logger_->get_logger(), "Found no lanelets in the map. Routing cannot be done.");
             return lanelet::Optional<lanelet::routing::Route>();
         }
         // extract starting lanelet
@@ -51,234 +62,238 @@ namespace route {
         for(lanelet::BasicPoint2d point : via)
         {
             auto via_lanelet_vector = lanelet::geometry::findNearest(map_pointer->laneletLayer, point, 1);
-            via_lanelets_vector.push_back(lanelet::ConstLanelet(via_lanelet_vector[0].second.constData()));
+            via_lanelets_vector.emplace_back(lanelet::ConstLanelet(via_lanelet_vector[0].second.constData()));
         }
         // routing
         return graph_pointer->getRouteVia(start_lanelet, via_lanelets_vector, end_lanelet);
     }
 
-    void RouteGeneratorWorker::setReroutingChecker(std::function<bool()> inputFunction)
+    void RouteGeneratorWorker::setReroutingChecker(const std::function<bool()> inputFunction)
     {
         reroutingChecker=inputFunction;
     }
 
-    bool RouteGeneratorWorker::get_available_route_cb(cav_srvs::GetAvailableRoutesRequest& req, cav_srvs::GetAvailableRoutesResponse& resp)
-    {
-        boost::filesystem::path route_path_object(this->route_file_path_);
-        if(boost::filesystem::exists(route_path_object))
-        {   
-            boost::filesystem::directory_iterator end_point;
-            // read all route files in the given directory
-            for(boost::filesystem::directory_iterator itr(route_path_object); itr != end_point; ++itr)
+    bool RouteGeneratorWorker::getAvailableRouteCb(const std::shared_ptr<rmw_request_id_t>,
+                                const std::shared_ptr<carma_planning_msgs::srv::GetAvailableRoutes::Request>,
+                                std::shared_ptr<carma_planning_msgs::srv::GetAvailableRoutes::Response> resp)
+    {   
+        // Return if the the directory specified by route_file_path_ does not exist
+        if(!boost::filesystem::exists(boost::filesystem::path(this->route_file_path_)))
+        {
+            RCLCPP_ERROR_STREAM(logger_->get_logger(), "No directory exists at " << route_file_path_);
+            return true;
+        }
+ 
+        // Read all route files in the given directory
+        boost::filesystem::directory_iterator end_point;
+        for(boost::filesystem::directory_iterator itr(boost::filesystem::path(this->route_file_path_)); itr != end_point; ++itr)
+        {
+            // Skip if the iterator has landed on a folder
+            if(boost::filesystem::is_directory(itr->status()))
             {
-                if(!boost::filesystem::is_directory(itr->status()))
-                {
-                    auto full_file_name = itr->path().filename().generic_string();
-                    cav_msgs::Route route_msg;
-
-                    //Include logic that sorts out invalid route files based on their ending*/
-                    if(full_file_name.find(".csv") != full_file_name.npos)
-                     { 
-                       // assume route files ending with ".csv", before that is the actual route name
-                        route_msg.route_id = full_file_name.substr(0, full_file_name.find(".csv"));
-                        std::ifstream fin(itr->path().generic_string());
-                        std::string dest_name;
-                        if(fin.is_open())
-                        {
-                            while (!fin.eof())
-                            {
-                                std::string temp;
-                                std::getline(fin, temp);
-                                if(temp != "") dest_name = temp;
-                            }
-                            fin.close();
-                        } 
-                        else
-                        {
-                           ROS_ERROR_STREAM("File open failed...");
-                        }
-                        auto last_comma = dest_name.find_last_of(',');
-                        if(!std::isdigit(dest_name.substr(last_comma + 1).at(0)))
-                        {
-                            route_msg.route_name = dest_name.substr(last_comma + 1);
-                            resp.available_routes.push_back(route_msg);
-                        }
-                     }
-                }
+                continue;
             }
-            
-            //after route path object is available to select, worker will able to transit state and provide route selection service
-            if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::LOADING) 
+
+            auto full_file_name = itr->path().filename().generic_string();
+            carma_planning_msgs::msg::Route route_msg;
+
+            // Skip if '.csv' is not found in the file name
+            if(full_file_name.find(".csv") == std::string::npos)
+            { 
+                continue;
+            }          
+
+            // Assume route files ending with ".csv", before that is the actual route name
+            route_msg.route_id = full_file_name.substr(0, full_file_name.find(".csv"));
+            std::ifstream fin(itr->path().generic_string());
+            std::string dest_name;
+            if(fin.is_open())
             {
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_LOADED);
-                publish_route_event(cav_msgs::RouteEvent::ROUTE_LOADED);
+                while (!fin.eof())
+                {
+                    std::string temp;
+                    std::getline(fin, temp);
+                    if(temp != "") dest_name = temp;
+                }
+                fin.close();
+            } 
+            else
+            {
+                RCLCPP_ERROR_STREAM(logger_->get_logger(), "File open failed...");
+            }
+            auto last_comma = dest_name.find_last_of(',');
+            if(!std::isdigit(dest_name.substr(last_comma + 1).at(0)))
+            {
+                route_msg.route_name = dest_name.substr(last_comma + 1);
+                resp->available_routes.push_back(move(route_msg));
             }
         }
+            
+        //after route path object is available to select, worker will able to transit state and provide route selection service
+        if(this->rs_worker_.getRouteState() == RouteStateWorker::RouteState::LOADING) 
+        {
+            this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_LOADED);
+            publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_LOADED);
+        }
+
         return true;
     }
 
-    void RouteGeneratorWorker::set_route_file_path(const std::string& path)
+    void RouteGeneratorWorker::setRouteFilePath(const std::string& path)
     {
         this->route_file_path_ = path;
         // after route path is set, worker will able to transit state and provide route selection service
-        this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_LOADED);
-        publish_route_event(cav_msgs::RouteEvent::ROUTE_LOADED);
+        this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_LOADED);
+        publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_LOADED);
     }
 
-    bool RouteGeneratorWorker::set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp)
+    bool RouteGeneratorWorker::setActiveRouteCb(const std::shared_ptr<rmw_request_id_t>,
+                                const std::shared_ptr<carma_planning_msgs::srv::SetActiveRoute::Request> req,
+                                std::shared_ptr<carma_planning_msgs::srv::SetActiveRoute::Response> resp)
     {   
-        if(req.choice == cav_srvs::SetActiveRouteRequest::ROUTE_ID)
-        {
-            ROS_INFO_STREAM("set_active_route_cb: Selected Route ID: " << req.routeID);
-        }
-        else if(req.choice == cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY)
-        {
-            ROS_INFO_STREAM("set_active_route_cb: Destination Points array of size " << req.destination_points.size());
-        }
-
         // only allow a new route to be activated in route selection state
-        if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::SELECTION)
+        if(this->rs_worker_.getRouteState() != RouteStateWorker::RouteState::SELECTION)
         {
-            ROS_DEBUG_STREAM("Valid state proceeding with selection");
-        	
-            // entering to routing state once destinations are picked
-            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_SELECTED);
-            publish_route_event(cav_msgs::RouteEvent::ROUTE_SELECTED);
+            RCLCPP_ERROR_STREAM(logger_->get_logger(), "System is already following a route.");
+            resp->error_status = carma_planning_msgs::srv::SetActiveRoute::Response::ALREADY_FOLLOWING_ROUTE;
 
-            if (!vehicle_pose_) {
-                ROS_ERROR_STREAM("No vehicle position. Routing cannot be completed.");
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
-                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
-                return true;
-            }
-
-            // Check if the map projection is available
-            if (!map_proj_) {
-                ROS_ERROR_STREAM("Could not generate route as there was no map projection available");
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
-                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
-                return true;
-            }
-
-            // load destination points in map frame
-            std::vector<lanelet::BasicPoint3d> destination_points;
-            if(req.choice == cav_srvs::SetActiveRouteRequest::ROUTE_ID)
-            {   
-                std::vector<cav_msgs::Position3D> gps_destination_points = load_route_destination_gps_points_from_route_id(req.routeID);
-                destination_points = load_route_destinations_in_map_frame(gps_destination_points);
-            }
-            else if(req.choice == cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY)
-            {
-                destination_points = load_route_destinations_in_map_frame(req.destination_points);
-            }
-
-            // Check that the requested route is valid with at least one destination point
-            if(destination_points.size() < 1)
-            {
-                ROS_ERROR_STREAM("Provided route contains no destination points. Routing cannot be completed.");
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTE_FILE_ERROR;
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
-                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
-                return true;
-            }
-
-            if (!world_model_ || !world_model_->getMap()) {
-                ROS_ERROR_STREAM("World model has not been initialized.");
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
-                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
-                return true;
-            }
-
-            // convert points in 2d to map frame
-            destination_points_in_map_ = lanelet::utils::transform(destination_points, [](auto a) { return lanelet::traits::to2D(a); });
-
-            // Add vehicle as first destination point
-            auto destination_points_in_map_with_vehicle = destination_points_in_map_;
-            
-            lanelet::BasicPoint2d vehicle_position(vehicle_pose_->pose.position.x, vehicle_pose_->pose.position.y);
-            destination_points_in_map_with_vehicle.insert(destination_points_in_map_with_vehicle.begin(), vehicle_position);
-
-            int idx = 0;
-            // validate if the points are geometrically in the map
-            for (auto pt : destination_points_in_map_with_vehicle)
-            {
-                auto llts = world_model_->getLaneletsFromPoint(pt, 1);
-                if (llts.empty())
-                {
-                    ROS_ERROR_STREAM("Route Generator: " << idx 
-                        << "th destination point is not in the map, x: " << pt.x() << " y: " << pt.y());
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTE_FILE_ERROR;
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
-                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
-                return true;
-                }
-                idx ++;
-            }
-            
-            // get route graph from world model object
-            auto p = world_model_->getMapRoutingGraph();
-            // generate a route
-            auto route = routing(destination_points_in_map_with_vehicle.front(),
-                                std::vector<lanelet::BasicPoint2d>(destination_points_in_map_with_vehicle.begin() + 1, destination_points_in_map_with_vehicle.end() - 1),
-                                destination_points_in_map_with_vehicle.back(),
-                                world_model_->getMap(), world_model_->getMapRoutingGraph());
-            // check if route succeeded
-            if(!route)
-            {
-                ROS_ERROR_STREAM("Cannot find a route passing all destinations.");
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
-                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
-                return true;
-            }
-
-            if (check_for_duplicate_lanelets_in_shortest_path(route.get()))
-            {
-                ROS_ERROR_STREAM("At least one duplicate Lanelet ID occurs in the shortest path. Routing cannot be completed.");
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
-                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
-                return true;
-            }
-
-            // Specify the end point of the route that is inside the last lanelet
-            lanelet::Point3d end_point{lanelet::utils::getId(), destination_points_in_map_with_vehicle.back().x(), destination_points_in_map_with_vehicle.back().y(), 0};
-
-            route->setEndPoint(end_point);
-
-            // update route message
-            route_msg_ = compose_route_msg(route);
-
-            for(auto id : route_msg_.route_path_lanelet_ids)
-            {
-                auto ll = world_model_->getMap()->laneletLayer.get(id);
-                route_llts.push_back(ll);
-
-            }
-
-            route_msg_.route_name = req.routeID;
-            route_marker_msg_ = compose_route_marker_msg(route);
-            route_msg_.header.stamp = ros::Time::now();
-            route_msg_.header.frame_id = "map";
-            route_msg_.map_version = world_model_->getMapVersion();
-            // since routing is done correctly, transit to route following state
-            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_STARTED);
-            publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);
-            // set publish flag such that updated msg will be published in the next spin
-            new_route_msg_generated_ = true;
             return true;
         }
 
-        ROS_ERROR_STREAM("System is already following a route.");
-        resp.errorStatus = cav_srvs::SetActiveRouteResponse::ALREADY_FOLLOWING_ROUTE;
+        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Valid state proceeding with selection");
+        	
+        // entering to routing state once destinations are picked
+        this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_SELECTED);
+        publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_SELECTED);
 
+        if (!vehicle_pose_) {
+            RCLCPP_ERROR_STREAM(logger_->get_logger(), "No vehicle position. Routing cannot be completed.");
+            resp->error_status = carma_planning_msgs::srv::SetActiveRoute::Response::ROUTING_FAILURE;
+            this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+            publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_GEN_FAILED);
+            return true;
+        }
+
+        // Check if the map projection is available
+        if (!map_proj_) {
+            RCLCPP_ERROR_STREAM(logger_->get_logger(), "Could not generate route as there was no map projection available");
+            resp->error_status = carma_planning_msgs::srv::SetActiveRoute::Response::ROUTING_FAILURE;
+            this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+            publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_GEN_FAILED);
+            return true;
+        }
+
+        // load destination points in map frame
+        std::vector<lanelet::BasicPoint3d> destination_points;
+        if(req->choice == carma_planning_msgs::srv::SetActiveRoute::Request::ROUTE_ID)
+        {   
+            RCLCPP_INFO_STREAM(logger_->get_logger(), "set_active_route_cb: Selected Route ID: " << req->route_id);
+            std::vector<carma_v2x_msgs::msg::Position3D> gps_destination_points = loadRouteDestinationGpsPointsFromRouteId(req->route_id);
+            destination_points = loadRouteDestinationsInMapFrame(gps_destination_points);
+        }
+        else if(req->choice == carma_planning_msgs::srv::SetActiveRoute::Request::DESTINATION_POINTS_ARRAY)
+        {
+            RCLCPP_INFO_STREAM(logger_->get_logger(), "set_active_route_cb: Destination Points array of size " << req->destination_points.size());
+            destination_points = loadRouteDestinationsInMapFrame(req->destination_points);
+        }
+
+        // Check that the requested route is valid with at least one destination point
+        if(destination_points.size() < 1)
+        {
+            RCLCPP_ERROR_STREAM(logger_->get_logger(), "Provided route contains no destination points. Routing cannot be completed.");
+            resp->error_status = carma_planning_msgs::srv::SetActiveRoute::Response::ROUTE_FILE_ERROR;
+            this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+            publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_GEN_FAILED);
+            return true;
+        }
+
+        if (!world_model_ || !world_model_->getMap()) {
+            RCLCPP_ERROR_STREAM(logger_->get_logger(), "World model has not been initialized.");
+            resp->error_status = carma_planning_msgs::srv::SetActiveRoute::Response::ROUTING_FAILURE;
+            this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+            publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_GEN_FAILED);
+            return true;
+        }
+
+        // convert points in 2d to map frame
+        destination_points_in_map_ = lanelet::utils::transform(destination_points, [](auto a) { return lanelet::traits::to2D(a); });
+
+        // Add vehicle as first destination point
+        auto destination_points_in_map_with_vehicle = destination_points_in_map_;
+            
+        lanelet::BasicPoint2d vehicle_position(vehicle_pose_->pose.position.x, vehicle_pose_->pose.position.y);
+        destination_points_in_map_with_vehicle.insert(destination_points_in_map_with_vehicle.begin(), vehicle_position);
+
+        int idx = 0;
+        // validate if the points are geometrically in the map
+        for (auto pt : destination_points_in_map_with_vehicle)
+        {
+            if ((world_model_->getLaneletsFromPoint(pt, 1)).empty())
+            {
+                RCLCPP_ERROR_STREAM(logger_->get_logger(), "Route Generator: " << idx 
+                        << "th destination point is not in the map, x: " << pt.x() << " y: " << pt.y());
+                resp->error_status = carma_planning_msgs::srv::SetActiveRoute::Response::ROUTE_FILE_ERROR;
+                this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_GEN_FAILED);
+                return true;
+            }
+            idx ++;
+        }
+            
+        // get route graph from world model object
+        auto p = world_model_->getMapRoutingGraph();
+        // generate a route
+        auto route = routing(destination_points_in_map_with_vehicle.front(),
+                            std::vector<lanelet::BasicPoint2d>(destination_points_in_map_with_vehicle.begin() + 1, destination_points_in_map_with_vehicle.end() - 1),
+                            destination_points_in_map_with_vehicle.back(),
+                            world_model_->getMap(), world_model_->getMapRoutingGraph());
+        // check if route succeeded
+        if(!route)
+        {
+            RCLCPP_ERROR_STREAM(logger_->get_logger(), "Cannot find a route passing all destinations.");
+            resp->error_status = carma_planning_msgs::srv::SetActiveRoute::Response::ROUTING_FAILURE;
+            this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+            publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_GEN_FAILED);
+            return true;
+        }
+
+        if (checkForDuplicateLaneletsInShortestPath(route.get()))
+        {
+            RCLCPP_ERROR_STREAM(logger_->get_logger(), "At least one duplicate Lanelet ID occurs in the shortest path. Routing cannot be completed.");
+            resp->error_status = carma_planning_msgs::srv::SetActiveRoute::Response::ROUTING_FAILURE;
+            this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+            publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_GEN_FAILED);
+            return true;
+        }
+
+        // Specify the end point of the route that is inside the last lanelet
+        lanelet::Point3d end_point{lanelet::utils::getId(), destination_points_in_map_with_vehicle.back().x(), destination_points_in_map_with_vehicle.back().y(), 0};
+
+        route->setEndPoint(end_point);
+
+        // update route message
+        route_msg_ = composeRouteMsg(route);
+
+        for(auto id : route_msg_.route_path_lanelet_ids)
+        {
+            auto ll = world_model_->getMap()->laneletLayer.get(id);
+            route_llts.push_back(ll);
+        }
+
+        route_msg_.route_name = req->route_id;
+        route_marker_msg_ = composeRouteMarkerMsg(route);
+        route_msg_.header.stamp = clock_->now();
+        route_msg_.header.frame_id = "map";
+        route_msg_.map_version = world_model_->getMapVersion();
+        // since routing is done correctly, transit to route following state
+        this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_STARTED);
+        publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_STARTED);
+        // set publish flag such that updated msg will be published in the next spin
+        new_route_msg_generated_ = true;
         return true;
     }
 
-    bool RouteGeneratorWorker::check_for_duplicate_lanelets_in_shortest_path(const lanelet::routing::Route& route) const
+    bool RouteGeneratorWorker::checkForDuplicateLaneletsInShortestPath(const lanelet::routing::Route& route) const
     {
         // Create a vector for the lanelet IDs in the shortest path
         std::vector<lanelet::Id> shortest_path_lanelet_ids;
@@ -291,9 +306,8 @@ namespace route {
 
         // Verify that there are no duplicate lanelet IDs in the shortest path
         std::sort(shortest_path_lanelet_ids.begin(), shortest_path_lanelet_ids.end());
-        auto it = std::adjacent_find(shortest_path_lanelet_ids.begin(), shortest_path_lanelet_ids.end());
         
-        if (it != shortest_path_lanelet_ids.end())
+        if (std::adjacent_find(shortest_path_lanelet_ids.begin(), shortest_path_lanelet_ids.end()) != shortest_path_lanelet_ids.end())
         {
             // Route's shortest path contains duplicate lanelet IDs
             return true;
@@ -303,10 +317,10 @@ namespace route {
         return false;
     }
 
-    std::vector<lanelet::BasicPoint3d> RouteGeneratorWorker::load_route_destinations_in_map_frame(const std::vector<cav_msgs::Position3D>& destinations) const
+    std::vector<lanelet::BasicPoint3d> RouteGeneratorWorker::loadRouteDestinationsInMapFrame(const std::vector<carma_v2x_msgs::msg::Position3D>& destinations) const
     {
         if (!map_proj_) {
-            throw std::invalid_argument("load_route_destinations_in_map_frame (using destination points array) before map projection was set");
+            throw std::invalid_argument("loadRouteDestinationsInMapFrame (using destination points array) before map projection was set");
         }
         
         lanelet::projection::LocalFrameProjector projector(map_proj_.get().c_str()); // Build map projector
@@ -334,7 +348,7 @@ namespace route {
         return destination_points;
     }
 
-    std::vector<cav_msgs::Position3D> RouteGeneratorWorker::load_route_destination_gps_points_from_route_id(const std::string& route_id) const
+    std::vector<carma_v2x_msgs::msg::Position3D> RouteGeneratorWorker::loadRouteDestinationGpsPointsFromRouteId(const std::string& route_id) const
     {
         // compose full path of the route file
         std::string route_file_name = route_file_path_ + route_id + ".csv";
@@ -342,23 +356,23 @@ namespace route {
         std::string line;
         
         // read each line in route file (if any)
-        std::vector<cav_msgs::Position3D> destination_points;
+        std::vector<carma_v2x_msgs::msg::Position3D> destination_points;
         while(std::getline(fs, line))
         {
-            cav_msgs::Position3D gps_point;
+            carma_v2x_msgs::msg::Position3D gps_point;
 
             // lat lon and elev is seperated by comma
             auto comma = line.find(",");
             // convert lon value in degrees from string
-            gps_point.longitude = std::stod(line.substr(0, comma));
+            gps_point.longitude = std::stof(line.substr(0, comma));
             line.erase(0, comma + 1);
             comma = line.find(",");
             // convert lat value in degrees from string
-            gps_point.latitude = std::stod(line.substr(0, comma));
+            gps_point.latitude = std::stof(line.substr(0, comma));
             // elevation is in meters
             line.erase(0, comma + 1);
             comma = line.find(",");
-            gps_point.elevation = std::stod(line.substr(0, comma));
+            gps_point.elevation = std::stof(line.substr(0, comma));
             gps_point.elevation_exists = true;
 
             destination_points.push_back(gps_point);
@@ -367,7 +381,7 @@ namespace route {
         return destination_points;
     }
 
-    visualization_msgs::Marker RouteGeneratorWorker::compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route)
+    visualization_msgs::msg::Marker RouteGeneratorWorker::composeRouteMarkerMsg(const lanelet::Optional<lanelet::routing::Route>& route)
     {
         std::vector<lanelet::ConstPoint3d> points;
         auto end_point_3d = route.get().getEndPoint();
@@ -375,7 +389,7 @@ namespace route {
         double end_point_downtrack = carma_wm::geometry::trackPos(last_ll, {end_point_3d.x(), end_point_3d.y()}).downtrack;
         double lanelet_downtrack = carma_wm::geometry::trackPos(last_ll, last_ll.centerline().back().basicPoint2d()).downtrack;
         // get number of points to display using ratio of the downtracks
-        int points_until_end_point = (int) last_ll.centerline().size() * (end_point_downtrack / lanelet_downtrack);
+        auto points_until_end_point = int (last_ll.centerline().size() * (end_point_downtrack / lanelet_downtrack));
   
         for(const auto& ll : route.get().shortestPath())
         {
@@ -396,11 +410,11 @@ namespace route {
         route_marker_msg_.points={};
 
         // create the marker msgs
-        visualization_msgs::Marker marker;
+        visualization_msgs::msg::Marker marker;
         marker.header.frame_id = "map";
-        marker.header.stamp = ros::Time();
-        marker.type = visualization_msgs::Marker::SPHERE_LIST;//
-        marker.action = visualization_msgs::Marker::ADD;
+        marker.header.stamp = rclcpp::Time();
+        marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;//
+        marker.action = visualization_msgs::msg::Marker::ADD;
         marker.ns = "route_visualizer";
 
         marker.scale.x = 0.65;
@@ -416,13 +430,13 @@ namespace route {
 
         if (points.empty())
         {
-            ROS_WARN_STREAM("No central line points! Returning");
+            RCLCPP_WARN_STREAM(logger_->get_logger(), "No central line points! Returning");
             return route_marker_msg_;
         }
  
         for (int i = 0; i < points.size(); i=i+5)
         {
-            geometry_msgs::Point temp_point;
+            geometry_msgs::msg::Point temp_point;
             temp_point.x = points[i].x();
             temp_point.y = points[i].y();
             temp_point.z = 1; //to show up on top of the lanelet lines
@@ -433,9 +447,9 @@ namespace route {
         return marker;
     }
 
-    cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route)
+    carma_planning_msgs::msg::Route RouteGeneratorWorker::composeRouteMsg(const lanelet::Optional<lanelet::routing::Route>& route) const
     {
-        cav_msgs::Route msg;
+        carma_planning_msgs::msg::Route msg;
         // iterate through the shortest path to populate shortest_path_lanelet_ids
         for(const auto& ll : route.get().shortestPath())
         {
@@ -453,18 +467,20 @@ namespace route {
         return msg;
     }
 
-    bool RouteGeneratorWorker::abort_active_route_cb(cav_srvs::AbortActiveRouteRequest &req, cav_srvs::AbortActiveRouteResponse &resp)
+    bool RouteGeneratorWorker::abortActiveRouteCb(const std::shared_ptr<rmw_request_id_t>,
+                                const std::shared_ptr<carma_planning_msgs::srv::AbortActiveRoute::Request>,
+                                std::shared_ptr<carma_planning_msgs::srv::AbortActiveRoute::Response> resp)
     {
         // only make sense to abort when it is in route following state
-        if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING)
+        if(this->rs_worker_.getRouteState() == RouteStateWorker::RouteState::FOLLOWING)
         {
-            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_ABORTED);
-            resp.error_status = cav_srvs::AbortActiveRouteResponse::NO_ERROR;
-            publish_route_event(cav_msgs::RouteEvent::ROUTE_ABORTED);
-            route_msg_ = cav_msgs::Route{};
+            this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_ABORTED);
+            resp->error_status = carma_planning_msgs::srv::AbortActiveRoute::Response::NO_ERROR;
+            publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_ABORTED);
+            route_msg_ = carma_planning_msgs::msg::Route{};
         } else {
             // service call successed but there is not active route
-            resp.error_status = cav_srvs::AbortActiveRouteResponse::NO_ACTIVE_ROUTE;
+            resp->error_status = carma_planning_msgs::srv::AbortActiveRoute::Response::NO_ACTIVE_ROUTE;
         }
         return true;
     }
@@ -475,25 +491,25 @@ namespace route {
         tf2_buffer_.setUsingDedicatedThread(true);
     }
 
-    void RouteGeneratorWorker::bumper_pose_cb()
+    void RouteGeneratorWorker::bumperPoseCb()
     {
         try
         {
-            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(1.0)); //save to local copy of transform 0.1 sec timeout
+            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", rclcpp::Time(0,0), rclcpp::Duration(1.0*1e9)); //save to local copy of transform 0.1 sec timeout
             tf2::fromMsg(tf_, frontbumper_transform_);
         }
         catch (const tf2::TransformException &ex)
         {
-            ROS_WARN("%s", ex.what());
+            RCLCPP_WARN_STREAM(logger_->get_logger(), ex.what());
         }
         
-        geometry_msgs::PoseStamped updated_vehicle_pose;
+        geometry_msgs::msg::PoseStamped updated_vehicle_pose;
         updated_vehicle_pose.pose.position.x = frontbumper_transform_.getOrigin().getX();
         updated_vehicle_pose.pose.position.y = frontbumper_transform_.getOrigin().getY();
         updated_vehicle_pose.pose.position.z = frontbumper_transform_.getOrigin().getZ();
         vehicle_pose_ = updated_vehicle_pose; 
             
-        if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
+        if(this->rs_worker_.getRouteState() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
             current_loc_ = lanelet::BasicPoint2d(vehicle_pose_->pose.position.x, vehicle_pose_->pose.position.y);
             // get dt ct from world model
@@ -501,17 +517,17 @@ namespace route {
             try {
                 track = this->world_model_->routeTrackPos(current_loc_);
             } catch (std::invalid_argument ex) {
-                ROS_WARN_STREAM("Routing has finished but carma_wm has not receive it!");
+                RCLCPP_WARN_STREAM(logger_->get_logger(), "Routing has finished but carma_wm has not receive it!");
                 return;
             }
 
             // Return if world model has not yet been updated with the current active route
             if ((this->world_model_->getRouteName()).compare(route_msg_.route_name) != 0) {
-                ROS_WARN_STREAM("Current active route name is " << route_msg_.route_name << ", WorldModel is using " << this->world_model_->getRouteName());
+                RCLCPP_WARN_STREAM(logger_->get_logger(), "Current active route name is " << route_msg_.route_name << ", WorldModel is using " << this->world_model_->getRouteName());
                 return;
             }
 
-            auto current_lanelet = get_closest_lanelet_from_route_llts(current_loc_);
+            auto current_lanelet = getClosestLaneletFromRouteLanelets(current_loc_);
             auto lanelet_track = carma_wm::geometry::trackPos(current_lanelet, current_loc_);
             ll_id_ = current_lanelet.id();
             ll_crosstrack_distance_ = lanelet_track.crosstrack;
@@ -529,7 +545,7 @@ namespace route {
                 } 
                 else 
                 {
-                    ROS_ERROR_STREAM("Failed to set the current speed limit. The lanelet_id: "
+                    RCLCPP_ERROR_STREAM(logger_->get_logger(), "Failed to set the current speed limit. The lanelet_id: "
                         << ll_id_ << " could not be matched with a lanelet in the map. The previous speed limit of "
                         << speed_limit_ << " will be used.");
                 }
@@ -537,38 +553,41 @@ namespace route {
             } 
             else 
             {
-                ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built.");
+                RCLCPP_ERROR_STREAM(logger_->get_logger(), "Failed to set the current speed limit. Valid traffic rules object could not be built.");
             }
-            geometry_msgs::PoseStampedPtr pose_ptr(new geometry_msgs::PoseStamped(*vehicle_pose_));
+            std::shared_ptr<geometry_msgs::msg::PoseStamped> pose_ptr(new geometry_msgs::msg::PoseStamped(*vehicle_pose_));
+            
             // check if we left the seleted route by cross track error
-            bool departed = crosstrack_error_check(pose_ptr, current_lanelet);
-            if (departed)
-                {
-                    this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_DEPARTED);
-                    publish_route_event(cav_msgs::RouteEvent::ROUTE_DEPARTED);
-                }
+            if (crosstrackErrorCheck(pose_ptr, current_lanelet))
+            {
+                this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_DEPARTED);
+                publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_DEPARTED);
+            }
 
             // check if we reached our destination be remaining down track distance            
             double route_length_2d = world_model_->getRouteEndTrackPos().downtrack;
             if((current_downtrack_distance_ > route_length_2d - down_track_target_range_ && current_speed_ < epsilon_) || (current_downtrack_distance_ > route_length_2d))
             {
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_COMPLETED);
-                publish_route_event(cav_msgs::RouteEvent::ROUTE_COMPLETED);
+                this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_COMPLETED);
+                publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_COMPLETED);
             }
         }
     }
 
-    void RouteGeneratorWorker::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg)
+    void RouteGeneratorWorker::twistCb(geometry_msgs::msg::TwistStamped::UniquePtr msg)
     {
         current_speed_ = msg->twist.linear.x;
     }
 
-    void RouteGeneratorWorker::georeference_cb(const std_msgs::StringConstPtr& msg)
+    void RouteGeneratorWorker::georeferenceCb(std_msgs::msg::String::UniquePtr msg)
     {
         map_proj_ = msg->data;
     }
 
-    void RouteGeneratorWorker::set_publishers(ros::Publisher route_event_pub, ros::Publisher route_state_pub, ros::Publisher route_pub,ros::Publisher route_marker_pub)
+    void RouteGeneratorWorker::setPublishers(const carma_ros2_utils::PubPtr<carma_planning_msgs::msg::RouteEvent>& route_event_pub,
+                        const carma_ros2_utils::PubPtr<carma_planning_msgs::msg::RouteState>& route_state_pub,
+                        const carma_ros2_utils::PubPtr<carma_planning_msgs::msg::Route>& route_pub,
+                        const carma_ros2_utils::PubPtr<visualization_msgs::msg::Marker>& route_marker_pub)
     {
         route_event_pub_ = route_event_pub;
         route_state_pub_ = route_state_pub;
@@ -576,18 +595,17 @@ namespace route {
         route_marker_pub_= route_marker_pub;
     }
 
-    void RouteGeneratorWorker::set_ctdt_param(double ct_max_error, double dt_dest_range)
+    void RouteGeneratorWorker::setDowntrackDestinationRange(double dt_dest_range)
     {
-        this->cross_track_max_ = ct_max_error;
         this->down_track_target_range_ = dt_dest_range;
     }
 
-    void RouteGeneratorWorker::publish_route_event(uint8_t event_type)
+    void RouteGeneratorWorker::publishRouteEvent(uint8_t event_type)
     {
         route_event_queue.push(event_type);
     }
     
-    lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map)
+    lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::rerouteAfterRouteInvalidation(const std::vector<lanelet::BasicPoint2d>& destination_points_in_map)
     {
         std::vector<lanelet::BasicPoint2d> destination_points_in_map_temp;
         
@@ -598,14 +616,14 @@ namespace route {
             if( current_downtrack_distance_< destination_down_track)
             {
                 destination_points_in_map_temp.push_back(i);
-                ROS_DEBUG_STREAM("current_downtrack_distance_:" << current_downtrack_distance_);
-                ROS_DEBUG_STREAM("destination_down_track:" << destination_down_track);
+                RCLCPP_DEBUG_STREAM(logger_->get_logger(), "current_downtrack_distance_:" << current_downtrack_distance_);
+                RCLCPP_DEBUG_STREAM(logger_->get_logger(), "destination_down_track:" << destination_down_track);
             }
         }  
         
         destination_points_in_map_ = destination_points_in_map_temp; // Update our route point list
         
-        ROS_DEBUG_STREAM("New destination_points_in_map.size:" << destination_points_in_map_.size());
+        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "New destination_points_in_map.size:" << destination_points_in_map_.size());
 
         auto route=routing(current_loc_, // Route from current location through future destinations
                             std::vector<lanelet::BasicPoint2d>(destination_points_in_map_.begin(), destination_points_in_map_.end() - 1),
@@ -615,53 +633,53 @@ namespace route {
         return route;
     }
 
-    bool RouteGeneratorWorker::spin_callback()
+    bool RouteGeneratorWorker::spinCallback()
     {
         // Update vehicle position
-        bumper_pose_cb();
+        bumperPoseCb();
 
         if(reroutingChecker()==true)
         {
-           ROS_DEBUG_STREAM("Rerouting required");
-           this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
-           publish_route_event(cav_msgs::RouteEvent::ROUTE_INVALIDATION);
-           auto route = reroute_after_route_invalidation(destination_points_in_map_);
+           RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Rerouting required");
+           this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
+           publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_INVALIDATION);
+           auto route = rerouteAfterRouteInvalidation(destination_points_in_map_);
 
            // check if route successed
            if(!route)
             {
-                ROS_ERROR_STREAM("Cannot find a route passing all destinations.");
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
-                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
+                RCLCPP_ERROR_STREAM(logger_->get_logger(), "Cannot find a route passing all destinations.");
+                this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
             }
-            else if(check_for_duplicate_lanelets_in_shortest_path(route.get()))
+            else if(checkForDuplicateLaneletsInShortestPath(route.get()))
             {
-                ROS_ERROR_STREAM("At least one duplicate Lanelet ID occurs in the shortest path. Routing cannot be completed.");
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
-                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
+                RCLCPP_ERROR_STREAM(logger_->get_logger(), "At least one duplicate Lanelet ID occurs in the shortest path. Routing cannot be completed.");
+                this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
             }
             else
             {
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_STARTED);
-                publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);  
+                this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_STARTED);
+                publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_STARTED);  
             }    
             std::string original_route_name = route_msg_.route_name;
-            route_msg_=compose_route_msg(route);
+            route_msg_ = composeRouteMsg(route);
             route_msg_.route_name = original_route_name;
             route_msg_.is_rerouted = true;
             route_msg_.map_version = world_model_->getMapVersion();
-            route_marker_msg_=compose_route_marker_msg(route);
-            new_route_msg_generated_=true;
-            new_route_marker_generated_=true;
+            route_marker_msg_ = composeRouteMarkerMsg(route);
+            new_route_msg_generated_ = true;
+            new_route_marker_generated_ = true;
         }
         
         // publish new route and set new route flag back to false
         if(new_route_msg_generated_ && new_route_marker_generated_)
         {
-            route_pub_.publish(route_msg_);
-            route_marker_pub_.publish(route_marker_msg_);
+            route_pub_->publish(route_msg_);
+            route_marker_pub_->publish(route_marker_msg_);
             new_route_msg_generated_ = false;
             new_route_marker_generated_ = false;
             route_msg_.is_rerouted = false;
@@ -669,30 +687,31 @@ namespace route {
         // publish route state messsage if a route is selected
         if(route_msg_.route_name != "")
         {
-            cav_msgs::RouteState state_msg;
-            state_msg.header.stamp = ros::Time::now();
-            state_msg.routeID = route_msg_.route_name;
+            carma_planning_msgs::msg::RouteState state_msg;
+            state_msg.header.stamp = clock_->now();
+            state_msg.route_id = route_msg_.route_name;
             state_msg.cross_track = current_crosstrack_distance_;
             state_msg.down_track = current_downtrack_distance_;
             state_msg.lanelet_downtrack = ll_downtrack_distance_;            
-            state_msg.state = this->rs_worker_.get_route_state();
+            state_msg.state = this->rs_worker_.getRouteState();
             state_msg.lanelet_id = ll_id_;
             state_msg.speed_limit = speed_limit_;
-            route_state_pub_.publish(state_msg);
+            route_state_pub_->publish(state_msg);
         }
         // publish route event in order if any
         while(!route_event_queue.empty())
         {
             route_event_msg_.event = route_event_queue.front();
-            route_event_pub_.publish(route_event_msg_);
+            RCLCPP_INFO_STREAM(logger_->get_logger(), "Publishing a route event!");
+            route_event_pub_->publish(route_event_msg_);
             route_event_queue.pop();
         }
         return true; 
     }
 
-    bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current)
+    bool RouteGeneratorWorker::crosstrackErrorCheck(const std::shared_ptr<geometry_msgs::msg::PoseStamped>& msg, lanelet::ConstLanelet current)
     {
-       lanelet::BasicPoint2d position;
+        lanelet::BasicPoint2d position;
 
         position.x()= msg->pose.position.x;
         position.y()= msg->pose.position.y;
@@ -703,11 +722,11 @@ namespace route {
             return false;
         }
 
-        ROS_DEBUG_STREAM("LLt Polygon Dimensions1: " << current.polygon2d().front().x()<< ", "<< current.polygon2d().front().y());
-        ROS_DEBUG_STREAM("LLt Polygon Dimensions2: " << current.polygon2d().back().x()<< ", "<< current.polygon2d().back().y());
-        ROS_DEBUG_STREAM("Distance1: "<< boost::geometry::distance(position, current.polygon2d())<<" Crosstrack: "<< cross_track_dist );
+        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "LLt Polygon Dimensions1: " << current.polygon2d().front().x()<< ", "<< current.polygon2d().front().y());
+        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "LLt Polygon Dimensions2: " << current.polygon2d().back().x()<< ", "<< current.polygon2d().back().y());
+        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Distance1: " << boost::geometry::distance(position, current.polygon2d()) << " Max allowed Crosstrack: " << cross_track_dist_ );
     
-        if (boost::geometry::distance(position, current.polygon2d()) > cross_track_dist) //Evaluate lanelet crosstrack distance from vehicle
+        if (boost::geometry::distance(position, current.polygon2d()) > cross_track_dist_) //Evaluate lanelet crosstrack distance from vehicle
             {
                 cte_count_++;
 
@@ -729,11 +748,11 @@ namespace route {
 
 
 
-    lanelet::ConstLanelet RouteGeneratorWorker::get_closest_lanelet_from_route_llts(lanelet::BasicPoint2d position)
+    lanelet::ConstLanelet RouteGeneratorWorker::getClosestLaneletFromRouteLanelets(lanelet::BasicPoint2d position) const
     {
-       double min = std::numeric_limits<double>::infinity();
+        double min = std::numeric_limits<double>::infinity();
         lanelet::ConstLanelet min_llt;
-        for (auto i: route_llts)
+        for (const auto& i: route_llts)
          {
             double dist = boost::geometry::distance(position, i.polygon2d());
             if (dist < min)
@@ -745,22 +764,20 @@ namespace route {
     return min_llt;
     }
 
-    void RouteGeneratorWorker::set_CTE_dist(double cte_dist)
+    void RouteGeneratorWorker::setCrosstrackErrorDistance(double cte_dist)
     {
-        cross_track_dist = cte_dist;
+        cross_track_dist_ = cte_dist;
     }
 
-     void RouteGeneratorWorker::set_CTE_count_max(int cte_max)
+     void RouteGeneratorWorker::setCrosstrackErrorCountMax(int cte_max)
     {
         cte_count_max_ = cte_max;
 
     }
 
-    void RouteGeneratorWorker::addllt(lanelet::ConstLanelet llt)
+    void RouteGeneratorWorker::addLanelet(lanelet::ConstLanelet llt)
     {
         route_llts.push_back(llt);
     }
 
-
-}
-
+} // route

@@ -1378,6 +1378,66 @@ namespace carma_wm
     return curr_light;
   }
 
+   bool CARMAWorldModel::check_if_seen_before_movement_state(boost::posix_time::ptime min_end_time_dynamic,lanelet::CarmaTrafficSignalState received_state_dynamic,uint16_t mov_id, uint8_t mov_signal_group)
+    {
+
+      if(sim_.traffic_signal_states_[mov_id][mov_signal_group].empty())
+      {
+          return false;
+      }
+
+      std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>> temp_signal_states;
+
+      for(auto mov_check:sim_.traffic_signal_states_[mov_id][mov_signal_group])
+      {
+         if (lanelet::time::timeFromSec(ros::Time::now().toSec()) > mov_check.first)
+         {
+           temp_signal_states.push_back(std::make_pair(mov_check.first, mov_check.second ));
+         }
+        
+        auto last_time_difference = mov_check.first - min_end_time_dynamic;  
+        bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
+
+        if(received_state_dynamic == mov_check.second && is_duplicate)
+        {
+          return true;
+        }
+ 
+      } 
+      sim_.traffic_signal_states_[mov_id][mov_signal_group]=temp_signal_states;
+      return false;
+      
+    }
+
+    boost::posix_time::ptime CARMAWorldModel::min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy)
+    {
+        if (moy_exists) //account for minute of the year
+        {
+          auto inception_boost(boost::posix_time::time_from_string("1970-01-01 00:00:00.000")); // inception of epoch
+          auto duration_since_inception(lanelet::time::durationFromSec(ros::Time::now().toSec()));
+          auto curr_time_boost = inception_boost + duration_since_inception;
+
+          int curr_year = curr_time_boost.date().year();
+          auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year)+ "-01-01 00:00:00.000"));
+
+          auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)moy);
+
+          int hours_of_day = curr_minute_stamp_boost.time_of_day().hours();
+          int curr_month = curr_minute_stamp_boost.date().month();
+          int curr_day = curr_minute_stamp_boost.date().day();
+
+          auto curr_day_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "/" + std::to_string(curr_month) + "/" + std::to_string(curr_day) +" 00:00:00.000")); // GMT is the standard
+          auto curr_hour_boost = curr_day_boost + boost::posix_time::hours(hours_of_day);
+
+          min_end_time += lanelet::time::durationFromSec(lanelet::time::toSec(curr_hour_boost));
+          return min_end_time;
+        }
+        else
+        {
+          return min_end_time; // return unchanged
+        }
+    }
+
   void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT &spat_msg)
   {
     if (!semantic_map_)
@@ -1424,30 +1484,31 @@ namespace carma_wm
           continue;
         }
 
+       if(current_movement_state.movement_event_list.size()>1) // Dynamic Spat Processing with future phases
+        {
+          for(auto current_movement_event:current_movement_state.movement_event_list)
+          {
+
+            // raw min_end_time in seconds measured from the most recent full hour
+            boost::posix_time::ptime min_end_time_dynamic = lanelet::time::timeFromSec(current_movement_event.timing.min_end_time);
+            min_end_time_dynamic=min_end_time_converter_minute_of_year(min_end_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy); // Accounting minute of the year
+            auto received_state_dynamic = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_event.event_state.movement_phase_state);
+            
+            bool recorded = check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,curr_intersection.id.id,current_movement_state.signal_group);
+	    	    if (!recorded)
+		        {
+              sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time_dynamic, received_state_dynamic));
+    		    }		
+	        }
+        } 
+        else // Fixed Spat Processing without future phases
+        {
+
         // raw min_end_time in seconds measured from the most recent full hour
         boost::posix_time::ptime min_end_time = lanelet::time::timeFromSec(current_movement_state.movement_event_list[0].timing.min_end_time);
         auto received_state = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state);
         
-        if (curr_intersection.moy_exists) //account for minute of the year
-        {
-          auto inception_boost(boost::posix_time::time_from_string("1970-01-01 00:00:00.000")); // inception of epoch
-          auto duration_since_inception(lanelet::time::durationFromSec(ros::Time::now().toSec()));
-          auto curr_time_boost = inception_boost + duration_since_inception;
-
-          int curr_year = curr_time_boost.date().year();
-          auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year)+ "-01-01 00:00:00.000"));
-
-          auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)curr_intersection.moy);
-
-          int hours_of_day = curr_minute_stamp_boost.time_of_day().hours();
-          int curr_month = curr_minute_stamp_boost.date().month();
-          int curr_day = curr_minute_stamp_boost.date().day();
-
-          auto curr_day_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "/" + std::to_string(curr_month) + "/" + std::to_string(curr_day) +" 00:00:00.000")); // GMT is the standard
-          auto curr_hour_boost = curr_day_boost + boost::posix_time::hours(hours_of_day);
-
-          min_end_time += lanelet::time::durationFromSec(lanelet::time::toSec(curr_hour_boost));
-        }
+        min_end_time=min_end_time_converter_minute_of_year(min_end_time,curr_intersection.moy_exists,curr_intersection.moy);
 
         auto last_time_difference = sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first - min_end_time;  
         bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
@@ -1576,7 +1637,7 @@ namespace carma_wm
         sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time, received_state));
         sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group]++;
         ROS_DEBUG_STREAM("Counter now: " << sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] << ", for id: "<< curr_light_id);
-      }
+        }  }
     }
   }
 

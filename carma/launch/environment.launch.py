@@ -294,6 +294,8 @@ def generate_launch_description():
                     ],
                     remappings=[
                         ("external_objects", "external_object_predictions"),
+                        ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
+                        ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] )
                     ]
             ),
             ComposableNode( 
@@ -307,7 +309,9 @@ def generate_launch_description():
                     remappings=[
                         ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
                         ("geofence", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_geofence_control" ] ),
-                        ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_operation" ] )
+                        ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_operation" ] ),
+                        ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
+                        ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] )
                     ]
             ),
         ]

@@ -1545,5 +1545,48 @@ TEST(CARMAWorldModelTest, getIntersectionAlongRoute)
 
 }
 
+TEST(CARMAWorldModelTest, checkIfSeenBeforeMovementState)
+{
+  carma_wm::CARMAWorldModel cmw;
+
+  cmw.sim_.traffic_signal_states_[13][15].push_back(std::make_pair(boost::posix_time::time_from_string("1970-01-01 00:00:00.000"), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
+
+  boost::posix_time::ptime min_end_time_dynamic = boost::posix_time::time_from_string("1970-01-01 00:00:00.000");
+  auto received_state_dynamic=lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN;
+  int mov_id=13;
+  int mov_signal_group=15;
+ 
+  ASSERT_EQ(cmw.check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,mov_id,mov_signal_group), 1);
+
+  min_end_time_dynamic=boost::posix_time::time_from_string("1970-01-01 00:00:00.000");
+  received_state_dynamic= lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE;
+  mov_id=13;
+  mov_signal_group=15;
+
+  ASSERT_EQ(cmw.check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,mov_id,mov_signal_group), 0);
+}
+
+TEST(CARMAWorldModelTest, minEndTimeConverterMinuteOfYear)
+{
+  carma_wm::CARMAWorldModel cmw;
+  boost::posix_time::ptime min_end_time=boost::posix_time::time_from_string("1970-01-01 00:00:00.000");
+  bool moy_exists=1;
+  double moy=1;
+  ros::Time::setNow(ros::Time(1));
+    
+  ASSERT_EQ(cmw.min_end_time_converter_minute_of_year(min_end_time,moy_exists,moy), boost::posix_time::time_from_string("1970-01-01 00:00:01.000"));
+
+  min_end_time=boost::posix_time::time_from_string("1970-01-01 00:00:01.000");
+  moy_exists=1;
+  ros::Time::setNow(ros::Time(3601));
+    
+  ASSERT_EQ(cmw.min_end_time_converter_minute_of_year(min_end_time,moy_exists,moy), boost::posix_time::time_from_string("1970-01-01 01:00:01.000"));
+
+  min_end_time=boost::posix_time::time_from_string("1970-01-01 00:00:00.000");
+  moy_exists=0;
+  ros::Time::setNow(ros::Time(0));
+
+  ASSERT_EQ(cmw.min_end_time_converter_minute_of_year(min_end_time,moy_exists,moy), boost::posix_time::time_from_string("1970-01-01 00:00:00.000"));
+}
 
 }  // namespace carma_wm
