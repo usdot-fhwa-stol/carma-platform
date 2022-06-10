@@ -69,7 +69,7 @@ max_steering_angle: 1.05 #approx 60 deg
 
 # fixed heading error that can't be steered out, rad
 # TODO this needs to come from global vehicle config, as it is vehicle-specific
-heading_bias: -0.011 # Lexus observed to be -0.011
+heading_bias: -0.011 #blue Lexus observed to be -0.011 on 6/9/22
 
 
 #-----Non-PID values
