@@ -1182,11 +1182,11 @@ namespace platoon_strategic_ihp
                 pm_.current_plan = ActionPlan(true, request.m_header.timestamp, request.m_header.plan_id, senderId);
 
                 // // If we are asking to join an actual platoon (not a solo vehicle), then save its ID for later use
-                // if (platoonId.compare(pm_.dummyID) != 0)
-                // {
-                //     pm_.targetPlatoonID = platoonId;
-                //     ROS_DEBUG_STREAM("Detected neighbor as a real platoon & storing its ID: " << platoonId);
-                // }
+                if (platoonId.compare(pm_.dummyID) != 0)
+                {
+                    pm_.targetPlatoonID = platoonId;
+                    ROS_DEBUG_STREAM("Detected neighbor as a real platoon & storing its ID: " << platoonId);
+                }
             }
 
             // step 6. Return none if no platoon nearby
@@ -1308,8 +1308,11 @@ namespace platoon_strategic_ihp
                 request.urgency = 50;
 
                 mobility_request_publisher_(request); 
-                // temp
-                pm_.currentPlatoonID = request.m_header.plan_id;
+                if (config_.allowCutinJoin)
+                {
+                    pm_.currentPlatoonID = request.m_header.plan_id;
+                }
+                
                 ROS_DEBUG_STREAM("new platoon id: " << pm_.currentPlatoonID);
                 pm_.current_plan = ActionPlan(true, request.m_header.timestamp, request.m_header.plan_id, senderId);
                 
@@ -2499,7 +2502,11 @@ namespace platoon_strategic_ihp
             candidatestateStartTime = ros::Time::now().toNSec() / 1000000;
             ROS_DEBUG_STREAM("pm_.currentPlatoonID: " << pm_.currentPlatoonID);
             ROS_DEBUG_STREAM("pm_.targetPlatoonID: " << pm_.targetPlatoonID);
-            // pm_.currentPlatoonID = pm_.targetPlatoonID;
+            if (pm_.targetPlatoonID.compare(pm_.dummyID) != 0)
+            {
+                pm_.currentPlatoonID = pm_.targetPlatoonID;
+            }
+            
             pm_.current_plan.valid = false; //but leave peerId intact for use in second request
         }
 
@@ -3020,7 +3027,7 @@ namespace platoon_strategic_ihp
             // Task 3: Calculate proper cut_in index 
             // Note: The cut-in index is zero-based and points to the gap-leading vehicle's index. For cut-in from front, the join index = -1.
             double joinerDtD = current_downtrack_;
-            target_join_index_ = 0;//pm_.getClosestIndex(joinerDtD);
+            target_join_index_ = -1;//pm_.getClosestIndex(joinerDtD);
 
             // Task 4: Send out request to leader about cut-in position
             cav_msgs::MobilityRequest request;
