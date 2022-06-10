@@ -45,7 +45,7 @@ namespace platoon_control_pid0
         pnh_->param<double>("pid_c_integral_max",   config_.pid_c_integral_max, config_.pid_c_integral_max);
         pnh_->param<double>("time_step",            config_.time_step,          config_.time_step);
         pnh_->param<double>("gamma_h",              config_.gamma_h,            config_.gamma_h);
-        pnh_->param<int>(   "heading_lookahead",    config_.heading_lookahead,  config_.heading_lookahead);
+        pnh_->param<double>("lookahead_time",       config_.lookahead_time,     config_.lookahead_time);
         pnh_->param<double>("max_steering_angle",   config_.max_steering_angle, config_.max_steering_angle);
         pnh_->param<double>("max_accel",            config_.max_accel,          config_.max_accel);
         pnh_->param<double>("speed_adjustment_cap", config_.speed_adjustment_cap, config_.speed_adjustment_cap);
@@ -147,7 +147,7 @@ namespace platoon_control_pid0
         // Update timing info
         prev_input_time_ = ros::Time::now().toNSec() / 1000000;
         ++consecutive_input_ctr_;
-        ROS_DEBUG_STREAM("Trajectory " << consecutive_input_ctr_ << " received with " 
+        ROS_DEBUG_STREAM("\\\\ Trajectory " << consecutive_input_ctr_ << " received with " 
                             << tp->trajectory_points.size() << " points.");
     }
 

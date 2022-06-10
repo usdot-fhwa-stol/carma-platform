@@ -134,12 +134,12 @@ namespace platoon_control_pid0
 
         /** SHOULD BE PRIVATE!
          * \brief Calculates the heading we want to steer to, based on the given trajectory plan.  If a heading_lookahead
-         *          is specified, then it will consider the heading that number of TPs in front of the vehicle as well as
-         *          the nearest TP.  It then uses whichever of these has the largest magnitude difference from current
-         *          vehicle heading as the result.
+         *          is specified, then it will consider the heading of the trajectory at that time in the future.
+         * \param speed the speed of travel, m/s
+         * \param spacing typical distance between trajectory points, m
          * \return desired heading, rad in [0, 2pi)
          */
-        double calc_desired_heading();
+        double calc_desired_heading(const double speed, const double spacing);
 
 
         /**
@@ -156,7 +156,7 @@ namespace platoon_control_pid0
 
         double unit_test_get_traj_py(const size_t index);
 
-        void unit_test_set_heading_lookahead(const int lookahead);
+        void unit_test_set_lookahead(const double lookahead);
 
 
     private:
@@ -166,7 +166,7 @@ namespace platoon_control_pid0
 
         double              time_step_;                     //time between control loop iterations, s
         double              gamma_h_;                       //steering command mixing ratio between heading & CTE PIDs
-        int                 heading_lookahead_;             //num TPs downtrack to consider for determining trajectory heading
+        double              lookahead_time_;                //time into future that is projected for finding trajectory heading, s
         double              wheelbase_;                     //wheelbase of the vehicle, m
         double              max_steering_angle_;            //upper limit on steering angle, rad
         double              heading_bias_;                  //fixed error in vehicle heading measurement that can't be steered out, rad

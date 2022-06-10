@@ -150,33 +150,36 @@ TEST(PlatoonControlWorkerTest, test_calc_desired_heading)
     EXPECT_NEAR(0.0, pcw.unit_test_get_traj_py(2), 0.01);
     EXPECT_NEAR(0.8, pcw.unit_test_get_traj_py(3), 0.01);
 
+    const double SPEED = 5.0;
+    const double SPACING = 2.0;
+
     // first test - vehicle heading almost same as TP1, no lookahead
-    pcw.unit_test_set_heading_lookahead(0);
+    pcw.unit_test_set_lookahead(0.0);
     pcw.unit_test_set_pose(-0.9, -0.2, 0.79);
     pcw.find_nearest_point();
     EXPECT_EQ(1, pcw.get_tp_index());
-    EXPECT_NEAR(0.785, pcw.calc_desired_heading(), 0.01);
+    EXPECT_NEAR(0.785, pcw.calc_desired_heading(SPEED, SPACING), 0.01);
 
     // 2nd test - vehicle heading almost same as TP1, lookahead defined
-    pcw.unit_test_set_heading_lookahead(2);
+    pcw.unit_test_set_lookahead(0.8);
     pcw.unit_test_set_pose(-0.9, -0.2, 0.79);
     pcw.find_nearest_point();
     EXPECT_EQ(1, pcw.get_tp_index());
-    EXPECT_NEAR(0.611, pcw.calc_desired_heading(), 0.01);
+    EXPECT_NEAR(0.611, pcw.calc_desired_heading(SPEED, SPACING), 0.01);
 
     // 3rd test - vehicle heading farther right, no lookahead
-    pcw.unit_test_set_heading_lookahead(0);
+    pcw.unit_test_set_lookahead(0.0);
     pcw.unit_test_set_pose(-0.9, -0.2, 0.6);
     pcw.find_nearest_point();
     EXPECT_EQ(1, pcw.get_tp_index());
-    EXPECT_NEAR(0.785, pcw.calc_desired_heading(), 0.01);
+    EXPECT_NEAR(0.785, pcw.calc_desired_heading(SPEED, SPACING), 0.01);
 
     // 4th test - vehicle heading farther right, lookahead defined
-    pcw.unit_test_set_heading_lookahead(2);
+    pcw.unit_test_set_lookahead(0.8);
     pcw.unit_test_set_pose(-0.9, -0.2, 0.6);
     pcw.find_nearest_point();
     EXPECT_EQ(1, pcw.get_tp_index());
-    EXPECT_NEAR(0.611, pcw.calc_desired_heading(), 0.01);
+    EXPECT_NEAR(0.611, pcw.calc_desired_heading(SPEED, SPACING), 0.01);
 }
 
 /*

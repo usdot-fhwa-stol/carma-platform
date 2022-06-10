@@ -55,9 +55,9 @@ pid_c_integral_max: 10.0 #1.0 good for 15 mph
 # Value must be in [0, 1], where 0 only uses CTE and 1 only uses heading
 gamma_h: 0.4 #last=0.4 #0.3 best so far; 0.5 not enough CTE control
 
-# Number of trajectory points ahead of nearest at which to look for curvature
+# Amount of future time projected onto trajectory to find the target curvature, sec
 # (must be >= 0)
-heading_lookahead: 8 #12 reasonably good for Suntrax curves @30 mph
+lookahead_time: 0.5 #1.0 reasonably good for Suntrax curves @30 mph
 
 # expected time elapsed between calls to PID controllers, s
 # This value needs to be 1/control_timer frequency that is set at bottom of initialize()

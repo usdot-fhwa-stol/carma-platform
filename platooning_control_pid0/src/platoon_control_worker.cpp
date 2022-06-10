@@ -45,7 +45,7 @@ namespace platoon_control_pid0
         // Store the params we need for future operations
         time_step_ = config.time_step;
         gamma_h_ = config.gamma_h;
-        heading_lookahead_ = config.heading_lookahead;
+        lookahead_time_ = config.lookahead_time;
         wheelbase_ = config.wheelbase;
         max_steering_angle_ = config.max_steering_angle;
         heading_bias_ = config.heading_bias;
@@ -95,18 +95,19 @@ namespace platoon_control_pid0
 
     void PlatoonControlWorker::generate_control_signal() {
 
+        // CAUTION: a vehicle running this code can only be a solo vehicle or platoon leader!
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM("///// SPEED CONTROL FOR SOLO/LEAD VEHICLE ONLY!");
+        ROS_WARN_STREAM("///// SPEED CONTROL FOR SOLO/LEAD VEHICLE ONLY!");
+
         // Find the trajectory point nearest the vehicle but in front of it
         // TODO: may need to consider choosing a point a little farther forward (there may be multiple points
         //       between rear axle (vehicle origin) and front bumper!)
         find_nearest_point();
-        ROS_DEBUG_STREAM("Nearest forward tp = " << tp_index_);
+        ROS_DEBUG_STREAM("Nearest forward tp = " << tp_index_ << " of " << traj_.size() << " points available.");
 
 
         //---------- Speed command
-
-        // CAUTION: a vehicle running this code can only be a solo vehicle or platoon leader!
-        ROS_DEBUG_STREAM("///// SPEED CONTROL FOR SOLO/LEAD VEHICLE ONLY!");
-        ROS_WARN_STREAM("///// SPEED CONTROL FOR SOLO/LEAD VEHICLE ONLY!");
 
         // For now, just drive the speeds indicated by the trajectory, i.e. no gap control.  Once the
         // plugin is basically proven out, this section can be enhanced for platoon gap control.
@@ -135,7 +136,9 @@ namespace platoon_control_pid0
 
         // Find the heading that we want to steer to, based on some number of trajectory points downtrack of vehicle
         // (looking ahead into a changing road radius may accommodate some dynamic lag in the steering hardware)
-        double tp_heading = calc_desired_heading();
+        double tp_heading = calc_desired_heading(speed_cmd_, tp_dist);
+        ROS_DEBUG_STREAM("Vehicle hdg = " << host_heading_ << ", local traj hdg = " << normalize_yaw(traj_[tp_index_].yaw)
+                        << ", tgt traj hdg = " << tp_heading);
 
         // Calculate the heading error (desired - actual), as a delta angle, accounting for the possibility
         // of crossing over the zero-heading cardinal direction
@@ -225,8 +228,8 @@ namespace platoon_control_pid0
         return traj_[index].y;
     }
 
-    void PlatoonControlWorker::unit_test_set_heading_lookahead(const int lookahead) {
-        heading_lookahead_ = lookahead;
+    void PlatoonControlWorker::unit_test_set_lookahead(const double lookahead) {
+        lookahead_time_ = lookahead;
     }
 
 
@@ -354,15 +357,20 @@ namespace platoon_control_pid0
     }
 
 
-    double PlatoonControlWorker::calc_desired_heading() {
+    double PlatoonControlWorker::calc_desired_heading(const double speed, const double spacing) {
+
+        // Find the number of trajectory points we need to look downtrack based on the current speed
+        size_t future_num = static_cast<int>(speed / spacing * lookahead_time_ + 0.5);
 
         // Get the TP index at the lookahead index ahead of the vehicle
-        size_t index1 = tp_index_ + static_cast<size_t>(heading_lookahead_);
+        size_t index1 = tp_index_ + future_num;
 
         // If there is no TP defined that far out, then use the last TP that is defined
         if (index1 >= traj_.size()) {
             index1 = traj_.size() - 1;
+            ROS_DEBUG_STREAM("Lookahead limited!");
         }
+        ROS_DEBUG_STREAM("Looking ahead " << future_num << " TPs to #" << index1);
         
         // Return the heading of that lookahead point
         return normalize_yaw(traj_[index1].yaw);
