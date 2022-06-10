@@ -122,9 +122,9 @@ namespace subsystem_controllers
 
     }
 
-    void PluginManager::configure()
+    bool PluginManager::configure()
     {
-        
+        bool full_success = true;
         // Bring all known plugins to the inactive state
         for (auto plugin : em_.get_entries())
         {
@@ -145,16 +145,21 @@ namespace subsystem_controllers
                 Entry deactivated_entry = plugin;
                 deactivated_entry.active_ = false;
                 deactivated_entry.available_ = false;
-                deactivated_entry.user_requested_activation_ = false; // TODO is there an edge case where the user hits this first????
+                deactivated_entry.user_requested_activation_ = false;
                 em_.update_entry(deactivated_entry);
+
+                full_success = false;
             }
 
         }
 
+        return full_success;
+
     }
     
-    void PluginManager::activate()
+    bool PluginManager::activate()
     {
+        bool full_success = true;
         // Bring all required or auto activated plugins to the active state
         for (auto plugin : em_.get_entries())
         {
@@ -181,6 +186,8 @@ namespace subsystem_controllers
                 deactivated_entry.available_ = false;
                 deactivated_entry.user_requested_activation_ = false;
                 em_.update_entry(deactivated_entry);
+
+                full_success = false;
             }
 
             // If this was an auto activated plugin and not required then we only activate is once
@@ -194,10 +201,13 @@ namespace subsystem_controllers
             em_.update_entry(plugin);
 
         }
+
+        return full_success;
     }
     
-    void PluginManager::deactivate()
+    bool PluginManager::deactivate()
     {
+        bool full_success = true;
         // Bring all required or auto activated plugins to the active state
         for (auto plugin : em_.get_entries())
         {
@@ -221,13 +231,18 @@ namespace subsystem_controllers
                 deactivated_entry.available_ = false;
                 deactivated_entry.user_requested_activation_ = false;
                 em_.update_entry(deactivated_entry);
+
+                full_success = false;
             }
 
         }
+
+        return full_success;
     }
     
-    void PluginManager::cleanup()
+    bool PluginManager::cleanup()
     {
+        bool full_success = true;
         // Bring all required or auto activated plugins to the unconfigured state
         for (auto plugin : em_.get_entries())
         {
@@ -251,25 +266,18 @@ namespace subsystem_controllers
                 deactivated_entry.available_ = false;
                 deactivated_entry.user_requested_activation_ = false;
                 em_.update_entry(deactivated_entry);
+                
+                full_success = false;
             }
 
         }
+
+        return full_success;
     }
     
-    void PluginManager::shutdown()
+    bool PluginManager::shutdown()
     {
-        bool success = plugin_lifecycle_mgr_->shutdown(service_timeout_, call_timeout_, false, em_.get_entry_names()).empty();
-
-        if (success)
-        {
-
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("subsystem_controllers"), "Subsystem able to shutdown");
-        }
-        else
-        {
-
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("subsystem_controllers"), "Subsystem unable to shutdown cleanly");
-        }
+        return plugin_lifecycle_mgr_->shutdown(service_timeout_, call_timeout_, false, em_.get_entry_names()).empty();
     }
 
     void PluginManager::get_registered_plugins(SrvHeader, carma_planning_msgs::srv::PluginList::Request::SharedPtr, carma_planning_msgs::srv::PluginList::Response::SharedPtr res)

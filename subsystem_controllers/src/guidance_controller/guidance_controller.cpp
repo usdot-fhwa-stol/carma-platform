@@ -107,7 +107,12 @@ namespace subsystem_controllers
     bool success = lifecycle_mgr_.configure(std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms)).empty();
 
     // Configure our plugins
-    plugin_manager_->configure(); // TODO callback returns for this
+    try {
+      plugin_manager_->configure(); // Only checking required nodes. Other node failure tracked by activity status
+    } catch(const std::runtime_error& e) {
+      success = false;
+    }
+    
 
 
     if (success)
@@ -123,7 +128,6 @@ namespace subsystem_controllers
       return CallbackReturn::FAILURE;
     }
 
-    return cr2::CallbackReturn::SUCCESS;
   }
 
   cr2::CallbackReturn GuidanceControllerNode::handle_on_activate(const rclcpp_lifecycle::State &prev_state)
@@ -135,7 +139,25 @@ namespace subsystem_controllers
       return base_return;
     }
 
-    plugin_manager_->activate(); // TODO callback return
+    bool success = true;
+    try {
+      plugin_manager_->activate(); // Only checking required nodes. Other node failure tracked by activity status
+    } catch(const std::runtime_error& e) {
+      success = false;
+    }
+
+    if (success)
+    {
+
+      RCLCPP_INFO_STREAM(get_logger(), "Subsystem able to activate");
+      return CallbackReturn::SUCCESS;
+    }
+    else
+    {
+
+      RCLCPP_INFO_STREAM(get_logger(), "Subsystem unable to activate");
+      return CallbackReturn::FAILURE;
+    }
 
   }
 
@@ -148,31 +170,80 @@ namespace subsystem_controllers
       return base_return;
     }
 
-    plugin_manager_->deactivate(); // TODO callback return
+    bool success = true;
+    try {
+      plugin_manager_->deactivate(); // Only checking required nodes. Other node failure tracked by activity status
+    } catch(const std::runtime_error& e) {
+      success = false;
+    }
+
+    if (success)
+    {
+
+      RCLCPP_INFO_STREAM(get_logger(), "Subsystem able to deactivate");
+      return CallbackReturn::SUCCESS;
+    }
+    else
+    {
+
+      RCLCPP_INFO_STREAM(get_logger(), "Subsystem unable to deactivate");
+      return CallbackReturn::FAILURE;
+    }
   }
 
   cr2::CallbackReturn GuidanceControllerNode::handle_on_cleanup(const rclcpp_lifecycle::State &prev_state)
   {
-    auto base_return = BaseSubsystemController::handle_on_deactivate(prev_state);
+    auto base_return = BaseSubsystemController::handle_on_cleanup(prev_state);
 
     if (base_return != cr2::CallbackReturn::SUCCESS) {
-      RCLCPP_ERROR(get_logger(), "Guidance Controller could not deactivate");
+      RCLCPP_ERROR(get_logger(), "Guidance Controller could not cleanup");
       return base_return;
     }
 
-    plugin_manager_->cleanup(); // TODO callback return
+    bool success = true;
+    try {
+      plugin_manager_->cleanup(); // Only checking required nodes. Other node failure tracked by activity status
+    } catch(const std::runtime_error& e) {
+      success = false;
+    }
+
+    if (success)
+    {
+
+      RCLCPP_INFO_STREAM(get_logger(), "Subsystem able to cleanup");
+      return CallbackReturn::SUCCESS;
+    }
+    else
+    {
+
+      RCLCPP_INFO_STREAM(get_logger(), "Subsystem unable to cleanup");
+      return CallbackReturn::FAILURE;
+    }
   }
 
   cr2::CallbackReturn GuidanceControllerNode::handle_on_shutdown(const rclcpp_lifecycle::State &prev_state)
   {
-    auto base_return = BaseSubsystemController::handle_on_deactivate(prev_state);
+    auto base_return = BaseSubsystemController::handle_on_shutdown(prev_state);
 
     if (base_return != cr2::CallbackReturn::SUCCESS) {
-      RCLCPP_ERROR(get_logger(), "Guidance Controller could not deactivate");
+      RCLCPP_ERROR(get_logger(), "Guidance Controller could not shutdown");
       return base_return;
     }
 
-    plugin_manager_->shutdown(); // TODO callback return
+    bool success = plugin_manager_->shutdown();
+
+    if (success)
+    {
+
+      RCLCPP_INFO_STREAM(get_logger(), "Subsystem able to shutdown cleanly");
+      return CallbackReturn::SUCCESS;
+    }
+    else
+    {
+
+      RCLCPP_INFO_STREAM(get_logger(), "Subsystem unable to shutdown cleanly");
+      return CallbackReturn::FAILURE;
+    }
   }
 
 

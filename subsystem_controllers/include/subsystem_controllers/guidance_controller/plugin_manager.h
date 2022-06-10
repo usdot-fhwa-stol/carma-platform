@@ -65,12 +65,15 @@ namespace subsystem_controllers
             /**
              * Below are the state transition methods which will cause this manager to trigger the corresponding 
              * state transitions in the managed plugins. 
+             * 
+             * \throw std::runtime_error If a required node could not transition successfully
+             * \return True if all components transitioned successfully
              */ 
-            void configure(); 
-            void activate(); 
-            void deactivate(); 
-            void cleanup(); 
-            void shutdown(); 
+            bool configure(); 
+            bool activate(); 
+            bool deactivate(); 
+            bool cleanup(); 
+            bool shutdown(); 
 
             /**
              * \brief Update the status of a certain plugin
