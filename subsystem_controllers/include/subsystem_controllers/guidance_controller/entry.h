@@ -26,22 +26,25 @@ namespace subsystem_controllers
     struct Entry
     {
         //! Availability flag of a plugin
-        bool available_;
+        bool available_ = false;
         //! Activation flag of a plugin
-        bool active_;
+        bool active_ = false;
         //! Fully specified node name of a plugin
         std::string name_;
         //! Type of the plugin from the message enum in carma_planning_msgs::Plugin
-        uint8_t type_;
+        uint8_t type_ = 0;
         //! The capability string of the plugin
         std::string capability_;
         //! Flag indicating if the user requested this plugin be activated
-        bool user_requested_activation_;
+        bool user_requested_activation_ = false;
 
         /**
          * \brief All fields constructor
          */ 
         Entry(bool available, bool active, const std::string& name, uint8_t type, const std::string& capability, bool user_requested_activation)
             : available_(available), active_(active), name_(name), type_(type), capability_(capability), user_requested_activation_(user_requested_activation) {}
+        
+
+        Entry() = default;
     };
 }

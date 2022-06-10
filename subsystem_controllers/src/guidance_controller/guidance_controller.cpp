@@ -18,10 +18,12 @@
 #include <chrono>
 #include "subsystem_controllers/guidance_controller/guidance_controller.hpp"
 
+using std_msec = std::chrono::milliseconds;
+
 namespace subsystem_controllers
 {
   GuidanceControllerNode::GuidanceControllerNode(const rclcpp::NodeOptions &options)
-      : BaseSubsystemController(options),
+      : BaseSubsystemController(options)
   {
       // Don't automatically trigger state transitions from base class on configure
       // In this class the managed nodes list first needs to be modified then the transition will be triggered manually
@@ -63,7 +65,13 @@ namespace subsystem_controllers
     auto plugin_lifecycle_manager = std::make_shared<ros2_lifecycle_manager::Ros2LifecycleManager>(
       get_node_base_interface(), get_node_graph_interface(), get_node_logging_interface(), get_node_services_interface());
 
-    plugin_manager_ = std::make_shared<PluginManager>(config_.required_plugins, config_.auto_activated_plugins, plugin_lifecycle_manager, [this](){ return get_current_state().id(); });
+    plugin_manager_ = std::make_shared<PluginManager>(
+      config_.required_plugins, 
+      config_.auto_activated_plugins, 
+      plugin_lifecycle_manager, 
+      [this](){ return get_current_state().id(); },
+      std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms)
+    );
 
     plugin_discovery_sub_ = create_subscription<carma_planning_msgs::msg::Plugin>(
       "plugin_discovery", 50,
@@ -71,27 +79,27 @@ namespace subsystem_controllers
 
     get_registered_plugins_server_ = create_service<carma_planning_msgs::srv::PluginList>(
         "plugins/get_registered_plugins",
-        std::bind(&PluginManager::get_registered_plugins, plugin_manager_, std::placeholders::_1, std::placeholders::_2));
+        std::bind(&PluginManager::get_registered_plugins, plugin_manager_, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
     get_active_plugins_server_ = create_service<carma_planning_msgs::srv::PluginList>(
         "plugins/get_active_plugins",
-        std::bind(&PluginManager::get_active_plugins, plugin_manager_, std::placeholders::_1, std::placeholders::_2));
+        std::bind(&PluginManager::get_active_plugins, plugin_manager_, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
     activate_plugin_server_ = create_service<carma_planning_msgs::srv::PluginActivation>(
         "plugins/activate_plugin", // TODO check topic name
-        std::bind(&PluginManager::activate_plugin, plugin_manager_, std::placeholders::_1, std::placeholders::_2));
+        std::bind(&PluginManager::activate_plugin, plugin_manager_, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
-    get_strategic_plugin_by_capability_server_ = create_service<carma_planning_msgs::srv::GetPluginApi>(
-        "plugins/get_strategic_plugin_by_capability",
-        std::bind(&PluginManager::get_strategic_plugin_by_capability, plugin_manager_, std::placeholders::_1, std::placeholders::_2));
+    get_strategic_plugins_by_capability_server_ = create_service<carma_planning_msgs::srv::GetPluginApi>(
+        "plugins/get_strategic_plugins_by_capability",
+        std::bind(&PluginManager::get_strategic_plugins_by_capability, plugin_manager_, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
-    get_tactical_plugin_by_capability_server_ = create_service<carma_planning_msgs::srv::GetPluginApi>(
-        "plugins/get_tactical_plugin_by_capability",
-        std::bind(&PluginManager::get_tactical_plugin_by_capability, plugin_manager_, std::placeholders::_1, std::placeholders::_2));
+    get_tactical_plugins_by_capability_server_ = create_service<carma_planning_msgs::srv::GetPluginApi>(
+        "plugins/get_tactical_plugins_by_capability",
+        std::bind(&PluginManager::get_tactical_plugins_by_capability, plugin_manager_, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
-    get_control_plugin_by_capability_server_ = create_service<carma_planning_msgs::srv::GetPluginApi>(
-        "plugins/get_control_plugin_by_capability",
-        std::bind(&PluginManager::get_control_plugin_by_capability, plugin_manager_, std::placeholders::_1, std::placeholders::_2));
+    get_control_plugins_by_capability_server_ = create_service<carma_planning_msgs::srv::GetPluginApi>(
+        "plugins/get_control_plugins_by_capability",
+        std::bind(&PluginManager::get_control_plugins_by_capability, plugin_manager_, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
 
 

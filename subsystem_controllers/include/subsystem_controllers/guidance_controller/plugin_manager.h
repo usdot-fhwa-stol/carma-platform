@@ -25,6 +25,8 @@
 #include <functional>
 #include <vector>
 #include <memory>
+#include <chrono>
+#include <rmw/types.h>
 #include "entry_manager.h"
 #include "entry.h"
 
@@ -33,6 +35,7 @@ namespace subsystem_controllers
 {
 
     using GetParentNodeStateFunc = std::function<uint8_t()>;
+    using SrvHeader = const std::shared_ptr<rmw_request_id_t>;
 
     /**
      * \brief The PluginManager serves as a component to manage CARMA Guidance Plugins via their ros2 lifecycle interfaces
@@ -50,11 +53,14 @@ namespace subsystem_controllers
              * \param auto_activated_plugins The set of plugins which will be automatically activated at first system activation but not treated specially after that.
              * \param plugin_lifecycle_mgr A fully initialized lifecycle manager which will be used trigger plugin transitions
              * \param get_parent_state_func A callback which will allow this object to access the parent process lifecycle state
+             * \param service_timeout The timeout for plugin services to be available in nanoseconds
+             * \param call_timeout The timeout for calls to plugin services to fail in nanoseconds
              */
             PluginManager(const std::vector<std::string>& required_plugins,
                           const std::vector<std::string>& auto_activated_plugins,
                           std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> plugin_lifecycle_mgr,
-                          GetParentNodeStateFunc get_parent_state_func);
+                          GetParentNodeStateFunc get_parent_state_func,
+                          std::chrono::nanoseconds service_timeout, std::chrono::nanoseconds call_timeout);
 
             /**
              * Below are the state transition methods which will cause this manager to trigger the corresponding 
@@ -79,47 +85,52 @@ namespace subsystem_controllers
              * \param req The req details
              * \param[out] res The response containing the list of known plugins
              */ 
-            void get_registered_plugins(carma_planning_msgs::srv::PluginList::Request::SharedPtr req, carma_planning_msgs::srv::PluginList::Response::SharedPtr res);
+            void get_registered_plugins(SrvHeader, carma_planning_msgs::srv::PluginList::Request::SharedPtr req, carma_planning_msgs::srv::PluginList::Response::SharedPtr res);
 
             /**
              * \brief Get the list of currently active plugins
              * 
+             * \param header Middle ware header
              * \param req The req details
              * \param[out] res The response containing the list of active plugins
              */ 
-            void get_active_plugins(carma_planning_msgs::srv::PluginList::Request::SharedPtr req, carma_planning_msgs::srv::PluginList::Response::SharedPtr res);
+            void get_active_plugins(SrvHeader, carma_planning_msgs::srv::PluginList::Request::SharedPtr req, carma_planning_msgs::srv::PluginList::Response::SharedPtr res);
             
             /**
              * \brief Activate the specified plugin
              * 
+             * \param header Middle ware header
              * \param req The req details containing the plugin to activate
              * \param[out] res The response containing the success flag
              */ 
-            void activate_plugin(carma_planning_msgs::srv::PluginActivation::Request::SharedPtr req, carma_planning_msgs::srv::PluginActivation::Response::SharedPtr res);
+            void activate_plugin(SrvHeader, carma_planning_msgs::srv::PluginActivation::Request::SharedPtr req, carma_planning_msgs::srv::PluginActivation::Response::SharedPtr res);
 
             /**
              * \brief Get strategic plugins by capability
              * 
+             * \param header Middle ware header
              * \param req The req which identifies which capability is required
              * \param res The res which identifies the strategic plugins with the requested capability
              */
-            void get_strategic_plugins_by_capability(carma_planning_msgs::srv::GetPluginApi::Request::SharedPtr req, carma_planning_msgs::srv::GetPluginApi::Response::SharedPtr res);
+            void get_strategic_plugins_by_capability(SrvHeader, carma_planning_msgs::srv::GetPluginApi::Request::SharedPtr req, carma_planning_msgs::srv::GetPluginApi::Response::SharedPtr res);
 
             /**
              * \brief Get tactical plugins by capability
              * 
+             * \param header Middle ware header
              * \param req The req which identifies which capability is required
              * \param res The res which identifies the tactical plugins with the requested capability
              */
-            void get_tactical_plugins_by_capability(carma_planning_msgs::srv::GetPluginApi::Request::SharedPtr req, carma_planning_msgs::srv::GetPluginApi::Response::SharedPtr res);
+            void get_tactical_plugins_by_capability(SrvHeader, carma_planning_msgs::srv::GetPluginApi::Request::SharedPtr req, carma_planning_msgs::srv::GetPluginApi::Response::SharedPtr res);
 
             /**
              * \brief Get control plugins by capability
              * 
+             * \param header Middle ware header
              * \param req The req which identifies which capability is required
              * \param res The res which identifies the control plugins with the requested capability
              */
-            void get_control_plugins_by_capability(carma_planning_msgs::srv::GetPluginApi::Request::SharedPtr req, carma_planning_msgs::srv::GetPluginApi::Response::SharedPtr res);
+            void get_control_plugins_by_capability(SrvHeader, carma_planning_msgs::srv::GetPluginApi::Request::SharedPtr req, carma_planning_msgs::srv::GetPluginApi::Response::SharedPtr res);
 
         protected:
 
@@ -168,6 +179,15 @@ namespace subsystem_controllers
 
             //! Callback to retrieve the lifecycle state of the parent process 
             GetParentNodeStateFunc get_parent_state_func_;
+
+            //! Entry manager to keep track of detected plugins
+            EntryManager em_;
+
+            //! The timeout for services to be available
+            std::chrono::nanoseconds service_timeout_;
+            
+            //! The timeout for service calls to return
+            std::chrono::nanoseconds call_timeout_;
 
     };
 }

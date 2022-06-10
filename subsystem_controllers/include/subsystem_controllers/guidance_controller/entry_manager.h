@@ -33,7 +33,7 @@ namespace subsystem_controllers
             /*!
              * \brief Default constructor for EntryManager.
              */
-            EntryManager();
+            EntryManager() = default;
 
             /*!
              * \brief Add a new entry if the given name does not exist.
@@ -47,6 +47,11 @@ namespace subsystem_controllers
              * \brief Get all entries as a list.
              */
             std::vector<Entry> get_entries() const;
+
+            /*!
+             * \brief Get all entry names as a list
+             */
+            std::vector<std::string> get_entry_names() const;
 
             /*!
              * \brief Get a entry using name as the key.

@@ -38,7 +38,11 @@ target_link_libraries(localization_controller localization_controller_core ${bas
 ament_auto_add_library(guidance_controller_core SHARED src/guidance_controller/guidance_controller.cpp)
 rclcpp_components_register_nodes(guidance_controller_core "subsystem_controllers::GuidanceControllerNode")
 target_link_libraries(guidance_controller_core ${base_lib})
-ament_auto_add_executable(guidance_controller src/guidance_controller/main.cpp)
+ament_auto_add_executable(guidance_controller 
+  src/guidance_controller/main.cpp
+  src/guidance_controller/entry_manager.cpp
+  src/guidance_controller/plugin_manager.cpp
+)
 target_link_libraries(guidance_controller guidance_controller_core ${base_lib})
 
 # Environment Subsystem
