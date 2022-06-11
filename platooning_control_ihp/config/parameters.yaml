@@ -15,3 +15,11 @@ wheelBase: 3.09
 lowpassGain: 1.0
 lookaheadRatio: 1.6
 minLookaheadDist: 15.0
+vehicleLength: 5.0
+ss_theta: 4.0
+standstill: 2.0
+inter_tau: 1.5
+intra_tau: 0.6
+gap_weight: 0.9
+time_step: 5
+test_front_join: false

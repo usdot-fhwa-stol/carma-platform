@@ -25,12 +25,12 @@ namespace platoon_control_ihp
     }
     
 
-    void PlatoonControlIHPPlugin::initialize(){
-
+    void PlatoonControlIHPPlugin::initialize()
+    {
     	nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
 
-        PlatoonControlIHPPluginConfig config;
+        PlatooningControlIHPPluginConfig config;
 
         pnh_->param<double>("timeHeadway", config.timeHeadway, config.timeHeadway);
         pnh_->param<double>("standStillHeadway", config.standStillHeadway, config.standStillHeadway);
@@ -60,14 +60,13 @@ namespace platoon_control_ihp
         config_ = config;
 
 	  	// Trajectory Plan Subscriber
-        //   TODO: update trajectory executor to call this plugin
 		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("PlatoonControlIHPPlugin/plan_trajectory", 1, &PlatoonControlIHPPlugin::trajectoryPlan_cb, this);
         
         // Current Twist Subscriber
         current_twist_sub_ = nh_->subscribe<geometry_msgs::TwistStamped>("current_velocity", 1, &PlatoonControlIHPPlugin::currentTwist_cb, this);
 
         // Platoon Info Subscriber
-        // TODO consider changing the topic name so it is specific to ihp plugins (not sure if it is necessary)
+        // TODO: consider changing the topic name so it is specific to ihp plugins (not sure if it is necessary)
         platoon_info_sub_ = nh_->subscribe<cav_msgs::PlatooningInfo>("platoon_info", 1, &PlatoonControlIHPPlugin::platoonInfo_cb, this);
 
 		// Control Publisher
@@ -99,11 +98,12 @@ namespace platoon_control_ihp
             [this](const auto&) { ROS_DEBUG_STREAM("30hz timer callback called"); 
                                   controlTimerCb();  }); 
         
-        ROS_DEBUG_STREAM("control timer created ");
+        ROS_DEBUG_STREAM("control timer created ");    
     }
 
                                     
-    void PlatoonControlIHPPlugin::run(){
+    void PlatoonControlIHPPlugin::run()
+    {
         initialize();
         ros::CARMANodeHandle::spin();
     }
@@ -139,7 +139,7 @@ namespace platoon_control_ihp
         generateControlSignals(second_trajectory_point, lookahead_point); 
 
         return true;
-    }   
+    } 
 
     void  PlatoonControlIHPPlugin::trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp)
     {
@@ -227,12 +227,21 @@ namespace platoon_control_ihp
         pcw_.actual_gap_ = platooing_info_msg.actual_gap;
         pcw_.desired_gap_ = platooing_info_msg.desired_gap;
 
+        // UCLA: Read host platoon position 
+        pcw_.host_platoon_position_ = platooing_info_msg.host_platoon_position;
+        // UCLA: Read the time headway summation of all predecessors   
+        pcw_.current_predecessor_time_headway_sum_ = platooing_info_msg.current_predecessor_time_headway_sum;
+        // UCLA: Read predecessor speed m/s, and DtD position m.
+        pcw_.predecessor_speed_ = platooing_info_msg.predecessor_speed;
+        pcw_.predecessor_position_ = platooing_info_msg.predecessor_position;
+
         platooing_info_msg.host_cmd_speed = pcw_.speedCmd_;
         platoon_info_pub_.publish(platooing_info_msg);
     }
 
 
-    void PlatoonControlIHPPlugin::currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist){
+    void PlatoonControlIHPPlugin::currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist)
+    {
         current_speed_ = twist->twist.linear.x;
     }
 
@@ -260,8 +269,10 @@ namespace platoon_control_ihp
         return cmd_ctrl;
     }
 
-    void PlatoonControlIHPPlugin::generateControlSignals(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point){
+    void PlatoonControlIHPPlugin::generateControlSignals(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point)
+    {
 
+        // setting a speed baseline according to the trajectory speed profile. PID will calculate additional speed changes in addition to this value. 
         pcw_.setCurrentSpeed(trajectory_speed_); //TODO why this and not the actual vehicle speed?  Method name suggests different use than this.
         // pcw_.setCurrentSpeed(current_speed_);
         pcw_.setLeader(platoon_leader_);

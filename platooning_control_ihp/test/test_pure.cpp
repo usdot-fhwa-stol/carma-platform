@@ -22,7 +22,7 @@
 
 TEST(PurePursuitTest, test_filter)
 {
-    PlatoonControlIHPPluginConfig config;
+    PlatooningControlIHPPluginConfig config;
 	config.lowpassGain = 0.5;
     
     platoon_control_ihp::PurePursuit pp;
