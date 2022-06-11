@@ -208,33 +208,8 @@ namespace platoon_control_pid0
         return tp_index_;
     }
 
-    ////////////////// UNIT TEST SUPPORT ////////////////// TODO - redo all this
 
-    void PlatoonControlWorker::unit_test_set_pose(const double x, const double y, const double heading) {
-        host_x_ = x;
-        host_y_ = y;
-        host_heading_ = heading;
-    }
-
-    void PlatoonControlWorker::unit_test_set_traj(const std::vector<cav_msgs::TrajectoryPlanPoint> tr) {
-        traj_ = tr;
-    }
-
-    double PlatoonControlWorker::unit_test_get_traj_px(const size_t index) {
-        return traj_[index].x;
-    }
-
-    double PlatoonControlWorker::unit_test_get_traj_py(const size_t index) {
-        return traj_[index].y;
-    }
-
-    void PlatoonControlWorker::unit_test_set_lookahead(const double lookahead) {
-        lookahead_time_ = lookahead;
-    }
-
-
-
-    ////////////////// PRIVATE METHODS ////////////////////
+    ////////////////// PROTECTED METHODS ////////////////////
 
     void PlatoonControlWorker::find_nearest_point() {
 

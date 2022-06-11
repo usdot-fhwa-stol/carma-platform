@@ -20,7 +20,7 @@
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 
-TEST(PIDControllerTest, test1) //unlimited integral & outputs with no i & d terms
+TEST(PIDControllerTest, test_proportional)
 {
     platoon_control_pid0::PIDController pid("tester", 4.0, 10.0, 1.0, 2.0, 0.0, 0.0, 0.5, -20.0, 20.0, -50.0, 50.0);
     double res;
@@ -38,7 +38,7 @@ TEST(PIDControllerTest, test1) //unlimited integral & outputs with no i & d term
     EXPECT_NEAR(-17.8, res, 0.001);
 }
 
-TEST(PIDControllerTest, test2) //testing output limiter
+TEST(PIDControllerTest, test_output_limiter)
 {
     platoon_control_pid0::PIDController pid("tester", 4.0, 10.0, 1.0, 2.0, 0.0, 0.0, 0.5, -20.0, 20.0, -20.0, 20.0);
     double res;
@@ -52,7 +52,7 @@ TEST(PIDControllerTest, test2) //testing output limiter
     EXPECT_EQ(20.0, res);
 }
 
-TEST(PIDControllerTest, test3) //testing integral term & limiters
+TEST(PIDControllerTest, test_integral)
 {
     platoon_control_pid0::PIDController pid("tester", 4.0, 10.0, 1.0, 2.0, 0.1, 0.0, 0.5, -5.0, 12.0, -50.0, 50.0);
     double res;
@@ -74,7 +74,7 @@ TEST(PIDControllerTest, test3) //testing integral term & limiters
     EXPECT_NEAR(-26.5, res, 0.001);
 }
 
-TEST(PIDControllerTest, test4) //testing derivative term
+TEST(PIDControllerTest, test_derivative)
 {
     platoon_control_pid0::PIDController pid("tester", 4.0, 10.0, 1.0, 2.0, 0.0, 0.2, 0.5, -50.0, 50.0, -50.0, 50.0);
     double res;
@@ -88,7 +88,7 @@ TEST(PIDControllerTest, test4) //testing derivative term
     EXPECT_NEAR(2.4, res, 0.001);
 }
 
-TEST(PIDControllerTest, test5) //both derivative & integral terms active
+TEST(PIDControllerTest, test_full_control)
 {
     platoon_control_pid0::PIDController pid("tester", 4.0, 10.0, 1.0, 2.0, 0.1, 0.2, 0.5, -50.0, 50.0, -50.0, 50.0);
     double res;

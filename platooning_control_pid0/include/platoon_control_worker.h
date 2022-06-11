@@ -30,7 +30,7 @@
 namespace platoon_control_pid0
 {
     /**
-    * \brief Platoon Leader Struct
+    * \brief Holds info on the leader that host vehicle is managing gap to (not necessarily the platoon leader)
     */
 	struct DynamicLeaderInfo {
         // Static ID is permanent ID for each vehicle
@@ -112,54 +112,8 @@ namespace platoon_control_pid0
          */
         size_t get_tp_index();
 
-        /**
-         * SHOULD BE PRIVATE!
-         * \brief Given a sorted array of trajectory points (indicating direction of travel), finds the
-         *          nearest point to the vehicle that is in front of the vehicle.  It is assumed that
-         *          trajectories will be long enough and populated frequently enough that they will always
-         *          be close to the vehicle, so that a meaningfully close point will always be found.
-         *          Stores resulting identified point index in member variable tp_index_.
-         */
-        void find_nearest_point();
 
-
-        /**
-         * SHOULD BE PRIVATE!
-         * \brief Calculates the distance from the vehicle's origin to the trajectory path, moving
-         *          perpendicularly to the vehicle's heading.
-         * \return cross-track error, m, with positive values being left of trajectory
-         */
-        double calculate_cross_track();
-
-
-        /** SHOULD BE PRIVATE!
-         * \brief Calculates the heading we want to steer to, based on the given trajectory plan.  If a heading_lookahead
-         *          is specified, then it will consider the heading of the trajectory at that time in the future.
-         * \param speed the speed of travel, m/s
-         * \param spacing typical distance between trajectory points, m
-         * \return desired heading, rad in [0, 2pi)
-         */
-        double calc_desired_heading(const double speed, const double spacing);
-
-
-        /**
-         * \brief FOR UNIT TESTING ONLY - allows direct injection of relevant pose data
-         */
-        void unit_test_set_pose(const double x, const double y, const double heading);
-
-        /**
-         * \brief FOR UNIT TESTING ONLY - allows direct injection of a sample trajectory
-         */
-        void unit_test_set_traj(const std::vector<cav_msgs::TrajectoryPlanPoint> tr);
-
-        double unit_test_get_traj_px(const size_t index);
-
-        double unit_test_get_traj_py(const size_t index);
-
-        void unit_test_set_lookahead(const double lookahead);
-
-
-    private:
+    protected:
 
         PIDController *     pid_h_ = nullptr;               //PID controller for heading error
         PIDController *     pid_c_ = nullptr;               //PID controller for cross-track error
@@ -184,6 +138,31 @@ namespace platoon_control_pid0
         double              angular_vel_cmd_;               //output command for angular velocity of the vehicle, rad/s (around +Z axis)
         double              speed_cmd_;                     //output command for forward speed, m/s
 
+
+        /**
+         * \brief Given a sorted array of trajectory points (indicating direction of travel), finds the
+         *          nearest point to the vehicle that is in front of the vehicle.  It is assumed that
+         *          trajectories will be long enough and populated frequently enough that they will always
+         *          be close to the vehicle, so that a meaningfully close point will always be found.
+         *          Stores resulting identified point index in member variable tp_index_.
+         */
+        void find_nearest_point();
+
+        /**
+         * \brief Calculates the distance from the vehicle's origin to the trajectory path, moving
+         *          perpendicularly to the vehicle's heading.
+         * \return cross-track error, m, with positive values being left of trajectory
+         */
+        double calculate_cross_track();
+
+        /**
+         * \brief Calculates the heading we want to steer to, based on the given trajectory plan.  If a heading_lookahead
+         *          is specified, then it will consider the heading of the trajectory at that time in the future.
+         * \param speed the speed of travel, m/s
+         * \param spacing typical distance between trajectory points, m
+         * \return desired heading, rad in [0, 2pi)
+         */
+        double calc_desired_heading(const double speed, const double spacing);
 
         /**
          * \brief Returns the smallest delta angle between two heading values, accounting for the possibility that

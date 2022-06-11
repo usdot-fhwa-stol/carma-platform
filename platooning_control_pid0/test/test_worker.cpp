@@ -21,165 +21,217 @@
 #include <ros/ros.h>
 #include <boost/math/constants/constants.hpp>
 
-const double PI = boost::math::double_constants::pi;
-const double TWO_PI = 2.0*PI;
+namespace platoon_control_pid0 {
+
+    const double PI = boost::math::double_constants::pi;
+    const double TWO_PI = 2.0*PI;
+
+    // Derived class to get access to protected members - we test this class, not the parent
+    class WorkerTester : public PlatoonControlWorker {
+        public:
+            void ut_set_pose(const double x, const double y, const double heading) {
+                host_x_ = x;
+                host_y_ = y;
+                host_heading_ = heading;
+            }
+
+            void ut_set_traj(const std::vector<cav_msgs::TrajectoryPlanPoint> tr) {
+                traj_ = tr;
+            }
+
+            double ut_get_traj_px(const size_t index) {
+                return traj_[index].x;
+            }
+
+            double ut_get_traj_py(const size_t index) {
+                return traj_[index].y;
+            }
+
+            void ut_set_lookahead(const double lookahead) {
+                lookahead_time_ = lookahead;
+            }
+
+            void ut_find_nearest_point() {
+                find_nearest_point();
+            }
+
+            double ut_calculate_cross_track() {
+                return calculate_cross_track();
+            }
+
+            double ut_calc_desired_heading(double speed, double spacing) {
+                return calc_desired_heading(speed, spacing);
+            }
+
+            double get_host_x() { return host_x_; }
+
+            double get_host_y() { return host_y_; }
+
+            double get_host_heading() { return host_heading_; }
+    };
 
 
-TEST(PlatonControlWorkerTest, test_set_config)
-{
-    
-}
+    TEST(WorkerTesterTest, test_set_pose) //demonstrates that the derived class approach to test construction works
+    {
+        platoon_control_pid0::WorkerTester pcw;
 
-TEST(PlatoonControlWorkerTest, test_find_nearest_point)
-{
-    platoon_control_pid0::PlatoonControlWorker pcw;
-    std::vector<cav_msgs::TrajectoryPlanPoint> traj;
+        pcw.ut_set_pose(3.0, 3.5, 4.6);
+        EXPECT_NEAR(3.0, pcw.get_host_x(), 0.01);
+        EXPECT_NEAR(3.5, pcw.get_host_y(), 0.01);
+        EXPECT_NEAR(4.6, pcw.get_host_heading(), 0.01);
+    }
 
-    cav_msgs::TrajectoryPlanPoint p0, p1, p2;
-    p0.x = 1.0;
-    p0.y = 2.0;
-    traj.push_back(p0);
-    p1.x = 1.0;
-    p1.y = 3.0;
-    traj.push_back(p1);
-    p2.x = 1.0;
-    p2.y = 4.0;
-    traj.push_back(p2);
-    pcw.unit_test_set_traj(traj);
-    EXPECT_NEAR(3.0, pcw.unit_test_get_traj_py(1), 0.01);
+    TEST(WorkerTesterTest, test_find_nearest_point)
+    {
+        platoon_control_pid0::WorkerTester pcw;
+        std::vector<cav_msgs::TrajectoryPlanPoint> traj;
 
-    pcw.unit_test_set_pose(1.5, 0.0, 1.04*PI/2.0);
-    pcw.find_nearest_point();
-    EXPECT_EQ(0, pcw.get_tp_index());
+        cav_msgs::TrajectoryPlanPoint p0, p1, p2;
+        p0.x = 1.0;
+        p0.y = 2.0;
+        traj.push_back(p0);
+        p1.x = 1.0;
+        p1.y = 3.0;
+        traj.push_back(p1);
+        p2.x = 1.0;
+        p2.y = 4.0;
+        traj.push_back(p2);
+        pcw.ut_set_traj(traj);
+        EXPECT_NEAR(3.0, pcw.ut_get_traj_py(1), 0.01);
 
-    pcw.unit_test_set_pose(1.6, 2.2, 0.98*PI/2.0);
-    pcw.find_nearest_point();
-    EXPECT_EQ(1, pcw.get_tp_index());
+        pcw.ut_set_pose(1.5, 0.0, 1.04*PI/2.0);
+        pcw.ut_find_nearest_point();
+        EXPECT_EQ(0, pcw.get_tp_index());
 
-    pcw.unit_test_set_pose(0.82, 3.9, 0.85*PI/2.0);
-    pcw.find_nearest_point();
-    EXPECT_EQ(2, pcw.get_tp_index());
-}
+        pcw.ut_set_pose(1.6, 2.2, 0.98*PI/2.0);
+        pcw.ut_find_nearest_point();
+        EXPECT_EQ(1, pcw.get_tp_index());
 
-TEST(PlatoonControlWorkerTest, test_calculate_cross_track1)
-{
-    platoon_control_pid0::PlatoonControlWorker pcw;
-    std::vector<cav_msgs::TrajectoryPlanPoint> traj;
+        pcw.ut_set_pose(0.82, 3.9, 0.85*PI/2.0);
+        pcw.ut_find_nearest_point();
+        EXPECT_EQ(2, pcw.get_tp_index());
+    }
 
-    cav_msgs::TrajectoryPlanPoint p0, p1, p2;
-    p0.x = 1.0;
-    p0.y = 2.0;
-    traj.push_back(p0);
-    p1.x = 1.0;
-    p1.y = 3.0;
-    traj.push_back(p1);
-    p2.x = 1.0;
-    p2.y = 4.0;
-    traj.push_back(p2);
-    pcw.unit_test_set_traj(traj);
-    EXPECT_NEAR(3.0, pcw.unit_test_get_traj_py(1), 0.01);
-    
-    pcw.unit_test_set_pose(1.5, 0.0, 1.04*PI/2.0);
-    pcw.find_nearest_point();
-    EXPECT_EQ(0, pcw.get_tp_index());
-    double cte = pcw.calculate_cross_track();
-    EXPECT_NEAR(-0.5, cte, 0.01);
+    TEST(WorkerTesterTest, test_calculate_cross_track1)
+    {
+        platoon_control_pid0::WorkerTester pcw;
+        std::vector<cav_msgs::TrajectoryPlanPoint> traj;
 
-    pcw.unit_test_set_pose(1.6, 2.2, 0.98*PI/2.0);
-    pcw.find_nearest_point();
-    EXPECT_EQ(1, pcw.get_tp_index());
-    cte = pcw.calculate_cross_track();
-    EXPECT_NEAR(-0.6, cte, 0.01);
+        cav_msgs::TrajectoryPlanPoint p0, p1, p2;
+        p0.x = 1.0;
+        p0.y = 2.0;
+        traj.push_back(p0);
+        p1.x = 1.0;
+        p1.y = 3.0;
+        traj.push_back(p1);
+        p2.x = 1.0;
+        p2.y = 4.0;
+        traj.push_back(p2);
+        pcw.ut_set_traj(traj);
+        EXPECT_NEAR(3.0, pcw.ut_get_traj_py(1), 0.01);
+        
+        pcw.ut_set_pose(1.5, 0.0, 1.04*PI/2.0);
+        pcw.ut_find_nearest_point();
+        EXPECT_EQ(0, pcw.get_tp_index());
+        double cte = pcw.ut_calculate_cross_track();
+        EXPECT_NEAR(-0.5, cte, 0.01);
 
-    pcw.unit_test_set_pose(0.82, 3.9, 0.85*PI/2.0);
-    pcw.find_nearest_point();
-    EXPECT_EQ(2, pcw.get_tp_index());
-    cte = pcw.calculate_cross_track();
-    EXPECT_NEAR(0.18, cte, 0.01);
-}
+        pcw.ut_set_pose(1.6, 2.2, 0.98*PI/2.0);
+        pcw.ut_find_nearest_point();
+        EXPECT_EQ(1, pcw.get_tp_index());
+        cte = pcw.ut_calculate_cross_track();
+        EXPECT_NEAR(-0.6, cte, 0.01);
 
-TEST(PlatoonControlWorkerTest, test_calculate_cross_track2)
-{
-    platoon_control_pid0::PlatoonControlWorker pcw;
-    std::vector<cav_msgs::TrajectoryPlanPoint> traj;
+        pcw.ut_set_pose(0.82, 3.9, 0.85*PI/2.0);
+        pcw.ut_find_nearest_point();
+        EXPECT_EQ(2, pcw.get_tp_index());
+        cte = pcw.ut_calculate_cross_track();
+        EXPECT_NEAR(0.18, cte, 0.01);
+    }
 
-    cav_msgs::TrajectoryPlanPoint p0, p1, p2;
-    p0.x = -1.0;
-    p0.y = -2.0;
-    traj.push_back(p0);
-    p1.x = 0.0;
-    p1.y = -1.0;
-    traj.push_back(p1);
-    p2.x = 1.0;
-    p2.y = 0.0;
-    traj.push_back(p2);
-    pcw.unit_test_set_traj(traj);
-    EXPECT_NEAR(-1.0, pcw.unit_test_get_traj_py(1), 0.01);
-    
-    pcw.unit_test_set_pose(-0.9, -0.2, 0.3*PI/2.0); //left of track, heading toward right side of track
-    pcw.find_nearest_point();
-    EXPECT_EQ(1, pcw.get_tp_index());
-    double cte = pcw.calculate_cross_track();
-    EXPECT_NEAR(1.20, cte, 0.01);
-}
+    TEST(WorkerTesterTest, test_calculate_cross_track2)
+    {
+        platoon_control_pid0::WorkerTester pcw;
+        std::vector<cav_msgs::TrajectoryPlanPoint> traj;
 
-TEST(PlatoonControlWorkerTest, test_calc_desired_heading)
-{
-    platoon_control_pid0::PlatoonControlWorker pcw;
-    std::vector<cav_msgs::TrajectoryPlanPoint> traj;
+        cav_msgs::TrajectoryPlanPoint p0, p1, p2;
+        p0.x = -1.0;
+        p0.y = -2.0;
+        traj.push_back(p0);
+        p1.x = 0.0;
+        p1.y = -1.0;
+        traj.push_back(p1);
+        p2.x = 1.0;
+        p2.y = 0.0;
+        traj.push_back(p2);
+        pcw.ut_set_traj(traj);
+        EXPECT_NEAR(-1.0, pcw.ut_get_traj_py(1), 0.01);
+        
+        pcw.ut_set_pose(-0.9, -0.2, 0.3*PI/2.0); //left of track, heading toward right side of track
+        pcw.ut_find_nearest_point();
+        EXPECT_EQ(1, pcw.get_tp_index());
+        double cte = pcw.ut_calculate_cross_track();
+        EXPECT_NEAR(1.20, cte, 0.01);
+    }
 
-    cav_msgs::TrajectoryPlanPoint p0, p1, p2, p3;
-    p0.x = -1.0;
-    p0.y = -2.0;
-    p0.yaw = 0.7854;
-    traj.push_back(p0);
-    p1.x = 0.0;
-    p1.y = -1.0;
-    p1.yaw = 0.7854;
-    traj.push_back(p1);
-    p2.x = 1.0;
-    p2.y = 0.0;
-    p2.yaw = 0.7854;
-    traj.push_back(p2);
-    p3.x = 3.0;
-    p3.y = 0.8;
-    p3.yaw = 0.6111;
-    traj.push_back(p3);
-    pcw.unit_test_set_traj(traj);
-    EXPECT_NEAR(-1.0, pcw.unit_test_get_traj_py(1), 0.01);
-    EXPECT_NEAR(0.0, pcw.unit_test_get_traj_py(2), 0.01);
-    EXPECT_NEAR(0.8, pcw.unit_test_get_traj_py(3), 0.01);
+    TEST(WorkerTesterTest, test_calc_desired_heading)
+    {
+        platoon_control_pid0::WorkerTester pcw;
+        std::vector<cav_msgs::TrajectoryPlanPoint> traj;
 
-    const double SPEED = 5.0;
-    const double SPACING = 2.0;
+        cav_msgs::TrajectoryPlanPoint p0, p1, p2, p3;
+        p0.x = -1.0;
+        p0.y = -2.0;
+        p0.yaw = 0.7854;
+        traj.push_back(p0);
+        p1.x = 0.0;
+        p1.y = -1.0;
+        p1.yaw = 0.7854;
+        traj.push_back(p1);
+        p2.x = 1.0;
+        p2.y = 0.0;
+        p2.yaw = 0.7854;
+        traj.push_back(p2);
+        p3.x = 3.0;
+        p3.y = 0.8;
+        p3.yaw = 0.6111;
+        traj.push_back(p3);
+        pcw.ut_set_traj(traj);
+        EXPECT_NEAR(-1.0, pcw.ut_get_traj_py(1), 0.01);
+        EXPECT_NEAR(0.0, pcw.ut_get_traj_py(2), 0.01);
+        EXPECT_NEAR(0.8, pcw.ut_get_traj_py(3), 0.01);
 
-    // first test - vehicle heading almost same as TP1, no lookahead
-    pcw.unit_test_set_lookahead(0.0);
-    pcw.unit_test_set_pose(-0.9, -0.2, 0.79);
-    pcw.find_nearest_point();
-    EXPECT_EQ(1, pcw.get_tp_index());
-    EXPECT_NEAR(0.785, pcw.calc_desired_heading(SPEED, SPACING), 0.01);
+        const double SPEED = 5.0;
+        const double SPACING = 2.0;
 
-    // 2nd test - vehicle heading almost same as TP1, lookahead defined
-    pcw.unit_test_set_lookahead(0.8);
-    pcw.unit_test_set_pose(-0.9, -0.2, 0.79);
-    pcw.find_nearest_point();
-    EXPECT_EQ(1, pcw.get_tp_index());
-    EXPECT_NEAR(0.611, pcw.calc_desired_heading(SPEED, SPACING), 0.01);
+        // first test - vehicle heading almost same as TP1, no lookahead
+        pcw.ut_set_lookahead(0.0);
+        pcw.ut_set_pose(-0.9, -0.2, 0.79);
+        pcw.ut_find_nearest_point();
+        EXPECT_EQ(1, pcw.get_tp_index());
+        EXPECT_NEAR(0.785, pcw.ut_calc_desired_heading(SPEED, SPACING), 0.01);
 
-    // 3rd test - vehicle heading farther right, no lookahead
-    pcw.unit_test_set_lookahead(0.0);
-    pcw.unit_test_set_pose(-0.9, -0.2, 0.6);
-    pcw.find_nearest_point();
-    EXPECT_EQ(1, pcw.get_tp_index());
-    EXPECT_NEAR(0.785, pcw.calc_desired_heading(SPEED, SPACING), 0.01);
+        // 2nd test - vehicle heading almost same as TP1, lookahead defined
+        pcw.ut_set_lookahead(0.8);
+        pcw.ut_set_pose(-0.9, -0.2, 0.79);
+        pcw.ut_find_nearest_point();
+        EXPECT_EQ(1, pcw.get_tp_index());
+        EXPECT_NEAR(0.611, pcw.ut_calc_desired_heading(SPEED, SPACING), 0.01);
 
-    // 4th test - vehicle heading farther right, lookahead defined
-    pcw.unit_test_set_lookahead(0.8);
-    pcw.unit_test_set_pose(-0.9, -0.2, 0.6);
-    pcw.find_nearest_point();
-    EXPECT_EQ(1, pcw.get_tp_index());
-    EXPECT_NEAR(0.611, pcw.calc_desired_heading(SPEED, SPACING), 0.01);
+        // 3rd test - vehicle heading farther right, no lookahead
+        pcw.ut_set_lookahead(0.0);
+        pcw.ut_set_pose(-0.9, -0.2, 0.6);
+        pcw.ut_find_nearest_point();
+        EXPECT_EQ(1, pcw.get_tp_index());
+        EXPECT_NEAR(0.785, pcw.ut_calc_desired_heading(SPEED, SPACING), 0.01);
+
+        // 4th test - vehicle heading farther right, lookahead defined
+        pcw.ut_set_lookahead(0.8);
+        pcw.ut_set_pose(-0.9, -0.2, 0.6);
+        pcw.ut_find_nearest_point();
+        EXPECT_EQ(1, pcw.get_tp_index());
+        EXPECT_NEAR(0.611, pcw.ut_calc_desired_heading(SPEED, SPACING), 0.01);
+    }
 }
 
 /*
