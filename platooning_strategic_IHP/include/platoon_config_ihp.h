@@ -84,6 +84,7 @@ struct PlatoonPluginConfig
   //------------------------------------------------------------------------------------------------
   bool allowCutinJoin = true;    //Flag to enable/disable cut-in joins
   double significantDTDchange = 0.2;   // Ratio of dtd that is considered a significant change and triggers a new sort of platoon vector
+  int join_index = -1;            // target join index for cut-in join - used for testing purposes. -1: front cutin join, target_platoon.size()-1: cut-in rear
 
 
   friend std::ostream& operator<<(std::ostream& output, const PlatoonPluginConfig& c)
@@ -112,6 +113,7 @@ struct PlatoonPluginConfig
           << "minPlatooningSpeed: " << c.minPlatooningSpeed << std::endl
           << "allowCutinJoin: " << c.allowCutinJoin << std::endl
           << "significantDTDchange: " << c.significantDTDchange << std::endl
+          << "join_index: " << c.join_index << std::endl
           << "}" << std::endl;
     return output;
   }
