@@ -241,6 +241,7 @@ namespace route_following_plugin
         ros::Publisher plugin_discovery_pub_;
         ros::Publisher upcoming_lane_change_status_pub_;
         ros::Subscriber twist_sub_;
+        ros::Subscriber current_maneuver_plan_sub_;
         ros::Timer discovery_pub_timer_;
 
         // ROS service servers
@@ -279,6 +280,9 @@ namespace route_following_plugin
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
         lanelet::BasicPoint2d current_loc_;
+        
+        // Currently executing maneuver plan from Arbitrator
+        cav_msgs::ManeuverPlanConstPtr current_maneuver_plan_;
 
         //Queue of maneuver plans
         std::vector<cav_msgs::Maneuver> latest_maneuver_plan_;
@@ -300,6 +304,14 @@ namespace route_following_plugin
          * \param msg Latest twist message
          */
         void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+
+        /**
+         * \brief Callback for the ManeuverPlan subscriber, will store the current maneuver plan received locally.
+         * Used as part of the detection system for differentiating leaving the shortest path via another plugin
+         * vs. control drift taking the vehicle's reference point outside of the intended lane.
+         * \param msg Latest ManeuverPlan message
+         */
+        void current_maneuver_plan_cb(const cav_msgs::ManeuverPlanConstPtr& msg);
 
         /**
          * \brief returns duration as ros::Duration required to complete maneuver given its start dist, end dist, start speed and end speed
