@@ -909,13 +909,17 @@ namespace platoon_strategic_ihp
         */
 
         double min_diff = 99999.0;
-        int cut_in_index = -2; //-2 is meaningless default
+        int cut_in_index = -1; //-2 is meaningless default
+
+        ROS_DEBUG_STREAM("neighbor_platoon_.size(): " << neighbor_platoon_.size());
 
         // Loop through all target platoon members  
         for(size_t i = 0; i < neighbor_platoon_.size(); i++) 
         {
             double current_member_dtd = neighbor_platoon_[i].vehiclePosition; 
+            ROS_DEBUG_STREAM("current_member_dtd: "<< current_member_dtd);
             double curent_dtd_diff = current_member_dtd - joinerDtD;
+            ROS_DEBUG_STREAM("curent_dtd_diff: "<< curent_dtd_diff);
             // update min index
             if (curent_dtd_diff > 0 && curent_dtd_diff < min_diff)
             {

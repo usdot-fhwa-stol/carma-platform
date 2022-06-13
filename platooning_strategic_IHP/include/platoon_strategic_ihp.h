@@ -805,7 +805,7 @@ namespace platoon_strategic_ihp
             unsigned long infoMessageInterval_ = 200; // ms
             unsigned long prevHeartBeatTime_ = 0.0;
             int statusMessageInterval_ = 100; // ms
-            unsigned long NEGOTIATION_TIMEOUT = 5000;  // ms
+            unsigned long NEGOTIATION_TIMEOUT = 8000;  // ms
             unsigned long LANE_CHANGE_TIMEOUT = 300000; // ms (5 min)
             int noLeaderUpdatesCounter = 0;
             int LEADER_TIMEOUT_COUNTER_LIMIT = 5;
