@@ -585,6 +585,18 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             // !!! ASSUMPTION !!!:
             // Once non-route lanelets have been removed, it is assumed that our actual current lanelet is the only one that can remain.
             // TODO: Verify that this assumption is true in all cases OR implement more robust logic to track current lanelet when there are overlaps
+
+            if (llts.size() > 1) {
+                // Assumed that:
+                // 1. Vehicle is in a lanelet on the route.
+                // 2. The route does not contain overlapping lanelets.
+                ROS_WARN_STREAM("ANOMALOUS SIZE DETECTED FOR CURRENT LANELET CANDIDATES! SIZE: " << llts.size());
+            } else if (llts.size() < 1) {
+                //  We've left the route entirely.
+                ROS_ERROR_STREAM("Vehicle has left the route entirely. Unable to compute new shortest path.");
+                throw std::domain_error("Vehicle not on route, unable to compute shortest path.");
+            }
+
             auto current_lanelet = llts[0];
 
             // if the current lanelet is not on the shortest path
