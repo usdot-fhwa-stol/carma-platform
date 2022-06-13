@@ -129,7 +129,7 @@ namespace route {
     {   
         if(req.choice == cav_srvs::SetActiveRouteRequest::ROUTE_ID)
         {
-            ROS_INFO_STREAM("set_active_route_cb: Selected Route ID: " << req.routeID);
+            ROS_INFO_STREAM("set_active_route_cb: Selected Route ID: " << req.route_id);
         }
         else if(req.choice == cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY)
         {
@@ -147,7 +147,7 @@ namespace route {
 
             if (!vehicle_pose_) {
                 ROS_ERROR_STREAM("No vehicle position. Routing cannot be completed.");
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
+                resp.error_status = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
@@ -156,7 +156,7 @@ namespace route {
             // Check if the map projection is available
             if (!map_proj_) {
                 ROS_ERROR_STREAM("Could not generate route as there was no map projection available");
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
+                resp.error_status = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
@@ -166,7 +166,7 @@ namespace route {
             std::vector<lanelet::BasicPoint3d> destination_points;
             if(req.choice == cav_srvs::SetActiveRouteRequest::ROUTE_ID)
             {   
-                std::vector<cav_msgs::Position3D> gps_destination_points = load_route_destination_gps_points_from_route_id(req.routeID);
+                std::vector<cav_msgs::Position3D> gps_destination_points = load_route_destination_gps_points_from_route_id(req.route_id);
                 destination_points = load_route_destinations_in_map_frame(gps_destination_points);
             }
             else if(req.choice == cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY)
@@ -178,7 +178,7 @@ namespace route {
             if(destination_points.size() < 1)
             {
                 ROS_ERROR_STREAM("Provided route contains no destination points. Routing cannot be completed.");
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTE_FILE_ERROR;
+                resp.error_status = cav_srvs::SetActiveRouteResponse::ROUTE_FILE_ERROR;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
@@ -186,7 +186,7 @@ namespace route {
 
             if (!world_model_ || !world_model_->getMap()) {
                 ROS_ERROR_STREAM("World model has not been initialized.");
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
+                resp.error_status = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
@@ -210,7 +210,7 @@ namespace route {
                 {
                     ROS_ERROR_STREAM("Route Generator: " << idx 
                         << "th destination point is not in the map, x: " << pt.x() << " y: " << pt.y());
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTE_FILE_ERROR;
+                resp.error_status = cav_srvs::SetActiveRouteResponse::ROUTE_FILE_ERROR;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
@@ -229,7 +229,7 @@ namespace route {
             if(!route)
             {
                 ROS_ERROR_STREAM("Cannot find a route passing all destinations.");
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
+                resp.error_status = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
@@ -238,7 +238,7 @@ namespace route {
             if (check_for_duplicate_lanelets_in_shortest_path(route.get()))
             {
                 ROS_ERROR_STREAM("At least one duplicate Lanelet ID occurs in the shortest path. Routing cannot be completed.");
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
+                resp.error_status = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
@@ -259,7 +259,7 @@ namespace route {
 
             }
 
-            route_msg_.route_name = req.routeID;
+            route_msg_.route_name = req.route_id;
             route_marker_msg_ = compose_route_marker_msg(route);
             route_msg_.header.stamp = ros::Time::now();
             route_msg_.header.frame_id = "map";
@@ -273,7 +273,7 @@ namespace route {
         }
 
         ROS_ERROR_STREAM("System is already following a route.");
-        resp.errorStatus = cav_srvs::SetActiveRouteResponse::ALREADY_FOLLOWING_ROUTE;
+        resp.error_status = cav_srvs::SetActiveRouteResponse::ALREADY_FOLLOWING_ROUTE;
 
         return true;
     }
@@ -671,7 +671,7 @@ namespace route {
         {
             cav_msgs::RouteState state_msg;
             state_msg.header.stamp = ros::Time::now();
-            state_msg.routeID = route_msg_.route_name;
+            state_msg.route_id = route_msg_.route_name;
             state_msg.cross_track = current_crosstrack_distance_;
             state_msg.down_track = current_downtrack_distance_;
             state_msg.lanelet_downtrack = ll_downtrack_distance_;            
