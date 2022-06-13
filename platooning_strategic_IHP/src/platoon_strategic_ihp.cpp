@@ -776,17 +776,14 @@ namespace platoon_strategic_ihp
         std::vector<std::string> ecef_x_parsed;
         boost::algorithm::split(ecef_x_parsed, inputsParams[3], boost::is_any_of(":"));
         double ecef_x = std::stod(ecef_x_parsed[1]);
-        ROS_DEBUG_STREAM("ecef_x_parsed: " << ecef_x);
 
         std::vector<std::string> ecef_y_parsed;
         boost::algorithm::split(ecef_y_parsed, inputsParams[4], boost::is_any_of(":"));
         double ecef_y = std::stod(ecef_y_parsed[1]);
-        ROS_DEBUG_STREAM("ecef_y_parsed: " << ecef_y);
 
         std::vector<std::string> ecef_z_parsed;
         boost::algorithm::split(ecef_z_parsed, inputsParams[5], boost::is_any_of(":"));
         double ecef_z = std::stod(ecef_z_parsed[1]);
-        ROS_DEBUG_STREAM("ecef_z_parsed: " << ecef_z);
         
         cav_msgs::LocationECEF ecef_loc;
         ecef_loc.ecef_x = ecef_x;
@@ -1221,7 +1218,6 @@ namespace platoon_strategic_ihp
     // UCLA: Mobility operation callback for prepare to join state (cut-in join).
     void PlatoonStrategicIHPPlugin::mob_op_cb_preparetojoin(const cav_msgs::MobilityOperation& msg)
     {
-        ROS_DEBUG_STREAM("in mob_op_cb_preparetojoin");
         /*
          * If same lane with leader, then send request to do same lane join. 
          * Otherwise, just send status params.
@@ -2142,7 +2138,6 @@ namespace platoon_strategic_ihp
                     // We change back to normal leader state and try to join other platoons
                     ROS_DEBUG_STREAM("The leader " << msg.m_header.sender_id << " does not agree on our join. Change back to leader state.");
                     ROS_DEBUG_STREAM("Trying again..");
-                    // pm_.current_platoon_state = PlatoonState::LEADER;
                     // join plan failed, but we still need the peerid
                     pm_.current_plan.valid = false;
 
@@ -2154,7 +2149,6 @@ namespace platoon_strategic_ihp
                 }
 
                 // Clear our current join plan either way
-                // pm_.clearActionPlan();
             }
             else
             {
@@ -3309,7 +3303,7 @@ namespace platoon_strategic_ihp
             double target_crosstrack = wm_->routeTrackPos(target_cutin_pose_).crosstrack;
             ROS_DEBUG_STREAM("target_crosstrack: " << target_crosstrack);
             double crosstrackDiff = current_crosstrack_ - target_crosstrack; 
-            bool isLaneChangeFinished = abs(crosstrackDiff) <= config_.maxCrosstrackError; // Use 85% of lane width to account for noise.
+            bool isLaneChangeFinished = abs(crosstrackDiff) <= config_.maxCrosstrackError; 
             ROS_DEBUG_STREAM("crosstrackDiff: " << crosstrackDiff);
             ROS_DEBUG_STREAM("isLaneChangeFinished: " << isLaneChangeFinished);
             /**  
@@ -3382,9 +3376,6 @@ namespace platoon_strategic_ihp
                     }
 
                     ++last_lanelet_index;
-
-                    // resp.new_plan.maneuvers.push_back(composeManeuverMessage(lc_end_dist, lc_end_dist + 200,  
-                    //                         speed_progress, target_speed, target_lanelet_id, time_progress));
                     
 
 
@@ -3456,10 +3447,7 @@ namespace platoon_strategic_ihp
 
                 resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist,  
                                         speed_progress, target_speed,shortest_path[last_lanelet_index].id(), time_progress));
-                
-                // resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_downtrack_, end_dist,  
-                //                             speed_progress, target_speed,current_lanelet_id, time_progress));
-                    
+                                    
 
                 current_progress += dist_diff;
                 time_progress = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
@@ -3478,15 +3466,10 @@ namespace platoon_strategic_ihp
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
         }  
 
-        if (true)//(!safeToLaneChange_)
+        if (pm_.getHostPlatoonSize() < 2)
         {
-            
-            if (pm_.getHostPlatoonSize() < 2)
-            {
-
-                resp.new_plan.maneuvers = {};
-                ROS_WARN_STREAM("Platoon size 1 so Empty maneuver sent");
-            }
+            resp.new_plan.maneuvers = {};
+            ROS_WARN_STREAM("Platoon size 1 so Empty maneuver sent");
         }
 
         if (pm_.current_platoon_state == PlatoonState::STANDBY)
