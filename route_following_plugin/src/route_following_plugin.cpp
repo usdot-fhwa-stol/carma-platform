@@ -101,7 +101,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
 
         // pose_sub_ = nh_->subscribe("current_pose", 1, &RouteFollowingPlugin::pose_cb, this);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteFollowingPlugin::twist_cb, this);
-        current_maneuver_plan_sub_ = nh_->subscribe("final_maneuver_plan", 1, &RouteFollowingPlugin::current_maneuver_plan_cb, this);
+        current_maneuver_plan_sub_ = nh_->subscribe("maneuver_plan", 1, &RouteFollowingPlugin::current_maneuver_plan_cb, this);
 
         // read ros parameters
         pnh_->param<double>("minimal_plan_duration", min_plan_duration_, 16.0);
