@@ -15,6 +15,7 @@
  */
 #include <ros/ros.h>
 #include <string>
+#include <algorithm>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include "route_following_plugin.h"
@@ -100,7 +101,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
 
         // pose_sub_ = nh_->subscribe("current_pose", 1, &RouteFollowingPlugin::pose_cb, this);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteFollowingPlugin::twist_cb, this);
-        twist_sub_ = nh_->subscribe("final_maneuver_plan", 1, &RouteFollowingPlugin::latest_maneuver_plan_cb, this);
+        current_maneuver_plan_sub_ = nh_->subscribe("final_maneuver_plan", 1, &RouteFollowingPlugin::current_maneuver_plan_cb, this);
 
         // read ros parameters
         pnh_->param<double>("minimal_plan_duration", min_plan_duration_, 16.0);
@@ -153,7 +154,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         current_speed_ = msg->twist.linear.x;
     }
     
-    void current_maneuver_plan_cb(const cav_msgs::ManeuverPlanConstPtr& msg) {
+    void RouteFollowingPlugin::current_maneuver_plan_cb(const cav_msgs::ManeuverPlanConstPtr& msg) {
         current_maneuver_plan_ = msg;
     }
 
@@ -579,10 +580,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             auto llts = wm_->getLaneletsFromPoint(current_loc, 10);                                          
             // Remove any candidate lanelets not on the route
             llts.erase(std::remove_if(llts.begin(), llts.end(),
-                [&](auto lanelet) -> {
-                    return !wm_.getRoute().contains(lanelet);
-                }, 
-                llts.end()));
+                [&](auto lanelet) -> bool { return !wm_->getRoute()->contains(lanelet); }));
 
             // !!! ASSUMPTION !!!:
             // Once non-route lanelets have been removed, it is assumed that our actual current lanelet is the only one that can remain.
