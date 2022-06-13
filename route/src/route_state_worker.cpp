@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 LEIDOS.
+ * Copyright (C) 2020-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,15 +14,16 @@
  * the License.
  */
 
-#include "route/route_state_worker.hpp"
+#include "route_state_worker.h"
+#include <ros/ros.h>
 
 namespace route {
 
-    RouteStateWorker::RouteState RouteStateWorker::getRouteState() const {
+    RouteStateWorker::RouteState RouteStateWorker::get_route_state() const {
         return state_;
     }
 
-    void RouteStateWorker::onRouteEvent(RouteEvent event) {
+    void RouteStateWorker::on_route_event(RouteEvent event) {
         
         auto old_state = state_;
 
@@ -64,12 +65,6 @@ namespace route {
             throw std::invalid_argument("Current state is illegal: " + std::to_string(state_));
         }
 
-        RCLCPP_INFO_STREAM(logger_->get_logger(), "Received Route Event: " << event << " transitioning from: " << old_state << " to: " << state_);
+        ROS_INFO_STREAM("Received Route Event: " << event << " transitioning from: " << old_state << " to: " << state_);
     }
-
-    void RouteStateWorker::setLoggerInterface(rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger)
-    {
-        logger_ = logger;
-    }
-    
-} // route
+}
