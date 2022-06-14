@@ -51,6 +51,9 @@ def generate_launch_description():
     trajectory_executor_param_file = os.path.join(
         get_package_share_directory('trajectory_executor'), 'config/parameters.yaml')
     
+    route_param_file = os.path.join(
+        get_package_share_directory('route'), 'config/parameters.yaml')
+    
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
@@ -80,7 +83,7 @@ def generate_launch_description():
                 remappings = [
                     ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/mobility_path_msg" ] ),
                     ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NZ', default_value=''), "/map_param_loader/georeference"])
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference"])
                 ],
                 parameters=[
                     vehicle_characteristics_param_file,
@@ -100,6 +103,27 @@ def generate_launch_description():
                 ],
                 parameters=[
                     trajectory_executor_param_file
+                ]
+            ),
+            ComposableNode(
+                package='route',
+                plugin='route::Route',
+                name='route_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('route', env_log_levels) }
+                ],
+                remappings = [
+                    ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
+                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
+                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
+                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] )
+                ],
+                parameters=[
+                    {'route_file_path': route_file_folder},
+                    route_param_file
                 ]
             ),
         ]
