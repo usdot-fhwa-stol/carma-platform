@@ -239,7 +239,7 @@ namespace platoon_strategic_ihp
     {   
         double currentDtd = current_downtrack_;
         double currentCtd = current_crosstrack_;
-        bool samelane = abs(currentCtd-crosstrack) <= findLaneWidth();
+        bool samelane = abs(currentCtd-crosstrack) <= config_.maxCrosstrackError;
 
         if (downtrack < currentDtd && samelane) 
         {
@@ -465,7 +465,7 @@ namespace platoon_strategic_ihp
         // UCLA: add "lead with operation" for frontal join (inherited from leader waiting).
         else if (pm_.current_platoon_state == PlatoonState::LEADWITHOPERATION)
         {
-            status_msg.state = cav_msgs::PlatooningInfo::LEADING;
+            status_msg.state = cav_msgs::PlatooningInfo::CONNECTING_TO_NEW_FOLLOWER;
         }
         // UCLA: add "prepare to join" for frontal join (inherited from leader waiting).
         else if (pm_.current_platoon_state == PlatoonState::PREPARETOJOIN)
@@ -717,6 +717,7 @@ namespace platoon_strategic_ihp
         // If it comes from a member of an identified neighbor platoon, then
         if (platoonId.compare(pm_.targetPlatoonID) == 0)
         {
+            ROS_DEBUG_STREAM("Incoming platoonID matches target platoon id");
             // // Update this member's status (or add if it's unknown to us)
             // pm_.neighborMemberUpdates(vehicleID, platoonId, statusParams, dtd, ctd);
 
@@ -1118,6 +1119,14 @@ namespace platoon_strategic_ihp
                 ROS_DEBUG_STREAM("starting cut-in join process");
                 ROS_DEBUG_STREAM("rearVehicleDtd" << rearVehicleDtd);
                 ROS_DEBUG_STREAM("rearVehicleCtd" << rearVehicleCtd);
+
+                // If we are asking to join an actual platoon (not a solo vehicle), then save its ID for later use
+                if (platoonId.compare(pm_.dummyID) != 0)
+                {
+                    pm_.targetPlatoonID = platoonId;
+                    ROS_DEBUG_STREAM("Detected neighbor as a real platoon & storing its ID: " << platoonId);
+                    ROS_DEBUG_STREAM("pm_.targetPlatoonID: " << pm_.targetPlatoonID);
+                }
 
                 
                 carma_wm::TrackPos target_trackpose(rearVehicleDtd, rearVehicleCtd);
@@ -2280,9 +2289,11 @@ namespace platoon_strategic_ihp
                 {
                     ROS_DEBUG_STREAM("Received positive response for plan id = " << pm_.current_plan.planId);
                     ROS_DEBUG_STREAM("Change to Prepare to join state and prepare to change lane. ");
+                    
 
                     // Change to candidate leader and idle
                     pm_.current_platoon_state = PlatoonState::PREPARETOJOIN;
+                    ROS_DEBUG_STREAM("pm_.targetPlatoonID: " << pm_.targetPlatoonID);
                     pm_.neighbor_platoon_leader_id_ = msg.m_header.sender_id;
                     candidatestateStartTime = ros::Time::now().toNSec() / 1000000;
                     pm_.current_plan.valid = false; //but leave peerId intact for use in second request
