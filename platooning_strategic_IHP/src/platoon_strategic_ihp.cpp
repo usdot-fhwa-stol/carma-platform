@@ -1304,7 +1304,7 @@ namespace platoon_strategic_ihp
                 request.urgency = 50;
 
                 mobility_request_publisher_(request); 
-                if (config_.allowCutinJoin)
+                if (pm_.currentPlatoonID.compare(pm_.dummyID) == 0)
                 {
                     pm_.currentPlatoonID = request.m_header.plan_id;
                 }
@@ -1993,7 +1993,8 @@ namespace platoon_strategic_ihp
             pm_.current_platoon_state = PlatoonState::LEADERABORTING;
             candidatestateStartTime = ros::Time::now().toNSec() / 1000000;
             // if testing with two vehicles, use plan id as platoon id
-            if (config_.allowCutinJoin)
+            if (pm_.currentPlatoonID.compare(pm_.dummyID) == 0)
+            // if (config_.allowCutinJoin)
             {
                 pm_.currentPlatoonID = msg.m_header.plan_id;
             }
@@ -2499,6 +2500,7 @@ namespace platoon_strategic_ihp
             if (pm_.targetPlatoonID.compare(pm_.dummyID) != 0)
             {
                 pm_.currentPlatoonID = pm_.targetPlatoonID;
+                ROS_DEBUG_STREAM("pm_.currentPlatoonID now: " << pm_.currentPlatoonID);
             }
             
             pm_.current_plan.valid = false; //but leave peerId intact for use in second request
