@@ -500,10 +500,10 @@ namespace platoon_strategic_ihp
 
                 // TODO: To uncomment the following lines, platooninfo msg must be updated
                 // UCLA: Add the value of the summation of "veh_len/veh_speed" for all predecessors
-                // status_msg.current_predecessor_time_headway_sum = pm_.getPredecessorTimeHeadwaySum();
+                status_msg.current_predecessor_time_headway_sum = pm_.getPredecessorTimeHeadwaySum();
                 // UCLA: preceding vehicle info 
-                // status_msg.predecessor_speed = pm_.getPredecessorSpeed();
-                // status_msg.predecessor_position = pm_.getPredecessorPosition();
+                status_msg.predecessor_speed = pm_.getPredecessorSpeed();
+                status_msg.predecessor_position = pm_.getPredecessorPosition();
 
                 // Note: use isCreateGap to adjust the desired gap send to control plugin 
                 double regular_gap = std::max(config_.standStillHeadway, config_.timeHeadway * current_speed_);
@@ -1169,7 +1169,7 @@ namespace platoon_strategic_ihp
                 // Note: remove join_index to info param.
                 request.plan_type.type = cav_msgs::PlanType::PLATOON_CUT_IN_JOIN; 
 
-                // TODO: At this step all cut-in types start with this request, so the join_index at this point is set to default, -2.
+                // At this step all cut-in types start with this request, so the join_index at this point is set to default, -2.
                 int join_index = -2;
                 boost::format fmter(JOIN_PARAMS); // Note: Front and rear join uses same params, hence merge to one param for both condition.
                 fmter %platoon_size;                //  index = 0
@@ -3002,7 +3002,8 @@ namespace platoon_strategic_ihp
             // Task 3: Calculate proper cut_in index 
             // Note: The cut-in index is zero-based and points to the gap-leading vehicle's index. For cut-in from front, the join index = -1.
             double joinerDtD = current_downtrack_;
-            target_join_index_ = config_.join_index;//TODO: use neighbor platoon later: pm_.getClosestIndex(joinerDtD);
+            target_join_index_ = pm_.getClosestIndex(joinerDtD);
+            ROS_DEBUG_STREAM("calculated join index: " << target_join_index_);
 
             // Task 4: Send out request to leader about cut-in position
             cav_msgs::MobilityRequest request;
@@ -3121,16 +3122,6 @@ namespace platoon_strategic_ihp
         
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration(config_.time_step);
-        //TODO: if commented-out code is not needed, delete it
-        // double cur_plus_target = current_speed + target_speed;
-        // if (cur_plus_target < 0.00001) 
-        // {
-        //     maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration(config_.time_step);
-        // } 
-        // else 
-        // {
-        //     maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * cur_plus_target));
-        // }
         maneuver_msg.lane_following_maneuver.lane_ids = { std::to_string(lane_id) };
         current_time = maneuver_msg.lane_following_maneuver.end_time;
         ROS_DEBUG_STREAM("Creating lane follow start dist:"<<current_dist<<" end dist:"<<end_dist);
@@ -3287,14 +3278,7 @@ namespace platoon_strategic_ihp
             bool isLaneChangeFinished = abs(crosstrackDiff) <= config_.maxCrosstrackError; 
             ROS_DEBUG_STREAM("crosstrackDiff: " << crosstrackDiff);
             ROS_DEBUG_STREAM("isLaneChangeFinished: " << isLaneChangeFinished);
-            /**  
-             * Note: The function "find_target_lanelet_id" was used to test the IHP platooning logic and is only a pre-written scenario. 
-             *       We re-use the existing lane change maneuver for route-following, and followed the data flow just to compile the code. 
-             * 
-             * TODO: The IHP2 platooning should provide necessary data in a maneuver plan for the arbitrary lane change module.
-             *       This means this entire block need to be updated accordingly. 
-             */ 
-            
+
             // lane change not finished, use lane change plan
             if(!isLaneChangeFinished)  
             {
@@ -3328,6 +3312,7 @@ namespace platoon_strategic_ihp
                     }
                     
                     //TODO: target_cutin_pose_ represents the platoon leader. It seems this may be the wrong answer for mid- or rear-cutins?
+                    //SAINA: currently, the functions do not provide the correct point of rear vehicle of the platoon
                     double lc_end_dist = wm_->routeTrackPos(target_cutin_pose_).downtrack;
                     ROS_DEBUG_STREAM("lc_end_dist before buffer: " << lc_end_dist);
                     lc_end_dist = std::max(lc_end_dist, current_progress + config_.maxCutinGap);
@@ -3454,7 +3439,6 @@ namespace platoon_strategic_ihp
         if (pm_.current_platoon_state == PlatoonState::STANDBY)
         {
             pm_.current_platoon_state = PlatoonState::LEADER;
-            //pm_.current_plan.planId = boost::uuids::to_string(boost::uuids::random_generator()()); TODO: delete after testing
             ROS_DEBUG_STREAM("change the state from standby to leader at start-up");
         }
 
