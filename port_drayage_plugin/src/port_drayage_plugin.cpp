@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2018-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -127,7 +127,7 @@ namespace port_drayage_plugin
 
     bool PortDrayagePlugin::call_set_active_route_client(cav_srvs::SetActiveRoute req){
         if(_set_active_route_client.call(req)){
-            if(req.response.errorStatus == cav_srvs::SetActiveRouteResponse::NO_ERROR){
+            if(req.response.error_status == cav_srvs::SetActiveRouteResponse::NO_ERROR){
                 ROS_DEBUG_STREAM("Route Generation succeeded for Set Active Route service call.");
                 return true;
             }

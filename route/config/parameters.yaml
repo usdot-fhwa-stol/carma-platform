@@ -1,10 +1,14 @@
+# Double: Spin rate for the Route node
+# Units: Hz
+route_spin_rate: 10.0
+
 # Double: max cross track tolerance error
 # Units: meter
 max_crosstrack_error: 2.0
 
 # Double: downtrack_range tracks how far from the end a stop is accepted as a completed route
 # Units: meter
-destination_downtrack_range: 10
+destination_downtrack_range: 10.0
 
 # Int: Maximum number of consecutive timesteps outside of the route allowable before triggering LEFT_ROUTE
 cte_max_count: 4

@@ -1,14 +1,11 @@
 <?xml version="1.0"?>
 
 <!--  
- Copyright (C) 2018-2021 LEIDOS.
-
+ Copyright (C) 2018-2022 LEIDOS.
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  use this file except in compliance with the License. You may obtain a copy of
  the License at
-
  http://www.apache.org/licenses/LICENSE-2.0
-
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,21 +15,39 @@
 
 <package format="3">
   <name>route</name>
-  <version>3.3.0</version>
-  <description>The route package provides capabilities for loading different route files and route state mangement</description>
-  <maintainer email="carma@todo.todo">carma</maintainer>
-  <license>Apache License 2.0</license>
-  <author email="carma@todo.todo">carma</author>
-  <buildtool_depend>catkin</buildtool_depend>
+  <version>4.0.0</version>
+  <description>The route package</description>
+
+  <maintainer email="carma@dot.gov">carma</maintainer>
+
+  <license>Apache 2.0</license>
+  
+  <buildtool_depend>ament_cmake</buildtool_depend>
   <build_depend>carma_cmake_common</build_depend>
-  <depend>roscpp</depend>
+  <build_depend>ament_auto_cmake</build_depend>
+
+  <depend>rclcpp</depend>
+  <depend>carma_ros2_utils</depend>
+  <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
-  <depend>cav_srvs</depend>
-  <depend>carma_utils</depend>
-  <depend>autoware_msgs</depend>
-  <depend>wgs84_utils_ros1</depend>
-  <depend>carma_wm</depend>
-  <depend>tf</depend>
+  <depend>carma_planning_msgs</depend>
+  <depend>carma_v2x_msgs</depend>
+  <depend>visualization_msgs</depend>
+  <depend>carma_wm_ros2</depend>
+  <depend>wgs84_utils</depend>
+  <depend>lanelet2_core</depend>
+  <depend>lanelet2_extension</depend>
+  <depend>tf2_ros</depend>
   <depend>tf2</depend>
-  <depend>tf2_geometry_msgs</depend> 
+  <depend>tf2_geometry_msgs</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
