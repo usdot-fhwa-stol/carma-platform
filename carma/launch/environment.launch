@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  Copyright (C) 2018-2021 LEIDOS.
+  Copyright (C) 2018-2022 LEIDOS.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -41,25 +41,5 @@
   <node pkg="map_file" type="lanelet2_map_visualization" name="lanelet2_map_visualization">
     <remap from="/lanelet_map_bin" to="semantic_map"/>
   </node>
-
-  <!-- World Model Updater -->
-  <group>
-    <remap from="outgoing_geofence_request" to="$(optenv CARMA_MSG_NS)/outgoing_geofence_request"/>
-    <include file="$(find carma_wm_ctrl)/launch/carma_wm_broadcaster.launch"/>
-  </group>
-
-  <!-- CARMA Roadway Objects Node -->
-  <group>
-    <remap from= "external_objects" to= "external_object_predictions"/>
-    <include file="$(find roadway_objects)/launch/roadway_objects.launch"/>
-  </group>
-
-  <!-- Traffic Incident Parser -->
-  <group>
-    <remap from="georeference" to="$(optenv CARMA_LOCZ_NS)/map_param_loader/georeference"/>
-    <remap from="geofence" to="$(optenv CARMA_MSG_NS)/incoming_geofence_control"/>
-    <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
-    <include file="$(find traffic_incident_parser)/launch/traffic_incident_parser.launch"/>
-  </group>
 
 </launch>

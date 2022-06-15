@@ -44,11 +44,11 @@ while [[ $# -gt 0 ]]; do
             COMPONENT_VERSION_STRING=develop
             shift
             ;;
-        --ros-1-packages)
+        --ros-1-packages|--ros1)
             ROS1_PACKAGES=""
             shift
             ;;
-        --ros-2-packages)
+        --ros-2-packages|--ros2)
             ROS2_PACKAGES=""
             shift
             ;;

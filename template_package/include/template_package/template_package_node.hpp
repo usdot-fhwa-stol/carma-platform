@@ -85,7 +85,7 @@ namespace <SUB><package_name>
     ////
     // Overrides
     ////
-    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
+    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &prev_state);
 
     /**
      * TODO for USER: The following lifecycle overrides are also available if needed

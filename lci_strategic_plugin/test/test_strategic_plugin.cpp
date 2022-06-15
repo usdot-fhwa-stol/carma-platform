@@ -379,11 +379,46 @@ TEST_F(LCIStrategicTestFixture, handleFailureCase)
 
   EXPECT_THROW(lcip.handleFailureCase(5 ,0, 15, 0), std::invalid_argument);
 
+} 
 
+TEST(LCIStrategicPluginTest, moboperationcbtest)
+{
+  cav_msgs::MobilityOperation msg;
+  msg.strategy = "Carma/light_controlled_intersection";
 
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  LCIStrategicPluginConfig config;
+  LCIStrategicPlugin lcip(wm, config);
 
+  ASSERT_EQ(lcip.approaching_light_controlled_interction_, false);
+  auto msg_ptr = boost::make_shared<const cav_msgs::MobilityOperation>(msg);
+  lcip.mobilityOperationCb(msg_ptr);
+
+  ASSERT_EQ(lcip.approaching_light_controlled_interction_, true);
 }
 
+TEST(LCIStrategicPluginTest, parseStrategyParamstest)
+{
+  cav_msgs::MobilityOperation msg;
+  msg.strategy_params =  "st:16000,et:32000,dt:48000,dp:1,access:0";
 
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  LCIStrategicPluginConfig config;
+  LCIStrategicPlugin lcip(wm, config);
+
+  lcip.parseStrategyParams(msg.strategy_params);
+
+  
+  EXPECT_EQ(16000, lcip.scheduled_stop_time_);
+  EXPECT_EQ(32000, lcip.scheduled_enter_time_);
+  EXPECT_EQ(48000, lcip.scheduled_depart_time_);
+  EXPECT_EQ(1, lcip.scheduled_departure_position_);
+  EXPECT_EQ(false, lcip.is_allowed_int_);
+
+  cav_msgs::MobilityOperation outgoing_msg = lcip.generateMobilityOperation();
+  EXPECT_EQ(outgoing_msg.strategy, "Carma/light_controlled_intersection");
+  EXPECT_EQ(outgoing_msg.m_header.sender_id, config.vehicle_id);
+  std::cout << "strategy_param: " << outgoing_msg.strategy_params << std::endl;
+}
 
 }  // namespace lci_strategic_plugin
