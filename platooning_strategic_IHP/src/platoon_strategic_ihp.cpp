@@ -736,6 +736,7 @@ namespace platoon_strategic_ihp
         }
 
         // else it represents an uninteresting platoon
+        else
         {
             ROS_DEBUG_STREAM("Received mob op for platoon " << platoonId << " that doesn't match our platoon: " << pm_.currentPlatoonID
                              << " or known neighbor platoon: " << pm_.targetPlatoonID);
@@ -2347,9 +2348,6 @@ namespace platoon_strategic_ihp
             bool isForCurrentPlan = msg.m_header.plan_id == pm_.current_plan.planId;
             bool isForFrontJoin = msg.plan_type.type == cav_msgs::PlanType::PLATOON_FRONT_JOIN;
 
-
-            //TODO remove these diagnostics
-            isForFrontJoin = true; //once MobilityResponse msg structure includes plan type, this line can be removed
             if (msg.plan_type.type == cav_msgs::PlanType::UNKNOWN){
                 ROS_DEBUG_STREAM("*** plan type UNKNOWN");
             }else if (msg.plan_type.type == cav_msgs::PlanType::JOIN_PLATOON_FROM_FRONT){
@@ -2947,16 +2945,16 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("Published heart beat platoon INFO mobility operation message");
         }
 
-        // Task 3: plan time out
-        if (pm_.current_plan.valid)
-        {
-            bool isCurrentPlanTimeout = ((ros::Time::now().toNSec() / 1000000 - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT);
-            if (isCurrentPlanTimeout)
-            {
-                ROS_DEBUG_STREAM("Give up waiting on plan with planId: " << pm_.current_plan.planId << "; stay in LEADWITHOPERATION");
-                pm_.current_plan.valid = false;
-            }
-        }
+        // // Task 3: plan time out
+        // if (pm_.current_plan.valid)
+        // {
+        //     bool isCurrentPlanTimeout = ((ros::Time::now().toNSec() / 1000000 - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT);
+        //     if (isCurrentPlanTimeout)
+        //     {
+        //         ROS_DEBUG_STREAM("Give up waiting on plan with planId: " << pm_.current_plan.planId << "; stay in LEADWITHOPERATION");
+        //         pm_.current_plan.valid = false;
+        //     }
+        // }
 
         // Task 4: STATUS msgs
         bool hasFollower = pm_.getHostPlatoonSize() > 1  ||  config_.test_cutin_join;
@@ -3001,22 +2999,23 @@ namespace platoon_strategic_ihp
             // Leave neighbor platoon info in place, as we may retry the join later
         }
 
-        // Task 2.2: plan timeout
-        if (pm_.current_plan.valid) 
-        {
-            ROS_DEBUG_STREAM("pm_.current_plan.planStartTime: " << pm_.current_plan.planStartTime);
-            ROS_DEBUG_STREAM("timeout2: " << tsStart - pm_.current_plan.planStartTime);
-            ROS_DEBUG_STREAM("NEGOTIATION_TIMEOUT: " << NEGOTIATION_TIMEOUT);
-            bool isPlanTimeout = tsStart - pm_.current_plan.planStartTime > NEGOTIATION_TIMEOUT;
-            if (isPlanTimeout) 
-            {
-                ROS_DEBUG_STREAM("The current plan did not receive any response. Abort and change to leader state.");
-                pm_.current_platoon_state = PlatoonState::LEADER;
-                pm_.clearActionPlan();
-                pm_.resetHostPlatoon();
-                // Leave neighbor platoon info in place, as we may retry the join later
-            }
-        }
+        // TODO: Plan timeout is not needed for this state
+        // // Task 2.2: plan timeout
+        // if (pm_.current_plan.valid) 
+        // {
+        //     ROS_DEBUG_STREAM("pm_.current_plan.planStartTime: " << pm_.current_plan.planStartTime);
+        //     ROS_DEBUG_STREAM("timeout2: " << tsStart - pm_.current_plan.planStartTime);
+        //     ROS_DEBUG_STREAM("NEGOTIATION_TIMEOUT: " << NEGOTIATION_TIMEOUT);
+        //     bool isPlanTimeout = tsStart - pm_.current_plan.planStartTime > NEGOTIATION_TIMEOUT;
+        //     if (isPlanTimeout) 
+        //     {
+        //         ROS_DEBUG_STREAM("The current plan did not receive any response. Abort and change to leader state.");
+        //         pm_.current_platoon_state = PlatoonState::LEADER;
+        //         pm_.clearActionPlan();
+        //         pm_.resetHostPlatoon();
+        //         // Leave neighbor platoon info in place, as we may retry the join later
+        //     }
+        // }
 
         // If we aren't already waiting on a response to one of these plans, create one once neighbor info is available
         ROS_DEBUG_STREAM("current_plan.valid = " << pm_.current_plan.valid << ", is_neighbor_record_complete = " << pm_.is_neighbor_record_complete_);
