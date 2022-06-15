@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,28 +18,21 @@
  * This file contains unit tests which can be used like scripts to convert lanelet2 map files.
  */
 
-#include <gmock/gmock.h>
-#include <carma_wm/MapConformer.h>
+#include <gtest/gtest.h>
+#include <carma_wm_ros2/MapConformer.hpp>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>
 #include <lanelet2_io/io_handlers/Writer.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
-#include <autoware_lanelet2_ros_interface/utility/query.h>
-#include <autoware_lanelet2_ros_interface/utility/utilities.h>
+#include <autoware_lanelet2_ros2_interface/utility/query.hpp>
+#include <autoware_lanelet2_ros2_interface/utility/utilities.hpp>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
-#include <carma_wm/CARMAWorldModel.h>
+#include <carma_wm_ros2/CARMAWorldModel.hpp>
 #include <unordered_set>
-#include "TestHelpers.h"
+#include "TestHelpers.hpp"
 #include <iostream>
 #include <fstream>
-
-using ::testing::_;
-using ::testing::A;
-using ::testing::DoAll;
-using ::testing::InSequence;
-using ::testing::Return;
-using ::testing::ReturnArg;
 
 namespace carma_wm_ctrl
 {
