@@ -383,7 +383,9 @@ namespace platoon_strategic_ihp
         size_t neighbor_platoon_info_size_ = 0;
 
         // Platoon ID of the neighboring platoon
-        std::string targetPlatoonID = dummyID;  //ID of a real platoon that we may be attempting to join (dummy if neighbor is a solo vehicle)
+        std::string targetPlatoonID = dummyID;  //ID of a real platoon that we may be attempting to join
+
+        std::string neighborPlatoonID = dummyID;  //ID of the neighbor platoon that we may be attempting to join (dummy if neighbor is a solo vehicle)
 
         // Vehicle ID of the neighbor platoon's leader
         std::string neighbor_platoon_leader_id_ = dummyID; //dummy indicates unknown

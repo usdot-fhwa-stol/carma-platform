@@ -174,7 +174,7 @@ namespace platoon_strategic_ihp
         boost::algorithm::split(cur_parsed, inputsParams[1], boost::is_any_of(":"));
         double curSpeed = std::stod(cur_parsed[1]);
 
-        if (targetPlatoonID == platoonId)
+        if (neighborPlatoonID == platoonId)
         {
             updatesOrAddMemberInfo(neighbor_platoon_, senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
             ROS_DEBUG_STREAM("This STATUS messages is from the target platoon. Updating the info...");
@@ -314,7 +314,7 @@ namespace platoon_strategic_ihp
     {
         neighbor_platoon_.clear();
         neighbor_platoon_info_size_ = 0;
-        targetPlatoonID = dummyID;
+        neighborPlatoonID = dummyID;
         neighbor_platoon_leader_id_ = dummyID;
         is_neighbor_record_complete_ = false;
     }
