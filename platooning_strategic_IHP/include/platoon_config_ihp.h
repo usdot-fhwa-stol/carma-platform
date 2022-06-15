@@ -42,7 +42,7 @@ struct PlatoonPluginConfig
   double longitudinalCheckThresold      = 85.0;    // m
   double desiredJoinTimeGap             = 4.0;     // s
   double desiredJoinGap                 = 30.0;    // m
-  int    maxLeaderAbortingCalls         = 4;       // counter
+  int    maxLeaderAbortingCalls         = 2;       // counter
   double waitingStateTimeout            = 25.0;    // s
   double cmdSpeedMaxAdjustment          = 10.0;    // m/s
     
