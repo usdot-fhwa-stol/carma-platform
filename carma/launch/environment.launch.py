@@ -31,6 +31,14 @@ def generate_launch_description():
     Launch perception nodes.
     """
 
+    vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
+    declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_param_file',
+        default_value = "/opt/carma/vehicle/config/VehicleConfigParams.yaml",
+        description = "Path to file contain vehicle configuration parameters"
+    )
+
+
     autoware_auto_launch_pkg_prefix = get_package_share_directory(
         'autoware_auto_launch')
 
@@ -226,7 +234,7 @@ def generate_launch_description():
                     ("outgoing_geofence_ack", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),
                     ("outgoing_geofence_request", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_geofence_request" ] )
                 ],
-                parameters=[ carma_wm_ctrl_param_file ]
+                parameters=[ carma_wm_ctrl_param_file, vehicle_config_param_file ]
             ),
             ComposableNode(
                     package='object_detection_tracking',
@@ -328,6 +336,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        declare_vehicle_config_param_file_arg,
         declare_subsystem_controller_param_file_arg,
         lidar_perception_container,
         carma_external_objects_container,
