@@ -20,6 +20,7 @@
 
 namespace plan_delegator
 {
+    namespace std_ph = std::placeholders;
 
     namespace 
     {
@@ -135,18 +136,15 @@ namespace plan_delegator
         // Create initial config
         config_ = Config();
 
-        config_.planning_topic_prefix = declare_parameters<std::string>("planning_topic_prefix", config_.planning_topic_prefix);      
-        config_.planning_topic_suffix = declare_parameters<std::string>("planning_topic_suffix", config_.planning_topic_suffix);
-        config_.trajectory_planning_rate = declare_parameters<double>("trajectory_planning_rate", config_.trajectory_planning_rate); 
-        config_.max_trajectory_duration = declare_parameters<double>("trajectory_duration_threshold", config_.max_trajectory_duration);
-        config_.min_crawl_speed = declare_parameters<double>("min_speed", config_.min_crawl_speed);
+        config_.planning_topic_prefix = declare_parameter<std::string>("planning_topic_prefix", config_.planning_topic_prefix);      
+        config_.planning_topic_suffix = declare_parameter<std::string>("planning_topic_suffix", config_.planning_topic_suffix);
+        config_.trajectory_planning_rate = declare_parameter<double>("trajectory_planning_rate", config_.trajectory_planning_rate); 
+        config_.max_trajectory_duration = declare_parameter<double>("trajectory_duration_threshold", config_.max_trajectory_duration);
+        config_.min_crawl_speed = declare_parameter<double>("min_speed", config_.min_crawl_speed);
     }
-/*
-    carma_ros2_utils::CallbackReturn PlanDelegator::handle_on_configure(const rclcpp_lifecycle::State &);
+
+    carma_ros2_utils::CallbackReturn PlanDelegator::handle_on_configure(const rclcpp_lifecycle::State &)
     {
-        // Initialize world model
-        wml_.reset(new carma_wm::WMListener());
-        
         // Reset config
         config_ = Config();
 
@@ -159,26 +157,26 @@ namespace plan_delegator
         RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Done loading parameters: " << config_);
 
         traj_pub_ = create_publisher<carma_planning_msgs::msg::TrajectoryPlan>("plan_trajectory", 5);
-        plan_sub_ = create_subscription<carma_planning_msgs::msg::ManeuverPlan>("final_maneuver_plan", 5, &PlanDelegator::maneuverPlanCallback, this);
+        plan_sub_ = create_subscription<carma_planning_msgs::msg::ManeuverPlan>("final_maneuver_plan", 5, std::bind(&PlanDelegator::maneuverPlanCallback, this, std_ph::_1));
         twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 5,
-            [this](const geometry_msgs::msg::TwistStamped::UniquePtr& twist) {this->latest_twist_ = *twist;});
+            [this](geometry_msgs::msg::TwistStamped::UniquePtr twist) {this->latest_twist_ = *twist;});
         pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>("current_pose", 5,
-            [this](const geometry_msgs::msg::PoseStamped::UniquePtr& pose) {this->latest_pose_ = *pose;});
-        guidance_state_sub_ = create_subscription<carma_planning_msgs::msg::GuidanceState>("guidance_state", 5, &PlanDelegator::guidanceStateCallback, this);
+            [this](geometry_msgs::msg::PoseStamped::UniquePtr pose) {this->latest_pose_ = *pose;});
+        guidance_state_sub_ = create_subscription<carma_planning_msgs::msg::GuidanceState>("guidance_state", 5,  std::bind(&PlanDelegator::guidanceStateCallback, this, std_ph::_1));
 
         lookupFrontBumperTransform();
         wm_ = wml_.getWorldModel();
         return CallbackReturn::SUCCESS;
     }
-    
+      
     carma_ros2_utils::CallbackReturn PlanDelegator::handle_on_activate(const rclcpp_lifecycle::State &)
     {
         traj_timer_ = create_timer(get_clock(), 
             std::chrono::milliseconds((int)(config_.trajectory_planning_rate * 1000)),
-            std::bind(&onTrajPlanTick::onTrajPlanTick, this));
+            std::bind(&PlanDelegator::onTrajPlanTick, this));
          return CallbackReturn::SUCCESS;
     }
-
+    
     void PlanDelegator::guidanceStateCallback(carma_planning_msgs::msg::GuidanceState::UniquePtr msg)
     {
         guidance_engaged = (msg->state == carma_planning_msgs::msg::GuidanceState::ENGAGED);
@@ -188,10 +186,9 @@ namespace plan_delegator
     {
         RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Received request to delegate plan ID " << plan->maneuver_plan_id);
         // do basic check to see if the input is valid
-        if (isManeuverPlanValid(plan))
+        if (isManeuverPlanValid(*plan))
         {
             latest_maneuver_plan_ = *plan;
-
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Received plan with " << latest_maneuver_plan_.maneuvers.size() << " maneuvers");
             
             // Update the parameters associated with each maneuver
@@ -204,7 +201,7 @@ namespace plan_delegator
         }
     }
 
-    rclcpp::ServiceClient& PlanDelegator::getPlannerClientByName(const std::string& planner_name)
+    carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> PlanDelegator::getPlannerClientByName(const std::string& planner_name)
     {
         if(planner_name.size() == 0)
         {
@@ -214,15 +211,15 @@ namespace plan_delegator
         {
             RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Discovered new trajectory planner: " << planner_name);
             trajectory_planners_.emplace(
-                planner_name, nh_.serviceClient<carma_planning_msgs::srv::PlanTrajectory>(planning_topic_prefix_ + planner_name + planning_topic_suffix_));
+                planner_name, create_client<carma_planning_msgs::srv::PlanTrajectory>(config_.planning_topic_prefix + planner_name + config_.planning_topic_suffix));
         }
         return trajectory_planners_[planner_name];
     }
 
-    bool PlanDelegator::isManeuverPlanValid(const carma_planning_msgs::msg::ManeuverPlan::UniquePtr& maneuver_plan) const noexcept
+    bool PlanDelegator::isManeuverPlanValid(const carma_planning_msgs::msg::ManeuverPlan& maneuver_plan) const noexcept
     {
         // currently it only checks if maneuver list is empty
-        return !maneuver_plan->maneuvers.empty();
+        return !maneuver_plan.maneuvers.empty();
     }
 
     bool PlanDelegator::isTrajectoryValid(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan) const noexcept
@@ -233,39 +230,53 @@ namespace plan_delegator
 
     bool PlanDelegator::isManeuverExpired(const carma_planning_msgs::msg::Maneuver& maneuver, rclcpp::Time current_time) const
     {
-        return GET_MANEUVER_PROPERTY(maneuver, end_time) <= current_time; // TODO maneuver expiration should maybe be based off of distance not time? https://github.com/usdot-fhwa-stol/carma-platform/issues/1107
-    }
+        if (current_time.get_clock_type() == RCL_ROS_TIME)
+        {
+        }
+        else if (current_time.get_clock_type() == RCL_SYSTEM_TIME)
+        {
+        }
 
-    carma_planning_msgs::srv::PlanTrajectory PlanDelegator::composePlanTrajectoryRequest(const carma_planning_msgs::msg::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const
+        if (rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, end_time)).get_clock_type() == RCL_ROS_TIME)
+        {
+        }
+        else if (rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, end_time)).get_clock_type() == RCL_SYSTEM_TIME)
+        {
+        }
+        return rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, end_time)) <= current_time; // TODO maneuver expiration should maybe be based off of distance not time? https://github.com/usdot-fhwa-stol/carma-platform/issues/1107
+    }
+    
+    std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request> PlanDelegator::composePlanTrajectoryRequest(const carma_planning_msgs::msg::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const
     {
-        auto plan_req = carma_planning_msgs::srv::PlanTrajectory{};
-        plan_req.request.maneuver_plan = latest_maneuver_plan_;
+        auto plan_req = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
+        plan_req->maneuver_plan = latest_maneuver_plan_;
+
         // set current vehicle state if we have NOT planned any previous trajectories
         if(latest_trajectory_plan.trajectory_points.empty())
         {
-            plan_req.request.header.stamp = latest_pose_.header.stamp;
-            plan_req.request.vehicle_state.longitudinal_vel = latest_twist_.twist.linear.x;
-            plan_req.request.vehicle_state.x_pos_global = latest_pose_.pose.position.x;
-            plan_req.request.vehicle_state.y_pos_global = latest_pose_.pose.position.y;
+            plan_req->header.stamp = latest_pose_.header.stamp;
+            plan_req->vehicle_state.longitudinal_vel = latest_twist_.twist.linear.x;
+            plan_req->vehicle_state.x_pos_global = latest_pose_.pose.position.x;
+            plan_req->vehicle_state.y_pos_global = latest_pose_.pose.position.y;
             double roll, pitch, yaw;
             carma_wm::geometry::rpyFromQuaternion(latest_pose_.pose.orientation, roll, pitch, yaw);
-            plan_req.request.vehicle_state.orientation = yaw;
-            plan_req.request.maneuver_index_to_plan = current_maneuver_index;
+            plan_req->vehicle_state.orientation = yaw;
+            plan_req->maneuver_index_to_plan = current_maneuver_index;
         }
         // set vehicle state based on last two planned trajectory points
         else
         {
             carma_planning_msgs::msg::TrajectoryPlanPoint last_point = latest_trajectory_plan.trajectory_points.back();
             carma_planning_msgs::msg::TrajectoryPlanPoint second_last_point = *(latest_trajectory_plan.trajectory_points.rbegin() + 1);
-            plan_req.request.vehicle_state.x_pos_global = last_point.x;
-            plan_req.request.vehicle_state.y_pos_global = last_point.y;
+            plan_req->vehicle_state.x_pos_global = last_point.x;
+            plan_req->vehicle_state.y_pos_global = last_point.y;
             auto distance_diff = std::sqrt(std::pow(last_point.x - second_last_point.x, 2) + std::pow(last_point.y - second_last_point.y, 2));
-            rclcpp::Duration time_diff = last_point.target_time - second_last_point.target_time;
-            auto time_diff_sec = time_diff.toSec();
-            plan_req.request.maneuver_index_to_plan = current_maneuver_index;
+            rclcpp::Duration time_diff = rclcpp::Time(last_point.target_time) - rclcpp::Time(second_last_point.target_time);
+            auto time_diff_sec = time_diff.seconds();
+            plan_req->maneuver_index_to_plan = current_maneuver_index;
             // this assumes the vehicle does not have significant lateral velocity
-            plan_req.request.header.stamp = latest_trajectory_plan.trajectory_points.back().target_time;
-            plan_req.request.vehicle_state.longitudinal_vel = distance_diff / time_diff_sec;
+            plan_req->header.stamp = latest_trajectory_plan.trajectory_points.back().target_time;
+            plan_req->vehicle_state.longitudinal_vel = distance_diff / time_diff_sec;
             // TODO develop way to set yaw value for future points
         }
         return plan_req;
@@ -273,12 +284,17 @@ namespace plan_delegator
 
     bool PlanDelegator::isTrajectoryLongEnough(const carma_planning_msgs::msg::TrajectoryPlan& plan) const noexcept
     {
-        rclcpp::Duration time_diff = plan.trajectory_points.back().target_time - plan.trajectory_points.front().target_time;
-        return time_diff.toSec() >= max_trajectory_duration_;
+        rclcpp::Duration time_diff = rclcpp::Time(plan.trajectory_points.back().target_time) - rclcpp::Time(plan.trajectory_points.front().target_time);
+        return time_diff.seconds() >= config_.max_trajectory_duration;
     }
 
     void PlanDelegator::updateManeuverParameters(carma_planning_msgs::msg::Maneuver& maneuver)
     {
+        if (!wm_->getMap())
+        {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"), "Map is not set yet");
+            return;
+        }
         // Update maneuver starting and ending downtrack distances
         double original_start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
         double original_end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
@@ -410,7 +426,7 @@ namespace plan_delegator
             auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
 
             // ignore expired maneuvers
-            if(isManeuverExpired(maneuver))
+            if(isManeuverExpired(maneuver, get_clock()->now()))
             {
                 RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Dropping expired maneuver: " << GET_MANEUVER_PROPERTY(maneuver, parameters.maneuver_id));
                 // Update the maneuver plan index for the next loop
@@ -441,11 +457,15 @@ namespace plan_delegator
 
             // compose service request
             auto plan_req = composePlanTrajectoryRequest(latest_trajectory_plan, current_maneuver_index);
-
-            if(client.call(plan_req))
+            
+            auto plan_response = client->async_send_request(plan_req);
+            
+            // Wait for the result.
+            if (rclcpp::spin_until_future_complete(shared_from_this(), plan_response) ==
+                rclcpp::executor::FutureReturnCode::SUCCESS)
             {
                 // validate trajectory before add to the plan
-                if(!isTrajectoryValid(plan_req.response.trajectory_plan))
+                if(!isTrajectoryValid(plan_response.get()->trajectory_plan))
                 {
                     RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Found invalid trajectory with less than 2 trajectory points for " << latest_maneuver_plan_.maneuver_plan_id);
                     break;
@@ -453,22 +473,22 @@ namespace plan_delegator
                 //Remove duplicate point from start of trajectory
                 if(latest_trajectory_plan.trajectory_points.size() !=0){
                     
-                    if(latest_trajectory_plan.trajectory_points.back().target_time == plan_req.response.trajectory_plan.trajectory_points.front().target_time){
+                    if(latest_trajectory_plan.trajectory_points.back().target_time == plan_response.get()->trajectory_plan.trajectory_points.front().target_time){
                         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Removing duplicate point for planner: " << maneuver_planner);
-                        plan_req.response.trajectory_plan.trajectory_points.erase(plan_req.response.trajectory_plan.trajectory_points.begin());
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"plan_req.response.trajectory_plan size: " << plan_req.response.trajectory_plan.trajectory_points.size());
+                        plan_response.get()->trajectory_plan.trajectory_points.erase(plan_response.get()->trajectory_plan.trajectory_points.begin());
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"plan_response.get()->trajectory_plan size: " << plan_response.get()->trajectory_plan.trajectory_points.size());
 
                     }
                 }
                 latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
-                                                                plan_req.response.trajectory_plan.trajectory_points.begin(),
-                                                                plan_req.response.trajectory_plan.trajectory_points.end());
+                                                                plan_response.get()->trajectory_plan.trajectory_points.begin(),
+                                                                plan_response.get()->trajectory_plan.trajectory_points.end());
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"new latest_trajectory_plan size: " << latest_trajectory_plan.trajectory_points.size());
                 
                 // Assign the trajectory plan's initial longitudinal velocity based on the first tactical plugin's response
                 if(first_trajectory_plan == true)
                 {
-                    latest_trajectory_plan.initial_longitudinal_velocity = plan_req.response.trajectory_plan.initial_longitudinal_velocity;
+                    latest_trajectory_plan.initial_longitudinal_velocity = plan_response.get()->trajectory_plan.initial_longitudinal_velocity;
                     first_trajectory_plan = false;
                 }
 
@@ -480,9 +500,9 @@ namespace plan_delegator
 
                 // Update the maneuver plan index based on the last maneuver index converted to a trajectory
                 // This is required since inlanecruising_plugin can plan a trajectory over contiguous LANE_FOLLOWING maneuvers
-                if(plan_req.response.related_maneuvers.size() > 0)
+                if(plan_response.get()->related_maneuvers.size() > 0)
                 {
-                    current_maneuver_index = plan_req.response.related_maneuvers.back() + 1;
+                    current_maneuver_index = plan_response.get()->related_maneuvers.back() + 1;
                 } 
             }
             else
@@ -495,7 +515,7 @@ namespace plan_delegator
 
         return latest_trajectory_plan;
     }
-
+    
     void PlanDelegator::onTrajPlanTick()
     {
         carma_planning_msgs::msg::TrajectoryPlan trajectory_plan = planTrajectory();
@@ -503,8 +523,8 @@ namespace plan_delegator
         // Check if planned trajectory is valid before send out
         if(isTrajectoryValid(trajectory_plan))
         {
-            trajectory_plan.header.stamp = rclcpp::Time::now();
-            traj_pub_.publish(trajectory_plan);
+            trajectory_plan.header.stamp = get_clock()->now();
+            traj_pub_->publish(trajectory_plan);
         }
         else
         {
@@ -514,7 +534,7 @@ namespace plan_delegator
 
     void PlanDelegator::lookupFrontBumperTransform() 
     {
-        tf2_listener_.reset(new tf2_rclcpp::TransformListener(tf2_buffer_));
+        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
         tf2_buffer_.setUsingDedicatedThread(true);
         try
         {
@@ -525,8 +545,14 @@ namespace plan_delegator
         }
         catch (const tf2::TransformException &ex)
         {
-            RCLCPP_WARN("%s", ex.what());
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), ex.what());
         }
     }
-*/
+
 } // namespace plan_delegator
+
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+// Register the component with class_loader
+RCLCPP_COMPONENTS_REGISTER_NODE(plan_delegator::PlanDelegator)

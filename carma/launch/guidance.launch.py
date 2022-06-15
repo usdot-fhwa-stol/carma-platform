@@ -54,6 +54,9 @@ def generate_launch_description():
     route_param_file = os.path.join(
         get_package_share_directory('route'), 'config/parameters.yaml')
     
+    plan_delegator_param_file = os.path.join(
+        get_package_share_directory('plan_delegator'), 'config/plan_delegator_params.yaml')
+    
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
@@ -71,7 +74,28 @@ def generate_launch_description():
         executable='carma_component_container_mt',
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
-
+            ComposableNode(
+                package='plan_delegator',
+                plugin='plan_delegator::PlanDelegator',
+                name='plan_delegator',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('plan_delegator', env_log_levels) }
+                ],
+                remappings = [
+                    ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
+                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                    ("vehicle_status", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_status" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
+                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
+                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
+                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] )
+                ],
+                parameters=[
+                    plan_delegator_param_file
+                ]
+            ),
             ComposableNode(
                 package='mobilitypath_visualizer',
                 plugin='mobilitypath_visualizer::MobilityPathVisualizer',
@@ -125,7 +149,7 @@ def generate_launch_description():
                     {'route_file_path': route_file_folder},
                     route_param_file
                 ]
-            ),
+            )
         ]
     )
 

@@ -95,19 +95,9 @@ namespace plan_delegator
             static const constexpr double MILLISECOND_TO_SECOND = 0.001;
 
             /**
-             * \brief TrafficIncidentParserNode constructor 
+             * \brief PlanDelegator constructor 
              */
             explicit PlanDelegator(const rclcpp::NodeOptions &);
-
-            /**
-             * \brief Initialize the plan delegator
-             */
-            void init();
-
-            /**
-             * \brief Run the spin loop of plan delegator
-             */
-            void run();
 
             /**
              * \brief Callback function of maneuver plan subscriber
@@ -130,13 +120,13 @@ namespace plan_delegator
              * \brief Example if a maneuver end time has passed current system time
              * \return if input maneuver is expires
              */
-            bool isManeuverExpired(const carma_planning_msgs::msg::Maneuver& maneuver) const;
+            bool isManeuverExpired(const carma_planning_msgs::msg::Maneuver& maneuver, rclcpp::Time current_time) const;
 
             /**
              * \brief Generate new PlanTrajecory service request based on current planning progress
-             * \return a PlanTrajectory object which is ready to be used in the following service call
+             * \return a PlanTrajectoryRequest which is ready to be used in the following service call
              */
-            carma_planning_msgs::srv::PlanTrajectory composePlanTrajectoryRequest(const carma_planning_msgs::msg::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const;
+            std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request> composePlanTrajectoryRequest(const carma_planning_msgs::msg::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const;
 
             /**
              * \brief Lookup transfrom from front bumper to base link
@@ -198,7 +188,7 @@ namespace plan_delegator
              * \brief Example if a maneuver plan contains at least one maneuver
              * \return if input maneuver plan is valid
              */
-            bool isManeuverPlanValid(carma_planning_msgs::msg::ManeuverPlan::UniquePtr maneuver_plan) const noexcept;
+            bool isManeuverPlanValid(const carma_planning_msgs::msg::ManeuverPlan& maneuver_plan) const noexcept;
 
             /**
              * \brief Example if a trajectory plan conbtains at least two trajectory points

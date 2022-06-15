@@ -51,19 +51,19 @@ target_link_libraries(${node_exec}
         ${node_lib}
 )
 
-# Testing
-#if(BUILD_TESTING)  
-#
-#  find_package(ament_lint_auto REQUIRED)
-#  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
-#
-#  ament_add_gtest(test_plan_delegator test/test_plan_delegator.cpp)
-#
-#  ament_target_dependencies(test_plan_delegator ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
-#
-#  target_link_libraries(test_plan_delegator ${node_lib})
-#
-#endif()
+#Testing
+if(BUILD_TESTING)  
+
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+
+  ament_add_gtest(test_plan_delegator test/test_plan_delegator.cpp)
+
+  ament_target_dependencies(test_plan_delegator ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+
+  target_link_libraries(test_plan_delegator ${node_lib})
+
+endif()
 
 # Install
 ament_auto_package(
