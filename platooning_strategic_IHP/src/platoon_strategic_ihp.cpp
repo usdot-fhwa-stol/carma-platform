@@ -715,11 +715,11 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("CTD calculated from ecef is: " << ctd);
 
         // If it comes from a member of an identified neighbor platoon, then
-        if (platoonId.compare(pm_.targetPlatoonID) == 0)
+        if (platoonId.compare(pm_.neighborPlatoonID) == 0)
         {
             ROS_DEBUG_STREAM("Incoming platoonID matches target platoon id");
             // // Update this member's status (or add if it's unknown to us)
-            // pm_.neighborMemberUpdates(vehicleID, platoonId, statusParams, dtd, ctd);
+            pm_.neighborMemberUpdates(vehicleID, platoonId, statusParams, dtd, ctd);
         }
 
         // else if this message is for our platoon then store its info
