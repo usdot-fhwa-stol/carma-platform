@@ -1741,6 +1741,7 @@ namespace platoon_strategic_ihp
                     pm_.platoonLeaderID = applicantId;
 
                     waitingStartTime = ros::Time::now().toNSec() / 1000000;
+                    pm_.current_plan.valid = false;
                     return MobilityRequestResponse::ACK;
                 }
                 else 
@@ -2010,6 +2011,7 @@ namespace platoon_strategic_ihp
             }
             // Store the leader ID as that of the joiner to allow run_leader_aborting to work correctly
             pm_.platoonLeaderID = msg.m_header.sender_id;
+            pm_.current_plan.valid = false;
             return MobilityRequestResponse::ACK;
         }
 
@@ -2660,6 +2662,7 @@ namespace platoon_strategic_ihp
 
     void PlatoonStrategicIHPPlugin::run_follower()
     {
+        ROS_DEBUG_STREAM("run follower");
         // This is a interrupted-safe loop.
         // This loop has four tasks:
         // 1. Check the state start time, if it exceeds a limit it will give up current plan and change back to leader state
@@ -2809,28 +2812,6 @@ namespace platoon_strategic_ihp
             //clear plan validity & end; leave platoon info alone, as we may still be leading a valid platoon
             pm_.clearActionPlan();
             return;
-        }
-
-        // Task 2: plan timeout, check if current plan is still valid (i.e., not timed out).
-        if (pm_.current_plan.valid)
-        {
-            ROS_DEBUG_STREAM("pm_.current_plan.planStartTime: " << pm_.current_plan.planStartTime);
-            ROS_DEBUG_STREAM("timeout2: " << tsStart - pm_.current_plan.planStartTime);
-            ROS_DEBUG_STREAM("NEGOTIATION_TIMEOUT: " << NEGOTIATION_TIMEOUT);
-            bool isPlanTimeout = tsStart - pm_.current_plan.planStartTime > NEGOTIATION_TIMEOUT;
-            if (isPlanTimeout) 
-            {
-                ROS_DEBUG_STREAM("The current plan did not receive any response. Abort and change to leader state.");
-                pm_.current_platoon_state = PlatoonState::LEADER;
-
-                // Clean out current plan, and platoon info if the joiner would only be the second member
-                pm_.clearActionPlan();
-                if (pm_.getHostPlatoonSize() == 2)
-                {
-                    pm_.resetHostPlatoon();
-                }
-                return;
-            } 
         }
 
         // Task 3: update plan: PLATOON_FRONT_JOIN with new gap
