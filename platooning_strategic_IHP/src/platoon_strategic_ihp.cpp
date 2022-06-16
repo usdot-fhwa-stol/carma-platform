@@ -2138,12 +2138,14 @@ namespace platoon_strategic_ihp
                     pm_.current_platoon_state = PlatoonState::FOLLOWER;
                     ROS_DEBUG_STREAM("pm_.currentPlatoonID: " << pm_.currentPlatoonID);
                     ROS_DEBUG_STREAM("pm_.targetPlatoonID: " << pm_.currentPlatoonID);
+
                     if (pm_.targetPlatoonID.compare(pm_.dummyID) != 0)
                     {
                         pm_.currentPlatoonID = pm_.targetPlatoonID;
                         ROS_DEBUG_STREAM("pm_.currentPlatoonID now: " << pm_.currentPlatoonID);
                         pm_.resetNeighborPlatoon();
                     }
+
                     pm_.changeFromLeaderToFollower(pm_.currentPlatoonID, msg.m_header.sender_id);
                     ROS_DEBUG_STREAM("The leader " << msg.m_header.sender_id << " agreed on our join. Change to follower state.");
                     ROS_WARN("changed to follower");
@@ -2444,7 +2446,6 @@ namespace platoon_strategic_ihp
             pm_.current_platoon_state = pm_.current_platoon_state = PlatoonState::LEADER;
             return;
         }
-
         // UCLA: Create Gap or perform a rear join (no gap creation necessary)
         ROS_DEBUG_STREAM("pm_.is_neighbor_record_complete_ " << pm_.is_neighbor_record_complete_);
         if (isCreatingGap  &&  pm_.is_neighbor_record_complete_)
@@ -2526,6 +2527,7 @@ namespace platoon_strategic_ihp
             pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
             candidatestateStartTime = ros::Time::now().toNSec() / 1000000;
             pm_.current_plan.valid = false; //but leave peerId intact for use in second request
+
         } 
 
         else
