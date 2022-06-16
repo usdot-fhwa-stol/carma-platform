@@ -107,7 +107,7 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('trajectory_executor', env_log_levels) }
                 ],
                 remappings = [
-                    ("trajectory", "trajectory_plan"),
+                    ("trajectory", "plan_trajectory"),
                 ],
                 parameters=[
                     trajectory_executor_param_file,
