@@ -2134,13 +2134,20 @@ namespace platoon_strategic_ihp
                     // The platoon manager also need to change the platoon Id to the one that the target leader is using 
                     pm_.current_platoon_state = PlatoonState::FOLLOWER;
                     ROS_DEBUG_STREAM("pm_.currentPlatoonID: " << pm_.currentPlatoonID);
+<<<<<<< HEAD
                     
+=======
+                    ROS_DEBUG_STREAM("pm_.targetPlatoonID: " << pm_.currentPlatoonID);
+>>>>>>> 448eca05297f3022d9a12092b3f66a505f6baf43
                     if (pm_.targetPlatoonID.compare(pm_.dummyID) != 0)
                     {
                         pm_.currentPlatoonID = pm_.targetPlatoonID;
                         ROS_DEBUG_STREAM("pm_.currentPlatoonID now: " << pm_.currentPlatoonID);
                     }
+<<<<<<< HEAD
                     
+=======
+>>>>>>> 448eca05297f3022d9a12092b3f66a505f6baf43
                     pm_.changeFromLeaderToFollower(pm_.currentPlatoonID, msg.m_header.sender_id);
                     ROS_DEBUG_STREAM("The leader " << msg.m_header.sender_id << " agreed on our join. Change to follower state.");
                     ROS_WARN("changed to follower");
@@ -2522,7 +2529,11 @@ namespace platoon_strategic_ihp
             pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
             candidatestateStartTime = ros::Time::now().toNSec() / 1000000;
             pm_.current_plan.valid = false; //but leave peerId intact for use in second request
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 448eca05297f3022d9a12092b3f66a505f6baf43
         } 
 
         else
