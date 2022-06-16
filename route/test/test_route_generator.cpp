@@ -441,13 +441,13 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     cav_srvs::GetAvailableRoutesRequest req;
     cav_srvs::GetAvailableRoutesResponse resp;
     ASSERT_TRUE(worker.get_available_route_cb(req, resp));
-    ASSERT_EQ(5, resp.availableRoutes.size());
+    ASSERT_EQ(5, resp.available_routes.size());
 
-    for(auto i = 0; i < resp.availableRoutes.size();i++)    
+    for(auto i = 0; i < resp.available_routes.size();i++)    
     {
-        if(resp.availableRoutes[i].route_id  == "Test_town01_route_1")
+        if(resp.available_routes[i].route_id  == "Test_town01_route_1")
         {
-            ASSERT_EQ("DEST3", resp.availableRoutes[i].route_name);
+            ASSERT_EQ("DEST3", resp.available_routes[i].route_name);
             auto gps_points = worker.load_route_destination_gps_points_from_route_id("Test_town01_route_1");
             auto map_points = worker.load_route_destinations_in_map_frame(gps_points);
 
@@ -468,15 +468,15 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
 
     cav_srvs::SetActiveRouteRequest req2;
     cav_srvs::SetActiveRouteResponse resp2;
-    for(auto i: resp.availableRoutes)
+    for(auto i: resp.available_routes)
     {
         if(i.route_id  == "Test_town01_route_1")
         {
-            req2.routeID = i.route_id;
+            req2.route_id = i.route_id;
             req2.choice = cav_srvs::SetActiveRouteRequest::ROUTE_ID;
             ASSERT_EQ(worker.set_active_route_cb(req2, resp2), true);
             // TODO: temporarily disabled since map isnt loaded properly
-            // ASSERT_EQ(resp2.errorStatus, cav_srvs::SetActiveRouteResponse::NO_ERROR);
+            // ASSERT_EQ(resp2.error_status, cav_srvs::SetActiveRouteResponse::NO_ERROR);
         }
     }
 
@@ -503,7 +503,7 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
 
     ASSERT_EQ(worker2.set_active_route_cb(req4, resp4), true);
     // TODO: temporarily disabled since map isnt loaded properly
-    // ASSERT_EQ(resp4.errorStatus, cav_srvs::SetActiveRouteResponse::NO_ERROR);
+    // ASSERT_EQ(resp4.error_status, cav_srvs::SetActiveRouteResponse::NO_ERROR);
 }
 
 TEST(RouteGeneratorTest, test_duplicate_lanelets_in_shortest_path)

@@ -174,11 +174,19 @@ namespace platoon_strategic_ihp
         boost::algorithm::split(cur_parsed, inputsParams[1], boost::is_any_of(":"));
         double curSpeed = std::stod(cur_parsed[1]);
 
-        if (targetPlatoonID == platoonId)
+        if (neighborPlatoonID == platoonId)
         {
-            ROS_DEBUG_STREAM("This STATUS messages is from the target platoon. Updating the info...");
             updatesOrAddMemberInfo(neighbor_platoon_, senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
+            ROS_DEBUG_STREAM("This STATUS messages is from the target platoon. Updating the info...");
             ROS_DEBUG_STREAM("The first vehicle in that platoon is now " << neighbor_platoon_[0].staticId);
+
+            // If we have data on all members of a neighboring platoon, set a complete record flag
+            if (neighbor_platoon_info_size_ > 1  &&
+                neighbor_platoon_.size() == neighbor_platoon_info_size_)
+            {
+                is_neighbor_record_complete_ = true;
+                ROS_DEBUG_STREAM("Neighbor record is complete!");
+            }
         } 
         else //sender is in a different platoon
         {
@@ -306,7 +314,7 @@ namespace platoon_strategic_ihp
     {
         neighbor_platoon_.clear();
         neighbor_platoon_info_size_ = 0;
-        targetPlatoonID = dummyID;
+        neighborPlatoonID = dummyID;
         neighbor_platoon_leader_id_ = dummyID;
         is_neighbor_record_complete_ = false;
     }
@@ -909,13 +917,17 @@ namespace platoon_strategic_ihp
         */
 
         double min_diff = 99999.0;
-        int cut_in_index = -2; //-2 is meaningless default
+        int cut_in_index = -1; //-2 is meaningless default
+
+        ROS_DEBUG_STREAM("neighbor_platoon_.size(): " << neighbor_platoon_.size());
 
         // Loop through all target platoon members  
         for(size_t i = 0; i < neighbor_platoon_.size(); i++) 
         {
             double current_member_dtd = neighbor_platoon_[i].vehiclePosition; 
+            ROS_DEBUG_STREAM("current_member_dtd: "<< current_member_dtd);
             double curent_dtd_diff = current_member_dtd - joinerDtD;
+            ROS_DEBUG_STREAM("curent_dtd_diff: "<< curent_dtd_diff);
             // update min index
             if (curent_dtd_diff > 0 && curent_dtd_diff < min_diff)
             {

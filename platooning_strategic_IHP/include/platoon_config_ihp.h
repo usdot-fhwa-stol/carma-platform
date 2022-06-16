@@ -42,7 +42,7 @@ struct PlatoonPluginConfig
   double longitudinalCheckThresold      = 85.0;    // m
   double desiredJoinTimeGap             = 4.0;     // s
   double desiredJoinGap                 = 30.0;    // m
-  int    maxLeaderAbortingCalls         = 4;       // counter
+  int    maxLeaderAbortingCalls         = 2;       // counter
   double waitingStateTimeout            = 25.0;    // s
   double cmdSpeedMaxAdjustment          = 10.0;    // m/s
     
@@ -79,9 +79,12 @@ struct PlatoonPluginConfig
   bool test_front_join = false;  //Flag to enable/disable front join functionality with two vehicles.
                                 // Flag can be set to true, to test front join functionality with two vehicles
                                 // But in normal operating conditions it should be set to false
+  bool test_cutin_join = false; //Flag to enable/disable front/rear cutin join functionality with only 2 vehicles
+                                //Normal operations it should be false, but true allows a cutin to a single-car platoon
   //------------------------------------------------------------------------------------------------
   bool allowCutinJoin = true;    //Flag to enable/disable cut-in joins
   double significantDTDchange = 0.2;   // Ratio of dtd that is considered a significant change and triggers a new sort of platoon vector
+  int join_index = -1;            // target join index for cut-in join - used for testing purposes. -1: front cutin join, target_platoon.size()-1: cut-in rear
 
 
   friend std::ostream& operator<<(std::ostream& output, const PlatoonPluginConfig& c)
@@ -110,6 +113,7 @@ struct PlatoonPluginConfig
           << "minPlatooningSpeed: " << c.minPlatooningSpeed << std::endl
           << "allowCutinJoin: " << c.allowCutinJoin << std::endl
           << "significantDTDchange: " << c.significantDTDchange << std::endl
+          << "join_index: " << c.join_index << std::endl
           << "}" << std::endl;
     return output;
   }

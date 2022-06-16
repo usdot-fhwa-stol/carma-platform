@@ -127,7 +127,7 @@ namespace port_drayage_plugin
 
     bool PortDrayagePlugin::call_set_active_route_client(cav_srvs::SetActiveRoute req){
         if(_set_active_route_client.call(req)){
-            if(req.response.errorStatus == cav_srvs::SetActiveRouteResponse::NO_ERROR){
+            if(req.response.error_status == cav_srvs::SetActiveRouteResponse::NO_ERROR){
                 ROS_DEBUG_STREAM("Route Generation succeeded for Set Active Route service call.");
                 return true;
             }
