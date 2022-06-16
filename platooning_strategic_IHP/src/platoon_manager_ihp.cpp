@@ -174,11 +174,19 @@ namespace platoon_strategic_ihp
         boost::algorithm::split(cur_parsed, inputsParams[1], boost::is_any_of(":"));
         double curSpeed = std::stod(cur_parsed[1]);
 
-        if (targetPlatoonID == platoonId)
+        if (neighborPlatoonID == platoonId)
         {
-            ROS_DEBUG_STREAM("This STATUS messages is from the target platoon. Updating the info...");
             updatesOrAddMemberInfo(neighbor_platoon_, senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
+            ROS_DEBUG_STREAM("This STATUS messages is from the target platoon. Updating the info...");
             ROS_DEBUG_STREAM("The first vehicle in that platoon is now " << neighbor_platoon_[0].staticId);
+
+            // If we have data on all members of a neighboring platoon, set a complete record flag
+            if (neighbor_platoon_info_size_ > 1  &&
+                neighbor_platoon_.size() == neighbor_platoon_info_size_)
+            {
+                is_neighbor_record_complete_ = true;
+                ROS_DEBUG_STREAM("Neighbor record is complete!");
+            }
         } 
         else //sender is in a different platoon
         {
@@ -306,7 +314,7 @@ namespace platoon_strategic_ihp
     {
         neighbor_platoon_.clear();
         neighbor_platoon_info_size_ = 0;
-        targetPlatoonID = dummyID;
+        neighborPlatoonID = dummyID;
         neighbor_platoon_leader_id_ = dummyID;
         is_neighbor_record_complete_ = false;
     }
