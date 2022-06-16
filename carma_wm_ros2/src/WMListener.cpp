@@ -50,6 +50,9 @@ WMListener::WMListener(
   config_speed_limit_param = node_params_->get_parameter("config_speed_limit");
   participant_param = node_params_->get_parameter("vehicle_participant_type");
 
+  RCLCPP_INFO_STREAM(node_logging->get_logger(), "Loaded config speed limit: " << config_speed_limit_param.as_double());
+  RCLCPP_INFO_STREAM(node_logging->get_logger(), "Loaded vehicle participant type: " << participant_param.as_string());
+
   setConfigSpeedLimit(config_speed_limit_param.as_double());
   worker_->setVehicleParticipationType(participant_param.as_string());
 
