@@ -51,7 +51,7 @@ WMListener::WMListener(
   participant_param_value = node_params_->get_parameter("vehicle_participant_type");
 
   setConfigSpeedLimit(config_speed_limit_param.as_double());
-  worker_->setVehicleParticipationType(participant_param_value.as_string());
+  worker_->setVehicleParticipationType(participant_param.as_string());
 
   rclcpp::SubscriptionOptions map_update_options;
   rclcpp::SubscriptionOptions map_options;
