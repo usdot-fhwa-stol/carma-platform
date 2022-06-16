@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -51,7 +51,7 @@ namespace arbitrator
              * \param plans The plans to evaluate as (plan, cot ) pairs
              * \return The sorted list of up to size beam_width
              */
-            std::vector<std::pair<cav_msgs::ManeuverPlan, double>> prioritize_plans(std::vector<std::pair<cav_msgs::ManeuverPlan, double>> plans) const;
+            std::vector<std::pair<carma_planning_msgs::msg::ManeuverPlan, double>> prioritize_plans(std::vector<std::pair<carma_planning_msgs::msg::ManeuverPlan, double>> plans) const;
         private:
             int beam_width_;
     };

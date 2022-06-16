@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,14 +48,14 @@ namespace arbitrator
              * \param plan The plan to evaluate
              * \return double The total cost divided by the total distance of the plan
              */
-            double compute_total_cost(const cav_msgs::ManeuverPlan& plan);
+            double compute_total_cost(const carma_planning_msgs::msg::ManeuverPlan& plan);
 
             /**
              * \brief Compute the unit cost over distance of a given maneuver plan
              * \param plan The plan to evaluate
              * \return double The total cost divided by the total distance of the plan
              */
-            double compute_cost_per_unit_distance(const cav_msgs::ManeuverPlan& plan);
+            double compute_cost_per_unit_distance(const carma_planning_msgs::msg::ManeuverPlan& plan);
         private:
             std::map<std::string, double> plugin_costs_;
     };

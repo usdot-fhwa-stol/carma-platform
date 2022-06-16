@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,12 +13,12 @@
  * the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <memory>
 #include <map>
 #include <string>
-#include <carma_wm/WorldModel.h>
-#include <carma_wm/WMListener.h>
+#include <carma_wm_ros2/WorldModel.h>
+#include <carma_wm_ros2/WMListener.h>
 #include "arbitrator.hpp"
 #include "arbitrator_state_machine.hpp"
 #include "cost_system_cost_function.hpp"

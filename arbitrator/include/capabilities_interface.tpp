@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@
 #include <map>
 #include <string>
 #include <functional>
-#include <cav_srvs/PlanManeuvers.h>
+#include <carma_planning_msgs/srv/PlanManeuvers.h[[]]>
 
 namespace arbitrator 
 {
@@ -32,7 +32,7 @@ namespace arbitrator
         std::map<std::string, MSrv> responses;
         for (auto i = topics.begin(); i != topics.end(); i++) 
         {
-            ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PlanManeuvers>(*i);
+            ros::ServiceClient sc = nh_->serviceClient<carma_planning_msgs::srv::PlanManeuvers>(*i);
             ROS_DEBUG_STREAM("found client: " << *i);
             if (sc.call(msg)) {
                 responses.emplace(*i, msg);

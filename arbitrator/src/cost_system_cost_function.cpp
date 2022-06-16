@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,19 +16,19 @@
 
 #include "cost_system_cost_function.hpp"
 #include "arbitrator_utils.hpp"
-#include "cav_srvs/ComputePlanCost.h"
-#include "cav_msgs/ManeuverParameters.h"
+#include "carma_planning_msgs/srv/ComputePlanCost.hpp"
+#include "carma_planning_msgs/msg/ManeuverParameters.hpp"
 #include <limits>
 
 namespace arbitrator
 {
     void CostSystemCostFunction::init(ros::NodeHandle &nh)
     {
-        cost_system_sc_ = nh.serviceClient<cav_srvs::ComputePlanCost>("compute_plan_cost");
+        cost_system_sc_ = nh.serviceClient<carma_planning_msgs::srv::ComputePlanCost>("compute_plan_cost");
         initialized_ = true;
     }
 
-    double CostSystemCostFunction::compute_total_cost(const cav_msgs::ManeuverPlan& plan)
+    double CostSystemCostFunction::compute_total_cost(const carma_planning_msgs::msg::ManeuverPlan& plan)
     {
         if (!initialized_) {
             throw std::logic_error("Attempt to use CostSystemCostFunction before initialization.");
@@ -36,7 +36,7 @@ namespace arbitrator
 
         double total_cost = std::numeric_limits<double>::infinity();
 
-        cav_srvs::ComputePlanCost service_message;
+        carma_planning_msgs::srv::ComputePlanCost service_message;
         service_message.request.maneuver_plan = plan;
 
         if (cost_system_sc_.call(service_message)){
@@ -48,7 +48,7 @@ namespace arbitrator
         return total_cost;
     }
 
-    double CostSystemCostFunction::compute_cost_per_unit_distance(const cav_msgs::ManeuverPlan& plan)
+    double CostSystemCostFunction::compute_cost_per_unit_distance(const carma_planning_msgs::msg::ManeuverPlan& plan)
     {
         double plan_dist = arbitrator_utils::get_plan_end_distance(plan) - arbitrator_utils::get_plan_start_distance(plan);
         return compute_total_cost(plan) / plan_dist;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,15 +19,15 @@
 
 #include "capabilities_interface.hpp"
 #include "plugin_neighbor_generator.hpp"
-#include <cav_srvs/PlanManeuvers.h>
+#include <carma_planning_msgs/srv/PlanManeuvers.hpp>
 #include <map>
 
 namespace arbitrator
 {
     template <class T>
-    std::vector<cav_msgs::ManeuverPlan> PluginNeighborGenerator<T>::generate_neighbors(cav_msgs::ManeuverPlan plan, const VehicleState& initial_state) const
+    std::vector<carma_planning_msgs::msg::ManeuverPlan> PluginNeighborGenerator<T>::generate_neighbors(carma_planning_msgs::msg::ManeuverPlan plan, const VehicleState& initial_state) const
     {
-        cav_srvs::PlanManeuvers msg;
+        carma_planning_msgs::srv::PlanManeuvers msg;
         // Set prior plan
         msg.request.prior_plan = plan;
 
@@ -40,10 +40,10 @@ namespace arbitrator
         msg.request.veh_logitudinal_velocity = initial_state.velocity;
         msg.request.veh_lane_id = std::to_string(initial_state.lane_id);
 
-        std::map<std::string, cav_srvs::PlanManeuvers> res = ci_.multiplex_service_call_for_capability(CapabilitiesInterface::STRATEGIC_PLAN_CAPABILITY, msg);
+        std::map<std::string, carma_planning_msgs::srv::PlanManeuvers> res = ci_.multiplex_service_call_for_capability(CapabilitiesInterface::STRATEGIC_PLAN_CAPABILITY, msg);
 
         // Convert map to vector of map values
-        std::vector<cav_msgs::ManeuverPlan> out;
+        std::vector<carma_planning_msgs::msg::ManeuverPlan> out;
         for (auto it = res.begin(); it != res.end(); it++)
         {
             ROS_DEBUG_STREAM("Pushing response of child: " << it->first << ", which had mvr size: " << it->second.response.new_plan.maneuvers.size());

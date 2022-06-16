@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,9 +15,9 @@
  */
 
 #include "test_utils.h"
-#include <cav_msgs/ManeuverPlan.h>
-#include <cav_srvs/PlanManeuvers.h>
-#include <gmock/gmock.h>
+#include <carma_planning_msgs/msg/ManeuverPlan.hpp>
+#include <carma_planning_msgs/srv/PlanManeuvers.hpp>
+#include <gtest/gtest.h>
 #include "plugin_neighbor_generator.hpp"
 
 namespace arbitrator
@@ -25,8 +25,8 @@ namespace arbitrator
     class MockCapabilitiesInterface 
     {
         public:
-            using PluginResponses = std::map<std::string, cav_srvs::PlanManeuvers>;
-            MOCK_METHOD2(get_plans, PluginResponses(std::string, cav_srvs::PlanManeuvers));
+            using PluginResponses = std::map<std::string, carma_planning_msgs::srv::PlanManeuvers>;
+            MOCK_METHOD2(get_plans, PluginResponses(std::string, carma_planning_msgs::srv::PlanManeuvers));
             MOCK_METHOD1(get_topics_for_capability, std::vector<std::string>(const std::string&));
 
             template<typename MSrv>
@@ -36,10 +36,10 @@ namespace arbitrator
     };
 
     template<>
-    std::map<std::string, cav_srvs::PlanManeuvers> 
+    std::map<std::string, carma_planning_msgs::srv::PlanManeuvers> 
     MockCapabilitiesInterface::multiplex_service_call_for_capability(
         std::string query_string, 
-        cav_srvs::PlanManeuvers msg)
+        carma_planning_msgs::srv::PlanManeuvers msg)
     {
         return get_plans(query_string, msg);
     }
@@ -65,11 +65,11 @@ namespace arbitrator
             get_plans(::testing::_, ::testing::_))
             .WillRepeatedly(
                 ::testing::Return(
-                    std::map<std::string, cav_srvs::PlanManeuvers>()));
+                    std::map<std::string, carma_planning_msgs::srv::PlanManeuvers>()));
 
-        cav_msgs::ManeuverPlan plan;
+        carma_planning_msgs::msg::ManeuverPlan plan;
         VehicleState vs;
-        std::vector<cav_msgs::ManeuverPlan> plans = png.generate_neighbors(plan, vs);
+        std::vector<carma_planning_msgs::msg::ManeuverPlan> plans = png.generate_neighbors(plan, vs);
 
         ASSERT_EQ(0, plans.size());
         ASSERT_TRUE(plans.empty());
@@ -77,8 +77,8 @@ namespace arbitrator
 
     TEST_F(PluginNeighborGeneratorTest, testGetNeighbors2)
     {
-        std::map<std::string, cav_srvs::PlanManeuvers> responses;
-        cav_srvs::PlanManeuvers resp1, resp2, resp3;
+        std::map<std::string, carma_planning_msgs::srv::PlanManeuvers> responses;
+        carma_planning_msgs::srv::PlanManeuvers resp1, resp2, resp3;
         resp1.response.new_plan.maneuver_plan_id.push_back(0);
         resp2.response.new_plan.maneuver_plan_id.push_back(1);
         resp3.response.new_plan.maneuver_plan_id.push_back(2);
@@ -92,9 +92,9 @@ namespace arbitrator
                 ::testing::Return(
                     responses));
 
-        cav_msgs::ManeuverPlan plan;
+        carma_planning_msgs::msg::ManeuverPlan plan;
         VehicleState vs;
-        std::vector<cav_msgs::ManeuverPlan> plans = png.generate_neighbors(plan, vs);
+        std::vector<carma_planning_msgs::msg::ManeuverPlan> plans = png.generate_neighbors(plan, vs);
 
         ASSERT_FALSE(plans.empty());
         ASSERT_EQ(3, plans.size());

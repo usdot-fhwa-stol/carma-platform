@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,7 +50,7 @@ namespace arbitrator
              * \param initial_state The initial state of the vehicle at the start of plan. This will be provided to planners for specific use when plan is empty
              * \return A list of subsequent plans building on top of the input plan
              */
-            std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan, const VehicleState& initial_state) const;
+            std::vector<carma_planning_msgs::msg::ManeuverPlan> generate_neighbors(carma_planning_msgs::msg::ManeuverPlan plan, const VehicleState& initial_state) const;
         private:
             T &ci_;
     };

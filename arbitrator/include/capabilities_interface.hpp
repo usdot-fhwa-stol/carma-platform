@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,14 +17,14 @@
 #ifndef __ARBITRATOR_INCLUDE_CAPABILITIES_INTERFACE_HPP__
 #define __ARBITRATOR_INCLUDE_CAPABILITIES_INTERFACE_HPP__
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <vector>
 #include <map>
 #include <unordered_set>
 #include <string>
-#include <cav_srvs/PluginList.h>
-#include <cav_srvs/GetPluginApi.h>
+#include <carma_planning_msgs/srv/PluginList.hpp>
+#include <carma_planning_msgs/srv/GetPluginApi.hpp>
 
 namespace arbitrator
 {
@@ -40,7 +40,7 @@ namespace arbitrator
              * \param nh A publically addressesed ("/") ros::NodeHandle
              */
             CapabilitiesInterface(ros::NodeHandle *nh): nh_(nh) {
-                sc_s = nh_->serviceClient<cav_srvs::GetPluginApi>("plugins/get_strategic_plugin_by_capability");
+                sc_s = nh_->serviceClient<carma_planning_msgs::srv::GetPluginApi>("plugins/get_strategic_plugin_by_capability");
             };
 
             /**

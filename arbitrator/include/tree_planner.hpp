@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@
 #define __ARBITRATOR_INCLUDE_TREE_PLANNER_HPP__
 
 #include <memory>
-#include <cav_msgs/ManeuverPlan.h>
+#include <carma_planning_msgs/msg/ManeuverPlan.hpp>
 #include "planning_strategy.hpp"
 #include "cost_function.hpp"
 #include "neighbor_generator.hpp"
@@ -61,7 +61,7 @@ namespace arbitrator
              * 
              * \param start_state The starting state of the vehicle to plan for
              */
-            cav_msgs::ManeuverPlan generate_plan(const VehicleState& start_state);
+            carma_planning_msgs::msg::ManeuverPlan generate_plan(const VehicleState& start_state);
         protected:
             CostFunction &cost_function_;
             NeighborGenerator &neighbor_generator_;

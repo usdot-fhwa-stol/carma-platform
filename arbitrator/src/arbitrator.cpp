@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,10 @@
  */
 
 #include "arbitrator.hpp"
-#include <cav_msgs/ManeuverPlan.h>
-#include <cav_srvs/PlanManeuvers.h>
+#include <carma_planning_msgs/msg/ManeuverPlan.hpp>
+#include <carma_planning_msgs/srv/PlanManeuvers.hpp>
 #include "arbitrator_utils.hpp"
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <exception>
 #include <cstdlib>
 
@@ -59,24 +59,24 @@ namespace arbitrator
         }
     }
     
-    void Arbitrator::guidance_state_cb(const cav_msgs::GuidanceState::ConstPtr& msg) 
+    void Arbitrator::guidance_state_cb(const carma_planning_msgs::msg::GuidanceState::ConstPtr& msg) 
     {
         switch (msg->state)
         {
-            case cav_msgs::GuidanceState::STARTUP:
+            case carma_planning_msgs::msg::GuidanceState::STARTUP:
                 // NO-OP
                 break;
-            case cav_msgs::GuidanceState::DRIVERS_READY:
+            case carma_planning_msgs::msg::GuidanceState::DRIVERS_READY:
                 if(sm_->get_state() == ArbitratorState::PLANNING || sm_->get_state() == ArbitratorState::WAITING)
                 {
                     ROS_INFO("Received notice that guidance has been restarted, pausing arbitrator.");
                     sm_->submit_event(ArbitratorEvent::ARBITRATOR_PAUSED);
                 }
                 break;
-            case cav_msgs::GuidanceState::ACTIVE:
+            case carma_planning_msgs::msg::GuidanceState::ACTIVE:
                 // NO-OP
                 break;
-            case cav_msgs::GuidanceState::ENGAGED:
+            case carma_planning_msgs::msg::GuidanceState::ENGAGED:
                 ROS_INFO("Received notice that guidance has been engaged!");
                 if (sm_->get_state() == ArbitratorState::INITIAL) {
                     sm_->submit_event(ArbitratorEvent::SYSTEM_STARTUP_COMPLETE);
@@ -84,11 +84,11 @@ namespace arbitrator
                     sm_->submit_event(ArbitratorEvent::ARBITRATOR_RESUMED);
                 }
                 break;
-            case cav_msgs::GuidanceState::INACTIVE:
+            case carma_planning_msgs::msg::GuidanceState::INACTIVE:
                 ROS_INFO("Received notice that guidance has been disengaged, pausing arbitrator.");
                 sm_->submit_event(ArbitratorEvent::ARBITRATOR_PAUSED);
                 break;
-            case cav_msgs::GuidanceState::SHUTDOWN:
+            case carma_planning_msgs::msg::GuidanceState::SHUTDOWN:
                 ROS_INFO("Received notice that guidance has been shutdown, shutting down arbitrator.");
                 sm_->submit_event(ArbitratorEvent::SYSTEM_SHUTDOWN_INITIATED);
                 break;
@@ -102,8 +102,8 @@ namespace arbitrator
         if(!initialized_)
         {   
             ROS_INFO("Arbitrator initializing on first initial state spin...");
-            final_plan_pub_ = nh_->advertise<cav_msgs::ManeuverPlan>("final_maneuver_plan", 5);
-            guidance_state_sub_ = nh_->subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &Arbitrator::guidance_state_cb, this);
+            final_plan_pub_ = nh_->advertise<carma_planning_msgs::msg::ManeuverPlan>("final_maneuver_plan", 5);
+            guidance_state_sub_ = nh_->subscribe<carma_planning_msgs::msg::GuidanceState>("guidance_state", 5, &Arbitrator::guidance_state_cb, this);
             initialized_ = true;
             // TODO: load plan duration from parameters file
         }
@@ -115,7 +115,7 @@ namespace arbitrator
     {
         ROS_INFO("Aribtrator beginning planning process!");
         ros::Time planning_process_start = ros::Time::now();
-        cav_msgs::ManeuverPlan plan = planning_strategy_.generate_plan(vehicle_state_);
+        carma_planning_msgs::msg::ManeuverPlan plan = planning_strategy_.generate_plan(vehicle_state_);
         if (!plan.maneuvers.empty()) 
         {
             ros::Time plan_end_time = arbitrator_utils::get_plan_end_time(plan);

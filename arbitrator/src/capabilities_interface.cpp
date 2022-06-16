@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 
 #include "capabilities_interface.hpp"
-#include <cav_srvs/PlanManeuvers.h>
+#include <carma_planning_msgs/srv/PlanManeuvers.hpp>
 #include <exception>
 #include <sstream>
 
@@ -27,7 +27,7 @@ namespace arbitrator
     {
         std::vector<std::string> topics = {};
 
-        cav_srvs::GetPluginApi srv;
+        carma_planning_msgs::srv::GetPluginApi srv;
         srv.request.capability = "";
 
         if (query_string == STRATEGIC_PLAN_CAPABILITY && sc_s.call(srv))

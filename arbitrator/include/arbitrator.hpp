@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,16 +17,16 @@
 #ifndef __ARBITRATOR_INCLUDE_ARBITRATOR_HPP__
 #define __ARBITRATOR_INCLUDE_ARBITRATOR_HPP__
 
-#include <ros/ros.h>
-#include <carma_utils/CARMAUtils.h>
+#include <rclcpp/rclcpp.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include "arbitrator_state_machine.hpp"
 #include "planning_strategy.hpp"
 #include "capabilities_interface.hpp"
-#include <cav_msgs/GuidanceState.h>
+#include <carma_planning_msgs/msg/guidance_state.hpp>
 #include "vehicle_state.hpp"
-#include <carma_wm/WorldModel.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
+#include <carma_wm_ros2/WorldModel.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -127,7 +127,7 @@ namespace arbitrator
              * \brief Callback for receiving Guidance state machine updates
              * \param msg The new GuidanceState message
              */
-            void guidance_state_cb(const cav_msgs::GuidanceState::ConstPtr& msg);
+            void guidance_state_cb(const carma_planning_msgs::msg::GuidanceState::ConstPtr& msg);
 
         private:
             

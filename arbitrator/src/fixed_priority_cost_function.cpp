@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,8 @@
 
 #include "fixed_priority_cost_function.hpp"
 #include "arbitrator_utils.hpp"
-#include "cav_msgs/ManeuverParameters.h"
-#include <ros/ros.h>
+#include "carma_planning_msgs/msg/ManeuverParameters.hpp"
+#include <rclcpp/rclcpp.hpp>
 #include <limits>
 
 namespace arbitrator
@@ -42,7 +42,7 @@ namespace arbitrator
         }
     }
 
-    double FixedPriorityCostFunction::compute_total_cost(const cav_msgs::ManeuverPlan& plan) 
+    double FixedPriorityCostFunction::compute_total_cost(const carma_planning_msgs::msg::ManeuverPlan& plan) 
     {
         double total_cost = 0.0;
         for (auto it = plan.maneuvers.begin(); it != plan.maneuvers.end(); it++)
@@ -55,7 +55,7 @@ namespace arbitrator
         return total_cost;
     }
 
-    double FixedPriorityCostFunction::compute_cost_per_unit_distance(const cav_msgs::ManeuverPlan& plan)
+    double FixedPriorityCostFunction::compute_cost_per_unit_distance(const carma_planning_msgs::msg::ManeuverPlan& plan)
     {
         double plan_dist = arbitrator_utils::get_plan_end_distance(plan) - arbitrator_utils::get_plan_start_distance(plan);
         return compute_total_cost(plan) / plan_dist;
