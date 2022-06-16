@@ -331,6 +331,7 @@ namespace platoon_strategic_ihp
 
         /**
          * \brief UCLA: Return joiner's desired position in terms of target platoon index to cut into the platoon. 
+         *        CAUTION: ASSUMES that the neighbor platoon info is fully populated!
          * 
          * \param joinerDtD: The current downtrack distance (with regards to host vehicle) of the joiner vehicle.
          * 
@@ -340,7 +341,8 @@ namespace platoon_strategic_ihp
 
         /**
          * \brief UCLA: Return the current actual gap size in the target platoon for cut-in join, in m.
-         *        Note: The origin of the vehicle (for downtrack distance calculation) is located at the rear axle. 
+         *        Note: The origin of the vehicle (for downtrack distance calculation) is located at the rear axle.
+         *        CAUTION: ASSUMES that the neighbor platoon info is fully populated!
          * 
          * \param gap_leading_index: The platoon index of the  gap-leading vehicle. 
          * \param joinerDtD: The current downtrack distance (with regards to host vehicle route) of the joiner vehicle.
@@ -381,7 +383,9 @@ namespace platoon_strategic_ihp
         size_t neighbor_platoon_info_size_ = 0;
 
         // Platoon ID of the neighboring platoon
-        std::string targetPlatoonID = dummyID;  //ID of a real platoon that we may be attempting to join (dummy if neighbor is a solo vehicle)
+        std::string targetPlatoonID = dummyID;  //ID of a real platoon that we may be attempting to join
+
+        std::string neighborPlatoonID = dummyID;  //ID of the neighbor platoon that we may be attempting to join (dummy if neighbor is a solo vehicle)
 
         // Vehicle ID of the neighbor platoon's leader
         std::string neighbor_platoon_leader_id_ = dummyID; //dummy indicates unknown
