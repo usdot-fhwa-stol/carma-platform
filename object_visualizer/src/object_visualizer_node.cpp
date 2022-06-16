@@ -93,7 +93,12 @@ namespace object_visualizer
     }
 
     visualization_msgs::msg::MarkerArray viz_msg;
-    viz_msg.markers.reserve(msg->objects.size());
+    //delete all markers before adding new ones
+    visualization_msgs::msg::Marker marker;
+    viz_msg.markers.reserve(msg->objects.size() + 1); //+1 to account for delete all marker
+    marker.id = 0;
+    marker.action = visualization_msgs::msg::Marker::DELETEALL;
+    viz_msg.markers.push_back(marker);
 
     
     size_t id = 0; // We always count the id from zero so we can delete markers later in a consistent manner
@@ -170,8 +175,12 @@ namespace object_visualizer
     }
 
     visualization_msgs::msg::MarkerArray viz_msg;
-
-    viz_msg.markers.reserve(msg->roadway_obstacles.size());
+    //delete all markers before adding new ones
+    visualization_msgs::msg::Marker marker;
+    viz_msg.markers.reserve(msg->roadway_obstacles.size() + 1); //+1 to account for delete all marker
+    marker.id = 0;
+    marker.action = visualization_msgs::msg::Marker::DELETEALL;
+    viz_msg.markers.push_back(marker);
 
     size_t id = 0; // We always count the id from zero so we can delete markers later in a consistent manner
     for (auto obj : msg->roadway_obstacles) {
