@@ -127,6 +127,7 @@ def generate_launch_description():
                 launch_arguments = { 
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
                     'vehicle_config_param_file' : vehicle_config_param_file,
+                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file
                     }.items()
             ),
         ]
