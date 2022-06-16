@@ -48,7 +48,7 @@ WMListener::WMListener(
   
   // Get params
   config_speed_limit_param = node_params_->get_parameter("config_speed_limit");
-  participant_param_value = node_params_->get_parameter("vehicle_participant_type");
+  participant_param = node_params_->get_parameter("vehicle_participant_type");
 
   setConfigSpeedLimit(config_speed_limit_param.as_double());
   worker_->setVehicleParticipationType(participant_param.as_string());
