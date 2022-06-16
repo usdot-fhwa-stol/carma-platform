@@ -2139,6 +2139,7 @@ namespace platoon_strategic_ihp
                     {
                         pm_.currentPlatoonID = pm_.targetPlatoonID;
                         ROS_DEBUG_STREAM("pm_.currentPlatoonID now: " << pm_.currentPlatoonID);
+                        pm_.resetNeighborPlatoon();
                     }
                     pm_.changeFromLeaderToFollower(pm_.currentPlatoonID, msg.m_header.sender_id);
                     ROS_DEBUG_STREAM("The leader " << msg.m_header.sender_id << " agreed on our join. Change to follower state.");
@@ -2160,7 +2161,6 @@ namespace platoon_strategic_ihp
                     }
                 }
 
-                // Clear our current join plan either way
             }
             else
             {
@@ -2435,11 +2435,12 @@ namespace platoon_strategic_ihp
         if (!msg.is_accepted)
         {
             ROS_DEBUG_STREAM("Request " << msg.m_header.plan_id << " was rejected by leader.");
-            pm_.current_platoon_state = PlatoonState::LEADER;
+            ROS_DEBUG_STREAM("Action Plan reset.");
+            ROS_DEBUG_STREAM("Trying again....");
+            pm_.current_plan.valid = false;
             return;
         }
-        // TODO temporary
-        // pm_.is_neighbor_record_complete_ = true;
+
         // UCLA: Create Gap or perform a rear join (no gap creation necessary)
         ROS_DEBUG_STREAM("pm_.is_neighbor_record_complete_ " << pm_.is_neighbor_record_complete_);
         if (isCreatingGap  &&  pm_.is_neighbor_record_complete_)
@@ -2732,7 +2733,8 @@ namespace platoon_strategic_ihp
         // Task 3: update plan calculate gap, update plan: send PLATOON_FOLLOWER_JOIN request with new gap
         double desiredJoinGap2 = config_.desiredJoinTimeGap * current_speed_;
         double maxJoinGap = std::max(config_.desiredJoinGap, desiredJoinGap2);
-        double currentGap = pm_.getDistanceToPredVehicle();
+        double currentGap = pm_.neighbor_platoon_.back().vehiclePosition - current_downtrack_;
+        ROS_DEBUG_STREAM("pm_.neighbor_platoon_.back().vehiclePosition " << pm_.neighbor_platoon_.back().vehiclePosition);
         ROS_DEBUG_STREAM("Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " ms");
         ROS_DEBUG_STREAM("Since we have max allowed gap as " << config_.desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
         ROS_DEBUG_STREAM("The current gap from radar is " << currentGap << " m");
@@ -2758,12 +2760,6 @@ namespace platoon_strategic_ihp
             // Update the local record of the new activity plan and now establish that we have a platoon plan as well,
             // which allows us to start sending necessary op STATUS messages
             pm_.current_plan = ActionPlan(true, currentTime, planId, pm_.current_plan.peerId);
-            pm_.currentPlatoonID = planId;
-            if (pm_.targetPlatoonID.compare(pm_.dummyID) != 0)
-            {
-                pm_.currentPlatoonID = pm_.targetPlatoonID;
-                pm_.resetNeighborPlatoon();
-            }
             pm_.platoonLeaderID = pm_.current_plan.peerId;
 
             // Initialize counter to delay transmission of first operation STATUS message
@@ -2975,27 +2971,9 @@ namespace platoon_strategic_ihp
         }
 
         // TODO: Plan timeout is not needed for this state
-        // // Task 2.2: plan timeout
-        // if (pm_.current_plan.valid) 
-        // {
-        //     ROS_DEBUG_STREAM("pm_.current_plan.planStartTime: " << pm_.current_plan.planStartTime);
-        //     ROS_DEBUG_STREAM("timeout2: " << tsStart - pm_.current_plan.planStartTime);
-        //     ROS_DEBUG_STREAM("NEGOTIATION_TIMEOUT: " << NEGOTIATION_TIMEOUT);
-        //     bool isPlanTimeout = tsStart - pm_.current_plan.planStartTime > NEGOTIATION_TIMEOUT;
-        //     if (isPlanTimeout) 
-        //     {
-        //         ROS_DEBUG_STREAM("The current plan did not receive any response. Abort and change to leader state.");
-        //         pm_.current_platoon_state = PlatoonState::LEADER;
-        //         pm_.clearActionPlan();
-        //         pm_.resetHostPlatoon();
-        //         // Leave neighbor platoon info in place, as we may retry the join later
-        //     }
-        // }
 
         // If we aren't already waiting on a response to one of these plans, create one once neighbor info is available
         ROS_DEBUG_STREAM("current_plan.valid = " << pm_.current_plan.valid << ", is_neighbor_record_complete = " << pm_.is_neighbor_record_complete_);
-        // TODO temporaty
-        pm_.is_neighbor_record_complete_ = true;
         
         if (!pm_.current_plan.valid  &&  pm_.is_neighbor_record_complete_)
         {
