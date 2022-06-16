@@ -1901,6 +1901,7 @@ namespace platoon_strategic_ihp
                 else
                 {
                     ROS_DEBUG_STREAM("Front join geometry violation. NACK.  cutinDtdDifference = " << cutinDtdDifference);
+                    pm_.current_platoon_state = PlatoonState::LEADER;
                     return MobilityRequestResponse::NACK;
                 }
             }
@@ -1925,6 +1926,7 @@ namespace platoon_strategic_ihp
                 else
                 {
                     ROS_DEBUG_STREAM("Rear join geometry violation. NACK. rearGap = " << rearGap);
+                    pm_.current_platoon_state = pm_.current_platoon_state = PlatoonState::LEADER;
                     return MobilityRequestResponse::NACK;
                 }
             }
@@ -1976,6 +1978,7 @@ namespace platoon_strategic_ihp
                 else
                 {
                     ROS_DEBUG_STREAM("Mid join geometry violation. NACK. gapFollwerDiff = " << gapFollowerDiff);
+                    pm_.current_platoon_state = PlatoonState::LEADER;
                     return MobilityRequestResponse::NACK;
                 }
             }
@@ -2438,6 +2441,7 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("Action Plan reset.");
             ROS_DEBUG_STREAM("Trying again....");
             pm_.current_plan.valid = false;
+            pm_.current_platoon_state = pm_.current_platoon_state = PlatoonState::LEADER;
             return;
         }
 
