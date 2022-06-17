@@ -2743,7 +2743,18 @@ namespace platoon_strategic_ihp
         // Task 3: update plan calculate gap, update plan: send PLATOON_FOLLOWER_JOIN request with new gap
         double desiredJoinGap2 = config_.desiredJoinTimeGap * current_speed_;
         double maxJoinGap = std::max(config_.desiredJoinGap, desiredJoinGap2);
-        double currentGap = pm_.neighbor_platoon_.back().vehiclePosition - current_downtrack_;
+        double currentGap = 0.0;
+        if (!pm_.neighbor_platoon_.empty())
+        {
+            currentGap = pm_.neighbor_platoon_.back().vehiclePosition - current_downtrack_;
+            ROS_DEBUG_STREAM("curent gap calculated from back of neighbor platoon: " << currentGap);
+        }
+        else
+        {
+            currentGap = pm_.getDistanceToPredVehicle();
+            ROS_DEBUG_STREAM("curent gap when there is no neighbor platoon: " << currentGap);
+        }
+        
         ROS_DEBUG_STREAM("pm_.neighbor_platoon_.back().vehiclePosition " << pm_.neighbor_platoon_.back().vehiclePosition);
         ROS_DEBUG_STREAM("Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " ms");
         ROS_DEBUG_STREAM("Since we have max allowed gap as " << config_.desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
