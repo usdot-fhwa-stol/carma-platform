@@ -230,20 +230,7 @@ namespace plan_delegator
 
     bool PlanDelegator::isManeuverExpired(const carma_planning_msgs::msg::Maneuver& maneuver, rclcpp::Time current_time) const
     {
-        if (current_time.get_clock_type() == RCL_ROS_TIME)
-        {
-        }
-        else if (current_time.get_clock_type() == RCL_SYSTEM_TIME)
-        {
-        }
-
-        if (rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, end_time)).get_clock_type() == RCL_ROS_TIME)
-        {
-        }
-        else if (rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, end_time)).get_clock_type() == RCL_SYSTEM_TIME)
-        {
-        }
-        return rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, end_time)) <= current_time; // TODO maneuver expiration should maybe be based off of distance not time? https://github.com/usdot-fhwa-stol/carma-platform/issues/1107
+        return rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, end_time), get_clock()->get_clock_type()) <= current_time; // TODO maneuver expiration should maybe be based off of distance not time? https://github.com/usdot-fhwa-stol/carma-platform/issues/1107
     }
     
     std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request> PlanDelegator::composePlanTrajectoryRequest(const carma_planning_msgs::msg::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const
@@ -460,9 +447,10 @@ namespace plan_delegator
             
             auto plan_response = client->async_send_request(plan_req);
             
+            auto future_status = plan_response.wait_for(std::chrono::milliseconds(200));
+
             // Wait for the result.
-            if (rclcpp::spin_until_future_complete(shared_from_this(), plan_response) ==
-                rclcpp::executor::FutureReturnCode::SUCCESS)
+            if (future_status == std::future_status::ready)
             {
                 // validate trajectory before add to the plan
                 if(!isTrajectoryValid(plan_response.get()->trajectory_plan))
@@ -538,7 +526,7 @@ namespace plan_delegator
         tf2_buffer_.setUsingDedicatedThread(true);
         try
         {
-            geometry_msgs::msg::TransformStamped tf = tf2_buffer_.lookupTransform("base_link", "vehicle_front", rclcpp::Time(0), rclcpp::Duration(20.0)); //save to local copy of transform 20 sec timeout
+            geometry_msgs::msg::TransformStamped tf = tf2_buffer_.lookupTransform("base_link", "vehicle_front", rclcpp::Time(0), rclcpp::Duration(20.0, 0)); //save to local copy of transform 20 sec timeout
             length_to_front_bumper_ = tf.transform.translation.x;
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"length_to_front_bumper_: " << length_to_front_bumper_);
             

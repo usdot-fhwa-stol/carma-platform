@@ -119,6 +119,7 @@ namespace plan_delegator
             /**
              * \brief Example if a maneuver end time has passed current system time
              * \return if input maneuver is expires
+             * NOTE: current_time is assumed to be same clock type as this node
              */
             bool isManeuverExpired(const carma_planning_msgs::msg::Maneuver& maneuver, rclcpp::Time current_time) const;
 
@@ -191,7 +192,7 @@ namespace plan_delegator
             bool isManeuverPlanValid(const carma_planning_msgs::msg::ManeuverPlan& maneuver_plan) const noexcept;
 
             /**
-             * \brief Example if a trajectory plan conbtains at least two trajectory points
+             * \brief Example if a trajectory plan contains at least two trajectory points
              * \return if input trajectory plan is valid
              */
             bool isTrajectoryValid(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan) const noexcept;
