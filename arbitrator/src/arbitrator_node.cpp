@@ -29,9 +29,9 @@
 
 int main(int argc, char** argv) 
 {
-    ros::init(argc, argv, "arbitrator");
-    ros::CARMANodeHandle nh = ros::CARMANodeHandle();
-    ros::CARMANodeHandle pnh = ros::CARMANodeHandle("~");
+    rclcpp::init(argc, argv, "arbitrator");
+    rclcpp::CARMANodeHandle nh = rclcpp::CARMANodeHandle();
+    rclcpp::CARMANodeHandle pnh = rclcpp::CARMANodeHandle("~");
 
     // Handle dependency injection
     arbitrator::CapabilitiesInterface ci{&nh};
@@ -60,7 +60,7 @@ int main(int argc, char** argv)
 
     double target_plan;
     pnh.param("target_plan_duration", target_plan, 15.0);
-    arbitrator::TreePlanner tp{*cf, png, bss, ros::Duration(target_plan)};
+    arbitrator::TreePlanner tp{*cf, png, bss, rclcpp::Duration(target_plan)};
 
     double min_plan_duration;
     pnh.param("min_plan_duration", min_plan_duration, 6.0);
@@ -77,17 +77,17 @@ int main(int argc, char** argv)
         &sm, 
         &ci, 
         tp, 
-        ros::Duration(min_plan_duration),
-        ros::Rate(planning_frequency),
+        rclcpp::Duration(min_plan_duration),
+        rclcpp::Rate(planning_frequency),
         wm };
 
     
-    ros::Subscriber twist_sub = nh.subscribe("current_velocity", 1, &arbitrator::Arbitrator::twist_cb, &arbitrator);
+    rclcpp::Subscriber twist_sub = nh.subscribe("current_velocity", 1, &arbitrator::Arbitrator::twist_cb, &arbitrator);
 
     arbitrator.initializeBumperTransformLookup();
 
-    ros::Timer bumper_pose_timer = nh.createTimer(
-            ros::Duration(ros::Rate(10.0)),
+    rclcpp::Timer bumper_pose_timer = nh.createTimer(
+            rclcpp::Duration(rclcpp::Rate(10.0)),
             [&arbitrator](const auto&) {arbitrator.bumper_pose_cb();});
 
     arbitrator.run();

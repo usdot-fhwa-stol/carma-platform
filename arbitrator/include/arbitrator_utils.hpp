@@ -18,7 +18,7 @@
 #define __ARBITRATOR_INCLUDE_ARBITRATOR_UTILS_HPP__
 
 #include <rclcpp/rclcpp.hpp>
-#include <carma_planning_msgs/msg/ManeuverPlan.hpp>
+#include <carma_planning_msgs/msg/maneuver_plan.hpp>
 
 /**
  * \brief Macro definition to enable easier access to fields shared across the maneuver typees
@@ -44,10 +44,10 @@ namespace arbitrator_utils
     /**
      * \brief Get the start time of the first maneuver in the plan
      * \param plan The plan to examine
-     * \return The ros::Time at which it starts
+     * \return The rclcpp::Time at which it starts
      * \throws An invalid argument exception if the plan is empty
      */
-    ros::Time get_plan_start_time(const carma_planning_msgs::msg::ManeuverPlan&);
+    rclcpp::Time get_plan_start_time(const carma_planning_msgs::msg::ManeuverPlan&);
 
     /**
      * \brief Get the start distance of the first maneuver in the plan
@@ -60,10 +60,10 @@ namespace arbitrator_utils
     /**
      * \brief Get the end time of the first maneuver in the plan
      * \param plan The plan to examine
-     * \return The ros::Time at which it ends
+     * \return The rclcpp::Time at which it ends
      * \throws An invalid argument exception if the plan is empty
      */
-    ros::Time get_plan_end_time(const carma_planning_msgs::msg::ManeuverPlan&);
+    rclcpp::Time get_plan_end_time(const carma_planning_msgs::msg::ManeuverPlan&);
 
     /**
      * \brief Get the end distance of the first maneuver in the plan
@@ -76,10 +76,10 @@ namespace arbitrator_utils
     /**
      * \brief Get the start time of the specified maneuver
      * \param mvr The maneuver to examine
-     * \return The ros::Time at which it starts
+     * \return The rclcpp::Time at which it starts
      * \throws An invalid argument exception if the maneuver is poorly constructed
      */
-    ros::Time get_maneuver_start_time(const carma_planning_msgs::msg::Maneuver&);
+    rclcpp::Time get_maneuver_start_time(const carma_planning_msgs::msg::Maneuver&);
 
     /**
      * \brief Get the start distance the specified maneuver
@@ -92,10 +92,10 @@ namespace arbitrator_utils
     /**
      * \brief Get the end time of the specified maneuver
      * \param mvr The maneuver to examine
-     * \return The ros::Time at which it ends
+     * \return The rclcpp::Time at which it ends
      * \throws An invalid argument exception if the maneuver is poorly constructed
      */
-    ros::Time get_maneuver_end_time(const carma_planning_msgs::msg::Maneuver&);
+    rclcpp::Time get_maneuver_end_time(const carma_planning_msgs::msg::Maneuver&);
 
     /**
      * \brief Get the end distance of the specified maneuver

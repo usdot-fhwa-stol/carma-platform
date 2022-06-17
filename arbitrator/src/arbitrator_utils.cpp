@@ -21,7 +21,7 @@
 
 namespace arbitrator_utils
 {
-    ros::Time get_plan_end_time(const carma_planning_msgs::msg::ManeuverPlan &plan) 
+    rclcpp::Time get_plan_end_time(const carma_planning_msgs::msg::ManeuverPlan &plan) 
     {
         if (plan.maneuvers.empty())
         {
@@ -44,7 +44,7 @@ namespace arbitrator_utils
         return get_maneuver_end_distance(m);
     }
 
-    ros::Time get_plan_start_time(const carma_planning_msgs::msg::ManeuverPlan &plan) 
+    rclcpp::Time get_plan_start_time(const carma_planning_msgs::msg::ManeuverPlan &plan) 
     {
         if (plan.maneuvers.empty())
         {
@@ -66,12 +66,12 @@ namespace arbitrator_utils
         return get_maneuver_start_distance(m);
     }
 
-    ros::Time get_maneuver_end_time(const carma_planning_msgs::msg::Maneuver &mvr) 
+    rclcpp::Time get_maneuver_end_time(const carma_planning_msgs::msg::Maneuver &mvr) 
     {
         return GET_MANEUVER_PROPERTY(mvr, end_time);
     }
 
-    ros::Time get_maneuver_start_time(const carma_planning_msgs::msg::Maneuver &mvr) 
+    rclcpp::Time get_maneuver_start_time(const carma_planning_msgs::msg::Maneuver &mvr) 
     {
         return GET_MANEUVER_PROPERTY(mvr, start_time);
     }

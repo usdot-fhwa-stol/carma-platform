@@ -15,7 +15,7 @@
  */
 
 #include "arbitrator.hpp"
-#include <carma_planning_msgs/msg/ManeuverPlan.hpp>
+#include <carma_planning_msgs/msg/maneuver_plan.hpp>
 #include <carma_planning_msgs/srv/PlanManeuvers.hpp>
 #include "arbitrator_utils.hpp"
 #include <rclcpp/rclcpp.hpp>
@@ -27,9 +27,9 @@ namespace arbitrator
     void Arbitrator::run()
     {
         ROS_INFO("Aribtrator started, beginning arbitrator state machine.");
-        while (!ros::isShuttingDown())
+        while (!rclcpp::isShuttingDown())
         {
-            ros::spinOnce();
+            rclcpp::spinOnce();
             switch (sm_->get_state()) 
             {
                 case INITIAL:
@@ -50,7 +50,7 @@ namespace arbitrator
                     break;
                 case SHUTDOWN:
                     ROS_INFO("Arbitrator shutting down after being commanded to shutdown!");
-                    ros::shutdown();
+                    rclcpp::shutdown();
                     exit(0);
                     break;
                 default:
@@ -59,7 +59,7 @@ namespace arbitrator
         }
     }
     
-    void Arbitrator::guidance_state_cb(const carma_planning_msgs::msg::GuidanceState::ConstPtr& msg) 
+    void Arbitrator::guidance_state_cb(carma_planning_msgs::msg::GuidanceState::UniquePtr msg) 
     {
         switch (msg->state)
         {
@@ -108,19 +108,19 @@ namespace arbitrator
             // TODO: load plan duration from parameters file
         }
 
-        ros::Duration(0.1).sleep();
+        rclcpp::Duration(0.1).sleep();
     }
 
     void Arbitrator::planning_state()
     {
         ROS_INFO("Aribtrator beginning planning process!");
-        ros::Time planning_process_start = ros::Time::now();
+        rclcpp::Time planning_process_start = rclcpp::Time::now();
         carma_planning_msgs::msg::ManeuverPlan plan = planning_strategy_.generate_plan(vehicle_state_);
         if (!plan.maneuvers.empty()) 
         {
-            ros::Time plan_end_time = arbitrator_utils::get_plan_end_time(plan);
-            ros::Time plan_start_time = arbitrator_utils::get_plan_start_time(plan);
-            ros::Duration plan_duration = plan_end_time - plan_start_time;
+            rclcpp::Time plan_end_time = arbitrator_utils::get_plan_end_time(plan);
+            rclcpp::Time plan_start_time = arbitrator_utils::get_plan_start_time(plan);
+            rclcpp::Duration plan_duration = plan_end_time - plan_start_time;
 
             if (plan_duration < min_plan_duration_) 
             {
@@ -146,9 +146,9 @@ namespace arbitrator
     {
         // Sleep in 100ms increments until our next planning cycle
         // This ensures we spin() at least a few times
-        while (ros::Time::now() < next_planning_process_start_)
+        while (rclcpp::Time::now() < next_planning_process_start_)
         {
-            ros::Duration(0.1).sleep();
+            rclcpp::Duration(0.1).sleep();
         }
         ROS_INFO("Arbitrator transitioning from WAITING to PLANNING state.");
         sm_->submit_event(ArbitratorEvent::PLANNING_TIMER_TRIGGER);
@@ -156,20 +156,20 @@ namespace arbitrator
 
     void Arbitrator::paused_state()
     {
-        ros::Duration(0.1).sleep();
+        rclcpp::Duration(0.1).sleep();
     }
 
     void Arbitrator::shutdown_state()
     {
         ROS_INFO_STREAM("Arbitrator shutting down...");
-        ros::shutdown(); // Will stop upper level spin and shutdown node
+        rclcpp::shutdown(); // Will stop upper level spin and shutdown node
     }
 
     void Arbitrator::bumper_pose_cb()
     {
         try
         {
-            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(1.0)); //save to local copy of transform 1 sec timeout
+            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", rclcpp::Time(0), rclcpp::Duration(1.0)); //save to local copy of transform 1 sec timeout
             tf2::fromMsg(tf_, bumper_transform_);
             vehicle_state_.stamp = tf_.header.stamp;
         }
@@ -200,7 +200,7 @@ namespace arbitrator
 
     }
 
-    void Arbitrator::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg) 
+    void Arbitrator::twist_cb(geometry_msgs::TwistStamped::UniquePtr msg) 
     {
         vehicle_state_.velocity = msg->twist.linear.x;
     }

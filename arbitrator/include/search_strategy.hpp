@@ -18,7 +18,7 @@
 #define __ARBITRATOR_INCLUDE_SEARCH_STRATEGY_HPP__
 
 #include <map>
-#include <carma_planning_msgs/msg/ManeuverPlan.hpp>
+#include <carma_planning_msgs/msg/maneuver_plan.hpp>
 
 namespace arbitrator
 {

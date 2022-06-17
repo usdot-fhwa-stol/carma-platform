@@ -18,7 +18,7 @@
 #define __ARBITRATOR_INCLUDE_CAPABILITIES_INTERFACE_HPP__
 
 #include <rclcpp/rclcpp.hpp>
-#include <carma_utils/CARMAUtils.h>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <vector>
 #include <map>
 #include <unordered_set>
@@ -37,9 +37,9 @@ namespace arbitrator
         public:
             /**
              * \brief Constructor for Capabilities interface
-             * \param nh A publically addressesed ("/") ros::NodeHandle
+             * \param nh A publically addressesed ("/") rclcpp::NodeHandle
              */
-            CapabilitiesInterface(ros::NodeHandle *nh): nh_(nh) {
+            CapabilitiesInterface(rclcpp::NodeHandle *nh): nh_(nh) {
                 sc_s = nh_->serviceClient<carma_planning_msgs::srv::GetPluginApi>("plugins/get_strategic_plugin_by_capability");
             };
 
@@ -75,9 +75,9 @@ namespace arbitrator
             const static std::string STRATEGIC_PLAN_CAPABILITY;
         protected:
         private:
-            ros::NodeHandle *nh_;
+            rclcpp::NodeHandle *nh_;
 
-            ros::ServiceClient sc_s;
+            rclcpp::ServiceClient sc_s;
             std::unordered_set <std::string> capabilities_ ; 
 
 

@@ -47,7 +47,7 @@ namespace arbitrator
              * 
              * \param nh A publicly namespaced nodehandle
              */
-            void init(ros::NodeHandle &nh);
+            void init(rclcpp::NodeHandle &nh);
 
             /**
              * \brief Compute the unit cost over distance of a given maneuver plan
@@ -66,7 +66,7 @@ namespace arbitrator
              */
             double compute_cost_per_unit_distance(const carma_planning_msgs::msg::ManeuverPlan& plan);
         private:
-            ros::ServiceClient cost_system_sc_;
+            rclcpp::ServiceClient cost_system_sc_;
             bool initialized_ = false;
     };
 };

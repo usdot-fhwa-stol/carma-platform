@@ -32,7 +32,7 @@ namespace arbitrator
         open_list_to_evaluate.push_back(std::make_pair(root, INF));
 
         carma_planning_msgs::msg::ManeuverPlan longest_plan = root; // Track longest plan in case target length is never reached
-        ros::Duration longest_plan_duration = ros::Duration(0);
+        rclcpp::Duration longest_plan_duration = rclcpp::Duration(0);
 
         while (!open_list_to_evaluate.empty())
         {
@@ -52,7 +52,7 @@ namespace arbitrator
 
                 ROS_DEBUG_STREAM("PRINT END");
 
-                ros::Duration plan_duration; // zero duration
+                rclcpp::Duration plan_duration; // zero duration
 
                 // If we're not at the root, plan_duration is nonzero (our plan should have maneuvers)
                 if (!cur_plan.maneuvers.empty()) 
@@ -105,7 +105,7 @@ namespace arbitrator
         {
             // Pop the first element off the open list
             carma_planning_msgs::msg::ManeuverPlan cur_plan = pair.first;
-            ros::Duration plan_duration; // zero duration
+            rclcpp::Duration plan_duration; // zero duration
 
             // get plan duration
             plan_duration = arbitrator_utils::get_plan_end_time(cur_plan) - arbitrator_utils::get_plan_start_time(cur_plan); 

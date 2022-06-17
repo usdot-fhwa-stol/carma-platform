@@ -50,7 +50,7 @@ namespace arbitrator
     {
         public:
             TreePlannerTest():
-                tp{mcf, mng, mss, ros::Duration(5)} {};
+                tp{mcf, mng, mss, rclcpp::Duration(5)} {};
             MockSearchStrategy mss;
             MockCostFunction mcf;
             MockNeighborGenerator mng;
@@ -63,8 +63,8 @@ namespace arbitrator
         carma_planning_msgs::msg::Maneuver mvr1, mvr2, mvr3;
 
         mvr1.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
-        mvr1.lane_following_maneuver.start_time = ros::Time(0);
-        mvr1.lane_following_maneuver.end_time = ros::Time(5.0);
+        mvr1.lane_following_maneuver.start_time = rclcpp::Time(0);
+        mvr1.lane_following_maneuver.end_time = rclcpp::Time(5.0);
 
         plan1.maneuvers.push_back(mvr1);
         std::vector<carma_planning_msgs::msg::ManeuverPlan> plans{plan1};
@@ -95,8 +95,8 @@ namespace arbitrator
         carma_planning_msgs::msg::ManeuverPlan plan = tp.generate_plan(state);
         ASSERT_FALSE(plan.maneuvers.empty());
         ASSERT_EQ(1, plan.maneuvers.size());
-        ASSERT_EQ(ros::Time(0), plan.maneuvers[0].lane_following_maneuver.start_time);
-        ASSERT_EQ(ros::Time(5), plan.maneuvers[0].lane_following_maneuver.end_time);
+        ASSERT_EQ(rclcpp::Time(0), plan.maneuvers[0].lane_following_maneuver.start_time);
+        ASSERT_EQ(rclcpp::Time(5), plan.maneuvers[0].lane_following_maneuver.end_time);
     }
 
     TEST_F(TreePlannerTest, testGeneratePlan2)
@@ -105,16 +105,16 @@ namespace arbitrator
         carma_planning_msgs::msg::Maneuver mvr1, mvr2, mvr3;
 
         mvr1.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
-        mvr1.lane_following_maneuver.start_time = ros::Time(0);
-        mvr1.lane_following_maneuver.end_time = ros::Time(5.0);
+        mvr1.lane_following_maneuver.start_time = rclcpp::Time(0);
+        mvr1.lane_following_maneuver.end_time = rclcpp::Time(5.0);
 
         mvr2.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
-        mvr2.lane_following_maneuver.start_time = ros::Time(0);
-        mvr2.lane_following_maneuver.end_time = ros::Time(5.0);
+        mvr2.lane_following_maneuver.start_time = rclcpp::Time(0);
+        mvr2.lane_following_maneuver.end_time = rclcpp::Time(5.0);
 
         mvr3.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
-        mvr3.lane_following_maneuver.start_time = ros::Time(0);
-        mvr3.lane_following_maneuver.end_time = ros::Time(5.0);
+        mvr3.lane_following_maneuver.start_time = rclcpp::Time(0);
+        mvr3.lane_following_maneuver.end_time = rclcpp::Time(5.0);
 
         plan1.maneuvers.push_back(mvr1);
         plan2.maneuvers.push_back(mvr2);
@@ -147,8 +147,8 @@ namespace arbitrator
         carma_planning_msgs::msg::ManeuverPlan plan = tp.generate_plan(state);
         ASSERT_FALSE(plan.maneuvers.empty());
         ASSERT_EQ(1, plan.maneuvers.size());
-        ASSERT_EQ(ros::Time(0), plan.maneuvers[0].lane_following_maneuver.start_time);
-        ASSERT_EQ(ros::Time(5), plan.maneuvers[0].lane_following_maneuver.end_time);
+        ASSERT_EQ(rclcpp::Time(0), plan.maneuvers[0].lane_following_maneuver.start_time);
+        ASSERT_EQ(rclcpp::Time(5), plan.maneuvers[0].lane_following_maneuver.end_time);
     }
 
     TEST_F(TreePlannerTest, testGeneratePlan3)
@@ -157,16 +157,16 @@ namespace arbitrator
         carma_planning_msgs::msg::Maneuver mvr1, mvr2, mvr3;
 
         mvr1.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
-        mvr1.lane_following_maneuver.start_time = ros::Time(0);
-        mvr1.lane_following_maneuver.end_time = ros::Time(2);
+        mvr1.lane_following_maneuver.start_time = rclcpp::Time(0);
+        mvr1.lane_following_maneuver.end_time = rclcpp::Time(2);
 
         mvr2.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
-        mvr2.lane_following_maneuver.start_time = ros::Time(2);
-        mvr2.lane_following_maneuver.end_time = ros::Time(4);
+        mvr2.lane_following_maneuver.start_time = rclcpp::Time(2);
+        mvr2.lane_following_maneuver.end_time = rclcpp::Time(4);
 
         mvr3.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
-        mvr3.lane_following_maneuver.start_time = ros::Time(4);
-        mvr3.lane_following_maneuver.end_time = ros::Time(5);
+        mvr3.lane_following_maneuver.start_time = rclcpp::Time(4);
+        mvr3.lane_following_maneuver.end_time = rclcpp::Time(5);
 
         plan1.maneuvers.push_back(mvr1);
 
@@ -215,11 +215,11 @@ namespace arbitrator
         carma_planning_msgs::msg::ManeuverPlan plan = tp.generate_plan(state);
         ASSERT_FALSE(plan.maneuvers.empty());
         ASSERT_EQ(3, plan.maneuvers.size());
-        ASSERT_EQ(ros::Time(0), plan.maneuvers[0].lane_following_maneuver.start_time);
-        ASSERT_EQ(ros::Time(2), plan.maneuvers[0].lane_following_maneuver.end_time);
-        ASSERT_EQ(ros::Time(2), plan.maneuvers[1].lane_following_maneuver.start_time);
-        ASSERT_EQ(ros::Time(4), plan.maneuvers[1].lane_following_maneuver.end_time);
-        ASSERT_EQ(ros::Time(4), plan.maneuvers[2].lane_following_maneuver.start_time);
-        ASSERT_EQ(ros::Time(5), plan.maneuvers[2].lane_following_maneuver.end_time);
+        ASSERT_EQ(rclcpp::Time(0), plan.maneuvers[0].lane_following_maneuver.start_time);
+        ASSERT_EQ(rclcpp::Time(2), plan.maneuvers[0].lane_following_maneuver.end_time);
+        ASSERT_EQ(rclcpp::Time(2), plan.maneuvers[1].lane_following_maneuver.start_time);
+        ASSERT_EQ(rclcpp::Time(4), plan.maneuvers[1].lane_following_maneuver.end_time);
+        ASSERT_EQ(rclcpp::Time(4), plan.maneuvers[2].lane_following_maneuver.start_time);
+        ASSERT_EQ(rclcpp::Time(5), plan.maneuvers[2].lane_following_maneuver.end_time);
     }
 }

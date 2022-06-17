@@ -22,7 +22,7 @@
 
 namespace arbitrator
 {
-    void CostSystemCostFunction::init(ros::NodeHandle &nh)
+    void CostSystemCostFunction::init(rclcpp::NodeHandle &nh)
     {
         cost_system_sc_ = nh.serviceClient<carma_planning_msgs::srv::ComputePlanCost>("compute_plan_cost");
         initialized_ = true;

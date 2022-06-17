@@ -17,7 +17,7 @@
 #ifndef __ARBITRATOR_INCLUDE_PLANNING_STRATEGY_HPP__
 #define __ARBITRATOR_INCLUDE_PLANNING_STRATEGY_HPP__
 
-#include <carma_planning_msgs/msg/ManeuverPlan.hpp>
+#include <carma_planning_msgs/msg/maneuver_plan.hpp>
 #include "vehicle_state.hpp"
 
 namespace arbitrator

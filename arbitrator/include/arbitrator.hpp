@@ -40,7 +40,7 @@ namespace arbitrator
      * the CARMA planning process. Utilizes a generic planning interface to allow
      * for reconfiguration with other paradigms in the future.
      */
-    class Arbitrator 
+    class Arbitrator : public carma_ros2_utils::CarmaLifecycleNode
     {
         public:
             /**
@@ -54,13 +54,13 @@ namespace arbitrator
              * \param planning_frequency The frequency at which to generate high-level plans when engaged
              * \param wm pointer to an inialized world model.
              */ 
-            Arbitrator(ros::CARMANodeHandle *nh, 
-                ros::CARMANodeHandle *pnh, 
+            Arbitrator(rclcpp::CARMANodeHandle *nh, 
+                rclcpp::CARMANodeHandle *pnh, 
                 ArbitratorStateMachine *sm, 
                 CapabilitiesInterface *ci, 
                 PlanningStrategy &planning_strategy,
-                ros::Duration min_plan_duration,
-                ros::Rate planning_frequency,
+                rclcpp::Duration min_plan_duration,
+                rclcpp::Rate planning_frequency,
                 carma_wm::WorldModelConstPtr wm):
                 sm_(sm),
                 nh_(nh),
@@ -75,7 +75,7 @@ namespace arbitrator
             /**
              * \brief Begin the operation of the arbitrator.
              * 
-             * Loops internally via ros::Duration sleeps and spins
+             * Loops internally via rclcpp::Duration sleeps and spins
              */
             void run();
 
@@ -83,7 +83,7 @@ namespace arbitrator
              * \brief Callback for the twist subscriber, which will store latest twist locally
              * \param msg Latest twist message
              */
-            void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+            void twist_cb(geometry_msgs::TwistStamped::UniquePtr msg);
 
             /**
              * \brief Callback for the front bumper pose transform
@@ -127,20 +127,20 @@ namespace arbitrator
              * \brief Callback for receiving Guidance state machine updates
              * \param msg The new GuidanceState message
              */
-            void guidance_state_cb(const carma_planning_msgs::msg::GuidanceState::ConstPtr& msg);
+            void guidance_state_cb(carma_planning_msgs::msg::GuidanceState::UniquePtr msg);
 
         private:
             
             VehicleState vehicle_state_; // The current state of the vehicle for populating planning requests
 
             ArbitratorStateMachine *sm_;
-            ros::Publisher final_plan_pub_;
-            ros::Subscriber guidance_state_sub_;
-            ros::CARMANodeHandle *nh_;
-            ros::CARMANodeHandle *pnh_;
-            ros::Duration min_plan_duration_;
-            ros::Duration time_between_plans_;
-            ros::Time next_planning_process_start_;
+            rclcpp::Publisher final_plan_pub_;
+            rclcpp::Subscriber guidance_state_sub_;
+            rclcpp::CARMANodeHandle *nh_;
+            rclcpp::CARMANodeHandle *pnh_;
+            rclcpp::Duration min_plan_duration_;
+            rclcpp::Duration time_between_plans_;
+            rclcpp::Time next_planning_process_start_;
             CapabilitiesInterface *capabilities_interface_;
             PlanningStrategy &planning_strategy_;
             bool initialized_;

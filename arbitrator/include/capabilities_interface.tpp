@@ -21,7 +21,7 @@
 #include <map>
 #include <string>
 #include <functional>
-#include <carma_planning_msgs/srv/PlanManeuvers.h[[]]>
+#include <carma_planning_msgs/srv/PlanManeuvers.hpp>
 
 namespace arbitrator 
 {
@@ -32,7 +32,7 @@ namespace arbitrator
         std::map<std::string, MSrv> responses;
         for (auto i = topics.begin(); i != topics.end(); i++) 
         {
-            ros::ServiceClient sc = nh_->serviceClient<carma_planning_msgs::srv::PlanManeuvers>(*i);
+            rclcpp::ServiceClient sc = nh_->serviceClient<carma_planning_msgs::srv::PlanManeuvers>(*i);
             ROS_DEBUG_STREAM("found client: " << *i);
             if (sc.call(msg)) {
                 responses.emplace(*i, msg);

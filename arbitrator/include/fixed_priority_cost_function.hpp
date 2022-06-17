@@ -39,7 +39,7 @@ namespace arbitrator
         public:
             /**
              * \brief Constructor for FixedPriorityCostFunction
-             * \param nh A publically namespaced ("/") ros::NodeHandle
+             * \param nh A publically namespaced ("/") rclcpp::NodeHandle
              */
             FixedPriorityCostFunction(const std::map<std::string, double> &plugin_priorities);
 

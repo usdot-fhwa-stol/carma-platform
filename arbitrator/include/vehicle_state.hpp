@@ -26,7 +26,7 @@ namespace arbitrator
  */
 struct VehicleState
 {
-  ros::Time stamp;                         // Time stamp of position data used to populate struct
+  rclcpp::Time stamp;                         // Time stamp of position data used to populate struct
   double x = 0;                            // Vehicle x axis position in map frame (m)
   double y = 0;                            // Vehicle y axis position in map frame (m)
   double downtrack = 0;                    // Vehicle route downtrack (m)

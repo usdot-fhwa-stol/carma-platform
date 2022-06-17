@@ -18,7 +18,7 @@
 #define __ARBITRATOR_INCLUDE_NEIGHBOR_GENERATOR_HPP__
 
 #include <vector>
-#include <carma_planning_msgs/msg/ManeuverPlan.hpp>
+#include <carma_planning_msgs/msg/maneuver_plan.hpp>
 #include "vehicle_state.hpp"
 
 namespace arbitrator

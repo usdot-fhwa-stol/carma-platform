@@ -18,7 +18,7 @@
 #define __ARBITRATOR_INCLUDE_TREE_PLANNER_HPP__
 
 #include <memory>
-#include <carma_planning_msgs/msg/ManeuverPlan.hpp>
+#include <carma_planning_msgs/msg/maneuver_plan.hpp>
 #include "planning_strategy.hpp"
 #include "cost_function.hpp"
 #include "neighbor_generator.hpp"
@@ -49,7 +49,7 @@ namespace arbitrator
             TreePlanner(CostFunction &cf, 
                 NeighborGenerator &ng, 
                 SearchStrategy &ss, 
-                ros::Duration target):
+                rclcpp::Duration target):
                 cost_function_(cf),
                 neighbor_generator_(ng),
                 search_strategy_(ss),
@@ -66,7 +66,7 @@ namespace arbitrator
             CostFunction &cost_function_;
             NeighborGenerator &neighbor_generator_;
             SearchStrategy &search_strategy_;
-            ros::Duration target_plan_duration_;
+            rclcpp::Duration target_plan_duration_;
     };
 };
 
