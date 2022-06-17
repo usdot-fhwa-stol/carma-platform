@@ -139,19 +139,8 @@
         pd->handle_on_activate(dummy);
         
         carma_planning_msgs::msg::TrajectoryPlan res_plan;
-        //bool flag = false;
-        auto maneuver_pub = pd->create_publisher<carma_planning_msgs::msg::ManeuverPlan>("final_maneuver_plan", 5);
-        //auto traj_sub = pd->create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("plan_trajectory", 5, [&](carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg){
-        //    res_plan = *msg.get();
-        //});
 
-        //auto plugin_A_server = pd->create_service<carma_planning_msgs::srv::PlanTrajectory>("/guidance/plugins/plugin_A/plan_trajectory", [&](auto header, auto req, auto resp) -> void
-        //{
-        //    flag = true;
-        //    carma_planning_msgs::msg::TrajectoryPlan sending_plan;
-        //    sending_plan.trajectory_id = "plugin_A";
-        //    resp->trajectory_plan = sending_plan;
-        //});
+        auto maneuver_pub = pd->create_publisher<carma_planning_msgs::msg::ManeuverPlan>("final_maneuver_plan", 5);
 
         carma_planning_msgs::msg::ManeuverPlan plan;
         carma_planning_msgs::msg::Maneuver maneuver;
@@ -160,8 +149,6 @@
         plan.maneuvers.push_back(maneuver);
         maneuver_pub->on_activate();
         maneuver_pub->publish(plan);
-        //std::string res = res_plan.trajectory_id;
-        //EXPECT_EQ("plugin_A", res);
         std::this_thread::sleep_for(std::chrono::milliseconds(5000));
         auto num = maneuver_pub->get_subscription_count();
         EXPECT_EQ(1, num);
