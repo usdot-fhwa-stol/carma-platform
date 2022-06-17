@@ -2145,6 +2145,10 @@ namespace platoon_strategic_ihp
                         ROS_DEBUG_STREAM("pm_.currentPlatoonID now: " << pm_.currentPlatoonID);
                         pm_.resetNeighborPlatoon();
                     }
+                    else
+                    {
+                        pm_.currentPlatoonID = msg.m_header.plan_id;
+                    }
 
                     pm_.changeFromLeaderToFollower(pm_.currentPlatoonID, msg.m_header.sender_id);
                     ROS_DEBUG_STREAM("The leader " << msg.m_header.sender_id << " agreed on our join. Change to follower state.");
