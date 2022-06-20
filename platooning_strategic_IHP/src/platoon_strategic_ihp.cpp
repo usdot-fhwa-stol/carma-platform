@@ -715,7 +715,7 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("CTD calculated from ecef is: " << ctd);
 
         // If it comes from a member of an identified neighbor platoon, then
-        if (platoonId.compare(pm_.neighborPlatoonID) == 0)
+        if (platoonId.compare(pm_.neighborPlatoonID) == 0 && platoonId.compare(pm_.dummyID) != 0)
         {
             ROS_DEBUG_STREAM("Incoming platoonID matches target platoon id");
             // // Update this member's status (or add if it's unknown to us)
@@ -2748,6 +2748,8 @@ namespace platoon_strategic_ihp
         {
             currentGap = pm_.neighbor_platoon_.back().vehiclePosition - current_downtrack_;
             ROS_DEBUG_STREAM("curent gap calculated from back of neighbor platoon: " << currentGap);
+            ROS_DEBUG_STREAM("pm_.neighbor_platoon_.back().vehiclePosition " << pm_.neighbor_platoon_.back().vehiclePosition);
+       
         }
         else
         {
@@ -2755,7 +2757,6 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("curent gap when there is no neighbor platoon: " << currentGap);
         }
         
-        ROS_DEBUG_STREAM("pm_.neighbor_platoon_.back().vehiclePosition " << pm_.neighbor_platoon_.back().vehiclePosition);
         ROS_DEBUG_STREAM("Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " ms");
         ROS_DEBUG_STREAM("Since we have max allowed gap as " << config_.desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
         ROS_DEBUG_STREAM("The current gap from radar is " << currentGap << " m");
