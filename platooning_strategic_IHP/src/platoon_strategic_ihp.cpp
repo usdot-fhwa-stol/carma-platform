@@ -398,9 +398,10 @@ namespace platoon_strategic_ihp
         double two_lane_cross_error = 2*config_.maxCrosstrackError + findLaneWidth(); 
         // add longitudinal check threshold in config file 
         bool longitudinalCheck = current_downtrack_ >= rearVehicleDtd - config_.longitudinalCheckThresold || 
-                                 current_downtrack_ <= frontVehicleDtd + config_.maxCutinGap;
-        bool lateralCheck = current_crosstrack_ >= frontVehicleCtd - two_lane_cross_error || 
-                            current_crosstrack_ <= frontVehicleCtd + two_lane_cross_error;
+                                 current_downtrack_ <= frontVehicleDtd + config_.longitudinalCheckThresold;
+        bool lateralCheck = abs(current_crosstrack_ - frontVehicleCtd) <= two_lane_cross_error;
+        // current_crosstrack_ >= frontVehicleCtd - two_lane_cross_error || 
+        //                     current_crosstrack_ <= frontVehicleCtd + two_lane_cross_error;
         // logs for longitudinal and lateral check 
         ROS_DEBUG_STREAM("The longitudinalCheck result is: " << longitudinalCheck );
         ROS_DEBUG_STREAM("The lateralCheck result is: " << lateralCheck );
@@ -995,7 +996,15 @@ namespace platoon_strategic_ihp
              *       front-rear DTD difference = platoon_length + one_vehicle_length
              *       Vehicle length is already accounted for in the message's LENGTH value
              */
-            double rearVehicleDtd = frontVehicleDtd - platoon_length;
+
+            double rearVehicleDtd = frontVehicleDtd - platoon_length; 
+            ROS_DEBUG_STREAM("rear veh dtd from platoon length: " << rearVehicleDtd);
+            if (!pm_.neighbor_platoon_.empty())
+            {
+                rearVehicleDtd = pm_.neighbor_platoon_.back().vehiclePosition;
+                ROS_DEBUG_STREAM("rear veh dtd from neighbor platoon: " << rearVehicleDtd);
+            }
+            
             // Note: For one platoon, we assume all members are in the same lane.
             double rearVehicleCtd = frontVehicleCtd;
             ROS_DEBUG_STREAM("Neighbor platoon rearVehicleDtd: " << rearVehicleDtd << ", rearVehicleCtd: " << rearVehicleCtd);
