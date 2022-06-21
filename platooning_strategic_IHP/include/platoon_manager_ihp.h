@@ -87,7 +87,9 @@ namespace platoon_strategic_ihp
         //UCLA: CUT-IN JOIN STATE
         LEADWITHOPERATION,          // 7;
         //UCLA: CUT-IN JOIN STATE
-        PREPARETOJOIN               // 8;
+        PREPARETOJOIN,               // 8;
+        //UCLA: DEPART STATE
+        PREPARETODEPART             // 9;
     };
 
     /**
@@ -179,6 +181,13 @@ namespace platoon_strategic_ihp
          **/
         void updatesOrAddMemberInfo(std::vector<PlatoonMember>& platoon, std::string senderId, double cmdSpeed,
                                     double dtDistance, double ctDistance, double curSpeed);
+
+        /**
+         * \brief Delete the departing vehicle from platoon manager's platoon list. 
+         * 
+         * \param senderId vehicle ID for the departing vehicle
+         **/
+        void deleteDepartMemberInfo(std::vector<PlatoonMember>& platoon, std::string senderID);
         
         /**
         * \brief Returns total size of the platoon , in number of vehicles.
@@ -386,6 +395,9 @@ namespace platoon_strategic_ihp
         std::string targetPlatoonID = dummyID;  //ID of a real platoon that we may be attempting to join
 
         std::string neighborPlatoonID = dummyID;  //ID of the neighbor platoon that we may be attempting to join (dummy if neighbor is a solo vehicle)
+
+        // UCLA: Departing vehicle ID 
+        std::string departingID = "default_departing_id";
 
         // Vehicle ID of the neighbor platoon's leader
         std::string neighbor_platoon_leader_id_ = dummyID; //dummy indicates unknown

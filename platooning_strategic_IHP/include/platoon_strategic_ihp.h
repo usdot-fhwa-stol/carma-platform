@@ -284,6 +284,11 @@ namespace platoon_strategic_ihp
             void run_prepare_to_join();
 
             /**
+            * \brief UCLA Run prepare to depart State
+            */
+            void run_prepare_to_depart();
+
+            /**
              * \brief UCLA Update the private variable pose_ecef_point_
              */
             void setHostECEF(cav_msgs::LocationECEF pose_ecef_point);
@@ -712,6 +717,13 @@ namespace platoon_strategic_ihp
             */
             void mob_op_cb_preparetojoin(const cav_msgs::MobilityOperation& msg);
 
+            /**
+            * \brief Function to process mobility operation in PrepareToDepart state (departure)
+            *
+            * \param msg incoming mobility operation
+            */
+            void mob_op_cb_preparetodepart(const cav_msgs::MobilityOperation& msg);
+
             //------- 3. Mobility request callback -----------
             
             /**
@@ -750,6 +762,15 @@ namespace platoon_strategic_ihp
             */
             MobilityRequestResponse mob_req_cb_preparetojoin(const cav_msgs::MobilityRequest& msg);
 
+            /**
+            * \brief Function to process mobility request in preparetodepart state
+            *
+            * \param msg incoming mobility request
+            *
+            * \return ACK, NACK, or No response
+            */
+            MobilityRequestResponse mob_req_cb_preparetodepart(const cav_msgs::MobilityRequest& msg);
+
             // ------ 4. Mobility response callback ------
             /**
             * \brief Function to process mobility response in leaderaborting state.
@@ -778,6 +799,13 @@ namespace platoon_strategic_ihp
             * \param msg incoming mobility response
             */
             void mob_resp_cb_preparetojoin(const cav_msgs::MobilityResponse& msg);
+
+            /**
+            * \brief Function to process mobility response in preparetodepart state 
+            *
+            * \param msg incoming mobility response
+            */
+            void mob_resp_cb_preparetodepart(const cav_msgs::MobilityResponse& msg);
 
 
             // Pointer for map projector
@@ -864,5 +892,17 @@ namespace platoon_strategic_ihp
              *       for cut-in in middle, index indicate the gap leading vehicle's index.
              */    
             const std::string JOIN_PARAMS = "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%";
+
+            // UCLA: DEPART Strategy Params
+            /**
+             * index = 0, command speed in m/s.
+             * index = 1, current speed in m/s.
+             * index = 2, current downbtrack progress in cm. 
+             * index = 3, total route length in cm.
+             * index = 4, x coordinate in cm.
+             * index = 5, y coordinate in cm.
+             * index = 6, z coordinate in cm.
+             */
+            const std::string DEPART_PARAMS = "CMDSPEED:%1%,SPEED:%2%,DTD:%3%,ROUTELENGTH;%4%,ECEFX:%5%,ECEFY:%6%,ECEFZ:%7%";
     };
 }

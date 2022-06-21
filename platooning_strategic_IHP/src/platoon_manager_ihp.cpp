@@ -152,7 +152,7 @@ namespace platoon_strategic_ihp
         double hostCurSpeed = getCurrentSpeed();
         updatesOrAddMemberInfo(host_platoon_, hostStaticId, hostcmdSpeed, hostDtD, hostCtD, hostCurSpeed);
     }
-    
+
     // Update/add one member's information from STATUS messages, update platoon ID if needed.  
     void PlatoonManager::neighborMemberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& params, 
                                                const double& DtD, const double& CtD)
@@ -274,6 +274,24 @@ namespace platoon_strategic_ihp
     }
     
     // TODO: Place holder for delete member info due to dissolve operation.
+    // UCLA: Function to remove platoon members due to departure requests
+    void PlatoonManager::deleteDepartMemberInfo(std::vector<PlatoonMember>& platoon, std::string senderID)
+    {
+        // find the index of the departing vehicle 
+        int departIndex;
+        for (int i=0; i < platoon.size()-1; i++)
+        {
+            std::string curr_ID = platoon[i].staticId;
+            if (curr_ID == senderID)
+            {
+                departIndex = i;
+                ROS_DEBUG_STREAM("Deleting the " << departIndex << "th member of the platoon!");
+                // delete corresponding item in platoon 
+                platoon.erase(platoon.begin() + departIndex);
+                break;
+            }
+        }
+    }
 
     // Get the platoon size.
     int PlatoonManager::getHostPlatoonSize() {
@@ -370,7 +388,7 @@ namespace platoon_strategic_ihp
         // Indicate the member was not found
         return false;
     }
-        
+    
     // Find the downtrack distance of the last vehicle of the platoon, in m.    
     double PlatoonManager::getPlatoonRearDowntrackDistance(){
         // due to downtrack descending order, the 1ast vehicle in list is the platoon rear vehicle.
@@ -815,97 +833,8 @@ namespace platoon_strategic_ihp
         return host_platoon_[host_platoon_index].vehiclePosition; // m
     }
 
-    // Trajectory based platoon trajectory regulation.
-    double PlatoonManager::getIHPDesPosFollower(double time_step)
-    {
-        /**
-         * Calculate desired position based on previous vehicle's trajectory for followers.
-         * 
-         * TODO: The platoon trajectory regulation is derived with the assumption that all vehicle 
-         *       have identical length (i.e., 5m). Future development is needed to include variable 
-         *       vehicle length into consideration.
-         */
-
-        // 1. read dtd vector 
-        // dtd vector 
-        std::vector<double> downtrackDistance(host_platoon_.size());
-        for (size_t i = 0; i < host_platoon_.size(); i++)
-        {
-            downtrackDistance[i] = host_platoon_[i].vehiclePosition;
-        }
-        // speed vector
-        std::vector<double> speed(host_platoon_.size());
-        for (size_t i = 0; i < host_platoon_.size(); i++)
-        {
-            speed[i] = host_platoon_[i].vehicleSpeed;
-        }
-
-        // 2. find the summation of "veh_len/veh_speed" for all predecessors
-        double tmp_time_hdw = 0.0;
-        double cur_dtd;
-        for (size_t index = 0; index < downtrackDistance.size(); index++)
-        {
-            cur_dtd = downtrackDistance[index];
-            if (cur_dtd > getCurrentDowntrackDistance())
-            {
-                // greater dtd ==> in front of host veh 
-                tmp_time_hdw += config_.vehicleLength / (speed[index] + 0.00001);
-            }
-        }
-
-        // 3. read host veh and front veh info 
-        // Predecessor vehicle data.
-        double pred_spd = speed[getNumberOfVehicleInFront()-1]; // m/s 
-        double pred_pos = downtrackDistance[getNumberOfVehicleInFront()-1]; // m
-        
-        // host data. 
-        double ego_spd = getCurrentSpeed(); // m/s
-        double ego_pos = getCurrentDowntrackDistance(); // m
-        
-        // platoon position index
-        int pos_idx = getNumberOfVehicleInFront();
-
-        double desirePlatoonGap = config_.intra_tau; //s
-        
-        // IHP desired position calculation methods
-        double pos_g; // desired downtrack position calculated with time-gap, in m.
-        double pos_h; // desired downtrack position calculated with distance headaway, in m.
-
-        // 4. IHP gap regualtion 
-        
-        // intermediate variables 
-        double timeGapAndStepRatio = desirePlatoonGap/time_step;      // The ratio between desired platoon time gap and the current time_step.
-        double totalTimeGap = desirePlatoonGap*pos_idx;               // The overall time gap from host vehicle to the platoon leader, in s.
-
-        // calcilate pos_gap and pos_headway
-        if ((pred_spd <= ego_spd) && (ego_spd <= config_.ss_theta))
-        {
-            // ---> 4.1 pos_g 
-            pos_g = (pred_pos - config_.vehicleLength - config_.standstill + ego_pos*timeGapAndStepRatio) / (1 + timeGapAndStepRatio);
-            // ---> 4.2 pos_h
-            double pos_h_nom = (pred_pos - config_.standstill + ego_pos*(totalTimeGap + tmp_time_hdw)/time_step);
-            double pos_h_denom = (1 + ((totalTimeGap + tmp_time_hdw)/time_step));
-            pos_h = pos_h_nom/pos_h_denom;
-
-        }
-        else
-        {   
-            // ---> 4.1 pos_g 
-            pos_g = (pred_pos - config_.vehicleLength + ego_pos*(timeGapAndStepRatio)) / (1 + timeGapAndStepRatio);
-            // ---> 4.2 pos_h
-            double pos_h_nom = (pred_pos + ego_pos*(totalTimeGap + tmp_time_hdw)/time_step);
-            double pos_h_denom = (1 + ((totalTimeGap + tmp_time_hdw)/time_step));
-            pos_h = pos_h_nom/pos_h_denom;
-        }
-
-        // ---> 4.3 desire speed and desire location 
-        double pos_des = config_.gap_weight*pos_g + (1.0 - config_.gap_weight)*pos_h;
-        // double des_spd = (pos_des - ego_pos) / time_step;
-
-        // ---> 4.4 return IHP calculated desired location
-        return pos_des;
-    }
-
+    // Note: The IHP gap regulation has been moved to control plug-in.  
+    
     // UCLA: find the index of the closest vehicle in the target platoon that is in front of the host vehicle (cut-in joiner).
     // Note: The joiner will cut-in at the back of this vehicle, which make this index points to the vehicle that is leading the cut-in gap.
     int PlatoonManager::getClosestIndex(double joinerDtD)
