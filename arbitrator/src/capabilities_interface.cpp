@@ -15,7 +15,7 @@
  */
 
 #include "capabilities_interface.hpp"
-#include <carma_planning_msgs/srv/PlanManeuvers.hpp>
+#include <carma_planning_msgs/srv/plan_maneuvers.hpp>
 #include <exception>
 #include <sstream>
 
@@ -27,12 +27,16 @@ namespace arbitrator
     {
         std::vector<std::string> topics = {};
 
-        carma_planning_msgs::srv::GetPluginApi srv;
-        srv.request.capability = "";
+        auto srv = std::make_shared<carma_planning_msgs::srv::GetPluginApi::Request>();
+        srv->capability = "";
 
-        if (query_string == STRATEGIC_PLAN_CAPABILITY && sc_s.call(srv))
+        auto plan_response = sc_s_->async_send_request(srv);
+
+        auto future_status = plan_response.wait_for(std::chrono::milliseconds(1000));
+
+        if (query_string == STRATEGIC_PLAN_CAPABILITY && future_status == std::future_status::ready)
         {
-            topics = srv.response.plan_service;
+            topics = plan_response.get()->plan_service;
             
             // Log the topics
             std::ostringstream stream;
@@ -41,12 +45,12 @@ namespace arbitrator
                 stream << topic << ", ";
             }
             stream << std::endl;
-            ROS_INFO(stream.str().c_str());
+            RCLCPP_INFO_STREAM(nh_->get_logger(), stream.str().c_str());
         }
         else
         {
-            ROS_DEBUG_STREAM("servicd call failed...");
-            ROS_DEBUG_STREAM("client: " << sc_s);
+            RCLCPP_DEBUG_STREAM(nh_->get_logger(), "service call failed...");
+            RCLCPP_DEBUG_STREAM(nh_->get_logger(), "client: " << sc_s_);
         }
 
         return topics;

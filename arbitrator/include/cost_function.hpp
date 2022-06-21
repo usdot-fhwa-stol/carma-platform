@@ -18,7 +18,7 @@
 #define __ARBITRATOR_INCLUDE_COST_FUNCTION_HPP__
 
 #include <carma_planning_msgs/msg/maneuver_plan.hpp>
-#include <carma_planning_msgs/msg/maneuver_plan.hpp>
+#include <carma_planning_msgs/srv/compute_plan_cost.hpp>
 
 namespace arbitrator
 {

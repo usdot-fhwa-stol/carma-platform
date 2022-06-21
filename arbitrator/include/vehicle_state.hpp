@@ -18,6 +18,7 @@
  */
 
 #include <lanelet2_core/Forward.h>
+#include <rclcpp/rclcpp.hpp>
 
 namespace arbitrator
 {

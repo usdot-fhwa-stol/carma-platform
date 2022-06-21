@@ -24,6 +24,7 @@
 #include "neighbor_generator.hpp"
 #include "search_strategy.hpp"
 #include "vehicle_state.hpp"
+#include <rclcpp/rclcpp.hpp>
 
 namespace arbitrator
 {

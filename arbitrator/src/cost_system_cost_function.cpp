@@ -16,15 +16,15 @@
 
 #include "cost_system_cost_function.hpp"
 #include "arbitrator_utils.hpp"
-#include "carma_planning_msgs/srv/ComputePlanCost.hpp"
-#include "carma_planning_msgs/msg/ManeuverParameters.hpp"
+#include <carma_planning_msgs/srv/compute_plan_cost.hpp>
+#include <carma_planning_msgs/msg/maneuver_parameters.hpp>
 #include <limits>
 
 namespace arbitrator
 {
-    void CostSystemCostFunction::init(rclcpp::NodeHandle &nh)
+    void CostSystemCostFunction::init(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh)
     {
-        cost_system_sc_ = nh.serviceClient<carma_planning_msgs::srv::ComputePlanCost>("compute_plan_cost");
+        cost_system_sc_ = nh->create_client<carma_planning_msgs::srv::ComputePlanCost>("compute_plan_cost");
         initialized_ = true;
     }
 
@@ -36,13 +36,17 @@ namespace arbitrator
 
         double total_cost = std::numeric_limits<double>::infinity();
 
-        carma_planning_msgs::srv::ComputePlanCost service_message;
-        service_message.request.maneuver_plan = plan;
+        auto service_message = std::make_shared<carma_planning_msgs::srv::ComputePlanCost::Request>();
+        service_message->maneuver_plan = plan;
+        
+        auto resp = cost_system_sc_->async_send_request(service_message);
 
-        if (cost_system_sc_.call(service_message)){
-            total_cost = service_message.response.plan_cost;
+        auto future_status = resp.wait_for(std::chrono::milliseconds(1000));
+
+        if (future_status == std::future_status::ready){
+            total_cost = resp.get()->plan_cost;
         } else {
-            ROS_WARN_STREAM("Unable to get cost for plan from CostPluginSystem due to service call failure.");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "Unable to get cost for plan from CostPluginSystem due to service call failure.");
         }
 
         return total_cost;

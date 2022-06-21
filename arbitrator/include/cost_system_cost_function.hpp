@@ -21,6 +21,7 @@
 #include "cost_function.hpp"
 #include <map>
 #include <string>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
 
 namespace arbitrator
 {
@@ -47,7 +48,7 @@ namespace arbitrator
              * 
              * \param nh A publicly namespaced nodehandle
              */
-            void init(rclcpp::NodeHandle &nh);
+            void init(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh);
 
             /**
              * \brief Compute the unit cost over distance of a given maneuver plan
@@ -66,7 +67,7 @@ namespace arbitrator
              */
             double compute_cost_per_unit_distance(const carma_planning_msgs::msg::ManeuverPlan& plan);
         private:
-            rclcpp::ServiceClient cost_system_sc_;
+            carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::ComputePlanCost> cost_system_sc_;  //TODO convert it to ROS2
             bool initialized_ = false;
     };
 };

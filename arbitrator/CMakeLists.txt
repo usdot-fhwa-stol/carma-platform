@@ -35,14 +35,15 @@ include_directories(
 )
 
 # Build
-ament_auto_add_library(${node_exec} 
-  src/arbitrator_node.cpp
-)
+#ament_auto_add_library(${node_exec} 
+#  src/main.cpp
+#)
 
 ament_auto_add_library(${node_lib} SHARED
   src/arbitrator_state_machine.cpp
   src/arbitrator_utils.cpp
   src/arbitrator.cpp
+  src/arbitrator_node.cpp
   src/beam_search_strategy.cpp
   src/capabilities_interface.cpp
   src/fixed_priority_cost_function.cpp
@@ -51,42 +52,34 @@ ament_auto_add_library(${node_lib} SHARED
 )
 
 # Register component
-rclcpp_components_register_nodes(${node_lib} "arbitrator::Arbitrator")
+rclcpp_components_register_nodes(${node_lib} "arbitrator::ArbitratorNode")
 
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies
-target_link_libraries(${node_exec}
-        ${node_lib}
-)
-
-## Specify libraries to link a library or executable target against
-
-target_link_libraries(arbitrator_library ${catkin_LIBRARIES})
-
-target_link_libraries(${PROJECT_NAME}_node
-  arbitrator_library
-)
+#target_link_libraries(${node_exec}
+#        ${node_lib}
+#)
 
 # Testing
-if(BUILD_TESTING)  
-
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
-
-  ament_add_gtest(test_arbitrator 
-    test/test_arbitrator_state_machine.cpp
-    test/test_plugin_neighbor_generator.cpp
-    test/test_fixed_priority_cost_function.cpp
-    test/test_beam_search_strategy.cpp
-    test/test_tree_planner.cpp
-    test/test_main.cpp
-  )
-
-  ament_target_dependencies(test_arbitrator ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
-
-  target_link_libraries(test_arbitrator ${node_lib})
-
-endif()
+# if(BUILD_TESTING)  
+# 
+#   find_package(ament_lint_auto REQUIRED)
+#   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+# 
+#   ament_add_gtest(test_arbitrator 
+#     test/test_arbitrator_state_machine.cpp
+#     test/test_plugin_neighbor_generator.cpp
+#     test/test_fixed_priority_cost_function.cpp
+#     test/test_beam_search_strategy.cpp
+#     test/test_tree_planner.cpp
+#     test/test_main.cpp
+#   )
+# 
+#   ament_target_dependencies(test_arbitrator ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+# 
+#   target_link_libraries(test_arbitrator ${node_lib})
+# 
+# endif()
 
 # Install
 ament_auto_package(

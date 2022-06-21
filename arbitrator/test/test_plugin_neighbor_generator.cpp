@@ -16,7 +16,7 @@
 
 #include "test_utils.h"
 #include <carma_planning_msgs/msg/maneuver_plan.hpp>
-#include <carma_planning_msgs/srv/PlanManeuvers.hpp>
+#include <carma_planning_msgs/srv/plan_maneuvers.hpp>
 #include <gtest/gtest.h>
 #include "plugin_neighbor_generator.hpp"
 

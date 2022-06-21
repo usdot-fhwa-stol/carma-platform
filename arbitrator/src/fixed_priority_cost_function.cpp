@@ -16,7 +16,7 @@
 
 #include "fixed_priority_cost_function.hpp"
 #include "arbitrator_utils.hpp"
-#include "carma_planning_msgs/msg/ManeuverParameters.hpp"
+#include <carma_planning_msgs/msg/maneuver_parameters.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <limits>
 
@@ -38,7 +38,7 @@ namespace arbitrator
         for (auto it = plugin_priorities.begin(); it != plugin_priorities.end(); it++)
         {
             plugin_costs_[it->first] = 1.0 - (it->second / max_priority);
-            ROS_INFO_STREAM("FixedPriorityCostFunction: " << "Plugin: " << it->first << " Normalized Cost: " << plugin_costs_[it->first]);
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("arbitrator"), "FixedPriorityCostFunction: " << "Plugin: " << it->first << " Normalized Cost: " << plugin_costs_[it->first]);
         }
     }
 

@@ -39,7 +39,7 @@ namespace arbitrator
         public:
             /**
              * \brief Constructor for FixedPriorityCostFunction
-             * \param nh A publically namespaced ("/") rclcpp::NodeHandle
+             * \param plugin_priorities with plugin_name, priority_value mappings
              */
             FixedPriorityCostFunction(const std::map<std::string, double> &plugin_priorities);
 

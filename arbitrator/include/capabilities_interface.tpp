@@ -21,21 +21,27 @@
 #include <map>
 #include <string>
 #include <functional>
-#include <carma_planning_msgs/srv/PlanManeuvers.hpp>
+#include <carma_planning_msgs/srv/plan_maneuvers.hpp>
+#include "capabilities_interface.hpp"
 
 namespace arbitrator 
 {
-    template<typename MSrv>
-    std::map<std::string, MSrv> CapabilitiesInterface::multiplex_service_call_for_capability(std::string query_string, MSrv msg)
+    template<typename MSrvReq, typename MSrvRes>
+    std::map<std::string, MSrvRes> CapabilitiesInterface::multiplex_service_call_for_capability(std::string query_string, MSrvReq msg)
     {
         std::vector<std::string> topics = get_topics_for_capability(query_string);
-        std::map<std::string, MSrv> responses;
+        std::map<std::string, MSrvRes> responses;
         for (auto i = topics.begin(); i != topics.end(); i++) 
         {
-            rclcpp::ServiceClient sc = nh_->serviceClient<carma_planning_msgs::srv::PlanManeuvers>(*i);
-            ROS_DEBUG_STREAM("found client: " << *i);
-            if (sc.call(msg)) {
-                responses.emplace(*i, msg);
+            auto sc = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(*i);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << *i);
+            
+            auto resp = sc->async_send_request(msg);
+
+            auto future_status = resp.wait_for(std::chrono::milliseconds(100));
+            
+            if (future_status == std::future_status::ready) {
+                responses.emplace(*i, resp.get());
             }
         }
         return responses;

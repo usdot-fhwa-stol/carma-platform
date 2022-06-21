@@ -19,7 +19,7 @@
 
 #include "capabilities_interface.hpp"
 #include "plugin_neighbor_generator.hpp"
-#include <carma_planning_msgs/srv/PlanManeuvers.hpp>
+#include <carma_planning_msgs/srv/plan_maneuvers.hpp>
 #include <map>
 
 namespace arbitrator
@@ -27,27 +27,27 @@ namespace arbitrator
     template <class T>
     std::vector<carma_planning_msgs::msg::ManeuverPlan> PluginNeighborGenerator<T>::generate_neighbors(carma_planning_msgs::msg::ManeuverPlan plan, const VehicleState& initial_state) const
     {
-        carma_planning_msgs::srv::PlanManeuvers msg;
+        auto msg = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
         // Set prior plan
-        msg.request.prior_plan = plan;
+        msg->prior_plan = plan;
 
         // Set vehicle state at prior plan start
-        msg.request.header.frame_id = "map";
-        msg.request.header.stamp = initial_state.stamp;
-        msg.request.veh_x = initial_state.x;
-        msg.request.veh_y = initial_state.y;
-        msg.request.veh_downtrack = initial_state.downtrack;
-        msg.request.veh_logitudinal_velocity = initial_state.velocity;
-        msg.request.veh_lane_id = std::to_string(initial_state.lane_id);
+        msg->header.frame_id = "map";
+        msg->header.stamp = initial_state.stamp;
+        msg->veh_x = initial_state.x;
+        msg->veh_y = initial_state.y;
+        msg->veh_downtrack = initial_state.downtrack;
+        msg->veh_logitudinal_velocity = initial_state.velocity;
+        msg->veh_lane_id = std::to_string(initial_state.lane_id);
 
-        std::map<std::string, carma_planning_msgs::srv::PlanManeuvers> res = ci_.multiplex_service_call_for_capability(CapabilitiesInterface::STRATEGIC_PLAN_CAPABILITY, msg);
+        std::map<std::string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Response>> res = ci_.multiplex_service_call_for_capability(CapabilitiesInterface::STRATEGIC_PLAN_CAPABILITY, msg);
 
         // Convert map to vector of map values
         std::vector<carma_planning_msgs::msg::ManeuverPlan> out;
         for (auto it = res.begin(); it != res.end(); it++)
         {
-            ROS_DEBUG_STREAM("Pushing response of child: " << it->first << ", which had mvr size: " << it->second.response.new_plan.maneuvers.size());
-            out.push_back(it->second.response.new_plan);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "Pushing response of child: " << it->first << ", which had mvr size: " << it->second->new_plan.maneuvers.size());
+            out.push_back(it->second->new_plan);
         }
         return out;
     }

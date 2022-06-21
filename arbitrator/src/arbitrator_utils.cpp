@@ -15,7 +15,7 @@
  */
 
 #include "arbitrator_utils.hpp"
-#include <carma_planning_msgs/msg/Maneuver.hpp>
+#include <carma_planning_msgs/msg/maneuver.hpp>
 #include <exception>
 
 

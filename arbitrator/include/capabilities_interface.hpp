@@ -23,8 +23,8 @@
 #include <map>
 #include <unordered_set>
 #include <string>
-#include <carma_planning_msgs/srv/PluginList.hpp>
-#include <carma_planning_msgs/srv/GetPluginApi.hpp>
+#include <carma_planning_msgs/srv/plugin_list.hpp>
+#include <carma_planning_msgs/srv/get_plugin_api.hpp>
 
 namespace arbitrator
 {
@@ -37,10 +37,10 @@ namespace arbitrator
         public:
             /**
              * \brief Constructor for Capabilities interface
-             * \param nh A publically addressesed ("/") rclcpp::NodeHandle
+             * \param nh A CarmaLifecycleNode pointer this interface will work with
              */
-            CapabilitiesInterface(rclcpp::NodeHandle *nh): nh_(nh) {
-                sc_s = nh_->serviceClient<carma_planning_msgs::srv::GetPluginApi>("plugins/get_strategic_plugin_by_capability");
+            CapabilitiesInterface(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh): nh_(nh) {
+                sc_s_ = nh_->create_client<carma_planning_msgs::srv::GetPluginApi>("plugins/get_strategic_plugin_by_capability");
             };
 
             /**
@@ -61,23 +61,25 @@ namespace arbitrator
 
             /**
              * \brief Template function for calling all nodes which respond to a service associated
-             *      with a particular capabilitiy. Will send the service request to all nodes and 
+             *      with a particular capability. Will send the service request to all nodes and 
              *      aggregate the responses.
              * 
-             * \tparam MSrv The typename of the service message
+             * \tparam MSrvReq The typename of the service message request
+             * \tparam MSrvRes The typename of the service message response
+             * 
              * \param query_string The string name of the capability to look for
              * \param The message itself to send
              * \return A map matching the topic name that responded -> the response
              */
-            template<typename MSrv>
-            std::map<std::string, MSrv> multiplex_service_call_for_capability(std::string query_string, MSrv msg);
+            template<typename MSrvReq, typename MSrvRes>
+            std::map<std::string, MSrvRes> multiplex_service_call_for_capability(std::string query_string, MSrvReq msg);
 
             const static std::string STRATEGIC_PLAN_CAPABILITY;
         protected:
         private:
-            rclcpp::NodeHandle *nh_;
+            std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
 
-            rclcpp::ServiceClient sc_s;
+            carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::GetPluginApi> sc_s_;
             std::unordered_set <std::string> capabilities_ ; 
 
 

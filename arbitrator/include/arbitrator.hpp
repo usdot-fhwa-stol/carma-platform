@@ -40,13 +40,12 @@ namespace arbitrator
      * the CARMA planning process. Utilizes a generic planning interface to allow
      * for reconfiguration with other paradigms in the future.
      */
-    class Arbitrator : public carma_ros2_utils::CarmaLifecycleNode
+    class Arbitrator
     {
         public:
             /**
              * \brief Constructor for arbitrator class taking in dependencies via dependency injection
-             * \param nh A CARMANodeHandle instance with a globally referenced ("/") path
-             * \param pnh A CARMANodeHandle instance with a privately referenced ("~") path
+             * \param nh A CarmaLifecycleNode node pointer
              * \param sm An ArbitratorStateMachine instance for regulating the states of the Arbitrator
              * \param ci A CapabilitiesInterface for querying plugins
              * \param planning_strategy A planning strategy implementation for generating plans
@@ -54,23 +53,22 @@ namespace arbitrator
              * \param planning_frequency The frequency at which to generate high-level plans when engaged
              * \param wm pointer to an inialized world model.
              */ 
-            Arbitrator(rclcpp::CARMANodeHandle *nh, 
-                rclcpp::CARMANodeHandle *pnh, 
+            Arbitrator(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh,
                 ArbitratorStateMachine *sm, 
                 CapabilitiesInterface *ci, 
                 PlanningStrategy &planning_strategy,
                 rclcpp::Duration min_plan_duration,
                 rclcpp::Rate planning_frequency,
-                carma_wm::WorldModelConstPtr wm):
+                carma_wm::WorldModelConstPtr wm): 
                 sm_(sm),
                 nh_(nh),
-                pnh_(pnh),
                 capabilities_interface_(ci),
                 planning_strategy_(planning_strategy),
                 initialized_(false),
                 min_plan_duration_(min_plan_duration),
-                time_between_plans_(planning_frequency.expectedCycleTime()),
-                wm_(wm) {};
+                time_between_plans_(planning_frequency.period()),
+                wm_(wm),
+                tf2_buffer_(nh_->get_clock()) {};
             
             /**
              * \brief Begin the operation of the arbitrator.
@@ -83,7 +81,7 @@ namespace arbitrator
              * \brief Callback for the twist subscriber, which will store latest twist locally
              * \param msg Latest twist message
              */
-            void twist_cb(geometry_msgs::TwistStamped::UniquePtr msg);
+            void twist_cb(geometry_msgs::msg::TwistStamped::UniquePtr msg);
 
             /**
              * \brief Callback for the front bumper pose transform
@@ -134,10 +132,9 @@ namespace arbitrator
             VehicleState vehicle_state_; // The current state of the vehicle for populating planning requests
 
             ArbitratorStateMachine *sm_;
-            rclcpp::Publisher final_plan_pub_;
-            rclcpp::Subscriber guidance_state_sub_;
-            rclcpp::CARMANodeHandle *nh_;
-            rclcpp::CARMANodeHandle *pnh_;
+            carma_ros2_utils::PubPtr<carma_planning_msgs::msg::ManeuverPlan> final_plan_pub_;
+            carma_ros2_utils::SubPtr<carma_planning_msgs::msg::GuidanceState> guidance_state_sub_;
+            std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
             rclcpp::Duration min_plan_duration_;
             rclcpp::Duration time_between_plans_;
             rclcpp::Time next_planning_process_start_;
@@ -146,7 +143,7 @@ namespace arbitrator
             bool initialized_;
             carma_wm::WorldModelConstPtr wm_;
 
-            geometry_msgs::TransformStamped tf_;
+            geometry_msgs::msg::TransformStamped tf_;
             // TF listenser
             tf2_ros::Buffer tf2_buffer_;
             std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;

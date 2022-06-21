@@ -43,16 +43,16 @@ namespace arbitrator
                 // Pop the first element off the open list
                 carma_planning_msgs::msg::ManeuverPlan cur_plan = it->first;
 
-                ROS_DEBUG_STREAM("START");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "START");
                 
                 for (auto mvr : cur_plan.maneuvers)
                 {
-                    ROS_DEBUG_STREAM("Printing cur_plan: mvr: "<< (int)mvr.type);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "Printing cur_plan: mvr: "<< (int)mvr.type);
                 }   
 
-                ROS_DEBUG_STREAM("PRINT END");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "PRINT END");
 
-                rclcpp::Duration plan_duration; // zero duration
+                auto plan_duration = rclcpp::Duration(0, 0); // zero duration
 
                 // If we're not at the root, plan_duration is nonzero (our plan should have maneuvers)
                 if (!cur_plan.maneuvers.empty()) 
@@ -72,10 +72,10 @@ namespace arbitrator
                 if (plan_duration >= target_plan_duration_) 
                 {
                     final_open_list.push_back((*it));
-                    ROS_DEBUG_STREAM("Has enough duration, skipping that which has following mvrs..:");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "Has enough duration, skipping that which has following mvrs..:");
                     for (auto mvr : it->first.maneuvers)
                     {
-                        ROS_DEBUG_STREAM("Printing mvr: "<< (int)mvr.type);
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "Printing mvr: "<< (int)mvr.type);
                     }  
                     continue;
                 }
@@ -88,7 +88,7 @@ namespace arbitrator
                 {
                     if (child->maneuvers.empty())
                     {
-                        ROS_DEBUG_STREAM("Child was empty for id: " << child->maneuver_plan_id);
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "Child was empty for id: " << child->maneuver_plan_id);
                         continue;   
                     }
                     temp_open_list.push_back(std::make_pair(*child, cost_function_.compute_cost_per_unit_distance(*child)));
@@ -105,7 +105,7 @@ namespace arbitrator
         {
             // Pop the first element off the open list
             carma_planning_msgs::msg::ManeuverPlan cur_plan = pair.first;
-            rclcpp::Duration plan_duration; // zero duration
+            rclcpp::Duration plan_duration(0,0); // zero duration
 
             // get plan duration
             plan_duration = arbitrator_utils::get_plan_end_time(cur_plan) - arbitrator_utils::get_plan_start_time(cur_plan); 
