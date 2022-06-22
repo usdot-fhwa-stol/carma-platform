@@ -400,7 +400,7 @@ TEST(LCIStrategicPluginTest, moboperationcbtest)
 TEST(LCIStrategicPluginTest, parseStrategyParamstest)
 {
   cav_msgs::MobilityOperation msg;
-  msg.strategy_params =  "st:16000,et:32000,dt:48000,dp:1,access:0";
+  msg.strategy_params =  "st:16000,et:32000";
 
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   LCIStrategicPluginConfig config;
@@ -411,9 +411,6 @@ TEST(LCIStrategicPluginTest, parseStrategyParamstest)
   
   EXPECT_EQ(16000, lcip.scheduled_stop_time_);
   EXPECT_EQ(32000, lcip.scheduled_enter_time_);
-  EXPECT_EQ(48000, lcip.scheduled_depart_time_);
-  EXPECT_EQ(1, lcip.scheduled_departure_position_);
-  EXPECT_EQ(false, lcip.is_allowed_int_);
 
   cav_msgs::MobilityOperation outgoing_msg = lcip.generateMobilityOperation();
   EXPECT_EQ(outgoing_msg.strategy, "Carma/light_controlled_intersection");

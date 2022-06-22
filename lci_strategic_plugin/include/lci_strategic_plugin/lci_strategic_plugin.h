@@ -195,12 +195,6 @@ public:
   unsigned long long scheduled_stop_time_ = 0;
   // scheduled enter time
   unsigned long long scheduled_enter_time_ = 0;
-  // scheduled depart time
-  unsigned long long scheduled_depart_time_ = 0;
-  // scheduled latest depart position
-  uint32_t scheduled_departure_position_ = std::numeric_limits<uint32_t>::max();
-  // flag to show if the vehicle is allowed in intersection
-  bool is_allowed_int_ = false;
   
   //BSM
   std::string bsm_id_ = "default_bsm_id";
