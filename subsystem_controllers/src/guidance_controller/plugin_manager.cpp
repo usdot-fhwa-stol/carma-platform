@@ -55,8 +55,58 @@ namespace subsystem_controllers
 
     }
 
+    bool PluginManager::is_ros2_lifecycle_node(const std::string& node)
+    {
+        // Determine if this plugin is a ROS1 or ROS2 plugin
+        std::vector<std::string> name_parts;
+        boost::split(name_parts, node, boost::is_any_of("/"));
+
+        if (name_parts.empty()) {
+          RCLCPP_WARN_STREAM(rclcpp::get_logger("subsystem_controllers"), "Invalid name for plugin: " << node << " Plugin may not function in system.");
+          return false;
+        }
+
+        std::string base_name = name_parts.back();
+        name_parts.pop_back();
+        std::string namespace_joined = boost::algorithm::join(name_parts, "/");
+
+        auto services_and_types = get_service_names_and_types_by_node(base_name, namespace_joined);
+
+
+        // Next we check if both services are available with the correct type
+        // Short variable names used here to make conditional more readable
+        const std::string cs_srv = node + "/change_state";
+        const std::string gs_srv = node + "/get_state";
+
+        if (services_and_types.find(cs_srv) != services_and_types.end() 
+          && services_and_types.find(gs_srv) != services_and_types.end()
+          && std::find(services_and_types.at(cs_srv).begin(), services_and_types.at(cs_srv).end(), CHANGE_STATE_TYPE) != services_and_types.at(cs_srv).end()
+          && std::find(services_and_types.at(gs_srv).begin(), services_and_types.at(gs_srv).end(), GET_STATE_TYPE) != services_and_types.at(gs_srv).end())
+        {
+
+          return true;
+
+        }
+
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("subsystem_controllers"), "Detected non-ros2 lifecycle plugin " << node);
+        return false;
+    }
+
     void PluginManager::add_plugin(const Entry& plugin)
     {
+
+        // If this is a ros1 node we will still track it but we will not attempt to manage its state machine
+        if (is_ros2_lifecycle_node(plugin.name_)) {
+
+            Entry ros1_plugin = plugin;
+
+            ros1_plugin.is_ros1_ = true;
+          
+            em_.update_entry(ros1_plugin);
+
+          return;
+        }
+
         plugin_lifecycle_mgr_->add_managed_node(plugin.name_); 
 
         em_.update_entry(plugin);
@@ -128,6 +178,10 @@ namespace subsystem_controllers
         // Bring all known plugins to the inactive state
         for (auto plugin : em_.get_entries())
         {
+            if (plugin.is_ros1_) // We do not manage lifecycle of ros1 nodes
+                continue;
+
+            
             auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, plugin.name_, service_timeout_, call_timeout_);
 
             if(result_state != lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE) 
@@ -163,6 +217,9 @@ namespace subsystem_controllers
         // Bring all required or auto activated plugins to the active state
         for (auto plugin : em_.get_entries())
         {
+            if (plugin.is_ros1_) // We do not manage lifecycle of ros1 nodes
+                continue;
+
             // If this is not a plugin slated for activation then continue and leave up to user to activate manually later
             if (!plugin.user_requested_activation_)
                 continue;
@@ -211,6 +268,9 @@ namespace subsystem_controllers
         // Bring all required or auto activated plugins to the active state
         for (auto plugin : em_.get_entries())
         {
+
+            if (plugin.is_ros1_) // We do not manage lifecycle of ros1 nodes
+                continue;
             
             auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, plugin.name_, service_timeout_, call_timeout_);
 
@@ -246,6 +306,9 @@ namespace subsystem_controllers
         // Bring all required or auto activated plugins to the unconfigured state
         for (auto plugin : em_.get_entries())
         {
+
+            if (plugin.is_ros1_) // We do not manage lifecycle of ros1 nodes
+                continue;
             
             auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED, plugin.name_, service_timeout_, call_timeout_);
 
@@ -277,7 +340,15 @@ namespace subsystem_controllers
     
     bool PluginManager::shutdown()
     {
-        return plugin_lifecycle_mgr_->shutdown(service_timeout_, call_timeout_, false, em_.get_entry_names()).empty();
+        std::string all_names = em_.get_entry_names();
+        std::string ros2_names;
+        ros2_names.reserve(all_names.size());
+
+        std::copy_if(all_names.begin(), all_names.end(),
+                 std::back_inserter(ros2_names),
+                 [this](const std::string& n) { return !em_.get_entry_by_name(n)->is_ros1_; });
+
+        return plugin_lifecycle_mgr_->shutdown(service_timeout_, call_timeout_, false, ros2_names).empty();
     }
 
     void PluginManager::get_registered_plugins(SrvHeader, carma_planning_msgs::srv::PluginList::Request::SharedPtr, carma_planning_msgs::srv::PluginList::Response::SharedPtr res)
@@ -318,6 +389,12 @@ namespace subsystem_controllers
         if(!requested_plugin) // If not a known plugin then obviously not activated. Though really it would be better to have an indication of name failure in the message
         {
             res->newstate = false;
+            return;
+        }
+
+        if (requested_plugin->is_ros1_)
+        {
+            res->newstate = true;
             return;
         }
 

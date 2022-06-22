@@ -170,6 +170,15 @@ namespace subsystem_controllers
              */ 
             bool matching_capability(const std::vector<std::string>& base_capability_levels, const std::vector<std::string>& compared_capability_levels);
 
+            /**
+             * \brief Returns true if the specified fully qualified node name is a ROS2 lifecycle node
+             * 
+             * \param node The fully specified name of the node to evaluate
+             * 
+             * \return True if ros2 lifecycle node. False otherwise
+             */ 
+            bool is_ros2_lifecycle_node(const std::string& node);
+
             //! Set of required plugins a failure of which necessitates system shutdown
             std::unordered_set<std::string> required_plugins_;
 

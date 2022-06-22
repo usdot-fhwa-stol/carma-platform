@@ -37,6 +37,8 @@ namespace subsystem_controllers
         std::string capability_;
         //! Flag indicating if the user requested this plugin be activated
         bool user_requested_activation_ = false;
+        //! Flag indicating if this is a ros1 node
+        bool is_ros1_ = false;
 
         /**
          * \brief All fields constructor
