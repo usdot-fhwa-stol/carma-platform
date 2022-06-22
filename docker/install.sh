@@ -47,7 +47,7 @@ if [[ ! -z "$ROS1_PACKAGES$ROS2_PACKAGES" ]]; then
     fi
 else
     echo "Building all ROS1 CARMA Components"
-    colcon build --install-base /opt/carma/install --packages-skip light_controlled_intersection_tactical_plugin --cmake-args -DCMAKE_BUILD_TYPE=Release
+    colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release
 fi
 echo "Build of ROS1 CARMA Components Complete"
 

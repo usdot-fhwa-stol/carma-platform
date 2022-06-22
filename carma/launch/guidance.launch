@@ -116,7 +116,7 @@
   <include file="$(find platoon_control)/launch/platoon_control.launch" />
 
   <!-- Platooning Control IHP Plugin -->
-  <!-- <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" /> -->
+  <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" />
 
   <!-- Twist Filter -->
   <group>
@@ -234,7 +234,7 @@
   <include file="$(find stop_controlled_intersection_tactical_plugin)/launch/stop_controlled_intersection_tactical_plugin.launch" />
 
   <!-- Light Controlled Intersection Tactical Plugin -->
-  <!-- <include file="$(find light_controlled_intersection_tactical_plugin)/launch/light_controlled_intersection_tactical_plugin.launch" /> -->
+  <include file="$(find light_controlled_intersection_tactical_plugin)/launch/light_controlled_intersection_tactical_plugin.launch" />
   
   <!-- Guidance Plugin Validator -->
   <group>
