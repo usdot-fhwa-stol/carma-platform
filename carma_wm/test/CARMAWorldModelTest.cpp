@@ -1159,7 +1159,7 @@ TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
     FAIL() << "No point returned";
   }
   lanelet = map->laneletLayer.get(1200);
-  ASSERT_NEAR((*point).x(), lanelet.centerline().front().x() - 1.0, 0.001);
+  ASSERT_NEAR((*point).x(), lanelet.centerline().front().x() + 1.0, 0.001);
   ASSERT_NEAR((*point).y(), lanelet.centerline().front().y(), 0.001);
 
   pos.downtrack = 40.0;
@@ -1168,7 +1168,7 @@ TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
     FAIL() << "No point returned";
   }
   lanelet = map->laneletLayer.get(1203);
-  ASSERT_NEAR((*point).x(), lanelet.centerline().back().x() - 1.0, 0.001);
+  ASSERT_NEAR((*point).x(), lanelet.centerline().back().x() + 1.0, 0.001);
   ASSERT_NEAR((*point).y(), lanelet.centerline().back().y(), 0.001);
 
   pos.downtrack = 12.5;
@@ -1177,7 +1177,7 @@ TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
     FAIL() << "No point returned";
   }
   lanelet = map->laneletLayer.get(1200);
-  ASSERT_NEAR((*point).x(), lanelet.centerline().front().x() - 1.0, 0.001);
+  ASSERT_NEAR((*point).x(), lanelet.centerline().front().x() + 1.0, 0.001);
   ASSERT_NEAR((*point).y(), 12.5, 0.001);
 
   pos.downtrack = 10.0;
@@ -1185,9 +1185,13 @@ TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
   if (!point) {
     FAIL() << "No point returned";
   }
+  auto alt_point = wm->routeTrackPos(*point); // Verify the output is equivalent to the inverse function
   lanelet = map->laneletLayer.get(1200);
-  ASSERT_NEAR((*point).x(), lanelet.centerline().back().x() - 1.0, 0.001);
+  ASSERT_NEAR((*point).x(), lanelet.centerline().back().x() + 1.0, 0.001);
   ASSERT_NEAR((*point).y(), lanelet.centerline().back().y(), 0.001);
+
+  ASSERT_NEAR(alt_point.downtrack, pos.downtrack, 0.001);
+  ASSERT_NEAR(alt_point.crosstrack, pos.crosstrack, 0.001);
   
   pos.downtrack = 20.0;
   point = wm->pointFromRouteTrackPos(pos); // Test lanelet connection point
@@ -1195,7 +1199,7 @@ TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
     FAIL() << "No point returned";
   }
   lanelet = map->laneletLayer.get(1201);
-  ASSERT_NEAR((*point).x(), lanelet.centerline().back().x() - 1.0, 0.001);
+  ASSERT_NEAR((*point).x(), lanelet.centerline().back().x() + 1.0, 0.001);
   ASSERT_NEAR((*point).y(), lanelet.centerline().back().y(), 0.001);
 
   ////////////
@@ -1208,7 +1212,7 @@ TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
     FAIL() << "No point returned";
   }
   lanelet = map->laneletLayer.get(1200);
-  ASSERT_NEAR((*point).x(), lanelet.centerline().front().x() + 1.0, 0.001);
+  ASSERT_NEAR((*point).x(), lanelet.centerline().front().x() - 1.0, 0.001);
   ASSERT_NEAR((*point).y(), lanelet.centerline().front().y(), 0.001);
 
   pos.downtrack = 40.0;
@@ -1217,7 +1221,7 @@ TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
     FAIL() << "No point returned";
   }
   lanelet = map->laneletLayer.get(1203);
-  ASSERT_NEAR((*point).x(), lanelet.centerline().back().x() + 1.0, 0.001);
+  ASSERT_NEAR((*point).x(), lanelet.centerline().back().x() - 1.0, 0.001);
   ASSERT_NEAR((*point).y(), lanelet.centerline().back().y(), 0.001);
 
   pos.downtrack = 12.5;
@@ -1226,7 +1230,7 @@ TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
     FAIL() << "No point returned";
   }
   lanelet = map->laneletLayer.get(1200);
-  ASSERT_NEAR((*point).x(), lanelet.centerline().front().x() + 1.0, 0.001);
+  ASSERT_NEAR((*point).x(), lanelet.centerline().front().x() - 1.0, 0.001);
   ASSERT_NEAR((*point).y(), 12.5, 0.001);
 
   pos.downtrack = 10.0;
@@ -1235,7 +1239,7 @@ TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
     FAIL() << "No point returned";
   }
   lanelet = map->laneletLayer.get(1200);
-  ASSERT_NEAR((*point).x(), lanelet.centerline().back().x() + 1.0, 0.001);
+  ASSERT_NEAR((*point).x(), lanelet.centerline().back().x() - 1.0, 0.001);
   ASSERT_NEAR((*point).y(), lanelet.centerline().back().y(), 0.001);
   
   pos.downtrack = 20.0;
@@ -1244,7 +1248,7 @@ TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
     FAIL() << "No point returned";
   }
   lanelet = map->laneletLayer.get(1201);
-  ASSERT_NEAR((*point).x(), lanelet.centerline().back().x() + 1.0, 0.001);
+  ASSERT_NEAR((*point).x(), lanelet.centerline().back().x() - 1.0, 0.001);
   ASSERT_NEAR((*point).y(), lanelet.centerline().back().y(), 0.001);
 }
 
