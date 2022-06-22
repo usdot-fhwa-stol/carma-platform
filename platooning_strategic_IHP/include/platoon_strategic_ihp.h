@@ -56,6 +56,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <std_msgs/String.h>
+#include <carma_wm/TrafficControl.h>
 
 namespace platoon_strategic_ihp
 {

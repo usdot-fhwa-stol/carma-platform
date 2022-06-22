@@ -493,9 +493,24 @@ namespace platoon_strategic_ihp
 
                 int numOfVehiclesGaps = pm_.getNumberOfVehicleInFront() - pm_.dynamic_leader_index_;
                 ROS_DEBUG_STREAM("The host vehicle have " << numOfVehiclesGaps << " vehicles between itself and its leader (includes the leader)");
+                
+                // use current position to find lanelet ID
+                lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
 
+                auto llts = wm_->getLaneletsFromPoint(current_loc, 1);
+
+                auto geofence_gaps = llts[0].regulatoryElementsAs<lanelet::DigitalMinimumGap>();
+                double lanelet_digitalgap = 0.0;
+                if (!geofence_gaps.empty())
+                {
+                    lanelet_digitalgap = 44.0;//geofence_gaps[0]->getMinimumGap();
+                }
+                ROS_DEBUG_STREAM("lanelet_digitalgap: " << lanelet_digitalgap);
+                double desired_headway = std::max(current_speed_ * config_.timeHeadway, lanelet_digitalgap);
+                ROS_DEBUG_STREAM("speed based gap: " << current_speed_ * config_.timeHeadway);
+                ROS_DEBUG_STREAM("max desired_headway " << desired_headway);
                 // TODO: currently the average length of the vehicle is obtained from a config parameter. In future, plugin needs to be updated to receive each vehicle's actual length through status or BSM messages for more accuracy.
-                status_msg.desired_gap = std::max(config_.standStillHeadway * numOfVehiclesGaps, config_.timeHeadway * current_speed_* numOfVehiclesGaps) + (numOfVehiclesGaps - 1) * 5.0;//config_.averageVehicleLength;
+                status_msg.desired_gap = std::max(config_.standStillHeadway * numOfVehiclesGaps, desired_headway * numOfVehiclesGaps) + (numOfVehiclesGaps - 1) * 5.0;//config_.averageVehicleLength;
                 ROS_DEBUG_STREAM("The desired gap with the leader is " << status_msg.desired_gap);
 
 
@@ -507,10 +522,10 @@ namespace platoon_strategic_ihp
                 status_msg.predecessor_position = pm_.getPredecessorPosition();
 
                 // Note: use isCreateGap to adjust the desired gap send to control plugin 
-                double regular_gap = std::max(config_.standStillHeadway, config_.timeHeadway * current_speed_);
+                double regular_gap = std::max(config_.standStillHeadway, desired_headway);
                 ROS_DEBUG_STREAM("regular_gap: " << regular_gap);
                 ROS_DEBUG_STREAM("current_speed_: " << current_speed_);
-                ROS_DEBUG_STREAM("speed based gap: " << config_.timeHeadway * current_speed_);
+                ROS_DEBUG_STREAM("speed based gap: " << desired_headway);
                 if (pm_.isCreateGap){
                     // enlarged desired gap for gap creation
                     status_msg.desired_gap = regular_gap*(1 + config_.createGapAdjuster);
@@ -1935,7 +1950,7 @@ namespace platoon_strategic_ihp
                 else
                 {
                     ROS_DEBUG_STREAM("Rear join geometry violation. NACK. rearGap = " << rearGap);
-                    pm_.current_platoon_state = pm_.current_platoon_state = PlatoonState::LEADER;
+                    pm_.current_platoon_state = PlatoonState::LEADER;
                     return MobilityRequestResponse::NACK;
                 }
             }
@@ -2456,7 +2471,7 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("Action Plan reset.");
             ROS_DEBUG_STREAM("Trying again....");
             pm_.current_plan.valid = false;
-            pm_.current_platoon_state = pm_.current_platoon_state = PlatoonState::LEADER;
+            pm_.current_platoon_state = PlatoonState::LEADER;
             return;
         }
         // UCLA: Create Gap or perform a rear join (no gap creation necessary)
