@@ -29,10 +29,12 @@ namespace subsystem_controllers
                           const std::vector<std::string>& auto_activated_plugins, 
                           std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> plugin_lifecycle_mgr,
                           GetParentNodeStateFunc get_parent_state_func,
+                          ServiceNamesAndTypesFunc get_service_names_and_types_func,
                           std::chrono::nanoseconds service_timeout, std::chrono::nanoseconds call_timeout)
         : required_plugins_(required_plugins.begin(), required_plugins.end()),
             auto_activated_plugins_(auto_activated_plugins.begin(), auto_activated_plugins.end()),
             plugin_lifecycle_mgr_(plugin_lifecycle_mgr), get_parent_state_func_(get_parent_state_func),
+            get_service_names_and_types_func_(get_service_names_and_types_func),
             service_timeout_(service_timeout), call_timeout_(call_timeout)
     {
         if (!plugin_lifecycle_mgr)
@@ -70,7 +72,7 @@ namespace subsystem_controllers
         name_parts.pop_back();
         std::string namespace_joined = boost::algorithm::join(name_parts, "/");
 
-        auto services_and_types = get_service_names_and_types_by_node(base_name, namespace_joined);
+        auto services_and_types = get_service_names_and_types_func_(base_name, namespace_joined);
 
 
         // Next we check if both services are available with the correct type
@@ -80,8 +82,8 @@ namespace subsystem_controllers
 
         if (services_and_types.find(cs_srv) != services_and_types.end() 
           && services_and_types.find(gs_srv) != services_and_types.end()
-          && std::find(services_and_types.at(cs_srv).begin(), services_and_types.at(cs_srv).end(), CHANGE_STATE_TYPE) != services_and_types.at(cs_srv).end()
-          && std::find(services_and_types.at(gs_srv).begin(), services_and_types.at(gs_srv).end(), GET_STATE_TYPE) != services_and_types.at(gs_srv).end())
+          && std::find(services_and_types.at(cs_srv).begin(), services_and_types.at(cs_srv).end(), "lifecycle_msgs/srv/ChangeState") != services_and_types.at(cs_srv).end()
+          && std::find(services_and_types.at(gs_srv).begin(), services_and_types.at(gs_srv).end(), "lifecycle_msgs/srv/GetState") != services_and_types.at(gs_srv).end())
         {
 
           return true;
@@ -340,8 +342,8 @@ namespace subsystem_controllers
     
     bool PluginManager::shutdown()
     {
-        std::string all_names = em_.get_entry_names();
-        std::string ros2_names;
+        std::vector<std::string> all_names = em_.get_entry_names();
+        std::vector<std::string> ros2_names;
         ros2_names.reserve(all_names.size());
 
         std::copy_if(all_names.begin(), all_names.end(),
@@ -361,6 +363,7 @@ namespace subsystem_controllers
             msg.available = plugin.available_;
             msg.name = plugin.name_;
             msg.type = plugin.type_;
+            msg.capability = plugin.capability_;
             res->plugins.push_back(msg);
         }
     }
@@ -377,6 +380,7 @@ namespace subsystem_controllers
                 msg.available = plugin.available_;
                 msg.name = plugin.name_;
                 msg.type = plugin.type_;
+                msg.capability = plugin.capability_;
                 res->plugins.push_back(msg);
             }
         }
@@ -451,7 +455,7 @@ namespace subsystem_controllers
                 (req->capability.size() == 0 || (matching_capability(plugin_capability_levels, req_capability_levels) == 0 && plugin.active_ && plugin.available_)))
             {
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("guidance_controller"), "discovered control plugin: " << plugin.name_);
-                res->plan_service.push_back(plugin.name_ + plugin.capability_);
+                res->plan_service.push_back(plugin.name_ + control_trajectory_suffix_);
             }
             else
             {
@@ -475,7 +479,7 @@ namespace subsystem_controllers
                 (req->capability.size() == 0 || (matching_capability(plugin_capability_levels, req_capability_levels) == 0 && plugin.active_ && plugin.available_)))
             {
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("guidance_controller"), "discovered tactical plugin: " << plugin.name_);
-                res->plan_service.push_back(plugin.name_ + plugin.capability_);
+                res->plan_service.push_back(plugin.name_ + plan_trajectory_suffix_);
             }
             else
             {
@@ -499,7 +503,7 @@ namespace subsystem_controllers
                 (req->capability.size() == 0 || (matching_capability(plugin_capability_levels, req_capability_levels) == 0 && plugin.active_ && plugin.available_)))
             {
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("guidance_controller"), "discovered strategic plugin: " << plugin.name_);
-                res->plan_service.push_back(plugin.name_ + plugin.capability_);
+                res->plan_service.push_back(plugin.name_ + plan_maneuvers_suffix_);
             }
             else
             {
