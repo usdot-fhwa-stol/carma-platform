@@ -44,7 +44,7 @@ namespace yield_plugin
     : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher), 
       mobility_response_publisher_(mobility_response_publisher), lc_status_publisher_(lc_status_publisher)
   {
-    plugin_discovery_msg_.name = "YieldPlugin";
+    plugin_discovery_msg_.name = "yield_plugin";
     plugin_discovery_msg_.version_id = "v1.0";
     plugin_discovery_msg_.available = true;
     plugin_discovery_msg_.activated = false;

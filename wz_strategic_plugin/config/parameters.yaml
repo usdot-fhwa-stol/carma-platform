@@ -23,4 +23,4 @@ lane_following_plugin_name : InLaneCruisingPlugin
 stop_and_wait_plugin_name : StopAndWaitPlugin
 
 # String: The name of the plugin to use for intersection transit trajectory planning
-intersection_transit_plugin_name : IntersectionTransitPlugin
+intersection_transit_plugin_name : intersection_transit_maneuvering

@@ -40,7 +40,7 @@ struct PlatooningTacticalPluginConfig
   bool enable_object_avoidance = true;    // Activate object avoidance logic
   bool publish_debug = false; // True if debug publishing will be enabled
   double buffer_ending_downtrack = 20.0;
-  std::string desired_controller_plugin = "PlatooningControlPlugin"; ////The desired controller plugin for the platooning trajectory
+  std::string desired_controller_plugin = "platoon_control"; ////The desired controller plugin for the platooning trajectory
   
   friend std::ostream& operator<<(std::ostream& output, const PlatooningTacticalPluginConfig& c)
   {

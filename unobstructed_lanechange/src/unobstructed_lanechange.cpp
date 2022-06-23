@@ -33,7 +33,7 @@ namespace unobstructed_lanechange
         pnh_.reset(new ros::CARMANodeHandle("~"));
         
         trajectory_srv_ = nh_->advertiseService("plugins/UnobstructedLaneChangePlugin/plan_trajectory", &UnobstructedLaneChangePlugin::plan_trajectory_cb, this);
-        yield_client_ = nh_->serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
+        yield_client_ = nh_->serviceClient<cav_srvs::PlanTrajectory>("plugins/yield_plugin/plan_trajectory");
                 
         unobstructed_lanechange_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
         plugin_discovery_msg_.name = "UnobstructedLaneChangePlugin";

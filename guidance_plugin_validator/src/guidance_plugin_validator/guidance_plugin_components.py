@@ -158,15 +158,15 @@ class TacticalPluginResults:
         self.plugin_name = plugin_name
         
         # Set the plugin's node name
-        if plugin_name == "InLaneCruisingPlugin":
+        if plugin_name == "inlanecruising_plugin":
             self.node_name = "/guidance/inlanecruising_plugin"
         elif plugin_name == "StopandWaitPlugin":
             self.node_name = "/guidance/stop_and_wait_plugin"
-        elif plugin_name == "CooperativeLaneChangePlugin":
+        elif plugin_name == "cooperative_lanechange":
             self.node_name = "/guidance/cooperative_lanechange"
         elif plugin_name == "UnobstructedLaneChangePlugin":
             self.node_name = "/guidance/unobstructed_lanechange"
-        elif plugin_name == "YieldPlugin":
+        elif plugin_name == "yield_plugin":
             self.node_name = "/guidance/yield_plugin"
         else:
             rospy.logerr("ERROR: Unknown node for Tactical Plugin: " + str(self.plugin_name))

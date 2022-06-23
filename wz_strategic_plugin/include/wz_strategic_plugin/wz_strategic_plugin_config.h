@@ -47,12 +47,12 @@ struct WzStrategicPluginConfig
   std::string strategic_plugin_name = "WorkZonePlugin";
 
   //! The name of the tactical plugin to use for Lane Following trajectory planning
-  std::string lane_following_plugin_name = "InLaneCruisingPlugin";
+  std::string lane_following_plugin_name = "inlanecruising_plugin";
 
   //! The name of the plugin to use for stop and wait trajectory planning
   std::string stop_and_wait_plugin_name = "StopAndWaitPlugin";
 
   //! The name of the plugin to use for intersection transit trajectory planning
-  std::string intersection_transit_plugin_name = "IntersectionTransitPlugin";
+  std::string intersection_transit_plugin_name = "intersection_transit_maneuvering";
 };
 }  // namespace localizer
