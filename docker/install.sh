@@ -77,7 +77,7 @@ if [[ ! -z "$ROS1_PACKAGES$ROS2_PACKAGES" ]]; then
     fi
 else
     echo "Building all ROS2 components..."
-    colcon build --install-base /opt/carma/install_ros2 --build-base build_ros2 --cmake-args -DCMAKE_BUILD_TYPE=Release
+    colcon build  --install-base /opt/carma/install_ros2 --build-base build_ros2 --cmake-args -DCMAKE_BUILD_TYPE=Release
 fi
 
 echo "Build of ROS2 CARMA Components Complete"
