@@ -218,7 +218,13 @@ namespace plan_delegator
 
     bool PlanDelegator::isManeuverExpired(const cav_msgs::Maneuver& maneuver, ros::Time current_time) const
     {
-        return GET_MANEUVER_PROPERTY(maneuver, end_time) <= current_time; // TODO maneuver expiration should maybe be based off of distance not time? https://github.com/usdot-fhwa-stol/carma-platform/issues/1107
+        ROS_DEBUG_STREAM("maneuver start time:" << std::to_string(GET_MANEUVER_PROPERTY(maneuver, start_time).toSec()));
+        ROS_DEBUG_STREAM("maneuver end time:" << std::to_string(GET_MANEUVER_PROPERTY(maneuver, end_time).toSec()));
+        ROS_DEBUG_STREAM("current time:" << std::to_string(ros::Time::now().toSec()));
+        bool isexpired = GET_MANEUVER_PROPERTY(maneuver, end_time) <= current_time;
+        ROS_DEBUG_STREAM("isexpired:" << isexpired);
+        // TODO: temporary disabling expiration check
+        return  false;// TODO maneuver expiration should maybe be based off of distance not time? https://github.com/usdot-fhwa-stol/carma-platform/issues/1107
     }
 
     cav_srvs::PlanTrajectory PlanDelegator::composePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const

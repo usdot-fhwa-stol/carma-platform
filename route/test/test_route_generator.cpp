@@ -483,7 +483,7 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
             auto resp_ptr2 = std::make_shared<carma_planning_msgs::srv::SetActiveRoute::Response>(resp2);
             ASSERT_EQ(worker.setActiveRouteCb(header, req_ptr2, resp_ptr2), true);
             // TODO: temporarily disabled since map isnt loaded properly
-            // ASSERT_EQ(resp2.errorStatus, cav_srvs::SetActiveRouteResponse::NO_ERROR);
+            // ASSERT_EQ(resp2.error_status, cav_srvs::SetActiveRouteResponse::NO_ERROR);
         }
     }
     
@@ -514,7 +514,7 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     auto resp_ptr3 = std::make_shared<carma_planning_msgs::srv::SetActiveRoute::Response>(resp3);
     ASSERT_EQ(worker2.setActiveRouteCb(header, req_ptr3, resp_ptr3), true);
     // TODO: temporarily disabled since map isnt loaded properly
-    // ASSERT_EQ(resp4.errorStatus, cav_srvs::SetActiveRouteResponse::NO_ERROR);
+    // ASSERT_EQ(resp4.error_status, cav_srvs::SetActiveRouteResponse::NO_ERROR);
 }
 
 TEST(RouteGeneratorTest, test_duplicate_lanelets_in_shortest_path)

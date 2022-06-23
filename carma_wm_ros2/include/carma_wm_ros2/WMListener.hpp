@@ -144,9 +144,6 @@ private:
   const bool multi_threaded_;
   std::mutex mw_mutex_;
   
-  double config_speed_limit_ = 0.0;
-  std::string participant_  = "";
-  
 
 };
 }  // namespace carma_wm
