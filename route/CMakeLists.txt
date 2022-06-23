@@ -1,5 +1,5 @@
-#
-# Copyright (C) 2018-2021 LEIDOS.
+
+# Copyright (C) 2018-2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -12,91 +12,82 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
-#
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(route)
 
+# Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
+carma_check_ros_version(2)
 carma_package()
 
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  std_msgs
-  cav_srvs
-  carma_utils
-  autoware_msgs
-  wgs84_utils_ros1
-  carma_wm
-  tf
-  tf2
-  tf2_geometry_msgs
-)
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+# Name build targets
+set(node_exec route_node_exec)
+set(node_lib route_node_lib)
+set(generator_worker_lib route_worker_lib)
+set(state_worker_lib route_state_lib)
 
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils autoware_msgs wgs84_utils_ros1 carma_wm tf tf2 tf2_geometry_msgs
-)
-
-###########
-## Build ##
-###########
-
+# Includes
 include_directories(
-  ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
   include
 )
 
-
-add_executable( ${PROJECT_NAME}
-  src/main.cpp
-  src/route.cpp
-  src/route_generator_worker.cpp
-  src/route_state_worker.cpp)
-add_library(route_library src/route_generator_worker.cpp src/route_state_worker.cpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} route_library)
-target_link_libraries(route_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_dependencies(route_library ${catkin_EXPORTED_TARGETS})
-
-#############
-## Install ##
-#############
-
-install(DIRECTORY include
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
+# Build
+ament_auto_add_library(${generator_worker_lib} 
+        src/route_generator_worker.cpp
 )
 
-## Install C++
-install(TARGETS ${PROJECT_NAME} route_library
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ament_auto_add_library(${state_worker_lib} 
+        src/route_state_worker.cpp
 )
 
-## Install Other Resources
-install(DIRECTORY launch
-config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+ament_auto_add_library(${node_lib} SHARED
+        src/route_node.cpp
 )
 
-#############
-## Testing ##
-#############
-catkin_add_gmock(${PROJECT_NAME}-test 
-  test/test_route_generator.cpp
-  test/test_route_state.cpp
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
 )
-target_link_libraries(${PROJECT_NAME}-test route_library ${catkin_LIBRARIES})
+
+# Register component
+rclcpp_components_register_nodes(${node_lib} "route::Route")
+
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_lib}
+        ${generator_worker_lib}
+)
+
+target_link_libraries(${node_lib}
+        ${state_worker_lib}
+)
+
+target_link_libraries(${node_exec}
+        ${node_lib}
+)
+
+# Testing
+if(BUILD_TESTING)  
+
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+
+  ament_add_gtest(test_route 
+        test/test_route_generator.cpp
+        test/test_route_state.cpp
+  )
+
+  ament_target_dependencies(test_route ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+
+  target_link_libraries(test_route ${node_lib})
+
+endif()
+
+# Install
+ament_auto_package(
+        INSTALL_TO_SHARE config launch
+)

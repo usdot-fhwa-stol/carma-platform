@@ -65,6 +65,24 @@ struct LCIStrategicPluginConfig
   //! The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
   double min_maneuver_planning_period = 15.1;
 
+  //! Double: Approximate update time interval of carma streets
+  double carma_streets_update_interval = 1.0;
+  
+  //! Double: Vehicle reaction time to a received schedule in seconds (approximate value, only used for communication with the schedule)
+  double reaction_time = 2.0;
+
+  //! Double: Minimum inter-vehicle gap
+  double min_gap = 10.0;
+
+  //! Bool: Enable carma streets connection
+  bool  enable_carma_streets_connection = false;
+
+  //! Double: Mobility operation rate
+  double mobility_rate = 10.0;
+
+  //! License plate of the vehicle.
+  std::string vehicle_id = "default_id";
+
   //! The name to use for this plugin during comminications with the arbitrator
   std::string strategic_plugin_name = "LCIStrategicPlugin";
 

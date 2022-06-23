@@ -41,8 +41,6 @@ class WMListenerWorker;  // Forward declaration of worker class
  * in the constructor. When used in a multi-threading case users can ensure threadsafe operation though usage of the
  * getLock function
  *
- * NOTE: At the moment the mechanism of route communication in ROS is not defined therefore it is a TODO: to implement
- * full route support
  */
 class WMListener
 {
@@ -61,6 +59,10 @@ public:
     rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics,
     rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_params_,
     bool multi_thread = false);
+
+  /*! \brief Destructor
+   */
+  ~WMListener();
 
   /*!
    * \brief Returns a pointer to an intialized world model instance
@@ -125,9 +127,15 @@ public:
 
 private:
   // Callback function that uses lock to edit the map
-  void mapUpdateCallback(const autoware_lanelet2_msgs::msg::MapBin::UniquePtr geofence_msg);
+  void mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::UniquePtr geofence_msg);
   carma_ros2_utils::SubPtr<carma_perception_msgs::msg::RoadwayObstacleList> roadway_objects_sub_;
   carma_ros2_utils::SubPtr<autoware_lanelet2_msgs::msg::MapBin> map_update_sub_;
+
+  rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_;
+  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging_;
+  rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics_;
+  rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_params_;
+
   std::unique_ptr<WMListenerWorker> worker_;
   
   carma_ros2_utils::SubPtr<autoware_lanelet2_msgs::msg::MapBin> map_sub_;
@@ -135,14 +143,6 @@ private:
   carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::SPAT> traffic_spat_sub_;
   const bool multi_threaded_;
   std::mutex mw_mutex_;
-  
-  double config_speed_limit_ = 0.0;
-  std::string participant_  = "";
-  
-  rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_;
-  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging_;
-  rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics_;
-  rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_params_;
   
 
 };

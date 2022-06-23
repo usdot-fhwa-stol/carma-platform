@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>platoon_control_ihp</name>
+  <version>3.3.0</version>
+  <description>The node is to control the ihp platooning maneuver</description>
+  <maintainer email="CARMA@dot.gov">carma</maintainer>
+  <license>Apache 2.0 License</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>carma_utils</depend>
+  <depend>cav_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+  <depend>autoware_msgs</depend>
+  <build_depend>carma_cmake_common</build_depend>
+</package>

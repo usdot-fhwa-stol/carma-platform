@@ -42,11 +42,24 @@ def generate_launch_description():
     tactical_plugins_to_validate = LaunchConfiguration('tactical_plugins_to_validate')
     control_plugins_to_validate = LaunchConfiguration('control_plugins_to_validate')
 
+    vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
+    declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_param_file',
+        default_value = "/opt/carma/vehicle/config/VehicleConfigParams.yaml",
+        description = "Path to file contain vehicle configuration parameters"
+    )
+
     subsystem_controller_default_param_file = os.path.join(
         get_package_share_directory('subsystem_controllers'), 'config/guidance_controller_config.yaml')
 
     mobilitypath_visualizer_param_file = os.path.join(
         get_package_share_directory('mobilitypath_visualizer'), 'config/params.yaml')
+
+    trajectory_executor_param_file = os.path.join(
+        get_package_share_directory('trajectory_executor'), 'config/parameters.yaml')
+    
+    route_param_file = os.path.join(
+        get_package_share_directory('route'), 'config/parameters.yaml')
     
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
@@ -77,11 +90,50 @@ def generate_launch_description():
                 remappings = [
                     ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/mobility_path_msg" ] ),
                     ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NZ', default_value=''), "/map_param_loader/georeference"])
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference"])
                 ],
                 parameters=[
                     vehicle_characteristics_param_file,
-                    mobilitypath_visualizer_param_file
+                    mobilitypath_visualizer_param_file,
+                    vehicle_config_param_file
+                ]
+            ),
+            ComposableNode(
+                package='trajectory_executor',
+                plugin='trajectory_executor::TrajectoryExecutor',
+                name='trajectory_executor_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('trajectory_executor', env_log_levels) }
+                ],
+                remappings = [
+                    ("trajectory", "plan_trajectory"),
+                ],
+                parameters=[
+                    trajectory_executor_param_file,
+                    vehicle_config_param_file
+                ]
+            ),
+            ComposableNode(
+                package='route',
+                plugin='route::Route',
+                name='route_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('route', env_log_levels) }
+                ],
+                remappings = [
+                    ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
+                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
+                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
+                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] )
+                ],
+                parameters=[
+                    {'route_file_path': route_file_folder},
+                    route_param_file,
+                    vehicle_config_param_file
                 ]
             ),
         ]
@@ -98,6 +150,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([  
+        declare_vehicle_config_param_file_arg,
         declare_subsystem_controller_param_file_arg,      
         carma_guidance_container,
         subsystem_controller

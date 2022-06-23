@@ -554,7 +554,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlu
 
     // Build trajectory points
     std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
-        basic_autonomy::waypoint_generation::trajectory_from_points_times_orientations(future_basic_points, times, future_yaw, state_time);
+        basic_autonomy::waypoint_generation::trajectory_from_points_times_orientations(future_basic_points, times, future_yaw, state_time, "default");
 
     return traj_points;
 }

@@ -141,6 +141,9 @@ public:
   */
   lanelet::Lanelets identifyInteriorLanelets(const lanelet::Lanelets& entry_llts, const std::shared_ptr<lanelet::LaneletMap>& map);
 
+  // SignalizedIntersection's reference point correction pair of (x, y) for each intersection_id
+  std::unordered_map<uint16_t, std::pair<double, double>> intersection_coord_correction_;
+
   // SignalizedIntersection quick id lookup
   std::unordered_map<uint16_t, lanelet::Id> intersection_id_to_regem_id_;
 
@@ -168,6 +171,8 @@ private:
 
   // Max width of lane in meters
   double max_lane_width_ = 4;
+
+
 };
 
 }  // namespace carma_wm

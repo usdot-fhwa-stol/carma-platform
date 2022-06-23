@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -507,7 +507,7 @@ TEST(PortDrayageTest, testComposeSetActiveRouteRequest)
     // Verify the results of PortDrayageWorker's compose_set_active_route_request() method
     cav_srvs::SetActiveRoute route_req = pdw.compose_set_active_route_request(*pdw._latest_mobility_operation_msg.dest_latitude, *pdw._latest_mobility_operation_msg.dest_longitude);
     ASSERT_EQ(cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY, route_req.request.choice);
-    ASSERT_EQ("MOVING_TO_LOADING_AREA", route_req.request.routeID);
+    ASSERT_EQ("MOVING_TO_LOADING_AREA", route_req.request.route_id);
     ASSERT_EQ(1, route_req.request.destination_points.size());
     ASSERT_EQ(38.9550038, route_req.request.destination_points[0].latitude);
     ASSERT_EQ(-77.1481983, route_req.request.destination_points[0].longitude);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2018-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -113,7 +113,7 @@ namespace port_drayage_plugin
         cav_srvs::SetActiveRoute route_req;
         if (dest_latitude && dest_longitude) {
             route_req.request.choice = cav_srvs::SetActiveRouteRequest::DESTINATION_POINTS_ARRAY;
-            route_req.request.routeID = _latest_mobility_operation_msg.operation;
+            route_req.request.route_id = _latest_mobility_operation_msg.operation;
 
             cav_msgs::Position3D destination_point;
             destination_point.latitude = *_latest_mobility_operation_msg.dest_latitude;

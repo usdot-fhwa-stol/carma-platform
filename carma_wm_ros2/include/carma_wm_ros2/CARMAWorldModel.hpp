@@ -28,7 +28,7 @@
 #include <carma_v2x_msgs/msg/spat.hpp>
 #include "carma_wm_ros2/TrackPos.hpp"
 #include "carma_wm_ros2/WorldModelUtils.hpp"
-
+#include <lanelet2_extension/time/TimeConversion.h>
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "carma_wm_ros2/SignalizedIntersectionManager.hpp"
 
@@ -67,6 +67,20 @@ public:
    *  \param recompute_routing_graph Optional field which if true will result in the routing graph being recomputed. NOTE: If this map is the first map set the graph will always be recomputed
    */
   void setMap(lanelet::LaneletMapPtr map, size_t map_version = 0, bool recompute_routing_graph = true);
+
+  /*!
+   * \brief Set the routing graph for the participant type.
+   *        This function may serve as an optimization to recomputing the routing graph when it is already available
+   * 
+   * NOTE: The set graph will be overwritten if setMap(recompute_routing_graph=true) is called. 
+   *       It will not, be overwritten if the map is set with recompute_routing_graph=false
+   *
+   * \param graph The graph to set. 
+   *              NOTE: This graph must be for the participant type specified getVehicleParticipationType().
+   *              There is no way to validate this from the object so the user must ensure consistency. 
+   * 
+   */ 
+  void setRoutingGraph(LaneletRoutingGraphPtr graph);
 
   /*! \brief Set the current route. This route must match the current map for this class to function properly
    *

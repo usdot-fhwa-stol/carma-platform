@@ -88,6 +88,14 @@ namespace carma_wm
       double curr_x = ref_node.x();
       double curr_y = ref_node.y();
 
+      if (intersection_coord_correction_.find(intersection.id.id) != intersection_coord_correction_.end())
+      {
+        curr_x += intersection_coord_correction_[intersection.id.id].first;
+        curr_y += intersection_coord_correction_[intersection.id.id].second;
+        ROS_DEBUG_STREAM("Applied reference point correction, delta_x: " <<  intersection_coord_correction_[intersection.id.id].first <<
+                          ", delta_y: " << intersection_coord_correction_[intersection.id.id].second << ", to intersection id: " << (int)lane.lane_id);
+      }
+
       ROS_DEBUG_STREAM("Processing Lane id: " << (int)lane.lane_id);
       
       size_t min_number_of_points = 2; // two points minimum are required
@@ -122,7 +130,7 @@ namespace carma_wm
       
       for (auto node : node_list)
       {
-        ROS_DEBUG_STREAM("x: " << node.x() << ", y: " << node.y());
+        ROS_DEBUG_STREAM(node.x() << ", " << node.y());
       }
       
       // save which signal group connect to which exit lanes
@@ -431,6 +439,7 @@ namespace carma_wm
     this->signal_group_to_exit_lanelet_ids_ = other.signal_group_to_exit_lanelet_ids_;
     this->intersection_id_to_regem_id_ = other.intersection_id_to_regem_id_;
     this->signal_group_to_traffic_light_id_ = other.signal_group_to_traffic_light_id_;
+    this->intersection_coord_correction_ = other.intersection_coord_correction_;
 
     return *this;
   }
@@ -441,5 +450,6 @@ namespace carma_wm
     this->signal_group_to_exit_lanelet_ids_ = other.signal_group_to_exit_lanelet_ids_;
     this->intersection_id_to_regem_id_ = other.intersection_id_to_regem_id_;
     this->signal_group_to_traffic_light_id_ = other.signal_group_to_traffic_light_id_;
+    this->intersection_coord_correction_ = other.intersection_coord_correction_;
   }
 }  // namespace carma_wm

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 LEIDOS.
+ * Copyright (C) 2020-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,34 +14,37 @@
  * the License.
  */
 
-#include "route_state_worker.h"
+#include "route/route_state_worker.hpp"
 #include <gtest/gtest.h>
-#include <ros/ros.h>
 
 TEST(RouteStateTest, testStateTransitions)
 {
+    // Create a RouteStateWorker for this test
+    auto node = std::make_shared<rclcpp::Node>("test_node");
     route::RouteStateWorker worker;
-    ASSERT_EQ(route::RouteStateWorker::RouteState::LOADING, worker.get_route_state());
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_ABORTED);
-    ASSERT_EQ(route::RouteStateWorker::RouteState::LOADING, worker.get_route_state());
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_LOADED);
-    ASSERT_EQ(route::RouteStateWorker::RouteState::SELECTION, worker.get_route_state());
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_SELECTED);
-    ASSERT_EQ(route::RouteStateWorker::RouteState::ROUTING, worker.get_route_state());
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_STARTED);
-    ASSERT_EQ(route::RouteStateWorker::RouteState::FOLLOWING, worker.get_route_state());
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_COMPLETED);
-    ASSERT_EQ(route::RouteStateWorker::RouteState::LOADING, worker.get_route_state());
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_DEPARTED);
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_COMPLETED);
-    ASSERT_EQ(route::RouteStateWorker::RouteState::LOADING, worker.get_route_state());
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_LOADED);
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_SELECTED);
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
-    ASSERT_EQ(route::RouteStateWorker::RouteState::SELECTION, worker.get_route_state());
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_LOADED);
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_SELECTED);
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_STARTED);
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
-    ASSERT_EQ(route::RouteStateWorker::RouteState::ROUTING, worker.get_route_state());
+    worker.setLoggerInterface(node->get_node_logging_interface());
+    
+    ASSERT_EQ(route::RouteStateWorker::RouteState::LOADING, worker.getRouteState());
+    worker.onRouteEvent(route::RouteStateWorker::RouteEvent::ROUTE_ABORTED);
+    ASSERT_EQ(route::RouteStateWorker::RouteState::LOADING, worker.getRouteState());
+    worker.onRouteEvent(route::RouteStateWorker::RouteEvent::ROUTE_LOADED);
+    ASSERT_EQ(route::RouteStateWorker::RouteState::SELECTION, worker.getRouteState());
+    worker.onRouteEvent(route::RouteStateWorker::RouteEvent::ROUTE_SELECTED);
+    ASSERT_EQ(route::RouteStateWorker::RouteState::ROUTING, worker.getRouteState());
+    worker.onRouteEvent(route::RouteStateWorker::RouteEvent::ROUTE_STARTED);
+    ASSERT_EQ(route::RouteStateWorker::RouteState::FOLLOWING, worker.getRouteState());
+    worker.onRouteEvent(route::RouteStateWorker::RouteEvent::ROUTE_COMPLETED);
+    ASSERT_EQ(route::RouteStateWorker::RouteState::LOADING, worker.getRouteState());
+    worker.onRouteEvent(route::RouteStateWorker::RouteEvent::ROUTE_DEPARTED);
+    worker.onRouteEvent(route::RouteStateWorker::RouteEvent::ROUTE_COMPLETED);
+    ASSERT_EQ(route::RouteStateWorker::RouteState::LOADING, worker.getRouteState());
+    worker.onRouteEvent(route::RouteStateWorker::RouteEvent::ROUTE_LOADED);
+    worker.onRouteEvent(route::RouteStateWorker::RouteEvent::ROUTE_SELECTED);
+    worker.onRouteEvent(route::RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+    ASSERT_EQ(route::RouteStateWorker::RouteState::SELECTION, worker.getRouteState());
+    worker.onRouteEvent(route::RouteStateWorker::RouteEvent::ROUTE_LOADED);
+    worker.onRouteEvent(route::RouteStateWorker::RouteEvent::ROUTE_SELECTED);
+    worker.onRouteEvent(route::RouteStateWorker::RouteEvent::ROUTE_STARTED);
+    worker.onRouteEvent(route::RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
+    ASSERT_EQ(route::RouteStateWorker::RouteState::ROUTING, worker.getRouteState());
 }
