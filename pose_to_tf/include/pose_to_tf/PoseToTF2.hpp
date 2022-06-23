@@ -15,14 +15,14 @@
  * the License.
  */
 
-#include <ros/ros.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <geometry_msgs/PoseWithCovariance.h>
-#include <geometry_msgs/Pose.h>
-#include <geometry_msgs/TransformStamped.h>
+#include <rclcpp/rclcpp.hpp>
+#include <geometry_msgs/msg/PoseStamped.h>
+#include <geometry_msgs/msg/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/msg/PoseWithCovariance.h>
+#include <geometry_msgs/msg/Pose.h>
+#include <geometry_msgs/msg/TransformStamped.h>
 #include <functional>
-#include <pose_to_tf/PoseToTF2Config.h>
+#include <pose_to_tf/PoseToTF2Config.hpp>
 
 namespace pose_to_tf
 {
@@ -32,7 +32,7 @@ namespace pose_to_tf
 class PoseToTF2
 {
 public:
-  using TransformPublisher = std::function<void(const geometry_msgs::TransformStamped&)>;
+  using TransformPublisher = std::function<void(const geometry_msgs::msg::TransformStamped&)>;
 
   /**
    * \brief Constructor
@@ -46,28 +46,28 @@ public:
    *
    * \param msg The pose message to forward
    */
-  void poseStampedCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+  void poseStampedCallback(const geometry_msgs::msg::PoseStamped::UniquePtr& msg);
 
   /**
    * \brief Callback for new pose stamped messages
    *
    * \param msg The pose message to forward
    */
-  void poseWithCovarianceStampedCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
+  void poseWithCovarianceStampedCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::UniquePtr& msg);
 
   /**
    * \brief Callback for new pose stamped messages
    *
    * \param msg The pose message to forward
    */
-  void poseCallback(const geometry_msgs::PoseConstPtr& msg);
+  void poseCallback(const geometry_msgs::msg::Pose::UniquePtr& msg);
 
   /**
    * \brief Callback for new pose with covariance messages
    *
    * \param msg The pose message to forward
    */
-  void poseWithCovarianceCallback(const geometry_msgs::PoseWithCovarianceConstPtr& msg);
+  void poseWithCovarianceCallback(const geometry_msgs::msg::PoseWithCovariance::UniquePtr& msg);
 
 private:
 

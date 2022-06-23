@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,9 +15,9 @@
  */
 
 #include <gtest/gtest.h>
-#include <ros/ros.h>
-#include <pose_to_tf/PoseToTF2.h>
-#include <pose_to_tf/PoseToTF2Config.h>
+#include <rclcpp/rclcpp.hpp>
+#include <pose_to_tf/PoseToTF2.hpp>
+#include <pose_to_tf/PoseToTF2Config.hpp>
 
 using namespace pose_to_tf;
 
@@ -27,14 +27,14 @@ TEST(PoseToTF2, test_methods)
   config.child_frame = "base_link";
   config.default_parent_frame = "map";
   bool msg_set = false;
-  geometry_msgs::TransformStamped msg;
+  geometry_msgs::msg::TransformStamped msg;
 
   PoseToTF2 manager(config, [&msg, &msg_set](auto in) { msg_set = true; msg = in; });
 
   ros::Time now(1.5);
   ros::Time::setNow(now);
 
-  geometry_msgs::Pose poseA;
+  geometry_msgs::msg::Pose poseA;
   poseA.position.x = 1.2;
   poseA.position.y = 2.3;
   poseA.position.z = 5.0;
@@ -43,17 +43,17 @@ TEST(PoseToTF2, test_methods)
   poseA.orientation.z = 9.9;
   poseA.orientation.w = 1.0;
 
-  geometry_msgs::PoseStamped poseB;
+  geometry_msgs::msg::PoseStamped poseB;
 
   poseB.pose = poseA;
   poseB.header.stamp = ros::Time(0.5);
   poseB.header.frame_id = "odom";
 
-  geometry_msgs::PoseWithCovariance poseC;
+  geometry_msgs::msg::PoseWithCovariance poseC;
 
   poseC.pose = poseA;
 
-  geometry_msgs::PoseWithCovarianceStamped poseD;
+  geometry_msgs::msg::PoseWithCovarianceStamped poseD;
 
   poseD.pose.pose = poseA;
   poseD.header.stamp = ros::Time(0.5);
@@ -61,7 +61,7 @@ TEST(PoseToTF2, test_methods)
 
 
   ASSERT_FALSE(msg_set);
-  geometry_msgs::PoseConstPtr poseA_ptr(new geometry_msgs::Pose(poseA));
+  geometry_msgs::msg::PoseConstPtr poseA_ptr(new geometry_msgs::msg::Pose(poseA));
   manager.poseCallback(poseA_ptr);
 
   ASSERT_TRUE(msg_set);
@@ -79,7 +79,7 @@ TEST(PoseToTF2, test_methods)
   
 
   msg_set = false;
-  geometry_msgs::PoseStampedConstPtr poseB_ptr(new geometry_msgs::PoseStamped(poseB));
+  geometry_msgs::msg::PoseStampedConstPtr poseB_ptr(new geometry_msgs::msg::PoseStamped(poseB));
   manager.poseStampedCallback(poseB_ptr);
 
   ASSERT_TRUE(msg_set);
@@ -96,7 +96,7 @@ TEST(PoseToTF2, test_methods)
   ASSERT_NEAR(poseB.header.stamp.toSec(), msg.header.stamp.toSec(), 0.000000001);
 
   msg_set = false;
-  geometry_msgs::PoseWithCovarianceConstPtr poseC_ptr(new geometry_msgs::PoseWithCovariance(poseC));
+  geometry_msgs::msg::PoseWithCovarianceConstPtr poseC_ptr(new geometry_msgs::msg::PoseWithCovariance(poseC));
   manager.poseWithCovarianceCallback(poseC_ptr);
 
   ASSERT_TRUE(msg_set);
@@ -113,7 +113,7 @@ TEST(PoseToTF2, test_methods)
   ASSERT_NEAR(1.5, msg.header.stamp.toSec(), 0.000000001);
 
   msg_set = false;
-  geometry_msgs::PoseWithCovarianceStampedConstPtr poseD_ptr(new geometry_msgs::PoseWithCovarianceStamped(poseD));
+  geometry_msgs::msg::PoseWithCovarianceStampedConstPtr poseD_ptr(new geometry_msgs::msg::PoseWithCovarianceStamped(poseD));
   manager.poseWithCovarianceStampedCallback(poseD_ptr);
 
   ASSERT_TRUE(msg_set);
