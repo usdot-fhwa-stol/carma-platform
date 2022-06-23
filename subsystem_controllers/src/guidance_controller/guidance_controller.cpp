@@ -70,6 +70,7 @@ namespace subsystem_controllers
       config_.auto_activated_plugins, 
       plugin_lifecycle_manager, 
       [this](){ return get_current_state().id(); },
+      [this](auto node, auto ns){ return get_service_names_and_types_by_node(node, ns); },
       std_msec(base_config_.service_timeout_ms), std_msec(base_config_.call_timeout_ms)
     );
 
