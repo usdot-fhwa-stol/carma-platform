@@ -100,7 +100,7 @@ public:
                                     [&mob_request_pub](auto msg) { mob_request_pub.publish(msg); }, [&mob_operation_pub](auto msg) { mob_operation_pub.publish(msg); },
                                     [&platoon_info_pub](auto msg) { platoon_info_pub.publish(msg); } );
   
-    ros::ServiceServer maneuver_srv_ = nh.advertiseService("plugins/platoon_strategic_ihp/plan_maneuvers",
+    ros::ServiceServer maneuver_srv_ = nh.advertiseService("platoon_strategic_ihp/plan_maneuvers",
                                             &PlatoonStrategicIHPPlugin::plan_maneuver_cb, &worker);
     ros::Subscriber mob_request_sub = nh.subscribe("incoming_mobility_request", 1, &PlatoonStrategicIHPPlugin::mob_req_cb,  &worker);
     ros::Subscriber mob_response_sub = nh.subscribe("incoming_mobility_response", 1, &PlatoonStrategicIHPPlugin::mob_resp_cb,  &worker);

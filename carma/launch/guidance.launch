@@ -79,7 +79,7 @@
   <remap from="controller/enable_robotic" to="$(optenv CARMA_INTR_NS)/controller/enable_robotic"/>
 
   <remap from="guidance_state" to="$(optenv CARMA_GUIDE_NS)/state"/>
-  <remap from="maneuver_plan" to="$(optenv CARMA_GUIDE_NS)/arbitrator/final_maneuver_plan"/>
+  <remap from="maneuver_plan" to="$(optenv CARMA_GUIDE_NS)/final_maneuver_plan"/>
 
   <remap from="semantic_map" to="$(optenv CARMA_ENV_NS)/semantic_map"/>
   <remap from="map_update" to="$(optenv CARMA_ENV_NS)/map_update"/>
@@ -130,6 +130,12 @@
   <!-- Planning Stack -->
   <group ns="plugins">
 
+    <!-- Remappings for common topics to move out of the plugin namespace -->
+    <remap from="route" to="$(optenv CARMA_GUIDE_NS)/route"/>
+    <remap from="plugin_discovery" to="$(optenv CARMA_GUIDE_NS)/plugin_discovery"/>
+    <remap from="ctrl_raw" to="$(optenv CARMA_GUIDE_NS)/ctrl_raw"/>
+    <remap from="twist_raw" to="$(optenv CARMA_GUIDE_NS)/twist_raw"/>
+
     <!-- Pure Pursuit Wrapper -->
     <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch">
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
@@ -137,6 +143,7 @@
 
       <!-- Route Following Plugin -->
     <group>
+      <remap from="upcoming_lane_change_status" to="$(optenv CARMA_GUIDE_NS)/upcoming_lane_change_status"/>
       <remap from="upcoming_lane_change_status" to="$(optenv CARMA_GUIDE_NS)/upcoming_lane_change_status"/>
       <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
     </group>
@@ -168,11 +175,6 @@
     <group>
       <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
       <include file = "$(find cooperative_lanechange)/launch/cooperative_lanechange.launch"/>
-    </group>
-
-    <!-- Trajectory Plan Speed Visualizer -->
-    <group>
-      <include file="$(find trajectory_visualizer)/launch/trajectory_visualizer.launch" />
     </group>
 
     <!-- Yield Plugin -->
@@ -211,6 +213,7 @@
 
     <!-- Light Controlled Intersection Strategic Plugin -->
     <group>
+      <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
       <include file="$(find lci_strategic_plugin)/launch/lci_strategic_plugin.launch" />
     </group>
 
@@ -220,6 +223,11 @@
     <!-- Light Controlled Intersection Tactical Plugin -->
     <include file="$(find light_controlled_intersection_tactical_plugin)/launch/light_controlled_intersection_tactical_plugin.launch" />
 
+  </group>
+
+  <!-- Trajectory Plan Speed Visualizer -->
+  <group>
+    <include file="$(find trajectory_visualizer)/launch/trajectory_visualizer.launch" />
   </group>
 
   <!-- Port Drayage Plugin -->
