@@ -31,6 +31,9 @@ namespace gnss_to_map_convertor
     std::string map_frame = "map";             // Frame ID of the map frame
     std::string heading_frame = "ned_heading"; // Frame ID of the frame with +x aligned to vehicle heading and +z into the ground
 
+    double offset_x = 0.0;
+    double offset_y = 0.0;
+
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)
     {

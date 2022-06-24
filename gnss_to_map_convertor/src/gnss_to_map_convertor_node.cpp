@@ -50,6 +50,8 @@ namespace gnss_to_map_convertor
     get_parameter<std::string>("base_link_frame", config_.base_link_frame);
     get_parameter<std::string>("map_frame", config_.map_frame);
     get_parameter<std::string>("heading_frame", config_.heading_frame);
+    get_parameter<double>("offset_x", config_.offset_x);
+    get_parameter<double>("offset_y", config_.offset_y);
 
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
@@ -75,13 +77,13 @@ namespace gnss_to_map_convertor
           return tf;
         },
 
-        config_.map_frame, config_.base_link_frame, config_.heading_frame, this->get_node_logging_interface());
+        config_.map_frame, config_.base_link_frame, config_.heading_frame, config_.offset_x, config_.offset_y, this->get_node_logging_interface());
 
     // Fix Subscriber
 
     fix_sub_ = create_subscription<gps_msgs::msg::GPSFix>("gnss_fix_fused", 2,
                                                           std::bind(&GNSSToMapConvertor::gnssFixCb, convertor_worker_.get(), std_ph::_1));
-
+    
     // Georeference subsciber
 
     geo_sub = create_subscription<std_msgs::msg::String>("georeference", 1,
