@@ -87,14 +87,14 @@ namespace arbitrator
 
         auto wm = wm_listener_->getWorldModel();
 
-        arbitrator_ = std::make_shared<Arbitrator>(Arbitrator(
+        arbitrator_ = std::make_shared<Arbitrator>(
             shared_from_this(),
             &sm, 
             &ci, 
             tp, 
             rclcpp::Duration(config_.min_plan_duration* 1e9),
-            rclcpp::Rate(config_.planning_frequency),
-            wm ));
+            1/config_.planning_frequency,
+            wm );
 
         carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> twist_sub = create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 1, std::bind(&Arbitrator::twist_cb, arbitrator_.get(), std::placeholders::_1));
 

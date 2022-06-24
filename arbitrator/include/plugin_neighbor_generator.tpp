@@ -23,11 +23,14 @@
 #include <map>
 
 namespace arbitrator
-{
+{   
+    using PlanMvrRes = carma_planning_msgs::srv::PlanManeuvers::Response;
+    using PlanMvrReq = carma_planning_msgs::srv::PlanManeuvers::Request;
+
     template <class T>
     std::vector<carma_planning_msgs::msg::ManeuverPlan> PluginNeighborGenerator<T>::generate_neighbors(carma_planning_msgs::msg::ManeuverPlan plan, const VehicleState& initial_state) const
     {
-        auto msg = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+        auto msg = std::make_shared<PlanMvrReq>();
         // Set prior plan
         msg->prior_plan = plan;
 
@@ -40,7 +43,7 @@ namespace arbitrator
         msg->veh_logitudinal_velocity = initial_state.velocity;
         msg->veh_lane_id = std::to_string(initial_state.lane_id);
 
-        std::map<std::string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Response>> res = ci_.multiplex_service_call_for_capability(CapabilitiesInterface::STRATEGIC_PLAN_CAPABILITY, msg);
+        std::map<std::string, std::shared_ptr<PlanMvrRes>> res = ci_.template multiplex_service_call_for_capability<PlanMvrReq, PlanMvrRes>(CapabilitiesInterface::STRATEGIC_PLAN_CAPABILITY, msg);
 
         // Convert map to vector of map values
         std::vector<carma_planning_msgs::msg::ManeuverPlan> out;

@@ -35,9 +35,9 @@ include_directories(
 )
 
 # Build
-#ament_auto_add_library(${node_exec} 
-#  src/main.cpp
-#)
+ament_auto_add_library(${node_exec} 
+  src/main.cpp
+)
 
 ament_auto_add_library(${node_lib} SHARED
   src/arbitrator_state_machine.cpp
@@ -56,9 +56,9 @@ rclcpp_components_register_nodes(${node_lib} "arbitrator::ArbitratorNode")
 
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies
-#target_link_libraries(${node_exec}
-#        ${node_lib}
-#)
+target_link_libraries(${node_exec}
+        ${node_lib}
+)
 
 # Testing
 # if(BUILD_TESTING)  

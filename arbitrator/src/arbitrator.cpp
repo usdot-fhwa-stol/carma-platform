@@ -27,7 +27,7 @@ namespace arbitrator
     void Arbitrator::run()
     {
         RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator started, beginning arbitrator state machine.");
-        while (!rclcpp::isShuttingDown())
+        while (nh_->get_current_state().id() != lifecycle_msgs::msg::State::TRANSITION_STATE_SHUTTINGDOWN)
         {
             switch (sm_->get_state()) 
             {

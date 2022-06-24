@@ -26,6 +26,7 @@
 #include <carma_planning_msgs/srv/plugin_list.hpp>
 #include <carma_planning_msgs/srv/get_plugin_api.hpp>
 
+
 namespace arbitrator
 {
     /**
@@ -72,7 +73,8 @@ namespace arbitrator
              * \return A map matching the topic name that responded -> the response
              */
             template<typename MSrvReq, typename MSrvRes>
-            std::map<std::string, MSrvRes> multiplex_service_call_for_capability(std::string query_string, MSrvReq msg);
+            std::map<std::string, std::shared_ptr<MSrvRes>> multiplex_service_call_for_capability(const std::string& query_string, std::shared_ptr<MSrvReq> msg);
+            
 
             const static std::string STRATEGIC_PLAN_CAPABILITY;
         protected:
@@ -85,6 +87,8 @@ namespace arbitrator
 
             
     };
+
+    //extern template std::map<std::string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Response>> CapabilitiesInterface::multiplex_service_call_for_capability<std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Request>, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Response>>(const std::string& query_string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Request> msg);
 };
 
 #include "capabilities_interface.tpp"

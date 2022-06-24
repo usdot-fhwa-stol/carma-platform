@@ -25,21 +25,21 @@ namespace arbitrator
     class MockCapabilitiesInterface 
     {
         public:
-            using PluginResponses = std::map<std::string, carma_planning_msgs::srv::PlanManeuvers>;
-            MOCK_METHOD2(get_plans, PluginResponses(std::string, carma_planning_msgs::srv::PlanManeuvers));
+            using PluginResponses = std::map<std::string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Response>>;
+            MOCK_METHOD2(get_plans, PluginResponses(std::string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Request>));
             MOCK_METHOD1(get_topics_for_capability, std::vector<std::string>(const std::string&));
 
-            template<typename MSrv>
-            std::map<std::string, MSrv> multiplex_service_call_for_capability(std::string query_string, MSrv msg);
+            template<typename MSrvReq, typename MSrvRes>
+            std::map<std::string, std::shared_ptr<MSrvRes>> multiplex_service_call_for_capability(std::string query_string, std::shared_ptr<MSrvReq> msg);
             ~MockCapabilitiesInterface(){};
 
     };
 
     template<>
-    std::map<std::string, carma_planning_msgs::srv::PlanManeuvers> 
+    std::map<std::string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Response>> 
     MockCapabilitiesInterface::multiplex_service_call_for_capability(
         std::string query_string, 
-        carma_planning_msgs::srv::PlanManeuvers msg)
+        std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Request> msg)
     {
         return get_plans(query_string, msg);
     }

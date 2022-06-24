@@ -21,15 +21,14 @@ namespace arbitrator
 {
     TEST_F(FixedPriorityCostFunctionTest, testSingleManeuver)
     {
-        rclcpp::Time::init();
         carma_planning_msgs::msg::ManeuverPlan plan;
         carma_planning_msgs::msg::Maneuver mvr1;
         mvr1.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         mvr1.lane_following_maneuver.start_dist = 0;
-        mvr1.lane_following_maneuver.start_time = rclcpp::Time::now();
+        mvr1.lane_following_maneuver.start_time = rclcpp::Time(0,0);
         mvr1.lane_following_maneuver.lane_ids = {"0"};
         mvr1.lane_following_maneuver.end_dist = 1;
-        mvr1.lane_following_maneuver.end_time = rclcpp::Time::now();
+        mvr1.lane_following_maneuver.end_time = rclcpp::Time(0,0);
         mvr1.lane_following_maneuver.start_speed = 10;
         mvr1.lane_following_maneuver.end_speed = 10;
         mvr1.lane_following_maneuver.parameters.maneuver_id.push_back(0);
@@ -42,15 +41,14 @@ namespace arbitrator
 
     TEST_F(FixedPriorityCostFunctionTest, testMixedPlanners)
     {
-        rclcpp::Time::init();
         carma_planning_msgs::msg::ManeuverPlan plan;
         carma_planning_msgs::msg::Maneuver mvr1;
         mvr1.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         mvr1.lane_following_maneuver.start_dist = 0;
-        mvr1.lane_following_maneuver.start_time = rclcpp::Time::now();
+        mvr1.lane_following_maneuver.start_time = rclcpp::Time(0,0);
         mvr1.lane_following_maneuver.lane_ids = {"0"};
         mvr1.lane_following_maneuver.end_dist = 1;
-        mvr1.lane_following_maneuver.end_time = rclcpp::Time::now();
+        mvr1.lane_following_maneuver.end_time = rclcpp::Time(0,0);
         mvr1.lane_following_maneuver.start_speed = 10;
         mvr1.lane_following_maneuver.end_speed = 10;
         mvr1.lane_following_maneuver.parameters.maneuver_id.push_back(0);
@@ -59,10 +57,10 @@ namespace arbitrator
         carma_planning_msgs::msg::Maneuver mvr2;
         mvr2.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         mvr2.lane_following_maneuver.start_dist = 1;
-        mvr2.lane_following_maneuver.start_time = rclcpp::Time::now();
+        mvr2.lane_following_maneuver.start_time = rclcpp::Time(0,0);
         mvr2.lane_following_maneuver.lane_ids = {"0"};
         mvr2.lane_following_maneuver.end_dist = 2;
-        mvr2.lane_following_maneuver.end_time = rclcpp::Time::now();
+        mvr2.lane_following_maneuver.end_time = rclcpp::Time(0,0);
         mvr2.lane_following_maneuver.start_speed = 10;
         mvr2.lane_following_maneuver.end_speed = 10;
         mvr2.lane_following_maneuver.parameters.maneuver_id.push_back(0);
@@ -76,15 +74,14 @@ namespace arbitrator
 
     TEST_F(FixedPriorityCostFunctionTest, testSingleManeuverUnitDistance)
     {
-        rclcpp::Time::init();
         carma_planning_msgs::msg::ManeuverPlan plan1;
         carma_planning_msgs::msg::Maneuver mvr1;
         mvr1.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         mvr1.lane_following_maneuver.start_dist = 0;
-        mvr1.lane_following_maneuver.start_time = rclcpp::Time::now();
+        mvr1.lane_following_maneuver.start_time = rclcpp::Time(0,0);
         mvr1.lane_following_maneuver.lane_ids = {"0"};
         mvr1.lane_following_maneuver.end_dist = 1;
-        mvr1.lane_following_maneuver.end_time = rclcpp::Time::now();
+        mvr1.lane_following_maneuver.end_time = rclcpp::Time(0,0);
         mvr1.lane_following_maneuver.start_speed = 10;
         mvr1.lane_following_maneuver.end_speed = 10;
         mvr1.lane_following_maneuver.parameters.maneuver_id.push_back(0);
@@ -97,15 +94,14 @@ namespace arbitrator
 
     TEST_F(FixedPriorityCostFunctionTest, testUnitDistanceCost)
     {
-        rclcpp::Time::init();
         carma_planning_msgs::msg::ManeuverPlan plan2;
         carma_planning_msgs::msg::Maneuver mvr2;
         mvr2.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         mvr2.lane_following_maneuver.start_dist = 0;
-        mvr2.lane_following_maneuver.start_time = rclcpp::Time::now();
+        mvr2.lane_following_maneuver.start_time = rclcpp::Time(0,0);
         mvr2.lane_following_maneuver.lane_ids = {"0"};
         mvr2.lane_following_maneuver.end_dist = 1;
-        mvr2.lane_following_maneuver.end_time = rclcpp::Time::now();
+        mvr2.lane_following_maneuver.end_time = rclcpp::Time(0,0);
         mvr2.lane_following_maneuver.start_speed = 10;
         mvr2.lane_following_maneuver.end_speed = 10;
         mvr2.lane_following_maneuver.parameters.maneuver_id.push_back(0);
@@ -113,10 +109,10 @@ namespace arbitrator
         carma_planning_msgs::msg::Maneuver mvr3;
         mvr3.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         mvr3.lane_following_maneuver.start_dist = 1;
-        mvr3.lane_following_maneuver.start_time = rclcpp::Time::now();
+        mvr3.lane_following_maneuver.start_time = rclcpp::Time(0,0);
         mvr3.lane_following_maneuver.lane_ids = {"0"};
         mvr3.lane_following_maneuver.end_dist = 2;
-        mvr3.lane_following_maneuver.end_time = rclcpp::Time::now();
+        mvr3.lane_following_maneuver.end_time = rclcpp::Time(0,0);
         mvr3.lane_following_maneuver.start_speed = 10;
         mvr3.lane_following_maneuver.end_speed = 10;
         mvr3.lane_following_maneuver.parameters.maneuver_id.push_back(0);

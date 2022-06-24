@@ -58,7 +58,7 @@ namespace arbitrator
                 CapabilitiesInterface *ci, 
                 PlanningStrategy &planning_strategy,
                 rclcpp::Duration min_plan_duration,
-                rclcpp::Rate planning_frequency,
+                double planning_period,
                 carma_wm::WorldModelConstPtr wm): 
                 sm_(sm),
                 nh_(nh),
@@ -66,7 +66,7 @@ namespace arbitrator
                 planning_strategy_(planning_strategy),
                 initialized_(false),
                 min_plan_duration_(min_plan_duration),
-                time_between_plans_(planning_frequency.period()),
+                time_between_plans_(planning_period),
                 wm_(wm),
                 tf2_buffer_(nh_->get_clock()) {};
             
