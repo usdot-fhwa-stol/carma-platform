@@ -68,7 +68,7 @@ namespace arbitrator
              */
             double compute_cost_per_unit_distance(const carma_planning_msgs::msg::ManeuverPlan& plan);
         private:
-            carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::ComputePlanCost> cost_system_sc_;  //TODO convert it to ROS2
+            carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::ComputePlanCost> cost_system_sc_; 
             bool initialized_ = false;
     };
 };

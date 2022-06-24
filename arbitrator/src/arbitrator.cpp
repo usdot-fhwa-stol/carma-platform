@@ -104,7 +104,6 @@ namespace arbitrator
             final_plan_pub_ = nh_->create_publisher<carma_planning_msgs::msg::ManeuverPlan>("final_maneuver_plan", 5);
             guidance_state_sub_ = nh_->create_subscription<carma_planning_msgs::msg::GuidanceState>("guidance_state", 5, std::bind(&Arbitrator::guidance_state_cb, this, std::placeholders::_1));
             initialized_ = true;
-            // TODO: load plan duration from parameters file
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));

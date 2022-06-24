@@ -65,7 +65,7 @@ namespace arbitrator
                 << "planning_frequency: " << c.planning_frequency << std::endl
                 << "beam_width: " << c.beam_width << std::endl
                 << "use_fixed_costs: " << c.use_fixed_costs << std::endl
-                << "plugin_priorities: " << c.plugin_priorities << std::endl    // TODO not compiling...
+                << "plugin_priorities: " << c.plugin_priorities << std::endl
                 << "}" << std::endl;
             return output;
         };
