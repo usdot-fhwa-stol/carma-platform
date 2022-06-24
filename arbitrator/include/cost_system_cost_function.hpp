@@ -18,10 +18,11 @@
 #define __ARBITRATOR_INCLUDE_COST_SYSTEM_COST_FUNCTION_HPP__
 
 #include <rclcpp/rclcpp.hpp>
-#include "cost_function.hpp"
 #include <map>
 #include <string>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
+
+#include "cost_function.hpp"
 
 namespace arbitrator
 {

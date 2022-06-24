@@ -15,7 +15,7 @@
  */
 
 #include "arbitrator_node.hpp"
-#include "yaml-cpp/yaml.h"
+
 
 namespace arbitrator
 {
@@ -49,18 +49,18 @@ namespace arbitrator
         get_parameter<bool>("use_fixed_costs", config_.use_fixed_costs);
         rclcpp::Parameter plugin_priorities_param = get_parameter("plugin_priorities");
 
-        YAML::Node yaml_node = YAML::Load("plugin_priorities"); // TODO cricle back on map loading
+        //YAML::Node yaml_node = YAML::Load("plugin_priorities"); // TODO cricle back on map loading
 
         std::map<std::string, double> plugin_priorities;
-        if (yaml_node.IsDefined())
-        {
-            plugin_priorities = yaml_node.as<std::map<std::string, double>>();
-            RCLCPP_ERROR_STREAM(get_logger(), "HEY it worked!");
-        }
-        else
-        {
-            RCLCPP_ERROR_STREAM(get_logger(), "Parameter mapping did not work");
-        }
+        //if (yaml_node.IsDefined())
+        //{
+        //    plugin_priorities = yaml_node.as<std::map<std::string, double>>();
+        //    RCLCPP_ERROR_STREAM(get_logger(), "HEY it worked!");
+        //}
+        //else
+        //{
+        //    RCLCPP_ERROR_STREAM(get_logger(), "Parameter mapping did not work");
+        //}
 
         
         arbitrator::CostFunction *cf = nullptr;
@@ -114,3 +114,9 @@ namespace arbitrator
         return CallbackReturn::SUCCESS;
     }
 };
+
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+// Register the component with class_loader
+RCLCPP_COMPONENTS_REGISTER_NODE(arbitrator::ArbitratorNode)

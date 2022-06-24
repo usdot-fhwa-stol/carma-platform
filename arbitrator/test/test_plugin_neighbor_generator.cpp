@@ -18,10 +18,12 @@
 #include <carma_planning_msgs/msg/maneuver_plan.hpp>
 #include <carma_planning_msgs/srv/plan_maneuvers.hpp>
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include "plugin_neighbor_generator.hpp"
 
 namespace arbitrator
 {
+
     class MockCapabilitiesInterface 
     {
         public:
@@ -48,7 +50,7 @@ namespace arbitrator
     {
         public:
             PluginNeighborGeneratorTest():
-             png{mci} {};
+            png{mci} {};
 
             MockCapabilitiesInterface mci;
             PluginNeighborGenerator<MockCapabilitiesInterface> png;
@@ -65,7 +67,7 @@ namespace arbitrator
             get_plans(::testing::_, ::testing::_))
             .WillRepeatedly(
                 ::testing::Return(
-                    std::map<std::string, carma_planning_msgs::srv::PlanManeuvers>()));
+                    std::map<std::string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Response>>()));
 
         carma_planning_msgs::msg::ManeuverPlan plan;
         VehicleState vs;
@@ -77,29 +79,31 @@ namespace arbitrator
 
     TEST_F(PluginNeighborGeneratorTest, testGetNeighbors2)
     {
-        std::map<std::string, carma_planning_msgs::srv::PlanManeuvers> responses;
-        carma_planning_msgs::srv::PlanManeuvers resp1, resp2, resp3;
-        resp1.response.new_plan.maneuver_plan_id.push_back(0);
-        resp2.response.new_plan.maneuver_plan_id.push_back(1);
-        resp3.response.new_plan.maneuver_plan_id.push_back(2);
+        std::cerr << "HEREeee" << std::endl;
+        std::map<std::string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Response>> responses;
+        auto resp1 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        auto resp2 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        auto resp3 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        
+        resp1->new_plan.maneuver_plan_id = "1";
+        resp2->new_plan.maneuver_plan_id = "2";
+        resp3->new_plan.maneuver_plan_id = "3";
         responses["test_plugin_a"] = resp1;
         responses["test_plugin_b"] = resp2;
         responses["test_plugin_c"] = resp3;
-
+        
         EXPECT_CALL(mci, 
             get_plans(::testing::_, ::testing::_))
             .WillRepeatedly(
                 ::testing::Return(
                     responses));
-
         carma_planning_msgs::msg::ManeuverPlan plan;
         VehicleState vs;
         std::vector<carma_planning_msgs::msg::ManeuverPlan> plans = png.generate_neighbors(plan, vs);
-
         ASSERT_FALSE(plans.empty());
         ASSERT_EQ(3, plans.size());
-        ASSERT_EQ(0, plans[0].maneuver_plan_id[0]);
-        ASSERT_EQ(1, plans[1].maneuver_plan_id[0]);
-        ASSERT_EQ(2, plans[2].maneuver_plan_id[0]);
+        ASSERT_EQ("1", plans[0].maneuver_plan_id);
+        ASSERT_EQ("2", plans[1].maneuver_plan_id);
+        ASSERT_EQ("3", plans[2].maneuver_plan_id);
     }
 }

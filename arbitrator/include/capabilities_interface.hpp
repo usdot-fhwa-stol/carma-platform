@@ -88,7 +88,6 @@ namespace arbitrator
             
     };
 
-    //extern template std::map<std::string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Response>> CapabilitiesInterface::multiplex_service_call_for_capability<std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Request>, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Response>>(const std::string& query_string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Request> msg);
 };
 
 #include "capabilities_interface.tpp"
