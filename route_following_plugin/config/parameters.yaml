@@ -10,8 +10,8 @@ stopping_accel_limit_multiplier: 0.5
 buffer_lanechange_time : 3.0
 
 # String : The tactical plugin being used for lane change
-# For CLC: "cooperative_lane_change"
-lane_change_plugin : "cooperative_lane_change"
+# For CLC: "cooperative_lanechange"
+lane_change_plugin : "cooperative_lanechange"
 
 # String : The tactical plugin being used for stopping at the end of the route
 stop_and_wait_plugin : "stop_and_wait_plugin"

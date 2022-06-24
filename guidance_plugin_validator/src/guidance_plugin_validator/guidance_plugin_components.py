@@ -31,7 +31,7 @@ class StrategicPluginResults:
         self.plugin_name = plugin_name
         
         # Set the plugin's node name
-        if plugin_name == "RouteFollowing":
+        if plugin_name == "route_following_plugin":
             self.node_name = "/guidance/route_following_plugin"
         else:
             rospy.logerr("ERROR: Unknown node for Strategic Plugin: " + str(self.plugin_name))
