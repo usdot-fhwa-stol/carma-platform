@@ -63,6 +63,8 @@ namespace arbitrator
             Config config_;
             std::shared_ptr<Arbitrator> arbitrator_;
             rclcpp::TimerBase::SharedPtr bumper_pose_timer_;
+            rclcpp::TimerBase::SharedPtr arbitrator_run_;
+
     };
 
 }   // namespace abitrator

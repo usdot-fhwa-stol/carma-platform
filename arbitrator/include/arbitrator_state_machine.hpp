@@ -75,7 +75,7 @@ namespace arbitrator
     {
         public:
             ArbitratorStateMachine() : 
-                current_state(INITIAL){};
+                current_state(PLANNING){};
             /**
              * Submit an event for evaluation by the Arbitrator state machine.
              * @param The event to process

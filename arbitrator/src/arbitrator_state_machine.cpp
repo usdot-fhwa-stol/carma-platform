@@ -15,6 +15,7 @@
  */
 
 #include "arbitrator_state_machine.hpp"
+#include <iostream>
 
 namespace arbitrator
 {
@@ -27,12 +28,40 @@ namespace arbitrator
 
     ArbitratorState ArbitratorStateMachine::submit_event(ArbitratorEvent event)
     {
+        if (event == SYSTEM_STARTUP_COMPLETE)
+        {
+            std::cerr <<"GOT EVENT SYSTEM_STARTUP_COMPLETE " << std::endl;
+        }
+        else
+        {
+            std::cerr <<"GOOT UNKNOWN EVENT" << std::endl;
+        }
         for (auto iter = ARBITRATOR_TRANSITIONS.begin(); iter != ARBITRATOR_TRANSITIONS.end(); iter++) 
         {
             if (current_state == iter->current_state && event == iter->input_event) {
                 // In the event of multiple legal transistions this will take the last transition,
                 // But ultimately this condition should never arise.
                 current_state = iter->final_state;
+                if (iter->final_state == PLANNING)
+                {
+                    std::cerr <<"CHANGED TO PLANNING state" << std::endl;
+                }
+                else if (iter->final_state == PAUSED)
+                {
+                    std::cerr <<"CHANGED TO PAUSED state" << std::endl;
+                }
+                else if (iter->final_state == WAITING)
+                {
+                    std::cerr <<"CHANGED TO WAITING state" << std::endl;
+                }
+                else if (iter->final_state == SHUTDOWN)
+                {
+                    std::cerr <<"CHANGED TO SHUTDOWN state" << std::endl;
+                }
+                else if (iter->final_state == INITIAL)
+                {
+                    std::cerr <<"CHANGED TO INITIAL state" << std::endl;
+                }
                 break;
             }
         }

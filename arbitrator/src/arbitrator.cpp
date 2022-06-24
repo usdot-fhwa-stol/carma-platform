@@ -26,9 +26,11 @@ namespace arbitrator
 {
     void Arbitrator::run()
     {
-        RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator started, beginning arbitrator state machine.");
-        while (nh_->get_current_state().id() != lifecycle_msgs::msg::State::TRANSITION_STATE_SHUTTINGDOWN)
+        RCLCPP_INFO_STREAM(nh_->get_logger(), "Got here");
+        if (!planning_in_progress_ && nh_->get_current_state().id() != lifecycle_msgs::msg::State::TRANSITION_STATE_SHUTTINGDOWN)
         {
+            planning_in_progress_ = true;
+            
             switch (sm_->get_state()) 
             {
                 case INITIAL:
@@ -56,6 +58,12 @@ namespace arbitrator
                     throw std::invalid_argument("State machine attempting to process an illegal state value");
             }
         }
+        else
+        {
+            return;    
+        }
+        RCLCPP_INFO_STREAM(nh_->get_logger(), "Leaving");
+        planning_in_progress_ = false;
     }
     
     void Arbitrator::guidance_state_cb(carma_planning_msgs::msg::GuidanceState::UniquePtr msg) 
@@ -103,6 +111,8 @@ namespace arbitrator
             RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator initializing on first initial state spin...");
             final_plan_pub_ = nh_->create_publisher<carma_planning_msgs::msg::ManeuverPlan>("final_maneuver_plan", 5);
             guidance_state_sub_ = nh_->create_subscription<carma_planning_msgs::msg::GuidanceState>("guidance_state", 5, std::bind(&Arbitrator::guidance_state_cb, this, std::placeholders::_1));
+            final_plan_pub_->on_activate();
+
             initialized_ = true;
         }
 
