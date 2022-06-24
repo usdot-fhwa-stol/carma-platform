@@ -75,6 +75,7 @@ namespace platoon_control
 		double kappa = calculateKappa(tp);
 		
 		double steering = atan(config_.wheelBase * kappa);
+		steering += config_.correctionAngle;
 		ROS_DEBUG_STREAM("calculated steering angle: " << steering);
 		double filtered_steering = lowPassfilter(config_.lowpassGain, prev_steering, steering);
 		ROS_DEBUG_STREAM("filtered steering: " << filtered_steering);

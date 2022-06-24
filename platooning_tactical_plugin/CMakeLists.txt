@@ -32,6 +32,7 @@ set( CATKIN_DEPS
   tf
   tf2
   tf2_geometry_msgs
+  basic_autonomy
 )
 
 ## Find catkin macros and libraries
@@ -68,7 +69,6 @@ add_executable( ${PROJECT_NAME}
   
 add_library(platooning_tactical_plugin_library 
   src/platooning_tactical_plugin.cpp
-  src/smoothing/BSpline.cpp
 )
 target_link_libraries(platooning_tactical_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(platooning_tactical_plugin_library ${catkin_EXPORTED_TARGETS})
@@ -102,6 +102,5 @@ install(DIRECTORY launch config
 
 catkin_add_gmock(${PROJECT_NAME}-test 
   test/test_platooning_tactical_plugin_planning.cpp
-  test/test_platooning_tactical_plugin.cpp
 )
 target_link_libraries(${PROJECT_NAME}-test platooning_tactical_plugin_library ${catkin_LIBRARIES})
