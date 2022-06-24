@@ -1,6 +1,6 @@
 # Double: Selected pose publication rate
 # Units: Hz
-pose_pub_rate: 10.0
+pose_pub_rate: 50.0
 
 # Double: NDT fitness score threshold above which the result can be considered degraded
 fitness_score_degraded_threshold: 20.0
@@ -39,4 +39,4 @@ sequential_timesteps_until_gps_operation: 5
 # 2 - AUTO select between NDT and GNSS with GNSS timeout
 # 3 - AUTO select between NDT and GNSS without GNSS timeout
 # 4 - GNSS only with NDT initialization
-localization_mode: 4
+localization_mode: 1
