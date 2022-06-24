@@ -47,7 +47,7 @@ TEST(PlatooningTacticalPluginTest, testPlanningCallback)
   PlatooningTacticalPluginConfig config;
   config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  PlatooningTacticalPlugin plugin(wm, config, [&](auto msg) {});
+  PlatooningTacticalPlugin plugin(wm, config, [&](auto msg) { ROS_DEBUG_STREAM(msg); });
 
   auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10);
 
@@ -116,7 +116,7 @@ TEST(PlatooningTacticalPluginTest, testPlanningCallbackexception)
   PlatooningTacticalPluginConfig config;
   config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  PlatooningTacticalPlugin plugin(wm, config, [&](auto msg) {});
+  PlatooningTacticalPlugin plugin(wm, config, [&](auto msg) { ROS_DEBUG_STREAM(msg); });
 
   auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10);
 
@@ -180,7 +180,7 @@ TEST(PlatooningTacticalPluginTest, testPlanningCallbackexception)
 }
 
 
-};  // namespace platooning_tactical_plugin
+}  // namespace platooning_tactical_plugin
 
 // Run all the tests
 int main(int argc, char **argv)

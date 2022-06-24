@@ -26,4 +26,4 @@ use_fixed_costs: true
 # Map: The priorities associated with each plugin during the planning 
 # process, values will be normalized at runtime and inverted into costs
 # Unit: N/a
-plugin_priorities: {LCIStrategicPlugin: 5.0, SCIStrategicPlugin: 4.0, RouteFollowingPlugin: 2.0, WorkZonePlugin: 4.0, PlatooningStrategicPlugin: 1.0}
+plugin_priorities: {PlatooningStrategicIHPPlugin: 4.0, LCIStrategicPlugin: 3.0, SCIStrategicPlugin: 2.0, PlatooningStrategicPlugin: 2.0, RouteFollowingPlugin: 1.0}
