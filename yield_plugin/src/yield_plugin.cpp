@@ -447,21 +447,21 @@ namespace yield_plugin
       ROS_DEBUG_STREAM("object_down_track");
       ROS_DEBUG_STREAM(object_down_track);
       
-      ROS_DEBUG_STREAM("vehicle_downtrack - object_down_track");
-      ROS_DEBUG_STREAM(vehicle_downtrack - object_down_track);
+      double dist_to_object = object_down_track - vehicle_downtrack;
+      ROS_DEBUG_STREAM("object_down_track - vehicle_downtrack");
+      ROS_DEBUG_STREAM(dist_to_object);
       
       ROS_DEBUG_STREAM("i.object.velocity.twist.linear.x");
       ROS_DEBUG_STREAM(i.object.velocity.twist.linear.x);
 
       if(current_velocity.linear.x > 0.0) {
-        
-          // std::abs might not be needed cause vehicles in the behind of vehicle to cause problem
-        
-          ROS_DEBUG_STREAM("std::abs(vehicle_downtrack - object_down_track)/current_velocity.linear.x");
+          ROS_DEBUG_STREAM("(object_down_downtrack - vehicle_downtrack)/current_velocity.linear.x");
+          ROS_DEBUG_STREAM(dist_to_object/current_velocity.linear.x);
 
-          ROS_DEBUG_STREAM(object_down_track - vehicle_downtrack/current_velocity.linear.x);
-
-          if((object_down_track - vehicle_downtrack)/current_velocity.linear.x < config_.collision_horizon) {
+          // Check to see if the object is in front of us and has a time-to-collision lower than our
+          // desired horizon
+          if(dist_to_object >= 0 &&
+            dist_to_object / current_velocity.linear.x < config_.collision_horizon) {
               rwol_collision.push_back(i);
           }
       }

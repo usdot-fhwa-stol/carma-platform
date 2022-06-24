@@ -1,6 +1,6 @@
 # Float: The length of the trajectory in time domain
 # Unit: s
-trajectory_time_length: 6.0 # Trajectory length in seconds
+trajectory_time_length: 10.0 # Trajectory length in seconds
 # Float: Curve re-sampling step size in m
 # Unit: m
 curve_resample_step_size: 1.0 
