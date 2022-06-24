@@ -91,7 +91,7 @@ struct LCIStrategicPluginConfig
   std::string lane_following_plugin_name = "light_controlled_intersection_tactical_plugin";
 
   //! The name of the plugin to use for stop and wait trajectory planning
-  std::string stop_and_wait_plugin_name = "StopAndWaitPlugin";
+  std::string stop_and_wait_plugin_name = "stop_and_wait_plugin";
 
   //! The name of the plugin to use for intersection transit trajectory planning
   //! This plugin is used to travel INSIDE the intersection where there is no trajectory smoothing algorithm active

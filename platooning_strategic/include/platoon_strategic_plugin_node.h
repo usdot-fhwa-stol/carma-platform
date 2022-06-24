@@ -32,7 +32,7 @@
 namespace platoon_strategic
 {
 /**
- * \brief ROS node for the YieldPlugin
+ * \brief ROS node for the yield_plugin
  */ 
 class PlatoonStrategicPluginNode
 {

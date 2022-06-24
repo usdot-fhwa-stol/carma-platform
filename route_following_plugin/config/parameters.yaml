@@ -14,7 +14,7 @@ buffer_lanechange_time : 3.0
 lane_change_plugin : "cooperative_lane_change"
 
 # String : The tactical plugin being used for stopping at the end of the route
-stop_and_wait_plugin : "StopAndWaitPlugin"
+stop_and_wait_plugin : "stop_and_wait_plugin"
 
 # String : The tactical plugin being used for lane following
 lane_following_plugin : "inlanecruising_plugin"

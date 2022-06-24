@@ -57,7 +57,7 @@ strategic_plugin_name : lci_strategic_plugin
 lane_following_plugin_name : light_controlled_intersection_tactical_plugin
 
 # String: The name of the plugin to use for stop and wait trajectory planning
-stop_and_wait_plugin_name : StopAndWaitPlugin
+stop_and_wait_plugin_name : stop_and_wait_plugin
 
 # String: The name of the plugin to use for intersection transit trajectory planning
 #         This plugin is used to travel INSIDE the intersection where there is no trajectory smoothing algorithm active

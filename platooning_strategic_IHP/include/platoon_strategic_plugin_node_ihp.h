@@ -39,7 +39,7 @@
 namespace platoon_strategic_ihp
 {
 /**
- * \brief ROS node for the YieldPlugin
+ * \brief ROS node for the yield_plugin
  */ 
 class PlatoonStrategicIHPPluginNode
 {

@@ -26,7 +26,7 @@
 namespace intersection_transit_maneuvering
 {
     /**
- * \brief ROS node for the InLaneCruisingPlugin
+ * \brief ROS node for the inlanecruising_plugin
  */
 class IntersectionTransitManeuveringNode
 {

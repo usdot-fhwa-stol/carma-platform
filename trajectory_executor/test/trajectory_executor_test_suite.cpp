@@ -88,7 +88,7 @@ namespace trajectory_executor_test_suite
         rclcpp::Time cur_time = rclcpp::Time(0,0);
         for (int i = 0; i < 10; i++) {
             carma_planning_msgs::msg::TrajectoryPlanPoint p;
-            p.controller_plugin_name = "Pure Pursuit";
+            p.controller_plugin_name = "pure_pursuit_wrapper_node";
             p.lane_id = "0";
             p.planner_plugin_name = "cruising";
             rclcpp::Duration dur((i * 0.13)*1e9); // Convert seconds to nanoseconds

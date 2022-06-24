@@ -88,7 +88,7 @@ TEST(pure_pursuit_wrapper, onSpin)
   ASSERT_TRUE(!!plugin_msg);
 
   cav_msgs::Plugin msg = plugin_msg.get();
-  ASSERT_EQ(0, msg.name.compare("Pure Pursuit"));
+  ASSERT_EQ(0, msg.name.compare("pure_pursuit_wrapper_node"));
   ASSERT_EQ(0, msg.version_id.compare("v1.0"));
   ASSERT_TRUE(msg.available);
   ASSERT_TRUE(msg.activated);

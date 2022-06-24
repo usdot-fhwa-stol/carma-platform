@@ -293,7 +293,7 @@ class ControlPluginResults:
         self.plugin_name = plugin_name
         
         # Set the plugin's node name and plugin_discovery capability
-        if plugin_name == "Pure Pursuit":
+        if plugin_name == "pure_pursuit_wrapper_node":
             self.node_name = "/guidance/pure_pursuit_wrapper_node"
             self.capability = "control_pure_pursuit_plan/plan_controls"
             self.plan_trajectory_topic = "/guidance/pure_pursuit/plan_trajectory"
