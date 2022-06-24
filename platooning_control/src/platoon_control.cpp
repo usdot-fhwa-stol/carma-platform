@@ -51,7 +51,9 @@ namespace platoon_control
         pnh_->param<double>("minLookaheadDist", config.minLookaheadDist, config.minLookaheadDist);
         pnh_->param<double>("wheelBase", config.wheelBase, config.wheelBase);
         pnh_->param<double>("correctionAngle", config.correctionAngle, config.correctionAngle);
-        
+        pnh_->param<double>("integratorMax_pp", config.integratorMax_pp, config.integratorMax_pp);
+        pnh_->param<double>("integratorMin_pp", config.integratorMin_pp, config.integratorMin_pp);
+        pnh_->param<double>("Ki_pp", config.Ki_pp, config.Ki_pp);
 
         // Global params (from vehicle config)
         pnh_->getParam("/vehicle_id", config.vehicleID);
