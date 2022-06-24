@@ -38,13 +38,13 @@ namespace pose_to_tf
     pose_to_tf_worker_= std::make_shared<PoseToTF2>(worker);
 
     // Setup subscribers
-    pose_sub = create_subscription<geometry_msgs::msg::Pose>("pose_to_tf", 1,
+    pose_sub = create_subscription<geometry_msgs::msg::Pose>("pose_to_tf", 50,
                                                               std::bind(&pose_to_tf::PoseToTF2::poseCallback, pose_to_tf_worker_.get(), std_ph::_1));
-    pose_stamped_sub = create_subscription<geometry_msgs::msg::PoseStamped>("pose_stamped_to_tf", 1,
+    pose_stamped_sub = create_subscription<geometry_msgs::msg::PoseStamped>("pose_stamped_to_tf", 50,
                                                               std::bind(&pose_to_tf::PoseToTF2::poseStampedCallback, pose_to_tf_worker_.get(), std_ph::_1));
-    pose_with_cov_sub = create_subscription<geometry_msgs::msg::PoseWithCovariance>("pose_with_cov_to_tf", 1,
+    pose_with_cov_sub = create_subscription<geometry_msgs::msg::PoseWithCovariance>("pose_with_cov_to_tf", 50,
                                                               std::bind(&pose_to_tf::PoseToTF2::poseWithCovarianceCallback, pose_to_tf_worker_.get(), std_ph::_1));
-    pose_with_cov_stamped_sub = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>("pose_with_cov_stamped_to_tf", 1,
+    pose_with_cov_stamped_sub = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>("pose_with_cov_stamped_to_tf", 50,
                                                               std::bind(&pose_to_tf::PoseToTF2::poseWithCovarianceStampedCallback, pose_to_tf_worker_.get(), std_ph::_1));
   
     // Return success if everthing initialized successfully

@@ -15,11 +15,11 @@
  */
 
 #include <rclcpp/rclcpp.hpp>
-#include <geometry_msgs/msg/PoseStamped.h>
-#include <geometry_msgs/msg/PoseWithCovarianceStamped.h>
-#include <geometry_msgs/msg/Pose.h>
-#include <geometry_msgs/msg/TransformStamped.h>
-#include <geometry_msgs/msg/Transform.h>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/transform.hpp>
 #include <functional>
 #include "pose_to_tf/PoseToTF2.hpp"
 
