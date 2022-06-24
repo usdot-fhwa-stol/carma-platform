@@ -40,7 +40,7 @@ public:
    *
    * \param transform_pub A callback to trigger transform broadcast
    */
-  PoseToTF2(PoseToTF2Config config, TransformPublisher transform_pub);
+  PoseToTF2(PoseToTF2Config config, TransformPublisher transform_pub,std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node);
 
   /**
    * \brief Callback for new pose stamped messages
