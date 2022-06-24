@@ -22,7 +22,7 @@
 
 using namespace pose_to_tf;
 
-class PoseToTfNode : public carma_ros2_utils::CarmaLifecycleNode
+class PoseToTfNodeTest : public carma_ros2_utils::CarmaLifecycleNode
   {
 
   private:
@@ -31,7 +31,7 @@ class PoseToTfNode : public carma_ros2_utils::CarmaLifecycleNode
   
   public:
   
-  explicit PoseToTfNode(const rclcpp::NodeOptions &options)
+  explicit PoseToTfNodeTest(const rclcpp::NodeOptions &options)
       : carma_ros2_utils::CarmaLifecycleNode(options)
   {
 
@@ -56,7 +56,7 @@ TEST(PoseToTF2, test_methods)
   config.default_parent_frame = "map";
   bool msg_set = false;
   geometry_msgs::msg::TransformStamped msg;
-  auto node = std::make_shared<PoseToTfNode >(rclcpp::NodeOptions());
+  auto node = std::make_shared<PoseToTfNodeTest>(rclcpp::NodeOptions());
   
   PoseToTF2 manager(config, [&msg, &msg_set](auto in) { msg_set = true; msg = in; },node);
   
@@ -90,8 +90,8 @@ TEST(PoseToTF2, test_methods)
 
 
   ASSERT_FALSE(msg_set);
-  geometry_msgs::msg::PoseConstPtr poseA_ptr(new geometry_msgs::msg::Pose(poseA));
-  manager.poseCallback(poseA_ptr);
+  auto poseA_ptr = std::make_unique<geometry_msgs::msg::Pose>(poseA);
+  manager.poseCallback(std::move(poseA_ptr));
 
   ASSERT_TRUE(msg_set);
   ASSERT_EQ(poseA.position.x, msg.transform.translation.x);
@@ -104,12 +104,11 @@ TEST(PoseToTF2, test_methods)
 
   ASSERT_EQ(0, msg.header.frame_id.compare(config.default_parent_frame));
   ASSERT_EQ(0, msg.child_frame_id.compare(config.child_frame));
-  ASSERT_NEAR(1.5, msg.header.stamp.toSec(), 0.000000001);
-  
+  ASSERT_NEAR(1.5, rclcpp::Time(msg.header.stamp).seconds(), 0.000000001);
 
   msg_set = false;
-  geometry_msgs::msg::PoseStampedConstPtr poseB_ptr(new geometry_msgs::msg::PoseStamped(poseB));
-  manager.poseStampedCallback(poseB_ptr);
+  auto poseB_ptr = std::make_unique<geometry_msgs::msg::PoseStamped>(poseB);
+  manager.poseStampedCallback(std::move(poseB_ptr));
 
   ASSERT_TRUE(msg_set);
   ASSERT_EQ(poseB.pose.position.x, msg.transform.translation.x);
@@ -122,11 +121,11 @@ TEST(PoseToTF2, test_methods)
   
   ASSERT_EQ(0, msg.header.frame_id.compare(poseB.header.frame_id));
   ASSERT_EQ(0, msg.child_frame_id.compare(config.child_frame));
-  ASSERT_NEAR(poseB.header.stamp.toSec(), msg.header.stamp.toSec(), 0.000000001);
+  ASSERT_NEAR(rclcpp::Time(poseB.header.stamp).seconds(), rclcpp::Time(msg.header.stamp).seconds(), 0.000000001);
 
   msg_set = false;
-  geometry_msgs::msg::PoseWithCovarianceConstPtr poseC_ptr(new geometry_msgs::msg::PoseWithCovariance(poseC));
-  manager.poseWithCovarianceCallback(poseC_ptr);
+  auto poseC_ptr = std::make_unique<geometry_msgs::msg::PoseWithCovariance>(poseC);
+  manager.poseWithCovarianceCallback(std::move(poseC_ptr));
 
   ASSERT_TRUE(msg_set);
   ASSERT_EQ(poseC.pose.position.x, msg.transform.translation.x);
@@ -139,11 +138,11 @@ TEST(PoseToTF2, test_methods)
   
   ASSERT_EQ(0, msg.header.frame_id.compare(config.default_parent_frame));
   ASSERT_EQ(0, msg.child_frame_id.compare(config.child_frame));
-  ASSERT_NEAR(1.5, msg.header.stamp.toSec(), 0.000000001);
+  ASSERT_NEAR(1.5, rclcpp::Time(msg.header.stamp).seconds(), 0.000000001);
 
   msg_set = false;
-  geometry_msgs::msg::PoseWithCovarianceStampedConstPtr poseD_ptr(new geometry_msgs::msg::PoseWithCovarianceStamped(poseD));
-  manager.poseWithCovarianceStampedCallback(poseD_ptr);
+  auto poseD_ptr = std::make_unique<geometry_msgs::msg::PoseWithCovarianceStamped>(poseD);
+  manager.poseWithCovarianceStampedCallback(std::move(poseD_ptr));
 
   ASSERT_TRUE(msg_set);
   ASSERT_EQ(poseD.pose.pose.position.x, msg.transform.translation.x);
@@ -156,5 +155,5 @@ TEST(PoseToTF2, test_methods)
   
   ASSERT_EQ(0, msg.header.frame_id.compare(poseD.header.frame_id));
   ASSERT_EQ(0, msg.child_frame_id.compare(config.child_frame));
-  ASSERT_NEAR(poseD.header.stamp.toSec(), msg.header.stamp.toSec(), 0.000000001);
+  ASSERT_NEAR(rclcpp::Time(poseD.header.stamp).seconds(), rclcpp::Time(msg.header.stamp).seconds(), 0.000000001);
 }

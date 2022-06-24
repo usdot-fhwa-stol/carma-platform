@@ -40,7 +40,7 @@ namespace pose_to_tf
     carma_ros2_utils::SubPtr<geometry_msgs::msg::PoseWithCovarianceStamped> pose_with_cov_stamped_sub;
     
     //PoseToTF2 class object
-    std::shared_ptr <TPoseToTF2> pose_to_tf_worker_;
+    std::shared_ptr <PoseToTF2> pose_to_tf_worker_;
 
     // Node configuration
     PoseToTF2Config config_;

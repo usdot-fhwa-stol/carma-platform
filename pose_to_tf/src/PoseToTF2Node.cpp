@@ -15,6 +15,7 @@
  */
 
 #include "pose_to_tf/PoseToTF2Node.hpp"
+#include <tf2_ros/transform_broadcaster.h>
 
 namespace pose_to_tf
 {
@@ -33,8 +34,8 @@ namespace pose_to_tf
 
   carma_ros2_utils::CallbackReturn PoseToTfNode::handle_on_configure(const rclcpp_lifecycle::State &)
   {
-    tf2_ros::TransformBroadcaster tf_broadcaster;
-    pose_to_tf::PoseToTF2 worker(config, [&tf_broadcaster](auto msg){tf_broadcaster.sendTransform(msg);}, shared_from_this());
+    tf2_ros::TransformBroadcaster tf_broadcaster(shared_from_this());
+    pose_to_tf::PoseToTF2 worker(config_, [&tf_broadcaster](auto msg){tf_broadcaster.sendTransform(msg);}, shared_from_this());
     pose_to_tf_worker_= std::make_shared<PoseToTF2>(worker);
 
     // Setup subscribers
