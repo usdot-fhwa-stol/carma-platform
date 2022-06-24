@@ -46,8 +46,8 @@ def generate_launch_description():
             # Launch the core node(s)
             ComposableNode(
                     package='pose_to_tf',
-                    plugin='traffic_incident_parser::TrafficIncidentParserNode',
-                    name='traffic_incident_parser_node',
+                    plugin='pose_to_tf::PoseToTfNode',
+                    name='pose_to_tf_node',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
                         {'--log-level' : log_level }

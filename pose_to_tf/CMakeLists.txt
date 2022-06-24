@@ -27,8 +27,9 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 # Name build targets
-set(worker_lib PoseToTF2_lib)
-set(node_exec main_exec)
+set(worker_lib PoseToTF2_worker_lib)
+set(node_exec PoseToTF2Node_node_exec)
+set(node_lib PoseToTF2Node_node)
 
 # Includes
 include_directories(
@@ -36,19 +37,25 @@ include_directories(
 )
 
 # Build
-ament_auto_add_library(${node_lib} SHARED
-         src/PoseToTF2.cpp
+ament_auto_add_library(${worker_lib}
+        src/PoseToTF2.cpp
 )
-
+ament_auto_add_library(${node_lib} SHARED
+        src/PoseToTF2Node.cpp
+)
 ament_auto_add_executable(${node_exec} 
         src/main.cpp 
 )
 
 # Register component
-rclcpp_components_register_nodes(${node_lib} "pose_to_tf::PoseToTF2")
+rclcpp_components_register_nodes(${node_lib} "pose_to_tf::PoseToTfNode")
 
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies
+target_link_libraries(${node_lib}
+        ${worker_lib}
+)
+
 target_link_libraries(${node_exec}
         ${node_lib}
 )

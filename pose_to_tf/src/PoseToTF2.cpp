@@ -21,7 +21,7 @@
 #include <geometry_msgs/msg/TransformStamped.h>
 #include <geometry_msgs/msg/Transform.h>
 #include <functional>
-#include <pose_to_tf/PoseToTF2.hpp>
+#include "pose_to_tf/PoseToTF2.hpp"
 
 namespace tf2
 {
@@ -62,7 +62,7 @@ PoseToTF2::PoseToTF2(PoseToTF2Config config, TransformPublisher transform_pub, s
 {
 }
 
-void PoseToTF2::poseStampedCallback(const geometry_msgs::msg::PoseStamped::UniquePtr& msg)
+void PoseToTF2::poseStampedCallback(geometry_msgs::msg::PoseStamped::UniquePtr msg)
 {
   geometry_msgs::msg::TransformStamped out_tf;
   tf2::convert(*msg, out_tf);
@@ -70,7 +70,7 @@ void PoseToTF2::poseStampedCallback(const geometry_msgs::msg::PoseStamped::Uniqu
   transform_pub_(out_tf);
 }
 
-void PoseToTF2::poseWithCovarianceStampedCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::UniquePtr& msg)
+void PoseToTF2::poseWithCovarianceStampedCallback(geometry_msgs::msg::PoseWithCovarianceStamped::UniquePtr msg)
 {
   geometry_msgs::msg::TransformStamped out_tf;
   tf2::convert(*msg, out_tf);
@@ -78,7 +78,7 @@ void PoseToTF2::poseWithCovarianceStampedCallback(const geometry_msgs::msg::Pose
   transform_pub_(out_tf);
 }
 
-void PoseToTF2::poseCallback(const geometry_msgs::msg::Pose::UniquePtr& msg)
+void PoseToTF2::poseCallback(geometry_msgs::msg::Pose::UniquePtr msg)
 {
   geometry_msgs::msg::TransformStamped out_tf;
   tf2::convert(*msg, out_tf.transform);
@@ -88,7 +88,7 @@ void PoseToTF2::poseCallback(const geometry_msgs::msg::Pose::UniquePtr& msg)
   transform_pub_(out_tf);
 }
 
-void PoseToTF2::poseWithCovarianceCallback(const geometry_msgs::msg::PoseWithCovariance::UniquePtr& msg)
+void PoseToTF2::poseWithCovarianceCallback(geometry_msgs::msg::PoseWithCovariance::UniquePtr msg)
 {
   geometry_msgs::msg::TransformStamped out_tf;
   tf2::convert(*msg, out_tf.transform);
@@ -97,4 +97,4 @@ void PoseToTF2::poseWithCovarianceCallback(const geometry_msgs::msg::PoseWithCov
   out_tf.child_frame_id = config_.child_frame;
   transform_pub_(out_tf);
 }
-}  // namespace pose_to_tf
+}//namespace pose_to_tf

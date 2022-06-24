@@ -18,8 +18,36 @@
 #include <rclcpp/rclcpp.hpp>
 #include <pose_to_tf/PoseToTF2.hpp>
 #include <pose_to_tf/PoseToTF2Config.hpp>
+#include <pose_to_tf/PoseToTF2Node.hpp>
 
 using namespace pose_to_tf;
+
+class PoseToTfNode : public carma_ros2_utils::CarmaLifecycleNode
+  {
+
+  private:
+
+    rclcpp::Time current_time_;
+  
+  public:
+  
+  explicit PoseToTfNode(const rclcpp::NodeOptions &options)
+      : carma_ros2_utils::CarmaLifecycleNode(options)
+  {
+
+  }
+
+  void setNow(rclcpp::Time c_time_)
+  {
+     current_time_=c_time_;
+  }
+
+  rclcpp::Time now()
+  {
+    return current_time_;
+  }
+
+  };
 
 TEST(PoseToTF2, test_methods)
 {
@@ -28,11 +56,12 @@ TEST(PoseToTF2, test_methods)
   config.default_parent_frame = "map";
   bool msg_set = false;
   geometry_msgs::msg::TransformStamped msg;
-
-  PoseToTF2 manager(config, [&msg, &msg_set](auto in) { msg_set = true; msg = in; });
-
-  ros::Time now(1.5);
-  ros::Time::setNow(now);
+  auto node = std::make_shared<PoseToTfNode >(rclcpp::NodeOptions());
+  
+  PoseToTF2 manager(config, [&msg, &msg_set](auto in) { msg_set = true; msg = in; },node);
+  
+  rclcpp::Time now(1.5*1e9);
+  node->setNow(now);
 
   geometry_msgs::msg::Pose poseA;
   poseA.position.x = 1.2;
@@ -46,7 +75,7 @@ TEST(PoseToTF2, test_methods)
   geometry_msgs::msg::PoseStamped poseB;
 
   poseB.pose = poseA;
-  poseB.header.stamp = ros::Time(0.5);
+  poseB.header.stamp = rclcpp::Time(0.5*1e9);
   poseB.header.frame_id = "odom";
 
   geometry_msgs::msg::PoseWithCovariance poseC;
@@ -56,7 +85,7 @@ TEST(PoseToTF2, test_methods)
   geometry_msgs::msg::PoseWithCovarianceStamped poseD;
 
   poseD.pose.pose = poseA;
-  poseD.header.stamp = ros::Time(0.5);
+  poseD.header.stamp = rclcpp::Time(0.5*1e9);
   poseD.header.frame_id = "odom";
 
 

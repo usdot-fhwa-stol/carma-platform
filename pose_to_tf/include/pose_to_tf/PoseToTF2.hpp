@@ -46,33 +46,32 @@ public:
    *
    * \param msg The pose message to forward
    */
-  void poseStampedCallback(const geometry_msgs::msg::PoseStamped::UniquePtr& msg);
+  void poseStampedCallback(geometry_msgs::msg::PoseStamped::UniquePtr msg);
 
   /**
    * \brief Callback for new pose stamped messages
    *
    * \param msg The pose message to forward
    */
-  void poseWithCovarianceStampedCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::UniquePtr& msg);
+  void poseWithCovarianceStampedCallback(geometry_msgs::msg::PoseWithCovarianceStamped::UniquePtr msg);
 
   /**
    * \brief Callback for new pose stamped messages
    *
    * \param msg The pose message to forward
    */
-  void poseCallback(const geometry_msgs::msg::Pose::UniquePtr& msg);
+  void poseCallback(geometry_msgs::msg::Pose::UniquePtr msg);
 
   /**
    * \brief Callback for new pose with covariance messages
    *
    * \param msg The pose message to forward
    */
-  void poseWithCovarianceCallback(const geometry_msgs::msg::PoseWithCovariance::UniquePtr& msg);
+  void poseWithCovarianceCallback(geometry_msgs::msg::PoseWithCovariance::UniquePtr msg);
 
 private:
-
+  std::shared_ptr <carma_ros2_utils::CarmaLifecycleNode> node_;
+  
   PoseToTF2Config config_;
-  TransformPublisher transform_pub_;
 };
-
-}  // namespace pose_to_tf
+}//namespace pose_to_tf
