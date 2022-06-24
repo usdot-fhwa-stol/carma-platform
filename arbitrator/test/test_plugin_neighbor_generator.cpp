@@ -79,7 +79,6 @@ namespace arbitrator
 
     TEST_F(PluginNeighborGeneratorTest, testGetNeighbors2)
     {
-        std::cerr << "HEREeee" << std::endl;
         std::map<std::string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Response>> responses;
         auto resp1 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
         auto resp2 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();

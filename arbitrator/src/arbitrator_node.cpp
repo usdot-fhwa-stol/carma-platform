@@ -30,7 +30,7 @@ namespace arbitrator
         config_.beam_width = declare_parameter<int>("beam_width", config_.beam_width);
         config_.use_fixed_costs = declare_parameter<bool>("use_fixed_costs", config_.use_fixed_costs);
         
-        //declare_parameter("plugin_priorities");
+        //declare_parameter("plugin_priorities"); 
     }
     
     carma_ros2_utils::CallbackReturn ArbitratorNode::handle_on_configure(const rclcpp_lifecycle::State &)
@@ -49,7 +49,7 @@ namespace arbitrator
         get_parameter<bool>("use_fixed_costs", config_.use_fixed_costs);
         //rclcpp::Parameter plugin_priorities_param = get_parameter("plugin_priorities");
 
-        //YAML::Node yaml_node = YAML::Load("plugin_priorities"); // TODO cricle back on map loading
+        //YAML::Node yaml_node = YAML::Load("plugin_priorities"); // TODO circle back on map loading
 
         std::map<std::string, double> plugin_priorities = {std::pair<std::string,double >("HAHA", 1.0)};
         //if (yaml_node.IsDefined())
@@ -105,16 +105,13 @@ namespace arbitrator
     
     carma_ros2_utils::CallbackReturn ArbitratorNode::handle_on_activate(const rclcpp_lifecycle::State &)
     {
-        //bumper_pose_timer_ = create_timer(get_clock(),
-        //                        std::chrono::milliseconds(100),
-        //                        [this]() {this->arbitrator_->bumper_pose_cb();});
+        bumper_pose_timer_ = create_timer(get_clock(),
+                                std::chrono::milliseconds(100),
+                                [this]() {this->arbitrator_->bumper_pose_cb();});
         
-        std::cerr << "CALLED HERE" << std::endl;
         arbitrator_run_ = create_timer(get_clock(),
                                 std::chrono::duration<double>(1/config_.planning_frequency),
                                 [this]() {this->arbitrator_->run();});
-        //std::thread run_arbitrator_worker(&Arbitrator::run, arbitrator_.get()); // TODO does this actually work??
-        std::cerr << "CALLED HERE 1" << std::endl;
         RCLCPP_INFO_STREAM(get_logger(), "Arbitrator started, beginning arbitrator state machine.");
         return CallbackReturn::SUCCESS;
     }
