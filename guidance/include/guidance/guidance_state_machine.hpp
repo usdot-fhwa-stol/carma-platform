@@ -52,7 +52,8 @@ namespace guidance
             };
 
             /*!
-             * \brief Default constructor for GuidanceStateMachine
+             * \brief constructor for GuidanceStateMachine
+             * \param logger The logger interface that will be used by this object
              */
             GuidanceStateMachine(rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger);
 

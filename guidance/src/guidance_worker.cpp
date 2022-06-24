@@ -95,7 +95,7 @@ namespace guidance
 
   carma_ros2_utils::CallbackReturn GuidanceWorker::handle_on_shutdown(const rclcpp_lifecycle::State &prev_state)
   {
-    // 
+    // Update Guidance State Machine with SHUTDOWN signal
     gsm_.onGuidanceShutdown();
   }
 

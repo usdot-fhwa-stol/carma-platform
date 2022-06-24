@@ -23,7 +23,7 @@ namespace guidance
 {
 
   /**
-   * \brief Stuct containing the algorithm configuration values for guidance
+   * \brief Stuct containing the algorithm configuration values for GuidanceWorker
    */
   struct Config
   {
