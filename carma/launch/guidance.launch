@@ -109,9 +109,6 @@
     <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
   </group>
 
-   <!-- Workzone Strategic Plugin >
-  <include file="$(find wz_strategic_plugin)/launch/wz_strategic_plugin.launch" /-->
-
   <!-- Platooning Control Plugin -->
   <include file="$(find platoon_control)/launch/platoon_control.launch" />
 
@@ -164,12 +161,6 @@
     <!-- StopandWait Plugin -->
   <group>
     <include file="$(find stop_and_wait_plugin)/launch/stop_and_wait_plugin.launch" />
-  </group>
-
-  <!-- unobstructed lanechange -->
-  <group>
-    <remap from="final_waypoints" to="base_waypoints"/>
-    <include file="$(find unobstructed_lanechange)/launch/unobstructed_lanechange.launch" />
   </group>
 
   <!-- Cooperative lanechange -->
