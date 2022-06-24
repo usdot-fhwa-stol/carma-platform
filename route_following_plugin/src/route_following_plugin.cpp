@@ -15,6 +15,7 @@
  */
 #include <ros/ros.h>
 #include <string>
+#include <algorithm>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include "route_following_plugin.h"
@@ -100,6 +101,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
 
         // pose_sub_ = nh_->subscribe("current_pose", 1, &RouteFollowingPlugin::pose_cb, this);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteFollowingPlugin::twist_cb, this);
+        current_maneuver_plan_sub_ = nh_->subscribe("maneuver_plan", 1, &RouteFollowingPlugin::current_maneuver_plan_cb, this);
 
         // read ros parameters
         pnh_->param<double>("minimal_plan_duration", min_plan_duration_, 16.0);
@@ -150,6 +152,10 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
     void RouteFollowingPlugin::twist_cb(const geometry_msgs::TwistStampedConstPtr &msg)
     {
         current_speed_ = msg->twist.linear.x;
+    }
+    
+    void RouteFollowingPlugin::current_maneuver_plan_cb(const cav_msgs::ManeuverPlanConstPtr& msg) {
+        current_maneuver_plan_ = msg;
     }
 
     std::vector<cav_msgs::Maneuver> RouteFollowingPlugin::routeCb(const lanelet::routing::LaneletPath &route_shortest_path)
@@ -528,7 +534,6 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
 
         ROS_DEBUG_STREAM("Looking up front bumper pose...");
         
-        
         try
         {
             tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", ros::Time(0), ros::Duration(1.0)); //save to local copy of transform 1 sec timeout
@@ -550,10 +555,7 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
         current_loc_ = current_loc;
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         
-        auto llts = wm_->getLaneletsFromPoint(current_loc, 10);                                          
-
         ROS_DEBUG_STREAM("pose_cb : current_progress" << current_progress << ", and upcoming_lane_change_status_msg_map_.size(): " << upcoming_lane_change_status_msg_map_.size());
-
         while (!upcoming_lane_change_status_msg_map_.empty() && current_progress > upcoming_lane_change_status_msg_map_.front().first)
         {
             ROS_DEBUG_STREAM("pose_cb : the vehicle has passed the lanechange point at downtrack" << upcoming_lane_change_status_msg_map_.front().first);
@@ -568,15 +570,42 @@ void setManeuverLaneletIds(cav_msgs::Maneuver& mvr, lanelet::Id start_id, lanele
             ROS_DEBUG_STREAM("upcoming_lane_change_status_msg_map_.front().second.downtrack_until_lanechange: " <<static_cast<double>(upcoming_lane_change_status_msg_map_.front().second.downtrack_until_lanechange));
             upcoming_lane_change_status_pub_.publish(upcoming_lane_change_status_msg_map_.front().second); 
         }
+        
+        // Check if we need to return to route shortest path.
+        // Step 1. Check if another plugin aside from RFP has been in control
+        if (current_maneuver_plan_  != nullptr &&
+            GET_MANEUVER_PROPERTY(current_maneuver_plan_->maneuvers[0], parameters.planning_strategic_plugin) \
+            != planning_strategic_plugin_) {
+            // If another plugin may have brought us off shortest path, check our current lanelet
+            auto llts = wm_->getLaneletsFromPoint(current_loc, 10);                                          
+            // Remove any candidate lanelets not on the route
+            llts.erase(std::remove_if(llts.begin(), llts.end(),
+                [&](auto lanelet) -> bool { return !wm_->getRoute()->contains(lanelet); }));
 
-        auto current_lanelet = llts[0];
-        // if the current lanelet is not on the shortest path
-        if (shortest_path_set_.find(current_lanelet.id()) == shortest_path_set_.end())
-        {
-            returnToShortestPath(current_lanelet);
-   
+            // !!! ASSUMPTION !!!:
+            // Once non-route lanelets have been removed, it is assumed that our actual current lanelet is the only one that can remain.
+            // TODO: Verify that this assumption is true in all cases OR implement more robust logic to track current lanelet when there are overlaps
+
+            if (llts.size() > 1) {
+                // Assumed that:
+                // 1. Vehicle is in a lanelet on the route.
+                // 2. The route does not contain overlapping lanelets.
+                ROS_WARN_STREAM("ANOMALOUS SIZE DETECTED FOR CURRENT LANELET CANDIDATES! SIZE: " << llts.size());
+            } else if (llts.size() < 1) {
+                //  We've left the route entirely.
+                ROS_ERROR_STREAM("Vehicle has left the route entirely. Unable to compute new shortest path.");
+                throw std::domain_error("Vehicle not on route, unable to compute shortest path.");
+            }
+
+            auto current_lanelet = llts[0];
+
+            // if the current lanelet is not on the shortest path
+            if (shortest_path_set_.find(current_lanelet.id()) == shortest_path_set_.end())
+            {
+                returnToShortestPath(current_lanelet);
+    
+            }
         }
-      
     }
 
     ros::Duration RouteFollowingPlugin::getManeuverDuration(cav_msgs::Maneuver &maneuver, double epsilon) const
