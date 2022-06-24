@@ -15,14 +15,15 @@
  * the License.
  */
 
-#include <ros/ros.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <geometry_msgs/PoseWithCovariance.h>
-#include <geometry_msgs/Pose.h>
-#include <geometry_msgs/TransformStamped.h>
+#include <rclcpp/rclcpp.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/transform.hpp>
 #include <functional>
-#include <pose_to_tf/PoseToTF2Config.h>
+#include <pose_to_tf/PoseToTF2Config.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
 
 namespace pose_to_tf
 {
@@ -32,47 +33,48 @@ namespace pose_to_tf
 class PoseToTF2
 {
 public:
-  using TransformPublisher = std::function<void(const geometry_msgs::TransformStamped&)>;
+  using TransformPublisher = std::function<void(const geometry_msgs::msg::TransformStamped&)>;
 
   /**
    * \brief Constructor
    *
    * \param transform_pub A callback to trigger transform broadcast
    */
-  PoseToTF2(PoseToTF2Config config, TransformPublisher transform_pub);
+  PoseToTF2(PoseToTF2Config config, TransformPublisher transform_pub,std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node);
 
   /**
    * \brief Callback for new pose stamped messages
    *
    * \param msg The pose message to forward
    */
-  void poseStampedCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+  void poseStampedCallback(geometry_msgs::msg::PoseStamped::UniquePtr msg);
 
   /**
    * \brief Callback for new pose stamped messages
    *
    * \param msg The pose message to forward
    */
-  void poseWithCovarianceStampedCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
+  void poseWithCovarianceStampedCallback(geometry_msgs::msg::PoseWithCovarianceStamped::UniquePtr msg);
 
   /**
    * \brief Callback for new pose stamped messages
    *
    * \param msg The pose message to forward
    */
-  void poseCallback(const geometry_msgs::PoseConstPtr& msg);
+  void poseCallback(geometry_msgs::msg::Pose::UniquePtr msg);
 
   /**
    * \brief Callback for new pose with covariance messages
    *
    * \param msg The pose message to forward
    */
-  void poseWithCovarianceCallback(const geometry_msgs::PoseWithCovarianceConstPtr& msg);
+  void poseWithCovarianceCallback(geometry_msgs::msg::PoseWithCovariance::UniquePtr msg);
 
 private:
 
+  std::shared_ptr <carma_ros2_utils::CarmaLifecycleNode> node_;
+  
   PoseToTF2Config config_;
   TransformPublisher transform_pub_;
 };
-
-}  // namespace pose_to_tf
+}//namespace pose_to_tf
