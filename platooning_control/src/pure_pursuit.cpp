@@ -72,12 +72,19 @@ namespace platoon_control
 	void PurePursuit::calculateSteer(const cav_msgs::TrajectoryPlanPoint& tp)
 	{
 
-		double kappa = calculateKappa(tp);
-		
+		double kappa = calculateKappa(tp);		
+		ROS_DEBUG_STREAM("kappa pp: " << kappa);
+
+		double lookahead = getLookaheadDist(tp);
+		ROS_DEBUG_STREAM("lookahead pp: " << lookahead);
+
+
 		double error=kappa*lookahead*lookahead/2;
-	    // Integral term
+		ROS_DEBUG_STREAM("error term pp: " << error);
+	    
+		// Integral term
 	    _integral += error * config_.dt;
-		ROS_DEBUG_STREAM("Integral term: " << _integral);
+		ROS_DEBUG_STREAM("Integral term pp: " << _integral);
 
 		if (_integral > config_.integratorMax_pp){
 			 _integral = config_.integratorMax_pp;
@@ -86,7 +93,7 @@ namespace platoon_control
 			_integral = config_.integratorMin_pp;
 		}
 	    double Iout = config_.Ki_pp * _integral;
-		ROS_DEBUG_STREAM("Iout: " << Iout);
+		ROS_DEBUG_STREAM("Iout pp: " << Iout);
 		double steering = atan(config_.wheelBase * kappa)+Iout;
 
 

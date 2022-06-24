@@ -107,7 +107,6 @@ namespace platoon_control
 		cav_msgs::TrajectoryPlanPoint tp0;
 
 		double _integral = 0.0;
-		double lookahead = 0.0;
 		// helper function (if needed)
 		// inline double deg2rad(double deg) const
 		// {
