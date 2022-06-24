@@ -23,6 +23,7 @@
 #include <geometry_msgs/msg/transform.hpp>
 #include <functional>
 #include <pose_to_tf/PoseToTF2Config.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
 
 namespace pose_to_tf
 {
@@ -70,8 +71,10 @@ public:
   void poseWithCovarianceCallback(geometry_msgs::msg::PoseWithCovariance::UniquePtr msg);
 
 private:
+
   std::shared_ptr <carma_ros2_utils::CarmaLifecycleNode> node_;
   
   PoseToTF2Config config_;
+  TransformPublisher transform_pub_;
 };
 }//namespace pose_to_tf
