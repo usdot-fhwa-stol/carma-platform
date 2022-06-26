@@ -41,6 +41,13 @@ def generate_launch_description():
     strategic_plugins_to_validate = LaunchConfiguration('strategic_plugins_to_validate')
     tactical_plugins_to_validate = LaunchConfiguration('tactical_plugins_to_validate')
     control_plugins_to_validate = LaunchConfiguration('control_plugins_to_validate')
+    
+    vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
+    declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_param_file',
+        default_value = "/opt/carma/vehicle/config/VehicleConfigParams.yaml",
+        description = "Path to file contain vehicle configuration parameters"
+    )
 
     subsystem_controller_default_param_file = os.path.join(
         get_package_share_directory('subsystem_controllers'), 'config/guidance_controller_config.yaml')
@@ -94,6 +101,7 @@ def generate_launch_description():
                 ],
                 parameters=[
                     plan_delegator_param_file
+                    vehicle_config_param_file
                 ]
             ),
             ComposableNode(
