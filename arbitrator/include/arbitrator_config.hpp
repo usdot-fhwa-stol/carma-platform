@@ -35,7 +35,7 @@ namespace arbitrator
         {
             output << pair.first << ": " << pair.second << std::endl;
         }
-        output << "}" << std::endl;
+        output << "}";
         return output;
     };
 

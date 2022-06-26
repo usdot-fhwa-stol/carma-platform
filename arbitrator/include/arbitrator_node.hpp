@@ -25,6 +25,7 @@
 #include <string>
 #include <carma_wm_ros2/WorldModel.hpp>
 #include <carma_wm_ros2/WMListener.hpp>
+#include <rapidjson/document.h>
 
 #include "arbitrator.hpp"
 #include "arbitrator_config.hpp"
@@ -60,6 +61,9 @@ namespace arbitrator
             carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &);
         
         private:
+            // helper function to parse plugin_priorities param from yaml as a json
+            std::map<std::string, double> plugin_priorities_map_from_json(const std::string& json_string);
+
             Config config_;
             std::shared_ptr<Arbitrator> arbitrator_;
             rclcpp::TimerBase::SharedPtr bumper_pose_timer_;

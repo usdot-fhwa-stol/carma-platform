@@ -29,8 +29,7 @@ namespace arbitrator
         config_.planning_frequency = declare_parameter<double>("planning_frequency", config_.planning_frequency);
         config_.beam_width = declare_parameter<int>("beam_width", config_.beam_width);
         config_.use_fixed_costs = declare_parameter<bool>("use_fixed_costs", config_.use_fixed_costs);
-        
-        //declare_parameter("plugin_priorities"); 
+        config_.plugin_priorities = plugin_priorities_map_from_json(declare_parameter<std::string>("plugin_priorities", ""));
     }
     
     carma_ros2_utils::CallbackReturn ArbitratorNode::handle_on_configure(const rclcpp_lifecycle::State &)
@@ -47,26 +46,17 @@ namespace arbitrator
         get_parameter<double>("planning_frequency", config_.planning_frequency);
         get_parameter<int>("beam_width", config_.beam_width);
         get_parameter<bool>("use_fixed_costs", config_.use_fixed_costs);
-        //rclcpp::Parameter plugin_priorities_param = get_parameter("plugin_priorities");
+        std::string json_string;
+        get_parameter<std::string>("plugin_priorities", json_string);
 
-        //YAML::Node yaml_node = YAML::Load("plugin_priorities"); // TODO circle back on map loading
+        config_.plugin_priorities = plugin_priorities_map_from_json(json_string);
 
-        std::map<std::string, double> plugin_priorities = {std::pair<std::string,double >("HAHA", 1.0)};
-        //if (yaml_node.IsDefined())
-        //{
-        //    plugin_priorities = yaml_node.as<std::map<std::string, double>>();
-        //    RCLCPP_ERROR_STREAM(get_logger(), "HEY it worked!");
-        //}
-        //else
-        //{
-        //    RCLCPP_ERROR_STREAM(get_logger(), "Parameter mapping did not work");
-        //}
+        RCLCPP_INFO_STREAM(get_logger(), "Arbitrator Loaded Params: " << config_);
 
-        
         arbitrator::CostFunction *cf = nullptr;
         arbitrator::CostSystemCostFunction cscf = arbitrator::CostSystemCostFunction();
 
-        arbitrator::FixedPriorityCostFunction fpcf(plugin_priorities);
+        arbitrator::FixedPriorityCostFunction fpcf(config_.plugin_priorities);
         if (config_.use_fixed_costs) {
             cf = &fpcf;
         } else {
@@ -115,6 +105,32 @@ namespace arbitrator
         RCLCPP_INFO_STREAM(get_logger(), "Arbitrator started, beginning arbitrator state machine.");
         return CallbackReturn::SUCCESS;
     }
+
+    std::map<std::string, double> ArbitratorNode::plugin_priorities_map_from_json(const std::string& json_string)
+    {
+        std::map<std::string, double> map;
+    
+        rapidjson::Document d;
+        if(d.Parse(json_string.c_str()).HasParseError())
+        {
+            RCLCPP_WARN(get_logger(), "Failed to parse plugin_priorities map. Invalid json structure");
+            return map;
+        }
+        if (!d.HasMember("plugin_priorities")) {
+            RCLCPP_WARN(get_logger(), "No plugin_priorities found in arbitrator config");
+            return map;
+        }
+        rapidjson::Value& map_value = d["plugin_priorities"];
+
+        for (rapidjson::Value::ConstMemberIterator it = map_value.MemberBegin(); 
+                                    it != map_value.MemberEnd(); it++) 
+        {
+            map[it->name.GetString()] = it->value.GetDouble();   
+        }
+        return map;
+
+    }
+
 };
 
 
