@@ -230,7 +230,13 @@ namespace plan_delegator
 
     bool PlanDelegator::isManeuverExpired(const carma_planning_msgs::msg::Maneuver& maneuver, rclcpp::Time current_time) const
     {
-        return rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, end_time), get_clock()->get_clock_type()) <= current_time; // TODO maneuver expiration should maybe be based off of distance not time? https://github.com/usdot-fhwa-stol/carma-platform/issues/1107
+        RCLCPP_DEBUG_STREAM(get_logger(), "maneuver start time:" << std::to_string(rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, start_time)).seconds()));
+        RCLCPP_DEBUG_STREAM(get_logger(), "maneuver end time:" << std::to_string(rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, end_time)).seconds()));
+        RCLCPP_DEBUG_STREAM(get_logger(), "current time:" << std::to_string(now().seconds()));
+        bool isexpired = rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, end_time), get_clock()->get_clock_type()) <= current_time; // TODO maneuver expiration should maybe be based off of distance not time? https://github.com/usdot-fhwa-stol/carma-platform/issues/1107
+        RCLCPP_DEBUG_STREAM(get_logger(), "isexpired:" << isexpired);
+        // TODO: temporary disabling expiration check
+        return false;
     }
     
     std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request> PlanDelegator::composePlanTrajectoryRequest(const carma_planning_msgs::msg::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const

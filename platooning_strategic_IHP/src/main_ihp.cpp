@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,13 +14,20 @@
  * the License.
  */
 
-#include <gtest/gtest.h>
-#include <ros/ros.h>
+/*
+ * Developed by the UCLA Mobility Lab, 10/20/2021. 
+ *
+ * Creator: Xu Han
+ * Author: Xu Han, Xin Xia, Jiaqi Ma
+ */
 
-// Run all the tests
-int main(int argc, char **argv)
+#include <ros/ros.h>
+#include "platoon_strategic_plugin_node_ihp.h"
+
+int main(int argc, char** argv)
 {
-    testing::InitGoogleTest(&argc, argv);
-    ros::Time::init();
-    return RUN_ALL_TESTS();
+    ros::init(argc, argv, "platoon_strategic_ihp");
+    platoon_strategic_ihp::PlatoonStrategicIHPPluginNode node;
+    node.run();
+    return 0;
 }

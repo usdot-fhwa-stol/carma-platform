@@ -49,6 +49,13 @@ def generate_launch_description():
         description = "Path to file contain vehicle configuration parameters"
     )
 
+    vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
+    declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_param_file',
+        default_value = "/opt/carma/vehicle/config/VehicleConfigParams.yaml",
+        description = "Path to file contain vehicle configuration parameters"
+    )
+
     subsystem_controller_default_param_file = os.path.join(
         get_package_share_directory('subsystem_controllers'), 'config/guidance_controller_config.yaml')
 
@@ -119,7 +126,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     vehicle_characteristics_param_file,
-                    mobilitypath_visualizer_param_file
+                    mobilitypath_visualizer_param_file,
+                    vehicle_config_param_file
                 ]
             ),
             ComposableNode(
@@ -131,10 +139,11 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('trajectory_executor', env_log_levels) }
                 ],
                 remappings = [
-                    ("trajectory", "trajectory_plan"),
+                    ("trajectory", "plan_trajectory"),
                 ],
                 parameters=[
-                    trajectory_executor_param_file
+                    trajectory_executor_param_file,
+                    vehicle_config_param_file
                 ]
             ),
             ComposableNode(
@@ -155,7 +164,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     {'route_file_path': route_file_folder},
-                    route_param_file
+                    route_param_file,
+                    vehicle_config_param_file
                 ]
             )
         ]
@@ -172,6 +182,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([  
+        declare_vehicle_config_param_file_arg,
         declare_subsystem_controller_param_file_arg,      
         carma_guidance_container,
         subsystem_controller

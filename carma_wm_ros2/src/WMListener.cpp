@@ -37,18 +37,24 @@ WMListener::WMListener(
   rclcpp::Parameter config_speed_limit_param("config_speed_limit");
   if(!node_params_->get_parameter("config_speed_limit", config_speed_limit_param)){
     rclcpp::ParameterValue config_speed_limit_param_value;
-    config_speed_limit_param_value = node_params_->declare_parameter("config_speed_limit", rclcpp::ParameterValue (config_speed_limit_));
+    config_speed_limit_param_value = node_params_->declare_parameter("config_speed_limit", rclcpp::ParameterValue (0.0));
   }
 
   rclcpp::Parameter participant_param("vehicle_participant_type");
   if(!node_params_->get_parameter("vehicle_participant_type", participant_param)){
     rclcpp::ParameterValue participant_param_value;
-    participant_param_value = node_params_->declare_parameter("vehicle_participant_type", rclcpp::ParameterValue(participant_));
+    participant_param_value = node_params_->declare_parameter("vehicle_participant_type", rclcpp::ParameterValue(""));
   }
   
   // Get params
-  node_params_->get_parameter("config_speed_limit");
-  node_params_->get_parameter("vehicle_participant_type");
+  config_speed_limit_param = node_params_->get_parameter("config_speed_limit");
+  participant_param = node_params_->get_parameter("vehicle_participant_type");
+
+  RCLCPP_INFO_STREAM(node_logging->get_logger(), "Loaded config speed limit: " << config_speed_limit_param.as_double());
+  RCLCPP_INFO_STREAM(node_logging->get_logger(), "Loaded vehicle participant type: " << participant_param.as_string());
+
+  setConfigSpeedLimit(config_speed_limit_param.as_double());
+  worker_->setVehicleParticipationType(participant_param.as_string());
 
   rclcpp::SubscriptionOptions map_update_options;
   rclcpp::SubscriptionOptions map_options;
