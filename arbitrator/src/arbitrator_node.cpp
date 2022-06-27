@@ -19,11 +19,6 @@
 
 namespace arbitrator
 {
-    struct Object
-    {   
-        int value = 0;
-        
-    };
     ArbitratorNode::ArbitratorNode(const rclcpp::NodeOptions& options) : carma_ros2_utils::CarmaLifecycleNode(options) 
     {
         // Create initial config
