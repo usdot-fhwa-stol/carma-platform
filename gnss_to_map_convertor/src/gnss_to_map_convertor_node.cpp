@@ -27,12 +27,19 @@ namespace gnss_to_map_convertor
     // Declare parameters
     config_.base_link_frame = declare_parameter<std::string>("base_link_frame", config_.base_link_frame);
     config_.map_frame = declare_parameter<std::string>("map_frame", config_.map_frame);
-    config_.heading_frame = declare_parameter<std::string>("heading_frame", config_.heading_frame);
+    config_.heading_frame = declare_parameter<std::string>("heading_frame", config_.heading_frame);   
+    //config_.offset_x = declare_parameter<double>("offset_x", config_.offset_x);
+    //config_.offset_y = declare_parameter<double>("offset_y", config_.offset_y);
+    
   }
 
   rcl_interfaces::msg::SetParametersResult Node::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
   {
-    auto error = update_params<std::string>({{"base_link_frame", config_.base_link_frame},{"map_frame", config_.map_frame},{"heading_frame", config_.heading_frame}}, parameters);
+    //auto error = update_params<std::string>({{"base_link_frame", config_.base_link_frame},{"map_frame", config_.map_frame},{"heading_frame", config_.heading_frame},{"offset_x", config_.offset_x},{"offset_y", config_.offset_y}}, parameters);
+    
+	auto error = update_params<std::string>({{"base_link_frame", config_.base_link_frame},{"map_frame", config_.map_frame},{"heading_frame", config_.heading_frame}}, parameters);
+        
+        //auto error2 = update_params<double>({{"offset_x", config_.offset_x},{"offset_y", config_.offset_y}}, parameters);
 
     rcl_interfaces::msg::SetParametersResult result;
 

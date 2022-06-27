@@ -137,6 +137,9 @@ geometry_msgs::msg::PoseWithCovarianceStamped GNSSToMapConvertor::poseFromGnss(
   const double alt = fix_msg.altitude;
 
   lanelet::BasicPoint3d map_point = projector.forward({ lat, lon, alt });
+  
+  //map_point.x()=map_point.x()+offset_x_;//UCLA modification
+  
   RCLCPP_DEBUG_STREAM(logger_->get_logger(), "map_point: " << map_point.x() << ", " << map_point.y() << ", " << map_point.z());
 
   if (fabs(map_point.x()) > 10000.0 || fabs(map_point.y()) > 10000.0)
@@ -200,8 +203,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped GNSSToMapConvertor::poseFromGnss(
   geometry_msgs::msg::PoseWithCovarianceStamped pose;
   pose.header = fix_msg.header;
 
-  pose.pose.pose.position.x = T_m_b.getOrigin().getX() + offset_x_;
-  pose.pose.pose.position.y = T_m_b.getOrigin().getY() + offset_y_;
+  pose.pose.pose.position.x = T_m_b.getOrigin().getX();
+  pose.pose.pose.position.y = T_m_b.getOrigin().getY();
   pose.pose.pose.position.z = T_m_b.getOrigin().getZ();
 
   pose.pose.pose.orientation.x = T_m_b.getRotation().getX();

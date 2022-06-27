@@ -158,4 +158,4 @@ private:
 
 };
 
-};  // namespace gnss_to_map_convertor
+}  // namespace gnss_to_map_convertor
