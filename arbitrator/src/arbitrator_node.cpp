@@ -108,9 +108,9 @@ namespace arbitrator
     
     carma_ros2_utils::CallbackReturn ArbitratorNode::handle_on_activate(const rclcpp_lifecycle::State &)
     {
-        //bumper_pose_timer_ = create_timer(get_clock(),
-        //                        std::chrono::milliseconds(100),
-        //                        [this]() {this->arbitrator_->bumper_pose_cb();});
+        bumper_pose_timer_ = create_timer(get_clock(),
+                                std::chrono::milliseconds(100),
+                                [this]() {this->arbitrator_->bumper_pose_cb();});
         
         arbitrator_run_ = create_timer(get_clock(),
                                 std::chrono::duration<double>(1/config_.planning_frequency),

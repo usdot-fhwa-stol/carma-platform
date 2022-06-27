@@ -79,7 +79,6 @@ namespace arbitrator
 
         plan1.maneuvers.push_back(mvr1);
         std::vector<carma_planning_msgs::msg::ManeuverPlan> plans{plan1};
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "testing" );
 
         {
             InSequence seq;
@@ -92,7 +91,6 @@ namespace arbitrator
                     Return(std::vector<carma_planning_msgs::msg::ManeuverPlan>())
                 );
         }
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "testing1" );
 
 
         EXPECT_CALL(*mcf, compute_cost_per_unit_distance(_))
@@ -106,9 +104,7 @@ namespace arbitrator
             );
 
         VehicleState state;
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "testing12" );
         carma_planning_msgs::msg::ManeuverPlan plan = tp.generate_plan(state);
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "testing13" );
         ASSERT_FALSE(plan.maneuvers.empty());
         ASSERT_EQ(1, plan.maneuvers.size());
         ASSERT_EQ(rclcpp::Time(0, 0), rclcpp::Time(plan.maneuvers[0].lane_following_maneuver.start_time, RCL_SYSTEM_TIME));

@@ -110,7 +110,7 @@ namespace arbitrator
         {   
             RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator initializing on first initial state spin...");
             final_plan_pub_ = nh_->create_publisher<carma_planning_msgs::msg::ManeuverPlan>("final_maneuver_plan", 5);
-            guidance_state_sub_ = nh_->create_subscription<carma_planning_msgs::msg::GuidanceState>("state", 5, std::bind(&Arbitrator::guidance_state_cb, this, std::placeholders::_1));
+            guidance_state_sub_ = nh_->create_subscription<carma_planning_msgs::msg::GuidanceState>("guidance_state", 5, std::bind(&Arbitrator::guidance_state_cb, this, std::placeholders::_1));
             final_plan_pub_->on_activate();
 
             initialized_ = true;
@@ -123,17 +123,8 @@ namespace arbitrator
     {
         RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator beginning planning process!");
         rclcpp::Time planning_process_start = nh_->get_clock()->now();
-        RCLCPP_ERROR_STREAM(nh_->get_logger(), "A1!");
         
-        vehicle_state_.stamp = rclcpp::Time(0,0);
-        vehicle_state_.downtrack = 100;
-        vehicle_state_.lane_id = 100;
-        vehicle_state_.velocity = 100;
-        vehicle_state_.y = 100;
-        vehicle_state_.x = 100;
-        RCLCPP_ERROR_STREAM(nh_->get_logger(), "AA!");
         carma_planning_msgs::msg::ManeuverPlan plan = planning_strategy_->generate_plan(vehicle_state_);
-        RCLCPP_ERROR_STREAM(nh_->get_logger(), "A2!");
         if (!plan.maneuvers.empty()) 
         {
             rclcpp::Time plan_end_time = arbitrator_utils::get_plan_end_time(plan);
