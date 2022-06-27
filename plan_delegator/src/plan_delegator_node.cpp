@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,15 +14,21 @@
  * the License.
  */
 
-#include "ros/ros.h"
+#include "rclcpp/rclcpp.hpp"
 #include "plan_delegator.hpp"
 
 // Main entry point for plan delegator
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "plan_delegator");
-    plan_delegator::PlanDelegator pd;
-    pd.init();
-    pd.run();
-    return 0;
+  rclcpp::init(argc, argv);
+
+  auto node = std::make_shared<plan_delegator::PlanDelegator>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
+
+  rclcpp::shutdown();
+
+  return 0;
 }
