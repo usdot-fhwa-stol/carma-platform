@@ -47,7 +47,7 @@ ament_auto_add_library(${node_lib} SHARED
   src/tree_planner.cpp
 )
 
-ament_auto_add_library(${node_exec} 
+ament_auto_add_executable(${node_exec} 
   src/main.cpp
 )
 

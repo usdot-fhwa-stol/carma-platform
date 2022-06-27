@@ -61,14 +61,6 @@ namespace arbitrator
         std::shared_ptr<arbitrator::CostFunction> cf;
         arbitrator::CostSystemCostFunction cscf = arbitrator::CostSystemCostFunction();
 
-        Object* o;
-        {
-            o = new Object();
-            o->value = 5;
-        }
-        RCLCPP_ERROR_STREAM(get_logger(), "AAAAAAAAAAA" << o->value);
-
-
         arbitrator::FixedPriorityCostFunction fpcf(config_.plugin_priorities);
         if (config_.use_fixed_costs) {
             cf = std::make_shared<arbitrator::FixedPriorityCostFunction>(fpcf);

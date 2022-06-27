@@ -26,7 +26,6 @@ namespace arbitrator
 {
     void Arbitrator::run()
     {
-        RCLCPP_INFO_STREAM(nh_->get_logger(), "Got here");
         if (!planning_in_progress_ && nh_->get_current_state().id() != lifecycle_msgs::msg::State::TRANSITION_STATE_SHUTTINGDOWN)
         {
             planning_in_progress_ = true;
@@ -62,7 +61,6 @@ namespace arbitrator
         {
             return;    
         }
-        RCLCPP_INFO_STREAM(nh_->get_logger(), "Leaving");
         planning_in_progress_ = false;
     }
     
