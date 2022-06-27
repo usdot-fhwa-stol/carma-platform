@@ -29,8 +29,11 @@ namespace arbitrator
     std::map<std::string, std::shared_ptr<MSrvRes>> 
         CapabilitiesInterface::multiplex_service_call_for_capability(const std::string& query_string, std::shared_ptr<MSrvReq> msg)
     {
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "multiplex_service_call_for_capability 1END");
         std::vector<std::string> topics = get_topics_for_capability(query_string);
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "multiplex_service_call_for_capability 2END");
         std::map<std::string, std::shared_ptr<MSrvRes>> responses;
+
         for (auto i = topics.begin(); i != topics.end(); i++) 
         {
             auto sc = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(*i);

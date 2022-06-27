@@ -29,8 +29,11 @@ namespace arbitrator
 
         auto srv = std::make_shared<carma_planning_msgs::srv::GetPluginApi::Request>();
         srv->capability = "";
-
+        
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "get_topics_for_capability 1END");
+        
         auto plan_response = sc_s_->async_send_request(srv);
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "get_topics_for_capability 1END");
 
         auto future_status = plan_response.wait_for(std::chrono::milliseconds(1000));
 
@@ -49,8 +52,8 @@ namespace arbitrator
         }
         else
         {
-            RCLCPP_DEBUG_STREAM(nh_->get_logger(), "service call failed...");
-            RCLCPP_DEBUG_STREAM(nh_->get_logger(), "client: " << sc_s_);
+            RCLCPP_ERROR_STREAM(nh_->get_logger(), "service call failed...");
+            RCLCPP_ERROR_STREAM(nh_->get_logger(), "client: " << sc_s_);
         }
 
         return topics;

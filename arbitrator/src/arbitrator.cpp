@@ -123,7 +123,17 @@ namespace arbitrator
     {
         RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator beginning planning process!");
         rclcpp::Time planning_process_start = nh_->get_clock()->now();
-        carma_planning_msgs::msg::ManeuverPlan plan = planning_strategy_.generate_plan(vehicle_state_);
+        RCLCPP_ERROR_STREAM(nh_->get_logger(), "A1!");
+        
+        vehicle_state_.stamp = rclcpp::Time(0,0);
+        vehicle_state_.downtrack = 100;
+        vehicle_state_.lane_id = 100;
+        vehicle_state_.velocity = 100;
+        vehicle_state_.y = 100;
+        vehicle_state_.x = 100;
+        RCLCPP_ERROR_STREAM(nh_->get_logger(), "AA!");
+        carma_planning_msgs::msg::ManeuverPlan plan = planning_strategy_->generate_plan(vehicle_state_);
+        RCLCPP_ERROR_STREAM(nh_->get_logger(), "A2!");
         if (!plan.maneuvers.empty()) 
         {
             rclcpp::Time plan_end_time = arbitrator_utils::get_plan_end_time(plan);

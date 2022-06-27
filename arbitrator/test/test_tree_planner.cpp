@@ -58,10 +58,13 @@ namespace arbitrator
     {
         public:
             TreePlannerTest():
-                tp{mcf, mng, mss, rclcpp::Duration(5, 0)} {};
-            MockSearchStrategy mss;
-            MockCostFunction mcf;
-            MockNeighborGenerator mng;
+                tp{mcf, 
+                mng, 
+                mss, 
+                rclcpp::Duration(5, 0)} {};
+            std::shared_ptr<MockSearchStrategy> mss = std::shared_ptr<MockSearchStrategy>(new MockSearchStrategy);
+            std::shared_ptr<MockCostFunction> mcf =  std::shared_ptr<MockCostFunction>(new MockCostFunction);
+            std::shared_ptr<MockNeighborGenerator> mng =  std::shared_ptr<MockNeighborGenerator>(new MockNeighborGenerator);
             TreePlanner tp;
     };
 
@@ -76,31 +79,36 @@ namespace arbitrator
 
         plan1.maneuvers.push_back(mvr1);
         std::vector<carma_planning_msgs::msg::ManeuverPlan> plans{plan1};
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "testing" );
 
         {
             InSequence seq;
-            EXPECT_CALL(mng, generate_neighbors(_,_))
+            EXPECT_CALL(*mng, generate_neighbors(_,_))
                 .WillOnce(
                     Return(plans)
                 );
-            EXPECT_CALL(mng, generate_neighbors(_,_))
+            EXPECT_CALL(*mng, generate_neighbors(_,_))
                 .WillRepeatedly(
                     Return(std::vector<carma_planning_msgs::msg::ManeuverPlan>())
                 );
         }
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "testing1" );
 
-        EXPECT_CALL(mcf, compute_cost_per_unit_distance(_))
+
+        EXPECT_CALL(*mcf, compute_cost_per_unit_distance(_))
             .WillRepeatedly(
                 Return(5.0)
             );
 
-        EXPECT_CALL(mss, prioritize_plans(_))
+        EXPECT_CALL(*mss, prioritize_plans(_))
             .WillRepeatedly(
                 ReturnArg<0>()
             );
 
         VehicleState state;
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "testing12" );
         carma_planning_msgs::msg::ManeuverPlan plan = tp.generate_plan(state);
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "testing13" );
         ASSERT_FALSE(plan.maneuvers.empty());
         ASSERT_EQ(1, plan.maneuvers.size());
         ASSERT_EQ(rclcpp::Time(0, 0), rclcpp::Time(plan.maneuvers[0].lane_following_maneuver.start_time, RCL_SYSTEM_TIME));
@@ -131,22 +139,22 @@ namespace arbitrator
 
         {
             InSequence seq;
-            EXPECT_CALL(mng, generate_neighbors(_,_))
+            EXPECT_CALL(*mng, generate_neighbors(_,_))
                 .WillOnce(
                     Return(plans)
                 );
-            EXPECT_CALL(mng, generate_neighbors(_,_))
+            EXPECT_CALL(*mng, generate_neighbors(_,_))
                 .WillRepeatedly(
                     Return(std::vector<carma_planning_msgs::msg::ManeuverPlan>())
                 );
         }
 
-        EXPECT_CALL(mcf, compute_cost_per_unit_distance(_))
+        EXPECT_CALL(*mcf, compute_cost_per_unit_distance(_))
             .WillRepeatedly(
                 Return(5.0)
             );
 
-        EXPECT_CALL(mss, prioritize_plans(_))
+        EXPECT_CALL(*mss, prioritize_plans(_))
             .WillRepeatedly(
                 ReturnArg<0>()
             );
@@ -191,30 +199,30 @@ namespace arbitrator
 
         {
             InSequence seq;
-            EXPECT_CALL(mng, generate_neighbors(_,_))
+            EXPECT_CALL(*mng, generate_neighbors(_,_))
                 .WillOnce(
                     Return(plans1)
                 );
-            EXPECT_CALL(mng, generate_neighbors(_,_))
+            EXPECT_CALL(*mng, generate_neighbors(_,_))
                 .WillOnce(
                     Return(plans2)
                 );
-            EXPECT_CALL(mng, generate_neighbors(_,_))
+            EXPECT_CALL(*mng, generate_neighbors(_,_))
                 .WillOnce(
                     Return(plans3)
                 );
-            EXPECT_CALL(mng, generate_neighbors(_,_))
+            EXPECT_CALL(*mng, generate_neighbors(_,_))
                 .WillRepeatedly(
                     Return(std::vector<carma_planning_msgs::msg::ManeuverPlan>())
                 );
         }
 
-        EXPECT_CALL(mcf, compute_cost_per_unit_distance(_))
+        EXPECT_CALL(*mcf, compute_cost_per_unit_distance(_))
             .WillRepeatedly(
                 Return(5.0)
             );
 
-        EXPECT_CALL(mss, prioritize_plans(_))
+        EXPECT_CALL(*mss, prioritize_plans(_))
             .WillRepeatedly(
                 ReturnArg<0>()
             );

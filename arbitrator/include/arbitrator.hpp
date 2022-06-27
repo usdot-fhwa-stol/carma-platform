@@ -55,9 +55,9 @@ namespace arbitrator
              * \param wm pointer to an inialized world model.
              */ 
             Arbitrator(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh,
-                ArbitratorStateMachine *sm, 
-                CapabilitiesInterface *ci, 
-                PlanningStrategy &planning_strategy,
+                std::shared_ptr<ArbitratorStateMachine> sm, 
+                std::shared_ptr<CapabilitiesInterface> ci, 
+                std::shared_ptr<PlanningStrategy> planning_strategy,
                 rclcpp::Duration min_plan_duration,
                 double planning_period,
                 carma_wm::WorldModelConstPtr wm): 
@@ -132,15 +132,15 @@ namespace arbitrator
             
             VehicleState vehicle_state_; // The current state of the vehicle for populating planning requests
 
-            ArbitratorStateMachine *sm_;
+            std::shared_ptr<ArbitratorStateMachine> sm_;
             carma_ros2_utils::PubPtr<carma_planning_msgs::msg::ManeuverPlan> final_plan_pub_;
             carma_ros2_utils::SubPtr<carma_planning_msgs::msg::GuidanceState> guidance_state_sub_;
             std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
             rclcpp::Duration min_plan_duration_;
             rclcpp::Duration time_between_plans_;
             rclcpp::Time next_planning_process_start_;
-            CapabilitiesInterface *capabilities_interface_;
-            PlanningStrategy &planning_strategy_;
+            std::shared_ptr<CapabilitiesInterface> capabilities_interface_;
+            std::shared_ptr<PlanningStrategy> planning_strategy_;
             bool initialized_;
             carma_wm::WorldModelConstPtr wm_;
 

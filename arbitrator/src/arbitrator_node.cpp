@@ -19,6 +19,11 @@
 
 namespace arbitrator
 {
+    struct Object
+    {   
+        int value = 0;
+        
+    };
     ArbitratorNode::ArbitratorNode(const rclcpp::NodeOptions& options) : carma_ros2_utils::CarmaLifecycleNode(options) 
     {
         // Create initial config
@@ -40,7 +45,7 @@ namespace arbitrator
         
         // Reset config
         config_ = Config();
-  
+        
         get_parameter<double>("min_plan_duration", config_.min_plan_duration);
         get_parameter<double>("target_plan_duration", config_.target_plan_duration);
         get_parameter<double>("planning_frequency", config_.planning_frequency);
@@ -53,23 +58,30 @@ namespace arbitrator
 
         RCLCPP_INFO_STREAM(get_logger(), "Arbitrator Loaded Params: " << config_);
 
-        arbitrator::CostFunction *cf = nullptr;
+        std::shared_ptr<arbitrator::CostFunction> cf;
         arbitrator::CostSystemCostFunction cscf = arbitrator::CostSystemCostFunction();
+
+        Object* o;
+        {
+            o = new Object();
+            o->value = 5;
+        }
+        RCLCPP_ERROR_STREAM(get_logger(), "AAAAAAAAAAA" << o->value);
+
 
         arbitrator::FixedPriorityCostFunction fpcf(config_.plugin_priorities);
         if (config_.use_fixed_costs) {
-            cf = &fpcf;
+            cf = std::make_shared<arbitrator::FixedPriorityCostFunction>(fpcf);
         } else {
             cscf.init(shared_from_this());
-            cf = &cscf;
+            cf = std::make_shared<arbitrator::CostSystemCostFunction>(cscf);
         }
 
-        arbitrator::BeamSearchStrategy bss(config_.beam_width);
+        auto bss = std::make_shared<arbitrator::BeamSearchStrategy>(config_.beam_width);
 
-        arbitrator::PluginNeighborGenerator<arbitrator::CapabilitiesInterface> png{ci};
-        arbitrator::TreePlanner tp(*cf, png, bss, rclcpp::Duration(config_.target_plan_duration* 1e9));
-
-     
+        auto png = std::make_shared<arbitrator::PluginNeighborGenerator<arbitrator::CapabilitiesInterface>>(ci);
+        arbitrator::TreePlanner tp(cf, png, bss, rclcpp::Duration(config_.target_plan_duration* 1e9));
+    
         auto wm_listener_ = std::make_shared<carma_wm::WMListener>(
             this->get_node_base_interface(), this->get_node_logging_interface(),
         this->get_node_topics_interface(), this->get_node_parameters_interface()
@@ -79,13 +91,14 @@ namespace arbitrator
 
         arbitrator_ = std::make_shared<Arbitrator>(
             shared_from_this(),
-            &sm, 
-            &ci, 
-            tp, 
+            std::make_shared<ArbitratorStateMachine>(sm), 
+            std::make_shared<CapabilitiesInterface>(ci), 
+            std::make_shared<TreePlanner>(tp), 
             rclcpp::Duration(config_.min_plan_duration* 1e9),
             1/config_.planning_frequency,
             wm );
-
+        
+        
         carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> twist_sub = create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 1, std::bind(&Arbitrator::twist_cb, arbitrator_.get(), std::placeholders::_1));
 
         arbitrator_->initializeBumperTransformLookup();
@@ -95,9 +108,9 @@ namespace arbitrator
     
     carma_ros2_utils::CallbackReturn ArbitratorNode::handle_on_activate(const rclcpp_lifecycle::State &)
     {
-        bumper_pose_timer_ = create_timer(get_clock(),
-                                std::chrono::milliseconds(100),
-                                [this]() {this->arbitrator_->bumper_pose_cb();});
+        //bumper_pose_timer_ = create_timer(get_clock(),
+        //                        std::chrono::milliseconds(100),
+        //                        [this]() {this->arbitrator_->bumper_pose_cb();});
         
         arbitrator_run_ = create_timer(get_clock(),
                                 std::chrono::duration<double>(1/config_.planning_frequency),
