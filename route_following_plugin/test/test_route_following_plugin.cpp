@@ -14,12 +14,12 @@
  * the License.
  */
 
-#include "route_following_plugin.h"
+#include "route_following_plugin.hpp"
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 #include <thread>
 #include <chrono>
-#include <carma_wm/WMTestLibForGuidance.h>
+#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -38,12 +38,11 @@ namespace route_following_plugin
     TEST(RouteFollowingPluginTest, testComposeManeuverMessage)
     {
         RouteFollowingPlugin rfp;
-        ros::Time::init();
-        ros::Time current_time = ros::Time::now();
+        rclcpp::Time current_time = ros::Time::now();
         auto msg = rfp.composeLaneFollowingManeuverMessage(1.0, 10.0, 0.9, 11.176, {2});
-        EXPECT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, msg.type);
-        EXPECT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, msg.lane_following_maneuver.parameters.negotiation_type);
-        EXPECT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN, msg.lane_following_maneuver.parameters.presence_vector);
+        EXPECT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, msg.type);
+        EXPECT_EQ(carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION, msg.lane_following_maneuver.parameters.negotiation_type);
+        EXPECT_EQ(carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN, msg.lane_following_maneuver.parameters.presence_vector);
         EXPECT_EQ("InLaneCruisingPlugin", msg.lane_following_maneuver.parameters.planning_tactical_plugin);
         EXPECT_EQ("RouteFollowingPlugin", msg.lane_following_maneuver.parameters.planning_strategic_plugin);
         EXPECT_NEAR(1.0, msg.lane_following_maneuver.start_dist, 0.01);
@@ -106,16 +105,16 @@ namespace route_following_plugin
 
         //Define plan for request and response
         //PlanManeuversRequest
-        cav_srvs::PlanManeuvers plan;
+        carma_planning_msgs::srv::PlanManeuvers plan;
         cav_srvs::PlanManeuversRequest pplan;
 
-        cav_msgs::ManeuverPlan plan_req1;
+        carma_planning_msgs::msg::ManeuverPlan plan_req1;
         plan_req1.header;
         plan_req1.maneuver_plan_id;
         plan_req1.planning_start_time;
         plan_req1.planning_completion_time;
 
-        ros::Time current_time = ros::Time::now();
+        rclcpp::Time current_time = ros::Time::now();
         plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0, 0, 0, 11.176, {0}));
         pplan.prior_plan = plan_req1;
         plan.request = pplan;
@@ -127,7 +126,6 @@ namespace route_following_plugin
         plan.response = newplan;
 
         //RouteFollowing plan maneuver callback
-        ros::Time::init();
         auto shortest_path = cmw->getRoute()->shortestPath();
 
         worker.latest_maneuver_plan_ = worker.routeCb(shortest_path);
@@ -142,7 +140,7 @@ namespace route_following_plugin
             }
 
             ASSERT_FALSE(plan.response.new_plan.maneuvers.empty());
-            ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, plan.response.new_plan.maneuvers.back().type);
+            ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, plan.response.new_plan.maneuvers.back().type);
             ASSERT_EQ(plan.response.new_plan.maneuvers.back().stop_and_wait_maneuver.start_speed, limit.value());
         }
         else
@@ -185,13 +183,12 @@ namespace route_following_plugin
         cmw->carma_wm::CARMAWorldModel::setMap(map);
 
         RouteFollowingPlugin worker;
-        ros::Time::init(); //initializing ros time to use ros::Time::now()
         //get position on map
         auto llt = map.get()->laneletLayer.get(start_id);
         lanelet::LineString3d left_bound = llt.leftBound();
         lanelet::LineString3d right_bound = llt.rightBound();
-        geometry_msgs::PoseStamped left;
-        geometry_msgs::PoseStamped right;
+        geometry_msgs::msg::PoseStamped left;
+        geometry_msgs::msg::PoseStamped right;
         for (lanelet::Point3d &p : left_bound)
         {
             left.pose.position.x = p.x();
@@ -219,15 +216,15 @@ namespace route_following_plugin
         auto shortest_path = cmw->getRoute()->shortestPath();
         //Define plan for request and response
         //PlanManeuversRequest
-        cav_srvs::PlanManeuvers plan;
+        carma_planning_msgs::srv::PlanManeuvers plan;
         cav_srvs::PlanManeuversRequest pplan;
 
-        cav_msgs::ManeuverPlan plan_req1;
+        carma_planning_msgs::msg::ManeuverPlan plan_req1;
         plan_req1.header;
         plan_req1.maneuver_plan_id;
         plan_req1.planning_start_time;
         plan_req1.planning_completion_time;
-        ros::Time current_time = ros::Time::now();
+        rclcpp::Time current_time = ros::Time::now();
         plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0.0, 100.0, 0, 11.176, {start_id}));
         pplan.prior_plan = plan_req1;
         plan.request = pplan;
@@ -299,12 +296,12 @@ namespace route_following_plugin
 
         auto lane_change_status_msg=worker.ComposeLaneChangeStatus(start_lanelet,end_lanelet_1);
 
-        ASSERT_EQ(lane_change_status_msg.lane_change,cav_msgs::UpcomingLaneChangeStatus::RIGHT);
+        ASSERT_EQ(lane_change_status_msg.lane_change,carma_planning_msgs::msg::UpcomingLaneChangeStatus::RIGHT);
         ASSERT_EQ(lane_change_status_msg.downtrack_until_lanechange,0);
 
         lane_change_status_msg=worker.ComposeLaneChangeStatus(end_lanelet_1,start_lanelet);
 
-        ASSERT_EQ(lane_change_status_msg.lane_change,cav_msgs::UpcomingLaneChangeStatus::LEFT);
+        ASSERT_EQ(lane_change_status_msg.lane_change,carma_planning_msgs::msg::UpcomingLaneChangeStatus::LEFT);
         ASSERT_EQ(lane_change_status_msg.downtrack_until_lanechange,0);
 
     }
@@ -314,20 +311,19 @@ namespace route_following_plugin
     {
         RouteFollowingPlugin worker;
         /*composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, int lane_id, ros::Time start_time);*/
-        ros::Time::init();
-        ros::Time start_time = ros::Time::now();
-        cav_msgs::Maneuver maneuver = worker.composeLaneFollowingManeuverMessage(10.0, 100.0, 0.0, 100.0, {101});
+        rclcpp::Time start_time = ros::Time::now();
+        carma_planning_msgs::msg::Maneuver maneuver = worker.composeLaneFollowingManeuverMessage(10.0, 100.0, 0.0, 100.0, {101});
 
         worker.setManeuverStartDist(maneuver, 50.0);
         ASSERT_EQ(maneuver.lane_following_maneuver.start_dist, 50.0);
 
-        ros::Time new_start_time = start_time + ros::Duration(10.0);
-        std::vector<cav_msgs::Maneuver> maneuvers;
+        rclcpp::Time new_start_time = start_time + rclcpp::Duration(10.0);
+        std::vector<carma_planning_msgs::msg::Maneuver> maneuvers;
         maneuvers.push_back(maneuver);
 
         worker.updateTimeProgress(maneuvers, new_start_time);
 
-        double start_time_change = GET_MANEUVER_PROPERTY(maneuvers.front(), start_time).toSec() - start_time.toSec();
+        double start_time_change = rclcpp::Time(GET_MANEUVER_PROPERTY(maneuvers.front(), start_time)).seconds() - rclcpp::Time(start_time).seconds();
         ASSERT_EQ(start_time_change, 10.0);
     }
 
@@ -365,13 +361,12 @@ TEST(RouteFollowingPlugin, TestReturnToShortestPath)
         worker.wm_ = cmw;
 
         //RouteFollowing plan maneuver callback
-        ros::Time::init();
         auto shortest_path = cmw->getRoute()->shortestPath();
 
         worker.latest_maneuver_plan_ = worker.routeCb(shortest_path);
 
         // If the vehicle remains on the shortest path, the next maneuver is lane following
-        ASSERT_EQ(worker.latest_maneuver_plan_[0].type, cav_msgs::Maneuver::LANE_FOLLOWING);
+        ASSERT_EQ(worker.latest_maneuver_plan_[0].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
 
         for (auto ll:route->shortestPath())
         {
@@ -383,14 +378,7 @@ TEST(RouteFollowingPlugin, TestReturnToShortestPath)
         worker.returnToShortestPath(current_lanelet);
 
         // Since the vehicle is not on the shortest path, the first maneuver is lane change
-        ASSERT_EQ(worker.latest_maneuver_plan_[0].type, cav_msgs::Maneuver::LANE_CHANGE);
+        ASSERT_EQ(worker.latest_maneuver_plan_[0].type, carma_planning_msgs::msg::Maneuver::LANE_CHANGE);
     }
 }
 
-// Run all the tests
-int main(int argc, char **argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    auto res = RUN_ALL_TESTS();
-    return res;
-}
