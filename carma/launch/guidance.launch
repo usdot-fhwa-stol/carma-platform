@@ -92,9 +92,6 @@
   <!-- Launch Arbitrator -->
   <include file="$(find arbitrator)/launch/arbitrator.launch"/>
 
-  <!-- Launch Plan Delegator -->
-  <include file="$(find plan_delegator)/launch/plan_delegator.launch"/>
-
   <remap from="/vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
   <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
 
