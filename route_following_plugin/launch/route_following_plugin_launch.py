@@ -24,7 +24,7 @@ import os
 
 
 '''
-This file is can be used to launch the CARMA pose_to_tf.
+This file is can be used to launch the CARMA route_following_plugin_container.
   Though in carma-platform it may be launched directly from the base launch file.
 '''
 
@@ -38,7 +38,7 @@ def generate_launch_description():
     # Launch node(s) in a carma container to allow logging to be configured
     container = ComposableNodeContainer(
         package='carma_ros2_utils',
-        name='pose_to_tf_container',
+        name='route_following_plugin_container_container',
         namespace=GetCurrentNamespace(),
         executable='carma_component_container_mt',
         composable_node_descriptions=[

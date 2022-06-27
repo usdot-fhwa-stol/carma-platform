@@ -17,14 +17,14 @@
  */
 
 #include <vector>
-#include <carma_planning_msgs/msg/Plugin.h>
+#include <carma_planning_msgs/msg/plugin.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <carma_wm_ros2/WMListener.hpp>
 #include <carma_wm_ros2/WorldModel.hpp>
-#include <carma_planning_msgs/srv/PlanManeuvers.srv>
-#include <carma_planning_msgs/msg/UpcomingLaneChangeStatus.h>
+#include <carma_planning_msgs/srv/plan_maneuvers.srv>
+#include <carma_planning_msgs/msg/upcoming_lane_change_status.hpp>
 #include <gtest/gtest_prod.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
@@ -243,7 +243,7 @@ namespace route_following_plugin
         rclcpp::TimerBase::SharedPtr discovery_pub_timer_;
 
         // Service Servers
-        carma_ros2_utils::ServicePtr<std_srvs::srv::Empty> plan_maneuver_srv_;
+        carma_ros2_utils::ServicePtr<std_srvs::srv::PlanManeuvers> plan_maneuver_srv_;
 
         // unordered set of all the lanelet ids in shortest path
         std::unordered_set<lanelet::Id> shortest_path_set_;

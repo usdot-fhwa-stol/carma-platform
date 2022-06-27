@@ -38,7 +38,7 @@ namespace route_following_plugin
     TEST(RouteFollowingPluginTest, testComposeManeuverMessage)
     {
         RouteFollowingPlugin rfp;
-        rclcpp::Time current_time = ros::Time::now();
+        rclcpp::Time current_time = get_clock()->now();
         auto msg = rfp.composeLaneFollowingManeuverMessage(1.0, 10.0, 0.9, 11.176, {2});
         EXPECT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, msg.type);
         EXPECT_EQ(carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION, msg.lane_following_maneuver.parameters.negotiation_type);
@@ -106,7 +106,7 @@ namespace route_following_plugin
         //Define plan for request and response
         //PlanManeuversRequest
         carma_planning_msgs::srv::PlanManeuvers plan;
-        cav_srvs::PlanManeuversRequest pplan;
+        carma_planning_msgs::srv::PlanManeuversRequest pplan;
 
         carma_planning_msgs::msg::ManeuverPlan plan_req1;
         plan_req1.header;
@@ -114,12 +114,12 @@ namespace route_following_plugin
         plan_req1.planning_start_time;
         plan_req1.planning_completion_time;
 
-        rclcpp::Time current_time = ros::Time::now();
+        rclcpp::Time current_time = get_clock()->now();
         plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0, 0, 0, 11.176, {0}));
         pplan.prior_plan = plan_req1;
         plan.request = pplan;
         //PlanManeuversResponse
-        cav_srvs::PlanManeuversResponse newplan;
+        carma_planning_msgs::srv::PlanManeuversResponse newplan;
         for (auto i = 0; i < plan_req1.maneuvers.size(); i++)
             newplan.new_plan.maneuvers.push_back(plan_req1.maneuvers[i]);
 
@@ -217,19 +217,19 @@ namespace route_following_plugin
         //Define plan for request and response
         //PlanManeuversRequest
         carma_planning_msgs::srv::PlanManeuvers plan;
-        cav_srvs::PlanManeuversRequest pplan;
+        carma_planning_msgs::srv::PlanManeuversRequest pplan;
 
         carma_planning_msgs::msg::ManeuverPlan plan_req1;
         plan_req1.header;
         plan_req1.maneuver_plan_id;
         plan_req1.planning_start_time;
         plan_req1.planning_completion_time;
-        rclcpp::Time current_time = ros::Time::now();
+        rclcpp::Time current_time = get_clock()->now();
         plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0.0, 100.0, 0, 11.176, {start_id}));
         pplan.prior_plan = plan_req1;
         plan.request = pplan;
         //PlanManeuversResponse
-        cav_srvs::PlanManeuversResponse newplan;
+        carma_planning_msgs::srv::PlanManeuversResponse newplan;
         for (auto i = 0; i < plan_req1.maneuvers.size(); i++)
             newplan.new_plan.maneuvers.push_back(plan_req1.maneuvers[i]);
 
@@ -311,7 +311,7 @@ namespace route_following_plugin
     {
         RouteFollowingPlugin worker;
         /*composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, int lane_id, ros::Time start_time);*/
-        rclcpp::Time start_time = ros::Time::now();
+        rclcpp::Time start_time = get_clock()->now();
         carma_planning_msgs::msg::Maneuver maneuver = worker.composeLaneFollowingManeuverMessage(10.0, 100.0, 0.0, 100.0, {101});
 
         worker.setManeuverStartDist(maneuver, 50.0);

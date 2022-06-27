@@ -20,7 +20,7 @@
 namespace route_following_plugin
 {
     /**
-   * \brief Stuct containing the frame configuration values for route_following_plugin
+   * \brief Stuct containing config values values for route_following_plugin
    */
    
   struct Config

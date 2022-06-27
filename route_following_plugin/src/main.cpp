@@ -15,7 +15,7 @@
  */
 
 #include <rclcpp/rclcpp.hpp>
-#include "route_following_plugin.h"
+#include "route_following_plugin.hpp"
 
 int main(int argc, char** argv)
 {
