@@ -211,8 +211,7 @@ def generate_launch_description():
                         # TODO when camera detection is added, we will wan to separate this node into a different component to preserve fault tolerance 
                     ],
                     parameters=[ tracking_nodes_param_file ]
-            ),
- 
+            )
         ]
     )
 
