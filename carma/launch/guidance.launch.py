@@ -151,7 +151,10 @@ def generate_launch_description():
                     ("final_maneuver_plan", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/arbitrator/final_maneuver_plan" ] ),
                     ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
                 ],
-                parameters=[ arbitrator_param_file_path ]
+                parameters=[ 
+                    arbitrator_param_file_path,
+                    vehicle_config_param_file
+                ]
             ),
         ]
     )
