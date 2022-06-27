@@ -59,7 +59,7 @@ namespace arbitrator
         // Stream operator for this config
         friend std::ostream &operator<<(std::ostream &output, const Config &c)
         {
-            output << "WMBroadcaster::Config { " << std::endl
+            output << "Arbitrator::Config { " << std::endl
                 << "min_plan_duration: " << c.min_plan_duration << std::endl
                 << "target_plan_duration: " << c.target_plan_duration << std::endl
                 << "planning_frequency: " << c.planning_frequency << std::endl

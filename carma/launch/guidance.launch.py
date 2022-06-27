@@ -61,7 +61,7 @@ def generate_launch_description():
     route_param_file = os.path.join(
         get_package_share_directory('route'), 'config/parameters.yaml')
     
-    param_file_path = os.path.join(
+    arbitrator_param_file_path = os.path.join(
         get_package_share_directory('arbitrator'), 'config/arbitrator_params.yaml')
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
@@ -140,14 +140,18 @@ def generate_launch_description():
                 ]
             ),
             ComposableNode(
-                    package='arbitrator',
-                    plugin='arbitrator::ArbitratorNode',
-                    name='arbitrator_node',
-                    extra_arguments=[
-                        {'use_intra_process_comms': True},
-                        {'--log-level' : log_level }
-                    ],
-                    parameters=[ param_file_path ]
+                package='arbitrator',
+                plugin='arbitrator::ArbitratorNode',
+                name='arbitrator',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('arbitrator', env_log_levels) }
+                ],
+                remappings = [
+                    ("final_maneuver_plan", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/arbitrator/final_maneuver_plan" ] ),
+                    ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
+                ],
+                parameters=[ arbitrator_param_file_path ]
             ),
         ]
     )
