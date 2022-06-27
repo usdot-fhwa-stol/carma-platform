@@ -61,15 +61,12 @@ def generate_launch_description():
     route_param_file = os.path.join(
         get_package_share_directory('route'), 'config/parameters.yaml')
     
-<<<<<<< HEAD
     arbitrator_param_file_path = os.path.join(
         get_package_share_directory('arbitrator'), 'config/arbitrator_params.yaml')
 
-=======
     plan_delegator_param_file = os.path.join(
         get_package_share_directory('plan_delegator'), 'config/plan_delegator_params.yaml')
     
->>>>>>> develop
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
