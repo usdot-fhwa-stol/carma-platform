@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License") { you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,142 +16,141 @@
 
 #include <thread>
 #include <chrono>
-#include <cav_msgs/ManeuverPlan.h>
-#include <cav_srvs/PlanTrajectory.h>
+#include <carma_planning_msgs/msg/maneuver_plan.hpp>
+#include <carma_planning_msgs/srv/plan_trajectory.hpp>
 #include <gtest/gtest.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include "plan_delegator.hpp"
 
     class PlanDelegatorTest : public plan_delegator::PlanDelegator
     {
         public:
+            explicit PlanDelegatorTest(const rclcpp::NodeOptions &options) : plan_delegator::PlanDelegator(options){};
 
             // Helper functions for unit test
             std::string getPlanningTopicPrefix()
             {
-                return this->planning_topic_prefix_;
+                return this->config_.planning_topic_prefix;
             }
 
             void setPlanningTopicPrefix(std::string prefix)
             {
-                this->planning_topic_prefix_ = prefix;
+                this->config_.planning_topic_prefix = prefix;
             }
 
             std::string getPlanningTopicSuffix()
             {
-                return this->planning_topic_suffix_;
+                return this->config_.planning_topic_suffix;
             }
 
             void setPlanningTopicSuffix(std::string suffix)
             {
-                this->planning_topic_suffix_ = suffix;
+                this->config_.planning_topic_suffix = suffix;
             }
 
             double getSpinRate()
             {
-                return this->trajectory_planning_rate_;
+                return this->config_.trajectory_planning_rate;
             }
 
             double getMaxTrajDuration()
             {
-                return this->max_trajectory_duration_;
+                return this->config_.max_trajectory_duration;
             }
 
-            cav_msgs::ManeuverPlan getLatestManeuverPlan()
+            carma_planning_msgs::msg::ManeuverPlan getLatestManeuverPlan()
             {
                 return this->latest_maneuver_plan_;
             }
 
-            std::unordered_map<std::string, ros::ServiceClient> getServiceMap()
+            std::unordered_map<std::string, carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory>> getServiceMap()
             {
                 return this->trajectory_planners_;
             }
     };
 
     TEST(TestPlanDelegator, UnitTestPlanDelegator) {
-        PlanDelegatorTest pd;
+        rclcpp::NodeOptions options;
+        options.use_intra_process_comms(true);
+        auto pd = std::make_shared<PlanDelegatorTest>(options);
+        rclcpp_lifecycle::State dummy;
+        pd->handle_on_configure(dummy);
+        pd->handle_on_activate(dummy);
         // test initialization
-        EXPECT_EQ(0, pd.getPlanningTopicPrefix().compare(""));
-        EXPECT_EQ(0, pd.getPlanningTopicSuffix().compare(""));
-        EXPECT_EQ(10.0, pd.getSpinRate());
-        EXPECT_EQ(6.0, pd.getMaxTrajDuration());
+        EXPECT_EQ(0, pd->getPlanningTopicPrefix().compare("/plugins/"));
+        EXPECT_EQ(0, pd->getPlanningTopicSuffix().compare("/plan_trajectory"));
+        EXPECT_EQ(10.0, pd->getSpinRate());
+        EXPECT_EQ(6.0, pd->getMaxTrajDuration());
         // test maneuver plan callback
-        cav_msgs::ManeuverPlan plan;
-        cav_msgs::Maneuver maneuver;
+        carma_planning_msgs::msg::ManeuverPlan plan;
+        carma_planning_msgs::msg::Maneuver maneuver;
         maneuver.type = maneuver.LANE_FOLLOWING;
         maneuver.lane_following_maneuver.parameters.planning_strategic_plugin = "plugin_A";
         plan.maneuvers.push_back(maneuver);
-        pd.maneuverPlanCallback(cav_msgs::ManeuverPlanConstPtr(new cav_msgs::ManeuverPlan(plan)));
-        EXPECT_EQ("plugin_A", GET_MANEUVER_PROPERTY(pd.getLatestManeuverPlan().maneuvers[0], parameters.planning_strategic_plugin));
-        cav_msgs::ManeuverPlan new_plan;
-        pd.maneuverPlanCallback(cav_msgs::ManeuverPlanConstPtr(new cav_msgs::ManeuverPlan(new_plan)));
+        pd->maneuverPlanCallback(std::make_unique<carma_planning_msgs::msg::ManeuverPlan>(plan));
+        EXPECT_EQ("plugin_A", GET_MANEUVER_PROPERTY(pd->getLatestManeuverPlan().maneuvers[0], parameters.planning_strategic_plugin));
+        carma_planning_msgs::msg::ManeuverPlan new_plan;
+        pd->maneuverPlanCallback(std::make_unique<carma_planning_msgs::msg::ManeuverPlan>(new_plan));
         // empty plan should not be stored locally
-        EXPECT_EQ("plugin_A", GET_MANEUVER_PROPERTY(pd.getLatestManeuverPlan().maneuvers[0], parameters.planning_strategic_plugin));
+        EXPECT_EQ("plugin_A", GET_MANEUVER_PROPERTY(pd->getLatestManeuverPlan().maneuvers[0], parameters.planning_strategic_plugin));
         // test create service client
-        EXPECT_THROW(pd.getPlannerClientByName(""), std::invalid_argument);
-        pd.setPlanningTopicPrefix("/guidance/plugins/");
-        pd.setPlanningTopicSuffix("/plan_trajectory");
-        ros::ServiceClient plugin_A = pd.getPlannerClientByName("plugin_A");
-        EXPECT_EQ("/guidance/plugins/plugin_A/plan_trajectory", plugin_A.getService());
-        EXPECT_EQ(1, pd.getServiceMap().size());
-        ros::ServiceClient plugin_A_copy = pd.getPlannerClientByName("plugin_A");
+        EXPECT_THROW(pd->getPlannerClientByName(""), std::invalid_argument);
+        pd->setPlanningTopicPrefix("/guidance/plugins/");
+        pd->setPlanningTopicSuffix("/plan_trajectory");
+        auto plugin_A = pd->getPlannerClientByName("plugin_A");
+        EXPECT_EQ(0, std::string(plugin_A->get_service_name()).compare("/guidance/plugins/plugin_A/plan_trajectory"));
+        EXPECT_EQ(1, pd->getServiceMap().size());
+        auto plugin_A_copy = pd->getPlannerClientByName("plugin_A");
         EXPECT_EQ(true, plugin_A == plugin_A_copy);
         // test expired maneuver
-        ros::Time test_time(0, 1000);
-        cav_msgs::Maneuver test_maneuver;
-        test_maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+        rclcpp::Time test_time(0, 1000);
+        carma_planning_msgs::msg::Maneuver test_maneuver;
+        test_maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         test_maneuver.lane_following_maneuver.end_time = test_time;
-        EXPECT_EQ(true, pd.isManeuverExpired(test_maneuver));
-        ros::Time test_time_eariler(0, 500);
-        EXPECT_EQ(false, pd.isManeuverExpired(test_maneuver, test_time_eariler));
+        EXPECT_EQ(true, pd->isManeuverExpired(test_maneuver, pd->get_clock()->now()));
+        rclcpp::Time test_time_earlier(0, 500, pd->get_clock()->get_clock_type());
+        EXPECT_EQ(false, pd->isManeuverExpired(test_maneuver, test_time_earlier));
         // test compose new plan trajectory request
         uint16_t current_maneuver_index = 0;
-        cav_msgs::TrajectoryPlan traj_plan;
-        cav_msgs::TrajectoryPlanPoint point_1;
+        carma_planning_msgs::msg::TrajectoryPlan traj_plan;
+        carma_planning_msgs::msg::TrajectoryPlanPoint point_1;
         point_1.x = 0.0;
         point_1.y = 0.0;
-        point_1.target_time = ros::Time(0);
-        cav_msgs::TrajectoryPlanPoint point_2;
+        point_1.target_time = rclcpp::Time(0, 0, pd->get_clock()->get_clock_type());
+        carma_planning_msgs::msg::TrajectoryPlanPoint point_2;
         point_2.x = 1.0;
         point_2.y = 1.0;
-        point_2.target_time = ros::Time(1.41421);
+        point_2.target_time = rclcpp::Time(1.41421e9, pd->get_clock()->get_clock_type());
         traj_plan.trajectory_points.push_back(point_1);
         traj_plan.trajectory_points.push_back(point_2);
-        cav_srvs::PlanTrajectory req = pd.composePlanTrajectoryRequest(traj_plan, current_maneuver_index);
-        EXPECT_NEAR(1.0, req.request.vehicle_state.x_pos_global, 0.01);
-        EXPECT_NEAR(1.0, req.request.vehicle_state.y_pos_global, 0.01);
-        EXPECT_NEAR(1.0, req.request.vehicle_state.longitudinal_vel, 0.1);
-        EXPECT_EQ(0, req.request.maneuver_index_to_plan);
+        auto req = pd->composePlanTrajectoryRequest(traj_plan, current_maneuver_index);
+        EXPECT_NEAR(1.0, req->vehicle_state.x_pos_global, 0.01);
+        EXPECT_NEAR(1.0, req->vehicle_state.y_pos_global, 0.01);
+        EXPECT_NEAR(1.0, req->vehicle_state.longitudinal_vel, 0.1);
+        EXPECT_EQ(0, req->maneuver_index_to_plan);
     }
 
     TEST(TestPlanDelegator, TestPlanDelegator) {
-        ros::NodeHandle nh = ros::NodeHandle();
-        cav_msgs::TrajectoryPlan res_plan;
-        // bool flag = false;
-        ros::Publisher maneuver_pub = nh.advertise<cav_msgs::ManeuverPlan>("final_maneuver_plan", 5);
-        // ros::Subscriber traj_sub = nh.subscribe<cav_msgs::TrajectoryPlan>("plan_trajectory", 5, [&](cav_msgs::TrajectoryPlanConstPtr msg){
-        //     res_plan = msg.get();
-            
-        // });
-        // boost::function<bool(cav_srvs::PlanTrajectoryRequest&, cav_srvs::PlanTrajectoryResponse&)> cb = [&](cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& res) -> bool
-        // {
-        //     flag = true;
-        // //     cav_msgs::TrajectoryPlan sending_plan;
-        // //     sending_plan.trajectory_id = "plugin_A";
-        // //     res.trajectory_plan = sending_plan;
-        //     return true;
-        // };
-        //ros::ServiceServer plugin_A_server = nh.advertiseService("/guidance/plugins/plugin_A/plan_trajectory", cb);
-        cav_msgs::ManeuverPlan plan;
-        cav_msgs::Maneuver maneuver;
+        rclcpp::NodeOptions options;
+        options.use_intra_process_comms(true);
+        auto pd = std::make_shared<PlanDelegatorTest>(options);
+        rclcpp_lifecycle::State dummy;
+        pd->handle_on_configure(dummy);
+        pd->handle_on_activate(dummy);
+        
+        carma_planning_msgs::msg::TrajectoryPlan res_plan;
+
+        auto maneuver_pub = pd->create_publisher<carma_planning_msgs::msg::ManeuverPlan>("final_maneuver_plan", 5);
+
+        carma_planning_msgs::msg::ManeuverPlan plan;
+        carma_planning_msgs::msg::Maneuver maneuver;
         maneuver.type = maneuver.LANE_FOLLOWING;
         maneuver.lane_following_maneuver.parameters.planning_strategic_plugin = "plugin_A";
         plan.maneuvers.push_back(maneuver);
-        maneuver_pub.publish(plan);
-        // std::string res = res_plan->trajectory_id;
-        // //EXPECT_EQ("plugin_A", res);
+        maneuver_pub->on_activate();
+        maneuver_pub->publish(plan);
         std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-        auto num = maneuver_pub.getNumSubscribers();
+        auto num = maneuver_pub->get_subscription_count();
         EXPECT_EQ(1, num);
     }
 
@@ -159,10 +158,17 @@
     * \brief Main entrypoint for unit tests
     */
     int main (int argc, char **argv) {
-        testing::InitGoogleTest(&argc, argv);
-        ros::init(argc, argv, "test_plan_delegator");
-        //std::thread spinner([] {while (ros::ok()) ros::spin();});
-        auto res = RUN_ALL_TESTS();
-        //ros::shutdown();
-        return res;
+        ::testing::InitGoogleTest(&argc, argv);
+
+        //Initialize ROS
+        rclcpp::init(argc, argv);
+        auto ret = rcutils_logging_set_logger_level(
+                rclcpp::get_logger("plan_delegator").get_name(), RCUTILS_LOG_SEVERITY_DEBUG);
+
+        bool success = RUN_ALL_TESTS();
+
+        //shutdown ROS
+        rclcpp::shutdown();
+
+        return success;
     }
