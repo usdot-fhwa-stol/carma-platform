@@ -60,6 +60,9 @@ def generate_launch_description():
     
     route_param_file = os.path.join(
         get_package_share_directory('route'), 'config/parameters.yaml')
+
+    guidance_param_file = os.path.join(
+        get_package_share_directory('guidance'), 'config/parameters.yaml')
     
     arbitrator_param_file_path = os.path.join(
         get_package_share_directory('arbitrator'), 'config/arbitrator_params.yaml')
@@ -181,6 +184,23 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
+            ComposableNode(
+                package='guidance',
+                plugin='guidance::GuidanceWorker',
+                name='guidance_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('route', env_log_levels) }
+                ],
+                remappings = [
+                    ("vehicle_status", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_status" ] ),
+                    ("robot_status", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/controller/robot_status" ] ),
+                    ("enable_robotic", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/controller/enable_robotic" ] ),
+                ],
+                parameters=[
+                    guidance_param_file
+                ]
+            )
         ]
     )
 
