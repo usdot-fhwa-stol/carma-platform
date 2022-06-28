@@ -138,7 +138,9 @@ geometry_msgs::msg::PoseWithCovarianceStamped GNSSToMapConvertor::poseFromGnss(
 
   lanelet::BasicPoint3d map_point = projector.forward({ lat, lon, alt });
   
-  //map_point.x()=map_point.x()+offset_x_;//UCLA modification
+  //UCLA modification, add constant offset (on X and Y) to correct gps signal
+  map_point.x()=map_point.x()+offset_x_; 
+  map_point.y()=map_point.y()+offset_y_;
   
   RCLCPP_DEBUG_STREAM(logger_->get_logger(), "map_point: " << map_point.x() << ", " << map_point.y() << ", " << map_point.z());
 
