@@ -72,7 +72,7 @@ public:
    *
    */
   GNSSToMapConvertor(PosePubCallback pose_pub, TransformLookupCallback tf_lookup, std::string map_frame_id,
-                     std::string base_link_frame_id, std::string heading_frame_id, rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger);
+                     std::string base_link_frame_id, std::string heading_frame_id, double offset_x, double offset_y, rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger);
 
   /**
    * \brief GNSS Fix callback which will publish a pose representing that fix in the map frame if the required
@@ -136,6 +136,8 @@ private:
   std::string map_frame_id_;           // The frame id of the map which the output pose will be in.
   std::string base_link_frame_id_;     // The frame id of the final reported pose
   std::string heading_frame_id_;       // The frame id of the heading frame
+  double offset_x_;
+  double offset_y_;
 
   // Rotation describing the orientation of an NED frame relative to the map frame located at the map origin.
   // This is derived from the received georeference
@@ -156,4 +158,4 @@ private:
 
 };
 
-};  // namespace gnss_to_map_convertor
+}  // namespace gnss_to_map_convertor

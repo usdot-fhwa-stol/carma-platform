@@ -27,12 +27,20 @@ namespace gnss_to_map_convertor
     // Declare parameters
     config_.base_link_frame = declare_parameter<std::string>("base_link_frame", config_.base_link_frame);
     config_.map_frame = declare_parameter<std::string>("map_frame", config_.map_frame);
-    config_.heading_frame = declare_parameter<std::string>("heading_frame", config_.heading_frame);
+    config_.heading_frame = declare_parameter<std::string>("heading_frame", config_.heading_frame);   
+    config_.offset_x = declare_parameter<double>("offset_x", config_.offset_x);
+    config_.offset_y = declare_parameter<double>("offset_y", config_.offset_y);
+    
   }
 
   rcl_interfaces::msg::SetParametersResult Node::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
   {
-    auto error = update_params<std::string>({{"base_link_frame", config_.base_link_frame},{"map_frame", config_.map_frame},{"heading_frame", config_.heading_frame}}, parameters);
+    //auto error = update_params<std::string>({{"base_link_frame", config_.base_link_frame},{"map_frame", config_.map_frame},{"heading_frame", config_.heading_frame},{"offset_x", config_.offset_x},{"offset_y", config_.offset_y}}, parameters);
+    
+	auto error = update_params<std::string>({{"base_link_frame", config_.base_link_frame},{"map_frame", config_.map_frame},{"heading_frame", config_.heading_frame}}, parameters);
+        
+        //UCLA: updating GPS offsets 
+        auto error2 = update_params<double>({{"offset_x", config_.offset_x},{"offset_y", config_.offset_y}}, parameters);
 
     rcl_interfaces::msg::SetParametersResult result;
 
@@ -50,12 +58,14 @@ namespace gnss_to_map_convertor
     get_parameter<std::string>("base_link_frame", config_.base_link_frame);
     get_parameter<std::string>("map_frame", config_.map_frame);
     get_parameter<std::string>("heading_frame", config_.heading_frame);
+    get_parameter<double>("offset_x", config_.offset_x);
+    get_parameter<double>("offset_y", config_.offset_y);
 
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
 
     // Map pose publisher
-    map_pose_pub = create_publisher<geometry_msgs::msg::PoseStamped>("gnss_pose", 10);
+    map_pose_pub = create_publisher<geometry_msgs::msg::PoseStamped>("gnss_pose", 1);
 
     // Initialize primary worker object 
     convertor_worker_ = std::make_shared<GNSSToMapConvertor>(
@@ -75,13 +85,13 @@ namespace gnss_to_map_convertor
           return tf;
         },
 
-        config_.map_frame, config_.base_link_frame, config_.heading_frame, this->get_node_logging_interface());
+        config_.map_frame, config_.base_link_frame, config_.heading_frame, config_.offset_x, config_.offset_y, this->get_node_logging_interface());
 
     // Fix Subscriber
 
-    fix_sub_ = create_subscription<gps_msgs::msg::GPSFix>("gnss_fix_fused", 2,
+    fix_sub_ = create_subscription<gps_msgs::msg::GPSFix>("gnss_fix_fused", 1,
                                                           std::bind(&GNSSToMapConvertor::gnssFixCb, convertor_worker_.get(), std_ph::_1));
-
+    
     // Georeference subsciber
 
     geo_sub = create_subscription<std_msgs::msg::String>("georeference", 1,

@@ -23,12 +23,14 @@ namespace gnss_to_map_convertor
 {
 GNSSToMapConvertor::GNSSToMapConvertor(PosePubCallback pose_pub, TransformLookupCallback tf_lookup,
                                        std::string map_frame_id, std::string base_link_frame_id,
-                                       std::string heading_frame_id,rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger)
+                                       std::string heading_frame_id, double offset_x, double offset_y, rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger)
   : pose_pub_(pose_pub)
   , tf_lookup_(tf_lookup)
   , map_frame_id_(map_frame_id)
   , base_link_frame_id_(base_link_frame_id)
   , heading_frame_id_(heading_frame_id) 
+  , offset_x_(offset_x)
+  , offset_y_(offset_y)
   , logger_(logger)
 {
 }
@@ -135,6 +137,11 @@ geometry_msgs::msg::PoseWithCovarianceStamped GNSSToMapConvertor::poseFromGnss(
   const double alt = fix_msg.altitude;
 
   lanelet::BasicPoint3d map_point = projector.forward({ lat, lon, alt });
+  
+  //UCLA modification, add constant offset (on X and Y) to correct gps signal
+  map_point.x()=map_point.x()+offset_x_; 
+  map_point.y()=map_point.y()+offset_y_;
+  
   RCLCPP_DEBUG_STREAM(logger_->get_logger(), "map_point: " << map_point.x() << ", " << map_point.y() << ", " << map_point.z());
 
   if (fabs(map_point.x()) > 10000.0 || fabs(map_point.y()) > 10000.0)

@@ -53,19 +53,19 @@ target_link_libraries(${node_exec}
         ${node_lib}
 )
 
-# Testing
-if(BUILD_TESTING)  
+# # Testing
+# if(BUILD_TESTING)  
 
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+#   find_package(ament_lint_auto REQUIRED)
+#   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_gnss_to_map_convertor test/node_test.cpp)
+#   ament_add_gtest(test_gnss_to_map_convertor test/node_test.cpp)
 
-  ament_target_dependencies(test_gnss_to_map_convertor ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+#   ament_target_dependencies(test_gnss_to_map_convertor ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
-  target_link_libraries(test_gnss_to_map_convertor ${node_lib})
+#   target_link_libraries(test_gnss_to_map_convertor ${node_lib})
 
-endif()
+# endif()
 
 # Install
 ament_auto_package(
