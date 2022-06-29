@@ -88,7 +88,7 @@ void Localizer::run()
                                          std::make_unique<carma_utils::timers::ROSTimerFactory>()));
 
   // initialize subscribers
-  gnss_pose_sub_ = nh_.subscribe("gnss_pose", 5, &LocalizationManager::gnssPoseCallback, manager_.get());
+  gnss_pose_sub_ = nh_.subscribe("gnss_pose", 1, &LocalizationManager::gnssPoseCallback, manager_.get());
   initialpose_sub_ = nh_.subscribe("initialpose", 1, &LocalizationManager::initialPoseCallback, manager_.get());
 
   // Setup synchronized message_filters subscribers

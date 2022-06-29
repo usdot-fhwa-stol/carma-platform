@@ -17,6 +17,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <algorithm>
 #include "localization_manager/LocalizationManager.h"
+//#include <tf2/transform_broadcaster.h>
 
 namespace localizer
 {
@@ -261,6 +262,23 @@ void LocalizationManager::posePubTick(const ros::TimerEvent& te)
   // Publish current pose message if available
   if (current_pose_){
     pose_pub_(*current_pose_);
+
+    static tf2_ros::TransformBroadcaster tf_br_;
+    geometry_msgs::TransformStamped transformStamped;
+    transformStamped.header.stamp = current_pose_.get().header.stamp; // Transform stamp should exactly match the same of the data it is set from
+    transformStamped.header.frame_id = current_pose_.get().header.frame_id;
+    transformStamped.child_frame_id = "base_link";
+    transformStamped.transform.translation.x = current_pose_.get().pose.position.x;
+    transformStamped.transform.translation.y = current_pose_.get().pose.position.y;
+    transformStamped.transform.translation.z = current_pose_.get().pose.position.z;
+
+    transformStamped.transform.rotation.x = current_pose_.get().pose.orientation.x;
+    transformStamped.transform.rotation.y = current_pose_.get().pose.orientation.y;
+    transformStamped.transform.rotation.z = current_pose_.get().pose.orientation.z;
+    transformStamped.transform.rotation.w = current_pose_.get().pose.orientation.w;
+
+    tf_br_.sendTransform(transformStamped);
+
   }
 
   // Create and publish status report message

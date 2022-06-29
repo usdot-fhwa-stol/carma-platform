@@ -171,7 +171,30 @@ namespace platoon_control
         double traveled_dist = 0.0;
         bool found_point = false;
 
-        for (size_t i = 1; i<trajectory_plan.trajectory_points.size() - 1; i++)
+        // for (size_t i = 1; i<trajectory_plan.trajectory_points.size() - 1; i++)
+        // {
+        //     double dx =  pose_msg_.pose.position.x - trajectory_plan.trajectory_points[i].x;
+        //     double dy =  pose_msg_.pose.position.y - trajectory_plan.trajectory_points[i].y;
+
+        //     double dx1 = trajectory_plan.trajectory_points[i].x - trajectory_plan.trajectory_points[i-1].x;
+        //     double dy1 = trajectory_plan.trajectory_points[i].y - trajectory_plan.trajectory_points[i-1].y;
+        //     double dist1 = std::sqrt(dx1*dx1 + dy1*dy1);  
+        //     ROS_DEBUG_STREAM("trajectory spacing: " << dist1);          
+
+        //     double dist = std::sqrt(dx*dx + dy*dy);            
+
+        //     traveled_dist = dist;
+
+        //     if ((lookahead_dist - traveled_dist) < 1.0)
+        //     {
+        //         lookahead_point =  trajectory_plan.trajectory_points[i];
+        //         found_point = true;
+        //         ROS_DEBUG_STREAM("found lookahead point at index: " << i);
+        //         break;
+        //     }
+        // }
+
+        for (size_t i = trajectory_plan.trajectory_points.size()-1; i>0; i--)
         {
             double dx =  pose_msg_.pose.position.x - trajectory_plan.trajectory_points[i].x;
             double dy =  pose_msg_.pose.position.y - trajectory_plan.trajectory_points[i].y;
@@ -185,7 +208,7 @@ namespace platoon_control
 
             traveled_dist = dist;
 
-            if ((lookahead_dist - traveled_dist) < 1.0)
+            if (abs(lookahead_dist - traveled_dist) < 1.0)
             {
                 lookahead_point =  trajectory_plan.trajectory_points[i];
                 found_point = true;
@@ -199,7 +222,6 @@ namespace platoon_control
             lookahead_point = trajectory_plan.trajectory_points.back();
             ROS_DEBUG_STREAM("lookahead point set as the last trajectory point");
         }
-
         
         return lookahead_point;
     }

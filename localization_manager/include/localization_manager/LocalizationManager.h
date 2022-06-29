@@ -32,6 +32,8 @@
 #include "LocalizationTypes.h"
 #include "LocalizationManagerConfig.h"
 #include "LocalizationTransitionTable.h"
+#include <tf2_ros/transform_broadcaster.h>
+
 
 namespace localizer
 {

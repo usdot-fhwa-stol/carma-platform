@@ -80,7 +80,7 @@
     <remap from="ekf_pose" to="current_pose"/>
     <remap from="ekf_pose_with_covariance" to="current_pose_with_covariance"/>
 
-    <include file="$(find ekf_localizer)/launch/ekf_localizer.launch" >
+    <!-- <include file="$(find ekf_localizer)/launch/ekf_localizer.launch" >
       <arg name="show_debug_info" default="false"/>
       <arg name="enable_yaw_bias_estimation" default="True"/>
       <arg name="predict_frequency" default="50.0"/>
@@ -107,7 +107,7 @@
       <arg name="proc_stddev_wz_c" default="0.05"/>
       <arg name="pose_frame_id" default="map"/>
       <arg name="child_frame_id" default="base_link"/>
-    </include>
+    </include> -->
   </group>
 
   <!-- NDT Matching-->
@@ -120,17 +120,20 @@
     <remap from="/config/ndt" to="config/ndt"/>
     <remap from="filtered_points" to="random_points"/>
     <remap from="initialpose" to="managed_initialpose"/>
-    <include file="$(find lidar_localizer)/launch/ndt_matching.launch">
-      <arg name="get_height" value="true" />
-      <arg name="use_odom" value="true" />
-      <arg name="use_gnss" value="0"/>
-      <arg name="gnss_reinit_fitness" value="10000.0" /> <!-- Set to unreasonably high value to ensure no reinitialization occurs as it rarely works -->
-      <arg name="base_frame" value="base_link"/>
-    </include>
+    <!-- <include file="$(find lidar_localizer)/launch/ndt_matching.launch"> -->
+      <!-- <arg name="get_height" value="true" /> -->
+      <!-- <arg name="use_odom" value="true" /> -->
+      <!-- <arg name="use_gnss" value="0"/> -->
+      <!--<arg name="gnss_reinit_fitness" value="10000.0" />--><!-- Set to unreasonably high value to ensure no reinitialization occurs as it rarely works -->
+      <!-- <arg name="base_frame" value="base_link"/> -->
+    <!-- </include> -->
+    
   </group>
 
   <!-- GNSS/NDT selection localizer-->
   <group>
+
+    <remap from="selected_pose" to="current_pose"/>
     <include file="$(find localization_manager)/launch/localization_manager.launch"/>
   </group>
 
