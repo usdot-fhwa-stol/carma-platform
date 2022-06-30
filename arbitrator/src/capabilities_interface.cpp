@@ -32,7 +32,7 @@ namespace arbitrator
         
         auto plan_response = sc_s_->async_send_request(srv);
 
-        auto future_status = plan_response.wait_for(std::chrono::milliseconds(1000));
+        auto future_status = plan_response.wait_for(std::chrono::milliseconds(200));
 
         if (query_string == STRATEGIC_PLAN_CAPABILITY && future_status == std::future_status::ready)
         {

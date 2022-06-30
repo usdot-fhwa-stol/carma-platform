@@ -39,7 +39,7 @@ namespace arbitrator
             
             std::shared_future<std::shared_ptr<MSrvRes>> resp = sc->async_send_request(msg);
 
-            auto future_status = resp.wait_for(std::chrono::milliseconds(1000));
+            auto future_status = resp.wait_for(std::chrono::milliseconds(500));
             
             if (future_status == std::future_status::ready) {
                 responses.emplace(*i, resp.get());

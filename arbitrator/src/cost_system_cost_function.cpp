@@ -41,7 +41,7 @@ namespace arbitrator
         
         auto resp = cost_system_sc_->async_send_request(service_message);
 
-        auto future_status = resp.wait_for(std::chrono::milliseconds(1000));
+        auto future_status = resp.wait_for(std::chrono::milliseconds(500));
 
         if (future_status == std::future_status::ready){
             total_cost = resp.get()->plan_cost;
