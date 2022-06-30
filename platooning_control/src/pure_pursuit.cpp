@@ -72,6 +72,7 @@ namespace platoon_control
 	void PurePursuit::calculateSteer(const cav_msgs::TrajectoryPlanPoint& tp)
 	{
 
+<<<<<<< HEAD
 		double kappa = calculateKappa(tp);		
 		ROS_DEBUG_STREAM("kappa pp: " << kappa);
 
@@ -97,6 +98,11 @@ namespace platoon_control
 		double steering = atan(config_.wheelBase * kappa)+Iout;
 
 
+=======
+		double kappa = calculateKappa(tp);
+		
+		double steering = atan(config_.wheelBase * kappa);
+>>>>>>> origin/release/cabin
 		steering += config_.correctionAngle;
 		ROS_DEBUG_STREAM("calculated steering angle: " << steering);
 		double filtered_steering = lowPassfilter(config_.lowpassGain, prev_steering, steering);

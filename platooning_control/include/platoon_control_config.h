@@ -45,10 +45,13 @@ struct PlatooningControlPluginConfig
   int     shutdownTimeout = 200;                // ms 
   int     ignoreInitialInputs = 0;              // num inputs to throw away after startup
   double correctionAngle = 0.0;
+<<<<<<< HEAD
   
   double integratorMax_pp = 0.0;
   double integratorMin_pp = 0.0;
   double Ki_pp = 0.0;
+=======
+>>>>>>> origin/release/cabin
   
   
   friend std::ostream& operator<<(std::ostream& output, const PlatooningControlPluginConfig& c)
@@ -76,9 +79,12 @@ struct PlatooningControlPluginConfig
            << "shutdownTimeout: " << c.shutdownTimeout << std::endl
            << "ignoreInitialInputs: " << c.ignoreInitialInputs << std::endl
            << "correctionAngle: " << c.correctionAngle << std::endl
+<<<<<<< HEAD
            << "integratorMax_pp: " << c.integratorMax_pp << std::endl
            << "integratorMin_pp: " << c.integratorMin_pp << std::endl
            << "Ki_pp: " << c.Ki_pp << std::endl
+=======
+>>>>>>> origin/release/cabin
            << "}" << std::endl;
     return output;
   }
