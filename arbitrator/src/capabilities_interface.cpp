@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 
 #include "capabilities_interface.hpp"
-#include <cav_srvs/PlanManeuvers.h>
+#include <carma_planning_msgs/srv/plan_maneuvers.hpp>
 #include <exception>
 #include <sstream>
 
@@ -27,12 +27,16 @@ namespace arbitrator
     {
         std::vector<std::string> topics = {};
 
-        cav_srvs::GetPluginApi srv;
-        srv.request.capability = "";
+        auto srv = std::make_shared<carma_planning_msgs::srv::GetPluginApi::Request>();
+        srv->capability = "";
+        
+        auto plan_response = sc_s_->async_send_request(srv);
 
-        if (query_string == STRATEGIC_PLAN_CAPABILITY && sc_s.call(srv))
+        auto future_status = plan_response.wait_for(std::chrono::milliseconds(200));
+
+        if (query_string == STRATEGIC_PLAN_CAPABILITY && future_status == std::future_status::ready)
         {
-            topics = srv.response.plan_service;
+            topics = plan_response.get()->plan_service;
             
             // Log the topics
             std::ostringstream stream;
@@ -41,12 +45,12 @@ namespace arbitrator
                 stream << topic << ", ";
             }
             stream << std::endl;
-            ROS_INFO(stream.str().c_str());
+            RCLCPP_INFO_STREAM(nh_->get_logger(), stream.str().c_str());
         }
         else
         {
-            ROS_DEBUG_STREAM("servicd call failed...");
-            ROS_DEBUG_STREAM("client: " << sc_s);
+            RCLCPP_ERROR_STREAM(nh_->get_logger(), "service call failed...");
+            RCLCPP_ERROR_STREAM(nh_->get_logger(), "client: " << sc_s_);
         }
 
         return topics;

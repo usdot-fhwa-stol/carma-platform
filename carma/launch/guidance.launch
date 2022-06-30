@@ -86,9 +86,6 @@
   <remap from="roadway_objects" to="$(optenv CARMA_ENV_NS)/roadway_objects"/>
   <remap from="incoming_spat" to="$(optenv CARMA_MSG_NS)/incoming_spat"/>
 
-  <!-- Launch Arbitrator -->
-  <include file="$(find arbitrator)/launch/arbitrator.launch"/>
-
   <remap from="/vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
   <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,8 @@
 #ifndef __ARBITRATOR_INCLUDE_ARBITRATOR_UTILS_HPP__
 #define __ARBITRATOR_INCLUDE_ARBITRATOR_UTILS_HPP__
 
-#include <ros/ros.h>
-#include <cav_msgs/ManeuverPlan.h>
+#include <rclcpp/rclcpp.hpp>
+#include <carma_planning_msgs/msg/maneuver_plan.hpp>
 
 /**
  * \brief Macro definition to enable easier access to fields shared across the maneuver typees
@@ -31,12 +31,12 @@
  * \return Expands to an expression (in the form of chained ternary operators) that evalutes to the desired field
  */
 #define GET_MANEUVER_PROPERTY(mvr, property)\
-        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
-            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
-                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
-                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property :\
-                        ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
-                        ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
+        (((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
+            ((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
+                ((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
+                    ((mvr).type == carma_planning_msgs::msg::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property :\
+                        ((mvr).type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
+                        ((mvr).type == carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
                             throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))))
 
 namespace arbitrator_utils
@@ -44,10 +44,10 @@ namespace arbitrator_utils
     /**
      * \brief Get the start time of the first maneuver in the plan
      * \param plan The plan to examine
-     * \return The ros::Time at which it starts
+     * \return The rclcpp::Time at which it starts
      * \throws An invalid argument exception if the plan is empty
      */
-    ros::Time get_plan_start_time(const cav_msgs::ManeuverPlan&);
+    rclcpp::Time get_plan_start_time(const carma_planning_msgs::msg::ManeuverPlan&);
 
     /**
      * \brief Get the start distance of the first maneuver in the plan
@@ -55,15 +55,15 @@ namespace arbitrator_utils
      * \return The double-valued linear downtrack distance in meters to the start of the plan
      * \throws An invalid argument exception if the plan is empty
      */
-    double get_plan_start_distance(const cav_msgs::ManeuverPlan&);
+    double get_plan_start_distance(const carma_planning_msgs::msg::ManeuverPlan&);
 
     /**
      * \brief Get the end time of the first maneuver in the plan
      * \param plan The plan to examine
-     * \return The ros::Time at which it ends
+     * \return The rclcpp::Time at which it ends
      * \throws An invalid argument exception if the plan is empty
      */
-    ros::Time get_plan_end_time(const cav_msgs::ManeuverPlan&);
+    rclcpp::Time get_plan_end_time(const carma_planning_msgs::msg::ManeuverPlan&);
 
     /**
      * \brief Get the end distance of the first maneuver in the plan
@@ -71,15 +71,15 @@ namespace arbitrator_utils
      * \return The double-valued linear downtrack distance in meters to the end of the plan
      * \throws An invalid argument exception if the plan is empty
      */
-    double get_plan_end_distance(const cav_msgs::ManeuverPlan&);
+    double get_plan_end_distance(const carma_planning_msgs::msg::ManeuverPlan&);
 
     /**
      * \brief Get the start time of the specified maneuver
      * \param mvr The maneuver to examine
-     * \return The ros::Time at which it starts
+     * \return The rclcpp::Time at which it starts
      * \throws An invalid argument exception if the maneuver is poorly constructed
      */
-    ros::Time get_maneuver_start_time(const cav_msgs::Maneuver&);
+    rclcpp::Time get_maneuver_start_time(const carma_planning_msgs::msg::Maneuver&);
 
     /**
      * \brief Get the start distance the specified maneuver
@@ -87,15 +87,15 @@ namespace arbitrator_utils
      * \return The double-valued linear downtrack distance in meters to the start of the maneuver
      * \throws An invalid argument exception if the maneuver is poorly constructed
      */
-    double get_maneuver_start_distance(const cav_msgs::Maneuver&);
+    double get_maneuver_start_distance(const carma_planning_msgs::msg::Maneuver&);
     
     /**
      * \brief Get the end time of the specified maneuver
      * \param mvr The maneuver to examine
-     * \return The ros::Time at which it ends
+     * \return The rclcpp::Time at which it ends
      * \throws An invalid argument exception if the maneuver is poorly constructed
      */
-    ros::Time get_maneuver_end_time(const cav_msgs::Maneuver&);
+    rclcpp::Time get_maneuver_end_time(const carma_planning_msgs::msg::Maneuver&);
 
     /**
      * \brief Get the end distance of the specified maneuver
@@ -103,7 +103,7 @@ namespace arbitrator_utils
      * \return The double-valued linear downtrack distance in meters to the end of the maneuver
      * \throws An invalid argument exception if the maneuver is poorly constructed
      */
-    double get_maneuver_end_distance(const cav_msgs::Maneuver&);
+    double get_maneuver_end_distance(const carma_planning_msgs::msg::Maneuver&);
 } // namespace arbitrator
 
 #endif //__ARBITRATOR_INCLUDE_ARBITRATOR_UTILS_HPP__

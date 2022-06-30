@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@
 #define __ARBITRATOR_INCLUDE_NEIGHBOR_GENERATOR_HPP__
 
 #include <vector>
-#include <cav_msgs/ManeuverPlan.h>
+#include <carma_planning_msgs/msg/maneuver_plan.hpp>
 #include "vehicle_state.hpp"
 
 namespace arbitrator
@@ -38,7 +38,7 @@ namespace arbitrator
              *
              * \return A vector containing the new plans generated from it, if any
              */
-            virtual std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan, const VehicleState& initial_state) const = 0;
+            virtual std::vector<carma_planning_msgs::msg::ManeuverPlan> generate_neighbors(carma_planning_msgs::msg::ManeuverPlan plan, const VehicleState& initial_state) const = 0;
 
             /**
              * \brief Virtual destructor provided for memory safety

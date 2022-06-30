@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 
 #include "arbitrator_state_machine.hpp"
+#include <iostream>
 
 namespace arbitrator
 {
@@ -27,12 +28,13 @@ namespace arbitrator
 
     ArbitratorState ArbitratorStateMachine::submit_event(ArbitratorEvent event)
     {
-        for (auto iter = ARBITRATOR_TRANSITIONS.begin(); iter != ARBITRATOR_TRANSITIONS.end(); iter++) 
+        for (auto pair : ARBITRATOR_TRANSITIONS) 
         {
-            if (current_state == iter->current_state && event == iter->input_event) {
+            if (current_state == pair.current_state && event == pair.input_event) 
+            {
                 // In the event of multiple legal transistions this will take the last transition,
                 // But ultimately this condition should never arise.
-                current_state = iter->final_state;
+                current_state = pair.final_state;
                 break;
             }
         }

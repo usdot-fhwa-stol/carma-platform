@@ -64,6 +64,9 @@ def generate_launch_description():
     guidance_param_file = os.path.join(
         get_package_share_directory('guidance'), 'config/parameters.yaml')
     
+    arbitrator_param_file_path = os.path.join(
+        get_package_share_directory('arbitrator'), 'config/arbitrator_params.yaml')
+
     plan_delegator_param_file = os.path.join(
         get_package_share_directory('plan_delegator'), 'config/plan_delegator_params.yaml')
     
@@ -161,6 +164,23 @@ def generate_launch_description():
                 parameters=[
                     {'route_file_path': route_file_folder},
                     route_param_file,
+                    vehicle_config_param_file
+                ]
+            ),
+            ComposableNode(
+                package='arbitrator',
+                plugin='arbitrator::ArbitratorNode',
+                name='arbitrator',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('arbitrator', env_log_levels) }
+                ],
+                remappings = [
+                    ("final_maneuver_plan", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/arbitrator/final_maneuver_plan" ] ),
+                    ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
+                ],
+                parameters=[ 
+                    arbitrator_param_file_path,
                     vehicle_config_param_file
                 ]
             ),
