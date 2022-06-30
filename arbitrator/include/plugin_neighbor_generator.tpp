@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,35 +19,37 @@
 
 #include "capabilities_interface.hpp"
 #include "plugin_neighbor_generator.hpp"
-#include <cav_srvs/PlanManeuvers.h>
+#include <carma_planning_msgs/srv/plan_maneuvers.hpp>
 #include <map>
 
 namespace arbitrator
-{
+{   
+    using PlanMvrRes = carma_planning_msgs::srv::PlanManeuvers::Response;
+    using PlanMvrReq = carma_planning_msgs::srv::PlanManeuvers::Request;
+
     template <class T>
-    std::vector<cav_msgs::ManeuverPlan> PluginNeighborGenerator<T>::generate_neighbors(cav_msgs::ManeuverPlan plan, const VehicleState& initial_state) const
+    std::vector<carma_planning_msgs::msg::ManeuverPlan> PluginNeighborGenerator<T>::generate_neighbors(carma_planning_msgs::msg::ManeuverPlan plan, const VehicleState& initial_state) const
     {
-        cav_srvs::PlanManeuvers msg;
+        auto msg = std::make_shared<PlanMvrReq>();
         // Set prior plan
-        msg.request.prior_plan = plan;
+        msg->prior_plan = plan;
 
         // Set vehicle state at prior plan start
-        msg.request.header.frame_id = "map";
-        msg.request.header.stamp = initial_state.stamp;
-        msg.request.veh_x = initial_state.x;
-        msg.request.veh_y = initial_state.y;
-        msg.request.veh_downtrack = initial_state.downtrack;
-        msg.request.veh_logitudinal_velocity = initial_state.velocity;
-        msg.request.veh_lane_id = std::to_string(initial_state.lane_id);
-
-        std::map<std::string, cav_srvs::PlanManeuvers> res = ci_.multiplex_service_call_for_capability(CapabilitiesInterface::STRATEGIC_PLAN_CAPABILITY, msg);
-
+        msg->header.frame_id = "map";
+        msg->header.stamp = initial_state.stamp;
+        msg->veh_x = initial_state.x;
+        msg->veh_y = initial_state.y;
+        msg->veh_downtrack = initial_state.downtrack;
+        msg->veh_logitudinal_velocity = initial_state.velocity;
+        msg->veh_lane_id = std::to_string(initial_state.lane_id);
+        
+        std::map<std::string, std::shared_ptr<PlanMvrRes>> res = ci_.template multiplex_service_call_for_capability<PlanMvrReq, PlanMvrRes>(CapabilitiesInterface::STRATEGIC_PLAN_CAPABILITY, msg);
         // Convert map to vector of map values
-        std::vector<cav_msgs::ManeuverPlan> out;
+        std::vector<carma_planning_msgs::msg::ManeuverPlan> out;
         for (auto it = res.begin(); it != res.end(); it++)
         {
-            ROS_DEBUG_STREAM("Pushing response of child: " << it->first << ", which had mvr size: " << it->second.response.new_plan.maneuvers.size());
-            out.push_back(it->second.response.new_plan);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "Pushing response of child: " << it->first << ", which had mvr size: " << it->second->new_plan.maneuvers.size());
+            out.push_back(it->second->new_plan);
         }
         return out;
     }
