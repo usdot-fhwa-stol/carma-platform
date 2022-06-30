@@ -219,11 +219,11 @@
   </group>
 
   <!-- Stop Controlled Intersection Strategic Plugin -->
-  <!-- <group>
+  <group>
     <remap from="outgoing_mobility_operation" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_operation"/>
     <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
     <include file="$(find sci_strategic_plugin)/launch/sci_strategic_plugin.launch" />
-  </group> -->
+  </group>
 
   <!-- Light Controlled Intersection Strategic Plugin -->
   <group>

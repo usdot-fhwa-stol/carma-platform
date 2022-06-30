@@ -499,7 +499,6 @@ namespace platoon_strategic_ihp
 
                 auto llts = wm_->getLaneletsFromPoint(current_loc, 1);
 
-<<<<<<< HEAD
                 double lanelet_digitalgap = 0.0;
 
                 if (!llts.empty())
@@ -517,14 +516,6 @@ namespace platoon_strategic_ihp
                     ROS_DEBUG_STREAM("No lanelets in this location!!!: ");
                 }
                 
-=======
-                auto geofence_gaps = llts[0].regulatoryElementsAs<lanelet::DigitalMinimumGap>();
-                double lanelet_digitalgap = 0.0;
-                if (!geofence_gaps.empty())
-                {
-                    lanelet_digitalgap = 44.0;//geofence_gaps[0]->getMinimumGap();
-                }
->>>>>>> origin/release/cabin
                 ROS_DEBUG_STREAM("lanelet_digitalgap: " << lanelet_digitalgap);
                 double desired_headway = std::max(current_speed_ * config_.timeHeadway, lanelet_digitalgap);
                 ROS_DEBUG_STREAM("speed based gap: " << current_speed_ * config_.timeHeadway);

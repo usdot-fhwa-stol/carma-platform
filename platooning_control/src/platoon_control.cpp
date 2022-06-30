@@ -51,13 +51,9 @@ namespace platoon_control
         pnh_->param<double>("minLookaheadDist", config.minLookaheadDist, config.minLookaheadDist);
         pnh_->param<double>("wheelBase", config.wheelBase, config.wheelBase);
         pnh_->param<double>("correctionAngle", config.correctionAngle, config.correctionAngle);
-<<<<<<< HEAD
         pnh_->param<double>("integratorMax_pp", config.integratorMax_pp, config.integratorMax_pp);
         pnh_->param<double>("integratorMin_pp", config.integratorMin_pp, config.integratorMin_pp);
         pnh_->param<double>("Ki_pp", config.Ki_pp, config.Ki_pp);
-=======
-        
->>>>>>> origin/release/cabin
 
         // Global params (from vehicle config)
         pnh_->getParam("/vehicle_id", config.vehicleID);
@@ -144,7 +140,6 @@ namespace platoon_control
         trajectory_speed_ = getTrajectorySpeed(latest_trajectory_.trajectory_points);
         
         generateControlSignals(second_trajectory_point, lookahead_point); 
-<<<<<<< HEAD
 
         return true;
     }   
@@ -156,19 +151,6 @@ namespace platoon_control
             return;
         }
 
-=======
-
-        return true;
-    }   
-
-    void  PlatoonControlPlugin::trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp)
-    {
-        if (tp->trajectory_points.size() < 2) {
-            ROS_WARN_STREAM("PlatoonControlPlugin cannot execute trajectory as only 1 point was provided");
-            return;
-        }
-
->>>>>>> origin/release/cabin
         latest_trajectory_ = *tp;
         prev_input_time_ = ros::Time::now().toNSec() / 1000000;
         ++consecutive_input_counter_;
