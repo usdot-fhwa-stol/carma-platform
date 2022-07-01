@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2020-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
  * the License.
  */
 
+#include <rclcpp/rclcpp.hpp>
 #include <functional>
 
 namespace port_drayage_plugin
@@ -25,10 +26,11 @@ namespace port_drayage_plugin
      * 
      * INACTIVE = PortDrayagePlugin is not currently operating in an active
      *  capacity
-     * EN_ROUTE = The vehicle is currently EN_ROUTE to a destination, either
-     *  under the direciton of the PortDrayagePlugin or otherwise.
-     * AWAITING_DIRECTION = The vehicle is currently stopped under the command
-     *  of the PortDrayagePlugin and is awaiting further guidance from the 
+     * EN_ROUTE_TO_INITIAL_DESTINATION = The vehicle is currently enroute  to its initial
+     *   destination, the type of which is based on the configuration parameters for this node
+     * EN_ROUTE_TO_RECEIVED_DESTINATION = The vehicle is currently enroute to a destination
+     *   that was received from infrastructure
+     * AWAITING_DIRECTION = The vehicle is currently stopped and is awaiting further guidance from the 
      *  port infrastructure to tell it the next destination.
      */ 
     enum PortDrayageState
@@ -69,11 +71,14 @@ namespace port_drayage_plugin
     class PortDrayageStateMachine
     {
         private:
-            PortDrayageState _state;
-            std::function<void()> _on_system_startup;
-            std::function<void()> _on_received_new_destination;
-            std::function<void()> _on_arrived_at_destination;
-            std::function<void()> _on_drayage_completed;
+            PortDrayageState state_;
+            std::function<void()> on_system_startup_;
+            std::function<void()> on_received_new_destination_;
+            std::function<void()> on_arrived_at_destination_;
+            std::function<void()> on_drayage_completed_;
+
+            // Logger interface for this object
+            rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
 
         public:
             /**
@@ -81,49 +86,49 @@ namespace port_drayage_plugin
              * 
              * The system initially starts in INACTIVE state.
              */
-            PortDrayageStateMachine() :
-                _state(PortDrayageState::INACTIVE) {};
+            PortDrayageStateMachine(rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger) :
+                logger_(logger),
+                state_(PortDrayageState::INACTIVE) {};
         
             /**
              * \Brief Inform the state machine that an event has transpired.
              * 
              * \param event The event that took place.
              */
-            void process_event(PortDrayageEvent event);
+            void processEvent(PortDrayageEvent event);
 
             /**
              * \brief Get the current state of the state machine
              * \return The current state value
              */
-            PortDrayageState get_state() const;
+            PortDrayageState getState() const;
 
             /**
              * \brief Set the callback to be invoked upon transitioning out of the
              * inactive state.
              * \param cb The std::function callback object
              */
-            void set_on_system_startup_callback(const std::function<void()> &cb);
+            void setOnSystemStartupCallback(const std::function<void()> &cb);
 
             /**
              * \brief Set the callback to be invoked upon transitioning into the 
              * EN_ROUTE state
              * \param cb The std::function callback object
              */
-            void set_on_received_new_destination_callback(const std::function<void()> &cb);
+            void setOnReceivedNewDestinationCallback(const std::function<void()> &cb);
 
             /**
              * \brief Set the callback to be invoked upon transitioning into the 
              * AWAITING_DESTINATION state
              * \param cb The std::function callback object
              */
-            void set_on_arrived_at_destination_callback(const std::function<void()> &cb);
+            void setOnArrivedAtDestinationCallback(const std::function<void()> &cb);
 
             /**
              * \brief Set the callback to be invoked upon transitioning into the
              * inactive state.
              * \param cb The std::function callback object
              */
-            void set_on_drayage_completed_callback(const std::function<void()> &cb);
+            void setOnDrayageCompletedCallback(const std::function<void()> &cb);
     };
 } // namespace port_drayage_plugin
-

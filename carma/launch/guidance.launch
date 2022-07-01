@@ -186,14 +186,6 @@
     <include file = "$(find yield_plugin)/launch/yield_plugin.launch"/>
   </group>
 
-  <!-- Port Drayage Plugin -->
-  <group>
-    <remap from="outgoing_mobility_operation" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_operation"/>
-    <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
-    <remap from="route_event" to="$(optenv CARMA_GUIDE_NS)/route_event"/>
-    <include file="$(find port_drayage_plugin)/launch/port_drayage_plugin.launch" />
-  </group>
-
   <!-- Platoon Strategic Plugin -->
   <!-- <group>
     <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
