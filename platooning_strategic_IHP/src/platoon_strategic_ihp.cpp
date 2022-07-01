@@ -499,7 +499,7 @@ namespace platoon_strategic_ihp
 
                 auto llts = wm_->getLaneletsFromPoint(current_loc, 1);
 
-                double lanelet_digitalgap = 0.0;
+                double lanelet_digitalgap = config_.standStillHeadway;
 
                 if (!llts.empty())
                 {
@@ -2653,7 +2653,7 @@ namespace platoon_strategic_ihp
         unsigned long tsStart = ros::Time::now().toNSec() / 1000000;
 
         // If vehicle is not rolling then return
-        if (current_speed_ <= config_.minPlatooningSpeed)
+        if (current_speed_ <= STOPPED_SPEED)
         {
             return;
         }
