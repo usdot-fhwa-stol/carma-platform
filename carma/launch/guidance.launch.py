@@ -67,7 +67,7 @@ def generate_launch_description():
     port_drayage_plugin_param_file = os.path.join(
         get_package_share_directory('port_drayage_plugin'), 'config/parameters.yaml')
     
-    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "DEBUG" }')
+    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
     declare_subsystem_controller_param_file_arg = DeclareLaunchArgument(
