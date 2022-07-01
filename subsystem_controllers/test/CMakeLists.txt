@@ -22,10 +22,12 @@ add_executable(test_carma_lifecycle_node
 
 ament_add_gtest(controllers_gtest
   localization_controller_test.cpp
+  test_plugin_manager.cpp
 )
 
 target_link_libraries(controllers_gtest
   localization_controller_core
+  guidance_controller_core
 )
 
 ament_target_dependencies(test_carma_lifecycle_node ${dependencies} )
