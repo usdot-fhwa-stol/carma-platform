@@ -30,7 +30,7 @@ PurePursuitWrapper::PurePursuitWrapper(PurePursuitWrapperConfig config, Waypoint
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = true;
   plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
-  plugin_discovery_msg_.capability = "control_pure_pursuit_plan/plan_controls";
+  plugin_discovery_msg_.capability = "control/trajectory_control";
 }
 
 bool PurePursuitWrapper::onSpin()
