@@ -57,7 +57,7 @@ namespace platoon_strategic_ihp
         plugin_discovery_msg_.name = "platoon_strategic_ihp";
         plugin_discovery_msg_.version_id = "v1.0";
         plugin_discovery_msg_.available = true;
-        plugin_discovery_msg_.activated = false;
+        plugin_discovery_msg_.activated = true;
         plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
         plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
         ROS_DEBUG_STREAM("ctor complete. hostStaticId = " << hostStaticId);
