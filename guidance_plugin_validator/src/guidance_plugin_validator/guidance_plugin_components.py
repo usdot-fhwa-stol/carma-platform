@@ -293,7 +293,7 @@ class ControlPluginResults:
         # Set the plugin's node name and plugin_discovery capability
         if plugin_name == "pure_pursuit_wrapper_node":
             self.node_name = "/guidance/pure_pursuit_wrapper_node"
-            self.capability = "control_pure_pursuit_plan/plan_controls"
+            self.capability = "control/trajectory_control"
             self.plan_trajectory_topic = "/guidance/pure_pursuit/plan_trajectory"
         else:
             rospy.logerr("ERROR: Unknown node for Control Plugin: " + str(self.plugin_name))

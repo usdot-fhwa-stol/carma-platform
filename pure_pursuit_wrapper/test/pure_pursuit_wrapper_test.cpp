@@ -93,7 +93,7 @@ TEST(pure_pursuit_wrapper, onSpin)
   ASSERT_TRUE(msg.available);
   ASSERT_TRUE(msg.activated);
   ASSERT_EQ(cav_msgs::Plugin::CONTROL, msg.type);
-  ASSERT_EQ(0, msg.capability.compare("control_pure_pursuit_plan/plan_controls"));
+  ASSERT_EQ(0, msg.capability.compare("control/trajectory_control"));
 }
 
 int main(int argc, char** argv)

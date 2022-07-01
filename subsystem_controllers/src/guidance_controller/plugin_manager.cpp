@@ -452,7 +452,7 @@ namespace subsystem_controllers
             boost::split(plugin_capability_levels, plugin.capability_, boost::is_any_of("/"));
 
             if(plugin.type_ == carma_planning_msgs::msg::Plugin::CONTROL && 
-                (req->capability.size() == 0 || (matching_capability(plugin_capability_levels, req_capability_levels) == 0 && plugin.active_ && plugin.available_)))
+                (req->capability.size() == 0 || (matching_capability(plugin_capability_levels, req_capability_levels) && plugin.active_ && plugin.available_)))
             {
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("guidance_controller"), "discovered control plugin: " << plugin.name_);
                 res->plan_service.push_back(plugin.name_ + control_trajectory_suffix_);
@@ -476,7 +476,7 @@ namespace subsystem_controllers
             boost::split(plugin_capability_levels, plugin.capability_, boost::is_any_of("/"));
 
             if(plugin.type_ == carma_planning_msgs::msg::Plugin::TACTICAL && 
-                (req->capability.size() == 0 || (matching_capability(plugin_capability_levels, req_capability_levels) == 0 && plugin.active_ && plugin.available_)))
+                (req->capability.size() == 0 || (matching_capability(plugin_capability_levels, req_capability_levels) && plugin.active_ && plugin.available_)))
             {
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("guidance_controller"), "discovered tactical plugin: " << plugin.name_);
                 res->plan_service.push_back(plugin.name_ + plan_trajectory_suffix_);
@@ -500,7 +500,7 @@ namespace subsystem_controllers
             boost::split(plugin_capability_levels, plugin.capability_, boost::is_any_of("/"));
 
             if(plugin.type_ == carma_planning_msgs::msg::Plugin::STRATEGIC && 
-                (req->capability.size() == 0 || (matching_capability(plugin_capability_levels, req_capability_levels) == 0 && plugin.active_ && plugin.available_)))
+                (req->capability.size() == 0 || (matching_capability(plugin_capability_levels, req_capability_levels) && plugin.active_ && plugin.available_)))
             {
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("guidance_controller"), "discovered strategic plugin: " << plugin.name_);
                 res->plan_service.push_back(plugin.name_ + plan_maneuvers_suffix_);
