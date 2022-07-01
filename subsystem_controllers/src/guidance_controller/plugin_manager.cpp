@@ -72,7 +72,14 @@ namespace subsystem_controllers
         name_parts.pop_back();
         std::string namespace_joined = boost::algorithm::join(name_parts, "/");
 
-        auto services_and_types = get_service_names_and_types_func_(base_name, namespace_joined);
+        std::map<std::string, std::vector<std::string>> services_and_types;
+        try {
+            services_and_types = get_service_names_and_types_func_(base_name, namespace_joined);
+        } 
+        catch (const std::runtime_error& e) {
+            return false; // Seems this method can throw an exception if not a ros2 node
+        }
+        
 
 
         // Next we check if both services are available with the correct type
