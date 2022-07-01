@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,12 +18,13 @@
 #define __ARBITRATOR_INCLUDE_TREE_PLANNER_HPP__
 
 #include <memory>
-#include <cav_msgs/ManeuverPlan.h>
+#include <carma_planning_msgs/msg/maneuver_plan.hpp>
 #include "planning_strategy.hpp"
 #include "cost_function.hpp"
 #include "neighbor_generator.hpp"
 #include "search_strategy.hpp"
 #include "vehicle_state.hpp"
+#include <rclcpp/rclcpp.hpp>
 
 namespace arbitrator
 {
@@ -41,15 +42,15 @@ namespace arbitrator
         public:
             /**
              * \brief Tree planner constructor
-             * \param cf A reference to a CostFunction implementation
-             * \param ng A reference to a NeighborGenerator implementation
-             * \param ss A reference to a SearchStrategy implementation
+             * \param cf Shared ptr to a CostFunction implementation
+             * \param ng Shared ptr to a NeighborGenerator implementation
+             * \param ss Shared ptr to a SearchStrategy implementation
              * \param target The desired duration of finished plans
              */
-            TreePlanner(CostFunction &cf, 
-                NeighborGenerator &ng, 
-                SearchStrategy &ss, 
-                ros::Duration target):
+            TreePlanner(std::shared_ptr<CostFunction> cf, 
+                std::shared_ptr<NeighborGenerator> ng, 
+                std::shared_ptr<SearchStrategy> ss, 
+                rclcpp::Duration target):
                 cost_function_(cf),
                 neighbor_generator_(ng),
                 search_strategy_(ss),
@@ -61,12 +62,12 @@ namespace arbitrator
              * 
              * \param start_state The starting state of the vehicle to plan for
              */
-            cav_msgs::ManeuverPlan generate_plan(const VehicleState& start_state);
+            carma_planning_msgs::msg::ManeuverPlan generate_plan(const VehicleState& start_state);
         protected:
-            CostFunction &cost_function_;
-            NeighborGenerator &neighbor_generator_;
-            SearchStrategy &search_strategy_;
-            ros::Duration target_plan_duration_;
+            std::shared_ptr<CostFunction> cost_function_;
+            std::shared_ptr<NeighborGenerator> neighbor_generator_;
+            std::shared_ptr<SearchStrategy> search_strategy_;
+            rclcpp::Duration target_plan_duration_;
     };
 };
 

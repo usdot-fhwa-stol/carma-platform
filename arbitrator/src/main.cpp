@@ -6,7 +6,6 @@
  * the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -14,10 +13,23 @@
  * the License.
  */
 
-#include <gtest/gtest.h>
+#include "arbitrator_node.hpp"
+#include <rclcpp/rclcpp.hpp>
 
-// Run all the tests
-int main(int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+
+int main(int argc, char** argv) 
+{
+    // Initialize node
+    rclcpp::init(argc, argv);
+
+    // Call current CARMA arbitrator node instance called ArbitratorNode with specific planning paradigm.
+    auto node = std::make_shared<arbitrator::ArbitratorNode>(rclcpp::NodeOptions());
+    
+    rclcpp::executors::MultiThreadedExecutor executor;
+    executor.add_node(node->get_node_base_interface());
+    executor.spin();
+
+    rclcpp::shutdown();
+
+    return 0;
 }

@@ -1,6 +1,6 @@
 
 /*------------------------------------------------------------------------------
-* Copyright (C) 2019-2021 LEIDOS.
+* Copyright (C) 2022 LEIDOS.
 *
 * Licensed under the Apache License, Version 2.0 (the "License"); you may not
 * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,6 @@
 #define __ARBITRATOR_INCLUDE_TEST_UTILS_HPP__
 
 #include <gtest/gtest.h>
-#include <gmock/gmock.h>
 #include "arbitrator_state_machine.hpp"
 #include "fixed_priority_cost_function.hpp"
 #include "beam_search_strategy.hpp"
