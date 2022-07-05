@@ -288,11 +288,11 @@ namespace route_following_plugin
         std::vector<cav_msgs::Maneuver> latest_maneuver_plan_;
 
         //Tactical plugin being used for planning lane change
-        std::string lane_change_plugin_ = "CooperativeLaneChangePlugin";
-        std::string stop_and_wait_plugin_ = "StopAndWaitPlugin";
+        std::string lane_change_plugin_ = "cooperative_lanechange";
+        std::string stop_and_wait_plugin_ = "stop_and_wait_plugin";
 
-        std::string planning_strategic_plugin_ = "RouteFollowingPlugin";
-        std::string lanefollow_planning_tactical_plugin_ = "InLaneCruisingPlugin"; 
+        std::string planning_strategic_plugin_ = "route_following_plugin";
+        std::string lanefollow_planning_tactical_plugin_ = "inlanecruising_plugin"; 
 
         /**
          * \brief Callback for the front bumper pose transform
