@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--  
- Copyright (C) 2018-2020 LEIDOS.
+ Copyright (C) 2018-2022 LEIDOS.
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  use this file except in compliance with the License. You may obtain a copy of
@@ -18,17 +18,31 @@
 
 <package format="3">
   <name>pose_to_tf</name>
-  <version>3.3.0</version>
+  <version>4.0.0</version>
   <description>Pacage provides a node to convert different types of pose messages into transform messages</description>
-  <maintainer email="carma@todo.todo">carma</maintainer>
+  <maintainer email="carma@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
-  <author email="carma@todo.todo">carma</author>
-  <buildtool_depend>catkin</buildtool_depend>
+  <author email="carma@dot.gov">carma</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <build_depend>carma_cmake_common</build_depend>
+  <build_depend>ament_auto_cmake</build_depend>
+
   <depend>geometry_msgs</depend>
-  <depend>roscpp</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>	
   <depend>tf2_geometry_msgs</depend>
-  <depend>carma_utils</depend>
-  <build_depend>carma_cmake_common</build_depend>
+  <depend>rclcpp</depend>
+  <depend>carma_ros2_utils</depend>
+  <depend>rclcpp_components</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

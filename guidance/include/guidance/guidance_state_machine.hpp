@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2018-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,12 @@
 
 #pragma once
 
-#include <cav_msgs/SystemAlert.h>
-#include <cav_msgs/RobotEnabled.h>
-#include <cav_msgs/GuidanceState.h>
-#include <cav_msgs/RouteEvent.h>
-#include <autoware_msgs/VehicleStatus.h>
+#include <carma_planning_msgs/msg/guidance_state.hpp>
+#include <carma_driver_msgs/msg/robot_enabled.hpp>
+#include <carma_planning_msgs/msg/route_event.hpp>
+#include <autoware_msgs/msg/vehicle_status.hpp>
+
+#include <rclcpp/rclcpp.hpp>
 
 namespace guidance
 {
@@ -51,19 +52,25 @@ namespace guidance
             };
 
             /*!
-             * \brief Default constructor for GuidanceStateMachine
+             * \brief constructor for GuidanceStateMachine
+             * \param logger The logger interface that will be used by this object
              */
-            GuidanceStateMachine() = default;
+            GuidanceStateMachine(rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger);
 
             /*!
              * \brief Handle vehicle status message from ROS network.
              */
-            void onVehicleStatus(const autoware_msgs::VehicleStatusConstPtr& msg);
+            void onVehicleStatus(autoware_msgs::msg::VehicleStatus::UniquePtr msg);
 
             /*!
-             * \brief Handle system_alert message from ROS network.
+             * \brief Updates Guidance State Machine with INITIALIZED signal
              */
-            void onSystemAlert(const cav_msgs::SystemAlertConstPtr& msg);
+            void onGuidanceInitialized();
+
+            /*!
+             * \brief Updates Guidance State Machine with SHUTDOWN signal
+             */
+            void onGuidanceShutdown();
 
             /*!
              * \brief Handle set_guidance_active service call from ROS network.
@@ -73,12 +80,12 @@ namespace guidance
             /*!
              * \brief Handle robotic_status message from ROS network.
              */
-            void onRoboticStatus(const cav_msgs::RobotEnabledConstPtr& msg);
+            void onRoboticStatus(carma_driver_msgs::msg::RobotEnabled::UniquePtr msg);
 
             /*!
              * \brief Handle route event message.
              */
-            void onRouteEvent(const cav_msgs::RouteEventConstPtr& msg);
+            void onRouteEvent(carma_planning_msgs::msg::RouteEvent::UniquePtr msg);
 
             /*!
              * \brief Indicate if SetEnableRobotic needs to be called in ACTIVE state.
@@ -106,13 +113,12 @@ namespace guidance
             // make one service call in ACTIVE state to engage
             bool called_robotic_engage_in_active_{false};
 
-            // Flag indicating that DRIVERS_READY signal was received during system startup.
-            // This is needed for state transitions since the most recent system alert message may contain unrelated information
-            bool operational_drivers_{false}; 
-
             // Current vehicle speed in m/s. Used to handle end of route state transition.
             double current_velocity_ = 0.0;
 
+            // Logger interface
+            rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
+
     };
 
-}
+} // guidance
