@@ -10,6 +10,7 @@ myClock.bin
 /*.tar.gz
 *.class
 **/bin
+**/__pycache__
 
 # ignore build directories
 build

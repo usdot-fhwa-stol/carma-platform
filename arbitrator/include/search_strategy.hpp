@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@
 #define __ARBITRATOR_INCLUDE_SEARCH_STRATEGY_HPP__
 
 #include <map>
-#include <cav_msgs/ManeuverPlan.h>
+#include <carma_planning_msgs/msg/maneuver_plan.hpp>
 
 namespace arbitrator
 {
@@ -42,7 +42,7 @@ namespace arbitrator
              * \return A sorted (and/or reduced) list of (plan, cost) pairs after a
              *      heuristic may or may not have been applied
              */
-            virtual std::vector<std::pair<cav_msgs::ManeuverPlan, double>> prioritize_plans(std::vector<std::pair<cav_msgs::ManeuverPlan, double>> plans) const = 0;
+            virtual std::vector<std::pair<carma_planning_msgs::msg::ManeuverPlan, double>> prioritize_plans(std::vector<std::pair<carma_planning_msgs::msg::ManeuverPlan, double>> plans) const = 0;
 
             /**
              * \brief Virtual destructor provided for memory safety

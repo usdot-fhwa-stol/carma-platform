@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (C) 2022 LEIDOS.
  *
@@ -14,19 +16,27 @@
  * the License.
  */
 
-#include <rclcpp/rclcpp.hpp>
-#include <pose_to_tf/PoseToTF2Node.hpp>
+#include <iostream>
+#include <vector>
 
-int main(int argc, char **argv) 
+namespace guidance
 {
-  rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<pose_to_tf::PoseToTfNode>(rclcpp::NodeOptions());
-  
-  rclcpp::executors::MultiThreadedExecutor executor;
-  executor.add_node(node->get_node_base_interface());
-  executor.spin();
-  rclcpp::shutdown();
+  /**
+   * \brief Stuct containing the algorithm configuration values for GuidanceWorker
+   */
+  struct Config
+  {
+    double spin_rate_hz = 10.0; // (Hz) The rate at which the Guidance Node will process messages
 
-  return 0;
-}
+    // Stream operator for this config
+    friend std::ostream &operator<<(std::ostream &output, const Config &c)
+    {
+      output << "guidance::Config { " << std::endl
+           << "spin_rate_hz: " << c.spin_rate_hz << std::endl
+           << "}" << std::endl;
+      return output;
+    }
+  };
+
+} // guidance
