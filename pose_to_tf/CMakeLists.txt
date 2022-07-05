@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -14,81 +14,68 @@
 # the License.
 #
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(pose_to_tf)
 
+# Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
+carma_check_ros_version(2)
 carma_package()
 
-## Find catkin macros and libraries
-set(ROS_DEPS
-  geometry_msgs
-  roscpp
-  tf2
-  tf2_ros
-  tf2_geometry_msgs
-  carma_utils
-)
-find_package(catkin REQUIRED COMPONENTS
-  ${ROS_DEPS}
-)
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-###################################
-## catkin specific configuration ##
-###################################
+# Name build targets
+set(worker_lib PoseToTF2_worker_lib)
+set(node_exec PoseToTF2Node_node_exec)
+set(node_lib PoseToTF2Node_node)
 
-catkin_package(
-  CATKIN_DEPENDS ${ROS_DEPS}
-  LIBRARIES ${PROJECT_NAME}
-)
-
-###########
-## Build ##
-###########
-
+# Includes
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
 )
 
-add_library( ${PROJECT_NAME}
-                src/PoseToTF2.cpp)
-
-add_dependencies( ${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
-
-
-add_executable( ${PROJECT_NAME}_node
-                src/main.cpp)
-
-add_dependencies( ${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_LIBRARIES})
-
-#############
-## Install ##
-#############
-
-install(DIRECTORY include
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+# Build
+ament_auto_add_library(${worker_lib}
+        src/PoseToTF2.cpp
+)
+ament_auto_add_library(${node_lib} SHARED
+        src/PoseToTF2Node.cpp
+)
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
 )
 
-## Install C++
-install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# Register component
+rclcpp_components_register_nodes(${node_lib} "pose_to_tf::PoseToTfNode")
+
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_lib}
+        ${worker_lib}
 )
 
-## Install Other Resources
-install(DIRECTORY launch config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+target_link_libraries(${node_exec}
+        ${node_lib}
 )
 
-#############
-## Testing ##
-#############
-catkin_add_gmock(${PROJECT_NAME}-test test/TestMain.cpp 
-  test/TestPoseToTF2.cpp
+# Testing
+if(BUILD_TESTING)  
+
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+
+  ament_add_gtest(test_pose_to_tf test/TestPoseToTF2.cpp)
+
+  ament_target_dependencies(test_pose_to_tf
+  ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+
+  target_link_libraries(test_pose_to_tf ${node_lib})
+
+endif()
+
+  # Install
+ament_auto_package(
+        INSTALL_TO_SHARE launch config
 )
-target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})

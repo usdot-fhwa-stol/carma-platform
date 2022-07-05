@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,31 +15,33 @@
  */
 
 #include "test_utils.h"
-#include <cav_msgs/ManeuverPlan.h>
-#include <cav_srvs/PlanManeuvers.h>
+#include <carma_planning_msgs/msg/maneuver_plan.hpp>
+#include <carma_planning_msgs/srv/plan_maneuvers.hpp>
+#include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "plugin_neighbor_generator.hpp"
 
 namespace arbitrator
 {
+
     class MockCapabilitiesInterface 
     {
         public:
-            using PluginResponses = std::map<std::string, cav_srvs::PlanManeuvers>;
-            MOCK_METHOD2(get_plans, PluginResponses(std::string, cav_srvs::PlanManeuvers));
+            using PluginResponses = std::map<std::string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Response>>;
+            MOCK_METHOD2(get_plans, PluginResponses(std::string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Request>));
             MOCK_METHOD1(get_topics_for_capability, std::vector<std::string>(const std::string&));
 
-            template<typename MSrv>
-            std::map<std::string, MSrv> multiplex_service_call_for_capability(std::string query_string, MSrv msg);
+            template<typename MSrvReq, typename MSrvRes>
+            std::map<std::string, std::shared_ptr<MSrvRes>> multiplex_service_call_for_capability(std::string query_string, std::shared_ptr<MSrvReq> msg);
             ~MockCapabilitiesInterface(){};
 
     };
 
     template<>
-    std::map<std::string, cav_srvs::PlanManeuvers> 
+    std::map<std::string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Response>> 
     MockCapabilitiesInterface::multiplex_service_call_for_capability(
         std::string query_string, 
-        cav_srvs::PlanManeuvers msg)
+        std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Request> msg)
     {
         return get_plans(query_string, msg);
     }
@@ -48,7 +50,7 @@ namespace arbitrator
     {
         public:
             PluginNeighborGeneratorTest():
-             png{mci} {};
+            png{mci} {};
 
             MockCapabilitiesInterface mci;
             PluginNeighborGenerator<MockCapabilitiesInterface> png;
@@ -65,11 +67,11 @@ namespace arbitrator
             get_plans(::testing::_, ::testing::_))
             .WillRepeatedly(
                 ::testing::Return(
-                    std::map<std::string, cav_srvs::PlanManeuvers>()));
+                    std::map<std::string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Response>>()));
 
-        cav_msgs::ManeuverPlan plan;
+        carma_planning_msgs::msg::ManeuverPlan plan;
         VehicleState vs;
-        std::vector<cav_msgs::ManeuverPlan> plans = png.generate_neighbors(plan, vs);
+        std::vector<carma_planning_msgs::msg::ManeuverPlan> plans = png.generate_neighbors(plan, vs);
 
         ASSERT_EQ(0, plans.size());
         ASSERT_TRUE(plans.empty());
@@ -77,29 +79,30 @@ namespace arbitrator
 
     TEST_F(PluginNeighborGeneratorTest, testGetNeighbors2)
     {
-        std::map<std::string, cav_srvs::PlanManeuvers> responses;
-        cav_srvs::PlanManeuvers resp1, resp2, resp3;
-        resp1.response.new_plan.maneuver_plan_id.push_back(0);
-        resp2.response.new_plan.maneuver_plan_id.push_back(1);
-        resp3.response.new_plan.maneuver_plan_id.push_back(2);
+        std::map<std::string, std::shared_ptr<carma_planning_msgs::srv::PlanManeuvers::Response>> responses;
+        auto resp1 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        auto resp2 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        auto resp3 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        
+        resp1->new_plan.maneuver_plan_id = "1";
+        resp2->new_plan.maneuver_plan_id = "2";
+        resp3->new_plan.maneuver_plan_id = "3";
         responses["test_plugin_a"] = resp1;
         responses["test_plugin_b"] = resp2;
         responses["test_plugin_c"] = resp3;
-
+        
         EXPECT_CALL(mci, 
             get_plans(::testing::_, ::testing::_))
             .WillRepeatedly(
                 ::testing::Return(
                     responses));
-
-        cav_msgs::ManeuverPlan plan;
+        carma_planning_msgs::msg::ManeuverPlan plan;
         VehicleState vs;
-        std::vector<cav_msgs::ManeuverPlan> plans = png.generate_neighbors(plan, vs);
-
+        std::vector<carma_planning_msgs::msg::ManeuverPlan> plans = png.generate_neighbors(plan, vs);
         ASSERT_FALSE(plans.empty());
         ASSERT_EQ(3, plans.size());
-        ASSERT_EQ(0, plans[0].maneuver_plan_id[0]);
-        ASSERT_EQ(1, plans[1].maneuver_plan_id[0]);
-        ASSERT_EQ(2, plans[2].maneuver_plan_id[0]);
+        ASSERT_EQ("1", plans[0].maneuver_plan_id);
+        ASSERT_EQ("2", plans[1].maneuver_plan_id);
+        ASSERT_EQ("3", plans[2].maneuver_plan_id);
     }
 }
