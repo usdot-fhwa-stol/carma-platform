@@ -98,7 +98,7 @@ TEST(YieldPlugin, UnitTestYield)
 
     ros::CARMANodeHandle nh;
 
-    ros::ServiceClient plugin1= nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
+    ros::ServiceClient plugin1= nh.serviceClient<cav_srvs::PlanTrajectory>("yield_plugin/plan_trajectory");
 
     ros::Subscriber mob_resp_sub = nh.subscribe("outgoing_mobility_response", 5, callback);
     ros::Subscriber lc_status_sub = nh.subscribe("cooperative_lane_change_status", 5, status_callback);    

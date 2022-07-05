@@ -19,7 +19,7 @@
 #include <iostream>
 
 /**
- * \brief Stuct containing the algorithm configuration values for the YieldPluginConfig
+ * \brief Stuct containing the algorithm configuration values for the PlatoonStrategicPlugin
  */
 struct PlatoonPluginConfig
 {

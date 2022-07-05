@@ -32,11 +32,11 @@ plugin_priorities: '
   {
  	  "plugin_priorities": 
       {
- 			  "PlatooningStrategicIHPPlugin": 4.0,
-        "LCIStrategicPlugin": 3.0,
-        "SCIStrategicPlugin": 2.0,
-        "PlatooningStrategicPlugin": 2.0,
-        "RouteFollowingPlugin": 1.0
+ 			  "platoon_strategic_ihp": 4.0,
+        "lci_strategic_plugin": 3.0,
+        "sci_strategic_plugin": 2.0,
+        "platoon_strategic": 2.0,
+        "route_following_plugin": 1.0
       }
   }
   '

@@ -10,14 +10,14 @@ stopping_accel_limit_multiplier: 0.5
 buffer_lanechange_time : 3.0
 
 # String : The tactical plugin being used for lane change
-# For CLC: "CooperativeLaneChangePlugin" for unobstructed : "UnobstructedLaneChangePlugin"
-lane_change_plugin : "CooperativeLaneChangePlugin"
+# For CLC: "cooperative_lanechange"
+lane_change_plugin : "cooperative_lanechange"
 
 # String : The tactical plugin being used for stopping at the end of the route
-stop_and_wait_plugin : "StopAndWaitPlugin"
+stop_and_wait_plugin : "stop_and_wait_plugin"
 
 # String : The tactical plugin being used for lane following
-lane_following_plugin : "InLaneCruisingPlugin"
+lane_following_plugin : "inlanecruising_plugin"
 
 # Double : The minimum length a maneuver can be when it is being modified to support stopping behavior.
 # Units : meters
