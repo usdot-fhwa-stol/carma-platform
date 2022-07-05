@@ -84,7 +84,7 @@ struct LCIStrategicPluginConfig
   std::string vehicle_id = "default_id";
 
   //! The name to use for this plugin during comminications with the arbitrator
-  std::string strategic_plugin_name = "intersection_transit_maneuvering";
+  std::string strategic_plugin_name = "lci_strategic_plugin";
 
   //! The name of the tactical plugin to use for Lane Following trajectory planning
   //! This plugin is used to apply trajectory smoothing algorithm BEFORE entering the intersection if within activation distance

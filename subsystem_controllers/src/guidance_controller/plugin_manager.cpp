@@ -105,7 +105,7 @@ namespace subsystem_controllers
     {
 
         // If this is a ros1 node we will still track it but we will not attempt to manage its state machine
-        if (is_ros2_lifecycle_node(plugin.name_)) {
+        if (!is_ros2_lifecycle_node(plugin.name_)) {
 
             Entry ros1_plugin = plugin;
 
@@ -409,9 +409,19 @@ namespace subsystem_controllers
             return;
         }
 
-        auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE, requested_plugin->name_, service_timeout_, call_timeout_);
+        bool activated = false;
+        if (req->activated)
+        {
+            auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE, requested_plugin->name_, service_timeout_, call_timeout_);
 
-        bool activated = (result_state == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE);
+            activated = (result_state == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE);
+        } else {
+            auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, requested_plugin->name_, service_timeout_, call_timeout_);
+
+            activated = (result_state == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE);
+        }
+
+
 
         Entry updated_entry(requested_plugin->available_, activated, requested_plugin->name_, requested_plugin->type_, requested_plugin->capability_, true); // Mark as user activated
         em_.update_entry(updated_entry);
