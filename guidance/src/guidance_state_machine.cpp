@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2018-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,12 @@
  */
 
 #include "guidance/guidance_state_machine.hpp"
-#include <ros/ros.h>
 
 namespace guidance
 {
+    GuidanceStateMachine::GuidanceStateMachine(rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger)
+        : logger_(logger) {}
+
     void GuidanceStateMachine::onGuidanceSignal(Signal signal)
     {
         // Set to OFF state of SHUTDOWN signal received
@@ -83,34 +85,29 @@ namespace guidance
         }
     }
 
-    void GuidanceStateMachine::onVehicleStatus(const autoware_msgs::VehicleStatusConstPtr& msg)
+    void GuidanceStateMachine::onVehicleStatus(autoware_msgs::msg::VehicleStatus::UniquePtr msg)
     {
         current_velocity_ = msg->speed * 0.277777; // Convert kilometers per hour to meters per second. Rounded down so that it comes under epsilon for parking check
         if (current_guidance_state_ == State::ENTER_PARK)
         {
             // '3' indicates vehicle gearshift is currently set to PARK
-            if(msg->current_gear.gear== autoware_msgs::Gear::PARK)
+            if(msg->current_gear.gear== autoware_msgs::msg::Gear::PARK)
             {
                 onGuidanceSignal(Signal::OVERRIDE); // Required for ENTER_PARK -> INACTIVE
 
-                if(operational_drivers_){
-                    onGuidanceSignal(Signal::INITIALIZED); 
-                }
+                onGuidanceSignal(Signal::INITIALIZED); // Required for INACTIVE -> DRIVERS_READY
             }
         }
     }
 
-    void GuidanceStateMachine::onSystemAlert(const cav_msgs::SystemAlertConstPtr& msg)
+    void GuidanceStateMachine::onGuidanceInitialized()
     {
-        if(msg->type == msg->DRIVERS_READY)
-        {
-            operational_drivers_ = true;
-            onGuidanceSignal(Signal::INITIALIZED);
-        } else if(msg->type == msg->SHUTDOWN)
-        {
-            operational_drivers_ = false;
-            onGuidanceSignal(Signal::SHUTDOWN);
-        }
+        onGuidanceSignal(Signal::INITIALIZED);
+    }
+
+    void GuidanceStateMachine::onGuidanceShutdown()
+    {
+        onGuidanceSignal(Signal::SHUTDOWN);
     }
 
     void GuidanceStateMachine::onSetGuidanceActive(bool msg)
@@ -125,7 +122,7 @@ namespace guidance
         
     }
 
-    void GuidanceStateMachine::onRoboticStatus(const cav_msgs::RobotEnabledConstPtr& msg)
+    void GuidanceStateMachine::onRoboticStatus(carma_driver_msgs::msg::RobotEnabled::UniquePtr msg)
     {
         // robotic status changes from false to true
         if(!robotic_active_status_ && msg->robot_active)
@@ -141,17 +138,17 @@ namespace guidance
         }
     }
 
-    void GuidanceStateMachine::onRouteEvent(const cav_msgs::RouteEventConstPtr& msg)
+    void GuidanceStateMachine::onRouteEvent(carma_planning_msgs::msg::RouteEvent::UniquePtr msg)
     {
-        if(msg->event == cav_msgs::RouteEvent::ROUTE_DEPARTED ||
-           msg->event == cav_msgs::RouteEvent::ROUTE_ABORTED) {
+        if(msg->event == carma_planning_msgs::msg::RouteEvent::ROUTE_DEPARTED ||
+           msg->event == carma_planning_msgs::msg::RouteEvent::ROUTE_ABORTED) {
                onGuidanceSignal(Signal::DISENGAGED);
            }
-        else if(msg->event == cav_msgs::RouteEvent::ROUTE_COMPLETED){
+        else if(msg->event == carma_planning_msgs::msg::RouteEvent::ROUTE_COMPLETED){
             if (fabs(current_velocity_) < 0.001) { // Check we have successfully stopped
                 onGuidanceSignal(Signal::PARK); // ENGAGED -> ENTER_PARK this state restricts transitioning out of ENTER_PARK until vehicle is shifted to PARK
             } else { // Vehicle was not able to stop transition to inactive
-                ROS_WARN_STREAM("Vehicle failed to park on route completion because current velocity was " << current_velocity_);
+                RCLCPP_WARN_STREAM(logger_->get_logger(), "Vehicle failed to park on route completion because current velocity was " << current_velocity_);
                 onGuidanceSignal(Signal::OVERRIDE);
             }
         }

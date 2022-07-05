@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright (C) 2019-2022 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,24 +15,22 @@
  * the License.
  */
 
-#ifndef PLAN_DELEGATOR_INCLUDE_PLAN_DELEGATOR_HPP_
-#define PLAN_DELEGATOR_INCLUDE_PLAN_DELEGATOR_HPP_
-
 #include <unordered_map>
 #include <math.h>
-#include <ros/ros.h>
-#include <cav_msgs/ManeuverPlan.h>
-#include <cav_msgs/GuidanceState.h>
-#include <cav_srvs/PlanTrajectory.h>
-#include <carma_utils/CARMAUtils.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
+#include <rclcpp/rclcpp.hpp>
+#include <carma_planning_msgs/msg/maneuver_plan.hpp>
+#include <carma_planning_msgs/msg/guidance_state.hpp>
+#include <carma_planning_msgs/srv/plan_trajectory.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <carma_wm/WMListener.h>
-#include <carma_wm/WorldModel.h>
-#include <carma_wm/Geometry.h>
+#include <carma_wm_ros2/WMListener.hpp>
+#include <carma_wm_ros2/WorldModel.hpp>
+#include <carma_wm_ros2/Geometry.hpp>
+#include <string>
 
 // TODO Replace this Macro if possible
 /**
@@ -41,74 +40,94 @@
  * \return Expands to an expression (in the form of chained ternary operators) that evalutes to the desired field
  */
 #define GET_MANEUVER_PROPERTY(mvr, property)\
-        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
-            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
-                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
-                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property :\
-                        ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
-                        ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
+        (((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
+            ((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
+                ((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
+                    ((mvr).type == carma_planning_msgs::msg::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property :\
+                        ((mvr).type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
+                        ((mvr).type == carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
                             throw new std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))))
 
 
 #define SET_MANEUVER_PROPERTY(mvr, property, value)\
-        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property = (value) :\
-            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property = (value) :\
-                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property = (value) :\
-                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property = (value) :\
-                        ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property = (value) :\
-                            ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property = (value) :\
+        (((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property = (value) :\
+            ((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property = (value) :\
+                ((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property = (value) :\
+                    ((mvr).type == carma_planning_msgs::msg::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property = (value) :\
+                        ((mvr).type == carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property = (value) :\
+                            ((mvr).type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property = (value) :\
                                 throw std::invalid_argument("ADJUST_MANEUVER_PROPERTY (property) called on maneuver with invalid type id " + std::to_string((mvr).type)))))))))
 
 
 namespace plan_delegator
 {
-    class PlanDelegator
+    /**
+     * \brief Config struct
+     */
+    struct Config
+    {
+        // ROS params
+        std::string planning_topic_prefix = "/plugins/";
+        std::string planning_topic_suffix = "/plan_trajectory";
+        double trajectory_planning_rate = 10.0;
+        double max_trajectory_duration = 6.0;
+        double min_crawl_speed = 2.2352; // Min crawl speed in m/s
+        
+        // Stream operator for this config
+        friend std::ostream &operator<<(std::ostream &output, const Config &c)
+        {
+        output << "PlanDelegator::Config { " << std::endl
+            << "planning_topic_prefix: " << c.planning_topic_prefix << std::endl
+            << "planning_topic_suffix: " << c.planning_topic_suffix << std::endl
+            << "trajectory_planning_rate: " << c.trajectory_planning_rate << std::endl
+            << "max_trajectory_duration: " << c.max_trajectory_duration << std::endl
+            << "min_crawl_speed: " << c.min_crawl_speed << std::endl
+            << "}" << std::endl;
+        return output;
+        }
+    };
+    
+    class PlanDelegator : public carma_ros2_utils::CarmaLifecycleNode
     {
         public:
 
             // constants definition
             static const constexpr double MILLISECOND_TO_SECOND = 0.001;
 
-            PlanDelegator() = default;
-
             /**
-             * \brief Initialize the plan delegator
+             * \brief PlanDelegator constructor 
              */
-            void init();
-
-            /**
-             * \brief Run the spin loop of plan delegator
-             */
-            void run();
+            explicit PlanDelegator(const rclcpp::NodeOptions &);
 
             /**
              * \brief Callback function of maneuver plan subscriber
              */
-            void maneuverPlanCallback(const cav_msgs::ManeuverPlanConstPtr& plan);
+            void maneuverPlanCallback(carma_planning_msgs::msg::ManeuverPlan::UniquePtr plan);
 
             /**
              * \brief Callback function of guidance state subscriber
              */
-            void guidanceStateCallback(const cav_msgs::GuidanceStateConstPtr& plan);
+            void guidanceStateCallback(carma_planning_msgs::msg::GuidanceState::UniquePtr plan);
 
             /**
              * \brief Get PlanTrajectory service client by plugin name and
              * create new PlanTrajectory service client if specified name does not exist
              * \return a ServiceClient object which corresponse to the target planner
              */
-            ros::ServiceClient& getPlannerClientByName(const std::string& planner_name);
+            carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> getPlannerClientByName(const std::string& planner_name);
 
             /**
              * \brief Example if a maneuver end time has passed current system time
              * \return if input maneuver is expires
+             * NOTE: current_time is assumed to be same clock type as this node
              */
-            bool isManeuverExpired(const cav_msgs::Maneuver& maneuver, ros::Time current_time = ros::Time::now()) const;
+            bool isManeuverExpired(const carma_planning_msgs::msg::Maneuver& maneuver, rclcpp::Time current_time) const;
 
             /**
              * \brief Generate new PlanTrajecory service request based on current planning progress
-             * \return a PlanTrajectory object which is ready to be used in the following service call
+             * \return a PlanTrajectoryRequest which is ready to be used in the following service call
              */
-            cav_srvs::PlanTrajectory composePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const;
+            std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request> composePlanTrajectoryRequest(const carma_planning_msgs::msg::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const;
 
             /**
              * \brief Lookup transfrom from front bumper to base link
@@ -121,41 +140,37 @@ namespace plan_delegator
              * are shifted based on the distance between the base_link frame and the vehicle_front frame.
              * \param maneuver The maneuver to be updated.
              */
-            void updateManeuverParameters(cav_msgs::Maneuver& maneuver);
+            void updateManeuverParameters(carma_planning_msgs::msg::Maneuver& maneuver);
+
+            ////
+            // Overrides
+            ////
+            carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
+            carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &);
 
         protected:
-        
-            // ROS params
-            std::string planning_topic_prefix_ = "";
-            std::string planning_topic_suffix_ = "";
-            double trajectory_planning_rate_ = 10.0;
-            double max_trajectory_duration_ = 6.0;
-            double min_crawl_speed_ = 2.2352; // Min crawl speed in m/s
-
+            // Node configuration
+            Config config_;
+  
             // map to store service clients
-            std::unordered_map<std::string, ros::ServiceClient> trajectory_planners_;
+            std::unordered_map<std::string, carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory>> trajectory_planners_;
             // local storage of incoming messages
-            cav_msgs::ManeuverPlan latest_maneuver_plan_;
-            geometry_msgs::PoseStamped latest_pose_;
-            geometry_msgs::TwistStamped latest_twist_;
+            carma_planning_msgs::msg::ManeuverPlan latest_maneuver_plan_;
+            geometry_msgs::msg::PoseStamped latest_pose_;
+            geometry_msgs::msg::TwistStamped latest_twist_;
 
             // wm listener pointer and pointer to the actual wm object
-            std::shared_ptr<carma_wm::WMListener> wml_;
+            carma_wm::WMListener wml_;
             carma_wm::WorldModelConstPtr wm_;
 
         private:
-
-            // nodehandle and private nodehandle
-            ros::NodeHandle nh_;
-            ros::NodeHandle pnh_;
-
             // ROS subscribers and publishers
-            ros::Publisher traj_pub_;
-            ros::Subscriber plan_sub_;
-            ros::Subscriber pose_sub_;
-            ros::Subscriber twist_sub_;
-            ros::Subscriber guidance_state_sub_;
-            ros::Timer traj_timer_;
+            carma_ros2_utils::PubPtr<carma_planning_msgs::msg::TrajectoryPlan> traj_pub_;
+            carma_ros2_utils::SubPtr<carma_planning_msgs::msg::ManeuverPlan> plan_sub_;
+            carma_ros2_utils::SubPtr<geometry_msgs::msg::PoseStamped> pose_sub_;
+            carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> twist_sub_;
+            carma_ros2_utils::SubPtr<carma_planning_msgs::msg::GuidanceState> guidance_state_sub_;
+            rclcpp::TimerBase::SharedPtr traj_timer_;
 
             bool guidance_engaged = false;
 
@@ -168,32 +183,31 @@ namespace plan_delegator
             /**
              * \brief Callback function for triggering trajectory planning
              */
-            void onTrajPlanTick(const ros::TimerEvent& te);
+            void onTrajPlanTick();
 
             /**
              * \brief Example if a maneuver plan contains at least one maneuver
              * \return if input maneuver plan is valid
              */
-            bool isManeuverPlanValid(const cav_msgs::ManeuverPlanConstPtr& maneuver_plan) const noexcept;
+            bool isManeuverPlanValid(const carma_planning_msgs::msg::ManeuverPlan& maneuver_plan) const noexcept;
 
             /**
              * \brief Example if a trajectory plan contains at least two trajectory points
              * \return if input trajectory plan is valid
              */
-            bool isTrajectoryValid(const cav_msgs::TrajectoryPlan& trajectory_plan) const noexcept;
+            bool isTrajectoryValid(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan) const noexcept;
 
             /**
              * \brief Example if a trajectory plan is longer than configured time thresheld
              * \return if input trajectory plan is long enough
              */
-            bool isTrajectoryLongEnough(const cav_msgs::TrajectoryPlan& plan) const noexcept;
+            bool isTrajectoryLongEnough(const carma_planning_msgs::msg::TrajectoryPlan& plan) const noexcept;
 
             /**
              * \brief Plan trajectory based on latest maneuver plan via ROS service call to plugins
              * \return a TrajectoryPlan object which contains PlanTrajectory response from plugins
              */
-            cav_msgs::TrajectoryPlan planTrajectory();
+            carma_planning_msgs::msg::TrajectoryPlan planTrajectory();
 
     };
 }
-#endif // PLAN_DELEGATOR_INCLUDE_PLAN_DELEGATOR_HPP_
