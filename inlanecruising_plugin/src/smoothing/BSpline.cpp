@@ -1,4 +1,4 @@
-#include <inlanecruising_plugin/smoothing/BSpline.h>
+#include <inlanecruising_plugin/smoothing/BSpline.hpp>
 
 namespace inlanecruising_plugin
 {

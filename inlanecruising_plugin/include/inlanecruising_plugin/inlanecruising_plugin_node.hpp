@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,15 +16,12 @@
  * the License.
  */
 
-#include <cav_msgs/Plugin.h>
-#include <carma_utils/CARMAUtils.h>
-#include <cav_srvs/PlanTrajectory.h>
-#include <carma_wm/WMListener.h>
+#include <carma_planning_msgs/msg/plugin.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include <carma_wm_ros2/WMListener.hpp>
 #include <functional>
-#include <autoware_msgs/Lane.h>
-#include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
-#include "inlanecruising_plugin.h"
-#include "inlanecruising_config.h"
+#include "inlanecruising_plugin.hpp"
+#include "inlanecruising_config.hpp"
 
 namespace inlanecruising_plugin
 {
@@ -46,7 +43,7 @@ public:
     carma_wm::WMListener wml;
     auto wm_ = wml.getWorldModel();
 
-    ros::Publisher discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+    ros::Publisher discovery_pub = nh.advertise<carma_planning_msgs::msg::Plugin>("plugin_discovery", 1);
     ros::Publisher trajectory_debug_pub = pnh.advertise<carma_debug_msgs::TrajectoryCurvatureSpeeds>("debug/trajectory_planning", 1);
     
     InLaneCruisingPluginConfig config;
@@ -69,7 +66,7 @@ public:
     pnh.param<bool>("enable_object_avoidance", config.enable_object_avoidance, config.enable_object_avoidance);
     pnh.param<double>("buffer_ending_downtrack", config.buffer_ending_downtrack, config.buffer_ending_downtrack);
 
-    ROS_INFO_STREAM("InLaneCruisingPlugin Params" << config);
+    RCLCPP_INFO_STREAM(get_logger(), "InLaneCruisingPlugin Params" << config);
     
     config.lateral_accel_limit = config.lateral_accel_limit * config.lat_accel_multiplier;
     config.max_accel = config.max_accel *  config.max_accel_multiplier;
@@ -79,7 +76,7 @@ public:
     ros::console::get_loggers(logger);
     config.publish_debug = logger[ROSCONSOLE_DEFAULT_NAME] == ros::console::levels::Debug;
 
-    ROS_INFO_STREAM("InLaneCruisingPlugin Params After Accel Change" << config);
+    RCLCPP_INFO_STREAM(get_logger(), "InLaneCruisingPlugin Params After Accel Change" << config);
     
     InLaneCruisingPlugin worker(wm_, config, [&discovery_pub](const auto& msg) { discovery_pub.publish(msg); },
                                              [&trajectory_debug_pub](const auto& msg) { trajectory_debug_pub.publish(msg); });
@@ -88,9 +85,9 @@ public:
                                             &InLaneCruisingPlugin::plan_trajectory_cb, &worker);
 
     //TODO: Update yield client to use the Plugin Manager capabilities query, in case someone else wants to add an alternate yield implementation 
-    ros::ServiceClient yield_client = nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
+    ros::ServiceClient yield_client = nh.serviceClient<carma_planning_msgs::srv::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
     worker.set_yield_client(yield_client);
-    ROS_INFO_STREAM("Yield Client Set");
+    RCLCPP_INFO_STREAM(get_logger(), "Yield Client Set");
 
     ros::Timer discovery_pub_timer_ = nh.createTimer(
             ros::Duration(ros::Rate(10.0)),

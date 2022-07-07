@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,16 +14,14 @@
  * the License.
  */
 
-#include <inlanecruising_plugin/inlanecruising_plugin_node.h>
-#include <carma_utils/CARMAUtils.h>
+#include <inlanecruising_plugin/inlanecruising_plugin_node.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <gtest/gtest.h>
-#include <ros/ros.h>
-#include "ros/service.h"
+#include <rclcpp/rclcpp.hpp>
+//
 #include <thread>
 #include <chrono>
-
-#include "ros/ros.h"
-#include <cav_srvs/PlanTrajectory.h>
+#include <carma_planning_msgs/srv/plan_trajectory.hpp>
 
 TEST(InLaneCruisingPluginTest, rostest1)
 {
@@ -32,27 +30,27 @@ TEST(InLaneCruisingPluginTest, rostest1)
     bool flag_yield = false;
     std::string res = "";
 
-    cav_srvs::PlanTrajectory traj_srv;
+    carma_planning_msgs::srv::PlanTrajectory traj_srv;
     traj_srv.request.initial_trajectory_plan.trajectory_id = "ILCReq";
    
-    ros::ServiceClient plugin1= nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/InLaneCruisingPlugin/plan_trajectory");
+    ros::ServiceClient plugin1= nh.serviceClient<carma_planning_msgs::srv::PlanTrajectory>("plugins/InLaneCruisingPlugin/plan_trajectory");
 
-    ROS_INFO_STREAM("ilc service: " << plugin1.getService());
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("inlanecruising_plugin"), "ilc service: " << plugin1.getService());
     if(plugin1.waitForExistence(ros::Duration(5.0)))
     {
         ros::spinOnce();
-        ROS_ERROR("waiting");
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("inlanecruising_plugin"), ("waiting");
         if (plugin1.call(traj_srv))
         {
             res = traj_srv.response.trajectory_plan.trajectory_id;
-            ROS_ERROR("ILC Traj Service called");
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("inlanecruising_plugin"), ("ILC Traj Service called");
             flag_trajectory = true;
             flag_yield = true;
             
         }
         else
         {
-            ROS_ERROR("ILC Trajectory Service not called");
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("inlanecruising_plugin"), ("ILC Trajectory Service not called");
             res = "error";
         }
     }

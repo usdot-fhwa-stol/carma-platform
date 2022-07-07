@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,22 +14,21 @@
  * the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <algorithm>
 #include <memory>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <lanelet2_core/geometry/Point.h>
-#include <trajectory_utils/trajectory_utils.h>
-#include <trajectory_utils/conversions/conversions.h>
+#include <trajectory_utils/trajectory_utils.hpp>
+#include <trajectory_utils/conversions/conversions.hpp>
 #include <sstream>
-#include <carma_utils/containers/containers.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <Eigen/LU>
 #include <Eigen/SVD>
-#include <inlanecruising_plugin/inlanecruising_plugin.h>
+#include <inlanecruising_plugin/inlanecruising_plugin.hpp>
 
 
 
@@ -46,7 +45,7 @@ InLaneCruisingPlugin::InLaneCruisingPlugin(carma_wm::WorldModelConstPtr wm, InLa
   plugin_discovery_msg_.version_id = "v1.0";
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = false;
-  plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
+  plugin_discovery_msg_.type = carma_planning_msgs::msg::Plugin::TACTICAL;
   plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
 }
 
@@ -56,8 +55,8 @@ bool InLaneCruisingPlugin::onSpin()
   return true;
 }
 
-bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req,
-                                              cav_srvs::PlanTrajectoryResponse& resp)
+bool InLaneCruisingPlugin::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectoryRequest& req,
+                                              carma_planning_msgs::srv::PlanTrajectoryResponse& resp)
 {
    ros::WallTime start_time = ros::WallTime::now();  // Start timeing the execution time for planning so it can be logged
 
@@ -65,10 +64,10 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
   // Only plan the trajectory for the initial LANE_FOLLOWING maneuver and any immediately sequential maneuvers of the same type
-  std::vector<cav_msgs::Maneuver> maneuver_plan;
+  std::vector<carma_planning_msgs::msg::Maneuver> maneuver_plan;
   for(size_t i = req.maneuver_index_to_plan; i < req.maneuver_plan.maneuvers.size(); i++)
   {
-    if(req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_FOLLOWING)
+    if(req.maneuver_plan.maneuvers[i].type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING)
     {
       maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
       resp.related_maneuvers.push_back(i);
@@ -97,11 +96,11 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   auto points_and_target_speeds = basic_autonomy::waypoint_generation::create_geometry_profile(maneuver_plan, std::max((double)0, current_downtrack - config_.back_distance),
                                                                          wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config);
 
-  ROS_DEBUG_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
+  RCLCPP_DEBUG_STREAM(get_logger(), "points_and_target_speeds: " << points_and_target_speeds.size());
 
-  ROS_DEBUG_STREAM("PlanTrajectory");
+  RCLCPP_DEBUG_STREAM(get_logger(), "PlanTrajectory");
 
-  cav_msgs::TrajectoryPlan original_trajectory;
+  carma_planning_msgs::msg::TrajectoryPlan original_trajectory;
   original_trajectory.header.frame_id = "map";
   original_trajectory.header.stamp = ros::Time::now();
   original_trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
@@ -119,21 +118,21 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   
   if (config_.enable_object_avoidance)
   {
-    ROS_DEBUG_STREAM("Activate Object Avoidance");
+    RCLCPP_DEBUG_STREAM(get_logger(), "Activate Object Avoidance");
     if (yield_client_ && yield_client_.exists() && yield_client_.isValid())
     {
-      ROS_DEBUG_STREAM("Yield Client is valid");
-      cav_srvs::PlanTrajectory yield_srv;
+      RCLCPP_DEBUG_STREAM(get_logger(), "Yield Client is valid");
+      carma_planning_msgs::srv::PlanTrajectory yield_srv;
       yield_srv.request.initial_trajectory_plan = original_trajectory;
       yield_srv.request.vehicle_state = req.vehicle_state;
 
       if (yield_client_.call(yield_srv))
       {
-        ROS_DEBUG_STREAM("Received Traj from Yield");
-        cav_msgs::TrajectoryPlan yield_plan = yield_srv.response.trajectory_plan;
+        RCLCPP_DEBUG_STREAM(get_logger(), "Received Traj from Yield");
+        carma_planning_msgs::msg::TrajectoryPlan yield_plan = yield_srv.response.trajectory_plan;
         if (validate_yield_plan(yield_plan))
         {
-          ROS_DEBUG_STREAM("Yield trajectory validated");
+          RCLCPP_DEBUG_STREAM(get_logger(), "Yield trajectory validated");
           resp.trajectory_plan = yield_plan;
         }
         else
@@ -154,7 +153,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   }
   else
   {
-    ROS_DEBUG_STREAM("Ignored Object Avoidance");
+    RCLCPP_DEBUG_STREAM(get_logger(), "Ignored Object Avoidance");
     resp.trajectory_plan = original_trajectory;
   }
 
@@ -163,12 +162,12 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
     debug_publisher_(debug_msg_); 
   }
   
-  resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+  resp.maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
   ros::WallTime end_time = ros::WallTime::now();  // Planning complete
 
   ros::WallDuration duration = end_time - start_time;
-  ROS_DEBUG_STREAM("ExecutionTime: " << duration.toSec());
+  RCLCPP_DEBUG_STREAM(get_logger(), "ExecutionTime: " << duration.toSec());
 
   return true;
 }
@@ -178,24 +177,24 @@ void InLaneCruisingPlugin::set_yield_client(ros::ServiceClient& client)
   yield_client_ = client;
 }
 
-bool InLaneCruisingPlugin::validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan)
+bool InLaneCruisingPlugin::validate_yield_plan(const carma_planning_msgs::msg::TrajectoryPlan& yield_plan)
 {
   if (yield_plan.trajectory_points.size()>= 2)
   {
-    ROS_DEBUG_STREAM("Yield Trajectory Time" << (double)yield_plan.trajectory_points[0].target_time.toSec());
-    ROS_DEBUG_STREAM("Now:" << (double)ros::Time::now().toSec());
+    RCLCPP_DEBUG_STREAM(get_logger(), "Yield Trajectory Time" << (double)yield_plan.trajectory_points[0].target_time.toSec());
+    RCLCPP_DEBUG_STREAM(get_logger(), "Now:" << (double)ros::Time::now().toSec());
     if (yield_plan.trajectory_points[0].target_time + ros::Duration(5.0) > ros::Time::now())
     {
       return true;
     }
     else
     {
-      ROS_DEBUG_STREAM("Old Yield Trajectory");
+      RCLCPP_DEBUG_STREAM(get_logger(), "Old Yield Trajectory");
     }
   }
   else
   {
-    ROS_DEBUG_STREAM("Invalid Yield Trajectory"); 
+    RCLCPP_DEBUG_STREAM(get_logger(), "Invalid Yield Trajectory"); 
   }
   return false;
 }

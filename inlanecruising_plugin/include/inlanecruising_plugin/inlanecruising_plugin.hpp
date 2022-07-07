@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,27 +17,26 @@
  */
 
 #include <vector>
-#include <cav_msgs/TrajectoryPlan.h>
-#include <cav_msgs/TrajectoryPlanPoint.h>
-#include <cav_msgs/Plugin.h>
+#include <carma_planning_msgs/msg/trajectory_plan.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
+#include <carma_planning_msgs/msg/plugin.hpp>
 #include <boost/shared_ptr.hpp>
-#include <carma_utils/CARMAUtils.h>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <boost/geometry.hpp>
-#include <carma_wm/Geometry.h>
-#include <basic_autonomy/basic_autonomy.h>
-#include <cav_srvs/PlanTrajectory.h>
-#include <carma_wm/WMListener.h>
-#include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
+#include <carma_wm_ros2/Geometry.hpp>
+#include <basic_autonomy_ros2/basic_autonomy.hpp>
+#include <carma_planning_msgs/srv/plan_trajectory.hpp>
+#include <carma_wm_ros2/WMListener.hpp>
 #include <functional>
-#include "inlanecruising_config.h"
+#include "inlanecruising_config.hpp"
 #include <unordered_set>
-#include <autoware_msgs/Lane.h>
-#include <ros/ros.h>
-#include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
+#include <autoware_msgs/msg/lane.h>
+#include <rclcpp/rclcpp.hpp>
+#include <carma_debug_ros2_msgs/msg/trajectory_curvature_speeds.hpp>
 
 namespace inlanecruising_plugin
 {
-using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
+using PublishPluginDiscoveryCB = std::function<void(const carma_planning_msgs::msg::Plugin&)>;
 using DebugPublisher = std::function<void(const carma_debug_msgs::TrajectoryCurvatureSpeeds&)>;
 using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
 
@@ -67,7 +66,7 @@ public:
    * 
    * \return True if success. False otherwise
    */ 
-  bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
+  bool plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectoryRequest& req, carma_planning_msgs::srv::PlanTrajectoryResponse& resp);
 
   /**
    * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
@@ -90,9 +89,9 @@ public:
    *
    * \return true or falss
    */
-  bool validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan);
+  bool validate_yield_plan(const carma_planning_msgs::msg::TrajectoryPlan& yield_plan);
 
-  cav_msgs::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
+  carma_planning_msgs::msg::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
   
 private:
 
@@ -101,7 +100,7 @@ private:
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
   ros::ServiceClient yield_client_;
 
-  cav_msgs::Plugin plugin_discovery_msg_;
+  carma_planning_msgs::msg::Plugin plugin_discovery_msg_;
   DebugPublisher debug_publisher_;
   carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg_;
 

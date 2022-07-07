@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,10 +14,10 @@
  * the License.
  */
 
-#include <inlanecruising_plugin/inlanecruising_plugin.h>
-#include <carma_wm/WMTestLibForGuidance.h>
+#include <inlanecruising_plugin/inlanecruising_plugin.hpp>
+#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
 #include <gtest/gtest.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>
@@ -27,29 +27,26 @@
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/primitives/Traits.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
-#include <carma_wm/MapConformer.h>
-#include <carma_wm/CARMAWorldModel.h>
-#include <ros/console.h>
+#include <carma_wm_ros2/MapConformer.hpp>
+#include <carma_wm_ros2/CARMAWorldModel.hpp>
 #include <unsupported/Eigen/Splines>
-#include <carma_utils/containers/containers.h>
+//#include <carma_utils/containers/containers.h> TODO
 #include <tf/LinearMath/Vector3.h>
 
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <algorithm>
 #include <memory>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <lanelet2_core/geometry/Point.h>
-#include <trajectory_utils/trajectory_utils.h>
-#include <trajectory_utils/conversions/conversions.h>
+#include <trajectory_utils/trajectory_utils.hpp>
+#include <trajectory_utils/conversions/conversions.hpp>
 #include <sstream>
-#include <carma_utils/containers/containers.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-
 #include <Eigen/LU>
 #include <Eigen/SVD>
 #include <unordered_set>
@@ -91,14 +88,14 @@ TEST(InLaneCruisingPluginTest, testPlanningCallback)
 
   carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
 
-  cav_srvs::PlanTrajectoryRequest req;
+  carma_planning_msgs::srv::PlanTrajectoryRequest req;
   req.vehicle_state.x_pos_global = 1.5;
   req.vehicle_state.y_pos_global = 5;
   req.vehicle_state.orientation = 0;
   req.vehicle_state.longitudinal_vel = 0.0;
 
-  cav_msgs::Maneuver maneuver;
-  maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+  carma_planning_msgs::msg::Maneuver maneuver;
+  maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   maneuver.lane_following_maneuver.lane_ids = {"1200"};
   maneuver.lane_following_maneuver.start_dist = 5.0;
   maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
@@ -108,8 +105,8 @@ TEST(InLaneCruisingPluginTest, testPlanningCallback)
   maneuver.lane_following_maneuver.end_speed = 6.7056;
   maneuver.lane_following_maneuver.end_time = ros::Time(4.4704);
 
-  cav_msgs::Maneuver maneuver2;
-  maneuver2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+  carma_planning_msgs::msg::Maneuver maneuver2;
+  maneuver2.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   maneuver2.lane_following_maneuver.lane_ids = {"1200"};
   maneuver2.lane_following_maneuver.start_dist = 14.98835712;
   maneuver2.lane_following_maneuver.start_speed = 6.7056;
@@ -120,8 +117,8 @@ TEST(InLaneCruisingPluginTest, testPlanningCallback)
   maneuver2.lane_following_maneuver.end_time = ros::Time(4.4704 + 7.45645430685);
 
   // Create a third maneuver of a different type to test the final element in resp.related_maneuvers
-  cav_msgs::Maneuver maneuver3;
-  maneuver3.type = cav_msgs::Maneuver::LANE_CHANGE;
+  carma_planning_msgs::msg::Maneuver maneuver3;
+  maneuver3.type = carma_planning_msgs::msg::Maneuver::LANE_CHANGE;
 
   req.maneuver_plan.maneuvers.push_back(maneuver);
   req.maneuver_plan.maneuvers.push_back(maneuver2);
@@ -129,7 +126,7 @@ TEST(InLaneCruisingPluginTest, testPlanningCallback)
 
   req.maneuver_index_to_plan = 0;
 
-  cav_srvs::PlanTrajectoryResponse resp;
+  carma_planning_msgs::srv::PlanTrajectoryResponse resp;
 
   plugin.plan_trajectory_cb(req, resp);
 
@@ -179,19 +176,19 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
   carma_wm::test::setRouteByIds(route_ids, wm);
 
   auto p = wm->getMap()->laneletLayer.get(130).centerline()[3];
-  ROS_WARN_STREAM("Start Point: " << p.x() << ", " << p.y());
+  RCLCPP_WARN_STREAM(rclcpp::get_logger("inlanecruising_plugin"), "Start Point: " << p.x() << ", " << p.y());
 
   // -159.666, 521.683
 
-  cav_srvs::PlanTrajectoryRequest req;
+  carma_planning_msgs::srv::PlanTrajectoryRequest req;
 
   req.vehicle_state.x_pos_global = -107;
   req.vehicle_state.y_pos_global = 311.904;
   req.vehicle_state.orientation = -2.7570977;
   req.vehicle_state.longitudinal_vel = 0.0;
 
-  cav_msgs::Maneuver maneuver;
-  maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+  carma_planning_msgs::msg::Maneuver maneuver;
+  maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   maneuver.lane_following_maneuver.lane_ids = {"110"};
   maneuver.lane_following_maneuver.start_dist = 14.98835712 + 45+ 180;
   maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
@@ -201,8 +198,8 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
   maneuver.lane_following_maneuver.end_speed = 6.7056;
   maneuver.lane_following_maneuver.end_time = ros::Time(8);
 
-  cav_msgs::Maneuver maneuver2;
-  maneuver2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+  carma_planning_msgs::msg::Maneuver maneuver2;
+  maneuver2.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   maneuver2.lane_following_maneuver.lane_ids = {"110"};
   maneuver2.lane_following_maneuver.start_dist = 14.98835712 + 45+ 202;
   maneuver2.lane_following_maneuver.start_speed = 6.7056;
@@ -215,7 +212,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
   req.maneuver_plan.maneuvers.push_back(maneuver);
   req.maneuver_plan.maneuvers.push_back(maneuver2);
 
-  cav_srvs::PlanTrajectoryResponse resp;
+  carma_planning_msgs::srv::PlanTrajectoryResponse resp;
 
   inlc.plan_trajectory_cb(req, resp);
 
@@ -268,7 +265,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
   {
     downsampled_points.push_back(route_geometry[i]);
     // Uncomment to print and check if this original map matches with the generated one below 
-    // ROS_INFO_STREAM("Original point: x: " << route_geometry[i].x() << "y: " << route_geometry[i].y());
+    // RCLCPP_INFO_STREAM(rclcpp::get_logger("inlanecruising_plugin"), "Original point: x: " << route_geometry[i].x() << "y: " << route_geometry[i].y());
   }
 
   std::unique_ptr<basic_autonomy::smoothing::SplineI> fit_curve = basic_autonomy:: waypoint_generation::compute_fit(downsampled_points);
@@ -280,7 +277,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
   for(int i=0; i< downsampled_points.size(); i++){
     lanelet::BasicPoint2d pt = (*fit_curve)(parameter);
     // Uncomment to print and check if this generated map matches with the original one above 
-    // ROS_INFO_STREAM("BSpline point: x: " << values.x() << "y: " << values.y());
+    // RCLCPP_INFO_STREAM(rclcpp::get_logger("inlanecruising_plugin"), "BSpline point: x: " << values.x() << "y: " << values.y());
     spline_points.push_back(pt);
     parameter += 1.0/(downsampled_points.size()*1.0);
   }
@@ -302,7 +299,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
   }
 
   // We say it is passing if there is less than 10% error in total number of points
-  ROS_INFO_STREAM("Total points above 5 degree difference in their direction:" << error_count 
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("inlanecruising_plugin"), "Total points above 5 degree difference in their direction:" << error_count 
     << ", which is " << (double)error_count/(double)downsampled_points.size()*100 << "% of total");
   ASSERT_TRUE((double)error_count/(double)downsampled_points.size() < 0.1); 
 }

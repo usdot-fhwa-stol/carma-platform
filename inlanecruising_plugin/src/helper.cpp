@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,16 +15,16 @@
  */
 
  
-#include "ros/ros.h"
-#include <cav_srvs/PlanTrajectory.h>
+#include "ros/ros.hpp"
+#include <carma_planning_msgs/srv/plan_trajectory.hpp>
 
-bool callback(cav_srvs::PlanTrajectory::Request  &req,
-         cav_srvs::PlanTrajectory::Response &res)
+bool callback(carma_planning_msgs::srv::PlanTrajectory::Request  &req,
+         carma_planning_msgs::srv::PlanTrajectory::Response &res)
 {
     if (req.initial_trajectory_plan.trajectory_id == "YieldReq"){
         res.trajectory_plan.trajectory_id = "YieldResp";
     } 
-    ROS_ERROR("Yield callback");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("inlanecruising_plugin"), ("Yield callback");
     return true;
 }
 
