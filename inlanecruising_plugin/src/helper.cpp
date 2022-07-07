@@ -31,12 +31,12 @@ bool callback(carma_planning_msgs::srv::PlanTrajectory::Request  &req,
 // Helper node to include the callback function for yield trajectory
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "helper");
-  ros::NodeHandle n;
+  rclcpp::init(argc, argv, "helper");
+  rclcpp::NodeHandle n;
 
-  ros::ServiceServer service = n.advertiseService("plugins/YieldPlugin/plan_trajectory", callback);
-  ros::spin();
-  ros::Duration(5).sleep();
+  rclcpp::ServiceServer service = n.advertiseService("plugins/YieldPlugin/plan_trajectory", callback);
+  rclcpp::spin();
+  rclcpp::Duration(5).sleep();
 
   return 0;
 }

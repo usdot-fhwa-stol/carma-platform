@@ -25,7 +25,7 @@
 
 TEST(InLaneCruisingPluginTest, rostest1)
 {
-    ros::CARMANodeHandle nh;
+    rclcpp::CARMANodeHandle nh;
     bool flag_trajectory = false;
     bool flag_yield = false;
     std::string res = "";
@@ -33,12 +33,12 @@ TEST(InLaneCruisingPluginTest, rostest1)
     carma_planning_msgs::srv::PlanTrajectory traj_srv;
     traj_srv.request.initial_trajectory_plan.trajectory_id = "ILCReq";
    
-    ros::ServiceClient plugin1= nh.serviceClient<carma_planning_msgs::srv::PlanTrajectory>("plugins/InLaneCruisingPlugin/plan_trajectory");
+    rclcpp::ServiceClient plugin1= nh.serviceClient<carma_planning_msgs::srv::PlanTrajectory>("plugins/InLaneCruisingPlugin/plan_trajectory");
 
     RCLCPP_INFO_STREAM(rclcpp::get_logger("inlanecruising_plugin"), "ilc service: " << plugin1.getService());
-    if(plugin1.waitForExistence(ros::Duration(5.0)))
+    if(plugin1.waitForExistence(rclcpp::Duration(5.0)))
     {
-        ros::spinOnce();
+        rclcpp::spinOnce();
         RCLCPP_ERROR_STREAM(rclcpp::get_logger("inlanecruising_plugin"), ("waiting");
         if (plugin1.call(traj_srv))
         {
@@ -63,8 +63,8 @@ TEST(InLaneCruisingPluginTest, rostest1)
 
 int main (int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
-    ros::init(argc, argv, "rostest_ilc");
-    ros::NodeHandle nh;
+    rclcpp::init(argc, argv, "rostest_ilc");
+    rclcpp::NodeHandle nh;
     auto res = RUN_ALL_TESTS();
     return res;
 }

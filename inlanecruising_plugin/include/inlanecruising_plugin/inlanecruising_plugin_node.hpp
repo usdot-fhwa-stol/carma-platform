@@ -18,82 +18,62 @@
 
 #include <carma_planning_msgs/msg/plugin.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include <carma_guidance_plugins/tactical_plugin.hpp>
 #include <carma_wm_ros2/WMListener.hpp>
 #include <functional>
 #include "inlanecruising_plugin.hpp"
 #include "inlanecruising_config.hpp"
+#include <carma_planning_msgs/msg/trajectory_plan.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
+#include <carma_planning_msgs/msg/plugin.hpp>
+#include <carma_planning_msgs/srv/plan_trajectory.hpp>
+#include <carma_debug_ros2_msgs/msg/trajectory_curvature_speeds.hpp>
 
 namespace inlanecruising_plugin
 {
 /**
  * \brief ROS node for the InLaneCruisingPlugin
  */ 
-class InLaneCruisingPluginNode
+class InLaneCruisingPluginNode : public carma_guidance_plugins::TacticalPlugin
 {
 public:
-
+    
   /**
-   * \brief Entrypoint for this node
-   */ 
-  void run()
-  {
-    ros::CARMANodeHandle nh;
-    ros::CARMANodeHandle pnh("~");
+   * \brief Node constructor 
+   */
+  explicit InLaneCruisingPluginNode(const rclcpp::NodeOptions &);
 
-    carma_wm::WMListener wml;
-    auto wm_ = wml.getWorldModel();
+  ////
+  // Overrides
+  ////
+  carma_ros2_utils::CallbackReturn on_configure_plugin();
+   
+  bool get_availability();
 
-    ros::Publisher discovery_pub = nh.advertise<carma_planning_msgs::msg::Plugin>("plugin_discovery", 1);
-    ros::Publisher trajectory_debug_pub = pnh.advertise<carma_debug_msgs::TrajectoryCurvatureSpeeds>("debug/trajectory_planning", 1);
-    
-    InLaneCruisingPluginConfig config;
+  std::string get_plugin_name();
 
-    pnh.param<double>("trajectory_time_length", config.trajectory_time_length, config.trajectory_time_length);
-    pnh.param<double>("curve_resample_step_size", config.curve_resample_step_size, config.curve_resample_step_size);
-    pnh.param<int>("default_downsample_ratio", config.default_downsample_ratio, config.default_downsample_ratio);
-    pnh.param<int>("turn_downsample_ratio", config.turn_downsample_ratio, config.turn_downsample_ratio);
-    pnh.param<double>("minimum_speed", config.minimum_speed, config.minimum_speed);
-    pnh.param<double>("max_accel_multiplier", config.max_accel_multiplier, config.max_accel_multiplier);
-    pnh.param<double>("lat_accel_multiplier", config.lat_accel_multiplier, config.lat_accel_multiplier);
-    pnh.param<double>("back_distance", config.back_distance, config.back_distance);
-    pnh.param<int>("speed_moving_average_window_size", config.speed_moving_average_window_size,
-                     config.speed_moving_average_window_size);
-    pnh.param<int>("curvature_moving_average_window_size", config.curvature_moving_average_window_size,
-                     config.curvature_moving_average_window_size);
-    pnh.param<double>("buffer_ending_downtrack", config.buffer_ending_downtrack, config.buffer_ending_downtrack);
-    pnh.param<double>("/vehicle_acceleration_limit", config.max_accel, config.max_accel);
-    pnh.param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
-    pnh.param<bool>("enable_object_avoidance", config.enable_object_avoidance, config.enable_object_avoidance);
-    pnh.param<double>("buffer_ending_downtrack", config.buffer_ending_downtrack, config.buffer_ending_downtrack);
+  std::string get_version_id();
 
-    RCLCPP_INFO_STREAM(get_logger(), "InLaneCruisingPlugin Params" << config);
-    
-    config.lateral_accel_limit = config.lateral_accel_limit * config.lat_accel_multiplier;
-    config.max_accel = config.max_accel *  config.max_accel_multiplier;
-    
-    // Determine if we will enable debug publishing by checking the current log level of the node
-    std::map< std::string, ros::console::levels::Level> logger;
-    ros::console::get_loggers(logger);
-    config.publish_debug = logger[ROSCONSOLE_DEFAULT_NAME] == ros::console::levels::Debug;
+  rcl_interfaces::msg::SetParametersResult parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
 
-    RCLCPP_INFO_STREAM(get_logger(), "InLaneCruisingPlugin Params After Accel Change" << config);
-    
-    InLaneCruisingPlugin worker(wm_, config, [&discovery_pub](const auto& msg) { discovery_pub.publish(msg); },
-                                             [&trajectory_debug_pub](const auto& msg) { trajectory_debug_pub.publish(msg); });
+  void plan_trajectory_callback(
+    std::shared_ptr<rmw_request_id_t>, 
+    carma_planning_msgs::srv::PlanTrajectory::Request req, 
+    carma_planning_msgs::srv::PlanTrajectory::Response resp);
 
-    ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory",
-                                            &InLaneCruisingPlugin::plan_trajectory_cb, &worker);
+private:
 
-    //TODO: Update yield client to use the Plugin Manager capabilities query, in case someone else wants to add an alternate yield implementation 
-    ros::ServiceClient yield_client = nh.serviceClient<carma_planning_msgs::srv::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
-    worker.set_yield_client(yield_client);
-    RCLCPP_INFO_STREAM(get_logger(), "Yield Client Set");
+  // Node configuration
+  InLaneCruisingPluginConfig config_;
 
-    ros::Timer discovery_pub_timer_ = nh.createTimer(
-            ros::Duration(ros::Rate(10.0)),
-            [&worker](const auto&) {worker.onSpin();});
-    ros::CARMANodeHandle::spin();
-  }
+  carma_ros2_utils::PubPtr<carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds> trajectory_debug_pub_;
+
+  // Service Clients
+  carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
+
+  // Worker
+  InLaneCruisingPlugin worker_;
+
 };
 
 }  // namespace inlanecruising_plugin

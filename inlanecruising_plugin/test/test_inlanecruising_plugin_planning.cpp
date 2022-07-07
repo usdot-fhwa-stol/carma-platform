@@ -98,23 +98,23 @@ TEST(InLaneCruisingPluginTest, testPlanningCallback)
   maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   maneuver.lane_following_maneuver.lane_ids = {"1200"};
   maneuver.lane_following_maneuver.start_dist = 5.0;
-  maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
+  maneuver.lane_following_maneuver.start_time = rclcpp::Time(0.0);
   maneuver.lane_following_maneuver.start_speed = 0.0;
 
   maneuver.lane_following_maneuver.end_dist = 14.98835712;
   maneuver.lane_following_maneuver.end_speed = 6.7056;
-  maneuver.lane_following_maneuver.end_time = ros::Time(4.4704);
+  maneuver.lane_following_maneuver.end_time = rclcpp::Time(4.4704);
 
   carma_planning_msgs::msg::Maneuver maneuver2;
   maneuver2.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   maneuver2.lane_following_maneuver.lane_ids = {"1200"};
   maneuver2.lane_following_maneuver.start_dist = 14.98835712;
   maneuver2.lane_following_maneuver.start_speed = 6.7056;
-  maneuver2.lane_following_maneuver.start_time = ros::Time(4.4704);
+  maneuver2.lane_following_maneuver.start_time = rclcpp::Time(4.4704);
 
   maneuver2.lane_following_maneuver.end_dist = 14.98835712 + 50.0;
   maneuver2.lane_following_maneuver.end_speed = 6.7056;
-  maneuver2.lane_following_maneuver.end_time = ros::Time(4.4704 + 7.45645430685);
+  maneuver2.lane_following_maneuver.end_time = rclcpp::Time(4.4704 + 7.45645430685);
 
   // Create a third maneuver of a different type to test the final element in resp.related_maneuvers
   carma_planning_msgs::msg::Maneuver maneuver3;
@@ -191,23 +191,23 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
   maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   maneuver.lane_following_maneuver.lane_ids = {"110"};
   maneuver.lane_following_maneuver.start_dist = 14.98835712 + 45+ 180;
-  maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
+  maneuver.lane_following_maneuver.start_time = rclcpp::Time(0.0);
   maneuver.lane_following_maneuver.start_speed = 0.0;
 
   maneuver.lane_following_maneuver.end_dist = 14.98835712 + 50.0 + 45 + 200;
   maneuver.lane_following_maneuver.end_speed = 6.7056;
-  maneuver.lane_following_maneuver.end_time = ros::Time(8);
+  maneuver.lane_following_maneuver.end_time = rclcpp::Time(8);
 
   carma_planning_msgs::msg::Maneuver maneuver2;
   maneuver2.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   maneuver2.lane_following_maneuver.lane_ids = {"110"};
   maneuver2.lane_following_maneuver.start_dist = 14.98835712 + 45+ 202;
   maneuver2.lane_following_maneuver.start_speed = 6.7056;
-  maneuver2.lane_following_maneuver.start_time = ros::Time(4.4704);
+  maneuver2.lane_following_maneuver.start_time = rclcpp::Time(4.4704);
 
   maneuver2.lane_following_maneuver.end_dist = 14.98835712 + 50.0 + 45 + 250;
   maneuver2.lane_following_maneuver.end_speed = 6.7056;
-  maneuver2.lane_following_maneuver.end_time = ros::Time(4.4704 + 7.45645430685 + 37.31);
+  maneuver2.lane_following_maneuver.end_time = rclcpp::Time(4.4704 + 7.45645430685 + 37.31);
 
   req.maneuver_plan.maneuvers.push_back(maneuver);
   req.maneuver_plan.maneuvers.push_back(maneuver2);
@@ -311,10 +311,10 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
 int main(int argc, char **argv)
 {
     testing::InitGoogleTest(&argc, argv);
-    ros::Time::init();
+    rclcpp::Time::init();
     ROSCONSOLE_AUTOINIT;
-    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
-      ros::console::notifyLoggerLevelsChanged();
+    if( rclcpp::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, rclcpp::console::levels::Debug) ) {
+      rclcpp::console::notifyLoggerLevelsChanged();
     }
     return RUN_ALL_TESTS();
 }

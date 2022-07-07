@@ -21,7 +21,7 @@
 int main(int argc, char** argv)
 {
   
-    ros::init(argc, argv, "inlanecruising_plugin");
+    rclcpp::init(argc, argv, "inlanecruising_plugin");
     inlanecruising_plugin::InLaneCruisingPluginNode ip;
     ip.run();
     return 0;

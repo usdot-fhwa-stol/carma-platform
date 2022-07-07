@@ -37,7 +37,7 @@
 namespace inlanecruising_plugin
 {
 using PublishPluginDiscoveryCB = std::function<void(const carma_planning_msgs::msg::Plugin&)>;
-using DebugPublisher = std::function<void(const carma_debug_msgs::TrajectoryCurvatureSpeeds&)>;
+using DebugPublisher = std::function<void(const carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds&)>;
 using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
 
 /**
@@ -49,14 +49,13 @@ class InLaneCruisingPlugin
 public:
   /**
    * \brief Constructor
-   * 
+   * \param nh Pointer to the lifecyle node
    * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
    * \param config The configuration to be used for this object
    * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
    * \param debug_publisher Callback which will publish a debug message. The callback defaults to no-op.
    */ 
-  InLaneCruisingPlugin(carma_wm::WorldModelConstPtr wm, InLaneCruisingPluginConfig config,
-                       PublishPluginDiscoveryCB plugin_discovery_publisher, DebugPublisher debug_publisher=[](const auto& msg){});
+  InLaneCruisingPlugin(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, carma_wm::WorldModelConstPtr wm, InLaneCruisingPluginConfig config, DebugPublisher debug_publisher=[](const auto& msg){});
 
   /**
    * \brief Service callback for trajectory planning
@@ -64,45 +63,40 @@ public:
    * \param req The service request
    * \param resp The service response
    * 
-   * \return True if success. False otherwise
+   * \return True if success. False otherwise TODO
    */ 
-  bool plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectoryRequest& req, carma_planning_msgs::srv::PlanTrajectoryResponse& resp);
-
-  /**
-   * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
-   * 
-   * \return True if the node should continue running. False otherwise
-   */ 
-  bool onSpin();
+  void plan_trajectory_callback(
+    carma_planning_msgs::srv::PlanTrajectory::Request req, 
+    carma_planning_msgs::srv::PlanTrajectory::Response resp);
 
   /**
    * \brief set the yield service
    * 
    * \param yield_srv input yield service
    */
-  void set_yield_client(ros::ServiceClient& client);
+  void set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client);
 
    /**
    * \brief verify if the input yield trajectory plan is valid
    * 
    * \param yield_plan input yield trajectory plan
    *
-   * \return true or falss
+   * \return true or false
    */
   bool validate_yield_plan(const carma_planning_msgs::msg::TrajectoryPlan& yield_plan);
 
   carma_planning_msgs::msg::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
   
-private:
+  std::string plugin_name_;
+  std::string version_id_;
 
+private:
   carma_wm::WorldModelConstPtr wm_;
   InLaneCruisingPluginConfig config_;
-  PublishPluginDiscoveryCB plugin_discovery_publisher_;
-  ros::ServiceClient yield_client_;
-
-  carma_planning_msgs::msg::Plugin plugin_discovery_msg_;
+  carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
   DebugPublisher debug_publisher_;
-  carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg_;
+  carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds debug_msg_;
+  std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
 
 };
 
