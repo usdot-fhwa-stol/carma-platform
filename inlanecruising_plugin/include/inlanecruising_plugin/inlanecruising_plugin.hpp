@@ -40,6 +40,8 @@ using PublishPluginDiscoveryCB = std::function<void(const carma_planning_msgs::m
 using DebugPublisher = std::function<void(const carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds&)>;
 using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
 
+static const std::string ILC_LOGGER = "inlanecruising_plugin";
+
 /**
  * \brief Class containing primary business logic for the In-Lane Cruising Plugin
  * 

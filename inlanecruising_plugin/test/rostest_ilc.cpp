@@ -35,22 +35,22 @@ TEST(InLaneCruisingPluginTest, rostest1)
    
     rclcpp::ServiceClient plugin1= nh.serviceClient<carma_planning_msgs::srv::PlanTrajectory>("plugins/InLaneCruisingPlugin/plan_trajectory");
 
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("inlanecruising_plugin"), "ilc service: " << plugin1.getService());
+    RCLCPP_INFO_STREAM(rclcpp::get_logger(ILC_LOGGER), "ilc service: " << plugin1.getService());
     if(plugin1.waitForExistence(rclcpp::Duration(5.0)))
     {
         rclcpp::spinOnce();
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("inlanecruising_plugin"), ("waiting");
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger(ILC_LOGGER), ("waiting");
         if (plugin1.call(traj_srv))
         {
             res = traj_srv.response.trajectory_plan.trajectory_id;
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("inlanecruising_plugin"), ("ILC Traj Service called");
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger(ILC_LOGGER), ("ILC Traj Service called");
             flag_trajectory = true;
             flag_yield = true;
             
         }
         else
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("inlanecruising_plugin"), ("ILC Trajectory Service not called");
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger(ILC_LOGGER), ("ILC Trajectory Service not called");
             res = "error";
         }
     }

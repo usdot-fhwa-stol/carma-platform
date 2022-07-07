@@ -32,7 +32,7 @@ void printDebugPerLine(const std::vector<T>& values, std::function<std::string(T
 {
   for (const auto& value : values)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("inlanecruising_plugin"), func(value));
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(ILC_LOGGER), func(value));
   }
 }
 
@@ -53,7 +53,7 @@ void printDoublesPerLineWithPrefix(const std::string& prefix, const std::vector<
 {
   for (const auto& value : values)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("inlanecruising_plugin"), prefix << value);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(ILC_LOGGER), prefix << value);
   }
 }
 
