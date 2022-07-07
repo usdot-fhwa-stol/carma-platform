@@ -15,6 +15,7 @@
  */
 
 #include <inlanecruising_plugin/inlanecruising_plugin.hpp>
+#include <inlanecruising_plugin/inlanecruising_plugin_node.hpp>
 #include <gtest/gtest.h>
 #include <rclcpp/rclcpp.hpp>
 #include <carma_wm_ros2/CARMAWorldModel.hpp>
@@ -60,7 +61,8 @@ TEST(InLaneCruisingPluginTest, trajectory_from_points_times_orientations)
   InLaneCruisingPluginConfig config;
   config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+  auto node = std::make_shared<inlanecruising_plugin::InLaneCruisingPluginNode>(rclcpp::NodeOptions());
+  InLaneCruisingPlugin plugin(node, wm, config, [&](auto msg) {});
 
   lanelet::BasicPoint2d p1(0.0, 0.0);
   lanelet::BasicPoint2d p2(2.0, 0.0);
@@ -71,7 +73,7 @@ TEST(InLaneCruisingPluginTest, trajectory_from_points_times_orientations)
 
   std::vector<double> times = { 0, 2, 4, 8 };
   std::vector<double> yaws = { 0.2, 0.5, 0.6, 1.0 };
-  rclcpp::Time startTime(1.0);
+  rclcpp::Time startTime(1.0, 0);
   std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> traj_points =
       plugin.trajectory_from_points_times_orientations(points, times, yaws, startTime);
 
@@ -114,7 +116,8 @@ TEST(InLaneCruisingPluginTest, constrain_to_time_boundary)
   InLaneCruisingPluginConfig config;
   config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+  auto node = std::make_shared<inlanecruising_plugin::InLaneCruisingPluginNode>(rclcpp::NodeOptions());
+  InLaneCruisingPlugin plugin(node, wm, config, [&](auto msg) {});
 
   std::vector<PointSpeedPair> points;
 
@@ -167,7 +170,8 @@ TEST(InLaneCruisingPluginTest, get_nearest_index_by_downtrack_test)
   InLaneCruisingPluginConfig config;
   config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+  auto node = std::make_shared<inlanecruising_plugin::InLaneCruisingPluginNode>(rclcpp::NodeOptions());
+  InLaneCruisingPlugin plugin(node, wm, config, [&](auto msg) {});
   std::vector<PointSpeedPair> points;
   std::vector<lanelet::BasicPoint2d> basic_points;
   PointSpeedPair p;
@@ -210,7 +214,8 @@ TEST(InLaneCruisingPluginTest, get_nearest_basic_point_index)
   InLaneCruisingPluginConfig config;
   config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+  auto node = std::make_shared<inlanecruising_plugin::InLaneCruisingPluginNode>(rclcpp::NodeOptions());
+  InLaneCruisingPlugin plugin(node, wm, config, [&](auto msg) {});
 
   std::vector<PointSpeedPair> points;
 
@@ -245,7 +250,8 @@ TEST(InLaneCruisingPluginTest, split_point_speed_pairs)
   InLaneCruisingPluginConfig config;
   config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+  auto node = std::make_shared<inlanecruising_plugin::InLaneCruisingPluginNode>(rclcpp::NodeOptions());
+  InLaneCruisingPlugin plugin(node, wm, config, [&](auto msg) {});
 
   std::vector<PointSpeedPair> points;
 
@@ -297,7 +303,8 @@ TEST(InLaneCruisingPluginTest, compute_fit)
   InLaneCruisingPluginConfig config;
   config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+  auto node = std::make_shared<inlanecruising_plugin::InLaneCruisingPluginNode>(rclcpp::NodeOptions());
+  InLaneCruisingPlugin plugin(node, wm, config, [&](auto msg) {});
 
   ///////////////////////
   // Check straight line
@@ -405,7 +412,8 @@ TEST(InLaneCruisingPluginTest, optimize_speed)
   InLaneCruisingPluginConfig config;
   config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+  auto node = std::make_shared<inlanecruising_plugin::InLaneCruisingPluginNode>(rclcpp::NodeOptions());
+  InLaneCruisingPlugin plugin(node, wm, config, [&](auto msg) {});
 
   std::vector<double> downtracks, curv_speeds;
   downtracks.push_back(0);
@@ -499,7 +507,8 @@ TEST(InLaneCruisingPluginTest, compute_curvature_at)
   InLaneCruisingPluginConfig config;
   config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+  auto node = std::make_shared<inlanecruising_plugin::InLaneCruisingPluginNode>(rclcpp::NodeOptions());
+  InLaneCruisingPlugin plugin(node, wm, config, [&](auto msg) {});
 
   ///////////////////////
   // Check straight line
@@ -586,7 +595,8 @@ TEST(InLaneCruisingPluginTest, attach_back_points)
   InLaneCruisingPluginConfig config;
   config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+  auto node = std::make_shared<inlanecruising_plugin::InLaneCruisingPluginNode>(rclcpp::NodeOptions());
+  InLaneCruisingPlugin plugin(node, wm, config, [&](auto msg) {});
 
   std::vector<PointSpeedPair> points;
   std::vector<PointSpeedPair> future_points;
@@ -633,60 +643,62 @@ TEST(InLaneCruisingPluginTest, test_verify_yield)
   InLaneCruisingPluginConfig config;
   config.enable_object_avoidance = true;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+  auto node = std::make_shared<inlanecruising_plugin::InLaneCruisingPluginNode>(rclcpp::NodeOptions());
+
+  InLaneCruisingPlugin plugin(node, wm, config, [&](auto msg) {});
 
   std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_points;
 
-    rclcpp::Time startTime(rclcpp::Time::now());
+  rclcpp::Time startTime = node->now();
 
-    carma_planning_msgs::msg::TrajectoryPlanPoint point_2;
-    point_2.x = 5.0;
-    point_2.y = 0.0;
-    point_2.target_time = startTime + rclcpp::Duration(1);
-    point_2.lane_id = "1";
-    trajectory_points.push_back(point_2);
+  carma_planning_msgs::msg::TrajectoryPlanPoint point_2;
+  point_2.x = 5.0;
+  point_2.y = 0.0;
+  point_2.target_time = startTime + rclcpp::Duration(1, 0);
+  point_2.lane_id = "1";
+  trajectory_points.push_back(point_2);
 
-    carma_planning_msgs::msg::TrajectoryPlanPoint point_3;
-    point_3.x = 10.0;
-    point_3.y = 0.0;
-    point_3.target_time = startTime + rclcpp::Duration(2);
-    point_3.lane_id = "1";
-    trajectory_points.push_back(point_3);
+  carma_planning_msgs::msg::TrajectoryPlanPoint point_3;
+  point_3.x = 10.0;
+  point_3.y = 0.0;
+  point_3.target_time = startTime + rclcpp::Duration(2, 0);
+  point_3.lane_id = "1";
+  trajectory_points.push_back(point_3);
 
 
-    carma_planning_msgs::msg::TrajectoryPlan tp;
-    tp.trajectory_points = trajectory_points;
+  carma_planning_msgs::msg::TrajectoryPlan tp;
+  tp.trajectory_points = trajectory_points;
 
-    bool res = plugin.validate_yield_plan(tp);
-    ASSERT_TRUE(plugin.validate_yield_plan(tp));
+  bool res = plugin.validate_yield_plan(tp);
+  ASSERT_TRUE(plugin.validate_yield_plan(tp));
 
-    carma_planning_msgs::msg::TrajectoryPlan tp2;
+  carma_planning_msgs::msg::TrajectoryPlan tp2;
 
-    carma_planning_msgs::msg::TrajectoryPlanPoint point_4;
-    point_4.x = 5.0;
-    point_4.y = 0.0;
-    point_4.target_time = startTime + rclcpp::Duration(1);
-    point_4.lane_id = "1";
-    tp2.trajectory_points.push_back(point_4);
-    
-    ASSERT_FALSE(plugin.validate_yield_plan(tp2));
+  carma_planning_msgs::msg::TrajectoryPlanPoint point_4;
+  point_4.x = 5.0;
+  point_4.y = 0.0;
+  point_4.target_time = startTime + rclcpp::Duration(1, 0);
+  point_4.lane_id = "1";
+  tp2.trajectory_points.push_back(point_4);
+  
+  ASSERT_FALSE(plugin.validate_yield_plan(tp2));
 
-    carma_planning_msgs::msg::TrajectoryPlan tp3;
+  carma_planning_msgs::msg::TrajectoryPlan tp3;
 
-    carma_planning_msgs::msg::TrajectoryPlanPoint point_5;
-    point_5.x = 5.0;
-    point_5.y = 0.0;
-    point_5.target_time = startTime;
-    point_5.lane_id = "1";
-    tp3.trajectory_points.push_back(point_5);
+  carma_planning_msgs::msg::TrajectoryPlanPoint point_5;
+  point_5.x = 5.0;
+  point_5.y = 0.0;
+  point_5.target_time = startTime;
+  point_5.lane_id = "1";
+  tp3.trajectory_points.push_back(point_5);
 
-    carma_planning_msgs::msg::TrajectoryPlanPoint point_6;
-    point_6.x = 10.0;
-    point_6.y = 0.0;
-    point_6.target_time = startTime + rclcpp::Duration(1);
-    point_6.lane_id = "1";
-    tp3.trajectory_points.push_back(point_6);
+  carma_planning_msgs::msg::TrajectoryPlanPoint point_6;
+  point_6.x = 10.0;
+  point_6.y = 0.0;
+  point_6.target_time = startTime + rclcpp::Duration(1, 0);
+  point_6.lane_id = "1";
+  tp3.trajectory_points.push_back(point_6);
 
-    ASSERT_FALSE(plugin.validate_yield_plan(tp2));
+  ASSERT_FALSE(plugin.validate_yield_plan(tp2));
     
 }

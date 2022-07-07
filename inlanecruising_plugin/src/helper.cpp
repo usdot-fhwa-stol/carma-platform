@@ -15,7 +15,7 @@
  */
 
  
-#include "ros/ros.hpp"
+#include <rclcpp/rclcpp.hpp>
 #include <carma_planning_msgs/srv/plan_trajectory.hpp>
 
 bool callback(carma_planning_msgs::srv::PlanTrajectory::Request  &req,
@@ -24,19 +24,19 @@ bool callback(carma_planning_msgs::srv::PlanTrajectory::Request  &req,
     if (req.initial_trajectory_plan.trajectory_id == "YieldReq"){
         res.trajectory_plan.trajectory_id = "YieldResp";
     } 
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("inlanecruising_plugin"), ("Yield callback");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("inlanecruising_plugin"), "Yield callback");
     return true;
 }
 
-// Helper node to include the callback function for yield trajectory
-int main(int argc, char **argv)
-{
-  rclcpp::init(argc, argv, "helper");
-  rclcpp::NodeHandle n;
-
-  rclcpp::ServiceServer service = n.advertiseService("plugins/YieldPlugin/plan_trajectory", callback);
-  rclcpp::spin();
-  rclcpp::Duration(5).sleep();
-
-  return 0;
-}
+// Helper node to include the callback function for yield trajectory TODO mish
+//int main(int argc, char **argv)
+//{
+//  rclcpp::init(argc, argv, "helper");
+//  rclcpp::NodeHandle n;
+//
+//  rclcpp::ServiceServer service = n.advertiseService("plugins/YieldPlugin/plan_trajectory", callback);
+//  rclcpp::spin();
+//  rclcpp::Duration(5).sleep();
+//
+//  return 0;
+//}

@@ -45,22 +45,23 @@ InLaneCruisingPlugin::InLaneCruisingPlugin(std::shared_ptr<carma_ros2_utils::Car
 }
 
 void InLaneCruisingPlugin::plan_trajectory_callback(
-  carma_planning_msgs::srv::PlanTrajectory::Request req, 
-  carma_planning_msgs::srv::PlanTrajectory::Response resp)
+  std::shared_ptr<rmw_request_id_t> srv_header, 
+  carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+  carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
 {
-  rclcpp::WallTime start_time = rclcpp::WallTime::now();  // Start timeing the execution time for planning so it can be logged
+  std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();  // Start timing the execution time for planning so it can be logged
 
-  lanelet::BasicPoint2d veh_pos(req.vehicle_state.x_pos_global, req.vehicle_state.y_pos_global);
+  lanelet::BasicPoint2d veh_pos(req->vehicle_state.x_pos_global, req->vehicle_state.y_pos_global);
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
   // Only plan the trajectory for the initial LANE_FOLLOWING maneuver and any immediately sequential maneuvers of the same type
   std::vector<carma_planning_msgs::msg::Maneuver> maneuver_plan;
-  for(size_t i = req.maneuver_index_to_plan; i < req.maneuver_plan.maneuvers.size(); i++)
+  for(size_t i = req->maneuver_index_to_plan; i < req->maneuver_plan.maneuvers.size(); i++)
   {
-    if(req.maneuver_plan.maneuvers[i].type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING)
+    if(req->maneuver_plan.maneuvers[i].type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING)
     {
-      maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
-      resp.related_maneuvers.push_back(i);
+      maneuver_plan.push_back(req->maneuver_plan.maneuvers[i]);
+      resp->related_maneuvers.push_back(i);
     }
     else
     {
@@ -84,7 +85,7 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
                                                                             config_.buffer_ending_downtrack);
   
   auto points_and_target_speeds = basic_autonomy::waypoint_generation::create_geometry_profile(maneuver_plan, std::max((double)0, current_downtrack - config_.back_distance),
-                                                                         wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config);
+                                                                         wm_, ending_state_before_buffer_, req->vehicle_state, wpg_general_config, wpg_detail_config);
 
   RCLCPP_DEBUG_STREAM(nh_->get_logger(), "points_and_target_speeds: " << points_and_target_speeds.size());
 
@@ -96,34 +97,39 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
   original_trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
   original_trajectory.trajectory_points = basic_autonomy:: waypoint_generation::compose_lanefollow_trajectory_from_path(points_and_target_speeds, 
-                                                                                req.vehicle_state, req.header.stamp, wm_, ending_state_before_buffer_, debug_msg_, 
+                                                                                req->vehicle_state, req->header.stamp, wm_, ending_state_before_buffer_, debug_msg_, 
                                                                                 wpg_detail_config); // Compute the trajectory
-  original_trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
+  original_trajectory.initial_longitudinal_velocity = std::max(req->vehicle_state.longitudinal_vel, config_.minimum_speed);
 
   // Set the planning plugin field name
   for (auto& p : original_trajectory.trajectory_points) {
-    p.planner_plugin_name = nh_->get_plugin_name();
+    p.planner_plugin_name = plugin_name_;
   }
   
   
   if (config_.enable_object_avoidance)
   {
     RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Activate Object Avoidance");
-    if (yield_client_ && yield_client_.exists() && yield_client_.isValid())
+    if (yield_client_ && yield_client_->service_is_ready())
     {
       RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Yield Client is valid");
-      carma_planning_msgs::srv::PlanTrajectory yield_srv;
-      yield_srv.request.initial_trajectory_plan = original_trajectory;
-      yield_srv.request.vehicle_state = req.vehicle_state;
+      
+      auto yield_srv = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
+      yield_srv->initial_trajectory_plan = original_trajectory;
+      yield_srv->vehicle_state = req->vehicle_state;
 
-      if (yield_client_.call(yield_srv))
+      auto yield_resp = yield_client_->async_send_request(yield_srv);
+
+      auto future_status = yield_resp.wait_for(std::chrono::milliseconds(100));
+
+      if (future_status == std::future_status::ready)
       {
         RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Received Traj from Yield");
-        carma_planning_msgs::msg::TrajectoryPlan yield_plan = yield_srv.response.trajectory_plan;
+        carma_planning_msgs::msg::TrajectoryPlan yield_plan = yield_resp.get()->trajectory_plan;
         if (validate_yield_plan(yield_plan))
         {
           RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Yield trajectory validated");
-          resp.trajectory_plan = yield_plan;
+          resp->trajectory_plan = yield_plan;
         }
         else
         {
@@ -144,22 +150,20 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
   else
   {
     RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Ignored Object Avoidance");
-    resp.trajectory_plan = original_trajectory;
+    resp->trajectory_plan = original_trajectory;
   }
 
   if (config_.publish_debug) { // Publish the debug message if in debug logging mode
-    debug_msg_.trajectory_plan = resp.trajectory_plan;
+    debug_msg_.trajectory_plan = resp->trajectory_plan;
     debug_publisher_(debug_msg_); 
   }
   
-  resp.maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+  resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
-  rclcpp::WallTime end_time = rclcpp::WallTime::now();  // Planning complete
+  std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete
 
-  rclcpp::WallDuration duration = end_time - start_time;
-  RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ExecutionTime: " << duration.toSec());
-
-  return true;
+  auto duration = end_time - start_time;
+  RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ExecutionTime: " << std::chrono::duration<double>(duration).count());
 }
 
 void InLaneCruisingPlugin::set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client)
@@ -173,7 +177,7 @@ bool InLaneCruisingPlugin::validate_yield_plan(const carma_planning_msgs::msg::T
   {
     RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Yield Trajectory Time" << rclcpp::Time(yield_plan.trajectory_points[0].target_time).seconds());
     RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Now:" << nh_->now().seconds());
-    if (rclcpp::Time(yield_plan.trajectory_points[0].target_time) + rclcpp::Duration(5.0) > nh_->now())
+    if (rclcpp::Time(yield_plan.trajectory_points[0].target_time) + rclcpp::Duration(5.0, 0) > nh_->now())
     {
       return true;
     }

@@ -66,8 +66,9 @@ public:
    * \return True if success. False otherwise TODO
    */ 
   void plan_trajectory_callback(
-    carma_planning_msgs::srv::PlanTrajectory::Request req, 
-    carma_planning_msgs::srv::PlanTrajectory::Response resp);
+    std::shared_ptr<rmw_request_id_t> srv_header, 
+    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+    carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp);
 
   /**
    * \brief set the yield service

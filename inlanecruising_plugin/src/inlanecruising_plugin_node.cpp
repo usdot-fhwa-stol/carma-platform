@@ -19,7 +19,7 @@
 namespace inlanecruising_plugin
 {
   namespace std_ph = std::placeholders;
-
+  
   InLaneCruisingPluginNode::InLaneCruisingPluginNode(const rclcpp::NodeOptions &options)
       : carma_guidance_plugins::TacticalPlugin(options)
   {
@@ -43,7 +43,7 @@ namespace inlanecruising_plugin
     config_.enable_object_avoidance = declare_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
     config_.buffer_ending_downtrack = declare_parameter<double>("buffer_ending_downtrack", config_.buffer_ending_downtrack);
   }
-
+  
   carma_ros2_utils::CallbackReturn InLaneCruisingPluginNode::on_configure_plugin()
   {
     auto wm_ = get_world_model();
@@ -83,11 +83,11 @@ namespace inlanecruising_plugin
 
     RCLCPP_INFO_STREAM(get_logger(), "InLaneCruisingPlugin Params After Accel Change" << config_);
     
-    InLaneCruisingPlugin worker_(shared_from_this(), wm_, config_,[this](const carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds& msg) { trajectory_debug_pub_->publish(msg); });
+    auto worker_ = std::make_shared<InLaneCruisingPlugin>(shared_from_this(), wm_, config_,[this](const carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds& msg) { trajectory_debug_pub_->publish(msg); });
 
     //TODO: Update yield client to use the Plugin Manager capabilities query, in case someone else wants to add an alternate yield implementation 
     yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
-    worker_.set_yield_client(yield_client_);
+    worker_->set_yield_client(yield_client_);
     RCLCPP_INFO_STREAM(get_logger(), "Yield Client Set");
 
     // Return success if everything initialized successfully
@@ -132,20 +132,26 @@ namespace inlanecruising_plugin
 
   std::string InLaneCruisingPluginNode::get_plugin_name()
   {
-    return worker_.plugin_name_;
+    return worker_->plugin_name_;
   }
 
   std::string InLaneCruisingPluginNode::get_version_id()
   {
-    return worker_.version_id_;
+    return worker_->version_id_;
   }
 
   void InLaneCruisingPluginNode::plan_trajectory_callback(
-    std::shared_ptr<rmw_request_id_t>, 
-    carma_planning_msgs::srv::PlanTrajectory::Request req, 
-    carma_planning_msgs::srv::PlanTrajectory::Response resp)
+    std::shared_ptr<rmw_request_id_t> srv_header, 
+    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+    carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
   {
-    worker_.plan_trajectory_callback(req, resp);
+    worker_->plan_trajectory_callback(srv_header, req, resp);
   }
 
 }  // namespace inlanecruising_plugin
+
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+// Register the component with class_loader
+RCLCPP_COMPONENTS_REGISTER_NODE(inlanecruising_plugin::InLaneCruisingPluginNode)

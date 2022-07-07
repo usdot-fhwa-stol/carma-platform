@@ -48,18 +48,18 @@ public:
   ////
   carma_ros2_utils::CallbackReturn on_configure_plugin();
    
-  bool get_availability();
+  bool get_availability() override;
 
-  std::string get_plugin_name();
+  std::string get_plugin_name() override;
 
-  std::string get_version_id();
+  std::string get_version_id() override;
 
   rcl_interfaces::msg::SetParametersResult parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
 
   void plan_trajectory_callback(
-    std::shared_ptr<rmw_request_id_t>, 
-    carma_planning_msgs::srv::PlanTrajectory::Request req, 
-    carma_planning_msgs::srv::PlanTrajectory::Response resp);
+    std::shared_ptr<rmw_request_id_t> srv_header, 
+    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+    carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp) override;
 
 private:
 
@@ -72,7 +72,7 @@ private:
   carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
 
   // Worker
-  InLaneCruisingPlugin worker_;
+  std::shared_ptr<InLaneCruisingPlugin> worker_;
 
 };
 

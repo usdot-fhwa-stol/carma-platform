@@ -15,15 +15,19 @@
  */
 
 #include <rclcpp/rclcpp.hpp>
-
 #include <inlanecruising_plugin/inlanecruising_plugin_node.hpp>
 
-int main(int argc, char** argv)
+int main(int argc, char **argv) 
 {
-  
-    rclcpp::init(argc, argv, "inlanecruising_plugin");
-    inlanecruising_plugin::InLaneCruisingPluginNode ip;
-    ip.run();
-    return 0;
+  rclcpp::init(argc, argv);
 
-};
+  auto node = std::make_shared<inlanecruising_plugin::InLaneCruisingPluginNode>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
+
+  rclcpp::shutdown();
+
+  return 0;
+}

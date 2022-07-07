@@ -70,6 +70,9 @@ def generate_launch_description():
     plan_delegator_param_file = os.path.join(
         get_package_share_directory('plan_delegator'), 'config/plan_delegator_params.yaml')
     
+    inlanecruising_plugin_file_path = os.path.join(
+        get_package_share_directory('inlanecruising_plugin'), 'config/parameters.yaml')
+
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
@@ -200,7 +203,22 @@ def generate_launch_description():
                 parameters=[
                     guidance_param_file
                 ]
-            )
+            ),
+            ComposableNode(
+                    package='inlanecruising_plugin',
+                    plugin='inlanecruising_plugin::InLaneCruisingPluginNode',
+                    name='inlanecruising_plugin',
+                    extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('inlanecruising_plugin', env_log_levels) }
+                ],
+                remappings = [
+                    ("final_waypoints", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/base_waypoints" ] ),
+                ],
+                parameters=[
+                    inlanecruising_plugin_file_path
+                ]
+            ),
         ]
     )
 

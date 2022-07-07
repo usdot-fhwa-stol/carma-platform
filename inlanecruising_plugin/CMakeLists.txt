@@ -44,6 +44,7 @@ include_directories(
 # Build
 ament_auto_add_library(${node_lib} SHARED
         src/inlanecruising_plugin.cpp
+        src/inlanecruising_plugin_node.cpp
         src/helper.cpp
         src/smoothing/BSpline.cpp
 )
@@ -66,22 +67,22 @@ target_link_libraries(${node_exec}
 )
 
 # Testing
-#if(BUILD_TESTING)  
-#  find_package(ament_lint_auto REQUIRED)
-#  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
-#
-#  ament_add_gtest(test_inlanecruising_plugin 
-#  test/test_inlanecruising_plugin.cpp
-#  test/test_inlanecruising_plugin_planning.cpp
-#  test/rostest_ilc.cpp
-#  )
-#
-#  ament_target_dependencies(test_inlanecruising_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
-#
-#  target_link_libraries(test_inlanecruising_plugin 
-#       ${node_lib}
-#  )
-#endif()
+if(BUILD_TESTING)  
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+
+  ament_add_gtest(test_inlanecruising_plugin 
+  test/test_inlanecruising_plugin.cpp
+  test/test_inlanecruising_plugin_planning.cpp
+  #test/rostest_ilc.cpp
+  )
+
+  ament_target_dependencies(test_inlanecruising_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+
+  target_link_libraries(test_inlanecruising_plugin 
+       ${node_lib}
+  )
+endif()
 
 # Install
 ament_auto_package(
