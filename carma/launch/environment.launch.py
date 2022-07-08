@@ -288,48 +288,48 @@ def generate_launch_description():
                     motion_computation_param_file,
                 ]
             ),
-            # ComposableNode( #CARMA Motion Prediction Visualizer Node
-            #         package='motion_prediction_visualizer',
-            #         plugin='motion_prediction_visualizer::Node',
-            #         name='motion_prediction_visualizer',
-            #         extra_arguments=[
-            #             {'use_intra_process_comms': True}, 
-            #             {'--log-level' : GetLogLevel('motion_prediction_visualizer', env_log_levels) }
-            #         ],
-            #         remappings=[
-            #             ("external_objects", "external_object_predictions" ),
-            #         ]
-            # ),
-            # ComposableNode( 
-            #         package='roadway_objects',
-            #         plugin='roadway_objects::RoadwayObjectsNode',
-            #         name='roadway_objects_node',
-            #         extra_arguments=[
-            #             {'use_intra_process_comms': True}, 
-            #             {'--log-level' : GetLogLevel('roadway_objects', env_log_levels) }
-            #         ],
-            #         remappings=[
-            #             ("external_objects", "external_object_predictions"),
-            #             ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
-            #             ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] )
-            #         ]
-            # ),
-            # ComposableNode( 
-            #         package='traffic_incident_parser',
-            #         plugin='traffic_incident_parser::TrafficIncidentParserNode',
-            #         name='traffic_incident_parser_node',
-            #         extra_arguments=[
-            #             {'use_intra_process_comms': True}, 
-            #             {'--log-level' : GetLogLevel('traffic_incident_parser', env_log_levels) }
-            #         ],
-            #         remappings=[
-            #             ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
-            #             ("geofence", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_geofence_control" ] ),
-            #             ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_operation" ] ),
-            #             ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
-            #             ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] )
-            #         ]
-            # ),
+            ComposableNode( #CARMA Motion Prediction Visualizer Node
+                    package='motion_prediction_visualizer',
+                    plugin='motion_prediction_visualizer::Node',
+                    name='motion_prediction_visualizer',
+                    extra_arguments=[
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('motion_prediction_visualizer', env_log_levels) }
+                    ],
+                    remappings=[
+                        ("external_objects", "external_object_predictions" ),
+                    ]
+            ),
+            ComposableNode( 
+                    package='roadway_objects',
+                    plugin='roadway_objects::RoadwayObjectsNode',
+                    name='roadway_objects_node',
+                    extra_arguments=[
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('roadway_objects', env_log_levels) }
+                    ],
+                    remappings=[
+                        ("external_objects", "external_object_predictions"),
+                        ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
+                        ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] )
+                    ]
+            ),
+            ComposableNode( 
+                    package='traffic_incident_parser',
+                    plugin='traffic_incident_parser::TrafficIncidentParserNode',
+                    name='traffic_incident_parser_node',
+                    extra_arguments=[
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('traffic_incident_parser', env_log_levels) }
+                    ],
+                    remappings=[
+                        ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                        ("geofence", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_geofence_control" ] ),
+                        ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_operation" ] ),
+                        ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
+                        ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] )
+                    ]
+            ),
         ]
     )
 
