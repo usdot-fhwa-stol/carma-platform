@@ -55,8 +55,9 @@ public:
    * \param nh Pointer to the lifecyle node
    * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
    * \param config The configuration to be used for this object
-   * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
    * \param debug_publisher Callback which will publish a debug message. The callback defaults to no-op.
+   * \param plugin_name Retrieved from the plugin node
+   * \param version_id Retrieved from the plugin node
    */ 
   InLaneCruisingPlugin(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, 
                       carma_wm::WorldModelConstPtr wm, 
@@ -105,8 +106,9 @@ private:
   DebugPublisher debug_publisher_;
   carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds debug_msg_;
   std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
+  
+  // Access members for unit test
   FRIEND_TEST(InLaneCruisingPluginTest, rostest1);
-
 };
 
 

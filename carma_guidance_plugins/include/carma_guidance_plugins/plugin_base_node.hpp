@@ -115,6 +115,13 @@ namespace carma_guidance_plugins
     virtual uint8_t get_type();
 
     /**
+     * \brief Return the name of this plugin
+     * 
+     * \return Name of this plugin
+     */ 
+    std::string get_plugin_name();
+
+    /**
      * \brief Get the availability status of this plugin based on the current operating environment.
      *        Method must be overriden by extending classes. 
      * 

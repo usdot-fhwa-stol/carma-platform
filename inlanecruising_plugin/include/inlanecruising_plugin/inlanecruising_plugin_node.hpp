@@ -50,8 +50,6 @@ public:
    
   bool get_availability() override;
 
-  std::string get_plugin_name();
-
   std::string get_version_id() override final;
 
   rcl_interfaces::msg::SetParametersResult parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);

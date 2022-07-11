@@ -26,7 +26,7 @@ namespace inlanecruising_plugin
     // Create initial config
     config_ = InLaneCruisingPluginConfig();
 
-    plugin_name_ = "inlanecruising_plugin";
+    plugin_name_ = get_plugin_name();
     version_id_= "v1.0";
 
     // Declare parameters
@@ -133,11 +133,6 @@ namespace inlanecruising_plugin
   bool InLaneCruisingPluginNode::get_availability()
   {
     return true;
-  }
-
-  std::string InLaneCruisingPluginNode::get_plugin_name()
-  {
-    return plugin_name_;
   }
 
   std::string InLaneCruisingPluginNode::get_version_id()
