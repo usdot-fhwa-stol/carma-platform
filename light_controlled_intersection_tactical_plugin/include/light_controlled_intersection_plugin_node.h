@@ -105,7 +105,7 @@ public:
 
     LightControlledIntersectionTacticalPlugin worker(wm_, config, [&discovery_pub](auto& msg) { discovery_pub.publish(msg); });
 
-    ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/LightControlledIntersectionTacticalPlugin/plan_trajectory",
+    ros::ServiceServer trajectory_srv_ = nh.advertiseService("light_controlled_intersection_tactical_plugin/plan_trajectory",
                                             &LightControlledIntersectionTacticalPlugin::plan_trajectory_cb, &worker);
 
     ros::Timer discovery_pub_timer_ = 

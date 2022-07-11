@@ -36,10 +36,10 @@ namespace platoon_strategic
     {
         pm_ = PlatoonManager();
 
-        plugin_discovery_msg_.name = "PlatooningStrategicPlugin";
+        plugin_discovery_msg_.name = "platoon_strategic";
         plugin_discovery_msg_.version_id = "v1.0";
         plugin_discovery_msg_.available = true;
-        plugin_discovery_msg_.activated = false;
+        plugin_discovery_msg_.activated = true;
         plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
         plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";  
     }
@@ -377,8 +377,8 @@ namespace platoon_strategic
         maneuver_msg.type = cav_msgs::Maneuver::LANE_CHANGE;
         maneuver_msg.lane_change_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.lane_change_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
-        maneuver_msg.lane_change_maneuver.parameters.planning_tactical_plugin = "CooperativeLaneChangePlugin";
-        maneuver_msg.lane_change_maneuver.parameters.planning_strategic_plugin = "PlatooningStrategicPlugin";
+        maneuver_msg.lane_change_maneuver.parameters.planning_tactical_plugin = "cooperative_lanechange";
+        maneuver_msg.lane_change_maneuver.parameters.planning_strategic_plugin = "platoon_strategic";
         maneuver_msg.lane_change_maneuver.start_dist = start_dist;
         maneuver_msg.lane_change_maneuver.start_speed = start_speed;
         maneuver_msg.lane_change_maneuver.end_dist = end_dist;
@@ -418,8 +418,8 @@ namespace platoon_strategic
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
         maneuver_msg.lane_following_maneuver.parameters.negotiation_type = cav_msgs::ManeuverParameters::PLATOONING;
         maneuver_msg.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
-        maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "PlatooningTacticalPlugin";
-        maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "PlatooningStrategicPlugin";
+        maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "platooning_tactical_plugin";
+        maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "platoon_strategic";
         maneuver_msg.lane_following_maneuver.start_dist = current_dist;
         maneuver_msg.lane_following_maneuver.start_speed = current_speed;
         maneuver_msg.lane_following_maneuver.start_time = current_time;

@@ -19,7 +19,7 @@
 #include <iostream>
 
 /**
- * \brief Stuct containing the algorithm configuration values for the InLaneCruisingPlugin
+ * \brief Stuct containing the algorithm configuration values for the stop_and_wait_plugin
  */
 struct StopandWaitConfig
 {

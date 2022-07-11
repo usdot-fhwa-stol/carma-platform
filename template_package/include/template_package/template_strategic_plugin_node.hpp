@@ -92,8 +92,6 @@ namespace <SUB><package_name>
 
     bool get_availability() override;
 
-    std::string get_plugin_name() override;
-
     std::string get_version_id() override;
     
     /**

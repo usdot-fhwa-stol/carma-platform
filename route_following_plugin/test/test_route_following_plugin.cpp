@@ -44,7 +44,7 @@ namespace route_following_plugin
         EXPECT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, msg.type);
         EXPECT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, msg.lane_following_maneuver.parameters.negotiation_type);
         EXPECT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN, msg.lane_following_maneuver.parameters.presence_vector);
-        EXPECT_EQ("InLaneCruisingPlugin", msg.lane_following_maneuver.parameters.planning_tactical_plugin);
+        EXPECT_EQ("inlanecruising_plugin", msg.lane_following_maneuver.parameters.planning_tactical_plugin);
         EXPECT_EQ("RouteFollowingPlugin", msg.lane_following_maneuver.parameters.planning_strategic_plugin);
         EXPECT_NEAR(1.0, msg.lane_following_maneuver.start_dist, 0.01);
         EXPECT_NEAR(0.9, msg.lane_following_maneuver.start_speed, 0.01);

@@ -84,11 +84,11 @@ public:
     InLaneCruisingPlugin worker(wm_, config, [&discovery_pub](const auto& msg) { discovery_pub.publish(msg); },
                                              [&trajectory_debug_pub](const auto& msg) { trajectory_debug_pub.publish(msg); });
 
-    ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory",
+    ros::ServiceServer trajectory_srv_ = nh.advertiseService("inlanecruising_plugin/plan_trajectory",
                                             &InLaneCruisingPlugin::plan_trajectory_cb, &worker);
 
     //TODO: Update yield client to use the Plugin Manager capabilities query, in case someone else wants to add an alternate yield implementation 
-    ros::ServiceClient yield_client = nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
+    ros::ServiceClient yield_client = nh.serviceClient<cav_srvs::PlanTrajectory>("yield_plugin/plan_trajectory");
     worker.set_yield_client(yield_client);
     ROS_INFO_STREAM("Yield Client Set");
 

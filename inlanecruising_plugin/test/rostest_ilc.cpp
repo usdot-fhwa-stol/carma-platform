@@ -35,7 +35,7 @@ TEST(InLaneCruisingPluginTest, rostest1)
     cav_srvs::PlanTrajectory traj_srv;
     traj_srv.request.initial_trajectory_plan.trajectory_id = "ILCReq";
    
-    ros::ServiceClient plugin1= nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/InLaneCruisingPlugin/plan_trajectory");
+    ros::ServiceClient plugin1= nh.serviceClient<cav_srvs::PlanTrajectory>("inlanecruising_plugin/plan_trajectory");
 
     ROS_INFO_STREAM("ilc service: " << plugin1.getService());
     if(plugin1.waitForExistence(ros::Duration(5.0)))

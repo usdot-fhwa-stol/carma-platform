@@ -38,7 +38,7 @@ namespace carma_guidance_plugins
   carma_ros2_utils::CallbackReturn TacticalPlugin::handle_on_configure(const rclcpp_lifecycle::State &prev_state)
   {
     // Initialize plan trajectory service
-    plan_trajectory_service_ = create_service<carma_planning_msgs::srv::PlanTrajectory>(get_plugin_name() + "/plan_trajectory", 
+    plan_trajectory_service_ = create_service<carma_planning_msgs::srv::PlanTrajectory>(std::string(get_name()) + "/plan_trajectory", 
       [this] (auto header, auto req, auto resp) {
         if (this->get_activation_status()) // Only trigger when activated
         {

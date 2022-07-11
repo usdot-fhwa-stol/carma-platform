@@ -56,16 +56,16 @@ struct SCIStrategicPluginConfig
   double intersection_exit_zone_length = 15.0;
 
   //! The name to use for this plugin during comminications with the arbitrator
-  std::string strategic_plugin_name = "SCIStrategicPlugin";
+  std::string strategic_plugin_name = "sci_strategic_plugin";
 
   //! The name of the tactical plugin to use for Lane Following trajectory planning
-  std::string lane_following_plugin_name = "StopControlledIntersectionTacticalPlugin";
+  std::string lane_following_plugin_name = "stop_controlled_intersection_tactical_plugin";
 
   //! The name of the plugin to use for stop and wait trajectory planning
-  std::string stop_and_wait_plugin_name = "StopAndWaitPlugin";
+  std::string stop_and_wait_plugin_name = "stop_and_wait_plugin";
 
   //! The name of the plugin to use for intersection transit trajectory planning
-  std::string intersection_transit_plugin_name = "IntersectionTransitPlugin";
+  std::string intersection_transit_plugin_name = "intersection_transit_maneuvering";
 
   //! License plate of the vehicle.
   std::string vehicle_id = "default_id";

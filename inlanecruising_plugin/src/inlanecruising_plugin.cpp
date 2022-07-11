@@ -42,10 +42,10 @@ InLaneCruisingPlugin::InLaneCruisingPlugin(carma_wm::WorldModelConstPtr wm, InLa
                                            PublishPluginDiscoveryCB plugin_discovery_publisher, DebugPublisher debug_publisher)
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher), debug_publisher_(debug_publisher)
 {
-  plugin_discovery_msg_.name = "InLaneCruisingPlugin";
+  plugin_discovery_msg_.name = "inlanecruising_plugin";
   plugin_discovery_msg_.version_id = "v1.0";
   plugin_discovery_msg_.available = true;
-  plugin_discovery_msg_.activated = false;
+  plugin_discovery_msg_.activated = true;
   plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
   plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
 }
