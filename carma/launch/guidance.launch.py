@@ -220,6 +220,7 @@ def generate_launch_description():
                 ],
                 parameters=[
                     inlanecruising_plugin_file_path
+                    vehicle_config_param_file
                 ]
             ),
         ]
