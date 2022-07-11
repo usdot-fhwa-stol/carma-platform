@@ -24,8 +24,8 @@ import os
 
 
 '''
-This file is can be used to launch the CARMA port_drayage_plugin_node.
-  Though in carma-platform it may be launched directly from the base launch file.
+This file can be used to launch the CARMA port_drayage_plugin_node.
+Though in carma-platform it may be launched directly from the base launch file.
 '''
 
 def generate_launch_description():
