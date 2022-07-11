@@ -213,7 +213,6 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('inlanecruising_plugin', env_log_levels) }
                 ],
                 remappings = [
-                    ("final_waypoints", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/base_waypoints" ] ),
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
                     ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
