@@ -174,10 +174,12 @@ namespace port_drayage_plugin
         if (pdsm_.getState() == PortDrayageState::EN_ROUTE_TO_INITIAL_DESTINATION) {
             // The CMV's initial destination is either the Staging Area Entrance or the Port Entrance
             if (starting_at_staging_area_) {
-                pt.put("operation", OperationID::ENTER_STAGING_AREA);
+                OperationID pickup_operation = OperationID::ENTER_STAGING_AREA;
+                pt.put("operation", pickup_operation);
             }
             else {
-                pt.put("operation", OperationID::ENTER_PORT);
+                OperationID enter_port_operation = OperationID::ENTER_PORT;
+                pt.put("operation", enter_port_operation);
             }
 
             // Add cargo_id if CMV is carrying cargo
