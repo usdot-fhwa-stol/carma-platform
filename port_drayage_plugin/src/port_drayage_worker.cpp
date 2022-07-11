@@ -121,13 +121,13 @@ namespace port_drayage_plugin
         std::string popup_text = "";
 
         // Add text that indicates the previous action was completed (if it was a pickup or dropoff action)
-        if (previous_operation == pickup_operation_) {
+        if (previous_operation == OperationID::PICKUP) {
             popup_text += "The pickup action was completed successfully. ";
         }
-        else if (previous_operation == dropoff_operation_) {
+        else if (previous_operation == OperationID::DROPOFF) {
             popup_text += "The dropoff action was completed successfully. ";
         }
-        else if (previous_operation == holding_area_operation_) {
+        else if (previous_operation == OperationID::HOLDING_AREA) {
             popup_text += "The inspection was completed successfully. ";
         }
 
@@ -174,10 +174,10 @@ namespace port_drayage_plugin
         if (pdsm_.getState() == PortDrayageState::EN_ROUTE_TO_INITIAL_DESTINATION) {
             // The CMV's initial destination is either the Staging Area Entrance or the Port Entrance
             if (starting_at_staging_area_) {
-                pt.put("operation", enter_staging_area_operation_);
+                pt.put("operation", OperationID::ENTER_STAGING_AREA);
             }
             else {
-                pt.put("operation", enter_port_operation_);
+                pt.put("operation", OperationID::ENTER_PORT);
             }
 
             // Add cargo_id if CMV is carrying cargo
@@ -199,7 +199,7 @@ namespace port_drayage_plugin
             } 
 
             // Assign specific fields for arrival at a Pickup location
-            if (latest_mobility_operation_msg_.operation == pickup_operation_) {
+            if (latest_mobility_operation_msg_.operation == OperationID::PICKUP) {
                 // Assign 'cargo_id' using the value received in the previous port drayage message
                 if (latest_mobility_operation_msg_.cargo_id) {
                     pt.put("cargo_id", *latest_mobility_operation_msg_.cargo_id);
@@ -213,7 +213,7 @@ namespace port_drayage_plugin
                 }
             }
             // Assign specific fields for arrival at a Dropoff location
-            else if (latest_mobility_operation_msg_.operation == dropoff_operation_) {
+            else if (latest_mobility_operation_msg_.operation == OperationID::DROPOFF) {
                 // Assign 'cargo_id' using the ID of the cargo currently being carried
                 if (cargo_id_ != "") {
                     pt.put("cargo_id", cargo_id_);
@@ -271,7 +271,7 @@ namespace port_drayage_plugin
     void PortDrayageWorker::updateCargoInformationAfterActionCompletion(const PortDrayageMobilityOperationMsg& previous_port_drayage_msg) {
         // If the previously received message was for 'Pickup' or 'Dropoff', update this object's cargo_id_ member accordingly
         // Note: This assumes the previous 'Pickup' or 'Dropoff' action was successful
-        if (previous_port_drayage_msg.operation == pickup_operation_) {
+        if (previous_port_drayage_msg.operation == OperationID::PICKUP) {
 
             if (previous_port_drayage_msg.cargo_id) {
                 cargo_id_ = *previous_port_drayage_msg.cargo_id;
@@ -281,7 +281,7 @@ namespace port_drayage_plugin
                 RCLCPP_DEBUG_STREAM(logger_->get_logger(), "CMV has completed pickup, but there is no Cargo ID associated with the picked up cargo.");
             }
         }
-        else if (previous_port_drayage_msg.operation == dropoff_operation_) {
+        else if (previous_port_drayage_msg.operation == OperationID::DROPOFF) {
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "CMV completed dropoff action. CMV is no longer carrying cargo ID " << cargo_id_);
             cargo_id_ = ""; // Empty string is used when no cargo is being carried
         }
@@ -299,12 +299,12 @@ namespace port_drayage_plugin
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "operation: " << latest_mobility_operation_msg_.operation);
 
         // If this CMV is commanded to pickup new cargo, check that it isn't already carrying cargo
-        if (latest_mobility_operation_msg_.operation == pickup_operation_ && cargo_id_ != "") {
+        if (latest_mobility_operation_msg_.operation == OperationID::PICKUP && cargo_id_ != "") {
             RCLCPP_WARN_STREAM(logger_->get_logger(), "Received 'PICKUP' operation, but CMV is already carrying cargo.");
         }
 
         // If this CMV is commanded to dropoff cargo, check that it is actually carrying cargo
-        if (latest_mobility_operation_msg_.operation == dropoff_operation_ && cargo_id_ == "") {
+        if (latest_mobility_operation_msg_.operation == OperationID::DROPOFF && cargo_id_ == "") {
             RCLCPP_WARN_STREAM(logger_->get_logger(), "Received 'DROPOFF' operation, but CMV isn't currently carrying cargo.");
         }
 
@@ -314,16 +314,16 @@ namespace port_drayage_plugin
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "cargo id: " << *latest_mobility_operation_msg_.cargo_id);
 
             // Log message if the cargo ID being dropped off does not match the cargo ID currently being carried
-            if (latest_mobility_operation_msg_.operation == dropoff_operation_ && cargo_id_ != pt.get<std::string>("cargo_id")) {
+            if (latest_mobility_operation_msg_.operation == OperationID::DROPOFF && cargo_id_ != pt.get<std::string>("cargo_id")) {
                 RCLCPP_WARN_STREAM(logger_->get_logger(), "CMV commanded to dropoff an invalid Cargo ID. Currently carrying " << cargo_id_ << ", commanded to dropoff " << pt.get<std::string>("cargo_id"));
             }
         }
         else{
             // If this message is for 'PICKUP', then the 'cargo_id' field is required
-            if(latest_mobility_operation_msg_.operation == pickup_operation_) {
+            if(latest_mobility_operation_msg_.operation == OperationID::PICKUP) {
                 RCLCPP_WARN_STREAM(logger_->get_logger(), "Received 'PICKUP' operation, but no cargo_id was included.");
             }
-            else if (latest_mobility_operation_msg_.operation == dropoff_operation_) {
+            else if (latest_mobility_operation_msg_.operation == OperationID::DROPOFF) {
                 RCLCPP_WARN_STREAM(logger_->get_logger(), "Received 'DROPOFF' operation, but no cargo_id was included.");
             }
 

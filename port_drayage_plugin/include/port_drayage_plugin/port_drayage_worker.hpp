@@ -128,11 +128,6 @@ namespace port_drayage_plugin
             std::shared_ptr<carma_planning_msgs::msg::RouteEvent> latest_route_event_ = nullptr;
             PortDrayageStateMachine pdsm_;
             std::string previously_completed_operation_;
-            const OperationID pickup_operation_{OperationID::PICKUP}; 
-            const OperationID dropoff_operation_{OperationID::DROPOFF};
-            const OperationID enter_staging_area_operation_{OperationID::ENTER_STAGING_AREA};
-            const OperationID enter_port_operation_{OperationID::ENTER_PORT};
-            const OperationID holding_area_operation_{OperationID::HOLDING_AREA};
             std::string cmv_id_;
             std::string cargo_id_; // Empty if CMV is not currently carrying cargo
             std::function<void(carma_v2x_msgs::msg::MobilityOperation)> publish_mobility_operation_;
