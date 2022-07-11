@@ -38,7 +38,7 @@ namespace route_following_plugin
     TEST(RouteFollowingPluginTest, testComposeManeuverMessage)
     {
         RouteFollowingPlugin rfp;
-        rclcpp::Time current_time = get_clock()->now();
+        rclcpp::Time current_time = rfp->now();
         auto msg = rfp.composeLaneFollowingManeuverMessage(1.0, 10.0, 0.9, 11.176, {2});
         EXPECT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, msg.type);
         EXPECT_EQ(carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION, msg.lane_following_maneuver.parameters.negotiation_type);
@@ -114,7 +114,7 @@ namespace route_following_plugin
         plan_req1.planning_start_time;
         plan_req1.planning_completion_time;
 
-        rclcpp::Time current_time = get_clock()->now();
+        rclcpp::Time current_time = rfp->now();
         plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0, 0, 0, 11.176, {0}));
         pplan.prior_plan = plan_req1;
         plan.request = pplan;
@@ -224,7 +224,7 @@ namespace route_following_plugin
         plan_req1.maneuver_plan_id;
         plan_req1.planning_start_time;
         plan_req1.planning_completion_time;
-        rclcpp::Time current_time = get_clock()->now();
+        rclcpp::Time current_time = rfp->now();
         plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0.0, 100.0, 0, 11.176, {start_id}));
         pplan.prior_plan = plan_req1;
         plan.request = pplan;
@@ -311,19 +311,19 @@ namespace route_following_plugin
     {
         RouteFollowingPlugin worker;
         /*composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, int lane_id, ros::Time start_time);*/
-        rclcpp::Time start_time = get_clock()->now();
+        rclcpp::Time start_time = rfp->now();
         carma_planning_msgs::msg::Maneuver maneuver = worker.composeLaneFollowingManeuverMessage(10.0, 100.0, 0.0, 100.0, {101});
 
         worker.setManeuverStartDist(maneuver, 50.0);
         ASSERT_EQ(maneuver.lane_following_maneuver.start_dist, 50.0);
 
-        rclcpp::Time new_start_time = start_time + rclcpp::Duration(10.0);
+        rclcpp::Time new_start_time = start_time + rclcpp::Duration(10.0*1e9);
         std::vector<carma_planning_msgs::msg::Maneuver> maneuvers;
         maneuvers.push_back(maneuver);
 
         worker.updateTimeProgress(maneuvers, new_start_time);
 
-        double start_time_change = rclcpp::Time(GET_MANEUVER_PROPERTY(maneuvers.front(), start_time)).seconds() - rclcpp::Time(start_time).seconds();
+        double start_time_change = rclcpp::Time(GET_MANEUVER_PROPERTY(maneuvers.front(), start_time)).seconds() - start_time.seconds();
         ASSERT_EQ(start_time_change, 10.0);
     }
 

@@ -23,7 +23,7 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <carma_wm_ros2/WMListener.hpp>
 #include <carma_wm_ros2/WorldModel.hpp>
-#include <carma_planning_msgs/srv/plan_maneuvers.srv>
+#include <carma_planning_msgs/srv/plan_maneuvers.hpp>
 #include <carma_planning_msgs/msg/upcoming_lane_change_status.hpp>
 #include <gtest/gtest_prod.h>
 #include <tf2_ros/transform_listener.h>
@@ -270,7 +270,7 @@ namespace route_following_plugin
         lanelet::BasicPoint2d current_loc_;
         
         // Currently executing maneuver plan from Arbitrator
-        carma_planning_msgs::msg::ManeuverPlanConstPtr current_maneuver_plan_;
+        carma_planning_msgs::msg::ManeuverPlan::UniquePtr current_maneuver_plan_;
 
         //Queue of maneuver plans
         std::vector<carma_planning_msgs::msg::Maneuver> latest_maneuver_plan_;

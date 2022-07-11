@@ -94,7 +94,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
     config_.min_plan_duration_ = declare_parameter<double>("minimal_plan_duration", config_.min_plan_duration_);
     config_.lane_change_plugin_= declare_parameter<std::string>("lane_change_plugin", config_.lane_change_plugin_);
     config_.stop_and_wait_plugin_ = declare_parameter<std::string>("stop_and_wait_plugin", config_.stop_and_wait_plugin_);
-    config_.lanefollow_planning_tactical_plugin_ = declare_parameter<std::string>("lane_following_plugin", config_.vlanefollow_planning_tactical_plugin_);
+    config_.lanefollow_planning_tactical_plugin_ = declare_parameter<std::string>("lane_following_plugin", config_.lanefollow_planning_tactical_plugin_);
     config_.route_end_point_buffer_ = declare_parameter<double>("/guidance/route/destination_downtrack_range", config_.route_end_point_buffer_);
     config_.accel_limit_ = declare_parameter<double>("/vehicle_acceleration_limit", config_.accel_limit_);
     config_.lateral_accel_limit_ = declare_parameter<double>("/vehicle_lateral_accel_limit", config_.lateral_accel_limit_);
@@ -470,7 +470,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         }
         else
         {
-            updateTimeProgress(new_maneuvers, req->header.stamp);
+            updateTimeProgress(new_maneuvers, rclcpp::Time(req->header.stamp));
             RCLCPP_DEBUG_STREAM(get_logger(),"Detected NO prior plan! Using this->now():"<< std::to_string(this->now().seconds()));   
         }
 
@@ -622,7 +622,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         }
     }
 
-    rclcpp::Duration RouteFollowingPlugin::getManeuverDuration(ccarma_planning_msgs::msg::Maneuver &maneuver, double epsilon) const
+    rclcpp::Duration RouteFollowingPlugin::getManeuverDuration(carma_planning_msgs::msg::Maneuver &maneuver, double epsilon) const
     {
         double maneuver_start_speed = GET_MANEUVER_PROPERTY(maneuver, start_speed);
         double manever_end_speed = getManeuverEndSpeed(maneuver);
@@ -714,7 +714,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
     {
         switch (maneuver.type)
         {
-        case ccarma_planning_msgs::msg::Maneuver::LANE_FOLLOWING:
+        case carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING:
             maneuver.lane_following_maneuver.start_dist = start_dist;
             break;
         case carma_planning_msgs::msg::Maneuver::LANE_CHANGE:
@@ -771,7 +771,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         carma_planning_msgs::msg::Maneuver maneuver_msg;
         maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_CHANGE;
         maneuver_msg.lane_change_maneuver.parameters.negotiation_type = carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION;
-        maneuver_msg.lane_change_maneuver.parameters.presence_vector = ccarma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN;
+        maneuver_msg.lane_change_maneuver.parameters.presence_vector = carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.lane_change_maneuver.parameters.planning_tactical_plugin = lane_change_plugin_;
         maneuver_msg.lane_change_maneuver.parameters.planning_strategic_plugin = planning_strategic_plugin_;
         maneuver_msg.lane_change_maneuver.start_dist = start_dist;
