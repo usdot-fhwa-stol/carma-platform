@@ -46,7 +46,7 @@ namespace carma_guidance_plugins
           this->plan_trajectory_callback(header, req, resp);
         }
       });
-    std::cerr << "Handle_on_configure1" << std::endl;
+    std::cerr << "Handle_on_configure1, name: " << plan_trajectory_service_->get_service_name() << std::endl;
     
     return PluginBaseNode::handle_on_configure(prev_state);
   }

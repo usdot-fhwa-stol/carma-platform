@@ -53,7 +53,7 @@ ament_auto_add_executable(${node_exec}
 )
 
 # Register component
-rclcpp_components_register_nodes(${node_lib} "inlanecruising_plugin::InLaneCruisingPlugin")
+rclcpp_components_register_nodes(${node_lib} "inlanecruising_plugin::InLaneCruisingPluginNode")
 target_link_libraries(${node_lib}
         ${Boost_LIBRARIES}
         ${EIGEN3_LIBRARIES}
