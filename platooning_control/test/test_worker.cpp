@@ -130,3 +130,24 @@ TEST(PlatoonControlWorkerTest, test_steer)
     pcw.generateSteer(point);
     EXPECT_NEAR(0, pcw.steerCmd_, 0.1);
 }
+
+TEST(PlatoonControlWorkerTest, test_accel)
+{
+
+    platoon_control::PlatoonControlWorker pcw;
+    pcw.currentSpeed = 5.0;
+    pcw.speedCmd_ = 6.0;
+    
+    geometry_msgs::PoseStamped current_pose;
+    current_pose.pose.position.x = 0.0;
+    current_pose.pose.position.y = 0.0;
+
+    pcw.setCurrentPose(current_pose);
+
+    cav_msgs::TrajectoryPlanPoint next_trajectory_point;
+    next_trajectory_point.x = 0.0;
+    next_trajectory_point.y = 10.0;
+
+    pcw.generateAccel(next_trajectory_point);
+    EXPECT_NEAR(0.55, pcw.accelCmd_, 0.1);
+}

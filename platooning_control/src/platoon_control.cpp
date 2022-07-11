@@ -103,12 +103,8 @@ namespace platoon_control
         cav_msgs::TrajectoryPlanPoint lookahead_point = getLookaheadTrajectoryPoint(*tp);
 
         trajectory_speed_ = getTrajectorySpeed(tp->trajectory_points);
-
-    	
         
         generateControlSignals(first_trajectory_point, lookahead_point); // TODO this should really be called on a timer against that last trajectory so 30Hz control loop can be achieved
-
-
     }
 
     cav_msgs::TrajectoryPlanPoint PlatoonControlPlugin::getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan)
@@ -204,7 +200,7 @@ namespace platoon_control
         return cmd_twist;
     }
 
-    autoware_msgs::ControlCommandStamped PlatoonControlPlugin::composeCtrlCmd(double linear_vel, double steering_angle)
+    autoware_msgs::ControlCommandStamped PlatoonControlPlugin::composeCtrlCmd(double linear_vel, double steering_angle, double linear_accel)
     {
         autoware_msgs::ControlCommandStamped cmd_ctrl;
         cmd_ctrl.header.stamp = ros::Time::now();
@@ -212,6 +208,8 @@ namespace platoon_control
         ROS_DEBUG_STREAM("ctrl command speed " << cmd_ctrl.cmd.linear_velocity);
         cmd_ctrl.cmd.steering_angle = steering_angle;
         ROS_DEBUG_STREAM("ctrl command steering " << cmd_ctrl.cmd.steering_angle);
+        cmd_ctrl.cmd.linear_acceleration = linear_accel;
+        ROS_DEBUG_STREAM("ctrl command accel " << cmd_ctrl.cmd.linear_acceleration);
 
         return cmd_ctrl;
     }
@@ -223,12 +221,12 @@ namespace platoon_control
         pcw_.setLeader(platoon_leader_);
     	pcw_.generateSpeed(first_trajectory_point);
     	pcw_.generateSteer(lookahead_point);
-
+        pcw_.generateAccel(first_trajectory_point); // Should be called after pcw_.generateSpeed so that generateAccel() can use the latest commanded speed in calculation
 
         geometry_msgs::TwistStamped twist_msg = composeTwistCmd(pcw_.speedCmd_, pcw_.angVelCmd_);
         twist_pub_.publish(twist_msg);
 
-        autoware_msgs::ControlCommandStamped ctrl_msg = composeCtrlCmd(pcw_.speedCmd_, pcw_.steerCmd_);
+        autoware_msgs::ControlCommandStamped ctrl_msg = composeCtrlCmd(pcw_.speedCmd_, pcw_.steerCmd_, pcw_.accelCmd_);
         ctrl_pub_.publish(ctrl_msg);
     }
 

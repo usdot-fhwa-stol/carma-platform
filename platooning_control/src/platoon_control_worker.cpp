@@ -133,7 +133,7 @@ namespace platoon_control
                     speed_cmd = min;
                 }
                 lastCmdSpeed = speed_cmd;
-                ROS_DEBUG_STREAM("The speed command after max accel cap is: " << speed_cmd << " m/s");
+                ROS_WARN_STREAM("The speed command after max accel cap is: " << speed_cmd << " m/s");
         }
 
         speedCmd_ = speed_cmd;
@@ -150,6 +150,15 @@ namespace platoon_control
         pp_.calculateSteer(point);
     	steerCmd_ = pp_.getSteeringAngle(); 
         angVelCmd_ = pp_.getAngularVelocity();
+    }
+
+    void PlatoonControlWorker::generateAccel(const cav_msgs::TrajectoryPlanPoint& next_trajectory_point)
+    {
+        const double delta_distance =
+            std::hypot(next_trajectory_point.x - current_pose_.position.x, next_trajectory_point.y - current_pose_.position.y);
+        const double v_i = currentSpeed;
+        const double v_f = speedCmd_; 
+        accelCmd_ = (v_f * v_f - v_i * v_i) / (2 * delta_distance);
     }
 
     // TODO get the actual leader from strategic plugin
