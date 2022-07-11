@@ -219,7 +219,7 @@ def generate_launch_description():
                     ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] )
                 ],
                 parameters=[
-                    inlanecruising_plugin_file_path
+                    inlanecruising_plugin_file_path,
                     vehicle_config_param_file
                 ]
             ),
