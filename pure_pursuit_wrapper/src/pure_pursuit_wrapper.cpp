@@ -25,12 +25,12 @@ namespace pure_pursuit_wrapper
 PurePursuitWrapper::PurePursuitWrapper(PurePursuitWrapperConfig config, WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub)
   : config_(config), waypoint_pub_(waypoint_pub), plugin_discovery_pub_(plugin_discovery_pub)
 {
-  plugin_discovery_msg_.name = "Pure Pursuit";
+  plugin_discovery_msg_.name = "pure_pursuit_wrapper_node";
   plugin_discovery_msg_.version_id = "v1.0";
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = true;
   plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
-  plugin_discovery_msg_.capability = "control_pure_pursuit_plan/plan_controls";
+  plugin_discovery_msg_.capability = "control/trajectory_control";
 }
 
 bool PurePursuitWrapper::onSpin()

@@ -26,8 +26,8 @@ namespace inlanecruising_plugin
     // Create initial config
     config_ = InLaneCruisingPluginConfig();
 
-    std::string plugin_name_ = "InLaneCruisingPlugin";
-    std::string version_id_= "v1.0";
+    plugin_name_ = "inlanecruising_plugin";
+    version_id_= "v1.0";
 
     // Declare parameters
     config_.trajectory_time_length = declare_parameter<double>("trajectory_time_length", config_.trajectory_time_length);
@@ -48,7 +48,6 @@ namespace inlanecruising_plugin
   
   carma_ros2_utils::CallbackReturn InLaneCruisingPluginNode::on_configure_plugin()
   {
-    
     auto wm_ = get_world_model();
 
     trajectory_debug_pub_ = create_publisher<carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds>("debug/trajectory_planning", 1);
@@ -92,7 +91,7 @@ namespace inlanecruising_plugin
                                                           version_id_);
 
     //TODO: Update yield client to use the Plugin Manager capabilities query, in case someone else wants to add an alternate yield implementation 
-    yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
+    yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("yield_plugin/plan_trajectory");
     worker_->set_yield_client(yield_client_);
     RCLCPP_INFO_STREAM(get_logger(), "Yield Client Set");
 

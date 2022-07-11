@@ -63,7 +63,7 @@ namespace carma_guidance_plugins
     current_velocity_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>("vehicle/twist", 1,
       std::bind(&ControlPlugin::current_twist_callback, this, std_ph::_1));
 
-    trajectory_plan_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>(get_plugin_name() + "/plan_trajectory", 1,
+    trajectory_plan_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>(std::string(get_name()) + "/plan_trajectory", 1,
       std::bind(&ControlPlugin::current_trajectory_callback, this, std_ph::_1));
 
     vehicle_cmd_pub_ = create_publisher<autoware_msgs::msg::ControlCommandStamped>("ctrl_raw", 1);

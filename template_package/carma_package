@@ -111,7 +111,6 @@ if [ ! "$plugin_type" = "control" ]; then
 
 fi
 
-
 # Perform substitutions
 find . -type f -exec sed -i "s/<SUB><package_name>/${package_name}/g" {} \;
 find . -type f -exec sed -i "s/<SUB><year>/${current_year}/g" {} \;

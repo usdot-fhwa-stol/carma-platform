@@ -39,7 +39,7 @@ namespace carma_guidance_plugins
   {
     // Initialize plan trajectory service
     std::cerr << "Handle_on_configure" << std::endl;
-    plan_trajectory_service_ = create_service<carma_planning_msgs::srv::PlanTrajectory>(get_plugin_name() + "/plan_trajectory", 
+    plan_trajectory_service_ = create_service<carma_planning_msgs::srv::PlanTrajectory>(std::string(get_name()) + "/plan_trajectory", 
       [this] (auto header, auto req, auto resp) {
         if (this->get_activation_status()) // Only trigger when activated
         {
