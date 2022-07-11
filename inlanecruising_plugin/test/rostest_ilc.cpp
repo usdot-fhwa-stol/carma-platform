@@ -33,7 +33,7 @@ TEST(InLaneCruisingPluginTest, rostest1)
 {
     auto yield_node = std::make_shared<Node>(rclcpp::NodeOptions());
      
-    auto service = yield_node->create_service<carma_planning_msgs::srv::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory", 
+    auto service = yield_node->create_service<carma_planning_msgs::srv::PlanTrajectory>("yield_plugin/plan_trajectory", 
                                             std::bind(&Node::callback, yield_node.get(), std_ph::_1, std_ph::_2, std_ph::_3));
 
     yield_node->configure();

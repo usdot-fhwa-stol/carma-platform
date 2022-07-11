@@ -128,12 +128,11 @@ TEST(InLaneCruisingPluginTest, testPlanningCallback)
   req.maneuver_index_to_plan = 0;
 
   carma_planning_msgs::srv::PlanTrajectory::Response resp;
-  std::shared_ptr<rmw_request_id_t> srv_header;
 
   auto req_ptr = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>(req);
   auto resp_ptr = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response>(resp);
 
-  plugin.plan_trajectory_callback(srv_header, req_ptr, resp_ptr);
+  plugin.plan_trajectory_callback(req_ptr, resp_ptr);
 
   EXPECT_EQ(1, resp_ptr->related_maneuvers.back());
 
@@ -220,12 +219,11 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
   req.maneuver_plan.maneuvers.push_back(maneuver2);
 
   carma_planning_msgs::srv::PlanTrajectory::Response resp;
-  std::shared_ptr<rmw_request_id_t> srv_header;
 
   auto req_ptr = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>(req);
   auto resp_ptr = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response>(resp);
 
-  inlc.plan_trajectory_callback(srv_header, req_ptr, resp_ptr);
+  inlc.plan_trajectory_callback(req_ptr, resp_ptr);
 }
 
 TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)

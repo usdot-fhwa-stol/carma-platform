@@ -39,15 +39,14 @@ namespace inlanecruising_plugin
 {
 InLaneCruisingPlugin::InLaneCruisingPlugin(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, 
                                           carma_wm::WorldModelConstPtr wm, 
-                                          InLaneCruisingPluginConfig config, 
-                                          DebugPublisher debug_publisher,
-                                          std::string plugin_name,
-                                          std::string version_id)
+                                          const InLaneCruisingPluginConfig& config, 
+                                          const DebugPublisher& debug_publisher,
+                                          const std::string& plugin_name,
+                                          const std::string& version_id)
   : nh_(nh), wm_(wm), config_(config), debug_publisher_(debug_publisher), plugin_name_(plugin_name), version_id_ (version_id)
 {}
 
 void InLaneCruisingPlugin::plan_trajectory_callback(
-  std::shared_ptr<rmw_request_id_t> srv_header, 
   carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
   carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
 {
@@ -63,7 +62,7 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
     if(req->maneuver_plan.maneuvers[i].type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING)
     {
       maneuver_plan.push_back(req->maneuver_plan.maneuvers[i]);
-      resp->related_maneuvers.push_back(i);
+      resp->related_maneuvers.push_back((uint8_t)i);
     }
     else
     {
@@ -173,7 +172,7 @@ void InLaneCruisingPlugin::set_yield_client(carma_ros2_utils::ClientPtr<carma_pl
   yield_client_ = client;
 }
 
-bool InLaneCruisingPlugin::validate_yield_plan(const carma_planning_msgs::msg::TrajectoryPlan& yield_plan)
+bool InLaneCruisingPlugin::validate_yield_plan(const carma_planning_msgs::msg::TrajectoryPlan& yield_plan) const
 {
   if (yield_plan.trajectory_points.size()>= 2)
   {

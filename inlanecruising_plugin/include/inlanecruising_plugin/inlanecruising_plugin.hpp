@@ -61,10 +61,10 @@ public:
    */ 
   InLaneCruisingPlugin(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, 
                       carma_wm::WorldModelConstPtr wm, 
-                      InLaneCruisingPluginConfig config, 
-                      DebugPublisher debug_publisher=[](const auto& msg){},
-                      std::string plugin_name = "InLaneCruisingPlugin",
-                      std::string version_id = "v1.0");
+                      const InLaneCruisingPluginConfig& config, 
+                      const DebugPublisher& debug_publisher=[](const auto& msg){},
+                      const std::string& plugin_name = "InLaneCruisingPlugin",
+                      const std::string& version_id = "v1.0");
 
   /**
    * \brief Service callback for trajectory planning
@@ -74,7 +74,6 @@ public:
    * 
    */ 
   void plan_trajectory_callback(
-    std::shared_ptr<rmw_request_id_t> srv_header, 
     carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp);
 
@@ -92,7 +91,7 @@ public:
    *
    * \return true or false
    */
-  bool validate_yield_plan(const carma_planning_msgs::msg::TrajectoryPlan& yield_plan);
+  bool validate_yield_plan(const carma_planning_msgs::msg::TrajectoryPlan& yield_plan) const;
 
   carma_planning_msgs::msg::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
 

@@ -119,7 +119,7 @@ namespace carma_guidance_plugins
      * 
      * \return Name of this plugin
      */ 
-    std::string get_plugin_name();
+    std::string get_plugin_name() const;
 
     /**
      * \brief Get the availability status of this plugin based on the current operating environment.

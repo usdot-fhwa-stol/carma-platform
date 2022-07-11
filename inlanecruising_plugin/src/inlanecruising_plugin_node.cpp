@@ -21,14 +21,11 @@ namespace inlanecruising_plugin
   namespace std_ph = std::placeholders;
   
   InLaneCruisingPluginNode::InLaneCruisingPluginNode(const rclcpp::NodeOptions &options)
-      : carma_guidance_plugins::TacticalPlugin(options)
+      : carma_guidance_plugins::TacticalPlugin(options), 
+        plugin_name_(get_plugin_name()), 
+        version_id_("v1.0"), 
+        config_(InLaneCruisingPluginConfig())
   {
-    // Create initial config
-    config_ = InLaneCruisingPluginConfig();
-
-    plugin_name_ = get_plugin_name();
-    version_id_= "v1.0";
-
     // Declare parameters
     config_.trajectory_time_length = declare_parameter<double>("trajectory_time_length", config_.trajectory_time_length);
     config_.curve_resample_step_size = declare_parameter<double>("curve_resample_step_size", config_.curve_resample_step_size);
@@ -85,7 +82,7 @@ namespace inlanecruising_plugin
 
     RCLCPP_INFO_STREAM(get_logger(), "InLaneCruisingPlugin Params After Accel Change" << config_);
     
-    auto worker_ = std::make_shared<InLaneCruisingPlugin>(shared_from_this(), wm_, config_,
+    worker_ = std::make_shared<InLaneCruisingPlugin>(shared_from_this(), wm_, config_,
                                                           [this](const carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds& msg) { trajectory_debug_pub_->publish(msg); },
                                                           plugin_name_,
                                                           version_id_);
@@ -145,7 +142,7 @@ namespace inlanecruising_plugin
     carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
   {
-    worker_->plan_trajectory_callback(srv_header, req, resp);
+    worker_->plan_trajectory_callback(req, resp);
   }
 
 }  // namespace inlanecruising_plugin

@@ -47,7 +47,7 @@ namespace carma_guidance_plugins
     wm_ = wm_listener_->getWorldModel();
   }
 
-  std::string PluginBaseNode::get_plugin_name()
+  std::string PluginBaseNode::get_plugin_name() const
   {
     return std::string(get_namespace()) + std::string(get_name());
   }
