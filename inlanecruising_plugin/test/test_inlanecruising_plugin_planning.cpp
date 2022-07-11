@@ -31,7 +31,6 @@
 #include <carma_wm_ros2/MapConformer.hpp>
 #include <carma_wm_ros2/CARMAWorldModel.hpp>
 #include <unsupported/Eigen/Splines>
-#include <tf/LinearMath/Vector3.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <rclcpp/rclcpp.hpp>
@@ -49,6 +48,7 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 #include <unordered_set>
+#include <tf2/LinearMath/Transform.h>
 
 
 typedef Eigen::Spline<double, 2> Spline2d;
@@ -297,13 +297,13 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
   for(int i = 1; i < downsampled_points.size(); i ++)
   {
     // tag as erroneous if directions of generated points are not within 5 degree of those of original points
-    tf::Vector3 original_vector(downsampled_points[i].x() - downsampled_points[i-1].x(), 
+    tf2::Vector3 original_vector(downsampled_points[i].x() - downsampled_points[i-1].x(), 
                       downsampled_points[i].y() - downsampled_points[i-1].y(), 0);
     original_vector.setZ(0);
-    tf::Vector3 spline_vector(spline_points[i].x() - spline_points[i-1].x(), 
+    tf2::Vector3 spline_vector(spline_points[i].x() - spline_points[i-1].x(), 
                       spline_points[i].y() - spline_points[i-1].y(), 0);
     spline_vector.setZ(0);
-    double angle_in_rad = std::fabs(tf::tfAngle(original_vector, spline_vector));
+    double angle_in_rad = std::fabs(tf2::tf2Angle(original_vector, spline_vector));
     if (angle_in_rad > 0.08)  error_count ++;
   }
 

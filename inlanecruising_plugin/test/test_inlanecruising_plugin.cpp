@@ -20,7 +20,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <carma_wm_ros2/CARMAWorldModel.hpp>
 #include <math.h>
-#include <tf/LinearMath/Vector3.h>
+#include <tf2/LinearMath/Transform.h>
 
 using namespace inlanecruising_plugin;
 // Test to ensure Eigen::Isometry2d behaves like tf2::Transform
