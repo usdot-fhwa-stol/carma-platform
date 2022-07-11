@@ -93,6 +93,8 @@ namespace carma_guidance_plugins
 
   carma_ros2_utils::CallbackReturn PluginBaseNode::handle_on_configure(const rclcpp_lifecycle::State &)
   {
+    std::cerr << "Handle_on_configure3" << std::endl;
+    
     return on_configure_plugin();
   }
   

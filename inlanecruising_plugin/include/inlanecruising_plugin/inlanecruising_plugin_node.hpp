@@ -66,6 +66,9 @@ private:
   // Node configuration
   InLaneCruisingPluginConfig config_;
 
+  std::string plugin_name_;
+  std::string version_id_;
+
   carma_ros2_utils::PubPtr<carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds> trajectory_debug_pub_;
 
   // Service Clients
@@ -73,6 +76,9 @@ private:
 
   // Worker
   std::shared_ptr<InLaneCruisingPlugin> worker_;
+
+  // Unit Test Accessors
+  FRIEND_TEST(InLaneCruisingPluginTest, rostest1);
 
 };
 

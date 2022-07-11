@@ -26,6 +26,9 @@ namespace inlanecruising_plugin
     // Create initial config
     config_ = InLaneCruisingPluginConfig();
 
+    std::string plugin_name_ = "InLaneCruisingPlugin";
+    std::string version_id_= "v1.0";
+
     // Declare parameters
     config_.trajectory_time_length = declare_parameter<double>("trajectory_time_length", config_.trajectory_time_length);
     config_.curve_resample_step_size = declare_parameter<double>("curve_resample_step_size", config_.curve_resample_step_size);
@@ -41,11 +44,11 @@ namespace inlanecruising_plugin
     config_.max_accel = declare_parameter<double>("/vehicle_acceleration_limit", config_.max_accel);
     config_.lateral_accel_limit = declare_parameter<double>("/vehicle_lateral_accel_limit", config_.lateral_accel_limit);
     config_.enable_object_avoidance = declare_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
-    config_.buffer_ending_downtrack = declare_parameter<double>("buffer_ending_downtrack", config_.buffer_ending_downtrack);
   }
   
   carma_ros2_utils::CallbackReturn InLaneCruisingPluginNode::on_configure_plugin()
   {
+    
     auto wm_ = get_world_model();
 
     trajectory_debug_pub_ = create_publisher<carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds>("debug/trajectory_planning", 1);
@@ -66,7 +69,7 @@ namespace inlanecruising_plugin
     get_parameter<double>("/vehicle_acceleration_limit", config_.max_accel);
     get_parameter<double>("/vehicle_lateral_accel_limit", config_.lateral_accel_limit);
     get_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
-    get_parameter<double>("buffer_ending_downtrack", config_.buffer_ending_downtrack);
+
 
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&InLaneCruisingPluginNode::parameter_update_callback, this, std_ph::_1));
@@ -83,7 +86,10 @@ namespace inlanecruising_plugin
 
     RCLCPP_INFO_STREAM(get_logger(), "InLaneCruisingPlugin Params After Accel Change" << config_);
     
-    auto worker_ = std::make_shared<InLaneCruisingPlugin>(shared_from_this(), wm_, config_,[this](const carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds& msg) { trajectory_debug_pub_->publish(msg); });
+    auto worker_ = std::make_shared<InLaneCruisingPlugin>(shared_from_this(), wm_, config_,
+                                                          [this](const carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds& msg) { trajectory_debug_pub_->publish(msg); },
+                                                          plugin_name_,
+                                                          version_id_);
 
     //TODO: Update yield client to use the Plugin Manager capabilities query, in case someone else wants to add an alternate yield implementation 
     yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
@@ -132,12 +138,12 @@ namespace inlanecruising_plugin
 
   std::string InLaneCruisingPluginNode::get_plugin_name()
   {
-    return worker_->plugin_name_;
+    return plugin_name_;
   }
 
   std::string InLaneCruisingPluginNode::get_version_id()
   {
-    return worker_->version_id_;
+    return version_id_;
   }
 
   void InLaneCruisingPluginNode::plan_trajectory_callback(

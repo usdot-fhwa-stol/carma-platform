@@ -37,12 +37,14 @@ using oss = std::ostringstream;
 
 namespace inlanecruising_plugin
 {
-InLaneCruisingPlugin::InLaneCruisingPlugin(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, carma_wm::WorldModelConstPtr wm, InLaneCruisingPluginConfig config, DebugPublisher debug_publisher)
-  : nh_(nh), wm_(wm), config_(config), debug_publisher_(debug_publisher)
-{
-  plugin_name_ = "InLaneCruisingPlugin";
-  version_id_ = "v1.0";
-}
+InLaneCruisingPlugin::InLaneCruisingPlugin(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, 
+                                          carma_wm::WorldModelConstPtr wm, 
+                                          InLaneCruisingPluginConfig config, 
+                                          DebugPublisher debug_publisher,
+                                          std::string plugin_name,
+                                          std::string version_id)
+  : nh_(nh), wm_(wm), config_(config), debug_publisher_(debug_publisher), plugin_name_(plugin_name), version_id_ (version_id)
+{}
 
 void InLaneCruisingPlugin::plan_trajectory_callback(
   std::shared_ptr<rmw_request_id_t> srv_header, 
@@ -105,11 +107,11 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
   for (auto& p : original_trajectory.trajectory_points) {
     p.planner_plugin_name = plugin_name_;
   }
-  
-  
+    
   if (config_.enable_object_avoidance)
   {
     RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Activate Object Avoidance");
+
     if (yield_client_ && yield_client_->service_is_ready())
     {
       RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Yield Client is valid");

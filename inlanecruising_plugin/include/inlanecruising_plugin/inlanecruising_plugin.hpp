@@ -33,6 +33,7 @@
 #include <autoware_msgs/msg/lane.h>
 #include <rclcpp/rclcpp.hpp>
 #include <carma_debug_ros2_msgs/msg/trajectory_curvature_speeds.hpp>
+#include <gtest/gtest.h>
 
 namespace inlanecruising_plugin
 {
@@ -57,15 +58,19 @@ public:
    * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
    * \param debug_publisher Callback which will publish a debug message. The callback defaults to no-op.
    */ 
-  InLaneCruisingPlugin(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, carma_wm::WorldModelConstPtr wm, InLaneCruisingPluginConfig config, DebugPublisher debug_publisher=[](const auto& msg){});
+  InLaneCruisingPlugin(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, 
+                      carma_wm::WorldModelConstPtr wm, 
+                      InLaneCruisingPluginConfig config, 
+                      DebugPublisher debug_publisher=[](const auto& msg){},
+                      std::string plugin_name = "InLaneCruisingPlugin",
+                      std::string version_id = "v1.0");
 
   /**
    * \brief Service callback for trajectory planning
-   * 
+   * \param srv_header header
    * \param req The service request
    * \param resp The service response
    * 
-   * \return True if success. False otherwise TODO
    */ 
   void plan_trajectory_callback(
     std::shared_ptr<rmw_request_id_t> srv_header, 
@@ -89,17 +94,18 @@ public:
   bool validate_yield_plan(const carma_planning_msgs::msg::TrajectoryPlan& yield_plan);
 
   carma_planning_msgs::msg::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
-  
-  std::string plugin_name_;
-  std::string version_id_;
 
 private:
+
+  std::string plugin_name_;
+  std::string version_id_;
   carma_wm::WorldModelConstPtr wm_;
   InLaneCruisingPluginConfig config_;
   carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
   DebugPublisher debug_publisher_;
   carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds debug_msg_;
   std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
+  FRIEND_TEST(InLaneCruisingPluginTest, rostest1);
 
 };
 
