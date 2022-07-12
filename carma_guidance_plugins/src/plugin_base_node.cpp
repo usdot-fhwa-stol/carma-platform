@@ -49,7 +49,12 @@ namespace carma_guidance_plugins
 
   std::string PluginBaseNode::get_plugin_name() const
   {
-    return std::string(get_namespace()) + std::string(get_name());
+    return std::string(get_name());
+  }
+
+  std::string PluginBaseNode::get_plugin_name_and_ns() const
+  {
+    return std::string(get_namespace()) + "/" + std::string(get_name());
   }
 
   std::shared_ptr<carma_wm::WMListener> PluginBaseNode::get_world_model_listener()
