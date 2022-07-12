@@ -226,8 +226,6 @@ namespace subsystem_controllers
         // Bring all required or auto activated plugins to the active state
         for (auto plugin : em_.get_entries())
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("subsystem_controllers"), "Activate is called! on: " << plugin.name_); 
-
             if (plugin.is_ros1_) // We do not manage lifecycle of ros1 nodes
                 continue;
 
@@ -236,10 +234,6 @@ namespace subsystem_controllers
                 continue;
 
             auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE, plugin.name_, service_timeout_, call_timeout_);
-
-            if (plugin.name_ == "/guidance/plugins/inlanecruising_plugin" || plugin.name_ == "inlanecruising_plugin" || plugin.name_ == "/inlanecruising_plugin"
-             || plugin.name_ == "/guidance/inlanecruising_plugin" || plugin.name_ == "/plugins/inlanecruising_plugin")
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("subsystem_controllers"), "Resulting: " << (int)result_state); 
 
             if(result_state != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) 
             {
