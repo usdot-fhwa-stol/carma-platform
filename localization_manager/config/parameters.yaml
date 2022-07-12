@@ -1,6 +1,6 @@
 # Double: Selected pose publication rate
 # Units: Hz
-pose_pub_rate: 10.0
+pose_pub_rate: 50.0
 
 # Double: NDT fitness score threshold above which the result can be considered degraded
 fitness_score_degraded_threshold: 20.0
