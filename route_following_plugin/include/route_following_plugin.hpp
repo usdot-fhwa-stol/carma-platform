@@ -85,7 +85,6 @@ namespace route_following_plugin
         carma_planning_msgs::msg::UpcomingLaneChangeStatus ComposeLaneChangeStatus(lanelet::ConstLanelet starting_lanelet,lanelet::ConstLanelet ending_lanelet);
 
         bool get_availability();
-        std::string get_plugin_name();
         std::string get_version_id();
         
         private:
@@ -283,11 +282,6 @@ namespace route_following_plugin
         std::string stop_and_wait_plugin_ = "stop_and_wait_plugin";
 
         std::string planning_strategic_plugin_ = "route_following_plugin";
-        std::string lanefollow_planning_tactical_plugin_ = "inlanecruising_plugin"; 
-
-        //Tactical plugin being used for planning lane change
-        std::string lane_change_plugin_ = "cooperative_lanechange";
-        std::string stop_and_wait_plugin_ = "stop_and_wait_plugin";
         std::string lanefollow_planning_tactical_plugin_ = "inlanecruising_plugin"; 
    
         /**

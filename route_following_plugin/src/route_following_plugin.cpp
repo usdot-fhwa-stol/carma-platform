@@ -391,6 +391,16 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         }
     }
 
+            bool RouteFollowingPlugin::get_availability()
+            {
+                return true;
+            }
+    
+        std::string RouteFollowingPlugin::get_version_id()
+        {
+                return "v1.0";
+        }
+
     void  RouteFollowingPlugin::plan_maneuvers_callback(
       std::shared_ptr<rmw_request_id_t> srv_header, 
       carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
@@ -422,7 +432,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
 
         std::vector<carma_planning_msgs::msg::Maneuver> new_maneuvers;
 
-        while (planned_time < min_plan_duration_ && i < latest_maneuver_plan_.size())
+        while (planned_time < config_.min_plan_duration_ && i < latest_maneuver_plan_.size())
         {
           //  RCLCPP_INFO_STREAM(rclcpp::get_logger(),"Checking maneuver id " << i);
             //Ignore plans for distance already covered
