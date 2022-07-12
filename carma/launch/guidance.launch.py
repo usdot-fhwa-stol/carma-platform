@@ -213,7 +213,7 @@ def generate_launch_description():
     # Launch plugins
     plugins_group = GroupAction(
         actions=[
-            PushRosNamespace(EnvironmentVariable('CARMA_PLGNS_NS', default_value='plugins')),
+            PushRosNamespace("plugins"),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/plugins.launch.py']),
                 launch_arguments={
