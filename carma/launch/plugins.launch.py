@@ -43,26 +43,11 @@ def generate_launch_description():
     control_plugins_to_validate = LaunchConfiguration('control_plugins_to_validate')
     
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
-    declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
-        name = 'vehicle_config_param_file',
-        default_value = "/opt/carma/vehicle/config/VehicleConfigParams.yaml",
-        description = "Path to file contain vehicle configuration parameters"
-    )
-
-    subsystem_controller_default_param_file = os.path.join(
-        get_package_share_directory('subsystem_controllers'), 'config/guidance_controller_config.yaml')
 
     inlanecruising_plugin_file_path = os.path.join(
         get_package_share_directory('inlanecruising_plugin'), 'config/parameters.yaml')
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
-
-    subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
-    declare_subsystem_controller_param_file_arg = DeclareLaunchArgument(
-        name = 'subsystem_controller_param_file',
-        default_value = subsystem_controller_default_param_file,
-        description = "Path to file containing override parameters for the subsystem controller"
-    )
 
     carma_plugins_container = ComposableNodeContainer(
         package='carma_ros2_utils',
@@ -91,20 +76,7 @@ def generate_launch_description():
             )
         ]
     )
-       
-    # subsystem_controller which orchestrates the lifecycle of this subsystem's components
-    subsystem_controller = Node(
-        package='subsystem_controllers',
-        name='guidance_controller',
-        executable='guidance_controller',
-        parameters=[ subsystem_controller_default_param_file, subsystem_controller_param_file ],
-        on_exit= Shutdown(), # Mark the subsystem controller as required
-        arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
-    )
 
-    return LaunchDescription([  
-        declare_vehicle_config_param_file_arg,
-        declare_subsystem_controller_param_file_arg,      
-        carma_plugins_container,
-        subsystem_controller
+    return LaunchDescription([    
+        carma_plugins_container
     ]) 
