@@ -25,6 +25,7 @@
 #include <carma_wm_ros2/WorldModel.hpp>
 #include <carma_planning_msgs/srv/plan_maneuvers.hpp>
 #include <carma_planning_msgs/msg/upcoming_lane_change_status.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <gtest/gtest_prod.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
@@ -68,9 +69,7 @@ namespace route_following_plugin
          */
         explicit RouteFollowingPlugin(const rclcpp::NodeOptions &);
         
-        // Overrides
-        carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
-        carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &);
+        carma_ros2_utils::CallbackReturn on_configure_plugin();
 
         // wm listener pointer and pointer to the actual wm object
         std::shared_ptr<carma_wm::WMListener> wml_;
@@ -84,6 +83,10 @@ namespace route_following_plugin
          * two provided lanelets are forming a lane change
          */
         carma_planning_msgs::msg::UpcomingLaneChangeStatus ComposeLaneChangeStatus(lanelet::ConstLanelet starting_lanelet,lanelet::ConstLanelet ending_lanelet);
+
+        bool get_availability();
+        std::string get_plugin_name();
+        std::string get_version_id();
         
         private:
 
@@ -162,7 +165,7 @@ namespace route_following_plugin
         void plan_maneuvers_callback(
          std::shared_ptr<rmw_request_id_t> srv_header, 
          carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
-         carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp)
+         carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp);
 
         /**
          * \brief Given a Lanelet, find it's associated Speed Limit
@@ -232,18 +235,18 @@ namespace route_following_plugin
         void returnToShortestPath(const lanelet::ConstLanelet &current_lanelet);
 
         //Subscribers
-        carma_ros2_utils::SubPtr<carma_planning_msgs::msg::TrajectoryPlan> twist_sub_;
-        carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::BSM> current_maneuver_plan_sub_;;
+        carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> twist_sub_;
+        carma_ros2_utils::SubPtr<carma_planning_msgs::msg::ManeuverPlan> current_maneuver_plan_sub_;
     
         // Publishers
-        carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityPath> plugin_discovery_pub_;
-        carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityPath> upcoming_lane_change_status_pub_;
+        carma_ros2_utils::PubPtr<carma_planning_msgs::msg::Plugin> plugin_discovery_pub_;
+        carma_ros2_utils::PubPtr<carma_planning_msgs::msg::UpcomingLaneChangeStatus> upcoming_lane_change_status_pub_;
 
         // Timer for publishing MobilityPath message
         rclcpp::TimerBase::SharedPtr discovery_pub_timer_;
 
         // Service Servers
-        carma_ros2_utils::ServicePtr<std_srvs::srv::PlanManeuvers> plan_maneuver_srv_;
+        carma_ros2_utils::ServicePtr<carma_planning_msgs::srv::PlanManeuvers> plan_maneuver_srv_;
 
         // unordered set of all the lanelet ids in shortest path
         std::unordered_set<lanelet::Id> shortest_path_set_;
@@ -275,7 +278,15 @@ namespace route_following_plugin
         //Queue of maneuver plans
         std::vector<carma_planning_msgs::msg::Maneuver> latest_maneuver_plan_;
 
+        // Minimal duration of maneuver, loaded from config file
+        double min_plan_duration_ = 16.0;
+
         std::string planning_strategic_plugin_ = "RouteFollowingPlugin";
+
+        //Tactical plugin being used for planning lane change
+        std::string lane_change_plugin_ = "cooperative_lanechange";
+        std::string stop_and_wait_plugin_ = "stop_and_wait_plugin";
+        std::string lanefollow_planning_tactical_plugin_ = "inlanecruising_plugin"; 
    
         /**
          * \brief Callback for the front bumper pose transform
