@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2021-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
  * the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <algorithm>
 #include <memory>
@@ -26,26 +26,28 @@
 #include <trajectory_utils/trajectory_utils.h>
 #include <trajectory_utils/conversions/conversions.h>
 #include <sstream>
-#include <carma_utils/containers/containers.h>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+//#include <carma_utils/containers/containers.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <Eigen/LU>
 #include <Eigen/SVD>
 #include <unordered_set>
-#include "stop_and_wait_plugin.h"
-#include "stop_and_wait_config.h"
+#include "stop_and_wait_plugin.hpp"
+#include "stop_and_wait_config.hpp"
 #include <vector>
-#include <cav_msgs/Trajectory.h>
-#include <cav_msgs/StopAndWaitManeuver.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/geometry/LineString.h>
-#include <carma_wm/CARMAWorldModel.h>
-#include <carma_utils/containers/containers.h>
-#include <carma_wm/Geometry.h>
-#include <cav_msgs/TrajectoryPlanPoint.h>
-#include <cav_msgs/TrajectoryPlan.h>
+#include <carma_wm_ros2/CARMAWorldModel.hpp>
 #include <math.h>
 #include <std_msgs/Float64.h>
+#include <carma_planning_msgs/msg/stop_and_wait_maneuver.hpp>
+#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan.hpp>
+
+//#include <cav_msgs/Trajectory.h>
+
 
 namespace stop_and_wait_plugin
 {
@@ -75,7 +77,7 @@ public:
     pnh.param<double>("cernterline_sampling_spacing", config.cernterline_sampling_spacing, config.cernterline_sampling_spacing);
     pnh.param<double>("default_stopping_buffer", config.default_stopping_buffer, config.default_stopping_buffer);
 
-    ros::Publisher plugin_discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+    ros::Publisher plugin_discovery_pub = nh.advertise<carma_planning_msgs::msg::Plugin>("plugin_discovery", 1);
 
     StopandWait plugin(wm, config, [&plugin_discovery_pub](auto msg) { plugin_discovery_pub.publish(msg); });
 

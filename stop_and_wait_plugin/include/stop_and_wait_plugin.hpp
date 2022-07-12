@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,29 +16,29 @@
  */
 
 #include <vector>
-#include <cav_msgs/TrajectoryPlan.h>
-#include <cav_msgs/TrajectoryPlanPoint.h>
-#include <cav_msgs/Plugin.h>
-#include <boost/shared_ptr.hpp>
-#include <carma_utils/CARMAUtils.h>
-#include <boost/geometry.hpp>
-#include <carma_wm/Geometry.h>
-#include <cav_srvs/PlanTrajectory.h>
-#include <carma_wm/WMListener.h>
-#include <functional>
-#include <carma_wm/CARMAWorldModel.h>
-#include <lanelet2_core/primitives/Lanelet.h>
-#include <lanelet2_core/geometry/LineString.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
+#include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <boost/optional.hpp>
-#include "stop_and_wait_config.h"
+#include "stop_and_wait_config.hpp"
 #include <basic_autonomy/basic_autonomy.h>
 #include <basic_autonomy/helper_functions.h>
+#include <boost/shared_ptr.hpp>
+#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm_ros2/WMListener.hpp>
+#include <functional>
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_core/geometry/LineString.h>
+#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include <boost/geometry.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <carma_planning_msgs/srv/plan_trajectory.hpp>
+#include <carma_planning_msgs/msg/plugin.hpp>
 
 namespace stop_and_wait_plugin
 {
-using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
+using PublishPluginDiscoveryCB = std::function<void(const carma_planning_msgs::msg::Plugin&)>;
 /**
  * \brief Convenience class for pairing 2d points with speeds
  */
@@ -54,7 +54,7 @@ public:
   /**
    * \brief Constructor
    */
-  StopandWait(carma_wm::WorldModelConstPtr wm, StopandWaitConfig config,
+  StopandWait(carma_wm_ros2::WorldModelConstPtr wm, StopandWaitConfig config,
               PublishPluginDiscoveryCB plugin_discovery_publisher);
 
   /**
@@ -65,7 +65,7 @@ public:
    *
    * \return True if success. False otherwise
    */
-  bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
+  bool plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::Request::UniquePtr req, carma_planning_msgs::srv::PlanTrajectory::Response::UniquePtr resp);
 
   /**
    * \brief Method meant to be called periodically to trigger plugin discovery behavior
@@ -90,9 +90,9 @@ public:
    * 
    * \return List of centerline points paired with speed limits. All output points will have speed matching state.logitudinal_velocity
    */
-  std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
-                                                  const carma_wm::WorldModelConstPtr& wm,
-                                                  const cav_msgs::VehicleState& state);
+  std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<carma_planning_msgs::msg::Maneuver>& maneuvers,
+                                                  const carma_wm_ros2::WorldModelConstPtr& wm,
+                                                  const carma_planning_msgs::msg::VehicleState& state);
   /**
    * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of
    * trajectory points for trajectory planning
@@ -103,7 +103,7 @@ public:
    * \param initial_speed Returns the initial_speed used to generate the trajectory
    * \return A list of trajectory points to send to the carma planning stack
    */
-  std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_centerline(
+  std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> compose_trajectory_from_centerline(
       const std::vector<PointSpeedPair>& points, double starting_downtrack, double starting_speed, double stop_location,
       double stop_location_buffer, ros::Time start_time, double stopping_acceleration, double& initial_speed);
 
@@ -113,7 +113,7 @@ public:
   void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
                             std::vector<double>* speeds) const;
 
-  std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
+  std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
       const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times,
       const std::vector<double>& yaws, ros::Time startTime);
 
@@ -122,11 +122,11 @@ private:
   double epsilon_ = 0.001; //small constant to compare double
 
   // pointer to the actual wm object
-  carma_wm::WorldModelConstPtr wm_;
+  carma_wm_ros2::WorldModelConstPtr wm_;
   StopandWaitConfig config_;
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
   
-  cav_msgs::Plugin plugin_discovery_msg_;
+  carma_planning_msgs::msg::Plugin plugin_discovery_msg_;
   
 };
 }  // namespace stop_and_wait_plugin
