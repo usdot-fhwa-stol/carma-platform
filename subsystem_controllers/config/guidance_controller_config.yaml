@@ -19,8 +19,8 @@
       - /guidance/trajectory_executor
       - /guidance/twist_filter
       - /guidance/twist_gate
-      - /guidance/route_following_plugin # The minimal set of guidance plugins for system operation are route_following/inlane_cruising/pure_pursuit
-      - /guidance/inlanecruising_plugin
+      - /guidance/plugins/route_following_plugin # The minimal set of guidance plugins for system operation are route_following/inlanecruising/pure_pursuit
+      - /guidance/plugins/inlanecruising_plugin
       - /guidance/pure_pursuit_wrapper
       - /guidance/pure_pursuit
       - /guidance/yield_plugin

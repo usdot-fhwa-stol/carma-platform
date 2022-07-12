@@ -22,7 +22,7 @@ namespace inlanecruising_plugin
   
   InLaneCruisingPluginNode::InLaneCruisingPluginNode(const rclcpp::NodeOptions &options)
       : carma_guidance_plugins::TacticalPlugin(options), 
-        plugin_name_(get_plugin_name()), 
+        plugin_name_(get_plugin_name_and_ns()), 
         version_id_("v1.0"), 
         config_(InLaneCruisingPluginConfig())
   {
@@ -88,7 +88,7 @@ namespace inlanecruising_plugin
                                                           version_id_);
 
     //TODO: Update yield client to use the Plugin Manager capabilities query, in case someone else wants to add an alternate yield implementation 
-    yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("plugins/yield_plugin/plan_trajectory");
+    yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("yield_plugin/plan_trajectory");
     worker_->set_yield_client(yield_client_);
     RCLCPP_INFO_STREAM(get_logger(), "Yield Client Set");
 

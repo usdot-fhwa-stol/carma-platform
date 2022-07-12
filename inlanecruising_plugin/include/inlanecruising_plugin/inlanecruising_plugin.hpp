@@ -63,7 +63,7 @@ public:
                       carma_wm::WorldModelConstPtr wm, 
                       const InLaneCruisingPluginConfig& config, 
                       const DebugPublisher& debug_publisher=[](const auto& msg){},
-                      const std::string& plugin_name = "InLaneCruisingPlugin",
+                      const std::string& plugin_name = "inlanecruising_plugin",
                       const std::string& version_id = "v1.0");
 
   /**
