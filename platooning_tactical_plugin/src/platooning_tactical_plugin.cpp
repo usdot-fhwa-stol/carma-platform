@@ -40,10 +40,10 @@ PlatooningTacticalPlugin::PlatooningTacticalPlugin(carma_wm::WorldModelConstPtr 
                                            PublishPluginDiscoveryCB plugin_discovery_publisher)
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
 {
-  plugin_discovery_msg_.name = "PlatooningTacticalPlugin";
+  plugin_discovery_msg_.name = "platooning_tactical_plugin";
   plugin_discovery_msg_.version_id = "v1.0";
   plugin_discovery_msg_.available = true;
-  plugin_discovery_msg_.activated = false;
+  plugin_discovery_msg_.activated = true;
   plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
   plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
 }

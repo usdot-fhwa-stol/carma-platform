@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,15 +21,14 @@ namespace arbitrator
 {
     TEST_F(FixedPriorityCostFunctionTest, testSingleManeuver)
     {
-        ros::Time::init();
-        cav_msgs::ManeuverPlan plan;
-        cav_msgs::Maneuver mvr1;
-        mvr1.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+        carma_planning_msgs::msg::ManeuverPlan plan;
+        carma_planning_msgs::msg::Maneuver mvr1;
+        mvr1.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         mvr1.lane_following_maneuver.start_dist = 0;
-        mvr1.lane_following_maneuver.start_time = ros::Time::now();
+        mvr1.lane_following_maneuver.start_time = rclcpp::Time(0,0);
         mvr1.lane_following_maneuver.lane_ids = {"0"};
         mvr1.lane_following_maneuver.end_dist = 1;
-        mvr1.lane_following_maneuver.end_time = ros::Time::now();
+        mvr1.lane_following_maneuver.end_time = rclcpp::Time(0,0);
         mvr1.lane_following_maneuver.start_speed = 10;
         mvr1.lane_following_maneuver.end_speed = 10;
         mvr1.lane_following_maneuver.parameters.maneuver_id.push_back(0);
@@ -42,27 +41,26 @@ namespace arbitrator
 
     TEST_F(FixedPriorityCostFunctionTest, testMixedPlanners)
     {
-        ros::Time::init();
-        cav_msgs::ManeuverPlan plan;
-        cav_msgs::Maneuver mvr1;
-        mvr1.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+        carma_planning_msgs::msg::ManeuverPlan plan;
+        carma_planning_msgs::msg::Maneuver mvr1;
+        mvr1.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         mvr1.lane_following_maneuver.start_dist = 0;
-        mvr1.lane_following_maneuver.start_time = ros::Time::now();
+        mvr1.lane_following_maneuver.start_time = rclcpp::Time(0,0);
         mvr1.lane_following_maneuver.lane_ids = {"0"};
         mvr1.lane_following_maneuver.end_dist = 1;
-        mvr1.lane_following_maneuver.end_time = ros::Time::now();
+        mvr1.lane_following_maneuver.end_time = rclcpp::Time(0,0);
         mvr1.lane_following_maneuver.start_speed = 10;
         mvr1.lane_following_maneuver.end_speed = 10;
         mvr1.lane_following_maneuver.parameters.maneuver_id.push_back(0);
         mvr1.lane_following_maneuver.parameters.planning_strategic_plugin = "plugin_a";
 
-        cav_msgs::Maneuver mvr2;
-        mvr2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+        carma_planning_msgs::msg::Maneuver mvr2;
+        mvr2.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         mvr2.lane_following_maneuver.start_dist = 1;
-        mvr2.lane_following_maneuver.start_time = ros::Time::now();
+        mvr2.lane_following_maneuver.start_time = rclcpp::Time(0,0);
         mvr2.lane_following_maneuver.lane_ids = {"0"};
         mvr2.lane_following_maneuver.end_dist = 2;
-        mvr2.lane_following_maneuver.end_time = ros::Time::now();
+        mvr2.lane_following_maneuver.end_time = rclcpp::Time(0,0);
         mvr2.lane_following_maneuver.start_speed = 10;
         mvr2.lane_following_maneuver.end_speed = 10;
         mvr2.lane_following_maneuver.parameters.maneuver_id.push_back(0);
@@ -76,15 +74,14 @@ namespace arbitrator
 
     TEST_F(FixedPriorityCostFunctionTest, testSingleManeuverUnitDistance)
     {
-        ros::Time::init();
-        cav_msgs::ManeuverPlan plan1;
-        cav_msgs::Maneuver mvr1;
-        mvr1.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+        carma_planning_msgs::msg::ManeuverPlan plan1;
+        carma_planning_msgs::msg::Maneuver mvr1;
+        mvr1.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         mvr1.lane_following_maneuver.start_dist = 0;
-        mvr1.lane_following_maneuver.start_time = ros::Time::now();
+        mvr1.lane_following_maneuver.start_time = rclcpp::Time(0,0);
         mvr1.lane_following_maneuver.lane_ids = {"0"};
         mvr1.lane_following_maneuver.end_dist = 1;
-        mvr1.lane_following_maneuver.end_time = ros::Time::now();
+        mvr1.lane_following_maneuver.end_time = rclcpp::Time(0,0);
         mvr1.lane_following_maneuver.start_speed = 10;
         mvr1.lane_following_maneuver.end_speed = 10;
         mvr1.lane_following_maneuver.parameters.maneuver_id.push_back(0);
@@ -97,26 +94,25 @@ namespace arbitrator
 
     TEST_F(FixedPriorityCostFunctionTest, testUnitDistanceCost)
     {
-        ros::Time::init();
-        cav_msgs::ManeuverPlan plan2;
-        cav_msgs::Maneuver mvr2;
-        mvr2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+        carma_planning_msgs::msg::ManeuverPlan plan2;
+        carma_planning_msgs::msg::Maneuver mvr2;
+        mvr2.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         mvr2.lane_following_maneuver.start_dist = 0;
-        mvr2.lane_following_maneuver.start_time = ros::Time::now();
+        mvr2.lane_following_maneuver.start_time = rclcpp::Time(0,0);
         mvr2.lane_following_maneuver.lane_ids = {"0"};
         mvr2.lane_following_maneuver.end_dist = 1;
-        mvr2.lane_following_maneuver.end_time = ros::Time::now();
+        mvr2.lane_following_maneuver.end_time = rclcpp::Time(0,0);
         mvr2.lane_following_maneuver.start_speed = 10;
         mvr2.lane_following_maneuver.end_speed = 10;
         mvr2.lane_following_maneuver.parameters.maneuver_id.push_back(0);
         mvr2.lane_following_maneuver.parameters.planning_strategic_plugin = "plugin_a";
-        cav_msgs::Maneuver mvr3;
-        mvr3.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+        carma_planning_msgs::msg::Maneuver mvr3;
+        mvr3.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         mvr3.lane_following_maneuver.start_dist = 1;
-        mvr3.lane_following_maneuver.start_time = ros::Time::now();
+        mvr3.lane_following_maneuver.start_time = rclcpp::Time(0,0);
         mvr3.lane_following_maneuver.lane_ids = {"0"};
         mvr3.lane_following_maneuver.end_dist = 2;
-        mvr3.lane_following_maneuver.end_time = ros::Time::now();
+        mvr3.lane_following_maneuver.end_time = rclcpp::Time(0,0);
         mvr3.lane_following_maneuver.start_speed = 10;
         mvr3.lane_following_maneuver.end_speed = 10;
         mvr3.lane_following_maneuver.parameters.maneuver_id.push_back(0);

@@ -278,10 +278,12 @@ namespace route_following_plugin
         //Queue of maneuver plans
         std::vector<carma_planning_msgs::msg::Maneuver> latest_maneuver_plan_;
 
-        // Minimal duration of maneuver, loaded from config file
-        double min_plan_duration_ = 16.0;
+        //Tactical plugin being used for planning lane change
+        std::string lane_change_plugin_ = "cooperative_lanechange";
+        std::string stop_and_wait_plugin_ = "stop_and_wait_plugin";
 
-        std::string planning_strategic_plugin_ = "RouteFollowingPlugin";
+        std::string planning_strategic_plugin_ = "route_following_plugin";
+        std::string lanefollow_planning_tactical_plugin_ = "inlanecruising_plugin"; 
 
         //Tactical plugin being used for planning lane change
         std::string lane_change_plugin_ = "cooperative_lanechange";

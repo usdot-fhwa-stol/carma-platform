@@ -30,4 +30,28 @@
     unmanaged_required_nodes: [''] # TODO add the controller driver once it is integrated with ROS2
 
     # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
-    full_subsystem_required: true
+    full_subsystem_required: false
+
+    # List of guidance plugins (node name) to consider required and who's failure shall result in automation abort. 
+    # Required plugins will be automatically activated at startup
+    # Required plugins cannot be deactivated by the user
+    required_plugins:
+      - /guidance/plugins/route_following_plugin
+      - /guidance/plugins/pure_pursuit_wrapper
+      - /guidance/plugins/inlane_cruising_plugin
+      - /guidance/plugins/cooperative_lanechange
+
+    # List of guidance plugins which are not required but the user wishes to have automatically activated
+    # so that the user doesn't need to manually activate them via the UI on each launch (though they still can)
+    # this list should have zero intersection with the required_plugins
+    auto_activated_plugins:
+      - /guidance/plugins/lic_strategic_plugin
+      - /guidance/plugins/intersection_transit_maneuvering
+      - /guidance/plugins/light_controlled_intersection_tactical_plugin
+      - /guidance/plugins/stop_and_wait_plugin
+      - /guidance/plugins/sci_strategic_plugin
+      - /guidance/plugins/stop_controlled_intersection_tactical_plugin
+      - /guidance/plugins/platoon_control_ihp
+      - /guidance/plugins/platoon_strategic_ihp
+      - /guidance/plugins/platooning_tactical_plugin
+      - /guidance/plugins/yield_plugin

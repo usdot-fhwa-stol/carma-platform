@@ -102,7 +102,7 @@ TEST(InLaneCruisingPluginTest, trajectory_from_points_times_orientations)
   ASSERT_EQ(0, traj_points[2].controller_plugin_name.compare(controller_plugin));
   ASSERT_EQ(0, traj_points[3].controller_plugin_name.compare(controller_plugin));
 
-  std::string expected_plugin_name = "InLaneCruisingPlugin";
+  std::string expected_plugin_name = "inlanecruising_plugin";
   ASSERT_EQ(0, traj_points[0].planner_plugin_name.compare(expected_plugin_name));
   ASSERT_EQ(0, traj_points[1].planner_plugin_name.compare(expected_plugin_name));
   ASSERT_EQ(0, traj_points[2].planner_plugin_name.compare(expected_plugin_name));

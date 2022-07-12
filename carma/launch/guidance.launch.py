@@ -60,7 +60,13 @@ def generate_launch_description():
     
     route_param_file = os.path.join(
         get_package_share_directory('route'), 'config/parameters.yaml')
+
+    guidance_param_file = os.path.join(
+        get_package_share_directory('guidance'), 'config/parameters.yaml')
     
+    arbitrator_param_file_path = os.path.join(
+        get_package_share_directory('arbitrator'), 'config/arbitrator_params.yaml')
+
     plan_delegator_param_file = os.path.join(
         get_package_share_directory('plan_delegator'), 'config/plan_delegator_params.yaml')
     
@@ -159,6 +165,40 @@ def generate_launch_description():
                     {'route_file_path': route_file_folder},
                     route_param_file,
                     vehicle_config_param_file
+                ]
+            ),
+            ComposableNode(
+                package='arbitrator',
+                plugin='arbitrator::ArbitratorNode',
+                name='arbitrator',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('arbitrator', env_log_levels) }
+                ],
+                remappings = [
+                    ("final_maneuver_plan", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/arbitrator/final_maneuver_plan" ] ),
+                    ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
+                ],
+                parameters=[ 
+                    arbitrator_param_file_path,
+                    vehicle_config_param_file
+                ]
+            ),
+            ComposableNode(
+                package='guidance',
+                plugin='guidance::GuidanceWorker',
+                name='guidance_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('route', env_log_levels) }
+                ],
+                remappings = [
+                    ("vehicle_status", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_status" ] ),
+                    ("robot_status", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/controller/robot_status" ] ),
+                    ("enable_robotic", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/controller/enable_robotic" ] ),
+                ],
+                parameters=[
+                    guidance_param_file
                 ]
             )
         ]

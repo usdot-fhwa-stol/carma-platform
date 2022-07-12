@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -99,7 +99,7 @@ namespace arbitrator
                 {INITIAL, SYSTEM_STARTUP_COMPLETE, PLANNING},
                 {PLANNING, PLANNING_COMPLETE, WAITING},
                 {WAITING, PLANNING_TIMER_TRIGGER, PLANNING},
-
+                
                 // Interrupt and resume
                 {PLANNING, ARBITRATOR_PAUSED, PAUSED},
                 {WAITING, ARBITRATOR_PAUSED, PAUSED},

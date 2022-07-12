@@ -15,7 +15,7 @@
 -->
 <launch>
     <node name="stop_and_wait_plugin" pkg="stop_and_wait_plugin" type="stop_and_wait_plugin" output="log">
-      <remap from="plan_trajectory" to="plugins/StopAndWaitPlugin/plan_trajectory"/>
+      <remap from="plan_trajectory" to="stop_and_wait_plugin/plan_trajectory"/>
       <rosparam command="load" file="$(find stop_and_wait_plugin)/config/parameters.yaml"/>
     </node>
 </launch>

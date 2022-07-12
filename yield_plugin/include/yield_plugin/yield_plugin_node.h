@@ -76,7 +76,7 @@ public:
     YieldPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); }, [&mob_resp_pub](auto msg) { mob_resp_pub.publish(msg); },
                                     [&lc_status_pub](auto msg) { lc_status_pub.publish(msg); });
       
-    ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/YieldPlugin/plan_trajectory",
+    ros::ServiceServer trajectory_srv_ = nh.advertiseService("yield_plugin/plan_trajectory",
                                             &YieldPlugin::plan_trajectory_cb, &worker);
     ros::Subscriber mob_request_sub = nh.subscribe("incoming_mobility_request", 5, &YieldPlugin::mobilityrequest_cb,  &worker);
     ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &YieldPlugin::bsm_cb,  &worker);
