@@ -93,7 +93,7 @@ namespace platoon_control
         * \brief Generates acceleration command based on the second trajectory point. Should be
         *        called after generateSpeed() so that the latest commanded speed can be used.
         */
-        void generateAccel(const cav_msgs::TrajectoryPlanPoint& next_trajectory_point);
+        void generateAccel(const double& current_vehicle_speed);
 
         /**
         * \brief set platoon leader

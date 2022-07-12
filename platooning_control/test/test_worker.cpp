@@ -144,10 +144,8 @@ TEST(PlatoonControlWorkerTest, test_accel)
 
     pcw.setCurrentPose(current_pose);
 
-    cav_msgs::TrajectoryPlanPoint next_trajectory_point;
-    next_trajectory_point.x = 0.0;
-    next_trajectory_point.y = 10.0;
+    double current_speed = 5.0;
 
-    pcw.generateAccel(next_trajectory_point);
+    pcw.generateAccel(current_speed);
     EXPECT_NEAR(0.55, pcw.accelCmd_, 0.1);
 }

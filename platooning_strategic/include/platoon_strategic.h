@@ -492,7 +492,7 @@ namespace platoon_strategic
             int statusMessageInterval_ = 100; //ms
             int NEGOTIATION_TIMEOUT = 5000;  // ms
             int noLeaderUpdatesCounter = 0;
-            int LEADER_TIMEOUT_COUNTER_LIMIT = 5;
+            int LEADER_TIMEOUT_COUNTER_LIMIT = 25;
             double waitingStateTimeout = 25.0; // s
             double desiredJoinGap = 30.0; // m
             double desiredJoinTimeGap = 4.0; // s
