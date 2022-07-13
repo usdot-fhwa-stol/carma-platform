@@ -49,6 +49,14 @@ namespace port_drayage_plugin
 
     result.successful = !error && !error_2;
 
+    if (result.successful) {
+      // Set PortDrayageWorker parameters
+      pdw_.setVehicleID(config_.cmv_id);
+      pdw_.setCargoID(config_.cargo_id);
+      pdw_.setEnablePortDrayageFlag(config_.enable_port_drayage);
+      pdw_.setStartingAtStagingAreaFlag(config_.starting_at_staging_area);
+    }
+
     return result;
   }
 
