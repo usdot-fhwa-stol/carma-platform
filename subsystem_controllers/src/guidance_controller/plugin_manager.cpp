@@ -51,7 +51,6 @@ namespace subsystem_controllers
         for (const auto& p : required_plugins_) {
             bool is_ros1 = ros2_initial_plugins_.find(p) == ros2_initial_plugins_.end();
             Entry e(false, false, p, carma_planning_msgs::msg::Plugin::UNKNOWN, "", true, is_ros1);
-            e.is_ros1_ = is_ros2_lifecycle_node(p);
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("subsystem_controllers"), "Adding p:!" << p); 
             em_.update_entry(e);
             plugin_lifecycle_mgr_->add_managed_node(p);
@@ -60,7 +59,6 @@ namespace subsystem_controllers
         for (const auto& p : auto_activated_plugins_) {
             bool is_ros1 = ros2_initial_plugins_.find(p) == ros2_initial_plugins_.end();
             Entry e(false, false, p, carma_planning_msgs::msg::Plugin::UNKNOWN, "", true, is_ros1);
-            e.is_ros1_ = is_ros2_lifecycle_node(p);
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("subsystem_controllers"), "Adding p:!" << p); 
             em_.update_entry(e);
             plugin_lifecycle_mgr_->add_managed_node(p);
