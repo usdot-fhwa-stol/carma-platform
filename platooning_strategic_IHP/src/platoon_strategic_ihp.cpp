@@ -533,7 +533,7 @@ namespace platoon_strategic_ihp
                 status_msg.predecessor_position = pm_.getPredecessorPosition();
 
                 // Note: use isCreateGap to adjust the desired gap send to control plugin 
-                double regular_gap = std::max(config_.standStillHeadway, desired_headway);
+                double regular_gap = status_msg.desired_gap;
                 ROS_DEBUG_STREAM("regular_gap: " << regular_gap);
                 ROS_DEBUG_STREAM("current_speed_: " << current_speed_);
                 ROS_DEBUG_STREAM("speed based gap: " << desired_headway);
@@ -541,10 +541,10 @@ namespace platoon_strategic_ihp
                     // enlarged desired gap for gap creation
                     status_msg.desired_gap = regular_gap*(1 + config_.createGapAdjuster);
                 }
-                else{
-                    // normal desired gap
-                    status_msg.desired_gap = regular_gap;
-                }
+                // else{
+                //     // normal desired gap
+                //     status_msg.desired_gap = regular_gap;
+                // }
                 status_msg.actual_gap = platoon_leader.vehiclePosition - current_downtrack_;
                 ROS_DEBUG_STREAM("status_msg.actual_gap: " << status_msg.actual_gap);
             }
@@ -2791,7 +2791,8 @@ namespace platoon_strategic_ihp
             currentGap = pm_.getDistanceToPredVehicle();
             ROS_DEBUG_STREAM("curent gap when there is no neighbor platoon: " << currentGap);
         }
-        
+        //TODOtempo
+        currentGap = pm_.getDistanceToPredVehicle();
         ROS_DEBUG_STREAM("Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " ms");
         ROS_DEBUG_STREAM("Since we have max allowed gap as " << config_.desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
         ROS_DEBUG_STREAM("The current gap from radar is " << currentGap << " m");

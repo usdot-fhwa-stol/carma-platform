@@ -115,8 +115,11 @@
   <!-- Platooning Control Plugin -->
   <include file="$(find platoon_control)/launch/platoon_control.launch" />
 
-  <!-- Platooning Control IHP Plugin -->
-  <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" />
+  <!-- Platooning Control IHP Plugin
+  <group>
+    <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" />
+    <remap from="platooning_info_ihp" to="platooning_info"/>
+  </group> -->
 
   <!-- Twist Filter -->
   <group>
