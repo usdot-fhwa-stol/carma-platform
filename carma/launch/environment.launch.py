@@ -311,6 +311,9 @@ def generate_launch_description():
                         ("external_objects", "external_object_predictions"),
                         ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
                         ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] )
+                    ],
+                    parameters = [
+                        vehicle_config_param_file
                     ]
             ),
             ComposableNode( 
@@ -327,6 +330,9 @@ def generate_launch_description():
                         ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_operation" ] ),
                         ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
                         ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] )
+                    ],
+                    parameters = [
+                        vehicle_config_param_file
                     ]
             ),
         ]

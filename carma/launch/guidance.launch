@@ -144,12 +144,6 @@
 
     <!-- Platooning Control IHP Plugin -->
     <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" />
-    
-    <!-- Inlanecruising Plugin -->
-    <group>
-      <remap from="final_waypoints" to="base_waypoints"/>
-      <include file="$(find inlanecruising_plugin)/launch/inlanecruising_plugin.launch" />
-    </group>
 
     <!-- Platooning Tactical Plugin -->
     <group>
