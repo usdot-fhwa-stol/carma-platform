@@ -55,3 +55,7 @@
       - /guidance/plugins/platoon_strategic_ihp
       - /guidance/plugins/platooning_tactical_plugin
       - /guidance/plugins/yield_plugin
+    
+    # List of guidance plugins that are ported to ROS2. If not in this list, it is assumed to be ROS1, and not managed.
+    ros2_initial_plugins:
+      - /guidance/plugins/inlanecruising_plugin

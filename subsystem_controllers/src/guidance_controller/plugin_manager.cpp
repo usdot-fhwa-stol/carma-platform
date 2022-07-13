@@ -27,34 +27,45 @@ namespace subsystem_controllers
 
     PluginManager::PluginManager(const std::vector<std::string>& required_plugins,
                           const std::vector<std::string>& auto_activated_plugins, 
+                          const std::vector<std::string>& ros2_initial_plugins,
                           std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> plugin_lifecycle_mgr,
                           GetParentNodeStateFunc get_parent_state_func,
                           ServiceNamesAndTypesFunc get_service_names_and_types_func,
                           std::chrono::nanoseconds service_timeout, std::chrono::nanoseconds call_timeout)
         : required_plugins_(required_plugins.begin(), required_plugins.end()),
             auto_activated_plugins_(auto_activated_plugins.begin(), auto_activated_plugins.end()),
+            ros2_initial_plugins_(ros2_initial_plugins.begin(), ros2_initial_plugins.end()),
             plugin_lifecycle_mgr_(plugin_lifecycle_mgr), get_parent_state_func_(get_parent_state_func),
             get_service_names_and_types_func_(get_service_names_and_types_func),
             service_timeout_(service_timeout), call_timeout_(call_timeout)
     {
         if (!plugin_lifecycle_mgr)
             throw std::invalid_argument("Input plugin_lifecycle_mgr to PluginManager constructor cannot be null");
+        
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("subsystem_controllers"), "Starting constructor!"); 
 
         // For all required and auto activated plugins add unknown entries but with 
         // user_requested_activation set to true.
         // This will be used later to determine how to transition the plugin specified by that entry
+        
         for (const auto& p : required_plugins_) {
-            Entry e(false, false, p, carma_planning_msgs::msg::Plugin::UNKNOWN, "", true);
+            bool is_ros1 = ros2_initial_plugins_.find(p) == ros2_initial_plugins_.end();
+            Entry e(false, false, p, carma_planning_msgs::msg::Plugin::UNKNOWN, "", true, is_ros1);
+            e.is_ros1_ = is_ros2_lifecycle_node(p);
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("subsystem_controllers"), "Adding p:!" << p); 
             em_.update_entry(e);
             plugin_lifecycle_mgr_->add_managed_node(p);
         }
 
         for (const auto& p : auto_activated_plugins_) {
-            Entry e(false, false, p, carma_planning_msgs::msg::Plugin::UNKNOWN, "", true);
+            bool is_ros1 = ros2_initial_plugins_.find(p) == ros2_initial_plugins_.end();
+            Entry e(false, false, p, carma_planning_msgs::msg::Plugin::UNKNOWN, "", true, is_ros1);
+            e.is_ros1_ = is_ros2_lifecycle_node(p);
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("subsystem_controllers"), "Adding p:!" << p); 
             em_.update_entry(e);
             plugin_lifecycle_mgr_->add_managed_node(p);
         }
-
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("subsystem_controllers"), "Ending constructor!"); 
     }
 
     bool PluginManager::is_ros2_lifecycle_node(const std::string& node)
@@ -226,6 +237,9 @@ namespace subsystem_controllers
         // Bring all required or auto activated plugins to the active state
         for (auto plugin : em_.get_entries())
         {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("subsystem_controllers"), "Activate is called! on: " << plugin.name_); 
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("subsystem_controllers"), "Ais_ris1: " << plugin.is_ros1_ << ", user_requested_activation_:" << plugin.user_requested_activation_); 
+
             if (plugin.is_ros1_) // We do not manage lifecycle of ros1 nodes
                 continue;
 
@@ -234,6 +248,8 @@ namespace subsystem_controllers
                 continue;
 
             auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE, plugin.name_, service_timeout_, call_timeout_);
+
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("subsystem_controllers"), "Resulting: " << (int)result_state); 
 
             if(result_state != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) 
             {
@@ -421,9 +437,7 @@ namespace subsystem_controllers
             activated = (result_state == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE);
         }
 
-
-
-        Entry updated_entry(requested_plugin->available_, activated, requested_plugin->name_, requested_plugin->type_, requested_plugin->capability_, true); // Mark as user activated
+        Entry updated_entry(requested_plugin->available_, activated, requested_plugin->name_, requested_plugin->type_, requested_plugin->capability_, true, requested_plugin->is_ros1_); // Mark as user activated
         em_.update_entry(updated_entry);
 
         res->newstate = activated;
@@ -431,18 +445,18 @@ namespace subsystem_controllers
 
     void PluginManager::update_plugin_status(carma_planning_msgs::msg::Plugin::UniquePtr msg)
     {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("guidance_controller"), "received status from: " << msg->name);
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("guidance_controller"), "received status from: " << msg->name);
         boost::optional<Entry> requested_plugin = em_.get_entry_by_name(msg->name);
 
         if (!requested_plugin) // This is a new plugin so we need to add it
         {
-            Entry plugin(msg->available, msg->activated, msg->name, msg->type, msg->capability, false);
+            Entry plugin(msg->available, msg->activated, msg->name, msg->type, msg->capability, false, false); //is_ros1 flag is updated appropriately in add_plugin
             add_plugin(plugin);
             return;
         }
 
-        Entry plugin(msg->available, msg->activated, msg->name, msg->type, msg->capability, requested_plugin->user_requested_activation_);
-
+        Entry plugin(msg->available, msg->activated, msg->name, msg->type, msg->capability, requested_plugin->user_requested_activation_, requested_plugin->is_ros1_);
+        
         em_.update_entry(plugin);
     }
 

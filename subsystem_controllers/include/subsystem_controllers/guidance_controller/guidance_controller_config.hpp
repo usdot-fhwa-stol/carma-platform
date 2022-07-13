@@ -37,6 +37,9 @@ namespace subsystem_controllers
     //  this list should have zero intersection with the required_plugins
     std::vector<std::string> auto_activated_plugins;
 
+    //! List of guidance plugins that are ROS2. If it is not in the list, it is assumed to be ROS1 and not managed
+    std::vector<std::string> ros2_initial_plugins;
+
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const GuidanceControllerConfig &c)
     {
@@ -52,7 +55,12 @@ namespace subsystem_controllers
       for (auto node : c.auto_activated_plugins)
         output << node << " ";
 
-      output << "] " << std::endl
+      output << "] " << std::endl << "ros2_initial_plugins: [ ";
+
+       for (auto node : c.ros2_initial_plugins)
+        output << node << " ";
+      
+      output << "] " << std::endl 
         << "}" << std::endl;
       return output;
     }
