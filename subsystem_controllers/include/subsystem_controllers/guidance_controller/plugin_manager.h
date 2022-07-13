@@ -56,6 +56,7 @@ namespace subsystem_controllers
              * 
              * \param required_plugins The set of plugins which will be treated as required. A failure in these plugins will result in an exception
              * \param auto_activated_plugins The set of plugins which will be automatically activated at first system activation but not treated specially after that.
+             * \param ros2_initial_plugins The set of plugins which will be managed as they are ROS2.
              * \param plugin_lifecycle_mgr A fully initialized lifecycle manager which will be used trigger plugin transitions
              * \param get_parent_state_func A callback which will allow this object to access the parent process lifecycle state
              * \param get_service_names_and_types_func A callback which returns a map of service names to service types based on the provided base node name and namespace
@@ -64,6 +65,7 @@ namespace subsystem_controllers
              */
             PluginManager(const std::vector<std::string>& required_plugins,
                           const std::vector<std::string>& auto_activated_plugins,
+                          const std::vector<std::string>& ros2_initial_plugins,
                           std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> plugin_lifecycle_mgr,
                           GetParentNodeStateFunc get_parent_state_func,
                           ServiceNamesAndTypesFunc get_service_names_and_types_func,
@@ -192,6 +194,10 @@ namespace subsystem_controllers
             //! Set of use specified auto activated plugins which will automatically started without need for user input
             // These will only be activated once, if the user later deactivates them then that behavior will be preserved
             std::unordered_set<std::string> auto_activated_plugins_;
+
+            //! Set of ROS2 plugins that will be managed initially. In other words, newly detected plugins after initial configuration are also managed appropriately
+            // despite not being in the list.
+            std::unordered_set<std::string> ros2_initial_plugins_;
 
             //! Lifecycle Manager which will track the plugin nodes and call their lifecycle services on request
             std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> plugin_lifecycle_mgr_;
