@@ -29,12 +29,17 @@ namespace arbitrator
     std::map<std::string, std::shared_ptr<MSrvRes>> 
         CapabilitiesInterface::multiplex_service_call_for_capability(const std::string& query_string, std::shared_ptr<MSrvReq> msg)
     {
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "inside 1 multiplex!");
+        
         std::vector<std::string> topics = get_topics_for_capability(query_string);
+
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "inside 2 multiplex!");
+
         std::map<std::string, std::shared_ptr<MSrvRes>> responses;
 
         for (auto i = topics.begin(); i != topics.end(); i++) 
         {
-            auto sc = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(*i);
+            auto sc = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>("plugins/" + *i);
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << *i);
             
             std::shared_future<std::shared_ptr<MSrvRes>> resp = sc->async_send_request(msg);
@@ -43,6 +48,10 @@ namespace arbitrator
             
             if (future_status == std::future_status::ready) {
                 responses.emplace(*i, resp.get());
+            }
+            else
+            {
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "failed...: " << *i);
             }
         }
         return responses;

@@ -1994,7 +1994,7 @@ carma_perception_msgs::msg::CheckActiveGeofence WMBroadcaster::checkActiveGeofen
 
   if (active_geofence_llt_ids_.size() <= 0 ) 
   {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "No active geofence llt ids are loaded to the WMBroadcaster");
+    //RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "No active geofence llt ids are loaded to the WMBroadcaster");
     return outgoing_geof;
   }
 

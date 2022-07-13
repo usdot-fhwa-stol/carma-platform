@@ -35,7 +35,7 @@ namespace arbitrator
     carma_ros2_utils::CallbackReturn ArbitratorNode::handle_on_configure(const rclcpp_lifecycle::State &)
     {
         // Handle dependency injection
-        arbitrator::CapabilitiesInterface ci(shared_from_this());
+        auto ci = std::make_shared<arbitrator::CapabilitiesInterface>(shared_from_this());
         arbitrator::ArbitratorStateMachine sm;
         
         // Reset config
@@ -79,7 +79,7 @@ namespace arbitrator
         arbitrator_ = std::make_shared<Arbitrator>(
             shared_from_this(),
             std::make_shared<ArbitratorStateMachine>(sm), 
-            std::make_shared<CapabilitiesInterface>(ci), 
+            ci, 
             std::make_shared<TreePlanner>(tp), 
             rclcpp::Duration(config_.min_plan_duration* 1e9),
             1/config_.planning_frequency,

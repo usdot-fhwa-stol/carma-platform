@@ -210,7 +210,7 @@ def generate_launch_description():
         ]
     )
 
-    # Launch plugins
+    ## Launch plugins
     plugins_group = GroupAction(
         actions=[
             PushRosNamespace("plugins"),
@@ -229,7 +229,7 @@ def generate_launch_description():
             ),
         ]
     )
-       
+      
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
         package='subsystem_controllers',

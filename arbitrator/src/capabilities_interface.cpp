@@ -26,11 +26,14 @@ namespace arbitrator
     std::vector<std::string> CapabilitiesInterface::get_topics_for_capability(const std::string& query_string)
     {
         std::vector<std::string> topics = {};
-
+        RCLCPP_ERROR_STREAM(nh_->get_logger(), "get_topics_for_capability start!");
+        
         auto srv = std::make_shared<carma_planning_msgs::srv::GetPluginApi::Request>();
         srv->capability = "";
         
         auto plan_response = sc_s_->async_send_request(srv);
+
+        RCLCPP_ERROR_STREAM(nh_->get_logger(), "get_topics_for_capability end!");
 
         auto future_status = plan_response.wait_for(std::chrono::milliseconds(200));
 
