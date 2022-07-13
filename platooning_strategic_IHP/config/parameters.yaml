@@ -28,6 +28,6 @@ test_front_join: false
 test_cutin_join: false
 slowDownAdjuster: 0.75
 createGapAdjuster: 0.3
-minPlatooningSpeed: 10.0
+minPlatooningSpeed: 11.0
 allowCutinJoin: true
 significantDTDchange: 0.2
