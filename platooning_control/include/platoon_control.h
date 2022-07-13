@@ -63,6 +63,10 @@ namespace platoon_control
 
 			// current speed (in m/s)
 			double current_speed_ = 0.0;
+
+			// Timestamp associated with the latest speed received and stored in current_speed_
+			ros::Time current_speed_timestamp_;
+
 			double trajectory_speed_ = 0.0;
 
         

@@ -135,17 +135,12 @@ TEST(PlatoonControlWorkerTest, test_accel)
 {
 
     platoon_control::PlatoonControlWorker pcw;
-    pcw.currentSpeed = 5.0;
-    pcw.speedCmd_ = 6.0;
-    
-    geometry_msgs::PoseStamped current_pose;
-    current_pose.pose.position.x = 0.0;
-    current_pose.pose.position.y = 0.0;
-
-    pcw.setCurrentPose(current_pose);
-
     double current_speed = 5.0;
+    pcw.speedCmd_ = 6.0;
 
-    pcw.generateAccel(current_speed);
-    EXPECT_NEAR(0.55, pcw.accelCmd_, 0.1);
+    ros::Time current_speed_timestamp = ros::Time(1,0);
+    ros::Time current_time = ros::Time(3,0);
+
+    pcw.generateAccel(current_speed, current_speed_timestamp, current_time);
+    EXPECT_NEAR(0.5, pcw.accelCmd_, 0.1);
 }

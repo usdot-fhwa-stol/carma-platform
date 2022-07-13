@@ -152,13 +152,15 @@ namespace platoon_control
         angVelCmd_ = pp_.getAngularVelocity();
     }
 
-    void PlatoonControlWorker::generateAccel(const double& current_vehicle_speed)
+    void PlatoonControlWorker::generateAccel(const double& current_speed, const ros::Time& current_speed_timestamp, const ros::Time& current_time)
     {
-        const double v_i = current_vehicle_speed; 
+        const double v_i = current_speed; 
         const double v_f = speedCmd_; 
-        const double delta_time = ctrl_config_.cmdTmestamp / 1000.0;
+        const double delta_time = (current_time - current_speed_timestamp).toSec();
         ROS_DEBUG_STREAM("V_i: " << v_i << ", V_f: " << v_f << ", delta_time: " << delta_time << "sec"); 
         accelCmd_ = (v_f - v_i) / delta_time;
+
+        ROS_DEBUG_STREAM("Commanded accel before applying limits: " << accelCmd_ << " m/s^2");
 
         if(enableMaxAccelFilter) {
             if (accelCmd_ > ctrl_config_.maxAccel) {
@@ -169,7 +171,7 @@ namespace platoon_control
             }
         }
 
-        ROS_DEBUG_STREAM("Commanded accel (raw): " << accelCmd_ << " m/s^2");
+        ROS_DEBUG_STREAM("Commanded accel after applying limits: " << accelCmd_ << " m/s^2");
     }
 
     // TODO get the actual leader from strategic plugin

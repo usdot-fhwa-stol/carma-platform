@@ -186,6 +186,7 @@ namespace platoon_control
 
     void PlatoonControlPlugin::currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist){
         current_speed_ = twist->twist.linear.x;
+        current_speed_timestamp_ = twist->header.stamp;
     }
 
 
@@ -221,7 +222,7 @@ namespace platoon_control
         pcw_.setLeader(platoon_leader_);
     	pcw_.generateSpeed(first_trajectory_point);
     	pcw_.generateSteer(lookahead_point);
-        pcw_.generateAccel(current_speed_); // Should be called after pcw_.generateSpeed so that generateAccel() can use the latest commanded speed in calculation
+        pcw_.generateAccel(current_speed_, current_speed_timestamp_, ros::Time::now()); // Should be called after pcw_.generateSpeed so that generateAccel() can use the latest commanded speed in calculation
 
         geometry_msgs::TwistStamped twist_msg = composeTwistCmd(pcw_.speedCmd_, pcw_.angVelCmd_);
         twist_pub_.publish(twist_msg);
