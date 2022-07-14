@@ -45,7 +45,7 @@ namespace carma_guidance_plugins
           this->plan_trajectory_callback(header, req, resp);
         }
       });
-    
+          
     return PluginBaseNode::handle_on_configure(prev_state);
   }
 

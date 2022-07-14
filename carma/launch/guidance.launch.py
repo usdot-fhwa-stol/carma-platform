@@ -19,6 +19,7 @@ from launch_ros.actions import Node
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch.substitutions import EnvironmentVariable
+from launch.substitutions import ThisLaunchFileDir
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 from launch.substitutions import LaunchConfiguration
@@ -30,6 +31,8 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import GroupAction
 from launch_ros.actions import set_remap
 from launch.actions import DeclareLaunchArgument
+from launch_ros.actions import PushRosNamespace
+
 
 # Launch file for launching the nodes in the CARMA guidance stack
 
@@ -41,7 +44,7 @@ def generate_launch_description():
     strategic_plugins_to_validate = LaunchConfiguration('strategic_plugins_to_validate')
     tactical_plugins_to_validate = LaunchConfiguration('tactical_plugins_to_validate')
     control_plugins_to_validate = LaunchConfiguration('control_plugins_to_validate')
-    
+    vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
     declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
         name = 'vehicle_config_param_file',
@@ -70,6 +73,9 @@ def generate_launch_description():
     plan_delegator_param_file = os.path.join(
         get_package_share_directory('plan_delegator'), 'config/plan_delegator_params.yaml')
     
+    inlanecruising_plugin_file_path = os.path.join(
+        get_package_share_directory('inlanecruising_plugin'), 'config/parameters.yaml')
+
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
@@ -200,10 +206,30 @@ def generate_launch_description():
                 parameters=[
                     guidance_param_file
                 ]
-            )
+            ),
         ]
     )
 
+    # Launch plugins
+    plugins_group = GroupAction(
+        actions=[
+            PushRosNamespace("plugins"),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/plugins.launch.py']),
+                launch_arguments={
+                    'route_file_folder' : route_file_folder,
+                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file, 
+                    'vehicle_config_param_file' : vehicle_config_param_file,
+                    'enable_guidance_plugin_validator' : enable_guidance_plugin_validator,
+                    'strategic_plugins_to_validate' : strategic_plugins_to_validate,
+                    'tactical_plugins_to_validate' : tactical_plugins_to_validate,
+                    'control_plugins_to_validate' : control_plugins_to_validate,
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                }.items()
+            ),
+        ]
+    )
+       
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
         package='subsystem_controllers',
@@ -218,5 +244,6 @@ def generate_launch_description():
         declare_vehicle_config_param_file_arg,
         declare_subsystem_controller_param_file_arg,      
         carma_guidance_container,
+        plugins_group,
         subsystem_controller
     ]) 

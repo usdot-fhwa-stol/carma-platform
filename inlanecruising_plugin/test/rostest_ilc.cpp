@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,60 +14,71 @@
  * the License.
  */
 
-#include <inlanecruising_plugin/inlanecruising_plugin_node.h>
-#include <carma_utils/CARMAUtils.h>
+#include <inlanecruising_plugin/inlanecruising_plugin_node.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <gtest/gtest.h>
-#include <ros/ros.h>
-#include "ros/service.h"
+#include <rclcpp/rclcpp.hpp>
 #include <thread>
 #include <chrono>
+#include <carma_planning_msgs/srv/plan_trajectory.hpp>
+#include "helper.hpp"
+#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
 
-#include "ros/ros.h"
-#include <cav_srvs/PlanTrajectory.h>
+
+namespace inlanecruising_plugin
+{
 
 TEST(InLaneCruisingPluginTest, rostest1)
 {
-    ros::CARMANodeHandle nh;
-    bool flag_trajectory = false;
-    bool flag_yield = false;
-    std::string res = "";
+    auto yield_node = std::make_shared<Node>(rclcpp::NodeOptions());
+     
+    auto service = yield_node->create_service<carma_planning_msgs::srv::PlanTrajectory>("yield_plugin/plan_trajectory", 
+                                            std::bind(&Node::callback, yield_node.get(), std_ph::_1, std_ph::_2, std_ph::_3));
 
-    cav_srvs::PlanTrajectory traj_srv;
-    traj_srv.request.initial_trajectory_plan.trajectory_id = "ILCReq";
+    yield_node->configure();
+    yield_node->activate(); 
+
+    auto ilc_node = std::make_shared<inlanecruising_plugin::InLaneCruisingPluginNode>(rclcpp::NodeOptions());
+
+    ilc_node->configure();
+    ilc_node->activate(); 
+
+    // Add these nodes to an executor to spin them and trigger callbacks
+    rclcpp::executors::MultiThreadedExecutor executor;
+    executor.add_node(yield_node->get_node_base_interface());
+    executor.add_node(ilc_node->get_node_base_interface());
+
+    carma_planning_msgs::srv::PlanTrajectory::Request traj_srv;
+    traj_srv.initial_trajectory_plan.trajectory_id = "YieldReq";
    
-    ros::ServiceClient plugin1= nh.serviceClient<cav_srvs::PlanTrajectory>("inlanecruising_plugin/plan_trajectory");
+    InLaneCruisingPluginConfig config;
+    config.enable_object_avoidance = true;
+    config.default_downsample_ratio = 1;
 
-    ROS_INFO_STREAM("ilc service: " << plugin1.getService());
-    if(plugin1.waitForExistence(ros::Duration(5.0)))
-    {
-        ros::spinOnce();
-        ROS_ERROR("waiting");
-        if (plugin1.call(traj_srv))
-        {
-            res = traj_srv.response.trajectory_plan.trajectory_id;
-            ROS_ERROR("ILC Traj Service called");
-            flag_trajectory = true;
-            flag_yield = true;
-            
-        }
-        else
-        {
-            ROS_ERROR("ILC Trajectory Service not called");
-            res = "error";
-        }
+    auto yield_srv = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>(traj_srv);
+    auto yield_resp = ilc_node->yield_client_->async_send_request(yield_srv);
+
+      // Spin executor for 2 seconds
+    auto end_time = std::chrono::system_clock::now() + std::chrono::seconds(2);
+    
+    while(std::chrono::system_clock::now() < end_time){
+        executor.spin_once();
     }
-    EXPECT_TRUE(flag_trajectory);
-    ASSERT_TRUE(flag_yield);
-    // EXPECT_EQ(res, "ILC2Yield");
+
+    auto future_status = yield_resp.wait_for(std::chrono::milliseconds(100));
+
+    if (future_status == std::future_status::ready)
+    {
+        RCLCPP_DEBUG_STREAM(ilc_node->get_logger(), "Received Traj from Yield");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger(ILC_LOGGER), "ILC Traj Service called");
+    }
+    else
+    {
+        throw std::invalid_argument("Unable to Call Yield Plugin");
+    }
+
+
+    ASSERT_EQ(yield_resp.get()->trajectory_plan.trajectory_id, "YieldResp");
 }
-
-
-
-int main (int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-    ros::init(argc, argv, "rostest_ilc");
-    ros::NodeHandle nh;
-    auto res = RUN_ALL_TESTS();
-    return res;
 }
-
