@@ -19,8 +19,8 @@
       - /guidance/trajectory_executor
       - /guidance/twist_filter
       - /guidance/twist_gate
-      - /guidance/route_following_plugin # The minimal set of guidance plugins for system operation are route_following/inlane_cruising/pure_pursuit
-      - /guidance/inlanecruising_plugin
+      - /guidance/plugins/route_following_plugin # The minimal set of guidance plugins for system operation are route_following/inlanecruising/pure_pursuit
+      - /guidance/plugins/inlanecruising_plugin
       - /guidance/pure_pursuit_wrapper
       - /guidance/pure_pursuit
       - /guidance/yield_plugin
@@ -38,14 +38,14 @@
     required_plugins:
       - /guidance/plugins/route_following_plugin
       - /guidance/plugins/pure_pursuit_wrapper
-      - /guidance/plugins/inlane_cruising_plugin
+      - /guidance/plugins/inlanecruising_plugin
       - /guidance/plugins/cooperative_lanechange
 
     # List of guidance plugins which are not required but the user wishes to have automatically activated
     # so that the user doesn't need to manually activate them via the UI on each launch (though they still can)
     # this list should have zero intersection with the required_plugins
     auto_activated_plugins:
-      - /guidance/plugins/lic_strategic_plugin
+      - /guidance/plugins/lci_strategic_plugin
       - /guidance/plugins/intersection_transit_maneuvering
       - /guidance/plugins/light_controlled_intersection_tactical_plugin
       - /guidance/plugins/stop_and_wait_plugin
@@ -55,3 +55,7 @@
       - /guidance/plugins/platoon_strategic_ihp
       - /guidance/plugins/platooning_tactical_plugin
       - /guidance/plugins/yield_plugin
+    
+    # List of guidance plugins that are ported to ROS2. If not in this list, it is assumed to be ROS1, and not managed.
+    ros2_initial_plugins:
+      - /guidance/plugins/inlanecruising_plugin
