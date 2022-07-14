@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
  */
 
 #include <vector>
-#include <carma_wm/Geometry.h>
+#include <carma_wm_ros2/Geometry.hpp>
 
 namespace inlanecruising_plugin
 {
@@ -40,7 +40,7 @@ public:
    * 
    * \param points The key points
    */ 
-  virtual void setPoints(std::vector<lanelet::BasicPoint2d> points) = 0;
+  virtual void setPoints(const std::vector<lanelet::BasicPoint2d>& points) = 0;
   
     /**
   *  \brief Get the BasicPoint2d coordinate along the curve at t-th step. 

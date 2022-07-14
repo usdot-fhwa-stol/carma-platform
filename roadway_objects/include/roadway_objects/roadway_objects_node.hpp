@@ -47,10 +47,10 @@ namespace roadway_objects
     carma_ros2_utils::PubPtr<carma_perception_msgs::msg::RoadwayObstacleList> roadway_obs_pub_;
 
     // World Model Listener. Must be declared before object_worker_ for proper initialization.
-    carma_wm::WMListener wm_listener_;
+    std::shared_ptr<carma_wm::WMListener> wm_listener_;
 
     // Worker class object
-    RoadwayObjectsWorker object_worker_;
+    std::shared_ptr<RoadwayObjectsWorker> object_worker_;
 
   public:
     /**

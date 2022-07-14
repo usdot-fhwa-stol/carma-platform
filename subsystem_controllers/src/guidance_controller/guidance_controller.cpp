@@ -28,6 +28,9 @@ namespace subsystem_controllers
       // Don't automatically trigger state transitions from base class on configure
       // In this class the managed nodes list first needs to be modified then the transition will be triggered manually
       trigger_managed_nodes_configure_from_base_class_ = false;
+      config_.required_plugins = declare_parameter<std::vector<std::string>>("required_plugins", config_.required_plugins); 
+      config_.auto_activated_plugins = declare_parameter<std::vector<std::string>>("auto_activated_plugins", config_.auto_activated_plugins); 
+      config_.ros2_initial_plugins = declare_parameter<std::vector<std::string>>("ros2_initial_plugins", config_.ros2_initial_plugins); 
   }
 
   cr2::CallbackReturn GuidanceControllerNode::handle_on_configure(const rclcpp_lifecycle::State &prev_state) {
@@ -58,6 +61,7 @@ namespace subsystem_controllers
     // Load required plugins and default enabled plugins
     get_parameter<std::vector<std::string>>("required_plugins", config_.required_plugins); 
     get_parameter<std::vector<std::string>>("auto_activated_plugins", config_.auto_activated_plugins); 
+    get_parameter<std::vector<std::string>>("ros2_initial_plugins", config_.ros2_initial_plugins); 
 
     RCLCPP_INFO_STREAM(get_logger(), "Config: " << config_);
 
@@ -67,7 +71,8 @@ namespace subsystem_controllers
 
     plugin_manager_ = std::make_shared<PluginManager>(
       config_.required_plugins, 
-      config_.auto_activated_plugins, 
+      config_.auto_activated_plugins,
+      config_.ros2_initial_plugins, 
       plugin_lifecycle_manager, 
       [this](){ return get_current_state().id(); },
       [this](auto node, auto ns){ return get_service_names_and_types_by_node(node, ns); },

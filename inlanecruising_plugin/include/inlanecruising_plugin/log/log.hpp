@@ -1,5 +1,5 @@
 #include <sstream>
-#include <inlanecruising_plugin/inlanecruising_plugin.h>
+#include <inlanecruising_plugin/inlanecruising_plugin.hpp>
 
 namespace inlanecruising_plugin
 {
@@ -25,19 +25,19 @@ std::string pointSpeedPairToStream(PointSpeedPair point)
 }
 
 /**
- * \brief Print a ROS_DEBUG_STREAM for each value in values where the printed value is a string returned by func
+ * \brief Print a RCLPP_DEBUG_STREAM for each value in values where the printed value is a string returned by func
  */ 
 template <class T>
 void printDebugPerLine(const std::vector<T>& values, std::function<std::string(T)> func)
 {
   for (const auto& value : values)
   {
-    ROS_DEBUG_STREAM(func(value));
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(ILC_LOGGER), func(value));
   }
 }
 
 /**
- * \brief Print a ROS_DEBUG_STREAM for each value in values where the printed value is a string returned by free_func
+ * \brief Print a RCLPP_DEBUG_STREAM for each value in values where the printed value is a string returned by free_func
  */ 
 template <class T>
 void printDebugPerLine(const std::vector<T>& values, std::string (*free_func)(T))
@@ -47,13 +47,13 @@ void printDebugPerLine(const std::vector<T>& values, std::string (*free_func)(T)
 }
 
 /**
- * \brief Print a ROS_DEBUG_STREAM for each value in values where the printed value is << prefix << value
+ * \brief Print a RCLPP_DEBUG_STREAM for each value in values where the printed value is << prefix << value
  */ 
 void printDoublesPerLineWithPrefix(const std::string& prefix, const std::vector<double>& values)
 {
   for (const auto& value : values)
   {
-    ROS_DEBUG_STREAM(prefix << value);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(ILC_LOGGER), prefix << value);
   }
 }
 
