@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,8 @@
  */
 
 #include <vector>
-#include <carma_wm/Geometry.h>
-#include <inlanecruising_plugin/smoothing/SplineI.h>
+#include <carma_wm_ros2/Geometry.hpp>
+#include <inlanecruising_plugin/smoothing/SplineI.hpp>
 #include <unsupported/Eigen/Splines>
 
 namespace inlanecruising_plugin
@@ -34,7 +34,7 @@ class BSpline : public SplineI
 {
 public:
   ~BSpline(){};
-  void setPoints(std::vector<lanelet::BasicPoint2d> points) override;
+  void setPoints(const std::vector<lanelet::BasicPoint2d>& points) override;
   lanelet::BasicPoint2d operator()(double t) const override;
   lanelet::BasicPoint2d first_deriv(double t) const override;
   lanelet::BasicPoint2d second_deriv(double t) const override;

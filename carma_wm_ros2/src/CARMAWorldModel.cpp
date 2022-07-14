@@ -549,7 +549,14 @@ namespace carma_wm
 
       RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::CARMAWorldModel"), "Building routing graph");
 
-      TrafficRulesConstPtr traffic_rules = *(getTrafficRules(participant_type_));
+      auto tr = getTrafficRules(participant_type_);
+
+      if (!tr)
+      {
+        throw std::invalid_argument("Could not construct traffic rules for participant");
+      }
+
+      TrafficRulesConstPtr traffic_rules = *tr;
 
       lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
       map_routing_graph_ = std::move(map_graph);

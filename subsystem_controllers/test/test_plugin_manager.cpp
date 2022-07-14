@@ -127,6 +127,7 @@ namespace subsystem_controllers
     {
         std::vector<std::string> req_plugins = {"plg_1"};
         std::vector<std::string> auto_actv_plugins = {"plg_2"};
+        std::vector<std::string> ros2_plugins = {"plg_2", "plg_1"};
 
         auto mlm = std::make_shared<MockLifecycleManager>();
 
@@ -135,6 +136,7 @@ namespace subsystem_controllers
         PluginManager pm(
             req_plugins, 
             auto_actv_plugins, 
+            ros2_plugins,
             mlm, 
             [&curr_state](){ return curr_state; },
             [](auto node, auto) -> std::map<std::string, std::vector<std::string, std::allocator<std::string>>> { 

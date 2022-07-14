@@ -46,10 +46,10 @@ namespace traffic_incident_parser
     carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::TrafficControlMessage> traffic_control_msg_pub_;
 
     // World Model Listener; must be declared before traffic_parser_worker_ for proper initialization
-    carma_wm::WMListener wm_listener_;
+    std::shared_ptr<carma_wm::WMListener> wm_listener_;
     
     // TrafficIncidentParserWorker class object
-    TrafficIncidentParserWorker traffic_parser_worker_;
+    std::shared_ptr<TrafficIncidentParserWorker> traffic_parser_worker_;
 
   public:
 
