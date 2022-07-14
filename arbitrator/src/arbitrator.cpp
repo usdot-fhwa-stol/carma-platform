@@ -138,7 +138,7 @@ namespace arbitrator
             } 
             else 
             {
-                RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator is publishing plan " << plan.maneuver_plan_id << " of duration " << plan_duration.seconds() << " as current maneuver plan");
+                RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator is publishing plan " << std::string(plan.maneuver_plan_id) << " of duration " << plan_duration.seconds() << " as current maneuver plan");
             }
             final_plan_pub_->publish(plan);
         }

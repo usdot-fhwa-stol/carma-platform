@@ -182,7 +182,6 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('arbitrator', env_log_levels) }
                 ],
                 remappings = [
-                    ("final_maneuver_plan", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/arbitrator/final_maneuver_plan" ] ),
                     ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
                 ],
                 parameters=[ 
