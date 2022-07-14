@@ -750,7 +750,7 @@ namespace platoon_strategic_ihp
         }
 
         // else if this message is for our platoon then store its info
-        else if (platoonId.compare(pm_.currentPlatoonID) == 0)
+        else if (platoonId.compare(pm_.currentPlatoonID) == 0 && platoonId.compare(pm_.dummyID) != 0)
         {
             pm_.hostMemberUpdates(vehicleID, platoonId, statusParams, dtd, ctd);
         }
