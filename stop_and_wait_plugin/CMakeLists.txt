@@ -27,15 +27,20 @@ ament_auto_find_build_dependencies()
 
 # Name build targets
 set(node_exec stop_and_wait_plugin_exec)
-set(node_lib stop_and_wait_plugin_lib)
+set(worker_lib stop_and_wait_plugin_lib)
+set(node_lib stop_and_wait_plugin_node)
 
 include_directories(
   include
 )
 
 # Build
-ament_auto_add_library(${node_lib} SHARED
+ament_auto_add_library(${worker_lib}
         src/stop_and_wait_plugin.cpp
+)
+
+ament_auto_add_library(${node_lib} SHARED
+        src/stop_and_wait_plugin_node.cpp
 )
 
 ament_auto_add_executable(${node_exec} 
@@ -43,10 +48,14 @@ ament_auto_add_executable(${node_exec}
 )
 
 # Register component
-rclcpp_components_register_nodes(${node_lib} "stop_and_wait_plugin::StopandWaitNode")
+rclcpp_components_register_nodes(${worker_lib} "stop_and_wait_plugin::StopandWaitNode")
 
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies
+target_link_libraries(${node_lib}
+        ${worker_lib}
+)
+
 target_link_libraries(${node_exec}
         ${node_lib}
 )
@@ -60,7 +69,7 @@ ament_lint_auto_find_test_dependencies()
 ament_add_gtest(test_stopandwait_plugin test_stopandwait_plugin.cpp)
 ament_target_dependencies(test_stopandwait_plugin
 ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
-target_link_libraries(test_stopandwait_plugin ${node_lib})
+target_link_libraries(test_stopandwait_plugin ${worker_lib})
 endif()
 
   # Install

@@ -57,37 +57,26 @@ public:
   /**
    * \brief General entry point to begin the operation of this class
    */
-  void run()
-  {
-    ros::CARMANodeHandle nh;
-    ros::CARMANodeHandle pnh("~");
 
     carma_wm::WMListener wml;
     auto wm = wml.getWorldModel();
 
     StopandWaitConfig config;
 
-    pnh.param<double>("minimal_trajectory_duration", config.minimal_trajectory_duration,
-                      config.minimal_trajectory_duration);
-    pnh.param<double>("stop_timestep", config.stop_timestep, config.stop_timestep);
-    pnh.param<double>("trajectory_step_size", config.trajectory_step_size, config.trajectory_step_size);
-    pnh.param<double>("accel_limit_multiplier", config.accel_limit_multiplier, config.accel_limit_multiplier);
-    pnh.param<double>("/vehicle_acceleration_limit", config.accel_limit, config.accel_limit);
-    pnh.param<double>("crawl_speed", config.crawl_speed, config.crawl_speed);
-    pnh.param<double>("cernterline_sampling_spacing", config.cernterline_sampling_spacing, config.cernterline_sampling_spacing);
-    pnh.param<double>("default_stopping_buffer", config.default_stopping_buffer, config.default_stopping_buffer);
-
-    ros::Publisher plugin_discovery_pub = nh.advertise<carma_planning_msgs::msg::Plugin>("plugin_discovery", 1);
+    carma_ros2_utils::PubPtr<carma_planning_msgs::msg::Plugin> plugin_discovery_pub;
 
     StopandWait plugin(wm, config, [&plugin_discovery_pub](auto msg) { plugin_discovery_pub.publish(msg); });
 
     ros::ServiceServer trajectory_srv_ =
         nh.advertiseService("plan_trajectory", &StopandWait::plan_trajectory_cb, &plugin);
 
+
+    carma_ros2_utils::ServicePtr<carma_planning_msgs::srv::PlanTrajectory> trajectory_srv;
+
+
     ros::Timer discovery_pub_timer =
         pnh.createTimer(ros::Duration(ros::Rate(10.0)), [&plugin](const auto&) { plugin.spinCallback(); });
 
-    ros::CARMANodeHandle::spin();
-  }
+
 };
 }  // namespace stop_and_wait_plugin
