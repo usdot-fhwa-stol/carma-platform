@@ -184,7 +184,7 @@ namespace plan_delegator
 
     void PlanDelegator::maneuverPlanCallback(carma_planning_msgs::msg::ManeuverPlan::UniquePtr plan)
     {
-        RCLCPP_INFO_STREAM(get_logger(),"Received request to delegate plan ID " << plan->maneuver_plan_id);
+        RCLCPP_INFO_STREAM(get_logger(),"Received request to delegate plan ID " << std::string(plan->maneuver_plan_id));
         // do basic check to see if the input is valid
         if (isManeuverPlanValid(*plan))
         {
@@ -197,7 +197,7 @@ namespace plan_delegator
             }
         }
         else {
-            RCLCPP_WARN_STREAM(get_logger(),"Received empty plan, no maneuvers found in plan ID " << plan->maneuver_plan_id);
+            RCLCPP_WARN_STREAM(get_logger(),"Received empty plan, no maneuvers found in plan ID " << std::string(plan->maneuver_plan_id));
         }
     }
 
@@ -461,7 +461,7 @@ namespace plan_delegator
                 // validate trajectory before add to the plan
                 if(!isTrajectoryValid(plan_response.get()->trajectory_plan))
                 {
-                    RCLCPP_WARN_STREAM(get_logger(),"Found invalid trajectory with less than 2 trajectory points for " << latest_maneuver_plan_.maneuver_plan_id);
+                    RCLCPP_WARN_STREAM(get_logger(),"Found invalid trajectory with less than 2 trajectory points for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
                     break;
                 }
                 //Remove duplicate point from start of trajectory
@@ -488,7 +488,7 @@ namespace plan_delegator
 
                 if(isTrajectoryLongEnough(latest_trajectory_plan))
                 {
-                    RCLCPP_INFO_STREAM(get_logger(),"Plan Trajectory completed for " << latest_maneuver_plan_.maneuver_plan_id);
+                    RCLCPP_INFO_STREAM(get_logger(),"Plan Trajectory completed for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
                     break;
                 }
 
@@ -501,7 +501,7 @@ namespace plan_delegator
             }
             else
             {
-                RCLCPP_WARN_STREAM(get_logger(),"Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << latest_maneuver_plan_.maneuver_plan_id);
+                RCLCPP_WARN_STREAM(get_logger(),"Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << std::string(latest_maneuver_plan_.maneuver_plan_id));
                 // if one service call fails, it should end plan immediately because it is there is no point to generate plan with empty space
                 break;
             }

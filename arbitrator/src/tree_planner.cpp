@@ -96,7 +96,7 @@ namespace arbitrator
                     
                     if (child->maneuvers.empty())
                     {
-                        RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "Child was empty for id: " << child->maneuver_plan_id);
+                        RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "Child was empty for id: " << std::string(child->maneuver_plan_id));
                         continue;   
                     }
 
