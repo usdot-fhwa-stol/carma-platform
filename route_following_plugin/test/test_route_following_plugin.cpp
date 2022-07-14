@@ -37,12 +37,12 @@ namespace route_following_plugin
 
     TEST(RouteFollowingPluginTest, testComposeManeuverMessage)
     {
-        RouteFollowingPlugin rfp;
+        auto rfp = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
         rclcpp::Time current_time = rfp->now();
-        auto msg = rfp.composeLaneFollowingManeuverMessage(1.0, 10.0, 0.9, 11.176, {2});
-        EXPECT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, msg.type);
-        EXPECT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, msg.lane_following_maneuver.parameters.negotiation_type);
-        EXPECT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN, msg.lane_following_maneuver.parameters.presence_vector);
+        auto msg = rfp->composeLaneFollowingManeuverMessage(1.0, 10.0, 0.9, 11.176, {2});
+        EXPECT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, msg.type);
+        EXPECT_EQ(carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION, msg.lane_following_maneuver.parameters.negotiation_type);
+        EXPECT_EQ(carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN, msg.lane_following_maneuver.parameters.presence_vector);
         EXPECT_EQ("inlanecruising_plugin", msg.lane_following_maneuver.parameters.planning_tactical_plugin);
         EXPECT_EQ("RouteFollowingPlugin", msg.lane_following_maneuver.parameters.planning_strategic_plugin);
         EXPECT_NEAR(1.0, msg.lane_following_maneuver.start_dist, 0.01);
@@ -55,13 +55,13 @@ namespace route_following_plugin
 
     TEST(RouteFollowingPluginTest, testIdentifyLaneChange)
     {
-        RouteFollowingPlugin rfp;
+        auto rfp = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
         auto relations = lanelet::routing::LaneletRelations();
-        EXPECT_TRUE(rfp.isLaneChangeNeeded(relations, 1));
+        EXPECT_TRUE(rfp->isLaneChangeNeeded(relations, 1));
         lanelet::routing::LaneletRelation relation;
         relation.relationType = lanelet::routing::RelationType::Successor;
         relations.push_back(relation);
-        EXPECT_FALSE(rfp.isLaneChangeNeeded(relations, 0));
+        EXPECT_FALSE(rfp->isLaneChangeNeeded(relations, 0));
     }
 
     TEST(RouteFollowingPlugin, TestAssociateSpeedLimit)
@@ -91,22 +91,22 @@ namespace route_following_plugin
 
         cmw.get()->setConfigSpeedLimit(30.0);
 
-        RouteFollowingPlugin worker;
+        auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
         cmw->carma_wm::CARMAWorldModel::setMap(map);
-        worker.wm_ = cmw;
+        worker->wm_ = cmw;
 
         //Define current position and velocity
 
         lanelet::BasicPoint2d current_loc = start_lanelet.centerline2d().front();
-        worker.current_loc_ = current_loc;
+        worker->current_loc_ = current_loc;
 
         //define twist
-        worker.current_speed_ = 10.0;
+        worker->current_speed_ = 10.0;
 
         //Define plan for request and response
         //PlanManeuversRequest
         carma_planning_msgs::srv::PlanManeuvers plan;
-        carma_planning_msgs::srv::PlanManeuversRequest pplan;
+        carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr pplan;
 
         carma_planning_msgs::msg::ManeuverPlan plan_req1;
         plan_req1.header;
@@ -114,22 +114,22 @@ namespace route_following_plugin
         plan_req1.planning_start_time;
         plan_req1.planning_completion_time;
 
-        rclcpp::Time current_time = rfp->now();
-        plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0, 0, 0, 11.176, {0}));
-        pplan.prior_plan = plan_req1;
+        rclcpp::Time current_time = worker->now();
+        plan_req1.maneuvers.push_back(worker->composeLaneFollowingManeuverMessage(0, 0, 0, 11.176, {0}));
+        pplan->prior_plan = plan_req1;
         plan.request = pplan;
         //PlanManeuversResponse
-        carma_planning_msgs::srv::PlanManeuversResponse newplan;
+        carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr newplan;
         for (auto i = 0; i < plan_req1.maneuvers.size(); i++)
-            newplan.new_plan.maneuvers.push_back(plan_req1.maneuvers[i]);
+            newplan->new_plan.maneuvers.push_back(plan_req1.maneuvers[i]);
 
         plan.response = newplan;
 
         //RouteFollowing plan maneuver callback
         auto shortest_path = cmw->getRoute()->shortestPath();
 
-        worker.latest_maneuver_plan_ = worker.routeCb(shortest_path);
-        if (worker.planManeuverCb(plan.request, plan.response))
+        worker->latest_maneuver_plan_ = worker->routeCb(shortest_path);
+        if (worker->planManeuverCb(plan.request, plan.response))
         {
             //check target speeds in updated response
             lanelet::Velocity limit = 30_mph;
@@ -182,7 +182,7 @@ namespace route_following_plugin
         std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
         cmw->carma_wm::CARMAWorldModel::setMap(map);
 
-        RouteFollowingPlugin worker;
+        auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
         //get position on map
         auto llt = map.get()->laneletLayer.get(start_id);
         lanelet::LineString3d left_bound = llt.leftBound();
@@ -204,38 +204,38 @@ namespace route_following_plugin
         //Assign start of centerline of start lanelet as current position
         lanelet::BasicPoint2d start_location;
         start_location = llt.centerline2d().back();
-        worker.current_loc_ = start_location;
+        worker->current_loc_ = start_location;
 
         //define twist
-        worker.current_speed_ = 0.0;
+        worker->current_speed_ = 0.0;
 
         //Set Route
         carma_wm::test::setRouteByIds({start_id, end_id}, cmw);
         cmw->carma_wm::CARMAWorldModel::setMap(map);
-        worker.wm_ = cmw;
+        worker->wm_ = cmw;
         auto shortest_path = cmw->getRoute()->shortestPath();
         //Define plan for request and response
         //PlanManeuversRequest
         carma_planning_msgs::srv::PlanManeuvers plan;
-        carma_planning_msgs::srv::PlanManeuversRequest pplan;
+        carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr pplan;
 
         carma_planning_msgs::msg::ManeuverPlan plan_req1;
         plan_req1.header;
         plan_req1.maneuver_plan_id;
         plan_req1.planning_start_time;
         plan_req1.planning_completion_time;
-        rclcpp::Time current_time = rfp->now();
-        plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0.0, 100.0, 0, 11.176, {start_id}));
-        pplan.prior_plan = plan_req1;
+        rclcpp::Time current_time = worker->now();
+        plan_req1.maneuvers.push_back(worker->composeLaneFollowingManeuverMessage(0.0, 100.0, 0, 11.176, {start_id}));
+        pplan->prior_plan = plan_req1;
         plan.request = pplan;
         //PlanManeuversResponse
-        carma_planning_msgs::srv::PlanManeuversResponse newplan;
+        carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr newplan;
         for (auto i = 0; i < plan_req1.maneuvers.size(); i++)
-            newplan.new_plan.maneuvers.push_back(plan_req1.maneuvers[i]);
+            newplan->new_plan.maneuvers.push_back(plan_req1.maneuvers[i]);
 
         plan.response = newplan;
-        worker.latest_maneuver_plan_ = worker.routeCb(shortest_path);
-        if (worker.planManeuverCb(plan.request, plan.response))
+        worker->latest_maneuver_plan_ = worker->routeCb(shortest_path);
+        if (worker->planManeuverCb(plan.request, plan.response))
         {
             //check target speeds in updated response
             lanelet::Velocity limit = 25_mph;
@@ -251,9 +251,9 @@ namespace route_following_plugin
             EXPECT_TRUE(false);
         }
         //Test findSpeedLimit function
-        auto current_lanelets = lanelet::geometry::findNearest(worker.wm_->getMap()->laneletLayer, worker.current_loc_, 10);
+        auto current_lanelets = lanelet::geometry::findNearest(worker->wm_->getMap()->laneletLayer, worker->current_loc_, 10);
         lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
-        double speed = worker.findSpeedLimit(current_lanelet);
+        double speed = worker->findSpeedLimit(current_lanelet);
         if (speed < 11.176)
         {
             ASSERT_EQ(speed, 0.0);
@@ -290,16 +290,16 @@ namespace route_following_plugin
 
         cmw.get()->setConfigSpeedLimit(30.0);
 
-        RouteFollowingPlugin worker;
+        auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
         cmw->carma_wm::CARMAWorldModel::setMap(map);
-        worker.wm_=cmw;
+        worker->wm_=cmw;
 
-        auto lane_change_status_msg=worker.ComposeLaneChangeStatus(start_lanelet,end_lanelet_1);
+        auto lane_change_status_msg=worker->ComposeLaneChangeStatus(start_lanelet,end_lanelet_1);
 
         ASSERT_EQ(lane_change_status_msg.lane_change,carma_planning_msgs::msg::UpcomingLaneChangeStatus::RIGHT);
         ASSERT_EQ(lane_change_status_msg.downtrack_until_lanechange,0);
 
-        lane_change_status_msg=worker.ComposeLaneChangeStatus(end_lanelet_1,start_lanelet);
+        lane_change_status_msg=worker->ComposeLaneChangeStatus(end_lanelet_1,start_lanelet);
 
         ASSERT_EQ(lane_change_status_msg.lane_change,carma_planning_msgs::msg::UpcomingLaneChangeStatus::LEFT);
         ASSERT_EQ(lane_change_status_msg.downtrack_until_lanechange,0);
@@ -309,19 +309,19 @@ namespace route_following_plugin
     
     TEST(RouteFollowingPlugin, TestHelperfunctions)
     {
-        RouteFollowingPlugin worker;
+        auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
         /*composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, int lane_id, ros::Time start_time);*/
-        rclcpp::Time start_time = rfp->now();
-        carma_planning_msgs::msg::Maneuver maneuver = worker.composeLaneFollowingManeuverMessage(10.0, 100.0, 0.0, 100.0, {101});
+        rclcpp::Time start_time = worker->now();
+        carma_planning_msgs::msg::Maneuver maneuver = worker->composeLaneFollowingManeuverMessage(10.0, 100.0, 0.0, 100.0, {101});
 
-        worker.setManeuverStartDist(maneuver, 50.0);
+        worker->setManeuverStartDist(maneuver, 50.0);
         ASSERT_EQ(maneuver.lane_following_maneuver.start_dist, 50.0);
 
         rclcpp::Time new_start_time = start_time + rclcpp::Duration(10.0*1e9);
         std::vector<carma_planning_msgs::msg::Maneuver> maneuvers;
         maneuvers.push_back(maneuver);
 
-        worker.updateTimeProgress(maneuvers, new_start_time);
+        worker->updateTimeProgress(maneuvers, new_start_time);
 
         double start_time_change = rclcpp::Time(GET_MANEUVER_PROPERTY(maneuvers.front(), start_time)).seconds() - start_time.seconds();
         ASSERT_EQ(start_time_change, 10.0);
@@ -356,29 +356,29 @@ TEST(RouteFollowingPlugin, TestReturnToShortestPath)
 
         cmw.get()->setConfigSpeedLimit(30.0);
 
-        RouteFollowingPlugin worker;
+        auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
         cmw->carma_wm::CARMAWorldModel::setMap(map);
-        worker.wm_ = cmw;
+        worker->wm_ = cmw;
 
         //RouteFollowing plan maneuver callback
         auto shortest_path = cmw->getRoute()->shortestPath();
 
-        worker.latest_maneuver_plan_ = worker.routeCb(shortest_path);
+        worker->latest_maneuver_plan_ = worker->routeCb(shortest_path);
 
         // If the vehicle remains on the shortest path, the next maneuver is lane following
-        ASSERT_EQ(worker.latest_maneuver_plan_[0].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_EQ(worker->latest_maneuver_plan_[0].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
 
         for (auto ll:route->shortestPath())
         {
-            worker.shortest_path_set_.insert(ll.id());
+            worker->shortest_path_set_.insert(ll.id());
             std::cout<<"id added: " << ll.id() << std::endl;
         }
 
         lanelet::Lanelet current_lanelet = map->laneletLayer.get(1200);
-        worker.returnToShortestPath(current_lanelet);
+        worker->returnToShortestPath(current_lanelet);
 
         // Since the vehicle is not on the shortest path, the first maneuver is lane change
-        ASSERT_EQ(worker.latest_maneuver_plan_[0].type, carma_planning_msgs::msg::Maneuver::LANE_CHANGE);
+        ASSERT_EQ(worker->latest_maneuver_plan_[0].type, carma_planning_msgs::msg::Maneuver::LANE_CHANGE);
     }
 }
 

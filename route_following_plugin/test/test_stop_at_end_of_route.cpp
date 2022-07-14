@@ -17,9 +17,9 @@
 #include "route_following_plugin.hpp"
 #include <gtest/gtest.h>
 #include <rclcpp/rclcpp.hpp>
-#include <carma_wm/WMTestLibForGuidance.h>
 #include <carma_wm_ros2/WMTestLibForGuidance.hpp>
-#include <carma_wm/CARMAWorldModel.h>
+#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <carma_wm_ros2/CARMAWorldModel.hpp>
 #include <lanelet2_core/LaneletMap.h>
 #include <string>
 
@@ -68,8 +68,8 @@ protected:
 
 TEST_F(StopAndWaitTestFixture, CaseOne)
 {
-  RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -85,7 +85,7 @@ TEST_F(StopAndWaitTestFixture, CaseOne)
   m1.lane_following_maneuver.end_speed = entry_speed;
   m1.lane_following_maneuver.lane_ids = { "1200", "1201" };
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(3, result.size());
@@ -121,8 +121,8 @@ TEST_F(StopAndWaitTestFixture, CaseOne)
 
 TEST_F(StopAndWaitTestFixture, CaseTwo)
 {
-  RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -138,7 +138,7 @@ TEST_F(StopAndWaitTestFixture, CaseTwo)
   m1.lane_following_maneuver.end_speed = entry_speed;
   m1.lane_following_maneuver.lane_ids = { "1200", "1201", "1202" };
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(2, result.size());
@@ -165,8 +165,8 @@ TEST_F(StopAndWaitTestFixture, CaseTwo)
 
 TEST_F(StopAndWaitTestFixture, CaseThree)
 {
-  RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -175,14 +175,14 @@ TEST_F(StopAndWaitTestFixture, CaseThree)
   double route_end_downtrack = 100.0;
 
   carma_planning_msgs::msg::Maneuver m1;
-  m1.type = carma_planning_msgs::msg::LANE_FOLLOWING;
+  m1.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   m1.lane_following_maneuver.start_dist = 0;
   m1.lane_following_maneuver.end_dist = 78;
   m1.lane_following_maneuver.start_speed = entry_speed;
   m1.lane_following_maneuver.end_speed = entry_speed;
   m1.lane_following_maneuver.lane_ids = { "1200", "1201", "1202", "1203" };
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(2, result.size());
@@ -209,8 +209,8 @@ TEST_F(StopAndWaitTestFixture, CaseThree)
 
 TEST_F(StopAndWaitTestFixture, CaseFour)
 {
-  RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -234,7 +234,7 @@ TEST_F(StopAndWaitTestFixture, CaseFour)
   m2.lane_following_maneuver.end_speed = entry_speed;
   m2.lane_following_maneuver.lane_ids = { "1203" };
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ m1, m2 }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ m1, m2 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(2, result.size()); // M2 should have been dropped
@@ -261,8 +261,8 @@ TEST_F(StopAndWaitTestFixture, CaseFour)
 
 TEST_F(StopAndWaitTestFixture, CaseFive)
 {
-      RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -286,7 +286,7 @@ TEST_F(StopAndWaitTestFixture, CaseFive)
   m2.lane_following_maneuver.end_speed = entry_speed;
   m2.lane_following_maneuver.lane_ids = { "1202", "1203" };
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ m1, m2 }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ m1, m2 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(2, result.size()); // M2 should have been dropped
@@ -313,8 +313,8 @@ TEST_F(StopAndWaitTestFixture, CaseFive)
 
 TEST_F(StopAndWaitTestFixture, CaseSix)
 {
-        RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -331,7 +331,7 @@ TEST_F(StopAndWaitTestFixture, CaseSix)
   m1.lane_change_maneuver.starting_lane_id = "1202";
   m1.lane_change_maneuver.ending_lane_id = "1202";
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(2, result.size());
@@ -356,8 +356,8 @@ TEST_F(StopAndWaitTestFixture, CaseSix)
 
 TEST_F(StopAndWaitTestFixture, CaseSeven)
 {
-            RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -374,7 +374,7 @@ TEST_F(StopAndWaitTestFixture, CaseSeven)
   m1.lane_change_maneuver.starting_lane_id = "1201";
   m1.lane_change_maneuver.ending_lane_id = "1202";
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(3, result.size());
@@ -408,8 +408,8 @@ TEST_F(StopAndWaitTestFixture, CaseSeven)
 
 TEST_F(StopAndWaitTestFixture, CaseEight)
 {
-            RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -426,7 +426,7 @@ TEST_F(StopAndWaitTestFixture, CaseEight)
   m1.lane_change_maneuver.starting_lane_id = "1202";
   m1.lane_change_maneuver.ending_lane_id = "1203";
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(2, result.size());
@@ -451,8 +451,8 @@ TEST_F(StopAndWaitTestFixture, CaseEight)
 
 TEST_F(StopAndWaitTestFixture, CaseNine)
 {
-                RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -470,14 +470,14 @@ TEST_F(StopAndWaitTestFixture, CaseNine)
   m1.lane_change_maneuver.ending_lane_id = "1203";
 
   // Cannot shrink lane change maneuver this much. Expect exception to be thrown
-  ASSERT_THROW(worker.addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
+  ASSERT_THROW(worker->addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length), std::invalid_argument);
 }
 
 TEST_F(StopAndWaitTestFixture, CaseTen)
 {
-                RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -485,7 +485,7 @@ TEST_F(StopAndWaitTestFixture, CaseTen)
   double min_maneuver_length = 10.0;
   double route_end_downtrack = 100.0;
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(1, result.size());
