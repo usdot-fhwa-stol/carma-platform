@@ -20,20 +20,24 @@ namespace traffic_incident_parser
   namespace std_ph = std::placeholders;
 
   TrafficIncidentParserNode::TrafficIncidentParserNode(const rclcpp::NodeOptions &options)
-      : carma_ros2_utils::CarmaLifecycleNode(options),
-        wm_listener_(this->get_node_base_interface(), this->get_node_logging_interface(), 
-                     this->get_node_topics_interface(), this->get_node_parameters_interface()),
-        traffic_parser_worker_(wm_listener_.getWorldModel(), std::bind(&TrafficIncidentParserNode::publishTrafficControlMessage, this, std_ph::_1), get_node_logging_interface(), get_clock())
+      : carma_ros2_utils::CarmaLifecycleNode(options)
   {
   }
 
   carma_ros2_utils::CallbackReturn TrafficIncidentParserNode::handle_on_configure(const rclcpp_lifecycle::State &)
   {
+
+    wm_listener_ = std::make_shared<carma_wm::WMListener>(get_node_base_interface(), get_node_logging_interface(), 
+                     get_node_topics_interface(), get_node_parameters_interface());
+    
+    traffic_parser_worker_ = std::make_shared<TrafficIncidentParserWorker>(wm_listener_->getWorldModel(), std::bind(&TrafficIncidentParserNode::publishTrafficControlMessage, this, std_ph::_1), get_node_logging_interface(), get_clock());
+
+
     // Setup subscribers
     projection_sub_ = create_subscription<std_msgs::msg::String>("georeference", 1,
-                                                              std::bind(&TrafficIncidentParserWorker::georeferenceCallback, &traffic_parser_worker_, std_ph::_1));
+                                                              std::bind(&TrafficIncidentParserWorker::georeferenceCallback, traffic_parser_worker_.get(), std_ph::_1));
     mobility_operation_sub_ = create_subscription<carma_v2x_msgs::msg::MobilityOperation>("incoming_mobility_operation", 1,
-                                                              std::bind(&TrafficIncidentParserWorker::mobilityOperationCallback, &traffic_parser_worker_, std_ph::_1));
+                                                              std::bind(&TrafficIncidentParserWorker::mobilityOperationCallback, traffic_parser_worker_.get(), std_ph::_1));
 
     // Setup publishers
 
