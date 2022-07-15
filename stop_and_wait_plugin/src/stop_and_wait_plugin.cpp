@@ -25,7 +25,6 @@
 #include <trajectory_utils/conversions/conversions.h>
 #include <sstream>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
-//#include <carma_utils/containers/containers.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <Eigen/LU>
@@ -44,14 +43,12 @@
 #include <std_msgs/Float64.h>
 #include <math.h>
 
-//#include <cav_msgs/Trajectory.h>
-
 using oss = std::ostringstream;
 
 namespace stop_and_wait_plugin
 {
 
-StopandWait::StopandWait(carma_wm_ros2::WorldModelConstPtr wm, StopandWaitConfig config)
+StopandWait::StopandWait(carma_wm::WorldModelConstPtr wm, StopandWaitConfig config)
   : wm_(wm), config_(config)
 {
 
@@ -152,7 +149,7 @@ bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::R
 
 // Returns the centerline points and speed limits for the provided maneuver
 std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<carma_planning_msgs::msg::Maneuver>& maneuvers,
-                                                             const carma_wm_ros2::WorldModelConstPtr& wm,
+                                                             const carma_wm::WorldModelConstPtr& wm,
                                                              const carma_planning_msgs::msg::VehicleState& state)
 {
   std::vector<PointSpeedPair> points_and_target_speeds;
@@ -274,8 +271,6 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
   for (int i = points.size() - 2; i >= 0; i--)
   {  // NOTE: Do not use size_t for i type here as -- with > 0 will result in overflow
 
-
-
     double v_i = prev_pair.speed;
     double dx = lanelet::geometry::distance2d(prev_pair.point, points[i].point);
     double new_downtrack = inverse_downtracks.back() + dx;
@@ -300,8 +295,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
       prev_pair = pair;
       continue;  // continue until loop end
     }
-
-    
+   
     double v_f = sqrt(v_i * v_i + 2 * target_accel * dx);
 
     PointSpeedPair pair = points[i];
@@ -370,8 +364,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
     }
   }
 
-  std::vector<double> yaws = carma_wm_ros2::geometry::compute_tangent_orientations(raw_points);
-
+  std::vector<double> yaws = carma_wm::geometry::compute_tangent_orientations(raw_points);
 
   for (size_t i = 0; i < points.size(); i++)
   {

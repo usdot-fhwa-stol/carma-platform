@@ -20,6 +20,7 @@
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <boost/optional.hpp>
 #include "stop_and_wait_config.hpp"
+#include "stop_and_wait_node.hpp"
 #include <basic_autonomy/basic_autonomy.h>
 #include <basic_autonomy/helper_functions.h>
 #include <boost/shared_ptr.hpp>
@@ -54,8 +55,7 @@ public:
   /**
    * \brief Constructor
    */
-  StopandWait(carma_wm_ros2::WorldModelConstPtr wm, StopandWaitConfig config,
-              PublishPluginDiscoveryCB plugin_discovery_publisher);
+  StopandWait(carma_wm::WorldModelConstPtr wm, StopandWaitConfig config);
 
   /**
    * \brief Service callback for trajectory planning
@@ -66,16 +66,6 @@ public:
    * \return True if success. False otherwise
    */
   bool plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::Request::UniquePtr req, carma_planning_msgs::srv::PlanTrajectory::Response::UniquePtr resp);
-
-  /**
-   * \brief Method meant to be called periodically to trigger plugin discovery behavior
-   */
-  bool spinCallback();
-
-  /**
-   * \brief General entry point to begin the operation of this class
-   */
-  void run();
 
   /**
    * \brief Converts a set of requested STOP_AND_WAIT maneuvers to point speed limit pairs.
@@ -91,7 +81,7 @@ public:
    * \return List of centerline points paired with speed limits. All output points will have speed matching state.logitudinal_velocity
    */
   std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<carma_planning_msgs::msg::Maneuver>& maneuvers,
-                                                  const carma_wm_ros2::WorldModelConstPtr& wm,
+                                                  const carma_wm::WorldModelConstPtr& wm,
                                                   const carma_planning_msgs::msg::VehicleState& state);
   /**
    * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of
@@ -122,11 +112,8 @@ private:
   double epsilon_ = 0.001; //small constant to compare double
 
   // pointer to the actual wm object
-  carma_wm_ros2::WorldModelConstPtr wm_;
+  carma_wm::WorldModelConstPtr wm_;
   StopandWaitConfig config_;
-  PublishPluginDiscoveryCB plugin_discovery_publisher_;
-  
-  carma_planning_msgs::msg::Plugin plugin_discovery_msg_;
   
 };
 }  // namespace stop_and_wait_plugin

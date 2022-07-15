@@ -47,29 +47,40 @@
 
 namespace stop_and_wait_plugin
 {
-class StopandWaitNode
+class StopandWaitNode : public carma_guidance_plugins::TacticalPlugin
 {
-public:
 
-    
+private:
+
+    StopandWaitConfig config_;
+
+    // Worker
+    std::shared_ptr<StopandWait> plugin_;
+
+public:
+  
   /**
    * \brief Node constructor 
    */
     explicit StopandWaitNode(const rclcpp::NodeOptions &);
 
-    bool get_availability() override;
+    /**
+     * \brief This method should be used to load parameters and will be called on the configure state transition.
+     */ 
+    carma_ros2_utils::CallbackReturn on_configure_plugin();
 
-    std::string get_version_id() override final;
-
-    StopandWaitConfig config;
-
-    // Worker
-    std::shared_ptr<StopandWait> plugin;
+    ////
+    // Overrides
+    ////
 
     void plan_trajectory_callback(
     std::shared_ptr<rmw_request_id_t> srv_header, 
     carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp) override;
+
+    bool get_availability() override;
+
+    std::string get_version_id() override final;
 
 };
 }  // namespace stop_and_wait_plugin

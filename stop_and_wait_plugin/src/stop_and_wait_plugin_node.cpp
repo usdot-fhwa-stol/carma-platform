@@ -21,26 +21,26 @@ namespace stop_and_wait_plugin
   namespace std_ph = std::placeholders;
 
   StopandWaitNode::StopandWaitNode(const rclcpp::NodeOptions &options)
-      : carma_guidance_plugins::TacticalPlugin(options)
+      : carma_guidance_plugins::TacticalPlugin(options), version_id_("v1.0")
   {
     // Create initial config
-    config = StopandWaitConfig();
+    config_ = StopandWaitConfig();
  
     // Declare parameters
-    config.config.minimal_trajectory_duration = declare_parameter<std::string>("minimal_trajectory_duration", config.minimal_trajectory_duration);
-    config.stop_timestep = declare_parameter<std::string>("stop_timestep", config.stop_timestep);
-    config.trajectory_step_size = declare_parameter<std::string>("trajectory_step_size", config.trajectory_step_size);
-    config.accel_limit_multiplier = declare_parameter<std::string>("accel_limit_multiplier", config.accel_limit_multiplier);
-    config.accel_limit = declare_parameter<std::string>("/vehicle_acceleration_limit", config.accel_limit);
-    config.crawl_speed = declare_parameter<std::string>("crawl_speed", config.crawl_speed);
-    config.cernterline_sampling_spacing = declare_parameter<std::string>("cernterline_sampling_spacing", config.cernterline_sampling_spacing);
-    config.default_stopping_buffer = declare_parameter<std::string>("default_stopping_buffer", config.default_stopping_buffer);
+    config_.minimal_trajectory_duration = declare_parameter<std::string>("minimal_trajectory_duration", config_.minimal_trajectory_duration);
+    config_.stop_timestep = declare_parameter<std::string>("stop_timestep", config_.stop_timestep);
+    config_.trajectory_step_size = declare_parameter<std::string>("trajectory_step_size", config_.trajectory_step_size);
+    config_.accel_limit_multiplier = declare_parameter<std::string>("accel_limit_multiplier", config_.accel_limit_multiplier);
+    config_.accel_limit = declare_parameter<std::string>("/vehicle_acceleration_limit", config_.accel_limit);
+    config_.crawl_speed = declare_parameter<std::string>("crawl_speed", config_.crawl_speed);
+    config_.cernterline_sampling_spacing = declare_parameter<std::string>("cernterline_sampling_spacing", config_.cernterline_sampling_spacing);
+    config_.default_stopping_buffer = declare_parameter<std::string>("default_stopping_buffer", config_.default_stopping_buffer);
   }
 
-  carma_ros2_utils::CallbackReturn StopandWaitNode::handle_on_configure(const rclcpp_lifecycle::State &)
+  carma_ros2_utils::CallbackReturn StopandWaitNode::on_configure_plugin()
   {
   
-    StopandWait plugin(wm, config);
+    StopandWait plugin(wm, config_);
                                         
     // Return success if everthing initialized successfully
     return CallbackReturn::SUCCESS;
@@ -51,7 +51,17 @@ namespace stop_and_wait_plugin
     carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
   {
-    plugin->plan_trajectory_cb(req, resp);
+    plugin_->plan_trajectory_cb(req, resp);
+  }
+
+    bool StopandWaitNode::get_availability()
+  {
+    return true;
+  }
+
+  std::string StopandWaitNode::get_version_id()
+  {
+    return version_id_;
   }
 
 } // stop_and_wait_plugin

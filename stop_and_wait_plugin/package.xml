@@ -32,7 +32,6 @@ Copyright (C) 2018-2022 LEIDOS.
   <depend>std_msgs</depend>
   <depend>autoware_msgs</depend>
   <depend>carma_wm_ros2</depend>
-  <depend>tf</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend> 
   <depend>trajectory_utils</depend>
