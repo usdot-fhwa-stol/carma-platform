@@ -47,6 +47,16 @@ namespace carma_guidance_plugins
     wm_ = wm_listener_->getWorldModel();
   }
 
+  std::string PluginBaseNode::get_plugin_name() const
+  {
+    return std::string(get_name());
+  }
+
+  std::string PluginBaseNode::get_plugin_name_and_ns() const
+  {
+    return std::string(get_namespace()) + "/" + std::string(get_name());
+  }
+
   std::shared_ptr<carma_wm::WMListener> PluginBaseNode::get_world_model_listener()
   {
     lazy_wm_initialization();
@@ -142,7 +152,7 @@ namespace carma_guidance_plugins
     }
 
     carma_planning_msgs::msg::Plugin msg;
-    msg.name = std::string(get_namespace()) + std::string(get_name());
+    msg.name = get_plugin_name_and_ns();
     msg.version_id = get_version_id();
     msg.type = get_type();
     msg.available = get_availability();
