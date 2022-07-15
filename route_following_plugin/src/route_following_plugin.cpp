@@ -126,7 +126,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
                                                               std::bind(&RouteFollowingPlugin::current_maneuver_plan_cb,this,std_ph::_1));
 
     // set world model point form wm listener
-    wml_ = get_world_model_listener();
+   get_world_model_listener();
 
     //set a route callback to update route and calculate maneuver
     wml_->setRouteCallback([this]() {

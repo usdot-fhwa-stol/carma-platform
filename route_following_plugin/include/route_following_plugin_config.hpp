@@ -20,7 +20,7 @@
 namespace route_following_plugin
 {
     /**
-   * \brief Stuct containing config values values for route_following_plugin
+   * \brief Struct containing config values values for route_following_plugin
    */
    
   struct Config
@@ -28,10 +28,10 @@ namespace route_following_plugin
     // Minimal duration of maneuver, loaded from config file
     double min_plan_duration_ = 16.0;
     //Tactical plugin being used for planning lane change
-    std::string lane_change_plugin_ = "CooperativeLaneChangePlugin";
-    std::string stop_and_wait_plugin_ = "StopAndWaitPlugin";
+    std::string lane_change_plugin_ =  "cooperative_lanechange";
+    std::string stop_and_wait_plugin_ = "stop_and_wait_plugin";
 
-    std::string lanefollow_planning_tactical_plugin_ = "InLaneCruisingPlugin";
+    std::string lanefollow_planning_tactical_plugin_ = "inlanecruising_plugin";
     double route_end_point_buffer_ = 10.0;
     double accel_limit_ = 2.0;
     double lateral_accel_limit_ = 2.0;

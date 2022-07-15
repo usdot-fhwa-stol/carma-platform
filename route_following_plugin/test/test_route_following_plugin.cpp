@@ -16,7 +16,7 @@
 
 #include "route_following_plugin.hpp"
 #include <gtest/gtest.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <thread>
 #include <chrono>
 #include <carma_wm_ros2/WMTestLibForGuidance.hpp>
@@ -130,19 +130,22 @@ namespace route_following_plugin
         auto shortest_path = cmw->getRoute()->shortestPath();
 
         worker->latest_maneuver_plan_ = worker->routeCb(shortest_path);
-        if (worker->planManeuverCb(plan_request, plan_response))
+
+        std::shared_ptr<rmw_request_id_t> srv_header;
+
+        if (worker->plan_maneuvers_callback(srv_header,plan_request, plan_response))
         {
             //check target speeds in updated response
             lanelet::Velocity limit = 30_mph;
-            ASSERT_EQ(plan_request->new_plan.maneuvers[0].lane_following_maneuver.end_speed, 11.176);
+            ASSERT_EQ(plan_response->new_plan.maneuvers[0].lane_following_maneuver.end_speed, 11.176);
             for (auto i = 1; i < plan_response->new_plan.maneuvers.size() - 1; i++)
             {
-                ASSERT_EQ(plan.response.new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value());
+                ASSERT_EQ(plan_response->new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value());
             }
 
-            ASSERT_FALSE(plan.response.new_plan.maneuvers.empty());
-            ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, plan.response.new_plan.maneuvers.back().type);
-            ASSERT_EQ(plan.response.new_plan.maneuvers.back().stop_and_wait_maneuver.start_speed, limit.value());
+            ASSERT_FALSE(plan_response->new_plan.maneuvers.empty());
+            ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, plan_response->new_plan.maneuvers.back().type);
+            ASSERT_EQ(plan_response->new_plan.maneuvers.back().stop_and_wait_maneuver.start_speed, limit.value());
         }
         else
         {
@@ -217,7 +220,8 @@ namespace route_following_plugin
         auto shortest_path = cmw->getRoute()->shortestPath();
         //Define plan for request and response
         //PlanManeuversRequest
-        carma_planning_msgs::srv::PlanManeuvers plan;
+        carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr plan_request;
+        carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr plan_response;
         carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr pplan;
 
         carma_planning_msgs::msg::ManeuverPlan plan_req1;
@@ -228,22 +232,25 @@ namespace route_following_plugin
         rclcpp::Time current_time = worker->now();
         plan_req1.maneuvers.push_back(worker->composeLaneFollowingManeuverMessage(0.0, 100.0, 0, 11.176, {start_id}));
         pplan->prior_plan = plan_req1;
-        plan.request = pplan;
+        plan_request = pplan;
         //PlanManeuversResponse
         carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr newplan;
         for (auto i = 0; i < plan_req1.maneuvers.size(); i++)
             newplan->new_plan.maneuvers.push_back(plan_req1.maneuvers[i]);
 
-        plan.response = newplan;
+        plan_response = newplan;
         worker->latest_maneuver_plan_ = worker->routeCb(shortest_path);
-        if (worker->planManeuverCb(plan.request, plan.response))
+
+        std::shared_ptr<rmw_request_id_t> srv_header;
+
+        if (worker->plan_maneuvers_callback(srv_header,plan_request, plan_response))
         {
             //check target speeds in updated response
             lanelet::Velocity limit = 25_mph;
 
-            for (auto i = 0; i < plan.response.new_plan.maneuvers.size() - 1; i++)
+            for (auto i = 0; i < plan_response->new_plan.maneuvers.size() - 1; i++)
             {
-                ASSERT_EQ(plan.response.new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value());
+                ASSERT_EQ(plan_response->new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value());
             }
 
         }
