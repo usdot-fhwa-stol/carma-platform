@@ -200,7 +200,22 @@ def generate_launch_description():
                 parameters=[
                     guidance_param_file
                 ]
+            ),
+            ComposableNode(
+                package='trajectory_visualizer',
+                plugin='trajectory_visualizer::TrajectoryVisualizer',
+                name='trajectory_visualizer_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('route', env_log_levels) }
+                ],
+                remappings = [
+                      ],
+                parameters=[
+                    trajectory_visualizer_param_file
+                ]
             )
+
         ]
     )
 

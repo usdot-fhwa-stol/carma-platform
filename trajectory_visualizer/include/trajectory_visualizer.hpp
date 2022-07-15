@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2020-2021 LEIDOS.
+ * Copyright (C) 2020-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,7 +52,6 @@ namespace trajectory_visualizer
 
        size_t prev_marker_list_size_ = 0;
        // we are not saving every trajectory history at this point
-       //visualization_msgs::MarkerArray g_global_marker_array; 
 
      public:
 

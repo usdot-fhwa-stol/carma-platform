@@ -30,7 +30,7 @@ namespace trajectory_visualizer {
     config_ = Config();
 
     // Declare parameters
-    config_.max_speed = declare_parameter<double>("message_type", config_.max_speed);
+    config_.max_speed = declare_parameter<double>("max_speed", config_.max_speed);
   }
 
     carma_ros2_utils::CallbackReturn TrajectoryVisualizer::handle_on_configure(const rclcpp_lifecycle::State &)
@@ -40,7 +40,7 @@ namespace trajectory_visualizer {
     // Setup publisher
     traj_marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("trajectory_visualizer", 1);
 
-    // Return success if everthing initialized successfully
+    // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
   }
  
@@ -64,7 +64,7 @@ namespace trajectory_visualizer {
         // display by markers the velocity between each trajectory point/target time.
         visualization_msgs::msg::Marker marker;
         marker.header.frame_id = "map";
-        marker.header.stamp =  rclcpp::Time();
+        marker.header.stamp =  this->now();
         marker.type = visualization_msgs::msg::Marker::ARROW;
         marker.action = visualization_msgs::msg::Marker::ADD;
         marker.ns = "trajectory_visualizer";
@@ -106,12 +106,10 @@ namespace trajectory_visualizer {
             // map color to the scale of the speed
             // red being the highest, green being the lowest (0ms)
             
-            //ROS_DEBUG_STREAM("Speed:" << speed << "ms, max_speed:" << max_speed << "ms");
-            RCLCPP_INFO_STREAM(this->get_logger(),"Speed:" << speed << "ms, max_speed:" << max_speed << "ms");
+            RCLCPP_DEBUG_STREAM(this->get_logger(),"Speed:" << speed << "ms, max_speed:" << max_speed << "ms");
             if (speed > max_speed) 
             {
-                //ROS_DEBUG_STREAM("Speed was big, so capped at " << max_speed << "ms");
-                RCLCPP_INFO_STREAM(this->get_logger(),"Speed was big, so capped at " << max_speed << "ms");
+                RCLCPP_DEBUG_STREAM(this->get_logger(),"Speed was big, so capped at " << max_speed << "ms");
                 speed = max_speed;
             }
 
