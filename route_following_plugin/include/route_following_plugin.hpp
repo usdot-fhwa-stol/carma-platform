@@ -238,7 +238,6 @@ namespace route_following_plugin
         carma_ros2_utils::SubPtr<carma_planning_msgs::msg::ManeuverPlan> current_maneuver_plan_sub_;
     
         // Publishers
-        carma_ros2_utils::PubPtr<carma_planning_msgs::msg::Plugin> plugin_discovery_pub_;
         carma_ros2_utils::PubPtr<carma_planning_msgs::msg::UpcomingLaneChangeStatus> upcoming_lane_change_status_pub_;
 
         // Timer for publishing MobilityPath message
@@ -251,9 +250,6 @@ namespace route_following_plugin
         std::unordered_set<lanelet::Id> shortest_path_set_;
        
         static constexpr double MAX_LANE_WIDTH = 3.70; // Maximum lane width of a US highway
-
-        // Plugin discovery message
-        carma_planning_msgs::msg::Plugin plugin_discovery_msg_;
 
         // Node configuration
         Config config_;

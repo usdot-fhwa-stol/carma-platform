@@ -38,7 +38,7 @@ def generate_launch_description():
     # Launch node(s) in a carma container to allow logging to be configured
     container = ComposableNodeContainer(
         package='carma_ros2_utils',
-        name='route_following_plugin_container_container',
+        name='route_following_plugin_container',
         namespace=GetCurrentNamespace(),
         executable='carma_component_container_mt',
         composable_node_descriptions=[
