@@ -109,9 +109,6 @@
     <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
   </group>
 
-   <!-- Workzone Strategic Plugin > -->
-  <include file="$(find wz_strategic_plugin)/launch/wz_strategic_plugin.launch" />
-
   <!-- Platooning Control Plugin -->
   <include file="$(find platoon_control)/launch/platoon_control.launch" />
 
