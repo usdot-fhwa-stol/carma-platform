@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 LEIDOS.
+# Copyright (C) 2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -97,7 +97,7 @@ install(DIRECTORY launch config
 #############
 ## Testing ##
 #############
-catkin_add_gmock(${PROJECT_NAME}-test 
- test/test_lci_tactical_plugin.cpp
- WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
-target_link_libraries(${PROJECT_NAME}-test light_controlled_intersection_tactical_library ${catkin_LIBRARIES})
+# catkin_add_gmock(${PROJECT_NAME}-test 
+#  test/test_lci_tactical_plugin.cpp
+#  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+# target_link_libraries(${PROJECT_NAME}-test light_controlled_intersection_tactical_library ${catkin_LIBRARIES})

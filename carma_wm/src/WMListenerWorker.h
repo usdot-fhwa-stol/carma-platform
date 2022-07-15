@@ -82,19 +82,18 @@ public:
    */
   void setRouteCallback(std::function<void()> callback);
 
- /*!
+  /*!
    * \brief Allows user to set a callback to be triggered when a map update is received
    *
    * \param config_lim A callback function that will be triggered after the world model receives a new map update
    */
   void setConfigSpeedLimit(double config_lim);
   
-/**
- *  \brief Returns the current configured speed limit value
- * 
-*/
+  /**
+   *  \brief Returns the current configured speed limit value
+   * 
+   */
   double getConfigSpeedLimit() const;
-
 
   /*!
    * \brief Allows user to set a callback to be triggered when a map update is received
@@ -103,28 +102,41 @@ public:
    */
   void setVehicleParticipationType(std::string participant);
 
-/**
- * @brief Returns the Vehicle Participation Type value
- * 
- */
+  /**
+   * @brief Returns the Vehicle Participation Type value
+   * 
+   */
   std::string getVehicleParticipationType() const;
 
-
-/**
- *  \brief Check if re-routing is needed and returns re-routing flag
- * 
-*/
+  /**
+   *  \brief Check if re-routing is needed and returns re-routing flag
+   * 
+   */
   bool checkIfReRoutingNeeded() const;
-/**
- *  \brief Enable updates without route and set route_node_flag_ as true
- * 
-*/
+
+  /**
+   *  \brief Enable updates without route and set route_node_flag_ as true
+   * 
+   */
   void enableUpdatesWithoutRoute();
-/**
- *  \brief incoming spat message
- * 
-*/
+
+  /**
+   * \brief Helper function to convert a routing graph message into a actual RoutingGraph object
+   * 
+   * \param msg The graph message to convert
+   * \param map The base map this graph applies to 
+   * 
+   * \return nullptr if the graph could not be constructed or the provided graph does not match the map
+   */ 
+  LaneletRoutingGraphPtr routingGraphFromMsg(const autoware_lanelet2_msgs::RoutingGraph& msg, lanelet::LaneletMapPtr map) const;
+
+  /**
+   *  \brief incoming spat message
+   * 
+  */
   void incomingSpatCallback(const cav_msgs::SPAT& spat_msg);
+
+
 
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;

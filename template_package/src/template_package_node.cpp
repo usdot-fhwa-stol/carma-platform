@@ -74,7 +74,7 @@ namespace <SUB><package_name>
         std::chrono::milliseconds(1000),
         std::bind(&Node::example_timer_callback, this));
 
-    // Return success if everthing initialized successfully
+    // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
   }
 

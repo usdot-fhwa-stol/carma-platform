@@ -126,6 +126,8 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/environment.launch.py']),
                 launch_arguments = { 
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                    'vehicle_config_param_file' : vehicle_config_param_file,
+                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file
                     }.items()
             ),
         ]
@@ -166,6 +168,7 @@ def generate_launch_description():
                 launch_arguments={
                     'route_file_folder' : route_file_folder,
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file, 
+                    'vehicle_config_param_file' : vehicle_config_param_file,
                     'enable_guidance_plugin_validator' : enable_guidance_plugin_validator,
                     'strategic_plugins_to_validate' : strategic_plugins_to_validate,
                     'tactical_plugins_to_validate' : tactical_plugins_to_validate,

@@ -22,7 +22,7 @@ namespace basic_autonomy
 {
 namespace smoothing
 {
-void BSpline::setPoints(std::vector<lanelet::BasicPoint2d> points)
+void BSpline::setPoints(const std::vector<lanelet::BasicPoint2d>& points)
 {
   Eigen::MatrixXd matrix_points(2, points.size());
   int row_index = 0;
@@ -51,5 +51,5 @@ lanelet::BasicPoint2d  BSpline::second_deriv(double t) const {
   return output;
 }
 
-};  // namespace smoothing
-};  // namespace basic_autonomy
+}  // namespace smoothing
+}  // namespace basic_autonomy

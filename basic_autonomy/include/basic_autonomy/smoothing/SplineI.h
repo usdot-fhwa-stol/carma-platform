@@ -40,7 +40,7 @@ public:
    * 
    * \param points The key points
    */ 
-  virtual void setPoints(std::vector<lanelet::BasicPoint2d> points) = 0;
+  virtual void setPoints(const std::vector<lanelet::BasicPoint2d>& points) = 0;
   
     /**
   *  \brief Get the BasicPoint2d coordinate along the curve at t-th step. 
@@ -69,5 +69,5 @@ public:
    */ 
   virtual lanelet::BasicPoint2d second_deriv(double x) const = 0;
 };
-};  // namespace smoothing
-};  // namespace basic_autonomy
+} // namespace smoothing
+} // namespace basic_autonomy

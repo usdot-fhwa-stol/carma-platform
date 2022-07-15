@@ -100,12 +100,12 @@ public:
    * \param points The set of points that define the current lane the vehicle is in and are defined based on the request
    * planning maneuvers. These points must be in the same lane as the vehicle and must extend in front of it though it
    * is fine if they also extend behind it. \param state The current state of the vehicle
-   *
+   * \param initial_speed Returns the initial_speed used to generate the trajectory
    * \return A list of trajectory points to send to the carma planning stack
    */
   std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_centerline(
       const std::vector<PointSpeedPair>& points, double starting_downtrack, double starting_speed, double stop_location,
-      double stop_location_buffer, ros::Time start_time, double stopping_acceleration);
+      double stop_location_buffer, ros::Time start_time, double stopping_acceleration, double& initial_speed);
 
   /**
    * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists
@@ -118,6 +118,8 @@ public:
       const std::vector<double>& yaws, ros::Time startTime);
 
 private:
+
+  double epsilon_ = 0.001; //small constant to compare double
 
   // pointer to the actual wm object
   carma_wm::WorldModelConstPtr wm_;

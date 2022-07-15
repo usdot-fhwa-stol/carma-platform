@@ -10,6 +10,7 @@ myClock.bin
 /*.tar.gz
 *.class
 **/bin
+**/__pycache__
 
 # ignore build directories
 build
@@ -40,3 +41,4 @@ truck_can_driver
 
 # exceptions
 !hooks/build
+.vscode

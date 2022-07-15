@@ -68,6 +68,20 @@ public:
    */
   void setMap(lanelet::LaneletMapPtr map, size_t map_version = 0, bool recompute_routing_graph = true);
 
+  /*!
+   * \brief Set the routing graph for the participant type.
+   *        This function may serve as an optimization to recomputing the routing graph when it is already available
+   * 
+   * NOTE: The set graph will be overwritten if setMap(recompute_routing_graph=true) is called. 
+   *       It will not, be overwritten if the map is set with recompute_routing_graph=false
+   *
+   * \param graph The graph to set. 
+   *              NOTE: This graph must be for the participant type specified getVehicleParticipationType().
+   *              There is no way to validate this from the object so the user must ensure consistency. 
+   * 
+   */ 
+  void setRoutingGraph(LaneletRoutingGraphPtr graph);
+
   /*! \brief Set the current route. This route must match the current map for this class to function properly
    *
    *  \param route A shared pointer to the route which will share ownership to this object
@@ -146,6 +160,20 @@ public:
    */
   lanelet::CarmaTrafficSignalPtr getTrafficSignal(const lanelet::Id& id) const;
 
+  /*! \brief update minimum end time to account for minute of the year
+    * \param min_end_time minimum end time of the spat movement event list
+    * \param moy_exists tells weather minute of the year exist or not
+    * \param moy value of the minute of the year
+   */
+  boost::posix_time::ptime min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy=0);
+  
+  /*! \brief for cheking previous rate to avoid repetation.
+    * \param min_end_time_dynamic dynamic spat processing minimum end time
+    * \param received_state_dynamic phase rate of the movement event list event state
+    * \param mov_id id of the traffic signal states
+    * \param mov_signal_group signal group of the traffic signal states
+   */
+  bool check_if_seen_before_movement_state(boost::posix_time::ptime min_end_time_dynamic,lanelet::CarmaTrafficSignalState received_state_dynamic,uint16_t mov_id, uint8_t mov_signal_group);
   /**
    * \brief (non-const version) Gets the underlying lanelet, given the cartesian point on the map 
    *
@@ -226,6 +254,8 @@ public:
   std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n = 10) const override;
 
   std::vector<lanelet::CarmaTrafficSignalPtr> getSignalsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
+
+  boost::optional<std::pair<lanelet::ConstLanelet, lanelet::ConstLanelet>> getEntryExitOfSignalAlongRoute(const lanelet::CarmaTrafficSignalPtr& traffic_signal) const override;
 
   std::vector<std::shared_ptr<lanelet::AllWayStop>> getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
 

@@ -23,7 +23,20 @@ beam_width: 3
 # Unit: N/a
 use_fixed_costs: true
 
+  # JSON String: Plugin Priorities Map
+# It would have been preferable to use a dictionary here but ROS2 Foxy does not support this type of parameter
 # Map: The priorities associated with each plugin during the planning 
 # process, values will be normalized at runtime and inverted into costs
 # Unit: N/a
-plugin_priorities: {SCIStrategicPlugin: 4.0, RouteFollowingPlugin: 2.0, WorkZonePlugin: 4.0, PlatooningStrategicPlugin: 1.0}
+plugin_priorities: '
+  {
+ 	  "plugin_priorities": 
+      {
+ 			  "platoon_strategic_ihp": 4.0,
+        "lci_strategic_plugin": 3.0,
+        "sci_strategic_plugin": 2.0,
+        "platoon_strategic": 2.0,
+        "route_following_plugin": 1.0
+      }
+  }
+  '

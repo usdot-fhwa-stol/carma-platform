@@ -44,10 +44,10 @@ namespace yield_plugin
     : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher), 
       mobility_response_publisher_(mobility_response_publisher), lc_status_publisher_(lc_status_publisher)
   {
-    plugin_discovery_msg_.name = "YieldPlugin";
+    plugin_discovery_msg_.name = "yield_plugin";
     plugin_discovery_msg_.version_id = "v1.0";
     plugin_discovery_msg_.available = true;
-    plugin_discovery_msg_.activated = false;
+    plugin_discovery_msg_.activated = true;
     plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
     plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";   
   }
@@ -447,21 +447,21 @@ namespace yield_plugin
       ROS_DEBUG_STREAM("object_down_track");
       ROS_DEBUG_STREAM(object_down_track);
       
-      ROS_DEBUG_STREAM("vehicle_downtrack - object_down_track");
-      ROS_DEBUG_STREAM(vehicle_downtrack - object_down_track);
+      double dist_to_object = object_down_track - vehicle_downtrack;
+      ROS_DEBUG_STREAM("object_down_track - vehicle_downtrack");
+      ROS_DEBUG_STREAM(dist_to_object);
       
       ROS_DEBUG_STREAM("i.object.velocity.twist.linear.x");
       ROS_DEBUG_STREAM(i.object.velocity.twist.linear.x);
 
       if(current_velocity.linear.x > 0.0) {
-        
-          // std::abs might not be needed cause vehicles in the behind of vehicle to cause problem
-        
-          ROS_DEBUG_STREAM("std::abs(vehicle_downtrack - object_down_track)/current_velocity.linear.x");
+          ROS_DEBUG_STREAM("(object_down_downtrack - vehicle_downtrack)/current_velocity.linear.x");
+          ROS_DEBUG_STREAM(dist_to_object/current_velocity.linear.x);
 
-          ROS_DEBUG_STREAM(object_down_track - vehicle_downtrack/current_velocity.linear.x);
-
-          if((object_down_track - vehicle_downtrack)/current_velocity.linear.x < config_.collision_horizon) {
+          // Check to see if the object is in front of us and has a time-to-collision lower than our
+          // desired horizon
+          if(dist_to_object >= 0 &&
+            dist_to_object / current_velocity.linear.x < config_.collision_horizon) {
               rwol_collision.push_back(i);
           }
       }

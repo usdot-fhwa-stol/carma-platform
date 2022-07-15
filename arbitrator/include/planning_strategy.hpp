@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 #ifndef __ARBITRATOR_INCLUDE_PLANNING_STRATEGY_HPP__
 #define __ARBITRATOR_INCLUDE_PLANNING_STRATEGY_HPP__
 
-#include <cav_msgs/ManeuverPlan.h>
+#include <carma_planning_msgs/msg/maneuver_plan.hpp>
 #include "vehicle_state.hpp"
 
 namespace arbitrator
@@ -37,7 +37,7 @@ namespace arbitrator
              * 
              * \return A maneuver plan from the vehicle's current state
              */
-            virtual cav_msgs::ManeuverPlan generate_plan(const VehicleState& start_state) = 0;
+            virtual carma_planning_msgs::msg::ManeuverPlan generate_plan(const VehicleState& start_state) = 0;
 
             /**
              * \brief Virtual destructor provided for memory safety

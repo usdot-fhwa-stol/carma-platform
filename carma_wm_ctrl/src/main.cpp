@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,16 +14,20 @@
  * the License.
  */
 
-#include <carma_wm_ctrl/WMBroadcasterNode.h>
-#include <ros/ros.h>
+#include <carma_wm_ctrl/WMBroadcasterNode.hpp>
+#include <rclcpp/rclcpp.hpp>
+
 // Main execution
 int main(int argc, char** argv)
 {
   // Initialize node
-  ros::init(argc, argv, "wm_broadcaster");
-  carma_wm_ctrl::WMBroadcasterNode node;
+  rclcpp::init(argc, argv);
+  
+  auto node = std::make_shared<carma_wm_ctrl::WMBroadcasterNode>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
 
-  // Start execution
-  node.run();
-  return 0;
+  rclcpp::shutdown();
 };

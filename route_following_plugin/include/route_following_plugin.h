@@ -29,6 +29,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <unordered_set>
 
 /**
  * \brief Macro definition to enable easier access to fields shared across the maneuver types
@@ -225,6 +226,14 @@ namespace route_following_plugin
          */ 
         std::string getNewManeuverId() const;
 
+        /**
+         * \brief This method re-routes the vehicle back to the shortest path, if the vehicle has left the shortest path, but is still on the route
+         * Re-routing is performed by generating a new shortest path via the closest lanelet on the original shortest path
+         * 
+         * \param current_lanelet curretn lanelet where the vehicle is at
+         */ 
+        void returnToShortestPath(const lanelet::ConstLanelet &current_lanelet);
+
         // CARMA ROS node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
@@ -232,10 +241,14 @@ namespace route_following_plugin
         ros::Publisher plugin_discovery_pub_;
         ros::Publisher upcoming_lane_change_status_pub_;
         ros::Subscriber twist_sub_;
+        ros::Subscriber current_maneuver_plan_sub_;
         ros::Timer discovery_pub_timer_;
 
         // ROS service servers
         ros::ServiceServer plan_maneuver_srv_;  
+
+        // unordered set of all the lanelet ids in shortest path
+        std::unordered_set<lanelet::Id> shortest_path_set_;
 
         // Minimal duration of maneuver, loaded from config file
         double min_plan_duration_ = 16.0;
@@ -267,16 +280,19 @@ namespace route_following_plugin
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
         lanelet::BasicPoint2d current_loc_;
+        
+        // Currently executing maneuver plan from Arbitrator
+        cav_msgs::ManeuverPlanConstPtr current_maneuver_plan_;
 
         //Queue of maneuver plans
         std::vector<cav_msgs::Maneuver> latest_maneuver_plan_;
 
         //Tactical plugin being used for planning lane change
-        std::string lane_change_plugin_ = "CooperativeLaneChangePlugin";
-        std::string stop_and_wait_plugin_ = "StopAndWaitPlugin";
+        std::string lane_change_plugin_ = "cooperative_lanechange";
+        std::string stop_and_wait_plugin_ = "stop_and_wait_plugin";
 
-        std::string planning_strategic_plugin_ = "RouteFollowingPlugin";
-        std::string lanefollow_planning_tactical_plugin_ = "InLaneCruisingPlugin"; 
+        std::string planning_strategic_plugin_ = "route_following_plugin";
+        std::string lanefollow_planning_tactical_plugin_ = "inlanecruising_plugin"; 
 
         /**
          * \brief Callback for the front bumper pose transform
@@ -288,6 +304,14 @@ namespace route_following_plugin
          * \param msg Latest twist message
          */
         void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+
+        /**
+         * \brief Callback for the ManeuverPlan subscriber, will store the current maneuver plan received locally.
+         * Used as part of the detection system for differentiating leaving the shortest path via another plugin
+         * vs. control drift taking the vehicle's reference point outside of the intended lane.
+         * \param msg Latest ManeuverPlan message
+         */
+        void current_maneuver_plan_cb(const cav_msgs::ManeuverPlanConstPtr& msg);
 
         /**
          * \brief returns duration as ros::Duration required to complete maneuver given its start dist, end dist, start speed and end speed
@@ -317,6 +341,7 @@ namespace route_following_plugin
         FRIEND_TEST(RouteFollowingPlugin, TestAssociateSpeedLimit);
         FRIEND_TEST(RouteFollowingPlugin, TestAssociateSpeedLimitusingosm);
         FRIEND_TEST(RouteFollowingPlugin, TestHelperfunctions);
+        FRIEND_TEST(RouteFollowingPlugin, TestReturnToShortestPath);
         FRIEND_TEST(StopAndWaitTestFixture, CaseOne);
         FRIEND_TEST(StopAndWaitTestFixture, CaseTwo);
         FRIEND_TEST(StopAndWaitTestFixture, CaseThree);

@@ -25,12 +25,12 @@ namespace pure_pursuit_wrapper
 PurePursuitWrapper::PurePursuitWrapper(PurePursuitWrapperConfig config, WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub)
   : config_(config), waypoint_pub_(waypoint_pub), plugin_discovery_pub_(plugin_discovery_pub)
 {
-  plugin_discovery_msg_.name = "Pure Pursuit";
+  plugin_discovery_msg_.name = "pure_pursuit_wrapper_node";
   plugin_discovery_msg_.version_id = "v1.0";
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = true;
   plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
-  plugin_discovery_msg_.capability = "control_pure_pursuit_plan/plan_controls";
+  plugin_discovery_msg_.capability = "control/trajectory_control";
 }
 
 bool PurePursuitWrapper::onSpin()
@@ -47,11 +47,23 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
   std::vector<double> times;
   std::vector<double> downtracks;
 
-  //Remove trajectory points with duplicated timestamps
-  std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = remove_repeated_timestamps(tp->trajectory_points);
-  ROS_DEBUG_STREAM("Original Trajectory size:"<<tp->trajectory_points.size() <<" Size after removing duplicate timestamps:"<<trajectory_points.size());
+  std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = tp->trajectory_points;
+  ROS_DEBUG_STREAM("Original Trajectory size:"<<trajectory_points.size());
 
   trajectory_utils::conversions::trajectory_to_downtrack_time(trajectory_points, &downtracks, &times);
+
+  //detect stopping case
+  size_t stopping_index = 0;
+  for (size_t i = 1; i < times.size(); i++)
+  {
+    if (times[i] == times[i - 1]) //if exactly same, it is stopping case
+    {
+      ROS_DEBUG_STREAM("Detected a stopping case where times is exactly equal: " << times[i-1]);
+      ROS_DEBUG_STREAM("And index of that is: " << i << ", where size is: " << times.size());
+      stopping_index = i;
+      break;
+    }
+  }
 
   std::vector<double> speeds;
   trajectory_utils::conversions::time_to_speed(downtracks, times, tp->initial_longitudinal_velocity, &speeds);
@@ -61,8 +73,15 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
     throw std::invalid_argument("Speeds and trajectory points sizes do not match");
   }
 
-  for (size_t i =0; i < speeds.size(); i++) { // Ensure 0 is min speed
-    speeds[i] = std::max(0.0, speeds[i]);
+  for (size_t i = 0; i < speeds.size(); i++) { // Ensure 0 is min speed
+    if (stopping_index != 0 && i >= stopping_index - 1)
+    {
+      speeds[i] = 0.0;  //stopping case
+    }
+    else
+    {
+      speeds[i] = std::max(0.0, speeds[i]);
+    }
   }
 
   std::vector<double> lag_speeds = apply_response_lag(speeds, downtracks, config_.vehicle_response_lag); // This call requires that the first speed point be current speed to work as expected

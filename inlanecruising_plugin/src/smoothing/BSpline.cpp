@@ -1,10 +1,10 @@
-#include <inlanecruising_plugin/smoothing/BSpline.h>
+#include <inlanecruising_plugin/smoothing/BSpline.hpp>
 
 namespace inlanecruising_plugin
 {
 namespace smoothing
 {
-void BSpline::setPoints(std::vector<lanelet::BasicPoint2d> points)
+void BSpline::setPoints(const std::vector<lanelet::BasicPoint2d>& points)
 {
   Eigen::MatrixXd matrix_points(2, points.size());
   int row_index = 0;
