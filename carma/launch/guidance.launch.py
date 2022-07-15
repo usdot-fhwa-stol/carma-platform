@@ -72,6 +72,9 @@ def generate_launch_description():
 
     plan_delegator_param_file = os.path.join(
         get_package_share_directory('plan_delegator'), 'config/plan_delegator_params.yaml')
+
+    port_drayage_plugin_param_file = os.path.join(
+        get_package_share_directory('port_drayage_plugin'), 'config/parameters.yaml')
     
     inlanecruising_plugin_file_path = os.path.join(
         get_package_share_directory('inlanecruising_plugin'), 'config/parameters.yaml')
@@ -207,6 +210,26 @@ def generate_launch_description():
                     guidance_param_file
                 ]
             ),
+            ComposableNode(
+                package='port_drayage_plugin',
+                plugin='port_drayage_plugin::PortDrayagePlugin',
+                name='port_drayage_plugin_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('route', env_log_levels) }
+                ],
+                remappings = [
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                    ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_operation" ] ),  
+                    ("outgoing_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),     
+                    ("ui_instructions", [ EnvironmentVariable('CARMA_UI_NS', default_value=''), "/ui_instructions" ] )       
+                ],
+                parameters=[
+                    port_drayage_plugin_param_file,
+                    vehicle_characteristics_param_file
+                ]     
+            )  
         ]
     )
 

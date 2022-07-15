@@ -1,5 +1,0 @@
-stop_speed_epsilon: 1.0
-cargo_id: "" # Test value (Empty string indicates the vehicle is not carrying cargo); CARMA Streets expects cargo_id to be a string
-enable_port_drayage: false # bool: Flag to activate and deactivate port drayage operations. If false, state machine will remain INACTIVE.
-starting_at_staging_area: true # bool: Flag indicating CMV's first destination; 'true' indicates Staging Area Entrance; 'false' indicates Port Entrance.
-host_id: "HOST_ID"

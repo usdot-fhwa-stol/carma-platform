@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,19 +14,20 @@
  * the License.
  */
 
-// @SONAR_STOP@
-#include <ros/ros.h>
-#include <carma_utils/CARMAUtils.h>
-#include <memory>
-#include "port_drayage_plugin/port_drayage_plugin.h"
+#include <rclcpp/rclcpp.hpp>
+#include "port_drayage_plugin/port_drayage_plugin.hpp"
 
-int main(int argc, char** argv)
+int main(int argc, char **argv) 
 {
-    ros::init(argc, argv, "port_drayage_plugin");
-    std::shared_ptr<ros::CARMANodeHandle> nh = std::make_shared<ros::CARMANodeHandle>("");
-    std::shared_ptr<ros::CARMANodeHandle> pnh = std::make_shared<ros::CARMANodeHandle>("~");
-    port_drayage_plugin::PortDrayagePlugin pdp{nh, pnh};
-    return pdp.run();
-}
+  rclcpp::init(argc, argv);
 
-// @SONAR_START
+  auto node = std::make_shared<port_drayage_plugin::PortDrayagePlugin>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
+
+  rclcpp::shutdown();
+
+  return 0;
+}
