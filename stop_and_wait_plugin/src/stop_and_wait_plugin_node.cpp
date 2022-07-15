@@ -21,7 +21,7 @@ namespace stop_and_wait_plugin
   namespace std_ph = std::placeholders;
 
   StopandWaitNode::StopandWaitNode(const rclcpp::NodeOptions &options)
-      : carma_ros2_utils::CarmaLifecycleNode(options)
+      : carma_guidance_plugins::TacticalPlugin(options)
   {
     // Create initial config
     config = StopandWaitConfig();
@@ -39,32 +39,19 @@ namespace stop_and_wait_plugin
 
   carma_ros2_utils::CallbackReturn StopandWaitNode::handle_on_configure(const rclcpp_lifecycle::State &)
   {
-
-    // Setup subscribers
-    pose_sub = create_subscription<geometry_msgs::msg::Pose>("pose_to_tf", 50,
-                                                              std::bind(&pose_to_tf::PoseToTF2::poseCallback, pose_to_tf_worker_.get(), std_ph::_1));
   
-
-   
-    plugin_discovery_pub = create_publisher<carma_planning_msgs::msg::Plugin>("plugin_discovery", 1);
-
-
-
-    StopandWait plugin(wm, config, [&plugin_discovery_pub](auto msg) { plugin_discovery_pub.publish(msg); });
-
-    ros::ServiceServer trajectory_srv_ =
-        nh.advertiseService("plan_trajectory", &StopandWait::plan_trajectory_cb, &plugin);
-
-
-    trajectory_srv = create_service<carma_planning_msgs::srv::PlanManeuvers>("plugins/" + planning_strategic_plugin_ + "/plan_maneuvers",
-                                                            std::bind(&RouteFollowingPlugin::plan_maneuvers_callback, this, std_ph::_1, std_ph::_2, std_ph::_3));
-    
-
-    ros::Timer discovery_pub_timer =
-        pnh.createTimer(ros::Duration(ros::Rate(10.0)), [&plugin](const auto&) { plugin.spinCallback(); });                                                          
-  
+    StopandWait plugin(wm, config);
+                                        
     // Return success if everthing initialized successfully
     return CallbackReturn::SUCCESS;
+  }
+
+    void StopandWaitNode::plan_trajectory_callback(
+    std::shared_ptr<rmw_request_id_t> srv_header, 
+    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+    carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
+  {
+    plugin->plan_trajectory_cb(req, resp);
   }
 
 } // stop_and_wait_plugin

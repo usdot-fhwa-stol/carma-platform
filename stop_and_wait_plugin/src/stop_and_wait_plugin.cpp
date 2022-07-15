@@ -50,25 +50,15 @@ using oss = std::ostringstream;
 
 namespace stop_and_wait_plugin
 {
-StopandWait::StopandWait(carma_wm_ros2::WorldModelConstPtr wm, StopandWaitConfig config,
-                         PublishPluginDiscoveryCB plugin_discovery_publisher)
-  : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
+
+StopandWait::StopandWait(carma_wm_ros2::WorldModelConstPtr wm, StopandWaitConfig config)
+  : wm_(wm), config_(config)
 {
-  plugin_discovery_msg_.name = "stop_and_wait_plugin";
-  plugin_discovery_msg_.version_id = "v1.1";
-  plugin_discovery_msg_.available = true;
-  plugin_discovery_msg_.activated = true;
-  plugin_discovery_msg_.type = carma_planning_msgs::msg::Plugin::TACTICAL;
-  plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
+
 };
 
-bool StopandWait::spinCallback()
-{
-  plugin_discovery_publisher_(plugin_discovery_msg_);
-  return true;
-}
 
-bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::Request::UniquePtr req, carma_planning_msgs::srv::PlanTrajectory::Response::UniquePtr resp)
+bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
 {
 
   RCLCPP_INFO_STREAM(this->get_logger(),"Starting stop&wait planning");

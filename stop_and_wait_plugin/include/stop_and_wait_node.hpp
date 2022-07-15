@@ -27,7 +27,6 @@
 #include <trajectory_utils/conversions/conversions.h>
 #include <sstream>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
-//#include <carma_utils/containers/containers.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <Eigen/LU>
@@ -46,37 +45,31 @@
 #include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 
-//#include <cav_msgs/Trajectory.h>
-
-
 namespace stop_and_wait_plugin
 {
 class StopandWaitNode
 {
 public:
-  /**
-   * \brief General entry point to begin the operation of this class
-   */
 
-    carma_wm::WMListener wml;
-    auto wm = wml.getWorldModel();
+    
+  /**
+   * \brief Node constructor 
+   */
+    explicit StopandWaitNode(const rclcpp::NodeOptions &);
+
+    bool get_availability() override;
+
+    std::string get_version_id() override final;
 
     StopandWaitConfig config;
 
-    carma_ros2_utils::PubPtr<carma_planning_msgs::msg::Plugin> plugin_discovery_pub;
+    // Worker
+    std::shared_ptr<StopandWait> plugin;
 
-    StopandWait plugin(wm, config, [&plugin_discovery_pub](auto msg) { plugin_discovery_pub.publish(msg); });
-
-    ros::ServiceServer trajectory_srv_ =
-        nh.advertiseService("plan_trajectory", &StopandWait::plan_trajectory_cb, &plugin);
-
-
-    carma_ros2_utils::ServicePtr<carma_planning_msgs::srv::PlanTrajectory> trajectory_srv;
-
-
-    ros::Timer discovery_pub_timer =
-        pnh.createTimer(ros::Duration(ros::Rate(10.0)), [&plugin](const auto&) { plugin.spinCallback(); });
-
+    void plan_trajectory_callback(
+    std::shared_ptr<rmw_request_id_t> srv_header, 
+    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+    carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp) override;
 
 };
 }  // namespace stop_and_wait_plugin
