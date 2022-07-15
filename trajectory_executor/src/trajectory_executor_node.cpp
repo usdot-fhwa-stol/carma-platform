@@ -56,7 +56,7 @@ namespace trajectory_executor
 
       //Hardcoding platoon control plugins
       std::string control_plugin2 = "platoon_control";
-      std::string control_plugin_topic2 = "/guidance/platoon_control/plan_trajectory";
+      std::string control_plugin_topic2 = "/guidance/plugins/platoon_control/plan_trajectory";
       out[control_plugin2] = control_plugin_topic2;
 
       return out;
