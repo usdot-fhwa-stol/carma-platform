@@ -79,6 +79,9 @@ def generate_launch_description():
     inlanecruising_plugin_file_path = os.path.join(
         get_package_share_directory('inlanecruising_plugin'), 'config/parameters.yaml')
 
+     route_following_plugin_file_path = os.path.join(
+        get_package_share_directory('route_following_plugin'), 'config/parameters.yaml')
+
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
