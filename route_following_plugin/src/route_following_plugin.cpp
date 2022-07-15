@@ -128,6 +128,8 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
     // set world model point form wm listener
    get_world_model_listener();
 
+   wm_ = get_world_model();
+
     //set a route callback to update route and calculate maneuver
     wml_->setRouteCallback([this]() {
         //RCLCPP_INFO_STREAM(rclcpp::get_logger(),"Recomputing maneuvers due to a route update");

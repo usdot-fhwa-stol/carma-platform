@@ -133,24 +133,20 @@ namespace route_following_plugin
 
         std::shared_ptr<rmw_request_id_t> srv_header;
 
-        if (worker->plan_maneuvers_callback(srv_header,plan_request, plan_response))
+        worker->plan_maneuvers_callback(srv_header,plan_request, plan_response);
+        
+        //check target speeds in updated response
+        lanelet::Velocity limit = 30_mph;
+        ASSERT_EQ(plan_response->new_plan.maneuvers[0].lane_following_maneuver.end_speed, 11.176);
+        for (auto i = 1; i < plan_response->new_plan.maneuvers.size() - 1; i++)
         {
-            //check target speeds in updated response
-            lanelet::Velocity limit = 30_mph;
-            ASSERT_EQ(plan_response->new_plan.maneuvers[0].lane_following_maneuver.end_speed, 11.176);
-            for (auto i = 1; i < plan_response->new_plan.maneuvers.size() - 1; i++)
-            {
-                ASSERT_EQ(plan_response->new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value());
-            }
+        ASSERT_EQ(plan_response->new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value());
+        }
 
-            ASSERT_FALSE(plan_response->new_plan.maneuvers.empty());
-            ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, plan_response->new_plan.maneuvers.back().type);
-            ASSERT_EQ(plan_response->new_plan.maneuvers.back().stop_and_wait_maneuver.start_speed, limit.value());
-        }
-        else
-        {
-            EXPECT_TRUE(false);
-        }
+        ASSERT_FALSE(plan_response->new_plan.maneuvers.empty());
+        ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, plan_response->new_plan.maneuvers.back().type);
+        ASSERT_EQ(plan_response->new_plan.maneuvers.back().stop_and_wait_maneuver.start_speed, limit.value());
+
     }
 
     TEST(RouteFollowingPlugin, TestAssociateSpeedLimitusingosm)
@@ -243,21 +239,15 @@ namespace route_following_plugin
 
         std::shared_ptr<rmw_request_id_t> srv_header;
 
-        if (worker->plan_maneuvers_callback(srv_header,plan_request, plan_response))
-        {
-            //check target speeds in updated response
-            lanelet::Velocity limit = 25_mph;
+        worker->plan_maneuvers_callback(srv_header,plan_request, plan_response);
+        //check target speeds in updated response
+        lanelet::Velocity limit = 25_mph;
 
-            for (auto i = 0; i < plan_response->new_plan.maneuvers.size() - 1; i++)
-            {
-                ASSERT_EQ(plan_response->new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value());
-            }
-
-        }
-        else
+        for (auto i = 0; i < plan_response->new_plan.maneuvers.size() - 1; i++)
         {
-            EXPECT_TRUE(false);
+          ASSERT_EQ(plan_response->new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value());
         }
+
         //Test findSpeedLimit function
         auto current_lanelets = lanelet::geometry::findNearest(worker->wm_->getMap()->laneletLayer, worker->current_loc_, 10);
         lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
