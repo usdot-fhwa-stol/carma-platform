@@ -26,7 +26,8 @@ namespace trajectory_visualizer
 {
 
     /**
-     * TrajectoryVisualizer publishes 
+     * TrajectoryVisualizer . publishes trajectory represented by various colors of rviz markers depending on the speed of trajectory. 
+     * More than 75% of max_speed is red, more 50% is blue, more than 25% is teal, less then 25% is green. 
      * 
     */ 
     const double MPH_TO_MS = 0.44704;

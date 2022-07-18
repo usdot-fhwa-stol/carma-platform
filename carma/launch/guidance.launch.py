@@ -213,10 +213,8 @@ def generate_launch_description():
                 name='trajectory_visualizer_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('route', env_log_levels) }
+                    {'--log-level' : GetLogLevel('trajectory_visualizer', env_log_levels) }
                 ],
-                remappings = [
-                      ],
                 parameters=[
                     trajectory_visualizer_param_file
                 ]
