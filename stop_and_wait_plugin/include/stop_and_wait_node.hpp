@@ -60,6 +60,7 @@ private:
 
     std::string version_id_;
     std::string plugin_name_;
+    carma_wm::WorldModelConstPtr wm_;
 
 public:
   

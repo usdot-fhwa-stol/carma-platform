@@ -20,7 +20,6 @@
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <boost/optional.hpp>
 #include "stop_and_wait_config.hpp"
-#include "stop_and_wait_node.hpp"
 #include "basic_autonomy_ros2/basic_autonomy.hpp"
 #include "basic_autonomy_ros2/helper_functions.hpp"
 #include <boost/shared_ptr.hpp>
@@ -39,7 +38,6 @@
 
 namespace stop_and_wait_plugin
 {
-using PublishPluginDiscoveryCB = std::function<void(const carma_planning_msgs::msg::Plugin&)>;
 /**
  * \brief Convenience class for pairing 2d points with speeds
  */

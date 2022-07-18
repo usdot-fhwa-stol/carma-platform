@@ -79,9 +79,8 @@ bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::R
 
   if (req->vehicle_state.longitudinal_vel < epsilon_)
   {
-    RCLCPP_INFO_STREAM(nh_->get_logger(),"Detected that car is already stopped! Ignoring the request to plan Stop&Wait");
-    RCLCPP_INFO_STREAM(nh_->get_logger(),"Detected that car is already stopped! Ignoring the request to plan Stop&Wait");
-    
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Detected that car is already stopped! Ignoring the request to plan Stop&Wait");
+     
     return true;
   }
 
@@ -166,8 +165,8 @@ std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<c
   // std::min call here is a guard against starting_downtrack being within 1m of the maneuver end_dist
   // in this case the sampleRoutePoints method will return a single point allowing execution to continue
   std::vector<lanelet::BasicPoint2d> route_points = wm->sampleRoutePoints(
-      std::min(starting_downtrack + config_.cernterline_sampling_spacing, stop_and_wait_maneuver.end_dist),
-      stop_and_wait_maneuver.end_dist, config_.cernterline_sampling_spacing);
+      std::min(starting_downtrack + config_.centerline_sampling_spacing, stop_and_wait_maneuver.end_dist),
+      stop_and_wait_maneuver.end_dist, config_.centerline_sampling_spacing);
 
 
   route_points.insert(route_points.begin(), veh_pos);
@@ -199,7 +198,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::trajecto
   for (size_t i = 0; i < points.size(); i++)
   {
     carma_planning_msgs::msg::TrajectoryPlanPoint tpp;
-    rclcpp::Duration relative_time(times[i]);
+    rclcpp::Duration relative_time(times[i] * 1e9);
     tpp.target_time = startTime + relative_time;
     tpp.x = points[i].x();
     tpp.y = points[i].y();
@@ -373,10 +372,10 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
 
   auto traj = trajectory_from_points_times_orientations(raw_points, times, yaws, start_time);
 
-  while (rclcpp::Time(traj.back().target_time) - rclcpp::Time(traj.front().target_time) < rclcpp::Duration(config_.minimal_trajectory_duration))
+  while (rclcpp::Time(traj.back().target_time) - rclcpp::Time(traj.front().target_time) < rclcpp::Duration(config_.minimal_trajectory_duration * 1e9))
   {
     carma_planning_msgs::msg::TrajectoryPlanPoint new_point = traj.back();
-    new_point.target_time = rclcpp::Time(new_point.target_time) + rclcpp::Duration(config_.stop_timestep);
+    new_point.target_time = rclcpp::Time(new_point.target_time) + rclcpp::Duration(config_.stop_timestep * 1e9);
     traj.push_back(new_point);
   }
 

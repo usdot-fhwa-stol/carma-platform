@@ -14,7 +14,7 @@
  * the License.
  */
 
-#include "stop_and_wait_plugin_node.hpp"
+#include "stop_and_wait_node.hpp"
 
 namespace stop_and_wait_plugin
 {
@@ -27,14 +27,14 @@ namespace stop_and_wait_plugin
     config_ = StopandWaitConfig();
  
     // Declare parameters
-    config_.minimal_trajectory_duration = declare_parameter<std::string>("minimal_trajectory_duration", config_.minimal_trajectory_duration);
-    config_.stop_timestep = declare_parameter<std::string>("stop_timestep", config_.stop_timestep);
-    config_.trajectory_step_size = declare_parameter<std::string>("trajectory_step_size", config_.trajectory_step_size);
-    config_.accel_limit_multiplier = declare_parameter<std::string>("accel_limit_multiplier", config_.accel_limit_multiplier);
-    config_.accel_limit = declare_parameter<std::string>("/vehicle_acceleration_limit", config_.accel_limit);
-    config_.crawl_speed = declare_parameter<std::string>("crawl_speed", config_.crawl_speed);
-    config_.cernterline_sampling_spacing = declare_parameter<std::string>("cernterline_sampling_spacing", config_.cernterline_sampling_spacing);
-    config_.default_stopping_buffer = declare_parameter<std::string>("default_stopping_buffer", config_.default_stopping_buffer);
+    config_.minimal_trajectory_duration = declare_parameter<double>("minimal_trajectory_duration", config_.minimal_trajectory_duration);
+    config_.stop_timestep = declare_parameter<double>("stop_timestep", config_.stop_timestep);
+    config_.trajectory_step_size = declare_parameter<double>("trajectory_step_size", config_.trajectory_step_size);
+    config_.accel_limit_multiplier = declare_parameter<double>("accel_limit_multiplier", config_.accel_limit_multiplier);
+    config_.accel_limit = declare_parameter<double>("/vehicle_acceleration_limit", config_.accel_limit);
+    config_.crawl_speed = declare_parameter<double>("crawl_speed", config_.crawl_speed);
+    config_.centerline_sampling_spacing = declare_parameter<double>("centerline_sampling_spacing", config_.centerline_sampling_spacing);
+    config_.default_stopping_buffer = declare_parameter<double>("default_stopping_buffer", config_.default_stopping_buffer);
   }
 
   carma_ros2_utils::CallbackReturn StopandWaitNode::on_configure_plugin()
