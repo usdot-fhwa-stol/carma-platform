@@ -69,12 +69,12 @@ namespace arbitrator
         auto png = std::make_shared<arbitrator::PluginNeighborGenerator<arbitrator::CapabilitiesInterface>>(ci);
         arbitrator::TreePlanner tp(cf, png, bss, rclcpp::Duration(config_.target_plan_duration* 1e9));
     
-        auto wm_listener_ = std::make_shared<carma_wm::WMListener>(
+        wm_listener_ = std::make_shared<carma_wm::WMListener>(
             this->get_node_base_interface(), this->get_node_logging_interface(),
         this->get_node_topics_interface(), this->get_node_parameters_interface()
         );
 
-        auto wm = wm_listener_->getWorldModel();
+        wm_ = wm_listener_->getWorldModel();
 
         arbitrator_ = std::make_shared<Arbitrator>(
             shared_from_this(),
@@ -83,7 +83,7 @@ namespace arbitrator
             std::make_shared<TreePlanner>(tp), 
             rclcpp::Duration(config_.min_plan_duration* 1e9),
             1/config_.planning_frequency,
-            wm );
+            wm_ );
         
         
         carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> twist_sub = create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 1, std::bind(&Arbitrator::twist_cb, arbitrator_.get(), std::placeholders::_1));
