@@ -42,10 +42,15 @@ bool PurePursuitWrapper::onSpin()
 
 void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp)
 {
+  ROS_DEBUG_STREAM("Received TrajectoryPlanCurrentPosecallback message");
+
   std::vector<double> times;
   std::vector<double> downtracks;
 
   std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = tp->trajectory_points;
+
+  ROS_DEBUG_STREAM("Original Trajectory size:"<<trajectory_points.size());
+
 
   trajectory_utils::conversions::trajectory_to_downtrack_time(trajectory_points, &downtracks, &times);
 

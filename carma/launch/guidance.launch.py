@@ -236,7 +236,7 @@ def generate_launch_description():
         ]
     )
 
-    ## Launch plugins
+    # Launch plugins
     plugins_group = GroupAction(
         actions=[
             PushRosNamespace("plugins"),

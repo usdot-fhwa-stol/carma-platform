@@ -47,7 +47,7 @@ namespace arbitrator
             }
             else
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "failed...: " << *i);
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "failed...: " << *i);
             }
         }
         return responses;
