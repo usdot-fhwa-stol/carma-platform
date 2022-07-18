@@ -45,8 +45,6 @@ namespace inlanecruising_plugin
   
   carma_ros2_utils::CallbackReturn InLaneCruisingPluginNode::on_configure_plugin()
   {
-    auto wm_ = get_world_model();
-
     trajectory_debug_pub_ = create_publisher<carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds>("debug/trajectory_planning", 1);
 
     config_ = InLaneCruisingPluginConfig();
@@ -82,7 +80,7 @@ namespace inlanecruising_plugin
 
     RCLCPP_INFO_STREAM(get_logger(), "InLaneCruisingPlugin Params After Accel Change" << config_);
     
-    worker_ = std::make_shared<InLaneCruisingPlugin>(shared_from_this(), wm_, config_,
+    worker_ = std::make_shared<InLaneCruisingPlugin>(shared_from_this(), get_world_model(), config_,
                                                           [this](const carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds& msg) { trajectory_debug_pub_->publish(msg); },
                                                           plugin_name_,
                                                           version_id_);

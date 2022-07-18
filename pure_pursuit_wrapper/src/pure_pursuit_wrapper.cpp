@@ -42,13 +42,13 @@ bool PurePursuitWrapper::onSpin()
 
 void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp)
 {
-  ROS_DEBUG_STREAM("Received TrajectoryPlanCurrentPosecallback message");
+  ROS_ERROR_STREAM("Received TrajectoryPlanCurrentPosecallback message");
 
   std::vector<double> times;
   std::vector<double> downtracks;
 
   std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = tp->trajectory_points;
-  ROS_DEBUG_STREAM("Original Trajectory size:"<<trajectory_points.size());
+  ROS_ERROR_STREAM("Original Trajectory size:"<<trajectory_points.size());
 
   trajectory_utils::conversions::trajectory_to_downtrack_time(trajectory_points, &downtracks, &times);
 
@@ -105,8 +105,13 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
   }
 
   lane.waypoints = waypoints;
+  ROS_ERROR_STREAM("Finished TrajectoryPlanCurrentPosecallback message");
+
   waypoint_pub_(lane);
+  ROS_ERROR_STREAM("Published TrajectoryPlanCurrentPosecallback message");
+
 };
+
 
 std::vector<double> PurePursuitWrapper::apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) const { // Note first speed is assumed to be vehicle speed
   if (speeds.size() != downtracks.size()) {

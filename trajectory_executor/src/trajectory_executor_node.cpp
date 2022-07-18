@@ -120,7 +120,7 @@ namespace trajectory_executor
 
   void TrajectoryExecutor::onTrajEmitTick()
   {
-    RCLCPP_DEBUG_STREAM(get_logger(), "TrajectoryExecutor tick start!");
+    RCLCPP_ERROR_STREAM(get_logger(), "TrajectoryExecutor tick start!");
 
     if (cur_traj_ != nullptr) {
       // Determine the relevant control plugin for the current timestep
@@ -147,19 +147,19 @@ namespace trajectory_executor
       RCLCPP_DEBUG_STREAM(get_logger(), "Awaiting initial trajectory publication...");
     }
 
-    RCLCPP_DEBUG_STREAM(get_logger(), "TrajectoryExecutor tick completed succesfully!");
+    RCLCPP_ERROR_STREAM(get_logger(), "TrajectoryExecutor tick completed succesfully!");
 
   }
 
   void TrajectoryExecutor::onNewTrajectoryPlan(carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg)
   {
-    RCLCPP_DEBUG_STREAM(get_logger(), "Received new trajectory plan!");
+    RCLCPP_ERROR_STREAM(get_logger(), "Received new trajectory plan!");
     RCLCPP_DEBUG_STREAM(get_logger(), "New Trajectory plan ID: " << msg->trajectory_id);
     RCLCPP_DEBUG_STREAM(get_logger(), "New plan contains " << msg->trajectory_points.size() << " points");
 
     cur_traj_ = std::unique_ptr<carma_planning_msgs::msg::TrajectoryPlan>(move(msg));
     timesteps_since_last_traj_ = 0;
-    RCLCPP_INFO_STREAM(get_logger(), "Successfully swapped trajectories!");  
+    RCLCPP_ERROR_STREAM(get_logger(), "Successfully swapped trajectories!");  
   }
 
   void TrajectoryExecutor::guidanceStateMonitor(carma_planning_msgs::msg::GuidanceState::UniquePtr msg)

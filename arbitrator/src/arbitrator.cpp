@@ -82,7 +82,7 @@ namespace arbitrator
                 // NO-OP
                 break;
             case carma_planning_msgs::msg::GuidanceState::ENGAGED:
-                RCLCPP_INFO_STREAM(nh_->get_logger(), "Received notice that guidance has been engaged!");
+                //RCLCPP_INFO_STREAM(nh_->get_logger(), "Received notice that guidance has been engaged!");
                 if (sm_->get_state() == ArbitratorState::INITIAL) {
                     sm_->submit_event(ArbitratorEvent::SYSTEM_STARTUP_COMPLETE);
                 } else if (sm_->get_state() == ArbitratorState::PAUSED) {
@@ -190,6 +190,11 @@ namespace arbitrator
 
         vehicle_state_.x = bumper_transform_.getOrigin().getX();
         vehicle_state_.y = bumper_transform_.getOrigin().getY();
+
+        RCLCPP_ERROR_STREAM(nh_->get_logger(), "vehicle_state_.x: " << vehicle_state_.x << 
+                                                ", vehicle_state_.y: " << vehicle_state_.y <<
+                                                ", vehicle_state_.downtrack: " << vehicle_state_.downtrack);
+
         // If the route is available then set the downtrack and lane id
         if (wm_->getRoute()) {
 
