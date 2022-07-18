@@ -68,7 +68,7 @@ namespace inlanecruising_plugin
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&InLaneCruisingPluginNode::parameter_update_callback, this, std_ph::_1));
 
-    RCLCPP_INFO_STREAM(get_logger(), "InLaneCruisingPlugin Params" << config_);
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("inlanecruising_plugin"), "InLaneCruisingPlugin Params" << config_);
     
     config_.lateral_accel_limit = config_.lateral_accel_limit * config_.lat_accel_multiplier;
     config_.max_accel = config_.max_accel *  config_.max_accel_multiplier;
@@ -78,7 +78,7 @@ namespace inlanecruising_plugin
 
     config_.publish_debug = level == RCUTILS_LOG_SEVERITY_DEBUG;
 
-    RCLCPP_INFO_STREAM(get_logger(), "InLaneCruisingPlugin Params After Accel Change" << config_);
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("inlanecruising_plugin"), "InLaneCruisingPlugin Params After Accel Change" << config_);
     
     worker_ = std::make_shared<InLaneCruisingPlugin>(shared_from_this(), get_world_model(), config_,
                                                           [this](const carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds& msg) { trajectory_debug_pub_->publish(msg); },
@@ -88,7 +88,7 @@ namespace inlanecruising_plugin
     //TODO: Update yield client to use the Plugin Manager capabilities query, in case someone else wants to add an alternate yield implementation 
     yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("yield_plugin/plan_trajectory");
     worker_->set_yield_client(yield_client_);
-    RCLCPP_INFO_STREAM(get_logger(), "Yield Client Set");
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("inlanecruising_plugin"), "Yield Client Set");
 
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
