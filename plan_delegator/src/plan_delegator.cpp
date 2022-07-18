@@ -184,14 +184,14 @@ namespace plan_delegator
 
     void PlanDelegator::maneuverPlanCallback(carma_planning_msgs::msg::ManeuverPlan::UniquePtr plan)
     {
-        RCLCPP_ERROR_STREAM(get_logger(),"Received request to delegate plan ID " << std::string(plan->maneuver_plan_id));
+        RCLCPP_INFO_STREAM(get_logger(),"Received request to delegate plan ID " << std::string(plan->maneuver_plan_id));
         // do basic check to see if the input is valid
         auto copy_plan = *plan;
 
         if (isManeuverPlanValid(copy_plan))
         {
             latest_maneuver_plan_ = copy_plan;
-            RCLCPP_ERROR_STREAM(get_logger(),"Received plan with " << latest_maneuver_plan_.maneuvers.size() << " maneuvers");
+            RCLCPP_DEBUG_STREAM(get_logger(),"Received plan with " << latest_maneuver_plan_.maneuvers.size() << " maneuvers");
             
             // Update the parameters associated with each maneuver
             for (auto& maneuver : latest_maneuver_plan_.maneuvers) {
@@ -199,7 +199,7 @@ namespace plan_delegator
             }
         }
         else {
-            RCLCPP_ERROR_STREAM(get_logger(),"Received empty plan, no maneuvers found in plan ID " << std::string(plan->maneuver_plan_id));
+            RCLCPP_WARN_STREAM(get_logger(),"Received empty plan, no maneuvers found in plan ID " << std::string(plan->maneuver_plan_id));
         }
     }
 
@@ -211,8 +211,7 @@ namespace plan_delegator
         }
         if(trajectory_planners_.find(planner_name) == trajectory_planners_.end())
         {
-            RCLCPP_ERROR_STREAM(get_logger(),"Discovered new trajectory planner: " << planner_name);
-            RCLCPP_ERROR_STREAM(get_logger(),"Discovered new FULL trajectory planner: " << config_.planning_topic_prefix + planner_name + config_.planning_topic_suffix);
+            RCLCPP_INFO_STREAM(get_logger(),"Discovered new trajectory planner: " << planner_name);
             
             trajectory_planners_.emplace(
                 planner_name, create_client<carma_planning_msgs::srv::PlanTrajectory>(config_.planning_topic_prefix + planner_name + config_.planning_topic_suffix));
@@ -234,11 +233,11 @@ namespace plan_delegator
 
     bool PlanDelegator::isManeuverExpired(const carma_planning_msgs::msg::Maneuver& maneuver, rclcpp::Time current_time) const
     {
-        RCLCPP_ERROR_STREAM(get_logger(), "maneuver start time:" << std::to_string(rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, start_time)).seconds()));
-        RCLCPP_ERROR_STREAM(get_logger(), "maneuver end time:" << std::to_string(rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, end_time)).seconds()));
-        RCLCPP_ERROR_STREAM(get_logger(), "current time:" << std::to_string(now().seconds()));
+        RCLCPP_DEBUG_STREAM(get_logger(), "maneuver start time:" << std::to_string(rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, start_time)).seconds()));
+        RCLCPP_DEBUG_STREAM(get_logger(), "maneuver end time:" << std::to_string(rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, end_time)).seconds()));
+        RCLCPP_DEBUG_STREAM(get_logger(), "current time:" << std::to_string(now().seconds()));
         bool isexpired = rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, end_time), get_clock()->get_clock_type()) <= current_time; // TODO maneuver expiration should maybe be based off of distance not time? https://github.com/usdot-fhwa-stol/carma-platform/issues/1107
-        RCLCPP_ERROR_STREAM(get_logger(), "isexpired:" << isexpired);
+        RCLCPP_DEBUG_STREAM(get_logger(), "isexpired:" << isexpired);
         // TODO: temporary disabling expiration check
         return false;
     }
@@ -295,13 +294,13 @@ namespace plan_delegator
         // Update maneuver starting and ending downtrack distances
         double original_start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
         double original_end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
-        RCLCPP_ERROR_STREAM(get_logger(),"Changing maneuver distances for planner: " << GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin));
+        RCLCPP_DEBUG_STREAM(get_logger(),"Changing maneuver distances for planner: " << GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin));
         double adjusted_start_dist = original_start_dist - length_to_front_bumper_;
-        RCLCPP_ERROR_STREAM(get_logger(),"original_start_dist:" << original_start_dist);
-        RCLCPP_ERROR_STREAM(get_logger(),"adjusted_start_dist:" << adjusted_start_dist);
+        RCLCPP_DEBUG_STREAM(get_logger(),"original_start_dist:" << original_start_dist);
+        RCLCPP_DEBUG_STREAM(get_logger(),"adjusted_start_dist:" << adjusted_start_dist);
         double adjusted_end_dist = original_end_dist - length_to_front_bumper_;
-        RCLCPP_ERROR_STREAM(get_logger(),"original_end_dist:" << original_end_dist);
-        RCLCPP_ERROR_STREAM(get_logger(),"adjusted_end_dist:" << adjusted_end_dist);
+        RCLCPP_DEBUG_STREAM(get_logger(),"original_end_dist:" << original_end_dist);
+        RCLCPP_DEBUG_STREAM(get_logger(),"adjusted_end_dist:" << adjusted_end_dist);
         SET_MANEUVER_PROPERTY(maneuver, start_dist, adjusted_start_dist);
         SET_MANEUVER_PROPERTY(maneuver, end_dist, adjusted_end_dist);
 
@@ -398,7 +397,6 @@ namespace plan_delegator
             }
 
         }
-        RCLCPP_ERROR_STREAM(get_logger(),"Ending maneuver dist change here");
     }
 
     carma_planning_msgs::msg::TrajectoryPlan PlanDelegator::planTrajectory()
@@ -415,7 +413,6 @@ namespace plan_delegator
         
         // Track the index of the starting maneuver in the maneuver plan that this trajectory plan service request is for
         uint16_t current_maneuver_index = 0;
-        RCLCPP_ERROR_STREAM(get_logger(),"Guidance is engaged! where size is: " << latest_maneuver_plan_.maneuvers.size());
         
         // Loop through maneuver list to make service call to applicable Tactical Plugin
         while(current_maneuver_index < latest_maneuver_plan_.maneuvers.size())
@@ -426,7 +423,7 @@ namespace plan_delegator
             // ignore expired maneuvers
             if(isManeuverExpired(maneuver, get_clock()->now()))
             {
-                RCLCPP_ERROR_STREAM(get_logger(),"Dropping expired maneuver: " << GET_MANEUVER_PROPERTY(maneuver, parameters.maneuver_id));
+                RCLCPP_INFO_STREAM(get_logger(),"Dropping expired maneuver: " << GET_MANEUVER_PROPERTY(maneuver, parameters.maneuver_id));
                 // Update the maneuver plan index for the next loop
                 ++current_maneuver_index;
                 continue;
@@ -435,13 +432,12 @@ namespace plan_delegator
             double current_downtrack = wm_->routeTrackPos(current_loc).downtrack;
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"current_downtrack" << current_downtrack);
             double maneuver_end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
-            RCLCPP_DEBUG_STREAM(get_logger(),"maneuver_end_dist" << maneuver_end_dist);
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"),"maneuver_end_dist" << maneuver_end_dist);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"maneuver_end_dist" << maneuver_end_dist);
 
             // ignore maneuver that is passed.
             if (current_downtrack > maneuver_end_dist)
             {
-                RCLCPP_ERROR_STREAM(get_logger(),"Dropping passed maneuver: " << GET_MANEUVER_PROPERTY(maneuver, parameters.maneuver_id));
+                RCLCPP_INFO_STREAM(get_logger(),"Dropping passed maneuver: " << GET_MANEUVER_PROPERTY(maneuver, parameters.maneuver_id));
                 // Update the maneuver plan index for the next loop
                 ++current_maneuver_index;
                 continue;
@@ -453,7 +449,7 @@ namespace plan_delegator
             
             auto client = getPlannerClientByName(maneuver_planner);
             
-            RCLCPP_ERROR_STREAM(get_logger(),"Current planner: " << maneuver_planner);
+            RCLCPP_DEBUG_STREAM(get_logger(),"Current planner: " << maneuver_planner);
 
             // compose service request
             auto plan_req = composePlanTrajectoryRequest(latest_trajectory_plan, current_maneuver_index);
@@ -475,16 +471,16 @@ namespace plan_delegator
                 if(latest_trajectory_plan.trajectory_points.size() !=0){
                     
                     if(latest_trajectory_plan.trajectory_points.back().target_time == plan_response.get()->trajectory_plan.trajectory_points.front().target_time){
-                        RCLCPP_ERROR_STREAM(get_logger(),"Removing duplicate point for planner: " << maneuver_planner);
+                        RCLCPP_DEBUG_STREAM(get_logger(),"Removing duplicate point for planner: " << maneuver_planner);
                         plan_response.get()->trajectory_plan.trajectory_points.erase(plan_response.get()->trajectory_plan.trajectory_points.begin());
-                        RCLCPP_ERROR_STREAM(get_logger(),"plan_response.get()->trajectory_plan size: " << plan_response.get()->trajectory_plan.trajectory_points.size());
+                        RCLCPP_DEBUG_STREAM(get_logger(),"plan_response.get()->trajectory_plan size: " << plan_response.get()->trajectory_plan.trajectory_points.size());
 
                     }
                 }
                 latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
                                                                 plan_response.get()->trajectory_plan.trajectory_points.begin(),
                                                                 plan_response.get()->trajectory_plan.trajectory_points.end());
-                RCLCPP_ERROR_STREAM(get_logger(),"new latest_trajectory_plan size: " << latest_trajectory_plan.trajectory_points.size());
+                RCLCPP_DEBUG_STREAM(get_logger(),"new latest_trajectory_plan size: " << latest_trajectory_plan.trajectory_points.size());
                 
                 // Assign the trajectory plan's initial longitudinal velocity based on the first tactical plugin's response
                 if(first_trajectory_plan == true)
@@ -495,7 +491,7 @@ namespace plan_delegator
 
                 if(isTrajectoryLongEnough(latest_trajectory_plan))
                 {
-                    RCLCPP_ERROR_STREAM(get_logger(),"Plan Trajectory completed for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
+                    RCLCPP_INFO_STREAM(get_logger(),"Plan Trajectory completed for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
                     break;
                 }
 
@@ -508,7 +504,7 @@ namespace plan_delegator
             }
             else
             {
-                RCLCPP_ERROR_STREAM(get_logger(),"Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << std::string(latest_maneuver_plan_.maneuver_plan_id));
+                RCLCPP_WARN_STREAM(get_logger(),"Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << std::string(latest_maneuver_plan_.maneuver_plan_id));
                 // if one service call fails, it should end plan immediately because it is there is no point to generate plan with empty space
                 break;
             }
@@ -541,7 +537,7 @@ namespace plan_delegator
         {
             geometry_msgs::msg::TransformStamped tf = tf2_buffer_.lookupTransform("base_link", "vehicle_front", rclcpp::Time(0), rclcpp::Duration(20.0, 0)); //save to local copy of transform 20 sec timeout
             length_to_front_bumper_ = tf.transform.translation.x;
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"),"length_to_front_bumper_: " << length_to_front_bumper_);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"length_to_front_bumper_: " << length_to_front_bumper_);
             
         }
         catch (const tf2::TransformException &ex)

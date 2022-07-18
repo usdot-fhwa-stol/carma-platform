@@ -51,7 +51,7 @@ namespace arbitrator
 
         config_.plugin_priorities = plugin_priorities_map_from_json(json_string);
 
-        RCLCPP_INFO_STREAM(get_logger(), "Arbitrator Loaded Params: " << config_);
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("arbitrator"), "Arbitrator Loaded Params: " << config_);
 
         std::shared_ptr<arbitrator::CostFunction> cf;
         arbitrator::CostSystemCostFunction cscf = arbitrator::CostSystemCostFunction();
@@ -102,7 +102,7 @@ namespace arbitrator
         arbitrator_run_ = create_timer(get_clock(),
                                 std::chrono::duration<double>(1/config_.planning_frequency),
                                 [this]() {this->arbitrator_->run();});
-        RCLCPP_INFO_STREAM(get_logger(), "Arbitrator started, beginning arbitrator state machine.");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("arbitrator"), "Arbitrator started, beginning arbitrator state machine.");
         return CallbackReturn::SUCCESS;
     }
 
@@ -113,11 +113,11 @@ namespace arbitrator
         rapidjson::Document d;
         if(d.Parse(json_string.c_str()).HasParseError())
         {
-            RCLCPP_WARN(get_logger(), "Failed to parse plugin_priorities map. Invalid json structure");
+            RCLCPP_WARN(rclcpp::get_logger("arbitrator"), "Failed to parse plugin_priorities map. Invalid json structure");
             return map;
         }
         if (!d.HasMember("plugin_priorities")) {
-            RCLCPP_WARN(get_logger(), "No plugin_priorities found in arbitrator config");
+            RCLCPP_WARN(rclcpp::get_logger("arbitrator"), "No plugin_priorities found in arbitrator config");
             return map;
         }
         rapidjson::Value& map_value = d["plugin_priorities"];

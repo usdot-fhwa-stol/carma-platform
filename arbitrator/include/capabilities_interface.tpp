@@ -29,11 +29,7 @@ namespace arbitrator
     std::map<std::string, std::shared_ptr<MSrvRes>> 
         CapabilitiesInterface::multiplex_service_call_for_capability(const std::string& query_string, std::shared_ptr<MSrvReq> msg)
     {
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "inside 1 multiplex!");
-        
         std::vector<std::string> topics = get_topics_for_capability(query_string);
-
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "inside 2 multiplex!");
 
         std::map<std::string, std::shared_ptr<MSrvRes>> responses;
 

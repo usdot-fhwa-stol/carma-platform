@@ -24,8 +24,6 @@ namespace arbitrator
 {
     carma_planning_msgs::msg::ManeuverPlan TreePlanner::generate_plan(const VehicleState& start_state) 
     {
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "Inside function!");
-        
         carma_planning_msgs::msg::ManeuverPlan root;
         std::vector<std::pair<carma_planning_msgs::msg::ManeuverPlan, double>> open_list_to_evaluate;
         std::vector<std::pair<carma_planning_msgs::msg::ManeuverPlan, double>> final_open_list;
@@ -36,8 +34,6 @@ namespace arbitrator
         carma_planning_msgs::msg::ManeuverPlan longest_plan = root; // Track longest plan in case target length is never reached
         rclcpp::Duration longest_plan_duration = rclcpp::Duration(0);
         
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "Before while!");
-
 
         while (!open_list_to_evaluate.empty())
         {
@@ -84,11 +80,9 @@ namespace arbitrator
                     }  
                     continue;
                 }
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "Starting neighbor gen");
-                
+
                 // Expand it, and reprioritize
                 std::vector<carma_planning_msgs::msg::ManeuverPlan> children = neighbor_generator_->generate_neighbors(cur_plan, start_state);
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "Ending neighbor gen");
 
                 // Compute cost for each child and store in open list
                 for (auto child = children.begin(); child != children.end(); child++)
