@@ -55,7 +55,11 @@ public:
   /**
    * \brief Constructor
    */
-  StopandWait(carma_wm::WorldModelConstPtr wm, StopandWaitConfig config);
+  StopandWait(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, 
+                                          carma_wm::WorldModelConstPtr wm, 
+                                          const StopandWaitConfig& config, 
+                                          const std::string& plugin_name,
+                                          const std::string& version_id);
 
   /**
    * \brief Service callback for trajectory planning

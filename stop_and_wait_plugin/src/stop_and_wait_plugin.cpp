@@ -373,10 +373,10 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
 
   auto traj = trajectory_from_points_times_orientations(raw_points, times, yaws, start_time);
 
-  while (traj.back().target_time - traj.front().target_time < rclcpp::Duration(config_.minimal_trajectory_duration))
+  while (rclcpp::Time(traj.back().target_time) - rclcpp::Time(traj.front().target_time) < rclcpp::Duration(config_.minimal_trajectory_duration))
   {
     carma_planning_msgs::msg::TrajectoryPlanPoint new_point = traj.back();
-    new_point.target_time = new_point.target_time + rclcpp::Duration(config_.stop_timestep);
+    new_point.target_time = rclcpp::Time(new_point.target_time) + rclcpp::Duration(config_.stop_timestep);
     traj.push_back(new_point);
   }
 

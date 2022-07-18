@@ -66,7 +66,7 @@ target_link_libraries(${node_exec}
 #find_package(ament_lint_auto REQUIRED)
 #ament_lint_auto_find_test_dependencies()
 
-#ament_add_gtest(test_stopandwait_plugin test_stopandwait_plugin.cpp)
+#ament_add_gtest(test_stopandwait_plugin test/test_stopandwait_plugin.cpp)
 #ament_target_dependencies(test_stopandwait_plugin
 #${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 #target_link_libraries(test_stopandwait_plugin ${worker_lib})

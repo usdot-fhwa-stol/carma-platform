@@ -14,13 +14,13 @@
  * the License.
  */
 
-#include "stop_and_wait_plugin.h"
-#include "stop_and_wait_config.h"
-#include <gtest/gtest.h>
-#include <ros/ros.h>
+#include "stop_and_wait_plugin.hpp"
+#include "stop_and_wait_plugin.hpp"
+#include "stop_and_wait_config.hpp"
+#include <rclcpp/rclcpp.hpp>
 #include <thread>
 #include <chrono>
-#include <carma_wm/WMTestLibForGuidance.h>
+#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -32,21 +32,21 @@
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <string>
-#include <cav_msgs/Maneuver.h>
+#include <carma_planning_msgs/msg/Maneuver.hpp>
 #include <carma_utils/containers/containers.h>
-#include <cav_msgs/VehicleState.h>
-#include <cav_msgs/TrajectoryPlanPoint.h>
+#include <carma_planning_msgs/msg/vehicle_state.h>
+#include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
 #include <fstream>
-#include <cav_srvs/PlanTrajectory.h>
+#include <carma_planning_msgs/srv/plan_trajectory.hpp>
 #include <sstream>
-#include <ros/package.h>
+#include <rclcpp/package.hpp>
 #include <unordered_set>
 
 namespace stop_and_wait_plugin
 {
 TEST(StopandWait, TestStopandWaitPlanning)
 {
-  ros::Time::setNow(ros::Time(0.0));
+  rclcpp::Time::setNow(rclcpp::Time(0,0));
   StopandWaitConfig config;
 
   config.minimal_trajectory_duration = 6.0;    // Trajectory length in seconds
@@ -85,16 +85,16 @@ TEST(StopandWait, TestStopandWaitPlanning)
   req.vehicle_state.y_pos_global = 5;
   req.vehicle_state.orientation = 3.14/2;
   req.vehicle_state.longitudinal_vel = 8.9408; // 20 mph
-  req.header.stamp = ros::Time(0.0);
+  req.header.stamp = rclcpp::Time(0,0);
 
   cav_msgs::Maneuver maneuver;
   maneuver.type = cav_msgs::Maneuver::STOP_AND_WAIT;
   maneuver.stop_and_wait_maneuver.start_dist = 5.0;
-  maneuver.stop_and_wait_maneuver.start_time = ros::Time(0.0);
+  maneuver.stop_and_wait_maneuver.start_time = rclcpp::Time(0,0);
   maneuver.stop_and_wait_maneuver.start_speed = 8.9408;
 
   maneuver.stop_and_wait_maneuver.end_dist = 55;
-  maneuver.stop_and_wait_maneuver.end_time = ros::Time(11.175999999999998);
+  maneuver.stop_and_wait_maneuver.end_time = rclcpp::Time(11,175999999999998);
 
   req.maneuver_plan.maneuvers.push_back(maneuver);
   req.maneuver_index_to_plan = 0;
@@ -106,10 +106,10 @@ TEST(StopandWait, TestStopandWaitPlanning)
   double vel = resp.trajectory_plan.initial_longitudinal_velocity;
   bool first= true;
   lanelet::BasicPoint2d prev_point;
-  ros::Time prev_time = ros::Time(0.0);
+  rclcpp::Time prev_time = rclcpp::Time(0,0);
   for (auto point : resp.trajectory_plan.trajectory_points) {
     lanelet::BasicPoint2d p(point.x, point.y);
-    ROS_INFO_STREAM("Y: " << point.y);
+    RCLCPP_INFO_STREAM("Y: " << point.y);
     double delta = 0;
     if (first) {
       first = false;
@@ -119,23 +119,10 @@ TEST(StopandWait, TestStopandWaitPlanning)
       ROS_INFO_STREAM("delta: " << delta << " timediff: " << (point.target_time - prev_time).toSec() << "pre_vel: " << vel);
       vel = (2.0 * delta / (point.target_time - prev_time).toSec()) - vel;
     }
-    ROS_ERROR_STREAM("point time: " << point.target_time.toSec() << " dist: " << dist << " vel: " << vel);
+    RCLCPP_ERROR_STREAM("point time: " << point.target_time.toSec() << " dist: " << dist << " vel: " << vel);
     prev_point = p;
     prev_time = point.target_time;
   }
 }
 }  // namespace stop_and_wait_plugin
 
-// Run all the tests
-int main(int argc, char** argv)
-{
-  testing::InitGoogleTest(&argc, argv);
-  ros::Time::init();
-  ROSCONSOLE_AUTOINIT;
-  if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) { // Change to Debug to enable debug logs
-    ros::console::notifyLoggerLevelsChanged();
-  }
-  auto res = RUN_ALL_TESTS();
-  
-  return res;
-}
