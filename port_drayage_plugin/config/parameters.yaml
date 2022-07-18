@@ -1,0 +1,8 @@
+# String: The ID of the cargo that is being carried at system start-up. Empty if CMV is not carrying cargo.
+cargo_id: "" 
+
+# Bool: Flag to activate/deactivate port drayage operations. If false, the port drayage state machine will remain INACTIVE
+enable_port_drayage: false 
+
+# Bool: Flag to indicate CMV's first destination; 'true' indicates Staging Area Entrance, 'false' indicates Port Entrance
+starting_at_staging_area: true

@@ -72,9 +72,31 @@ namespace platoon_control
 	void PurePursuit::calculateSteer(const cav_msgs::TrajectoryPlanPoint& tp)
 	{
 
-		double kappa = calculateKappa(tp);
-		
-		double steering = atan(config_.wheelBase * kappa);
+		double kappa = calculateKappa(tp);		
+		ROS_DEBUG_STREAM("kappa pp: " << kappa);
+
+		double lookahead = getLookaheadDist(tp);
+		ROS_DEBUG_STREAM("lookahead pp: " << lookahead);
+
+
+		double error=kappa*lookahead*lookahead/2;
+		ROS_DEBUG_STREAM("error term pp: " << error);
+	    
+		// Integral term
+	    _integral += error * config_.dt;
+		ROS_DEBUG_STREAM("Integral term pp: " << _integral);
+
+		if (_integral > config_.integratorMax_pp){
+			 _integral = config_.integratorMax_pp;
+		}
+		else if (_integral < config_.integratorMin_pp){
+			_integral = config_.integratorMin_pp;
+		}
+	    double Iout = config_.Ki_pp * _integral;
+		ROS_DEBUG_STREAM("Iout pp: " << Iout);
+		double steering = atan(config_.wheelBase * kappa)+Iout;
+
+
 		steering += config_.correctionAngle;
 		ROS_DEBUG_STREAM("calculated steering angle: " << steering);
 		double filtered_steering = lowPassfilter(config_.lowpassGain, prev_steering, steering);
