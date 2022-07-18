@@ -57,8 +57,7 @@ namespace trajectory_visualizer {
     {
         if (msg->trajectory_points.size() == 0)
         {
-            //ROS_WARN_STREAM("No trajectory point in plan_trajectory! Returning");
-            RCLCPP_INFO_STREAM(this->get_logger(),"No trajectory point in plan_trajectory! Returning");
+           RCLCPP_WARN_STREAM(this->get_logger(),"No trajectory point in plan_trajectory! Returning");
         }
         visualization_msgs::msg::MarkerArray tmp_marker_array;
         // display by markers the velocity between each trajectory point/target time.
