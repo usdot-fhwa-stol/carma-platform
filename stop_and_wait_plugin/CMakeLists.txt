@@ -35,7 +35,7 @@ include_directories(
 )
 
 # Build
-ament_auto_add_library(${worker_lib}
+ament_auto_add_library(${worker_lib} SHARED
         src/stop_and_wait_plugin.cpp
 )
 
@@ -61,16 +61,16 @@ target_link_libraries(${node_exec}
 )
 
 # Testing
-if(BUILD_TESTING)  
+#if(BUILD_TESTING)  
 
-find_package(ament_lint_auto REQUIRED)
-ament_lint_auto_find_test_dependencies()
+#find_package(ament_lint_auto REQUIRED)
+#ament_lint_auto_find_test_dependencies()
 
-ament_add_gtest(test_stopandwait_plugin test_stopandwait_plugin.cpp)
-ament_target_dependencies(test_stopandwait_plugin
-${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
-target_link_libraries(test_stopandwait_plugin ${worker_lib})
-endif()
+#ament_add_gtest(test_stopandwait_plugin test_stopandwait_plugin.cpp)
+#ament_target_dependencies(test_stopandwait_plugin
+#${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+#target_link_libraries(test_stopandwait_plugin ${worker_lib})
+#endif()
 
   # Install
 ament_auto_package(

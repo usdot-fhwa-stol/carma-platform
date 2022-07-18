@@ -23,8 +23,9 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <lanelet2_core/geometry/Point.h>
-#include <trajectory_utils/trajectory_utils.h>
-#include <trajectory_utils/conversions/conversions.h>
+#include <trajectory_utils/trajectory_utils.hpp>
+#include <trajectory_utils/conversions/conversions.hpp>
+#include <carma_guidance_plugins/tactical_plugin.hpp>
 #include <sstream>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <Eigen/Core>

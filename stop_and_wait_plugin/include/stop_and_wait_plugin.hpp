@@ -21,8 +21,8 @@
 #include <boost/optional.hpp>
 #include "stop_and_wait_config.hpp"
 #include "stop_and_wait_node.hpp"
-#include <basic_autonomy/basic_autonomy.h>
-#include <basic_autonomy/helper_functions.h>
+#include "basic_autonomy_ros2/basic_autonomy.hpp"
+#include "basic_autonomy_ros2/helper_functions.hpp"
 #include <boost/shared_ptr.hpp>
 #include <carma_wm_ros2/CARMAWorldModel.hpp>
 #include <carma_wm_ros2/WMListener.hpp>
@@ -65,7 +65,7 @@ public:
    *
    * \return True if success. False otherwise
    */
-  bool plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::Request::UniquePtr req, carma_planning_msgs::srv::PlanTrajectory::Response::UniquePtr resp);
+  bool plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp);
 
   /**
    * \brief Converts a set of requested STOP_AND_WAIT maneuvers to point speed limit pairs.
@@ -95,7 +95,7 @@ public:
    */
   std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> compose_trajectory_from_centerline(
       const std::vector<PointSpeedPair>& points, double starting_downtrack, double starting_speed, double stop_location,
-      double stop_location_buffer, ros::Time start_time, double stopping_acceleration, double& initial_speed);
+      double stop_location_buffer, rclcpp::Time start_time, double stopping_acceleration, double& initial_speed);
 
   /**
    * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists
@@ -105,7 +105,7 @@ public:
 
   std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
       const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times,
-      const std::vector<double>& yaws, ros::Time startTime);
+      const std::vector<double>& yaws, rclcpp::Time startTime);
 
 private:
 
