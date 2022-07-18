@@ -21,7 +21,7 @@ namespace stop_and_wait_plugin
   namespace std_ph = std::placeholders;
 
   StopandWaitNode::StopandWaitNode(const rclcpp::NodeOptions &options)
-      : carma_guidance_plugins::TacticalPlugin(options), version_id_("v1.0")
+      : carma_guidance_plugins::TacticalPlugin(options),plugin_name_(get_plugin_name_and_ns()),version_id_("v1.0")
   {
     // Create initial config
     config_ = StopandWaitConfig();
@@ -40,7 +40,7 @@ namespace stop_and_wait_plugin
   carma_ros2_utils::CallbackReturn StopandWaitNode::on_configure_plugin()
   {
   
-    StopandWait plugin(wm, config_);
+    plugin_ = std::make_shared<StopandWait>(shared_from_this(), wm_, config_,plugin_name_,version_id_);
                                         
     // Return success if everthing initialized successfully
     return CallbackReturn::SUCCESS;

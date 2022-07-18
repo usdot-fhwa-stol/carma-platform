@@ -57,6 +57,9 @@ private:
     // Worker
     std::shared_ptr<StopandWait> plugin_;
 
+    std::string version_id_;
+    std::string plugin_name_;
+
 public:
   
   /**

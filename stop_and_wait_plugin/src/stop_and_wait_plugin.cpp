@@ -48,17 +48,18 @@ using oss = std::ostringstream;
 namespace stop_and_wait_plugin
 {
 
-StopandWait::StopandWait(carma_wm::WorldModelConstPtr wm, StopandWaitConfig config)
-  : wm_(wm), config_(config)
-{
-
-};
-
+StopandWait::StopandWait(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, 
+                                          carma_wm::WorldModelConstPtr wm, 
+                                          const StopandWaitConfig& config, 
+                                          const std::string& plugin_name,
+                                          const std::string& version_id)
+  : nh_(nh), wm_(wm), config_(config),plugin_name_(plugin_name), version_id_ (version_id)
+{};
 
 bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
 {
 
-  RCLCPP_INFO_STREAM(this->get_logger(),"Starting stop&wait planning");
+  RCLCPP_INFO_STREAM(nh_->get_logger(),"Starting stop&wait planning");
 
   if (req->maneuver_index_to_plan >= req->maneuver_plan.maneuvers.size())
   {
@@ -74,12 +75,12 @@ bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::R
 
   lanelet::BasicPoint2d veh_pos(req->vehicle_state.x_pos_global, req->vehicle_state.y_pos_global);
 
-  RCLCPP_INFO_STREAM(this->get_logger(),"planning state x:" << req->vehicle_state.x_pos_global << ", y: " << req->vehicle_state.y_pos_global << ", speed: " << req->vehicle_state.longitudinal_vel);
+  RCLCPP_INFO_STREAM(nh_->get_logger(),"planning state x:" << req->vehicle_state.x_pos_global << ", y: " << req->vehicle_state.y_pos_global << ", speed: " << req->vehicle_state.longitudinal_vel);
 
   if (req->vehicle_state.longitudinal_vel < epsilon_)
   {
-    RCLCPP_INFO_STREAM(this->get_logger(),"Detected that car is already stopped! Ignoring the request to plan Stop&Wait");
-    RCLCPP_INFO_STREAM(this->get_logger(),"Detected that car is already stopped! Ignoring the request to plan Stop&Wait");
+    RCLCPP_INFO_STREAM(nh_->get_logger(),"Detected that car is already stopped! Ignoring the request to plan Stop&Wait");
+    RCLCPP_INFO_STREAM(nh_->get_logger(),"Detected that car is already stopped! Ignoring the request to plan Stop&Wait");
     
     return true;
   }

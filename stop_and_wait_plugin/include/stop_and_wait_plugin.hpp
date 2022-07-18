@@ -112,8 +112,11 @@ private:
   double epsilon_ = 0.001; //small constant to compare double
 
   // pointer to the actual wm object
+  std::string plugin_name_;
+  std::string version_id_;
   carma_wm::WorldModelConstPtr wm_;
   StopandWaitConfig config_;
+  std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
   
 };
 }  // namespace stop_and_wait_plugin
