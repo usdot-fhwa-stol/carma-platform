@@ -84,11 +84,8 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
 }
 
   RouteFollowingPlugin::RouteFollowingPlugin(const rclcpp::NodeOptions &options)
-      : carma_guidance_plugins::StrategicPlugin(options), tf2_buffer_(get_clock())
+      : carma_guidance_plugins::StrategicPlugin(options), tf2_buffer_(get_clock()), config_(Config())
   {
-    // Create initial config
-    config_ = Config();
-
     // Declare parameters
     config_.min_plan_duration_ = declare_parameter<double>("minimal_plan_duration", config_.min_plan_duration_);
     config_.lane_change_plugin_= declare_parameter<std::string>("lane_change_plugin", config_.lane_change_plugin_);
@@ -153,7 +150,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
     {
         
         
-        for (auto ll:route_shortest_path)
+        for (const auto& ll:route_shortest_path)
         {
             shortest_path_set_.insert(ll.id());
         }
@@ -302,7 +299,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
                     // Identify the lanelets which will be crossed by this lane follow maneuver
                     std::vector<lanelet::ConstLanelet> crossed_lanelets = wm_->getLaneletsBetween(last_maneuver_end_downtrack, required_start_downtrack, true, false); 
 
-                    if (crossed_lanelets.size() == 0) {
+                    if (crossed_lanelets.empty()) {
                         throw std::invalid_argument("The new lane follow maneuver does not cross any lanelets going from: " + std::to_string(last_maneuver_end_downtrack) + " to: " + std::to_string(required_start_downtrack));
                     }
 
@@ -323,7 +320,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
                 // Identify the lanelets which will be crossed by this updated maneuver
                 std::vector<lanelet::ConstLanelet> crossed_lanelets = wm_->getLaneletsBetween(GET_MANEUVER_PROPERTY(maneuvers.back(), start_dist), required_start_downtrack, true, false);
 
-                if (crossed_lanelets.size() == 0) {
+                if (crossed_lanelets.empty()) {
                     throw std::invalid_argument("Updated maneuver does not cross any lanelets going from: " + std::to_string(GET_MANEUVER_PROPERTY(maneuvers.back(), start_dist)) + " to: " + std::to_string(required_start_downtrack));
                 }
 
@@ -346,7 +343,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         // Identify the lanelets which will be crossed by this stop and wait maneuver
         std::vector<lanelet::ConstLanelet> crossed_lanelets = wm_->getLaneletsBetween(last_maneuver_end_downtrack, route_end_downtrack, true, false);
 
-        if (crossed_lanelets.size() == 0) {
+        if (crossed_lanelets.empty()) {
 
             throw std::invalid_argument("Stopping maneuver does not cross any lanelets going from: " + std::to_string(last_maneuver_end_downtrack) + " to: " + std::to_string(route_end_downtrack));
 
@@ -446,7 +443,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
             ++i;
         }
 
-        if (new_maneuvers.size() == 0)
+        if (new_maneuvers.empty())
         {
             RCLCPP_INFO_STREAM(get_logger(),"Cannot plan maneuver because no route is found");
             return;
@@ -501,7 +498,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         //update plan
         resp->new_plan = req->prior_plan;
         RCLCPP_INFO_STREAM(get_logger(),"Updating maneuvers before returning... Prior plan size:" << req->prior_plan.maneuvers.size());
-        for (auto mvr : new_maneuvers)
+        for (const auto& mvr : new_maneuvers)
         {
             resp->new_plan.maneuvers.push_back(mvr);
         }
@@ -518,7 +515,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         // default to right lane change
         upcoming_lanechange_status_msg.lane_change = carma_planning_msgs::msg::UpcomingLaneChangeStatus::RIGHT; 
         // change to left if detected
-        for (auto &relation : wm_->getRoute()->leftRelations(starting_lanelet))
+        for (const auto &relation : wm_->getRoute()->leftRelations(starting_lanelet))
         {
            RCLCPP_INFO_STREAM(get_logger(),"Checking relation.lanelet.id()" <<relation.lanelet.id());
             if (relation.lanelet.id() == ending_lanelet.id())
@@ -602,7 +599,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
                 throw std::domain_error("Vehicle not on route, unable to compute shortest path.");
             }
 
-            auto current_lanelet = llts[0];
+            const auto& current_lanelet = llts[0];
 
             // if the current lanelet is not on the shortest path
             if (shortest_path_set_.find(current_lanelet.id()) == shortest_path_set_.end())
@@ -860,12 +857,12 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         auto adjacent_lanelets = routing_graph->besides(current_lanelet);
         if (!adjacent_lanelets.empty())
         {
-            for (auto adjacent:adjacent_lanelets)
+            for (const auto& adjacent:adjacent_lanelets)
             {
                 if (shortest_path_set_.find(adjacent.id())!=shortest_path_set_.end())
                 {
                     auto following_lanelets = routing_graph->following(adjacent);
-                    auto target_following_lanelet = following_lanelets[0];
+                    const auto& target_following_lanelet = following_lanelets[0];
                     RCLCPP_INFO_STREAM(get_logger(),"The target_following_lanelet id is: " << target_following_lanelet.id());
                     lanelet::ConstLanelets interm;
                     interm.push_back(static_cast<lanelet::ConstLanelet>(target_following_lanelet));
