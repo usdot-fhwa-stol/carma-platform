@@ -50,6 +50,8 @@ jobs:
       # Checkout PR branch
       - checkout:
           path: src/CARMAPlatform
+      - setup_remote_docker:
+          docker_layer_caching: true # DLC will explicitly cache layers here and try to avoid rebuilding.
       - run: 
           name: Pull Deps
           command: |
@@ -62,7 +64,7 @@ jobs:
           command: |
             source ${INIT_ENV}
             export ROS_PARALLEL_JOBS='-j4 -l4' # Try to reduce memory consumption on build
-            build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output bash make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
+            build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output bash make_with_coverage.bash -m -e /opt/carma/build -o ./coverage_reports/gcov
       - run:
           name: Run C++ Tests ROS 1
           command: |
