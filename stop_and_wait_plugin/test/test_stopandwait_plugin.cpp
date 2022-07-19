@@ -39,6 +39,7 @@
 #include <carma_planning_msgs/srv/plan_trajectory.hpp>
 #include <sstream>
 #include <unordered_set>
+#include <gtest/gtest.h>
 
 namespace stop_and_wait_plugin
 {
@@ -128,3 +129,17 @@ TEST(StopandWait, TestStopandWaitPlanning)
 }
 }  // namespace stop_and_wait_plugin
 
+int main(int argc, char ** argv)
+{
+    ::testing::InitGoogleTest(&argc, argv);
+
+    //Initialize ROS
+    rclcpp::init(argc, argv);
+
+    bool success = RUN_ALL_TESTS();
+
+    //shutdown ROS
+    rclcpp::shutdown();
+
+    return success;
+} 
