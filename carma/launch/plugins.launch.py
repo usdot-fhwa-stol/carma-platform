@@ -79,7 +79,7 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-                        ComposableNode(
+            ComposableNode(
                     package='route_following_plugin',
                     plugin='route_following_plugin::RouteFollowingPlugin',
                     name='route_following_plugin',

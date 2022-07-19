@@ -240,9 +240,6 @@ namespace route_following_plugin
         // Publishers
         carma_ros2_utils::PubPtr<carma_planning_msgs::msg::UpcomingLaneChangeStatus> upcoming_lane_change_status_pub_;
 
-        // Timer for publishing MobilityPath message
-        rclcpp::TimerBase::SharedPtr discovery_pub_timer_;
-
         // Service Servers
         carma_ros2_utils::ServicePtr<carma_planning_msgs::srv::PlanManeuvers> plan_maneuver_srv_;
 
