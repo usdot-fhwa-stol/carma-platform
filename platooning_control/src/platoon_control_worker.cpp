@@ -133,7 +133,7 @@ namespace platoon_control
                     speed_cmd = min;
                 }
                 lastCmdSpeed = speed_cmd;
-                ROS_WARN_STREAM("The speed command after max accel cap is: " << speed_cmd << " m/s");
+                ROS_DEBUG_STREAM("The speed command after max accel cap is: " << speed_cmd << " m/s");
         }
 
         speedCmd_ = speed_cmd;
