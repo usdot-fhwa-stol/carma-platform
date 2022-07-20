@@ -130,3 +130,17 @@ TEST(PlatoonControlWorkerTest, test_steer)
     pcw.generateSteer(point);
     EXPECT_NEAR(0, pcw.steerCmd_, 0.1);
 }
+
+TEST(PlatoonControlWorkerTest, test_accel)
+{
+
+    platoon_control::PlatoonControlWorker pcw;
+    double current_speed = 5.0;
+    pcw.speedCmd_ = 6.0;
+
+    ros::Time current_speed_timestamp = ros::Time(1,0);
+    ros::Time current_time = ros::Time(3,0);
+
+    pcw.generateAccel(current_speed, current_speed_timestamp, current_time);
+    EXPECT_NEAR(0.5, pcw.accelCmd_, 0.1);
+}

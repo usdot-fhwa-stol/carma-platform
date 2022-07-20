@@ -110,6 +110,7 @@ namespace platoon_strategic
             lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
             carma_wm::TrackPos tc = wm_->routeTrackPos(current_loc);
             current_downtrack_ = tc.downtrack;
+            pm_.current_downtrack_distance_ = current_downtrack_;
             ROS_DEBUG_STREAM("current_downtrack_ = " << current_downtrack_);
             current_crosstrack_ = tc.crosstrack;
             ROS_DEBUG_STREAM("current_crosstrack_ = " << current_crosstrack_);
@@ -263,11 +264,7 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("change the state from standby to leader at start-up");
         }
 
-        
-        pm_.current_downtrack_distance_ = current_downtrack_;
-        pm_.HostMobilityId = config_.vehicleID;
-        ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
-        
+        pm_.HostMobilityId = config_.vehicleID;        
         return true;
     }
 

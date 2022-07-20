@@ -152,6 +152,39 @@ namespace platoon_control
         angVelCmd_ = pp_.getAngularVelocity();
     }
 
+    void PlatoonControlWorker::generateAccel(const double& current_speed, const ros::Time& current_speed_timestamp, const ros::Time& current_time)
+    {   
+        // NOTE: This approach for calculating commanded acceleration assumes that the current_speed and current_speed_timestamp values are from recent data
+        //       readings, and can be used to calculate a valid acceleration.
+
+        const double v_i = current_speed; 
+        const double v_f = speedCmd_; 
+        const double delta_time = (current_time - current_speed_timestamp).toSec();
+        ROS_DEBUG_STREAM("V_i: " << v_i << ", V_f: " << v_f << ", delta_time: " << delta_time << "sec"); 
+
+        if (delta_time == 0.0) {
+            ROS_WARN_STREAM("delta_time is 0, commanded accel will be set to 0 m/s^2");
+            accelCmd_ = 0.0;
+            return;
+        }
+        else {
+            accelCmd_ = (v_f - v_i) / delta_time;
+        }
+
+        ROS_DEBUG_STREAM("Commanded accel before applying limits: " << accelCmd_ << " m/s^2");
+
+        if(enableMaxAccelFilter) {
+            if (accelCmd_ > ctrl_config_.maxAccel) {
+                accelCmd_ = ctrl_config_.maxAccel;
+            }
+            else if (accelCmd_ < (-1.0 * ctrl_config_.maxAccel)){
+                accelCmd_ = -1.0 * ctrl_config_.maxAccel;
+            }
+        }
+
+        ROS_DEBUG_STREAM("Commanded accel after applying limits: " << accelCmd_ << " m/s^2");
+    }
+
     // TODO get the actual leader from strategic plugin
     void PlatoonControlWorker::setLeader(const PlatoonLeaderInfo& leader){
     	platoon_leader = leader;

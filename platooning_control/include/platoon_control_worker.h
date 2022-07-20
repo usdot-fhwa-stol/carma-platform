@@ -90,6 +90,12 @@ namespace platoon_control
         void generateSteer(const cav_msgs::TrajectoryPlanPoint& point);
 
         /**
+        * \brief Generates acceleration command based on the second trajectory point. Should be
+        *        called after generateSpeed() so that the latest commanded speed can be used.
+        */
+        void generateAccel(const double& current_speed, const ros::Time& current_speed_timestamp, const ros::Time& current_time);
+
+        /**
         * \brief set platoon leader
         */
         void setLeader(const PlatoonLeaderInfo& leader);
@@ -106,6 +112,7 @@ namespace platoon_control
         double speedCmd_ = 0;
         double steerCmd_ = 0;
         double angVelCmd_ = 0;
+        double accelCmd_ = 0;
         double desired_gap_ = ctrl_config_.standStillHeadway;
         double actual_gap_ = 0.0;
         bool last_cmd_set_ = false;

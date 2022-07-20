@@ -53,7 +53,7 @@ namespace platoon_control
 			geometry_msgs::TwistStamped composeTwistCmd(double linear_vel, double angular_vel);
 
 			// Compose control message by calculating speed and steering commands.
-			autoware_msgs::ControlCommandStamped composeCtrlCmd(double linear_vel, double steering_angle);
+			autoware_msgs::ControlCommandStamped composeCtrlCmd(double linear_vel, double steering_angle, double linear_accel);
 
 			// find the point correspoding to the lookahead distance
 			cav_msgs::TrajectoryPlanPoint getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan);
@@ -63,6 +63,10 @@ namespace platoon_control
 
 			// current speed (in m/s)
 			double current_speed_ = 0.0;
+
+			// Timestamp associated with the latest speed received and stored in current_speed_
+			ros::Time current_speed_timestamp_;
+
 			double trajectory_speed_ = 0.0;
 
         
