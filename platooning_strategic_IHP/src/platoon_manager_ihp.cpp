@@ -181,7 +181,7 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("The first vehicle in that platoon is now " << neighbor_platoon_[0].staticId);
 
             // If we have data on all members of a neighboring platoon, set a complete record flag
-            if (neighbor_platoon_info_size_ > 1  &&
+            if ( //TODO JAS TESTING ONLY:  neighbor_platoon_info_size_ > 1  &&
                 neighbor_platoon_.size() == neighbor_platoon_info_size_)
             {
                 is_neighbor_record_complete_ = true;
