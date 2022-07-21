@@ -54,6 +54,17 @@ namespace platoon_strategic_ihp
         PlatoonMember hostVehicleMember = PlatoonMember(hostStaticId, 0.0, 0.0, 0.0, 0.0, cur_t); 
         pm_.host_platoon_.push_back(hostVehicleMember);
 
+        //TODO JAS - TESTING ONLY!  This is for the mainline vehicle when testing 2-car cutin join
+        // needs to publish a non-zero ID so joiner will think it's a legit platoon.
+        pm_.currentPlatoonID = boost::uuids::to_string(boost::uuids::random_generator()());
+
+
+
+
+
+
+
+
         plugin_discovery_msg_.name = "PlatooningStrategicIHPPlugin";
         plugin_discovery_msg_.version_id = "v1.0";
         plugin_discovery_msg_.available = true;
@@ -1145,6 +1156,19 @@ namespace platoon_strategic_ihp
             else if ((targetPlatoonSize > 1  ||  config_.test_cutin_join)  &&  !config_.test_front_join  
                         &&  isVehicleNearTargetPlatoon(rearVehicleDtd, frontVehicleDtd, frontVehicleCtd))
             {
+                //TODO JAS
+                // This is for mainline vehicle only (the simulated target platoon that only has 1 vehicle due to test limitations)
+                if (config_.test_cutin_join) {
+                    ROS_DEBUG_STREAM("///// TEST ONLY - refusing to request cut-in join from target platoon.");
+                    return;
+                }
+
+
+
+
+
+
+
 
                 ROS_DEBUG_STREAM("starting cut-in join process");
                 ROS_DEBUG_STREAM("rearVehicleDtd " << rearVehicleDtd);
@@ -2678,13 +2702,7 @@ namespace platoon_strategic_ihp
         }
 
         // Task 4: STATUS msgs
-        //TODO JAS: bool hasFollower = pm_.getHostPlatoonSize() > 1  ||  config_.test_cutin_join;
-        bool hasFollower = false;
-
-
-
-
-
+        bool hasFollower = pm_.getHostPlatoonSize() > 1  ||  config_.test_cutin_join;
         ROS_DEBUG_STREAM("hasFollower" << hasFollower);
         // if has follower, publish platoon message as STATUS mob_op
         if (hasFollower)
@@ -2989,13 +3007,7 @@ namespace platoon_strategic_ihp
         // }
 
         // Task 4: STATUS msgs
-        //TODO JAS: bool hasFollower = pm_.getHostPlatoonSize() > 1  ||  config_.test_cutin_join;
-        bool hasFollower = false;
-
-
-
-
-
+        bool hasFollower = pm_.getHostPlatoonSize() > 1  ||  config_.test_cutin_join;
         // if has follower, publish platoon message as STATUS mob_op
         if (hasFollower) 
         {
