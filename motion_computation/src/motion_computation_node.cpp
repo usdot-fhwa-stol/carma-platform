@@ -64,6 +64,22 @@ namespace motion_computation
 
     result.successful = !error && !error_2;
 
+    if (result.successful){
+      // Set motion_worker_'s prediction parameters
+      motion_worker_.setPredictionTimeStep(config_.prediction_time_step);
+      motion_worker_.setPredictionPeriod(config_.prediction_period);
+      motion_worker_.setXAccelerationNoise(config_.cv_x_accel_noise);
+      motion_worker_.setYAccelerationNoise(config_.cv_y_accel_noise);
+      motion_worker_.setProcessNoiseMax(config_.prediction_process_noise_max);
+      motion_worker_.setConfidenceDropRate(config_.prediction_confidence_drop_rate);
+      motion_worker_.setDetectionInputFlags( 
+          config_.enable_sensor_processing,
+          config_.enable_bsm_processing,
+          config_.enable_psm_processing,
+          config_.enable_mobility_path_processing
+      );
+    }
+
     return result;
   }
 

@@ -469,8 +469,8 @@ namespace carma_wm
       double sigma = geometry::point_to_point_yaw(prior_point, next_point); // Angle between route segment and x-axis
       double theta = sigma + M_PI_2;                                        // M_PI_2 is 90 deg. Theta is the angle to the vector from the route projected point
                                                                             // to the target point
-      double delta_x = cos(theta) * crosstrack;
-      double delta_y = sin(theta) * crosstrack;
+      double delta_x = cos(theta) * -crosstrack;
+      double delta_y = sin(theta) * -crosstrack;
 
       return lanelet::BasicPoint2d(x + delta_x, y + delta_y);
     }
@@ -503,8 +503,8 @@ namespace carma_wm
       double sigma = geometry::point_to_point_yaw(prior_point, next_point); // Angle between route segment and x-axis
       double theta = sigma + M_PI_2;                                        // M_PI_2 is 90 deg. Theta is the angle to the vector from the route projected point
                                                                             // to the target point
-      double delta_x = cos(theta) * crosstrack;
-      double delta_y = sin(theta) * crosstrack;
+      double delta_x = cos(theta) * -crosstrack;
+      double delta_y = sin(theta) * -crosstrack;
 
       x += delta_x; // Adjust x and y of target point to account for crosstrack
       y += delta_y;
@@ -549,7 +549,14 @@ namespace carma_wm
 
       RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::CARMAWorldModel"), "Building routing graph");
 
-      TrafficRulesConstPtr traffic_rules = *(getTrafficRules(participant_type_));
+      auto tr = getTrafficRules(participant_type_);
+
+      if (!tr)
+      {
+        throw std::invalid_argument("Could not construct traffic rules for participant");
+      }
+
+      TrafficRulesConstPtr traffic_rules = *tr;
 
       lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
       map_routing_graph_ = std::move(map_graph);
