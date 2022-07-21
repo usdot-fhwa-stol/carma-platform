@@ -738,7 +738,7 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("CTD calculated from ecef is: " << ctd);
 
         // If it comes from a member of an identified neighbor platoon, then
-        if (platoonId.compare(pm_.neighborPlatoonID) == 0 && platoonId.compare(pm_.dummyID) != 0)
+        if (platoonId.compare(pm_.targetPlatoonID) == 0 && platoonId.compare(pm_.dummyID) != 0)
         {
             ROS_DEBUG_STREAM("Incoming platoonID matches target platoon id");
             // // Update this member's status (or add if it's unknown to us)
@@ -863,10 +863,10 @@ namespace platoon_strategic_ihp
             {
                 // If platoon ID doesn't match our known target platoon then clear any old neighbor platoon info and record
                 // the platoon ID and the sender as the leader (only leaders send INFO)
-                if (msg.m_header.plan_id.compare(pm_.neighborPlatoonID) != 0)
+                if (msg.m_header.plan_id.compare(pm_.targetPlatoonID) != 0)
                 {
                     pm_.resetNeighborPlatoon();
-                    pm_.neighborPlatoonID = msg.m_header.plan_id;
+                    pm_.targetPlatoonID = msg.m_header.plan_id;
                 }
                 pm_.neighbor_platoon_leader_id_ = msg.m_header.sender_id;
                 ROS_DEBUG_STREAM("pm_.neighbor_platoon_leader_id_: " << pm_.neighbor_platoon_leader_id_);
