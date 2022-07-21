@@ -2678,7 +2678,13 @@ namespace platoon_strategic_ihp
         }
 
         // Task 4: STATUS msgs
-        bool hasFollower = pm_.getHostPlatoonSize() > 1  ||  config_.test_cutin_join;
+        //TODO JAS: bool hasFollower = pm_.getHostPlatoonSize() > 1  ||  config_.test_cutin_join;
+        bool hasFollower = false;
+
+
+
+
+
         ROS_DEBUG_STREAM("hasFollower" << hasFollower);
         // if has follower, publish platoon message as STATUS mob_op
         if (hasFollower)
@@ -2983,7 +2989,13 @@ namespace platoon_strategic_ihp
         // }
 
         // Task 4: STATUS msgs
-        bool hasFollower = pm_.getHostPlatoonSize() > 1  ||  config_.test_cutin_join;
+        //TODO JAS: bool hasFollower = pm_.getHostPlatoonSize() > 1  ||  config_.test_cutin_join;
+        bool hasFollower = false;
+
+
+
+
+
         // if has follower, publish platoon message as STATUS mob_op
         if (hasFollower) 
         {
