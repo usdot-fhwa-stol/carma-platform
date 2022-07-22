@@ -6,7 +6,7 @@ standStillHeadway: 12.0
 maxAllowedJoinTimeGap: 15.0
 maxAllowedJoinGap: 90.0
 desiredJoinTimeGap: 4.0
-desiredJoinGap: 190.0
+desiredJoinGap: 90.0
 maxLeaderAbortingCalls: 2
 waitingStateTimeout: 25.0
 cmdSpeedMaxAdjustment: 10.0
@@ -14,7 +14,7 @@ minAllowableHeadaway: 1.6
 headawayStableLowerBond: 1.7
 maxAllowableHeadaway: 4.0
 headawayStableUpperBond: 3.9
-minCutinGap: 22.0
+minCutinGap: 18.0
 maxCutinGap: 150.0
 longitudinalCheckThresold: 100.0
 maxCrosstrackError: 1.5
