@@ -3467,7 +3467,7 @@ namespace platoon_strategic_ihp
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
         }  
 
-        if (pm_.getHostPlatoonSize() < 2)
+        if (pm_.getHostPlatoonSize() < 2 || !safeToLaneChange_)
         {
             resp.new_plan.maneuvers = {};
             ROS_WARN_STREAM("Platoon size 1 so Empty maneuver sent");
