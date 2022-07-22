@@ -14,7 +14,7 @@ minAllowableHeadaway: 1.6
 headawayStableLowerBond: 1.7
 maxAllowableHeadaway: 4.0
 headawayStableUpperBond: 3.9
-minCutinGap: 22.0
+minCutinGap: 18.0
 maxCutinGap: 150.0
 longitudinalCheckThresold: 100.0
 maxCrosstrackError: 1.5
@@ -25,9 +25,9 @@ inter_tau: 1.5
 intra_tau: 0.6
 gap_weight: 0.9
 test_front_join: false
-test_cutin_join: false
+test_cutin_join: true
 slowDownAdjuster: 0.75
 createGapAdjuster: 0.3
-minPlatooningSpeed: 11.0
+minPlatooningSpeed: 8.0
 allowCutinJoin: true
 significantDTDchange: 0.2
