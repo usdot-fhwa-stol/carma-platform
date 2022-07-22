@@ -859,7 +859,7 @@ namespace platoon_strategic_ihp
             boost::algorithm::split(p_size, inputsParams[2], boost::is_any_of(":"));
             int platoon_size = std::stoi(p_size[1]);
             ROS_DEBUG_STREAM("neighbor platoon_size from INFO: " << platoon_size);
-            if (platoon_size > 1  &&  msg.m_header.plan_id.compare(pm_.currentPlatoonID) != 0)
+            if ((platoon_size > 1  ||  config_.test_cutin_join)  &&  msg.m_header.plan_id.compare(pm_.currentPlatoonID) != 0)
             {
                 // If platoon ID doesn't match our known target platoon then clear any old neighbor platoon info and record
                 // the platoon ID and the sender as the leader (only leaders send INFO)
