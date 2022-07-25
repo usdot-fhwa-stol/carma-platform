@@ -25,9 +25,9 @@ inter_tau: 1.5
 intra_tau: 0.6
 gap_weight: 0.9
 test_front_join: false
-test_cutin_join: false
+test_cutin_join: true
 slowDownAdjuster: 0.75
 createGapAdjuster: 0.3
-minPlatooningSpeed: 11.0
+minPlatooningSpeed: 5.0
 allowCutinJoin: true
 significantDTDchange: 0.2

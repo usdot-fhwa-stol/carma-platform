@@ -3264,8 +3264,9 @@ namespace platoon_strategic_ihp
         
         if(last_lanelet_index == -1 && !safeToLaneChange_)
         {
-            ROS_ERROR_STREAM("Current position is not on the shortest path! Returning an empty maneuver");
-            return true;
+            ROS_DEBUG_STREAM("Current position is not on the shortest path! Returning an empty maneuver");
+            ROS_DEBUG_STREAM("last_lanelet_index" << last_lanelet_index);
+            // return true;
         }
 
         // read status data
@@ -3323,7 +3324,6 @@ namespace platoon_strategic_ihp
                 while (current_progress < total_maneuver_length)
                 {   
                     ROS_DEBUG_STREAM("Lane Change Maneuver for Cut-in join ! ");
-                    ROS_DEBUG_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
                     ROS_DEBUG_STREAM("current_progress: "<< current_progress);
                     ROS_DEBUG_STREAM("speed_progress: " << speed_progress);
                     ROS_DEBUG_STREAM("target_speed: " << target_speed);
@@ -3345,6 +3345,7 @@ namespace platoon_strategic_ihp
                     // ----------------------------------------------------------------------------------------------------------
                     if (end_dist < current_progress)
                     {
+                        ROS_DEBUG_STREAM("lc_end_dist befor");
                         break;
                     }
                     
@@ -3367,8 +3368,16 @@ namespace platoon_strategic_ihp
                     ROS_DEBUG_STREAM("target_lanelet_id: " << target_lanelet_id);
 
                     // note: Since lanelet ID is not important for arbitrary lanechange, just use first lanelet's Id to create a maneuver msg.
-                    resp.new_plan.maneuvers.push_back(composeLaneChangeManeuverMessage(current_downtrack_, lc_end_dist,  
+                    resp.new_plan.maneuvers.push_back(composeLaneChangeManeuverMessage(current_progress, lc_end_dist,  
                                             speed_progress, target_speed, current_lanelet_id, target_lanelet_id , time_progress));
+                    
+                    if (current_lanelet_id == target_lanelet_id)
+                    {
+                        ROS_DEBUG_STREAM("In target lane");
+                        resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, current_progress + 100,  
+                                            speed_progress, target_speed, current_lanelet_id, time_progress));
+                    }
+                    
 
                     current_progress += dist_diff;
                     // read lane change maneuver end time as time progress
@@ -3408,7 +3417,7 @@ namespace platoon_strategic_ihp
                     }
                     // Note: The previous plan was generated at the beginning of the trip. It is necessary to update 
                     //       it as the lane ID and lanelet Index are different.
-                    resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_downtrack_, end_dist,  
+                    resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, current_progress + 100,  
                                             speed_progress, target_speed, current_lanelet_id, time_progress));
                     
                     current_progress += dist_diff;
@@ -3446,8 +3455,11 @@ namespace platoon_strategic_ihp
                     break;
                 }
 
-                resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist,  
-                                        speed_progress, target_speed,shortest_path[last_lanelet_index].id(), time_progress));
+                // resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist,  
+                //                         speed_progress, target_speed,shortest_path[last_lanelet_index].id(), time_progress));
+                
+                resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, current_progress + 100,  
+                                            speed_progress, target_speed, current_lanelet_id, time_progress));
                                     
 
                 current_progress += dist_diff;
@@ -3465,12 +3477,19 @@ namespace platoon_strategic_ihp
         if(resp.new_plan.maneuvers.size() == 0)
         {
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
+            ROS_DEBUG_STREAM("Cannot plan maneuver because no route is found");
         }  
 
-        if (pm_.getHostPlatoonSize() < 2 || !safeToLaneChange_)
+        if (pm_.getHostPlatoonSize() < 2 && !safeToLaneChange_)
         {
             resp.new_plan.maneuvers = {};
             ROS_WARN_STREAM("Platoon size 1 so Empty maneuver sent");
+        }
+        else
+        {
+            ROS_DEBUG_STREAM("Planning maneuvers: ");
+            ROS_DEBUG_STREAM("safeToLaneChange_: " << safeToLaneChange_);
+            ROS_DEBUG_STREAM("pm_.getHostPlatoonSize(): " << pm_.getHostPlatoonSize());
         }
 
         if (pm_.current_platoon_state == PlatoonState::STANDBY)
