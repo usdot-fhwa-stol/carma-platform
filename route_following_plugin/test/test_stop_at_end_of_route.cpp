@@ -14,11 +14,12 @@
  * the License.
  */
 
-#include "route_following_plugin.h"
+#include "route_following_plugin.hpp"
 #include <gtest/gtest.h>
-#include <ros/ros.h>
-#include <carma_wm/WMTestLibForGuidance.h>
-#include <carma_wm/CARMAWorldModel.h>
+#include <rclcpp/rclcpp.hpp>
+#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <carma_wm_ros2/CARMAWorldModel.hpp>
 #include <lanelet2_core/LaneletMap.h>
 #include <string>
 
@@ -67,8 +68,8 @@ protected:
 
 TEST_F(StopAndWaitTestFixture, CaseOne)
 {
-  RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -76,21 +77,21 @@ TEST_F(StopAndWaitTestFixture, CaseOne)
   double min_maneuver_length = 10.0;
   double route_end_downtrack = 100.0;
 
-  cav_msgs::Maneuver m1;
-  m1.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+  carma_planning_msgs::msg::Maneuver m1;
+  m1.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   m1.lane_following_maneuver.start_dist = 0;
   m1.lane_following_maneuver.end_dist = 40;
   m1.lane_following_maneuver.start_speed = entry_speed;
   m1.lane_following_maneuver.end_speed = entry_speed;
   m1.lane_following_maneuver.lane_ids = { "1200", "1201" };
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(3, result.size());
 
   // m1
-  ASSERT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, result[0].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, result[0].type);
   ASSERT_NEAR(0.0, result[0].lane_following_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(40.0, result[0].lane_following_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[0].lane_following_maneuver.start_speed, 0.00001);
@@ -100,7 +101,7 @@ TEST_F(StopAndWaitTestFixture, CaseOne)
   ASSERT_TRUE(result[0].lane_following_maneuver.lane_ids[1].compare("1201") == 0);
 
   // Extra lane follow
-  ASSERT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, result[1].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, result[1].type);
   ASSERT_NEAR(40.0, result[1].lane_following_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(75.0, result[1].lane_following_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[1].lane_following_maneuver.start_speed, 0.00001);
@@ -110,7 +111,7 @@ TEST_F(StopAndWaitTestFixture, CaseOne)
   ASSERT_TRUE(result[1].lane_following_maneuver.lane_ids[1].compare("1202") == 0);
 
   // Stop And Wait
-  ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result[2].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, result[2].type);
   ASSERT_NEAR(75.0, result[2].stop_and_wait_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(100.0, result[2].stop_and_wait_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[2].stop_and_wait_maneuver.start_speed, 0.00001);
@@ -120,8 +121,8 @@ TEST_F(StopAndWaitTestFixture, CaseOne)
 
 TEST_F(StopAndWaitTestFixture, CaseTwo)
 {
-  RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -129,21 +130,21 @@ TEST_F(StopAndWaitTestFixture, CaseTwo)
   double min_maneuver_length = 10.0;
   double route_end_downtrack = 100.0;
 
-  cav_msgs::Maneuver m1;
-  m1.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+  carma_planning_msgs::msg::Maneuver m1;
+  m1.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   m1.lane_following_maneuver.start_dist = 0;
   m1.lane_following_maneuver.end_dist = 70;
   m1.lane_following_maneuver.start_speed = entry_speed;
   m1.lane_following_maneuver.end_speed = entry_speed;
   m1.lane_following_maneuver.lane_ids = { "1200", "1201", "1202" };
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(2, result.size());
 
   // m1
-  ASSERT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, result[0].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, result[0].type);
   ASSERT_NEAR(0.0, result[0].lane_following_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(70.0, result[0].lane_following_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[0].lane_following_maneuver.start_speed, 0.00001);
@@ -154,7 +155,7 @@ TEST_F(StopAndWaitTestFixture, CaseTwo)
   ASSERT_TRUE(result[0].lane_following_maneuver.lane_ids[2].compare("1202") == 0);
 
   // Stop And Wait
-  ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result[1].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, result[1].type);
   ASSERT_NEAR(70.0, result[1].stop_and_wait_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(100.0, result[1].stop_and_wait_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[1].stop_and_wait_maneuver.start_speed, 0.00001);
@@ -164,8 +165,8 @@ TEST_F(StopAndWaitTestFixture, CaseTwo)
 
 TEST_F(StopAndWaitTestFixture, CaseThree)
 {
-  RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -173,21 +174,21 @@ TEST_F(StopAndWaitTestFixture, CaseThree)
   double min_maneuver_length = 10.0;
   double route_end_downtrack = 100.0;
 
-  cav_msgs::Maneuver m1;
-  m1.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+  carma_planning_msgs::msg::Maneuver m1;
+  m1.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   m1.lane_following_maneuver.start_dist = 0;
   m1.lane_following_maneuver.end_dist = 78;
   m1.lane_following_maneuver.start_speed = entry_speed;
   m1.lane_following_maneuver.end_speed = entry_speed;
   m1.lane_following_maneuver.lane_ids = { "1200", "1201", "1202", "1203" };
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(2, result.size());
 
   // m1
-  ASSERT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, result[0].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, result[0].type);
   ASSERT_NEAR(0.0, result[0].lane_following_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(75.0, result[0].lane_following_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[0].lane_following_maneuver.start_speed, 0.00001);
@@ -198,7 +199,7 @@ TEST_F(StopAndWaitTestFixture, CaseThree)
   ASSERT_TRUE(result[0].lane_following_maneuver.lane_ids[2].compare("1202") == 0);
 
   // Stop And Wait
-  ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result[1].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, result[1].type);
   ASSERT_NEAR(75.0, result[1].stop_and_wait_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(100.0, result[1].stop_and_wait_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[1].stop_and_wait_maneuver.start_speed, 0.00001);
@@ -208,8 +209,8 @@ TEST_F(StopAndWaitTestFixture, CaseThree)
 
 TEST_F(StopAndWaitTestFixture, CaseFour)
 {
-  RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -217,29 +218,29 @@ TEST_F(StopAndWaitTestFixture, CaseFour)
   double min_maneuver_length = 10.0;
   double route_end_downtrack = 100.0;
 
-  cav_msgs::Maneuver m1;
-  m1.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+  carma_planning_msgs::msg::Maneuver m1;
+  m1.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   m1.lane_following_maneuver.start_dist = 0;
   m1.lane_following_maneuver.end_dist = 78;
   m1.lane_following_maneuver.start_speed = entry_speed;
   m1.lane_following_maneuver.end_speed = entry_speed;
   m1.lane_following_maneuver.lane_ids = { "1200", "1201", "1202", "1203" };
 
-cav_msgs::Maneuver m2;
-  m2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+  carma_planning_msgs::msg::Maneuver m2;
+  m2.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   m2.lane_following_maneuver.start_dist = 78;
   m2.lane_following_maneuver.end_dist = 90;
   m2.lane_following_maneuver.start_speed = entry_speed;
   m2.lane_following_maneuver.end_speed = entry_speed;
   m2.lane_following_maneuver.lane_ids = { "1203" };
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ m1, m2 }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ m1, m2 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(2, result.size()); // M2 should have been dropped
 
   // m1
-  ASSERT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, result[0].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, result[0].type);
   ASSERT_NEAR(0.0, result[0].lane_following_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(75.0, result[0].lane_following_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[0].lane_following_maneuver.start_speed, 0.00001);
@@ -250,7 +251,7 @@ cav_msgs::Maneuver m2;
   ASSERT_TRUE(result[0].lane_following_maneuver.lane_ids[2].compare("1202") == 0);
 
   // Stop And Wait
-  ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result[1].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, result[1].type);
   ASSERT_NEAR(75.0, result[1].stop_and_wait_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(100.0, result[1].stop_and_wait_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[1].stop_and_wait_maneuver.start_speed, 0.00001);
@@ -260,8 +261,8 @@ cav_msgs::Maneuver m2;
 
 TEST_F(StopAndWaitTestFixture, CaseFive)
 {
-      RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -269,29 +270,29 @@ TEST_F(StopAndWaitTestFixture, CaseFive)
   double min_maneuver_length = 10.0;
   double route_end_downtrack = 100.0;
 
-  cav_msgs::Maneuver m1;
-  m1.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+  carma_planning_msgs::msg::Maneuver m1;
+  m1.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   m1.lane_following_maneuver.start_dist = 0;
   m1.lane_following_maneuver.end_dist = 70;
   m1.lane_following_maneuver.start_speed = entry_speed;
   m1.lane_following_maneuver.end_speed = entry_speed;
   m1.lane_following_maneuver.lane_ids = { "1200", "1201", "1202" };
 
-cav_msgs::Maneuver m2;
-  m2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+  carma_planning_msgs::msg::Maneuver m2;
+  m2.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   m2.lane_following_maneuver.start_dist = 70;
   m2.lane_following_maneuver.end_dist = 90;
   m2.lane_following_maneuver.start_speed = entry_speed;
   m2.lane_following_maneuver.end_speed = entry_speed;
   m2.lane_following_maneuver.lane_ids = { "1202", "1203" };
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ m1, m2 }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ m1, m2 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(2, result.size()); // M2 should have been dropped
 
   // m1
-  ASSERT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, result[0].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, result[0].type);
   ASSERT_NEAR(0.0, result[0].lane_following_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(70.0, result[0].lane_following_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[0].lane_following_maneuver.start_speed, 0.00001);
@@ -302,7 +303,7 @@ cav_msgs::Maneuver m2;
   ASSERT_TRUE(result[0].lane_following_maneuver.lane_ids[2].compare("1202") == 0);
 
   // Stop And Wait should have been extended
-  ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result[1].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, result[1].type);
   ASSERT_NEAR(70.0, result[1].stop_and_wait_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(100.0, result[1].stop_and_wait_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[1].stop_and_wait_maneuver.start_speed, 0.00001);
@@ -312,8 +313,8 @@ cav_msgs::Maneuver m2;
 
 TEST_F(StopAndWaitTestFixture, CaseSix)
 {
-        RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -321,8 +322,8 @@ TEST_F(StopAndWaitTestFixture, CaseSix)
   double min_maneuver_length = 10.0;
   double route_end_downtrack = 100.0;
 
-  cav_msgs::Maneuver m1;
-  m1.type = cav_msgs::Maneuver::LANE_CHANGE;
+  carma_planning_msgs::msg::Maneuver m1;
+  m1.type = carma_planning_msgs::msg::Maneuver::LANE_CHANGE;
   m1.lane_change_maneuver.start_dist = 50;
   m1.lane_change_maneuver.end_dist = 70;
   m1.lane_change_maneuver.start_speed = entry_speed;
@@ -330,13 +331,13 @@ TEST_F(StopAndWaitTestFixture, CaseSix)
   m1.lane_change_maneuver.starting_lane_id = "1202";
   m1.lane_change_maneuver.ending_lane_id = "1202";
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(2, result.size());
 
   // m1
-  ASSERT_EQ(cav_msgs::Maneuver::LANE_CHANGE, result[0].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_CHANGE, result[0].type);
   ASSERT_NEAR(50.0, result[0].lane_change_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(70.0, result[0].lane_change_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[0].lane_change_maneuver.start_speed, 0.00001);
@@ -345,7 +346,7 @@ TEST_F(StopAndWaitTestFixture, CaseSix)
   ASSERT_TRUE(result[0].lane_change_maneuver.ending_lane_id.compare("1202") == 0);
 
   // Stop And Wait should have been extended
-  ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result[1].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, result[1].type);
   ASSERT_NEAR(70.0, result[1].stop_and_wait_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(100.0, result[1].stop_and_wait_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[1].stop_and_wait_maneuver.start_speed, 0.00001);
@@ -355,8 +356,8 @@ TEST_F(StopAndWaitTestFixture, CaseSix)
 
 TEST_F(StopAndWaitTestFixture, CaseSeven)
 {
-            RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -364,8 +365,8 @@ TEST_F(StopAndWaitTestFixture, CaseSeven)
   double min_maneuver_length = 10.0;
   double route_end_downtrack = 100.0;
 
-  cav_msgs::Maneuver m1;
-  m1.type = cav_msgs::Maneuver::LANE_CHANGE;
+  carma_planning_msgs::msg::Maneuver m1;
+  m1.type = carma_planning_msgs::msg::Maneuver::LANE_CHANGE;
   m1.lane_change_maneuver.start_dist = 30;
   m1.lane_change_maneuver.end_dist = 58;
   m1.lane_change_maneuver.start_speed = entry_speed;
@@ -373,13 +374,13 @@ TEST_F(StopAndWaitTestFixture, CaseSeven)
   m1.lane_change_maneuver.starting_lane_id = "1201";
   m1.lane_change_maneuver.ending_lane_id = "1202";
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(3, result.size());
 
   // m1
-  ASSERT_EQ(cav_msgs::Maneuver::LANE_CHANGE, result[0].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_CHANGE, result[0].type);
   ASSERT_NEAR(30.0, result[0].lane_change_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(58.0, result[0].lane_change_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[0].lane_change_maneuver.start_speed, 0.00001);
@@ -388,7 +389,7 @@ TEST_F(StopAndWaitTestFixture, CaseSeven)
   ASSERT_TRUE(result[0].lane_change_maneuver.ending_lane_id.compare("1202") == 0);
 
 // Extra lane follow
-  ASSERT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, result[1].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, result[1].type);
   ASSERT_NEAR(58.0, result[1].lane_following_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(75.0, result[1].lane_following_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[1].lane_following_maneuver.start_speed, 0.00001);
@@ -397,7 +398,7 @@ TEST_F(StopAndWaitTestFixture, CaseSeven)
   ASSERT_TRUE(result[1].lane_following_maneuver.lane_ids[0].compare("1202") == 0);
 
   // Stop And Wait 
-  ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result[2].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, result[2].type);
   ASSERT_NEAR(75.0, result[2].stop_and_wait_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(100.0, result[2].stop_and_wait_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[2].stop_and_wait_maneuver.start_speed, 0.00001);
@@ -407,8 +408,8 @@ TEST_F(StopAndWaitTestFixture, CaseSeven)
 
 TEST_F(StopAndWaitTestFixture, CaseEight)
 {
-            RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -416,8 +417,8 @@ TEST_F(StopAndWaitTestFixture, CaseEight)
   double min_maneuver_length = 10.0;
   double route_end_downtrack = 100.0;
 
-  cav_msgs::Maneuver m1;
-  m1.type = cav_msgs::Maneuver::LANE_CHANGE;
+  carma_planning_msgs::msg::Maneuver m1;
+  m1.type = carma_planning_msgs::msg::Maneuver::LANE_CHANGE;
   m1.lane_change_maneuver.start_dist = 50.01;
   m1.lane_change_maneuver.end_dist = 85;
   m1.lane_change_maneuver.start_speed = entry_speed;
@@ -425,13 +426,13 @@ TEST_F(StopAndWaitTestFixture, CaseEight)
   m1.lane_change_maneuver.starting_lane_id = "1202";
   m1.lane_change_maneuver.ending_lane_id = "1203";
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(2, result.size());
 
   // m1
-  ASSERT_EQ(cav_msgs::Maneuver::LANE_CHANGE, result[0].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_CHANGE, result[0].type);
   ASSERT_NEAR(50.01, result[0].lane_change_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(75.0, result[0].lane_change_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[0].lane_change_maneuver.start_speed, 0.00001);
@@ -440,7 +441,7 @@ TEST_F(StopAndWaitTestFixture, CaseEight)
   ASSERT_TRUE(result[0].lane_change_maneuver.ending_lane_id.compare("1202") == 0);
 
   // Stop And Wait 
-  ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result[1].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, result[1].type);
   ASSERT_NEAR(75.0, result[1].stop_and_wait_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(100.0, result[1].stop_and_wait_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[1].stop_and_wait_maneuver.start_speed, 0.00001);
@@ -450,8 +451,8 @@ TEST_F(StopAndWaitTestFixture, CaseEight)
 
 TEST_F(StopAndWaitTestFixture, CaseNine)
 {
-                RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -459,8 +460,8 @@ TEST_F(StopAndWaitTestFixture, CaseNine)
   double min_maneuver_length = 10.0;
   double route_end_downtrack = 100.0;
 
-  cav_msgs::Maneuver m1;
-  m1.type = cav_msgs::Maneuver::LANE_CHANGE;
+  carma_planning_msgs::msg::Maneuver m1;
+  m1.type = carma_planning_msgs::msg::Maneuver::LANE_CHANGE;
   m1.lane_change_maneuver.start_dist = 70;
   m1.lane_change_maneuver.end_dist = 90;
   m1.lane_change_maneuver.start_speed = entry_speed;
@@ -469,14 +470,14 @@ TEST_F(StopAndWaitTestFixture, CaseNine)
   m1.lane_change_maneuver.ending_lane_id = "1203";
 
   // Cannot shrink lane change maneuver this much. Expect exception to be thrown
-  ASSERT_THROW(worker.addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
+  ASSERT_THROW(worker->addStopAndWaitAtRouteEnd({ m1 }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length), std::invalid_argument);
 }
 
 TEST_F(StopAndWaitTestFixture, CaseTen)
 {
-                RouteFollowingPlugin worker;
-  worker.wm_ = cmw_;  // Set world model from test fixture
+  auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+  worker->wm_ = cmw_;  // Set world model from test fixture
 
   double entry_speed = 10.0;
   double long_accel_limit = 2.0;
@@ -484,13 +485,13 @@ TEST_F(StopAndWaitTestFixture, CaseTen)
   double min_maneuver_length = 10.0;
   double route_end_downtrack = 100.0;
 
-  auto result = worker.addStopAndWaitAtRouteEnd({ }, route_end_downtrack, entry_speed, long_accel_limit,
+  auto result = worker->addStopAndWaitAtRouteEnd({ }, route_end_downtrack, entry_speed, long_accel_limit,
                                                 lat_accel_limit, min_maneuver_length);
 
   ASSERT_EQ(1, result.size());
 
   // Stop And Wait
-  ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result[0].type);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, result[0].type);
   ASSERT_NEAR(75.0, result[0].stop_and_wait_maneuver.start_dist, 0.00001);
   ASSERT_NEAR(100.0, result[0].stop_and_wait_maneuver.end_dist, 0.00001);
   ASSERT_NEAR(entry_speed, result[0].stop_and_wait_maneuver.start_speed, 0.00001);
@@ -500,10 +501,3 @@ TEST_F(StopAndWaitTestFixture, CaseTen)
 
 }  // namespace route_following_plugin
 
-// Run all the tests
-int main(int argc, char** argv)
-{
-  testing::InitGoogleTest(&argc, argv);
-  auto res = RUN_ALL_TESTS();
-  return res;
-}

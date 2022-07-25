@@ -131,14 +131,7 @@
     <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch">
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
     </include>
-
-      <!-- Route Following Plugin -->
-    <group>
-      <remap from="upcoming_lane_change_status" to="$(optenv CARMA_GUIDE_NS)/upcoming_lane_change_status"/>
-      <remap from="upcoming_lane_change_status" to="$(optenv CARMA_GUIDE_NS)/upcoming_lane_change_status"/>
-      <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
-    </group>
-
+      
     <!-- Platooning Control Plugin -->
     <include file="$(find platoon_control)/launch/platoon_control.launch" />
 
@@ -151,11 +144,6 @@
       <include file="$(find platooning_tactical_plugin)/launch/platooning_tactical_plugin.launch" />
     </group>
     
-      <!-- StopandWait Plugin -->
-    <group>
-      <include file="$(find stop_and_wait_plugin)/launch/stop_and_wait_plugin.launch" />
-    </group>
-
     <!-- Cooperative lanechange -->
     <group>
       <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>

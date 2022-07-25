@@ -17,19 +17,22 @@
  */
 
 #include <vector>
-#include <cav_msgs/Plugin.h>
-#include <carma_utils/CARMAUtils.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <carma_wm/WMListener.h>
-#include <carma_wm/WorldModel.h>
-#include <cav_srvs/PlanManeuvers.h>
-#include <cav_msgs/UpcomingLaneChangeStatus.h>
+#include <carma_planning_msgs/msg/plugin.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <carma_wm_ros2/WMListener.hpp>
+#include <carma_wm_ros2/WorldModel.hpp>
+#include <carma_planning_msgs/srv/plan_maneuvers.hpp>
+#include <carma_planning_msgs/msg/upcoming_lane_change_status.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <gtest/gtest_prod.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <unordered_set>
+#include "carma_guidance_plugins/strategic_plugin.hpp"
+#include "route_following_plugin_config.hpp"
 
 /**
  * \brief Macro definition to enable easier access to fields shared across the maneuver types
@@ -38,46 +41,35 @@
  * \return Expands to an expression (in the form of chained ternary operators) that evalutes to the desired field
  */
 #define GET_MANEUVER_PROPERTY(mvr, property)\
-        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
-            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
-                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
-                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property :\
-                        ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
-                            ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
+        (((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
+            ((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
+                ((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
+                    ((mvr).type == carma_planning_msgs::msg::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property :\
+                        ((mvr).type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
+                            ((mvr).type == carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
                                 throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id " + std::to_string((mvr).type)))))))))
 
 #define SET_MANEUVER_PROPERTY(mvr, property, value)\
-        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property = (value) :\
-            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property = (value) :\
-                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property = (value) :\
-                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property = (value) :\
-                        ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property = (value) :\
-                            ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property = (value) :\
+        (((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property = (value) :\
+            ((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property = (value) :\
+                ((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property = (value) :\
+                    ((mvr).type == carma_planning_msgs::msg::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property = (value) :\
+                        ((mvr).type == carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property = (value) :\
+                            ((mvr).type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property = (value) :\
                                 throw std::invalid_argument("SET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id " + std::to_string((mvr).type)))))))))
-
                         
 namespace route_following_plugin
 {
-
-    class RouteFollowingPlugin
+    class RouteFollowingPlugin : public carma_guidance_plugins::StrategicPlugin
     {
         public:
 
         /**
          * \brief Default constructor for RouteFollowingPlugin class
          */
-        RouteFollowingPlugin() = default;
-
-
-        /**
-         * \brief General entry point to begin the operation of this class
-         */
-        void run();
-
-        /**
-         * \brief Initialize ROS publishers, subscribers, service servers and service clients
-         */
-        void initialize();
+        explicit RouteFollowingPlugin(const rclcpp::NodeOptions &);
+        
+        carma_ros2_utils::CallbackReturn on_configure_plugin();
 
         // wm listener pointer and pointer to the actual wm object
         std::shared_ptr<carma_wm::WMListener> wml_;
@@ -90,7 +82,10 @@ namespace route_following_plugin
          * \return UpcomingLaneChangeStatus Note: this method will only work correctly if the 
          * two provided lanelets are forming a lane change
          */
-        cav_msgs::UpcomingLaneChangeStatus ComposeLaneChangeStatus(lanelet::ConstLanelet starting_lanelet,lanelet::ConstLanelet ending_lanelet);
+        carma_planning_msgs::msg::UpcomingLaneChangeStatus ComposeLaneChangeStatus(lanelet::ConstLanelet starting_lanelet,lanelet::ConstLanelet ending_lanelet);
+
+        bool get_availability();
+        std::string get_version_id();
         
         private:
 
@@ -103,7 +98,7 @@ namespace route_following_plugin
          * \param lane_ids List of lanelet IDs that the current maneuver traverses. Message expects these to be contiguous and end to end 
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, const std::vector<lanelet::Id>& lane_ids) const;
+        carma_planning_msgs::msg::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, const std::vector<lanelet::Id>& lane_ids) const;
 
         /**
          * \brief Compose a lane change maneuver message based on input params 
@@ -116,7 +111,7 @@ namespace route_following_plugin
          * \param target_speed Target speed of the current maneuver
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeLaneChangeManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id,lanelet::Id ending_lane_id) const;
+        carma_planning_msgs::msg::Maneuver composeLaneChangeManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id,lanelet::Id ending_lane_id) const;
         
         /**
          * \brief Compose a stop and wait maneuver message based on input params. 
@@ -129,7 +124,7 @@ namespace route_following_plugin
          * \param stopping_accel Acceleration used for calculating the stopping distance
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double start_dist, double end_dist, double start_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, double stopping_accel) const;
+        carma_planning_msgs::msg::Maneuver composeStopAndWaitManeuverMessage(double start_dist, double end_dist, double start_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, double stopping_accel) const;
 
         /**
          * \brief Given a LaneletRelations and ID of the next lanelet in the shortest path
@@ -144,20 +139,20 @@ namespace route_following_plugin
          * \param maneuver A maneuver (non-specific to type) to be performed
          * \param start_dist the starting distance that the maneuver need to be updated to
          */
-        void setManeuverStartDist(cav_msgs::Maneuver& maneuver, double start_dist) const;
+        void setManeuverStartDist(carma_planning_msgs::msg::Maneuver& maneuver, double start_dist) const;
 
         /**
          * \brief Given an array of maneuvers update the starting time for each
          * \param maneuvers An array of maneuvers (non-specific to type) 
          * \param start_time The starting time for the first maneuver in the sequence, each consequent maneuver is pushed ahead by same amount
          */
-        void updateTimeProgress(std::vector<cav_msgs::Maneuver>& maneuvers, ros::Time start_time) const;
+        void updateTimeProgress(std::vector<carma_planning_msgs::msg::Maneuver>& maneuvers, rclcpp::Time start_time) const;
         /**
          * \brief Given an maneuver update the starting speed
          * \param maneuver maneuver to update the starting speed for
          * \param start_time The starting speed for the maneuver passed as argument
          */
-        void updateStartingSpeed(cav_msgs::Maneuver& maneuver, double start_speed) const;
+        void updateStartingSpeed(carma_planning_msgs::msg::Maneuver& maneuver, double start_speed) const;
 
         /**
          * \brief Service callback for arbitrator maneuver planning
@@ -165,7 +160,11 @@ namespace route_following_plugin
          * \param resp Plan maneuver response with a list of maneuver plan
          * \return If service call successed
          */
-        bool planManeuverCb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
+      
+        void plan_maneuvers_callback(
+         std::shared_ptr<rmw_request_id_t> srv_header, 
+         carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+         carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp);
 
         /**
          * \brief Given a Lanelet, find it's associated Speed Limit
@@ -178,7 +177,7 @@ namespace route_following_plugin
          * \brief Calculate maneuver plan for remaining route. This callback is triggered when a new route has been received and processed by the world model
          * \param route_shortest_path A list of lanelets along the shortest path of the route using which the maneuver plan is calculated.
          */
-        std::vector<cav_msgs::Maneuver> routeCb(const lanelet::routing::LaneletPath& route_shortest_path);
+        std::vector<carma_planning_msgs::msg::Maneuver> routeCb(const lanelet::routing::LaneletPath& route_shortest_path);
 
         /**
          * \brief Adds a StopAndWait maneuver to the end of a maneuver set stopping at the provided downtrack value
@@ -201,8 +200,8 @@ namespace route_following_plugin
          * that any previous maneuvers which were slower need not be accounted for as planning for a higher speed will always be capable of handling that case 
          * and any which were faster would already have their speed reduced by the maneuver which this speed was derived from. 
          */ 
-        std::vector<cav_msgs::Maneuver> addStopAndWaitAtRouteEnd (
-                const std::vector<cav_msgs::Maneuver>& input_maneuvers, 
+        std::vector<carma_planning_msgs::msg::Maneuver> addStopAndWaitAtRouteEnd (
+                const std::vector<carma_planning_msgs::msg::Maneuver>& input_maneuvers, 
                 double route_end_downtrack, double stopping_entry_speed, double stopping_logitudinal_accel,
                 double lateral_accel_limit, double min_maneuver_length
             ) const;
@@ -217,7 +216,7 @@ namespace route_following_plugin
          * 
          * \return true if the provided maneuver plus the computed dynamic buffer starts after the provided downtrack value
          */ 
-        bool maneuverWithBufferStartsAfterDowntrack(const cav_msgs::Maneuver& maneuver, double downtrack, double lateral_accel, double min_maneuver_length) const;
+        bool maneuverWithBufferStartsAfterDowntrack(const carma_planning_msgs::msg::Maneuver& maneuver, double downtrack, double lateral_accel, double min_maneuver_length) const;
 
         /**
          * \brief This method returns a new UUID as a string for assignment to a Maneuver message
@@ -234,42 +233,26 @@ namespace route_following_plugin
          */ 
         void returnToShortestPath(const lanelet::ConstLanelet &current_lanelet);
 
-        // CARMA ROS node handles
-        std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
+        //Subscribers
+        carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> twist_sub_;
+        carma_ros2_utils::SubPtr<carma_planning_msgs::msg::ManeuverPlan> current_maneuver_plan_sub_;
+    
+        // Publishers
+        carma_ros2_utils::PubPtr<carma_planning_msgs::msg::UpcomingLaneChangeStatus> upcoming_lane_change_status_pub_;
 
-        // ROS publishers and subscribers
-        ros::Publisher plugin_discovery_pub_;
-        ros::Publisher upcoming_lane_change_status_pub_;
-        ros::Subscriber twist_sub_;
-        ros::Subscriber current_maneuver_plan_sub_;
-        ros::Timer discovery_pub_timer_;
-
-        // ROS service servers
-        ros::ServiceServer plan_maneuver_srv_;  
+        // Service Servers
+        carma_ros2_utils::ServicePtr<carma_planning_msgs::srv::PlanManeuvers> plan_maneuver_srv_;
 
         // unordered set of all the lanelet ids in shortest path
         std::unordered_set<lanelet::Id> shortest_path_set_;
-
-        // Minimal duration of maneuver, loaded from config file
-        double min_plan_duration_ = 16.0;
-
-        double route_end_point_buffer_ = 10.0;
-
-        double stopping_accel_limit_multiplier_ = 0.5;
-
-        double accel_limit_ = 2.0;
-
-        double lateral_accel_limit_ = 2.0;
-
-        double min_maneuver_length_ = 10.0; // Minimum length to allow for a maneuver when updating it for stop and wait
-        
+       
         static constexpr double MAX_LANE_WIDTH = 3.70; // Maximum lane width of a US highway
 
-        // Plugin discovery message
-        cav_msgs::Plugin plugin_discovery_msg_;
+        // Node configuration
+        Config config_;
 
         //Upcoming Lane Change downtrack and its lanechange status message map
-        std::queue<std::pair<double, cav_msgs::UpcomingLaneChangeStatus>> upcoming_lane_change_status_msg_map_;
+        std::queue<std::pair<double, carma_planning_msgs::msg::UpcomingLaneChangeStatus>> upcoming_lane_change_status_msg_map_;
         
         // Current vehicle forward speed
         double current_speed_ = 0.0;
@@ -278,14 +261,14 @@ namespace route_following_plugin
         double epsilon_ = 0.0001;
 
         // Current vehicle pose in map
-        geometry_msgs::PoseStamped pose_msg_;
+        geometry_msgs::msg::PoseStamped pose_msg_;
         lanelet::BasicPoint2d current_loc_;
         
         // Currently executing maneuver plan from Arbitrator
-        cav_msgs::ManeuverPlanConstPtr current_maneuver_plan_;
+        carma_planning_msgs::msg::ManeuverPlan::UniquePtr current_maneuver_plan_;
 
         //Queue of maneuver plans
-        std::vector<cav_msgs::Maneuver> latest_maneuver_plan_;
+        std::vector<carma_planning_msgs::msg::Maneuver> latest_maneuver_plan_;
 
         //Tactical plugin being used for planning lane change
         std::string lane_change_plugin_ = "cooperative_lanechange";
@@ -293,7 +276,7 @@ namespace route_following_plugin
 
         std::string planning_strategic_plugin_ = "route_following_plugin";
         std::string lanefollow_planning_tactical_plugin_ = "inlanecruising_plugin"; 
-
+   
         /**
          * \brief Callback for the front bumper pose transform
          */
@@ -303,7 +286,7 @@ namespace route_following_plugin
          * \brief Callback for the twist subscriber, which will store latest twist locally
          * \param msg Latest twist message
          */
-        void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+        void twist_cb(geometry_msgs::msg::TwistStamped::UniquePtr msg);
 
         /**
          * \brief Callback for the ManeuverPlan subscriber, will store the current maneuver plan received locally.
@@ -311,7 +294,7 @@ namespace route_following_plugin
          * vs. control drift taking the vehicle's reference point outside of the intended lane.
          * \param msg Latest ManeuverPlan message
          */
-        void current_maneuver_plan_cb(const cav_msgs::ManeuverPlanConstPtr& msg);
+        void current_maneuver_plan_cb(carma_planning_msgs::msg::ManeuverPlan::UniquePtr msg);
 
         /**
          * \brief returns duration as ros::Duration required to complete maneuver given its start dist, end dist, start speed and end speed
@@ -319,14 +302,14 @@ namespace route_following_plugin
          * \param epsilon The acceptable min start_speed + target_speed in the maneuver message, under which the maneuver is treated as faulty.
          * Throws exception if sum of start and target speed of maneuver is below limit defined by parameter epsilon
          */
-        ros::Duration getManeuverDuration(cav_msgs::Maneuver &maneuver, double epsilon) const;
+        rclcpp::Duration getManeuverDuration(carma_planning_msgs::msg::Maneuver &maneuver, double epsilon) const;
 
         /**
          * \brief Initialize transform lookup from front bumper to map
          */
         void initializeBumperTransformLookup();
 
-        geometry_msgs::TransformStamped tf_;
+        geometry_msgs::msg::TransformStamped tf_;
         
         // front bumper transform
         tf2::Stamped<tf2::Transform> frontbumper_transform_;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,16 +14,20 @@
  * the License.
  */
 
-#include <ros/ros.h>
-#include "route_following_plugin.h"
+#include <rclcpp/rclcpp.hpp>
+#include "route_following_plugin.hpp"
 
 int main(int argc, char** argv)
 {
+
+  rclcpp::init(argc, argv);
+
+  auto node = std::make_shared<route_following_plugin::RouteFollowingPlugin>(rclcpp::NodeOptions());
   
-    ros::init(argc, argv, "route_following_plugin");
-    route_following_plugin::RouteFollowingPlugin rfp;
-    rfp.run();
-    return 0;
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
+  rclcpp::shutdown();
 
-
-};
+  return 0;
+}

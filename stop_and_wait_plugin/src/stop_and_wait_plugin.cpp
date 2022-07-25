@@ -14,33 +14,31 @@
  * the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <algorithm>
 #include <memory>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <lanelet2_core/geometry/Point.h>
-#include <trajectory_utils/trajectory_utils.h>
-#include <trajectory_utils/conversions/conversions.h>
+#include <trajectory_utils/trajectory_utils.hpp>
+#include <trajectory_utils/conversions/conversions.hpp>
 #include <sstream>
-#include <carma_utils/containers/containers.h>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <Eigen/LU>
 #include <Eigen/SVD>
 #include <unordered_set>
-#include "stop_and_wait_plugin.h"
+#include "stop_and_wait_plugin.hpp"
 #include <vector>
-#include <cav_msgs/Trajectory.h>
-#include <cav_msgs/StopAndWaitManeuver.h>
+#include <carma_planning_msgs/msg/stop_and_wait_maneuver.hpp>
+#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/geometry/LineString.h>
-#include <carma_wm/CARMAWorldModel.h>
-#include <carma_utils/containers/containers.h>
-#include <carma_wm/Geometry.h>
-#include <cav_msgs/TrajectoryPlanPoint.h>
-#include <cav_msgs/TrajectoryPlan.h>
+#include <carma_wm_ros2/CARMAWorldModel.hpp>
 #include <math.h>
 #include <std_msgs/Float64.h>
 #include <math.h>
@@ -49,79 +47,69 @@ using oss = std::ostringstream;
 
 namespace stop_and_wait_plugin
 {
-StopandWait::StopandWait(carma_wm::WorldModelConstPtr wm, StopandWaitConfig config,
-                         PublishPluginDiscoveryCB plugin_discovery_publisher)
-  : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
-{
-  plugin_discovery_msg_.name = "stop_and_wait_plugin";
-  plugin_discovery_msg_.version_id = "v1.1";
-  plugin_discovery_msg_.available = true;
-  plugin_discovery_msg_.activated = true;
-  plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
-  plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
-};
 
-bool StopandWait::spinCallback()
-{
-  plugin_discovery_publisher_(plugin_discovery_msg_);
-  return true;
-}
+StopandWait::StopandWait(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, 
+                                          carma_wm::WorldModelConstPtr wm, 
+                                          const StopandWaitConfig& config, 
+                                          const std::string& plugin_name,
+                                          const std::string& version_id)
+  : version_id_ (version_id),plugin_name_(plugin_name),config_(config),nh_(nh), wm_(wm)
+{};
 
-bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
+bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
 {
 
-  ROS_DEBUG_STREAM("Starting stop&wait planning");
+  RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Starting stop&wait planning");
 
-  if (req.maneuver_index_to_plan >= req.maneuver_plan.maneuvers.size())
+  if (req->maneuver_index_to_plan >= req->maneuver_plan.maneuvers.size())
   {
     throw std::invalid_argument(
-        "StopAndWait plugin asked to plan invalid maneuver index: " + std::to_string(req.maneuver_index_to_plan) +
-        " for plan of size: " + std::to_string(req.maneuver_plan.maneuvers.size()));
+        "StopAndWait plugin asked to plan invalid maneuver index: " + std::to_string(req->maneuver_index_to_plan) +
+        " for plan of size: " + std::to_string(req->maneuver_plan.maneuvers.size()));
   }
 
-  if (req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].type != cav_msgs::Maneuver::STOP_AND_WAIT)
+  if (req->maneuver_plan.maneuvers[req->maneuver_index_to_plan].type != carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT)
   {
     throw std::invalid_argument("StopAndWait plugin asked to plan non STOP_AND_WAIT maneuver");
   }
 
-  lanelet::BasicPoint2d veh_pos(req.vehicle_state.x_pos_global, req.vehicle_state.y_pos_global);
+  lanelet::BasicPoint2d veh_pos(req->vehicle_state.x_pos_global, req->vehicle_state.y_pos_global);
 
-  ROS_DEBUG_STREAM("planning state x:" << req.vehicle_state.x_pos_global << ", y: " << req.vehicle_state.y_pos_global << ", speed: " << req.vehicle_state.longitudinal_vel);
+  RCLCPP_DEBUG_STREAM(nh_->get_logger(),"planning state x:" << req->vehicle_state.x_pos_global << ", y: " << req->vehicle_state.y_pos_global << ", speed: " << req->vehicle_state.longitudinal_vel);
 
-  if (req.vehicle_state.longitudinal_vel < epsilon_)
+  if (req->vehicle_state.longitudinal_vel < epsilon_)
   {
-    ROS_WARN_STREAM("Detected that car is already stopped! Ignoring the request to plan Stop&Wait");
-    ROS_DEBUG_STREAM("Detected that car is already stopped! Ignoring the request to plan Stop&Wait");
-    
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Detected that car is already stopped! Ignoring the request to plan Stop&Wait");
+     
     return true;
   }
 
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
-  ROS_DEBUG_STREAM("Current_downtrack" << current_downtrack);
+  RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Current_downtrack" << current_downtrack);
 
-  if (req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].stop_and_wait_maneuver.end_dist < current_downtrack)
+  if (req->maneuver_plan.maneuvers[req->maneuver_index_to_plan].stop_and_wait_maneuver.end_dist < current_downtrack)
   {
     throw std::invalid_argument("StopAndWait plugin asked to plan maneuver that ends earlier than the current state.");
   }
 
-  resp.related_maneuvers.push_back(req.maneuver_index_to_plan);
-  resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+  resp->related_maneuvers.push_back(req->maneuver_index_to_plan);
+  resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
-  std::string maneuver_id = req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].stop_and_wait_maneuver.parameters.maneuver_id;
+  std::string maneuver_id = req->maneuver_plan.maneuvers[req->maneuver_index_to_plan].stop_and_wait_maneuver.parameters.maneuver_id;
 
-  ROS_INFO_STREAM("Maneuver not yet planned, planning new trajectory");
+  RCLCPP_INFO_STREAM(nh_->get_logger(),"Maneuver not yet planned, planning new trajectory");
 
   // Maneuver input is valid so continue with execution
-  std::vector<cav_msgs::Maneuver> maneuver_plan = { req.maneuver_plan.maneuvers[req.maneuver_index_to_plan] };
+  std::vector<carma_planning_msgs::msg::Maneuver> maneuver_plan = { req->maneuver_plan.maneuvers[req->maneuver_index_to_plan] };
 
   std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points(
-      maneuver_plan, wm_, req.vehicle_state);  // Now have 1m downsampled points from cur to endpoint
+      maneuver_plan, wm_, req->vehicle_state);  // Now have 1m downsampled points from cur to endpoint
 
   // Trajectory plan
-  cav_msgs::TrajectoryPlan trajectory;
+  carma_planning_msgs::msg::TrajectoryPlan trajectory;
   trajectory.header.frame_id = "map";
-  trajectory.header.stamp = req.header.stamp;
+  trajectory.header.stamp = req->header.stamp;
   trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
   // Extract the stopping buffer used to consider a stopping behavior complete
@@ -129,7 +117,7 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
   
   double stopping_accel = 0.0;
   if (maneuver_plan[0].stop_and_wait_maneuver.parameters.presence_vector &
-      cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA)
+      carma_planning_msgs::msg::ManeuverParameters::HAS_FLOAT_META_DATA)
   {
     if(maneuver_plan[0].stop_and_wait_maneuver.parameters.float_valued_meta_data.size() < 2){
       throw std::invalid_argument("stop and wait maneuver message missing required meta data");
@@ -137,37 +125,37 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
     stop_location_buffer = maneuver_plan[0].stop_and_wait_maneuver.parameters.float_valued_meta_data[0];
     stopping_accel = maneuver_plan[0].stop_and_wait_maneuver.parameters.float_valued_meta_data[1];
 
-    ROS_DEBUG_STREAM("Using stop buffer from meta data: " << stop_location_buffer);
-    ROS_DEBUG_STREAM("Using stopping acceleration from meta data: "<< stopping_accel);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Using stop buffer from meta data: " << stop_location_buffer);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Using stopping acceleration from meta data: "<< stopping_accel);
   }
   else{
     throw std::invalid_argument("stop and wait maneuver message missing required float meta data");
   }
 
-  double initial_speed = req.vehicle_state.longitudinal_vel; //will be modified after compose_trajectory_from_centerline 
+  double initial_speed = req->vehicle_state.longitudinal_vel; //will be modified after compose_trajectory_from_centerline 
 
   trajectory.trajectory_points = compose_trajectory_from_centerline(
-      points_and_target_speeds, current_downtrack, req.vehicle_state.longitudinal_vel,
-      maneuver_plan[0].stop_and_wait_maneuver.end_dist, stop_location_buffer, req.header.stamp, stopping_accel, initial_speed);
+      points_and_target_speeds, current_downtrack, req->vehicle_state.longitudinal_vel,
+      maneuver_plan[0].stop_and_wait_maneuver.end_dist, stop_location_buffer, req->header.stamp, stopping_accel, initial_speed);
 
-  ROS_DEBUG_STREAM("Trajectory points size:" << trajectory.trajectory_points.size());
+  RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Trajectory points size:" << trajectory.trajectory_points.size());
 
   trajectory.initial_longitudinal_velocity = initial_speed;
 
-  resp.trajectory_plan = trajectory;
+  resp->trajectory_plan = trajectory;
 
   return true;
 }
 
 // Returns the centerline points and speed limits for the provided maneuver
-std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
+std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<carma_planning_msgs::msg::Maneuver>& maneuvers,
                                                              const carma_wm::WorldModelConstPtr& wm,
-                                                             const cav_msgs::VehicleState& state)
+                                                             const carma_planning_msgs::msg::VehicleState& state)
 {
   std::vector<PointSpeedPair> points_and_target_speeds;
   std::unordered_set<lanelet::Id> visited_lanelets;
 
-  cav_msgs::StopAndWaitManeuver stop_and_wait_maneuver = maneuvers[0].stop_and_wait_maneuver;
+  carma_planning_msgs::msg::StopAndWaitManeuver stop_and_wait_maneuver = maneuvers[0].stop_and_wait_maneuver;
 
   lanelet::BasicPoint2d veh_pos(state.x_pos_global, state.y_pos_global);
   double starting_downtrack = wm_->routeTrackPos(veh_pos).downtrack;  // The vehicle position
@@ -177,8 +165,8 @@ std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<c
   // std::min call here is a guard against starting_downtrack being within 1m of the maneuver end_dist
   // in this case the sampleRoutePoints method will return a single point allowing execution to continue
   std::vector<lanelet::BasicPoint2d> route_points = wm->sampleRoutePoints(
-      std::min(starting_downtrack + config_.cernterline_sampling_spacing, stop_and_wait_maneuver.end_dist),
-      stop_and_wait_maneuver.end_dist, config_.cernterline_sampling_spacing);
+      std::min(starting_downtrack + config_.centerline_sampling_spacing, stop_and_wait_maneuver.end_dist),
+      stop_and_wait_maneuver.end_dist, config_.centerline_sampling_spacing);
 
 
   route_points.insert(route_points.begin(), veh_pos);
@@ -195,44 +183,43 @@ std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<c
   return points_and_target_speeds;
 }
 
-std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::trajectory_from_points_times_orientations(
+std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::trajectory_from_points_times_orientations(
     const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times, const std::vector<double>& yaws,
-    ros::Time startTime)
+    rclcpp::Time startTime)
 {
   if (points.size() != times.size() || points.size() != yaws.size())
   {
     throw std::invalid_argument("All input vectors must have the same size");
   }
 
-  std::vector<cav_msgs::TrajectoryPlanPoint> traj;
+  std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> traj;
   traj.reserve(points.size());
 
   for (size_t i = 0; i < points.size(); i++)
   {
-    cav_msgs::TrajectoryPlanPoint tpp;
-    ros::Duration relative_time(times[i]);
+    carma_planning_msgs::msg::TrajectoryPlanPoint tpp;
+    rclcpp::Duration relative_time(times[i] * 1e9);
     tpp.target_time = startTime + relative_time;
     tpp.x = points[i].x();
     tpp.y = points[i].y();
     tpp.yaw = yaws[i];
 
     tpp.controller_plugin_name = "default";
-    tpp.planner_plugin_name = plugin_discovery_msg_.name;
-
+ 
     traj.push_back(tpp);
   }
 
   return traj;
 }
 
-std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_centerline(
+std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_centerline(
     const std::vector<PointSpeedPair>& points, double starting_downtrack, double starting_speed, double stop_location,
-    double stop_location_buffer, ros::Time start_time, double stopping_acceleration, double& initial_speed)
+    double stop_location_buffer, rclcpp::Time start_time, double stopping_acceleration, double& initial_speed)
 {
-  std::vector<cav_msgs::TrajectoryPlanPoint> plan;
+  std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> plan;
   if (points.size() == 0)
   {
-    ROS_WARN_STREAM("No points to use as trajectory in stop and wait plugin");
+    RCLCPP_WARN_STREAM(nh_->get_logger(),"No points to use as trajectory in stop and wait plugin");
     return plan;
   }
 
@@ -262,11 +249,11 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   if (req_dist > remaining_distance)
   {
 
-    ROS_DEBUG_STREAM("Target Accel Update From: " << target_accel);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Target Accel Update From: " << target_accel);
     target_accel =
         (starting_speed * starting_speed) / (2.0 * remaining_distance);  // If we cannot reach the end point it the
                                                                          // required distance update the accel target
-    ROS_DEBUG_STREAM("Target Accel Update To: " << target_accel);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Target Accel Update To: " << target_accel);
   }
 
 
@@ -282,8 +269,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   bool reached_end = false;
   for (int i = points.size() - 2; i >= 0; i--)
   {  // NOTE: Do not use size_t for i type here as -- with > 0 will result in overflow
-
-
 
     double v_i = prev_pair.speed;
     double dx = lanelet::geometry::distance2d(prev_pair.point, points[i].point);
@@ -309,8 +294,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
       prev_pair = pair;
       continue;  // continue until loop end
     }
-
-    
+   
     double v_f = sqrt(v_i * v_i + 2 * target_accel * dx);
 
     PointSpeedPair pair = points[i];
@@ -373,7 +357,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
   {
     if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
     {  // If the time
-      ROS_WARN_STREAM("Detected non-normal (nan, inf, etc.) time. Making it same as before: " << times[i-1]);
+      RCLCPP_WARN_STREAM(nh_->get_logger(),"Detected non-normal (nan, inf, etc.) time. Making it same as before: " << times[i-1]);
       // NOTE: overriding the timestamps in assumption that pure_pursuit_wrapper will detect it as stopping case
       times[i] = times[i - 1];
     }
@@ -381,18 +365,17 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_
 
   std::vector<double> yaws = carma_wm::geometry::compute_tangent_orientations(raw_points);
 
-
   for (size_t i = 0; i < points.size(); i++)
   {
-    ROS_DEBUG_STREAM("1d: " << downtracks[i] << " t: " << times[i] << " v: " << filtered_speeds[i]);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"1d: " << downtracks[i] << " t: " << times[i] << " v: " << filtered_speeds[i]);
   }
 
   auto traj = trajectory_from_points_times_orientations(raw_points, times, yaws, start_time);
 
-  while (traj.back().target_time - traj.front().target_time < ros::Duration(config_.minimal_trajectory_duration))
+  while (rclcpp::Time(traj.back().target_time) - rclcpp::Time(traj.front().target_time) < rclcpp::Duration(config_.minimal_trajectory_duration * 1e9))
   {
-    cav_msgs::TrajectoryPlanPoint new_point = traj.back();
-    new_point.target_time = new_point.target_time + ros::Duration(config_.stop_timestep);
+    carma_planning_msgs::msg::TrajectoryPlanPoint new_point = traj.back();
+    new_point.target_time = rclcpp::Time(new_point.target_time) + rclcpp::Duration(config_.stop_timestep * 1e9);
     traj.push_back(new_point);
   }
 

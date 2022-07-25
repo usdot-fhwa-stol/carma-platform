@@ -20,7 +20,7 @@ crawl_speed : 0.91
 
 # Double: The gap in meters between points sampled from the lanelet centerlines for planning trajectory positions
 # Units: m
-cernterline_sampling_spacing: 1.0
+centerline_sampling_spacing: 1.0
 
 
 # Double: The default buffer in meters used for where the vehicle can come to a stop during execution. 

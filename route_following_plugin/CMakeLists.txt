@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 LEIDOS.
+# Copyright (C) 2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -14,91 +14,56 @@
 # the License.
 #
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(route_following_plugin)
 
 find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
+carma_check_ros_version(2)
 carma_package()
 
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  std_msgs
-  cav_msgs
-  cav_srvs
-  carma_utils
-  carma_wm
-  tf
-  tf2
-  tf2_geometry_msgs
-)
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
-
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils cav_msgs carma_wm tf tf2 tf2_geometry_msgs
-)
-
-###########
-## Build ##
-###########
+# Name build targets
+set(node_exec route_following_plugin_exec)
+set(node_lib route_following_plugin_lib)
 
 include_directories(
-  ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
   include
 )
 
-
-add_executable( ${PROJECT_NAME}
-  src/route_following_plugin.cpp
-  src/main.cpp)
-
-add_library(route_following_plugin_lib src/route_following_plugin.cpp)
-add_dependencies(route_following_plugin_lib ${catkin_EXPORTED_TARGETS})
-
-target_link_libraries(route_following_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-
-target_link_libraries(${PROJECT_NAME} route_following_plugin_lib)
-
-#############
-## Install ##
-#############
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
+# Build
+ament_auto_add_library(${node_lib} SHARED
+        src/route_following_plugin.cpp
 )
 
-## Install C++
-install(TARGETS ${PROJECT_NAME} route_following_plugin_lib
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
 )
 
-## Install Other Resources
-install(DIRECTORY launch config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# Register component
+rclcpp_components_register_nodes(${node_lib} "route_following_plugin::RouteFollowingPlugin")
+
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_exec}
+        ${node_lib}
 )
 
-#############
-## Testing ##
-#############
-catkin_add_gmock(${PROJECT_NAME}-test
-test/test_route_following_plugin.cpp
- WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+# Testing
+if(BUILD_TESTING)  
 
-catkin_add_gmock(${PROJECT_NAME}-stopping-test
-test/test_stop_at_end_of_route.cpp
- WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
- 
-target_link_libraries(${PROJECT_NAME}-test route_following_plugin_lib ${catkin_LIBRARIES})
-target_link_libraries(${PROJECT_NAME}-stopping-test route_following_plugin_lib ${catkin_LIBRARIES})
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+
+  ament_add_gtest(test_route_following_plugin test/test_route_following_plugin.cpp test/test_stop_at_end_of_route.cpp)
+  ament_target_dependencies(test_route_following_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+  target_link_libraries(test_route_following_plugin ${node_lib})
+
+endif()
+
+# Install
+ament_auto_package(
+        INSTALL_TO_SHARE config launch
+)
