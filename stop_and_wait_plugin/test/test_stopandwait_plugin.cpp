@@ -14,13 +14,12 @@
  * the License.
  */
 
-#include "stop_and_wait_plugin.h"
-#include "stop_and_wait_config.h"
-#include <gtest/gtest.h>
-#include <ros/ros.h>
+#include "stop_and_wait_plugin.hpp"
+#include "stop_and_wait_config.hpp"
+#include <rclcpp/rclcpp.hpp>
 #include <thread>
 #include <chrono>
-#include <carma_wm/WMTestLibForGuidance.h>
+#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -32,21 +31,20 @@
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <string>
-#include <cav_msgs/Maneuver.h>
-#include <carma_utils/containers/containers.h>
-#include <cav_msgs/VehicleState.h>
-#include <cav_msgs/TrajectoryPlanPoint.h>
+#include <carma_planning_msgs/msg/maneuver.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include <carma_planning_msgs/msg/vehicle_state.h>
+#include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
 #include <fstream>
-#include <cav_srvs/PlanTrajectory.h>
+#include <carma_planning_msgs/srv/plan_trajectory.hpp>
 #include <sstream>
-#include <ros/package.h>
 #include <unordered_set>
+#include <gtest/gtest.h>
 
 namespace stop_and_wait_plugin
 {
 TEST(StopandWait, TestStopandWaitPlanning)
 {
-  ros::Time::setNow(ros::Time(0.0));
   StopandWaitConfig config;
 
   config.minimal_trajectory_duration = 6.0;    // Trajectory length in seconds
@@ -56,7 +54,12 @@ TEST(StopandWait, TestStopandWaitPlanning)
   config.accel_limit = 2.0;                    // Longitudinal acceleration limit of the vehicle
 
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  StopandWait plugin(wm, config, [&](auto msg) {});
+  
+  std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh;
+  const std::string& plugin_name= "stop_and_wait_plugin";
+  const std::string& version_id="v1.0";
+ 
+  StopandWait plugin(nh,wm, config, plugin_name,version_id);
 
   auto map = carma_wm::test::buildGuidanceTestMap(3.7, 20);
 
@@ -80,62 +83,63 @@ TEST(StopandWait, TestStopandWaitPlanning)
 
   carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
 
-  cav_srvs::PlanTrajectoryRequest req;
-  req.vehicle_state.x_pos_global = 1.5;
-  req.vehicle_state.y_pos_global = 5;
-  req.vehicle_state.orientation = 3.14/2;
-  req.vehicle_state.longitudinal_vel = 8.9408; // 20 mph
-  req.header.stamp = ros::Time(0.0);
+  carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req;
+  req->vehicle_state.x_pos_global = 1.5;
+  req->vehicle_state.y_pos_global = 5;
+  req->vehicle_state.orientation = 3.14/2;
+  req->vehicle_state.longitudinal_vel = 8.9408; // 20 mph
+  req->header.stamp = rclcpp::Time(0.0* 1e9);
 
-  cav_msgs::Maneuver maneuver;
-  maneuver.type = cav_msgs::Maneuver::STOP_AND_WAIT;
+  carma_planning_msgs::msg::Maneuver maneuver;
+  maneuver.type = carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT;
   maneuver.stop_and_wait_maneuver.start_dist = 5.0;
-  maneuver.stop_and_wait_maneuver.start_time = ros::Time(0.0);
+  maneuver.stop_and_wait_maneuver.start_time = rclcpp::Time(0.0* 1e9);
   maneuver.stop_and_wait_maneuver.start_speed = 8.9408;
 
   maneuver.stop_and_wait_maneuver.end_dist = 55;
-  maneuver.stop_and_wait_maneuver.end_time = ros::Time(11.175999999999998);
+  maneuver.stop_and_wait_maneuver.end_time = rclcpp::Time(11.175999999999998* 1e9);
 
-  req.maneuver_plan.maneuvers.push_back(maneuver);
-  req.maneuver_index_to_plan = 0;
+  req->maneuver_plan.maneuvers.push_back(maneuver);
+  req->maneuver_index_to_plan = 0;
 
-  cav_srvs::PlanTrajectoryResponse resp;
+  carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp;
   plugin.plan_trajectory_cb(req, resp);
 
   double dist = 0;
-  double vel = resp.trajectory_plan.initial_longitudinal_velocity;
+  double vel = resp->trajectory_plan.initial_longitudinal_velocity;
   bool first= true;
   lanelet::BasicPoint2d prev_point;
-  ros::Time prev_time = ros::Time(0.0);
-  for (auto point : resp.trajectory_plan.trajectory_points) {
+  rclcpp::Time prev_time = rclcpp::Time(0.0* 1e9);
+  for (auto point : resp->trajectory_plan.trajectory_points) {
     lanelet::BasicPoint2d p(point.x, point.y);
-    ROS_INFO_STREAM("Y: " << point.y);
+    RCLCPP_INFO_STREAM(nh->get_logger(),"Y: " << point.y);
     double delta = 0;
     if (first) {
       first = false;
     } else {
       delta = lanelet::geometry::distance2d(p, prev_point);
       dist += delta;
-      ROS_INFO_STREAM("delta: " << delta << " timediff: " << (point.target_time - prev_time).toSec() << "pre_vel: " << vel);
-      vel = (2.0 * delta / (point.target_time - prev_time).toSec()) - vel;
+      RCLCPP_INFO_STREAM(nh->get_logger(),"delta: " << delta << " timediff: " << (rclcpp::Time(point.target_time) - prev_time).seconds() << "pre_vel: " << vel);
+      vel = (2.0 * delta / (rclcpp::Time(point.target_time) - prev_time).seconds()) - vel;
     }
-    ROS_ERROR_STREAM("point time: " << point.target_time.toSec() << " dist: " << dist << " vel: " << vel);
+    RCLCPP_ERROR_STREAM(nh->get_logger(),"point time: " << rclcpp::Time(point.target_time).seconds() << " dist: " << dist << " vel: " << vel);
     prev_point = p;
     prev_time = point.target_time;
   }
 }
 }  // namespace stop_and_wait_plugin
 
-// Run all the tests
-int main(int argc, char** argv)
+int main(int argc, char ** argv)
 {
-  testing::InitGoogleTest(&argc, argv);
-  ros::Time::init();
-  ROSCONSOLE_AUTOINIT;
-  if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) { // Change to Debug to enable debug logs
-    ros::console::notifyLoggerLevelsChanged();
-  }
-  auto res = RUN_ALL_TESTS();
-  
-  return res;
-}
+    ::testing::InitGoogleTest(&argc, argv);
+
+    //Initialize ROS
+    rclcpp::init(argc, argv);
+
+    bool success = RUN_ALL_TESTS();
+
+    //shutdown ROS
+    rclcpp::shutdown();
+
+    return success;
+} 
