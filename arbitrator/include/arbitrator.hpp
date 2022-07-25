@@ -131,7 +131,7 @@ namespace arbitrator
         private:
             
             VehicleState vehicle_state_; // The current state of the vehicle for populating planning requests
-
+            
             std::shared_ptr<ArbitratorStateMachine> sm_;
             carma_ros2_utils::PubPtr<carma_planning_msgs::msg::ManeuverPlan> final_plan_pub_;
             carma_ros2_utils::SubPtr<carma_planning_msgs::msg::GuidanceState> guidance_state_sub_;

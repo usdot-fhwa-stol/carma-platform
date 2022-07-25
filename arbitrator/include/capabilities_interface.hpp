@@ -41,7 +41,7 @@ namespace arbitrator
              * \param nh A CarmaLifecycleNode pointer this interface will work with
              */
             CapabilitiesInterface(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh): nh_(nh) {
-                sc_s_ = nh_->create_client<carma_planning_msgs::srv::GetPluginApi>("plugins/get_strategic_plugin_by_capability");
+                sc_s_ = nh_->create_client<carma_planning_msgs::srv::GetPluginApi>("plugins/get_strategic_plugins_by_capability");
             };
 
             /**

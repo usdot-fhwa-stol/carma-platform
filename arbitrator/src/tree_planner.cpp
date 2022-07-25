@@ -33,6 +33,7 @@ namespace arbitrator
 
         carma_planning_msgs::msg::ManeuverPlan longest_plan = root; // Track longest plan in case target length is never reached
         rclcpp::Duration longest_plan_duration = rclcpp::Duration(0);
+        
 
         while (!open_list_to_evaluate.empty())
         {
@@ -79,7 +80,7 @@ namespace arbitrator
                     }  
                     continue;
                 }
-                
+
                 // Expand it, and reprioritize
                 std::vector<carma_planning_msgs::msg::ManeuverPlan> children = neighbor_generator_->generate_neighbors(cur_plan, start_state);
 
@@ -89,7 +90,7 @@ namespace arbitrator
                     
                     if (child->maneuvers.empty())
                     {
-                        RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "Child was empty for id: " << child->maneuver_plan_id);
+                        RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "Child was empty for id: " << std::string(child->maneuver_plan_id));
                         continue;   
                     }
 

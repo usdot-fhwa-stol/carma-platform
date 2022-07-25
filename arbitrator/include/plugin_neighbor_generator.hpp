@@ -40,7 +40,7 @@ namespace arbitrator
              * Constructor for PluginNeighborGenerator
              * \param ci A capabilties interface for accessing the plugins
              */
-            PluginNeighborGenerator(T &ci) :
+            PluginNeighborGenerator(std::shared_ptr<T> ci) :
                 ci_(ci) {};
 
             /**
@@ -52,7 +52,7 @@ namespace arbitrator
              */
             std::vector<carma_planning_msgs::msg::ManeuverPlan> generate_neighbors(carma_planning_msgs::msg::ManeuverPlan plan, const VehicleState& initial_state) const;
         private:
-            T &ci_;
+            std::shared_ptr<T> ci_;
     };
 };
 
