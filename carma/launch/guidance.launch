@@ -144,11 +144,6 @@
       <include file="$(find platooning_tactical_plugin)/launch/platooning_tactical_plugin.launch" />
     </group>
     
-      <!-- StopandWait Plugin -->
-    <group>
-      <include file="$(find stop_and_wait_plugin)/launch/stop_and_wait_plugin.launch" />
-    </group>
-
     <!-- Cooperative lanechange -->
     <group>
       <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
