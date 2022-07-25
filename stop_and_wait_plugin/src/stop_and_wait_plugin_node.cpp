@@ -21,7 +21,7 @@ namespace stop_and_wait_plugin
   namespace std_ph = std::placeholders;
 
   StopandWaitNode::StopandWaitNode(const rclcpp::NodeOptions &options)
-      : carma_guidance_plugins::TacticalPlugin(options),plugin_name_(get_plugin_name_and_ns()),version_id_("v1.0")
+      : carma_guidance_plugins::TacticalPlugin(options),version_id_("v1.0"),plugin_name_(get_plugin_name_and_ns())
   {
     // Create initial config
     config_ = StopandWaitConfig();

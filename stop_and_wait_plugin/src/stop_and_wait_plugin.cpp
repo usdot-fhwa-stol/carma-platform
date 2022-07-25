@@ -53,13 +53,13 @@ StopandWait::StopandWait(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> n
                                           const StopandWaitConfig& config, 
                                           const std::string& plugin_name,
                                           const std::string& version_id)
-  : nh_(nh), wm_(wm), config_(config),plugin_name_(plugin_name), version_id_ (version_id)
+  : version_id_ (version_id),plugin_name_(plugin_name),config_(config),nh_(nh), wm_(wm)
 {};
 
 bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
 {
 
-  RCLCPP_INFO_STREAM(nh_->get_logger(),"Starting stop&wait planning");
+  RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Starting stop&wait planning");
 
   if (req->maneuver_index_to_plan >= req->maneuver_plan.maneuvers.size())
   {
@@ -75,7 +75,7 @@ bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::R
 
   lanelet::BasicPoint2d veh_pos(req->vehicle_state.x_pos_global, req->vehicle_state.y_pos_global);
 
-  RCLCPP_INFO_STREAM(nh_->get_logger(),"planning state x:" << req->vehicle_state.x_pos_global << ", y: " << req->vehicle_state.y_pos_global << ", speed: " << req->vehicle_state.longitudinal_vel);
+  RCLCPP_DEBUG_STREAM(nh_->get_logger(),"planning state x:" << req->vehicle_state.x_pos_global << ", y: " << req->vehicle_state.y_pos_global << ", speed: " << req->vehicle_state.longitudinal_vel);
 
   if (req->vehicle_state.longitudinal_vel < epsilon_)
   {
@@ -86,7 +86,7 @@ bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::R
 
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
-  RCLCPP_INFO_STREAM(nh_->get_logger(),"Current_downtrack" << current_downtrack);
+  RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Current_downtrack" << current_downtrack);
 
   if (req->maneuver_plan.maneuvers[req->maneuver_index_to_plan].stop_and_wait_maneuver.end_dist < current_downtrack)
   {
@@ -125,8 +125,8 @@ bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::R
     stop_location_buffer = maneuver_plan[0].stop_and_wait_maneuver.parameters.float_valued_meta_data[0];
     stopping_accel = maneuver_plan[0].stop_and_wait_maneuver.parameters.float_valued_meta_data[1];
 
-    RCLCPP_INFO_STREAM(nh_->get_logger(),"Using stop buffer from meta data: " << stop_location_buffer);
-    RCLCPP_INFO_STREAM(nh_->get_logger(),"Using stopping acceleration from meta data: "<< stopping_accel);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Using stop buffer from meta data: " << stop_location_buffer);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Using stopping acceleration from meta data: "<< stopping_accel);
   }
   else{
     throw std::invalid_argument("stop and wait maneuver message missing required float meta data");
@@ -138,7 +138,7 @@ bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::R
       points_and_target_speeds, current_downtrack, req->vehicle_state.longitudinal_vel,
       maneuver_plan[0].stop_and_wait_maneuver.end_dist, stop_location_buffer, req->header.stamp, stopping_accel, initial_speed);
 
-  RCLCPP_INFO_STREAM(nh_->get_logger(),"Trajectory points size:" << trajectory.trajectory_points.size());
+  RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Trajectory points size:" << trajectory.trajectory_points.size());
 
   trajectory.initial_longitudinal_velocity = initial_speed;
 
@@ -219,7 +219,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
   std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> plan;
   if (points.size() == 0)
   {
-    RCLCPP_INFO_STREAM(nh_->get_logger(),"No points to use as trajectory in stop and wait plugin");
+    RCLCPP_WARN_STREAM(nh_->get_logger(),"No points to use as trajectory in stop and wait plugin");
     return plan;
   }
 
@@ -249,11 +249,11 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
   if (req_dist > remaining_distance)
   {
 
-    RCLCPP_INFO_STREAM(nh_->get_logger(),"Target Accel Update From: " << target_accel);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Target Accel Update From: " << target_accel);
     target_accel =
         (starting_speed * starting_speed) / (2.0 * remaining_distance);  // If we cannot reach the end point it the
                                                                          // required distance update the accel target
-    RCLCPP_INFO_STREAM(nh_->get_logger(),"Target Accel Update To: " << target_accel);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Target Accel Update To: " << target_accel);
   }
 
 
@@ -357,7 +357,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
   {
     if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
     {  // If the time
-      RCLCPP_INFO_STREAM(nh_->get_logger(),"Detected non-normal (nan, inf, etc.) time. Making it same as before: " << times[i-1]);
+      RCLCPP_WARN_STREAM(nh_->get_logger(),"Detected non-normal (nan, inf, etc.) time. Making it same as before: " << times[i-1]);
       // NOTE: overriding the timestamps in assumption that pure_pursuit_wrapper will detect it as stopping case
       times[i] = times[i - 1];
     }
@@ -367,7 +367,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
 
   for (size_t i = 0; i < points.size(); i++)
   {
-    RCLCPP_INFO_STREAM(nh_->get_logger(),"1d: " << downtracks[i] << " t: " << times[i] << " v: " << filtered_speeds[i]);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"1d: " << downtracks[i] << " t: " << times[i] << " v: " << filtered_speeds[i]);
   }
 
   auto traj = trajectory_from_points_times_orientations(raw_points, times, yaws, start_time);
