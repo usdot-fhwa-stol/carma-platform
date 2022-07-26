@@ -3160,6 +3160,17 @@ namespace platoon_strategic_ihp
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration(config_.time_step);
         maneuver_msg.lane_following_maneuver.lane_ids = { std::to_string(lane_id) };
+        ROS_DEBUG_STREAM("in compose maneuver lane id:"<< lane_id);
+
+        lanelet::ConstLanelet current_lanelet = wm_->getMap()->laneletLayer.get(lane_id);
+        if(!wm_->getMapRoutingGraph()->following(current_lanelet, false).empty())
+        {
+            
+            auto next_lanelet_id = wm_->getMapRoutingGraph()->following(current_lanelet, false).front().id();
+            ROS_DEBUG_STREAM("next_lanelet_id:"<< next_lanelet_id);
+            maneuver_msg.lane_following_maneuver.lane_ids.push_back(std::to_string(next_lanelet_id));
+        }
+        
         current_time = maneuver_msg.lane_following_maneuver.end_time;
         ROS_DEBUG_STREAM("Creating lane follow start dist:"<<current_dist<<" end dist:"<<end_dist);
         ROS_DEBUG_STREAM("Duration:"<< maneuver_msg.lane_following_maneuver.end_time.toSec() - maneuver_msg.lane_following_maneuver.start_time.toSec());
@@ -3332,7 +3343,7 @@ namespace platoon_strategic_ihp
                     
                     // set to next lane destination, consider sending ecef instead of dtd 
                     double end_dist = 0.0;// wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
-                    end_dist = std::min(end_dist, total_maneuver_length);
+                    end_dist = std::max(end_dist, total_maneuver_length);
                     ROS_DEBUG_STREAM("end_dist: " << end_dist);
                     // consider calculate dtd_diff and ctd_diff
                     double dist_diff = end_dist - current_progress;
@@ -3342,11 +3353,11 @@ namespace platoon_strategic_ihp
                     // TODO: what info is mocked? // This is just mock info to compile the code.                     
 
                     // ----------------------------------------------------------------------------------------------------------
-                    if (end_dist < current_progress)
-                    {
-                        ROS_DEBUG_STREAM("lc_end_dist befor");
-                        break;
-                    }
+                    // if (end_dist < current_progress)
+                    // {
+                    //     ROS_DEBUG_STREAM("lc_end_dist befor");
+                    //     break;
+                    // }
                     
                     //TODO: target_cutin_pose_ represents the platoon leader. It seems this may be the wrong answer for mid- or rear-cutins?
                     //SAINA: currently, the functions do not provide the correct point of rear vehicle of the platoon
@@ -3397,7 +3408,7 @@ namespace platoon_strategic_ihp
                 // send out lane following plan
                 while (current_progress < total_maneuver_length)
                 {   
-                    ROS_DEBUG_STREAM("Same Lane Maneuver for platoon join ! ");
+                    ROS_DEBUG_STREAM("Same Lane Maneuver for completing platoon cut-in join ! ");
                     ROS_DEBUG_STREAM("current_progress: "<< current_progress);
                     ROS_DEBUG_STREAM("speed_progress: " << speed_progress);
                     ROS_DEBUG_STREAM("target_speed: " << target_speed);
@@ -3435,8 +3446,9 @@ namespace platoon_strategic_ihp
             ROS_DEBUG_STREAM("Planning Same Lane Maneuver! ");
             while (current_progress < total_maneuver_length)
             {   
-                ROS_DEBUG_STREAM("Same Lane Maneuver for platoon join ! ");
+                ROS_DEBUG_STREAM("Regular same lane join! ");
                 ROS_DEBUG_STREAM("current_progress: "<< current_progress);
+                ROS_DEBUG_STREAM("current_lanelet_id: "<< current_lanelet_id);
                 ROS_DEBUG_STREAM("speed_progress: " << speed_progress);
                 ROS_DEBUG_STREAM("target_speed: " << target_speed);
                 ROS_DEBUG_STREAM("time_progress: " << time_progress.toSec());
