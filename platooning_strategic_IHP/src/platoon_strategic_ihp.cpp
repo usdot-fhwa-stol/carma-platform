@@ -3329,10 +3329,9 @@ namespace platoon_strategic_ihp
                     ROS_DEBUG_STREAM("target_speed: " << target_speed);
                     ROS_DEBUG_STREAM("time_progress: " << time_progress.toSec());
 
-                    // ----------------------- UCLA: consider change according to maneuver plan requirement --------------------
-                    auto p = shortest_path[last_lanelet_index].centerline2d().back(); // change to lane change path
+                    
                     // set to next lane destination, consider sending ecef instead of dtd 
-                    double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
+                    double end_dist = 0.0;// wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
                     end_dist = std::min(end_dist, total_maneuver_length);
                     ROS_DEBUG_STREAM("end_dist: " << end_dist);
                     // consider calculate dtd_diff and ctd_diff
@@ -3399,13 +3398,11 @@ namespace platoon_strategic_ihp
                 while (current_progress < total_maneuver_length)
                 {   
                     ROS_DEBUG_STREAM("Same Lane Maneuver for platoon join ! ");
-                    ROS_DEBUG_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
                     ROS_DEBUG_STREAM("current_progress: "<< current_progress);
                     ROS_DEBUG_STREAM("speed_progress: " << speed_progress);
                     ROS_DEBUG_STREAM("target_speed: " << target_speed);
                     ROS_DEBUG_STREAM("time_progress: " << time_progress.toSec());
-                    auto p = shortest_path[last_lanelet_index].centerline2d().back();
-                    double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
+                    double end_dist = 0.0; //wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
                     // end_dist = std::min(end_dist, total_maneuver_length);
                     end_dist = std::max(end_dist, total_maneuver_length);
                     ROS_DEBUG_STREAM("end_dist: " << end_dist);
@@ -3439,14 +3436,12 @@ namespace platoon_strategic_ihp
             while (current_progress < total_maneuver_length)
             {   
                 ROS_DEBUG_STREAM("Same Lane Maneuver for platoon join ! ");
-                ROS_DEBUG_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
                 ROS_DEBUG_STREAM("current_progress: "<< current_progress);
                 ROS_DEBUG_STREAM("speed_progress: " << speed_progress);
                 ROS_DEBUG_STREAM("target_speed: " << target_speed);
                 ROS_DEBUG_STREAM("time_progress: " << time_progress.toSec());
-                auto p = shortest_path[last_lanelet_index].centerline2d().back();
-                double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
-                end_dist = std::min(end_dist, total_maneuver_length);
+                double end_dist = 0;//wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
+                end_dist = std::max(end_dist, total_maneuver_length);
                 ROS_DEBUG_STREAM("end_dist: " << end_dist);
                 double dist_diff = end_dist - current_progress;
                 ROS_DEBUG_STREAM("dist_diff: " << dist_diff);
