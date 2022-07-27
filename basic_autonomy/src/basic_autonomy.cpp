@@ -76,8 +76,12 @@ namespace basic_autonomy
 
             cav_msgs::LaneFollowingManeuver lane_following_maneuver = maneuver.lane_following_maneuver;
             
+            // auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack, true, true);
+
+
             auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack, true, true);
-            
+
+
             bool lanelets_defined = !maneuver.lane_following_maneuver.lane_ids.empty();
             ROS_DEBUG_STREAM("lanelets_defined: " << lanelets_defined);
             bool isFromPlatooning = maneuver.lane_following_maneuver.parameters.planning_strategic_plugin == "PlatooningStrategicIHPPlugin";
@@ -90,7 +94,16 @@ namespace basic_autonomy
                 ROS_DEBUG_STREAM("extracted id: " << lane_id);
                 lanelet::ConstLanelet new_lanelet = wm->getMap()->laneletLayer.get(lane_id);
                 lanelets.push_back(new_lanelet);
-            }
+
+                if (maneuver.lane_following_maneuver.lane_ids.size()>1)
+                {
+                    lane_id = stoi(maneuver.lane_following_maneuver.lane_ids[1]);
+                    ROS_DEBUG_STREAM("more extracted id: " << lane_id);
+                    new_lanelet = wm->getMap()->laneletLayer.get(lane_id);
+                    lanelets.push_back(new_lanelet);
+                }
+            } 
+
 
 
             if (lanelets.empty())

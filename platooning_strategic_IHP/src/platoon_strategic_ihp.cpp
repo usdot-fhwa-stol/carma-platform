@@ -3016,8 +3016,9 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("waitingStateTimeout: " << waitingStateTimeout * 1000);
         if (isCurrentStateTimeout) 
         {
-            ROS_DEBUG_STREAM("The current prepare to join state is timeout. Change back to leader state.");
+            ROS_DEBUG_STREAM("The current prepare to join state is timeout. Change back to leader state and abort lane change.");
             pm_.current_platoon_state = PlatoonState::LEADER;
+            safeToLaneChange_ = false;
             pm_.clearActionPlan();
             pm_.resetHostPlatoon();
             // Leave neighbor platoon info in place, as we may retry the join later
@@ -3170,6 +3171,10 @@ namespace platoon_strategic_ihp
             auto next_lanelet_id = wm_->getMapRoutingGraph()->following(current_lanelet, false).front().id();
             ROS_DEBUG_STREAM("next_lanelet_id:"<< next_lanelet_id);
             maneuver_msg.lane_following_maneuver.lane_ids.push_back(std::to_string(next_lanelet_id));
+        }
+        else
+        {
+            ROS_DEBUG_STREAM("No following lanelets");
         }
 
         current_time = maneuver_msg.lane_following_maneuver.end_time;
@@ -3432,7 +3437,7 @@ namespace platoon_strategic_ihp
                 }
 
                 resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist,  
-                                        speed_progress, target_speed,shortest_path[last_lanelet_index].id(), time_progress));
+                                        speed_progress, target_speed,current_lanelet_id, time_progress));
                                     
 
                 current_progress += dist_diff;

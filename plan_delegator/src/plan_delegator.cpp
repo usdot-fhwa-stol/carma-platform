@@ -330,7 +330,7 @@ namespace plan_delegator
                 maneuver.lane_following_maneuver.lane_ids.pop_back();
             }
         } 
-        else if (maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING)
+        else if (maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING && maneuver.type != cav_msgs::Maneuver::LANE_CHANGE)
         {
             // Obtain the original starting lanelet from the maneuver
             lanelet::Id original_starting_lanelet_id = std::stoi(getManeuverStartingLaneletId(maneuver));
