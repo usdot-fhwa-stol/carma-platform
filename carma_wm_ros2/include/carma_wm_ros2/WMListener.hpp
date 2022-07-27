@@ -60,6 +60,10 @@ public:
     rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_params_,
     bool multi_thread = false);
 
+  /*! \brief Destructor
+   */
+  ~WMListener();
+
   /*!
    * \brief Returns a pointer to an intialized world model instance
    *
@@ -139,9 +143,6 @@ private:
   carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::SPAT> traffic_spat_sub_;
   const bool multi_threaded_;
   std::mutex mw_mutex_;
-  
-  double config_speed_limit_ = 0.0;
-  std::string participant_  = "";
   
 
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,32 +14,19 @@
  * the License.
  */
 
-#include <ros/ros.h>
-#include <tf2_ros/transform_broadcaster.h>
-#include <pose_to_tf/PoseToTF2.h>
-#include <pose_to_tf/PoseToTF2Config.h>
-#include <carma_utils/CARMANodeHandle.h>
+#include <rclcpp/rclcpp.hpp>
+#include <pose_to_tf/PoseToTF2Node.hpp>
 
-int main(int argc, char** argv)
+int main(int argc, char **argv) 
 {
-  ros::init(argc, argv, "pose_to_tf");
+  rclcpp::init(argc, argv);
 
-  ros::CARMANodeHandle nh;
-  ros::CARMANodeHandle pnh("~");
+  auto node = std::make_shared<pose_to_tf::PoseToTfNode>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
+  rclcpp::shutdown();
 
-  tf2_ros::TransformBroadcaster tf_broadcaster;
-
-  pose_to_tf::PoseToTF2Config config;
-  pnh.param<std::string>("child_frame", config.child_frame, config.child_frame);
-  pnh.param<std::string>("default_parent_frame", config.default_parent_frame, config.default_parent_frame);
-
-  pose_to_tf::PoseToTF2 worker(config, [&tf_broadcaster](auto msg){tf_broadcaster.sendTransform(msg);});
-
-  ros::Subscriber pose_sub = nh.subscribe("pose_to_tf", 10, &pose_to_tf::PoseToTF2::poseCallback, &worker);
-  ros::Subscriber pose_stamped_sub = nh.subscribe("pose_stamped_to_tf", 10, &pose_to_tf::PoseToTF2::poseStampedCallback, &worker);
-  ros::Subscriber pose_with_cov_sub = nh.subscribe("pose_with_cov_to_tf", 10, &pose_to_tf::PoseToTF2::poseWithCovarianceCallback, &worker);
-  ros::Subscriber pose_with_cov_stamped_sub = nh.subscribe("pose_with_cov_stamped_to_tf", 10, &pose_to_tf::PoseToTF2::poseWithCovarianceStampedCallback, &worker);
-
-  ros::CARMANodeHandle::spin();
   return 0;
-};
+}

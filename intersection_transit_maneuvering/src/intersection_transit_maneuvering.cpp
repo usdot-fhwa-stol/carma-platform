@@ -130,7 +130,7 @@ std::ostream& operator<<(std::ostream& os, cav_msgs::Maneuver m) {
     IntersectionTransitManeuvering::IntersectionTransitManeuvering(PublishPluginDiscoveryCB plugin_discovery_publisher,
                                                                      std::shared_ptr<CallInterface> obj)
     {        
-        plugin_discovery_msg_.name = "IntersectionTransitPlugin";
+        plugin_discovery_msg_.name = "intersection_transit_maneuvering";
         plugin_discovery_msg_.version_id = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = true;

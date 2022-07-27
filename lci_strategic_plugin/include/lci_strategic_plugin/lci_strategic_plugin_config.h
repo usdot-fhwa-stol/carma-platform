@@ -65,18 +65,36 @@ struct LCIStrategicPluginConfig
   //! The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
   double min_maneuver_planning_period = 15.1;
 
+  //! Double: Approximate update time interval of carma streets
+  double carma_streets_update_interval = 1.0;
+  
+  //! Double: Vehicle reaction time to a received schedule in seconds (approximate value, only used for communication with the schedule)
+  double reaction_time = 2.0;
+
+  //! Double: Minimum inter-vehicle gap
+  double min_gap = 10.0;
+
+  //! Bool: Enable carma streets connection
+  bool  enable_carma_streets_connection = false;
+
+  //! Double: Mobility operation rate
+  double mobility_rate = 10.0;
+
+  //! License plate of the vehicle.
+  std::string vehicle_id = "default_id";
+
   //! The name to use for this plugin during comminications with the arbitrator
-  std::string strategic_plugin_name = "LCIStrategicPlugin";
+  std::string strategic_plugin_name = "lci_strategic_plugin";
 
   //! The name of the tactical plugin to use for Lane Following trajectory planning
   //! This plugin is used to apply trajectory smoothing algorithm BEFORE entering the intersection if within activation distance
-  std::string lane_following_plugin_name = "LightControlledIntersectionTacticalPlugin";
+  std::string lane_following_plugin_name = "light_controlled_intersection_tactical_plugin";
 
   //! The name of the plugin to use for stop and wait trajectory planning
-  std::string stop_and_wait_plugin_name = "StopAndWaitPlugin";
+  std::string stop_and_wait_plugin_name = "stop_and_wait_plugin";
 
   //! The name of the plugin to use for intersection transit trajectory planning
   //! This plugin is used to travel INSIDE the intersection where there is no trajectory smoothing algorithm active
-  std::string intersection_transit_plugin_name = "IntersectionTransitPlugin";
+  std::string intersection_transit_plugin_name = "intersection_transit_maneuvering";
 };
 }  // namespace localizer

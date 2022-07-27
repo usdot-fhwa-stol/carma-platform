@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 LEIDOS.
+# Copyright (C) 2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -14,114 +14,77 @@
 # the License.
 #
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(inlanecruising_plugin)
 
+# Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
+carma_check_ros_version(2)
 carma_package()
 
-set( CATKIN_DEPS
-  roscpp
-  std_msgs
-  cav_msgs
-  cav_srvs
-  carma_utils
-  trajectory_utils
-  autoware_msgs
-  carma_wm
-  basic_autonomy
-  tf
-  tf2
-  tf2_geometry_msgs
-  carma_debug_msgs
-)
-
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
- ${CATKIN_DEPS}
-)
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost)
 find_package(Eigen3 REQUIRED)
 
-###################################
-## catkin specific configuration ##
-###################################
+# Name build targets
+set(node_exec inlanecruising_plugin_node_exec)
+set(node_lib inlanecruising_plugin_node)
 
-catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS ${CATKIN_DEPS}
-  DEPENDS Boost EIGEN3
-)
-
-###########
-## Build ##
-###########
-
+# Includes
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
 )
 
-add_executable( ${PROJECT_NAME}
-  src/main.cpp)
-add_library(inlanecruising_plugin_library 
-  src/inlanecruising_plugin.cpp
+# Build
+ament_auto_add_library(${node_lib} SHARED
+        src/inlanecruising_plugin.cpp
+        src/inlanecruising_plugin_node.cpp
+        src/smoothing/BSpline.cpp
 )
 
-add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
-target_link_libraries(inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-
-add_dependencies(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-
-add_library(helper src/helper.cpp)
-target_link_libraries(helper
-  ${catkin_LIBRARIES}
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
 )
 
-add_executable(helper_node src/helper.cpp)
-target_link_libraries(helper_node
-  helper
-  ${catkin_LIBRARIES}
-)
-#############
-## Install ##
-#############
-
-install(DIRECTORY include
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+# Register component
+rclcpp_components_register_nodes(${node_lib} "inlanecruising_plugin::InLaneCruisingPluginNode")
+target_link_libraries(${node_lib}
+        ${Boost_LIBRARIES}
+        ${EIGEN3_LIBRARIES}
 )
 
-## Install C++
-install(TARGETS ${PROJECT_NAME} inlanecruising_plugin_library
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_exec}
+        ${node_lib}
 )
 
-## Install Other Resources
-install(DIRECTORY launch config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+# Testing
+if(BUILD_TESTING)  
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-#############
-## Testing ##
-#############
-
-if(CATKIN_ENABLE_TESTING)
-
-  catkin_add_gmock(${PROJECT_NAME}-test 
-    test/test_inlanecruising_plugin_planning.cpp
+  ament_add_gtest(test_inlanecruising_plugin 
+        test/test_inlanecruising_plugin.cpp
+        test/test_inlanecruising_plugin_planning.cpp
+        test/rostest_ilc.cpp
   )
-  target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
 
-  find_package(rostest REQUIRED)
-  add_rostest_gtest(rostest_ilc test/ilc_plugin.test test/rostest_ilc.cpp)
-  target_link_libraries(rostest_ilc ${catkin_LIBRARIES})
+  ament_target_dependencies(test_inlanecruising_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+
+  target_link_libraries(test_inlanecruising_plugin 
+       ${node_lib}
+  )
 endif()
+
+# Install
+ament_auto_package(
+       INSTALL_TO_SHARE config launch
+)
 

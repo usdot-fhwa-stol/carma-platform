@@ -62,7 +62,6 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}
   src/health_monitor.cpp
-  src/plugin_manager.cpp
   src/driver_manager.cpp
   src/entry_manager.cpp
   src/entry.cpp
@@ -71,7 +70,6 @@ add_executable(${PROJECT_NAME}
 
 ## Add cmake target dependencies of the executable
 add_library(plugin_driver_manager_library
-  src/plugin_manager.cpp
   src/driver_manager.cpp
   src/entry_manager.cpp
   src/health_monitor.cpp
@@ -124,7 +122,6 @@ install(DIRECTORY
 catkin_add_gtest(${PROJECT_NAME}-test
   test/test_driver_manager.cpp
   test/test_entry_manager.cpp
-  test/test_plugin_manager.cpp
   test/test_health_monitor.cpp
   test/test_main.cpp)
 # if(TARGET ${PROJECT_NAME}-test)

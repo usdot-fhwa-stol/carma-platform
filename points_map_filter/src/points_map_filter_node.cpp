@@ -86,8 +86,16 @@ namespace points_map_filter
     points_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>("points_raw", 10,
                                                                      std::bind(&Node::points_callback, this, std_ph::_1));
 
-    map_sub_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>("lanelet2_map", 1,
-                                                                        std::bind(&Node::map_callback, this, std_ph::_1));
+    // NOTE: Currently, intra-process comms must be disabled for subcribers that are transient_local: https://github.com/ros2/rclcpp/issues/1753
+    rclcpp::SubscriptionOptions map_sub_options; 
+    map_sub_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for this SubscriptionOptions object
+
+    auto map_sub_qos = rclcpp::QoS(rclcpp::KeepLast(1)); // Set the queue size for a subscriber with this QoS
+    map_sub_qos.transient_local();  // If it is possible that this node is a late-joiner to its topic, it must be set to transient_local to receive earlier messages that were missed.
+                                    // NOTE: The publisher's QoS must be set to transisent_local() as well for earlier messages to be resent to this later-joiner.
+
+    map_sub_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>("lanelet2_map", map_sub_qos,
+                                                                        std::bind(&Node::map_callback, this, std_ph::_1), map_sub_options);
 
     // Setup publishers
     filtered_points_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("filtered_points", 10);

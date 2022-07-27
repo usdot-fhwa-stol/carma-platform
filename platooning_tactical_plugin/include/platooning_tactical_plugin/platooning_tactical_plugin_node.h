@@ -73,7 +73,7 @@ public:
     
     PlatooningTacticalPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); });
 
-    ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/PlatooningTacticalPlugin/plan_trajectory",
+    ros::ServiceServer trajectory_srv_ = nh.advertiseService("platooning_tactical_plugin/plan_trajectory",
                                             &PlatooningTacticalPlugin::plan_trajectory_cb, &worker);
 
     ros::Timer discovery_pub_timer_ = nh.createTimer(

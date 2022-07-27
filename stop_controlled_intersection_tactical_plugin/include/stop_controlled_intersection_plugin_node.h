@@ -85,7 +85,7 @@ public:
     StopControlledIntersectionTacticalPlugin worker(wm_, config, [&discovery_pub](auto& msg) { discovery_pub.publish(msg); });
                                             // [trajectory_debug_pub](const auto& msg) { trajectory_debug_pub.publish(msg); });
 
-    ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/StopControlledIntersectionTacticalPlugin/plan_trajectory",
+    ros::ServiceServer trajectory_srv_ = nh.advertiseService("stop_controlled_intersection_tactical_plugin/plan_trajectory",
                                             &StopControlledIntersectionTacticalPlugin::plan_trajectory_cb, &worker);
 
     ros::Timer discovery_pub_timer_ = 
