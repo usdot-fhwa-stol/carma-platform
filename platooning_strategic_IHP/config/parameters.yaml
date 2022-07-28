@@ -4,7 +4,8 @@ mvr_duration: 15
 timeHeadway: 1.2
 standStillHeadway: 12.0
 maxAllowedJoinTimeGap: 15.0
-maxAllowedJoinGap: 90.0
+maxAllowedJoinGap: 200.0
+minAllowedJoinGap: 5.0
 desiredJoinTimeGap: 4.0
 desiredJoinGap: 90.0
 maxLeaderAbortingCalls: 2
