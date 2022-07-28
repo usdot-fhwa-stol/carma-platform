@@ -1677,7 +1677,7 @@ namespace platoon_strategic_ihp
                 double currentGap = currentRearDtd - applicantCurrentDtd - config_.vehicleLength;
                 double currentTimeGap = currentGap / applicantCurrentSpeed;
                 ROS_DEBUG_STREAM("The gap between current platoon rear and applicant is " << currentGap << "m or " << currentTimeGap << "s");
-                if (currentGap < 0) 
+                if (currentGap < config_.minAllowedJoinGap) 
                 {
                     ROS_WARN("We should not receive any request from the vehicle in front of us. NACK it.");
                     return MobilityRequestResponse::NACK;
@@ -1729,7 +1729,7 @@ namespace platoon_strategic_ihp
                 double currentTimeGap = currentGap / applicantCurrentSpeed;
                 ROS_DEBUG_STREAM("The gap between current platoon front and applicant is " << currentGap << "m or " << currentTimeGap << "s");
                 
-                if (currentGap < 0) 
+                if (currentGap < config_.minAllowedJoinGap) 
                 {
                     ROS_WARN("The current time gap is not suitable for frontal join. NACK it.");
                     return MobilityRequestResponse::NACK;
@@ -2487,26 +2487,8 @@ namespace platoon_strategic_ihp
         {
             // task 1: check gap 
             double cut_in_gap = pm_.getCutInGap(target_join_index_, current_downtrack_);   
-            ROS_DEBUG_STREAM("Start loop to check cut-in gap, start lane change when gap allows");
-            while (cut_in_gap < config_.minCutinGap) // TODO: use min gap as "safe to cut-in" gap, may need to adjust change later
-            {   
-                // Use LANE_CHANGE_TIMEOUT to bond the "creat gap"
-                bool isCurrentPlanTimeout = ros::Time::now().toNSec()/1000000  - pm_.current_plan.planStartTime > LANE_CHANGE_TIMEOUT;
-                // Set the plan as invalid and break the loop once the open-gap exceeds timeout.
-                if(isCurrentPlanTimeout) 
-                {
-                    ROS_DEBUG_STREAM("Give up current on waiting plan with planId: " << pm_.current_plan.planId << "; staying in PREPARETOJOIN");
-                    pm_.current_plan.valid = false;
-                    // exit function when timeout
-                    return;
-                }
-                
-                ROS_DEBUG_STREAM("The target gap " << cut_in_gap << " is not safe for lane change, wait for a larger gap");
-                // Sleep period equals statusMessageInterval_ 
-                ros::Duration(statusMessageInterval_/1000).sleep();
-                cut_in_gap = pm_.getCutInGap(target_join_index_, current_downtrack_);  
-            }
-            
+            // cut-in gap not needed for front and rear join, so ignored
+                   
             // task 2: set indicator if gap is safe
             safeToLaneChange_ = true;
             ROS_DEBUG_STREAM("Gap is now sufficiently large.");
@@ -3359,8 +3341,35 @@ namespace platoon_strategic_ihp
                     int target_lanelet_id = target_lanelets[0].second.id();
                     ROS_DEBUG_STREAM("target_lanelet_id: " << target_lanelet_id);
 
-                    resp.new_plan.maneuvers.push_back(composeLaneChangeManeuverMessage(current_downtrack_, lc_end_dist,  
+                    lanelet::ConstLanelet starting_lanelet = wm_->getMap()->laneletLayer.get(current_lanelet_id);
+                    lanelet::ConstLanelet ending_lanelet = wm_->getMap()->laneletLayer.get(target_lanelet_id);
+
+                    auto relation = wm_->getMapRoutingGraph()->routingRelation(starting_lanelet, ending_lanelet);
+
+                    if (relation == lanelet::routing::RelationType::Left || relation == lanelet::routing::RelationType::Right)
+                    {
+                        lanechangePossible_ = true;
+                    }
+                    else
+                    {
+                        safeToLaneChange_ = false;
+                    }
+
+                    if (lanechangePossible_)
+                    {
+                        ROS_DEBUG_STREAM("Lane change possible, planning it.. " );
+                        resp.new_plan.maneuvers.push_back(composeLaneChangeManeuverMessage(current_downtrack_, lc_end_dist,  
                                             speed_progress, target_speed, current_lanelet_id, target_lanelet_id , time_progress));
+                        
+                    }
+                    else
+                    {
+                        ROS_DEBUG_STREAM("Lane change impossible, planning lanefollow instead ... " );
+                        resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_downtrack_, end_dist,  
+                                            speed_progress, target_speed, current_lanelet_id, time_progress));
+                    }
+
+                    
 
                     current_progress += dist_diff;
                     // read lane change maneuver end time as time progress
@@ -3451,6 +3460,7 @@ namespace platoon_strategic_ihp
         {
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
         }  
+
 
         if (pm_.getHostPlatoonSize() < 2 && !safeToLaneChange_)
         {
