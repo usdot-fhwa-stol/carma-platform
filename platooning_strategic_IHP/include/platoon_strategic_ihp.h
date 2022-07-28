@@ -824,7 +824,6 @@ namespace platoon_strategic_ihp
             
             // Is there a sufficient gap open in the platoon for a cut-in join?
             bool safeToLaneChange_ = false;
-            bool lanechangePossible_ = false;
 
             // Strategy types
             const std::string PLATOONING_STRATEGY = "Carma/Platooning";

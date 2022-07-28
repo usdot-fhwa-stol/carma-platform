@@ -3350,17 +3350,18 @@ namespace platoon_strategic_ihp
                     lanelet::ConstLanelet ending_lanelet = wm_->getMap()->laneletLayer.get(target_lanelet_id);
 
                     auto relation = wm_->getMapRoutingGraph()->routingRelation(starting_lanelet, ending_lanelet);
-
+                    bool lanechangePossible = false;
+                    
                     if (relation == lanelet::routing::RelationType::Left || relation == lanelet::routing::RelationType::Right)
                     {
-                        lanechangePossible_ = true;
+                        lanechangePossible = true;
                     }
                     else
                     {
-                        lanechangePossible_ = false;
+                        lanechangePossible = false;
                     }
 
-                    if (lanechangePossible_)
+                    if (lanechangePossible)
                     {
                         ROS_DEBUG_STREAM("Lane change possible, planning it.. " );
                         resp.new_plan.maneuvers.push_back(composeLaneChangeManeuverMessage(current_downtrack_, lc_end_dist,  

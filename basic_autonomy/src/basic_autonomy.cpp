@@ -75,9 +75,6 @@ namespace basic_autonomy
             std::vector<PointSpeedPair> points_and_target_speeds;
 
             cav_msgs::LaneFollowingManeuver lane_following_maneuver = maneuver.lane_following_maneuver;
-            
-            // auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack, true, true);
-
 
             auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack, true, true);
 
