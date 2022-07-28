@@ -371,8 +371,7 @@ namespace plan_delegator
                     setManeuverEndingLaneletId(maneuver, lanelet_before_original_ending_lanelet.id());
                 }
                 else {
-                    // throw std::invalid_argument("Updated maneuver has unknown ending lanelet.");
-                    ROS_DEBUG_STREAM("Updated maneuver has unknown ending lanelet.");
+                    throw std::invalid_argument("Updated maneuver has unknown ending lanelet.");
                 }
             }
 
