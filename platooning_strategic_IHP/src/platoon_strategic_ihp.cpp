@@ -2488,24 +2488,24 @@ namespace platoon_strategic_ihp
             // task 1: check gap 
             double cut_in_gap = pm_.getCutInGap(target_join_index_, current_downtrack_);   
             ROS_DEBUG_STREAM("Start loop to check cut-in gap, start lane change when gap allows");
-            while (cut_in_gap < config_.minCutinGap) // TODO: use min gap as "safe to cut-in" gap, may need to adjust change later
-            {   
-                // Use LANE_CHANGE_TIMEOUT to bond the "creat gap"
-                bool isCurrentPlanTimeout = ros::Time::now().toNSec()/1000000  - pm_.current_plan.planStartTime > LANE_CHANGE_TIMEOUT;
-                // Set the plan as invalid and break the loop once the open-gap exceeds timeout.
-                if(isCurrentPlanTimeout) 
-                {
-                    ROS_DEBUG_STREAM("Give up current on waiting plan with planId: " << pm_.current_plan.planId << "; staying in PREPARETOJOIN");
-                    pm_.current_plan.valid = false;
-                    // exit function when timeout
-                    return;
-                }
+            // while (cut_in_gap < config_.minCutinGap) // TODO: use min gap as "safe to cut-in" gap, may need to adjust change later
+            // {   
+            //     // Use LANE_CHANGE_TIMEOUT to bond the "creat gap"
+            //     bool isCurrentPlanTimeout = ros::Time::now().toNSec()/1000000  - pm_.current_plan.planStartTime > LANE_CHANGE_TIMEOUT;
+            //     // Set the plan as invalid and break the loop once the open-gap exceeds timeout.
+            //     if(isCurrentPlanTimeout) 
+            //     {
+            //         ROS_DEBUG_STREAM("Give up current on waiting plan with planId: " << pm_.current_plan.planId << "; staying in PREPARETOJOIN");
+            //         pm_.current_plan.valid = false;
+            //         // exit function when timeout
+            //         return;
+            //     }
                 
-                ROS_DEBUG_STREAM("The target gap " << cut_in_gap << " is not safe for lane change, wait for a larger gap");
-                // Sleep period equals statusMessageInterval_ 
-                ros::Duration(statusMessageInterval_/1000).sleep();
-                cut_in_gap = pm_.getCutInGap(target_join_index_, current_downtrack_);  
-            }
+            //     ROS_DEBUG_STREAM("The target gap " << cut_in_gap << " is not safe for lane change, wait for a larger gap");
+            //     // Sleep period equals statusMessageInterval_ 
+            //     ros::Duration(statusMessageInterval_/1000).sleep();
+            //     cut_in_gap = pm_.getCutInGap(target_join_index_, current_downtrack_);  
+            // }
             
             // task 2: set indicator if gap is safe
             safeToLaneChange_ = true;
@@ -3457,7 +3457,7 @@ namespace platoon_strategic_ihp
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
         }  
 
-        if (pm_.getHostPlatoonSize() < 2 && !safeToLaneChange_)
+        if (pm_.getHostPlatoonSize() < 2)// && !safeToLaneChange_)
         {
             resp.new_plan.maneuvers = {};
             ROS_WARN_STREAM("Platoon size 1 so Empty maneuver sent");

@@ -330,7 +330,7 @@ namespace plan_delegator
                 maneuver.lane_following_maneuver.lane_ids.pop_back();
             }
         } 
-        else if (maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING && maneuver.type != cav_msgs::Maneuver::LANE_CHANGE)
+        else if (maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING)
         {
             // Obtain the original starting lanelet from the maneuver
             lanelet::Id original_starting_lanelet_id = std::stoi(getManeuverStartingLaneletId(maneuver));
@@ -371,7 +371,8 @@ namespace plan_delegator
                     setManeuverEndingLaneletId(maneuver, lanelet_before_original_ending_lanelet.id());
                 }
                 else {
-                    throw std::invalid_argument("Updated maneuver has unknown ending lanelet.");
+                    // throw std::invalid_argument("Updated maneuver has unknown ending lanelet.");
+                    ROS_DEBUG_STREAM("Updated maneuver has unknown ending lanelet.");
                 }
             }
 
