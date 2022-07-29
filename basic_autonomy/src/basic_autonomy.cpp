@@ -76,30 +76,73 @@ namespace basic_autonomy
 
             cav_msgs::LaneFollowingManeuver lane_following_maneuver = maneuver.lane_following_maneuver;
 
-            auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack, true, true);
-
+            std::vector<lanelet::ConstLanelet> lanelets;
 
             bool lanelets_defined = !maneuver.lane_following_maneuver.lane_ids.empty();
-            ROS_DEBUG_STREAM("lanelets_defined: " << lanelets_defined);
-            bool isFromPlatooning = maneuver.lane_following_maneuver.parameters.planning_strategic_plugin == "PlatooningStrategicIHPPlugin";
-            ROS_DEBUG_STREAM("isFromPlatooning: " << isFromPlatooning);
 
-            if (lanelets_defined && isFromPlatooning)
+            if (lanelets_defined)
             {
-                lanelets = {};
-                int lane_id = stoi(maneuver.lane_following_maneuver.lane_ids[0]);
-                ROS_DEBUG_STREAM("extracted id: " << lane_id);
-                lanelet::ConstLanelet new_lanelet = wm->getMap()->laneletLayer.get(lane_id);
-                lanelets.push_back(new_lanelet);
+                int current_laneid = stoi(maneuver.lane_following_maneuver.lane_ids[0]);
+                ROS_DEBUG_STREAM("current lanelet id: " << current_laneid);
+                lanelet::ConstLanelet current_lanelet = wm->getMap()->laneletLayer.get(current_laneid);
+                lanelets.push_back(current_lanelet);
+                ROS_DEBUG_STREAM("current lanelet id added");
 
-                if (maneuver.lane_following_maneuver.lane_ids.size()>1)
+                auto following_lanelets = wm->getMapRoutingGraph()->following(current_lanelet);
+
+                // skipping the current lanelet
+                size_t num_defined_lanelets = std::min(maneuver.lane_following_maneuver.lane_ids.size(), following_lanelets.size());
+                ROS_DEBUG_STREAM("num_defined_lanelets: " << num_defined_lanelets);
+
+                if (num_defined_lanelets > 1)
                 {
-                    lane_id = stoi(maneuver.lane_following_maneuver.lane_ids[1]);
-                    ROS_DEBUG_STREAM("more extracted id: " << lane_id);
-                    new_lanelet = wm->getMap()->laneletLayer.get(lane_id);
-                    lanelets.push_back(new_lanelet);
+                    for (size_t i=0; i<num_defined_lanelets-1; i++)
+                    {
+                        int lane_id = stoi(maneuver.lane_following_maneuver.lane_ids[i+1]);
+                        if (lane_id == following_lanelets[i].id())
+                        {
+                            lanelet::ConstLanelet new_lanelet = wm->getMap()->laneletLayer.get(lane_id);
+                            lanelets.push_back(new_lanelet);
+                        }
+                        else
+                        {
+                            ROS_DEBUG_STREAM("list of lanelets are not following each other");
+                        }
+                        
+                    }
                 }
-            } 
+
+                
+                else
+                {
+                    ROS_DEBUG_STREAM("Only one lanelet defined");
+                }
+            }
+
+            // auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack, true, true);
+
+
+            // bool lanelets_defined = !maneuver.lane_following_maneuver.lane_ids.empty();
+            // ROS_DEBUG_STREAM("lanelets_defined: " << lanelets_defined);
+            // bool isFromPlatooning = maneuver.lane_following_maneuver.parameters.planning_strategic_plugin == "PlatooningStrategicIHPPlugin";
+            // ROS_DEBUG_STREAM("isFromPlatooning: " << isFromPlatooning);
+
+            // if (lanelets_defined && isFromPlatooning)
+            // {
+            //     lanelets = {};
+            //     int lane_id = stoi(maneuver.lane_following_maneuver.lane_ids[0]);
+            //     ROS_DEBUG_STREAM("extracted id: " << lane_id);
+            //     lanelet::ConstLanelet new_lanelet = wm->getMap()->laneletLayer.get(lane_id);
+            //     lanelets.push_back(new_lanelet);
+
+            //     if (maneuver.lane_following_maneuver.lane_ids.size()>1)
+            //     {
+            //         lane_id = stoi(maneuver.lane_following_maneuver.lane_ids[1]);
+            //         ROS_DEBUG_STREAM("more extracted id: " << lane_id);
+            //         new_lanelet = wm->getMap()->laneletLayer.get(lane_id);
+            //         lanelets.push_back(new_lanelet);
+            //     }
+            // } 
 
 
 
