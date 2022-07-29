@@ -76,48 +76,40 @@ namespace basic_autonomy
 
             cav_msgs::LaneFollowingManeuver lane_following_maneuver = maneuver.lane_following_maneuver;
 
-            std::vector<lanelet::ConstLanelet> lanelets;
-
-            bool lanelets_defined = !maneuver.lane_following_maneuver.lane_ids.empty();
-
-            if (lanelets_defined)
+            std::vector<lanelet::ConstLanelet> lanelets = { wm->getMap()->laneletLayer.get(stoi(lane_following_maneuver.lane_ids[0]))}; // Accept first lanelet reguardless
+            for (size_t i = 1; i < lane_following_maneuver.lane_ids.size(); i++) // Iterate over remaining lanelets and check if they are followers of the previous lanelet
             {
-                int current_laneid = stoi(maneuver.lane_following_maneuver.lane_ids[0]);
-                ROS_DEBUG_STREAM("current lanelet id: " << current_laneid);
-                lanelet::ConstLanelet current_lanelet = wm->getMap()->laneletLayer.get(current_laneid);
-                lanelets.push_back(current_lanelet);
-                ROS_DEBUG_STREAM("current lanelet id added");
+                auto ll_id = lane_following_maneuver.lane_ids[i];
+                int cur_id = stoi(ll_id);
+                auto cur_ll = wm->getMap()->laneletLayer.get(cur_id);
+                auto following_lanelets = wm->getMapRoutingGraph()->following(lanelets.back());
 
-                auto following_lanelets = wm->getMapRoutingGraph()->following(current_lanelet);
-
-                // skipping the current lanelet
-                size_t num_defined_lanelets = std::min(maneuver.lane_following_maneuver.lane_ids.size(), following_lanelets.size());
-                ROS_DEBUG_STREAM("num_defined_lanelets: " << num_defined_lanelets);
-
-                if (num_defined_lanelets > 1)
+                bool is_follower = false;
+                for (auto follower_ll : following_lanelets )
                 {
-                    for (size_t i=0; i<num_defined_lanelets-1; i++)
+                    if (follower_ll.id() == cur_ll.id())
                     {
-                        int lane_id = stoi(maneuver.lane_following_maneuver.lane_ids[i+1]);
-                        if (lane_id == following_lanelets[i].id())
-                        {
-                            lanelet::ConstLanelet new_lanelet = wm->getMap()->laneletLayer.get(lane_id);
-                            lanelets.push_back(new_lanelet);
-                        }
-                        else
-                        {
-                            ROS_DEBUG_STREAM("list of lanelets are not following each other");
-                        }
-                        
+                        is_follower = true;
+                        break;
                     }
                 }
 
-                
-                else
+                if (!is_follower)
                 {
-                    ROS_DEBUG_STREAM("Only one lanelet defined");
+                    std::invalid_argument("Invalid list of lanelets they are not followers");
                 }
+
+                lanelets.push_back(cur_ll); // Keep lanelet
+
             }
+
+            auto extra_following_lanelets = wm->getMapRoutingGraph()->following(lanelets.back());
+            if (!extra_following_lanelets.empty())
+            {
+                lanelets.push_back(extra_following_lanelets[0]);
+            }
+
+            
 
             // auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack, true, true);
 
