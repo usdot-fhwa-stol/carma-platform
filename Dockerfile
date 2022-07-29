@@ -33,7 +33,7 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 
-FROM usdotfhwastoldev/autoware.ai:develop AS base-image
+FROM usdotfhwastol/autoware.ai:carma-system-4.2.0 AS base-image
 
 FROM base-image AS source-code
 
