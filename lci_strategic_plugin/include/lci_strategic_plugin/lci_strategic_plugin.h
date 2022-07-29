@@ -20,9 +20,12 @@
 #include <string>
 #include <cav_srvs/PlanManeuvers.h>
 #include <cav_msgs/Plugin.h>
+#include <cav_msgs/MobilityOperation.h>
+#include <cav_msgs/BSM.h>
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
 #include <carma_utils/CARMAUtils.h>
+#include <bsm_helper/bsm_helper.h>
 #include <carma_wm/Geometry.h>
 #include <lanelet2_core/Forward.h>
 #include <gtest/gtest_prod.h>
@@ -42,6 +45,13 @@
 
 namespace lci_strategic_plugin
 {
+
+  enum class TurnDirection {
+            Straight,
+            Right,
+            Left
+    };
+
 /**
  * \brief Struct representing trajectory smoothing algorithm parameters using distance and acceleration
  *        Based on TSMO USE CASE 2. Chapter 2. Trajectory Smoothing
@@ -125,7 +135,79 @@ public:
    * \brief Lookup transfrom from front bumper to base link
    */
   void lookupFrontBumperTransform();
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  /**
+   * \brief callback function for mobility operation
+   * 
+   * \param msg input mobility operation msg
+   */
+  void mobilityOperationCb(const cav_msgs::MobilityOperationConstPtr& msg);
 
+  /**
+   * \brief BSM callback function
+   */
+  void BSMCb(const cav_msgs::BSMConstPtr& msg);
+
+ /**
+   * \brief parse strategy parameters
+   * 
+   * \param strategy_params input string of strategy params from mob op msg
+   */
+  void parseStrategyParams(const std::string& strategy_params);
+
+  /**
+   * \brief Generates Mobility Operation messages
+   *
+   * \return mobility operation msg for status and intent
+   */
+  cav_msgs::MobilityOperation generateMobilityOperation();
+
+  /**
+   * \brief Determine the turn direction at intersection
+   *
+   * \param lanelets_list List of lanelets crossed around the intersection area
+   *
+   * \return turn direction in format of straight, left, right
+   *
+   */
+  TurnDirection getTurnDirectionAtIntersection(std::vector<lanelet::ConstLanelet> lanelets_list);
+
+  /**
+   * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery and mobility operation msgs.
+   * 
+   * \return True if the node should continue running. False otherwise
+   */ 
+  bool mobilityPubSpin();
+
+
+  ros::Publisher mobility_operation_pub;
+  
+  
+  ////////// VARIABLES ///////////
+
+  TurnDirection intersection_turn_direction_ = TurnDirection::Straight;
+  bool approaching_light_controlled_interction_ = false;
+
+  // CARMA Streets Variakes
+  // timestamp for msg received from carma streets
+  unsigned long long street_msg_timestamp_ = 0;
+  // scheduled stop time
+  unsigned long long scheduled_stop_time_ = 0;
+  // scheduled enter time
+  unsigned long long scheduled_enter_time_ = 0;
+  // scheduled depart time
+  unsigned long long scheduled_depart_time_ = 0;
+  // scheduled latest depart position
+  uint32_t scheduled_departure_position_ = std::numeric_limits<uint32_t>::max();
+  // flag to show if the vehicle is allowed in intersection
+  bool is_allowed_int_ = false;
+  
+  //BSM
+  std::string bsm_id_ = "default_bsm_id";
+  uint8_t bsm_msg_count_ = 0;
+  uint16_t bsm_sec_mark_ = 0;
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    /**
    * \brief Useful metrics for LCI Plugin
    * \param case_num_ Current speed profile case generated
@@ -643,6 +725,8 @@ private:
   TrajectoryParams get_ts_case(double t, double et, double v0, double v1, double v_max, double v_min, double a_max, double a_min, double x0, double x_end, double dx, BoundaryDistances boundary_distances, std::vector<TrajectoryParams> params);
   
   ////////// VARIABLES ///////////
+  
+  std::string previous_strategy_params_ = "";  
 
   double max_comfort_accel_ = 2.0;  // acceleration rates after applying miltiplier
   double max_comfort_decel_ = -2.0; 

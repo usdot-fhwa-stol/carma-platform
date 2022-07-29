@@ -5,7 +5,8 @@ set -e
 # This script is used to build a package for the CARMA platform.
 # The script will create a new folder in the parent folder with the name of the package.
 # After calling the script the new package should be immeadiatly buildable
-# Usage: ./carma_package <this template_package path> <package name> <path to new package parent folder>
+# Usage: ./carma_package <this template_package path> <package name> <path to new package parent folder> <optional plugin type>
+# <optional plugin type> should be one of strategic, tactical, or control. If unset, then not a plugin 
 
 if [[ -z $BASH_VERSION  ]]; then
     echo "Bash version could not be checked. Please run this script using bash"
@@ -18,8 +19,8 @@ if [[ "${BASH_VERSION:0:1}" -lt 4 ]]; then
 fi
 
 
-if [[ "$#" -ne 3 ]]; then
-    echo "Incorrect inputs: Input must be of form <this template_package path> <package name> <path to new package parent folder>"
+if [[ "$#" -ne 3 && "$#" -ne 4 ]]; then
+    echo "Incorrect inputs: Input must be of form <this template_package path> <package name> <path to new package parent folder> <optional plugin type>. If set, <optional plugin type> should be one of strategic, tactical, or control. If unset, then not a plugin"
     exit 2
 fi
 
@@ -50,6 +51,25 @@ if [[ ! -d ${package_parent_path} ]]; then
     exit 2
 fi
 
+plugin_type=$4
+
+if [ "$plugin_type" = "strategic" ] || [ "$plugin_type" = "tactical" ] || [ "$plugin_type" = "control" ]; then
+   
+    echo "Making plugin of type: $plugin_type"
+
+    base_node_dep='<depend>carma_guidance_plugins<\/depend>'
+    
+elif [[ -z ${plugin_type} ]]; then
+
+    echo "Plugin type not provided assuming standard node (not a plugin)"
+    plugin_type="none"
+    base_node_dep=''
+
+else
+    echo "Plugin type not valid. Must be one of strategic, tactical, or control. If not making a plugin leave field empty" 
+    exit 2
+fi
+
 target_path=$(realpath ${package_parent_path}/${package_name})
 
 # Copy the template_package to the new package
@@ -64,9 +84,39 @@ if [[ $PWD != $(realpath ${target_path}) ]]; then
     exit 2
 fi
 
+# Cleanup alternative node files based on user specified type befoe substitutions
+if [ ! "$plugin_type"  = "none" ]; then
+
+    rm include/template_package/template_package_node.hpp
+    rm src/template_package_node.cpp
+
+fi
+    
+if [ ! "$plugin_type" = "strategic" ]; then
+
+    rm include/template_package/template_strategic_plugin_node.hpp
+    rm src/template_strategic_plugin_node.cpp
+fi
+
+if [ ! "$plugin_type" = "tactical" ]; then
+    
+    rm include/template_package/template_tactical_plugin_node.hpp
+    rm src/template_tactical_plugin_node.cpp
+fi
+
+if [ ! "$plugin_type" = "control" ]; then
+
+    rm include/template_package/template_control_plugin_node.hpp
+    rm src/template_control_plugin_node.cpp
+
+fi
+
+
 # Perform substitutions
 find . -type f -exec sed -i "s/<SUB><package_name>/${package_name}/g" {} \;
 find . -type f -exec sed -i "s/<SUB><year>/${current_year}/g" {} \;
+find . -type f -exec sed -i "s/<SUB><base_node_dep>/${base_node_dep}/g" {} \;
+
 
 # Update file names for new package
 shopt -s globstar
@@ -76,7 +126,14 @@ for f in ./**; do
         continue
     fi
 
+    # Here the files will be renamed. 
+    # Since the user must specify one of none, strategic, tactical, or control and we delete the conflicting files above
+    # We should be able to safely replace all the rules even when unused without conflict
     new_name=$(echo $f | sed "s/template_package/${package_name}/g")
+    new_name=$(echo $new_name | sed "s/template_strategic_plugin/${package_name}/g")
+    new_name=$(echo $new_name | sed "s/template_tactical_plugin/${package_name}/g")
+    new_name=$(echo $new_name | sed "s/template_control_plugin/${package_name}/g")
+
     directory_name=$(dirname $new_name)
     if [[ ! -d $directory_name ]]; then
         mkdir -p $directory_name
