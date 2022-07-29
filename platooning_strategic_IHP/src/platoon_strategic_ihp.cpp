@@ -3351,7 +3351,7 @@ namespace platoon_strategic_ihp
 
                     auto relation = wm_->getMapRoutingGraph()->routingRelation(starting_lanelet, ending_lanelet);
                     bool lanechangePossible = false;
-                    
+                    // TODO: Assuming a lane change is only needed from an adjacent left/right lanelet. Only valid for IHP platooning. Need to generalize in future.
                     if (relation == lanelet::routing::RelationType::Left || relation == lanelet::routing::RelationType::Right)
                     {
                         lanechangePossible = true;
