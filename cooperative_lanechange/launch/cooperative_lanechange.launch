@@ -21,6 +21,7 @@ Loads parameters and configures logging for the node
  
 -->
 <launch>
-    <rosparam command="load" file="$(find cooperative_lanechange)/config/parameters.yaml"/>
-    <node name="cooperative_lanechange" pkg="cooperative_lanechange" type="cooperative_lanechange" output="log"/>
+    <node name="cooperative_lanechange" pkg="cooperative_lanechange" type="cooperative_lanechange" output="log">
+      <rosparam command="load" file="$(find cooperative_lanechange)/config/parameters.yaml"/>
+    </node>
 </launch>

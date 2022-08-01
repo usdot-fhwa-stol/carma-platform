@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,7 +41,7 @@ void IndexedDistanceMap::pushBack(const lanelet::LineString2d& ls)
   id_index_map[ls.id()] = std::make_pair(ls_i, 0);  // Add linestirng id
 }
 
-size_t IndexedDistanceMap::getElementIndexByDistance(double distance) const {
+std::pair<size_t, size_t> IndexedDistanceMap::getElementIndexByDistance(double distance, bool get_point) const {
   if (distance < 0) {
     throw std::invalid_argument("Distance must non-negative: " + std::to_string(distance));
   }
@@ -54,10 +54,27 @@ size_t IndexedDistanceMap::getElementIndexByDistance(double distance) const {
 
   auto low = std::lower_bound (accum_lengths.begin(), accum_lengths.end(), distance, // Binary search to find the index 
     [](const std::tuple<std::vector<double>, double>& a, const double& b){return std::get<1>(a) < b;});
+  
+  size_t ls_index = 0;
   if (low == accum_lengths.end()) { // If we reached the end, it means we should pick the final point since we already checked the bounds
-    return accum_lengths.size() - 1;
+    ls_index = accum_lengths.size() - 1;
+  } else {
+    ls_index = std::max(low - accum_lengths.begin() - 1, (long int)0);
   }
-  return low - accum_lengths.begin();
+
+  if (!get_point) { // If we are looking for the linestring index then return
+    return std::make_pair(ls_index, (size_t) 0);
+  }
+
+  // If we are looking for the point index then calculate the index in the same manner as before
+  double dist_to_ls = distanceToElement(ls_index);
+  double relative_dist = distance - dist_to_ls;
+
+  auto low_point = std::lower_bound (std::get<0>(accum_lengths[ls_index]).begin(), std::get<0>(accum_lengths[ls_index]).end(), relative_dist, // Binary search to find the point index 
+    [](const double& a, const double& b){ return a < b; });
+  
+  size_t point_idx = std::max(low_point - std::get<0>(accum_lengths[ls_index]).begin() - 1, (long int)0);
+  return std::make_pair(ls_index, point_idx);
 }
 
 double IndexedDistanceMap::elementLength(size_t index) const

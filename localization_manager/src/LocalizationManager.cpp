@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -241,6 +241,12 @@ void LocalizationManager::posePubTick(const ros::TimerEvent& te)
     {
       transition_table_.signal(LocalizationSignal::POOR_NDT_FREQ_OR_FITNESS_SCORE);
     }
+  }
+
+  // check if last gnss time stamp is older than threshold and send the corresponding signal
+  if (last_raw_gnss_value_ && ros::Time::now() - last_raw_gnss_value_->header.stamp > ros::Duration(config_.gnss_data_timeout / 1000.0))
+  {
+    transition_table_.signal(LocalizationSignal::GNSS_DATA_TIMEOUT);
   }
 
   // Used in LocalizerMode::GNSS_WITH_NDT_INIT 

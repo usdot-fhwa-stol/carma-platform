@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,6 +31,9 @@
 #include <cav_msgs/RoadwayObstacleList.h>
 #include <cav_msgs/ExternalObject.h>
 #include <cav_msgs/ExternalObjectList.h>
+#include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
+#include <lanelet2_extension/regulatory_elements/SignalizedIntersection.h>
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 #include "TrackPos.h"
 
 namespace carma_wm
@@ -116,20 +119,22 @@ public:
   virtual TrackPos routeTrackPos(const lanelet::BasicPoint2d& point) const = 0;
 
   /*! \brief Returns a list of lanelets which are part of the route and whose downtrack bounds exist within the provided
-   * start and end distances The bounds are included so areas which end exactly at start or start exactly at end are
-   * included
+   * start and end distances. 
    *
    * \param start The starting downtrack for the query
-   * \param end The ending downtrack for the query
+   * \param end The ending downtrack for the query.
    * \param shortest_path_only If true the lanelets returned will be part of the route shortest path
+   * param bounds_inclusive If true, the bounds are included so areas which end exactly at start or start exactly at end are
+   * included. NOTE: Non-inclusive behavior toggled by !bounds_inclusive is not equivalent to a != check as it merely shrinks bounds
+   * by 0.00001 to get new start and end distances. 
    *
-   * \throws std::invalid_argument If the route is not yet loaded or if start >= end
+   * \throws std::invalid_argument If the route is not yet loaded or if start > end
    *
    * \return A list of lanelets which contain regions that lie between start and end along the route. This function will
    * not return lanelets which are not part of the route
    */
-  virtual std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end,
-                                                                bool shortest_path_only = false) const = 0;
+  virtual std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false,
+                                                                bool bounds_inclusive = true) const = 0;
 
   /*! \brief Samples the route centerline between the provided downtracks with the provided step size. 
    *         At lane changes the points should exhibit a discontinuous jump at the end of the initial lanelet
@@ -182,6 +187,12 @@ public:
    */
   virtual LaneletRouteConstPtr getRoute() const = 0;
 
+  /*! \brief Get the current route name. 
+   *
+   * \return A string that matches the name of the current route.
+   */
+  virtual std::string getRouteName() const = 0;
+
   /*! \brief Get trackpos of the end of route point relative to the route
    *
    * \return Trackpos
@@ -211,7 +222,15 @@ public:
    * no rule set is available for the requested participant.
    */
   virtual lanelet::Optional<TrafficRulesConstPtr>
-  getTrafficRules(const std::string& participant = lanelet::Participants::Vehicle) const = 0;
+  getTrafficRules(const std::string& participant) const = 0;
+
+  /**
+   * @brief Get the Traffic Rules object 
+   * @return  Optional Shared pointer to an intialized traffic rules object which is used by carma. A default participant value will be used
+   * in case setVehicleParticipationType is not called. Acceptable participants are Vehicle, VehicleCar, and VehicleTruck
+   */
+  virtual lanelet::Optional<TrafficRulesConstPtr>
+  getTrafficRules() const = 0;
 
   /**
    * \brief Converts an ExternalObject in a RoadwayObstacle by mapping its position onto the semantic map. Can also be
@@ -320,24 +339,87 @@ public:
                                                      const LaneSection& section = LANE_AHEAD) const = 0;
 
   /**
-   * \brief Gets the underlying lanelet, given the cartesian point on the map
-   *
-   * \param point Cartesian point to check the corressponding lanelet
-   * \param n     Number of lanelets to return. Default is 10. As there could be many lanelets overlapping.
-   * \throw std::invalid_argument if the map is not set, contains no lanelets
-   *
-   * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
-   */
-  virtual std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point,
-                                                             const unsigned int n) const = 0;
-
-  /**
    * \brief Returns a monotonically increasing version number which represents the version stamp of the map geometry data
    *        It is possible for the non-geometric aspects of the map to change without this value increasing.
    * 
    * \return map version
    */ 
   virtual size_t getMapVersion() const = 0;
+
+  /**
+   * \brief Gets the underlying lanelet, given the cartesian point on the map
+   *
+   * \param point         Cartesian point to check the corressponding lanelet
+   * \param n             Number of lanelets to return. Default is 10. As there could be many lanelets overlapping.
+   * \throw std::invalid_argument if the map is not set, contains no lanelets
+   *
+   * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
+   */
+  virtual std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n = 10) const = 0;
+
+    /**
+   * \brief  Return a list of traffic lights/intersections along the current route.  
+   * The traffic lights along a route and the next traffic light ahead of us on the route specifically, 
+   * so a sorted list (by downtrack distance) of traffic lights on the route ahead of us thus eliminating those behind the vehicle.
+   *
+   * \param loc location
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or route is not set
+   *
+   * \return list of traffic lights along the current route
+   */
+  virtual std::vector<lanelet::CarmaTrafficSignalPtr> getSignalsAlongRoute(const lanelet::BasicPoint2d& loc) const = 0;
+
+  /**
+   * \brief Returns the entry and exit lanelet of the signal along the SHORTEST PATH of route. This is useful if traffic_signal controls
+   *        both directions in an intersection for example. 
+   *
+   * \param traffic_signal traffic signal of interest
+   * \throw std::invalid_argument if nullptr is passed in traffic_signal
+   *
+   * \return pair of entry and exit lanelet of the signal along the route. boost::none if the given signal doesn't have both entry/exit pair along the shortest path route.
+   */
+  virtual boost::optional<std::pair<lanelet::ConstLanelet, lanelet::ConstLanelet>> getEntryExitOfSignalAlongRoute(const lanelet::CarmaTrafficSignalPtr& traffic_signal) const = 0;
+   
+  /**
+   * \brief  Return a list of all way stop intersections along the current route.  
+   * The tall way stop intersections along a route and the next all way stop intersections ahead of us on the route specifically, 
+   * so a sorted list (by downtrack distance) of all way stop intersections on the route ahead of us thus eliminating those behind the vehicle.
+   *
+   * \param loc location
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or route is not set
+   *
+   * \return list of all way stop intersections along the current route
+   */
+  virtual std::vector<std::shared_ptr<lanelet::AllWayStop>> getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const = 0;
+
+  /**
+   * \brief  Return a list of signalized intersections along the current route.  
+   * The signalized intersections along a route and the next signalized intersections ahead of us on the route specifically, 
+   * so a sorted list (by downtrack distance) of signalized intersections on the route ahead of us thus eliminating those behind the vehicle.
+   *
+   * \param loc location
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or route is not set
+   *
+   * \return list of signalized intersections along the current route
+   */
+  virtual std::vector<lanelet::SignalizedIntersectionPtr> getSignalizedIntersectionsAlongRoute(const lanelet::BasicPoint2d &loc) const = 0;
+
+  /**
+   * \brief Given the cartesian point on the map, tries to get the opposite direction lanelet on the left
+   *        This function is intended to find "adjacentLeft lanelets" that doesn't share points between lanelets
+   *        where adjacentLeft of lanelet library fails
+   *
+   * \param semantic_map  Lanelet Map Ptr
+   * \param point         Cartesian point to check the corressponding lanelet
+   * \param n             Number of lanelets to return. Default is 10. As there could be many lanelets overlapping.
+   * 
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or if adjacent lanelet is not opposite direction
+   * NOTE:  Only to be used on 2 lane, opposite direction road. Number of points in all linestrings are assumed to be roughly the same.
+   *        The point is assumed to be on roughly similar shape of overlapping lanelets if any
+   * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
+   */
+  virtual std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n = 10) const = 0;
+
 };
 
 // Helpful using declarations for carma_wm classes

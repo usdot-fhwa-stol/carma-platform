@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,6 @@
  */
 
 #include "driver_manager.h"
-
 namespace health_monitor
 {
 
@@ -29,6 +28,8 @@ namespace health_monitor
     {
         Entry driver_status(msg->status == cav_msgs::DriverStatus::OPERATIONAL || msg->status == cav_msgs::DriverStatus::DEGRADED,true, msg->name, current_time, 0, "");
         em_.update_entry(driver_status);
+        // NOTE: The following is a temporary hack to allow the lidar driver to be moved to ROS2 which will not use this node
+        Entry fake_entry(msg->status == cav_msgs::DriverStatus::OPERATIONAL,true, msg->name, current_time, 0, "");
     }
 
     void DriverManager::evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout)
@@ -77,6 +78,14 @@ namespace health_monitor
             }
             
         }
+
+        //////////////////////
+        // NOTE: THIS IS A MANUAL DISABLE OF ALL LIDAR AND GPS FAILURE DETECTION FOLLOWING THE ROS2 PORT
+        /////////////////////
+        lidar1=1;
+        lidar2=1;
+        gps=1;
+        /////////////////////
 
         //Decision making 
         if (ssc == 0)
@@ -138,7 +147,7 @@ namespace health_monitor
                 evaluate_sensor(ssc,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
             if(em_.is_lidar_gps_entry_required(i->name_)==0) //Lidar
-            {
+            {   
                 evaluate_sensor(lidar,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
             else if(em_.is_lidar_gps_entry_required(i->name_)==1) //GPS
@@ -150,6 +159,13 @@ namespace health_monitor
                 evaluate_sensor(camera,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
         }
+
+        //////////////////////
+        // NOTE: THIS IS A MANUAL DISABLE OF ALL LIDAR FAILURE DETECTION FOLLOWING THE ROS2 PORT
+        /////////////////////
+        lidar=1;
+        gps=1;
+        /////////////////////
 
         //Decision making 
         if(ssc==1)

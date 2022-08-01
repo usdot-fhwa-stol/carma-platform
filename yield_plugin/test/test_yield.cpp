@@ -33,7 +33,6 @@
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/primitives/Traits.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
-#include <lanelet2_extension/utility/query.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <carma_wm/MapConformer.h>
@@ -52,7 +51,7 @@ TEST(YieldPluginTest, test_polynomial_calc)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
 
   std::vector<double> coeff;
   coeff.push_back(2.0);
@@ -79,7 +78,7 @@ TEST(YieldPluginTest, test_polynomial_calc_derivative)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
 
   std::vector<double> coeff;
   coeff.push_back(2.0);
@@ -106,7 +105,7 @@ TEST(YieldPluginTest, MaxTrajectorySpeed)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
 
   std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points;
 
@@ -180,7 +179,7 @@ TEST(YieldPluginTest, test_update_traj)
   config.vehicle_height = 1;
   
   // std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
 
   
 
@@ -307,7 +306,7 @@ TEST(YieldPluginTest, test_update_traj2)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
 
   cav_msgs::TrajectoryPlan original_tp;
 
@@ -407,7 +406,7 @@ TEST(YieldPluginTest, test_update_traj_stop)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
 
   cav_msgs::TrajectoryPlan original_tp;
 
@@ -514,7 +513,7 @@ TEST(YieldPluginTest, jmt_traj)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
 
   cav_msgs::TrajectoryPlan original_tp;
 
@@ -591,7 +590,7 @@ TEST(YieldPluginTest, min_digital_gap)
   wm->setMap(map);
 
   YieldPluginConfig config;
-  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
 
   cav_msgs::TrajectoryPlan original_tp;
 

@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -69,6 +69,7 @@ enum class LocalizationSignal
   TIMEOUT,
   LIDAR_SENSOR_FAILURE,
   LIDAR_INITIALIZED_SWITCH_TO_GPS,
+  GNSS_DATA_TIMEOUT
 };
 /**
  * \brief Stream operator for LocalizationSignal enum.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2020-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 
 #include <gmock/gmock.h>
 #include <carma_wm/TrafficControl.h>
-#include <lanelet2_extension/utility/message_conversion.h>
+#include <autoware_lanelet2_ros_interface/utility/message_conversion.h>
 #include <memory>
 #include <chrono>
 #include <ctime>
@@ -67,7 +67,7 @@ TEST(TrafficControl, TrafficControlBinMsgTest)
   // from broadcaster
   autoware_lanelet2_msgs::MapBin gf_obj_msg;
   
-  auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
+  auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, {ll_1}));
   ROS_INFO("Below null pointer error message is expected");
   auto null = nullptr;
   carma_wm::toBinMsg(send_data, null);
@@ -89,6 +89,9 @@ TEST(TrafficControl, TrafficControlBinMsgTest)
   ASSERT_EQ(data_received->update_list_[0].first, gf_ptr->update_list_[0].first);
   ASSERT_NE(data_received->update_list_[0].second, gf_ptr->update_list_[0].second); // they are now not same because of serialization, the data address is different
                                                                                     // but again, they are same elements
+  ASSERT_EQ(data_received->lanelet_additions_.size(), 1);
+  ASSERT_EQ(data_received->lanelet_additions_[0].id(), ll_1.id());
+
 }
 
 }  // namespace carma_wm_ctrl

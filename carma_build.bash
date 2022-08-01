@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#  Copyright (C) 2018-2020 LEIDOS.
+#  Copyright (C) 2018-2021 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
@@ -97,7 +97,12 @@ fi
 ###
 # Build CARMA 
 ###
+
+source /opt/autoware.ai/ros/install/setup.bash
+echo "Autoware built successfuly. Binaries sourced from $(realpath ./install/setup.bash)"
+
 echo "Building CARMA"
 cd ${carma_workspace}
+
 colcon build --cmake-args ${carma_build_args}
-echo echo "CARMA built successfuly. Binaries sourced from $(realpath ./install/setup.bash)"
+echo "CARMA built successfuly. Binaries sourced from $(realpath ./install/setup.bash)"

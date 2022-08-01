@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2018-2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -14,72 +14,52 @@
 # the License.
 #
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(trajectory_visualizer)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(2)
+carma_package()
 
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  autoware_msgs
-  carma_utils
-  cav_msgs
-)
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-## System dependencies are found with CMake's conventions
+# Name build targets
+set(node_exec trajectory_visualizer_exec)
+set(node_lib trajectory_visualizer_lib)
 
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp autoware_msgs carma_utils cav_msgs
-)
-
-###########
-## Build ##
-###########
-
+# Includes
 include_directories(
-  ${catkin_INCLUDE_DIRS}
   include
 )
 
-add_executable( ${PROJECT_NAME}
-  src/main.cpp
-  src/trajectory_visualizer.cpp
+ament_auto_add_library(${node_lib} SHARED
+        src/trajectory_visualizer.cpp
 )
 
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-
-
-#############
-## Install ##
-#############
-
-install(DIRECTORY include
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
 )
 
-## Install C++
-install(TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# Register component
+rclcpp_components_register_nodes(${node_lib} "trajectory_visualizer::TrajectoryVisualizer")
+
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_exec}
+        ${node_lib}
 )
 
-## Install Other Resources
-install(DIRECTORY launch config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+# Testing
+if(BUILD_TESTING) 
 
-#############
-## Testing ##
-#############
-# no test currently
+find_package(ament_lint_auto REQUIRED)
+ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+
+endif()
+
+# Install
+ament_auto_package(
+        INSTALL_TO_SHARE config launch
+)

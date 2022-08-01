@@ -1,6 +1,230 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 3.11.0, released Feb 3rd, 2021
+----------------------------------------
+
+**Summary:**
+Carma-platform release version 3.11.0 is the final version which is exclusively ROS1. It has one major enhancement which is to enable Cooperative Right-of-Way (CRW), stop sign intersection traversal.This release also includes new enhancements in Carma-streets, as listed below, to aid with the stop sign intersection traversal.Subsequent versions will contain both ROS1 and ROS2 code as the system is transitioned from the former to the latter. In addition to the stop sign intersection traversal enhancements, several bug fixes are included in this release.
+
+Note: V2X Hub release 7.1.0 includes a CARMA streets plugin for the following operations:
+-	Receive, decode and forward the BSM, Mobility Operations Message and Mobility Path Message to CARMA Streets.
+-	Broadcast schedule plan using Mobility Operations Message received from CARMA Streets.
+
+CARMA-Platform:
+
+Enhancements in this release:
+-	Issue 1563: The following new Plugins and updates have been added to the CARMA code bases:
+1.Added Stop Controlled Intersection Strategic Plugin to communicate with CARMA Streets that includes broadcasting the status and intent of the vehicle. 
+-	Receiving schedule messages from CARMA Streets and processing them.
+-	Generate maneuvers based on the received schedule for approaching the intersection and stopping at the stop bar through the Strategic Plugin.
+2.Added Stop Controlled Intersection Tactical Plugin in CARMA Platform for generating trajectories according to the Trajectory Smoothing (TS) logic.
+-	Issue 1584: Updated stop and wait plugin with a moving average filter to smooth the stopping behavior.
+
+Fixes in this release:
+-	Issue 1519: Fixed both Mobility Path and Mobility Operation header host BSM Id by changing the length from 10 digits to 8 digits with total length to send cpp message node. 
+-	Issue 1552: Fixed Mobility Path encoder error by Llimiting the number of mobility path offset messages to 60.
+-	Issue 1569: Fixed the BSM speed issues by updating the BSM generator launch files. 
+-	Issue 1572& 1573: Updated parameters and logic to stop and wait plugin to prevent acceleration when the vehicle was trying to slow down.
+-	Issue 1582: Fixed vehicle stops before 3 meters away from the stop line and wait for intersection access. 
+-	Issue 1592: Fixed Stopping behavior of vehicle at intersection by updating the parameters of involved plugins to minimize jerkiness and also ensure the vehicle stops smoothly.
+
+CARMA-Streets:
+
+Enhancement in this release:
+-	Issue 86: Added an open source software to monitor Kafka traffic to collect performance data and calculate metrics.Also added environment variables to set Kafka log retention time. 
+-	Issue 87: Added a message logger service to the scheduling service to log scheduling logic calculations through a CSV log file for every scheduling calculation.
+
+Fixes in this release:
+-	Issue 72:  Fixed Sonar scan Analysis on the intersection model source code by excluding Open API generated code for the REST server under the intersection model directory.
+- Issue 69: Fixed distance to end of Lanelet calculation since it sometimes generated the incorrect value, also removed code that is not needed.
+-	Issue 79: Fixed delayed mobility path messages since it sometimes arrives more than 0.1s later than the mobility operation message which affects the mapping function between these two messages.
+-	Issue 83&84: Updated frequency parameter in manifest JSON file to configure frequency of sending scheduling plans and set the scheduling delta to 0.2 sec.
+-	Issue 88: Removed two Kafka topics v2xhub_in and v2xhub_out initially created to demo the CARMA-Streets V2X-Hub plugin’s capability to transmit J2735 messages to a CARMA-Streets deployment via Kafka.
+-	Issue 92: Fixed Min 300 to max 900 milliseconds delay in these lanelet2 related functions for one vehicle testing. When one or more vehicles sends a message concurrently, the delay can be incrementally larger. 
+
+
+Version 3.10.0, released Dec 17th, 2021
+----------------------------------------
+
+**Summary:**
+Carma-platform release version 3.10.0 is comprised of two major enhancements. First, ROS1 Noetic (Updating the underlying ROS version from ROS Kinetic to ROS Noetic). Second updating the underlying OS from Ubuntu 16.04 to Ubuntu 20.04 to support the ROS2 migration which will use Ubuntu 20.04. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
+
+Enhancements in this release:
+-	The following changes have been made to the CARMA code bases. 
+1.	Docker base images updated to Ubuntu 20.04 and CUDA 11
+2.	ROS version changed to ROS Noetic
+3.	All python code updated from Python 2 to Python 3
+4.	All ROS package manifest files updated from version 2 to 3
+5.	Autoware.ai version updated from 1.13 to 1.14 except for the critical NDT node which remains on version 1.13 due to instability in the 1.14 version encountered during testing.
+6.	Lanelet2 HD maps library updated from v0.9 to v1.1.1
+7.	AVT Vimba Camera driver SDK version updated from v3.1 to v5.0
+8.	Default C++ version increased from C++ 11 to C++ 14
+9.	Handful of small code smells and compile warnings resolved.
+10.	Default ROS workspace structure changed so autoware.ai and carma-platform exist in the same source directory
+
+Fixes in this release:
+-	Issue 1496: Fixed No objects reported from lidar detection anomaly
+-	Issue 1490: Fixed platooning control package is missing autoware_msgs dependency
+-	Issue 1486: Fixed localization in release/elise is less stable then in 3.8
+-	Issue 1485: Fixed avt_vimba_camera driver is highly unstable in release/elise anomaly
+-	Issue 1484: Fixed Cuda version mismatch in Elise
+-	Issue 1477: Fixed Noetic version of carma-ssc-interface-wrapper-driver does not contain pacmod3 and kvaser_interface
+-	Issue 1436: Fixed Mock Controller Driver Dropping Connection Due to Message md5sum Mismatch.
+
+Version 3.9.0, released Dec 5th, 2021
+----------------------------------------
+
+**Summary:**
+Carma-platform release version 3.9.0 is comprised of one major enhancements. First, Updated Carma Freight Port Drayage plugin web service integration. Along with the above enhancement, several bug fixes and CI related enhancements are included in this release.
+
+Enhancements in this release:
+-	Issue 1438: Updated Port Drayage Plugin to publish UI Instructions to the Web UI when a route to a newly received destination has been generated.
+-	Issue 1416: Update Port Drayage plugin to receive PICKUP actions and to broadcast an arrival message when arriving at a 'PICKUP' location.
+-	Issue 1321: Added capability for CARMA Platform to generate a new active route based off a received destination point for Port Drayage.
+-	Issue 1252: Added incoming Mobility Operation message processing to Port Drayage Plugin when new Mobility Operation message with strategy carma/port drayage received by a carma vehicle and contents of the Mobility Operation message's strategy params field are stored in Port Drayage Worker.
+
+Fixes in this release:
+-	Issue 1534: Updated Port Drayage plugin to set its cmv_id using the vehicle_id global parameter, which includes the vehicle's license plate information and updated cmv_id to a string value.
+-	Issue 1479: Added combined_lidar_frame arg name in the launch files to have default frame for passenger vehicles and freightliners.
+-	Issue 1520&1515&1521:  Fixed a small bug in CLC “duration is out of 32-bit range" (from vehicle state having a speed of -nan in ILC logs) ~1-2 seconds after starting the lane change.
+-	Issue 1507: Fixed Input vectors empty exception sometimes at the end of the lane change from cooperative lane change plugin.
+-	Issue 1506: Fixed Insufficient spline points exception from inlane-cruising when executing a lane change.
+-	Issue 1524: Fixed route node’s logic using non-down track calculation for route completion check. Which is using a different down track frame compliant calculation for its end of route check.
+-	Issue 125: Updated route event popup text from Restart to "Start A New Route" in web UI.
+-	Issue 91: Fixed strategy params parsing issues in carma-platform with replacing encoded quotation marks in received Mobility Operation message's strategy params field.
+
+
+Version 3.8.2, released Oct 22nd, 2021
+----------------------------------------
+
+**Summary:** 
+Carma-platform release version 3.8.2 is a hotfix release for 3.8.0.
+
+Fixes in this release:
+-	Issue 1489: Fixed stop and wait tactical plugin which uses constant vehicle acceleration specified through config parameters to bring the vehicle to a stop by sending acceleration value to the tactical plugin as a meta data in the maneuver message.
+-	Issue 147: Updated the IP Addresses listed in the drivers. Launch file for the forward-facing left and right cameras on two of the trucks (10004 and 80550).
+-	Issue 75: Fixed two LiDAR’s which were not calibrated on the carma white truck during verification testing.
+
+
+Version 3.8.1, released Oct 15th, 2021
+----------------------------------------
+
+**Summary:** 
+Carma-platform release version 3.8.1 is a hotfix release for 3.8.0.
+
+Fixes in this release:
+- Issue 1461: Fixed basic autonomy errors in inlane cruising to prevent planning maneuvers on top of themselves, by fixing broken maneuvers_to_points method that didn't properly track the processed lanelets.
+- Issue 1446: Fixed the work zone plugin by updating vehicle length parameter and modifying traffic light downtrack calculations to ensure that the target stopping location would be shifted backward by vehicle length.
+- Issue 1475 & 139: Fixed carma-platform and carma-config by carma-docker.launch file for each freightliner to pass in the correct LiDAR frame and fixed IP address of the front left camera in the blue truck.
+
+Version 3.8.0, released Sep 24th, 2021
+----------------------------------------
+
+**Summary:**
+Carma-platform release version 3.8.0 is comprised of two major enhancements. First, Cooperative Traffic Signaling (CTS), fixed signal transit for Work Zones using a SPaT message a vehicle plans a maneuver to proceed through the intersection as efficiently as possible, or come to a safe stop if needed. Second lane geometry updates affected by a geofence to split and stitch lanelets together to match the geofence requirements. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
+
+Enhancements in this release:
+-	Issue 1366: Added Work Zone use case node that can process intersection transit maneuvering messages sent from Carma Cloud.
+-	Issue 1363: Updated Work zone use case related map modification in Geofence, Developed logic to identify which lanelets are affected by a Geofence which involves a geometry change and how to split stitch lanelets together to match the work zone Geofence requirements.
+-	Issue 1377: Updated Strategic plugin to use Plan Maneuvers service call to include the initial vehicle state at the start of planning and removed duplicated code to get the current position/lane/velocity information in order to begin maneuver planning.
+
+Fixes in this release:
+-	Issue 1172: Updated Stop and Wait plugin to use a constant acceleration for planning stopping maneuvers at the end of a route and also updated In lane cruising to prevent overlapping points on lanelet transitions
+-	Issue 1371: Fixed both carma-platform and carma-msg’s Maneuver Parameters message value “negotiation type” is incorrectly spelled as "neogition_type" in multiple files.
+-	Issue 1383: Fixed Ci failing due to package of pure pursuit jerk wrapper in SonarQube.
+-	Issue 1461: Fixed basic autonomy introduces errors in in lane-cruising
+-	Issue 1420: Fixed Platform and UI need to process/display the SPAT correctly and distinguish which SPAT is from the approaching traffic signal controller for the SV as traffic signal intersection ID and group ID that are not available.
+
+Version 3.7.2, released Sep 1st, 2021
+----------------------------------------
+
+**Summary:** 
+Carma-platform release version 3.7.2 is a hotfix release for 3.7.0.
+
+Fixes in this release:
+-	Issue 1426: Route Following Plugin can seg fault in the presence of a lane change after a reroute.
+-	Issue 1427: Rerouting triggered multiple time from TIM geofence.
+-	Issue 1428: Excessive steering during lane change along curve at ACM 
+
+Version 3.7.0, released Aug 10th, 2021
+----------------------------------------
+
+**Summary:** 
+Carma-platform release version 3.7.0 is comprised of three major enhancements. First, Unobstructed lane change. Second Cooperative Lane Follow (CLF) - All Predecessor Following (APF) platooning. Third, Cooperative Traffic Management - Speed Advisory.  Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
+
+Enhancements in this release:
+-	Issue 1344: Added Platooning Strategic and developed Tactical and Control Plugins to enable CARMA Platform to perform platooning.
+
+Fixes in this release:
+-	Issue 957: Fixed Platooning code missing some of the mobility message fields where Platooning plugin messages are populated with correct data.
+-	Issue 1347: Fixed route following plugin and Inlane cruising plugin with error no points to fit in time span exception during platooning test.
+-	Issue 1351: Fixed Route Following Before passing the maneuver to the response the starting speed is updated but the ending speed is not changed and doesn't update speed limit if route not updated.
+-	Issue 1356: Fixed Routing Graph creation takes unacceptably long time on ACM map.
+-	Issue 1360: Fixed Smooth speed change when the control plugin first changes to platooning control.
+-	Issue 1364: Fixed Platoon gap control by adding last speed command as current speed for smooth speed transition.
+-	Issue 1227: Fixed cooperative lane change functionality by adding necessary components relates to yield plugin and fixed few other issues for CLC and integration tested.
+
+Version 3.6.0, released June 29th, 2021
+-------------------------------------
+
+**Summary:**
+Carma-platform release version 3.6.0 is comprised of four major enhancements. First, Added ADS unobstructed lane change. Second CTM Move-over law –When receiving a request from an emergency vehicle, CARMA Platform plans move over to the adjacent open lane. Third, Added Geofence speed, Gap control and lane closure. And fourth, added Carma-cloud integration. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
+
+Enhancements in this release:
+-	Issue 1195: Added new functions to World Model interface, like route conversion to map and sample Route Points.
+-	Issue 1199: Added a new node that visualizes host's and incoming mobility path’s location and received mobility path is synchronized to that of the host by matching the time steps and interpolating the points.
+-	Issue 1206: Added a debug topic to in-lane cruising to improve the data analysis experience. 
+-	Issue 1209: Updated Yield plugin to receive adjustable inter-vehicle gap from the map and modify the trajectory accordingly.
+-	Issue 1216: Added the new Carma node handle spin behavior which improved vehicle control by reducing planning and feedback communications latencies. 
+-	Issue 1234: Added lane change status publisher to Yield plugin constructor to ensure the topic is published properly.
+-	Issue 1235: Added a ROS parameter for choosing the tactical plugin to be used for lane changing.
+-	Issue 1275: Updated WM Broadcaster logic to determine when the host vehicle is within an active Geofence.
+-	Issue 1296: Updated TCM Path nodes to match the logic of Carma-cloud with absolute Cartesian coordinates for each nodes.
+
+Fixes in this release:
+-	Issue 1163: Modified the object detection tracking node to accurately relay the object id for classification.
+-	Issue 509: Arbitrator doesn't handle shutdown state properly.
+-	Issue 1217: The EKF node and the pose to tf node both appear to be outputting the same transform which results in a frequency of 100Hz which will likely have a negative impact on system performance due to the extra high data frequency.
+-	Issue 1223: Fixed traffic incident parser node georeference remap to /map param loader/georeference.
+-	Issue 1231&866: Control requests are supposed to be published at periodic intervals (10s) after a route is selected.
+-	Issue 1232: Fixed a number of issues with the TIM use case functionality. Correctly sets the schedule for the control messages coming out of the traffic incident parser node.
+-	Issue 1244: Motion prediction reports wrong speed on prediction state part of roadway object message.
+-	Issue 1267: Fixed Incorrect node placement from traffic incident parser node.
+-	Issue 1270: TIM scenario vehicle speed up to configured limit instead of slowing down when in Geofence region.
+-	Issue 1283: Fixed TCR timer after selecting a route, the WMB should broadcast constantly every 10 seconds.
+
+Version 3.5.3, released April 9th, 2021
+----------------------------------------------
+
+**Summary:**
+carma-platform release version 3.5.3 is comprised of five major enhancements. First, Added Automated Driving System (ADS) Lane Follow. Second Added ADS Motion Control. Third, ADS Perception. Fourth, ADS Planning. And fifth Operator UI. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
+
+Enhancements in this release:
+- Issue 731: Updated the platooning tactical plugin to be compatible with the new routing mechanism of CARMA that uses vector map instead of recorded waypoints.
+-	Issue 1022: Added Tactical Stop and Wait Maneuver Plugin that handles maneuver plans of type Stop and Wait.
+-	Issue 1023: Added filter to the incoming trajectory plan request so inlane cruising only works on lane following maneuver types.
+-	Issue 1031: Added a new carma_record package with rosbag record functionality which allows for carma config parameters to control the recording of certain Topics.
+-	Issue 1037&1038: Added Traffic Incident parser node is a standalone ROS node in the CARMA Platform which collects incoming broadcasted data from DSRC Driver also added Speed advisory.
+-	Issue1042: Added waypoint generation methodology to unobstructed lane change and updated the Lane Change Tactical Plugin to behave in a compatible manner with the new Guidance waypoint generation methodology.
+-	Issue 834&1049: Updated the in-lane cruising plugin to include object avoidance logic.
+-	Issue 1056: Added Feature mobility conversion to support the cooperative lane change design with Mobility Path data to get accurate predictions of vehicle motion for external object prediction.
+-	Issue 1089: Developed Yield tactical plugin for modifying trajectories to avoid surrounding objects and Updated In-Lane Cruising plugin to communicate with Yield plugin.
+-	Issue 1168: Added lane change status to the cooperative lane change plugin for displaying progress in the UI.
+-	Issue 1140: Added new GPS only with initialization mode this allows the GPS offset with the map to be computed which gives the resulting GPS only pose far more accuracy. 
+-	Issue 1072: Added Additional logic to include the camera as a required driver in the health monitor node and system recognizes the camera's driver status sends the appropriate alert messages to the health monitor.
+
+Fixes in this release:
+-	Issue 992: After receiving a response from the truck, the appropriate truck image does not always load and a broken link is shown.
+-	Issue 1057: After getting a left route event unable to reselect the same route on the UI as receiving the already following route error.
+-	Issue 1060: where the vehicle doesn't publish a route completed event after stopping at the end of the route.
+-	Issue 1062: Non-valid route files reported from route node to UI as "0".
+-	Issue 1028: On implementing the end of route behavior Trajectory executor issues error "Ran out of trajectory" at route end.
+-	Issue 1189: Restrict routes which consist of a shortest path with duplicate lanelet IDs from being generated
+-	Issue 1114: In-Lane cruising does not always select the shortest path lanelet when there is an adjacent lanelet going in the same direction.
+-	Issue 1130: Fixed the required plugins configuration file to fix the UI display of required plugins to have Route Following, InLane Cruising Plugin, Stop and Wait Plugin, Pure Pursuit.
+-	Issue 1160&1164: The predicted and current velocities of the roadway obstacle when detected on the /environment/roadway objects topic is always zero.
+
 Version 3.4.2, released December 15th, 2020
 --------------------------------------------------------
 

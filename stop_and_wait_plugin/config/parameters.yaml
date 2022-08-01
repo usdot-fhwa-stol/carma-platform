@@ -2,17 +2,31 @@
 # Units: seconds
 minimal_trajectory_duration : 6.0
 
-#Int:Amount to downsample input lanelet centerline data.Corresponds to saving each nth point.
-downsample_ratio: 8
+# Double: Size of timesteps between stopped trajectory points when stopped
+# Units: seconds
+stop_timestep : 0.1
 
-# Double: The maximum acceptable jerk for completing maneuver 
-# Units: meters per second cube
-max_jerk_limit: 3.0
+# Double: Downtrack distance between trajectory points
+# Units: m
+trajectory_step_size : 1.0
 
-# Double: The minimum timestep used for planning trajectory
-#Units: seconds
-min_timestep : 0.1
+# Double: multiplier to apply to the maximum allowable vehicle deceleration limit so we plan under our capabilities
+# Units: percentage
+accel_limit_multiplier : 0.95
 
-# Double: The minimum jerk below which slow down is ignored, constant speed is assumed, in m/s2
-#Units: meters per second cube
-min_jerk: 0.01
+# Double: Minimum speed the vehicle can command before being ready to stop
+# Units: m/s
+crawl_speed : 0.91
+
+# Double: The gap in meters between points sampled from the lanelet centerlines for planning trajectory positions
+# Units: m
+centerline_sampling_spacing: 1.0
+
+
+# Double: The default buffer in meters used for where the vehicle can come to a stop during execution. 
+#         This value is overriden by the first value in maneuver.parameters.float_valued_meta_data[]
+# Units: m
+default_stopping_buffer: 5.0
+
+#Double: Window size for the moving average filter used for smoothing the speeds.
+moving_average_window_size: 19.0

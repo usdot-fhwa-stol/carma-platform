@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2020-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -549,7 +549,7 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
 
 void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit)
 {
-
+  
   auto default_traffic_rules = getAllGermanTrafficRules();  // Use german traffic rules as default as they most closely
                                                             // match the generic traffic rules
   // Handle lanelets
@@ -569,5 +569,5 @@ void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit
     addInferredPassingControlLine(area, map);
   }
 }
-};  // namespace MapConformer
+}  // namespace MapConformer
 }  // namespace lanelet

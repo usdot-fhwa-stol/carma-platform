@@ -1,10 +1,24 @@
 # The minimum duration of a maneuver plan, in seconds
-minimal_maneuver_duration: 15
+minimal_plan_duration: 15
 
-#Double : The jerk used to bring vehicle to a halt at end of route
-#Unit : m/s3
-route_end_jerk : 0.05
+# Multiplier for the acceleration limit which will be used for formulating the stopping maneuver
+# This multiplier should be a bit lower than whatever plugin will be used to bring the vehicle to a stop to provide buffer in planning
+stopping_accel_limit_multiplier: 0.5
 
 # Double : Extra time allowed for lane change, in order to make transition smooth
 #Unit : seconds
 buffer_lanechange_time : 3.0
+
+# String : The tactical plugin being used for lane change
+# For CLC: "cooperative_lanechange"
+lane_change_plugin : "cooperative_lanechange"
+
+# String : The tactical plugin being used for stopping at the end of the route
+stop_and_wait_plugin : "stop_and_wait_plugin"
+
+# String : The tactical plugin being used for lane following
+lane_following_plugin : "inlanecruising_plugin"
+
+# Double : The minimum length a maneuver can be when it is being modified to support stopping behavior.
+# Units : meters
+min_maneuver_length : 45.0 # TODO update in lane cruising so that such an exterme value is not needed

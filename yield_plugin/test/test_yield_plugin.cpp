@@ -86,8 +86,8 @@ TEST(YieldPlugin, UnitTestYield)
 
     cav_srvs::PlanTrajectory traj_srv;
     traj_srv.request.initial_trajectory_plan = original_tp;
-    traj_srv.request.vehicle_state.X_pos_global= 1;
-    traj_srv.request.vehicle_state.Y_pos_global = 1;
+    traj_srv.request.vehicle_state.x_pos_global= 1;
+    traj_srv.request.vehicle_state.y_pos_global = 1;
     traj_srv.request.vehicle_state.longitudinal_vel = 11;
     traj_srv.request.maneuver_plan = plan;
     
@@ -98,7 +98,7 @@ TEST(YieldPlugin, UnitTestYield)
 
     ros::CARMANodeHandle nh;
 
-    ros::ServiceClient plugin1= nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/Yieldlugin/plan_trajectory");
+    ros::ServiceClient plugin1= nh.serviceClient<cav_srvs::PlanTrajectory>("yield_plugin/plan_trajectory");
 
     ros::Subscriber mob_resp_sub = nh.subscribe("outgoing_mobility_response", 5, callback);
     ros::Subscriber lc_status_sub = nh.subscribe("cooperative_lane_change_status", 5, status_callback);    

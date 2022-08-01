@@ -1,6 +1,6 @@
 <!--
 
-  Copyright (C) 2018-2020 LEIDOS.
+  Copyright (C) 2018-2021 LEIDOS.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,6 @@ Loads parameters and configures logging for the node
 -->
 <launch>
 <node pkg="platoon_control" type="platoon_control" name="platoon_control">
-        <rosparam command="load" file="$(find platoon_control)/config/parameters.yaml" />
-    </node>
+    <rosparam command="load" file="$(find platoon_control)/config/parameters.yaml" />
+</node>
 </launch>

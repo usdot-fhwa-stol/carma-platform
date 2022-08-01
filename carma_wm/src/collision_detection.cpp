@@ -1,70 +1,163 @@
+
+/*------------------------------------------------------------------------------
+* Copyright (C) 2020-2021 LEIDOS.
+*
+* Licensed under the Apache License, Version 2.0 (the "License"); you may not
+* use this file except in compliance with the License. You may obtain a copy of
+* the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+* License for the specific language governing permissions and limitations under
+* the License.
+
+------------------------------------------------------------------------------*/
+
 #include "carma_wm/collision_detection.h"
 
 namespace carma_wm {
 
     namespace collision_detection {
 
-        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(const cav_msgs::RoadwayObstacleList& rwol, const cav_msgs::TrajectoryPlan& tp, const geometry_msgs::Vector3& size, const geometry_msgs::Twist& veloctiy, const __uint64_t target_time){
+        //TODO: consider rewriting this method to improve efficiency; it has object_count*prediction_count*trajectory_point sqrt calls!
+
+        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(const cav_msgs::RoadwayObstacleList& rwol, const cav_msgs::TrajectoryPlan& tp, 
+                                                                        const geometry_msgs::Vector3& size, const geometry_msgs::Twist& velocity) {
 
             std::vector<cav_msgs::RoadwayObstacle> rwo_collison;
 
-            collision_detection::MovingObject vehicle_object = ConvertVehicleToMovingObject(tp, size, veloctiy);
+            // collision_detection::MovingObject vehicle_object = ConvertVehicleToMovingObject(tp, size, velocity);
 
-            // for (auto i : rwol.roadway_obstacles){
+            // lanelet::BasicPoint2d point(original_tp[0].x,original_tp[0].y);
 
-            //     collision_detection::MovingObject rwo = ConvertRoadwayObstacleToMovingObject(i);
+            // double vehicle_downtrack = CARMAWorldModel::routeTrackPos(point).downtrack;
 
-            //     bool collision = DetectCollision(vehicle_object, rwo, target_time);
+            for (auto i : rwol.roadway_obstacles) {
 
-            //     if(collision) {
-            //         rwo_collison.push_back(i);
-            //     }
-            // }
+                // ROS_DEBUG_STREAM("downtrack: ");
+                // ROS_DEBUG_STREAM(i.down_track - vehicle_downtrack);
 
-            for (auto i : rwol.roadway_obstacles){
+                for (auto j : i.object.predictions) {
 
-                collision_detection::MovingObject rwo = ConvertRoadwayObstacleToMovingObject(i);
+                    std::cout << "next trajectory ....." << std::endl << std::endl << std::endl << std::endl << std::endl << std::endl << std::endl;
 
-                for (int j = 0; j < rwo.fp.size(); j++) {
-                    // std::cout << "helloooooo";
 
-                    std::deque<polygon_t> output;
+                    for(size_t k=0; k < tp.trajectory_points.size(); k++) {
 
-                    polygon_t vehicle = std::get<1>(vehicle_object.fp[j]);
-                    polygon_t object = std::get<1>(rwo.fp[j]);
+                        ROS_DEBUG_STREAM("in for loop");
 
-                    boost::geometry::correct(object);
-                    boost::geometry::correct(vehicle);
+                        double distancex = (tp.trajectory_points[k].x - j.predicted_position.position.x)*(tp.trajectory_points[k].x - j.predicted_position.position.x);
+                        double distancey = (tp.trajectory_points[k].y - j.predicted_position.position.y)*(tp.trajectory_points[k].y - j.predicted_position.position.y);
 
-                    boost::geometry::intersection(object, vehicle, output); 
+                        ROS_DEBUG_STREAM("tp.trajectory_points[k].x");
+                        ROS_DEBUG_STREAM(tp.trajectory_points[k].x);
 
-                    std::cout << "object " << boost::geometry::wkt( object) << std::endl;
-                    std::cout << "car " << boost::geometry::wkt(vehicle) << std::endl;
+                        ROS_DEBUG_STREAM("j.predicted_position.position.x");
+                        ROS_DEBUG_STREAM(j.predicted_position.position.x);
 
-                    if(output.size() > 0){
+                        ROS_DEBUG_STREAM("tp.trajectory_points[k].y");
+                        ROS_DEBUG_STREAM(tp.trajectory_points[k].y);
 
-                        // BOOST_FOREACH(polygon_t const& p, output)
-                        // {
-                        //     std::cout << ": " << boost::geometry::area(p) << std::endl;
-                        // }
+                        ROS_DEBUG_STREAM("j.predicted_position.position.y");
+                        ROS_DEBUG_STREAM(j.predicted_position.position.y);
 
-                        std::cout << "yes" << std::endl;
-                        rwo_collison.push_back(i);
-                        break;
+                        std::cout << "distancex" << std::endl;
+                        std::cout << tp.trajectory_points[k].x - j.predicted_position.position.x << std::endl;
+
+
+                        std::cout << "distancey" << std::endl;
+                        std::cout << tp.trajectory_points[k].y - j.predicted_position.position.y << std::endl;
+
+
+                        double calcdistance = sqrt(abs(distancex + distancey));
+
+                        std::cout <<  "calcdistance"<< std::endl;
+                        std::cout << calcdistance << std::endl;
+
+                        std::cout <<  "j.header.stamp"<< std::endl;
+                        std::cout <<  j.header.stamp << std::endl;
+
+                        std::cout << "tp.trajectory_points[k].target_time"<< std::endl;
+                        std::cout << tp.trajectory_points[k].target_time << std::endl;
+
+                        ros::Duration diff= j.header.stamp - tp.trajectory_points[k].target_time;
+
+                        double timediff = diff.toSec();
+
+                        std::cout << "time diff" << std::endl;
+                        std::cout << timediff << std::endl;
+
+                        double x = (i.object.size.x - size.x)*(i.object.size.x - size.x);
+                        double y = (i.object.size.y - size.y)*(i.object.size.y - size.y);
+
+                        std::cout << "size diff" << std::endl;
+                        std::cout << sqrt(x - y) << std::endl;
+
+                        std::cout << "velocity.linear.x" << velocity.linear.x << std::endl;
+                        std::cout << "velocity.linear.y" << velocity.linear.y << std::endl;
+                        std::cout << "j.predicted_velocity.linear.x" << j.predicted_velocity.linear.x << std::endl;
+                        std::cout << "j.predicted_velocity.linear.y" << j.predicted_velocity.linear.y << std::endl;
+                        
+                        double car_t_x = tp.trajectory_points[k].x - tp.trajectory_points[0].x / velocity.linear.x;
+                        // double car_t_y = tp.trajectory_points[k].y - tp.trajectory_points[0].y/velocity.linear.y;
+
+                        double object_t_x = j.predicted_position.position.x - i.object.predictions[0].predicted_position.position.x / i.object.velocity.twist.linear.x;
+                        // double object_t_y = j.predicted_position.position.y - i.object.predictions[0].predicted_position.position.y / j.predicted_velocity.linear.y;
+
+                        std::cout << "car_t_x" << car_t_x << std::endl;
+                        std::cout << "object_t_x" << object_t_x << std::endl;
+
+                        std::cout << "diff in time stuff " << car_t_x - object_t_x << std::endl;
+
+                        if(timediff <= 5) {
+                            if(calcdistance <= sqrt(x - y) ) {
+                                rwo_collison.push_back(i);
+                                break;
+                            }
+                        }
                     }
                 }
 
-                // bool collision = DetectCollision(vehicle_object, rwo, target_time);
 
-                // if(collision) {
-                //     rwo_collison.push_back(i);
-                // }
+            //     collision_detection::MovingObject rwo = ConvertRoadwayObstacleToMovingObject(i);
+
+            //     for (int j = 0; j < rwo.fp.size(); j++) {
+            //         // std::cout << "helloooooo";
+
+            //         std::deque<polygon_t> output;
+
+            //         polygon_t vehicle = std::get<1>(vehicle_object.fp[j]);
+            //         polygon_t object = std::get<1>(rwo.fp[j]);
+
+            //         boost::geometry::correct(object);
+            //         boost::geometry::correct(vehicle);
+
+            //         boost::geometry::intersection(object, vehicle, output); 
+
+            //         // std::cout << "object " << boost::geometry::wkt( object) << std::endl;
+            //         // std::cout << "car " << boost::geometry::wkt(vehicle) << std::endl;
+
+            //         if(output.size() > 0){
+
+            //             // BOOST_FOREACH(polygon_t const& p, output)
+            //             // {
+            //             //     std::cout << ": " << boost::geometry::area(p) << std::endl;
+            //             // }
+
+            //             // std::cout << "yes" << std::endl;
+            //             rwo_collison.push_back(i);
+            //             break;
+            //         }
+            //     }
             }
 
 
 
             return rwo_collison;
-        };
+        }
 
         collision_detection::MovingObject ConvertRoadwayObstacleToMovingObject(const cav_msgs::RoadwayObstacle& rwo){
 
@@ -77,7 +170,7 @@ namespace carma_wm {
 
             // Add future polygons for roadway obstacle
             for (auto i : rwo.object.predictions){
-                std::tuple <__uint64_t,polygon_t> future_object(i.header.stamp.toNSec() / 1000000,ObjectToBoostPolygon<polygon_t>(i.predicted_position, rwo.object.size));
+                std::tuple <__uint64_t,polygon_t> future_object(i.header.stamp.toNSec() / 1000000, ObjectToBoostPolygon<polygon_t>(i.predicted_position, rwo.object.size));
                 
                 mo.fp.push_back(future_object);
             }
@@ -85,9 +178,9 @@ namespace carma_wm {
             mo.linear_velocity = rwo.object.velocity.twist.linear;
 
             return mo;
-        };
+        }
 
-        collision_detection::MovingObject ConvertVehicleToMovingObject(const cav_msgs::TrajectoryPlan& tp, const geometry_msgs::Vector3& size, const geometry_msgs::Twist& veloctiy){
+        collision_detection::MovingObject ConvertVehicleToMovingObject(const cav_msgs::TrajectoryPlan& tp, const geometry_msgs::Vector3& size, const geometry_msgs::Twist& velocity){
             
             collision_detection::MovingObject v;
 
@@ -110,7 +203,7 @@ namespace carma_wm {
             pose.orientation.w = vehicle_orientation.getW();
 
             v.object_polygon = ObjectToBoostPolygon<polygon_t>(pose, size);
-            v.linear_velocity = veloctiy.linear;
+            v.linear_velocity = velocity.linear;
 
             for(size_t i=1; i < tp.trajectory_points.size() - 1; i++){
 
@@ -135,7 +228,7 @@ namespace carma_wm {
             }
 
             return v;
-        };
+        }
 
         bool DetectCollision(collision_detection::MovingObject const &ob_1, collision_detection::MovingObject const &ob_2, __uint64_t target_time) {            
             
@@ -148,7 +241,7 @@ namespace carma_wm {
             }
             
             return false;
-        };
+        }
 
         bool CheckPolygonIntersection(collision_detection::MovingObject const &ob_1, collision_detection::MovingObject const &ob_2) {    
 
@@ -165,7 +258,7 @@ namespace carma_wm {
                 }
 
             return false;
-        };
+        }
 
         collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject const &op, __uint64_t target_time){
             
@@ -176,25 +269,26 @@ namespace carma_wm {
                 }
             }
 
-            std::vector<point_t> unioin_future_polygon_points;
-            unioin_future_polygon_points.reserve(union_polygon_size);
+            std::vector<point_t> union_future_polygon_points;
+            union_future_polygon_points.reserve(union_polygon_size);
 
             for (auto i : op.fp){
                 if( std::get<0>(i) <= target_time) {
-                    unioin_future_polygon_points.insert( unioin_future_polygon_points.end(), std::get<1>(i).outer().begin(), std::get<1>(i).outer().end());
+                    union_future_polygon_points.insert( union_future_polygon_points.end(), std::get<1>(i).outer().begin(), std::get<1>(i).outer().end());
                 }
             }
 
             polygon_t union_polygon;  
-            boost::geometry::assign_points(union_polygon, unioin_future_polygon_points);
+            boost::geometry::assign_points(union_polygon, union_future_polygon_points);
 
             polygon_t hull_polygon;
             boost::geometry::convex_hull(union_polygon, hull_polygon);
 
-            collision_detection::MovingObject output_object = {hull_polygon, op.linear_velocity};
+            std::vector<std::tuple <__uint64_t, collision_detection::polygon_t>> no_future;
+            collision_detection::MovingObject output_object = {hull_polygon, op.linear_velocity, no_future};
             
             return output_object;
-        };
+        }
 
         template <class P>
         P ObjectToBoostPolygon(const geometry_msgs::Pose& pose, const geometry_msgs::Vector3& size) {

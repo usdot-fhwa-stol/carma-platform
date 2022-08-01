@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -188,6 +188,8 @@ void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSi
         setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
       }
       break;
+    case LocalizationSignal::GNSS_DATA_TIMEOUT:
+      throw std::runtime_error("GNSS_DATA_TIMEOUT occurred while in DEGRADED_NO_LIDAR_FIX state. Localization cannot recover");
     default:
       logDebugSignal(signal);
       break;

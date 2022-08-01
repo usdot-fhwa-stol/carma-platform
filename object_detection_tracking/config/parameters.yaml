@@ -1,23 +1,2 @@
-# Time between predicted states in seconds
-prediction_time_step: 0.1
-
-# Period of prediction in seconds
-prediction_period: 2.0
-
-# CV Model X-Axis Acceleration Noise
-cv_x_accel_noise: 9.0
-
-# CV Model Y-Axis Acceleration Noise
-cv_y_accel_noise: 9.0
-
-# Maximum expected process noise. Used for mapping noise to confidence in [0,1] range
-prediction_process_noise_max: 1000.0
-
-# Percentage of initial confidence to propagate to next time step
-prediction_confidence_drop_rate: 0.95
-
-#Velodyne frame designation 
-velodyne_frame : "velodyne"
-
 #Map frame designation
 map_frame : "map"

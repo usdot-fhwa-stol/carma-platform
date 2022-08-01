@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,12 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "roadway_objects/RoadwayObjectsNode.h"
 
-int main(int argc, char** argv)
+#include <rclcpp/rclcpp.hpp>
+#include "roadway_objects/roadway_objects_node.hpp"
+
+int main(int argc, char **argv) 
 {
-  ros::init(argc, argv, "roadway_objects");
-  objects::RoadwayObjectsNode node;
-  node.run();
+  rclcpp::init(argc, argv);
+
+  auto node = std::make_shared<roadway_objects::RoadwayObjectsNode>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
+
+  rclcpp::shutdown();
+
   return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@
 #include <carma_wm/WMListener.h>
 #include "WMListenerWorker.h"
 
+
 namespace carma_wm
 {
   // @SONAR_STOP@
@@ -31,15 +32,21 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
     ROS_DEBUG_STREAM("WMListener: Using multi-threaded subscription");
     nh_.setCallbackQueue(&async_queue_);
   }
-  map_update_sub_= nh_.subscribe("map_update", 1, &WMListener::mapUpdateCallback, this);
-  map_sub_ = nh_.subscribe("semantic_map", 1, &WMListenerWorker::mapCallback, worker_.get());
+  map_update_sub_= nh_.subscribe("map_update", 200, &WMListener::mapUpdateCallback, this);
+  map_sub_ = nh_.subscribe("semantic_map", 2, &WMListenerWorker::mapCallback, worker_.get());
   route_sub_ = nh_.subscribe("route", 1, &WMListenerWorker::routeCallback, worker_.get());
   roadway_objects_sub_ = nh_.subscribe("roadway_objects", 1, &WMListenerWorker::roadwayObjectListCallback, worker_.get());
+  traffic_spat_sub_ = nh_.subscribe("incoming_spat", 20, &WMListenerWorker::incomingSpatCallback, worker_.get());
 
   double cL;
   nh2_.getParam("/config_speed_limit", cL);
   setConfigSpeedLimit(cL);
-  
+
+  std::string participant;
+  nh2_.getParam("/vehicle_participant_type", participant);
+  worker_->setVehicleParticipationType(participant);
+
+
   // Set up AsyncSpinner for multi-threaded use case
   if (multi_threaded_)
   {
@@ -75,6 +82,9 @@ WorldModelConstPtr WMListener::getWorldModel()
 void WMListener::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg)
 {
   const std::lock_guard<std::mutex> lock(mw_mutex_);
+
+  ROS_INFO_STREAM("New Map Update Received. SeqNum: " << geofence_msg->seq_id);
+
   worker_->mapUpdateCallback(geofence_msg);
 }
 
@@ -105,7 +115,6 @@ void WMListener::setConfigSpeedLimit(double config_lim) const
 {
   worker_->setConfigSpeedLimit(config_lim);
 }
-
 
 // @SONAR_START@
 

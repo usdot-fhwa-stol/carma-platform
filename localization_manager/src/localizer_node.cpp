@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -73,6 +73,8 @@ void Localizer::run()
                   config.gnss_only_operation_timeout);
   pnh_.param<int>("sequential_timesteps_until_gps_operation", config.sequential_timesteps_until_gps_operation,
                   config.sequential_timesteps_until_gps_operation);
+  pnh_.param<int>("gnss_data_timeout", config.gnss_data_timeout,
+                  config.gnss_data_timeout);
 
   int localization_mode;
   pnh_.param<int>("localization_mode", localization_mode, 0);

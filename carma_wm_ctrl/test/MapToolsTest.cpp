@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,26 +18,21 @@
  * This file contains unit tests which can be used like scripts to convert lanelet2 map files.
  */
 
-#include <gmock/gmock.h>
-#include <carma_wm/MapConformer.h>
+#include <gtest/gtest.h>
+#include <carma_wm_ros2/MapConformer.hpp>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>
 #include <lanelet2_io/io_handlers/Writer.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
-#include <lanelet2_extension/utility/query.h>
-#include <lanelet2_extension/utility/utilities.h>
+#include <autoware_lanelet2_ros2_interface/utility/query.hpp>
+#include <autoware_lanelet2_ros2_interface/utility/utilities.hpp>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
-#include <carma_wm/CARMAWorldModel.h>
+#include <carma_wm_ros2/CARMAWorldModel.hpp>
 #include <unordered_set>
-#include "TestHelpers.h"
-
-using ::testing::_;
-using ::testing::A;
-using ::testing::DoAll;
-using ::testing::InSequence;
-using ::testing::Return;
-using ::testing::ReturnArg;
+#include "TestHelpers.hpp"
+#include <iostream>
+#include <fstream>
 
 namespace carma_wm_ctrl
 {
@@ -597,6 +592,70 @@ TEST(MapTools, DISABLED_split_lanes)  // Remove DISABLED_ to enable unit test
   auto geo_ref_node = osm_node.insert_child_before("geoReference", first_osm_child);
   geo_ref_node.text().set(target_frame.c_str());
   doc.save_file(new_file.c_str());
+
+}
+
+/**
+ * \brief This Test extracts the cenerline of the provided lanelet id and writes it to a csv file.
+ *        Output file will be map_centerline.csv
+ *  
+ * \param file The file to read the map from
+ * \param lanelet_ids A list of lanelet IDs where the associated lanelets are contiguous. 
+ */ 
+TEST(MapTools, DISABLED_extract_centerline)
+{
+
+  ///////////
+  // UNIT TEST ARGUMENTS
+  ///////////
+
+  // File location of osm file
+  std::string file = "resource/ACM_06.02.21.xodr.osm";    
+
+  // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
+  // For the output to be meaningful these lanelets MUST be contigous
+  std::vector<lanelet::Id> lanelet_ids = { 28113, 29083, 30095, 104191, 57801, 58979, 91965, 6835, 117009, 43306, 110987, 9409, 11912, 119541, 22975, 119667, 17802, 125749 };
+
+  ///////////
+  // START OF LOGIC
+  ///////////
+  int projector_type = 0;
+  std::string target_frame;
+  lanelet::ErrorMessages load_errors;
+
+
+  // The parsing in this file was copied from 
+  lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+  lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+  lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+  // Grabs lanelet elements from the start and end IDs. Fails the unit test if there is no lanelet with the matching ID
+
+  std::vector<lanelet::Lanelet> lanelets;
+  std::vector<lanelet::BasicPoint2d> centerline;
+
+  // Process centerline
+  for (auto id : lanelet_ids) {
+    try {
+      auto ll = map->laneletLayer.get(id);
+      auto centerline2d = lanelet::utils::to2D(ll.centerline()); 
+      centerline.insert(centerline.end(), centerline2d.basicBegin() + 1, centerline2d.basicEnd()); // Skip first point to avoid overlaps
+    }
+    catch (const lanelet::NoSuchPrimitiveError& e) {
+        FAIL() << "The specified lanelet Id of " << id << " does not exist in the provided map.";
+    }
+  }
+
+  // Write centerline to file
+
+  std::ofstream myfile;
+  myfile.open ("map_centerline.csv");
+  myfile << "x (m), y (m) \n";
+  myfile << std::setprecision(12);
+  for (auto p : centerline) {
+    myfile << p.x() << "," << p.y() << "\n";
+  }
+  myfile.close();
 
 }
 

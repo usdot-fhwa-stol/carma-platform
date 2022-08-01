@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2018-2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(health_monitor)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
@@ -63,7 +62,6 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}
   src/health_monitor.cpp
-  src/plugin_manager.cpp
   src/driver_manager.cpp
   src/entry_manager.cpp
   src/entry.cpp
@@ -72,16 +70,20 @@ add_executable(${PROJECT_NAME}
 
 ## Add cmake target dependencies of the executable
 add_library(plugin_driver_manager_library
-  src/plugin_manager.cpp
   src/driver_manager.cpp
   src/entry_manager.cpp
   src/health_monitor.cpp
   src/entry.cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}
+
+target_link_libraries(plugin_driver_manager_library
   ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
+)
+
+target_link_libraries(${PROJECT_NAME}
+  plugin_driver_manager_library
 )
 
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
@@ -92,7 +94,7 @@ add_dependencies(plugin_driver_manager_library ${catkin_EXPORTED_TARGETS})
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} plugin_driver_manager_library
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -120,7 +122,6 @@ install(DIRECTORY
 catkin_add_gtest(${PROJECT_NAME}-test
   test/test_driver_manager.cpp
   test/test_entry_manager.cpp
-  test/test_plugin_manager.cpp
   test/test_health_monitor.cpp
   test/test_main.cpp)
 # if(TARGET ${PROJECT_NAME}-test)

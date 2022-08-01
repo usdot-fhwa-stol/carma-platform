@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2018-2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(platoon_strategic)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
@@ -28,10 +27,15 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   carma_wm
+  lanelet2_extension
+  tf
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -40,7 +44,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
    INCLUDE_DIRS include
-   CATKIN_DEPENDS carma_utils cav_msgs roscpp std_msgs carma_wm cav_srvs
+   CATKIN_DEPENDS carma_utils cav_msgs roscpp std_msgs carma_wm cav_srvs lanelet2_extension
 )
 
 ###########
@@ -55,10 +59,8 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
 
 add_executable( ${PROJECT_NAME}
-  ${headers}
   src/platoon_strategic.cpp
   src/platoon_manager.cpp
   src/main.cpp)
@@ -66,12 +68,12 @@ add_executable( ${PROJECT_NAME}
 
 add_library(platoon_strategic_plugin_lib
  src/platoon_strategic.cpp
- src/state_machine.cpp
  src/platoon_manager.cpp)
 
 add_dependencies(platoon_strategic_plugin_lib ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME} platoon_strategic_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(platoon_strategic_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} platoon_strategic_plugin_lib)
 
 
 #############
@@ -86,7 +88,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} platoon_strategic_plugin_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -94,7 +96,7 @@ install(TARGETS ${PROJECT_NAME}
 
 # Mark other files for installation (e.g. launch and bag files, etc.)
 install(DIRECTORY
-  launch
+  launch config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
@@ -105,7 +107,6 @@ install(DIRECTORY
 
 catkin_add_gmock(${PROJECT_NAME}-test
   test/test_platoon_manager.cpp
-  test/test_state_machine.cpp
   test/mobility_messages.cpp
   test/main_test.cpp)
 

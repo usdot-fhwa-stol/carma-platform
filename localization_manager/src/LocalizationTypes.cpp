@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,6 +58,7 @@ std::ostream& operator<<(std::ostream& os, LocalizationSignal s)
     case LocalizationSignal::TIMEOUT  : os << "TIMEOUT"; break;
     case LocalizationSignal::LIDAR_SENSOR_FAILURE  : os << "LIDAR_SENSOR_FAILURE"; break;
     case LocalizationSignal::LIDAR_INITIALIZED_SWITCH_TO_GPS  : os << "LIDAR_INITIALIZED_SWITCH_TO_GPS"; break;
+    case LocalizationSignal::GNSS_DATA_TIMEOUT  : os << "GNSS_DATA_TIMEOUT"; break;
     default: os.setstate(std::ios_base::failbit);
   }  // clang-format on
   return os;

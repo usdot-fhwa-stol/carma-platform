@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@
 #include <cav_msgs/MobilityRequest.h>
 #include <cav_msgs/BSM.h>
 #include <std_msgs/String.h>
-#include "boost/format.hpp"
+#include <boost/format.hpp>
 #include <boost/chrono.hpp>
 #include <boost/thread/thread.hpp>
 

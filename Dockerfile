@@ -1,4 +1,4 @@
-#  Copyright (C) 2018-2020 LEIDOS.
+#  Copyright (C) 2018-2021 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,7 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 
-FROM usdotfhwastol/autoware.ai:carma-system-3.6.0 AS base-image
+FROM usdotfhwastoldev/autoware.ai:develop AS base-image
 
 FROM base-image AS source-code
 
@@ -47,11 +47,14 @@ RUN ~/src/carma-platform/docker/checkout.bash
 
 
 FROM base-image AS install
+ARG ROS1_PACKAGES=""
+ENV ROS1_PACKAGES=${ROS1_PACKAGES}
+ARG ROS2_PACKAGES=""
+ENV ROS2_PACKAGES=${ROS2_PACKAGES}
 
 # Copy the source files from the previous stage and build/install
 RUN mkdir ~/carma_ws
 COPY --from=source-code --chown=carma /home/carma/src /home/carma/carma_ws/src
-
 
 RUN ~/carma_ws/src/carma-platform/docker/install.sh
 

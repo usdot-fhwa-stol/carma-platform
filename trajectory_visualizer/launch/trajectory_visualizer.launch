@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-	<rosparam command="load" file="$(find trajectory_visualizer)/config/params.yaml"/>
-	<node pkg="trajectory_visualizer" type="trajectory_visualizer" name="trajectory_visualizer" output="log" />
-</launch>

@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2018-2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(platoon_control)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
@@ -26,6 +25,7 @@ find_package(catkin REQUIRED COMPONENTS
   cav_msgs
   roscpp
   std_msgs
+  autoware_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -38,7 +38,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
    INCLUDE_DIRS include
-   CATKIN_DEPENDS carma_utils cav_msgs roscpp std_msgs
+   CATKIN_DEPENDS carma_utils cav_msgs roscpp std_msgs autoware_msgs
 )
 
 ###########
@@ -70,7 +70,8 @@ add_library(platoon_control_plugin_lib
 
 add_dependencies(platoon_control_plugin_lib ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME} platoon_control_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(platoon_control_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} platoon_control_plugin_lib)
 
 
 #############
@@ -78,14 +79,14 @@ target_link_libraries(${PROJECT_NAME} platoon_control_plugin_lib ${catkin_LIBRAR
 #############
 
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
   PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} platoon_control_plugin_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -93,7 +94,7 @@ install(TARGETS ${PROJECT_NAME}
 
 # Mark other files for installation (e.g. launch and bag files, etc.)
 install(DIRECTORY
-  launch
+  launch config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

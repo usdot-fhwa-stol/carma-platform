@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,16 +14,19 @@
  * the License.
  */
 
+#include <rclcpp/rclcpp.hpp>
+#include "stop_and_wait_node.hpp"
 
-#include <ros/ros.h>
-
-#include <stop_and_wait_plugin.h>
-
-int main(int argc, char** argv)
+int main(int argc, char **argv) 
 {
+  rclcpp::init(argc, argv);
 
-    ros::init(argc, argv, "stop_and_wait_plugin");
-    stop_and_wait_plugin::StopandWait sw;
-    sw.run();
-    return 0;
+  auto node = std::make_shared<stop_and_wait_plugin::StopandWaitNode>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
+  rclcpp::shutdown();
+
+  return 0;
 }

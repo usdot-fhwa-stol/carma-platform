@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  Copyright (C) 2018-2021 LEIDOS.
+  Copyright (C) 2018-2022 LEIDOS.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -23,8 +23,11 @@
   <!-- Arguments -->
   <arg name="route_file_folder" default="$(find carma)/routes" doc="Path of folder containing routes to load"/>
   <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle" doc="The directory continaing vehicle calibration type parameters"/>
-  
-  
+  <arg name="enable_guidance_plugin_validator" default="false" doc="Flag indicating whether the Guidance Plugin Validator node will actively validate guidance strategic, tactical, and control plugins"/>
+  <arg name="strategic_plugins_to_validate" default="[]" doc="List of String: Guidance Strategic Plugins that will be validated by the Guidance Plugin Validator Node if enabled"/>
+  <arg name="tactical_plugins_to_validate" default="[]" doc="List of String: Guidance Tactical Plugins that will be validated by the Guidance Plugin Validator Node if enabled"/>
+  <arg name="control_plugins_to_validate" default="[]" doc="List of String: Guidance Control Plugins that will be validated by the Guidance Plugin Validator Node if enabled"/>
+
   <!-- Remap topics from external packages -->
   <remap from="bsm" to="$(optenv CARMA_MSG_NS)/outgoing_bsm"/>
   <remap from="bsm_outbound" to="$(optenv CARMA_MSG_NS)/bsm_outbound"/>
@@ -70,46 +73,22 @@
   <remap from="/green_waypoints_array" to="green_waypoints_array"/>
   <remap from="trajectory" to="plan_trajectory"/>
 
+  <remap from="georeference" to="$(optenv CARMA_LOCZ_NS)/map_param_loader/georeference"/>
   <remap from="current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>
   <remap from="current_velocity" to="$(optenv CARMA_INTR_NS)/vehicle/twist"/>
   <remap from="controller/enable_robotic" to="$(optenv CARMA_INTR_NS)/controller/enable_robotic"/>
 
   <remap from="guidance_state" to="$(optenv CARMA_GUIDE_NS)/state"/>
-  <remap from="maneuver_plan" to="$(optenv CARMA_GUIDE_NS)/arbitrator/final_maneuver_plan"/>
+  <remap from="maneuver_plan" to="$(optenv CARMA_GUIDE_NS)/final_maneuver_plan"/>
 
   <remap from="semantic_map" to="$(optenv CARMA_ENV_NS)/semantic_map"/>
   <remap from="map_update" to="$(optenv CARMA_ENV_NS)/map_update"/>
   <remap from="roadway_objects" to="$(optenv CARMA_ENV_NS)/roadway_objects"/>
-
-  <!-- Launch Guidance Main -->
-  <include file="$(find guidance)/launch/guidance_main.launch"/>
-
-  <!-- Launch Arbitrator -->
-  <include file="$(find arbitrator)/launch/arbitrator.launch"/>
-
-  <!-- Launch Plan Delegator -->
-  <include file="$(find plan_delegator)/launch/plan_delegator.launch"/>
-
-  <!-- TODO Check topic remapping-->
-
-  <!-- Trajectory Executor -->
-  <include file="$(find trajectory_executor)/launch/trajectory_executor.launch" />
-
+  <remap from="incoming_spat" to="$(optenv CARMA_MSG_NS)/incoming_spat"/>
 
   <remap from="/vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
   <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
 
-  <!-- Pure Pursuit Wrapper -->
-  <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch">
-	  <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
-  </include>
-  
-  <!-- Pure Pursuit Jerk Wrapper -->
-  <include file="$(find pure_pursuit_jerk_wrapper)/launch/pure_pursuit_jerk_wrapper.launch" />
-
-    <!-- Route Following Plugin -->
-  <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
-  
   <!-- Twist Filter -->
   <group>
     <remap from="/accel_cmd" to="accel_cmd"/>
@@ -140,47 +119,83 @@
   </group>
 
   <!-- Planning Stack -->
-  
-  <!-- Inlanecruising Plugin -->
-  <group>
-    <remap from="final_waypoints" to="base_waypoints"/>
-    <include file="$(find inlanecruising_plugin)/launch/inlanecruising_plugin.launch" />
-  </group>
-  
-    <!-- StopandWait Plugin -->
-  <group>
-    <remap from="final_waypoints" to="base_waypoints"/>
-    <include file="$(find stop_and_wait_plugin)/launch/stop_and_wait_plugin.launch" />
-  </group>
+  <group ns="plugins">
 
-  <!-- unobstructed lanechange -->
-  <group>
-    <remap from="final_waypoints" to="base_waypoints"/>
-    <include file="$(find unobstructed_lanechange)/launch/unobstructed_lanechange.launch" />
-  </group>
+    <!-- Remappings for common topics to move out of the plugin namespace -->
+    <remap from="route" to="$(optenv CARMA_GUIDE_NS)/route"/>
+    <remap from="plugin_discovery" to="$(optenv CARMA_GUIDE_NS)/plugin_discovery"/>
+    <remap from="ctrl_raw" to="$(optenv CARMA_GUIDE_NS)/ctrl_raw"/>
+    <remap from="twist_raw" to="$(optenv CARMA_GUIDE_NS)/twist_raw"/>
 
-  <!-- Cooperative lanechange -->
-  <group>
-    <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
-    <include file = "$(find cooperative_lanechange)/launch/cooperative_lanechange.launch"/>
-  </group>
+    <!-- Pure Pursuit Wrapper -->
+    <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch">
+      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
+    </include>
+      
+    <!-- Platooning Control Plugin -->
+    <include file="$(find platoon_control)/launch/platoon_control.launch" />
 
-  <!-- Route Node -->
-  <include file="$(find route)/launch/route.launch">
-    <arg name="route_file_folder" value="$(arg route_file_folder)"/>
-  </include>
+    <!-- Platooning Control IHP Plugin -->
+    <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" />
 
-  <!-- Mobility Path Publisher -->
-  <group>
-    <remap from="mobility_path_msg" to="$(optenv CARMA_MSG_NS)/mobility_path_msg"/>
-    <include file="$(find mobilitypath_publisher)/launch/mobilitypath_publisher.launch" />
-  </group>
+    <!-- Platooning Tactical Plugin -->
+    <group>
+      <remap from="final_waypoints" to="base_waypoints"/>
+      <include file="$(find platooning_tactical_plugin)/launch/platooning_tactical_plugin.launch" />
+    </group>
+    
+    <!-- Cooperative lanechange -->
+    <group>
+      <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
+      <include file = "$(find cooperative_lanechange)/launch/cooperative_lanechange.launch"/>
+    </group>
 
-  <!-- MobilityPath Visualizer -->
-  <group>
-    <remap from="mobility_path_msg" to="$(optenv CARMA_MSG_NS)/mobility_path_msg"/>
-    <remap from="incoming_mobility_path" to="$(optenv CARMA_MSG_NS)/incoming_mobility_path"/>
-    <include file="$(find mobilitypath_visualizer)/launch/mobilitypath_visualizer.launch"/>
+    <!-- Yield Plugin -->
+    <group>
+      <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
+      <include file = "$(find yield_plugin)/launch/yield_plugin.launch"/>
+    </group>
+
+    <!-- Platoon Strategic Plugin -->
+    <!-- <group>
+      <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
+      <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
+      <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
+      <include file = "$(find platoon_strategic)/launch/platoon_strategic.launch"/>
+    </group> -->
+
+    <!-- Platoon Strategic IHP Plugin -->
+    <group>
+      <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
+      <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
+      <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
+      <include file = "$(find platoon_strategic_ihp)/launch/platoon_strategic_ihp.launch"/>
+    </group>
+
+    <!-- Intersection Transit Maneuvering Plugin-->
+    <group>
+      <include file = "$(find intersection_transit_maneuvering)/launch/intersection_transit_maneuvering.launch"/>
+    </group>
+
+    <!-- Stop Controlled Intersection Strategic Plugin -->
+    <group>
+      <remap from="outgoing_mobility_operation" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_operation"/>
+      <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
+      <include file="$(find sci_strategic_plugin)/launch/sci_strategic_plugin.launch" />
+    </group>
+
+    <!-- Light Controlled Intersection Strategic Plugin -->
+    <group>
+      <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
+      <include file="$(find lci_strategic_plugin)/launch/lci_strategic_plugin.launch" />
+    </group>
+
+    <!-- Stop Controlled Intersection Tactical Plugin -->
+    <include file="$(find stop_controlled_intersection_tactical_plugin)/launch/stop_controlled_intersection_tactical_plugin.launch" />
+
+    <!-- Light Controlled Intersection Tactical Plugin -->
+    <include file="$(find light_controlled_intersection_tactical_plugin)/launch/light_controlled_intersection_tactical_plugin.launch" />
+
   </group>
 
   <!-- Trajectory Plan Speed Visualizer -->
@@ -194,13 +209,54 @@
     <include file = "$(find yield_plugin)/launch/yield_plugin.launch"/>
   </group>
 
-  <!-- Port Drayage Plugin -->
+  <!-- Platoon Strategic Plugin -->
+  <!-- <group>
+    <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
+    <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
+    <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
+    <include file = "$(find platoon_strategic)/launch/platoon_strategic.launch"/>
+  </group> -->
+
+  <!-- Platoon Strategic IHP Plugin -->
+  <group>
+    <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
+    <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
+    <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
+    <include file = "$(find platoon_strategic_ihp)/launch/platoon_strategic_ihp.launch"/>
+  </group>
+
+  <!-- Intersection Transit Maneuvering Plugin-->
+  <group>
+   <include file = "$(find intersection_transit_maneuvering)/launch/intersection_transit_maneuvering.launch"/>
+  </group>
+
+  <!-- Stop Controlled Intersection Strategic Plugin -->
   <group>
     <remap from="outgoing_mobility_operation" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_operation"/>
     <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
-    <include file="$(find port_drayage_plugin)/launch/port_drayage_plugin.launch" />
+    <include file="$(find sci_strategic_plugin)/launch/sci_strategic_plugin.launch" />
   </group>
 
+  <!-- Light Controlled Intersection Strategic Plugin -->
+  <group>
+    <include file="$(find lci_strategic_plugin)/launch/lci_strategic_plugin.launch" />
+  </group>
+
+  <!-- Stop Controlled Intersection Tactical Plugin -->
+  <include file="$(find stop_controlled_intersection_tactical_plugin)/launch/stop_controlled_intersection_tactical_plugin.launch" />
+
+  <!-- Light Controlled Intersection Tactical Plugin -->
+  <include file="$(find light_controlled_intersection_tactical_plugin)/launch/light_controlled_intersection_tactical_plugin.launch" />
+  
+  <!-- Guidance Plugin Validator -->
+  <group>
+    <remap from="plugin_discovery" to="$(optenv CARMA_GUIDE_NS)/plugin_discovery"/>
+    <include file="$(find guidance_plugin_validator)/launch/guidance_plugin_validator.launch">
+      <arg name="enable_guidance_plugin_validator" value="$(arg enable_guidance_plugin_validator)"/>
+      <arg name="strategic_plugins_to_validate" value="$(arg strategic_plugins_to_validate)"/>
+      <arg name="tactical_plugins_to_validate" value="$(arg tactical_plugins_to_validate)"/>
+      <arg name="control_plugins_to_validate" value="$(arg control_plugins_to_validate)"/>
+    </include>
+  </group>
 
 </launch>
-

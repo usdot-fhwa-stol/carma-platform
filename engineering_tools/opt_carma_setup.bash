@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#  Copyright (C) 2018-2020 LEIDOS.
+#  Copyright (C) 2018-2021 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
@@ -36,7 +36,7 @@ FILE_EXT=$RANDOM
 mkdir ~/carma_temp_$FILE_EXT
 cd ~/carma_temp_$FILE_EXT
 
-git clone --branch carma-develop --depth 1 git@github.com:usdot-fhwa-stol/autoware.ai.git
+git clone --branch carma-develop --depth 1 https://github.com/usdot-fhwa-stol/autoware.ai.git
 cp -R autoware.ai/core_perception/vision_darknet_detect/darknet/cfg/ /opt/carma/yolo/darknet/cfg/
 curl -o /opt/carma/yolo/darknet/data/yolov3.weights -L https://pjreddie.com/media/files/yolov3.weights
 chmod 775 /opt/carma/yolo/darknet/data/yolov3.weights

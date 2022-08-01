@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 LEIDOS.
+ * Copyright (C) 2018-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -88,12 +88,12 @@ TEST(pure_pursuit_wrapper, onSpin)
   ASSERT_TRUE(!!plugin_msg);
 
   cav_msgs::Plugin msg = plugin_msg.get();
-  ASSERT_EQ(0, msg.name.compare("Pure Pursuit"));
-  ASSERT_EQ(0, msg.versionId.compare("v1.0"));
+  ASSERT_EQ(0, msg.name.compare("pure_pursuit_wrapper_node"));
+  ASSERT_EQ(0, msg.version_id.compare("v1.0"));
   ASSERT_TRUE(msg.available);
   ASSERT_TRUE(msg.activated);
   ASSERT_EQ(cav_msgs::Plugin::CONTROL, msg.type);
-  ASSERT_EQ(0, msg.capability.compare("control_pure_pursuit_plan/plan_controls"));
+  ASSERT_EQ(0, msg.capability.compare("control/trajectory_control"));
 }
 
 int main(int argc, char** argv)

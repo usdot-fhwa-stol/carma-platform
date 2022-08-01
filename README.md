@@ -1,6 +1,6 @@
-| CicleCI Build Status | Sonar Code Quality |
-|----------------------|---------------------|
-[![CircleCI](https://circleci.com/gh/usdot-fhwa-stol/carma-platform.svg?style=svg)](https://circleci.com/gh/usdot-fhwa-stol/carma-platform) | [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=usdot-fhwa-stol_CARMAPlatform&metric=alert_status)](https://sonarcloud.io/dashboard?id=usdot-fhwa-stol_CARMAPlatform) |
+| CicleCI Build Status | Sonar Code Quality | DockerHub Release | DockerHub Release Candidate | DockerHub Develop |
+|------|-----|-----|-----|-----|
+[![CircleCI](https://circleci.com/gh/usdot-fhwa-stol/carma-platform.svg?style=svg)](https://circleci.com/gh/usdot-fhwa-stol/carma-platform) | [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=usdot-fhwa-stol_CARMAPlatform&metric=alert_status)](https://sonarcloud.io/dashboard?id=usdot-fhwa-stol_CARMAPlatform) | [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/usdotfhwastol/carma-platform?label=Usdotfhwa%20STOL&logo=%232496ED)](https://hub.docker.com/repository/docker/usdotfhwastol/carma-platform) | [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/usdotfhwastolcandidate/carma-platform?label=Usdotfhwastol%20Candidate&logo=%232496ED)](https://hub.docker.com/repository/docker/usdotfhwastolcandidate/carma-platform) | [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/usdotfhwastoldev/carma-platform?label=Usdotfhwastol%20DEV&logo=%232496ED)](https://hub.docker.com/repository/docker/usdotfhwastoldev/carma-platform)
 
 # CARMA
 ![CARMA Arch](docs/image/CARMA3_Vehicles.jpg)
@@ -34,6 +34,8 @@ The current CARMA requirements specification: [CARMA Platform Requirements](http
 The current version and release history of the CARMA software platform: [CARMA Release Notes](<docs/Release_notes.md>)
 
 **Repo Structure Note:**  The master and develop branches of this repo (and all other repos in the usdot-fhwa-stol GitHub organization) now reflects the third generation of CARMA code and documentation, called CARMA3.  It uses [Autoware](https://github.com/autowarefoundation/autoware) to provide SAE level 2 and 3 automation capability.  The legacy CARMA2 code is still being supported.  It was used extensively by FHWA during 2018 for SAE level 1 experiments.  To work with that code base, please check out the CARMA2-integration branch and make pull requests to it (using the contribution process outlined below).
+
+**ROS Version Note:** Release 3.11 was the final version of CARMA Platform to contain only ROS1 code. The develop branches and future versions will contain a mix of ROS1 and ROS2 code in a mixed system until all code has been fully ported to ROS2. You can learn more about this system and the ROS2 migration efforts on confluence here: [CARMA Platform ROS2 Docs](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/573341725/ROS+2)
 
 ## Roadmap
 The current CARMA ecosystem development direction and release plans can be found here: [CARMA Roadmap](https://usdot-carma.atlassian.net/wiki/spaces/CRMECO/pages/1093435397/CARMA+Ecosystem+Roadmap)
@@ -71,10 +73,12 @@ For administrative information on CARMA2, including vehicle and developer PC con
 ## Other CARMA Packages
 CARMA Platform<sup>SM</sup> is a downloadable, open source software (OSS) platform architected to be extensible and reusable for a wide variety of research purposes to advance innovation for cooperative driving automation. It enables communication between vehicles, road users such as pedestrians, bicyclists, and scooters, and infrastructure devices capable of communication. It promotes collaboration between a community of engineers and researchers to accelerate the development, testing, and evaluation of cooperative driving automation while advancing the safety, security, data, and use of artificial intelligence in automated driving technology.  
 
-The CARMA Platform is distributed as a set of multiple independent packages hosted in separate Github repositories. These packages facilitate operation of the CARMA Platform with different hardware configurations or allow it to support different modes of operation. To include one of these packages in your build of the CARMA Platform system please clone the Github repository into the same Catkin workspace `src/` folder as this repository. The Catkin build system will verify that dependencies are resolved appropriately and build the newly included package when you next run `catkin_make`. An incomplete listing of available packages for CARMA2 includes:
+The CARMA Platform is distributed as a set of multiple independent packages hosted in separate Github repositories. These packages facilitate operation of the CARMA Platform with different hardware configurations or allow it to support different modes of operation. To include one of these packages in your build of the CARMA Platform system please clone the Github repository into the same Catkin workspace `src/` folder as this repository. The Catkin build system will verify that dependencies are resolved appropriately and build the newly included package when you next run `catkin_make`. An incomplete listing of available packages for CARMA3 includes:
 
 ### Vehicle Controller Interface Drivers
 * [carma-ssc-interface-wrapper](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper)
+* [dataspeed_controller_driver](https://github.com/VT-ASIM-LAB/dataspeed_controller_driver) (Externally managed)
+* [dataspeed_can_driver](https://github.com/VT-ASIM-LAB/dataspeed_can_driver) (Externally managed)
 
 ### Sensor Drivers
 * [carma-cohda-dsrc-driver](https://github.com/usdot-fhwa-stol/carma-cohda-dsrc-driver)
@@ -82,6 +86,9 @@ The CARMA Platform is distributed as a set of multiple independent packages host
 * [avt_vimba_camera](https://github.com/usdot-fhwa-stol/avt_vimba_camera)
 * [carma-delphi-srr2-driver](https://github.com/usdot-fhwa-stol/carma-delphi-srr2-driver)
 * [novatel_gps_driver](https://github.com/usdot-fhwa-stol/novatel_gps_driver)
+* [gstreamer_camera_driver](https://github.com/VT-ASIM-LAB/gstreamer_camera_driver) (Externally managed)
+* [ouster_lidar_driver](https://github.com/VT-ASIM-LAB/ouster_lidar_driver) (Externally managed)
+* [inertiallabs_gnss_driver](https://github.com/VT-ASIM-LAB/inertiallabs_gnss_driver) (Externally managed)
 
 ### General System Utilites
 * [carma-web-ui](https://github.com/usdot-fhwa-stol/carma-web-ui)

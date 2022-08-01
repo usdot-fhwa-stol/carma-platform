@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-    <arg name="route_file_folder" default="/opt/carma/routes/" />
-
-	<node pkg="route" type="route" name="route">
-        <param name="route_file_path" type="str" value="$(arg route_file_folder)" />        
-		<rosparam command="load" file="$(find route)/config/route_config_params.yaml" />
-    </node>
-</launch>

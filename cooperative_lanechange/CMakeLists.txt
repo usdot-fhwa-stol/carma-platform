@@ -16,10 +16,9 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(cooperative_lanechange)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 set( CATKIN_DEPS
   roscpp
@@ -30,11 +29,13 @@ set( CATKIN_DEPS
   trajectory_utils
   autoware_msgs
   carma_wm
+  basic_autonomy
   tf
   tf2_ros
   tf2_geometry_msgs
-  unobstructed_lanechange
   roslib
+  carma_debug_msgs
+  lanelet2_extension
 )
 
 ## Find catkin macros and libraries
@@ -42,7 +43,7 @@ find_package(catkin REQUIRED COMPONENTS
  ${CATKIN_DEPS}
 )
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost)
 find_package(Eigen3 REQUIRED)
 
 ###################################
@@ -53,7 +54,7 @@ find_package(Eigen3 REQUIRED)
 catkin_package(
    INCLUDE_DIRS include
    CATKIN_DEPENDS ${CATKIN_DEPS}
-   DEPENDS Boost Eigen3
+   DEPENDS Boost EIGEN3
 )
 
 ###########
@@ -72,16 +73,17 @@ include_directories(
 file(GLOB_RECURSE headers */*.hpp */*.h)
 
 add_executable( ${PROJECT_NAME}
-  ${headers}
-  src/cooperative_lanechange.cpp
   src/main.cpp)
 
 
-add_library(cooperative_lanechange_plugin_lib src/cooperative_lanechange.cpp src/smoothing/BSpline.cpp)
+add_library(cooperative_lanechange_plugin_lib 
+src/cooperative_lanechange.cpp
+)
 
 add_dependencies(cooperative_lanechange_plugin_lib ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME} cooperative_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(cooperative_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} cooperative_lanechange_plugin_lib)
 
 
 #############

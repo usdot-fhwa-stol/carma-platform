@@ -1,4 +1,21 @@
- 
+
+/*------------------------------------------------------------------------------
+* Copyright (C) 2020-2021 LEIDOS.
+*
+* Licensed under the Apache License, Version 2.0 (the "License"); you may not
+* use this file except in compliance with the License. You may obtain a copy of
+* the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+* License for the specific language governing permissions and limitations under
+* the License.
+
+------------------------------------------------------------------------------*/
+
 #include <cav_msgs/MobilityRequest.h>
 #include <cav_msgs/MobilityResponse.h>
 #include <cav_msgs/MobilityOperation.h>
@@ -57,7 +74,7 @@ class MobilityMessages{
             header.timestamp = 55555555555555;
             
             //set up mobility request
-            req1.header = header;
+            req1.m_header = header;
             req1.strategy = "CARMA/platooning";
             req1.plan_type = plan;
             req1.urgency = 1000;
@@ -93,7 +110,7 @@ class MobilityMessages{
             header.timestamp = 555555555555;
             
             //set up mobility request
-            req2.header = header;
+            req2.m_header = header;
             req2.strategy = "CARMA/platooning";
             req2.plan_type.type = cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
             req2.urgency = 1000;
@@ -129,7 +146,7 @@ class MobilityMessages{
             header.timestamp = 98745745;
             
             //set up mobility request
-            req3.header = header;
+            req3.m_header = header;
             req3.strategy = "CARMA/platooning3";
             req3.plan_type = plan;
             req3.urgency = 156;
@@ -151,7 +168,7 @@ class MobilityMessages{
             header.timestamp = 66666666;
 
             //set up mobility response
-            res1.header = header;
+            res1.m_header = header;
             res1.is_accepted = true;
             res1.urgency = 1000;
 
@@ -163,7 +180,7 @@ class MobilityMessages{
             header.timestamp = 1772327;
 
             //set up mobility response
-            res2.header = header;
+            res2.m_header = header;
             res2.is_accepted = false;
             res2.urgency = 50;
 
@@ -175,7 +192,7 @@ class MobilityMessages{
             header.timestamp = 77777777;
 
             //set up mobility response
-            res3.header = header;
+            res3.m_header = header;
             res3.is_accepted = true;
             res3.urgency = 700;
 
@@ -191,7 +208,7 @@ class MobilityMessages{
             header.plan_id = "plan_id3";
             header.timestamp = 44444444;
 
-            op1.header = header;
+            op1.m_header = header;
             op1.strategy = "STATUS";
             op1.strategy_params = "CMDSPEED:1.0,DTD:1.0,SPEED:1.0";
 
@@ -202,7 +219,7 @@ class MobilityMessages{
             header.plan_id = "plan_id12";
             header.timestamp = 8989898;
 
-            op2.header = header;
+            op2.m_header = header;
             op2.strategy = "strategy3";
             op2.strategy_params = "param1 param2 param3 param4 param5";
 
@@ -214,7 +231,7 @@ class MobilityMessages{
             header.plan_id = "plan_id23";
             header.timestamp = 181818;
 
-            op3.header = header;
+            op3.m_header = header;
             op3.strategy = "strategy23";
             op3.strategy_params = "";
         

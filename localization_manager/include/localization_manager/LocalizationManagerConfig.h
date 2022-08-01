@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,6 +39,8 @@ struct LocalizationManagerConfig
   //! Integer: Maximum allowed number of sequential timesteps to let lidar initialize before switching to GPS only mode
   //! NOTE: Only used in GNSS only with NDT initialization mode
   int sequential_timesteps_until_gps_operation = 5;
+  //! GNSS Data timeout. If exceeded the system will assume the GNSS is no longer functional. Units are ms
+  int gnss_data_timeout = 500;
   //! Localization mode to use
   LocalizerMode localization_mode = LocalizerMode::AUTO_WITHOUT_TIMEOUT;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 LEIDOS.
+ * Copyright (C) 2018-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -94,7 +94,7 @@ class LightBarManager
         // Node Data
         std::string node_name_;
         double spin_rate_;
-        std::map<lightbar_manager::LightBarIndicator, std::__cxx11::string> prev_owners_before_turn_;
+        std::map<lightbar_manager::LightBarIndicator, std::string> prev_owners_before_turn_;
 
         // spin callback function
         bool spinCallBack();

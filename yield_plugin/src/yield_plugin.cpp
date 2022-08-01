@@ -39,40 +39,23 @@ namespace yield_plugin
 {
   YieldPlugin::YieldPlugin(carma_wm::WorldModelConstPtr wm, YieldPluginConfig config,
                                             PublishPluginDiscoveryCB plugin_discovery_publisher, 
-                                            MobilityResponseCB mobility_response_publisher)
-    : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher), mobility_response_publisher_(mobility_response_publisher)
+                                            MobilityResponseCB mobility_response_publisher,
+                                            LaneChangeStatusCB lc_status_publisher)
+    : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher), 
+      mobility_response_publisher_(mobility_response_publisher), lc_status_publisher_(lc_status_publisher)
   {
-    plugin_discovery_msg_.name = "YieldPlugin";
-    plugin_discovery_msg_.versionId = "v1.0";
+    plugin_discovery_msg_.name = "yield_plugin";
+    plugin_discovery_msg_.version_id = "v1.0";
     plugin_discovery_msg_.available = true;
-    plugin_discovery_msg_.activated = false;
+    plugin_discovery_msg_.activated = true;
     plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
     plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";   
-  }
-
-  void YieldPlugin::lookupECEFtoMapTransform()
-  {
-    tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
-    tf2_buffer_.setUsingDedicatedThread(true);
-    try
-    {
-      tf_ = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
-    }
-    catch (const tf2::TransformException &ex)
-    {
-      ROS_WARN("%s", ex.what());
-    }
   }
 
   bool YieldPlugin::onSpin() 
   {
     plugin_discovery_publisher_(plugin_discovery_msg_);
     return true;
-  }
-
-  void YieldPlugin::set_lanechange_status_publisher(const ros::Publisher& publisher)
-  {
-    lanechange_status_pub_ = publisher;
   }
 
   std::vector<std::pair<int, lanelet::BasicPoint2d>> YieldPlugin::detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const
@@ -96,15 +79,12 @@ namespace yield_plugin
     return intersection_points;
   }
 
-  std::vector<lanelet::BasicPoint2d> YieldPlugin::convert_eceftrajectory_to_mappoints(const cav_msgs::Trajectory& ecef_trajectory, const geometry_msgs::TransformStamped& tf) const
+  std::vector<lanelet::BasicPoint2d> YieldPlugin::convert_eceftrajectory_to_mappoints(const cav_msgs::Trajectory& ecef_trajectory) const
   {
     cav_msgs::TrajectoryPlan trajectory_plan;
     std::vector<lanelet::BasicPoint2d> map_points;
 
-    tf2::Stamped<tf2::Transform> transform;
-    tf2::fromMsg(tf, transform);
-
-    lanelet::BasicPoint2d first_point = ecef_to_map_point(ecef_trajectory.location, transform);
+    lanelet::BasicPoint2d first_point = ecef_to_map_point(ecef_trajectory.location);
 
     map_points.push_back(first_point);
     auto curr_point = ecef_trajectory.location;
@@ -116,7 +96,7 @@ namespace yield_plugin
       curr_point.ecef_y += ecef_trajectory.offsets[i].offset_y;
       curr_point.ecef_z += ecef_trajectory.offsets[i].offset_z;
 
-      offset_point = ecef_to_map_point(curr_point, transform);
+      offset_point = ecef_to_map_point(curr_point);
       
       map_points.push_back(offset_point);
     }
@@ -124,21 +104,16 @@ namespace yield_plugin
     return map_points;
   }
 
-  lanelet::BasicPoint2d YieldPlugin::ecef_to_map_point(const cav_msgs::LocationECEF& ecef_point, const tf2::Transform& map_in_earth) const
+  lanelet::BasicPoint2d YieldPlugin::ecef_to_map_point(const cav_msgs::LocationECEF& ecef_point) const
   {
-    // convert input point to transform
-    tf2::Transform point_in_earth;
-    tf2::Quaternion no_rotation(0, 0, 0, 1);
-    tf2::Vector3 input_point {(double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0}; //m to cm
-    point_in_earth.setOrigin(input_point);
-    point_in_earth.setRotation(no_rotation);
-    // convert to map frame by (T_e_m)^(-1) * T_e_p
-    auto point_in_map = map_in_earth.inverse() * point_in_earth;
-    lanelet::BasicPoint2d output {
-      point_in_map.getOrigin().getX(),
-      point_in_map.getOrigin().getY()};
 
-    return output;
+    if (!map_projector_) {
+        throw std::invalid_argument("No map projector available for ecef conversion");
+    }
+      
+    lanelet::BasicPoint3d map_point = map_projector_->projectECEF( { (double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0 } , 1);
+    
+    return lanelet::traits::to2D(map_point);
   } 
     
   
@@ -146,11 +121,11 @@ namespace yield_plugin
   cav_msgs::MobilityResponse YieldPlugin::compose_mobility_response(const std::string& resp_recipient_id, const std::string& req_plan_id, bool response) const
   {
     cav_msgs::MobilityResponse out_mobility_response;
-    out_mobility_response.header.sender_id = config_.vehicle_id;
-    out_mobility_response.header.recipient_id = resp_recipient_id;
-    out_mobility_response.header.sender_bsm_id = host_bsm_id_;
-    out_mobility_response.header.plan_id = req_plan_id;
-    out_mobility_response.header.timestamp = ros::Time::now().toSec()*1000;
+    out_mobility_response.m_header.sender_id = config_.vehicle_id;
+    out_mobility_response.m_header.recipient_id = resp_recipient_id;
+    out_mobility_response.m_header.sender_bsm_id = host_bsm_id_;
+    out_mobility_response.m_header.plan_id = req_plan_id;
+    out_mobility_response.m_header.timestamp = ros::Time::now().toSec()*1000;
 
 
     if (config_.always_accept_mobility_request && response)
@@ -169,18 +144,22 @@ namespace yield_plugin
     cav_msgs::LaneChangeStatus lc_status_msg;
     if (incoming_request.strategy == "carma/cooperative-lane-change")
     {
+      if (!map_projector_) {
+        ROS_ERROR_STREAM("Cannot process mobility request as map projection is not yet set!");
+        return;
+      }
       if (incoming_request.plan_type.type == cav_msgs::PlanType::CHANGE_LANE_LEFT || incoming_request.plan_type.type == cav_msgs::PlanType::CHANGE_LANE_RIGHT)
       {
         ROS_DEBUG_STREAM("Cooperative Lane Change Request Received");
         lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_RECEIVED;
         lc_status_msg.description = "Received lane merge request";
-        if (incoming_request.header.recipient_id == config_.vehicle_id)
+        if (incoming_request.m_header.recipient_id == config_.vehicle_id)
         {
           ROS_DEBUG_STREAM("CLC Request correctly received");
         }
         // extract mobility header
-        std::string req_sender_id = incoming_request.header.sender_id;
-        std::string req_plan_id = incoming_request.header.plan_id;
+        std::string req_sender_id = incoming_request.m_header.sender_id;
+        std::string req_plan_id = incoming_request.m_header.plan_id;
         // extract mobility request
         cav_msgs::LocationECEF ecef_location = incoming_request.location;
         cav_msgs::Trajectory incoming_trajectory = incoming_request.trajectory;
@@ -204,7 +183,7 @@ namespace yield_plugin
 
         std::vector<lanelet::BasicPoint2d> req_traj_plan = {};
 
-        req_traj_plan = convert_eceftrajectory_to_mappoints(incoming_trajectory, tf_);
+        req_traj_plan = convert_eceftrajectory_to_mappoints(incoming_trajectory);
 
         double req_expiration_sec = (double)incoming_request.expiration;
         double current_time_sec = ros::Time::now().toSec();
@@ -212,7 +191,7 @@ namespace yield_plugin
         bool response_to_clc_req = false;
         // ensure there is enough time for the yield
         double req_plan_time = req_expiration_sec - current_time_sec;
-        double req_timestamp = (double)incoming_request.header.timestamp / 1000.0 - current_time_sec;
+        double req_timestamp = (double)incoming_request.m_header.timestamp / 1000.0 - current_time_sec;
         set_incoming_request_info(req_traj_plan, req_traj_speed, req_plan_time, req_timestamp);
 
         
@@ -237,15 +216,7 @@ namespace yield_plugin
         ROS_DEBUG_STREAM("response sent"); 
       }
     }
-    lanechange_status_pub_.publish(lc_status_msg);
-    if (lanechange_status_pub_.isLatched())
-    {
-      lanechange_status_pub_.publish(lc_status_msg);
-    }
-    else
-    {
-      ROS_WARN("Lane Change Status Topic is not latched.");
-    }
+    lc_status_publisher_(lc_status_msg);
     
   }
 
@@ -329,10 +300,12 @@ namespace yield_plugin
       lanelet::BasicPoint2d intersection_point = intersection_points[0].second;
       double dx = original_tp.trajectory_points[0].x - intersection_point.x();
       double dy = original_tp.trajectory_points[0].y - intersection_point.y();
+      // check if a digital_gap is available
+      double digital_gap = check_traj_for_digital_min_gap(original_tp);
+      ROS_DEBUG_STREAM("digital_gap: " << digital_gap);
       goal_pos = sqrt(dx*dx + dy*dy) - config_.x_gap;
       ROS_DEBUG_STREAM("Goal position (goal_pos): " << goal_pos);
       double collision_time = req_timestamp_ + (intersection_points[0].first * ecef_traj_timestep_) - config_.safety_collision_time_gap;
-      // planning_time = std::min(planning_time, collision_time);
       ROS_DEBUG_STREAM("req time stamp: " << req_timestamp_);
       ROS_DEBUG_STREAM("Collision time: " << collision_time);
       ROS_DEBUG_STREAM("intersection num: " << intersection_points[0].first);
@@ -372,7 +345,7 @@ namespace yield_plugin
     return cooperative_trajectory;
   }
 
-  cav_msgs::TrajectoryPlan YieldPlugin::generate_JMT_trajectory(const cav_msgs::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time) const                                                         
+  cav_msgs::TrajectoryPlan YieldPlugin::generate_JMT_trajectory(const cav_msgs::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time)                                                         
   {
     cav_msgs::TrajectoryPlan jmt_trajectory;
     std::vector<cav_msgs::TrajectoryPlanPoint> jmt_trajectory_points;
@@ -394,37 +367,47 @@ namespace yield_plugin
                                                                                                 planning_time);
  
     std::vector<double> original_traj_downtracks = get_relative_downtracks(original_tp);
-      
+    std::vector<double> calculated_speeds = {};
+    calculated_speeds.push_back(initial_velocity);
     for(size_t i = 1; i < original_tp.trajectory_points.size(); i++ )
+    {
+      double traj_target_time = i * planning_time / original_tp.trajectory_points.size();
+      double dt_dist = polynomial_calc(values, traj_target_time);
+      double dv = polynomial_calc_d(values, traj_target_time);
+      // cav_msgs::TrajectoryPlanPoint jmt_tpp;
+      if (dv >= original_max_speed)
       {
-        double traj_target_time = i * planning_time / original_tp.trajectory_points.size();
-        double dt_dist = polynomial_calc(values, traj_target_time);
-        double dv = polynomial_calc_d(values, traj_target_time);
-        cav_msgs::TrajectoryPlanPoint jmt_tpp;
-        // the last moving trajectory point
-        if (dv >= config_.max_stop_speed)
-        {
-          ROS_DEBUG_STREAM("target speed: " << dv);
-          if (dv >= original_max_speed){
-            dv = original_max_speed;
-          }
-          // if (dv >= initial_velocity){
-          //   dv = std::max(config_.max_stop_speed, initial_velocity);
-          // }
-          // trajectory point is copied to move all the available information, then its target time is updated
-          jmt_tpp = original_tp.trajectory_points[i];
-          jmt_tpp.target_time = jmt_trajectory_points[i-1].target_time + ros::Duration(original_traj_downtracks[i]/dv);
-          jmt_trajectory_points.push_back(jmt_tpp);
-        }
-        else
-        {
-          ROS_DEBUG_STREAM("target speed is zero");
-          // if speed is zero, the vehicle will stay in previous location.
-          jmt_tpp = jmt_trajectory_points[i-1];
-          jmt_tpp.target_time = jmt_trajectory_points[0].target_time + ros::Duration(traj_target_time);
-          jmt_trajectory_points.push_back(jmt_tpp);
-        }
+        dv = original_max_speed;
       }
+      calculated_speeds.push_back(dv);
+    }
+    // moving average filter
+    std::vector<double> filtered_speeds = moving_average_filter(calculated_speeds, config_.speed_moving_average_window_size);
+
+    double prev_speed = filtered_speeds[0];
+    for(size_t i = 1; i < original_tp.trajectory_points.size(); i++ )
+    {
+      cav_msgs::TrajectoryPlanPoint jmt_tpp;
+      double current_speed = filtered_speeds[i];
+      double traj_target_time = i * planning_time / original_tp.trajectory_points.size();
+      if (current_speed >= config_.max_stop_speed)
+      {
+        double dt = (2 * original_traj_downtracks[i]) / (current_speed + prev_speed);
+        jmt_tpp = original_tp.trajectory_points[i];
+        jmt_tpp.target_time = jmt_trajectory_points[i-1].target_time + ros::Duration(dt);
+        jmt_trajectory_points.push_back(jmt_tpp);
+      }
+      else
+      {
+        ROS_DEBUG_STREAM("target speed is zero");
+        // if speed is zero, the vehicle will stay in previous location.
+        jmt_tpp = jmt_trajectory_points[i-1];
+        jmt_tpp.target_time = jmt_trajectory_points[0].target_time + ros::Duration(traj_target_time);
+        jmt_trajectory_points.push_back(jmt_tpp);
+      }
+      prev_speed = current_speed;
+    }
+    
     jmt_trajectory.header = original_tp.header;
     jmt_trajectory.trajectory_id = original_tp.trajectory_id;
     jmt_trajectory.trajectory_points = jmt_trajectory_points;
@@ -444,8 +427,47 @@ namespace yield_plugin
     host_vehicle_size.x = config_.vehicle_length;
     host_vehicle_size.y = config_.vehicle_width;
     host_vehicle_size.z = config_.vehicle_height; 
-    std::vector<cav_msgs::RoadwayObstacle> rwol_collision = carma_wm::collision_detection::WorldCollisionDetection(rwol2, original_tp, host_vehicle_size, current_velocity, config_.collision_horizon);
+
+
+    std::vector<cav_msgs::RoadwayObstacle> rwol_collision;
+
+    // std::vector<cav_msgs::RoadwayObstacle> rwol_collision = carma_wm::collision_detection::WorldCollisionDetection(rwol2, original_tp, host_vehicle_size, current_velocity, config_.collision_horizon);
     
+    lanelet::BasicPoint2d point(original_tp.trajectory_points[0].x,original_tp.trajectory_points[0].y);
+    double vehicle_downtrack = wm_->routeTrackPos(point).downtrack;
+    
+    ROS_DEBUG_STREAM("vehicle_downtrack");
+    ROS_DEBUG_STREAM(vehicle_downtrack);
+
+    for (auto i : rwol2.roadway_obstacles){
+
+      lanelet::BasicPoint2d point_o(i.object.pose.pose.position.x, i.object.pose.pose.position.y);
+      double object_down_track = wm_->routeTrackPos(point_o).downtrack;
+
+      ROS_DEBUG_STREAM("object_down_track");
+      ROS_DEBUG_STREAM(object_down_track);
+      
+      double dist_to_object = object_down_track - vehicle_downtrack;
+      ROS_DEBUG_STREAM("object_down_track - vehicle_downtrack");
+      ROS_DEBUG_STREAM(dist_to_object);
+      
+      ROS_DEBUG_STREAM("i.object.velocity.twist.linear.x");
+      ROS_DEBUG_STREAM(i.object.velocity.twist.linear.x);
+
+      if(current_velocity.linear.x > 0.0) {
+          ROS_DEBUG_STREAM("(object_down_downtrack - vehicle_downtrack)/current_velocity.linear.x");
+          ROS_DEBUG_STREAM(dist_to_object/current_velocity.linear.x);
+
+          // Check to see if the object is in front of us and has a time-to-collision lower than our
+          // desired horizon
+          if(dist_to_object >= 0 &&
+            dist_to_object / current_velocity.linear.x < config_.collision_horizon) {
+              rwol_collision.push_back(i);
+          }
+      }
+
+    }
+
     ROS_DEBUG_STREAM("Roadway Object List (rwol) size: " << rwol.size());
 
     // correct the input types
@@ -470,6 +492,7 @@ namespace yield_plugin
       {
         // check if a digital_gap is available
         double digital_gap = check_traj_for_digital_min_gap(original_tp);
+        ROS_DEBUG_STREAM("digital_gap: " << digital_gap);
         // if a digital gap is available, it is replaced as safety gap 
         safety_gap = std::max(safety_gap, digital_gap);
       }
@@ -596,6 +619,11 @@ namespace yield_plugin
       }
     }
     return desired_gap;
+  }
+
+  void YieldPlugin::georeferenceCallback(const std_msgs::StringConstPtr& msg) 
+  {
+      map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());  // Build projector from proj string
   }
 
 }  // namespace yield_plugin

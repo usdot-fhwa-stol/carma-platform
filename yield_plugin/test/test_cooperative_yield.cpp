@@ -25,48 +25,16 @@
 
 using namespace yield_plugin;
 
-TEST(YieldPluginTest, convert_eceftrajectory_to_mappoints)
-{
-  YieldPluginConfig config;
-  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
-  geometry_msgs::TransformStamped tf;
-  tf.transform.translation.x = 2;
-  tf.transform.translation.y = 3;
-
-  cav_msgs::Trajectory ecef_traj;
-  ecef_traj.location.ecef_x = 2;
-  ecef_traj.location.ecef_y = 2;
-
-  cav_msgs::LocationOffsetECEF offset_p1;
-  offset_p1.offset_x = 1;
-  offset_p1.offset_y = 1;
-
-  cav_msgs::LocationOffsetECEF offset_p2;
-  offset_p2.offset_x = 2;
-  offset_p2.offset_y = 2;
-
-  ecef_traj.offsets = {offset_p1, offset_p2};
-
-  std::vector<lanelet::BasicPoint2d> map_points = plugin.convert_eceftrajectory_to_mappoints(ecef_traj, tf);
-
-  EXPECT_EQ(map_points[0].x(), 4);
-  EXPECT_EQ(map_points[0].y(), 6);
-  EXPECT_EQ(map_points[1].x(), 6);
-  EXPECT_EQ(map_points[1].y(), 9);
-  EXPECT_EQ(map_points[2].x(), 8);
-  EXPECT_EQ(map_points[2].y(), 12);
-}
 
 TEST(YieldPluginTest, compose_mobility_response)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
   cav_msgs::MobilityResponse resp = plugin.compose_mobility_response("recicpient_id", "plan_id", true);
 
-  EXPECT_EQ(resp.header.recipient_id, "recicpient_id");
-  EXPECT_EQ(resp.header.plan_id, "plan_id");
+  EXPECT_EQ(resp.m_header.recipient_id, "recicpient_id");
+  EXPECT_EQ(resp.m_header.plan_id, "plan_id");
   EXPECT_TRUE(resp.is_accepted);
 }
 
@@ -75,7 +43,7 @@ TEST(YieldPluginTest, test_detect_trajectories_intersection)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
 
   std::vector<lanelet::BasicPoint2d> v1, v2;
 
@@ -109,7 +77,7 @@ TEST(YieldPluginTest, test_update_clc_trajectory)
     YieldPluginConfig config;
     config.safety_collision_time_gap = 0.1;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-    YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+    YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
     
 
     
@@ -177,7 +145,7 @@ TEST(YieldPluginTest, test_traj_cb)
 {
     YieldPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-    YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+    YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
 
     cav_msgs::TrajectoryPlan original_tp;
 
@@ -220,8 +188,8 @@ TEST(YieldPluginTest, test_traj_cb)
     original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
 
     cav_srvs::PlanTrajectoryRequest req;
-    req.vehicle_state.X_pos_global = 1.5;
-    req.vehicle_state.Y_pos_global = 5;
+    req.vehicle_state.x_pos_global = 1.5;
+    req.vehicle_state.y_pos_global = 5;
     req.vehicle_state.orientation = 0;
     req.vehicle_state.longitudinal_vel = 0.0;
 

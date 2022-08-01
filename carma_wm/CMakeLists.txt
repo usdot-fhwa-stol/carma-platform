@@ -1,10 +1,24 @@
-cmake_minimum_required(VERSION 2.8.3)
+
+# Copyright (C) 2019-2021 LEIDOS.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+
+cmake_minimum_required(VERSION 3.0.2)
 project(carma_wm)
 
-## Compile as C++14, as it is required by lanelet2
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 ## Set catkin dependencies
 set ( PKG_CATKIN_DEPS 
@@ -20,6 +34,7 @@ set ( PKG_CATKIN_DEPS
   roscpp
   tf2
   tf2_geometry_msgs
+  autoware_lanelet2_ros_interface
 )
 
 ## Find required catkin packages
@@ -59,9 +74,11 @@ add_library(
   src/WMListener.cpp
   src/WMListenerWorker.cpp
   src/Geometry.cpp
+  src/WorldModelUtils.cpp
   src/TrafficControl.cpp
   src/IndexedDistanceMap.cpp
   src/collision_detection.cpp
+  src/SignalizedIntersectionManager.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -101,7 +118,7 @@ add_dependencies(
 
 # Mark libraries for installation
 # See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-install(TARGETS ${PROJECT_NAME} map_update_logger_node
+install(TARGETS ${PROJECT_NAME} #map_update_logger_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -117,15 +134,17 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 catkin_add_gmock(${PROJECT_NAME}-test
-  test/TestMain.cpp
-  test/MapConformerTest.cpp
-  test/CARMAWorldModelTest.cpp
-  test/WMTestLibForGuidanceTest.cpp
-  test/IndexedDistanceMapTest.cpp
-  test/WMListenerWorkerTest.cpp
   test/GeometryTest.cpp
+  test/TestMain.cpp
+  test/CARMAWorldModelTest.cpp
+  test/WMListenerWorkerTest.cpp
+  test/SignalizedIntersectionManagerTest.cpp
   test/CollisionDetectionTest.cpp
+  test/IndexedDistanceMapTest.cpp
+  test/MapConformerTest.cpp
   test/TrafficControlTest.cpp
+  test/WMTestLibForGuidanceTest.cpp
+  test/WorldModelUtilsTest.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@
 
 #include "neighbor_generator.hpp"
 #include "capabilities_interface.hpp"
+#include "vehicle_state.hpp"
 
 namespace arbitrator
 {
@@ -39,18 +40,19 @@ namespace arbitrator
              * Constructor for PluginNeighborGenerator
              * \param ci A capabilties interface for accessing the plugins
              */
-            PluginNeighborGenerator(T &ci) :
+            PluginNeighborGenerator(std::shared_ptr<T> ci) :
                 ci_(ci) {};
 
             /**
              * Generates a list of neighbor states for the given plan using 
              * the plugins available to the system
              * \param plan The plan that is the current search state
+             * \param initial_state The initial state of the vehicle at the start of plan. This will be provided to planners for specific use when plan is empty
              * \return A list of subsequent plans building on top of the input plan
              */
-            std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan) const;
+            std::vector<carma_planning_msgs::msg::ManeuverPlan> generate_neighbors(carma_planning_msgs::msg::ManeuverPlan plan, const VehicleState& initial_state) const;
         private:
-            T &ci_;
+            std::shared_ptr<T> ci_;
     };
 };
 

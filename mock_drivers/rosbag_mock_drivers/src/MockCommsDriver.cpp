@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2020-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,7 @@ uint8_t MockCommsDriver::getDriverStatus()
 
 void MockCommsDriver::outboundCallback(const cav_msgs::ByteArray::ConstPtr& msg) const
 {
-  ROS_DEBUG_STREAM("Received Byte Array of type: " << msg->messageType);
+  ROS_DEBUG_STREAM("Received Byte Array of type: " << msg->message_type);
 };
 
 MockCommsDriver::MockCommsDriver(bool dummy)

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  Copyright (C) 2018-2020 LEIDOS.
+  Copyright (C) 2018-2021 LEIDOS.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -52,5 +52,8 @@
     <arg name="guidance_state_topic_name" value= "$(optenv CARMA_GUIDE_NS)/state"/>
     <arg name="turn_signal_topic_name" value= "$(optenv CARMA_INTR_NS)/turn_signal_command"/>
   </include>
+	
+  <!-- Temporary node to get a ROS2 accel topic into the rosbag -->
+  <node pkg="topic_tools" type="relay" name="relay_vehicle_accel" args="/hardware_interface/as/velocity_accel_cov /hardware_interface/velocity_accel_cov"/>
 
 </launch>

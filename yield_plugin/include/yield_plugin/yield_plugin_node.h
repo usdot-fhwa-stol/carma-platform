@@ -49,7 +49,7 @@ public:
 
     ros::Publisher discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
     ros::Publisher mob_resp_pub = nh.advertise<cav_msgs::MobilityResponse>("outgoing_mobility_response", 1);
-    ros::Publisher lc_status_pub = nh.advertise<cav_msgs::LaneChangeStatus>("cooperative_lane_change_status", 1);
+    ros::Publisher lc_status_pub = nh.advertise<cav_msgs::LaneChangeStatus>("cooperative_lane_change_status", 10);
 
     YieldPluginConfig config;
 
@@ -70,25 +70,24 @@ public:
     pnh.param<double>("safety_collision_time_gap", config.safety_collision_time_gap, config.safety_collision_time_gap);
     pnh.param<bool>("enable_adjustable_gap", config.enable_adjustable_gap, config.enable_adjustable_gap);
     pnh.param<int>("acceptable_urgency", config.acceptable_urgency, config.acceptable_urgency);
+    pnh.param<double>("speed_moving_average_window_size", config.speed_moving_average_window_size, config.speed_moving_average_window_size);
     ROS_INFO_STREAM("YieldPlugin Params" << config);
 
-    YieldPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); }, [&mob_resp_pub](auto msg) { mob_resp_pub.publish(msg); });
-  
-    worker.lookupECEFtoMapTransform();
-    
-    worker.set_lanechange_status_publisher(lc_status_pub);
-
-    ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/YieldPlugin/plan_trajectory",
+    YieldPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); }, [&mob_resp_pub](auto msg) { mob_resp_pub.publish(msg); },
+                                    [&lc_status_pub](auto msg) { lc_status_pub.publish(msg); });
+      
+    ros::ServiceServer trajectory_srv_ = nh.advertiseService("yield_plugin/plan_trajectory",
                                             &YieldPlugin::plan_trajectory_cb, &worker);
     ros::Subscriber mob_request_sub = nh.subscribe("incoming_mobility_request", 5, &YieldPlugin::mobilityrequest_cb,  &worker);
     ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &YieldPlugin::bsm_cb,  &worker);
+    ros::Subscriber georeference_sub = nh.subscribe("georeference", 1, &YieldPlugin::georeferenceCallback, &worker);
     
-
     ros::Timer discovery_pub_timer_ = nh.createTimer(
             ros::Duration(ros::Rate(10.0)),
             [&worker](const auto&) { worker.onSpin(); });
 
     ros::CARMANodeHandle::spin();
+    
   }
 };
 

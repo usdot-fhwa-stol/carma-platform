@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>cooperative_lanechange</name>
   <version>3.3.0</version>
   <description>The node is to plan a cooperative lane change trajectory</description>
@@ -16,9 +16,10 @@
   <depend>tf</depend>
   <depend>tf2_ros</depend>
   <depend>tf2_geometry_msgs</depend> 
-  <depend>trajectory_utils</depend>
-  <depend>unobstructed_lanechange</depend>  
+  <depend>trajectory_utils</depend> 
   <depend>roslib</depend>
+  <depend>basic_autonomy</depend>
+  <depend>carma_debug_msgs</depend> 
+  <depend>lanelet2_extension</depend>
+  <build_depend>carma_cmake_common</build_depend>
 </package>
-
-  

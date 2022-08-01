@@ -19,7 +19,7 @@
 #include <autoware_lanelet2_msgs/MapBin.h>
 #include <cav_msgs/TrafficControlRequest.h>
 #include <carma_utils/CARMAUtils.h>
-#include <lanelet2_extension/utility/message_conversion.h>
+#include <autoware_lanelet2_ros_interface/utility/message_conversion.h>
 #include <carma_wm/TrafficControl.h>
 #include <carma_debug_msgs/MapUpdateReadable.h>
 #include <carma_debug_msgs/LaneletIdRegulatoryElementPair.h>
@@ -163,4 +163,4 @@ int main(int argc, char** argv)
   ros::Subscriber update_sub = nh.subscribe("/environment/map_update", 100, &CallbackHolder::raw_callback, &ch);
 
   ros::CARMANodeHandle::spin();
-};
+}

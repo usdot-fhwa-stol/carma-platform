@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2020-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,7 @@
 #include <carma_wm/Geometry.h>
 #include <carma_wm/MapConformer.h>
 #include <ros/ros.h>
+#include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
 /**
  * This is a test library made for guidance unit tests. In general, it includes the following :
  * - Helper functions to create the world from scratch or extend the world in getGuidanceTestMap()
@@ -63,12 +64,13 @@ struct MapOptions
 {
   enum class Obstacle {DEFAULT, NONE};
   enum class SpeedLimit {DEFAULT, NONE};
-  MapOptions(double lane_width = 3.7, double lane_length = 25, Obstacle obstacle =  Obstacle::DEFAULT, SpeedLimit speed_limit = SpeedLimit::DEFAULT): 
-                            lane_width_(lane_width), lane_length_(lane_length), obstacle_(obstacle), speed_limit_(speed_limit){}
+  MapOptions(double lane_width = 3.7, double lane_length = 25, Obstacle obstacle =  Obstacle::DEFAULT, SpeedLimit speed_limit = SpeedLimit::DEFAULT, int seg_num = 1): 
+                            lane_width_(lane_width), lane_length_(lane_length), obstacle_(obstacle), speed_limit_(speed_limit), seg_num_(seg_num){}
   double lane_width_;
   double lane_length_;
   Obstacle obstacle_ ;
   SpeedLimit speed_limit_;
+  int seg_num_;
 };
 /**
  * \brief helper function for quickly creating a lanelet::Point3d. random id is assigned
@@ -175,50 +177,54 @@ inline lanelet::Lanelet getLanelet(lanelet::Id id, std::vector<lanelet::Point3d>
  * \brief helper function for creating lanelet map for getGuidanceTestMap
  * \param width width of single lanelet, default is 3.7 meters which is US standard
  * \param length length of a single lanelet, default is 25 meters to accomplish 100 meters of full lane
+ * \param num how many number of segments should linestrings of the lanelet have. a.k.a num + 1 points in each linestring
  */
-inline lanelet::LaneletMapPtr buildGuidanceTestMap(double width, double length)
+inline lanelet::LaneletMapPtr buildGuidanceTestMap(double width, double length, int num = 1)
 {
   std::vector<lanelet::Lanelet> all_lanelets;
-  auto pt00 = carma_wm::test::getPoint(0.0,0, 0);
-  auto pt01 = carma_wm::test::getPoint(0.0,1 * length, 0);
-  auto pt02 = carma_wm::test::getPoint(0.0,2 * length, 0);
-  auto pt03 = carma_wm::test::getPoint(0.0,3 * length, 0);
-  auto pt04 = carma_wm::test::getPoint(0.0,4 * length, 0);
-  auto pt10 = carma_wm::test::getPoint(1 * width,0, 0);
-  auto pt11 = carma_wm::test::getPoint(1 * width,1 * length, 0);
-  auto pt12 = carma_wm::test::getPoint(1 * width,2 * length, 0);
-  auto pt13 = carma_wm::test::getPoint(1 * width,3 * length, 0);
-  auto pt14 = carma_wm::test::getPoint(1 * width,4 * length, 0);
-  auto pt20 = carma_wm::test::getPoint(2 * width,0, 0);
-  auto pt21 = carma_wm::test::getPoint(2 * width,1 * length, 0);
-  auto pt22 = carma_wm::test::getPoint(2 * width,2 * length, 0);
-  auto pt23 = carma_wm::test::getPoint(2 * width,3 * length, 0);
-  auto pt24 = carma_wm::test::getPoint(2 * width,4 * length, 0);
-  auto pt30 = carma_wm::test::getPoint(3 * width,0, 0);
-  auto pt31 = carma_wm::test::getPoint(3 * width,1 * length, 0);
-  auto pt32 = carma_wm::test::getPoint(3 * width,2 * length, 0);
-  auto pt33 = carma_wm::test::getPoint(3 * width,3 * length, 0);
-  auto pt34 = carma_wm::test::getPoint(3 * width,4 * length, 0);
+  double step_length = length / num;  // 26 points in one lanelet's lanelent
 
-  lanelet::LineString3d ls00(lanelet::utils::getId(), {pt00,pt01} );
-  lanelet::LineString3d ls01(lanelet::utils::getId(), {pt01,pt02} );
-  lanelet::LineString3d ls02(lanelet::utils::getId(), {pt02,pt03} );
-  lanelet::LineString3d ls03(lanelet::utils::getId(), {pt03,pt04} );
+  std::vector<lanelet::Point3d> pts0;
+  std::vector<lanelet::Point3d> pts1;
+  std::vector<lanelet::Point3d> pts2;
+  std::vector<lanelet::Point3d> pts3;
 
-  lanelet::LineString3d ls10(lanelet::utils::getId(), {pt10,pt11} );
-  lanelet::LineString3d ls11(lanelet::utils::getId(), {pt11,pt12} );
-  lanelet::LineString3d ls12(lanelet::utils::getId(), {pt12,pt13} );
-  lanelet::LineString3d ls13(lanelet::utils::getId(), {pt13,pt14} );
+  for (int i = 0; i < num * 4 + 1; i ++)
+  {
+    pts0.push_back(carma_wm::test::getPoint(0.0, i * step_length, 0));
+  } 
+  for (int i = 0; i < num * 4 + 1; i ++)
+  {
+    pts1.push_back(carma_wm::test::getPoint(1 * width, i * step_length, 0));
+  } 
+  for (int i = 0; i < num * 4 + 1; i ++)
+  {
+    pts2.push_back(carma_wm::test::getPoint(2 * width, i * step_length, 0));
+  } 
+  for (int i = 0; i < num * 4 + 1; i ++)
+  {
+    pts3.push_back(carma_wm::test::getPoint(3 * width, i * step_length, 0));
+  } 
 
-  lanelet::LineString3d ls20(lanelet::utils::getId(), {pt20,pt21} );
-  lanelet::LineString3d ls21(lanelet::utils::getId(), {pt21,pt22} );
-  lanelet::LineString3d ls22(lanelet::utils::getId(), {pt22,pt23} );
-  lanelet::LineString3d ls23(lanelet::utils::getId(), {pt23,pt24} );
+  lanelet::LineString3d ls00(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts0.begin(), pts0.begin() + num + 1));
+  lanelet::LineString3d ls01(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts0.begin() + num, pts0.begin() + 2 * num + 1));
+  lanelet::LineString3d ls02(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts0.begin() + 2 * num, pts0.begin() + 3 * num + 1)) ;
+  lanelet::LineString3d ls03(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts0.begin() + 3 * num, pts0.begin() + 4 * num + 1));
 
-  lanelet::LineString3d ls30(lanelet::utils::getId(), {pt30,pt31} );
-  lanelet::LineString3d ls31(lanelet::utils::getId(), {pt31,pt32} );
-  lanelet::LineString3d ls32(lanelet::utils::getId(), {pt32,pt33} );
-  lanelet::LineString3d ls33(lanelet::utils::getId(), {pt33,pt34} );
+  lanelet::LineString3d ls10(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts1.begin(), pts1.begin() + num + 1));
+  lanelet::LineString3d ls11(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts1.begin() + num, pts1.begin() + 2 * num + 1));
+  lanelet::LineString3d ls12(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts1.begin() + 2 * num, pts1.begin() + 3 * num + 1));
+  lanelet::LineString3d ls13(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts1.begin() + 3 * num, pts1.begin() + 4 * num + 1));
+
+  lanelet::LineString3d ls20(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts2.begin(), pts2.begin() + num + 1));
+  lanelet::LineString3d ls21(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts2.begin() + num, pts2.begin() + 2 * num + 1));
+  lanelet::LineString3d ls22(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts2.begin() + 2 * num, pts2.begin() + 3 * num + 1));
+  lanelet::LineString3d ls23(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts2.begin() + 3 * num, pts2.begin() + 4 * num + 1));
+
+  lanelet::LineString3d ls30(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts3.begin(), pts3.begin() + num + 1));
+  lanelet::LineString3d ls31(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts3.begin() + num, pts3.begin() + 2 * num + 1));
+  lanelet::LineString3d ls32(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts3.begin() + 2 * num, pts3.begin() + 3 * num + 1));
+  lanelet::LineString3d ls33(lanelet::utils::getId(), std::vector<lanelet::Point3d>(pts3.begin() + 3 * num, pts3.begin() + 4 * num + 1));
 
   all_lanelets.push_back(getLanelet(1200, ls00,ls10,lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed));
   all_lanelets.push_back(getLanelet(1201, ls01,ls11,lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed));
@@ -317,8 +323,12 @@ inline void addObstacle(double x, double y, std::shared_ptr<carma_wm::CARMAWorld
  * \param length length of roadway object, default 3 meters
  * NOTE: This assumes a similar simple shape of the GuidanceTestMap and does not populate cartesian components of the roadway object.
  */
-inline void addObstacle(carma_wm::TrackPos tp, lanelet::Id lanelet_id, std::shared_ptr<carma_wm::CARMAWorldModel> cmw, std::vector<carma_wm::TrackPos> pred_trackpos_list = {}, int time_step = 100, double width = 3, double length = 3)
+inline void addObstacle(carma_wm::TrackPos tp, lanelet::Id lanelet_id, std::shared_ptr<carma_wm::CARMAWorldModel> cmw, 
+                        std::vector<carma_wm::TrackPos> pred_trackpos_list = {}, int time_step = 100, double width = 3, double length = 3)
 {
+  //TODO: width & length are not used; if there are no plans to use them soon, remove them from param list
+  ROS_DEBUG_STREAM("/// the following args are not used: width = " << width << ", length = " << length << ". Logging to avoid compiler warning.");
+
   cav_msgs::RoadwayObstacle rwo;	
 
   if (!cmw->getMap() || cmw->getMap()->laneletLayer.size() == 0)
@@ -404,10 +414,10 @@ inline void setSpeedLimit (lanelet::Velocity speed_limit, std::shared_ptr<carma_
       }
     }
     lanelet::DigitalSpeedLimitPtr sl = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), speed_limit, {llt}, {},
-                                                     { lanelet::Participants::VehicleCar }));
+                                                     { lanelet::Participants::Vehicle }));
     cmw->getMutableMap()->update(llt, sl);
   }
-  ROS_INFO_STREAM("Set the new speed limit!");
+  ROS_INFO_STREAM("Set the new speed limit! Value: " << speed_limit.value());
 }
 
 /**
@@ -471,6 +481,80 @@ inline void setRouteByIds (std::vector<lanelet::Id> lanelet_ids, std::shared_ptr
   setRouteByLanelets(lanelets, cmw);
 }
 
+
+
+
+/**
+ * \brief Method adds a traffic light to the provided world model instance
+ *        NOTE: The stop line for the light will be located at the end of the owning_lanelets (in order) and formed from their two bound end points.
+ *        NOTE: Exit lanelet matches the entry lanelets by order. 
+ * 
+ * \param cmw The world model instance to update
+ * \param light_id The lanelet id to use for the generated traffic light regulatory element. This id should NOT be present in the map prior to this method call
+ * \param entry_lanelet_ids The ids of the lanelet which will own the traffic light element. These ids MUST be present in the map prior to this method being called
+ * \param exit_lanelet_ids The ids of the exit lanelet of this traffic light. These ids MUST be present in the map prior to this method being called
+ * \param timeing_plan Optional parameter that is the timing plan to use for the light. The specifications match those of CarmaTrafficSignalState.setStates()
+ *                     The default timing plan is 4sec yewllow, 20sec red, 20sec green
+ * \throw if any of the lanelet is not in map, or entry/exit lanelet sizes do not match
+ */ 
+inline void addTrafficLight(std::shared_ptr<carma_wm::CARMAWorldModel> cmw, lanelet::Id light_id, std::vector<lanelet::Id> entry_lanelet_ids, std::vector<lanelet::Id> exit_lanelet_ids, 
+std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>> timing_plan =
+{
+  std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(0), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED), // Just ended green
+  std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(4.0), lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE), // 4 sec yellow
+  std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(24.0), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN), // 20 sec red
+  std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(44.0), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED) // 20 sec green
+}) 
+{
+  if (entry_lanelet_ids.size() != exit_lanelet_ids.size())
+  {
+    throw std::invalid_argument("Provided entry and exit lanelets size do not match!");
+  }
+  
+  lanelet::Lanelets entry_lanelets;
+
+  for (auto id : entry_lanelet_ids) {
+    auto iterator = cmw->getMutableMap()->laneletLayer.find(id);
+    
+    if (iterator == cmw->getMutableMap()->laneletLayer.end())
+      throw std::invalid_argument("Provided with lanelet id not in map: " + std::to_string(id));
+
+    entry_lanelets.push_back(*iterator);
+  }
+
+  lanelet::Lanelets exit_lanelets;
+
+  for (auto id : exit_lanelet_ids) {
+    auto iterator = cmw->getMutableMap()->laneletLayer.find(id);
+    
+    if (iterator == cmw->getMutableMap()->laneletLayer.end())
+      throw std::invalid_argument("Provided with lanelet id not in map: " + std::to_string(id));
+
+    exit_lanelets.push_back(*iterator);
+  }
+
+  // Create stop line at end of owning lanelet
+  std::vector<lanelet::LineString3d> stop_lines;
+  for (auto llt: entry_lanelets)
+  {
+    lanelet::LineString3d virtual_stop_line(lanelet::utils::getId(), { llt.leftBound().back(), llt.rightBound().back() });
+    stop_lines.push_back(virtual_stop_line);
+  }
+  
+  // Build traffic light
+  std::shared_ptr<lanelet::CarmaTrafficSignal> traffic_light(new lanelet::CarmaTrafficSignal(lanelet::CarmaTrafficSignal::buildData(light_id, stop_lines, entry_lanelets, exit_lanelets )));
+  
+  // Set the timing plan
+  traffic_light->setStates(timing_plan,0);
+
+  // Ensure map lookup tables are updated
+  for (auto llt: entry_lanelets)
+  {
+    cmw->getMutableMap()->update(llt, traffic_light);
+  }
+  
+}
+
 /**
  * \brief Gets the CARMAWorldModel for the guidance test map
  *
@@ -484,9 +568,11 @@ inline std::shared_ptr<carma_wm::CARMAWorldModel> getGuidanceTestMap(MapOptions 
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();	
   // create the semantic map
-  auto map = buildGuidanceTestMap(map_options.lane_width_, map_options.lane_length_);
+  
+  auto map = buildGuidanceTestMap(map_options.lane_width_, map_options.lane_length_, map_options.seg_num_);
 
   // set the map, with default routingGraph
+  
   cmw->setMap(map);
 
   // set default route, from 1200 to 1203 (it will automatically pick the shortest)

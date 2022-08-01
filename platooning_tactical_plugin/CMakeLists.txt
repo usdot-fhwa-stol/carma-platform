@@ -1,5 +1,5 @@
-#
-# Copyright (C) 2018-2020 LEIDOS.
+
+# Copyright (C) 2020-2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -12,15 +12,13 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
-#
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(platooning_tactical_plugin)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(1)
+carma_package()
 
 set( CATKIN_DEPS
   roscpp
@@ -34,6 +32,7 @@ set( CATKIN_DEPS
   tf
   tf2
   tf2_geometry_msgs
+  basic_autonomy
 )
 
 ## Find catkin macros and libraries
@@ -70,7 +69,6 @@ add_executable( ${PROJECT_NAME}
   
 add_library(platooning_tactical_plugin_library 
   src/platooning_tactical_plugin.cpp
-  src/smoothing/BSpline.cpp
 )
 target_link_libraries(platooning_tactical_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(platooning_tactical_plugin_library ${catkin_EXPORTED_TARGETS})
@@ -104,6 +102,5 @@ install(DIRECTORY launch config
 
 catkin_add_gmock(${PROJECT_NAME}-test 
   test/test_platooning_tactical_plugin_planning.cpp
-  test/test_platooning_tactical_plugin.cpp
 )
 target_link_libraries(${PROJECT_NAME}-test platooning_tactical_plugin_library ${catkin_LIBRARIES})

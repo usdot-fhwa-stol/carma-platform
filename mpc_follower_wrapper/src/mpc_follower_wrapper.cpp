@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 LEIDOS.
+ * Copyright (C) 2018-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,7 +42,7 @@ void MPCFollowerWrapper::Initialize() {
 
   mpc_plugin_discovery_pub_ = nh_.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
   plugin_discovery_msg_.name = "MPC";
-  plugin_discovery_msg_.versionId = "v1.0";
+  plugin_discovery_msg_.version_id = "v1.0";
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = true;
   plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;

@@ -14,20 +14,20 @@
  * the License.
  */
 
-#include <ros/ros.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <geometry_msgs/Pose.h>
-#include <geometry_msgs/TransformStamped.h>
-#include <geometry_msgs/Transform.h>
+#include <rclcpp/rclcpp.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/transform.hpp>
 #include <functional>
-#include <pose_to_tf/PoseToTF2.h>
+#include "pose_to_tf/PoseToTF2.hpp"
 
 namespace tf2
 {
 namespace
 {
-void convert(const geometry_msgs::Pose& pose, geometry_msgs::Transform& trans)
+void convert(const geometry_msgs::msg::Pose& pose, geometry_msgs::msg::Transform& trans)
 {
   trans.rotation = pose.orientation;
   trans.translation.x = pose.position.x;
@@ -35,18 +35,18 @@ void convert(const geometry_msgs::Pose& pose, geometry_msgs::Transform& trans)
   trans.translation.z = pose.position.z;
 }
 
-void convert(const geometry_msgs::PoseWithCovariance& pose, geometry_msgs::Transform& trans)
+void convert(const geometry_msgs::msg::PoseWithCovariance& pose, geometry_msgs::msg::Transform& trans)
 {
   convert(pose.pose, trans);
 }
 
-void convert(const geometry_msgs::PoseStamped& pose, geometry_msgs::TransformStamped& trans)
+void convert(const geometry_msgs::msg::PoseStamped& pose, geometry_msgs::msg::TransformStamped& trans)
 {
   convert(pose.pose, trans.transform);
   trans.header = pose.header;
 }
 
-void convert(const geometry_msgs::PoseWithCovarianceStamped& pose, geometry_msgs::TransformStamped& trans)
+void convert(const geometry_msgs::msg::PoseWithCovarianceStamped& pose, geometry_msgs::msg::TransformStamped& trans)
 {
   convert(pose.pose, trans.transform);
   trans.header = pose.header;
@@ -56,44 +56,45 @@ void convert(const geometry_msgs::PoseWithCovarianceStamped& pose, geometry_msgs
 
 namespace pose_to_tf
 {
-PoseToTF2::PoseToTF2(PoseToTF2Config config, TransformPublisher transform_pub)
-  : config_(config), transform_pub_(transform_pub)
+
+PoseToTF2::PoseToTF2(PoseToTF2Config config, TransformPublisher transform_pub, std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node)
+  : config_(config), transform_pub_(transform_pub), node_(node)  
 {
 }
 
-void PoseToTF2::poseStampedCallback(const geometry_msgs::PoseStampedConstPtr& msg)
+void PoseToTF2::poseStampedCallback(geometry_msgs::msg::PoseStamped::UniquePtr msg)
 {
-  geometry_msgs::TransformStamped out_tf;
+  geometry_msgs::msg::TransformStamped out_tf;
   tf2::convert(*msg, out_tf);
   out_tf.child_frame_id = config_.child_frame;
   transform_pub_(out_tf);
 }
 
-void PoseToTF2::poseWithCovarianceStampedCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
+void PoseToTF2::poseWithCovarianceStampedCallback(geometry_msgs::msg::PoseWithCovarianceStamped::UniquePtr msg)
 {
-  geometry_msgs::TransformStamped out_tf;
+  geometry_msgs::msg::TransformStamped out_tf;
   tf2::convert(*msg, out_tf);
   out_tf.child_frame_id = config_.child_frame;
   transform_pub_(out_tf);
 }
 
-void PoseToTF2::poseCallback(const geometry_msgs::PoseConstPtr& msg)
+void PoseToTF2::poseCallback(geometry_msgs::msg::Pose::UniquePtr msg)
 {
-  geometry_msgs::TransformStamped out_tf;
+  geometry_msgs::msg::TransformStamped out_tf;
   tf2::convert(*msg, out_tf.transform);
-  out_tf.header.stamp = ros::Time::now();
+  out_tf.header.stamp = node_->now();
   out_tf.header.frame_id = config_.default_parent_frame;
   out_tf.child_frame_id = config_.child_frame;
   transform_pub_(out_tf);
 }
 
-void PoseToTF2::poseWithCovarianceCallback(const geometry_msgs::PoseWithCovarianceConstPtr& msg)
+void PoseToTF2::poseWithCovarianceCallback(geometry_msgs::msg::PoseWithCovariance::UniquePtr msg)
 {
-  geometry_msgs::TransformStamped out_tf;
+  geometry_msgs::msg::TransformStamped out_tf;
   tf2::convert(*msg, out_tf.transform);
-  out_tf.header.stamp = ros::Time::now();
+  out_tf.header.stamp = node_->now();
   out_tf.header.frame_id = config_.default_parent_frame;
   out_tf.child_frame_id = config_.child_frame;
   transform_pub_(out_tf);
 }
-}  // namespace pose_to_tf
+}//namespace pose_to_tf
