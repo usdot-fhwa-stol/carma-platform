@@ -24,7 +24,7 @@ import datetime
 import math
 
 # HOW TO USE SCRIPT:
-# Run the following in a terminal:
+# Run the following in a terminal to download dependencies:
 #   sudo add-apt-repository ppa:deadsnakes/ppa
 #   sudo apt-get update
 #   sudo apt install python3.7

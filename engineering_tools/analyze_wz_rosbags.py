@@ -23,8 +23,18 @@ import rosbag # To import this, run the following command: "pip install --extra-
 import datetime
 import math
 
-# Usage:
-# python analyze_wz_rosbags.py <path to folder containing Workzone Use Case .bag files>
+# HOW TO USE SCRIPT:
+# Run the following in a terminal to download dependencies:
+#   sudo add-apt-repository ppa:deadsnakes/ppa
+#   sudo apt-get update
+#   sudo apt install python3.7
+#   python3.7 -m pip install --upgrade pip
+#   python3.7 -m pip install matplotlib
+#   python3.7 -m pip install --extra-index-url https://rospypi.github.io/simple/ rospy rosbag rospkg
+#   python3.7 -m pip install lz4
+#   python3.7 -m pip install roslz4 --extra-index-url https://rospypi.github.io/simple/
+# In terminal, navigate to the directory that contains this python script and run the following:
+#   python3.7 analyze_wz_rosbags.py <path to folder containing Workzone Use Case .bag files>
 
 def generate_speed_plot(bag):
     # Get the vehicle speed and plot it
@@ -1065,23 +1075,23 @@ def main():
         print("Need 1 arguments: process_bag.py <path to source folder with .bag files> ")
         exit()
     
-    source_folder = sys.argv[1]
+    #source_folder = sys.argv[1]
 
     # Re-direct the output of print() to a specified .txt file:
-    orig_stdout = sys.stdout
+    #orig_stdout = sys.stdout
     current_time = datetime.datetime.now()
-    text_log_filename = "Results_" + str(current_time) + ".txt"
-    text_log_file_writer = open(text_log_filename, 'w')
-    sys.stdout = text_log_file_writer
+    #text_log_filename = "Results_" + str(current_time) + ".txt"
+    #text_log_file_writer = open(text_log_filename, 'w')
+    #sys.stdout = text_log_file_writer
 
     # Create .csv file to make it easier to view overview of results (the .txt log file is still used for more in-depth information):
-    csv_results_filename = "Results_" + str(current_time) + ".csv"
-    csv_results_writer = csv.writer(open(csv_results_filename, 'w'))
-    csv_results_writer.writerow(["Bag Name", "Vehicle Name", "Test Type",
-                                 "WZ-1 Result", "WZ-2 Result", "WZ-3 Result", "WZ-4 Result", "WZ-5 Result", "WZ-6 Result", 
-                                 "WZ-7 Result", "WZ-8 Result", "WZ-9 Result", "WZ-10 Result","WZ-11 Result", "WZ-12 Result", 
-                                 "WZ-13 Result", "WZ-14 Result", "WZ-15 Result", "WZ-16 Result", "WZ-17 Result", "WZ-18 Result", 
-                                 "WZ-19 Result", "WZ-20 Result", "WZ-21 Result", "WZ-22 Result", "WZ-23 Result", "WZ-24 Result", "WZ-25 Result"])
+    #csv_results_filename = "Results_" + str(current_time) + ".csv"
+    #csv_results_writer = csv.writer(open(csv_results_filename, 'w'))
+    #csv_results_writer.writerow(["Bag Name", "Vehicle Name", "Test Type",
+    #                             "WZ-1 Result", "WZ-2 Result", "WZ-3 Result", "WZ-4 Result", "WZ-5 Result", "WZ-6 Result", 
+    #                             "WZ-7 Result", "WZ-8 Result", "WZ-9 Result", "WZ-10 Result","WZ-11 Result", "WZ-12 Result", 
+    #                             "WZ-13 Result", "WZ-14 Result", "WZ-15 Result", "WZ-16 Result", "WZ-17 Result", "WZ-18 Result", 
+    #                             "WZ-19 Result", "WZ-20 Result", "WZ-21 Result", "WZ-22 Result", "WZ-23 Result", "WZ-24 Result", "WZ-25 Result"])
     
     # Create list of Red Light Workzone Black Pacifica bag files to be processed
     black_pacifica_red_bag_files = [] 
@@ -1125,9 +1135,9 @@ def main():
             print("Blue Lexus Green Light Workzone Test Case")
             
         # Print processing progress to terminal (all other print statements are re-directed to outputted .txt file):
-        sys.stdout = orig_stdout
+        #sys.stdout = orig_stdout
         print("Processing bag file " + str(bag_file) + " (" + str(WZ_bag_files.index(bag_file) + 1) + " of " + str(len(WZ_bag_files)) + ")")
-        sys.stdout = text_log_file_writer
+        #sys.stdout = text_log_file_writer
 
         # Process bag file if it exists and can be processed, otherwise skip and proceed to next bag file
         try:
@@ -1275,14 +1285,14 @@ def main():
             vehicle_role = "Green Light"
 
         # Write simple pass/fail results to .csv file for appropriate row:
-        csv_results_writer.writerow([bag_file, vehicle_name, vehicle_role,
-                                     wz_1_result, wz_2_result, wz_3_result, wz_4_result, wz_5_result, wz_6_result, wz_7_result,
-                                     wz_8_result, wz_9_result, wz_10_result, wz_11_result, wz_12_result, wz_13_result, wz_14_result, 
-                                     wz_15_result, wz_16_result, wz_17_result, wz_18_result, wz_19_result, wz_20_result,
-                                     wz_21_result, wz_22_result, wz_23_result, wz_24_result, wz_25_result])
+        #csv_results_writer.writerow([bag_file, vehicle_name, vehicle_role,
+        #                             wz_1_result, wz_2_result, wz_3_result, wz_4_result, wz_5_result, wz_6_result, wz_7_result,
+        #                             wz_8_result, wz_9_result, wz_10_result, wz_11_result, wz_12_result, wz_13_result, wz_14_result, 
+        #                             wz_15_result, wz_16_result, wz_17_result, wz_18_result, wz_19_result, wz_20_result,
+        #                             wz_21_result, wz_22_result, wz_23_result, wz_24_result, wz_25_result])
         
-    sys.stdout = orig_stdout
-    text_log_file_writer.close()
+    #sys.stdout = orig_stdout
+    #text_log_file_writer.close()
     return
 
 if __name__ == "__main__":

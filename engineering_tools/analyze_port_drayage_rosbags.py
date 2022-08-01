@@ -23,8 +23,18 @@ import rosbag # To import this, run the following command: "pip install --extra-
 import datetime
 import math
 
-# Usage:
-# python3.7 analyze_port_drayage_rosbags.py <path to folder containing Port Drayage Use Case .bag files>
+# HOW TO USE SCRIPT:
+# Run the following in a terminal to download dependencies:
+#   sudo add-apt-repository ppa:deadsnakes/ppa
+#   sudo apt-get update
+#   sudo apt install python3.7
+#   python3.7 -m pip install --upgrade pip
+#   python3.7 -m pip install matplotlib
+#   python3.7 -m pip install --extra-index-url https://rospypi.github.io/simple/ rospy rosbag rospkg
+#   python3.7 -m pip install lz4
+#   python3.7 -m pip install roslz4 --extra-index-url https://rospypi.github.io/simple/
+# In terminal, navigate to the directory that contains this python script and run the following:
+#   python3.7 analyze_port_drayage_rosbags.py <path to folder containing Port Drayage Use Case .bag files>
 
 def generate_speed_plot(bag, engagement_times, route_id):
     # Speed command: /hardware_interface/arbitrated_speed_commands: msg.speed
