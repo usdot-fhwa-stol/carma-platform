@@ -26,6 +26,9 @@ import math
 # Usage:
 # python3.7 analyze_freight_workzone_rosbags.py <path to folder containing Work Zone Use Case .bag files>
 
+
+# Helper function: Creates a plot with 'actual speed vs. time' and 'commanded speed vs. time' 
+#                  and saves it as a .png image within the local directory
 def generate_speed_plot(bag, time_start_engagement, time_end_engagement, bag_file_name):
     # Speed command: /hardware_interface/arbitrated_speed_commands: msg.speed (m/s)
     # True Speed:    /hardware_interface/vehicle/twist: msg.twist.linear.x (m/s)
@@ -35,7 +38,7 @@ def generate_speed_plot(bag, time_start_engagement, time_end_engagement, bag_fil
     true_vehicle_speed_times = []
     true_vehicle_speeds = []
     # Note: This topic name assumes a pacmod controller is being used (freightliners or lexus)
-    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_start_engagement, end_time = time_end_engagement): # time_start_engagement+time_duration):
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle/twist'], start_time = time_start_engagement + rospy.Duration(30), end_time = time_start_engagement + rospy.Duration(60)): # time_start_engagement+time_duration):
         if first:
             time_start = t
             first = False
@@ -48,7 +51,7 @@ def generate_speed_plot(bag, time_start_engagement, time_end_engagement, bag_fil
     first = True
     cmd_vehicle_speed_times = []
     cmd_vehicle_speeds = []
-    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/arbitrated_speed_commands'], start_time = time_start_engagement, end_time = time_end_engagement): # time_start_engagement+time_duration):
+    for topic, msg, t in bag.read_messages(topics=['/hardware_interface/arbitrated_speed_commands'], start_time = time_start_engagement + rospy.Duration(30), end_time = time_start_engagement + rospy.Duration(60)): # time_start_engagement+time_duration):
         if first:
             time_start = t
             first = False
@@ -106,12 +109,13 @@ def generate_speed_plot(bag, time_start_engagement, time_end_engagement, bag_fil
 
     # Save the plot
     filename = "Speed_" + bag_file_name + ".png"
-    plt.savefig(filename, bbox_inches='tight')
+    #plt.savefig(filename, bbox_inches='tight')
     
-    #plt.show() # Display the plot
+    plt.show() # Display the plot
 
     return
 
+# Helper function: Creates a plot with 'crosstrack error vs. time' and saves it as a .png image within the local directory
 def generate_crosstrack_plot(bag, time_start_engagement, time_end_engagement, bag_file_name):
     # Crosstrack Error: /guidance/route_state msg.cross_track (meters)
     total_duration = 40
@@ -157,6 +161,8 @@ def generate_crosstrack_plot(bag, time_start_engagement, time_end_engagement, ba
 
     return
 
+# Helper function: Creates a plot with 'actual steering angle vs. time' and 'commanded steering angle vs. time' 
+#                  and saves it as a .png image within the local directory
 def generate_steering_plot(bag, engagement_times, route_id):
     # Speed command: /hardware_interface/arbitrated_speed_commands: msg.speed
     # True Speed:     /hardware_interface/pacmod_parsed_tx/vehicle_speed_rpt: msg.vehicle_speed
@@ -482,7 +488,7 @@ def check_restricted_lane_tcm_received(bag, time_start_engagement, time_end_enga
 
 ###########################################################################################################
 # FWZ-10: The vehicle returns an Acknowledgement message within 1 second after successfully processing 
-#         a TCM from CS.
+#         a TCM from CS.F
 ###########################################################################################################
 def check_tcm_acknowledgements(bag, time_start_engagement, time_end_engagement, num_tcms):
     max_duration_before_ack = 1.0 # (seconds) Maximum duration between receiving a TCM and acknowledging it
@@ -507,6 +513,7 @@ def check_tcm_acknowledgements(bag, time_start_engagement, time_end_engagement, 
             first = False
 
         msg_num = msg.tcm_v01.msgnum
+        #print("Received msg_num: " + str(msg_num))
         if tcm_receive_times[msg_num - 1] == None:
             tcm_receive_times[msg_num - 1] = t
         if None not in tcm_receive_times:
@@ -521,6 +528,7 @@ def check_tcm_acknowledgements(bag, time_start_engagement, time_end_engagement, 
                 msg_split = msg.strategy_params.split(':') # Split string by ':' character
                 msg_num = int(msg_split[2].split(',')[0]) # Split the second elemnt of the above split by the ',' character and obtain the first element
                 if tcm_ack_durations[msg_num - 1] == None:
+                    print(msg.strategy_params)
                     print("FWZ-10 (DEBUG): Acknowledging TCM msgnum " + str(msg_num) + " " + str((t - t_first_tcm).to_sec()) + " sec after receiving first TCM")
                     duration = (t - tcm_receive_times[msg_num - 1]).to_sec()
                     tcm_ack_durations[msg_num - 1] = duration
@@ -663,10 +671,10 @@ def check_lanechange_duration(bag, time_start_engagement, time_end_engagement, n
 
 ###########################################################################################################
 # FWZ-23: Upon entering the geofenced area with an advisory speed limit, the vehicle will initiate the 
-#         deceleration command to the advisory speed limit within less than 10 meters.
+#         deceleration command to the advisory speed limit within less than 1.3 seconds.
 ###########################################################################################################
 def check_time_to_begin_deceleration(bag, time_start_engagement, time_end_engagement, advisory_speed_limit_ms):
-    max_distance_before_decel = 10.0 # meters
+    max_duration_before_decel = 1.3 # seconds
 
     speed_limit_threshold_ms = 0.05
     min_speed_limit_ms = advisory_speed_limit_ms - speed_limit_threshold_ms
@@ -691,15 +699,14 @@ def check_time_to_begin_deceleration(bag, time_start_engagement, time_end_engage
             if first:
                 prev_speed = msg.twist.linear.x
                 first = False
-                speed_enter_geofence_ms = msg.twist.linear.x
                 continue
 
             speed_start_decel_ms = msg.twist.linear.x
             if msg.twist.linear.x - prev_speed < 0:
-                num_consecutive_decel +=1
+                num_consecutive_decel += 1
                 if num_consecutive_decel == num_consecutive_decel_required:
                     duration_before_decel = (time_start - time_enter_geofence).to_sec()
-                    time_begin_deceleration_in_geofence = time_start
+                    time_begin_deceleration_in_geofence = t
                     found_start_of_decel = True
             else:
                 break
@@ -708,16 +715,13 @@ def check_time_to_begin_deceleration(bag, time_start_engagement, time_end_engage
 
         if found_start_of_decel:
             break
-
-    avg_speed_before_decel = (speed_enter_geofence_ms + speed_start_decel_ms) / 2.0
-    distance_before_decel = avg_speed_before_decel * duration_before_decel
     
     is_successful = False
-    if distance_before_decel <= max_distance_before_decel:
-        print("FWZ-23 succeeded; vehicle began decelerating " + str(distance_before_decel) + " after entering geofence (" + str(duration_before_decel) + " seconds)")
+    if duration_before_decel < max_duration_before_decel:
+        print("FWZ-23 succeeded; vehicle began decelerating " + str(duration_before_decel) + " seconds after entering geofence")
         is_successful = True
     else:
-        print("FWZ-23 failed; vehicle began decelerating " + str(distance_before_decel) + " after entering geofence (" + str(duration_before_decel) + " seconds)")
+        print("FWZ-23 failed; vehicle began decelerating " + str(duration_before_decel) + " seconds after entering geofence")
 
 
     return is_successful, time_begin_deceleration_in_geofence
@@ -754,6 +758,7 @@ def check_speed_before_workzone(bag, time_start_engagement, time_end_engagement,
 ###########################################################################################################
 def check_deceleration_for_geofence(bag, time_start_engagement, time_end_engagement, time_begin_deceleration_in_geofence, advisory_speed_limit_ms):
     max_avg_deceleration = 2.0 # m/s^2
+    end_decel_speed = advisory_speed_limit_ms + 1.1176 # Add 1.1176 m/s (2.5 mph) buffer to the expected end-of-deceleration speed
 
     # Obtain timestamp associated with the end of the deceleration section 
     # Note: This is the moment when the vehicle's speed reaches the advisory speed limit
@@ -767,21 +772,22 @@ def check_deceleration_for_geofence(bag, time_start_engagement, time_end_engagem
 
             # Print Debug Line
             speed_start_decel_mph = msg.twist.linear.x * 2.2639 # 2.2369 mph is 1 m/s
-            print("FWZ-25 (DEBUG): Speed at start of deceleration section: " + str(speed_start_decel_mph) + " mph")
+            print("FWZ-25 (DEBUG): Speed at start of deceleration section: " + str(speed_start_decel_mph) + " mph (" + str(speed_start_decel_ms) + " m/s)")
             continue
 
         current_speed_ms = msg.twist.linear.x
-        if (current_speed_ms <= advisory_speed_limit_ms):
+        if (current_speed_ms <= end_decel_speed):
             time_end_decel = t
             speed_end_decel_ms = current_speed_ms
 
             # Print Debug Line
             speed_end_decel_mph = speed_end_decel_ms * 2.2369 # 2.2369 mph is 1 m/s
-            print("FWZ-25 (DEBUG): Speed at end of deceleration section: " + str(speed_end_decel_mph) + " mph")
+            print("FWZ-25 (DEBUG): Speed at end of deceleration section: " + str(speed_end_decel_mph) + " mph (" + str(speed_end_decel_ms) + " m/s)")
             break
 
 
     # Calculate the average deceleration across the full deceleration section
+    print("FWZ-25 (DEBUG): Duration between start and end of deceleration: " + str((time_end_decel-time_begin_deceleration_in_geofence).to_sec()))
     total_average_decel = (speed_start_decel_ms - speed_end_decel_ms) / (time_end_decel - time_begin_deceleration_in_geofence).to_sec()
     
     is_successful = False
@@ -796,10 +802,10 @@ def check_deceleration_for_geofence(bag, time_start_engagement, time_end_engagem
 
 ###########################################################################################################
 # FWZ-26: After exiting the geofenced area with an advisory speed limit, the vehicle will begin accelerating
-#         back to the original speed limit within less than 10 meters.
+#         back to the original speed limit within less than 1.3 seconds.
 ###########################################################################################################
 def check_time_to_begin_acceleration(bag, time_enter_geofence, time_end_engagement, original_speed_limit_ms):
-    max_distance_before_accel = 10.0 # meters
+    max_duration_before_accel = 10.0 # seconds
 
     # Obtain the time that the CMV enters a lanelet with the original speed limit (this indicates it has exited the geofenced area)
     speed_limit_threshold_ms = 0.05
@@ -825,10 +831,8 @@ def check_time_to_begin_acceleration(bag, time_enter_geofence, time_end_engageme
             if first:
                 prev_speed = msg.twist.linear.x
                 first = False
-                speed_exit_geofence_ms = msg.twist.linear.x
                 continue
 
-            speed_start_accel_ms = msg.twist.linear.x
             if msg.twist.linear.x - prev_speed > 0:
                 num_consecutive_accel +=1
                 if num_consecutive_accel == num_consecutive_accel_required:
@@ -843,15 +847,13 @@ def check_time_to_begin_acceleration(bag, time_enter_geofence, time_end_engageme
         if found_start_of_accel:
             break
 
-    avg_speed_before_accel = (speed_exit_geofence_ms + speed_start_accel_ms) / 2.0
-    distance_before_accel = avg_speed_before_accel * duration_before_accel
     
     is_successful = False
-    if distance_before_accel <= max_distance_before_accel:
-        print("FWZ-26 succeeded; vehicle began accelerating " + str(distance_before_accel) + " after exiting geofence (" + str(duration_before_accel) + " seconds)")
+    if duration_before_accel <= max_duration_before_accel:
+        print("FWZ-26 succeeded; vehicle began accelerating " + str(duration_before_accel) + " seconds after exiting geofence")
         is_successful = True
     else:
-        print("FWZ-26 failed; vehicle began accelerating " + str(distance_before_accel) + " after exiting geofence (" + str(duration_before_accel) + " seconds)")
+        print("FWZ-26 failed; vehicle began accelerating " + str(duration_before_accel) + " seconds after exiting geofence")
 
     return is_successful, time_begin_acceleration_after_geofence
 
@@ -862,8 +864,8 @@ def check_time_to_begin_acceleration(bag, time_enter_geofence, time_end_engageme
 #         of the section shall be no greater than 2.0 m/s^2.
 ###########################################################################################################
 def check_acceleration_after_geofence(bag, time_begin_acceleration_after_geofence, time_end_engagement, target_speed_limit_ms):
-    min_average_accel_rate = 1.0 # m/s^2
-    max_one_second_accel_rate = 2.0 # m/s^2
+    min_average_accel_rate = 0.0 # m/s^2
+    max_one_second_accel_rate = 1.5 # m/s^2
 
     # Set target speed (an offset below the target speed limit, since acceleration rate will decrease after this point)
     speed_limit_offset_ms = 0.89 # 0.89 m/s is 2 mph
@@ -931,9 +933,9 @@ def check_acceleration_after_geofence(bag, time_begin_acceleration_after_geofenc
         print("FWZ-27 (avg accel at start) Failed; total average acceleration was " + str(total_avg_accel) + " m/s^2")
     
     if all_one_second_windows_successful:
-        print("FWZ-27 (1-second accel windows) Succeeded; no occurrences of 1-second average acceleration above 2.0 m/s^2")
+        print("FWZ-27 (1-second accel windows) Succeeded; no occurrences of 1-second average acceleration above 1.5 m/s^2")
     else:
-        print("FWZ-27 (1-second accel windows) Failed; at least one occurrence of 1-second average acceleration above 2.0 m/s^2")
+        print("FWZ-27 (1-second accel windows) Failed; at least one occurrence of 1-second average acceleration above 1.5 m/s^2")
 
     is_successful = False
     if total_acceleration_rate_successful and all_one_second_windows_successful:
@@ -960,11 +962,15 @@ def check_steady_state_after_geofence(bag, time_begin_acceleration_after_geofenc
             has_reached_steady_state = True
         
         if not (min_steady_state_speed <= msg.twist.linear.x <= max_steady_state_speed) and has_reached_steady_state:
-            time_end_steady_state =t
-            has_reached_steady_state = False
+            time_end_steady_state = t
             break
+        elif has_reached_steady_state:
+            time_end_steady_state = t
     
-    time_at_steady_state = (time_end_steady_state - time_start_steady_state).to_sec()
+    if has_reached_steady_state:
+        time_at_steady_state = (time_end_steady_state - time_start_steady_state).to_sec()
+    else:
+        time_at_steady_state = 0.0
 
     is_successful = False
     if time_at_steady_state >= min_time_at_steady_state:
@@ -979,20 +985,43 @@ def check_steady_state_after_geofence(bag, time_begin_acceleration_after_geofenc
 # FWZ-32: The time taken between when a TCR is sent from the vehicle to a TCM is received by 
 #         the vehicle shall be less than 1 second.
 ###########################################################################################################
-def check_tcm_response_time(bag, time_enter_geofence):
+def check_tcm_response_time(bag, time_enter_geofence, tcr_rx_times, tcr_rx_reqids, reqid_v2x_timestamps):
+    # reqid_v2x_timestamps: 0 is reqid; 1 is tcr receive time; 2-10 are FIRST tcm tx times for msgnums 0 to 9
     tcr_reqids = []
     tcr_reqids_times = []
     num = 0
     for topic, msg, t in bag.read_messages(topics=['/message/outgoing_geofence_request']): 
         #print(str(num) + ": " + str(msg.tcr_v01.reqid))
         tcr_reqids.append([int(i) for i in msg.tcr_v01.reqid.id])
+        hex_string = ""
+        for i in msg.tcr_v01.reqid.id:
+            if i > 16:
+                hex_string += hex(i)[-2:]
+            else:
+                hex_string += "0" + hex(i)[-1:]          
+        if hex_string in tcr_rx_reqids:
+            index = tcr_rx_reqids.index(hex_string)
+            try:
+                min_time = min(reqid_v2x_timestamps[index][2:]) # Min timestamp of V2XHub transmitting a TCM for a msgnum of that reqid
+                max_time = max(reqid_v2x_timestamps[index][2:]) # Max timestamp of V2XHub transmitting a TCM for a msgnum of that reqid
+                #print("TCR " + str(num) + " broadcasted at time " + str(t.to_sec()))
+                time_cmv_to_v2x = reqid_v2x_timestamps[index][1] - float(t.to_sec())
+                print("TCR " + str(num) + ": " + str(hex_string) + " received by V2XHub " + str(time_cmv_to_v2x) + " sec after cmv broadcast; TCM transmitted " + str(min_time) + " to " + str(max_time) + " afterwards")
+                #print("Vehicle broadcasted TCR at " + str(t.to_sec()) + ", V2XHub RSU received TCR at " + str(reqid_v2x_timestamps[index][1]))
+            except:
+                print("TCR " + str(num) + ": " + str(reqid_v2x_timestamps[index]))
+                #print("From tcr_rx_reqids: " + str(tcr_rx_reqids[index]))
+        #else:
+        #    print("TCR " + str(num) + ": " + str(hex_string) + " not received by V2XHub")
+
         tcr_reqids_times.append(t)
         num += 1
-    #print(reqids)
 
-    print("Now TCMs received: ")
+    #print("Now TCMs received: ")
     num = 0
     tcm_reqids = []
+    has_received_unknown_TCM = False
+
     for topic, msg, t in bag.read_messages(topics=['/message/incoming_geofence_control']): 
         reqid = [int(i) for i in msg.tcm_v01.reqid.id]
         if reqid not in tcm_reqids:
@@ -1000,8 +1029,285 @@ def check_tcm_response_time(bag, time_enter_geofence):
             if reqid in tcr_reqids:
                 index = tcr_reqids.index(reqid)
                 duration_tcr_to_tcm = (t - tcr_reqids_times[index]).to_sec()
-                print("TCM " + str(num) + " was TCR # " + str(index) + ". Time from TCR to TCM was " + str(duration_tcr_to_tcm) + " seconds")
+                hex_string = ""
+                for i in msg.tcm_v01.reqid.id:
+                    if i > 16:
+                        hex_string += hex(i)[-2:]
+                    else:
+                        hex_string += "0" + hex(i)[-1:]               
+
+                print("TCM " + str(num) + " was TCR # " + str(index) + ". Time from TCR to TCM was " + str(duration_tcr_to_tcm) + " seconds. Reqid: " + str(hex_string))
+            else:
+                if not has_received_unknown_TCM:
+                    #print("RECEIVED TCM THAT WAS NOT A BROADCASTED TCR")
+                    has_received_unknown_TCM = True
+            
         num += 1
+
+# Helper function: Converts time from HH::MM::SS format of a given day to its Unix Epoch Time
+# Note: This is used because rosbags use Unix Epoch Time and some V2XHub and CARMA Cloud logs use HH::MM::SS EST format
+def get_system_time(time):
+    hours = float(time[0:2]) - 4.0 # The '4.0' is hardcoded since CarmaCloud time is 4 hours ahead of the EST time (at least for the initial data set analyzed)
+    minutes = float(time[3:5])
+    seconds = float(time[6:8])
+    ms = float(time[9:12])
+
+    #system_time = 1650513600.0 # HARDCODED (use for tests conducted on April 21st, 2022; this represents the epoch time at start of that day)
+    system_time = 1650600000.0 # HARDCODED (use for tests conducted on April 22nd; this represents the epoch time at start of that day)
+    system_time += 60*60*hours + 60*minutes + seconds + 0.001*ms
+
+    return system_time
+
+# Helper function for processing TCR receive and TCM send times from a CARMA Cloud tomcat log text file
+# NOTE: Function developed for April 22nd version of CARMA Cloud tomcat logs; the text log ouputs may no longer
+#       match the assumptions made in this function
+# Inputs:
+#   Source Folder: (String) Path to folder that contains tomcat log files
+#   tomcat_log_files: (String) List of file names to be processed
+#   empty_val: (integer) Integer value that indicates an element in the returned lists are empty
+# Outputs:
+#   all_cc_data: List with each row being [Received TCR reqid, TCR receive time, duration until TCM msgnum 1 sent, duration until TCM msgnum 2 sent, etc....]
+#        Note: List is in order of received TCR reqids
+#   cc_tcr_rx_reqids: List of each received TCR reqid in order that CARMA Cloud received it
+def process_tomcat_logs(source_folder, tomcat_log_files, empty_val):
+    # Each row of all_cc_data will be [TCR reqid, TCR receive time, duration until TCM msgnum 1 sent, duration until TCM msgnum 2 sent, ....etc....]
+    # Note: Populated in order of received TCR reqids; assumes 9 TCMs are sent for each TCR (this is the number used for Freight WZ testing)
+    all_cc_data = []
+
+    # List of each TCR received by CARMA Cloud in order (lowercase)
+    cc_tcr_rx_reqids = []
+
+    # Process each file contained within the provided tomcat_log_files list
+    for filename in tomcat_log_files:
+        print("Processing tomcat log file: " + str(filename))
+
+        # Parse each line in the tomcat log file and update all_cc_data and cc_tcr_rx_reqids based on TCR- and TCM-related logs
+        with open(str(source_folder) + "/" + filename, newline='') as f:
+            while(True):
+                line = f.readline()
+
+                if not line:
+                    break
+                else:
+                    if "TCR" in line:
+                        # Process a line that describes a received TCR by CARMA Cloud (from V2XHub)
+
+                        tcr_reqid = line[97:113]
+                        time = line[7:19]
+                        system_time = get_system_time(time) # Convert HH::MM::SS to Unix Epoch Time
+
+                        # NOTE: This assumes there are 9 TCMs being sent out for this test
+                        all_cc_data.append([str(tcr_reqid).lower(), system_time, empty_val, empty_val, empty_val, empty_val, empty_val, empty_val, empty_val, empty_val, empty_val])
+                        if tcr_reqid in cc_tcr_rx_reqids:
+                            print("WARNING: Duplicate TCR reqid found in tomcat log file " + str(filename) +": " + str(tcr_reqid))
+
+                        cc_tcr_rx_reqids.append(tcr_reqid.lower())
+                        #print(str(tcr_reqid.lower()) + " added to cc_tcr_rx_reqids")
+
+                    if "TCM 404" in line:
+                        # Process a line that describes a TCM sent out by CARMA Cloud (to V2XHub)
+
+                        tcm_reqid = (line[109:125]).lower()
+                        time = line[7:19]
+                        system_time = get_system_time(time) # Convert HH::MM::SS to Unix Epoch Time
+                        msgnum = int(line[177:178])
+
+                        index = cc_tcr_rx_reqids.index(tcm_reqid)
+                        #print("New TCM: " + str(tcm_reqid) + " msgnum " + str(msgnum) + " at time " + str(system_time) + " in response to received TCR #" + str(index))
+
+                        if all_cc_data[index][msgnum+1] == empty_val:
+                            all_cc_data[index][msgnum+1] = system_time - all_cc_data[index][1]
+                        else:
+                            print("Duplicate TCM: " + str(tcm_reqid) + " msgnum " + str(msgnum) + " at time " + str(system_time) + " for TCR #" + str(index))
+
+    min_times = []
+    count_below_one_sec = 0
+    min_time = 9999
+    max_time = 0.0
+    for row in all_cc_data:
+        if min(row[2:]) != empty_val:
+            min_times.append(min(row[1:]))
+            if min(row[2:]) < min_time:
+                min_time = min(row[1:])
+            if max(row[2:]) != empty_val:
+                if max(row[2:]) > max_time:
+                    max_time = max(row[2:])
+            if min(row[2:]) <= 1.0:
+                count_below_one_sec += 1
+    avg_time_cc = sum(min_times) / len(min_times)
+    pct_below_one_sec = (float(count_below_one_sec / len(min_times))) * 100.0
+
+    variance = sum([((x - avg_time_cc) ** 2) for x in min_times]) / len(min_times)
+    std_dev = variance ** 0.5
+
+    print("Average duration between CARMA Cloud receiving TCR from CS and sending first TCM: " + str(avg_time_cc))
+    print("Max duration: " + str(max_time))
+    print("Min duration: " + str(min_time))
+    print("Standard deviation: " + str(std_dev))
+    print("Percentage below 1 sec: " + str(pct_below_one_sec) + "%")
+
+    return all_cc_data, cc_tcr_rx_reqids
+
+def process_v2x_receive_and_broadcast_logs(source_folder, tcr_receive_csv_filenames, tcm_broadcast_csv_filenames, mobop_receive_csv_filenames, cc_tcr_rx_reqids, all_cc_data, empty_val):
+    # Read in V2XHub TCR Receiving Data from CSV Files
+    tcr_data = []
+    for filename in tcr_receive_csv_filenames:
+        with open(str(source_folder) + "/rsu_tcr_receive_data/" + filename, newline='') as f:
+            reader = csv.reader(f)
+            tcr_data += list(reader)[1:]
+
+    # Read in V2XHub TCM Transmission Data from CSV Files
+    tcm_data = []
+    for filename in tcm_broadcast_csv_filenames:
+        with open(str(source_folder) + "/" + filename, newline='') as f:
+            reader = csv.reader(f)
+            tcm_data += list(reader)[1:]
+    
+    # Create merged list of relevant V2XHub TCR Receiving & TCM Broadcasting data:
+    # reqid_v2x_timestamps is a list of lists: For each list, index 0 is reqid; 1 is tcr receive time; 2-10 are duration until FIRST tcm tx time for msgnums 0 to 9
+    reqid_v2x_timestamps = [] 
+    tcr_rx_times = [float(i[0]) for i in tcr_data[1:]] # Create list of times (in order) of each received TCR
+    tcr_rx_reqids = [str(i[2]) for i in tcr_data[1:]] # Create list of reqids (in order) of each received TCR
+    for i in range(0, len(tcr_rx_times)):
+        # Initial creation of each list in reqid_v2x_timestamps with first two indexes set to true values; all other indices set to temp '99999'
+        reqid_v2x_timestamps.append([tcr_rx_reqids[i], tcr_rx_times[i], empty_val, empty_val, empty_val, empty_val, empty_val, empty_val, empty_val, empty_val, empty_val])
+
+    for i in range(0, len(tcm_data)):
+        reqid = tcm_data[i][2]
+        if reqid in tcr_rx_reqids:
+            index = tcr_rx_reqids.index(reqid)
+            msgnum = tcm_data[i][3]
+            if reqid_v2x_timestamps[index][1 + int(msgnum)] == empty_val:
+                time_tcm_broadcasted = tcm_data[i][0]
+                time_tcr_received = reqid_v2x_timestamps[index][1]
+
+                # Add duration between received TCR and this TCM msgnum broadcast to reqid_v2x_timestamps
+                reqid_v2x_timestamps[index][1 + int(msgnum)] = float(time_tcm_broadcasted) - time_tcr_received
+
+    # Initial processing of reqid_v2x_timestamps to gather time duration data for communication flow between V2XHub TCR Receive <-> V2XHub TCM Broadcast
+    for row in reqid_v2x_timestamps:
+        if row[0] in cc_tcr_rx_reqids:
+            print("---")
+            v2x_tcr_receive_time = row[1]
+            cc_index = cc_tcr_rx_reqids.index(row[0])
+            cc_row = all_cc_data[cc_index]
+            cc_tcr_receive_time = cc_row[1]
+            duration_v2x_to_cc_tcr = cc_tcr_receive_time - v2x_tcr_receive_time
+            
+            formatted_cc_row = [ float(elem) for elem in cc_row[1:] ]
+            formatted_cc_row = [ '%.2f' % elem for elem in cc_row[1:] ]
+
+            print("TCR Reqid " + str(row[0]) + " took " + str(duration_v2x_to_cc_tcr) + " between V2XHub RSU receiving it and CC receiving it.")
+
+            formatted_total_rtt_row = [float(elem) for elem in row[1:]]
+            formatted_total_rtt_row = [ '%.2f' % elem for elem in row[1:] ]
+            print("TCR -> TCM total times V2X " + str(formatted_total_rtt_row))
+
+            print("CC Receive to CC Send TCM: " + str(formatted_cc_row))
+
+            # For each msgnum, subtract the duration_v2x_to_cc_tcr and the corresponding time that it was within CC
+            for i in range(2, len(row)):
+                row[i] = row[i] - (duration_v2x_to_cc_tcr + cc_row[i])
+
+            formatted_v2x_row = [float(elem) for elem in row[1:]]
+            formatted_v2x_row = [ '%.2f' % elem for elem in row[1:] ]
+
+            print("V2X Receive to TCM broad: " + str(formatted_v2x_row))
+        else:
+            print("TCR Reqid " + str(row[0]) + " not received by Carma Cloud")
+            continue
+    
+    # Process received MobilityOperation  TCM acknowledgement messages
+    mo_data = []
+    for filename in mobop_receive_csv_filenames:
+        with open(str(source_folder) + "/rsu_mobop_receive_data/" + filename, newline='') as f:
+            reader = csv.reader(f)
+            mo_data += list(reader)[1:]
+    
+    #[reqid, num_broadcast_1, num_broadcast_2, num_broadcast_3, ..]
+    #[reqid, time_receive_1, time_receive_2, time_receive_3, ...]
+    ack_v2x_timestamps = []
+    tcm_v2x_tx_before_ack_counts = []
+    tcm_v2x_tx_after_ack_counts = []
+    tcm_v2x_tx_times = []
+    tcm_v2x_tx_frequencies = []
+    for i in range(0, len(reqid_v2x_timestamps)):
+        ack_v2x_timestamps.append([reqid_v2x_timestamps[i][0], 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        tcm_v2x_tx_before_ack_counts.append([reqid_v2x_timestamps[i][0], 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        tcm_v2x_tx_after_ack_counts.append([reqid_v2x_timestamps[i][0], 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        tcm_v2x_tx_times.append([reqid_v2x_timestamps[i][0], [], [], [], [], [], [], [], [], []])
+        tcm_v2x_tx_frequencies.append([reqid_v2x_timestamps[i][0], 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+    for i in range(1, len(mo_data)):
+        try:
+            reqid = mo_data[i][3]
+            msgnum = mo_data[i][4]
+            time_ack = float(mo_data[i][0])
+            index = tcr_rx_reqids.index(reqid)
+            if ack_v2x_timestamps[index][int(msgnum)] == 0:
+                ack_v2x_timestamps[index][int(msgnum)] = time_ack
+        except:
+            continue
+
+    # Now create a [reqid, num_broadcast_tcm1_before_ack, num_broadcast_tcm2_before_ack, ...]
+    for i in range(0, len(tcm_data)):
+        # Check if TCM reqid matches a received TCR req id
+        if tcm_data[i][2] in tcr_rx_reqids:
+            index = tcr_rx_reqids.index(tcm_data[i][2])
+            msgnum = tcm_data[i][3]
+            time = float(tcm_data[i][0]) # Time that V2XHub RSU broadcasted TCM
+
+            # If TCM was broadcasted before the time of the received TCM Ack, increase TCM tx number for that msgnum
+            tcm_v2x_tx_times[index][int(msgnum)].append(time)
+
+            # No ACK was ever received
+            if ack_v2x_timestamps[index][int(msgnum)] == 0:
+                tcm_v2x_tx_before_ack_counts[index][int(msgnum)] += 1
+
+            # TCM was broadcasted before ACK was received
+            elif time < ack_v2x_timestamps[index][int(msgnum)]:
+                tcm_v2x_tx_before_ack_counts[index][int(msgnum)] += 1
+
+            # TCM was broadcasted after ACK was received
+            else:
+                tcm_v2x_tx_after_ack_counts[index][int(msgnum)] += 1
+
+    # Calculate the TCM tx frequencies for each TCM reqid's msgnum:
+    total_freq = 0.0
+    min_freq = 9999999
+    max_freq = 0.0
+    freq_count = 0
+    for i in range(0, len(tcm_v2x_tx_frequencies)):
+        for msgnum in range(1, 10):
+            tx_count = tcm_v2x_tx_before_ack_counts[i][msgnum] + tcm_v2x_tx_after_ack_counts[i][msgnum]
+            tx_time_diffs = 0.0
+            for k in range(1, len(tcm_v2x_tx_times[i][msgnum])):
+                tx_time_diffs += tcm_v2x_tx_times[i][msgnum][k] - tcm_v2x_tx_times[i][msgnum][k-1]
+            if tx_count >= 2:
+                tcm_v2x_tx_frequencies[i][msgnum] = 1.0 / (float(tx_time_diffs) / float(tx_count-1))
+                total_freq += tcm_v2x_tx_frequencies[i][msgnum]
+                freq_count += 1
+
+                if tcm_v2x_tx_frequencies[i][msgnum] < min_freq:
+                    min_freq = tcm_v2x_tx_frequencies[i][msgnum]
+                if tcm_v2x_tx_frequencies[i][msgnum] > max_freq:
+                    max_freq = tcm_v2x_tx_frequencies[i][msgnum]
+
+    print("Quantity TCM msgnum pubs after ACK first received for that msgnum: ")
+    num = 0
+    for i in tcm_v2x_tx_after_ack_counts:
+        if max(i[1:]) >= 0:
+            print("Before ACKs received: " + str(tcm_v2x_tx_before_ack_counts[num]))
+            print("After ACKs received: " + str(i))
+            print("TCM tx frequencies: " + str(tcm_v2x_tx_frequencies[num]))
+        num += 1
+    
+    avg_freq_tcm_tx = total_freq / float(freq_count)
+    print("Average frequency of TCM broadcasts: " + str(avg_freq_tcm_tx))
+    print("Min frequency: " + str(min_freq))
+    print("Max frequency: " + str(max_freq))
+
+    return tcr_rx_times, tcr_rx_reqids, reqid_v2x_timestamps
 
 # Main Function; run all tests from here
 def main():  
@@ -1014,35 +1320,56 @@ def main():
     # Re-direct the output of print() to a specified .txt file:
     orig_stdout = sys.stdout
     current_time = datetime.datetime.now()
-    text_log_filename = "Results_" + str(current_time) + ".txt"
-    text_log_file_writer = open(text_log_filename, 'w')
-    sys.stdout = text_log_file_writer
+    #text_log_filename = "Results_" + str(current_time) + ".txt"
+    #text_log_file_writer = open(text_log_filename, 'w')
+    #sys.stdout = text_log_file_writer
 
     # Create .csv file to make it easier to view overview of results (the .txt log file is still used for more in-depth information):
-    csv_results_filename = "Results_" + str(current_time) + ".csv"
-    csv_results_writer = csv.writer(open(csv_results_filename, 'w'))
-    csv_results_writer.writerow(["Bag Name", "Vehicle Name", "Test Type",
-                                     "FWZ-1", "FWZ-2", "FWZ-3", "FWZ-4", "FWZ-5",
-                                     "FWZ-6", "FWZ-7", "FWZ-8", "FWZ-9", "FWZ-10",
-                                     "FWZ-11", "FWZ-12", "FWZ-13", "FWZ-14", "FWZ-15",
-                                     "FWZ-16", "FWZ-17", "FWZ-18", "FWZ-19", "FWZ-20",
-                                     "FWZ-21", "FWZ-22", "FWZ-23", "FWZ-24", "FWZ-25",
-                                     "FWZ-26", "FWZ-27", "FWZ-28", "FWZ-29", "FWZ-30",
-                                     "FWZ-31", "FWZ-32"])
+    #csv_results_filename = "Results_" + str(current_time) + ".csv"
+    #csv_results_writer = csv.writer(open(csv_results_filename, 'w'))
+    #csv_results_writer.writerow(["Bag Name", "Vehicle Name", "Test Type",
+    #                                 "FWZ-1", "FWZ-2", "FWZ-3", "FWZ-4", "FWZ-5",
+    #                                 "FWZ-6", "FWZ-7", "FWZ-8", "FWZ-9", "FWZ-10",
+    #                                 "FWZ-11", "FWZ-12", "FWZ-13", "FWZ-14", "FWZ-15",
+    #                                 "FWZ-16", "FWZ-17", "FWZ-18", "FWZ-19", "FWZ-20",
+    #                                 "FWZ-21", "FWZ-22", "FWZ-23", "FWZ-24", "FWZ-25",
+    #                                 "FWZ-26", "FWZ-27", "FWZ-28", "FWZ-29", "FWZ-30",
+    #                                 "FWZ-31", "FWZ-32"])
 
-    white_truck_bag_files = ["3.2A_R1_WT_04212022.bag",
-                             "3.2A_R2_WT_04212022.bag",
-                             "3.2A_R3_WT_04212022.bag",
-                             "3.2A_R4_WT_04212022.bag",
-                             "3.2A_R5_WT_04212022.bag",
-                             "3.2D_R1_WT_04212022.bag",
-                             "3.2D_R2_WT_04212022.bag"]
+    white_truck_bag_files = ["Silver_Truck_April20-April27/_2022-04-22-13-50-06.bag",
+                            "Silver_Truck_April20-April27/_2022-04-22-13-41-54.bag",
+                            "Silver_Truck_April20-April27/_2022-04-22-14-11-26.bag",
+                            "Silver_Truck_April20-April27/_2022-04-25-15-38-11.bag",
+                            "Silver_Truck_April20-April27/_2022-04-25-16-50-46.bag",
+                            "Silver_Truck_April20-April27/_2022-04-25-17-10-20.bag",
+                            "Silver_Truck_April20-April27/_2022-04-25-17-44-17.bag",
+                            "Silver_Truck_April20-April27/_2022-04-25-18-54-03.bag",
+                            "Silver_Truck_April20-April27/_2022-04-25-19-06-33.bag",
+                            "Silver_Truck_April20-April27/_2022-04-25-21-16-09.bag",
+                            "Silver_Truck_April20-April27/_2022-04-25-21-29-52.bag"]
 
-    # Concatenate all Port Drayage bag file lists into one list
-    PD_bag_files = white_truck_bag_files 
+    
+    tomcat_log_files = ["carmacloud-20220422.txt"]
+
+    # In this script, any list element with a value that matches 'empty_val' is ignored
+    empty_val = 99999
+
+    # Process the CARMA Cloud tomcat log files to produce the two following data structures
+    #   all_cc_data: List with each row being [Received TCR reqid, TCR receive time, duration until TCM msgnum 1 sent, duration until TCM msgnum 2 sent, etc....]
+    #        Note: List is in order of received TCR reqids
+    #   cc_tcr_rx_reqids: List of each received TCR reqid in order that CARMA Cloud received it
+    all_cc_data, cc_tcr_rx_reqids = process_tomcat_logs(source_folder, tomcat_log_files, empty_val)
+
+    tcr_receive_csv_filenames = ["merged-tcr-rx-0421-to-0425.csv"]
+    tcm_broadcast_csv_filenames = ["merged-tcm-tx-0421-to-0425.csv"]
+    mobop_receive_csv_filenames = ["merged-mobop-rx-0421-to-0425.csv"]
+    tcr_rx_times, tcr_rx_reqids, reqid_v2x_timestamps = process_v2x_receive_and_broadcast_logs(source_folder, tcr_receive_csv_filenames, tcm_broadcast_csv_filenames, mobop_receive_csv_filenames, cc_tcr_rx_reqids, all_cc_data, empty_val)
+
+    # Concatenate all Freight Work Zone bag file lists into one list
+    WZ_bag_files = white_truck_bag_files 
 
     # Loop to conduct data anlaysis on each bag file:
-    for bag_file in PD_bag_files:
+    for bag_file in WZ_bag_files:
         print("*****************************************************************")
         print("Processing new bag: " + str(bag_file))
         if bag_file in white_truck_bag_files:
@@ -1051,9 +1378,9 @@ def main():
             print("Unknown bag file being processed.")
             
         # Print processing progress to terminal (all other print statements are re-directed to outputted .txt file):
-        sys.stdout = orig_stdout
-        print("Processing bag file " + str(bag_file) + " (" + str(PD_bag_files.index(bag_file) + 1) + " of " + str(len(PD_bag_files)) + ")")
-        sys.stdout = text_log_file_writer
+        #sys.stdout = orig_stdout
+        print("Processing bag file " + str(bag_file) + " (" + str(WZ_bag_files.index(bag_file) + 1) + " of " + str(len(WZ_bag_files)) + ")")
+        #sys.stdout = text_log_file_writer
 
         # Process bag file if it exists and can be processed, otherwise skip and proceed to next bag file
         try:
@@ -1069,14 +1396,15 @@ def main():
         print("Getting geofence times at " + str(datetime.datetime.now()))
         time_enter_geofence, time_exit_geofence, found_geofence_times = get_geofence_entrance_and_exit_times(bag)
         print("Got geofence times at " + str(datetime.datetime.now()))
-        if (not found_geofence_times):
-            print("Could not find geofence entrance and exit times in bag file.")
-            continue
+        #if (not found_geofence_times):
+        #    print("Could not find geofence entrance and exit times in bag file.")
+        #    continue
 
         # Get the rosbag times associated with the starting engagement and ending engagement for the Basic Travel use case test
         print("Getting engagement times at " + str(datetime.datetime.now()))
         time_test_start_engagement, time_test_end_engagement, found_test_times = get_test_case_engagement_times(bag, time_enter_geofence, time_exit_geofence)
-        print("Got engagement times at " + str(datetime.datetime.now()))
+        print("Started engagement at " + str(time_test_start_engagement.to_sec()))
+        print("Ended engagement at " + str(time_test_end_engagement.to_sec()))
         if (not found_test_times):
             print("Could not find test case engagement start and end times in bag file.")
             continue
@@ -1089,10 +1417,10 @@ def main():
         # OPTIONAL: Generate Plots:
 
         # Generate vehicle speed plot for the rosbag
-        generate_speed_plot(bag, time_test_start_engagement, time_test_end_engagement, bag_file)
+        #generate_speed_plot(bag, time_test_start_engagement, time_test_end_engagement, bag_file)
 
         # Generate cross-track error plot for the rosbag
-        generate_crosstrack_plot(bag, time_test_start_engagement, time_test_end_engagement, bag_file)
+        #generate_crosstrack_plot(bag, time_test_start_engagement, time_test_end_engagement, bag_file)
 
         # Initialize success flags
         fwz_1_result = False
@@ -1133,6 +1461,7 @@ def main():
         closed_lanelets = [10801, 10802]
         fwz_1_result, fwz_8_result = check_geofence_in_initial_route(bag, closed_lanelets)
 
+        
         fwz_2_result, time_start_steady_state_before_geofence = check_start_steady_state_before_geofence(bag, time_test_start_engagement, time_enter_geofence, original_speed_limit_ms)
 
         advisory_speed_limit_ms = 11.176 # 11.176 m/s is 25 mph
@@ -1162,7 +1491,8 @@ def main():
 
         fwz_29_result = check_steady_state_after_geofence(bag, time_begin_acceleration_after_geofence, time_test_end_engagement, original_speed_limit_ms)
 
-        check_tcm_response_time(bag, time_enter_geofence)
+        check_tcm_response_time(bag, time_enter_geofence, tcr_rx_times, tcr_rx_reqids, reqid_v2x_timestamps)
+        
 
         # Get vehicle type that this bag file is from
         vehicle_name = "Unknown"
@@ -1175,18 +1505,18 @@ def main():
         vehicle_role = "Freight Work Zone"
 
         # Write simple pass/fail results to .csv file for appropriate row:
-        csv_results_writer.writerow([bag_file, vehicle_name, vehicle_role,
-                                     fwz_1_result, fwz_2_result, fwz_3_result, fwz_4_result, fwz_5_result,
-                                     fwz_6_result, fwz_7_result, fwz_8_result, fwz_9_result, fwz_10_result,
-                                     fwz_11_result, fwz_12_result, fwz_13_result, fwz_14_result, fwz_15_result,
-                                     fwz_16_result, fwz_17_result, fwz_18_result, fwz_19_result, fwz_20_result,
-                                     fwz_21_result, fwz_22_result, fwz_23_result, fwz_24_result, fwz_25_result,
-                                     fwz_26_result, fwz_27_result, fwz_28_result, fwz_29_result, fwz_30_result,
-                                     fwz_31_result, fwz_32_result])
+        #csv_results_writer.writerow([bag_file, vehicle_name, vehicle_role,
+        #                             fwz_1_result, fwz_2_result, fwz_3_result, fwz_4_result, fwz_5_result,
+        #                             fwz_6_result, fwz_7_result, fwz_8_result, fwz_9_result, fwz_10_result,
+        #                             fwz_11_result, fwz_12_result, fwz_13_result, fwz_14_result, fwz_15_result,
+        #                             fwz_16_result, fwz_17_result, fwz_18_result, fwz_19_result, fwz_20_result,
+        #                             fwz_21_result, fwz_22_result, fwz_23_result, fwz_24_result, fwz_25_result,
+        #                             fwz_26_result, fwz_27_result, fwz_28_result, fwz_29_result, fwz_30_result,
+        #                             fwz_31_result, fwz_32_result])
 
         
-    sys.stdout = orig_stdout
-    text_log_file_writer.close()
+    #sys.stdout = orig_stdout
+    #text_log_file_writer.close()
     return
 
 if __name__ == "__main__":
