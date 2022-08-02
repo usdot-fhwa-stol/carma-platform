@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,22 +14,22 @@
  * the License.
  */
 
-#include "localization_manager/LocalizationTypes.h"
+#include "localization_manager/LocalizationTypes.hpp"
 
 namespace localization_manager
 {
 std::ostream& operator<<(std::ostream& os, LocalizerMode m)
 {
-  switch (m)
-  {  // clang-format off
-    case LocalizerMode::NDT   : os << "NDT"; break;
-    case LocalizerMode::GNSS: os << "GNSS"; break;
-    case LocalizerMode::GNSS_WITH_NDT_INIT: os << "GNSS_WITH_NDT_INIT"; break;
-    case LocalizerMode::AUTO_WITH_TIMEOUT : os << "AUTO_WITH_TIMEOUT"; break;
-    case LocalizerMode::AUTO_WITHOUT_TIMEOUT : os << "AUTO_WITHOUT_TIMEOUT"; break;
-    default: os.setstate(std::ios_base::failbit);
-  }  // clang-format on
-  return os;
+    switch (m)
+    {  // clang-format off
+        case LocalizerMode::NDT   : os << "NDT"; break;
+        case LocalizerMode::GNSS: os << "GNSS"; break;
+        case LocalizerMode::GNSS_WITH_NDT_INIT: os << "GNSS_WITH_NDT_INIT"; break;
+        case LocalizerMode::AUTO_WITH_TIMEOUT : os << "AUTO_WITH_TIMEOUT"; break;
+        case LocalizerMode::AUTO_WITHOUT_TIMEOUT : os << "AUTO_WITHOUT_TIMEOUT"; break;
+        default: os.setstate(std::ios_base::failbit);
+    }  // clang-format on
+    return os;
 }
 
 std::ostream& operator<<(std::ostream& os, LocalizationState s)
@@ -64,7 +64,7 @@ std::ostream& operator<<(std::ostream& os, LocalizationSignal s)
   return os;
 }
 
-carma_localization_msgs::msg::LocalizationStatusReport stateToMsg(LocalizationState state, const ros::Time& stamp)
+carma_localization_msgs::msg::LocalizationStatusReport stateToMsg(LocalizationState state, const rclcpp::Time& stamp)
 {
   carma_localization_msgs::msg::LocalizationStatusReport msg;
   switch (state)
@@ -97,4 +97,4 @@ carma_localization_msgs::msg::LocalizationStatusReport stateToMsg(LocalizationSt
   return msg;
 }
 
-}  // namespace localization_manager
+} // namespace localization_manager

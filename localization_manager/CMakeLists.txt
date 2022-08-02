@@ -1,4 +1,3 @@
-
 # Copyright (C) 2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -36,6 +35,9 @@ include_directories(
 
 # Build
 ament_auto_add_library(${node_lib} SHARED
+        src/LocalizationTypes.cpp
+        src/LocalizationTransitionTable.cpp
+        src/LocalizationManager.cpp
         src/localization_manager_node.cpp
 )
 
@@ -58,15 +60,16 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_localization_manager test/node_test.cpp)
+  ament_add_gtest(test_localization_manager 
+  test/TestLocalizationManager.cpp
+  test/TestLocalizationTransitionTable.cpp
+  test/TestLocalizationTypes.cpp
+  test/TestMain.cpp
+
+  )
 
   ament_target_dependencies(test_localization_manager ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
   target_link_libraries(test_localization_manager ${node_lib})
 
 endif()
-
-# Install
-ament_auto_package(
-        INSTALL_TO_SHARE config launch
-)

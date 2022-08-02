@@ -14,92 +14,157 @@
  * the License.
  */
 #include "localization_manager/localization_manager_node.hpp"
+#include <boost/bind.hpp>
+#include <boost/bind/placeholders.hpp>
+#include <carma_ros2_utils/timers/ROSTimerFactory.hpp>
 
 namespace localization_manager
 {
-  namespace std_ph = std::placeholders;
+    namespace std_ph = std::placeholders;
 
-  Node::Node(const rclcpp::NodeOptions &options)
-      : carma_ros2_utils::CarmaLifecycleNode(options)
-  {
-    // Create initial config
-    config_ = Config();
+    Node::Node(const rclcpp::NodeOptions &options)
+        :carma_ros2_utils::CarmaLifecycleNode(options)
 
-    // Declare parameters
-    config_.example_param = declare_parameter<std::string>("example_param", config_.example_param);
-  }
+    {
+        //Create initial config
+        config_ = LocalizationManagerConfig();
 
-  rcl_interfaces::msg::SetParametersResult Node::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
-  {
-    // TODO for the USER: Ensure all parameters can be updated dynamically by adding them to this method
-    auto error = update_params<std::string>({{"example_param", config_.example_param}}, parameters);
+        //Declare parameters
+        config_.fitness_score_degraded_threshold = declare_parameter<double>("fitness_score_degraded_threshold", config_.fitness_score_degraded_threshold);
+        config_.fitness_score_fault_threshold = declare_parameter<double>("fitness_score_fault_threshold",config_.fitness_score_fault_threshold);
+        config_.ndt_frequency_degraded_threshold = declare_parameter<double>("ndt_frequency_degraded_threshold", config_.ndt_frequency_degraded_threshold);
+        config_.ndt_frequency_fault_threshold = declare_parameter<double>("ndt_frequency_fault_threshold", config_.ndt_frequency_fault_threshold);
+        config_.auto_initialization_timeout = declare_parameter<int>("auto_initialization_timeout", config_.auto_initialization_timeout);
+        config_.gnss_only_operation_timeout = declare_parameter<int>("gnss_only_operation_timeout", config_.gnss_only_operation_timeout);
+        config_.sequential_timesteps_until_gps_operation = declare_parameter<int>("sequential_timesteps_until_gps_operation", config_.sequential_timesteps_until_gps_operation);
+        config_.gnss_data_timeout = declare_parameter<int>("gnss_data_timeout", config_.gnss_data_timeout);
+        config_.localization_mode = declare_parameter<int>("localization_mode", config_.localization_mode);
+        config_.pose_pub_rate = declare_parameter<double>("pose_pub_rate", config_.pose_pub_rate);
 
-    rcl_interfaces::msg::SetParametersResult result;
+    }
 
-    result.successful = !error;
+    rcl_interfaces::msg::SetParametersResult Node::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
+    {
+        auto error = update_params<double>({{"fitness_score_degraded_threshold", config_.fitness_score_degraded_threshold},
+        {"fitness_score_fault_threshold",config_.fitness_score_fault_threshold},
+        {"ndt_frequency_degraded_threshold", config_.ndt_frequency_degraded_threshold},
+        {"ndt_frequency_fault_threshold", config_.ndt_frequency_fault_threshold},
+        {"pose_pub_rate", config_.pose_pub_rate},
+        },parameters);
 
-    return result;
-  }
+        auto error_2 = update_params<int>({{"auto_initialization_timeout", config_.auto_initialization_timeout},
+        {"gnss_only_operation_timeout", config_.gnss_only_operation_timeout},
+        {"sequential_timesteps_until_gps_operation", config_.sequential_timesteps_until_gps_operation},
+        {"gnss_data_timeout", config_.gnss_data_timeout},
+        {"localization_mode", config_.localization_mode}
+        }, parameters);
 
-  carma_ros2_utils::CallbackReturn Node::handle_on_configure(const rclcpp_lifecycle::State &)
-  {
-    // Reset config
-    config_ = Config();
 
-    // Load parameters
-    get_parameter<std::string>("example_param", config_.example_param);
+        rcl_interfaces::msg::SetParametersResult result;
 
-    // Register runtime parameter update callback
-    add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
+        result.successful = !error && !error_2;
 
-    // Setup subscribers
-    example_sub_ = create_subscription<std_msgs::msg::String>("example_input_topic", 10,
-                                                              std::bind(&Node::example_callback, this, std_ph::_1));
+        return result;
+    }
 
-    // Setup publishers
-    example_pub_ = create_publisher<std_msgs::msg::String>("example_output_topic", 10);
+    carma_ros2_utils::CallbackReturn Node::handle_on_configure(const rclcpp_lifecycle::State &)
+    {
+        // Reset config
+        config_ = LocalizationManagerConfig();
 
-    // Setup service clients
-    example_client_ = create_client<std_srvs::srv::Empty>("example_used_service");
+        //Load parameters
+        get_parameter<double>("fitness_score_degraded_threshold", config_.fitness_score_degraded_threshold);
+        get_parameter<double>("fitness_score_fault_threshold",config_.fitness_score_fault_threshold);
+        get_parameter<double>("ndt_frequency_degraded_threshold", config_.ndt_frequency_degraded_threshold);
+        get_parameter<double>("ndt_frequency_fault_threshold", config_.ndt_frequency_fault_threshold);
+        get_parameter<int>("auto_initialization_timeout", config_.auto_initialization_timeout);
+        get_parameter<int>("gnss_only_operation_timeout", config_.gnss_only_operation_timeout);
+        get_parameter<int>("sequential_timesteps_until_gps_operation", config_.sequential_timesteps_until_gps_operation);
+        get_parameter<int>("gnss_data_timeout", config_.gnss_data_timeout);
+        get_parameter<int>("localization_mode", config_.localization_mode);
+        get_parameter<double>("pose_pub_rate", config_.pose_pub_rate);
 
-    // Setup service servers
-    example_service_ = create_service<std_srvs::srv::Empty>("example_provided_service",
-                                                            std::bind(&Node::example_service_callback, this, std_ph::_1, std_ph::_2, std_ph::_3));
+        // Register runtime parameter update callback
+        add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
 
-    // Setup timers
-    // NOTE: You will not be able to actually publish until in the ACTIVE state 
-    // so it may often make more sense for timers to be created in handle_on_activate
-    example_timer_ = create_timer(
-        get_clock(),
-        std::chrono::milliseconds(1000),
-        std::bind(&Node::example_timer_callback, this));
+        // Initialize worker object
+        manager_.reset(new LocalizationManager(std::bind(&Node::publishPoseStamped, this, std_ph::_1),
+                                         std::bind(&Node::publishStatus, this, std_ph::_1),
+                                         std::bind(&Node::publishManagedInitialPose, this, std_ph::_1),
+                                         config_, 
+                                         get_node_logging_interface(),
+                                         std::make_unique<carma_ros2_utils::timers::ROSTimerFactory>(shared_from_this())
+                                         ));
 
-    // Return success if everthing initialized successfully
-    return CallbackReturn::SUCCESS;
-  }
+        // Setup subscribers
+        gnss_pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>("gnss_pose", 5, 
+                                                                                std::bind(&LocalizationManager::gnssPoseCallback, manager_.get(), std_ph::_1));
+        initialpose_sub_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose", 1, 
+                                                                                            std::bind(&LocalizationManager::initialPoseCallback, manager_.get(), std_ph::_1));
 
-  // Parameter names not shown to prevent unused compile warning. The user may add them back
-  void Node::example_service_callback(const std::shared_ptr<rmw_request_id_t>,
-                                      const std::shared_ptr<std_srvs::srv::Empty::Request>,
-                                      std::shared_ptr<std_srvs::srv::Empty::Response>)
-  {
-    RCLCPP_INFO(  get_logger(), "Example service callback");
-  }
+        // Setup synchronized message_filters subscribers
+        rclcpp::QoS qos(5);
+        ndt_pose_sub_.subscribe(this, "ndt_pose", qos.get_rmw_qos_profile());
+        ndt_score_sub_.subscribe(this,"ndt_stat", qos.get_rmw_qos_profile());
 
-  void Node::example_timer_callback()
-  {
-    RCLCPP_DEBUG(get_logger(), "Example timer callback");
-    std_msgs::msg::String msg;
-    msg.data = "Hello World!";
-    example_pub_->publish(msg);
-  }
+        PoseStatsSynchronizer pose_stats_synchronizer(PoseStatsSyncPolicy(5), ndt_pose_sub_, ndt_score_sub_);
+        pose_stats_synchronizer.registerCallback(boost::bind(&Node::poseAndStatsCallback, this, _1, _2));
+        
+        // system_alert_topic_ protected member of CarmaLifecycleNode
+        system_alert_sub_ = create_subscription<carma_msgs::msg::SystemAlert>(system_alert_topic_, 1, 
+                                                                                std::bind(&LocalizationManager::systemAlertCallback, manager_.get(), std_ph::_1));
+        // Setup publishers
+        pose_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("selected_pose", 5);
+        state_pub_ = create_publisher<carma_localization_msgs::msg::LocalizationStatusReport>("localization_status", 5);
+        
+        // Create a publisher that will send all previously published messages to late-joining subscribers ONLY If the subscriber is transient_local too
+        rclcpp::PublisherOptions intra_proc_disabled; 
+        intra_proc_disabled.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for this PublisherOptions object
 
-  void Node::example_callback(std_msgs::msg::String::UniquePtr msg)
-  {
-    RCLCPP_INFO_STREAM(  get_logger(), "example_sub_ callback called with value: " << msg->data);
-  }
+        auto pub_qos_transient_local = rclcpp::QoS(rclcpp::KeepAll()); // A publisher with this QoS will store all messages that it has sent on the topic
+        pub_qos_transient_local.transient_local();  // A publisher with this QoS will re-send all (when KeepAll is used) messages to all late-joining subscribers 
+                                         // NOTE: The subscriber's QoS must be set to transient_local() as well for earlier messages to be resent to the later-joiner.
+        managed_initial_pose_pub_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("managed_initialpose", pub_qos_transient_local, intra_proc_disabled);
 
-} // localization_manager
+        //Setup timer
+        pose_timer_ = create_timer(get_clock(), std::chrono::milliseconds(int(1/config_.pose_pub_rate * 1000)), 
+            std::bind(&LocalizationManager::posePubTick, manager_.get()));
+
+        // Return success if everything initialized successfully
+        return CallbackReturn::SUCCESS;
+
+    }
+
+    void Node::publishPoseStamped(const geometry_msgs::msg::PoseStamped& msg) const
+    {
+        pose_pub_->publish(msg);
+    }
+
+    void Node::publishStatus(const carma_localization_msgs::msg::LocalizationStatusReport& msg) const
+    {
+        state_pub_->publish(msg);
+    }
+
+    void Node::publishManagedInitialPose(const geometry_msgs::msg::PoseWithCovarianceStamped& msg) const
+    {
+        managed_initial_pose_pub_->publish(msg);
+    }
+
+    void Node::poseAndStatsCallback(const geometry_msgs::msg::PoseStamped::ConstPtr pose,
+                                     const autoware_msgs::msg::NDTStat::ConstPtr stats) const
+    {
+        try
+        {
+            manager_->poseAndStatsCallback(pose, stats);
+        }
+        catch (const std::exception& e)
+        {
+            RCLCPP_ERROR_STREAM(get_logger(), "Uncaught Exception in localization_manager. Exception: "<< e.what() );
+        }
+        
+
+    }
+} // namespace localization_manager
 
 #include "rclcpp_components/register_node_macro.hpp"
 

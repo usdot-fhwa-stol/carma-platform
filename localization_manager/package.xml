@@ -14,33 +14,34 @@
 -->
 
 <package format="3">
-  <name>localization_manager</name>
-  <version>1.0.0</version>
-  <description>The localization_manager package</description>
+    <name>localization_manager</name>
+    <version>1.0.0</version>
+    <description>The localization_manager package</description>
 
-  <maintainer email="carma@dot.gov">carma</maintainer>
+    <maintainer email="carma@dot.gov">carma</maintainer>
 
-  <license>Apache 2.0</license>
-  
-  <buildtool_depend>ament_cmake</buildtool_depend>
-  <build_depend>carma_cmake_common</build_depend>
-  <build_depend>ament_auto_cmake</build_depend>
+    <license>Apache 2.0</license>
+    
+    <buildtool_depend>ament_cmake</buildtool_depend>
+    <build_depend>carma_cmake_common</build_depend>
+    <build_depend>ament_auto_cmake</build_depend>
 
-  <depend>rclcpp</depend>
-  <depend>carma_ros2_utils</depend>
-  <depend>rclcpp_components</depend>
-  <depend>carma_msgs</depend>
-  <depend>geometry_msgs</depend>
-  <depend>carma_localization_msgs</depend>
-  <depend>autoware_msgs</depend>
+    <depend>rclcpp</depend>
+    <depend>carma_ros2_utils</depend>
+    <depend>rclcpp_components</depend>
+    <depend>carma_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>carma_localization_msgs</depend>
+    <depend>autoware_msgs</depend>
+    <depend>message_filters_humble</depend>
 
-  <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_cmake_gtest</test_depend>
+    <test_depend>ament_lint_auto</test_depend>
+    <test_depend>ament_cmake_gtest</test_depend>
 
-  <exec_depend>launch</exec_depend>
-  <exec_depend>launch_ros</exec_depend>
+    <exec_depend>launch</exec_depend>
+    <exec_depend>launch_ros</exec_depend>
 
-  <export>
+    <export>
     <build_type>ament_cmake</build_type>
-  </export>
+    </export>
 </package>

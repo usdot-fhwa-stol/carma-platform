@@ -17,30 +17,40 @@
 #pragma once
 
 #include <rclcpp/rclcpp.hpp>
+#include <boost/shared_ptr.hpp>
 #include <functional>
 #include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/empty.hpp>
 
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
-#include "localization_manager/LocalizationManagerConfig.h"
-#include "LocalizationManager.h"
+#include "localization_manager/LocalizationManagerConfig.hpp"
+#include "localization_manager/LocalizationManager.hpp"
+#include "localization_manager/LocalizationTypes.hpp"
+#include <message_filters/subscriber.hpp>
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/sync_policies/exact_time.h>
+
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <boost/optional.hpp>
+#include <autoware_msgs/msg/ndt_stat.hpp>
 
 namespace localization_manager
 {
-
-  /**
+    /**
    * \brief Core execution node for this package
-   * 
    */
+
   class Node : public carma_ros2_utils::CarmaLifecycleNode
   {
-
-  private:
+    private:
     // Subscribers
-    carma_ros2_utils::SubPtr<geometry_msgs::msg::PoseStamped> ndt_pose_sub_;
-    carma_ros2_utils::SubPtr<autoware_msgs::msg::NDTStat> ndt_score_sub_;
+    message_filters::Subscriber<geometry_msgs::msg::PoseStamped, Node> ndt_pose_sub_;
+    message_filters::Subscriber<autoware_msgs::msg::NDTStat, Node> ndt_score_sub_;
     carma_ros2_utils::SubPtr<geometry_msgs::msg::PoseStamped> gnss_pose_sub_;
     carma_ros2_utils::SubPtr<geometry_msgs::msg::PoseWithCovarianceStamped> initialpose_sub_;
+    carma_ros2_utils::SubPtr<carma_msgs::msg::SystemAlert> system_alert_sub_;
 
     // Publishers
     carma_ros2_utils::PubPtr<geometry_msgs::msg::PoseStamped> pose_pub_;
@@ -51,52 +61,58 @@ namespace localization_manager
     rclcpp::TimerBase::SharedPtr pose_timer_;
 
     // Node configuration
-    Config config_;
+    LocalizationManagerConfig config_;
 
-    std::unique_ptr<LocalizationManager> manager_;
+    // Worker object
+    std::unique_ptr<LocalizationManager> manager_; 
 
-  public:
+    // Message filters policies
+    typedef message_filters::sync_policies::ExactTime<geometry_msgs::msg::PoseStamped, autoware_msgs::msg::NDTStat> PoseStatsSyncPolicy;
+    typedef message_filters::Synchronizer<PoseStatsSyncPolicy> PoseStatsSynchronizer;
+
+    public:
     /**
      * \brief Node constructor 
      */
     explicit Node(const rclcpp::NodeOptions &);
 
     /**
-     * \brief Example callback for dynamic parameter updates
+     * \brief callback for dynamic parameter updates
      */
     rcl_interfaces::msg::SetParametersResult 
     parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
 
     /**
-     * \brief Example timer callback
+     * \brief Callback to publish the selected pose
+     * \param msg The pose to publish
      */
-    void example_timer_callback();
+    void publishPoseStamped(const geometry_msgs::msg::PoseStamped& msg) const;
 
     /**
-     * \brief Example subscription callback
+     * \brief Callback to publish the provided localization status report
+     * \param msg The report to publish
      */
-    void example_callback(std_msgs::msg::String::UniquePtr msg);
+    void publishStatus(const carma_localization_msgs::msg::LocalizationStatusReport& msg) const;
 
     /**
-      * \brief Example service callback
+      * \brief Callback to publish the initial pose deemed suitable to intialize NDT
+      * \param msg The msg to publish
       */
-    void example_service_callback(const std::shared_ptr<rmw_request_id_t> header,
-                                  const std::shared_ptr<std_srvs::srv::Empty::Request> request,
-                                  std::shared_ptr<std_srvs::srv::Empty::Response> response);
+    void publishManagedInitialPose(const geometry_msgs::msg::PoseWithCovarianceStamped& msg) const;
+
+    /**
+     * \brief Synchronized callback for pose and stats data for usage with message_filters.
+     *        Provides exception handling. 
+     * \param pose The received pose message
+     * \param stats The received stats message
+     */ 
+    void poseAndStatsCallback(const geometry_msgs::msg::PoseStamped::ConstPtr pose,
+                                     const autoware_msgs::msg::NDTStat::ConstPtr stats) const;
 
     ////
     // Overrides
     ////
     carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
 
-    /**
-     * TODO for USER: The following lifecycle overrides are also available if needed
-     * handle_on_activate
-     * handle_on_deactivate
-     * handle_on_cleanup
-     * handle_on_shutdown
-     * handle_on_error
-     */
-  };
-
-} // localization_manager
+  }; 
+}
