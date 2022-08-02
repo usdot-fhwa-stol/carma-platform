@@ -92,7 +92,7 @@ jobs:
             source ${ROS_2_ENV}
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
             ls -la /opt/carma/coverage_reports/gcov/
-       - run:
+      - run:
           name: Save Java Test results
           command: |
             mkdir -p ~/junit
