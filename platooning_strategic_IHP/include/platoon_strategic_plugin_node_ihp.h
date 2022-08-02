@@ -73,6 +73,7 @@ public:
     pnh.param<double>("standStillHeadway", config.standStillHeadway, config.standStillHeadway);
     pnh.param<double>("maxAllowedJoinTimeGap", config.maxAllowedJoinTimeGap, config.maxAllowedJoinTimeGap);
     pnh.param<double>("maxAllowedJoinGap", config.maxAllowedJoinGap, config.maxAllowedJoinGap);
+    pnh.param<double>("minAllowedJoinGap", config.minAllowedJoinGap, config.minAllowedJoinGap);
     pnh.param<double>("desiredJoinTimeGap", config.desiredJoinTimeGap, config.desiredJoinTimeGap);
     pnh.param<double>("desiredJoinGap", config.desiredJoinGap, config.desiredJoinGap);
     pnh.param<double>("waitingStateTimeout", config.waitingStateTimeout, config.waitingStateTimeout);
