@@ -27,13 +27,13 @@ LocalizationManager::LocalizationManager(PosePublisher pose_pub,
                                         StatePublisher state_pub, ManagedInitialPosePublisher initialpose_pub,
                                         const LocalizationManagerConfig& config, 
                                         rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger,
-                                        std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory)
+                                        std::unique_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory)
 : pose_pub_(pose_pub)
 , state_pub_(state_pub)
 , initialpose_pub_(initialpose_pub)
 , config_(config)
 , logger_(logger)
-, timer_factory_(timer_factory)
+, timer_factory_(std::move(timer_factory))
 , transition_table_(static_cast<LocalizerMode>(config_.localization_mode))
 
 {
@@ -41,6 +41,7 @@ LocalizationManager::LocalizationManager(PosePublisher pose_pub,
     transition_table_.setTransitionCallback(std::bind(&LocalizationManager::stateTransitionCallback, this, 
                                                     std::placeholders::_1, std::placeholders::_2,
                                                     std::placeholders::_3)); 
+    timer_clock_type_ = timer_factory_->now().get_clock_type();                                                    
                                                       
 }    
 
@@ -58,20 +59,20 @@ double LocalizationManager::computeNDTFreq(const rclcpp::Time& new_stamp)
         return config_.ndt_frequency_degraded_threshold * 2;
     }
 
-    if (new_stamp <= prev_ndt_stamp_)
+    if (new_stamp <= rclcpp::Time(prev_ndt_stamp_.get(), timer_clock_type_))
     {
         RCLCPP_ERROR_STREAM(logger_->get_logger(), "LocalizationManager received NDT data out of order. Prev stamp was "
                         << prev_ndt_stamp_.get().seconds() << " new stamp is " << new_stamp.seconds());
         // When invalid data is received from NDT force the frequency into the fault range
         return config_.ndt_frequency_fault_threshold / 2;
     }
-    return computeFreq(prev_ndt_stamp_.get(), new_stamp);  // Convert delta to frequency (Hz = 1/s)
+    return computeFreq(rclcpp::Time(prev_ndt_stamp_.get(), timer_clock_type_), new_stamp);  // Convert delta to frequency (Hz = 1/s)
 }
 
 void LocalizationManager::poseAndStatsCallback(const geometry_msgs::msg::PoseStamped::ConstPtr pose,
                                                const autoware_msgs::msg::NDTStat::ConstPtr stats)
 {
-    double ndt_freq = computeNDTFreq(pose->header.stamp);
+    double ndt_freq = computeNDTFreq(rclcpp::Time(pose->header.stamp, timer_clock_type_));
     RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Received pose resulting in frequency value of " << ndt_freq << " with score of " << stats->score);
 
     if (stats->score >= config_.fitness_score_fault_threshold || ndt_freq <= config_.ndt_frequency_fault_threshold)
@@ -264,12 +265,12 @@ void LocalizationManager::posePubTick()
 {
     // Clear any expired timers
     clearTimers();
-    
+
     // Evaluate NDT Frequency if we have started receiving messages
     // This check provides protection against excessively long NDT computation times that do not trigger the callback
     if (prev_ndt_stamp_)
     {
-        double freq = computeFreq(prev_ndt_stamp_.get(), timer_factory_->now());
+        double freq = computeFreq(rclcpp::Time(prev_ndt_stamp_.get(),timer_clock_type_), timer_factory_->now());   
         if (freq <= config_.ndt_frequency_fault_threshold)
         {
             transition_table_.signal(LocalizationSignal::UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE);
@@ -279,13 +280,13 @@ void LocalizationManager::posePubTick()
             transition_table_.signal(LocalizationSignal::POOR_NDT_FREQ_OR_FITNESS_SCORE);
         }
     }
-    
+
     // check if last gnss time stamp is older than threshold and send the corresponding signal
-    if (last_raw_gnss_value_ && timer_factory_->now() - rclcpp::Time(last_raw_gnss_value_->header.stamp) > rclcpp::Duration(config_.gnss_data_timeout * 1e6))
+    if (last_raw_gnss_value_ && timer_factory_->now() - rclcpp::Time(last_raw_gnss_value_->header.stamp, timer_clock_type_) > rclcpp::Duration(config_.gnss_data_timeout * 1e6))
     {
         transition_table_.signal(LocalizationSignal::GNSS_DATA_TIMEOUT);
     }
-    std::cout<<"Reaching line 287"<<std::endl;
+
     // Used in LocalizerMode::GNSS_WITH_NDT_INIT 
     // If the state is not Operational with good NDT, or already using GPS only, we reset the counter
     if (transition_table_.getState() != LocalizationState::OPERATIONAL && 
@@ -299,10 +300,8 @@ void LocalizationManager::posePubTick()
     if (current_pose_){
         pose_pub_(*current_pose_);
     }
-    
+
     // Create and publish status report message
-    stateToMsg(transition_table_.getState(), timer_factory_->now());
-    
     carma_localization_msgs::msg::LocalizationStatusReport msg = stateToMsg(transition_table_.getState(), timer_factory_->now());
     state_pub_(msg);
 }

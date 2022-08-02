@@ -61,8 +61,11 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
   ament_add_gtest(test_localization_manager 
-  # test/node_test.cpp
   test/TestLocalizationManager.cpp
+  test/TestLocalizationTransitionTable.cpp
+  test/TestLocalizationTypes.cpp
+  test/TestMain.cpp
+
   )
 
   ament_target_dependencies(test_localization_manager ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})

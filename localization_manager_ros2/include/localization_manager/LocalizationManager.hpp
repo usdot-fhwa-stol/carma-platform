@@ -63,7 +63,7 @@ public:
                         ManagedInitialPosePublisher initialpose_pub,
                         const LocalizationManagerConfig& config,
                         rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger,
-                        std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory);
+                        std::unique_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory);
 
     /**
      * \brief Callback for new GNSS messages
@@ -154,11 +154,12 @@ private:
 
   // Using timer factory
   std::mutex mutex_;
-  std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory_;
+  std::unique_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory_;
   std::unordered_map<uint32_t, std::pair<TimerUniquePtr, bool>> timers_;
   TimerUniquePtr current_timer_;
   uint32_t next_id_ = 0;  // Timer id counter
   uint32_t current_timer_id_; 
+  rcl_clock_type_t timer_clock_type_ = RCL_SYSTEM_TIME;
  
 
   

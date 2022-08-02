@@ -93,7 +93,7 @@ namespace localization_manager
                                          std::bind(&Node::publishManagedInitialPose, this, std_ph::_1),
                                          config_, 
                                          get_node_logging_interface(),
-                                         std::make_shared<carma_ros2_utils::timers::ROSTimerFactory>(shared_from_this())
+                                         std::make_unique<carma_ros2_utils::timers::ROSTimerFactory>(shared_from_this())
                                          ));
 
         // Setup subscribers
