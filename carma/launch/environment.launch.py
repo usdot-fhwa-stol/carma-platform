@@ -211,8 +211,7 @@ def generate_launch_description():
                         # TODO when camera detection is added, we will wan to separate this node into a different component to preserve fault tolerance 
                     ],
                     parameters=[ tracking_nodes_param_file ]
-            ),
- 
+            )
         ]
     )
 
@@ -232,7 +231,7 @@ def generate_launch_description():
                 extra_arguments=[
                     {'use_intra_process_comms': True}, 
                     {'--log-level' : GetLogLevel('carma_wm_ctrl', env_log_levels) }
-                    ],
+                ],
                 remappings=[
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
                     ("geofence", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_geofence_control" ] ),
@@ -316,6 +315,7 @@ def generate_launch_description():
                     parameters = [
                         vehicle_config_param_file
                     ]
+                    
             ),
             ComposableNode( 
                     package='traffic_incident_parser',
@@ -335,6 +335,7 @@ def generate_launch_description():
                     parameters = [
                         vehicle_config_param_file
                     ]
+                    
             ),
         ]
     )

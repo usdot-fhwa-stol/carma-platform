@@ -52,7 +52,7 @@ LightControlledIntersectionTacticalPlugin::LightControlledIntersectionTacticalPl
                                     const PublishPluginDiscoveryCB& plugin_discovery_publisher)
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
   {
-    plugin_discovery_msg_.name = "LightControlledIntersectionTacticalPlugin";
+    plugin_discovery_msg_.name = "light_controlled_intersection_tactical_plugin";
     plugin_discovery_msg_.version_id = "v1.0";
     plugin_discovery_msg_.available = true;
     plugin_discovery_msg_.activated = true;

@@ -95,9 +95,9 @@ TEST(carma_guidance_plugins_test, connections_test) {
     ASSERT_TRUE(tactical_plugin->get_availability());
     ASSERT_TRUE(control_plugin->get_availability());
 
-    ASSERT_EQ(strategic_plugin->get_plugin_name(), "TestStrategicPlugin");
-    ASSERT_EQ(tactical_plugin->get_plugin_name(), "TestTacticalPlugin");
-    ASSERT_EQ(control_plugin->get_plugin_name(), "TestControlPlugin");
+    ASSERT_EQ(strategic_plugin->get_name(), "strategic_plugin_test");
+    ASSERT_EQ(tactical_plugin->get_name(), "tactical_plugin_test");
+    ASSERT_EQ(control_plugin->get_name(), "control_plugin_test");
 
     ASSERT_EQ(strategic_plugin->get_version_id(), "1.0");
     ASSERT_EQ(tactical_plugin->get_version_id(), "1.1");

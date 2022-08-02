@@ -83,7 +83,7 @@ int main(int argc, char** argv)
 
   // Setup callback connections
   ros::ServiceServer plan_maneuver_srv =
-      nh.advertiseService("plugins/" + config.strategic_plugin_name + "/plan_maneuvers", &lci_strategic_plugin::LCIStrategicPlugin::planManeuverCb, &lcip);
+      nh.advertiseService(config.strategic_plugin_name + "/plan_maneuvers", &lci_strategic_plugin::LCIStrategicPlugin::planManeuverCb, &lcip);
 
   lcip.lookupFrontBumperTransform();
   

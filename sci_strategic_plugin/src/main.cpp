@@ -58,7 +58,7 @@ int main(int argc, char** argv)
 
   // Setup callback connections
   ros::ServiceServer plan_maneuver_srv =
-      nh.advertiseService("plugins/" + config.strategic_plugin_name + "/plan_maneuvers", &sci_strategic_plugin::SCIStrategicPlugin::planManeuverCb, &plugin);
+      nh.advertiseService(config.strategic_plugin_name + "/plan_maneuvers", &sci_strategic_plugin::SCIStrategicPlugin::planManeuverCb, &plugin);
   
   // Mobility Operation Subscriber
   ros::Subscriber mob_operation_sub = nh.subscribe("incoming_mobility_operation", 1, &sci_strategic_plugin::SCIStrategicPlugin::mobilityOperationCb, &plugin);

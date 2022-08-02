@@ -63,9 +63,9 @@ namespace trajectory_executor_test_suite
             traj_pub_ = create_publisher<carma_planning_msgs::msg::TrajectoryPlan>("trajectory", 5);
 
             // Setup Subscribers
-            traj_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("/guidance/pure_pursuit/plan_trajectory", 100,
+            traj_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("/guidance/plugins/pure_pursuit/plan_trajectory", 100,
                                                                     std::bind(&TrajectoryExecutorTestSuite::trajEmitCallback, this, std_ph::_1));
-            traj_sub2_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("/guidance/PlatooningControlPlugin/plan_trajectory", 100,
+            traj_sub2_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("/guidance/plugins/platoon_control/plan_trajectory", 100,
                                                                     std::bind(&TrajectoryExecutorTestSuite::trajEmitCallback, this, std_ph::_1));
             
             return CallbackReturn::SUCCESS;
@@ -88,7 +88,7 @@ namespace trajectory_executor_test_suite
         rclcpp::Time cur_time = rclcpp::Time(0,0);
         for (int i = 0; i < 10; i++) {
             carma_planning_msgs::msg::TrajectoryPlanPoint p;
-            p.controller_plugin_name = "Pure Pursuit";
+            p.controller_plugin_name = "pure_pursuit_wrapper_node";
             p.lane_id = "0";
             p.planner_plugin_name = "cruising";
             rclcpp::Duration dur((i * 0.13)*1e9); // Convert seconds to nanoseconds
@@ -116,7 +116,7 @@ namespace trajectory_executor_test_suite
         rclcpp::Time cur_time = rclcpp::Time(0,0);
         for (int i = 0; i < 10; i++) {
             carma_planning_msgs::msg::TrajectoryPlanPoint p;
-            p.controller_plugin_name = "PlatooningControlPlugin";
+            p.controller_plugin_name = "platoon_control";
             p.lane_id = "0";
             p.planner_plugin_name = "cruising";
             rclcpp::Duration dur((i * 0.13)*1e9); // Convert seconds to nanoseconds

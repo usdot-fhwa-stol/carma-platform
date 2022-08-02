@@ -50,15 +50,15 @@ mobility_rate : 10.0
 
 
 # String: The name to use for this plugin during comminications with the arbitrator
-strategic_plugin_name : LCIStrategicPlugin
+strategic_plugin_name : lci_strategic_plugin
 
 # String: The name of the tactical plugin to use for Lane Following trajectory planning
 #         This plugin is used to apply trajectory smoothing algorithm BEFORE entering the intersection if within activation distance
-lane_following_plugin_name : LightControlledIntersectionTacticalPlugin
+lane_following_plugin_name : light_controlled_intersection_tactical_plugin
 
 # String: The name of the plugin to use for stop and wait trajectory planning
-stop_and_wait_plugin_name : StopAndWaitPlugin
+stop_and_wait_plugin_name : stop_and_wait_plugin
 
 # String: The name of the plugin to use for intersection transit trajectory planning
 #         This plugin is used to travel INSIDE the intersection where there is no trajectory smoothing algorithm active
-intersection_transit_plugin_name : IntersectionTransitPlugin
+intersection_transit_plugin_name : intersection_transit_maneuvering
