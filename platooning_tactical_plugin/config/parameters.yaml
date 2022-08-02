@@ -5,7 +5,7 @@ trajectory_time_length: 6.0 # Trajectory length in seconds
 # Unit: m
 curve_resample_step_size: 1.0 
 # Integer: Amount to downsample input lanelet centerline data. Value corresponds to saving each nth point.
-downsample_ratio: 8 
+downsample_ratio: 20 #8 
 # Float: Minimum allowable speed
 # Unit: m/s
 minimum_speed: 2.2352
@@ -26,4 +26,13 @@ lookahead_ratio: 2.0
 # Integer: Size of the window used in the moving average filter to smooth both the computed curvature and output speeds
 moving_average_window_size: 5
 # Integer: Number of points to look ahead when calculating the curvature of the lanelet centerline
-curvature_calc_lookahead_count: 1 
+curvature_calc_lookahead_count: 1
+
+# Multiplier of max_accel to bring the value under max_accel
+max_accel_multiplier: 0.4 
+
+# Multiplier of max_accel to bring the value under max_accel
+lat_accel_multiplier: 0.5 
+
+# Integer: Amount to downsample input lanelet centerline data. Value corresponds to saving each nth point.
+default_downsample_ratio: 20
