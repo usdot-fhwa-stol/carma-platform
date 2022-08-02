@@ -11,20 +11,20 @@ namespace carla_sensors
     {
         nh_ = nh_.reset(new ros::CARMANodeHandle());
         
-        points_raw_pub_ = nh_.advertise<sensor_msgs::msg::PointCloud2>("points_raw", 1);
+        points_raw_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("points_raw", 1);
         image_raw_pub_= nh_.advertise<sensor_msgs::Image>("image_raw", 1);
         image_color_pub_ = nh_.advertise<sensor_msgs::Image>("image_color",1);
         image_rect_pub_ = nh_.advertise<sensor_msgs::Image>("image_rect", 1);
-        camera_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("image_rect", 1);
+        camera_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("camera_info", 1);
 
-        gnss_fixed_fused_pub_ = nh_.advertise("gns_fix_fused");
+        gnss_fixed_fused_pub_ = nh_.advertise<gps_common::GPSFix>("gnss_fix_fused");
 
 
         //Subscribers
-        point_cloud_sub_ = nh_.subscribe<sensor_msgs::msg::PointCloud2>("points_cloud", 10, CarlaSensors::point_cloud_cb);
+        point_cloud_sub_ = nh_.subscribe<sensor_msgs::PointCloud2>("points_cloud", 10, CarlaSensors::point_cloud_cb);
         image_raw_sub_ = nh_.subscribe<sensor_msgs::Image>("/carla/{}/camera/image", 10, CarlaSensors::image_raw_cb);
-        image_color_sub_ = nh_.subscribe<sensor_msgs::CameraInfo>("/carla/{}/camera/image_color", 10, CarlaSensors::image_color_cb);
-        image_rect_sub_ = nh_.subscribe<sensor_msgs::CameraInfo>("/carla/{}/camera/image_rect", 10, CarlaSensors::image_rect_cb);
+        image_color_sub_ = nh_.subscribe<sensor_msgs::Image>("/carla/{}/camera/image_color", 10, CarlaSensors::image_color_cb);
+        image_rect_sub_ = nh_.subscribe<sensor_msgs::Image>("/carla/{}/camera/image_rect", 10, CarlaSensors::image_rect_cb);
         gnss_fixed_fused_sub_ = nh_.subscribe<sensor_msgs::NavSatFix>("/carla/{}/gnss/gnss_fix_fused", 10, CarlaSensors::gnss_fixed_fused_cb);
 
 
@@ -117,8 +117,32 @@ namespace carla_sensors
         gnss_fixed_msg.longitude = gnss_fixed.longitude;
         gnss_fixed_msg.position_covariance = gnss_fixed.position_covariance;
         gnss_fixed_msg.position_covariance_type = gnss_fixed.position_covariance_type;
-        gnss_fixed_msg.status.service = gnss_fixed.status.service;
-        gnss_fixed.status.status = gnss_fixed.status.status;
+        gnss_fixed_msg.status.status = gnss_fixed.status.status;
+
+        gnss_fixed_fused_pub_.publish(gnss_fixed_msg);
+
+    
+    }
+
+    sensor_msgs::PointCloud2 CarlaSensors::get_lidar_msg()
+    {
+        return point_cloud_msg;
+    }
+    sensor_msgs::Image CarlaSensors::get_image_raw_msg()
+    {
+        return image_raw_msg;
+    }
+    sensor_msgs::Image CarlaSensors::get_image_color_msg()
+    {
+        return image_color_msg;
+    }
+    sensor_msgs::Image CarlaSensors::get_image_rect_msg()
+    {
+        return image_rect_msg;
+    }
+    gps_common::GPSFix CarlaSensors::get_gnss_fixed_msg()
+    {
+        return gnss_fixed_msg;
     }
 
 }

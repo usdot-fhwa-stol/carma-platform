@@ -16,17 +16,19 @@
 -->
 
 <!-- 
-Example launch file for health monitor node
+Example launch file for the CARLA Sensors Integration node
 Loads parameters and configures logging for the node
 
-This launch file is not used in CARMA to start health_monitor 
-as it needs to be at the top level in carma_src.launch to be
-able to shut down other nodes.
  -->
 
  <launch>
 
-    <remap from="points_raw" to="/hardware_interface/lidar/points_raw"/>
+    <remap from="points_raw" to="$(optenv CARMA_INTR_NS)/lidar/points_raw"/>
+    <remap from="image_raw" to="$(optenv CARMA_INTR_NS)/camera/image_raw"/>
+    <remap from="image_color" to="$(optenv CARMA_INTR_NS)/camera/image_color"/>
+    <remap from="image_rect" to="$(optenv CARMA_INTR_NS)/camera/image_rect"/>
+    <remap from="camera_info" to="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
+    <remap from="gnss_fixed_fused" to="$(optenv CARMA_INTR_NS)/gnss/gnss_fixed_fused"/>
 
 
  </launch>

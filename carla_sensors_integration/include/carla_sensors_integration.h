@@ -16,12 +16,13 @@
 
 #pragma once
 
+#include <ros/ros.h>
+#include <carma_utils/CARMANodeHandle.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/NavSatFix.h>
-
-
+#include <gps_common/GPSFix.h>
 
 namespace carla_sensors
 {
@@ -42,6 +43,12 @@ namespace carla_sensors
             void image_color_cb(sensor_msgs::Image image_color);
             void image_rect_cb(sensor_msgs::Image image_rect);
             void gnss_fixed_fused_cb(sensor_msgs::NavSatFix gnss_fixed);
+
+            sensor_msgs::PointCloud2 get_lidar_msg();
+            sensor_msgs::Image get_image_raw_msg();
+            sensor_msgs::Image get_image_color_msg();
+            sensor_msgs::Image get_image_rect_msg();
+            gps_common::GPSFix get_gnss_fixed_msg();
 
 
 
@@ -70,8 +77,8 @@ namespace carla_sensors
             sensor_msgs::Image image_raw_msg;
             sensor_msgs::Image image_color_msg;
             sensor_msgs::Image image_rect_msg;
-            sensor_msgs::NavSatFix gnss_fixed_msg;
-            
+            gps_common::GPSFix gnss_fixed_msg;
+
 
 
 
