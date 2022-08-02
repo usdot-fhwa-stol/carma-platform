@@ -92,6 +92,12 @@ jobs:
             source ${ROS_2_ENV}
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
             ls -la /opt/carma/coverage_reports/gcov/
+       - run:
+          name: Save Java Test results
+          command: |
+            mkdir -p ~/junit
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/junit/ \;
+            find . -type f -regex ".*/build/Testing/.*xml" -exec cp {} ~/junit/ \;
           
       # Run SonarCloud analysis
       # PR Branches and number extracted from Circle variables and github api
