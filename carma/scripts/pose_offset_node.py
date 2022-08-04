@@ -50,7 +50,7 @@ def run():
   # Load params
   x_offset = rospy.get_param("/pose_x_offset", 1.0)
   y_offset = rospy.get_param("/pose_y_offset", 1.0)
-  z_offset = rospy.get_param('/pose_z_offset', 1.0)
+  z_offset = rospy.get_param('/pose_z_offset', 0.0)
 
   # Setup publishers
   pub = rospy.Publisher('selected_pose', PoseWithCovarianceStamped, queue_size=10)
