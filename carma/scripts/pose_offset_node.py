@@ -48,9 +48,9 @@ def run():
   rospy.init_node('pose_offset_node')
 
   # Load params
-  x_offset = rospy.get_param("/pose_x_offset")
-  y_offset = rospy.get_param("/pose_y_offset")
-  z_offset = rospy.get_param('/pose_z_offset')
+  x_offset = rospy.get_param("/pose_x_offset", 1.0)
+  y_offset = rospy.get_param("/pose_y_offset", 1.0)
+  z_offset = rospy.get_param('/pose_z_offset', 1.0)
 
   # Setup publishers
   pub = rospy.Publisher('selected_pose', PoseWithCovarianceStamped, queue_size=10)
