@@ -202,51 +202,6 @@
   <group>
     <include file="$(find trajectory_visualizer)/launch/trajectory_visualizer.launch" />
   </group>
-
-  <!-- Yield Plugin -->
-  <group>
-    <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
-    <include file = "$(find yield_plugin)/launch/yield_plugin.launch"/>
-  </group>
-
-  <!-- Platoon Strategic Plugin -->
-  <!-- <group>
-    <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
-    <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
-    <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
-    <include file = "$(find platoon_strategic)/launch/platoon_strategic.launch"/>
-  </group> -->
-
-  <!-- Platoon Strategic IHP Plugin -->
-  <group>
-    <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
-    <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
-    <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
-    <include file = "$(find platoon_strategic_ihp)/launch/platoon_strategic_ihp.launch"/>
-  </group>
-
-  <!-- Intersection Transit Maneuvering Plugin-->
-  <group>
-   <include file = "$(find intersection_transit_maneuvering)/launch/intersection_transit_maneuvering.launch"/>
-  </group>
-
-  <!-- Stop Controlled Intersection Strategic Plugin -->
-  <group>
-    <remap from="outgoing_mobility_operation" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_operation"/>
-    <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
-    <include file="$(find sci_strategic_plugin)/launch/sci_strategic_plugin.launch" />
-  </group>
-
-  <!-- Light Controlled Intersection Strategic Plugin -->
-  <group>
-    <include file="$(find lci_strategic_plugin)/launch/lci_strategic_plugin.launch" />
-  </group>
-
-  <!-- Stop Controlled Intersection Tactical Plugin -->
-  <include file="$(find stop_controlled_intersection_tactical_plugin)/launch/stop_controlled_intersection_tactical_plugin.launch" />
-
-  <!-- Light Controlled Intersection Tactical Plugin -->
-  <include file="$(find light_controlled_intersection_tactical_plugin)/launch/light_controlled_intersection_tactical_plugin.launch" />
   
   <!-- Guidance Plugin Validator -->
   <group>
