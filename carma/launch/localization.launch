@@ -136,7 +136,7 @@
   </group>
 
   <!-- TEMP OFFSET NODE -->
-  <node pkg="carma" type="scripts/pose_offset_node.py" name="pose_offset_node"/>
+  <node pkg="carma" type="pose_offset_node.py" name="pose_offset_node"/>
 
   <!-- Deadreckoner -->
   <include file="$(find deadreckoner)/launch/deadreckoner.launch">
