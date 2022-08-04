@@ -61,7 +61,7 @@ def run():
   # Bind subscriptions to worker
   sub = rospy.Subscriber('old_selected_pose', PoseWithCovarianceStamped, wkr.pose_cb, queue_size=10)
 
-  sub2 = rospy.Subscriber('~Vector3', Vector3, wkr.param_cb, queue_size=1)
+  sub2 = rospy.Subscriber('~pose_offset_node_params', Vector3, wkr.param_cb, queue_size=1)
   
   rospy.spin()
 
