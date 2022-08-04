@@ -53,13 +53,13 @@ def run():
   z_offset = rospy.get_param('/pose_z_offset', 0.0)
 
   # Setup publishers
-  pub = rospy.Publisher('selected_pose', PoseWithCovarianceStamped, queue_size=10)
+  pub = rospy.Publisher('selected_pose', PoseStamped, queue_size=10)
   
   # Create worker
   wkr = PoseOffsetWorker(pub, x_offset, y_offset, z_offset)
 
   # Bind subscriptions to worker
-  sub = rospy.Subscriber('old_selected_pose', PoseWithCovarianceStamped, wkr.pose_cb, queue_size=10)
+  sub = rospy.Subscriber('old_selected_pose', PoseStamped, wkr.pose_cb, queue_size=10)
 
   sub2 = rospy.Subscriber('~pose_offset_node_params', Vector3, wkr.param_cb, queue_size=1)
   
