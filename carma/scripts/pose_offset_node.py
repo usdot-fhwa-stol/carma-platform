@@ -15,7 +15,7 @@
 # the License.
 
 import rospy
-from geometry_msgs.msg import PoseWithCovarianceStamped
+from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Vector3
 
 # Worker class for core business logic
@@ -28,9 +28,9 @@ class PoseOffsetWorker:
     
     # Callback to apply offset based on parameters
     def pose_cb(self, msg):
-      msg.pose.pose.position.x += self.x_offset
-      msg.pose.pose.position.y += self.y_offset
-      msg.pose.pose.position.z += self.z_offset
+      msg.pose.position.x += self.x_offset
+      msg.pose.position.y += self.y_offset
+      msg.pose.position.z += self.z_offset
 
       self.pub.publish(msg)
 
