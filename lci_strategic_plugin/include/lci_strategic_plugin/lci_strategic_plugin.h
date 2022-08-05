@@ -742,7 +742,7 @@ private:
   //! Cache variables for storing the current intersection state between state machine transitions
   boost::optional<double> intersection_speed_;
   boost::optional<double> intersection_end_downtrack_;
-  std::string light_controlled_intersection_strategy_ = "Carma/light_controlled_intersection";
+  std::string light_controlled_intersection_strategy_ = "signalized"; // Strategy carma-streets is sending. Could be more verbose but needs to be changed on both ends
   
   // TF listenser
   tf2_ros::Buffer tf2_buffer_;

@@ -892,18 +892,13 @@ void LCIStrategicPlugin::BSMCb(const cav_msgs::BSMConstPtr& msg)
 
 void LCIStrategicPlugin::parseStrategyParams(const std::string& strategy_params)
 {
-  // sample strategy_params: "st:1634067044,et:1634067059"
+  // sample strategy_params: "et:1634067059"
   std::string params = strategy_params;
   std::vector<std::string> inputsParams;
   boost::algorithm::split(inputsParams, params, boost::is_any_of(","));
 
-  std::vector<std::string> st_parsed;
-  boost::algorithm::split(st_parsed, inputsParams[0], boost::is_any_of(":"));
-  scheduled_stop_time_ = std::stoull(st_parsed[1]);
-  ROS_DEBUG_STREAM("scheduled_stop_time_: " << scheduled_stop_time_);
-
   std::vector<std::string> et_parsed;
-  boost::algorithm::split(et_parsed, inputsParams[1], boost::is_any_of(":"));
+  boost::algorithm::split(et_parsed, inputsParams[0], boost::is_any_of(":"));
   scheduled_enter_time_ = std::stoull(et_parsed[1]);
   ROS_DEBUG_STREAM("scheduled_enter_time_: " << scheduled_enter_time_);
 
