@@ -1,12 +1,13 @@
 maxPlatoonSize: 10
 algorithmType: 0
 mvr_duration: 15
-timeHeadway: 2.5
+timeHeadway: 1.2
 standStillHeadway: 12.0
 maxAllowedJoinTimeGap: 15.0
-maxAllowedJoinGap: 90.0
+maxAllowedJoinGap: 200.0
+minAllowedJoinGap: 0.0
 desiredJoinTimeGap: 4.0
-desiredJoinGap: 90.0
+desiredJoinGap: 300.0
 maxLeaderAbortingCalls: 2
 waitingStateTimeout: 25.0
 cmdSpeedMaxAdjustment: 10.0
@@ -14,10 +15,10 @@ minAllowableHeadaway: 1.6
 headawayStableLowerBond: 1.7
 maxAllowableHeadaway: 4.0
 headawayStableUpperBond: 3.9
-minCutinGap: 22.0
+minCutinGap: 18.0
 maxCutinGap: 150.0
 longitudinalCheckThresold: 100.0
-maxCrosstrackError: 1.0
+maxCrosstrackError: 1.5
 vehicleLength: 5.0
 ss_theta: 4.0
 standstill: 2.0
@@ -28,6 +29,6 @@ test_front_join: false
 test_cutin_join: false
 slowDownAdjuster: 0.75
 createGapAdjuster: 0.3
-minPlatooningSpeed: 11.0
+minPlatooningSpeed: 5.0
 allowCutinJoin: true
 significantDTDchange: 0.2
