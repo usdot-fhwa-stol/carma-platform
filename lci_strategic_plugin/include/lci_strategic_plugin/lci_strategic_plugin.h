@@ -191,8 +191,6 @@ public:
   // CARMA Streets Variakes
   // timestamp for msg received from carma streets
   unsigned long long street_msg_timestamp_ = 0;
-  // scheduled stop time
-  unsigned long long scheduled_stop_time_ = 0;
   // scheduled enter time
   unsigned long long scheduled_enter_time_ = 0;
   
