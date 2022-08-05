@@ -75,8 +75,34 @@ namespace basic_autonomy
             std::vector<PointSpeedPair> points_and_target_speeds;
 
             cav_msgs::LaneFollowingManeuver lane_following_maneuver = maneuver.lane_following_maneuver;
-            
+
             auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack, true, true);
+
+            //TODO: This fix is temporary and only applies on lane follow maneuvers from Platooning Strategic Plugin IHP. 
+            // A general fix will be implemented soon. (issue #1863)
+            bool lanelets_defined = !maneuver.lane_following_maneuver.lane_ids.empty();
+            ROS_DEBUG_STREAM("lanelets_defined: " << lanelets_defined);
+            bool isFromPlatooning = maneuver.lane_following_maneuver.parameters.planning_strategic_plugin == "PlatooningStrategicIHPPlugin";
+            ROS_DEBUG_STREAM("isFromPlatooning: " << isFromPlatooning);
+
+            if (lanelets_defined && isFromPlatooning)
+            {
+                lanelets = {};
+                int lane_id = stoi(maneuver.lane_following_maneuver.lane_ids[0]);
+                ROS_DEBUG_STREAM("extracted id: " << lane_id);
+                lanelet::ConstLanelet new_lanelet = wm->getMap()->laneletLayer.get(lane_id);
+                lanelets.push_back(new_lanelet);
+
+                if (maneuver.lane_following_maneuver.lane_ids.size()>1)
+                {
+                    lane_id = stoi(maneuver.lane_following_maneuver.lane_ids[1]);
+                    ROS_DEBUG_STREAM("more extracted id: " << lane_id);
+                    new_lanelet = wm->getMap()->laneletLayer.get(lane_id);
+                    lanelets.push_back(new_lanelet);
+                }
+            } 
+
+
 
             if (lanelets.empty())
             {
@@ -594,6 +620,7 @@ namespace basic_autonomy
             size_t time_boundary_exclusive_index =
                 trajectory_utils::time_boundary_index(downtracks, speeds, time_span);
 
+			ROS_DEBUG_STREAM("time_boundary_exclusive_index = " << time_boundary_exclusive_index);
             if (time_boundary_exclusive_index == 0)
             {
                 throw std::invalid_argument("No points to fit in timespan");
@@ -701,7 +728,7 @@ namespace basic_autonomy
 
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
             const std::vector<lanelet::BasicPoint2d> &points, const std::vector<double> &times, const std::vector<double> &yaws,
-            ros::Time startTime)
+            ros::Time startTime, const std::string &desired_controller_plugin)
         {
             if (points.size() != times.size() || points.size() != yaws.size())
             {
@@ -720,7 +747,7 @@ namespace basic_autonomy
                 tpp.y = points[i].y();
                 tpp.yaw = yaws[i];
 
-                tpp.controller_plugin_name = "default";
+                tpp.controller_plugin_name = desired_controller_plugin;
                 //tpp.planner_plugin_name        //Planner plugin name is filled in the tactical plugin
 
                 traj.push_back(tpp);
@@ -795,6 +822,7 @@ namespace basic_autonomy
             ROS_DEBUG_STREAM("NearestPtIndex: " << nearest_pt_index);
 
             std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); // Points in front of current vehicle position
+			ROS_DEBUG_STREAM("Ready to call constrain_to_time_boundary: future_points size = " << future_points.size() << ", trajectory_time_length = " << detailed_config.trajectory_time_length);
             auto time_bound_points = constrain_to_time_boundary(future_points, detailed_config.trajectory_time_length);
 
             ROS_DEBUG_STREAM("Got time_bound_points with size:" << time_bound_points.size());
@@ -914,7 +942,7 @@ namespace basic_autonomy
                     std::vector<double> yaw = {state.orientation, state.orientation}; //Keep current orientation
 
                     std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
-                    trajectory_from_points_times_orientations(remaining_traj_points, times, yaw, state_time);
+                    trajectory_from_points_times_orientations(remaining_traj_points, times, yaw, state_time, detailed_config.desired_controller_plugin);
 
                     return traj_points;
 
@@ -971,7 +999,7 @@ namespace basic_autonomy
 
             // Build trajectory points
             std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
-                trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, state_time);
+                trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, state_time, detailed_config.desired_controller_plugin);
 
             //debug msg
             carma_debug_msgs::TrajectoryCurvatureSpeeds msg;
@@ -1002,7 +1030,8 @@ namespace basic_autonomy
                                                               int speed_moving_average_window_size,
                                                               int curvature_moving_average_window_size,
                                                               double back_distance,
-                                                              double buffer_ending_downtrack)
+                                                              double buffer_ending_downtrack,
+                                                              std::string desired_controller_plugin)
         {
             DetailedTrajConfig detailed_config;
 
@@ -1015,6 +1044,7 @@ namespace basic_autonomy
             detailed_config.curvature_moving_average_window_size = curvature_moving_average_window_size;
             detailed_config.back_distance = back_distance;
             detailed_config.buffer_ending_downtrack = buffer_ending_downtrack;
+            detailed_config.desired_controller_plugin = desired_controller_plugin;
 
             return detailed_config;
         }
@@ -1101,7 +1131,7 @@ namespace basic_autonomy
             ROS_DEBUG_STREAM("After removing extra buffer points, future_geom_points.size():"<< future_geom_points.size());
 
             std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
-                trajectory_from_points_times_orientations(future_geom_points, times, final_yaw_values, state_time);
+                trajectory_from_points_times_orientations(future_geom_points, times, final_yaw_values, state_time, detailed_config.desired_controller_plugin);
 
             return traj_points;
         }

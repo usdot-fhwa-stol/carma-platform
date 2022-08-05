@@ -22,7 +22,6 @@
 #include <cav_msgs/Plugin.h>
 #include <cav_msgs/DriverStatus.h>
 #include <boost/optional.hpp>
-#include "plugin_manager.h"
 #include "driver_manager.h"
 
 namespace health_monitor
@@ -59,25 +58,12 @@ namespace health_monitor
             std::shared_ptr<ros::CARMANodeHandle> pnh_;
 
             // workers
-            PluginManager plugin_manager_;
             DriverManager driver_manager_;
 
-            // service servers 
-            ros::ServiceServer registered_plugin_service_server_;
-            ros::ServiceServer active_plugin_service_server_;
-            ros::ServiceServer activate_plugin_service_server_;
-            ros::ServiceServer get_strategic_plugin_by_capability_server_;
-            ros::ServiceServer get_tactical_plugin_by_capability_server_;
-
             // topic subscribers
-            ros::Subscriber plugin_discovery_subscriber_;
             ros::Subscriber driver_discovery_subscriber_;
 
             // message/service callbacks
-            bool registered_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res);
-            bool active_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res);
-            bool activate_plugin_cb(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res);
-            void plugin_discovery_cb(const cav_msgs::PluginConstPtr& msg);
             void driver_discovery_cb(const cav_msgs::DriverStatusConstPtr& msg);
 
             // initialize method
@@ -89,18 +75,12 @@ namespace health_monitor
             std::vector<std::string> lidar_gps_drivers_;
             std::vector<std::string> camera_drivers_; 
  
-            std::vector<std::string> required_plugins_;
             bool truck_;
             bool car_;
 
             // record of startup timestamp
             long start_up_timestamp_;
 
-            // service name prefix and suffix
-            std::string plugin_service_prefix_;
-            std::string strategic_plugin_service_suffix_;
-            std::string tactical_plugin_service_suffix_;
-            
             // Previously published alert message
             boost::optional<cav_msgs::SystemAlert> prev_alert;
     };

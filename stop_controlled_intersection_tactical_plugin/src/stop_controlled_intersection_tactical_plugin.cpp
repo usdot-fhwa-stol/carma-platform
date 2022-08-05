@@ -53,7 +53,7 @@ StopControlledIntersectionTacticalPlugin::StopControlledIntersectionTacticalPlug
                                     const PublishPluginDiscoveryCB& plugin_discovery_publisher)
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
   {
-    plugin_discovery_msg_.name = "StopControlledIntersectionTacticalPlugin";
+    plugin_discovery_msg_.name = "stop_controlled_intersection_tactical_plugin";
     plugin_discovery_msg_.version_id = "v1.0";
     plugin_discovery_msg_.available = true;
     plugin_discovery_msg_.activated = true;
@@ -554,7 +554,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlu
 
     // Build trajectory points
     std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
-        basic_autonomy::waypoint_generation::trajectory_from_points_times_orientations(future_basic_points, times, future_yaw, state_time);
+        basic_autonomy::waypoint_generation::trajectory_from_points_times_orientations(future_basic_points, times, future_yaw, state_time, "default");
 
     return traj_points;
 }

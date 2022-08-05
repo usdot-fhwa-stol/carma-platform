@@ -4,7 +4,7 @@ ack_pub_times: 1
 max_lane_width: 4.0
 
 #Double: Period in seconds between traffic control requests after route selection
-traffic_control_request_period: 1.0
+traffic_control_request_period: 3.0
 
 #List of Int: Every element corresponds to intersection_id of every two elements (x,y) in intersection_coord_correction (id must be [0, +65535] ranges)
 intersection_ids_for_correction: [9945, 9709]

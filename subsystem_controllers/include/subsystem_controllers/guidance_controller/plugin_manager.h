@@ -27,6 +27,7 @@
 #include <memory>
 #include <chrono>
 #include <rmw/types.h>
+#include <map>
 #include "entry_manager.h"
 #include "entry.h"
 
@@ -36,6 +37,10 @@ namespace subsystem_controllers
 
     using GetParentNodeStateFunc = std::function<uint8_t()>;
     using SrvHeader = const std::shared_ptr<rmw_request_id_t>;
+    /**
+     * \brief Function which will return a map of service names and their message types based on the provided base node name and namespace
+     */ 
+    using ServiceNamesAndTypesFunc = std::function<std::map<std::string, std::vector<std::string, std::allocator<std::string>>>(const std::string &,const std::string &)>;
 
     /**
      * \brief The PluginManager serves as a component to manage CARMA Guidance Plugins via their ros2 lifecycle interfaces
@@ -51,15 +56,19 @@ namespace subsystem_controllers
              * 
              * \param required_plugins The set of plugins which will be treated as required. A failure in these plugins will result in an exception
              * \param auto_activated_plugins The set of plugins which will be automatically activated at first system activation but not treated specially after that.
+             * \param ros2_initial_plugins The set of plugins which will be managed as they are ROS2.
              * \param plugin_lifecycle_mgr A fully initialized lifecycle manager which will be used trigger plugin transitions
              * \param get_parent_state_func A callback which will allow this object to access the parent process lifecycle state
+             * \param get_service_names_and_types_func A callback which returns a map of service names to service types based on the provided base node name and namespace
              * \param service_timeout The timeout for plugin services to be available in nanoseconds
              * \param call_timeout The timeout for calls to plugin services to fail in nanoseconds
              */
             PluginManager(const std::vector<std::string>& required_plugins,
                           const std::vector<std::string>& auto_activated_plugins,
+                          const std::vector<std::string>& ros2_initial_plugins,
                           std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> plugin_lifecycle_mgr,
                           GetParentNodeStateFunc get_parent_state_func,
+                          ServiceNamesAndTypesFunc get_service_names_and_types_func,
                           std::chrono::nanoseconds service_timeout, std::chrono::nanoseconds call_timeout);
 
             /**
@@ -170,6 +179,15 @@ namespace subsystem_controllers
              */ 
             bool matching_capability(const std::vector<std::string>& base_capability_levels, const std::vector<std::string>& compared_capability_levels);
 
+            /**
+             * \brief Returns true if the specified fully qualified node name is a ROS2 lifecycle node
+             * 
+             * \param node The fully specified name of the node to evaluate
+             * 
+             * \return True if ros2 lifecycle node. False otherwise
+             */ 
+            bool is_ros2_lifecycle_node(const std::string& node);
+
             //! Set of required plugins a failure of which necessitates system shutdown
             std::unordered_set<std::string> required_plugins_;
 
@@ -177,11 +195,18 @@ namespace subsystem_controllers
             // These will only be activated once, if the user later deactivates them then that behavior will be preserved
             std::unordered_set<std::string> auto_activated_plugins_;
 
+            //! Set of ROS2 plugins that will be managed initially. In other words, newly detected plugins after initial configuration are also managed appropriately
+            // despite not being in the list.
+            std::unordered_set<std::string> ros2_initial_plugins_;
+
             //! Lifecycle Manager which will track the plugin nodes and call their lifecycle services on request
             std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> plugin_lifecycle_mgr_;
 
             //! Callback to retrieve the lifecycle state of the parent process 
             GetParentNodeStateFunc get_parent_state_func_;
+
+            //! Callback to get service names and types for the given node
+            ServiceNamesAndTypesFunc get_service_names_and_types_func_;
 
             //! Entry manager to keep track of detected plugins
             EntryManager em_;
@@ -191,6 +216,15 @@ namespace subsystem_controllers
             
             //! The timeout for service calls to return
             std::chrono::nanoseconds call_timeout_;
+
+            //! Base service name of plan_trajectory service
+            const std::string plan_maneuvers_suffix_ = "/plan_maneuvers"; 
+
+            //! Base service name of plan_trajectory service
+            const std::string plan_trajectory_suffix_ = "/plan_trajectory"; 
+
+            //! Base topic name of control plugin trajectory input topic
+            const std::string control_trajectory_suffix_ = "/plan_trajectory"; 
 
     };
 }

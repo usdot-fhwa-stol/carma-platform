@@ -1,0 +1,25 @@
+timeHeadway: 3.5
+standStillHeadway: 22.0
+maxAccel: 1.5
+Kp: 0.4
+Kd: 0.05 #0.1
+Ki: 0.0 #0.035
+maxValue: 2.0
+minValue: -10.0
+cmdTmestamp: 100
+adjustmentCap: 11.0
+dt: 0.1
+integratorMax: 100
+integratorMin: -100
+wheelBase: 3.09
+lowpassGain: 1.0
+lookaheadRatio: 1.6
+minLookaheadDist: 15.0
+vehicleLength: 5.0
+ss_theta: 4.0
+standstill: 2.0
+inter_tau: 1.5
+intra_tau: 0.6
+gap_weight: 0.9
+time_step: 5
+test_front_join: false

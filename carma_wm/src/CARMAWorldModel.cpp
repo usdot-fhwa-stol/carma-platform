@@ -468,8 +468,8 @@ namespace carma_wm
       double sigma = geometry::point_to_point_yaw(prior_point, next_point); // Angle between route segment and x-axis
       double theta = sigma + M_PI_2;                                        // M_PI_2 is 90 deg. Theta is the angle to the vector from the route projected point
                                                                             // to the target point
-      double delta_x = cos(theta) * crosstrack;
-      double delta_y = sin(theta) * crosstrack;
+      double delta_x = cos(theta) * -crosstrack; // Sign of cross track must be flipped since map frame is right handed but TrackPos frame is left handed
+      double delta_y = sin(theta) * -crosstrack;
 
       return lanelet::BasicPoint2d(x + delta_x, y + delta_y);
     }
@@ -502,8 +502,8 @@ namespace carma_wm
       double sigma = geometry::point_to_point_yaw(prior_point, next_point); // Angle between route segment and x-axis
       double theta = sigma + M_PI_2;                                        // M_PI_2 is 90 deg. Theta is the angle to the vector from the route projected point
                                                                             // to the target point
-      double delta_x = cos(theta) * crosstrack;
-      double delta_y = sin(theta) * crosstrack;
+      double delta_x = cos(theta) * -crosstrack; // Sign of cross track must be flipped since map frame is right handed but TrackPos frame is left handed
+      double delta_y = sin(theta) * -crosstrack;
 
       x += delta_x; // Adjust x and y of target point to account for crosstrack
       y += delta_y;

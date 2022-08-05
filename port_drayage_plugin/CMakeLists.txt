@@ -1,5 +1,5 @@
 
-# Copyright (C) 2020-2021 LEIDOS.
+# Copyright (C) 2020-2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -13,136 +13,62 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(port_drayage_plugin)
 
+# Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
+carma_check_ros_version(2)
 carma_package()
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  carma_utils
-  cav_msgs
-  cav_srvs
-  geometry_msgs
-  roscpp
-  std_msgs
-  carma_wm
-)
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+# Name build targets
+set(node_exec port_drayage_plugin_node_exec)
+set(node_lib port_drayage_plugin_node)
 
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if your package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES port_drayage_plugin
-  CATKIN_DEPENDS carma_utils cav_msgs cav_srvs roscpp std_msgs carma_wm
-#  DEPENDS system_lib
-)
-
-###########
-## Build ##
-###########
-
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
+# Includes
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
 )
 
-## Declare a C++ library
-add_library(port_drayage_plugin_library
-  src/port_drayage_plugin.cpp
-  src/port_drayage_state_machine.cpp
-  src/port_drayage_worker.cpp
+# Build
+ament_auto_add_library(${node_lib} SHARED
+        src/port_drayage_plugin.cpp
+        src/port_drayage_state_machine.cpp
+        src/port_drayage_worker.cpp
 )
 
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-add_dependencies(port_drayage_plugin_library ${catkin_EXPORTED_TARGETS})
-
-## Declare a C++ executable
-## With catkin_make all packages are built within a single CMake context
-## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME} src/port_drayage_plugin_main.cpp)
-
-## Rename C++ executable without prefix
-## The above recommended prefix causes long target names, the following renames the
-## target back to the shorter version for ease of user use
-## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME port_drayage_plugin PREFIX "")
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(port_drayage_plugin_library
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
 )
 
-target_link_libraries(${PROJECT_NAME}
-  port_drayage_plugin_library
+# Register component
+rclcpp_components_register_nodes(${node_lib} "port_drayage_plugin::PortDrayagePlugin")
+
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_exec}
+        ${node_lib}
 )
 
-#############
-## Install ##
-#############
+# Testing
+if(BUILD_TESTING)
 
-## Mark executables for installation
-## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS ${PROJECT_NAME} port_drayage_plugin_library
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable#
 
-## Mark libraries for installation
-## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-install(TARGETS ${PROJECT_NAME} port_drayage_plugin_library
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-)
+  ament_add_gtest(test_port_drayage_plugin test/test_port_drayage_plugin.cpp)
 
-## Mark cpp header files for installation
-# install(DIRECTORY include
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+  ament_target_dependencies(test_port_drayage_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
-## Mark other files for installation (e.g. launch and bag files, etc.)
-install(DIRECTORY
-  launch
-  config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+  target_link_libraries(test_port_drayage_plugin ${node_lib})
 
-#############
-## Testing ##
-#############
-
-## Add gtest based cpp test target and link libraries
-catkin_add_gtest(${PROJECT_NAME}-test test/test_port_drayage_plugin.cpp)
-if(TARGET ${PROJECT_NAME}-test)
-  target_link_libraries(${PROJECT_NAME}-test 
-  port_drayage_plugin_library 
-  ${catkin_LIBRARIES})
 endif()
 
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+# Install
+ament_auto_package(
+        INSTALL_TO_SHARE config launch
+)

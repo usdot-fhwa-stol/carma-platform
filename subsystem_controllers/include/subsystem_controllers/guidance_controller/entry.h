@@ -37,12 +37,14 @@ namespace subsystem_controllers
         std::string capability_;
         //! Flag indicating if the user requested this plugin be activated
         bool user_requested_activation_ = false;
+        //! Flag indicating if this is a ros1 node
+        bool is_ros1_ = false;
 
         /**
          * \brief All fields constructor
          */ 
-        Entry(bool available, bool active, const std::string& name, uint8_t type, const std::string& capability, bool user_requested_activation)
-            : available_(available), active_(active), name_(name), type_(type), capability_(capability), user_requested_activation_(user_requested_activation) {}
+        Entry(bool available, bool active, const std::string& name, uint8_t type, const std::string& capability, bool user_requested_activation, bool is_ros1)
+            : available_(available), active_(active), name_(name), type_(type), capability_(capability), user_requested_activation_(user_requested_activation), is_ros1_(is_ros1) {}
         
 
         Entry() = default;

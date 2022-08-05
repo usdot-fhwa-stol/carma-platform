@@ -31,6 +31,21 @@ def generate_launch_description():
     Launch perception nodes.
     """
 
+    vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
+    declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_param_file',
+        default_value = "/opt/carma/vehicle/config/VehicleConfigParams.yaml",
+        description = "Path to file contain vehicle configuration parameters"
+    )
+
+    vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
+    declare_vehicle_characteristics_param_file_arg = DeclareLaunchArgument(
+        name = 'vehicle_characteristics_param_file', 
+        default_value = "/opt/carma/vehicle/calibration/identifiers/UniqueVehicleParams.yaml",
+        description = "Path to file containing unique vehicle calibrations"
+    )
+
+
     autoware_auto_launch_pkg_prefix = get_package_share_directory(
         'autoware_auto_launch')
 
@@ -196,8 +211,7 @@ def generate_launch_description():
                         # TODO when camera detection is added, we will wan to separate this node into a different component to preserve fault tolerance 
                     ],
                     parameters=[ tracking_nodes_param_file ]
-            ),
- 
+            )
         ]
     )
 
@@ -217,16 +231,17 @@ def generate_launch_description():
                 extra_arguments=[
                     {'use_intra_process_comms': True}, 
                     {'--log-level' : GetLogLevel('carma_wm_ctrl', env_log_levels) }
-                    ],
+                ],
                 remappings=[
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
                     ("geofence", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_geofence_control" ] ),
                     ("incoming_map", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_map" ] ),
                     ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                    ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
                     ("outgoing_geofence_ack", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),
                     ("outgoing_geofence_request", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_geofence_request" ] )
                 ],
-                parameters=[ carma_wm_ctrl_param_file ]
+                parameters=[ carma_wm_ctrl_param_file, vehicle_config_param_file, vehicle_characteristics_param_file ]
             ),
             ComposableNode(
                     package='object_detection_tracking',
@@ -296,7 +311,11 @@ def generate_launch_description():
                         ("external_objects", "external_object_predictions"),
                         ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
                         ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] )
+                    ],
+                    parameters = [
+                        vehicle_config_param_file
                     ]
+                    
             ),
             ComposableNode( 
                     package='traffic_incident_parser',
@@ -312,7 +331,11 @@ def generate_launch_description():
                         ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_operation" ] ),
                         ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
                         ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] )
+                    ],
+                    parameters = [
+                        vehicle_config_param_file
                     ]
+                    
             ),
         ]
     )
@@ -328,6 +351,8 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        declare_vehicle_characteristics_param_file_arg,
+        declare_vehicle_config_param_file_arg,
         declare_subsystem_controller_param_file_arg,
         lidar_perception_container,
         carma_external_objects_container,

@@ -84,17 +84,17 @@ struct LCIStrategicPluginConfig
   std::string vehicle_id = "default_id";
 
   //! The name to use for this plugin during comminications with the arbitrator
-  std::string strategic_plugin_name = "LCIStrategicPlugin";
+  std::string strategic_plugin_name = "lci_strategic_plugin";
 
   //! The name of the tactical plugin to use for Lane Following trajectory planning
   //! This plugin is used to apply trajectory smoothing algorithm BEFORE entering the intersection if within activation distance
-  std::string lane_following_plugin_name = "LightControlledIntersectionTacticalPlugin";
+  std::string lane_following_plugin_name = "light_controlled_intersection_tactical_plugin";
 
   //! The name of the plugin to use for stop and wait trajectory planning
-  std::string stop_and_wait_plugin_name = "StopAndWaitPlugin";
+  std::string stop_and_wait_plugin_name = "stop_and_wait_plugin";
 
   //! The name of the plugin to use for intersection transit trajectory planning
   //! This plugin is used to travel INSIDE the intersection where there is no trajectory smoothing algorithm active
-  std::string intersection_transit_plugin_name = "IntersectionTransitPlugin";
+  std::string intersection_transit_plugin_name = "intersection_transit_maneuvering";
 };
 }  // namespace localizer

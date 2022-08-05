@@ -115,6 +115,21 @@ namespace carma_guidance_plugins
     virtual uint8_t get_type();
 
     /**
+     * \brief Return the name of this plugin with namespace.
+     * NOTE:  If only the name of the plugin is required, use get_plugin_name()
+     * 
+     * \return Name of this plugin with namespace
+     */ 
+    std::string get_plugin_name_and_ns() const;
+
+    /**
+     * \brief Return the name of this plugin
+     * 
+     * \return Name of this plugin
+     */ 
+    std::string get_plugin_name() const;
+
+    /**
      * \brief Get the availability status of this plugin based on the current operating environment.
      *        Method must be overriden by extending classes. 
      * 
