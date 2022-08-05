@@ -24,7 +24,7 @@ import os
 
 
 '''
-This file is can be used to launch the CARMA motion_computation_node.
+This file is can be used to launch the CARMA localization_manager node.
   Though in carma-platform it may be launched directly from the base launch file.
 '''
 

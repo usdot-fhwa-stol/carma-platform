@@ -16,7 +16,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <boost/shared_ptr.hpp>
-#include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <boost/optional.hpp>
@@ -32,8 +31,6 @@
 #include "localization_manager/LocalizationTypes.hpp"
 #include "localization_manager/LocalizationManagerConfig.hpp"
 #include "localization_manager/LocalizationTransitionTable.hpp"
-
-#include <rclcpp/timer.hpp>
 
 namespace localization_manager
 {

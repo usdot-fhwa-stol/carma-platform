@@ -43,30 +43,6 @@ namespace localization_manager
 
     }
 
-    rcl_interfaces::msg::SetParametersResult Node::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
-    {
-        auto error = update_params<double>({{"fitness_score_degraded_threshold", config_.fitness_score_degraded_threshold},
-        {"fitness_score_fault_threshold",config_.fitness_score_fault_threshold},
-        {"ndt_frequency_degraded_threshold", config_.ndt_frequency_degraded_threshold},
-        {"ndt_frequency_fault_threshold", config_.ndt_frequency_fault_threshold},
-        {"pose_pub_rate", config_.pose_pub_rate},
-        },parameters);
-
-        auto error_2 = update_params<int>({{"auto_initialization_timeout", config_.auto_initialization_timeout},
-        {"gnss_only_operation_timeout", config_.gnss_only_operation_timeout},
-        {"sequential_timesteps_until_gps_operation", config_.sequential_timesteps_until_gps_operation},
-        {"gnss_data_timeout", config_.gnss_data_timeout},
-        {"localization_mode", config_.localization_mode}
-        }, parameters);
-
-
-        rcl_interfaces::msg::SetParametersResult result;
-
-        result.successful = !error && !error_2;
-
-        return result;
-    }
-
     carma_ros2_utils::CallbackReturn Node::handle_on_configure(const rclcpp_lifecycle::State &)
     {
         // Reset config
@@ -83,9 +59,6 @@ namespace localization_manager
         get_parameter<int>("gnss_data_timeout", config_.gnss_data_timeout);
         get_parameter<int>("localization_mode", config_.localization_mode);
         get_parameter<double>("pose_pub_rate", config_.pose_pub_rate);
-
-        // Register runtime parameter update callback
-        add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
 
         // Initialize worker object
         manager_.reset(new LocalizationManager(std::bind(&Node::publishPoseStamped, this, std_ph::_1),
@@ -121,7 +94,7 @@ namespace localization_manager
         rclcpp::PublisherOptions intra_proc_disabled; 
         intra_proc_disabled.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for this PublisherOptions object
 
-        auto pub_qos_transient_local = rclcpp::QoS(rclcpp::KeepAll()); // A publisher with this QoS will store all messages that it has sent on the topic
+        auto pub_qos_transient_local = rclcpp::QoS(rclcpp::KeepLast(1)); // A publisher with this QoS will store all messages that it has sent on the topic
         pub_qos_transient_local.transient_local();  // A publisher with this QoS will re-send all (when KeepAll is used) messages to all late-joining subscribers 
                                          // NOTE: The subscriber's QoS must be set to transient_local() as well for earlier messages to be resent to the later-joiner.
         managed_initial_pose_pub_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("managed_initialpose", pub_qos_transient_local, intra_proc_disabled);

@@ -30,7 +30,7 @@ LocalizationState LocalizationTransitionTable::getState() const
 
 void LocalizationTransitionTable::logDebugSignal(LocalizationSignal signal) const
 {
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("localization_manager::LocalizationTransitionTable"), "LocalizationTransitionTable received unsupported signal of "<< signal <<"while in state"<<state_);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("localization_manager"), "LocalizationTransitionTable received unsupported signal of "<< signal <<"while in state"<<state_);
 }
 
 void LocalizationTransitionTable::setAndLogState(LocalizationState new_state, LocalizationSignal source_signal)
@@ -39,7 +39,7 @@ void LocalizationTransitionTable::setAndLogState(LocalizationState new_state, Lo
   {
       return; //State was unchanged no need to log or trigger callbacks
   }
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager::LocalizationTransitionTable"), "LocalizationTransitionTable changed localization state from "<< state_ << " to "<< new_state <<" because of signal "<<source_signal << " while in mode "<<mode_);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager"), "LocalizationTransitionTable changed localization state from "<< state_ << " to "<< new_state <<" because of signal "<<source_signal << " while in mode "<<mode_);
   
   LocalizationState prev_state = state_;
   state_ = new_state;

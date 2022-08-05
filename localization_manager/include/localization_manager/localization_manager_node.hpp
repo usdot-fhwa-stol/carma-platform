@@ -26,7 +26,7 @@
 #include "localization_manager/LocalizationManagerConfig.hpp"
 #include "localization_manager/LocalizationManager.hpp"
 #include "localization_manager/LocalizationTypes.hpp"
-#include <message_filters/subscriber.hpp>
+#include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/exact_time.h>
 
@@ -75,12 +75,6 @@ namespace localization_manager
      * \brief Node constructor 
      */
     explicit Node(const rclcpp::NodeOptions &);
-
-    /**
-     * \brief callback for dynamic parameter updates
-     */
-    rcl_interfaces::msg::SetParametersResult 
-    parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
 
     /**
      * \brief Callback to publish the selected pose

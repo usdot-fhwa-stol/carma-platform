@@ -59,9 +59,9 @@ def generate_launch_description():
     localization_manager_convertor_param_file = os.path.join(
     get_package_share_directory('localization_manager'), 'config/parameters.yaml')
 
-    localization_container = ComposableNodeContainer(
+    gnss_to_map_convertor_container = ComposableNodeContainer(
     package='carma_ros2_utils',
-    name='localization_container',
+    name='gnss_to_map_convertor_container',
     executable='carma_component_container_mt',
     namespace=GetCurrentNamespace(),
     composable_node_descriptions=[
@@ -79,7 +79,15 @@ def generate_launch_description():
                     ("georeference", "map_param_loader/georeference"),
                 ],
                 parameters=[ gnss_to_map_convertor_param_file ]
-        ),
+        )
+    ])
+
+    localization_manager_container = ComposableNodeContainer(
+    package='carma_ros2_utils',
+    name='localization_manager_container',
+    executable='carma_component_container_mt',
+    namespace=GetCurrentNamespace(),
+    composable_node_descriptions=[
         ComposableNode(
                 package='localization_manager',
                 plugin='localization_manager::Node',
@@ -108,5 +116,6 @@ def generate_launch_description():
     return LaunchDescription([
         declare_subsystem_controller_param_file_arg,       
         subsystem_controller,
-        localization_container
+        gnss_to_map_convertor_container,
+        localization_manager_container
     ]) 
