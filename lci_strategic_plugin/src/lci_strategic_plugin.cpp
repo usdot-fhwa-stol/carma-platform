@@ -919,7 +919,7 @@ cav_msgs::MobilityOperation LCIStrategicPlugin::generateMobilityOperation()
     if (intersection_turn_direction_ == TurnDirection::Right) intersection_turn_direction = "right";
     if (intersection_turn_direction_ == TurnDirection::Left) intersection_turn_direction = "left";
 
-    mo_.strategy_params = "access: " + "1" + "max_accel: " + std::to_string(vehicle_acceleration_limit_) +  // NOTE: Access currently set to 1 at all times since its not specified by streets
+    mo_.strategy_params = "access: " + "1" + ", max_accel: " + std::to_string(vehicle_acceleration_limit_) +  // NOTE: Access currently set to 1 at all times since its not specified by streets
                         ", max_decel: " + std::to_string(vehicle_deceleration_limit_) + ", react_time: " + std::to_string(config_.reaction_time) +
                         ", min_gap: " + std::to_string(config_.min_gap) + ", depart_pos: " + "0" + // NOTE: Departure position set to 0 at all times since it's not specified by streets
                         ", turn_direction: " + intersection_turn_direction + ", msg_count: " + std::to_string(bsm_msg_count_) + ", sec_mark: " + std::to_string(bsm_sec_mark_);
