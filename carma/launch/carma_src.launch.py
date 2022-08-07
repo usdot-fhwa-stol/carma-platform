@@ -201,6 +201,19 @@ def generate_launch_description():
         arguments=['--ros-args', '--log-level', GetLogLevel('system_controller', env_log_levels)]
     )
 
+    ui_group = GroupAction(
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_UI_NS', default_value='ui')),
+            
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ui.launch.py']),
+                launch_arguments={
+               
+                }.items()
+            ),
+        ]
+    )
+
     return LaunchDescription([
         declare_vehicle_calibration_dir_arg,
         declare_vehicle_config_dir_arg,
@@ -217,5 +230,6 @@ def generate_launch_description():
         localization_group,
         v2x_group,
         guidance_group, 
-        system_controller
+        system_controller,
+        ui_group
     ])
