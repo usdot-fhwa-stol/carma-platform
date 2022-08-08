@@ -107,6 +107,14 @@ def generate_launch_description():
         default_value= '[]',
         description='List of String: Guidance Control Plugins that will be validated by the Guidance Plugin Validator Node if enabled'
     )
+    
+    # Declare port
+    port = LaunchConfiguration('port')
+    declare_port = DeclareLaunchArgument(
+        name = 'port',
+        default_value= "9090",
+        description='The default port for rosbridge is 909'
+    )
 
     # Nodes
 
