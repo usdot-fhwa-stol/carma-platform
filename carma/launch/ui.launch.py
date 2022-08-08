@@ -30,6 +30,8 @@ def generate_launch_description():
     """
     UI/Ros_bridge nodes.
     """
+    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
+
     port = LaunchConfiguration('port')
     declare_port = DeclareLaunchArgument(
         name = 'port', 
@@ -91,7 +93,8 @@ def generate_launch_description():
                 ],
                 parameters=[ carma_param_file
                               ]
-            )
+        )
+    ])
 
     return LaunchDescription([
        declare_port,
