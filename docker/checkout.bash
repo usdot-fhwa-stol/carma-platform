@@ -55,7 +55,7 @@ fi
 #       which can make them incompatible with a new ros version after a source switch
 git clone https://github.com/astuff/astuff_sensor_msgs 
 #rosbridge_suite is a ROS meta-package including all the rosbridge packages.
-git clone https://github.com/RobotWebTools/rosbridge_suite.git
+git clone https://github.com/RobotWebTools/rosbridge_suite/commits/ros2
 
 cd astuff_sensor_msgs
 git checkout 41d5ef0c33fb27eb3c9ba808b51332bcce186a83
