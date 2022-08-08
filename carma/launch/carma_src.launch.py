@@ -232,6 +232,7 @@ def generate_launch_description():
         declare_strategic_plugins_to_validate,
         declare_tactical_plugins_to_validate,
         declare_control_plugins_to_validate,
+        port,
         drivers_group,
         transform_group,
         environment_group,
