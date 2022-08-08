@@ -44,7 +44,7 @@ def generate_launch_description():
 
     ui_container = ComposableNodeContainer(
         package='carma_ros2_utils', # rclcpp_components
-        name='perception_points_filter_container',
+        name='ui_container',
         executable='lifecycle_component_wrapper_mt',
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
