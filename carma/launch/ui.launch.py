@@ -48,7 +48,7 @@ def generate_launch_description():
         composable_node_descriptions=[
             ComposableNode(
                 package='rosbridge_server',
-                plugin='frame_transformer::Node',
+                plugin='rosbridge_websocket',
                 name='rosbridge_server',
                 extra_arguments=[
                     {'use_intra_process_comms': True}, 
