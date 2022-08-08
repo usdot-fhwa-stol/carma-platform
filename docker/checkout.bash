@@ -59,7 +59,9 @@ cd astuff_sensor_msgs
 git checkout 41d5ef0c33fb27eb3c9ba808b51332bcce186a83
 
 #rosbridge_suite is a ROS meta-package including all the rosbridge packages.
-git clone https://github.com/RobotWebTools/rosbridge_suite/commits/ros2
+git clone https://github.com/RobotWebTools/rosbridge_suite.git
+cd rosbridge_suite
+git checkout 17ea70066aafed92d7791e92c7bce4abc55e310d
 
 # Disable ibeo_msgs
 cd ibeo_msgs
