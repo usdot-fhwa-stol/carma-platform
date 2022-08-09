@@ -50,7 +50,7 @@ else
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
 fi
 
- add astuff messages
+# add astuff messages
 # NOTE: The ibeo_msgs package is ignored because on build the cmake files in that package run a sed command 
 #       which can make them incompatible with a new ros version after a source switch
 git clone https://github.com/astuff/astuff_sensor_msgs 
