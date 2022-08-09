@@ -213,7 +213,7 @@ public:
   carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg_;
   std::vector<double> last_final_speeds_;
 
-  std::string light_controlled_intersection_strategy_ = "Carma/light_controlled_intersection";
+  std::string light_controlled_intersection_strategy_ = "signalized"; // Strategy carma-streets is sending. Could be more verbose but needs to be changed on both ends
 
   double epsilon_ = 0.001; //Small constant to compare (double) 0.0 with
 };
