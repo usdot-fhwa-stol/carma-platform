@@ -68,4 +68,3 @@ cd ../
 
 #rosbridge_suite is a ROS meta-package including all the rosbridge packages.
 git clone https://github.com/usdot-fhwa-stol/rosbridge_suite
-cd rosbridge_suite
