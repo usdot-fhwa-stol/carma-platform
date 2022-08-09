@@ -50,7 +50,7 @@ else
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
 fi
 
-# add astuff messages
+ add astuff messages
 # NOTE: The ibeo_msgs package is ignored because on build the cmake files in that package run a sed command 
 #       which can make them incompatible with a new ros version after a source switch
 git clone https://github.com/astuff/astuff_sensor_msgs 
@@ -58,13 +58,14 @@ git clone https://github.com/astuff/astuff_sensor_msgs
 cd astuff_sensor_msgs
 git checkout 41d5ef0c33fb27eb3c9ba808b51332bcce186a83
 
-#rosbridge_suite is a ROS meta-package including all the rosbridge packages.
-git clone https://github.com/RobotWebTools/rosbridge_suite.git
-cd rosbridge_suite
-git checkout 17ea70066aafed92d7791e92c7bce4abc55e310d
-
 # Disable ibeo_msgs
-cd ../ibeo_msgs
+cd ibeo_msgs
 echo "" > COLCON_IGNORE
 cd ../astuff_sensor_msgs
 echo "" > COLCON_IGNORE
+
+cd ../
+
+#rosbridge_suite is a ROS meta-package including all the rosbridge packages.
+git clone https://github.com/usdot-fhwa-stol/rosbridge_suite
+cd rosbridge_suite
