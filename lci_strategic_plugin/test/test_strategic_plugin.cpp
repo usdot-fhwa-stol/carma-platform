@@ -83,7 +83,7 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
   ASSERT_NEAR(24.01, resp.new_plan.maneuvers[0].lane_following_maneuver.end_time.toSec(), 0.01);
   ASSERT_NEAR(300, resp.new_plan.maneuvers[0].lane_following_maneuver.end_dist, 0.0001);
   // check trajectory smoothing parameters:
-  ASSERT_EQ("Carma/light_controlled_intersection", resp.new_plan.maneuvers[0].lane_following_maneuver.parameters.string_valued_meta_data.front());
+  ASSERT_EQ("signalized", resp.new_plan.maneuvers[0].lane_following_maneuver.parameters.string_valued_meta_data.front());
   ASSERT_NEAR(0.6823, resp.new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[0], 0.01);
   ASSERT_NEAR(-0.6823, resp.new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[1], 0.01);
   ASSERT_NEAR(85.00, resp.new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[2], 0.01);
@@ -384,7 +384,7 @@ TEST_F(LCIStrategicTestFixture, handleFailureCase)
 TEST(LCIStrategicPluginTest, moboperationcbtest)
 {
   cav_msgs::MobilityOperation msg;
-  msg.strategy = "Carma/light_controlled_intersection";
+  msg.strategy = "signalized";
 
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   LCIStrategicPluginConfig config;
@@ -400,7 +400,7 @@ TEST(LCIStrategicPluginTest, moboperationcbtest)
 TEST(LCIStrategicPluginTest, parseStrategyParamstest)
 {
   cav_msgs::MobilityOperation msg;
-  msg.strategy_params =  "st:16000,et:32000,dt:48000,dp:1,access:0";
+  msg.strategy_params =  "et:32000";
 
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   LCIStrategicPluginConfig config;
@@ -411,12 +411,9 @@ TEST(LCIStrategicPluginTest, parseStrategyParamstest)
   
   EXPECT_EQ(16000, lcip.scheduled_stop_time_);
   EXPECT_EQ(32000, lcip.scheduled_enter_time_);
-  EXPECT_EQ(48000, lcip.scheduled_depart_time_);
-  EXPECT_EQ(1, lcip.scheduled_departure_position_);
-  EXPECT_EQ(false, lcip.is_allowed_int_);
 
   cav_msgs::MobilityOperation outgoing_msg = lcip.generateMobilityOperation();
-  EXPECT_EQ(outgoing_msg.strategy, "Carma/light_controlled_intersection");
+  EXPECT_EQ(outgoing_msg.strategy, "signalized");
   EXPECT_EQ(outgoing_msg.m_header.sender_id, config.vehicle_id);
   std::cout << "strategy_param: " << outgoing_msg.strategy_params << std::endl;
 }
