@@ -64,7 +64,7 @@ cd rosbridge_suite
 git checkout 17ea70066aafed92d7791e92c7bce4abc55e310d
 
 # Disable ibeo_msgs
-cd ibeo_msgs
+cd ../ibeo_msgs
 echo "" > COLCON_IGNORE
 cd ../astuff_sensor_msgs
 echo "" > COLCON_IGNORE
