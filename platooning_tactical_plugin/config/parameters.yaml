@@ -6,6 +6,7 @@ trajectory_time_length: 6.0 # Trajectory length in seconds
 curve_resample_step_size: 1.0 
 # Integer: Amount to downsample input lanelet centerline data. Value corresponds to saving each nth point.
 downsample_ratio: 8 
+default_downsample_ratio: 16
 # Float: Minimum allowable speed
 # Unit: m/s
 minimum_speed: 2.2352
