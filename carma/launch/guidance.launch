@@ -126,11 +126,6 @@
     <remap from="plugin_discovery" to="$(optenv CARMA_GUIDE_NS)/plugin_discovery"/>
     <remap from="ctrl_raw" to="$(optenv CARMA_GUIDE_NS)/ctrl_raw"/>
     <remap from="twist_raw" to="$(optenv CARMA_GUIDE_NS)/twist_raw"/>
-
-    <!-- Pure Pursuit Wrapper -->
-    <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch">
-      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
-    </include>
       
     <!-- Platooning Control Plugin -->
     <include file="$(find platoon_control)/launch/platoon_control.launch" />
@@ -196,11 +191,6 @@
     <!-- Light Controlled Intersection Tactical Plugin -->
     <include file="$(find light_controlled_intersection_tactical_plugin)/launch/light_controlled_intersection_tactical_plugin.launch" />
 
-  </group>
-
-  <!-- Trajectory Plan Speed Visualizer -->
-  <group>
-    <include file="$(find trajectory_visualizer)/launch/trajectory_visualizer.launch" />
   </group>
   
   <!-- Guidance Plugin Validator -->

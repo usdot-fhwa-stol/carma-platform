@@ -36,6 +36,7 @@ from launch.actions import DeclareLaunchArgument
 def generate_launch_description():
 
     route_file_folder = LaunchConfiguration('route_file_folder')
+    vehicle_calibration_dir = LaunchConfiguration('vehicle_calibration_dir')
     vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
     enable_guidance_plugin_validator = LaunchConfiguration('enable_guidance_plugin_validator')
     strategic_plugins_to_validate = LaunchConfiguration('strategic_plugins_to_validate')
@@ -51,9 +52,11 @@ def generate_launch_description():
         get_package_share_directory('route_following_plugin'), 'config/parameters.yaml')
 
     stop_and_wait_plugin_param_file = os.path.join(
-        get_package_share_directory('stop_and_wait_plugin'), 'config/stop_and_wait_plugin_params.yaml')        
+        get_package_share_directory('stop_and_wait_plugin'), 'config/parameters.yaml')        
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
+
+    pure_pursuit_tuning_parameters = [vehicle_calibration_dir, "/pure_pursuit/calibration.yaml"]
 
     carma_plugins_container = ComposableNodeContainer(
         package='carma_ros2_utils',
@@ -82,49 +85,69 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
+            #ComposableNode(
+            #        package='stop_and_wait_plugin',
+            #        plugin='stop_and_wait_plugin::StopandWaitNode',
+            #        name='stop_and_wait_plugin',
+            #        extra_arguments=[
+            #        {'use_intra_process_comms': True}, 
+            #        {'--log-level' : GetLogLevel('stop_and_wait_plugin', env_log_levels) }
+            #    ],
+            #    remappings = [
+            #        ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
+            #        ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
+            #        ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
+            #        ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
+            #        ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
+            #        ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
+            #    ],
+            #    parameters=[
+            #        stop_and_wait_plugin_param_file,
+            #        vehicle_config_param_file
+            #    ]
+            #),
+            #ComposableNode(
+            #        package='route_following_plugin',
+            #        plugin='route_following_plugin::RouteFollowingPlugin',
+            #        name='route_following_plugin',
+            #        extra_arguments=[
+            #        {'use_intra_process_comms': True}, 
+            #        {'--log-level' : GetLogLevel('route_following_plugin', env_log_levels) }
+            #    ],
+            #    remappings = [
+            #        ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
+            #        ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
+            #        ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
+            #        ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
+            #        ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
+            #        ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
+            #        ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
+            #        ("maneuver_plan", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/final_maneuver_plan" ] ),
+            #        ("upcoming_lane_change_status", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/upcoming_lane_change_status" ] ),
+            #    ],
+            #    parameters=[
+            #        route_following_plugin_file_path,
+            #        vehicle_config_param_file
+            #    ]
+            #),
             ComposableNode(
-                    package='stop_and_wait_plugin',
-                    plugin='stop_and_wait_plugin::StopandWaitNode',
-                    name='stop_and_wait_plugin',
+                    package='pure_pursuit_wrapper',
+                    plugin='pure_pursuit_wrapper::PurePursuitWrapperNode',
+                    name='pure_pursuit_wrapper',
                     extra_arguments=[
                     {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('stop_and_wait_plugin', env_log_levels) }
+                    {'--log-level' : GetLogLevel('pure_pursuit_wrapper', env_log_levels) }
                 ],
                 remappings = [
-                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
-                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
-                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
-                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
-                    ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
+                    ("ctrl_raw", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/ctrl_raw" ] ),
+                    ("pure_pursuit_wrapper/plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugins/pure_pursuit/plan_trajectory" ] ),
+                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                    ("vehicle/twist", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
                 ],
                 parameters=[
-                    stop_and_wait_plugin_param_file,
-                    vehicle_config_param_file
-                ]
-            ),
-            ComposableNode(
-                    package='route_following_plugin',
-                    plugin='route_following_plugin::RouteFollowingPlugin',
-                    name='route_following_plugin',
-                    extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('route_following_plugin', env_log_levels) }
-                ],
-                remappings = [
-                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
-                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
-                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
-                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
-                    ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
-                    ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
-                    ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
-                    ("maneuver_plan", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/final_maneuver_plan" ] ),
-                    ("upcoming_lane_change_status", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/upcoming_lane_change_status" ] ),
-                ],
-                parameters=[
-                    route_following_plugin_file_path,
-                    vehicle_config_param_file
+                    vehicle_characteristics_param_file, #vehicle_response_lag
+                    pure_pursuit_tuning_parameters #pure_pursuit calibration parameters
                 ]
             )
         ]

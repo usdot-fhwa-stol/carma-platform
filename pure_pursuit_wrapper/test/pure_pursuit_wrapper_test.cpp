@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2018-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,27 +26,27 @@ TEST(pure_pursuit_wrapper, trajectoryPlanHandler)
   plan.initial_longitudinal_velocity = 8.5;
 
   boost::optional<autoware_msgs::Lane> wp_msg;
-  boost::optional<cav_msgs::Plugin> plugin_msg;
+  boost::optional<carma_planning_msgs::msg::Plugin> plugin_msg;
   pure_pursuit_wrapper::PurePursuitWrapperConfig config;
   pure_pursuit_wrapper::PurePursuitWrapper ppw(config, [&wp_msg](auto msg) { wp_msg = msg; },
                                                [&plugin_msg](auto msg) { plugin_msg = msg; });
 
-  cav_msgs::TrajectoryPlanPoint tpp, tpp2, tpp3;
+  carma_planning_msgs::msg::TrajectoryPlanPoint tpp, tpp2, tpp3;
   tpp.x = 10;
   tpp.y = 10;
-  tpp.target_time = ros::Time(0.1);  // 8.5m/s
+  tpp.target_time = rclcpp::Time(0.1);  // 8.5m/s
 
   tpp2.x = 12;
   tpp2.y = 12;
-  tpp2.target_time = ros::Time(0.2);  // 48.068542495 m/s
+  tpp2.target_time = rclcpp::Time(0.2);  // 48.068542495 m/s
 
   tpp3.x = 14;
   tpp3.y = 14;
-  tpp3.target_time = ros::Time(0.3);  // 8.5m/s
+  tpp3.target_time = rclcpp::Time(0.3);  // 8.5m/s
 
   plan.trajectory_points = { tpp, tpp2, tpp3 };
 
-  cav_msgs::TrajectoryPlan::ConstPtr plan_ptr(new cav_msgs::TrajectoryPlan(plan));
+  carma_planning_msgs::msg::TrajectoryPlan::UniquePtr plan_ptr(new cav_msgs::TrajectoryPlan(plan));
 
   ASSERT_FALSE(!!wp_msg);
 
@@ -70,31 +70,6 @@ TEST(pure_pursuit_wrapper, trajectoryPlanHandler)
   ASSERT_NEAR(14.0, lane.waypoints[2].pose.pose.position.y, 0.0000001);
 }
 
-TEST(pure_pursuit_wrapper, onSpin)
-{
-  cav_msgs::TrajectoryPlan plan;
-  plan.initial_longitudinal_velocity = 8.5;
-
-  boost::optional<autoware_msgs::Lane> wp_msg;
-  boost::optional<cav_msgs::Plugin> plugin_msg;
-  pure_pursuit_wrapper::PurePursuitWrapperConfig config;
-  pure_pursuit_wrapper::PurePursuitWrapper ppw(config, [&wp_msg](auto msg) { wp_msg = msg; },
-                                               [&plugin_msg](auto msg) { plugin_msg = msg; });
-
-  ASSERT_FALSE(!!plugin_msg);
-
-  ASSERT_TRUE(ppw.onSpin());
-
-  ASSERT_TRUE(!!plugin_msg);
-
-  cav_msgs::Plugin msg = plugin_msg.get();
-  ASSERT_EQ(0, msg.name.compare("pure_pursuit_wrapper_node"));
-  ASSERT_EQ(0, msg.version_id.compare("v1.0"));
-  ASSERT_TRUE(msg.available);
-  ASSERT_TRUE(msg.activated);
-  ASSERT_EQ(cav_msgs::Plugin::CONTROL, msg.type);
-  ASSERT_EQ(0, msg.capability.compare("control/trajectory_control"));
-}
 
 int main(int argc, char** argv)
 {

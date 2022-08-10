@@ -167,6 +167,7 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/guidance.launch.py']),
                 launch_arguments={
                     'route_file_folder' : route_file_folder,
+                    'vehicle_calibration_dir' : vehicle_calibration_dir,
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file, 
                     'vehicle_config_param_file' : vehicle_config_param_file,
                     'enable_guidance_plugin_validator' : enable_guidance_plugin_validator,
