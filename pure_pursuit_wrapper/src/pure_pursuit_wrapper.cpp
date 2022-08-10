@@ -84,7 +84,6 @@ motion::motion_common::State PurePursuitWrapperNode::convert_state(geometry_msgs
   state.state.z = pose.pose.position.z;
 
   state.state.longitudinal_velocity_mps = twist.twist.linear.x;
-
   return state;
 }
 
@@ -93,9 +92,17 @@ autoware_msgs::msg::ControlCommandStamped PurePursuitWrapperNode::convert_cmd(mo
   autoware_msgs::msg::ControlCommandStamped return_cmd; //todo check if correct
   autoware_auto_msgs::msg::VehicleControlCommand cmd;
   return_cmd.header.stamp = cmd.stamp;
+
   return_cmd.cmd.linear_acceleration = cmd.long_accel_mps2;
   return_cmd.cmd.linear_velocity = cmd.velocity_mps;
   return_cmd.cmd.steering_angle = cmd.rear_wheel_angle_rad;
+
+  //RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.stamp: " << cmd.stamp);
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.long_accel_mps2: " << cmd.long_accel_mps2);
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.velocity_mps: " << cmd.velocity_mps);
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.rear_wheel_angle_rad: " << cmd.rear_wheel_angle_rad);
+
+
   //todo front_wheel_angle_rad is omitted
   return return_cmd;
 }
@@ -110,15 +117,19 @@ autoware_msgs::msg::ControlCommandStamped PurePursuitWrapperNode::generate_comma
   if (!current_trajectory_ || !current_pose_ || !current_twist_)
     return converted_cmd;
 
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "we are continuing");
+
+  motion::control::controller_common::State state_tf = convert_state(current_pose_.get(), current_twist_.get());
+
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "Forced from frame_id: " << state_tf.header.frame_id << ", into: " << current_trajectory_.get().header.frame_id);
+
+  current_trajectory_.get().header.frame_id = state_tf.header.frame_id;
 
   process_trajectory_plan(current_trajectory_.get());
-  
-  motion::control::controller_common::State state_tf = convert_state(current_pose_.get(), current_twist_.get());
 
   const auto cmd{pp_->compute_command(state_tf)};
   
   converted_cmd = convert_cmd(cmd);
+
 
   return converted_cmd;
 }
