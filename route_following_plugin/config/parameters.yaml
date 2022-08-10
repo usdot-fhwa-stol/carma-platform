@@ -1,5 +1,5 @@
 # The minimum duration of a maneuver plan, in seconds
-minimal_plan_duration: 15
+minimal_plan_duration: 15.0
 
 # Multiplier for the acceleration limit which will be used for formulating the stopping maneuver
 # This multiplier should be a bit lower than whatever plugin will be used to bring the vehicle to a stop to provide buffer in planning

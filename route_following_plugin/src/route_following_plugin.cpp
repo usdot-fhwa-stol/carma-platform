@@ -91,11 +91,11 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
     config_.lane_change_plugin_= declare_parameter<std::string>("lane_change_plugin", config_.lane_change_plugin_);
     config_.stop_and_wait_plugin_ = declare_parameter<std::string>("stop_and_wait_plugin", config_.stop_and_wait_plugin_);
     config_.lanefollow_planning_tactical_plugin_ = declare_parameter<std::string>("lane_following_plugin", config_.lanefollow_planning_tactical_plugin_);
-    config_.route_end_point_buffer_ = declare_parameter<double>("/guidance/route/destination_downtrack_range", config_.route_end_point_buffer_);
-    config_.accel_limit_ = declare_parameter<double>("/vehicle_acceleration_limit", config_.accel_limit_);
-    config_.lateral_accel_limit_ = declare_parameter<double>("/vehicle_lateral_accel_limit", config_.lateral_accel_limit_);
+    config_.route_end_point_buffer_ = declare_parameter<double>("guidance/route/destination_downtrack_range", config_.route_end_point_buffer_);
+    config_.accel_limit_ = declare_parameter<double>("vehicle_acceleration_limit", config_.accel_limit_);
+    config_.lateral_accel_limit_ = declare_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit_);
     config_.stopping_accel_limit_multiplier_ = declare_parameter<double>("stopping_accel_limit_multiplier", config_.stopping_accel_limit_multiplier_);
-    config_.min_maneuver_length_ = declare_parameter<double>("vehicle_id", config_.min_maneuver_length_);
+    config_.min_maneuver_length_ = declare_parameter<double>("min_maneuver_length", config_.min_maneuver_length_);
   }
 
     carma_ros2_utils::CallbackReturn RouteFollowingPlugin::on_configure_plugin()
