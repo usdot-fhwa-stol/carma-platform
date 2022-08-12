@@ -43,7 +43,8 @@ namespace arbitrator
         msg->veh_logitudinal_velocity = initial_state.velocity;
         msg->veh_lane_id = std::to_string(initial_state.lane_id);
         
-        std::map<std::string, std::shared_ptr<PlanMvrRes>> res = ci_.template multiplex_service_call_for_capability<PlanMvrReq, PlanMvrRes>(CapabilitiesInterface::STRATEGIC_PLAN_CAPABILITY, msg);
+        std::map<std::string, std::shared_ptr<PlanMvrRes>> res = ci_->template multiplex_service_call_for_capability<PlanMvrReq, PlanMvrRes>(CapabilitiesInterface::STRATEGIC_PLAN_CAPABILITY, msg);
+        
         // Convert map to vector of map values
         std::vector<carma_planning_msgs::msg::ManeuverPlan> out;
         for (auto it = res.begin(); it != res.end(); it++)

@@ -11,4 +11,4 @@ default_control_plugin: "pure_pursuit_wrapper_node"
 
 # String: Full path to default control plugin's trajectory input topic
 # Units: N/a
-default_control_plugin_topic: "/guidance/pure_pursuit/plan_trajectory"
+default_control_plugin_topic: "/guidance/plugins/pure_pursuit/plan_trajectory"

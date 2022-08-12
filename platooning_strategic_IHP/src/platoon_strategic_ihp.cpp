@@ -533,17 +533,13 @@ namespace platoon_strategic_ihp
                 status_msg.predecessor_position = pm_.getPredecessorPosition();
 
                 // Note: use isCreateGap to adjust the desired gap send to control plugin 
-                double regular_gap = std::max(config_.standStillHeadway, desired_headway);
+                double regular_gap = status_msg.desired_gap;
                 ROS_DEBUG_STREAM("regular_gap: " << regular_gap);
                 ROS_DEBUG_STREAM("current_speed_: " << current_speed_);
                 ROS_DEBUG_STREAM("speed based gap: " << desired_headway);
                 if (pm_.isCreateGap){
                     // enlarged desired gap for gap creation
                     status_msg.desired_gap = regular_gap*(1 + config_.createGapAdjuster);
-                }
-                else{
-                    // normal desired gap
-                    status_msg.desired_gap = regular_gap;
                 }
                 status_msg.actual_gap = platoon_leader.vehiclePosition - current_downtrack_;
                 ROS_DEBUG_STREAM("status_msg.actual_gap: " << status_msg.actual_gap);
@@ -750,7 +746,7 @@ namespace platoon_strategic_ihp
         }
 
         // else if this message is for our platoon then store its info
-        else if (platoonId.compare(pm_.currentPlatoonID) == 0)
+        else if (platoonId.compare(pm_.currentPlatoonID) == 0 && platoonId.compare(pm_.dummyID) != 0)
         {
             pm_.hostMemberUpdates(vehicleID, platoonId, statusParams, dtd, ctd);
         }
@@ -1681,7 +1677,7 @@ namespace platoon_strategic_ihp
                 double currentGap = currentRearDtd - applicantCurrentDtd - config_.vehicleLength;
                 double currentTimeGap = currentGap / applicantCurrentSpeed;
                 ROS_DEBUG_STREAM("The gap between current platoon rear and applicant is " << currentGap << "m or " << currentTimeGap << "s");
-                if (currentGap < 0) 
+                if (currentGap < config_.minAllowedJoinGap) 
                 {
                     ROS_WARN("We should not receive any request from the vehicle in front of us. NACK it.");
                     return MobilityRequestResponse::NACK;
@@ -1733,7 +1729,7 @@ namespace platoon_strategic_ihp
                 double currentTimeGap = currentGap / applicantCurrentSpeed;
                 ROS_DEBUG_STREAM("The gap between current platoon front and applicant is " << currentGap << "m or " << currentTimeGap << "s");
                 
-                if (currentGap < 0) 
+                if (currentGap < config_.minAllowedJoinGap) 
                 {
                     ROS_WARN("The current time gap is not suitable for frontal join. NACK it.");
                     return MobilityRequestResponse::NACK;
@@ -2491,26 +2487,8 @@ namespace platoon_strategic_ihp
         {
             // task 1: check gap 
             double cut_in_gap = pm_.getCutInGap(target_join_index_, current_downtrack_);   
-            ROS_DEBUG_STREAM("Start loop to check cut-in gap, start lane change when gap allows");
-            while (cut_in_gap < config_.minCutinGap) // TODO: use min gap as "safe to cut-in" gap, may need to adjust change later
-            {   
-                // Use LANE_CHANGE_TIMEOUT to bond the "creat gap"
-                bool isCurrentPlanTimeout = ros::Time::now().toNSec()/1000000  - pm_.current_plan.planStartTime > LANE_CHANGE_TIMEOUT;
-                // Set the plan as invalid and break the loop once the open-gap exceeds timeout.
-                if(isCurrentPlanTimeout) 
-                {
-                    ROS_DEBUG_STREAM("Give up current on waiting plan with planId: " << pm_.current_plan.planId << "; staying in PREPARETOJOIN");
-                    pm_.current_plan.valid = false;
-                    // exit function when timeout
-                    return;
-                }
-                
-                ROS_DEBUG_STREAM("The target gap " << cut_in_gap << " is not safe for lane change, wait for a larger gap");
-                // Sleep period equals statusMessageInterval_ 
-                ros::Duration(statusMessageInterval_/1000).sleep();
-                cut_in_gap = pm_.getCutInGap(target_join_index_, current_downtrack_);  
-            }
-            
+            // cut-in gap not needed for front and rear join, so ignored
+                   
             // task 2: set indicator if gap is safe
             safeToLaneChange_ = true;
             ROS_DEBUG_STREAM("Gap is now sufficiently large.");
@@ -2791,7 +2769,7 @@ namespace platoon_strategic_ihp
             currentGap = pm_.getDistanceToPredVehicle();
             ROS_DEBUG_STREAM("curent gap when there is no neighbor platoon: " << currentGap);
         }
-        
+
         ROS_DEBUG_STREAM("Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " ms");
         ROS_DEBUG_STREAM("Since we have max allowed gap as " << config_.desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
         ROS_DEBUG_STREAM("The current gap from radar is " << currentGap << " m");
@@ -3020,8 +2998,9 @@ namespace platoon_strategic_ihp
         ROS_DEBUG_STREAM("waitingStateTimeout: " << waitingStateTimeout * 1000);
         if (isCurrentStateTimeout) 
         {
-            ROS_DEBUG_STREAM("The current prepare to join state is timeout. Change back to leader state.");
+            ROS_DEBUG_STREAM("The current prepare to join state is timeout. Change back to leader state and abort lane change.");
             pm_.current_platoon_state = PlatoonState::LEADER;
+            safeToLaneChange_ = false;
             pm_.clearActionPlan();
             pm_.resetHostPlatoon();
             // Leave neighbor platoon info in place, as we may retry the join later
@@ -3164,6 +3143,22 @@ namespace platoon_strategic_ihp
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration(config_.time_step);
         maneuver_msg.lane_following_maneuver.lane_ids = { std::to_string(lane_id) };
+
+        ROS_DEBUG_STREAM("in compose maneuver lane id:"<< lane_id);
+
+        lanelet::ConstLanelet current_lanelet = wm_->getMap()->laneletLayer.get(lane_id);
+        if(!wm_->getMapRoutingGraph()->following(current_lanelet, false).empty())
+        {
+
+            auto next_lanelet_id = wm_->getMapRoutingGraph()->following(current_lanelet, false).front().id();
+            ROS_DEBUG_STREAM("next_lanelet_id:"<< next_lanelet_id);
+            maneuver_msg.lane_following_maneuver.lane_ids.push_back(std::to_string(next_lanelet_id));
+        }
+        else
+        {
+            ROS_DEBUG_STREAM("No following lanelets");
+        }
+
         current_time = maneuver_msg.lane_following_maneuver.end_time;
         ROS_DEBUG_STREAM("Creating lane follow start dist:"<<current_dist<<" end dist:"<<end_dist);
         ROS_DEBUG_STREAM("Duration:"<< maneuver_msg.lane_following_maneuver.end_time.toSec() - maneuver_msg.lane_following_maneuver.start_time.toSec());
@@ -3264,13 +3259,6 @@ namespace platoon_strategic_ihp
             }
         }
 
-        // Raise error is not on shortest path.
-        
-        if(last_lanelet_index == -1 && !safeToLaneChange_)
-        {
-            ROS_ERROR_STREAM("Current position is not on the shortest path! Returning an empty maneuver");
-            return true;
-        }
 
         // read status data
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
@@ -3327,30 +3315,18 @@ namespace platoon_strategic_ihp
                 while (current_progress < total_maneuver_length)
                 {   
                     ROS_DEBUG_STREAM("Lane Change Maneuver for Cut-in join ! ");
-                    ROS_DEBUG_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
                     ROS_DEBUG_STREAM("current_progress: "<< current_progress);
                     ROS_DEBUG_STREAM("speed_progress: " << speed_progress);
                     ROS_DEBUG_STREAM("target_speed: " << target_speed);
                     ROS_DEBUG_STREAM("time_progress: " << time_progress.toSec());
 
-                    // ----------------------- UCLA: consider change according to maneuver plan requirement --------------------
-                    auto p = shortest_path[last_lanelet_index].centerline2d().back(); // change to lane change path
                     // set to next lane destination, consider sending ecef instead of dtd 
-                    double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
-                    end_dist = std::min(end_dist, total_maneuver_length);
+                    double end_dist = total_maneuver_length;
                     ROS_DEBUG_STREAM("end_dist: " << end_dist);
                     // consider calculate dtd_diff and ctd_diff
                     double dist_diff = end_dist - current_progress;
                     ROS_DEBUG_STREAM("dist_diff: " << dist_diff);
-                    
-
-                    // TODO: what info is mocked? // This is just mock info to compile the code.                     
-
-                    // ----------------------------------------------------------------------------------------------------------
-                    if (end_dist < current_progress)
-                    {
-                        break;
-                    }
+    
                     
                     //TODO: target_cutin_pose_ represents the platoon leader. It seems this may be the wrong answer for mid- or rear-cutins?
                     //SAINA: currently, the functions do not provide the correct point of rear vehicle of the platoon
@@ -3367,12 +3343,40 @@ namespace platoon_strategic_ihp
                         ROS_DEBUG_STREAM("The target cutin pose is not on a valid lanelet. So no lane change!");
                         break;
                     } 
-                    int target_lanelet_id = target_lanelets[0].second.id(); //12301
+                    int target_lanelet_id = target_lanelets[0].second.id();
                     ROS_DEBUG_STREAM("target_lanelet_id: " << target_lanelet_id);
 
-                    // note: Since lanelet ID is not important for arbitrary lanechange, just use first lanelet's Id to create a maneuver msg.
-                    resp.new_plan.maneuvers.push_back(composeLaneChangeManeuverMessage(current_downtrack_, lc_end_dist,  
+                    lanelet::ConstLanelet starting_lanelet = wm_->getMap()->laneletLayer.get(current_lanelet_id);
+                    lanelet::ConstLanelet ending_lanelet = wm_->getMap()->laneletLayer.get(target_lanelet_id);
+
+                    auto relation = wm_->getMapRoutingGraph()->routingRelation(starting_lanelet, ending_lanelet);
+                    bool lanechangePossible = false;
+                    // TODO: Assuming a lane change is only needed from an adjacent left/right lanelet. Only valid for IHP platooning. 
+                    // Need to generalize in future. Refer to issue #1864
+                    if (relation == lanelet::routing::RelationType::Left || relation == lanelet::routing::RelationType::Right)
+                    {
+                        lanechangePossible = true;
+                    }
+                    else
+                    {
+                        lanechangePossible = false;
+                    }
+
+                    if (lanechangePossible)
+                    {
+                        ROS_DEBUG_STREAM("Lane change possible, planning it.. " );
+                        resp.new_plan.maneuvers.push_back(composeLaneChangeManeuverMessage(current_downtrack_, lc_end_dist,  
                                             speed_progress, target_speed, current_lanelet_id, target_lanelet_id , time_progress));
+                        
+                    }
+                    else
+                    {
+                        ROS_DEBUG_STREAM("Lane change impossible, planning lanefollow instead ... " );
+                        resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_downtrack_, end_dist,  
+                                            speed_progress, target_speed, current_lanelet_id, time_progress));
+                    }
+
+                    
 
                     current_progress += dist_diff;
                     // read lane change maneuver end time as time progress
@@ -3394,15 +3398,11 @@ namespace platoon_strategic_ihp
                 while (current_progress < total_maneuver_length)
                 {   
                     ROS_DEBUG_STREAM("Same Lane Maneuver for platoon join ! ");
-                    ROS_DEBUG_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
                     ROS_DEBUG_STREAM("current_progress: "<< current_progress);
                     ROS_DEBUG_STREAM("speed_progress: " << speed_progress);
                     ROS_DEBUG_STREAM("target_speed: " << target_speed);
                     ROS_DEBUG_STREAM("time_progress: " << time_progress.toSec());
-                    auto p = shortest_path[last_lanelet_index].centerline2d().back();
-                    double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
-                    // end_dist = std::min(end_dist, total_maneuver_length);
-                    end_dist = std::max(end_dist, total_maneuver_length);
+                    double end_dist = total_maneuver_length;
                     ROS_DEBUG_STREAM("end_dist: " << end_dist);
                     double dist_diff = end_dist - current_progress;
                     ROS_DEBUG_STREAM("dist_diff: " << dist_diff);
@@ -3434,14 +3434,11 @@ namespace platoon_strategic_ihp
             while (current_progress < total_maneuver_length)
             {   
                 ROS_DEBUG_STREAM("Same Lane Maneuver for platoon join ! ");
-                ROS_DEBUG_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
                 ROS_DEBUG_STREAM("current_progress: "<< current_progress);
                 ROS_DEBUG_STREAM("speed_progress: " << speed_progress);
                 ROS_DEBUG_STREAM("target_speed: " << target_speed);
                 ROS_DEBUG_STREAM("time_progress: " << time_progress.toSec());
-                auto p = shortest_path[last_lanelet_index].centerline2d().back();
-                double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
-                end_dist = std::min(end_dist, total_maneuver_length);
+                double end_dist = total_maneuver_length;
                 ROS_DEBUG_STREAM("end_dist: " << end_dist);
                 double dist_diff = end_dist - current_progress;
                 ROS_DEBUG_STREAM("dist_diff: " << dist_diff);
@@ -3451,7 +3448,7 @@ namespace platoon_strategic_ihp
                 }
 
                 resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist,  
-                                        speed_progress, target_speed,shortest_path[last_lanelet_index].id(), time_progress));
+                                        speed_progress, target_speed,current_lanelet_id, time_progress));
                                     
 
                 current_progress += dist_diff;
@@ -3471,10 +3468,17 @@ namespace platoon_strategic_ihp
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
         }  
 
-        if (pm_.getHostPlatoonSize() < 2)
+
+        if (pm_.getHostPlatoonSize() < 2 && !safeToLaneChange_)
         {
             resp.new_plan.maneuvers = {};
             ROS_WARN_STREAM("Platoon size 1 so Empty maneuver sent");
+        }
+        else
+        {
+            ROS_DEBUG_STREAM("Planning maneuvers: ");
+            ROS_DEBUG_STREAM("safeToLaneChange_: " << safeToLaneChange_);
+            ROS_DEBUG_STREAM("pm_.getHostPlatoonSize(): " << pm_.getHostPlatoonSize());
         }
 
         if (pm_.current_platoon_state == PlatoonState::STANDBY)

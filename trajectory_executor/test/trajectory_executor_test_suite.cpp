@@ -63,9 +63,9 @@ namespace trajectory_executor_test_suite
             traj_pub_ = create_publisher<carma_planning_msgs::msg::TrajectoryPlan>("trajectory", 5);
 
             // Setup Subscribers
-            traj_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("/guidance/pure_pursuit/plan_trajectory", 100,
+            traj_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("/guidance/plugins/pure_pursuit/plan_trajectory", 100,
                                                                     std::bind(&TrajectoryExecutorTestSuite::trajEmitCallback, this, std_ph::_1));
-            traj_sub2_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("/guidance/platoon_control/plan_trajectory", 100,
+            traj_sub2_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("/guidance/plugins/platoon_control/plan_trajectory", 100,
                                                                     std::bind(&TrajectoryExecutorTestSuite::trajEmitCallback, this, std_ph::_1));
             
             return CallbackReturn::SUCCESS;

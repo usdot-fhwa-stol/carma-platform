@@ -892,37 +892,15 @@ void LCIStrategicPlugin::BSMCb(const cav_msgs::BSMConstPtr& msg)
 
 void LCIStrategicPlugin::parseStrategyParams(const std::string& strategy_params)
 {
-  // sample strategy_params: "st:1634067044,et:1634067059, dt:1634067062.3256602,dp:2,,access: 0"
+  // sample strategy_params: "et:1634067059"
   std::string params = strategy_params;
   std::vector<std::string> inputsParams;
   boost::algorithm::split(inputsParams, params, boost::is_any_of(","));
 
-  std::vector<std::string> st_parsed;
-  boost::algorithm::split(st_parsed, inputsParams[0], boost::is_any_of(":"));
-  scheduled_stop_time_ = std::stoull(st_parsed[1]);
-  ROS_DEBUG_STREAM("scheduled_stop_time_: " << scheduled_stop_time_);
-
   std::vector<std::string> et_parsed;
-  boost::algorithm::split(et_parsed, inputsParams[1], boost::is_any_of(":"));
+  boost::algorithm::split(et_parsed, inputsParams[0], boost::is_any_of(":"));
   scheduled_enter_time_ = std::stoull(et_parsed[1]);
   ROS_DEBUG_STREAM("scheduled_enter_time_: " << scheduled_enter_time_);
-
-  std::vector<std::string> dt_parsed;
-  boost::algorithm::split(dt_parsed, inputsParams[2], boost::is_any_of(":"));
-  scheduled_depart_time_ = std::stoull(dt_parsed[1]);
-  ROS_DEBUG_STREAM("scheduled_depart_time_: " << scheduled_depart_time_);
-
-
-  std::vector<std::string> dp_parsed;
-  boost::algorithm::split(dp_parsed, inputsParams[3], boost::is_any_of(":"));
-  scheduled_departure_position_ = std::stoi(dp_parsed[1]);
-  ROS_DEBUG_STREAM("scheduled_departure_position_: " << scheduled_departure_position_);
-
-  std::vector<std::string> access_parsed;
-  boost::algorithm::split(access_parsed, inputsParams[4], boost::is_any_of(":"));
-  int access = std::stoi(access_parsed[1]);
-  is_allowed_int_ = (access == 1);
-  ROS_DEBUG_STREAM("is_allowed_int_: " << is_allowed_int_);
 
 }
 
@@ -941,10 +919,9 @@ cav_msgs::MobilityOperation LCIStrategicPlugin::generateMobilityOperation()
     if (intersection_turn_direction_ == TurnDirection::Right) intersection_turn_direction = "right";
     if (intersection_turn_direction_ == TurnDirection::Left) intersection_turn_direction = "left";
 
-
-    mo_.strategy_params = "access: " +  std::to_string(is_allowed_int_) + ", max_accel: " + std::to_string(vehicle_acceleration_limit_) + 
+    mo_.strategy_params = "access: 1, max_accel: " + std::to_string(vehicle_acceleration_limit_) +  // NOTE: Access currently set to 1 at all times since its not specified by streets
                         ", max_decel: " + std::to_string(vehicle_deceleration_limit_) + ", react_time: " + std::to_string(config_.reaction_time) +
-                        ", min_gap: " + std::to_string(config_.min_gap) + ", depart_pos: " + std::to_string(scheduled_departure_position_) + 
+                        ", min_gap: " + std::to_string(config_.min_gap) + ", depart_pos: 0" + // NOTE: Departure position set to 0 at all times since it's not specified by streets
                         ", turn_direction: " + intersection_turn_direction + ", msg_count: " + std::to_string(bsm_msg_count_) + ", sec_mark: " + std::to_string(bsm_sec_mark_);
     
 
@@ -1012,7 +989,7 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     return true;
   }
 
-  bool is_empty_schedule_msg = (scheduled_depart_time_ == 0 && scheduled_stop_time_ == 0 && scheduled_enter_time_ == 0);
+  bool is_empty_schedule_msg = (scheduled_enter_time_ == 0);
   if (is_empty_schedule_msg)
   {
     resp.new_plan.maneuvers = {};

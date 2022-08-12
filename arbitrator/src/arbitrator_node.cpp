@@ -35,7 +35,7 @@ namespace arbitrator
     carma_ros2_utils::CallbackReturn ArbitratorNode::handle_on_configure(const rclcpp_lifecycle::State &)
     {
         // Handle dependency injection
-        arbitrator::CapabilitiesInterface ci(shared_from_this());
+        auto ci = std::make_shared<arbitrator::CapabilitiesInterface>(shared_from_this());
         arbitrator::ArbitratorStateMachine sm;
         
         // Reset config
@@ -51,7 +51,7 @@ namespace arbitrator
 
         config_.plugin_priorities = plugin_priorities_map_from_json(json_string);
 
-        RCLCPP_INFO_STREAM(get_logger(), "Arbitrator Loaded Params: " << config_);
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("arbitrator"), "Arbitrator Loaded Params: " << config_);
 
         std::shared_ptr<arbitrator::CostFunction> cf;
         arbitrator::CostSystemCostFunction cscf = arbitrator::CostSystemCostFunction();
@@ -69,21 +69,21 @@ namespace arbitrator
         auto png = std::make_shared<arbitrator::PluginNeighborGenerator<arbitrator::CapabilitiesInterface>>(ci);
         arbitrator::TreePlanner tp(cf, png, bss, rclcpp::Duration(config_.target_plan_duration* 1e9));
     
-        auto wm_listener_ = std::make_shared<carma_wm::WMListener>(
+        wm_listener_ = std::make_shared<carma_wm::WMListener>(
             this->get_node_base_interface(), this->get_node_logging_interface(),
         this->get_node_topics_interface(), this->get_node_parameters_interface()
         );
 
-        auto wm = wm_listener_->getWorldModel();
+        wm_ = wm_listener_->getWorldModel();
 
         arbitrator_ = std::make_shared<Arbitrator>(
             shared_from_this(),
             std::make_shared<ArbitratorStateMachine>(sm), 
-            std::make_shared<CapabilitiesInterface>(ci), 
+            ci, 
             std::make_shared<TreePlanner>(tp), 
             rclcpp::Duration(config_.min_plan_duration* 1e9),
             1/config_.planning_frequency,
-            wm );
+            wm_ );
         
         
         carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> twist_sub = create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 1, std::bind(&Arbitrator::twist_cb, arbitrator_.get(), std::placeholders::_1));
@@ -102,7 +102,7 @@ namespace arbitrator
         arbitrator_run_ = create_timer(get_clock(),
                                 std::chrono::duration<double>(1/config_.planning_frequency),
                                 [this]() {this->arbitrator_->run();});
-        RCLCPP_INFO_STREAM(get_logger(), "Arbitrator started, beginning arbitrator state machine.");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("arbitrator"), "Arbitrator started, beginning arbitrator state machine.");
         return CallbackReturn::SUCCESS;
     }
 
@@ -113,11 +113,11 @@ namespace arbitrator
         rapidjson::Document d;
         if(d.Parse(json_string.c_str()).HasParseError())
         {
-            RCLCPP_WARN(get_logger(), "Failed to parse plugin_priorities map. Invalid json structure");
+            RCLCPP_WARN(rclcpp::get_logger("arbitrator"), "Failed to parse plugin_priorities map. Invalid json structure");
             return map;
         }
         if (!d.HasMember("plugin_priorities")) {
-            RCLCPP_WARN(get_logger(), "No plugin_priorities found in arbitrator config");
+            RCLCPP_WARN(rclcpp::get_logger("arbitrator"), "No plugin_priorities found in arbitrator config");
             return map;
         }
         rapidjson::Value& map_value = d["plugin_priorities"];

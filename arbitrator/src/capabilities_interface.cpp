@@ -26,7 +26,7 @@ namespace arbitrator
     std::vector<std::string> CapabilitiesInterface::get_topics_for_capability(const std::string& query_string)
     {
         std::vector<std::string> topics = {};
-
+        
         auto srv = std::make_shared<carma_planning_msgs::srv::GetPluginApi::Request>();
         srv->capability = "";
         

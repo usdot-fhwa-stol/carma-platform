@@ -52,7 +52,7 @@ namespace arbitrator
             PluginNeighborGeneratorTest():
             png{mci} {};
 
-            MockCapabilitiesInterface mci;
+            std::shared_ptr<MockCapabilitiesInterface> mci = std::shared_ptr<MockCapabilitiesInterface>(new MockCapabilitiesInterface());
             PluginNeighborGenerator<MockCapabilitiesInterface> png;
     };
 
@@ -63,7 +63,7 @@ namespace arbitrator
 
     TEST_F(PluginNeighborGeneratorTest, testGetNeighbors1)
     {
-        EXPECT_CALL(mci, 
+        EXPECT_CALL(*mci, 
             get_plans(::testing::_, ::testing::_))
             .WillRepeatedly(
                 ::testing::Return(
@@ -91,7 +91,7 @@ namespace arbitrator
         responses["test_plugin_b"] = resp2;
         responses["test_plugin_c"] = resp3;
         
-        EXPECT_CALL(mci, 
+        EXPECT_CALL(*mci, 
             get_plans(::testing::_, ::testing::_))
             .WillRepeatedly(
                 ::testing::Return(

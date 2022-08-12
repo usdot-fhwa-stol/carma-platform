@@ -123,6 +123,7 @@ namespace arbitrator
         rclcpp::Time planning_process_start = nh_->get_clock()->now();
         
         carma_planning_msgs::msg::ManeuverPlan plan = planning_strategy_->generate_plan(vehicle_state_);
+
         if (!plan.maneuvers.empty()) 
         {
             rclcpp::Time plan_end_time = arbitrator_utils::get_plan_end_time(plan);
@@ -135,7 +136,7 @@ namespace arbitrator
             } 
             else 
             {
-                RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator is publishing plan " << plan.maneuver_plan_id << " of duration " << plan_duration.seconds() << " as current maneuver plan");
+                RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator is publishing plan " << std::string(plan.maneuver_plan_id) << " of duration " << plan_duration.seconds() << " as current maneuver plan");
             }
             final_plan_pub_->publish(plan);
         }
@@ -187,6 +188,7 @@ namespace arbitrator
 
         vehicle_state_.x = bumper_transform_.getOrigin().getX();
         vehicle_state_.y = bumper_transform_.getOrigin().getY();
+
         // If the route is available then set the downtrack and lane id
         if (wm_->getRoute()) {
 

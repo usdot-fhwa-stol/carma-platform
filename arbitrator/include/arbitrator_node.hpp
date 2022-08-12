@@ -65,6 +65,9 @@ namespace arbitrator
             std::map<std::string, double> plugin_priorities_map_from_json(const std::string& json_string);
 
             Config config_;
+             // wm listener pointer and pointer to the actual wm object
+            std::shared_ptr<carma_wm::WMListener> wm_listener_;
+            carma_wm::WorldModelConstPtr wm_;
             std::shared_ptr<Arbitrator> arbitrator_;
             rclcpp::TimerBase::SharedPtr bumper_pose_timer_;
             rclcpp::TimerBase::SharedPtr arbitrator_run_;

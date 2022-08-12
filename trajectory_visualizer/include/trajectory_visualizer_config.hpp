@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2019-2022 LEIDOS.
  *
@@ -14,19 +15,25 @@
  * the License.
  */
 
-#include <rclcpp/rclcpp.hpp>
-#include "stop_and_wait_node.hpp"
+#include <string>
 
-int main(int argc, char **argv) 
+namespace trajectory_visualizer 
 {
-  rclcpp::init(argc, argv);
-
-  auto node = std::make_shared<stop_and_wait_plugin::StopandWaitNode>(rclcpp::NodeOptions());
-  
-  rclcpp::executors::MultiThreadedExecutor executor;
-  executor.add_node(node->get_node_base_interface());
-  executor.spin();
-  rclcpp::shutdown();
-
-  return 0;
-}
+    /**
+   * \brief max_speed values for trajectory_visualizer 
+   */
+   
+  struct Config
+  {
+    double max_speed = 25.0;
+ 
+    // Stream operator for this config
+    friend std::ostream &operator<<(std::ostream &output, const Config &c)
+    {
+      output << "trajectory_visualizer::Config { " << std::endl
+           << "max_speed: " << c.max_speed << std::endl
+           << "}" << std::endl;
+      return output;
+    }
+  };
+} // namespace trajectory_visualizer 

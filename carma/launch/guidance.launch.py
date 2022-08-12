@@ -72,7 +72,7 @@ def generate_launch_description():
 
     plan_delegator_param_file = os.path.join(
         get_package_share_directory('plan_delegator'), 'config/plan_delegator_params.yaml')
-
+        
     port_drayage_plugin_param_file = os.path.join(
         get_package_share_directory('port_drayage_plugin'), 'config/parameters.yaml')
     
@@ -108,11 +108,11 @@ def generate_launch_description():
                     ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
                     ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
                     ("vehicle_status", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_status" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
                     ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
-                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] )
+                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
+                    ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
                 ],
                 parameters=[
                     plan_delegator_param_file,
@@ -185,8 +185,11 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('arbitrator', env_log_levels) }
                 ],
                 remappings = [
-                    ("final_maneuver_plan", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/arbitrator/final_maneuver_plan" ] ),
                     ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
+                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
+                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
+                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
+                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] )
                 ],
                 parameters=[ 
                     arbitrator_param_file_path,
@@ -229,7 +232,20 @@ def generate_launch_description():
                     port_drayage_plugin_param_file,
                     vehicle_characteristics_param_file
                 ]     
-            )  
+            ),
+            ComposableNode(
+                package='trajectory_visualizer',
+                plugin='trajectory_visualizer::TrajectoryVisualizer',
+                name='trajectory_visualizer_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('trajectory_visualizer', env_log_levels) }
+                ],
+                parameters=[
+                    trajectory_visualizer_param_file
+                ]
+            ) 
+
         ]
     )
 
@@ -252,7 +268,7 @@ def generate_launch_description():
             ),
         ]
     )
-       
+      
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
         package='subsystem_controllers',
