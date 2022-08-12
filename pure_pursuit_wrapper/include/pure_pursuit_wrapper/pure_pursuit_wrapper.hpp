@@ -25,6 +25,7 @@
 #include <trajectory_utils/trajectory_utils.hpp>
 #include <carma_guidance_plugins/control_plugin.hpp>
 #include <pure_pursuit/pure_pursuit.hpp>
+#include <gtest/gtest_prod.h>
 
 namespace pure_pursuit_wrapper {
 
@@ -89,10 +90,16 @@ class PurePursuitWrapperNode : public carma_guidance_plugins::ControlPlugin
 
     PurePursuitWrapperConfig config_;
 
-    //std::shared_ptr<PurePursuitWrapper> pp_; //todo integrate library
     std::shared_ptr<pure_pursuit::PurePursuit> pp_;
-    
-   
+
+    std::shared_ptr<pure_pursuit::PurePursuit> get_pure_pursuit_worker()
+    {
+        return pp_;
+    }
+
+    // Unit Test Accessors
+    FRIEND_TEST(PurePursuitTest, sanity_check);
+
 };
 
 }  // namespace pure_pursuit_wrapper

@@ -87,21 +87,20 @@ motion::motion_common::State PurePursuitWrapperNode::convert_state(geometry_msgs
   return state;
 }
 
-autoware_msgs::msg::ControlCommandStamped PurePursuitWrapperNode::convert_cmd(motion::motion_common::Command cmdd)
+autoware_msgs::msg::ControlCommandStamped PurePursuitWrapperNode::convert_cmd(motion::motion_common::Command cmd)
 {
   autoware_msgs::msg::ControlCommandStamped return_cmd; //todo check if correct
-  autoware_auto_msgs::msg::VehicleControlCommand cmd;
   return_cmd.header.stamp = cmd.stamp;
 
   return_cmd.cmd.linear_acceleration = cmd.long_accel_mps2;
   return_cmd.cmd.linear_velocity = cmd.velocity_mps;
   return_cmd.cmd.steering_angle = cmd.rear_wheel_angle_rad;
 
-  //RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.stamp: " << cmd.stamp);
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.stamp: " << std::to_string(rclcpp::Time(cmd.stamp).seconds()));
   RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.long_accel_mps2: " << cmd.long_accel_mps2);
   RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.velocity_mps: " << cmd.velocity_mps);
   RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.rear_wheel_angle_rad: " << cmd.rear_wheel_angle_rad);
-
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.front_wheel_angle_rad: " << cmd.front_wheel_angle_rad);
 
   //todo front_wheel_angle_rad is omitted
   return return_cmd;
