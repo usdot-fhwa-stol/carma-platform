@@ -28,13 +28,13 @@ jobs:
     # Pull docker image from docker hub
     # XTERM used for better catkin_make output
     docker:
-      - image: usdotfhwastoldev/autoware.ai:coverage
+      - image: usdotfhwastoldev/autoware.ai:develop
         user: carma
         environment:
           TERM: xterm
           INIT_ENV: /home/carma/.base-image/init-env.sh
           ROS_2_ENV: /opt/autoware.ai/ros/install_ros2/setup.bash
-    resource_class: xlarge      
+    resource_class: xlarge
     # Set working directory
     working_directory: "/opt/carma/"
     # Pull code and execute tests
@@ -52,7 +52,7 @@ jobs:
           path: src/CARMAPlatform
       - setup_remote_docker:
           docker_layer_caching: true # DLC will explicitly cache layers here and try to avoid rebuilding.
-      - run: 
+      - run:
           name: Pull Deps
           command: |
             source ${INIT_ENV}
@@ -71,7 +71,6 @@ jobs:
             source ${INIT_ENV}
             export ROS_PARALLEL_JOBS='-j4 -l4' # Try to reduce memory consumption on build
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
-            ls -la /opt/carma/coverage_reports/gcov/
       - run:
           name: Cleanup before ROS 2 build
           # Clear the build and install folders before building ROS 2 
@@ -91,14 +90,6 @@ jobs:
             source ${INIT_ENV}
             source ${ROS_2_ENV}
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
-            ls -la /opt/carma/coverage_reports/gcov/
-      - run:
-          name: Save Java Test results
-          command: |
-            mkdir -p ~/junit
-            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/junit/ \;
-            find . -type f -regex ".*/build/Testing/.*xml" -exec cp {} ~/junit/ \;
-          
       # Run SonarCloud analysis
       # PR Branches and number extracted from Circle variables and github api
       # Circle CI seems to make a change to the base branch, so we must fetch --force to ensure correct git file change stats
@@ -129,7 +120,6 @@ jobs:
             echo "Target Branch = ${TARGET_BRANCH}"
             cd src/CARMAPlatform
             git fetch --force origin ${TARGET_BRANCH}:${TARGET_BRANCH}
-            ls -la /opt/carma/coverage_reports/gcov/
             sonar-scanner -Dproject.settings=.sonarqube/sonar-scanner.properties -Dsonar.login=${SONAR_SCANNER_TOKEN} -Dsonar.pullrequest.base=${TARGET_BRANCH} -Dsonar.pullrequest.branch=${CIRCLE_BRANCH} -Dsonar.pullrequest.key=${PR_NUM}
       - store_test_results:
           path: ~/junit
