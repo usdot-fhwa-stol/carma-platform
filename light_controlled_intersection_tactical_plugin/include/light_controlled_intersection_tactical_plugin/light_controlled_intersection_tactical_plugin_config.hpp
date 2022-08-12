@@ -43,9 +43,9 @@ namespace light_controlled_intersection_tactical_plugin
     double minimum_speed;
     double algorithm_evaluation_distance;
     double algorithm_evaluation_period;
-    double vehicle_lateral_accel_limit;
-    double vehicle_acceleration_limit;
-    double vehicle_deceleration_limit; 
+    double lateral_accel_limit;
+    double vehicle_accel_limit;
+    double vehicle_decel_limit; 
 
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)
@@ -67,9 +67,9 @@ namespace light_controlled_intersection_tactical_plugin
            << "minimum_speed: " << c.minimum_speed << std::endl
            << "algorithm_evaluation_distance: " << c.algorithm_evaluation_distance << std::endl
            << "algorithm_evaluation_period: " << c.algorithm_evaluation_period << std::endl
-           << "vehicle_lateral_accel_limit: " << c.vehicle_lateral_accel_limit << std::endl
-           << "vehicle_acceleration_limit: " << c.vehicle_acceleration_limit << std::endl
-           << "vehicle_deceleration_limit: " << c.vehicle_deceleration_limit << std::endl
+           << "lateral_accel_limit: " << c.lateral_accel_limit << std::endl
+           << "vehicle_accel_limit: " << c.vehicle_accel_limit << std::endl
+           << "vehicle_decel_limit: " << c.vehicle_decel_limit << std::endl
            << "}" << std::endl;
       return output;
     }

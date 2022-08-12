@@ -23,8 +23,8 @@
 #include <boost/geometry.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lanelet2_core/geometry/Point.h>
-#include <trajectory_utils_ros2/trajectory_utils.hpp>
-#include <trajectory_utils_ros2/conversions/conversions.hpp>
+#include <trajectory_utils/trajectory_utils.hpp>
+#include <trajectory_utils/conversions/conversions.hpp>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <Eigen/LU>
@@ -32,15 +32,14 @@
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <carma_ros2_utils/containers/containers.hpp>
-#include <carma_planning_msgs/msg/trajectory.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <carma_planning_msgs/srv/plan_trajectory.hpp>
 #include <carma_planning_msgs/msg/maneuver.hpp>
-#include <autoware_msgs/lane.hpp>
+#include <autoware_msgs/msg/lane.hpp>
 #include <carma_debug_ros2_msgs/msg/trajectory_curvature_speeds.hpp>
-#include <basic_autonomy/basic_autonomy.h>
-#include <basic_autonomy/helper_functions.h>
+#include <basic_autonomy_ros2/basic_autonomy.hpp>
+#include <basic_autonomy_ros2/helper_functions.hpp>
 
 #include <carma_guidance_plugins/tactical_plugin.hpp>
 #include "light_controlled_intersection_tactical_plugin/light_controlled_intersection_tactical_plugin_config.hpp"
@@ -95,8 +94,7 @@ namespace light_controlled_intersection_tactical_plugin
    */
   class LightControlledIntersectionTransitPluginNode : public carma_guidance_plugins::TacticalPlugin
   {
-
-  private:
+  private:    
     // LightControlledIntersectionTransitPluginNode configuration
     Config config_;
 
@@ -129,12 +127,14 @@ namespace light_controlled_intersection_tactical_plugin
     double last_successful_ending_downtrack_;         // if algorithm was successful, this is traffic_light_downtrack
     double last_successful_scheduled_entry_time_;     // if algorithm was successful, this is also scheduled entry time (ET in TSMO UC2 Algo)
 
-    carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg_;
+    carma_planning_msgs::msg::Plugin plugin_discovery_msg_;
+    carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds debug_msg_;
     std::vector<double> last_final_speeds_;
 
     std::string light_controlled_intersection_strategy_ = "signalized"; // Strategy carma-streets is sending. Could be more verbose but needs to be changed on both ends
 
   public:
+  
     /**
      * \brief LightControlledIntersectionTransitPluginNode constructor 
      */
@@ -198,7 +198,7 @@ namespace light_controlled_intersection_tactical_plugin
      *
      * \return value of speed limit in mps
      */
-    double findSpeedLimit(const lanelet::ConstLanelet& llt) const;
+    double findSpeedLimit(const lanelet::ConstLanelet& llt, const carma_wm::WorldModelConstPtr &wm) const;
 
     ////
     // Overrides
@@ -215,7 +215,7 @@ namespace light_controlled_intersection_tactical_plugin
     /**
      * \brief This method should be used to load parameters and will be called on the configure state transition.
      */ 
-    carma_ros2_utils::CallbackReturn on_configure_plugin();
+    carma_ros2_utils::CallbackReturn on_configure_plugin() override;
   };
 
 } // light_controlled_intersection_tactical_plugin

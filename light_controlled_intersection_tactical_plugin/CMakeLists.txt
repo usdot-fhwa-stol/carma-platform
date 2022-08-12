@@ -44,7 +44,7 @@ ament_auto_add_executable(${node_exec}
 )
 
 # Register component
-rclcpp_components_register_nodes(${node_lib} "light_controlled_intersection_tactical_plugin::Node")
+rclcpp_components_register_nodes(${node_lib} "light_controlled_intersection_tactical_plugin::LightControlledIntersectionTransitPluginNode")
 
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies

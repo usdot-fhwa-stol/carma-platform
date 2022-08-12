@@ -20,8 +20,7 @@ namespace light_controlled_intersection_tactical_plugin
   namespace std_ph = std::placeholders;
 
   LightControlledIntersectionTransitPluginNode::LightControlledIntersectionTransitPluginNode(const rclcpp::NodeOptions &options)
-      : carma_guidance_plugins::TacticalPlugin(options),
-        worker_(get_world_model(), config_);
+      : carma_guidance_plugins::TacticalPlugin(options)
   {
     // Create initial config
     config_ = Config();
@@ -55,24 +54,24 @@ namespace light_controlled_intersection_tactical_plugin
 
   rcl_interfaces::msg::SetParametersResult LightControlledIntersectionTransitPluginNode::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
   {
-    auto error = update_params<double>({
-      {"centerline_sampling_spacing", config_.centerline_sampling_spacing},
-      {"trajectory_time_length", config_.trajectory_time_length},
-      {"curve_resample_step_size", config_.curve_resample_step_size},
-      {"back_distance", config_.back_distance},
-      {"buffer_ending_downtrack", config_.buffer_ending_downtrack},
-      {"vehicle_decel_limit_multiplier", config_.vehicle_decel_limit_multiplier},
-      {"vehicle_accel_limit_multiplier", config_.vehicle_accel_limit_multiplier},
-      {"lat_accel_multiplier", config_.lat_accel_multiplier},      
-      {"stop_line_buffer", config_.stop_line_buffer},      
-      {"minimum_speed", config_.minimum_speed},      
-      {"algorithm_evaluation_distance", config_.algorithm_evaluation_distance},      
-      {"algorithm_evaluation_period", config_.algorithm_evaluation_period},
-      {"vehicle_lateral_accel_limit", config_.vehicle_lateral_accel_limit},
-      {"vehicle_acceleration_limit", config_.vehicle_acceleration_limit},
-      {"vehicle_deceleration_limit", config_.vehicle_deceleration_limit}}, parameters);
-    auto error_2 = update_params<double>({
-      {"default_downsample_ratio", config_.default_downsample_ratio},
+     auto error = update_params<double>(
+       {{"centerline_sampling_spacing", config_.centerline_sampling_spacing}}, parameters);
+    //   {"trajectory_time_length", config_.trajectory_time_length},
+    //   {"curve_resample_step_size", config_.curve_resample_step_size},
+    //   {"back_distance", config_.back_distance},
+    //   {"buffer_ending_downtrack", config_.buffer_ending_downtrack},
+    //   {"vehicle_decel_limit_multiplier", config_.vehicle_decel_limit_multiplier},
+    //   {"vehicle_accel_limit_multiplier", config_.vehicle_accel_limit_multiplier},
+    //   {"lat_accel_multiplier", config_.lat_accel_multiplier},      
+    //   {"stop_line_buffer", config_.stop_line_buffer},      
+    //   {"minimum_speed", config_.minimum_speed},      
+    //   {"algorithm_evaluation_distance", config_.algorithm_evaluation_distance},      
+    //   {"algorithm_evaluation_period", config_.algorithm_evaluation_period},
+    //   {"vehicle_lateral_accel_limit", config_.lateral_accel_limit},
+    //   {"vehicle_acceleration_limit", config_.vehicle_accel_limit},
+    //   {"vehicle_deceleration_limit", config_.vehicle_decel_limit}}, parameters);
+    auto error_2 = update_params<int>(
+      {{"default_downsample_ratio", config_.default_downsample_ratio},
       {"turn_downsample_ratio", config_.turn_downsample_ratio},
       {"curvature_moving_average_window_size", config_.curvature_moving_average_window_size},
       {"speed_moving_average_window_size", config_.speed_moving_average_window_size}}, parameters);
@@ -131,8 +130,8 @@ namespace light_controlled_intersection_tactical_plugin
 
   void LightControlledIntersectionTransitPluginNode::plan_trajectory_callback(
     std::shared_ptr<rmw_request_id_t>, 
-    carma_planning_msgs::msg::srv::PlanTrajectory::Request::SharedPtr req, 
-    carma_planning_msgs::msg::srv::PlanTrajectory::Response::SharedPtr resp)
+    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+    carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
   {
     RCLCPP_DEBUG_STREAM(get_logger(), "Starting light controlled intersection trajectory planning");
     
@@ -172,7 +171,7 @@ namespace light_controlled_intersection_tactical_plugin
     if (current_lanelets.empty())
     {
       RCLCPP_ERROR_STREAM(get_logger(), "Given vehicle position is not on the road! Returning...");
-      return true;
+      return;
     }
 
     // get the lanelet that is on the route in case overlapping ones found
@@ -188,7 +187,7 @@ namespace light_controlled_intersection_tactical_plugin
 
     RCLCPP_DEBUG_STREAM(get_logger(), "Current_lanelet: "<< current_lanelet.id());
 
-    speed_limit_ = findSpeedLimit(current_lanelet);
+    speed_limit_ = findSpeedLimit(current_lanelet, get_world_model());
 
     RCLCPP_DEBUG_STREAM(get_logger(), "speed_limit_: "<< speed_limit_);
 
@@ -256,9 +255,10 @@ namespace light_controlled_intersection_tactical_plugin
 
     RCLCPP_DEBUG_STREAM(get_logger(), "traj points size: " << last_trajectory_.trajectory_points.size() << ", last_final_speeds_ size: " <<
                          last_final_speeds_.size() );
+
     for (size_t i = 0; i < last_trajectory_.trajectory_points.size(); i++)
     {
-      if (last_trajectory_.trajectory_points[i].target_time > rclcpp::Time(req->header.stamp) - rclcpp::Duration(0.1 * 1e9)) // Duration is in nanoseconds
+      if (rclcpp::Time(last_trajectory_.trajectory_points[i].target_time) > rclcpp::Time(req->header.stamp) - rclcpp::Duration(0.1 * 1e9)) // Duration is in nanoseconds
       {
         reduced_last_traj.trajectory_points.emplace_back(last_trajectory_.trajectory_points[i]);
         reduced_final_speeds.emplace_back(last_final_speeds_[i]);
@@ -272,10 +272,10 @@ namespace light_controlled_intersection_tactical_plugin
           && last_case_.get() == new_case
           && is_new_case_successful == true
           && !last_trajectory_.trajectory_points.empty()
-          && last_trajectory_.trajectory_points.back().target_time > rclcpp::Time(req->header.stamp) + rclcpp::Duration(1 * 1e9)) // Duration is in nanoseconds
+          && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > rclcpp::Time(req->header.stamp) + rclcpp::Duration(1 * 1e9)) // Duration is in nanoseconds
     {
       resp->trajectory_plan = last_trajectory_;
-      RCLCPP_DEBUG_STREAM(get_logger(), "Last TRAJ's target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req->header.stamp);
+      RCLCPP_DEBUG_STREAM(get_logger(), "Last TRAJ's target time: " << rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() << ", and stamp:" << rclcpp::Time(req->header.stamp).seconds());
       RCLCPP_DEBUG_STREAM(get_logger(), "USING LAST TRAJ: " << (int)last_case_.get());
     }
     else if (is_last_case_successful_ != boost::none && last_case_ != boost::none
@@ -284,10 +284,10 @@ namespace light_controlled_intersection_tactical_plugin
             && last_successful_ending_downtrack_ - current_downtrack_ < config_.algorithm_evaluation_distance
             && last_successful_scheduled_entry_time_ - rclcpp::Time(req->header.stamp).seconds() < config_.algorithm_evaluation_period
             && !last_trajectory_.trajectory_points.empty()
-            && last_trajectory_.trajectory_points.back().target_time > req->header.stamp)
+            && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() > rclcpp::Time(req->header.stamp).seconds())
     {
       resp->trajectory_plan = last_trajectory_;
-      RCLCPP_DEBUG_STREAM(get_logger(), "Last Traj's target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req->header.stamp << ", and scheduled: " << std::to_string(last_successful_scheduled_entry_time_));
+      RCLCPP_DEBUG_STREAM(get_logger(), "Last Traj's target time: " << rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() << ", and stamp:" << rclcpp::Time(req->header.stamp).seconds() << ", and scheduled: " << std::to_string(last_successful_scheduled_entry_time_));
       RCLCPP_DEBUG_STREAM(get_logger(), "EDGE CASE: USING LAST TRAJ: " << (int)last_case_.get());
     }  
     else
@@ -297,11 +297,11 @@ namespace light_controlled_intersection_tactical_plugin
       last_case_ = new_case;
       last_final_speeds_ = debug_msg_.velocity_profile;
       is_last_case_successful_ = is_new_case_successful;
-      RCLCPP_DEBUG_STREAM(get_logger(), "USING NEW: Target time: " << last_trajectory_.trajectory_points.back().target_time << ", and stamp:" << req->header.stamp);
+      RCLCPP_DEBUG_STREAM(get_logger(), "USING NEW: Target time: " << rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() << ", and stamp:" << rclcpp::Time(req->header.stamp).seconds());
       if (is_new_case_successful)
       {
         last_successful_ending_downtrack_ = GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_dist);              // if algorithm was successful, this is traffic_light_downtrack
-        last_successful_scheduled_entry_time_ = GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_time).seconds();  // if algorithm was successful, this is also scheduled entry time (ET in TSMO UC2 Algo)
+        last_successful_scheduled_entry_time_ = rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_time)).seconds();  // if algorithm was successful, this is also scheduled entry time (ET in TSMO UC2 Algo)
         RCLCPP_DEBUG_STREAM(get_logger(), "last_successful_ending_downtrack_:" << last_successful_ending_downtrack_ << ", last_successful_scheduled_entry_time_: " << std::to_string(last_successful_scheduled_entry_time_));
       }
       RCLCPP_DEBUG_STREAM(get_logger(), "USING NEW CASE!!! : " << (int)last_case_.get());
@@ -313,92 +313,94 @@ namespace light_controlled_intersection_tactical_plugin
 
     resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
-    return true;
+    return;
   }
 
   void LightControlledIntersectionTransitPluginNode::apply_trajectory_smoothing_algorithm(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double remaining_dist, 
                                             double starting_speed, double departure_speed, TrajectoryParams tsp)
-  if (points_and_target_speeds.empty())
   {
-    throw std::invalid_argument("Point and target speed list is empty! Unable to apply case one speed profile...");
-  }
-  
-  // Checking route geometry start against start_dist and adjust profile
-  double planning_downtrack_start = wm->routeTrackPos(points_and_target_speeds[0].point).downtrack; // this can include buffered points earlier than maneuver start_dist
-
-  //Check calculated total dist against maneuver limits
-  double total_distance_needed = remaining_dist;
-  double dist1 = tsp.x1_ - start_dist;
-  double dist2 = tsp.x2_ - start_dist;
-  double dist3 = tsp.x3_ - start_dist;
-
-  RCLCPP_DEBUG_STREAM(get_logger(), "total_distance_needed: " << total_distance_needed << "\n" <<
-                  "dist1: " << dist1 << "\n" <<
-                  "dist2: " << dist2 << "\n" <<
-                  "dist3: " << dist3);
-  double algo_min_speed = std::min({tsp.v1_,tsp.v2_,tsp.v3_});
-  double algo_max_speed = std::max({tsp.v1_,tsp.v2_,tsp.v3_});
-
-  RCLCPP_DEBUG_STREAM(get_logger(), "found algo_minimum_speed: " << algo_min_speed << "\n" <<
-                  "algo_max_speed: " << algo_max_speed);
-
-  double total_dist_planned = 0; //Starting dist for maneuver treated as 0.0
-
-  if (planning_downtrack_start < start_dist)
-  {
-    //Account for the buffer distance that is technically not part of this maneuver
+    if (points_and_target_speeds.empty())
+    {
+      throw std::invalid_argument("Point and target speed list is empty! Unable to apply case one speed profile...");
+    }
     
-    total_dist_planned = planning_downtrack_start - start_dist;
-    RCLCPP_DEBUG_STREAM(get_logger(), "buffered section is present. Adjusted total_dist_planned to: " << total_dist_planned);      
-  }
-  
-  double prev_speed = starting_speed;
-  auto prev_point = points_and_target_speeds.front();
-  
-  for(auto& p : points_and_target_speeds)
-  {
-    double delta_d = lanelet::geometry::distance2d(prev_point.point, p.point);
-    total_dist_planned += delta_d;  
+    // Checking route geometry start against start_dist and adjust profile
+    double planning_downtrack_start = get_world_model()->routeTrackPos(points_and_target_speeds[0].point).downtrack; // this can include buffered points earlier than maneuver start_dist
 
-    //Apply the speed from algorithm at dist covered
-    //Kinematic: v_f = sqrt(v_o^2 + 2*a*d)
-    double speed_i;
-    if (total_dist_planned <= epsilon_) 
-    {
-      //Keep target speed same for buffer distance portion
-      speed_i = starting_speed;
-    }
-    else if(total_dist_planned <= dist1 + epsilon_){
-      //First segment
-      speed_i = sqrt(pow(starting_speed, 2) + 2 * tsp.a1_ * total_dist_planned);
-    }
-    else if(total_dist_planned > dist1 && total_dist_planned <= dist2 + epsilon_){
-      //Second segment
-      speed_i = sqrt(std::max(pow(tsp.v1_, 2) + 2 * tsp.a2_ * (total_dist_planned - dist1), 0.0)); //std::max to ensure negative value is not sqrt
-    }
-    else if (total_dist_planned > dist2 && total_dist_planned <= dist3 + epsilon_)
-    {
-      //Third segment
-      speed_i = sqrt(std::max(pow(tsp.v2_, 2) + 2 * tsp.a3_ * (total_dist_planned - dist2), 0.0)); //std::max to ensure negative value is not sqrt
-    }
-    else 
-    {
-      //buffer points that will be cut
-      speed_i = prev_speed;
-    }
+    //Check calculated total dist against maneuver limits
+    double total_distance_needed = remaining_dist;
+    double dist1 = tsp.x1_ - start_dist;
+    double dist2 = tsp.x2_ - start_dist;
+    double dist3 = tsp.x3_ - start_dist;
 
-    if (isnan(speed_i))
+    RCLCPP_DEBUG_STREAM(get_logger(), "total_distance_needed: " << total_distance_needed << "\n" <<
+                    "dist1: " << dist1 << "\n" <<
+                    "dist2: " << dist2 << "\n" <<
+                    "dist3: " << dist3);
+    double algo_min_speed = std::min({tsp.v1_,tsp.v2_,tsp.v3_});
+    double algo_max_speed = std::max({tsp.v1_,tsp.v2_,tsp.v3_});
+
+    RCLCPP_DEBUG_STREAM(get_logger(), "found algo_minimum_speed: " << algo_min_speed << "\n" <<
+                    "algo_max_speed: " << algo_max_speed);
+
+    double total_dist_planned = 0; //Starting dist for maneuver treated as 0.0
+
+    if (planning_downtrack_start < start_dist)
     {
-      speed_i = std::max(config_.minimum_speed, algo_min_speed);
-      RCLCPP_DEBUG_STREAM(get_logger(), "Detected nan number from equations. Set to " << speed_i);
+      //Account for the buffer distance that is technically not part of this maneuver
+      
+      total_dist_planned = planning_downtrack_start - start_dist;
+      RCLCPP_DEBUG_STREAM(get_logger(), "buffered section is present. Adjusted total_dist_planned to: " << total_dist_planned);      
     }
+    
+    double prev_speed = starting_speed;
+    auto prev_point = points_and_target_speeds.front();
+    
+    for(auto& p : points_and_target_speeds)
+    {
+      double delta_d = lanelet::geometry::distance2d(prev_point.point, p.point);
+      total_dist_planned += delta_d;  
 
-    p.speed = std::max({speed_i, config_.minimum_speed, algo_min_speed});
-    p.speed = std::min({p.speed, speed_limit_, algo_max_speed}); 
-    RCLCPP_DEBUG_STREAM(get_logger(), "Applied speed: " << p.speed << ", at dist: " << total_dist_planned);
+      //Apply the speed from algorithm at dist covered
+      //Kinematic: v_f = sqrt(v_o^2 + 2*a*d)
+      double speed_i;
+      if (total_dist_planned <= epsilon_) 
+      {
+        //Keep target speed same for buffer distance portion
+        speed_i = starting_speed;
+      }
+      else if(total_dist_planned <= dist1 + epsilon_){
+        //First segment
+        speed_i = sqrt(pow(starting_speed, 2) + 2 * tsp.a1_ * total_dist_planned);
+      }
+      else if(total_dist_planned > dist1 && total_dist_planned <= dist2 + epsilon_){
+        //Second segment
+        speed_i = sqrt(std::max(pow(tsp.v1_, 2) + 2 * tsp.a2_ * (total_dist_planned - dist1), 0.0)); //std::max to ensure negative value is not sqrt
+      }
+      else if (total_dist_planned > dist2 && total_dist_planned <= dist3 + epsilon_)
+      {
+        //Third segment
+        speed_i = sqrt(std::max(pow(tsp.v2_, 2) + 2 * tsp.a3_ * (total_dist_planned - dist2), 0.0)); //std::max to ensure negative value is not sqrt
+      }
+      else 
+      {
+        //buffer points that will be cut
+        speed_i = prev_speed;
+      }
 
-    prev_point = p;
-    prev_speed = p.speed;
+      if (isnan(speed_i))
+      {
+        speed_i = std::max(config_.minimum_speed, algo_min_speed);
+        RCLCPP_DEBUG_STREAM(get_logger(), "Detected nan number from equations. Set to " << speed_i);
+      }
+
+      p.speed = std::max({speed_i, config_.minimum_speed, algo_min_speed});
+      p.speed = std::min({p.speed, speed_limit_, algo_max_speed}); 
+      RCLCPP_DEBUG_STREAM(get_logger(), "Applied speed: " << p.speed << ", at dist: " << total_dist_planned);
+
+      prev_point = p;
+      prev_speed = p.speed;
+    }
   }
 
   void LightControlledIntersectionTransitPluginNode::apply_optimized_target_speed_profile(const carma_planning_msgs::msg::Maneuver& maneuver, const double starting_speed, std::vector<PointSpeedPair>& points_and_target_speeds)
@@ -425,7 +427,7 @@ namespace light_controlled_intersection_tactical_plugin
     double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
     double ending_downtrack = GET_MANEUVER_PROPERTY(maneuver, end_dist);
     double departure_speed = GET_MANEUVER_PROPERTY(maneuver, end_speed);
-    double scheduled_entry_time = GET_MANEUVER_PROPERTY(maneuver, end_time).toSec();
+    double scheduled_entry_time = rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver, end_time)).seconds();
     double entry_dist = ending_downtrack - starting_downtrack;
 
     // change speed profile depending on algorithm case starting from maneuver start_dist
@@ -433,9 +435,9 @@ namespace light_controlled_intersection_tactical_plugin
                                               departure_speed, tsp);
   }
 
-  double LightControlledIntersectionTransitPluginNode::findSpeedLimit(const lanelet::ConstLanelet& llt) const
+  double LightControlledIntersectionTransitPluginNode::findSpeedLimit(const lanelet::ConstLanelet& llt, const carma_wm::WorldModelConstPtr &wm) const
   {
-    lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = get_world_model()->getTrafficRules();
+    lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm->getTrafficRules();
     if (traffic_rules)
     {
       return (*traffic_rules)->speedLimit(llt).speedLimit.value();
