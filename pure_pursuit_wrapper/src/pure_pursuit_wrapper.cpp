@@ -94,7 +94,7 @@ autoware_msgs::msg::ControlCommandStamped PurePursuitWrapperNode::convert_cmd(mo
 
   return_cmd.cmd.linear_acceleration = cmd.long_accel_mps2;
   return_cmd.cmd.linear_velocity = cmd.velocity_mps;
-  return_cmd.cmd.steering_angle = cmd.rear_wheel_angle_rad;
+  return_cmd.cmd.steering_angle = cmd.front_wheel_angle_rad;
 
   RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.stamp: " << std::to_string(rclcpp::Time(cmd.stamp).seconds()));
   RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.long_accel_mps2: " << cmd.long_accel_mps2);
