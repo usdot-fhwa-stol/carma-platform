@@ -82,6 +82,7 @@ motion::motion_common::State PurePursuitWrapperNode::convert_state(geometry_msgs
   state.state.x = pose.pose.position.x;
   state.state.y = pose.pose.position.y;
   state.state.z = pose.pose.position.z;
+  state.state.heading.real = pose.pose.orientation.w;
 
   state.state.longitudinal_velocity_mps = twist.twist.linear.x;
   return state;
@@ -202,8 +203,12 @@ void PurePursuitWrapperNode::process_trajectory_plan(const carma_planning_msgs::
     }
   }
 
-  std::vector<double> lag_speeds = apply_response_lag(speeds, downtracks, config_.vehicle_response_lag); // This call requires that the first speed point be current speed to work as expected
-
+  std::vector<double> lag_speeds;
+  if (config_.is_delay_compensation)
+    lag_speeds = apply_response_lag(speeds, downtracks, config_.vehicle_response_lag); // This call requires that the first speed point be current speed to work as expected
+  else
+    lag_speeds = speeds;
+    
   autoware_auto_msgs::msg::Trajectory autoware_trajectory;
   autoware_trajectory.header = tp.header;
 
@@ -214,7 +219,9 @@ void PurePursuitWrapperNode::process_trajectory_plan(const carma_planning_msgs::
     autoware_point.x = trajectory_points[i].x;
     autoware_point.y = trajectory_points[i].y;
     autoware_point.longitudinal_velocity_mps = lag_speeds[i];
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x << 
+
+    autoware_point.time_from_start = rclcpp::Duration(times[i] * 1e9);
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x << 
                             ", y: " << trajectory_points[i].y <<
                             ", speed: " << lag_speeds[i]* 2.23694 << "mph");
     autoware_trajectory.points.push_back(autoware_point);

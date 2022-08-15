@@ -39,29 +39,33 @@ TEST(PurePursuitTest, sanity_check)
   node->activate();
 
   carma_planning_msgs::msg::TrajectoryPlanPoint tpp, tpp2, tpp3;
-  tpp.x = 10;
-  tpp.y = 10;
-  tpp.target_time = rclcpp::Time(0.1*1e9);  // 8.5m/s
+  tpp.x = 100;
+  tpp.y = 100;
+  tpp.target_time = rclcpp::Time(1.0*1e9);  // 14.14 m/s
 
-  tpp2.x = 12;
-  tpp2.y = 12;
-  tpp2.target_time = rclcpp::Time(0.2*1e9);  // 48.068542495 m/s
+  tpp2.x = 110;
+  tpp2.y = 110;
+  tpp2.target_time = rclcpp::Time(2.0*1e9);  // 14.14 m/s
 
-  tpp3.x = 14;
-  tpp3.y = 14;
-  tpp3.target_time = rclcpp::Time(0.3*1e9);  // 8.5m/s
+  tpp3.x = 120;
+  tpp3.y = 120;
+  tpp3.target_time = rclcpp::Time(3.0*1e9);  // 14.14 m/s
 
   carma_planning_msgs::msg::TrajectoryPlan plan;
+  plan.initial_longitudinal_velocity = 14.14;
 
   motion::control::controller_common::State state_tf;
   auto converted_time_now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   std::cerr << "Before processing: "  << std::to_string(static_cast<double>(converted_time_now)) << std::endl;
 
   state_tf.header.stamp = rclcpp::Time(converted_time_now*1e9);
+
+  state_tf.state.heading.real = 3.14 / 2;
+  state_tf.state.heading.imag = 0;
+
   state_tf.state.x = 0;
   state_tf.state.y = 0;
-  state_tf.state.longitudinal_velocity_mps = 1.0; //TODO arbitrary speed for first point
-
+  state_tf.state.longitudinal_velocity_mps = 4.0; //TODO arbitrary speed for first point
   plan.header.frame_id = state_tf.header.frame_id;
   plan.header.stamp = rclcpp::Time(converted_time_now*1e9) + rclcpp::Duration(1.0*1e9);
 
