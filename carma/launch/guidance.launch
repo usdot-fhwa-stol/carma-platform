@@ -197,11 +197,6 @@
     <include file="$(find light_controlled_intersection_tactical_plugin)/launch/light_controlled_intersection_tactical_plugin.launch" />
 
   </group>
-
-  <!-- Trajectory Plan Speed Visualizer -->
-  <group>
-    <include file="$(find trajectory_visualizer)/launch/trajectory_visualizer.launch" />
-  </group>
   
   <!-- Guidance Plugin Validator -->
   <group>

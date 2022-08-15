@@ -78,6 +78,9 @@ def generate_launch_description():
     
     inlanecruising_plugin_file_path = os.path.join(
         get_package_share_directory('inlanecruising_plugin'), 'config/parameters.yaml')
+    
+    trajectory_visualizer_param_file = os.path.join(
+        get_package_share_directory('trajectory_visualizer'), 'config/parameters.yaml')
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
