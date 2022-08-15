@@ -51,7 +51,7 @@ def generate_launch_description():
         get_package_share_directory('route_following_plugin'), 'config/parameters.yaml')
 
     stop_and_wait_plugin_param_file = os.path.join(
-        get_package_share_directory('stop_and_wait_plugin'), 'config/stop_and_wait_plugin_params.yaml')        
+        get_package_share_directory('stop_and_wait_plugin'), 'config/parameters.yaml')        
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
