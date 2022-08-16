@@ -26,6 +26,7 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 # Name build targets
+set(worker_lib light_controlled_intersection_tactical_plugin_worker_lib)
 set(node_exec light_controlled_intersection_tactical_plugin_node_exec)
 set(node_lib light_controlled_intersection_tactical_plugin_node)
 
@@ -35,6 +36,10 @@ include_directories(
 )
 
 # Build
+ament_auto_add_library(${worker_lib}
+        src/light_controlled_intersection_tactical_plugin.cpp
+)
+
 ament_auto_add_library(${node_lib} SHARED
         src/light_controlled_intersection_tactical_plugin_node.cpp
 )
@@ -48,6 +53,10 @@ rclcpp_components_register_nodes(${node_lib} "light_controlled_intersection_tact
 
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies
+target_link_libraries(${node_lib}
+        ${worker_lib}
+)
+
 target_link_libraries(${node_exec}
         ${node_lib}
 )

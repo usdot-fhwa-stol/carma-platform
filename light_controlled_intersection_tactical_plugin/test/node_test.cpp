@@ -22,16 +22,19 @@
 
 #include "light_controlled_intersection_tactical_plugin/light_controlled_intersection_tactical_plugin_node.hpp"
 
+namespace light_controlled_intersection_transit_plugin
+{
+    
+    TEST(LCITacticalPluginTest, apply_accel_cruise_decel_speed_profile_test)
+    {
+        rclcpp::NodeOptions options;
+        auto lci_node = std::make_shared<light_controlled_intersection_tactical_plugin::LightControlledIntersectionTransitPluginNode>(options);
+        lci_node->configure(); // Call configure state transition
+        lci_node->activate(); // Call activate state transition
+    }
 
-// TODO for USER: Implement a real test using GTest
-TEST(Testlight_controlled_intersection_tactical_plugin, example_test){
+} // namespace light_controlled_intersection_transit_plugin
 
-    rclcpp::NodeOptions options;
-    auto worker_node = std::make_shared<light_controlled_intersection_tactical_plugin::LightControlledIntersectionTransitPluginNode>(options);
-
-    worker_node->configure(); //Call configure state transition
-    worker_node->activate();  //Call activate state transition to get not read for runtime
-}
 
 int main(int argc, char ** argv)
 {

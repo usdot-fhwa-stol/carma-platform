@@ -244,8 +244,26 @@ def generate_launch_description():
                 parameters=[
                     trajectory_visualizer_param_file
                 ]
-            ) 
-
+            ),
+            ComposableNode(
+                package='light_controlled_intersection_tactical_plugin',
+                plugin='light_controlled_intersection_tactical_plugin::LightControlledIntersectionTransitPluginNode',
+                name='light_controlled_intersection_tactical_plugin_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('route', env_log_levels) }
+                ],
+                # remappings = [
+                #     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                #     ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                #     ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_operation" ] ),  
+                #     ("outgoing_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),     
+                #     ("ui_instructions", [ EnvironmentVariable('CARMA_UI_NS', default_value=''), "/ui_instructions" ] )       
+                # ],
+                parameters=[
+                    vehicle_config_param_file
+                ]     
+            )
         ]
     )
 
