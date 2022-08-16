@@ -21,10 +21,10 @@
  * Author: Xu Han, Xin Xia, Jiaqi Ma
  */
 
-#include "platoon_manager_ihp.h"
-#include "platoon_config_ihp.h"
+#include "platoon_strategic_ihp/platoon_manager_ihp.h"
+#include "platoon_strategic_ihp/platoon_config_ihp.h"
 #include <boost/algorithm/string.hpp>
-#include <ros/ros.h>
+#include <rclcpp/logging.hpp>
 #include <array>
 
 namespace platoon_strategic_ihp
@@ -48,16 +48,16 @@ namespace platoon_strategic_ihp
      * 
      */
 
-    PlatoonManager::PlatoonManager()
+    PlatoonManager::PlatoonManager(std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory) : timer_factory_(std::move(timer_factory))
     {
-        ROS_DEBUG_STREAM("Top of PlatoonManager ctor.");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Top of PlatoonManager ctor.");
     }
 
 
     // Update the location of the host in the vector of platoon members
     void PlatoonManager::updateHostPose(const double downtrack, const double crosstrack)
     {
-        ROS_DEBUG_STREAM("Host (index " << hostPosInPlatoon_ << "): downtrack = " << downtrack << ", crosstrack = " << crosstrack);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Host (index " << hostPosInPlatoon_ << "): downtrack = " << downtrack << ", crosstrack = " << crosstrack);
         host_platoon_[hostPosInPlatoon_].vehiclePosition = downtrack;
         host_platoon_[hostPosInPlatoon_].vehicleCrossTrack = crosstrack;
     }
@@ -98,7 +98,7 @@ namespace platoon_strategic_ihp
             // Sanity check
             if (platoonLeaderID.compare(host_platoon_[0].staticId) != 0)
             {
-                ROS_DEBUG_STREAM("///// platoonLeaderID NOT PROPERLY ASSIGNED! Value = " << platoonLeaderID
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "///// platoonLeaderID NOT PROPERLY ASSIGNED! Value = " << platoonLeaderID
                                 << ", host_platoon_[0].staticId = " << host_platoon_[0].staticId);
             }
 
@@ -111,36 +111,36 @@ namespace platoon_strategic_ihp
                 // TODO: better to have leader explicitly inform us that it is merging into another platoon, rather than require us to deduce it here.
                 //       This condition may also result from missing some message traffic, new leader in this platoon, or other confusion/incorrect code.
                 //       Consider using a new STATUS msg param that tells members of new platoon ID and new leader ID when a change is made.
-                ROS_DEBUG_STREAM("It seems that the current leader is joining another platoon.");
-                ROS_DEBUG_STREAM("So the platoon ID is changed from " << currentPlatoonID << " to " << platoonId);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "It seems that the current leader is joining another platoon.");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "So the platoon ID is changed from " << currentPlatoonID << " to " << platoonId);
                 currentPlatoonID = platoonId;
                 updatesOrAddMemberInfo(host_platoon_, senderId, cmdSpeed, dtDistance, ctDistance, curSpeed); 
             } 
             else if (currentPlatoonID == platoonId)
             {
-                ROS_DEBUG_STREAM("This STATUS messages is from our platoon. Updating the info...");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "This STATUS messages is from our platoon. Updating the info...");
                 updatesOrAddMemberInfo(host_platoon_, senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
-                ROS_DEBUG_STREAM("The first vehicle in our list is now " << host_platoon_[0].staticId);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The first vehicle in our list is now " << host_platoon_[0].staticId);
             } 
             else //sender is in a different platoon
             {
-                ROS_DEBUG_STREAM("This STATUS message is not from a vehicle we care about. Ignore this message with id: " << senderId);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "This STATUS message is not from a vehicle we care about. Ignore this message with id: " << senderId);
             }
         }
         else //host is leader
         {
             // If we are currently in any leader state, we only update platoon member based on platoon ID
-            ROS_DEBUG_STREAM("Host is leader: currentPlatoonID = " << currentPlatoonID << ", incoming platoonId = " << platoonId);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Host is leader: currentPlatoonID = " << currentPlatoonID << ", incoming platoonId = " << platoonId);
             if (currentPlatoonID == platoonId)
             {
-                ROS_DEBUG_STREAM("This STATUS messages is from our platoon. Updating the info...");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "This STATUS messages is from our platoon. Updating the info...");
                 updatesOrAddMemberInfo(host_platoon_, senderId, cmdSpeed, dtDistance, ctDistance, curSpeed); 
             }
             else
             {
-                ROS_DEBUG_STREAM("Platoon IDs not matched");
-                ROS_DEBUG_STREAM("currentPlatoonID: " << currentPlatoonID);
-                ROS_DEBUG_STREAM("incoming platoonId: " << platoonId);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Platoon IDs not matched");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "currentPlatoonID: " << currentPlatoonID);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "incoming platoonId: " << platoonId);
             }
         }
         
@@ -177,20 +177,20 @@ namespace platoon_strategic_ihp
         if (neighborPlatoonID == platoonId)
         {
             updatesOrAddMemberInfo(neighbor_platoon_, senderId, cmdSpeed, dtDistance, ctDistance, curSpeed);
-            ROS_DEBUG_STREAM("This STATUS messages is from the target platoon. Updating the info...");
-            ROS_DEBUG_STREAM("The first vehicle in that platoon is now " << neighbor_platoon_[0].staticId);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "This STATUS messages is from the target platoon. Updating the info...");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The first vehicle in that platoon is now " << neighbor_platoon_[0].staticId);
 
             // If we have data on all members of a neighboring platoon, set a complete record flag
             if (neighbor_platoon_info_size_ > 1  &&
                 neighbor_platoon_.size() == neighbor_platoon_info_size_)
             {
                 is_neighbor_record_complete_ = true;
-                ROS_DEBUG_STREAM("Neighbor record is complete!");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Neighbor record is complete!");
             }
         } 
         else //sender is in a different platoon
         {
-            ROS_DEBUG_STREAM("This STATUS message is not from a vehicle we care about. Ignore this message from sender: " 
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "This STATUS message is not from a vehicle we care about. Ignore this message from sender: " 
                             << senderId << " about platoon: " << platoonId);
         }
     }
@@ -207,7 +207,7 @@ namespace platoon_strategic_ihp
             if(platoon[i].staticId == senderId) {
                 if (abs(dtDistance - platoon[i].vehiclePosition)/(platoon[i].vehiclePosition + 0.01) > config_.significantDTDchange)
                 {
-                    ROS_DEBUG_STREAM( "DTD of member " << platoon[i].staticId << " is changed significantly, so a new sort is needed");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"),  "DTD of member " << platoon[i].staticId << " is changed significantly, so a new sort is needed");
 
                     sortNeeded = true;
                 }
@@ -215,17 +215,17 @@ namespace platoon_strategic_ihp
                 platoon[i].vehiclePosition = dtDistance;    // m 
                 platoon[i].vehicleCrossTrack = ctDistance;  // m
                 platoon[i].vehicleSpeed = curSpeed;         // m/s
-                platoon[i].timestamp = ros::Time::now().toNSec()/1000000;
-                ROS_DEBUG_STREAM("Receive and update platooning info on member " << i << ", ID:" << platoon[i].staticId);
-                ROS_DEBUG_STREAM("    CommandSpeed       = " << platoon[i].commandSpeed);
-                ROS_DEBUG_STREAM("    Actual Speed       = " << platoon[i].vehicleSpeed);
-                ROS_DEBUG_STREAM("    Downtrack Location = " << platoon[i].vehiclePosition);
-                ROS_DEBUG_STREAM("    Crosstrack dist    = " << platoon[i].vehicleCrossTrack);
+                platoon[i].timestamp = timer_factory_->now().nanoseconds()/1000000;
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Receive and update platooning info on member " << i << ", ID:" << platoon[i].staticId);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "    CommandSpeed       = " << platoon[i].commandSpeed);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "    Actual Speed       = " << platoon[i].vehicleSpeed);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "    Downtrack Location = " << platoon[i].vehiclePosition);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "    Crosstrack dist    = " << platoon[i].vehicleCrossTrack);
 
                 if (senderId == HostMobilityId)
                 {
                     hostPosInPlatoon_ = i;
-                    ROS_DEBUG_STREAM("    This is the HOST vehicle");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "    This is the HOST vehicle");
                 }
                 isExisted = true;
             }
@@ -235,8 +235,8 @@ namespace platoon_strategic_ihp
         {
             // sort the platoon member based on dowtrack distance (m) in an descending order.
             std::sort(std::begin(platoon), std::end(platoon), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition > b.vehiclePosition;});
-            ROS_DEBUG_STREAM("Platoon is re-sorted due to large difference in dtd update.");
-            ROS_DEBUG_STREAM("    Platoon order is now:");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Platoon is re-sorted due to large difference in dtd update.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "    Platoon order is now:");
             for (size_t i = 0;  i < platoon.size();  ++i)
             {
                 std::string hostFlag = " ";
@@ -245,21 +245,21 @@ namespace platoon_strategic_ihp
                     hostPosInPlatoon_ = i;
                     hostFlag = "Host";
                 }
-                ROS_DEBUG_STREAM("    " << platoon[i].staticId << "its DTD: " << platoon[i].vehiclePosition << " " << hostFlag);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "    " << platoon[i].staticId << "its DTD: " << platoon[i].vehiclePosition << " " << hostFlag);
             }
         }
 
         // if not already exist, add to platoon list.
         if(!isExisted) {
-            long cur_t = ros::Time::now().toNSec()/1000000; // time in millisecond
+            long cur_t = timer_factory_->now().nanoseconds()/1000000; // time in millisecond
 
             PlatoonMember newMember = PlatoonMember(senderId, cmdSpeed, curSpeed, dtDistance, ctDistance, cur_t);
             platoon.push_back(newMember);
-            // sort the platoon member based on dowtrack distance (m) in an descending order.
+            // sort the platoon member based on downtrack distance (m) in an descending order.
             std::sort(std::begin(platoon), std::end(platoon), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition > b.vehiclePosition;});
 
-            ROS_DEBUG_STREAM("Add a new vehicle into our platoon list " << newMember.staticId << " platoon.size now = " << platoon.size());
-            ROS_DEBUG_STREAM("    Platoon order is now:");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Add a new vehicle into our platoon list " << newMember.staticId << " platoon.size now = " << platoon.size());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "    Platoon order is now:");
             for (size_t i = 0;  i < platoon.size();  ++i)
             {
                 std::string hostFlag = " ";
@@ -268,7 +268,7 @@ namespace platoon_strategic_ihp
                     hostPosInPlatoon_ = i;
                     hostFlag = "Host";
                 }
-                ROS_DEBUG_STREAM("    " << platoon[i].staticId << "its DTD: " << platoon[i].vehiclePosition << " " << hostFlag);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "    " << platoon[i].staticId << "its DTD: " << platoon[i].vehiclePosition << " " << hostFlag);
             }
         }
     }
@@ -277,7 +277,7 @@ namespace platoon_strategic_ihp
 
     // Get the platoon size.
     int PlatoonManager::getHostPlatoonSize() {
-        ROS_DEBUG_STREAM("host platoon size: " << host_platoon_.size());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "host platoon size: " << host_platoon_.size());
         return host_platoon_.size();
     }
 
@@ -387,10 +387,10 @@ namespace platoon_strategic_ihp
     // Return the dynamic leader (i.e., the vehicle to follow) of the host vehicle.
     PlatoonMember PlatoonManager::getDynamicLeader(){
         PlatoonMember dynamicLeader;
-        ROS_DEBUG_STREAM("host_platoon_ size: " << host_platoon_.size());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "host_platoon_ size: " << host_platoon_.size());
         if(isFollower) 
         {
-            ROS_DEBUG_STREAM("Leader initially set as first vehicle in platoon");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Leader initially set as first vehicle in platoon");
             // return the first vehicle in the platoon as default if no valid algorithm applied
             // due to downtrack descending order, the platoon front veihcle is the first in list. 
             dynamicLeader = host_platoon_[0];
@@ -398,16 +398,16 @@ namespace platoon_strategic_ihp
                 size_t newLeaderIndex = allPredecessorFollowing();
 
                 dynamic_leader_index_ = (int)newLeaderIndex;
-                ROS_DEBUG_STREAM("dynamic_leader_index_: " << dynamic_leader_index_);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "dynamic_leader_index_: " << dynamic_leader_index_);
                 if(newLeaderIndex < host_platoon_.size()) { //this must always be true!
                     dynamicLeader = host_platoon_[newLeaderIndex];
-                    ROS_DEBUG_STREAM("APF output: " << dynamicLeader.staticId);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF output: " << dynamicLeader.staticId);
                     previousFunctionalDynamicLeaderIndex_ = newLeaderIndex;
                     previousFunctionalDynamicLeaderID_ = dynamicLeader.staticId;
                 }
                 else //something is terribly wrong in the logic!
                 {
-                    ROS_WARN_STREAM("newLeaderIndex = " << newLeaderIndex << " is invalid coming from allPredecessorFollowing!");
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "newLeaderIndex = " << newLeaderIndex << " is invalid coming from allPredecessorFollowing!");
                     /**
                      * it might happened when the subject vehicle gets far away from the preceding vehicle, 
                      * in which case the host vehicle will follow the one in front.
@@ -416,7 +416,7 @@ namespace platoon_strategic_ihp
                     // update index and ID 
                     previousFunctionalDynamicLeaderIndex_ = getNumberOfVehicleInFront()-1;
                     previousFunctionalDynamicLeaderID_ = dynamicLeader.staticId;
-                    ROS_DEBUG_STREAM("Based on the output of APF algorithm we start to follow our predecessor.");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Based on the output of APF algorithm we start to follow our predecessor.");
                 }
             }
         }
@@ -432,13 +432,13 @@ namespace platoon_strategic_ihp
         if(getNumberOfVehicleInFront() == 1)
         {
             // If the host is the second vehicle, then follow the leader.
-            ROS_DEBUG_STREAM("As the second vehicle in the platoon, it will always follow the leader. Case Zero");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "As the second vehicle in the platoon, it will always follow the leader. Case Zero");
             return 0;
         }
         ///***** Case One *****///
         // If there weren't a leader in the previous time step, follow the first vehicle (i.e., the platoon leader) as default.
         if(previousFunctionalDynamicLeaderID_ == "") {
-            ROS_DEBUG_STREAM("APF algorithm did not found a dynamic leader in previous time step. Case one");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF algorithm did not found a dynamic leader in previous time step. Case one");
             return 0;
         }
 
@@ -463,26 +463,26 @@ namespace platoon_strategic_ihp
         double distHeadwayWithPredecessor = downtrackDistance[hostPosInPlatoon_ - 1] - downtrackDistance[hostPosInPlatoon_];
         gapWithPred_ = distHeadwayWithPredecessor;
         if(insufficientGapWithPredecessor(distHeadwayWithPredecessor)) {
-            ROS_DEBUG_STREAM("APF algorithm decides there is an issue with the gap with preceding vehicle: " << distHeadwayWithPredecessor << " m. Case Two");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF algorithm decides there is an issue with the gap with preceding vehicle: " << distHeadwayWithPredecessor << " m. Case Two");
             return hostPosInPlatoon_ - 1;
         }
         else{
             // implementation of the main part of APF algorithm
             // calculate the time headway between every consecutive pair of vehicles
             std::vector<double> timeHeadways = calculateTimeHeadway(downtrackDistance, speed);
-            ROS_DEBUG_STREAM("APF calculate time headways: " );
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF calculate time headways: " );
             for (const auto& value : timeHeadways)
             {
-                ROS_DEBUG_STREAM("APF time headways: " << value);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF time headways: " << value);
             }
-            ROS_DEBUG_STREAM("APF found the previous dynamic leader is " << previousFunctionalDynamicLeaderID_);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF found the previous dynamic leader is " << previousFunctionalDynamicLeaderID_);
             // if the previous dynamic leader is the first vehicle in the platoon
             
             if(previousFunctionalDynamicLeaderIndex_ == 0) {
 
                 ///***** Case Three *****///
                 // If there is a violation, the return value is the desired dynamic leader index
-                ROS_DEBUG_STREAM("APF use violations on lower boundary or maximum spacing to choose dynamic leader. Case Three.");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF use violations on lower boundary or maximum spacing to choose dynamic leader. Case Three.");
                 return determineDynamicLeaderBasedOnViolation(timeHeadways);
             }
             else{
@@ -491,7 +491,7 @@ namespace platoon_strategic_ihp
                 std::vector<double> partialTimeHeadways = getTimeHeadwayFromIndex(timeHeadways, previousFunctionalDynamicLeaderIndex_);
                 for (const auto& value : partialTimeHeadways)
                 {
-                    ROS_DEBUG_STREAM("APF partial time headways: " << value);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF partial time headways: " << value);
                 }
                 int closestLowerBoundaryViolation = findLowerBoundaryViolationClosestToTheHostVehicle(partialTimeHeadways);
                 int closestMaximumSpacingViolation = findMaximumSpacingViolationClosestToTheHostVehicle(partialTimeHeadways);
@@ -516,42 +516,42 @@ namespace platoon_strategic_ihp
                     ///***** Case Four *****///
                     //we may switch dynamic leader further downstream
                     if(condition1 && condition2) {
-                        ROS_DEBUG_STREAM("APF found two conditions for assigning local dynamic leadership further downstream are satisfied. Case Four");
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF found two conditions for assigning local dynamic leadership further downstream are satisfied. Case Four");
                         return determineDynamicLeaderBasedOnViolation(timeHeadways);
                     } else {
                         
                         ///***** Case Five *****///
                         // We may not switch dynamic leadership to another vehicle further downstream because some criteria are not satisfied
-                        ROS_DEBUG_STREAM("APF found two conditions for assigning local dynamic leadership further downstream are not satisfied. Case Five.");
-                        ROS_DEBUG_STREAM("condition1: " << condition1 << " & condition2: " << condition2);
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF found two conditions for assigning local dynamic leadership further downstream are not satisfied. Case Five.");
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "condition1: " << condition1 << " & condition2: " << condition2);
                         return previousFunctionalDynamicLeaderIndex_;
                     }
                 } else if(closestLowerBoundaryViolation != -1 && closestMaximumSpacingViolation == -1) {
                     // The rest four cases have roughly the same logic: locate the closest violation and assign dynamic leadership accordingly
                     
                     ///***** Case Six *****///
-                    ROS_DEBUG_STREAM("APF found closestLowerBoundaryViolation on partial time headways. Case Six.");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF found closestLowerBoundaryViolation on partial time headways. Case Six.");
                     return previousFunctionalDynamicLeaderIndex_ - 1 + closestLowerBoundaryViolation;
 
                 } else if(closestLowerBoundaryViolation == -1 && closestMaximumSpacingViolation != -1) {
                     
                     ///***** Case Seven *****///
-                    ROS_DEBUG_STREAM("APF found closestMaximumSpacingViolation on partial time headways. Case Seven.");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF found closestMaximumSpacingViolation on partial time headways. Case Seven.");
                     return previousFunctionalDynamicLeaderIndex_ + closestMaximumSpacingViolation;
                 } else{
-                    ROS_DEBUG_STREAM("APF found closestMaximumSpacingViolation and closestLowerBoundaryViolation on partial time headways.");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF found closestMaximumSpacingViolation and closestLowerBoundaryViolation on partial time headways.");
                     if(closestLowerBoundaryViolation > closestMaximumSpacingViolation) {
                         
                         ///***** Case Eight *****///
-                        ROS_DEBUG_STREAM("closest LowerBoundaryViolation is higher than closestMaximumSpacingViolation on partial time headways. Case Eight.");
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "closest LowerBoundaryViolation is higher than closestMaximumSpacingViolation on partial time headways. Case Eight.");
                         return previousFunctionalDynamicLeaderIndex_ - 1 + closestLowerBoundaryViolation;
                     } else if(closestLowerBoundaryViolation < closestMaximumSpacingViolation) {
                         
                         ///***** Case Nine *****///
-                        ROS_DEBUG_STREAM("closestMaximumSpacingViolation is higher than closestLowerBoundaryViolation on partial time headways. Case Nine.");
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "closestMaximumSpacingViolation is higher than closestLowerBoundaryViolation on partial time headways. Case Nine.");
                         return previousFunctionalDynamicLeaderIndex_ + closestMaximumSpacingViolation;
                     } else {
-                        ROS_DEBUG_STREAM("APF dynamic Leader selection parameter is wrong!");
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF dynamic Leader selection parameter is wrong!");
                         return 0;
                     }
                 }
@@ -622,15 +622,15 @@ namespace platoon_strategic_ihp
         
         // Compare the violation locations, always following the closer violation vehicle (larger index) first, then the furthur ones.
         if(closestLowerBoundaryViolation > closestMaximumSpacingViolation) {
-            ROS_DEBUG_STREAM("APF found violation on closestLowerBoundaryViolation at " << closestLowerBoundaryViolation);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF found violation on closestLowerBoundaryViolation at " << closestLowerBoundaryViolation);
             return closestLowerBoundaryViolation; // Min violation, following the vehicle that is in font of the violating gap.
         } 
         else if(closestLowerBoundaryViolation < closestMaximumSpacingViolation){
-            ROS_DEBUG_STREAM("APF found violation on closestMaximumSpacingViolation at " << closestMaximumSpacingViolation);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF found violation on closestMaximumSpacingViolation at " << closestMaximumSpacingViolation);
             return closestMaximumSpacingViolation + 1; // Max violation, follow the vehicle that is behinf the violating gap.
         }
         else{
-            ROS_DEBUG_STREAM("APF found no violations on both closestLowerBoundaryViolation and closestMaximumSpacingViolation");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "APF found no violations on both closestLowerBoundaryViolation and closestMaximumSpacingViolation");
             return 0;
         }
     }
@@ -680,7 +680,7 @@ namespace platoon_strategic_ihp
             host_platoon_.erase(host_platoon_.begin(), host_platoon_.begin() + hostPosInPlatoon_);
         }else
         {
-            ROS_WARN("### Host becoming leader, but is already at index 0 in host_platoon_ vector!  Vector unchanged.");
+            RCLCPP_WARN(rclcpp::get_logger("platoon_strategic_ihp"), "### Host becoming leader, but is already at index 0 in host_platoon_ vector!  Vector unchanged.");
         }
 
         hostPosInPlatoon_ = 0;
@@ -688,7 +688,7 @@ namespace platoon_strategic_ihp
         currentPlatoonID = boost::uuids::to_string(boost::uuids::random_generator()());
         previousFunctionalDynamicLeaderID_ = "";
         previousFunctionalDynamicLeaderIndex_ = -1;
-        ROS_DEBUG_STREAM("The platoon manager is changed from follower state to leader state. New platoon ID = " << currentPlatoonID);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The platoon manager is changed from follower state to leader state. New platoon ID = " << currentPlatoonID);
     }
 
     // Change the local platoon manager from leader operation state to follower operation state for single vehicle status change.
@@ -716,7 +716,7 @@ namespace platoon_strategic_ihp
         // Clear the record of neighbor platoon, since we likely just joined it
         resetNeighborPlatoon();
 
-        ROS_DEBUG_STREAM("The platoon manager is changed from leader state to follower state. Platoon vector re-initialized. Plan ID = " << newPlatoonId);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The platoon manager is changed from leader state to follower state. Platoon vector re-initialized. Plan ID = " << newPlatoonId);
     }
 
     // Return the number of vehicles in the front of the host vehicle. If host is leader or a single vehicle, return 0.
@@ -919,15 +919,15 @@ namespace platoon_strategic_ihp
         double min_diff = 99999.0;
         int cut_in_index = -1; //-2 is meaningless default
 
-        ROS_DEBUG_STREAM("neighbor_platoon_.size(): " << neighbor_platoon_.size());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "neighbor_platoon_.size(): " << neighbor_platoon_.size());
 
         // Loop through all target platoon members  
         for(size_t i = 0; i < neighbor_platoon_.size(); i++) 
         {
             double current_member_dtd = neighbor_platoon_[i].vehiclePosition; 
-            ROS_DEBUG_STREAM("current_member_dtd: "<< current_member_dtd);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "current_member_dtd: "<< current_member_dtd);
             double curent_dtd_diff = current_member_dtd - joinerDtD;
-            ROS_DEBUG_STREAM("curent_dtd_diff: "<< curent_dtd_diff);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "curent_dtd_diff: "<< curent_dtd_diff);
             // update min index
             if (curent_dtd_diff > 0 && curent_dtd_diff < min_diff)
             {

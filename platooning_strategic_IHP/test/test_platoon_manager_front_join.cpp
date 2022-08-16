@@ -23,15 +23,15 @@
  * Author: Xu Han, Xin Xia, Jiaqi Ma
  */
 
-#include "platoon_manager_ihp.h"
-#include "platoon_strategic_ihp.h"
-#include "platoon_config_ihp.h"
+#include "platoon_strategic_ihp/platoon_manager_ihp.h"
+#include "platoon_strategic_ihp/platoon_strategic_ihp.h"
+#include "platoon_strategic_ihp/platoon_config_ihp.h"
 #include <gtest/gtest.h>
-#include <ros/ros.h>
-#include <carma_wm/WMListener.h>
-#include <carma_wm/WorldModel.h>
-#include <carma_wm/CARMAWorldModel.h>
-#include <carma_utils/CARMAUtils.h>
+#include <rclcpp/logging.hpp>
+#include <carma_wm_ros2/WMListener.hpp>
+#include <carma_wm_ros2/WorldModel.hpp>
+#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_utils/CARMAUtils.hpp>
 #include <string>
 #include <array>
 // #include "TestHelpers.h"
@@ -40,12 +40,11 @@ using namespace platoon_strategic_ihp;
 
 TEST(PlatoonManagerTestFrontJoin, test_construct_front)
 {
-    ros::Time::init();
-
     PlatoonPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {},
+        std::make_shared<carma_ros2_utils::timers::TestTimerFactory>());
     // Use Getter to retrieve host Platoon Manager class
     // change state
     plugin.setPMState(PlatoonState::LEADER);
@@ -54,13 +53,12 @@ TEST(PlatoonManagerTestFrontJoin, test_construct_front)
 // UCLA: use "run_candidate_leader" to test ecef encoding
 TEST(PlatoonManagerTestFrontJoin, test_ecef_encode_front)
 {
-    ros::Time::init();
-
     PlatoonPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
-    cav_msgs::LocationECEF ecef_point_test;
+    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {},
+        std::make_shared<carma_ros2_utils::timers::TestTimerFactory>());
+    carma_v2x_msgs::msg::LocationECEF ecef_point_test;
     ecef_point_test.ecef_x = 1.0;
     ecef_point_test.ecef_y = 2.0;
     ecef_point_test.ecef_z = 3.0;
@@ -72,7 +70,7 @@ TEST(PlatoonManagerTestFrontJoin, test_ecef_encode_front)
 
 TEST(PlatoonManagerTestFrontJoin, test_split_front)
 {
-    cav_msgs::MobilityOperation msg;
+    carma_v2x_msgs::msg::MobilityOperation msg;
     std::string strategyParams("INFO|REAR:1,LENGTH:2,SPEED:3,SIZE:4");
     std::vector<std::string> inputsParams;
     boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
@@ -109,7 +107,8 @@ TEST(PlatoonStrategicIHPPlugin, mob_resp_cb_front)
     PlatoonPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {},
+        std::make_shared<carma_ros2_utils::timers::TestTimerFactory>());
     // change state
     plugin.setPMState(PlatoonState::FOLLOWER);
 
@@ -121,12 +120,13 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
     PlatoonPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {},
+        std::make_shared<carma_ros2_utils::timers::TestTimerFactory>());
     
     // Use platoon manager setter to set state
     plugin.setPMState(PlatoonState::LEADER);
     // compose platoon info
-    cav_msgs::PlatooningInfo info_msg1 = plugin.composePlatoonInfoMsg();
+    carma_planning_msgs::msg::PlatooningInfo info_msg1 = plugin.composePlatoonInfoMsg();
     // check platoon info (Host is a single ADS vehicle, so it's also the leader)
     EXPECT_EQ(info_msg1.leader_id, "default_id");
 
@@ -141,7 +141,7 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
     // update platoon list
     plugin.updatePlatoonList(cur_pl);
     // compose platoon info
-    cav_msgs::PlatooningInfo info_msg2 = plugin.composePlatoonInfoMsg();
+    carma_planning_msgs::msg::PlatooningInfo info_msg2 = plugin.composePlatoonInfoMsg();
     // check platoo info (when host is follower, the newly added member will be the leader)
     EXPECT_EQ(info_msg2.leader_id, "1");
 }
@@ -154,7 +154,8 @@ TEST(PlatoonStrategicIHPPlugin, test_follower_front)
     PlatoonPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {},
+        std::make_shared<carma_ros2_utils::timers::TestTimerFactory>());
     // change state
     plugin.setPMState(PlatoonState::LEADERABORTING);
     // set plan valid
@@ -163,12 +164,12 @@ TEST(PlatoonStrategicIHPPlugin, test_follower_front)
     platoon_strategic_ihp::PlatoonManager pm_ = plugin.getHostPM();
     EXPECT_EQ(pm_.isFollower, false);
 
-    cav_msgs::MobilityResponse resp;
+    carma_v2x_msgs::msg::MobilityResponse resp;
     resp.is_accepted = true;
     // sender id need to match with default value
-    resp.header.sender_id = pm_.targetLeaderId;
+    resp.m_header.sender_id = pm_.targetLeaderId;
     // plan_id need to match with default value, which is ""
-    resp.header.plan_id = pm_.current_plan.planId;
+    resp.m_header.plan_id = pm_.current_plan.planId;
     plugin.mob_resp_cb(resp);
     
     // Use Getter to retrieve an updated Platoon Manager class
@@ -183,7 +184,8 @@ TEST(PlatoonStrategicIHPPlugin, cutin_test_leader_2)
     PlatoonPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {},
+        std::make_shared<carma_ros2_utils::timers::TestTimerFactory>());
 
     // change state
     plugin.setPMState(PlatoonState::LEADWITHOPERATION);
@@ -194,9 +196,9 @@ TEST(PlatoonStrategicIHPPlugin, cutin_test_leader_2)
     EXPECT_EQ(pm_.isFollower, false);
 
     // compose dummy request msg
-    cav_msgs::MobilityRequest msg;
-    msg.header.plan_id = "req";
-    msg.plan_type.type = cav_msgs::PlanType::CUT_IN_FRONT_DONE;
+    carma_v2x_msgs::msg::MobilityRequest msg;
+    msg.m_header.plan_id = "req";
+    msg.plan_type.type = carma_v2x_msgs::msg::PlanType::CUT_IN_FRONT_DONE;
 
     // compose dummy response msg
     MobilityRequestResponse resp = plugin.handle_mob_req(msg);
@@ -212,11 +214,11 @@ TEST(PlatoonStrategicIHPPlugin, cutin_test_leader_2)
 //UCLA: Cut-in front test for joining vheicle. Test the transition "leader --> prepare to jion"
 TEST(PlatoonStrategicIHPPlugin, cutin_test_join_1)
 {
-    ros::Time::init();
     PlatoonPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {},
+        std::make_shared<carma_ros2_utils::timers::TestTimerFactory>());
     // Use Getter to retrieve host Platoon Manager class
     platoon_strategic_ihp::PlatoonManager pm_ = plugin.getHostPM();
     plugin.setPMState(PlatoonState::LEADER);
@@ -224,13 +226,13 @@ TEST(PlatoonStrategicIHPPlugin, cutin_test_join_1)
     EXPECT_EQ(pm_.isFollower, false);
 
     // compose dummy response msg
-    cav_msgs::MobilityResponse resp;
+    carma_v2x_msgs::msg::MobilityResponse resp;
 
     // compose plan ID and leader ID
-    resp.header.plan_id = pm_.current_plan.planId;
-    resp.header.sender_id = pm_.current_plan.peerId;
+    resp.m_header.plan_id = pm_.current_plan.planId;
+    resp.m_header.sender_id = pm_.current_plan.peerId;
     // plan type and acceptance 
-    resp.plan_type.type = cav_msgs::PlanType::CUT_IN_FROM_SIDE;
+    resp.plan_type.type = carma_v2x_msgs::msg::PlanType::CUT_IN_FROM_SIDE;
     resp.is_accepted = true;
 
     // send dummy reponse 
@@ -248,7 +250,8 @@ TEST(PlatoonStrategicIHPPlugin, cutin_test_join_2)
     PlatoonPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {},
+        std::make_shared<carma_ros2_utils::timers::TestTimerFactory>());
     // change state
     plugin.setPMState(PlatoonState::PREPARETOJOIN);
     // set plan valid
@@ -258,13 +261,13 @@ TEST(PlatoonStrategicIHPPlugin, cutin_test_join_2)
     EXPECT_EQ(pm_.isFollower, false);
 
     // compose dummy response msg
-    cav_msgs::MobilityResponse resp;
+    carma_v2x_msgs::msg::MobilityResponse resp;
     // sender id need to match with default value
-    resp.header.sender_id = pm_.targetLeaderId;
+    resp.m_header.sender_id = pm_.targetLeaderId;
     // plan_id need to match with default value, which is ""
-    resp.header.plan_id = pm_.current_plan.planId;
+    resp.m_header.plan_id = pm_.current_plan.planId;
     resp.is_accepted = true;
-    resp.plan_type.type = cav_msgs::PlanType::CUT_IN_FRONT_DONE;
+    resp.plan_type.type = carma_v2x_msgs::msg::PlanType::CUT_IN_FRONT_DONE;
 
     // send dummy reponse 
     plugin.mob_resp_cb(resp);
@@ -283,7 +286,8 @@ TEST(PlatoonStrategicIHPPlugin, test_get_leader_front)
     PlatoonPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {},
+        std::make_shared<carma_ros2_utils::timers::TestTimerFactory>());
     // change state
     plugin.setPMState(PlatoonState::FOLLOWER);
 
@@ -331,8 +335,6 @@ TEST(PlatoonManagerTestFrontJoin, test2_front)
 
     std::string params = "CMDSPEED:11,DOWNTRACK:01,SPEED:11";
 
-    ros::Time::init();
-
     pm.updatesOrAddMemberInfo("2", 2.0, 1.0, 2.5); // dtd: 1.0m, larger down track, in front.
 
     EXPECT_EQ(2, pm.platoon.size());
@@ -358,8 +360,6 @@ TEST(PlatoonManagerTestFrontJoin, test3_front)
     pm.leaderID = "0";
     pm.currentPlatoonID = "a";
 
-    ros::Time::init();
-
     int res = pm.getTotalPlatooningSize();
 
     EXPECT_EQ(2, res);
@@ -382,8 +382,6 @@ TEST(PlatoonManagerTestFrontJoin, test4_front)
     pm.platoonSize = 2;
     pm.leaderID = "0";
     pm.currentPlatoonID = "a";
-
-    ros::Time::init();
 
     int res = pm.allPredecessorFollowing();
 
