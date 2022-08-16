@@ -34,7 +34,7 @@ jobs:
           TERM: xterm
           INIT_ENV: /home/carma/.base-image/init-env.sh
           ROS_2_ENV: /opt/autoware.ai/ros/install_ros2/setup.bash
-    resource_class: xlarge      
+    resource_class: xlarge
     # Set working directory
     working_directory: "/opt/carma/"
     # Pull code and execute tests
@@ -50,7 +50,9 @@ jobs:
       # Checkout PR branch
       - checkout:
           path: src/CARMAPlatform
-      - run: 
+      - setup_remote_docker:
+          docker_layer_caching: true # DLC will explicitly cache layers here and try to avoid rebuilding.
+      - run:
           name: Pull Deps
           command: |
             source ${INIT_ENV}
@@ -88,7 +90,6 @@ jobs:
             source ${INIT_ENV}
             source ${ROS_2_ENV}
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
-          
       # Run SonarCloud analysis
       # PR Branches and number extracted from Circle variables and github api
       # Circle CI seems to make a change to the base branch, so we must fetch --force to ensure correct git file change stats
