@@ -34,8 +34,8 @@ namespace light_controlled_intersection_tactical_plugin
         if(req->maneuver_index_to_plan >= req->maneuver_plan.maneuvers.size())
         {
         throw std::invalid_argument(
-            "Light Control Intersection Plugin asked to plan invalid maneuver index: " + std::to_string(req->maneuver_index_to_plan) + 
-            " for plan of size: " + std::to_string(req->maneuver_plan.maneuvers.size()));
+                "Light Control Intersection Plugin asked to plan invalid maneuver index: " + std::to_string(req->maneuver_index_to_plan) + 
+                " for plan of size: " + std::to_string(req->maneuver_plan.maneuvers.size()));
         }
         std::vector<carma_planning_msgs::msg::Maneuver> maneuver_plan;
         // expecting only one maneuver for an intersection
@@ -55,13 +55,13 @@ namespace light_controlled_intersection_tactical_plugin
         }  
 
         lanelet::BasicPoint2d veh_pos(req->vehicle_state.x_pos_global, req->vehicle_state.y_pos_global);
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Planning state x:"<<req->vehicle_state.x_pos_global <<" , y: " << req->vehicle_state.y_pos_global);
+        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Planning state x:" << req->vehicle_state.x_pos_global << " , y: " << req->vehicle_state.y_pos_global);
 
         current_downtrack_ = wm_->routeTrackPos(veh_pos).downtrack;
 
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Current_downtrack: "<< current_downtrack_);
 
-        auto current_lanelets = wm_->getLaneletsFromPoint({ req->vehicle_state.x_pos_global, req->vehicle_state.y_pos_global});
+        auto current_lanelets = wm_->getLaneletsFromPoint({req->vehicle_state.x_pos_global, req->vehicle_state.y_pos_global});
         lanelet::ConstLanelet current_lanelet;
         
         if (current_lanelets.empty())
@@ -81,11 +81,11 @@ namespace light_controlled_intersection_tactical_plugin
         }
         }
 
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Current_lanelet: "<< current_lanelet.id());
+        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Current_lanelet: " << current_lanelet.id());
 
         speed_limit_ = findSpeedLimit(current_lanelet, wm_);
 
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "speed_limit_: "<< speed_limit_);
+        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "speed_limit_: " << speed_limit_);
 
         DetailedTrajConfig wpg_detail_config;
         GeneralTrajConfig wpg_general_config;
@@ -127,7 +127,7 @@ namespace light_controlled_intersection_tactical_plugin
 
         // Set the planning plugin field name
         for (auto& p : trajectory.trajectory_points) {
-        p.planner_plugin_name = plugin_discovery_msg_.name;
+            p.planner_plugin_name = plugin_discovery_msg_.name;
         }
         
         bool is_new_case_successful = GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[1]);
@@ -135,15 +135,15 @@ namespace light_controlled_intersection_tactical_plugin
 
         if (is_last_case_successful_ != boost::none && last_case_ != boost::none)
         {
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "all variables are set!");
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "is_last_case_successful_.get(): " << (int)is_last_case_successful_.get());
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "evaluation distance: " << last_successful_ending_downtrack_ - current_downtrack_);
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "all variables are set!");
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "is_last_case_successful_.get(): " << (int)is_last_case_successful_.get());
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "evaluation distance: " << last_successful_ending_downtrack_ - current_downtrack_);
 
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "evaluation time: " << std::to_string(last_successful_scheduled_entry_time_ - rclcpp::Time(req->header.stamp).seconds()));
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "evaluation time: " << std::to_string(last_successful_scheduled_entry_time_ - rclcpp::Time(req->header.stamp).seconds()));
         }
         else
         {
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Not all variables are set...");
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Not all variables are set...");
         }
 
         carma_planning_msgs::msg::TrajectoryPlan reduced_last_traj;
@@ -154,11 +154,11 @@ namespace light_controlled_intersection_tactical_plugin
 
         for (size_t i = 0; i < last_trajectory_.trajectory_points.size(); i++)
         {
-        if (rclcpp::Time(last_trajectory_.trajectory_points[i].target_time) > rclcpp::Time(req->header.stamp) - rclcpp::Duration(0.1 * 1e9)) // Duration is in nanoseconds
-        {
-            reduced_last_traj.trajectory_points.emplace_back(last_trajectory_.trajectory_points[i]);
-            reduced_final_speeds.emplace_back(last_final_speeds_[i]);
-        }
+            if (rclcpp::Time(last_trajectory_.trajectory_points[i].target_time) > rclcpp::Time(req->header.stamp) - rclcpp::Duration(0.1 * 1e9)) // Duration is in nanoseconds
+            {
+                reduced_last_traj.trajectory_points.emplace_back(last_trajectory_.trajectory_points[i]);
+                reduced_final_speeds.emplace_back(last_final_speeds_[i]);
+            }
         }
 
         last_final_speeds_ = reduced_final_speeds;
@@ -170,37 +170,37 @@ namespace light_controlled_intersection_tactical_plugin
             && !last_trajectory_.trajectory_points.empty()
             && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > rclcpp::Time(req->header.stamp) + rclcpp::Duration(1 * 1e9)) // Duration is in nanoseconds
         {
-        resp->trajectory_plan = last_trajectory_;
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Last TRAJ's target time: " << rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() << ", and stamp:" << rclcpp::Time(req->header.stamp).seconds());
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "USING LAST TRAJ: " << (int)last_case_.get());
+            resp->trajectory_plan = last_trajectory_;
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Last TRAJ's target time: " << rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() << ", and stamp:" << rclcpp::Time(req->header.stamp).seconds());
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "USING LAST TRAJ: " << (int)last_case_.get());
         }
         else if (is_last_case_successful_ != boost::none && last_case_ != boost::none
-                && is_last_case_successful_.get() == true
-                && is_new_case_successful == false
-                && last_successful_ending_downtrack_ - current_downtrack_ < config_.algorithm_evaluation_distance
-                && last_successful_scheduled_entry_time_ - rclcpp::Time(req->header.stamp).seconds() < config_.algorithm_evaluation_period
-                && !last_trajectory_.trajectory_points.empty()
-                && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() > rclcpp::Time(req->header.stamp).seconds())
+            && is_last_case_successful_.get() == true
+            && is_new_case_successful == false
+            && last_successful_ending_downtrack_ - current_downtrack_ < config_.algorithm_evaluation_distance
+            && last_successful_scheduled_entry_time_ - rclcpp::Time(req->header.stamp).seconds() < config_.algorithm_evaluation_period
+            && !last_trajectory_.trajectory_points.empty()
+            && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() > rclcpp::Time(req->header.stamp).seconds())
         {
-        resp->trajectory_plan = last_trajectory_;
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Last Traj's target time: " << rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() << ", and stamp:" << rclcpp::Time(req->header.stamp).seconds() << ", and scheduled: " << std::to_string(last_successful_scheduled_entry_time_));
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "EDGE CASE: USING LAST TRAJ: " << (int)last_case_.get());
+            resp->trajectory_plan = last_trajectory_;
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Last Traj's target time: " << rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() << ", and stamp:" << rclcpp::Time(req->header.stamp).seconds() << ", and scheduled: " << std::to_string(last_successful_scheduled_entry_time_));
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "EDGE CASE: USING LAST TRAJ: " << (int)last_case_.get());
         }  
         else
         {
-        last_trajectory_ = trajectory;
-        resp->trajectory_plan = trajectory;
-        last_case_ = new_case;
-        last_final_speeds_ = debug_msg_.velocity_profile;
-        is_last_case_successful_ = is_new_case_successful;
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "USING NEW: Target time: " << rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() << ", and stamp:" << rclcpp::Time(req->header.stamp).seconds());
-        if (is_new_case_successful)
-        {
-            last_successful_ending_downtrack_ = GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_dist);              // if algorithm was successful, this is traffic_light_downtrack
-            last_successful_scheduled_entry_time_ = rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_time)).seconds();  // if algorithm was successful, this is also scheduled entry time (ET in TSMO UC2 Algo)
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "last_successful_ending_downtrack_:" << last_successful_ending_downtrack_ << ", last_successful_scheduled_entry_time_: " << std::to_string(last_successful_scheduled_entry_time_));
-        }
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "USING NEW CASE!!! : " << (int)last_case_.get());
+            last_trajectory_ = trajectory;
+            resp->trajectory_plan = trajectory;
+            last_case_ = new_case;
+            last_final_speeds_ = debug_msg_.velocity_profile;
+            is_last_case_successful_ = is_new_case_successful;
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "USING NEW: Target time: " << rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() << ", and stamp:" << rclcpp::Time(req->header.stamp).seconds());
+            if (is_new_case_successful)
+            {
+                last_successful_ending_downtrack_ = GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_dist);              // if algorithm was successful, this is traffic_light_downtrack
+                last_successful_scheduled_entry_time_ = rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_time)).seconds();  // if algorithm was successful, this is also scheduled entry time (ET in TSMO UC2 Algo)
+                RCLCPP_DEBUG_STREAM(logger_->get_logger(), "last_successful_ending_downtrack_:" << last_successful_ending_downtrack_ << ", last_successful_scheduled_entry_time_: " << std::to_string(last_successful_scheduled_entry_time_));
+            }
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "USING NEW CASE!!! : " << (int)last_case_.get());
         
         }
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Debug: new case:" << (int) new_case << ", is_new_case_successful: " << is_new_case_successful);
@@ -217,7 +217,7 @@ namespace light_controlled_intersection_tactical_plugin
     {
         if (points_and_target_speeds.empty())
         {
-        throw std::invalid_argument("Point and target speed list is empty! Unable to apply case one speed profile...");
+            throw std::invalid_argument("Point and target speed list is empty! Unable to apply case one speed profile...");
         }
         
         // Checking route geometry start against start_dist and adjust profile
@@ -243,10 +243,10 @@ namespace light_controlled_intersection_tactical_plugin
 
         if (planning_downtrack_start < start_dist)
         {
-        //Account for the buffer distance that is technically not part of this maneuver
-        
-        total_dist_planned = planning_downtrack_start - start_dist;
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "buffered section is present. Adjusted total_dist_planned to: " << total_dist_planned);      
+            //Account for the buffer distance that is technically not part of this maneuver
+            
+            total_dist_planned = planning_downtrack_start - start_dist;
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "buffered section is present. Adjusted total_dist_planned to: " << total_dist_planned);      
         }
         
         double prev_speed = starting_speed;
@@ -254,48 +254,48 @@ namespace light_controlled_intersection_tactical_plugin
         
         for(auto& p : points_and_target_speeds)
         {
-        double delta_d = lanelet::geometry::distance2d(prev_point.point, p.point);
-        total_dist_planned += delta_d;  
+            double delta_d = lanelet::geometry::distance2d(prev_point.point, p.point);
+            total_dist_planned += delta_d;  
 
-        //Apply the speed from algorithm at dist covered
-        //Kinematic: v_f = sqrt(v_o^2 + 2*a*d)
-        double speed_i;
-        if (total_dist_planned <= epsilon_) 
-        {
-            //Keep target speed same for buffer distance portion
-            speed_i = starting_speed;
-        }
-        else if(total_dist_planned <= dist1 + epsilon_){
-            //First segment
-            speed_i = sqrt(pow(starting_speed, 2) + 2 * tsp.a1_ * total_dist_planned);
-        }
-        else if(total_dist_planned > dist1 && total_dist_planned <= dist2 + epsilon_){
-            //Second segment
-            speed_i = sqrt(std::max(pow(tsp.v1_, 2) + 2 * tsp.a2_ * (total_dist_planned - dist1), 0.0)); //std::max to ensure negative value is not sqrt
-        }
-        else if (total_dist_planned > dist2 && total_dist_planned <= dist3 + epsilon_)
-        {
-            //Third segment
-            speed_i = sqrt(std::max(pow(tsp.v2_, 2) + 2 * tsp.a3_ * (total_dist_planned - dist2), 0.0)); //std::max to ensure negative value is not sqrt
-        }
-        else 
-        {
-            //buffer points that will be cut
-            speed_i = prev_speed;
-        }
+            //Apply the speed from algorithm at dist covered
+            //Kinematic: v_f = sqrt(v_o^2 + 2*a*d)
+            double speed_i;
+            if (total_dist_planned <= epsilon_) 
+            {
+                //Keep target speed same for buffer distance portion
+                speed_i = starting_speed;
+            }
+            else if(total_dist_planned <= dist1 + epsilon_){
+                //First segment
+                speed_i = sqrt(pow(starting_speed, 2) + 2 * tsp.a1_ * total_dist_planned);
+            }
+            else if(total_dist_planned > dist1 && total_dist_planned <= dist2 + epsilon_){
+                //Second segment
+                speed_i = sqrt(std::max(pow(tsp.v1_, 2) + 2 * tsp.a2_ * (total_dist_planned - dist1), 0.0)); //std::max to ensure negative value is not sqrt
+            }
+            else if (total_dist_planned > dist2 && total_dist_planned <= dist3 + epsilon_)
+            {
+                //Third segment
+                speed_i = sqrt(std::max(pow(tsp.v2_, 2) + 2 * tsp.a3_ * (total_dist_planned - dist2), 0.0)); //std::max to ensure negative value is not sqrt
+            }
+            else 
+            {
+                //buffer points that will be cut
+                speed_i = prev_speed;
+            }
 
-        if (isnan(speed_i))
-        {
-            speed_i = std::max(config_.minimum_speed, algo_min_speed);
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Detected nan number from equations. Set to " << speed_i);
-        }
+            if (isnan(speed_i))
+            {
+                speed_i = std::max(config_.minimum_speed, algo_min_speed);
+                RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Detected nan number from equations. Set to " << speed_i);
+            }
 
-        p.speed = std::max({speed_i, config_.minimum_speed, algo_min_speed});
-        p.speed = std::min({p.speed, speed_limit_, algo_max_speed}); 
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Applied speed: " << p.speed << ", at dist: " << total_dist_planned);
+            p.speed = std::max({speed_i, config_.minimum_speed, algo_min_speed});
+            p.speed = std::min({p.speed, speed_limit_, algo_max_speed}); 
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Applied speed: " << p.speed << ", at dist: " << total_dist_planned);
 
-        prev_point = p;
-        prev_speed = p.speed;
+            prev_point = p;
+            prev_speed = p.speed;
         }
     }
 
@@ -303,7 +303,7 @@ namespace light_controlled_intersection_tactical_plugin
     {
         if(GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data).size() < 9 || 
             GET_MANEUVER_PROPERTY(maneuver, parameters.int_valued_meta_data).size() < 2 ){
-        throw std::invalid_argument("There must be 9 float_valued_meta_data and 2 int_valued_meta_data to apply algorithm's parameters.");
+            throw std::invalid_argument("There must be 9 float_valued_meta_data and 2 int_valued_meta_data to apply algorithm's parameters.");
         }
 
         TrajectoryParams tsp;
@@ -336,11 +336,11 @@ namespace light_controlled_intersection_tactical_plugin
         lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm->getTrafficRules();
         if (traffic_rules)
         {
-        return (*traffic_rules)->speedLimit(llt).speedLimit.value();
+            return (*traffic_rules)->speedLimit(llt).speedLimit.value();
         }
         else
         {
-        throw std::invalid_argument("Valid traffic rules object could not be built");
+            throw std::invalid_argument("Valid traffic rules object could not be built");
         }
     }
 
@@ -356,26 +356,26 @@ namespace light_controlled_intersection_tactical_plugin
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "VehDowntrack: "<<max_starting_downtrack);
         for(const auto &maneuver : maneuvers)
         {
-        double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
-        
-        starting_downtrack = std::min(starting_downtrack, max_starting_downtrack);
+            double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
+            
+            starting_downtrack = std::min(starting_downtrack, max_starting_downtrack);
 
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Used downtrack: " << starting_downtrack);
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Used downtrack: " << starting_downtrack);
 
-        // check if required parameter from strategic planner is present
-        if(GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data).empty())
-        {
-            throw std::invalid_argument("No time_to_schedule_entry is provided in float_valued_meta_data");
-        }
+            // check if required parameter from strategic planner is present
+            if(GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data).empty())
+            {
+                throw std::invalid_argument("No time_to_schedule_entry is provided in float_valued_meta_data");
+            }
 
-        //overwrite maneuver type to use lane follow library function
-        carma_planning_msgs::msg::Maneuver temp_maneuver = maneuver;
-        temp_maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Creating Lane Follow Geometry");
-        std::vector<PointSpeedPair> lane_follow_points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
-        points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
-        
-        break; // expected to receive only one maneuver to plan
+            //overwrite maneuver type to use lane follow library function
+            carma_planning_msgs::msg::Maneuver temp_maneuver = maneuver;
+            temp_maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Creating Lane Follow Geometry");
+            std::vector<PointSpeedPair> lane_follow_points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
+            points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
+            
+            break; // expected to receive only one maneuver to plan
         }
 
         //Add buffer ending to lane follow points at the end of maneuver(s) end dist 
