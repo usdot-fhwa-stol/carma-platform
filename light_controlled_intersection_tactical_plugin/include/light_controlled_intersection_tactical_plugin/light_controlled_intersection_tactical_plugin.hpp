@@ -23,15 +23,8 @@
 #include <boost/geometry.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lanelet2_core/geometry/Point.h>
-#include <trajectory_utils/trajectory_utils.hpp>
-#include <trajectory_utils/conversions/conversions.hpp>
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-#include <Eigen/LU>
-#include <Eigen/SVD>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/geometry/LineString.h>
-#include <carma_ros2_utils/containers/containers.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <carma_planning_msgs/srv/plan_trajectory.hpp>
@@ -98,7 +91,7 @@ namespace light_controlled_intersection_tactical_plugin
     // World Model object
     carma_wm::WorldModelConstPtr wm_;
 
-    // LightControlledIntersectionTacticalPlugin configuration
+    // Config for this object
     Config config_;
 
     // Logger for this object
@@ -203,11 +196,8 @@ namespace light_controlled_intersection_tactical_plugin
 
     /**
      * \brief Function to process the light controlled intersection tactical plugin service call for trajectory planning
-     * 
      * \param req The service request
      * \param resp The service response
-     * 
-     * \return True if success. False otherwise
      */ 
     void plan_trajectory_cb( 
       carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 

@@ -128,7 +128,7 @@ namespace light_controlled_intersection_tactical_plugin
   }
 
   std::string LightControlledIntersectionTransitPluginNode::get_version_id() {
-    return "v1.0";
+    return "v4.0"; // Version ID matches the value set in this package's package.xml
   }
 
   void LightControlledIntersectionTransitPluginNode::plan_trajectory_callback(

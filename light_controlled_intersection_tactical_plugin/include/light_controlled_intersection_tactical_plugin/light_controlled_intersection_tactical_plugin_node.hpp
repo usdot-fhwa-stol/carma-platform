@@ -23,19 +23,6 @@
 #include "light_controlled_intersection_tactical_plugin/light_controlled_intersection_tactical_plugin_config.hpp"
 #include "light_controlled_intersection_tactical_plugin/light_controlled_intersection_tactical_plugin.hpp"
 
-/**
- * \brief Macro definition to enable easier access to fields shared across the maneuver types
- * \param mvr The maneuver object to invoke the accessors on
- * \param property The name of the field to access on the specific maneuver types. Must be shared by all extant maneuver types
- * \return Expands to an expression (in the form of chained ternary operators) that evalutes to the desired field
- */
-#define GET_MANEUVER_PROPERTY(mvr, property)\
-        (((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
-            ((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
-                ((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
-                        ((mvr).type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
-                                throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id " + std::to_string((mvr).type)))))))
-
 namespace light_controlled_intersection_tactical_plugin
 {
   /**
@@ -45,9 +32,11 @@ namespace light_controlled_intersection_tactical_plugin
   class LightControlledIntersectionTransitPluginNode : public carma_guidance_plugins::TacticalPlugin
   {
   private:    
-    // LightControlledIntersectionTransitPluginNode configuration
+    // Config for this object
     Config config_;
 
+
+    // Worker object
     std::shared_ptr<LightControlledIntersectionTacticalPlugin> worker_;
 
   public:
