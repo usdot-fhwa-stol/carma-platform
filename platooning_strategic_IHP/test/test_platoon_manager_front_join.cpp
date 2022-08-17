@@ -31,12 +31,13 @@
 #include <carma_wm_ros2/WMListener.hpp>
 #include <carma_wm_ros2/WorldModel.hpp>
 #include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
 #include <carma_ros2_utils/timers/testing/TestTimerFactory.hpp>
 #include <string>
 #include <array>
-// #include "TestHelpers.h"
 
-using namespace platoon_strategic_ihp;
+namespace platoon_strategic_ihp
+{
 
 TEST(PlatoonManagerTestFrontJoin, test_construct_front)
 {
@@ -104,10 +105,9 @@ TEST(PlatoonManagerTestFrontJoin, test_compose_front)
 
 TEST(PlatoonStrategicIHPPlugin, mob_resp_cb_front)
 {
-    PlatoonPluginConfig config;
-    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+    PlatoonPluginConfig config;;
 
-    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
+    PlatoonStrategicIHPPlugin plugin(carma_wm::test::getGuidanceTestMap(), config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
         std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
     // change state
     plugin.setPMState(PlatoonState::FOLLOWER);
@@ -118,9 +118,8 @@ TEST(PlatoonStrategicIHPPlugin, mob_resp_cb_front)
 TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
 {
     PlatoonPluginConfig config;
-    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
+    PlatoonStrategicIHPPlugin plugin(carma_wm::test::getGuidanceTestMap(), config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
         std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
     
     // Use platoon manager setter to set state
@@ -138,11 +137,14 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
     cur_pl.push_back(member);
     // update platoon list
     plugin.updatePlatoonList(cur_pl);
+
+    plugin.pm_.changeFromLeaderToFollower("a", "1");
     // compose platoon info
     carma_planning_msgs::msg::PlatooningInfo info_msg2 = plugin.composePlatoonInfoMsg();
     // check platoo info (when host is follower, the newly added member will be the leader)
     EXPECT_EQ(info_msg2.leader_id, "1");
 }
+
 
 // ---------------------------------------- UCLA Tests for same-lane front join and cut-in front join ---------------------------------------
 // UCLA: Use the transition "leader_aborting --> follower" to test follower functions
@@ -320,15 +322,15 @@ TEST(PlatoonManagerTestFrontJoin, test2_front)
     pm.host_platoon_ = cur_pl;
 
     pm.isFollower = true;
-    pm.platoonLeaderID = "0";
+    pm.platoonLeaderID = "2";
     pm.currentPlatoonID = "a";
 
     std::string params = "CMDSPEED:11,DOWNTRACK:01,SPEED:11";
 
     pm.updatesOrAddMemberInfo(cur_pl, "2", 2.0, 1.0, 0.0, 2.5); // dtd: 1.0m, larger down track, in front.
 
-    EXPECT_EQ(2ul, pm.host_platoon_.size());
-    EXPECT_EQ("2", pm.host_platoon_[0].staticId);  // sorted by dtd distance, larger downtrack means vehicle at front, hence ranked higher.
+    EXPECT_EQ(2ul, cur_pl.size());
+    EXPECT_EQ("2", cur_pl[0].staticId);  // sorted by dtd distance, larger downtrack means vehicle at front, hence ranked higher.
 }
 
 // add 2 member to platoon, test size 
@@ -375,3 +377,5 @@ TEST(PlatoonManagerTestFrontJoin, test4_front)
 
     EXPECT_EQ(0, res);
 }
+
+} // Namespace required for FRIEND_TEST to allow access to private members

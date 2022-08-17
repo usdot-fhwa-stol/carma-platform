@@ -215,10 +215,10 @@ TEST(PlatoonManagerTest, test2)
 
     std::string params = "CMDSPEED:11,DOWNTRACK:01,SPEED:11";
 
-    pm.updatesOrAddMemberInfo(cur_pl, "2", 2.0, 1.0, 0.0, 2.5);
+    pm.updatesOrAddMemberInfo(cur_pl, "2", 2.0, 1.0, 0.0, 2.5); //HERE
 
-    EXPECT_EQ(2ul, pm.host_platoon_.size());
-    EXPECT_EQ("1", pm.host_platoon_[0].staticId);
+    EXPECT_EQ(2ul, cur_pl.size());
+    EXPECT_EQ("2", cur_pl[0].staticId);
 }
 
 
@@ -240,7 +240,7 @@ TEST(PlatoonManagerTest, test3)
 
     int res = pm.getHostPlatoonSize();
 
-    EXPECT_EQ(3, res);
+    EXPECT_EQ(2, res);
 
 }
 

@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <gtest/gtest_prod.h>
 #include <vector>
 #include <math.h>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
@@ -842,5 +843,8 @@ namespace platoon_strategic_ihp
              *       for cut-in in middle, index indicate the gap leading vehicle's index.
              */    
             const std::string JOIN_PARAMS = "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%";
+
+            // Unit Test Accessors
+            FRIEND_TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front);
     };
 }
