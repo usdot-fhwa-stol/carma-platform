@@ -62,8 +62,8 @@ def generate_launch_description():
                     ("set_active_route",[EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/set_active_route"]), 
                     ("start_active_route",[EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/start_active_route"]),
                     ("get_available_routes", [EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/get_available_routes"]),
-                    ("route_state", [EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route_state]"), 
-                    ("route_event", [EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route_event]"),
+                    ("route_state", [EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route_state"]), 
+                    ("route_event", [EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route_event"]),
                     ("route", [EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route"]),
                     ("get_system_version", [EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/get_system_version"]), 
                     ("state", [EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state"]),  
@@ -93,8 +93,9 @@ def generate_launch_description():
                     ("can/speed", [EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/can/speed"]),
                     ("can/acc_engaged", [EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/can/acc_engaged"])        
                 ],
-                parameters=[ carma_param_file
-                              ]
+                parameters=[ 
+                    carma_param_file
+                ]
         )
     ])
 
