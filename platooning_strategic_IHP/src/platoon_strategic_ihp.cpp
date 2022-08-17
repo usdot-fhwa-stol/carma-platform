@@ -2480,9 +2480,6 @@ namespace platoon_strategic_ihp
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm_.is_neighbor_record_complete_ " << pm_.is_neighbor_record_complete_);
         if (isCreatingGap  &&  pm_.is_neighbor_record_complete_)
         {
-            // task 1: check gap 
-            double cut_in_gap = pm_.getCutInGap(target_join_index_, current_downtrack_);   
-            // cut-in gap not needed for front and rear join, so ignored
                    
             // task 2: set indicator if gap is safe
             safeToLaneChange_ = true;

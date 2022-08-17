@@ -218,6 +218,8 @@ namespace platoon_strategic_ihp
     cmd_sub.reset();
     georeference_sub.reset();
     worker_.reset();
+
+    return CallbackReturn::SUCCESS;
   }
 
 
