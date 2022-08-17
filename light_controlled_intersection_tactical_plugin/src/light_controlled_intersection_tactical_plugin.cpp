@@ -33,7 +33,7 @@ namespace light_controlled_intersection_tactical_plugin
         
         if(req->maneuver_index_to_plan >= req->maneuver_plan.maneuvers.size())
         {
-        throw std::invalid_argument(
+            throw std::invalid_argument(
                 "Light Control Intersection Plugin asked to plan invalid maneuver index: " + std::to_string(req->maneuver_index_to_plan) + 
                 " for plan of size: " + std::to_string(req->maneuver_plan.maneuvers.size()));
         }
@@ -66,19 +66,19 @@ namespace light_controlled_intersection_tactical_plugin
         
         if (current_lanelets.empty())
         {
-        RCLCPP_ERROR_STREAM(logger_->get_logger(), "Given vehicle position is not on the road! Returning...");
-        return;
+            RCLCPP_ERROR_STREAM(logger_->get_logger(), "Given vehicle position is not on the road! Returning...");
+            return;
         }
 
         // get the lanelet that is on the route in case overlapping ones found
         for (auto llt : current_lanelets)
         {
-        auto route = wm_->getRoute()->shortestPath();
-        if (std::find(route.begin(), route.end(), llt) != route.end())
-        {
-            current_lanelet = llt;
-            break;
-        }
+            auto route = wm_->getRoute()->shortestPath();
+            if (std::find(route.begin(), route.end(), llt) != route.end())
+            {
+                current_lanelet = llt;
+                break;
+            }
         }
 
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Current_lanelet: " << current_lanelet.id());
