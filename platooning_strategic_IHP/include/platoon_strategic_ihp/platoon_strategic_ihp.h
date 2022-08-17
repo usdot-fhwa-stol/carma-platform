@@ -293,11 +293,6 @@ namespace platoon_strategic_ihp
              * \brief UCLA Setter: Update platoon list (Unit Test).
              */
             void updatePlatoonList(std::vector<PlatoonMember> platoon_list);
-           
-            /**
-             * \brief UCLA Setter: Set the host to follower state (Unit Test).
-             */
-            void setToFollower();
 
             /**
              * \brief Set the current config
@@ -310,9 +305,6 @@ namespace platoon_strategic_ihp
             MobilityResponseCB mobility_response_publisher_;
             MobilityOperationCB mobility_operation_publisher_;
             PlatooningInfoCB platooning_info_publisher_;
-
-            // Platoon Manager Object
-            PlatoonManager pm_;
 
 
             // pointer to the actual wm object
@@ -766,9 +758,6 @@ namespace platoon_strategic_ihp
             // Pointer for map projector
             std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
-            // Interface for getting current time
-            std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory_;
-
             // flag to check if map is loaded
             bool map_loaded_ = false;
 
@@ -806,6 +795,12 @@ namespace platoon_strategic_ihp
             
             // Is there a sufficient gap open in the platoon for a cut-in join?
             bool safeToLaneChange_ = false;
+
+            // Interface for getting current time
+            std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory_;
+
+            // Platoon Manager Object
+            PlatoonManager pm_;
 
             // Strategy types
             const std::string PLATOONING_STRATEGY = "Carma/Platooning";
