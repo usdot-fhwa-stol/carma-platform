@@ -599,14 +599,15 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   ROS_DEBUG_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));
   ros::Time nearest_green_entry_time;
 
-  if (config_.enable_carma_streets_connection ==false || scheduled_enter_time_ == 0 )
+  if (config_.enable_carma_streets_connection ==false /*|| scheduled_enter_time_ == 0 */) // TODO revert
   {
      nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
                                           + ros::Duration(0.01); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehcile Estimation
   }
-  else if(config_.enable_carma_streets_connection ==true && scheduled_enter_time_ != 0 )
+  else if(config_.enable_carma_streets_connection ==true /*&& scheduled_enter_time_ != 0 */) // TODO revert
   {
-          nearest_green_entry_time = ros::Time(std::max(earliest_entry_time.toSec(), (scheduled_enter_time_)/1000.0)) + ros::Duration(0.01); //Carma Street
+    //nearest_green_entry_time = ros::Time(std::max(earliest_entry_time.toSec(), (scheduled_enter_time_)/1000.0)) + ros::Duration(0.01); //Carma Street
+    nearest_green_entry_time = earliest_entry_time + ros::Duration(0.01); //Carma Street TESTING TODO revert
   }
   
   if (!nearest_green_entry_time_cached_) 
