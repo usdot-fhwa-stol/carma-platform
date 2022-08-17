@@ -27,25 +27,25 @@ namespace light_controlled_intersection_tactical_plugin
    */
   struct Config
   {
-    double centerline_sampling_spacing;
-    double trajectory_time_length;
-    int default_downsample_ratio;
-    int turn_downsample_ratio;
-    double curve_resample_step_size;
-    int curvature_moving_average_window_size;
-    int speed_moving_average_window_size;
-    double back_distance;
-    double buffer_ending_downtrack;
-    double vehicle_decel_limit_multiplier;
-    double vehicle_accel_limit_multiplier;
-    double lat_accel_multiplier;
-    double stop_line_buffer;
-    double minimum_speed;
-    double algorithm_evaluation_distance;
-    double algorithm_evaluation_period;
-    double lateral_accel_limit;
-    double vehicle_accel_limit;
-    double vehicle_decel_limit; 
+    double centerline_sampling_spacing = 1.0;
+    double trajectory_time_length = 12.0;
+    int default_downsample_ratio = 10;
+    int turn_downsample_ratio = 5;
+    double curve_resample_step_size = 1.0;
+    int curvature_moving_average_window_size = 9;
+    int speed_moving_average_window_size = 5;
+    double back_distance = 20.0;
+    double buffer_ending_downtrack = 40.0;
+    double vehicle_decel_limit_multiplier = 1.0;
+    double vehicle_accel_limit_multiplier = 1.0;
+    double lat_accel_multiplier = 1.0;
+    double stop_line_buffer = 0.50;
+    double minimum_speed = 4.4704;
+    double algorithm_evaluation_distance = 35.0;
+    double algorithm_evaluation_period = 4.5;
+    double lateral_accel_limit = 2.5;
+    double vehicle_accel_limit = 2.0;
+    double vehicle_decel_limit = 2.0; 
 
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)

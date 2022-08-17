@@ -52,7 +52,7 @@ def generate_launch_description():
             ComposableNode(
                     package='light_controlled_intersection_tactical_plugin',
                     plugin='light_controlled_intersection_tactical_plugin::LightControlledIntersectionTransitPluginNode',
-                    name='light_controlled_intersection_tactical_plugin_node',
+                    name='light_controlled_intersection_tactical_plugin',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
                         {'--log-level' : log_level }
