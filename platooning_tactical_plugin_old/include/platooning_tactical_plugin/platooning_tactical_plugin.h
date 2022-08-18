@@ -1,7 +1,7 @@
 #pragma once
 
 /*------------------------------------------------------------------------------
-* Copyright (C) 2020-2022 LEIDOS.
+* Copyright (C) 2020-2021 LEIDOS.
 *
 * Licensed under the Apache License, Version 2.0 (the "License"); you may not
 * use this file except in compliance with the License. You may obtain a copy of
@@ -18,15 +18,19 @@
 ------------------------------------------------------------------------------*/
 
 #include <vector>
-#include <carma_planning_msgs/msg/trajectory_plan.hpp>
-#include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
-#include <carma_wm_ros2/Geometry.h>
-#include <carma_planning_msgs/srv/plan_trajectory.hpp>
+#include <cav_msgs/TrajectoryPlan.h>
+#include <cav_msgs/TrajectoryPlanPoint.h>
+#include <cav_msgs/Plugin.h>
+#include <boost/shared_ptr.hpp>
+#include <carma_utils/CARMAUtils.h>
+#include <boost/geometry.hpp>
+#include <carma_wm/Geometry.h>
+#include <cav_srvs/PlanTrajectory.h>
 #include <carma_wm/WMListener.h>
 #include <functional>
 #include <unordered_set>
-#include <carma_debug_ros2_msgs/msg/trajectory_curvature_speeds.hpp>
-#include <basic_autonomy_ros2/basic_autonomy.hpp>
+#include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
+#include <basic_autonomy/basic_autonomy.h>
 
 #include "platooning_tactical_plugin_config.h"
 
