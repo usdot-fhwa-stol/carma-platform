@@ -81,26 +81,7 @@ namespace carma_wm
   }
 
   lanelet::Id CARMAWorldModel::getTrafficSignalId(uint16_t intersection_id, uint8_t signal_group_id)
-  {
-    if (!traffic_light_ids_.empty())
-    {
-      // TODO: Old logic that needs be removed when workzone is connected
-      // open issue: https://github.com/usdot-fhwa-stol/carma-platform/issues/1553
-      uint32_t temp = 0;
-      temp |= intersection_id;
-      temp = temp << 8;
-      temp |= signal_group_id;
-
-      if (traffic_light_ids_.find(temp) != traffic_light_ids_.end())
-      {
-        return traffic_light_ids_[temp];
-      }
-      else
-      {
-        return lanelet::InvalId;
-      }
-    }
-    
+  {    
     lanelet::Id inter_id = lanelet::InvalId;
     lanelet::Id signal_id = lanelet::InvalId;
   
