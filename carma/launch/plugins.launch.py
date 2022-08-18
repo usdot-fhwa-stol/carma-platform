@@ -60,7 +60,7 @@ def generate_launch_description():
 
     carma_plugins_container = ComposableNodeContainer(
         package='carma_ros2_utils',
-        name='carma_guidance_plugins_container',
+        name='carma_guidance_core_plugins_container',
         executable='carma_component_container_mt',
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
@@ -151,7 +151,7 @@ def generate_launch_description():
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
                     ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/georeference" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
                     ("outgoing_mobility_response", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_response" ] ),
                     ("outgoing_mobility_request", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_request" ] ),
                     ("outgoing_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),
@@ -164,7 +164,7 @@ def generate_launch_description():
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
                     ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
                     ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
-                    ("current_pose", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/current_pose" ] ),
+                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
                 ],
                 parameters=[ 
                     platoon_strategic_ihp_param_file,

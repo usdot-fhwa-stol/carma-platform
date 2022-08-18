@@ -169,40 +169,33 @@ namespace platoon_strategic_ihp
                                     [this](auto msg) { this->platoon_info_pub->publish(msg); },
                                     std::make_shared<carma_ros2_utils::timers::ROSTimerFactory>(shared_from_this()));
 
-    carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityRequest> mob_request_sub;
-    carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityResponse> mob_response_sub;
-    carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityOperation> mob_operation_sub;
-    carma_ros2_utils::SubPtr<geometry_msgs::msg::PoseStamped> current_pose_sub;
-    carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> current_twist_sub;
-    carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> cmd_sub;
-    carma_ros2_utils::SubPtr<std_msgs::msg::String> georeference_sub;
 
     // Setup subscribers
     mob_request_sub = create_subscription<carma_v2x_msgs::msg::MobilityRequest>("incoming_mobility_request", 10,
-                                                              std::bind(&PlatoonStrategicIHPPlugin::mob_req_cb,  worker_, std_ph::_1));
+                                                              std::bind(&PlatoonStrategicIHPPlugin::mob_req_cb,  worker_.get(), std_ph::_1));
 
     mob_response_sub = create_subscription<carma_v2x_msgs::msg::MobilityResponse>("incoming_mobility_response", 10,
-                                                              std::bind(&PlatoonStrategicIHPPlugin::mob_resp_cb, worker_, std_ph::_1));
+                                                              std::bind(&PlatoonStrategicIHPPlugin::mob_resp_cb, worker_.get(), std_ph::_1));
 
     mob_operation_sub = create_subscription<carma_v2x_msgs::msg::MobilityOperation>("incoming_mobility_operation", 10,
-                                                              std::bind(&PlatoonStrategicIHPPlugin::mob_op_cb, worker_, std_ph::_1));
+                                                              std::bind(&PlatoonStrategicIHPPlugin::mob_op_cb, worker_.get(), std_ph::_1));
 
     current_pose_sub = create_subscription<geometry_msgs::msg::PoseStamped>("current_pose", 10,
-                                                              std::bind(&PlatoonStrategicIHPPlugin::pose_cb, worker_, std_ph::_1));
+                                                              std::bind(&PlatoonStrategicIHPPlugin::pose_cb, worker_.get(), std_ph::_1));
 
     current_twist_sub = create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 10,
-                                                              std::bind(&PlatoonStrategicIHPPlugin::twist_cb, worker_, std_ph::_1));
+                                                              std::bind(&PlatoonStrategicIHPPlugin::twist_cb, worker_.get(), std_ph::_1));
 
     cmd_sub = create_subscription<geometry_msgs::msg::TwistStamped>("twist_raw", 10,
-                                                              std::bind(&PlatoonStrategicIHPPlugin::cmd_cb, worker_, std_ph::_1));
+                                                              std::bind(&PlatoonStrategicIHPPlugin::cmd_cb, worker_.get(), std_ph::_1));
 
     georeference_sub = create_subscription<std_msgs::msg::String>("georeference", 10,
-                                                              std::bind(&PlatoonStrategicIHPPlugin::georeference_cb, worker_, std_ph::_1));
+                                                              std::bind(&PlatoonStrategicIHPPlugin::georeference_cb, worker_.get(), std_ph::_1));
 
     loop_timer_ = create_timer(
         get_clock(),
         std::chrono::milliseconds(100), // 10 Hz frequency
-        std::bind(&PlatoonStrategicIHPPlugin::onSpin, worker_));
+        std::bind(&PlatoonStrategicIHPPlugin::onSpin, worker_.get()));
 
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
@@ -211,6 +204,7 @@ namespace platoon_strategic_ihp
   carma_ros2_utils::CallbackReturn Node::on_cleanup_plugin()
   {
     // Ensure subscribers are disconnected incase cleanup is called, we don't want to keep driving the worker
+    RCLCPP_ERROR(get_logger(), "ABCD");
     mob_response_sub.reset();
     mob_operation_sub.reset();
     current_pose_sub.reset();
@@ -218,6 +212,7 @@ namespace platoon_strategic_ihp
     cmd_sub.reset();
     georeference_sub.reset();
     worker_.reset();
+    RCLCPP_ERROR(get_logger(), "EFGH");
 
     return CallbackReturn::SUCCESS;
   }

@@ -15,7 +15,7 @@
 
 <package format="3">
   <name>platoon_strategic_ihp</name>
-  <version>1.0.0</version>
+  <version>4.0.0</version>
   <description>The platoon_strategic_ihp package</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
