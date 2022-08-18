@@ -76,14 +76,8 @@ def generate_launch_description():
     port_drayage_plugin_param_file = os.path.join(
         get_package_share_directory('port_drayage_plugin'), 'config/parameters.yaml')
     
-    inlanecruising_plugin_file_path = os.path.join(
-        get_package_share_directory('inlanecruising_plugin'), 'config/parameters.yaml')
-    
     trajectory_visualizer_param_file = os.path.join(
         get_package_share_directory('trajectory_visualizer'), 'config/parameters.yaml')
-
-    light_controlled_intersection_tactical_plugin_param_file = os.path.join(
-        get_package_share_directory('light_controlled_intersection_tactical_plugin'), 'config/parameters.yaml')
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
@@ -250,25 +244,6 @@ def generate_launch_description():
                 parameters=[
                     trajectory_visualizer_param_file
                 ]
-            ),
-            ComposableNode(
-                package='light_controlled_intersection_tactical_plugin',
-                plugin='light_controlled_intersection_tactical_plugin::LightControlledIntersectionTransitPluginNode',
-                name='light_controlled_intersection_tactical_plugin',
-                extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('light_controlled_intersection_tactical_plugin', env_log_levels) }
-                ],
-                remappings = [
-                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
-                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
-                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
-                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] )
-                ],
-                parameters=[
-                    vehicle_config_param_file,
-                    light_controlled_intersection_tactical_plugin_param_file
-                ]     
             )
         ]
     )
