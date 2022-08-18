@@ -1487,7 +1487,10 @@ namespace carma_wm
 	    	    if (!recorded)
 		        {
               sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time_dynamic, received_state_dynamic));
-    		    }		
+    		      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time_dynamic))
+                 << ", state: " << received_state_dynamic);
+              curr_light->recorded_time_stamps.push_back(std::make_pair(min_end_time_dynamic, received_state_dynamic));
+            }		
 	        }
         } 
         else // Fixed Spat Processing without future phases
