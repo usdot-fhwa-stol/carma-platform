@@ -59,3 +59,4 @@
     # List of guidance plugins that are ported to ROS2. If not in this list, it is assumed to be ROS1, and not managed.
     ros2_initial_plugins:
       - /guidance/plugins/inlanecruising_plugin
+      - /guidance/plugins/light_controlled_intersection_tactical_plugin
