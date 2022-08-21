@@ -108,11 +108,11 @@ cav_msgs::Plugin LCIStrategicPlugin::getDiscoveryMsg() const
 
   ROS_ERROR_STREAM("Current time: " << std::to_string(ros::Time::now().toSec()));
   ROS_ERROR_STREAM("End time: " << returned_pair.get().first << ", of state: " << returned_pair.get().second);
-  ROS_ERROR_STREAM("Time difference: " << lanelet::time::toSec(returned_pair.get().first)) - std::to_string(ros::Time::now().toSec());
+  ROS_ERROR_STREAM("Time difference: " << std::to_string(lanelet::time::toSec(returned_pair.get().first) - ros::Time::now().toSec()));
   
   ROS_DEBUG_STREAM("Current time: " << std::to_string(ros::Time::now().toSec()));
   ROS_DEBUG_STREAM("End time: " << returned_pair.get().first << ", of state: " << returned_pair.get().second);
-  ROS_DEBUG_STREAM("Time difference: " << lanelet::time::toSec(returned_pair.get().first)) - std::to_string(ros::Time::now().toSec());
+  ROS_DEBUG_STREAM("Time difference: " << std::to_string(lanelet::time::toSec(returned_pair.get().first) - ros::Time::now().toSec()));
 
 
   return plugin_discovery_msg_;
@@ -670,8 +670,22 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   else if(config_.enable_carma_streets_connection ==true /*&& scheduled_enter_time_ != 0 */) // TODO revert
   {
     //nearest_green_entry_time = ros::Time(std::max(earliest_entry_time.toSec(), (scheduled_enter_time_)/1000.0)) + ros::Duration(0.01); //Carma Street
-    nearest_green_entry_time = earliest_entry_time + ros::Duration(0.01); //Carma Street TESTING TODO revert
+    // temporary logic to test UC3 incrementally. Testing if UC3 will act like UC2
+    // check if there is any GREEN state in the light since scheduled_enter_time_ is not sent yet
+    bool green_signal_exists = false;
+    for (auto pair : traffic_light->recorded_time_stamps)
+    {
+      if (pair.second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+        green_signal_exists = true;
+    }
+    if (green_signal_exists)
+      nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
+                                          + ros::Duration(0.01);
+    else
+      nearest_green_entry_time = earliest_entry_time + ros::Duration(0.01); //Carma Street TESTING TODO revert
   }
+  
+  ROS_DEBUG_STREAM("nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.toSec()) << ", with : " << nearest_green_entry_time - current_state.stamp  << " seconds left at: " << std::to_string(current_state.stamp.toSec()));
   
   if (!nearest_green_entry_time_cached_) 
   {
