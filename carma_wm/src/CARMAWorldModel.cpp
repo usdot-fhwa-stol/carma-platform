@@ -1471,7 +1471,11 @@ namespace carma_wm
           {
             // raw min_end_time in seconds measured from the most recent full hour
             boost::posix_time::ptime min_end_time_dynamic = lanelet::time::timeFromSec(current_movement_event.timing.min_end_time);
+            boost::posix_time::ptime start_time_dynamic = lanelet::time::timeFromSec(current_movement_event.timing.start_time);
+
             min_end_time_dynamic=min_end_time_converter_minute_of_year(min_end_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy); // Accounting minute of the year
+            start_time_dynamic=min_end_time_converter_minute_of_year(start_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy); // Accounting minute of the year
+
             auto received_state_dynamic = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_event.event_state.movement_phase_state);
             
             bool recorded = check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,curr_intersection.id.id,current_movement_state.signal_group);
@@ -1480,10 +1484,13 @@ namespace carma_wm
             if (!recorded)
 		        {
               sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time_dynamic, received_state_dynamic));
-              ROS_DEBUG_STREAM("intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time_dynamic))
+              ROS_DEBUG_STREAM("intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group 
+                  << ", start_time: " << std::to_string(lanelet::time::toSec(start_time_dynamic))
+                  << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time_dynamic))
                  << ", state: " << received_state_dynamic);
               curr_light->recorded_time_stamps.push_back(std::make_pair(min_end_time_dynamic, received_state_dynamic));
-    		    }		
+              curr_light->recorded_start_time_stamps.push_back(start_time_dynamic);
+    		    }
 	        }
         } 
         else // Fixed Spat Processing without future phases
@@ -1623,7 +1630,8 @@ namespace carma_wm
         sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group]++;
         ROS_DEBUG_STREAM("Counter now: " << sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] << ", for id: "<< curr_light_id);
         
-        }  }
+        }  
+      }
     }
   }
 
