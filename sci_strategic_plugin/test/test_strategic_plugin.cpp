@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,8 @@
 
 #include <gtest/gtest.h>
 #include <ros/console.h>
-#include "sci_strategic_plugin.h"
-#include "sci_strategic_plugin_config.h"
+#include "sci_strategic_plugin.hpp"
+#include "sci_strategic_plugin_config.hpp"
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_wm/WMTestLibForGuidance.h>
 
@@ -37,7 +37,7 @@ TEST(SCIStrategicPluginTest, getDiscoveryMsg)
   ASSERT_TRUE(msg.version_id.compare("v1.0") == 0);
   ASSERT_TRUE(msg.available);
   ASSERT_TRUE(msg.activated);
-  ASSERT_EQ(msg.type, cav_msgs::Plugin::STRATEGIC);
+  ASSERT_EQ(msg.type, carma_planning_msgs::msg::Plugin::STRATEGIC);
   ASSERT_TRUE(msg.capability.compare("strategic_plan/plan_maneuvers") == 0);
 }
 
@@ -49,12 +49,12 @@ TEST(SCIStrategicPluginTest, composeLaneFollowingManeuverMessage)
   SCIStrategicPlugin sci(wm, config);
 
   auto result =
-      sci.composeLaneFollowingManeuverMessage(1, 10.2, 20.4, 5, 10, ros::Time(1.2), 1.0, { 1200, 1201 });
+      sci.composeLaneFollowingManeuverMessage(1, 10.2, 20.4, 5, 10, rclcpp::Time(1.2*1e9), 1.0, { 1200, 1201 });
 
-  ASSERT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, result.type);
-  ASSERT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, result.lane_following_maneuver.parameters.negotiation_type);
-  ASSERT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN | cav_msgs::ManeuverParameters::HAS_INT_META_DATA | 
-  cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA | cav_msgs::ManeuverParameters::HAS_STRING_META_DATA,
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, result.type);
+  ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION, result.lane_following_maneuver.parameters.negotiation_type);
+  ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN | carma_planning_msgs::msg::ManeuverParameters::HAS_INT_META_DATA | 
+  carma_planning_msgs::msg::ManeuverParameters::HAS_FLOAT_META_DATA | carma_planning_msgs::msg::ManeuverParameters::HAS_STRING_META_DATA,
             result.lane_following_maneuver.parameters.presence_vector);
   ASSERT_TRUE(config.lane_following_plugin_name.compare(
                   result.lane_following_maneuver.parameters.planning_tactical_plugin) == 0);
@@ -65,8 +65,8 @@ TEST(SCIStrategicPluginTest, composeLaneFollowingManeuverMessage)
   ASSERT_EQ(20.4, result.lane_following_maneuver.end_dist);
   ASSERT_EQ(5, result.lane_following_maneuver.start_speed);
   ASSERT_EQ(10, result.lane_following_maneuver.end_speed);
-  ASSERT_EQ(ros::Time(1.2), result.lane_following_maneuver.start_time);
-  ASSERT_EQ(ros::Time(1.2) + ros::Duration(1.0), result.lane_following_maneuver.end_time);
+  ASSERT_EQ(rclcpp::Time(1.2*1e9), result.lane_following_maneuver.start_time);
+  ASSERT_EQ(rclcpp::Time(1.2*1e9) + rclcpp::Duration(1.0*1e9), result.lane_following_maneuver.end_time);
   ASSERT_EQ(2, result.lane_following_maneuver.lane_ids.size());
   ASSERT_TRUE(result.lane_following_maneuver.lane_ids[0].compare("1200") == 0);
   ASSERT_TRUE(result.lane_following_maneuver.lane_ids[1].compare("1201") == 0);
@@ -80,12 +80,12 @@ TEST(SCIStrategicPluginTest, composeIntersectionTransitMessage)
   SCIStrategicPlugin sci(wm, config);
   TurnDirection intersection_turn_direction = TurnDirection::Straight;
 
-  auto result = sci.composeIntersectionTransitMessage(10.2, 20.4, 5, 10, ros::Time(1.2), ros::Time(2.2), intersection_turn_direction, 1200, 1201);
+  auto result = sci.composeIntersectionTransitMessage(10.2, 20.4, 5, 10, rclcpp::Time(1.2*1e9), rclcpp::Time(2.2*1e9), intersection_turn_direction, 1200, 1201);
 
-  ASSERT_EQ(cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT, result.type);
-  ASSERT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION,
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT, result.type);
+  ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION,
             result.intersection_transit_straight_maneuver.parameters.negotiation_type);
-  ASSERT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN,
+  ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN,
             result.intersection_transit_straight_maneuver.parameters.presence_vector);
   ASSERT_TRUE(config.intersection_transit_plugin_name.compare(
                   result.intersection_transit_straight_maneuver.parameters.planning_tactical_plugin) == 0);
@@ -96,8 +96,8 @@ TEST(SCIStrategicPluginTest, composeIntersectionTransitMessage)
   ASSERT_EQ(20.4, result.intersection_transit_straight_maneuver.end_dist);
   ASSERT_EQ(5, result.intersection_transit_straight_maneuver.start_speed);
   ASSERT_EQ(10, result.intersection_transit_straight_maneuver.end_speed);
-  ASSERT_EQ(ros::Time(1.2), result.intersection_transit_straight_maneuver.start_time);
-  ASSERT_EQ(ros::Time(2.2), result.intersection_transit_straight_maneuver.end_time);
+  ASSERT_EQ(rclcpp::Time(1.2*1e9), result.intersection_transit_straight_maneuver.start_time);
+  ASSERT_EQ(rclcpp::Time(2.2*1e9), result.intersection_transit_straight_maneuver.end_time);
   ASSERT_TRUE(result.intersection_transit_straight_maneuver.starting_lane_id.compare("1200") == 0);
   ASSERT_TRUE(result.intersection_transit_straight_maneuver.ending_lane_id.compare("1201") == 0);
 }
@@ -108,11 +108,11 @@ TEST(SCIStrategicPluginTest, composeStopAndWaitManeuverMessage)
   SCIStrategicPluginConfig config;
   SCIStrategicPlugin sci(wm, config);
 
-  auto result = sci.composeStopAndWaitManeuverMessage(10.2, 20.4, 5, 1200, 1201, 0.56, ros::Time(1.2), ros::Time(2.2));
+  auto result = sci.composeStopAndWaitManeuverMessage(10.2, 20.4, 5, 1200, 1201, 0.56, rclcpp::Time(1.2*1e9), rclcpp::Time(2.2*1e9));
 
-  ASSERT_EQ(cav_msgs::Maneuver::STOP_AND_WAIT, result.type);
-  ASSERT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, result.stop_and_wait_maneuver.parameters.negotiation_type);
-  ASSERT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN | cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA,
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, result.type);
+  ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION, result.stop_and_wait_maneuver.parameters.negotiation_type);
+  ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN | carma_planning_msgs::msg::ManeuverParameters::HAS_FLOAT_META_DATA,
             result.stop_and_wait_maneuver.parameters.presence_vector);
   ASSERT_TRUE(config.stop_and_wait_plugin_name.compare(
                   result.stop_and_wait_maneuver.parameters.planning_tactical_plugin) == 0);
@@ -122,8 +122,8 @@ TEST(SCIStrategicPluginTest, composeStopAndWaitManeuverMessage)
   ASSERT_EQ(10.2, result.stop_and_wait_maneuver.start_dist);
   ASSERT_EQ(20.4, result.stop_and_wait_maneuver.end_dist);
   ASSERT_EQ(5, result.stop_and_wait_maneuver.start_speed);
-  ASSERT_EQ(ros::Time(1.2), result.stop_and_wait_maneuver.start_time);
-  ASSERT_EQ(ros::Time(2.2), result.stop_and_wait_maneuver.end_time);
+  ASSERT_EQ(rclcpp::Time(1.2*1e9), result.stop_and_wait_maneuver.start_time);
+  ASSERT_EQ(rclcpp::Time(2.2*1e9), result.stop_and_wait_maneuver.end_time);
   ASSERT_EQ(0.56, result.stop_and_wait_maneuver.parameters.float_valued_meta_data[1]);
   ASSERT_TRUE(result.stop_and_wait_maneuver.starting_lane_id.compare("1200") == 0);
   ASSERT_TRUE(result.stop_and_wait_maneuver.ending_lane_id.compare("1201") == 0);
@@ -154,7 +154,7 @@ TEST(SCIStrategicPluginTest, findSpeedLimit)
 
 TEST(SCIStrategicPluginTest, moboperationcbtest)
 {
-  cav_msgs::MobilityOperation msg;
+  carma_v2x_msgs::msg::MobilityOperation msg;
   msg.strategy = "Carma/stop_controlled_intersection";
 
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -162,7 +162,7 @@ TEST(SCIStrategicPluginTest, moboperationcbtest)
   SCIStrategicPlugin sci(wm, config);
 
   ASSERT_EQ(sci.approaching_stop_controlled_interction_, false);
-  auto msg_ptr = boost::make_shared<const cav_msgs::MobilityOperation>(msg);
+  auto msg_ptr = boost::make_shared<const carma_v2x_msgs::msg::MobilityOperation>(msg);
   sci.mobilityOperationCb(msg_ptr);
 
   ASSERT_EQ(sci.approaching_stop_controlled_interction_, true);
@@ -172,7 +172,7 @@ TEST(SCIStrategicPluginTest, moboperationcbtest)
 TEST(SCIStrategicPluginTest, parseStrategyParamstest)
 {
   
-  cav_msgs::MobilityOperation msg;
+  carma_v2x_msgs::msg::MobilityOperation msg;
   msg.strategy_params =  "st:16000,et:32000,dt:48000,dp:1,access:0";
 
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -188,7 +188,7 @@ TEST(SCIStrategicPluginTest, parseStrategyParamstest)
   EXPECT_EQ(1, sci.scheduled_departure_position_);
   EXPECT_EQ(false, sci.is_allowed_int_);
 
-  cav_msgs::MobilityOperation outgoing_msg = sci.generateMobilityOperation();
+  carma_v2x_msgs::msg::MobilityOperation outgoing_msg = sci.generateMobilityOperation();
   EXPECT_EQ(outgoing_msg.strategy, "Carma/stop_controlled_intersection");
   EXPECT_EQ(outgoing_msg.m_header.sender_id, config.vehicle_id);
   std::cout << "strategy_param: " << outgoing_msg.strategy_params << std::endl;
@@ -344,10 +344,10 @@ TEST(SCIStrategicPluginTest, DISABLE_maneuvercbtest)
 
   sci.current_downtrack_ = 1.0;
   // pose callback test
-  geometry_msgs::PoseStamped pose_msg;
+  geometry_msgs::msg::PoseStamped pose_msg;
   pose_msg.pose.position.x = 1.0;
   pose_msg.pose.position.y = 1.0;
-  auto msg = boost::make_shared<const geometry_msgs::PoseStamped>(pose_msg);
+  auto msg = boost::make_shared<const geometry_msgs::msg::PoseStamped>(pose_msg);
   sci.currentPoseCb(msg);
   ASSERT_NEAR(1.0, sci.current_downtrack_, 0.1);
 
@@ -359,11 +359,11 @@ TEST(SCIStrategicPluginTest, DISABLE_maneuvercbtest)
   sci.scheduled_depart_time_ = 7000;
   
 
-  cav_srvs::PlanManeuversRequest req;
-  cav_srvs::PlanManeuversResponse resp;
+  carma_planning_msgs::srv::PlanManeuversRequest req;
+  carma_planning_msgs::srv::PlanManeuversResponse resp;
 
   // approaching intersection
-  req = cav_srvs::PlanManeuversRequest();
+  req = carma_planning_msgs::srv::PlanManeuversRequest();
   req.veh_x = 1.85;
   req.veh_y = 1.0; 
   req.veh_downtrack = req.veh_y;
@@ -381,11 +381,11 @@ TEST(SCIStrategicPluginTest, DISABLE_maneuvercbtest)
   ASSERT_EQ(2, resp.new_plan.maneuvers[0].lane_following_maneuver.parameters.int_valued_meta_data[0]);
 
   // at the stop line
-  cav_srvs::PlanManeuversRequest req1;
-  cav_srvs::PlanManeuversResponse resp1;
+  carma_planning_msgs::srv::PlanManeuversRequest req1;
+  carma_planning_msgs::srv::PlanManeuversResponse resp1;
 
   sci.current_downtrack_ = 9;
-  req1 = cav_srvs::PlanManeuversRequest();
+  req1 = carma_planning_msgs::srv::PlanManeuversRequest();
   req1.veh_x = 9.85;
   req1.veh_y = 2.0; 
   req1.veh_downtrack = req.veh_y;

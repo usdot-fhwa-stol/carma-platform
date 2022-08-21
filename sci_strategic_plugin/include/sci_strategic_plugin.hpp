@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,25 +16,26 @@
  * the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
-#include <cav_srvs/PlanManeuvers.h>
-#include <cav_msgs/Plugin.h>
-#include <cav_msgs/MobilityOperation.h>
-#include <carma_wm/WMListener.h>
-#include <carma_wm/WorldModel.h>
-#include <carma_utils/CARMAUtils.h>
+#include <carma_planning_msgs/srv/plan_maneuvers.hpp>
+#include <carma_planning_msgs/msg/plugin.hpp>
+#include <carma_v2x_msgs/msg/mobility_operation.hpp>
+#include <carma_wm_ros2/WMListener.hpp>
+#include <carma_wm_ros2/WorldModel.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <bsm_helper/bsm_helper.h>
-#include <carma_wm/Geometry.h>
+#include <carma_wm_ros2/Geometry.hpp>
 #include <lanelet2_core/Forward.h>
 #include <gtest/gtest_prod.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
-#include <cav_msgs/BSM.h>
+#include <carma_v2x_msgs/msg/bsm.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include <carma_guidance_plugins/strategic_plugin.hpp>
 
-#include "sci_strategic_plugin_config.h"
+#include "sci_strategic_plugin_config.hpp"
 
 namespace sci_strategic_plugin
 {
@@ -49,29 +50,29 @@ namespace sci_strategic_plugin
   * \param mvr input maneuver
   * \return end speed
  */ 
-double getManeuverEndSpeed(const cav_msgs::Maneuver& mvr)
+double getManeuverEndSpeed(const carma_planning_msgs::msg::Maneuver& mvr)
   {
     switch(mvr.type) {
-        case cav_msgs::Maneuver::LANE_FOLLOWING:
+        case carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING:
             return mvr.lane_following_maneuver.end_speed;
-        case cav_msgs::Maneuver::LANE_CHANGE:
+        case carma_planning_msgs::msg::Maneuver::LANE_CHANGE:
             return mvr.lane_change_maneuver.end_speed;
-        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+        case carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
             return mvr.intersection_transit_straight_maneuver.end_speed;
-        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+        case carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
             return mvr.intersection_transit_left_turn_maneuver.end_speed;
-        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+        case carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
             return mvr.intersection_transit_right_turn_maneuver.end_speed;
-        case cav_msgs::Maneuver::STOP_AND_WAIT:
+        case carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT:
             return 0;
         default:
-            ROS_ERROR_STREAM("Requested end speed from unsupported maneuver type");
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "Requested end speed from unsupported maneuver type");
             return 0;
     }
   }
 
 
-class SCIStrategicPlugin
+class SCIStrategicPlugin : public carma_guidance_plugins::StrategicPlugin
 {
 public:
   /**
@@ -79,7 +80,7 @@ public:
    */
   struct VehicleState
   {
-    ros::Time stamp;      // Timestamp of this state data
+    rclcpp::Time stamp;      // Timestamp of this state data
     double downtrack;     // The downtrack of the vehicle along the route at time stamp
     double speed;         // The speed of the vehicle at time stamp
     lanelet::Id lane_id;  // The current lane id of the vehicle at time stamp
@@ -87,49 +88,39 @@ public:
 
   
   /**
-   * \brief Constructor
-   *
-   * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
-   * \param config The configuration to be used for this object
-   */
-  SCIStrategicPlugin(carma_wm::WorldModelConstPtr wm, SCIStrategicPluginConfig& config);
+     * \brief Default constructor for RouteFollowingPlugin class
+     */
+  explicit SCIStrategicPlugin(const rclcpp::NodeOptions &);
 
+  /**
+   * \brief Method to publish mobility operation msgs at a fixed rate of 10hz if approaching intersection.
+   *
+   */ 
+  void publishMobilityOperation();
 
   /**
    * \brief Service callback for arbitrator maneuver planning
    * \param req Plan maneuver request
-   * \param[out] resp Plan maneuver response with a list of maneuver plan
+   * \param resp Plan maneuver response with a list of maneuver plan
    * \return If service call successed
    */
-  bool planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp);
-
-  /**
-   * \brief Returns the current plugin discovery message reflecting system status
-   *
-   * \return cav_msgs::Plugin The plugin discovery message
-   */
-  cav_msgs::Plugin getDiscoveryMsg() const;
-  
-  /**
-   * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery and mobility operation msgs.
-   * 
-   * \return True if the node should continue running. False otherwise
-   */ 
-  bool onSpin();
-
+  void plan_maneuvers_callback(
+    std::shared_ptr<rmw_request_id_t> srv_header, 
+    carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+    carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp);
 
   /**
    * \brief callback function for mobility operation
    * 
    * \param msg input mobility operation msg
    */
-  void mobilityOperationCb(const cav_msgs::MobilityOperationConstPtr& msg);
+  void mobilityOperationCb(carma_v2x_msgs::msg::MobilityOperation::UniquePtr msg);
 
   /**
    * \brief callback function for current pose
    * \param msg input pose stamed msg
    */
-  void currentPoseCb(const geometry_msgs::PoseStampedConstPtr& msg);
+  void currentPoseCb(geometry_msgs::msg::PoseStamped::UniquePtr msg);
 
   /**
    * \brief Compose a lane keeping maneuver message based on input params
@@ -145,16 +136,16 @@ public:
    *
    * \return A lane keeping maneuver message which is ready to be published
    */
-  cav_msgs::Maneuver composeLaneFollowingManeuverMessage(int case_num, double start_dist, double end_dist, double start_speed,
-                                                         double target_speed, ros::Time start_time, double time_to_stop,
+  carma_planning_msgs::msg::Maneuver composeLaneFollowingManeuverMessage(int case_num, double start_dist, double end_dist, double start_speed,
+                                                         double target_speed, rclcpp::Time start_time, double time_to_stop,
                                                          std::vector<lanelet::Id> lane_ids);
 
-  cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double end_dist, double start_speed,
+  carma_planning_msgs::msg::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double end_dist, double start_speed,
                                                       const lanelet::Id& starting_lane_id, const lanelet::Id& ending_lane_id, 
-                                                      double stopping_accel, ros::Time start_time, ros::Time end_time) const;
+                                                      double stopping_accel, rclcpp::Time start_time, rclcpp::Time end_time) const;
 
-  cav_msgs::Maneuver composeIntersectionTransitMessage(double start_dist, double end_dist, double start_speed, 
-                                                      double target_speed, ros::Time start_time, ros::Time end_time, TurnDirection turn_direction,
+  carma_planning_msgs::msg::Maneuver composeIntersectionTransitMessage(double start_dist, double end_dist, double start_speed, 
+                                                      double target_speed, rclcpp::Time start_time, rclcpp::Time end_time, TurnDirection turn_direction,
                                                       const lanelet::Id& starting_lane_id, const lanelet::Id& ending_lane_id) const;
 
   /**
@@ -165,7 +156,7 @@ public:
    *
    * \return The extracted VehicleState
    */
-  VehicleState extractInitialState(const cav_srvs::PlanManeuversRequest& req) const;
+  VehicleState extractInitialState(const carma_planning_msgs::srv::PlanManeuvers::Request& req) const;
 
   /**
    * \brief Helper method which calls carma_wm::WorldModel::getLaneletsBetween(start_downtrack, end_downtrack, shortest_path_only,
@@ -284,12 +275,12 @@ public:
    *
    * \return mobility operation msg for status and intent
    */
-  cav_msgs::MobilityOperation generateMobilityOperation();
+  carma_v2x_msgs::msg::MobilityOperation generateMobilityOperation();
 
   /**
    * \brief BSM callback function
    */
-  void BSMCb(const cav_msgs::BSMConstPtr& msg);
+  void BSMCb(carma_v2x_msgs::msg::BSM::UniquePtr msg);
 
   /**
    * \brief Determine the turn direction at intersection
@@ -301,6 +292,14 @@ public:
    */
   TurnDirection getTurnDirectionAtIntersection(std::vector<lanelet::ConstLanelet> lanelets_list);
   
+  ////////// OVERRIDES ///////////
+  carma_ros2_utils::CallbackReturn on_configure_plugin();
+  carma_ros2_utils::CallbackReturn on_activate_plugin();
+
+  bool get_availability();
+  std::string get_version_id();
+        
+
   ////////// VARIABLES ///////////
 
   // CARMA Streets Variakes
@@ -328,22 +327,25 @@ public:
 
   bool approaching_stop_controlled_interction_ = false;
 
-  ros::Publisher mobility_operation_pub;
-  ros::Publisher plugin_discovery_pub;
-
   std::string bsm_id_ = "default_bsm_id";
   uint8_t bsm_msg_count_ = 0;
   uint16_t bsm_sec_mark_ = 0;
 
   private:
+
+  carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityOperation> mob_operation_sub_;
+  carma_ros2_utils::SubPtr<geometry_msgs::msg::PoseStamped> current_pose_sub_;
+  carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::BSM> bsm_sub_;
+  carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityOperation> mobility_operation_pub_;
+
+  // timer to publish mobility operation message
+  rclcpp::TimerBase::SharedPtr mob_op_pub_timer_;
+
   //! World Model pointer
   carma_wm::WorldModelConstPtr wm_;
 
   //! Config containing configurable algorithm parameters
   SCIStrategicPluginConfig config_;
-
-  //! Plugin discovery message
-  cav_msgs::Plugin plugin_discovery_msg_;
 
   //! Cache variables for storing the current intersection state between state machine transitions
   boost::optional<double> intersection_speed_;

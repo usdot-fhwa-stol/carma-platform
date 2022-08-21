@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,12 +15,12 @@
  */
 
 #include <gmock/gmock.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 int main(int argc, char **argv)
 {
     testing::InitGoogleTest(&argc, argv);
-    ros::Time::init();
+    rclcpp::Time::init();
     ROSCONSOLE_AUTOINIT;
     if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info) ) {
       ros::console::notifyLoggerLevelsChanged();

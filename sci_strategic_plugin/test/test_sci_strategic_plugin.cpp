@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,18 +14,18 @@
  * the License.
  */
 
-#include <sci_strategic_plugin.h>
-#include <carma_utils/CARMAUtils.h>
+#include <sci_strategic_plugin.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <gtest/gtest.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <thread>
 #include <chrono>
 
 TEST(SCIStrategicPlugin, UnitTest1)
 {
     ros::CARMANodeHandle nh;
-    ros::Publisher mob_op_pub = nh.advertise<cav_msgs::MobilityOperation>("incoming_mobility_operation", 5);
-    ros::Publisher pose_pub = nh.advertise<geometry_msgs::PoseStamped>("current_pose", 5);
+    ros::Publisher mob_op_pub = nh.advertise<carma_v2x_msgs::msg::MobilityOperation>("incoming_mobility_operation", 5);
+    ros::Publisher pose_pub = nh.advertise<geometry_msgs::msg::PoseStamped>("current_pose", 5);
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     ros::spinOnce(); 
     
