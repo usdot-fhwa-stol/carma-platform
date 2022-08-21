@@ -52,6 +52,9 @@ def generate_launch_description():
 
     stop_and_wait_plugin_param_file = os.path.join(
         get_package_share_directory('stop_and_wait_plugin'), 'config/parameters.yaml')        
+    
+    sci_strategic_plugin_file_path = os.path.join(
+        get_package_share_directory('sci_strategic_plugin'), 'config/parameters.yaml')
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
@@ -124,6 +127,32 @@ def generate_launch_description():
                 ],
                 parameters=[
                     route_following_plugin_file_path,
+                    vehicle_config_param_file
+                ]
+            ),
+            ComposableNode(
+                    package='sci_strategic_plugin',
+                    plugin='sci_strategic_plugin::SCIStrategicPlugin',
+                    name='sci_strategic_plugin',
+                    extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('sci_strategic_plugin', env_log_levels) }
+                ],
+                remappings = [
+                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
+                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
+                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
+                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
+                    ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
+                    ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
+                    ("maneuver_plan", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/final_maneuver_plan" ] ),
+                    ("outgoing_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),
+                    ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_request" ] ),
+                    ("bsm_outbound", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/bsm_outbound" ] ),
+                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                ],
+                parameters=[
+                    sci_strategic_plugin_file_path,
                     vehicle_config_param_file
                 ]
             )
