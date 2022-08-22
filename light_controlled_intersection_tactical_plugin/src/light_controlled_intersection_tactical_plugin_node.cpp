@@ -46,10 +46,6 @@ namespace light_controlled_intersection_tactical_plugin
     config_.lateral_accel_limit = declare_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit);
     config_.vehicle_accel_limit = declare_parameter<double>("vehicle_acceleration_limit", config_.vehicle_accel_limit);
     config_.vehicle_decel_limit = declare_parameter<double>("vehicle_deceleration_limit", config_.vehicle_decel_limit);
-
-    config_.lateral_accel_limit = config_.lateral_accel_limit * config_.lat_accel_multiplier;
-    config_.vehicle_accel_limit = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
-    config_.vehicle_decel_limit = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
   }
 
   rcl_interfaces::msg::SetParametersResult LightControlledIntersectionTransitPluginNode::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
@@ -110,6 +106,11 @@ namespace light_controlled_intersection_tactical_plugin
     get_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit);
     get_parameter<double>("vehicle_acceleration_limit", config_.vehicle_accel_limit);
     get_parameter<double>("vehicle_deceleration_limit", config_.vehicle_decel_limit);
+
+    // Use the configured multipliers to update the accel limits
+    config_.lateral_accel_limit = config_.lateral_accel_limit * config_.lat_accel_multiplier;
+    config_.vehicle_accel_limit = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
+    config_.vehicle_decel_limit = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
 
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&LightControlledIntersectionTransitPluginNode::parameter_update_callback, this, std_ph::_1));
