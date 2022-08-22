@@ -124,7 +124,7 @@ namespace localization_manager
     }
 
     void Node::poseAndStatsCallback(const geometry_msgs::msg::PoseStamped::ConstPtr pose,
-                                     const autoware_msgs::msg::NDTStat::ConstPtr stats) const
+                                     const autoware_msgs::msg::NDTStat::ConstPtr stats)
     {
         try
         {
@@ -133,6 +133,7 @@ namespace localization_manager
         catch (const std::exception& e)
         {
             RCLCPP_ERROR_STREAM(get_logger(), "Uncaught Exception in localization_manager. Exception: "<< e.what() );
+            handle_primary_state_exception(e);
         }
         
 

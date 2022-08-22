@@ -101,7 +101,7 @@ namespace localization_manager
      * \param stats The received stats message
      */ 
     void poseAndStatsCallback(const geometry_msgs::msg::PoseStamped::ConstPtr pose,
-                                     const autoware_msgs::msg::NDTStat::ConstPtr stats) const;
+                                     const autoware_msgs::msg::NDTStat::ConstPtr stats);
 
     ////
     // Overrides
