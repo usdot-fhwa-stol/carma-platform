@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2020 LEIDOS.
+# Copyright (C) 2019-2022 LEIDOS.
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -51,7 +51,7 @@ lateral_accel_limit : 1.5
 # Int : Size of the window used in the moving average filter to smooth both the computed curvature and output speeds
 speed_moving_average_window_size : 5
 
-#Int: // Size of the window used in the moving average filter to smooth the curvature profile
+# Int : Size of the window used in the moving average filter to smooth the curvature profile
 curvature_moving_average_window_size : 9
 
 # Int : Number of points to look ahead when calculating the curvature of the lanelet centerline
@@ -60,41 +60,48 @@ curvature_calc_lookahead_count : 1
 # Int: Amount to downsample input lanelet centerline data. Value corresponds to saving each nth point.
 downsample_ratio : 1
 
-#double : Acceptable range from the ending downtrack, when planning success can be published, if vehicle has changed lanes
-#Units: meters
-destination_range : 0
+# Double : Acceptable range from the ending downtrack, when planning success can be published, if vehicle has changed lanes
+# Units: meters
+destination_range : 0.0
 
-#Double : The time after which a lane change request can be considered to time out
-#Units : seconds
+# Double : The time after which a lane change request can be considered to time out
+# Units : seconds
 lanechange_time_out: 6.0
 
 # Double: The minimum timestep used for planning trajectory
-#Units: seconds
+# Units: seconds
 min_timestep : 0.1
 
-#Double:  The range from the start from which the plugin can start working
-#Units: meters
+# Double:  The range from the start from which the plugin can start working
+# Units: meters
 starting_downtrack_range : 5.0
 
-#Double: Fraction of the maneuver that has been completed. Starting fraction specifies a higher urgency of in the request to lane change
+# Double: Fraction of the maneuver that has been completed. Starting fraction specifies a higher urgency of in the request to lane change
 starting_fraction : 0.2
 
-#Double: Fraction of the maneuver that has been completed. Mid fraction specifies a lower urgency in the request to lane change
+# Double: Fraction of the maneuver that has been completed. Mid fraction specifies a lower urgency in the request to lane change
 mid_fraction : 0.5
 
-#Double: The minimum gap required between 2 vehicles to start lane changing
-#Units: meters
+# Double: The minimum gap required between 2 vehicles to start lane changing
+# Units: meters
 min_desired_gap: 5.0
 
-##Unused parameters added for using basic autonomy library
-#Int: Amount to downsample input lanelet centerline data on turns. Value corresponds to saving each nth point.
+# Double: Maximum time gap with vehicle in adjacent lane to require negotiation for lane change
+# Units: seconds
+desired_time_gap: 3.0
+
+## Unused parameters added for using basic autonomy library
+# Int: Amount to downsample input lanelet centerline data on turns. Value corresponds to saving each nth point.
 turn_downsample_ratio: 0
 
-#Double: Curve re-sampling step size in m
+# Double: Curve re-sampling step size
+# Units: meters
 curve_resample_step_size: 1.0
 
-#Double: Number of meters behind the first maneuver that need to be included in points for curvature calculation
+# Double: Number of meters behind the first maneuver that need to be included in points for curvature calculation
+# Units: meters
 back_distance: 0.0
 
-#Double: 
+# Double: Additional distance beyond ending downtrack to ensure sufficient points
+# Units: meters
 buffer_ending_downtrack: 5.0
