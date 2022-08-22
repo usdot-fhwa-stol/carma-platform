@@ -24,6 +24,8 @@
 
 namespace light_controlled_intersection_transit_plugin
 {
+    // TODO: The package requires additional unit tests to improve unit test coverage. These unit tests will be created
+    //       in a follow-on story.
     
     TEST(LCITacticalPluginTest, apply_accel_cruise_decel_speed_profile_test)
     {
