@@ -240,9 +240,6 @@ namespace route_following_plugin
         // Publishers
         carma_ros2_utils::PubPtr<carma_planning_msgs::msg::UpcomingLaneChangeStatus> upcoming_lane_change_status_pub_;
 
-        // Service Servers
-        carma_ros2_utils::ServicePtr<carma_planning_msgs::srv::PlanManeuvers> plan_maneuver_srv_;
-
         // unordered set of all the lanelet ids in shortest path
         std::unordered_set<lanelet::Id> shortest_path_set_;
        
