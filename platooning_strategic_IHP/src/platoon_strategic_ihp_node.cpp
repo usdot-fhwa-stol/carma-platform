@@ -204,7 +204,6 @@ namespace platoon_strategic_ihp
   carma_ros2_utils::CallbackReturn Node::on_cleanup_plugin()
   {
     // Ensure subscribers are disconnected incase cleanup is called, we don't want to keep driving the worker
-    RCLCPP_ERROR(get_logger(), "ABCD");
     mob_response_sub.reset();
     mob_operation_sub.reset();
     current_pose_sub.reset();
@@ -212,7 +211,6 @@ namespace platoon_strategic_ihp
     cmd_sub.reset();
     georeference_sub.reset();
     worker_.reset();
-    RCLCPP_ERROR(get_logger(), "EFGH");
 
     return CallbackReturn::SUCCESS;
   }
