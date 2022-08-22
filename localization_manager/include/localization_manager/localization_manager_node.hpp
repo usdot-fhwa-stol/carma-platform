@@ -26,9 +26,9 @@
 #include "localization_manager/LocalizationManagerConfig.hpp"
 #include "localization_manager/LocalizationManager.hpp"
 #include "localization_manager/LocalizationTypes.hpp"
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-#include <message_filters/sync_policies/exact_time.h>
+#include <message_filters_humble/subscriber.h>
+#include <message_filters_humble/time_synchronizer.h>
+#include <message_filters_humble/sync_policies/exact_time.h>
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -66,9 +66,9 @@ namespace localization_manager
     // Worker object
     std::unique_ptr<LocalizationManager> manager_; 
 
-    // Message filters policies
-    typedef message_filters::sync_policies::ExactTime<geometry_msgs::msg::PoseStamped, autoware_msgs::msg::NDTStat> PoseStatsSyncPolicy;
-    typedef message_filters::Synchronizer<PoseStatsSyncPolicy> PoseStatsSynchronizer;
+    // Message filters policies (TimeSynchronizer by default uses ExactTime Policy)
+    typedef message_filters::TimeSynchronizer <geometry_msgs::msg::PoseStamped, autoware_msgs::msg::NDTStat> TimeSynchronizer;
+    std::shared_ptr<TimeSynchronizer> pose_stats_synchronizer_;
 
     public:
     /**

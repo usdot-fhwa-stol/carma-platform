@@ -80,8 +80,8 @@ namespace localization_manager
         ndt_pose_sub_.subscribe(this, "ndt_pose", qos.get_rmw_qos_profile());
         ndt_score_sub_.subscribe(this,"ndt_stat", qos.get_rmw_qos_profile());
 
-        PoseStatsSynchronizer pose_stats_synchronizer(PoseStatsSyncPolicy(5), ndt_pose_sub_, ndt_score_sub_);
-        pose_stats_synchronizer.registerCallback(boost::bind(&Node::poseAndStatsCallback, this, _1, _2));
+        pose_stats_synchronizer_ = std::make_shared<TimeSynchronizer>(ndt_pose_sub_, ndt_score_sub_, 5);
+        pose_stats_synchronizer_->registerCallback(std::bind(&Node::poseAndStatsCallback, this, std_ph::_1, std_ph::_2));
         
         // system_alert_topic_ protected member of CarmaLifecycleNode
         system_alert_sub_ = create_subscription<carma_msgs::msg::SystemAlert>(system_alert_topic_, 1, 
