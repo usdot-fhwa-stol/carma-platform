@@ -23,90 +23,81 @@
 
 #pragma once
 
+#include <gtest/gtest_prod.h>
 #include <vector>
-#include <ros/ros.h>
 #include <math.h>
-#include <cav_msgs/TrajectoryPlan.h>
-#include <cav_msgs/TrajectoryPlanPoint.h>
-#include <cav_msgs/Plugin.h>
+#include <carma_planning_msgs/msg/trajectory_plan.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
+#include <carma_planning_msgs/msg/plugin.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/format.hpp>
-#include <carma_utils/CARMAUtils.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <cav_srvs/PlanManeuvers.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <cav_msgs/MobilityOperation.h>
-#include <cav_msgs/MobilityRequest.h>
-#include <cav_msgs/MobilityResponse.h>
-#include <cav_msgs/PlatooningInfo.h>
-#include <cav_msgs/PlanType.h>
-#include <cav_msgs/BSM.h>
-#include <carma_wm/WMListener.h>
-#include <carma_wm/WorldModel.h>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <carma_planning_msgs/srv/plan_maneuvers.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <carma_v2x_msgs/msg/mobility_operation.hpp>
+#include <carma_v2x_msgs/msg/mobility_request.hpp>
+#include <carma_v2x_msgs/msg/mobility_response.hpp>
+#include <carma_planning_msgs/msg/platooning_info.hpp>
+#include <carma_v2x_msgs/msg/plan_type.hpp>
+#include <carma_wm_ros2/WorldModel.hpp>
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+#include <lanelet2_extension/regulatory_elements/DigitalMinimumGap.h>
 #include "platoon_config_ihp.h"
-#include <platoon_manager_ihp.h>
+#include "platoon_manager_ihp.h"
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
-#include <std_msgs/String.h>
-#include <carma_wm/TrafficControl.h>
+#include <std_msgs/msg/string.hpp>
+#include <rclcpp/time.hpp>
 
 namespace platoon_strategic_ihp
 {
-    using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
-    using MobilityResponseCB = std::function<void(const cav_msgs::MobilityResponse&)>;
-    using MobilityRequestCB = std::function<void(const cav_msgs::MobilityRequest&)>;
-    using MobilityOperationCB = std::function<void(const cav_msgs::MobilityOperation&)>;
-    using PlatooningInfoCB = std::function<void(const cav_msgs::PlatooningInfo&)>;
+    using MobilityResponseCB = std::function<void(const carma_v2x_msgs::msg::MobilityResponse&)>;
+    using MobilityRequestCB = std::function<void(const carma_v2x_msgs::msg::MobilityRequest&)>;
+    using MobilityOperationCB = std::function<void(const carma_v2x_msgs::msg::MobilityOperation&)>;
+    using PlatooningInfoCB = std::function<void(const carma_planning_msgs::msg::PlatooningInfo&)>;
 
     class PlatoonStrategicIHPPlugin
     {
         public:
-            
-            /**
-            * \brief Default constructor for PlatoonStrategicIHPPlugin class
-            */ 
-            PlatoonStrategicIHPPlugin();
 
             /**
             * \brief Constructor
             * 
-            * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
+            * \param wm Pointer to initalized instance of the carma world model for accessing semantic map data
             * \param config The configuration to be used for this object
-            * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
             */ 
-            PlatoonStrategicIHPPlugin(carma_wm::WorldModelConstPtr wm, PlatoonPluginConfig config,
-                                PublishPluginDiscoveryCB plugin_discovery_publisher, MobilityResponseCB mobility_response_publisher,
+            PlatoonStrategicIHPPlugin(carma_wm::WorldModelConstPtr wm, PlatoonPluginConfig config, MobilityResponseCB mobility_response_publisher,
                                 MobilityRequestCB mobility_request_publisher, MobilityOperationCB mobility_operation_publisher,
-                                PlatooningInfoCB platooning_info_publisher);
+                                PlatooningInfoCB platooning_info_publisher,
+                                std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory);
             
             /**
             * \brief Callback function for Mobility Operation Message
             * 
             * \param msg Mobility Operation Message
             */
-            void mob_op_cb(const cav_msgs::MobilityOperation& msg);
+            void mob_op_cb(const carma_v2x_msgs::msg::MobilityOperation::UniquePtr msg);
 
             /**
             * \brief Callback function for Mobility Request Message
             * 
             * \param msg Mobility Request Message
             */
-            void mob_req_cb(const cav_msgs::MobilityRequest& msg);
+            void mob_req_cb(const carma_v2x_msgs::msg::MobilityRequest::UniquePtr msg);
 
             /**
             * \brief Callback function for Mobility Response Message
             * 
             * \param msg Mobility Response Message
             */
-            void mob_resp_cb(const cav_msgs::MobilityResponse& msg);
+            void mob_resp_cb(const carma_v2x_msgs::msg::MobilityResponse::UniquePtr msg);
 
             /**
             * \brief Function to the process and respond to the mobility request
@@ -115,7 +106,7 @@ namespace platoon_strategic_ihp
             *
             * \return Mobility response message
             */
-            MobilityRequestResponse handle_mob_req(const cav_msgs::MobilityRequest& msg);
+            MobilityRequestResponse handle_mob_req(const carma_v2x_msgs::msg::MobilityRequest& msg);
 
             /**
             * \brief Callback function to the maneuver request
@@ -125,7 +116,7 @@ namespace platoon_strategic_ihp
             *
             * \return Mobility response message
             */
-            bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
+            bool plan_maneuver_cb(carma_planning_msgs::srv::PlanManeuvers::Request &req, carma_planning_msgs::srv::PlanManeuvers::Response &resp);
 
             /**
             * \brief Find lanelet index from path
@@ -156,7 +147,7 @@ namespace platoon_strategic_ihp
             *
             * \return Maneuver message
             */
-            cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time& current_time);
+            carma_planning_msgs::msg::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, rclcpp::Time& current_time);
 
             /**
             * \brief Find start(current) and target(end) lanelet index from path to generate lane change maneuver message.
@@ -171,7 +162,7 @@ namespace platoon_strategic_ihp
             *
             * \return Maneuver message
             */
-            cav_msgs::Maneuver composeLaneChangeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int starting_lane_id, int ending_lane_id, ros::Time& current_time);
+            carma_planning_msgs::msg::Maneuver composeLaneChangeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int starting_lane_id, int ending_lane_id, rclcpp::Time& current_time);
 
             /**
             * \brief Update maneuver status based on prior plan
@@ -181,14 +172,14 @@ namespace platoon_strategic_ihp
             * \param current_progress current progress
             * \param lane_id lanelet ud
             */
-            void updateCurrentStatus(cav_msgs::Maneuver maneuver, double& speed, double& current_progress, int& lane_id);
+            void updateCurrentStatus(carma_planning_msgs::msg::Maneuver maneuver, double& speed, double& current_progress, int& lane_id);
 
             /**
             * \brief Callback function for current pose
             * 
             * \param msg PoseStamped msg
             */
-            void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+            void pose_cb(const geometry_msgs::msg::PoseStamped::UniquePtr msg);
 
             /**
             * \brief Compose Platoon information message
@@ -214,25 +205,25 @@ namespace platoon_strategic_ihp
             *       to the leader. 
             * 
             */
-            cav_msgs::PlatooningInfo composePlatoonInfoMsg();
+            carma_planning_msgs::msg::PlatooningInfo composePlatoonInfoMsg();
 
             /**
             * \brief Callback for the twist subscriber, which will store latest twist locally
             * \param msg Latest twist message
             */
-            void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+            void twist_cb(const geometry_msgs::msg::TwistStamped::UniquePtr msg);
 
             /**
             * \brief Callback for the control command
             * \param msg Latest twist cmd message
             */
-            void cmd_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+            void cmd_cb(const geometry_msgs::msg::TwistStamped::UniquePtr msg);
 
             /**
             * \brief Callback for the georeference
             * \param msg Latest georeference
             */
-            void georeference_cb(const std_msgs::StringConstPtr& msg);
+            void georeference_cb(const std_msgs::msg::String::UniquePtr msg);
 
             /**
             * \brief Spin callback function
@@ -260,7 +251,7 @@ namespace platoon_strategic_ihp
             void run_follower();
 
             // ECEF position of the host vehicle
-            cav_msgs::LocationECEF pose_ecef_point_;
+            carma_v2x_msgs::msg::LocationECEF pose_ecef_point_;
 
             // -------------- UCLA: add two states for frontal join ------------------
             /**
@@ -287,7 +278,7 @@ namespace platoon_strategic_ihp
             /**
              * \brief UCLA Update the private variable pose_ecef_point_
              */
-            void setHostECEF(cav_msgs::LocationECEF pose_ecef_point);
+            void setHostECEF(carma_v2x_msgs::msg::LocationECEF pose_ecef_point);
 
             /**
              * \brief UCLA Getter: for PlatoonManager class
@@ -303,26 +294,21 @@ namespace platoon_strategic_ihp
              * \brief UCLA Setter: Update platoon list (Unit Test).
              */
             void updatePlatoonList(std::vector<PlatoonMember> platoon_list);
-           
+
             /**
-             * \brief UCLA Setter: Set the host to follower state (Unit Test).
-             */
-            void setToFollower();
+             * \brief Set the current config
+             */ 
+            void setConfig(const PlatoonPluginConfig& config);
 
         private:
             
-            PublishPluginDiscoveryCB plugin_discovery_publisher_;
             MobilityRequestCB mobility_request_publisher_;
             MobilityResponseCB mobility_response_publisher_;
             MobilityOperationCB mobility_operation_publisher_;
             PlatooningInfoCB platooning_info_publisher_;
 
-            // Platoon Manager Object
-            PlatoonManager pm_;
 
-
-            // wm listener pointer and pointer to the actual wm object
-            std::shared_ptr<carma_wm::WMListener> wml_;
+            // pointer to the actual wm object
             carma_wm::WorldModelConstPtr wm_;
 
             // local copy of configuration file
@@ -330,7 +316,7 @@ namespace platoon_strategic_ihp
 
             // local copy of pose
             // Current vehicle pose in map
-            geometry_msgs::PoseStamped pose_msg_;
+            geometry_msgs::msg::PoseStamped pose_msg_;
             
             //Internal Variables used in unit tests
             // Current vehicle command speed, m/s
@@ -348,17 +334,6 @@ namespace platoon_strategic_ihp
 
             // Host Mobility ID
             std::string HostMobilityId = "hostid";
-
-            // ROS Publishers
-            ros::Publisher platoon_strategic_ihp_plugin_discovery_pub_;
-            ros::Publisher mob_op_pub_;
-            ros::Publisher mob_req_pub_;
-
-            // ROS Subscribers
-            ros::Subscriber pose_sub_;
-            ros::Subscriber mob_req_sub_;
-            ros::Subscriber mob_resp_sub_;
-            ros::Subscriber mob_op_sub_;
 
 
             /**
@@ -388,7 +363,7 @@ namespace platoon_strategic_ihp
             *
             * \return ACK, NACK, or No response
             */
-            MobilityRequestResponse mob_req_cb_leader(const cav_msgs::MobilityRequest& msg);
+            MobilityRequestResponse mob_req_cb_leader(const carma_v2x_msgs::msg::MobilityRequest& msg);
 
             /**
             * \brief Function to process mobility request in leader waiting state
@@ -397,7 +372,7 @@ namespace platoon_strategic_ihp
             *
             * \return ACK, NACK, or No response
             */
-            MobilityRequestResponse mob_req_cb_leaderwaiting(const cav_msgs::MobilityRequest& msg);
+            MobilityRequestResponse mob_req_cb_leaderwaiting(const carma_v2x_msgs::msg::MobilityRequest& msg);
 
             /**
             * \brief Function to process mobility request in follower state
@@ -406,7 +381,7 @@ namespace platoon_strategic_ihp
             *
             * \return ACK, NACK, or No response
             */
-            MobilityRequestResponse mob_req_cb_follower(const cav_msgs::MobilityRequest& msg);
+            MobilityRequestResponse mob_req_cb_follower(const carma_v2x_msgs::msg::MobilityRequest& msg);
 
             /**
             * \brief Function to process mobility request in candidate follower state
@@ -415,7 +390,7 @@ namespace platoon_strategic_ihp
             *
             * \return ACK, NACK, or No response
             */
-            MobilityRequestResponse mob_req_cb_candidatefollower(const cav_msgs::MobilityRequest& msg);
+            MobilityRequestResponse mob_req_cb_candidatefollower(const carma_v2x_msgs::msg::MobilityRequest& msg);
 
             /**
             * \brief Function to process mobility request in standby state
@@ -424,77 +399,77 @@ namespace platoon_strategic_ihp
             *
             * \return ACK, NACK, or No response
             */
-            MobilityRequestResponse mob_req_cb_standby(const cav_msgs::MobilityRequest& msg);
+            MobilityRequestResponse mob_req_cb_standby(const carma_v2x_msgs::msg::MobilityRequest& msg);
 
             /**
             * \brief Function to process mobility response in leader state
             *
             * \param msg incoming mobility response
             */
-            void mob_resp_cb_leader(const cav_msgs::MobilityResponse& msg);
+            void mob_resp_cb_leader(const carma_v2x_msgs::msg::MobilityResponse& msg);
 
             /**
             * \brief Function to process mobility response in leader waiting state
             *
             * \param msg incoming mobility response
             */
-            void mob_resp_cb_leaderwaiting(const cav_msgs::MobilityResponse& msg);
+            void mob_resp_cb_leaderwaiting(const carma_v2x_msgs::msg::MobilityResponse& msg);
             
             /**
             * \brief Function to process mobility response in follower state
             *
             * \param msg incoming mobility response
             */
-            void mob_resp_cb_follower(const cav_msgs::MobilityResponse& msg);
+            void mob_resp_cb_follower(const carma_v2x_msgs::msg::MobilityResponse& msg);
 
             /**
             * \brief Function to process mobility response in candidate follower state
             *
             * \param msg incoming mobility response
             */
-            void mob_resp_cb_candidatefollower(const cav_msgs::MobilityResponse& msg);
+            void mob_resp_cb_candidatefollower(const carma_v2x_msgs::msg::MobilityResponse& msg);
 
             /**
             * \brief Function to process mobility response in standby state
             *
             * \param msg incoming mobility response
             */
-            void mob_resp_cb_standby(const cav_msgs::MobilityResponse& msg);
+            void mob_resp_cb_standby(const carma_v2x_msgs::msg::MobilityResponse& msg);
             
             /**
             * \brief Function to process mobility operation in leader state
             *
             * \param msg incoming mobility operation
             */
-            void mob_op_cb_leader(const cav_msgs::MobilityOperation& msg);
+            void mob_op_cb_leader(const carma_v2x_msgs::msg::MobilityOperation& msg);
             
             /**
             * \brief Function to process mobility operation in leader waiting state
             *
             * \param msg incoming mobility operation
             */
-            void mob_op_cb_leaderwaiting(const cav_msgs::MobilityOperation& msg);
+            void mob_op_cb_leaderwaiting(const carma_v2x_msgs::msg::MobilityOperation& msg);
             
             /**
             * \brief Function to process mobility operation in follower state
             *
             * \param msg incoming mobility operation
             */
-            void mob_op_cb_follower(const cav_msgs::MobilityOperation& msg);
+            void mob_op_cb_follower(const carma_v2x_msgs::msg::MobilityOperation& msg);
             
             /**
             * \brief Function to process mobility operation in candidate follower state
             *
             * \param msg incoming mobility operation
             */
-            void mob_op_cb_candidatefollower(const cav_msgs::MobilityOperation& msg);
+            void mob_op_cb_candidatefollower(const carma_v2x_msgs::msg::MobilityOperation& msg);
             
             /**
             * \brief Function to process mobility operation in standby state
             *
             * \param msg incoming mobility operation
             */
-            void mob_op_cb_standby(const cav_msgs::MobilityOperation& msg);
+            void mob_op_cb_standby(const carma_v2x_msgs::msg::MobilityOperation& msg);
             
             /**
             * \brief Function to compose mobility operation in leader state
@@ -503,28 +478,28 @@ namespace platoon_strategic_ihp
             *
             * \return mobility operation msg
             */
-            cav_msgs::MobilityOperation composeMobilityOperationLeader(const std::string& type);
+            carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationLeader(const std::string& type);
 
             /**
             * \brief Function to compose mobility operation in follower state
             *
             * \return mobility operation msg
             */
-            cav_msgs::MobilityOperation composeMobilityOperationFollower();
+            carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationFollower();
 
             /**
             * \brief Function to compose mobility operation in leader waiting state
             *
             * \return mobility operation msg
             */
-            cav_msgs::MobilityOperation composeMobilityOperationLeaderWaiting();
+            carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationLeaderWaiting();
 
             /**
             * \brief Function to compose mobility operation in candidate follower state
             *
             * \return mobility operation msg
             */
-            cav_msgs::MobilityOperation composeMobilityOperationCandidateFollower();
+            carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationCandidateFollower();
             
             /**
             * \brief Function to convert pose from map frame to ecef location
@@ -533,7 +508,7 @@ namespace platoon_strategic_ihp
             *
             * \return mobility operation msg
             */
-            cav_msgs::LocationECEF pose_to_ecef(geometry_msgs::PoseStamped pose_msg);
+            carma_v2x_msgs::msg::LocationECEF pose_to_ecef(geometry_msgs::msg::PoseStamped pose_msg);
 
             /**
             * \brief Function to convert ecef location to a 2d point in map frame
@@ -542,7 +517,7 @@ namespace platoon_strategic_ihp
             *
             * \return 2d point in map frame
             */
-            lanelet::BasicPoint2d ecef_to_map_point(cav_msgs::LocationECEF ecef_point);
+            lanelet::BasicPoint2d ecef_to_map_point(carma_v2x_msgs::msg::LocationECEF ecef_point);
 
             // -------------- UCLA implemented functions -----------------------
             
@@ -587,14 +562,14 @@ namespace platoon_strategic_ihp
             /**
             * \brief Function to find the starting and ending lanelet ID for lane change in a two-lane scenario (used for cut-in join scenarios).
             * 
-            * Note: This is a temporary function for internal test only. The scenario is not genrealized. Can only find adjacebt lanletID based on predefiend direction (left, right).
+            * Note: This is a temporary function for internal test only. The scenario is not generalized. Can only find adjacent lanletID based on predefined direction (left, right).
             *       
             * \TODO: This function should be replaced by the complete arbitrary lane change module. 
             *
             * \param start_downtrack: The downtrack distance (m) of the starting point.
             *        end_downtrack: The downtrack distance (m) of the target (end) point.
             *
-            * \return (int): The adjacent laneletID based on the provided dontrack distance range. 
+            * \return (int): The adjacent laneletID based on the provided downtrack distance range. 
             */
             int find_target_lanelet_id(double start_downtrack, double end_downtrack);
             
@@ -605,28 +580,28 @@ namespace platoon_strategic_ihp
             *
             * \return mobility operation msg.
             */
-            cav_msgs::MobilityOperation composeMobilityOperationSTATUS();
+            carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationSTATUS();
             
             /**
             * \brief Function to compose mobility operation message with INFO params.
             *
             * \return mobility operation msg.
             */
-            cav_msgs::MobilityOperation composeMobilityOperationINFO();
+            carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationINFO();
             
             /**
             * \brief Function to compose mobility operation in LeaderAborting state.
             *
             * \return mobility operation msg.
             */
-            cav_msgs::MobilityOperation composeMobilityOperationLeaderAborting();
+            carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationLeaderAborting();
             
             /**
             * \brief Function to compose mobility operation in CandidateLeader.
             *
             * \return mobility operation msg.
             */
-            cav_msgs::MobilityOperation composeMobilityOperationCandidateLeader();
+            carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationCandidateLeader();
             
             /**
             * \brief Function to compose mobility operation in LeadWithOperation (cut-in join)
@@ -636,7 +611,7 @@ namespace platoon_strategic_ihp
             * \return msg: mobility operation msg 
             *         Return null ("") if the incoming message is trashed/unrecognized. 
             */
-            cav_msgs::MobilityOperation composeMobilityOperationLeadWithOperation(const std::string& type);
+            carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationLeadWithOperation(const std::string& type);
             
             /**
             * \brief Function to compose mobility operation in PrepareToJoin (cut-in join)
@@ -646,7 +621,7 @@ namespace platoon_strategic_ihp
             * \return msg: mobility operation msg
             *         Return null ("") if the incoming message is trashed/unrecognized. 
             */
-            cav_msgs::MobilityOperation composeMobilityOperationPrepareToJoin();
+            carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationPrepareToJoin();
 
             // --------- 2. Mobility operation callback -----------
             
@@ -656,7 +631,7 @@ namespace platoon_strategic_ihp
             *
             * \param msg incoming mobility operation message.
             */
-            void mob_op_cb_STATUS(const cav_msgs::MobilityOperation& msg);
+            void mob_op_cb_STATUS(const carma_v2x_msgs::msg::MobilityOperation& msg);
 
             /**
             * \brief Function to process mobility operation INFO params to find platoon length in m.
@@ -674,7 +649,7 @@ namespace platoon_strategic_ihp
             *   
             * \return ecef location of the sender.
             */
-            cav_msgs::LocationECEF mob_op_find_ecef_from_INFO_params(std::string strategyParams);
+            carma_v2x_msgs::msg::LocationECEF mob_op_find_ecef_from_INFO_params(std::string strategyParams);
             
             /**
             * \brief Function to process mobility operation for STATUS params.
@@ -683,35 +658,35 @@ namespace platoon_strategic_ihp
             *   
             * \return ecef location of the sender.
             */
-            cav_msgs::LocationECEF mob_op_find_ecef_from_STATUS_params(std::string strategyParams);
+            carma_v2x_msgs::msg::LocationECEF mob_op_find_ecef_from_STATUS_params(std::string strategyParams);
 
             /**
             * \brief Function to process mobility operation in leaderaborting state.
             *
             * \param msg incoming mobility operation message.
             */
-            void mob_op_cb_leaderaborting(const cav_msgs::MobilityOperation& msg);
+            void mob_op_cb_leaderaborting(const carma_v2x_msgs::msg::MobilityOperation& msg);
             
             /**
             * \brief Function to process mobility operation in candidateleader state.
             *
             * \param msg incoming mobility operation message.
             */
-            void mob_op_cb_candidateleader(const cav_msgs::MobilityOperation& msg);
+            void mob_op_cb_candidateleader(const carma_v2x_msgs::msg::MobilityOperation& msg);
             
             /**
             * \brief Function to process mobility operation in LeadWithOperation state (cut-in join)
             *
             * \param msg incoming mobility operation
             */
-            void mob_op_cb_leadwithoperation(const cav_msgs::MobilityOperation& msg);
+            void mob_op_cb_leadwithoperation(const carma_v2x_msgs::msg::MobilityOperation& msg);
             
             /**
             * \brief Function to process mobility operation in PrepareToJoin state (cut-in join)
             *
             * \param msg incoming mobility operation
             */
-            void mob_op_cb_preparetojoin(const cav_msgs::MobilityOperation& msg);
+            void mob_op_cb_preparetojoin(const carma_v2x_msgs::msg::MobilityOperation& msg);
 
             //------- 3. Mobility request callback -----------
             
@@ -722,7 +697,7 @@ namespace platoon_strategic_ihp
             *
             * \return ACK, NACK, or No response.
             */
-            MobilityRequestResponse mob_req_cb_leaderaborting(const cav_msgs::MobilityRequest& msg);
+            MobilityRequestResponse mob_req_cb_leaderaborting(const carma_v2x_msgs::msg::MobilityRequest& msg);
             
             /**
             * \brief Function to process mobility request in candidateleader state.
@@ -731,7 +706,7 @@ namespace platoon_strategic_ihp
             *
             * \return ACK, NACK, or No response.
             */
-            MobilityRequestResponse mob_req_cb_candidateleader(const cav_msgs::MobilityRequest& msg);
+            MobilityRequestResponse mob_req_cb_candidateleader(const carma_v2x_msgs::msg::MobilityRequest& msg);
             
             /**
             * \brief Function to process mobility request in leadwithoperation state (cut-in join)
@@ -740,7 +715,7 @@ namespace platoon_strategic_ihp
             *
             * \return ACK, NACK, or No response
             */
-            MobilityRequestResponse mob_req_cb_leadwithoperation(const cav_msgs::MobilityRequest& msg);
+            MobilityRequestResponse mob_req_cb_leadwithoperation(const carma_v2x_msgs::msg::MobilityRequest& msg);
             
             /**
             * \brief Function to process mobility request in preparetojoin state (cut-in join)
@@ -749,7 +724,7 @@ namespace platoon_strategic_ihp
             *
             * \return ACK, NACK, or No response
             */
-            MobilityRequestResponse mob_req_cb_preparetojoin(const cav_msgs::MobilityRequest& msg);
+            MobilityRequestResponse mob_req_cb_preparetojoin(const carma_v2x_msgs::msg::MobilityRequest& msg);
 
             // ------ 4. Mobility response callback ------
             /**
@@ -757,28 +732,28 @@ namespace platoon_strategic_ihp
             *
             * \param msg incoming mobility response.
             */
-            void mob_resp_cb_leaderaborting(const cav_msgs::MobilityResponse& msg);
+            void mob_resp_cb_leaderaborting(const carma_v2x_msgs::msg::MobilityResponse& msg);
             
             /**
             * \brief Function to process mobility response in candidateleader state.
             *
             * \param msg incoming mobility response.
             */
-            void mob_resp_cb_candidateleader(const cav_msgs::MobilityResponse& msg);
+            void mob_resp_cb_candidateleader(const carma_v2x_msgs::msg::MobilityResponse& msg);
             
             /**
             * \brief Function to process mobility response in leadwithoperation state (cut-in join)
             *
             * \param msg incoming mobility response
             */
-            void mob_resp_cb_leadwithoperation(const cav_msgs::MobilityResponse& msg);
+            void mob_resp_cb_leadwithoperation(const carma_v2x_msgs::msg::MobilityResponse& msg);
             
             /**
             * \brief Function to process mobility response in preparetojoin state 
             *
             * \param msg incoming mobility response
             */
-            void mob_resp_cb_preparetojoin(const cav_msgs::MobilityResponse& msg);
+            void mob_resp_cb_preparetojoin(const carma_v2x_msgs::msg::MobilityResponse& msg);
 
 
             // Pointer for map projector
@@ -787,11 +762,8 @@ namespace platoon_strategic_ihp
             // flag to check if map is loaded
             bool map_loaded_ = false;
 
-            // ros service servers
-            ros::ServiceServer maneuver_srv_;
-
             // Plugin discovery message
-            cav_msgs::Plugin plugin_discovery_msg_;
+            carma_planning_msgs::msg::Plugin plugin_discovery_msg_;
 
             // Number of calls to the run_leader_aborting() method
             int numLeaderAbortingCalls_ = 0;
@@ -824,6 +796,12 @@ namespace platoon_strategic_ihp
             
             // Is there a sufficient gap open in the platoon for a cut-in join?
             bool safeToLaneChange_ = false;
+
+            // Interface for getting current time
+            std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory_;
+
+            // Platoon Manager Object
+            PlatoonManager pm_;
 
             // Strategy types
             const std::string PLATOONING_STRATEGY = "Carma/Platooning";
@@ -865,5 +843,8 @@ namespace platoon_strategic_ihp
              *       for cut-in in middle, index indicate the gap leading vehicle's index.
              */    
             const std::string JOIN_PARAMS = "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%";
+
+            // Unit Test Accessors
+            FRIEND_TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front);
     };
 }

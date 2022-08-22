@@ -23,18 +23,18 @@
  * Author: Xu Han, Xin Xia, Jiaqi Ma
  */
 
-#include <ros/ros.h>
-#include <cav_msgs/MobilityOperation.h>
-#include <cav_msgs/MobilityRequest.h>
-#include <cav_msgs/MobilityResponse.h>
-#include <cav_msgs/PlanType.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <carma_wm/WMListener.h>
-#include <carma_wm/WorldModel.h>
+
+#include <carma_v2x_msgs/msg/mobility_operation.hpp>
+#include <carma_v2x_msgs/msg/mobility_request.hpp>
+#include <carma_v2x_msgs/msg/mobility_response.hpp>
+#include <carma_v2x_msgs/msg/plan_type.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <carma_wm_ros2/WMListener.hpp>
+#include <carma_wm_ros2/WorldModel.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <autoware_msgs/ControlCommandStamped.h>
+#include <carma_ros2_utils/timers/TimerFactory.hpp>
 #include "platoon_config_ihp.h"
 
 namespace platoon_strategic_ihp
@@ -120,9 +120,11 @@ namespace platoon_strategic_ihp
     public:
 
         /**
-        * \brief Default constructor
+        * \brief Constructor
+        * 
+        * \param timer_factory An interface which can be used to get access to the current time
         */
-        PlatoonManager();
+        PlatoonManager(std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory);
 
         /**
          * \brief Stores the latest info on location of the host vehicle.
@@ -394,7 +396,7 @@ namespace platoon_strategic_ihp
         bool is_neighbor_record_complete_ = false;
 
         // Current vehicle pose in map
-        geometry_msgs::PoseStamped pose_msg_;
+        geometry_msgs::msg::PoseStamped pose_msg_;
 
         // host vehicle's static ID 
         std::string HostMobilityId = "default_host_id";
@@ -403,6 +405,9 @@ namespace platoon_strategic_ihp
         bool isCreateGap = false;
 
         size_t dynamic_leader_index_ = 0;
+
+        // Timer factory used to get current time
+        std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory_;
         
     private:
 

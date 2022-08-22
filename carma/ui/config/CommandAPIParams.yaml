@@ -1,9 +1,0 @@
-# CommandAPIParams.yaml
-# Defines the ros parameters which are required by the CommandAPI
-
-# String: Host vehicle may have different instructions to show to the Driver before engaging the guidance system.
-host_instructions: 'This is the sample host vehicle instructions'
-
-# Integer: Interval in milliseconds to refresh the web page, usually to update a display page.
-# Units: Milliseconds
-page_refresh_interval: 100
