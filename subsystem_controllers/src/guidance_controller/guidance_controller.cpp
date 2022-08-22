@@ -116,6 +116,7 @@ namespace subsystem_controllers
     try {
       plugin_manager_->configure(); // Only checking required nodes. Other node failure tracked by activity status
     } catch(const std::runtime_error& e) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Error configuring plugin manager " << e.what());
       success = false;
     }
     
@@ -149,6 +150,7 @@ namespace subsystem_controllers
     try {
       plugin_manager_->activate(); // Only checking required nodes. Other node failure tracked by activity status
     } catch(const std::runtime_error& e) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Error activating plugin manager " << e.what());
       success = false;
     }
 
@@ -180,6 +182,7 @@ namespace subsystem_controllers
     try {
       plugin_manager_->deactivate(); // Only checking required nodes. Other node failure tracked by activity status
     } catch(const std::runtime_error& e) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Error deactivating plugin manager " << e.what());
       success = false;
     }
 
@@ -210,6 +213,7 @@ namespace subsystem_controllers
     try {
       plugin_manager_->cleanup(); // Only checking required nodes. Other node failure tracked by activity status
     } catch(const std::runtime_error& e) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Error cleaning up plugin manager " << e.what());
       success = false;
     }
 

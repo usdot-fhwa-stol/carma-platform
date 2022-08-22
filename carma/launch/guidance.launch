@@ -156,22 +156,6 @@
       <include file = "$(find yield_plugin)/launch/yield_plugin.launch"/>
     </group>
 
-    <!-- Platoon Strategic Plugin -->
-    <!-- <group>
-      <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
-      <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
-      <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
-      <include file = "$(find platoon_strategic)/launch/platoon_strategic.launch"/>
-    </group> -->
-
-    <!-- Platoon Strategic IHP Plugin -->
-    <group>
-      <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
-      <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
-      <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
-      <include file = "$(find platoon_strategic_ihp)/launch/platoon_strategic_ihp.launch"/>
-    </group>
-
     <!-- Intersection Transit Maneuvering Plugin-->
     <group>
       <include file = "$(find intersection_transit_maneuvering)/launch/intersection_transit_maneuvering.launch"/>

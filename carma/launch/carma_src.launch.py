@@ -239,6 +239,6 @@ def generate_launch_description():
         localization_group,
         v2x_group,
         guidance_group, 
-        system_controller,
-        ui_group
+        ui_group,
+        system_controller
     ])
