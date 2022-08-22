@@ -40,7 +40,7 @@
 #include <lanelet2_core/geometry/LineString.h>
 #include <carma_wm_ros2/CARMAWorldModel.hpp>
 #include <math.h>
-#include <std_msgs/Float64.h>
+#include <std_msgs/msg/float64.hpp>
 #include <math.h>
 
 using oss = std::ostringstream;
