@@ -245,15 +245,10 @@ namespace cooperative_lanechange
      */ 
     carma_ros2_utils::CallbackReturn on_configure_plugin();
 
-    /**
-     * TODO for USER: The following lifecycle overrides are also available if needed
-     * get_capability
-     * on_activate_plugin
-     * on_deactivate_plugin
-     * on_cleanup_plugin
-     * on_shutdown_plugin
-     * on_error_plugin
-     */
+    // Unit Tests
+    FRIEND_TEST(CooperativeLaneChangePlugin, TestLaneChangefunctions);
+    FRIEND_TEST(CooperativeLaneChangePlugin, Testcurrentgapcb);
+    FRIEND_TEST(CooperativeLaneChangePlugin,TestNoPath_roadwayobject);
   };
 
 } // cooperative_lanechange

@@ -58,7 +58,7 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_cooperative_lanechange test/node_test.cpp)
+  ament_add_gtest(test_cooperative_lanechange test/test_cooperative_plugin.cpp)
 
   ament_target_dependencies(test_cooperative_lanechange ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
