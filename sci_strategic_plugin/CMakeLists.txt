@@ -62,16 +62,16 @@ target_link_libraries(${node_exec}
 )
 
 # Testing TODO Misheel
-#if(BUILD_TESTING)  
-#
-#  find_package(ament_lint_auto REQUIRED)
-#  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
-#
-#  ament_add_gtest(test_route_following_plugin test/test_route_following_plugin.cpp test/test_stop_at_end_of_route.cpp)
-#  ament_target_dependencies(test_route_following_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
-#  target_link_libraries(test_route_following_plugin ${node_lib})
-#
-#endif()
+if(BUILD_TESTING)  
+
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+
+  ament_add_gtest(test_sci_strategic_plugin test/test_strategic_plugin.cpp test/test_sci_strategic_plugin.cpp test/test_main.cpp)
+  ament_target_dependencies(test_sci_strategic_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+  target_link_libraries(test_sci_strategic_plugin ${node_lib})
+
+endif()
 
 # Install
 ament_auto_package(

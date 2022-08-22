@@ -34,43 +34,15 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <carma_guidance_plugins/strategic_plugin.hpp>
-
 #include "sci_strategic_plugin_config.hpp"
 
 namespace sci_strategic_plugin
 {
-  enum TurnDirection {
-            Straight,
-            Right,
-            Left
-    };
-
-  /**
-  * \brief Anonymous function to extract maneuver end speed which can not be optained with GET_MANEUVER_PROPERY calls due to it missing in stop and wait plugin
-  * \param mvr input maneuver
-  * \return end speed
- */ 
-double getManeuverEndSpeed(const carma_planning_msgs::msg::Maneuver& mvr)
-  {
-    switch(mvr.type) {
-        case carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING:
-            return mvr.lane_following_maneuver.end_speed;
-        case carma_planning_msgs::msg::Maneuver::LANE_CHANGE:
-            return mvr.lane_change_maneuver.end_speed;
-        case carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
-            return mvr.intersection_transit_straight_maneuver.end_speed;
-        case carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
-            return mvr.intersection_transit_left_turn_maneuver.end_speed;
-        case carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
-            return mvr.intersection_transit_right_turn_maneuver.end_speed;
-        case carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT:
-            return 0;
-        default:
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "Requested end speed from unsupported maneuver type");
-            return 0;
-    }
-  }
-
+enum TurnDirection {
+          Straight,
+          Right,
+          Left
+};
 
 class SCIStrategicPlugin : public carma_guidance_plugins::StrategicPlugin
 {
@@ -355,6 +327,21 @@ public:
   std::string stop_controlled_intersection_strategy_ = "Carma/stop_controlled_intersection";
   std::string previous_strategy_params_ = "";  
   
+  // Unit test helper functions
+  carma_wm::WorldModelConstPtr get_wm() { return wm_; }
+  void set_wm(carma_wm::WorldModelConstPtr new_wm) { wm_ = new_wm; }
 
+  // Unit Test Accessors
+  FRIEND_TEST(SCIStrategicPluginTest, findSpeedLimit);
+  FRIEND_TEST(SCIStrategicPluginTest, moboperationcbtest);
+  FRIEND_TEST(SCIStrategicPluginTest, parseStrategyParamstest);
+  FRIEND_TEST(SCIStrategicPluginTest, calcEstimatedStopTimetest);
+  FRIEND_TEST(SCIStrategicPluginTest, calc_speed_before_deceltest);
+  FRIEND_TEST(SCIStrategicPluginTest, determine_speed_profile_casetest);
+  FRIEND_TEST(SCIStrategicPluginTest, caseOneSpeedProfiletest);
+  FRIEND_TEST(SCIStrategicPluginTest, caseTwoSpeedProfiletest);
+  FRIEND_TEST(SCIStrategicPluginTest, caseThreeSpeedProfiletest);
+  FRIEND_TEST(SCIStrategicPluginTest, testIntersectionturndirection);
+  FRIEND_TEST(SCIStrategicPluginTest, maneuvercbtest);
 };
 }  // namespace sci_strategic_plugin

@@ -33,9 +33,39 @@
                                                                                                       "invalid type "  \
                                                                                                       "id"))))))))
 
+
 namespace sci_strategic_plugin
 {
 namespace std_ph = std::placeholders;
+
+namespace {
+  /**
+  * \brief Anonymous function to extract maneuver end speed which can not be optained with GET_MANEUVER_PROPERY calls due to it missing in stop and wait plugin
+  * \param mvr input maneuver
+  * \return end speed
+  */ 
+  double getManeuverEndSpeed(const carma_planning_msgs::msg::Maneuver& mvr)
+  {
+    switch(mvr.type) 
+    {
+      case carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING:
+          return mvr.lane_following_maneuver.end_speed;
+      case carma_planning_msgs::msg::Maneuver::LANE_CHANGE:
+          return mvr.lane_change_maneuver.end_speed;
+      case carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+          return mvr.intersection_transit_straight_maneuver.end_speed;
+      case carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+          return mvr.intersection_transit_left_turn_maneuver.end_speed;
+      case carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+          return mvr.intersection_transit_right_turn_maneuver.end_speed;
+      case carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT:
+          return 0;
+      default:
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "Requested end speed from unsupported maneuver type");
+          return 0;
+    }
+  }
+} // namespace anonymous
 
 SCIStrategicPlugin::SCIStrategicPlugin(const rclcpp::NodeOptions &options)
   : carma_guidance_plugins::StrategicPlugin(options), config_(SCIStrategicPluginConfig())
