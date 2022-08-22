@@ -22,23 +22,6 @@
 
 #include "platoon_strategic_ihp/platoon_strategic_plugin_node_ihp.h"
 
-
-// TODO for USER: Implement a real test using GTest
-// TEST(Testplatoon_strategic_ihp, example_test){
-
-//     rclcpp::NodeOptions options;
-//     auto worker_node = std::make_shared<platoon_strategic_ihp::Node>(options);
-
-//     worker_node->configure(); //Call configure state transition
-//     worker_node->activate();  //Call activate state transition to get not read for runtime
-
-//     std::unique_ptr<std_msgs::msg::String> msg = std::make_shared<std_msgs::msg::String>();
-//     msg->data = "my string";
-
-//     worker_node->example_callback(move(msg)); // Manually drive topic callbacks
-
-// }
-
 int main(int argc, char ** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

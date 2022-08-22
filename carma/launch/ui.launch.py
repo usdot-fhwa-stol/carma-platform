@@ -18,7 +18,7 @@ from launch.substitutions import EnvironmentVariable
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
 from launch.actions import IncludeLaunchDescription
-from launch.launch_description_sources import FrontendLaunchDescriptionSource
+from launch.launch_description_sources import AnyLaunchDescription
 from launch.substitutions import EnvironmentVariable
 from launch.actions import GroupAction
 from launch_ros.actions.set_remap import SetRemap
@@ -74,7 +74,7 @@ def generate_launch_description():
             SetRemap("can/speed", [EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/can/speed"]),
             SetRemap("can/acc_engaged", [EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/can/acc_engaged"]),
             IncludeLaunchDescription(
-                FrontendLaunchDescriptionSource(
+                AnyLaunchDescription(
                     [ get_package_share_directory('rosbridge_server'), '/launch/rosbridge_websocket_launch.xml']
                 ),
                 launch_arguments = { 
