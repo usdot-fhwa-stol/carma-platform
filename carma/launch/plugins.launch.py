@@ -51,8 +51,8 @@ def generate_launch_description():
     route_following_plugin_file_path = os.path.join(
         get_package_share_directory('route_following_plugin'), 'config/parameters.yaml')
 
-    stop_and_wait_plugin_param_file = os.path.join(
-        get_package_share_directory('stop_and_wait_plugin'), 'config/parameters.yaml')        
+    #stop_and_wait_plugin_param_file = os.path.join(
+    #    get_package_share_directory('stop_and_wait_plugin'), 'config/parameters.yaml')        
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
@@ -60,7 +60,7 @@ def generate_launch_description():
 
     carma_plugins_container = ComposableNodeContainer(
         package='carma_ros2_utils',
-        name='carma_guidance_plugins_container',
+        name='carma_guidance_core_plugins_container',
         executable='carma_component_container_mt',
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
@@ -149,10 +149,11 @@ def generate_launch_description():
                     vehicle_characteristics_param_file, #vehicle_response_lag
                     pure_pursuit_tuning_parameters #pure_pursuit calibration parameters
                 ]
-            )
+            ),
         ]
     )
 
     return LaunchDescription([    
-        carma_plugins_container
+        carma_plugins_container,
+        #platooning_plugins_container
     ]) 

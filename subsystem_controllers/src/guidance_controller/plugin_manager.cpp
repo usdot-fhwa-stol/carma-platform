@@ -52,7 +52,8 @@ namespace subsystem_controllers
             
             Entry e(false, false, p, carma_planning_msgs::msg::Plugin::UNKNOWN, "", true, is_ros1);
             em_.update_entry(e);
-            plugin_lifecycle_mgr_->add_managed_node(p);
+            if (!is_ros1)
+                plugin_lifecycle_mgr_->add_managed_node(p);
         }
 
         for (const auto& p : auto_activated_plugins_) {
@@ -61,7 +62,8 @@ namespace subsystem_controllers
 
             Entry e(false, false, p, carma_planning_msgs::msg::Plugin::UNKNOWN, "", true, is_ros1);
             em_.update_entry(e);
-            plugin_lifecycle_mgr_->add_managed_node(p);
+            if (!is_ros1)
+                plugin_lifecycle_mgr_->add_managed_node(p);
         }
     }
 

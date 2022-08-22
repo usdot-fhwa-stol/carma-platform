@@ -24,7 +24,7 @@ import os
 
 
 '''
-This file is can be used to launch the CARMA trajectory_visualizer.
+This file is can be used to launch the CARMA platoon_strategic_ihp_node.
   Though in carma-platform it may be launched directly from the base launch file.
 '''
 
@@ -37,21 +37,22 @@ def generate_launch_description():
     
     # Get parameter file path
     param_file_path = os.path.join(
-        get_package_share_directory('trajectory_visualizer'), 'config/parameters.yaml')
+        get_package_share_directory('platoon_strategic_ihp'), 'config/parameters.yaml')
+
         
     # Launch node(s) in a carma container to allow logging to be configured
     container = ComposableNodeContainer(
         package='carma_ros2_utils',
-        name='trajectory_visualizer_container',
+        name='platoon_strategic_ihp_container',
         namespace=GetCurrentNamespace(),
         executable='carma_component_container_mt',
         composable_node_descriptions=[
             
             # Launch the core node(s)
             ComposableNode(
-                    package='trajectory_visualizer',
-                    plugin='trajectory_visualizer::TrajectoryVisualizer',
-                    name='trajectory_visualizer_node',
+                    package='platoon_strategic_ihp',
+                    plugin='platoon_strategic_ihp::Node',
+                    name='platoon_strategic_ihp_node',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
                         {'--log-level' : log_level }
