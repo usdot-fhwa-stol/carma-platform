@@ -51,13 +51,16 @@ def generate_launch_description():
         get_package_share_directory('route_following_plugin'), 'config/parameters.yaml')
 
     stop_and_wait_plugin_param_file = os.path.join(
-        get_package_share_directory('stop_and_wait_plugin'), 'config/parameters.yaml')        
+        get_package_share_directory('stop_and_wait_plugin'), 'config/parameters.yaml')    
+
+    platoon_strategic_ihp_param_file = os.path.join(
+        get_package_share_directory('platoon_strategic_ihp'), 'config/parameters.yaml')    
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     carma_plugins_container = ComposableNodeContainer(
         package='carma_ros2_utils',
-        name='carma_guidance_plugins_container',
+        name='carma_guidance_core_plugins_container',
         executable='carma_component_container_mt',
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
@@ -130,6 +133,50 @@ def generate_launch_description():
         ]
     )
 
+    platooning_plugins_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='platooning_plugins_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+            ComposableNode(
+                package='platoon_strategic_ihp',
+                plugin='platoon_strategic_ihp::Node',
+                name='platoon_strategic_ihp_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('platoon_strategic_ihp', env_log_levels) }
+                ],
+                remappings = [
+                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
+                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
+                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                    ("outgoing_mobility_response", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_response" ] ),
+                    ("outgoing_mobility_request", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_request" ] ),
+                    ("outgoing_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),
+                    ("incoming_mobility_request", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_request" ] ),
+                    ("incoming_mobility_response", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_response" ] ),
+                    ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_operation" ] ),
+                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
+                    ("twist_raw", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/twist_raw" ] ),
+                    ("platoon_info", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/platoon_info" ] ),
+                    ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
+                    ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
+                    ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
+                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                ],
+                parameters=[ 
+                    platoon_strategic_ihp_param_file,
+                    vehicle_config_param_file
+                ]
+            ),
+        ]
+    )
+
+    
+
     return LaunchDescription([    
-        carma_plugins_container
+        carma_plugins_container,
+        platooning_plugins_container
     ]) 
