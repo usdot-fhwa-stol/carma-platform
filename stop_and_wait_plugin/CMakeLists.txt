@@ -48,7 +48,7 @@ ament_auto_add_executable(${node_exec}
 )
 
 # Register component
-rclcpp_components_register_nodes(${worker_lib} "stop_and_wait_plugin::StopandWaitNode")
+rclcpp_components_register_nodes(${node_lib} "stop_and_wait_plugin::StopandWaitNode")
 
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies
