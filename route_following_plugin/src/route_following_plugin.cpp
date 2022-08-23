@@ -97,6 +97,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
     config_.lateral_accel_limit_ = declare_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit_);
     config_.stopping_accel_limit_multiplier_ = declare_parameter<double>("stopping_accel_limit_multiplier", config_.stopping_accel_limit_multiplier_);
     config_.min_maneuver_length_ = declare_parameter<double>("vehicle_id", config_.min_maneuver_length_);
+    config_.min_maneuver_length_ = declare_parameter<double>("min_maneuver_length", config_.min_maneuver_length_);
   }
 
     carma_ros2_utils::CallbackReturn RouteFollowingPlugin::on_configure_plugin()
