@@ -15,7 +15,7 @@
 
 <package format="3">
   <name>platooning_tactical_plugin</name>
-  <version>1.0.0</version>
+  <version>4.0.0</version>
   <description>The platooning_tactical_plugin package</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>

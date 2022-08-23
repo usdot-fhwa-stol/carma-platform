@@ -19,25 +19,7 @@
 #include <chrono>
 #include <thread>
 #include <future>
-
-#include "platooning_tactical_plugin/platooning_tactical_plugin_node.hpp"
-
-
-// TODO for USER: Implement a real test using GTest
-TEST(Testplatooning_tactical_plugin, example_test){
-
-    rclcpp::NodeOptions options;
-    auto worker_node = std::make_shared<platooning_tactical_plugin::Node>(options);
-
-    worker_node->configure(); //Call configure state transition
-    worker_node->activate();  //Call activate state transition to get not read for runtime
-
-    std::unique_ptr<std_msgs::msg::String> msg = std::make_unique<std_msgs::msg::String>();
-    msg->data = "my string";
-
-    worker_node->example_callback(move(msg)); // Manually drive topic callbacks
-
-}
+#include <rclcpp/rclcpp.hpp>
 
 int main(int argc, char ** argv)
 {

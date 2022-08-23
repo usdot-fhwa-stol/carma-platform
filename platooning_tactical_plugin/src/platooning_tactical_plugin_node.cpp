@@ -44,9 +44,9 @@ namespace platooning_tactical_plugin
     config_.lateral_accel_limit = config_.lateral_accel_limit * config_.lat_accel_multiplier;
     config_.max_accel = config_.max_accel *  config_.max_accel_multiplier;
 
-    ROS_INFO_STREAM("PlatooningTacticalPlugin Params" << config);
+    RCLCPP_INFO_STREAM(get_logger(), "PlatooningTacticalPlugin Params" << config);
 
-    worker_ = std::make_shared<PlatooningTacticalPlugin>(getWorldModel(), config_);
+    worker_ = std::make_shared<PlatooningTacticalPlugin>(get_world_model(), config_);
 
   }
 
@@ -109,7 +109,7 @@ namespace platooning_tactical_plugin
     config_.lateral_accel_limit = config_.lateral_accel_limit * config_.lat_accel_multiplier;
     config_.max_accel = config_.max_accel *  config_.max_accel_multiplier;
 
-    ROS_INFO_STREAM("PlatooningTacticalPlugin Params" << config);
+    RCLCPP_INFO_STREAM(get_logger(), "PlatooningTacticalPlugin Params" << config);
 
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
