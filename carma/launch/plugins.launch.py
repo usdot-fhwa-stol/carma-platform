@@ -149,8 +149,9 @@ def generate_launch_description():
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
                     ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
                     ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
-                    ("upcoming_lane_change_status", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/upcoming_lane_change_status" ] ),
+                    ("cooperative_lane_change_status", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/cooperative_lane_change_status" ] ),
                     ("bsm_outbound", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/bsm_outbound" ] ),
+                    ("outgoing_mobility_request", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_request" ] ),
                     ("incoming_mobility_response", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_response" ] ),
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
                     ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] )
