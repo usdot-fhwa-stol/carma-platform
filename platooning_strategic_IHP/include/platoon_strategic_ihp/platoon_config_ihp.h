@@ -18,6 +18,9 @@
 
 #include <iostream>
 
+namespace platoon_strategic_ihp
+{
+
 /**
  * \brief Stuct containing the algorithm configuration values for the yield_pluginConfig
  */
@@ -115,7 +118,9 @@ struct PlatoonPluginConfig
           << "allowCutinJoin: " << c.allowCutinJoin << std::endl
           << "significantDTDchange: " << c.significantDTDchange << std::endl
           << "join_index: " << c.join_index << std::endl
-          << "}" << std::endl;
+          << "}" << std::endl; //TODO this is missing some fields
     return output;
   }
 };
+
+} //platoon_strategic_ihp
