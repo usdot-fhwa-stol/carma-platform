@@ -32,7 +32,6 @@
 #include <carma_wm_ros2/CARMAWorldModel.hpp>
 #include <unsupported/Eigen/Splines>
 #include <carma_ros2_utils/containers/containers.hpp>
-#include <tf/LinearMath/Vector3.h>
 #include <carma_ros2_utils/timers/testing/TestTimerFactory.hpp>
 
 typedef Eigen::Spline<float, 2> Spline2d;

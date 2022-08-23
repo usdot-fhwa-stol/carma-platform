@@ -55,6 +55,9 @@ def generate_launch_description():
 
     platoon_strategic_ihp_param_file = os.path.join(
         get_package_share_directory('platoon_strategic_ihp'), 'config/parameters.yaml')    
+    
+    platoon_tactical_ihp_param_file = os.path.join(
+        get_package_share_directory('platooning_tactical_plugin'), 'config/parameters.yaml') 
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
@@ -170,6 +173,25 @@ def generate_launch_description():
                     platoon_strategic_ihp_param_file,
                     vehicle_config_param_file
                 ]
+            ),      
+            ComposableNode(
+                    package='platooning_tactical_plugin',
+                    plugin='platooning_tactical_plugin::Node',
+                    name='platooning_tactical_plugin_node',
+                    extra_arguments=[
+                        {'use_intra_process_comms': True},
+                        {'--log-level' : GetLogLevel('platooning_tactical_plugin', env_log_levels) }
+                    ],
+                remappings = [
+                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
+                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
+                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
+                    ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
+                    ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
+                ],
+                parameters=[ platoon_tactical_ihp_param_file, vehicle_config_param_file ]
             ),
         ]
     )

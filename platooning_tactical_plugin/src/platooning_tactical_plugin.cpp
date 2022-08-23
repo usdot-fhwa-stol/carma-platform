@@ -15,7 +15,6 @@
 
 #include "platooning_tactical_plugin/platooning_tactical_plugin.h"
 
-#include <ros/ros.h>
 #include <string>
 #include <algorithm>
 #include <memory>
