@@ -25,7 +25,7 @@ namespace light_controlled_intersection_tactical_plugin
     {
     }
 
-    void LightControlledIntersectionTacticalPlugin::plan_trajectory_cb( 
+    void LightControlledIntersectionTacticalPlugin::planTrajectoryCB( 
         carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
         carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
     {
@@ -104,11 +104,11 @@ namespace light_controlled_intersection_tactical_plugin
 
 
         // Create curve-fitting compatible trajectories (with extra back and front attached points) with raw speed limits from maneuver 
-        auto points_and_target_speeds = create_geometry_profile(maneuver_plan, std::max((double)0, current_downtrack_ - config_.back_distance),
+        auto points_and_target_speeds = createGeometryProfile(maneuver_plan, std::max((double)0, current_downtrack_ - config_.back_distance),
                                                                                 wm_, ending_state_before_buffer_, req->vehicle_state, wpg_general_config, wpg_detail_config);
 
         // Change raw speed limit values to target speeds specified by the algorithm
-        apply_optimized_target_speed_profile(maneuver_plan.front(), req->vehicle_state.longitudinal_vel, points_and_target_speeds);
+        applyOptimizedTargetSpeedProfile(maneuver_plan.front(), req->vehicle_state.longitudinal_vel, points_and_target_speeds);
 
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "points_and_target_speeds: " << points_and_target_speeds.size());
 
@@ -212,7 +212,7 @@ namespace light_controlled_intersection_tactical_plugin
         return;
     }
 
-    void LightControlledIntersectionTacticalPlugin::apply_trajectory_smoothing_algorithm(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double remaining_dist, 
+    void LightControlledIntersectionTacticalPlugin::applyTrajectorySmoothingAlgorithm(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double remaining_dist, 
                                                 double starting_speed, double departure_speed, TrajectoryParams tsp)
     {
         if (points_and_target_speeds.empty())
@@ -299,7 +299,7 @@ namespace light_controlled_intersection_tactical_plugin
         }
     }
 
-    void LightControlledIntersectionTacticalPlugin::apply_optimized_target_speed_profile(const carma_planning_msgs::msg::Maneuver& maneuver, const double starting_speed, std::vector<PointSpeedPair>& points_and_target_speeds)
+    void LightControlledIntersectionTacticalPlugin::applyOptimizedTargetSpeedProfile(const carma_planning_msgs::msg::Maneuver& maneuver, const double starting_speed, std::vector<PointSpeedPair>& points_and_target_speeds)
     {
         if(GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data).size() < 9 || 
             GET_MANEUVER_PROPERTY(maneuver, parameters.int_valued_meta_data).size() < 2 ){
@@ -327,7 +327,7 @@ namespace light_controlled_intersection_tactical_plugin
         double entry_dist = ending_downtrack - starting_downtrack;
 
         // change speed profile depending on algorithm case starting from maneuver start_dist
-        apply_trajectory_smoothing_algorithm(wm_, points_and_target_speeds, starting_downtrack, entry_dist, starting_speed, 
+        applyTrajectorySmoothingAlgorithm(wm_, points_and_target_speeds, starting_downtrack, entry_dist, starting_speed, 
                                                 departure_speed, tsp);
     }
 
@@ -344,7 +344,7 @@ namespace light_controlled_intersection_tactical_plugin
         }
     }
 
-    std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::create_geometry_profile(const std::vector<carma_planning_msgs::msg::Maneuver> &maneuvers, double max_starting_downtrack,const carma_wm::WorldModelConstPtr &wm,
+    std::vector<PointSpeedPair> LightControlledIntersectionTacticalPlugin::createGeometryProfile(const std::vector<carma_planning_msgs::msg::Maneuver> &maneuvers, double max_starting_downtrack,const carma_wm::WorldModelConstPtr &wm,
                                                                         carma_planning_msgs::msg::VehicleState &ending_state_before_buffer,const carma_planning_msgs::msg::VehicleState& state,
                                                                         const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config)
     {
@@ -385,5 +385,11 @@ namespace light_controlled_intersection_tactical_plugin
 
         return points_and_target_speeds;
     }
+
+    void LightControlledIntersectionTacticalPlugin::setConfig(const Config& config) 
+    {
+        config_ = config;
+    }
+
 
 } // light_controlled_intersection_tactical_plugin

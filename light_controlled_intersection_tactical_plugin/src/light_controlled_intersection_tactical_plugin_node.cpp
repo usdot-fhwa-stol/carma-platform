@@ -69,6 +69,11 @@ namespace light_controlled_intersection_tactical_plugin
       {"curvature_moving_average_window_size", config_.curvature_moving_average_window_size},
       {"speed_moving_average_window_size", config_.speed_moving_average_window_size}}, parameters);
 
+    if (worker_)
+    {
+      worker_->setConfig(config_);
+    }
+
     rcl_interfaces::msg::SetParametersResult result;
 
     result.successful = !error && !error_2;
@@ -134,7 +139,7 @@ namespace light_controlled_intersection_tactical_plugin
     carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
   {
-    worker_->plan_trajectory_cb(req, resp);
+    worker_->planTrajectoryCB(req, resp);
   }
 
 } // light_controlled_intersection_tactical_plugin

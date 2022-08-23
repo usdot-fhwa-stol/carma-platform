@@ -144,7 +144,7 @@ namespace light_controlled_intersection_tactical_plugin
      * NOTE: Cruising speed profile is applied (case 1) if speed before deceleration is higher than speed limit. Otherwise Case 2.
      * NOTE: when applying the speed profile, the function ignores buffer points beyond start_dist and end_dist. Internally uses: config_.back_distance and speed_limit_
      */
-    void apply_trajectory_smoothing_algorithm(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double remaining_dist, 
+    void applyTrajectorySmoothingAlgorithm(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double remaining_dist, 
                                             double starting_speed, double departure_speed, TrajectoryParams tsp);
 
     /**
@@ -156,7 +156,7 @@ namespace light_controlled_intersection_tactical_plugin
      *               These points must be in the same lane as the vehicle and must extend in front of it though it is fine if they also extend behind it. 
      *              
      */
-    void apply_optimized_target_speed_profile(const carma_planning_msgs::msg::Maneuver& maneuver, const double starting_speed, std::vector<PointSpeedPair>& points_and_target_speeds);
+    void applyOptimizedTargetSpeedProfile(const carma_planning_msgs::msg::Maneuver& maneuver, const double starting_speed, std::vector<PointSpeedPair>& points_and_target_speeds);
 
     /**
      * \brief Creates geometry profile to return a point speed pair struct for INTERSECTION_TRANSIT maneuver types (by converting it to LANE_FOLLOW)
@@ -171,7 +171,7 @@ namespace light_controlled_intersection_tactical_plugin
      * \return A vector of point speed pair struct which contains geometry points as basicpoint::lanelet2d and speed as a double for the maneuver
      * NOTE: This function is a slightly modified version of the same function in basic_autonomy library and currently only plans for the first maneuver
      */
-    std::vector<PointSpeedPair> create_geometry_profile(const std::vector<carma_planning_msgs::msg::Maneuver> &maneuvers, double max_starting_downtrack,const carma_wm::WorldModelConstPtr &wm,
+    std::vector<PointSpeedPair> createGeometryProfile(const std::vector<carma_planning_msgs::msg::Maneuver> &maneuvers, double max_starting_downtrack,const carma_wm::WorldModelConstPtr &wm,
                                                                         carma_planning_msgs::msg::VehicleState &ending_state_before_buffer,const carma_planning_msgs::msg::VehicleState& state,
                                                                         const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config);
 
@@ -199,10 +199,15 @@ namespace light_controlled_intersection_tactical_plugin
      * \param req The service request
      * \param resp The service response
      */ 
-    void plan_trajectory_cb( 
+    void planTrajectoryCB( 
       carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
       carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp);
 
+    /**
+     * \brief Setter function to set a new config for this object
+     * \param config The new config to be used by this object
+     */ 
+    void setConfig(const Config& config);
   };
 
 } // light_controlled_intersection_tactical_plugin
