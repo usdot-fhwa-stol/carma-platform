@@ -23,7 +23,7 @@ namespace inlanecruising_plugin
   InLaneCruisingPluginNode::InLaneCruisingPluginNode(const rclcpp::NodeOptions &options)
       : carma_guidance_plugins::TacticalPlugin(options), 
         plugin_name_(get_plugin_name_and_ns()), 
-        version_id_("v1.0"), 
+        version_id_("v4.0"), 
         config_(InLaneCruisingPluginConfig())
   {
     // Declare parameters
@@ -38,8 +38,8 @@ namespace inlanecruising_plugin
     config_.speed_moving_average_window_size = declare_parameter<int>("speed_moving_average_window_size", config_.speed_moving_average_window_size);
     config_.curvature_moving_average_window_size = declare_parameter<int>("curvature_moving_average_window_size", config_.curvature_moving_average_window_size);
     config_.buffer_ending_downtrack = declare_parameter<double>("buffer_ending_downtrack", config_.buffer_ending_downtrack);
-    config_.max_accel = declare_parameter<double>("/vehicle_acceleration_limit", config_.max_accel);
-    config_.lateral_accel_limit = declare_parameter<double>("/vehicle_lateral_accel_limit", config_.lateral_accel_limit);
+    config_.max_accel = declare_parameter<double>("vehicle_acceleration_limit", config_.max_accel);
+    config_.lateral_accel_limit = declare_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit);
     config_.enable_object_avoidance = declare_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
   }
   
@@ -60,8 +60,8 @@ namespace inlanecruising_plugin
     get_parameter<int>("speed_moving_average_window_size", config_.speed_moving_average_window_size);
     get_parameter<int>("curvature_moving_average_window_size", config_.curvature_moving_average_window_size);
     get_parameter<double>("buffer_ending_downtrack", config_.buffer_ending_downtrack);
-    get_parameter<double>("/vehicle_acceleration_limit", config_.max_accel);
-    get_parameter<double>("/vehicle_lateral_accel_limit", config_.lateral_accel_limit);
+    get_parameter<double>("vehicle_acceleration_limit", config_.max_accel);
+    get_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit);
     get_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
 
 
@@ -104,10 +104,7 @@ namespace inlanecruising_plugin
       {"max_accel_multiplier", config_.max_accel_multiplier},
       {"lat_accel_multiplier", config_.lat_accel_multiplier},
       {"back_distance", config_.back_distance},
-      {"buffer_ending_downtrack", config_.buffer_ending_downtrack},
-      {"/vehicle_acceleration_limit", config_.max_accel},
-      {"/vehicle_lateral_accel_limit", config_.lateral_accel_limit},
-      {"buffer_ending_downtrack", config_.buffer_ending_downtrack}}, parameters);
+      {"buffer_ending_downtrack", config_.buffer_ending_downtrack}}, parameters); // Global acceleration limits not allowed to dynamically update
 
     auto error_bool = update_params<bool>({
       {"enable_object_avoidance", config_.enable_object_avoidance}}, parameters);
