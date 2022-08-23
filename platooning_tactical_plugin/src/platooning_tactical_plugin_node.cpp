@@ -14,6 +14,7 @@
  * the License.
  */
 #include "platooning_tactical_plugin/platooning_tactical_plugin_node.h"
+#include <carma_ros2_utils/timers/ROSTimerFactory.hpp>
 
 namespace platooning_tactical_plugin
 {
@@ -44,9 +45,7 @@ namespace platooning_tactical_plugin
     config_.lateral_accel_limit = config_.lateral_accel_limit * config_.lat_accel_multiplier;
     config_.max_accel = config_.max_accel *  config_.max_accel_multiplier;
 
-    RCLCPP_INFO_STREAM(get_logger(), "PlatooningTacticalPlugin Params" << config);
-
-    worker_ = std::make_shared<PlatooningTacticalPlugin>(get_world_model(), config_);
+    RCLCPP_INFO_STREAM(get_logger(), "PlatooningTacticalPlugin Params" << config_);
 
   }
 
@@ -63,7 +62,7 @@ namespace platooning_tactical_plugin
       {"curvature_moving_average_window_size", config_.curvature_moving_average_window_size}
     }, parameters);
 
-    auto error3 = update_params<int>({
+    auto error3 = update_params<double>({
       {"trajectory_time_length", config_.trajectory_time_length},
       {"curve_resample_step_size", config_.curve_resample_step_size},
       {"minimum_speed", config_.minimum_speed},
@@ -79,7 +78,7 @@ namespace platooning_tactical_plugin
 
     if (result.successful && worker_)
     {
-      worker->setConfig(config_);
+      worker_->set_config(config_);
     }
 
     return result;
@@ -109,10 +108,13 @@ namespace platooning_tactical_plugin
     config_.lateral_accel_limit = config_.lateral_accel_limit * config_.lat_accel_multiplier;
     config_.max_accel = config_.max_accel *  config_.max_accel_multiplier;
 
-    RCLCPP_INFO_STREAM(get_logger(), "PlatooningTacticalPlugin Params" << config);
+    RCLCPP_INFO_STREAM(get_logger(), "PlatooningTacticalPlugin Params" << config_);
 
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
+
+    worker_ = std::make_shared<PlatooningTacticalPlugin>(get_world_model(), config_, 
+      std::make_shared<carma_ros2_utils::timers::ROSTimerFactory>(shared_from_this()));
 
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
@@ -126,7 +128,7 @@ namespace platooning_tactical_plugin
     if (!worker_)
       return;
     
-    worker_->plan_trajectory_cb(req, resp);
+    worker_->plan_trajectory_cb(*req, *resp);
   }
 
   bool Node::get_availability() {

@@ -16,7 +16,7 @@
  the License.
 -->
 <package format="3">
-<name>platooning_tactical_plugin</name>
+<name>platooning_tactical_plugin_old</name>
 <version>3.2.0</version>
 <description>
 The platooning_tactical_plugin converts maneuvers from platooning strategic plugin to a CARMA trajectory

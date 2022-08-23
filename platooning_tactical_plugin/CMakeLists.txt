@@ -37,6 +37,7 @@ include_directories(
 # Build
 ament_auto_add_library(${node_lib} SHARED
         src/platooning_tactical_plugin_node.cpp
+        src/platooning_tactical_plugin.cpp
 )
 
 ament_auto_add_executable(${node_exec} 
@@ -58,7 +59,7 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_platooning_tactical_plugin test/node_test.cpp)
+  ament_add_gtest(test_platooning_tactical_plugin test/node_test.cpp test/test_platooning_tactical_plugin_planning.cpp)
 
   ament_target_dependencies(test_platooning_tactical_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 

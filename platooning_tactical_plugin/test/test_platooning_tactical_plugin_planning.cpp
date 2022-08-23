@@ -33,6 +33,7 @@
 #include <unsupported/Eigen/Splines>
 #include <carma_ros2_utils/containers/containers.hpp>
 #include <tf/LinearMath/Vector3.h>
+#include <carma_ros2_utils/timers/testing/TestTimerFactory.hpp>
 
 typedef Eigen::Spline<float, 2> Spline2d;
 
@@ -44,13 +45,14 @@ TEST(PlatooningTacticalPluginTest, testPlanningCallback)
 {
   PlatooningTacticalPluginConfig config;
   config.default_downsample_ratio = 1;
-  std::shared_ptr<carma_wm_ros2::CARMAWorldModel> wm = std::make_shared<carma_wm_ros2::CARMAWorldModel>();
-  PlatooningTacticalPlugin plugin(wm, config, [&](auto msg) { RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_tactical_plugin"), msg); });
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  PlatooningTacticalPlugin plugin(wm, config,
+    std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
 
-  auto map = carma_wm_ros2::test::buildGuidanceTestMap(3.7, 10);
+  auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10);
 
   wm->setMap(map);
-  carma_wm_ros2::test::setSpeedLimit(15_mph, wm);
+  carma_wm::test::setSpeedLimit(15_mph, wm);
 
   /**
    * Total route length should be 100m
@@ -67,9 +69,9 @@ TEST(PlatooningTacticalPluginTest, testPlanningCallback)
    *           START_LINE
    */
 
-  carma_wm_ros2::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
+  carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
 
-  carma_planning_msgs::srv::PlanTrajectoryRequest req;
+  carma_planning_msgs::srv::PlanTrajectory::Request req;
   req.vehicle_state.x_pos_global = 1.5;
   req.vehicle_state.y_pos_global = 5;
   req.vehicle_state.orientation = 0;
@@ -102,7 +104,7 @@ TEST(PlatooningTacticalPluginTest, testPlanningCallback)
   req.maneuver_plan.maneuvers.push_back(maneuver);
   req.maneuver_plan.maneuvers.push_back(maneuver2);
 
-  cav_srvs::PlanTrajectoryResponse resp;
+  carma_planning_msgs::srv::PlanTrajectory::Response resp;
 
   plugin.plan_trajectory_cb(req, resp);
 
@@ -113,13 +115,14 @@ TEST(PlatooningTacticalPluginTest, testPlanningCallbackexception)
 {
   PlatooningTacticalPluginConfig config;
   config.default_downsample_ratio = 1;
-  std::shared_ptr<carma_wm_ros2::CARMAWorldModel> wm = std::make_shared<carma_wm_ros2::CARMAWorldModel>();
-  PlatooningTacticalPlugin plugin(wm, config, [&](auto msg) { RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_tactical_plugin"), msg); });
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  PlatooningTacticalPlugin plugin(wm, config,
+    std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
 
-  auto map = carma_wm_ros2::test::buildGuidanceTestMap(3.7, 10);
+  auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10);
 
   wm->setMap(map);
-  carma_wm_ros2::test::setSpeedLimit(15_mph, wm);
+  carma_wm::test::setSpeedLimit(15_mph, wm);
 
   /**
    * Total route length should be 100m
@@ -136,9 +139,9 @@ TEST(PlatooningTacticalPluginTest, testPlanningCallbackexception)
    *           START_LINE
    */
 
-  carma_wm_ros2::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
+  carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
 
-  carma_planning_msgs::srv::PlanTrajectoryRequest req;
+  carma_planning_msgs::srv::PlanTrajectory::Request req;
   req.vehicle_state.x_pos_global = 1.5;
   req.vehicle_state.y_pos_global = 5;
   req.vehicle_state.orientation = 0;
@@ -169,7 +172,7 @@ TEST(PlatooningTacticalPluginTest, testPlanningCallbackexception)
   req.maneuver_plan.maneuvers.push_back(maneuver);
   req.maneuver_plan.maneuvers.push_back(maneuver2);
 
-  carma_planning_msgs::srv::PlanTrajectoryResponse resp;
+  carma_planning_msgs::srv::PlanTrajectory::Response resp;
 
   // plugin.plan_trajectory_cb(req, resp);
 

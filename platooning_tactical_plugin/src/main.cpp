@@ -15,7 +15,7 @@
  */
 
 #include <rclcpp/rclcpp.hpp>
-#include "platooning_tactical_plugin/platooning_tactical_plugin_node.hpp"
+#include "platooning_tactical_plugin/platooning_tactical_plugin_node.h"
 
 int main(int argc, char **argv) 
 {

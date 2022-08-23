@@ -22,10 +22,11 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <lanelet2_core/geometry/Point.h>
-#include <trajectory_utils/trajectory_utils.h>
-#include <trajectory_utils/conversions/conversions.h>
+#include <trajectory_utils/trajectory_utils.hpp>
+#include <trajectory_utils/conversions/conversions.hpp>
 #include <sstream>
-#include <carma_utils/containers/containers.h>
+#include <chrono>
+#include <carma_ros2_utils/containers/containers.hpp>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <Eigen/LU>
@@ -36,21 +37,15 @@ using oss = std::ostringstream;
 
 namespace platooning_tactical_plugin
 {
-PlatooningTacticalPlugin::PlatooningTacticalPlugin(carma_wm_ros2::WorldModelConstPtr wm, PlatooningTacticalPluginConfig config,
-                                           PublishPluginDiscoveryCB plugin_discovery_publisher)
-  : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
+PlatooningTacticalPlugin::PlatooningTacticalPlugin(carma_wm::WorldModelConstPtr wm, PlatooningTacticalPluginConfig config,
+                                           std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory)
+  : wm_(wm), config_(config), timer_factory_(timer_factory)
 {}
-
-bool PlatooningTacticalPlugin::onSpin()
-{
-  plugin_discovery_publisher_(plugin_discovery_msg_);
-  return true;
-}
 
 bool PlatooningTacticalPlugin::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::Request& req,
                                                   carma_planning_msgs::srv::PlanTrajectory::Response& resp)
 {
-  ros::WallTime start_time = ros::WallTime::now(); // Start timing the execution time for planning so it can be logged
+  auto start_time = std::chrono::high_resolution_clock::now(); // Start timing the execution time for planning so it can be logged
 
   lanelet::BasicPoint2d veh_pos(req.vehicle_state.x_pos_global, req.vehicle_state.y_pos_global);
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
@@ -92,13 +87,13 @@ bool PlatooningTacticalPlugin::plan_trajectory_cb(carma_planning_msgs::srv::Plan
   auto points_and_target_speeds = basic_autonomy::waypoint_generation::create_geometry_profile(maneuver_plan, std::max((double)0, current_downtrack - config_.back_distance),
                                                                          wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config);
 
-  RCLCPP_DEBUG_STREAM(get_logger(), "points_and_target_speeds: " << points_and_target_speeds.size());
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_tactical_plugin"), "points_and_target_speeds: " << points_and_target_speeds.size());
 
-  RCLCPP_DEBUG_STREAM(get_logger(), "PlanTrajectory");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_tactical_plugin"), "PlanTrajectory");
 
   carma_planning_msgs::msg::TrajectoryPlan original_trajectory;
   original_trajectory.header.frame_id = "map";
-  original_trajectory.header.stamp = ros::Time::now();
+  original_trajectory.header.stamp = timer_factory_->now();
   original_trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
   original_trajectory.trajectory_points = basic_autonomy:: waypoint_generation::compose_lanefollow_trajectory_from_path(points_and_target_speeds, 
                                                                                 req.vehicle_state, req.header.stamp, wm_, ending_state_before_buffer_, debug_msg_, 
@@ -114,13 +109,18 @@ bool PlatooningTacticalPlugin::plan_trajectory_cb(carma_planning_msgs::srv::Plan
   
   resp.maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
-  ros::WallTime end_time = ros::WallTime::now();  // Planning complete
+  auto end_time = std::chrono::high_resolution_clock::now(); // Planning complete
 
-  ros::WallDuration duration = end_time - start_time;
-  RCLCPP_DEBUG_STREAM(get_logger(), "ExecutionTime: " << duration.toSec());
+  auto nano_s = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_tactical_plugin"), "ExecutionTime: " << ((double)nano_s.count() * 1e9));
 
   return true;
 
+}
+
+void PlatooningTacticalPlugin::set_config(PlatooningTacticalPluginConfig config)
+{
+  config_ = config;
 }
 
 }  // namespace platooning_tactical_plugin

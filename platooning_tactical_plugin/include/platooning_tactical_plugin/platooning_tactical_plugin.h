@@ -27,12 +27,12 @@
 #include <unordered_set>
 #include <carma_debug_ros2_msgs/msg/trajectory_curvature_speeds.hpp>
 #include <basic_autonomy_ros2/basic_autonomy.hpp>
+#include <carma_ros2_utils/timers/TimerFactory.hpp>
 
 #include "platooning_tactical_plugin_config.h"
 
 namespace platooning_tactical_plugin
 {
-using PublishPluginDiscoveryCB = std::function<void(const carma_planning_msgs::msg::Plugin&)>;
 using DebugPublisher = std::function<void(const carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds&)>;
 /**
  * \brief Convenience class for pairing 2d points with speeds
@@ -55,10 +55,9 @@ public:
    * 
    * \param wm Pointer to initalized instance of the carma world model for accessing semantic map data
    * \param config The configuration to be used for this object
-   * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
    */ 
-  PlatooningTacticalPlugin(carma_wm_ros2::WorldModelConstPtr wm, PlatooningTacticalPluginConfig config,
-                       PublishPluginDiscoveryCB plugin_discovery_publisher);
+  PlatooningTacticalPlugin(carma_wm::WorldModelConstPtr wm, PlatooningTacticalPluginConfig config,
+                       std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory);
 
   /**
    * \brief Service callback for trajectory planning
@@ -71,23 +70,22 @@ public:
   bool plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::Request& req, carma_planning_msgs::srv::PlanTrajectory::Response& resp);
 
   /**
-   * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
-   * 
-   * \return True if the node should continue running. False otherwise
+   * \brief Set the current config
    */ 
-  bool onSpin();
+  void set_config(PlatooningTacticalPluginConfig config);
 
 
   carma_planning_msgs::msg::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
 
 private:
-  carma_wm_ros2::WorldModelConstPtr wm_;
+  carma_wm::WorldModelConstPtr wm_;
   PlatooningTacticalPluginConfig config_;
-  PublishPluginDiscoveryCB plugin_discovery_publisher_;
 
   carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds debug_msg_;
   DebugPublisher debug_publisher_;
 
   carma_planning_msgs::msg::VehicleState ending_state_before_buffer; //state before applying extra points for curvature calculation that are removed later
+
+  std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory_;
 };
-};  // namespace platooning_tactical_plugin
+}  // namespace platooning_tactical_plugin
