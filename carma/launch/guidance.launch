@@ -260,6 +260,12 @@
   <!-- Light Controlled Intersection Tactical Plugin -->
   <include file="$(find light_controlled_intersection_tactical_plugin)/launch/light_controlled_intersection_tactical_plugin.launch" />
   
+  <!-- carla_sensors_integration node-->
+  <group>
+    <include file='$(find carla_sensors_integration)/launch/carla_sensors_integration.launch'>
+    </include>
+  </group>
+
   <!-- Guidance Plugin Validator -->
   <group>
     <remap from="plugin_discovery" to="$(optenv CARMA_GUIDE_NS)/plugin_discovery"/>

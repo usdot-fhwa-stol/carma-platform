@@ -19,12 +19,13 @@
 #include <chrono>
 #include <thread>
 #include <future>
+#include <ros/ros.h>
 
-#include <carla_sensors_integration.h>
+#include <carla_sensors_integration_worker.h>
 
 TEST(CarlaSensorsTest, testLIDARCallback)
 {
-    carla_sensors::CarlaSensors test1;
+    carla_sensors::CarlaSensorsWorker test1;
 
     sensor_msgs::PointCloud2 lidar_test;
 
@@ -49,13 +50,13 @@ TEST(CarlaSensorsTest, testLIDARCallback)
     lidar_test.point_step = 4;
     lidar_test.row_step = 1;
     lidar_test.width = 3;
-
+    
     test1.point_cloud_cb(lidar_test);
     auto result_msg = test1.get_lidar_msg();
 
     ASSERT_FALSE(result_msg.data.size() == 0);
     ASSERT_EQ(result_msg.data.size(), 3);
-    ASSERT_EQ(result_msg.fields.size, 0);
+    ASSERT_EQ(result_msg.fields.size(), 2);
     
 
 
@@ -64,7 +65,7 @@ TEST(CarlaSensorsTest, testLIDARCallback)
 
 TEST(CarlaSensorsTest, testImageRawCallback)
 {
-       carla_sensors::CarlaSensors test;
+       carla_sensors::CarlaSensorsWorker test;
 
     sensor_msgs::Image raw_image_msg;
 
@@ -96,7 +97,7 @@ TEST(CarlaSensorsTest, testImageRawCallback)
 TEST(CarlaSensorsTest, testImageColorCallback)
 {
 
-     carla_sensors::CarlaSensors test;
+     carla_sensors::CarlaSensorsWorker test;
 
     sensor_msgs::Image color_image_msg;
 
@@ -124,7 +125,7 @@ TEST(CarlaSensorsTest, testImageColorCallback)
 
 TEST(CarlaSensorsTest, testImageRectCallback)
 {
-   carla_sensors::CarlaSensors test;
+   carla_sensors::CarlaSensorsWorker test;
 
     sensor_msgs::Image rect_image_msg;
 
@@ -140,7 +141,7 @@ TEST(CarlaSensorsTest, testImageRectCallback)
 
     test.image_rect_cb(rect_image_msg);
 
-    auto result_msg = test.get_image_raw_msg();
+    auto result_msg = test.get_image_rect_msg();
 
     ASSERT_EQ(result_msg.data.size(), 4);
     ASSERT_EQ(result_msg.encoding, "TEST");
@@ -151,7 +152,7 @@ TEST(CarlaSensorsTest, testImageRectCallback)
 
 TEST(CarlaSensorsTest, testGNSSCallback)
 {
-    carla_sensors::CarlaSensors test1;
+    carla_sensors::CarlaSensorsWorker test1;
 
     sensor_msgs::NavSatFix gnss_test;
     gnss_test.altitude = 5.0;
@@ -172,3 +173,4 @@ TEST(CarlaSensorsTest, testGNSSCallback)
 
 
 }
+

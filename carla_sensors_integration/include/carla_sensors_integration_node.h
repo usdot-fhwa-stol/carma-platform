@@ -23,40 +23,33 @@
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <gps_common/GPSFix.h>
+#include<carla_sensors_integration_worker.h>
+
 
 namespace carla_sensors
 {
-    class CarlaSensors
+    class CarlaSensorsNode
     {
         public:
-
-            CarlaSensors();
-        
-        //TODO: add @brief for each callback function
-             
             void publish();
             void initialize();
             void spin();
+            void run();
 
             void point_cloud_cb(sensor_msgs::PointCloud2 point_cloud);
             void image_raw_cb(sensor_msgs::Image image_raw);
             void image_color_cb(sensor_msgs::Image image_color);
             void image_rect_cb(sensor_msgs::Image image_rect);
+            void camera_info_cb(sensor_msgs::CameraInfo camera_info);
             void gnss_fixed_fused_cb(sensor_msgs::NavSatFix gnss_fixed);
-
-            sensor_msgs::PointCloud2 get_lidar_msg();
-            sensor_msgs::Image get_image_raw_msg();
-            sensor_msgs::Image get_image_color_msg();
-            sensor_msgs::Image get_image_rect_msg();
-            gps_common::GPSFix get_gnss_fixed_msg();
-
-
 
         private:
 
+            carla_sensors::CarlaSensorsWorker carla_worker_;
             //CARMA ROS node handles
-            ros::CARMANodeHandle nh_;
-            
+            std::shared_ptr<ros::NodeHandle> nh_, pnh_;
+            //ros::CARMANodeHandle nh_;
+            //ros::CARMANodeHandle pnh_;
             /*Publishers and Subscribers*/
 
             ros::Subscriber point_cloud_sub_;
@@ -78,11 +71,12 @@ namespace carla_sensors
             sensor_msgs::Image image_color_msg;
             sensor_msgs::Image image_rect_msg;
             gps_common::GPSFix gnss_fixed_msg;
+            sensor_msgs::CameraInfo camera_info_msg;
 
 
+            double spin_rate_ = 10.0;
 
+            std::string carla_vehicle_role_;
 
-
-    }
-
+    };
 }

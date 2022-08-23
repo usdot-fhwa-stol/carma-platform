@@ -22,6 +22,9 @@ Loads parameters and configures logging for the node
  -->
 
  <launch>
+    <node name="carla_sensors_integration" pkg="carla_sensors_integration" type="carla_sensors_integration"/>
+
+    <arg name='role_name' default='ego_vehicle'/>
 
     <remap from="points_raw" to="$(optenv CARMA_INTR_NS)/lidar/points_raw"/>
     <remap from="image_raw" to="$(optenv CARMA_INTR_NS)/camera/image_raw"/>
