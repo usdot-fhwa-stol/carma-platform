@@ -104,7 +104,6 @@ namespace inlanecruising_plugin
       {"max_accel_multiplier", config_.max_accel_multiplier},
       {"lat_accel_multiplier", config_.lat_accel_multiplier},
       {"back_distance", config_.back_distance},
-      {"buffer_ending_downtrack", config_.buffer_ending_downtrack},
       {"buffer_ending_downtrack", config_.buffer_ending_downtrack}}, parameters); // Global acceleration limits not allowed to dynamically update
 
     auto error_bool = update_params<bool>({
