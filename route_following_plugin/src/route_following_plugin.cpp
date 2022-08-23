@@ -22,6 +22,7 @@
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+#include <chrono>
 
 namespace route_following_plugin
 {
@@ -92,18 +93,15 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
     config_.stop_and_wait_plugin_ = declare_parameter<std::string>("stop_and_wait_plugin", config_.stop_and_wait_plugin_);
     config_.lanefollow_planning_tactical_plugin_ = declare_parameter<std::string>("lane_following_plugin", config_.lanefollow_planning_tactical_plugin_);
     config_.route_end_point_buffer_ = declare_parameter<double>("/guidance/route/destination_downtrack_range", config_.route_end_point_buffer_);
-    config_.accel_limit_ = declare_parameter<double>("/vehicle_acceleration_limit", config_.accel_limit_);
-    config_.lateral_accel_limit_ = declare_parameter<double>("/vehicle_lateral_accel_limit", config_.lateral_accel_limit_);
+    config_.accel_limit_ = declare_parameter<double>("vehicle_acceleration_limit", config_.accel_limit_);
+    config_.lateral_accel_limit_ = declare_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit_);
     config_.stopping_accel_limit_multiplier_ = declare_parameter<double>("stopping_accel_limit_multiplier", config_.stopping_accel_limit_multiplier_);
     config_.min_maneuver_length_ = declare_parameter<double>("vehicle_id", config_.min_maneuver_length_);
   }
 
     carma_ros2_utils::CallbackReturn RouteFollowingPlugin::on_configure_plugin()
   {
-    // Setup service servers
-    plan_maneuver_srv_= create_service<carma_planning_msgs::srv::PlanManeuvers>(planning_strategic_plugin_ + "/plan_maneuvers",
-                                                            std::bind(&RouteFollowingPlugin::plan_maneuvers_callback, this, std_ph::_1, std_ph::_2, std_ph::_3));
-  
+
     // Setup publishers
     upcoming_lane_change_status_pub_ = create_publisher<carma_planning_msgs::msg::UpcomingLaneChangeStatus>("upcoming_lane_change_status", 1);
 
@@ -122,14 +120,14 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
     wml_->setRouteCallback([this]() {
         RCLCPP_INFO_STREAM(get_logger(),"Recomputing maneuvers due to a route update");
         this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
-        });
+    });
 
     wml_->setMapCallback([this]() {
         if (wm_->getRoute()) { // If this map update occured after a route was provided we need to regenerate maneuvers
-        RCLCPP_INFO_STREAM(get_logger(),"Recomputing maneuvers due to map update");
-        this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
+            RCLCPP_INFO_STREAM(get_logger(),"Recomputing maneuvers due to map update");
+            this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
         }
-        });
+    });
 
     initializeBumperTransformLookup();
     
