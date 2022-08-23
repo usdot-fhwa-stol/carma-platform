@@ -69,40 +69,54 @@ namespace basic_autonomy
                                                                 const carma_wm::WorldModelConstPtr &wm, const GeneralTrajConfig &general_config, 
                                                                 const DetailedTrajConfig &detailed_config, std::unordered_set<lanelet::Id> &visited_lanelets)
         {
-            if(maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING){
+            if (maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING)
+            {
                 throw std::invalid_argument("Create_lanefollow called on a maneuver type which is not LANE_FOLLOW");
             }
             std::vector<PointSpeedPair> points_and_target_speeds;
 
             cav_msgs::LaneFollowingManeuver lane_following_maneuver = maneuver.lane_following_maneuver;
 
-            auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack, true, true);
-
-            //TODO: This fix is temporary and only applies on lane follow maneuvers from Platooning Strategic Plugin IHP. 
-            // A general fix will be implemented soon. (issue #1863)
             bool lanelets_defined = !maneuver.lane_following_maneuver.lane_ids.empty();
-            ROS_DEBUG_STREAM("lanelets_defined: " << lanelets_defined);
-            bool isFromPlatooning = maneuver.lane_following_maneuver.parameters.planning_strategic_plugin == "PlatooningStrategicIHPPlugin";
-            ROS_DEBUG_STREAM("isFromPlatooning: " << isFromPlatooning);
 
-            if (lanelets_defined && isFromPlatooning)
+            if (!lanelets_defined)
             {
-                lanelets = {};
-                int lane_id = stoi(maneuver.lane_following_maneuver.lane_ids[0]);
-                ROS_DEBUG_STREAM("extracted id: " << lane_id);
-                lanelet::ConstLanelet new_lanelet = wm->getMap()->laneletLayer.get(lane_id);
-                lanelets.push_back(new_lanelet);
+                throw std::invalid_argument("No lanelets are defined for lanefollow maneuver");
+            }
+            // auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack, true, true);
+            // std::cout<< "size(): " << lanelets.size() << std::endl;
+            std::vector<lanelet::ConstLanelet> lanelets = { wm->getMap()->laneletLayer.get(stoi(lane_following_maneuver.lane_ids[0]))}; // Accept first lanelet reguardless
+            for (size_t i = 1; i < lane_following_maneuver.lane_ids.size(); i++) // Iterate over remaining lanelets and check if they are followers of the previous lanelet
+            {
+                auto ll_id = lane_following_maneuver.lane_ids[i];
+                int cur_id = stoi(ll_id);
+                auto cur_ll = wm->getMap()->laneletLayer.get(cur_id);
+                auto following_lanelets = wm->getMapRoutingGraph()->following(lanelets.back());
 
-                if (maneuver.lane_following_maneuver.lane_ids.size()>1)
+                bool is_follower = false;
+                for (auto follower_ll : following_lanelets )
                 {
-                    lane_id = stoi(maneuver.lane_following_maneuver.lane_ids[1]);
-                    ROS_DEBUG_STREAM("more extracted id: " << lane_id);
-                    new_lanelet = wm->getMap()->laneletLayer.get(lane_id);
-                    lanelets.push_back(new_lanelet);
+                    if (follower_ll.id() == cur_ll.id())
+                    {
+                        is_follower = true;
+                        break;
+                    }
                 }
-            } 
 
+                if (!is_follower)
+                {
+                    throw std::invalid_argument("Invalid list of lanelets they are not followers");
+                }
 
+                lanelets.push_back(cur_ll); // Keep lanelet
+
+            }
+
+            // auto extra_following_lanelets = wm->getMapRoutingGraph()->following(lanelets.back());
+            // if (!extra_following_lanelets.empty())
+            // {
+            //     lanelets.push_back(extra_following_lanelets[0]);
+            // }
 
             if (lanelets.empty())
             {
@@ -181,6 +195,7 @@ namespace basic_autonomy
                     }
 
                     downsampled_centerline = carma_wm::geometry::concatenate_line_strings(downsampled_centerline, downsampled_points);
+                    std::cout<<"added llt: " << l.id() << std::endl;
                     visited_lanelets.insert(l.id());
                 }
             }
