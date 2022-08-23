@@ -62,6 +62,7 @@ namespace cooperative_lanechange
     auto error = update_params<std::string>(
       {{"control_plugin_name", config_.control_plugin_name},
       {"vehicle_id", config_.vehicle_id}}, parameters);
+
     auto error_2 = update_params<double>(
       {{"trajectory_time_length", config_.trajectory_time_length},
       {"minimum_speed", config_.minimum_speed},
@@ -82,6 +83,7 @@ namespace cooperative_lanechange
       {"back_distance", config_.back_distance},
       {"buffer_ending_downtrack", config_.buffer_ending_downtrack},
       {"desired_time_gap", config_.desired_time_gap}}, parameters);
+      
     auto error_3 = update_params<int>(
       {{"speed_moving_average_window_size", config_.speed_moving_average_window_size},
       {"curvature_moving_average_window_size", config_.curvature_moving_average_window_size},
