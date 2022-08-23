@@ -27,7 +27,6 @@ namespace cooperative_lanechange
    */
   struct Config
   {
-    //! Example parameter
     double trajectory_time_length = 6.0;
     std::string control_plugin_name = "pure_pursuit";
     double minimum_speed = 2.2352;
