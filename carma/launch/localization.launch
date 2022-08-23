@@ -129,11 +129,6 @@
     </include>
   </group>
 
-  <!-- GNSS/NDT selection localizer-->
-  <group>
-    <include file="$(find localization_manager)/launch/localization_manager.launch"/>
-  </group>
-
   <!-- Deadreckoner -->
   <include file="$(find deadreckoner)/launch/deadreckoner.launch">
     <arg name="current_twist" value="$(optenv CARMA_INTR_NS)/vehicle/twist" />

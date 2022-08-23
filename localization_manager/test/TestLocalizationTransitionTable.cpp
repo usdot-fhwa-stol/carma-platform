@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,13 +15,13 @@
  */
 
 #include <gtest/gtest.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <boost/optional.hpp>
-#include "localization_manager/LocalizationTransitionTable.h"
+#include "localization_manager/LocalizationTransitionTable.hpp"
 
-using namespace localizer;
-
-/**
+namespace localization_manager
+{
+    /**
  * \brief Helper function to assert that the provided list of signals do not change the current state of the provided
  * transition table
  */
@@ -115,6 +115,7 @@ TEST(LocalizationTransitionTable, testTransitionsGNSSMode)
                                     LocalizationSignal::INITIAL_POSE,
                                 });
 }
+
 
 TEST(LocalizationTransitionTable, testTransitionsNDTMode)
 {
@@ -334,4 +335,6 @@ TEST(LocalizationTransitionTable, testTransitionsAUTOMode)
 
   ltt.signal(LocalizationSignal::LIDAR_SENSOR_FAILURE);
   ASSERT_EQ(LocalizationState::DEGRADED_NO_LIDAR_FIX, ltt.getState());
+}
+
 }
