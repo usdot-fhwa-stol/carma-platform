@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,12 +15,25 @@
  */
 
 #include <gtest/gtest.h>
-#include <ros/ros.h>
+#include <memory>
+#include <chrono>
+#include <thread>
+#include <future>
+
+#include "localization_manager/localization_manager_node.hpp"
 
 // Run all the tests
 int main(int argc, char **argv)
 {
-    testing::InitGoogleTest(&argc, argv);
-    ros::Time::init();
-    return RUN_ALL_TESTS();
+    ::testing::InitGoogleTest(&argc, argv);
+
+    //Initialize ROS
+    rclcpp::init(argc, argv);
+
+    bool success = RUN_ALL_TESTS();
+
+    //shutdown ROS
+    rclcpp::shutdown();
+
+    return success;
 }

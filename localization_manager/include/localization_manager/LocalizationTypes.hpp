@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,10 @@
  */
 
 #include <iostream>
-#include <cav_msgs/LocalizationStatusReport.h>
+#include <carma_localization_msgs/msg/localization_status_report.hpp>
+#include <rclcpp/rclcpp.hpp>
 
-namespace localizer
+namespace localization_manager
 {
 //! @brief Enum describing the possible operational modes of the LocalizationManager
 enum LocalizerMode
@@ -29,6 +30,7 @@ enum LocalizerMode
   AUTO_WITHOUT_TIMEOUT = 3,  // NDT operation with support for GPS fallback that will not timeout
   GNSS_WITH_NDT_INIT = 4,  // GNSS only operation with NDT initialization, switching to GNSS after 5 sequential timesteps of OPERATIONAL NDT
 };
+
 /**
  * \brief Stream operator for LocalizerMode enum.
  */
@@ -44,10 +46,12 @@ enum class LocalizationState
   DEGRADED_NO_LIDAR_FIX,
   AWAIT_MANUAL_INITIALIZATION,
 };
+
 /**
  * \brief Stream operator for LocalizationState enum.
  */
 std::ostream& operator<<(std::ostream& os, LocalizationState s);
+
 /**
  * \brief Helper function to convert LocalizationState objects into LocalizationStatusReport ROS messages
  * 
@@ -56,7 +60,7 @@ std::ostream& operator<<(std::ostream& os, LocalizationState s);
  * 
  * \return The initialized report message
  */ 
-cav_msgs::LocalizationStatusReport stateToMsg(LocalizationState state, const ros::Time& stamp);
+carma_localization_msgs::msg::LocalizationStatusReport stateToMsg(LocalizationState state, const rclcpp::Time& stamp);
 
 
 //! @brief Enum describing the possible signals to change the current LocalizationState
@@ -71,9 +75,10 @@ enum class LocalizationSignal
   LIDAR_INITIALIZED_SWITCH_TO_GPS,
   GNSS_DATA_TIMEOUT
 };
+
 /**
  * \brief Stream operator for LocalizationSignal enum.
  */
 std::ostream& operator<<(std::ostream& os, LocalizationSignal s);
 
-}  // namespace localizer
+} //namespace localization_manager
