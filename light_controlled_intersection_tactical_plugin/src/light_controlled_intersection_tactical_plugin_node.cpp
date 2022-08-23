@@ -62,10 +62,7 @@ namespace light_controlled_intersection_tactical_plugin
        {"stop_line_buffer", config_.stop_line_buffer},      
        {"minimum_speed", config_.minimum_speed},      
        {"algorithm_evaluation_distance", config_.algorithm_evaluation_distance},      
-       {"algorithm_evaluation_period", config_.algorithm_evaluation_period},
-       {"vehicle_lateral_accel_limit", config_.lateral_accel_limit},
-       {"vehicle_acceleration_limit", config_.vehicle_accel_limit},
-       {"vehicle_deceleration_limit", config_.vehicle_decel_limit}}, parameters);
+       {"algorithm_evaluation_period", config_.algorithm_evaluation_period}}, parameters); // Global acceleration limits not allowed to dynamically update
     auto error_2 = update_params<int>(
       {{"default_downsample_ratio", config_.default_downsample_ratio},
       {"turn_downsample_ratio", config_.turn_downsample_ratio},
