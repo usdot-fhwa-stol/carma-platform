@@ -71,10 +71,10 @@ def generate_launch_description():
                     package='inlanecruising_plugin',
                     plugin='inlanecruising_plugin::InLaneCruisingPluginNode',
                     name='inlanecruising_plugin',
-                    extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('inlanecruising_plugin', env_log_levels) }
-                ],
+                        extra_arguments=[
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('inlanecruising_plugin', env_log_levels) }
+                    ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
@@ -93,9 +93,9 @@ def generate_launch_description():
                     plugin='stop_and_wait_plugin::StopandWaitNode',
                     name='stop_and_wait_plugin',
                     extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('stop_and_wait_plugin', env_log_levels) }
-                ],
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('stop_and_wait_plugin', env_log_levels) }
+                    ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
@@ -114,9 +114,9 @@ def generate_launch_description():
                     plugin='route_following_plugin::RouteFollowingPlugin',
                     name='route_following_plugin',
                     extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('route_following_plugin', env_log_levels) }
-                ],
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('route_following_plugin', env_log_levels) }
+                    ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
@@ -138,9 +138,9 @@ def generate_launch_description():
                     plugin='cooperative_lanechange::CooperativeLaneChangePlugin',
                     name='cooperative_lanechange',
                     extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('cooperative_lanechange', env_log_levels) }
-                ],
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('cooperative_lanechange', env_log_levels) }
+                    ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
