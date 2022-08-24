@@ -37,22 +37,20 @@ namespace light_controlled_intersection_tactical_plugin
                 "Light Control Intersection Plugin asked to plan invalid maneuver index: " + std::to_string(req->maneuver_index_to_plan) + 
                 " for plan of size: " + std::to_string(req->maneuver_plan.maneuvers.size()));
         }
+
         std::vector<carma_planning_msgs::msg::Maneuver> maneuver_plan;
-        // expecting only one maneuver for an intersection
-        for(size_t i = req->maneuver_index_to_plan; i < req->maneuver_plan.maneuvers.size(); i++){
-            
-            if(req->maneuver_plan.maneuvers[i].type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING
-            && GET_MANEUVER_PROPERTY(req->maneuver_plan.maneuvers[i], parameters.string_valued_meta_data.front()) == light_controlled_intersection_strategy_)
-            {
-                maneuver_plan.push_back(req->maneuver_plan.maneuvers[i]);
-                resp->related_maneuvers.push_back(i);
-                break;
-            }
-            else
-            {
-                throw std::invalid_argument("Light Control Intersection Plugin asked to plan unsupported maneuver");
-            }
-        }  
+        // Expecting only one maneuver for an intersection, which corresponds to the maneuver_index_to_plan value provided in the request
+        if(req->maneuver_plan.maneuvers[req->maneuver_index_to_plan].type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING
+            && GET_MANEUVER_PROPERTY(req->maneuver_plan.maneuvers[req->maneuver_index_to_plan], parameters.string_valued_meta_data.front()) == light_controlled_intersection_strategy_)
+        {
+            maneuver_plan.push_back(req->maneuver_plan.maneuvers[req->maneuver_index_to_plan]);
+            resp->related_maneuvers.push_back(i);
+            break;
+        }
+        else 
+        {
+            throw std::invalid_argument("Light Control Intersection Plugin asked to plan unsupported maneuver");
+        }
 
         lanelet::BasicPoint2d veh_pos(req->vehicle_state.x_pos_global, req->vehicle_state.y_pos_global);
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Planning state x:" << req->vehicle_state.x_pos_global << " , y: " << req->vehicle_state.y_pos_global);
@@ -354,8 +352,12 @@ namespace light_controlled_intersection_tactical_plugin
         std::unordered_set<lanelet::Id> visited_lanelets;
         std::vector<carma_planning_msgs::msg::Maneuver> processed_maneuvers;
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "VehDowntrack: "<<max_starting_downtrack);
-        for(const auto &maneuver : maneuvers)
+
+        // Only one maneuver is expected in the received maneuver plan
+        if(maneuvers.size() == 1)
         {
+            auto maneuver == maneuvers.front();
+
             double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
             
             starting_downtrack = std::min(starting_downtrack, max_starting_downtrack);
@@ -373,9 +375,11 @@ namespace light_controlled_intersection_tactical_plugin
             temp_maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Creating Lane Follow Geometry");
             std::vector<PointSpeedPair> lane_follow_points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
-            points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
-            
-            break; // expected to receive only one maneuver to plan
+            points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());            
+        }
+        else 
+        {
+            throw std::invalid_argument("Light Control Intersection Plugin can only create a geometry profile for one maneuver");
         }
 
         //Add buffer ending to lane follow points at the end of maneuver(s) end dist 
