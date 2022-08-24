@@ -51,7 +51,10 @@ def generate_launch_description():
         get_package_share_directory('route_following_plugin'), 'config/parameters.yaml')
 
     stop_and_wait_plugin_param_file = os.path.join(
-        get_package_share_directory('stop_and_wait_plugin'), 'config/parameters.yaml')    
+        get_package_share_directory('stop_and_wait_plugin'), 'config/parameters.yaml')      
+
+    cooperative_lanechange_param_file = os.path.join(
+        get_package_share_directory('cooperative_lanechange'), 'config/parameters.yaml')      
 
     platoon_strategic_ihp_param_file = os.path.join(
         get_package_share_directory('platoon_strategic_ihp'), 'config/parameters.yaml')    
@@ -68,10 +71,10 @@ def generate_launch_description():
                     package='inlanecruising_plugin',
                     plugin='inlanecruising_plugin::InLaneCruisingPluginNode',
                     name='inlanecruising_plugin',
-                    extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('inlanecruising_plugin', env_log_levels) }
-                ],
+                        extra_arguments=[
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('inlanecruising_plugin', env_log_levels) }
+                    ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
@@ -90,9 +93,9 @@ def generate_launch_description():
                     plugin='stop_and_wait_plugin::StopandWaitNode',
                     name='stop_and_wait_plugin',
                     extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('stop_and_wait_plugin', env_log_levels) }
-                ],
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('stop_and_wait_plugin', env_log_levels) }
+                    ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
@@ -111,9 +114,9 @@ def generate_launch_description():
                     plugin='route_following_plugin::RouteFollowingPlugin',
                     name='route_following_plugin',
                     extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('route_following_plugin', env_log_levels) }
-                ],
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('route_following_plugin', env_log_levels) }
+                    ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
@@ -127,6 +130,35 @@ def generate_launch_description():
                 ],
                 parameters=[
                     route_following_plugin_file_path,
+                    vehicle_config_param_file
+                ]
+            ),
+            ComposableNode(
+                    package='cooperative_lanechange',
+                    plugin='cooperative_lanechange::CooperativeLaneChangePlugin',
+                    name='cooperative_lanechange',
+                    extra_arguments=[
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('cooperative_lanechange', env_log_levels) }
+                    ],
+                remappings = [
+                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
+                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
+                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
+                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
+                    ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
+                    ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
+                    ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
+                    ("cooperative_lane_change_status", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/cooperative_lane_change_status" ] ),
+                    ("bsm_outbound", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/bsm_outbound" ] ),
+                    ("outgoing_mobility_request", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_request" ] ),
+                    ("incoming_mobility_response", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_response" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] )
+                ],
+                parameters=[
+                    cooperative_lanechange_param_file,
+                    vehicle_characteristics_param_file,
                     vehicle_config_param_file
                 ]
             )
