@@ -45,7 +45,6 @@ namespace light_controlled_intersection_tactical_plugin
         {
             maneuver_plan.push_back(req->maneuver_plan.maneuvers[req->maneuver_index_to_plan]);
             resp->related_maneuvers.push_back(i);
-            break;
         }
         else 
         {
