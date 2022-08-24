@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,15 @@
  * the License.
  */
 
-#include <ros/console.h>
-#include "localization_manager/LocalizationTransitionTable.h"
 
-namespace localizer
+#include "localization_manager/LocalizationTransitionTable.hpp"
+
+
+namespace localization_manager
 {
-LocalizationTransitionTable::LocalizationTransitionTable(LocalizerMode mode) : mode_(mode)
-{
-}
+
+LocalizationTransitionTable::LocalizationTransitionTable(LocalizerMode mode) : mode_(mode) {}
+
 LocalizationState LocalizationTransitionTable::getState() const
 {
   return state_;
@@ -29,24 +30,22 @@ LocalizationState LocalizationTransitionTable::getState() const
 
 void LocalizationTransitionTable::logDebugSignal(LocalizationSignal signal) const
 {
-  ROS_DEBUG_STREAM("LocalizationTransitionTable received unsupported signal of " << signal << " while in state "
-                                                                                 << state_);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("localization_manager"), "LocalizationTransitionTable received unsupported signal of "<< signal <<"while in state"<<state_);
 }
 
 void LocalizationTransitionTable::setAndLogState(LocalizationState new_state, LocalizationSignal source_signal)
 {
   if (new_state == state_)
   {
-    return;  // State was unchanged no need to log or trigger callbacks
+      return; //State was unchanged no need to log or trigger callbacks
   }
-  ROS_INFO_STREAM("LocalizationTransitionTable changed localization state from "
-                  << state_ << " to " << new_state << " because of signal " << source_signal << " while in mode "
-                  << mode_);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager"), "LocalizationTransitionTable changed localization state from "<< state_ << " to "<< new_state <<" because of signal "<<source_signal << " while in mode "<<mode_);
+  
   LocalizationState prev_state = state_;
   state_ = new_state;
   if (transition_callback_)
   {
-    transition_callback_(prev_state, state_, source_signal);
+      transition_callback_(prev_state, state_, source_signal);
   }
 }
 
@@ -55,18 +54,18 @@ void LocalizationTransitionTable::signalWhenUNINITIALIZED(LocalizationSignal sig
   switch (signal)
   {
     case LocalizationSignal::INITIAL_POSE:
-      if (mode_ == LocalizerMode::GNSS)
-      {
-        setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
-      }
-      else
-      {
-        setAndLogState(LocalizationState::INITIALIZING, signal);
-      }
-      break;
+        if (mode_ == LocalizerMode::GNSS)
+        {
+            setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
+        }
+        else
+        {
+            setAndLogState(LocalizationState::INITIALIZING, signal);
+        }
+        break;
     default:
-      logDebugSignal(signal);
-      break;
+        logDebugSignal(signal);
+        break;
   }
 }
 
@@ -74,31 +73,32 @@ void LocalizationTransitionTable::signalWhenINITIALIZING(LocalizationSignal sign
 {
   switch (signal)
   {
-    // How to handle the combined conditions?
-    case LocalizationSignal::GOOD_NDT_FREQ_AND_FITNESS_SCORE:
-      setAndLogState(LocalizationState::OPERATIONAL, signal);
-      break;
-    case LocalizationSignal::POOR_NDT_FREQ_OR_FITNESS_SCORE:
-      setAndLogState(LocalizationState::DEGRADED, signal);
-      break;
-    case LocalizationSignal::LIDAR_SENSOR_FAILURE:
-      if (mode_ == LocalizerMode::NDT)
-      {
-        setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
-      }
-      else
-      {
-        setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
-      }
-      break;
-    case LocalizationSignal::TIMEOUT:
-      setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
-      break;
-    default:
-      logDebugSignal(signal);
-      break;
+      // How to handle the combined conditions?
+      case LocalizationSignal::GOOD_NDT_FREQ_AND_FITNESS_SCORE:
+          setAndLogState(LocalizationState::OPERATIONAL, signal);
+          break;
+      case LocalizationSignal::POOR_NDT_FREQ_OR_FITNESS_SCORE:
+          setAndLogState(LocalizationState::DEGRADED, signal);
+          break;
+      case LocalizationSignal::LIDAR_SENSOR_FAILURE:
+          if (mode_ == LocalizerMode::NDT)
+          {
+              setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
+          }
+          else
+          {
+              setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
+          }
+          break;
+      case LocalizationSignal::TIMEOUT:
+          setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
+          break;
+      default:
+          logDebugSignal(signal);
+          break;
   }
 }
+
 void LocalizationTransitionTable::signalWhenOPERATIONAL(LocalizationSignal signal)
 {
   switch (signal)
@@ -131,6 +131,7 @@ void LocalizationTransitionTable::signalWhenOPERATIONAL(LocalizationSignal signa
       break;
   }
 }
+
 void LocalizationTransitionTable::signalWhenDEGRADED(LocalizationSignal signal)
 {
   switch (signal)
@@ -166,6 +167,7 @@ void LocalizationTransitionTable::signalWhenDEGRADED(LocalizationSignal signal)
       break;
   }
 }
+
 void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSignal signal)
 {
   switch (signal)
@@ -195,6 +197,7 @@ void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSi
       break;
   }
 }
+
 void LocalizationTransitionTable::signalWhenAWAIT_MANUAL_INITIALIZATION(LocalizationSignal signal)
 {
   switch (signal)
@@ -214,6 +217,7 @@ void LocalizationTransitionTable::signalWhenAWAIT_MANUAL_INITIALIZATION(Localiza
       break;
   }
 }
+
 void LocalizationTransitionTable::signal(LocalizationSignal signal)
 {
   switch (state_)
@@ -241,8 +245,10 @@ void LocalizationTransitionTable::signal(LocalizationSignal signal)
       break;
   }
 }
+
 void LocalizationTransitionTable::setTransitionCallback(TransitionCallback cb)
 {
   transition_callback_ = cb;
 }
-}  // namespace localizer
+
+} //namespace localization_manager

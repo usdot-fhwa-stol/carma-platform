@@ -60,3 +60,4 @@
     ros2_initial_plugins:
       - /guidance/plugins/inlanecruising_plugin
       - /guidance/plugins/sci_strategic_plugin
+      - /guidance/plugins/cooperative_lanechange

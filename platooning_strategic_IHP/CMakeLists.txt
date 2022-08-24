@@ -1,4 +1,5 @@
-# Copyright (C) 2018-2021 LEIDOS.
+
+# Copyright (C) 2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -12,108 +13,73 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(platoon_strategic_ihp)
 
+# Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
+carma_check_ros_version(2)
 carma_package()
 
-## Compile as C++11, supported in ROS Kinetic and newer
-#add_compile_options(-std=c++14)
-#set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-#set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
-  carma_utils
-  cav_msgs
-  cav_srvs
-  roscpp
-  std_msgs
-  carma_wm
-  lanelet2_extension
-  tf
-  tf2
-  tf2_ros
-  tf2_geometry_msgs
+# Name build targets
+set(node_exec platoon_strategic_ihp_node_exec)
+set(node_lib platoon_strategic_ihp_node)
+
+# Includes
+include_directories(
+  include
 )
 
-## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED)
-
-###################################
-## catkin specific configuration ##
-###################################
-
-
-catkin_package(
-   INCLUDE_DIRS include
-   CATKIN_DEPENDS carma_utils cav_msgs roscpp std_msgs carma_wm cav_srvs lanelet2_extension
+# Build
+ament_auto_add_library(${node_lib} SHARED
+        src/platoon_manager_ihp.cpp
+        src/platoon_strategic_ihp_node.cpp
+        src/platoon_strategic_ihp.cpp
 )
 
-###########
-## Build ##
-###########
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
+)
 
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
+# Register component
+rclcpp_components_register_nodes(${node_lib} "platoon_strategic_ihp::Node")
+
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_exec}
+        ${node_lib}
+)
+
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
 )
 
-#file(GLOB_RECURSE headers */*.hpp */*.h)
+# Testing
+if(BUILD_TESTING)  
 
-add_library(platoon_strategic_ihp_plugin_lib
- src/platoon_strategic_ihp.cpp
- src/platoon_manager_ihp.cpp)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-add_dependencies(platoon_strategic_ihp_plugin_lib ${catkin_EXPORTED_TARGETS})
-target_link_libraries(platoon_strategic_ihp_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+  ament_add_gtest(test_platoon_strategic_ihp 
+        test/main_test.cpp
+        test/mobility_messages.cpp
+        test/test_platoon_manager_front_join.cpp
+        test/test_platoon_manager.cpp
+  )
 
-add_executable( ${PROJECT_NAME}
-  src/main_ihp.cpp)
+  ament_target_dependencies(test_platoon_strategic_ihp ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
-target_link_libraries(${PROJECT_NAME} platoon_strategic_ihp_plugin_lib)
+  target_link_libraries(test_platoon_strategic_ihp ${node_lib})
 
+endif()
 
-#############
-## Install ##
-#############
-
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
+# Install
+ament_auto_package(
+        INSTALL_TO_SHARE config launch
 )
-
-## Install C++
-install(TARGETS ${PROJECT_NAME} platoon_strategic_ihp_plugin_lib
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-# Mark other files for installation (e.g. launch and bag files, etc.)
-install(DIRECTORY
-  launch config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
-
-
-#############
-## Testing ##
-#############
-
-# catkin_add_gmock(${PROJECT_NAME}-test
-#   test/test_platoon_manager_front_join.cpp
-#   test/test_platoon_manager.cpp
-#   test/mobility_messages.cpp
-#   test/main_test.cpp)
-
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test platoon_strategic_ihp_plugin_lib ${catkin_LIBRARIES})
-# endif()
