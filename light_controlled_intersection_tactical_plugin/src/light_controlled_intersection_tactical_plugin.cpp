@@ -44,7 +44,7 @@ namespace light_controlled_intersection_tactical_plugin
             && GET_MANEUVER_PROPERTY(req->maneuver_plan.maneuvers[req->maneuver_index_to_plan], parameters.string_valued_meta_data.front()) == light_controlled_intersection_strategy_)
         {
             maneuver_plan.push_back(req->maneuver_plan.maneuvers[req->maneuver_index_to_plan]);
-            resp->related_maneuvers.push_back(i);
+            resp->related_maneuvers.push_back(req->maneuver_index_to_plan);
         }
         else 
         {
