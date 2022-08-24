@@ -917,3 +917,8 @@ std::string SCIStrategicPlugin::get_version_id()
 }
 
 }  // namespace SCI_strategic_plugin
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+// Register the component with class_loader
+RCLCPP_COMPONENTS_REGISTER_NODE(sci_strategic_plugin::SCIStrategicPlugin)
