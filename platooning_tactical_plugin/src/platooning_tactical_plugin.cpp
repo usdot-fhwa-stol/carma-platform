@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 LEIDOS.
+ * Copyright (C) 2018-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,17 +15,17 @@
 
 #include "platooning_tactical_plugin/platooning_tactical_plugin.h"
 
-#include <ros/ros.h>
 #include <string>
 #include <algorithm>
 #include <memory>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <lanelet2_core/geometry/Point.h>
-#include <trajectory_utils/trajectory_utils.h>
-#include <trajectory_utils/conversions/conversions.h>
+#include <trajectory_utils/trajectory_utils.hpp>
+#include <trajectory_utils/conversions/conversions.hpp>
 #include <sstream>
-#include <carma_utils/containers/containers.h>
+#include <chrono>
+#include <carma_ros2_utils/containers/containers.hpp>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <Eigen/LU>
@@ -37,38 +37,25 @@ using oss = std::ostringstream;
 namespace platooning_tactical_plugin
 {
 PlatooningTacticalPlugin::PlatooningTacticalPlugin(carma_wm::WorldModelConstPtr wm, PlatooningTacticalPluginConfig config,
-                                           PublishPluginDiscoveryCB plugin_discovery_publisher)
-  : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
-{
-  plugin_discovery_msg_.name = "platooning_tactical_plugin";
-  plugin_discovery_msg_.version_id = "v1.0";
-  plugin_discovery_msg_.available = true;
-  plugin_discovery_msg_.activated = true;
-  plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
-  plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
-}
+                                           std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory)
+  : wm_(wm), config_(config), timer_factory_(timer_factory)
+{}
 
-bool PlatooningTacticalPlugin::onSpin()
+bool PlatooningTacticalPlugin::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::Request& req,
+                                                  carma_planning_msgs::srv::PlanTrajectory::Response& resp)
 {
-  plugin_discovery_publisher_(plugin_discovery_msg_);
-  return true;
-}
-
-bool PlatooningTacticalPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req,
-                                              cav_srvs::PlanTrajectoryResponse& resp)
-{
-  ros::WallTime start_time = ros::WallTime::now(); // Start timeing the execution time for planning so it can be logged
+  auto start_time = std::chrono::high_resolution_clock::now(); // Start timing the execution time for planning so it can be logged
 
   lanelet::BasicPoint2d veh_pos(req.vehicle_state.x_pos_global, req.vehicle_state.y_pos_global);
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
   // Only plan the trajectory for the initial LANE_FOLLOWING maneuver and any immediately sequential maneuvers of the same type
-  std::vector<cav_msgs::Maneuver> maneuver_plan;
+  std::vector<carma_planning_msgs::msg::Maneuver> maneuver_plan;
   for(size_t i = req.maneuver_index_to_plan; i < req.maneuver_plan.maneuvers.size(); i++)
   {
-    if(req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_FOLLOWING)
+    if(req.maneuver_plan.maneuvers[i].type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING)
     {
-      if (req.maneuver_plan.maneuvers[i].lane_following_maneuver.parameters.negotiation_type != cav_msgs::ManeuverParameters::NO_NEGOTIATION)
+      if (req.maneuver_plan.maneuvers[i].lane_following_maneuver.parameters.negotiation_type != carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION)
       {
         maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
         resp.related_maneuvers.push_back(i);
@@ -99,13 +86,13 @@ bool PlatooningTacticalPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryReques
   auto points_and_target_speeds = basic_autonomy::waypoint_generation::create_geometry_profile(maneuver_plan, std::max((double)0, current_downtrack - config_.back_distance),
                                                                          wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config);
 
-  ROS_DEBUG_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_tactical_plugin"), "points_and_target_speeds: " << points_and_target_speeds.size());
 
-  ROS_DEBUG_STREAM("PlanTrajectory");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_tactical_plugin"), "PlanTrajectory");
 
-  cav_msgs::TrajectoryPlan original_trajectory;
+  carma_planning_msgs::msg::TrajectoryPlan original_trajectory;
   original_trajectory.header.frame_id = "map";
-  original_trajectory.header.stamp = ros::Time::now();
+  original_trajectory.header.stamp = timer_factory_->now();
   original_trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
   original_trajectory.trajectory_points = basic_autonomy:: waypoint_generation::compose_lanefollow_trajectory_from_path(points_and_target_speeds, 
                                                                                 req.vehicle_state, req.header.stamp, wm_, ending_state_before_buffer_, debug_msg_, 
@@ -119,15 +106,20 @@ bool PlatooningTacticalPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryReques
     debug_publisher_(debug_msg_); 
   }
   
-  resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+  resp.maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
-  ros::WallTime end_time = ros::WallTime::now();  // Planning complete
+  auto end_time = std::chrono::high_resolution_clock::now(); // Planning complete
 
-  ros::WallDuration duration = end_time - start_time;
-  ROS_DEBUG_STREAM("ExecutionTime: " << duration.toSec());
+  auto nano_s = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_tactical_plugin"), "ExecutionTime: " << ((double)nano_s.count() * 1e9));
 
   return true;
 
+}
+
+void PlatooningTacticalPlugin::set_config(PlatooningTacticalPluginConfig config)
+{
+  config_ = config;
 }
 
 }  // namespace platooning_tactical_plugin
