@@ -140,10 +140,10 @@ def generate_launch_description():
                 ]
             ),
             ComposableNode(
-                    package='sci_strategic_plugin',
-                    plugin='sci_strategic_plugin::SCIStrategicPlugin',
-                    name='sci_strategic_plugin',
-                    extra_arguments=[
+                package='sci_strategic_plugin',
+                plugin='sci_strategic_plugin::SCIStrategicPlugin',
+                name='sci_strategic_plugin',
+                extra_arguments=[
                     {'use_intra_process_comms': True}, 
                     {'--log-level' : GetLogLevel('sci_strategic_plugin', env_log_levels) }
                 ],
@@ -166,13 +166,13 @@ def generate_launch_description():
                 ]
             ),
             ComposableNode(
-                    package='cooperative_lanechange',
-                    plugin='cooperative_lanechange::CooperativeLaneChangePlugin',
-                    name='cooperative_lanechange',
-                    extra_arguments=[
-                        {'use_intra_process_comms': True}, 
-                        {'--log-level' : GetLogLevel('cooperative_lanechange', env_log_levels) }
-                    ],
+                package='cooperative_lanechange',
+                plugin='cooperative_lanechange::CooperativeLaneChangePlugin',
+                name='cooperative_lanechange',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('cooperative_lanechange', env_log_levels) }
+                ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
