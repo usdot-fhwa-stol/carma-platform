@@ -61,7 +61,7 @@ target_link_libraries(${node_exec}
         ${node_lib}
 )
 
-# Testing TODO Misheel
+# Testing
 if(BUILD_TESTING)  
 
   find_package(ament_lint_auto REQUIRED)
