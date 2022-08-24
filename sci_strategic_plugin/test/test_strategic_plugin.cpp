@@ -49,8 +49,8 @@ TEST(SCIStrategicPluginTest, composeLaneFollowingManeuverMessage)
   ASSERT_EQ(20.4, result.lane_following_maneuver.end_dist);
   ASSERT_EQ(5, result.lane_following_maneuver.start_speed);
   ASSERT_EQ(10, result.lane_following_maneuver.end_speed);
-  ASSERT_EQ(rclcpp::Time(1.2*1e9), result.lane_following_maneuver.start_time);
-  ASSERT_EQ(rclcpp::Time(1.2*1e9) + rclcpp::Duration(1.0*1e9), result.lane_following_maneuver.end_time);
+  ASSERT_EQ(rclcpp::Time(1.2*1e9, RCL_ROS_TIME), result.lane_following_maneuver.start_time);
+  ASSERT_EQ(rclcpp::Time(1.2*1e9, RCL_ROS_TIME) + rclcpp::Duration(1.0*1e9), result.lane_following_maneuver.end_time);
   ASSERT_EQ(2, result.lane_following_maneuver.lane_ids.size());
   ASSERT_TRUE(result.lane_following_maneuver.lane_ids[0].compare("1200") == 0);
   ASSERT_TRUE(result.lane_following_maneuver.lane_ids[1].compare("1201") == 0);
@@ -81,8 +81,8 @@ TEST(SCIStrategicPluginTest, composeIntersectionTransitMessage)
   ASSERT_EQ(20.4, result.intersection_transit_straight_maneuver.end_dist);
   ASSERT_EQ(5, result.intersection_transit_straight_maneuver.start_speed);
   ASSERT_EQ(10, result.intersection_transit_straight_maneuver.end_speed);
-  ASSERT_EQ(rclcpp::Time(1.2*1e9), result.intersection_transit_straight_maneuver.start_time);
-  ASSERT_EQ(rclcpp::Time(2.2*1e9), result.intersection_transit_straight_maneuver.end_time);
+  ASSERT_EQ(rclcpp::Time(1.2*1e9, RCL_ROS_TIME), result.intersection_transit_straight_maneuver.start_time);
+  ASSERT_EQ(rclcpp::Time(2.2*1e9, RCL_ROS_TIME), result.intersection_transit_straight_maneuver.end_time);
   ASSERT_TRUE(result.intersection_transit_straight_maneuver.starting_lane_id.compare("1200") == 0);
   ASSERT_TRUE(result.intersection_transit_straight_maneuver.ending_lane_id.compare("1201") == 0);
 }
@@ -107,8 +107,8 @@ TEST(SCIStrategicPluginTest, composeStopAndWaitManeuverMessage)
   ASSERT_EQ(10.2, result.stop_and_wait_maneuver.start_dist);
   ASSERT_EQ(20.4, result.stop_and_wait_maneuver.end_dist);
   ASSERT_EQ(5, result.stop_and_wait_maneuver.start_speed);
-  ASSERT_EQ(rclcpp::Time(1.2*1e9), result.stop_and_wait_maneuver.start_time);
-  ASSERT_EQ(rclcpp::Time(2.2*1e9), result.stop_and_wait_maneuver.end_time);
+  ASSERT_EQ(rclcpp::Time(1.2*1e9, RCL_ROS_TIME), result.stop_and_wait_maneuver.start_time);
+  ASSERT_EQ(rclcpp::Time(2.2*1e9, RCL_ROS_TIME), result.stop_and_wait_maneuver.end_time);
   ASSERT_EQ(0.56, result.stop_and_wait_maneuver.parameters.float_valued_meta_data[1]);
   ASSERT_TRUE(result.stop_and_wait_maneuver.starting_lane_id.compare("1200") == 0);
   ASSERT_TRUE(result.stop_and_wait_maneuver.ending_lane_id.compare("1201") == 0);
