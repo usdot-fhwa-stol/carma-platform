@@ -26,13 +26,12 @@
 namespace sci_strategic_plugin
 {
 
-/*
 TEST(SCIStrategicPluginTest, composeLaneFollowingManeuverMessage)
 {
   auto sci_node = std::make_shared<sci_strategic_plugin::SCIStrategicPlugin>(rclcpp::NodeOptions());
   sci_node->configure();
   sci_node->activate();
-
+  SCIStrategicPluginConfig config;
   auto result =
       sci_node->composeLaneFollowingManeuverMessage(1, 10.2, 20.4, 5, 10, rclcpp::Time(1.2*1e9), 1.0, { 1200, 1201 });
 
@@ -63,7 +62,7 @@ TEST(SCIStrategicPluginTest, composeIntersectionTransitMessage)
   auto sci_node = std::make_shared<sci_strategic_plugin::SCIStrategicPlugin>(rclcpp::NodeOptions());
   sci_node->configure();
   sci_node->activate();
-
+  SCIStrategicPluginConfig config;
   TurnDirection intersection_turn_direction = TurnDirection::Straight;
 
   auto result = sci_node->composeIntersectionTransitMessage(10.2, 20.4, 5, 10, rclcpp::Time(1.2*1e9), rclcpp::Time(2.2*1e9), intersection_turn_direction, 1200, 1201);
@@ -93,7 +92,7 @@ TEST(SCIStrategicPluginTest, composeStopAndWaitManeuverMessage)
   auto sci_node = std::make_shared<sci_strategic_plugin::SCIStrategicPlugin>(rclcpp::NodeOptions());
   sci_node->configure();
   sci_node->activate();
-
+  SCIStrategicPluginConfig config;
   auto result = sci_node->composeStopAndWaitManeuverMessage(10.2, 20.4, 5, 1200, 1201, 0.56, rclcpp::Time(1.2*1e9), rclcpp::Time(2.2*1e9));
 
   ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, result.type);
@@ -115,7 +114,6 @@ TEST(SCIStrategicPluginTest, composeStopAndWaitManeuverMessage)
   ASSERT_TRUE(result.stop_and_wait_maneuver.ending_lane_id.compare("1201") == 0);
 }
 
-*/
 TEST(SCIStrategicPluginTest, findSpeedLimit)
 {
   auto sci_node = std::make_shared<sci_strategic_plugin::SCIStrategicPlugin>(rclcpp::NodeOptions());
@@ -140,19 +138,19 @@ TEST(SCIStrategicPluginTest, findSpeedLimit)
   ASSERT_NEAR(11.176, sci_node->findSpeedLimit(*ll_iterator), 0.00001);
 }
 
-/*
 TEST(SCIStrategicPluginTest, moboperationcbtest)
 {
   carma_v2x_msgs::msg::MobilityOperation msg;
   msg.strategy = "Carma/stop_controlled_intersection";
 
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  SCIStrategicPluginConfig config;
-  SCIStrategicPlugin sci(wm, config);
-
+  auto sci_node = std::make_shared<sci_strategic_plugin::SCIStrategicPlugin>(rclcpp::NodeOptions());
+  sci_node->configure();
+  sci_node->activate();
+  sci_node->set_wm(wm);
   ASSERT_EQ(sci_node->approaching_stop_controlled_interction_, false);
-  auto msg_ptr = boost::make_shared<const carma_v2x_msgs::msg::MobilityOperation>(msg);
-  sci_node->mobilityOperationCb(msg_ptr);
+  auto msg_ptr = std::make_unique<carma_v2x_msgs::msg::MobilityOperation>(msg);
+  sci_node->mobilityOperationCb(std::move(msg_ptr));
 
   ASSERT_EQ(sci_node->approaching_stop_controlled_interction_, true);
 
@@ -166,7 +164,10 @@ TEST(SCIStrategicPluginTest, parseStrategyParamstest)
 
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   SCIStrategicPluginConfig config;
-  SCIStrategicPlugin sci(wm, config);
+  auto sci_node = std::make_shared<sci_strategic_plugin::SCIStrategicPlugin>(rclcpp::NodeOptions());
+  sci_node->configure();
+  sci_node->activate();
+  sci_node->set_wm(wm);
 
   sci_node->parseStrategyParams(msg.strategy_params);
 
@@ -186,8 +187,10 @@ TEST(SCIStrategicPluginTest, parseStrategyParamstest)
 TEST(SCIStrategicPluginTest, calcEstimatedStopTimetest)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  SCIStrategicPluginConfig config;
-  SCIStrategicPlugin sci(wm, config);
+  auto sci_node = std::make_shared<sci_strategic_plugin::SCIStrategicPlugin>(rclcpp::NodeOptions());
+  sci_node->configure();
+  sci_node->activate();
+  sci_node->set_wm(wm);
 
   double stop_time = sci_node->calcEstimatedStopTime(25, 13);
 
@@ -198,8 +201,10 @@ TEST(SCIStrategicPluginTest, calc_speed_before_deceltest)
 {
 
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  SCIStrategicPluginConfig config;
-  SCIStrategicPlugin sci(wm, config);
+  auto sci_node = std::make_shared<sci_strategic_plugin::SCIStrategicPlugin>(rclcpp::NodeOptions());
+  sci_node->configure();
+  sci_node->activate();
+  sci_node->set_wm(wm);
 
   double stop_speed = sci_node->calc_speed_before_decel(20, 250, 10);
 
@@ -209,8 +214,10 @@ TEST(SCIStrategicPluginTest, calc_speed_before_deceltest)
 TEST(SCIStrategicPluginTest, determine_speed_profile_casetest)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  SCIStrategicPluginConfig config;
-  SCIStrategicPlugin sci(wm, config);
+  auto sci_node = std::make_shared<sci_strategic_plugin::SCIStrategicPlugin>(rclcpp::NodeOptions());
+  sci_node->configure();
+  sci_node->activate();
+  sci_node->set_wm(wm);
 
   int case_num1 = sci_node->determine_speed_profile_case(50, 15, 40, 10);
 
@@ -229,8 +236,10 @@ TEST(SCIStrategicPluginTest, determine_speed_profile_casetest)
 TEST(SCIStrategicPluginTest, caseOneSpeedProfiletest)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  SCIStrategicPluginConfig config;
-  SCIStrategicPlugin sci(wm, config);
+  auto sci_node = std::make_shared<sci_strategic_plugin::SCIStrategicPlugin>(rclcpp::NodeOptions());
+  sci_node->configure();
+  sci_node->activate();
+  sci_node->set_wm(wm);
 
   std::vector<double> metadata{};
 
@@ -245,8 +254,10 @@ TEST(SCIStrategicPluginTest, caseOneSpeedProfiletest)
 TEST(SCIStrategicPluginTest, caseTwoSpeedProfiletest)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  SCIStrategicPluginConfig config;
-  SCIStrategicPlugin sci(wm, config);
+  auto sci_node = std::make_shared<sci_strategic_plugin::SCIStrategicPlugin>(rclcpp::NodeOptions());
+  sci_node->configure();
+  sci_node->activate();
+  sci_node->set_wm(wm);
 
   std::vector<double> metadata{};
 
@@ -262,8 +273,10 @@ TEST(SCIStrategicPluginTest, caseTwoSpeedProfiletest)
 TEST(SCIStrategicPluginTest, caseThreeSpeedProfiletest)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  SCIStrategicPluginConfig config;
-  SCIStrategicPlugin sci(wm, config);
+  auto sci_node = std::make_shared<sci_strategic_plugin::SCIStrategicPlugin>(rclcpp::NodeOptions());
+  sci_node->configure();
+  sci_node->activate();
+  sci_node->set_wm(wm);
 
   double dec_val = sci_node->caseThreeSpeedProfile(50, 5, 30);
 
@@ -273,8 +286,10 @@ TEST(SCIStrategicPluginTest, caseThreeSpeedProfiletest)
 TEST(SCIStrategicPluginTest, testIntersectionturndirection)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  SCIStrategicPluginConfig config;
-  SCIStrategicPlugin sci(wm, config);
+  auto sci_node = std::make_shared<sci_strategic_plugin::SCIStrategicPlugin>(rclcpp::NodeOptions());
+  sci_node->configure();
+  sci_node->activate();
+  sci_node->set_wm(wm);
 
   double dec_val = sci_node->caseThreeSpeedProfile(50, 5, 30);
 
@@ -284,7 +299,7 @@ TEST(SCIStrategicPluginTest, testIntersectionturndirection)
 // The map in this unit test does not support turn direction and therefore it is disabled. 
 // The test can be run if the turn direction detection logic (lines 461-467) is commented.
 
-TEST(SCIStrategicPluginTest, DISABLE_maneuvercbtest)
+TEST(SCIStrategicPluginTest, DISABLED_maneuvercbtest)
 {
   lanelet::Id id{1200};
   // intersection id
@@ -320,78 +335,76 @@ TEST(SCIStrategicPluginTest, DISABLE_maneuvercbtest)
   // Create a complete map
   carma_wm::test::MapOptions mp(1,1);
   auto cmw_ptr = carma_wm::test::getGuidanceTestMap(mp);
-
   std::shared_ptr<lanelet::AllWayStop> row = lanelet::AllWayStop::make(int_id, lanelet::AttributeMap(), {{ll1, ls1}, {ll3, ls4}});
+
   cmw_ptr->getMutableMap()->update(cmw_ptr->getMutableMap()->laneletLayer.get(1200), row);
 
   carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, cmw_ptr);
 
-
-  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  SCIStrategicPluginConfig config;
-  SCIStrategicPlugin sci(cmw_ptr, config);
+  auto sci_node = std::make_shared<sci_strategic_plugin::SCIStrategicPlugin>(rclcpp::NodeOptions());
+  sci_node->configure();
+  sci_node->activate();
+  sci_node->set_wm(cmw_ptr);
 
   sci_node->current_downtrack_ = 1.0;
   // pose callback test
   geometry_msgs::msg::PoseStamped pose_msg;
   pose_msg.pose.position.x = 1.0;
   pose_msg.pose.position.y = 1.0;
-  auto msg = boost::make_shared<const geometry_msgs::msg::PoseStamped>(pose_msg);
-  sci_node->currentPoseCb(msg);
+  auto msg = std::make_unique<geometry_msgs::msg::PoseStamped>(pose_msg);
+  sci_node->currentPoseCb(std::move(msg));
   ASSERT_NEAR(1.0, sci_node->current_downtrack_, 0.1);
-
 
   sci_node->approaching_stop_controlled_interction_ = true;
   sci_node->street_msg_timestamp_ = 2000;
   sci_node->scheduled_stop_time_ = 2500;
   sci_node->scheduled_enter_time_ = 5000;
   sci_node->scheduled_depart_time_ = 7000;
-  
 
-  carma_planning_msgs::srv::PlanManeuversRequest req;
-  carma_planning_msgs::srv::PlanManeuversResponse resp;
+  auto srv_header = std::make_shared<rmw_request_id_t>();
+  auto req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+  auto resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
 
   // approaching intersection
-  req = carma_planning_msgs::srv::PlanManeuversRequest();
-  req.veh_x = 1.85;
-  req.veh_y = 1.0; 
-  req.veh_downtrack = req.veh_y;
-  req.veh_logitudinal_velocity = 11.176;
-  req.veh_lane_id = "1200";
+  req->veh_x = 1.85;
+  req->veh_y = 1.0; 
+  req->veh_downtrack = req->veh_y;
+  req->veh_logitudinal_velocity = 11.176;
+  req->veh_lane_id = "1200";
 
-  
+  sci_node->plan_maneuvers_callback(srv_header, req, resp);
 
-  sci_node->planManeuverCb(req, resp);
+  ASSERT_EQ(1, resp->new_plan.maneuvers.size());
 
-  ASSERT_EQ(1, resp.new_plan.maneuvers.size());
-  ASSERT_EQ(resp.new_plan.maneuvers[0].lane_following_maneuver.lane_ids[0], "1200");
-  ASSERT_NEAR(0.0, resp.new_plan.maneuvers[0].lane_following_maneuver.end_speed, 0.00001);
+  ASSERT_EQ(resp->new_plan.maneuvers[0].lane_following_maneuver.lane_ids[0], "1200");
+
+  ASSERT_NEAR(0.0, resp->new_plan.maneuvers[0].lane_following_maneuver.end_speed, 0.00001);
+
   // case 3
-  ASSERT_EQ(2, resp.new_plan.maneuvers[0].lane_following_maneuver.parameters.int_valued_meta_data[0]);
+  ASSERT_EQ(2, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.int_valued_meta_data[0]);
+
 
   // at the stop line
-  carma_planning_msgs::srv::PlanManeuversRequest req1;
-  carma_planning_msgs::srv::PlanManeuversResponse resp1;
+  auto srv_header1 = std::make_shared<rmw_request_id_t>();
+  auto req1 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+  auto resp1 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
 
   sci_node->current_downtrack_ = 9;
-  req1 = carma_planning_msgs::srv::PlanManeuversRequest();
-  req1.veh_x = 9.85;
-  req1.veh_y = 2.0; 
-  req1.veh_downtrack = req.veh_y;
-  req1.veh_logitudinal_velocity = 0.0;
-  req1.veh_lane_id = "1209";
+  req1->veh_x = 9.85;
+  req1->veh_y = 2.0; 
+  req1->veh_downtrack = req->veh_y;
+  req1->veh_logitudinal_velocity = 0.0;
+  req1->veh_lane_id = "1209";
 
   sci_node->scheduled_enter_time_ = 7000;
-
-  sci_node->planManeuverCb(req1, resp1);
-  ASSERT_EQ(1, resp1.new_plan.maneuvers.size());
-  ASSERT_EQ(resp1.new_plan.maneuvers[0].stop_and_wait_maneuver.starting_lane_id, "1212");
-  ASSERT_EQ(resp1.new_plan.maneuvers[0].stop_and_wait_maneuver.ending_lane_id, "1212");
+  sci_node->plan_maneuvers_callback(srv_header1, req1, resp1);
+  ASSERT_EQ(1, resp1->new_plan.maneuvers.size());
+  ASSERT_EQ(resp1->new_plan.maneuvers[0].stop_and_wait_maneuver.starting_lane_id, "1212");
+  ASSERT_EQ(resp1->new_plan.maneuvers[0].stop_and_wait_maneuver.ending_lane_id, "1212");
 
 
 }
 
 
-*/
 
 } // namespace sci_strategic_plugin

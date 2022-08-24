@@ -342,6 +342,7 @@ public:
   FRIEND_TEST(SCIStrategicPluginTest, caseTwoSpeedProfiletest);
   FRIEND_TEST(SCIStrategicPluginTest, caseThreeSpeedProfiletest);
   FRIEND_TEST(SCIStrategicPluginTest, testIntersectionturndirection);
+  FRIEND_TEST(SCIStrategicPluginTest, DISABLED_maneuvercbtest);
   FRIEND_TEST(SCIStrategicPluginTest, maneuvercbtest);
 };
 }  // namespace sci_strategic_plugin

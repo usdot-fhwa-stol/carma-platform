@@ -33,7 +33,7 @@ public:
       : carma_ros2_utils::CarmaLifecycleNode(options)
     {}
 
-    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &){}
+    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &){return CallbackReturn::SUCCESS;}
 };
 
 
@@ -47,10 +47,8 @@ TEST(SCIStrategicPlugin, UnitTest1)
 
     auto mob_op_pub = nh1->create_publisher<carma_v2x_msgs::msg::MobilityOperation>("incoming_mobility_operation", 5);
     auto pose_pub = nh1->create_publisher<geometry_msgs::msg::PoseStamped>("current_pose", 5);
-    
     nh1->configure();
-    nh2->configure();
-
+    nh2->activate();
     rclcpp::executors::MultiThreadedExecutor executor;
     executor.add_node(nh1->get_node_base_interface());
     executor.add_node(nh2->get_node_base_interface());
