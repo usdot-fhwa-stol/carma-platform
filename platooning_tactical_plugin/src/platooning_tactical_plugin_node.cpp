@@ -72,6 +72,9 @@ namespace platooning_tactical_plugin
       {"buffer_ending_downtrack", config_.buffer_ending_downtrack}
     }, parameters); // Accel limits system wide and not allowed to be updated per node
 
+    config_.lateral_accel_limit = config_.lateral_accel_limit * config_.lat_accel_multiplier;
+    config_.max_accel = config_.max_accel *  config_.max_accel_multiplier;
+
     rcl_interfaces::msg::SetParametersResult result;
 
     result.successful = !error && !error2 && !error3;
