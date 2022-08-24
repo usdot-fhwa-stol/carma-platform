@@ -51,7 +51,7 @@ def generate_launch_description():
         get_package_share_directory('route_following_plugin'), 'config/parameters.yaml')
 
     stop_and_wait_plugin_param_file = os.path.join(
-        get_package_share_directory('stop_and_wait_plugin'), 'config/parameters.yaml')        
+        get_package_share_directory('stop_and_wait_plugin'), 'config/parameters.yaml')
 
     cooperative_lanechange_param_file = os.path.join(
         get_package_share_directory('cooperative_lanechange'), 'config/parameters.yaml')      
