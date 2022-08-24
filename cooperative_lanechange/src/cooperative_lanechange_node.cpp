@@ -33,7 +33,7 @@ namespace cooperative_lanechange
     config_.minimum_lookahead_distance = declare_parameter<double>("minimum_lookahead_distance", config_.minimum_lookahead_distance);
     config_.maximum_lookahead_distance = declare_parameter<double>("maximum_lookahead_distance", config_.maximum_lookahead_distance);
     config_.minimum_lookahead_speed = declare_parameter<double>("minimum_lookahead_speed", config_.minimum_lookahead_speed);
-    config_.maximum_lookahead_speed = declare_parameter<double>("maximum_lookahead_speed", config_.maximum_lookahead_distance);
+    config_.maximum_lookahead_speed = declare_parameter<double>("maximum_lookahead_speed", config_.maximum_lookahead_speed);
     config_.lateral_accel_limit = declare_parameter<double>("lateral_accel_limit", config_.lateral_accel_limit);
     config_.speed_moving_average_window_size = declare_parameter<int>("speed_moving_average_window_size", config_.speed_moving_average_window_size);
     config_.curvature_moving_average_window_size = declare_parameter<int>("curvature_moving_average_window_size", config_.curvature_moving_average_window_size);
@@ -52,9 +52,6 @@ namespace cooperative_lanechange
     config_.back_distance = declare_parameter<double>("back_distance", config_.back_distance);
     config_.buffer_ending_downtrack = declare_parameter<double>("buffer_ending_downtrack", config_.buffer_ending_downtrack);
     config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
-
-    // Initialize World Model
-    wm_ = get_world_model();
   }
 
   rcl_interfaces::msg::SetParametersResult CooperativeLaneChangePlugin::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
@@ -154,7 +151,9 @@ namespace cooperative_lanechange
     outgoing_mobility_request_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityRequest>("outgoing_mobility_request", 5); // Rate from yield plugin
     lanechange_status_pub_ = create_publisher<carma_planning_msgs::msg::LaneChangeStatus>("cooperative_lane_change_status", 10);
 
-
+    // Initialize World Model
+    wm_ = get_world_model();
+    
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
   }
@@ -265,7 +264,6 @@ namespace cooperative_lanechange
     carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
   {
-    //@SONAR_STOP@
     // Set boolean flag if this is the first time this service has been called
     if (!clc_called_)
     {
@@ -421,7 +419,6 @@ namespace cooperative_lanechange
       }
     }
     
-    //@SONAR_START@
     return;  
   }
 

@@ -158,7 +158,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     cooperative_lanechange_param_file,
-                    vehicle_characteristics_param_file
+                    vehicle_characteristics_param_file,
+                    vehicle_config_param_file
                 ]
             )
         ]
