@@ -147,15 +147,9 @@ rcl_interfaces::msg::SetParametersResult SCIStrategicPlugin::parameter_update_ca
     {"intersection_exit_zone_length", config_.intersection_exit_zone_length}
   }, parameters); // vehicle_acceleration_limit not updated as it's global param
 
-  auto error_string = update_params<std::string>({
-    {"strategic_plugin_name", config_.strategic_plugin_name},
-    {"lane_following_plugin_name", config_.lane_following_plugin_name},
-    {"intersection_transit_plugin_name", config_.intersection_transit_plugin_name},
-  }, parameters); // vehicle_acceleration_limit not updated as it's global param
-
   rcl_interfaces::msg::SetParametersResult result;
 
-  result.successful = !error_double && !error_string;
+  result.successful = !error_double;
 
   return result;
 }
