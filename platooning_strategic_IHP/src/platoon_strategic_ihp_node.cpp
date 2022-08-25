@@ -102,15 +102,15 @@ namespace platoon_strategic_ihp
       // vehicle_length and id excluded since they should not be updated at runtime
     }, parameters);
 
-    if (worker_)
-    {
-      worker_->setConfig(config_);
-    }
-
 
     rcl_interfaces::msg::SetParametersResult result;
 
     result.successful = !error && !error2 && !error3;
+
+    if (result.successful && worker_)
+    {
+      worker_->setConfig(config_);
+    }
 
     return result;
   }

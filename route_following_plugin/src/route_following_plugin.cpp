@@ -23,6 +23,7 @@
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+#include <chrono>
 
 namespace route_following_plugin
 {
@@ -163,14 +164,14 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
     wml_->setRouteCallback([this]() {
         RCLCPP_INFO_STREAM(get_logger(),"Recomputing maneuvers due to a route update");
         this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
-        });
+    });
 
     wml_->setMapCallback([this]() {
         if (wm_->getRoute()) { // If this map update occured after a route was provided we need to regenerate maneuvers
-        RCLCPP_INFO_STREAM(get_logger(),"Recomputing maneuvers due to map update");
-        this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
+            RCLCPP_INFO_STREAM(get_logger(),"Recomputing maneuvers due to map update");
+            this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
         }
-        });
+    });
 
     initializeBumperTransformLookup();
     

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,13 +15,13 @@
  */
 
 #include <rclcpp/rclcpp.hpp>
-#include "cooperative_lanechange/cooperative_lanechange_node.hpp"
+#include "platooning_tactical_plugin/platooning_tactical_plugin_node.h"
 
 int main(int argc, char **argv) 
 {
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<cooperative_lanechange::CooperativeLaneChangePlugin>(rclcpp::NodeOptions());
+  auto node = std::make_shared<platooning_tactical_plugin::Node>(rclcpp::NodeOptions());
   
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(node->get_node_base_interface());

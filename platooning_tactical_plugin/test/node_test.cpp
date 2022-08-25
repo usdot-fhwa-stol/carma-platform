@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,20 +14,24 @@
  * the License.
  */
 
+#include <gtest/gtest.h>
+#include <memory>
+#include <chrono>
+#include <thread>
+#include <future>
 #include <rclcpp/rclcpp.hpp>
-#include "cooperative_lanechange/cooperative_lanechange_node.hpp"
 
-int main(int argc, char **argv) 
+int main(int argc, char ** argv)
 {
-  rclcpp::init(argc, argv);
+    ::testing::InitGoogleTest(&argc, argv);
 
-  auto node = std::make_shared<cooperative_lanechange::CooperativeLaneChangePlugin>(rclcpp::NodeOptions());
-  
-  rclcpp::executors::MultiThreadedExecutor executor;
-  executor.add_node(node->get_node_base_interface());
-  executor.spin();
+    //Initialize ROS
+    rclcpp::init(argc, argv);
 
-  rclcpp::shutdown();
+    bool success = RUN_ALL_TESTS();
 
-  return 0;
-}
+    //shutdown ROS
+    rclcpp::shutdown();
+
+    return success;
+} 

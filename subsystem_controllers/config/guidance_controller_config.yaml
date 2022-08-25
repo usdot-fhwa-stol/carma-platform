@@ -1,5 +1,6 @@
-/**:
-  ros__parameters:
+stop_and_wait_plugin_param_file = os.path.join(
+        get_package_share_directory('stop_and_wait_plugin'), 'config/parameters.yaml')      
+
     # Long: Timeout for each service to be detected as available in milliseconds
     # Units: milliseconds
     service_timeout_ms : 200
@@ -60,6 +61,11 @@
       - /guidance/plugins/stop_controlled_intersection_tactical_plugin
       - /guidance/plugins/platoon_control_ihp
       - /guidance/plugins/platoon_strategic_ihp
-      - /guidance/plugins/platooning_tactical_plugin
+      - /guidance/plugins/platooning_tactical_plugin_node
       - /guidance/plugins/yield_plugin
-
+    
+    # List of guidance plugins that are ported to ROS2. If not in this list, it is assumed to be ROS1, and not managed.
+    ros2_initial_plugins:
+      - /guidance/plugins/inlanecruising_plugin
+      - /guidance/plugins/platooning_tactical_plugin_node
+      - /guidance/plugins/cooperative_lanechange

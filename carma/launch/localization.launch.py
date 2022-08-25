@@ -56,6 +56,9 @@ def generate_launch_description():
     gnss_to_map_convertor_param_file = os.path.join(
     get_package_share_directory('gnss_to_map_convertor'), 'config/parameters.yaml')
 
+    localization_manager_convertor_param_file = os.path.join(
+    get_package_share_directory('localization_manager'), 'config/parameters.yaml')
+
     gnss_to_map_convertor_container = ComposableNodeContainer(
     package='carma_ros2_utils',
     name='gnss_to_map_convertor_container',
@@ -79,6 +82,27 @@ def generate_launch_description():
         )
     ])
 
+    localization_manager_container = ComposableNodeContainer(
+    package='carma_ros2_utils',
+    name='localization_manager_container',
+    executable='carma_component_container_mt',
+    namespace=GetCurrentNamespace(),
+    composable_node_descriptions=[
+        ComposableNode(
+                package='localization_manager',
+                plugin='localization_manager::Node',
+                name='localization_manager',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('localization_manager', env_log_levels) }
+                ],
+                remappings=[
+                    
+                ],
+                parameters=[ localization_manager_convertor_param_file ]
+        )
+    ])
+
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
         package='subsystem_controllers',
@@ -92,5 +116,6 @@ def generate_launch_description():
     return LaunchDescription([
         declare_subsystem_controller_param_file_arg,       
         subsystem_controller,
-        gnss_to_map_convertor_container
+        gnss_to_map_convertor_container,
+        localization_manager_container
     ]) 
