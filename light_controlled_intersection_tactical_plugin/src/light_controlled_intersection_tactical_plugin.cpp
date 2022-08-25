@@ -355,7 +355,7 @@ namespace light_controlled_intersection_tactical_plugin
         // Only one maneuver is expected in the received maneuver plan
         if(maneuvers.size() == 1)
         {
-            auto maneuver == maneuvers.front();
+            auto maneuver = maneuvers.front();
 
             double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
             
