@@ -62,6 +62,9 @@ def generate_launch_description():
     platoon_strategic_ihp_param_file = os.path.join(
         get_package_share_directory('platoon_strategic_ihp'), 'config/parameters.yaml')    
     
+    sci_strategic_plugin_file_path = os.path.join(
+        get_package_share_directory('sci_strategic_plugin'), 'config/parameters.yaml')
+        
     platoon_tactical_ihp_param_file = os.path.join(
         get_package_share_directory('platooning_tactical_plugin'), 'config/parameters.yaml') 
 
@@ -140,6 +143,32 @@ def generate_launch_description():
                 ]
             ),
             ComposableNode(
+                package='sci_strategic_plugin',
+                plugin='sci_strategic_plugin::SCIStrategicPlugin',
+                name='sci_strategic_plugin',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('sci_strategic_plugin', env_log_levels) }
+                ],
+                remappings = [
+                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
+                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
+                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
+                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
+                    ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
+                    ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
+                    ("maneuver_plan", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/final_maneuver_plan" ] ),
+                    ("outgoing_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),
+                    ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_request" ] ),
+                    ("bsm_outbound", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/bsm_outbound" ] ),
+                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                ],
+                parameters=[
+                    sci_strategic_plugin_file_path,
+                    vehicle_config_param_file
+                ]
+            ),
+            ComposableNode(
                 package='cooperative_lanechange',
                 plugin='cooperative_lanechange::CooperativeLaneChangePlugin',
                 name='cooperative_lanechange',
@@ -191,7 +220,7 @@ def generate_launch_description():
             )
         ]
     )
-
+    
     platooning_plugins_container = ComposableNodeContainer(
         package='carma_ros2_utils',
         name='platooning_plugins_container',
@@ -231,13 +260,13 @@ def generate_launch_description():
                 ]
             ),      
             ComposableNode(
-                    package='platooning_tactical_plugin',
-                    plugin='platooning_tactical_plugin::Node',
-                    name='platooning_tactical_plugin_node',
-                    extra_arguments=[
-                        {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('platooning_tactical_plugin', env_log_levels) }
-                    ],
+                package='platooning_tactical_plugin',
+                plugin='platooning_tactical_plugin::Node',
+                name='platooning_tactical_plugin_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('platooning_tactical_plugin', env_log_levels) }
+                ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
@@ -249,6 +278,7 @@ def generate_launch_description():
                 ],
                 parameters=[ platoon_tactical_ihp_param_file, vehicle_config_param_file ]
             ),
+            
         ]
     )
 
