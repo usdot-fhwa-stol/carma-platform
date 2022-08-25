@@ -77,6 +77,7 @@ SCIStrategicPlugin::SCIStrategicPlugin(const rclcpp::NodeOptions &options)
   config_.delta_t = declare_parameter<double>("delta_t",   config_.delta_t);
   config_.min_gap = declare_parameter<double>("min_gap",   config_.min_gap);
   config_.reaction_time = declare_parameter<double>("reaction_time",   config_.reaction_time);
+  config_.intersection_exit_zone_length = declare_parameter<double>("intersection_exit_zone_length",   config_.intersection_exit_zone_length);
   config_.strategic_plugin_name = declare_parameter<std::string>("strategic_plugin_name",            config_.strategic_plugin_name);
   config_.lane_following_plugin_name = declare_parameter<std::string>("lane_following_plugin_name",       config_.lane_following_plugin_name);
   config_.intersection_transit_plugin_name = declare_parameter<std::string>("intersection_transit_plugin_name", config_.intersection_transit_plugin_name);
@@ -91,7 +92,6 @@ carma_ros2_utils::CallbackReturn SCIStrategicPlugin::on_configure_plugin()
 {
   // reset config
   config_ = SCIStrategicPluginConfig();
-
   // Declare parameters
   get_parameter<double>("vehicle_decel_limit_multiplier",   config_.vehicle_decel_limit_multiplier);
   get_parameter<double>("vehicle_accel_limit_multiplier",   config_.vehicle_accel_limit_multiplier);
@@ -99,6 +99,7 @@ carma_ros2_utils::CallbackReturn SCIStrategicPlugin::on_configure_plugin()
   get_parameter<double>("delta_t",   config_.delta_t);
   get_parameter<double>("min_gap",   config_.min_gap);
   get_parameter<double>("reaction_time",   config_.reaction_time);
+  get_parameter<double>("intersection_exit_zone_length",   config_.intersection_exit_zone_length);
   get_parameter<std::string>("strategic_plugin_name",            config_.strategic_plugin_name);
   get_parameter<std::string>("lane_following_plugin_name",       config_.lane_following_plugin_name);
   get_parameter<std::string>("intersection_transit_plugin_name", config_.intersection_transit_plugin_name);
@@ -107,6 +108,9 @@ carma_ros2_utils::CallbackReturn SCIStrategicPlugin::on_configure_plugin()
   get_parameter<double>("vehicle_deceleration_limit", config_.vehicle_decel_limit);
   get_parameter<double>("vehicle_acceleration_limit", config_.vehicle_accel_limit);
   
+   // Register runtime parameter update callback
+  add_on_set_parameters_callback(std::bind(&SCIStrategicPlugin::parameter_update_callback, this, std_ph::_1));
+
   RCLCPP_INFO_STREAM(rclcpp::get_logger("sci_strategic_plugin"),"Done loading parameters: " << config_);
 
   // Mobility Operation Subscriber
@@ -129,6 +133,31 @@ carma_ros2_utils::CallbackReturn SCIStrategicPlugin::on_configure_plugin()
 
   // Return success if everthing initialized successfully
   return CallbackReturn::SUCCESS;
+}
+
+rcl_interfaces::msg::SetParametersResult SCIStrategicPlugin::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
+{
+  auto error_double = update_params<double>({
+    {"vehicle_decel_limit_multiplier", config_.vehicle_decel_limit_multiplier},
+    {"vehicle_accel_limit_multiplier", config_.vehicle_accel_limit_multiplier},
+    {"stop_line_buffer", config_.stop_line_buffer},
+    {"delta_t", config_.delta_t},
+    {"min_gap", config_.min_gap},
+    {"reaction_time", config_.reaction_time},
+    {"intersection_exit_zone_length", config_.intersection_exit_zone_length}
+  }, parameters); // vehicle_acceleration_limit not updated as it's global param
+
+  auto error_string = update_params<std::string>({
+    {"strategic_plugin_name", config_.strategic_plugin_name},
+    {"lane_following_plugin_name", config_.lane_following_plugin_name},
+    {"intersection_transit_plugin_name", config_.intersection_transit_plugin_name},
+  }, parameters); // vehicle_acceleration_limit not updated as it's global param
+
+  rcl_interfaces::msg::SetParametersResult result;
+
+  result.successful = !error_double && !error_string;
+
+  return result;
 }
 
 carma_ros2_utils::CallbackReturn SCIStrategicPlugin::on_activate_plugin()

@@ -81,6 +81,12 @@ public:
     carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
     carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp);
 
+    /**
+   * \brief Callback for dynamic parameter updates
+   */
+  rcl_interfaces::msg::SetParametersResult 
+  parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
+
   /**
    * \brief callback function for mobility operation
    * 

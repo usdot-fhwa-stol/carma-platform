@@ -34,7 +34,10 @@ def generate_launch_description():
     log_level = LaunchConfiguration('log_level')
     declare_log_level_arg = DeclareLaunchArgument(
         name ='log_level', default_value='WARN')
-        
+    
+    sci_strategic_plugin_file_path = os.path.join(
+        get_package_share_directory('sci_strategic_plugin'), 'config/parameters.yaml')
+
     # Launch node(s) in a carma container to allow logging to be configured
     container = ComposableNodeContainer(
         package='carma_ros2_utils',
@@ -45,13 +48,16 @@ def generate_launch_description():
             
             # Launch the core node(s)
             ComposableNode(
-                    package='sci_strategic_plugin',
-                    plugin='sci_strategic_plugin::SCIStrategicPlugin',
-                    name='sci_strategic_plugin_node',
-                    extra_arguments=[
-                        {'use_intra_process_comms': True},
-                        {'--log-level' : log_level }
-                    ],
+                package='sci_strategic_plugin',
+                plugin='sci_strategic_plugin::SCIStrategicPlugin',
+                name='sci_strategic_plugin_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : log_level }
+                ],
+                parameters=[
+                    sci_strategic_plugin_file_path
+                ]
             ),
         ]
     )
