@@ -44,12 +44,10 @@ namespace platoon_strategic_ihp
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Top of PlatoonStrategicIHP ctor.");
         std::string hostStaticId = config_.vehicleID; //static ID for this vehicle
         pm_.HostMobilityId = hostStaticId;
-        
         // construct platoon member for host vehicle as the first element in the vector, since it starts life as a solo vehicle
         long cur_t = timer_factory_->now().nanoseconds()/1000000; // time in millisecond
         PlatoonMember hostVehicleMember = PlatoonMember(hostStaticId, 0.0, 0.0, 0.0, 0.0, cur_t); 
         pm_.host_platoon_.push_back(hostVehicleMember);
-
         plugin_discovery_msg_.name = "platoon_strategic_ihp";
         plugin_discovery_msg_.version_id = "v1.0";
         plugin_discovery_msg_.available = true;
@@ -3354,18 +3352,8 @@ namespace platoon_strategic_ihp
                     lanelet::ConstLanelet starting_lanelet = wm_->getMap()->laneletLayer.get(current_lanelet_id);
                     lanelet::ConstLanelet ending_lanelet = wm_->getMap()->laneletLayer.get(target_lanelet_id);
 
-                    auto relation = wm_->getMapRoutingGraph()->routingRelation(starting_lanelet, ending_lanelet);
-                    bool lanechangePossible = false;
-                    // TODO: Assuming a lane change is only needed from an adjacent left/right lanelet. Only valid for IHP platooning. 
-                    // Need to generalize in future. Refer to issue #1864
-                    if (relation == lanelet::routing::RelationType::Left || relation == lanelet::routing::RelationType::Right)
-                    {
-                        lanechangePossible = true;
-                    }
-                    else
-                    {
-                        lanechangePossible = false;
-                    }
+                    bool lanechangePossible = is_lanechange_possible(current_lanelet_id, target_lanelet_id);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "lanechangePossible: " << lanechangePossible);
 
                     if (lanechangePossible)
                     {
@@ -3494,6 +3482,48 @@ namespace platoon_strategic_ihp
 
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "current_downtrack: " << current_downtrack_);
         
+        return true;
+    }
+
+    bool PlatoonStrategicIHPPlugin::is_lanechange_possible(int start_lanelet_id, int target_lanelet_id)
+    {
+        lanelet::ConstLanelet starting_lanelet = wm_->getMap()->laneletLayer.get(start_lanelet_id);
+        lanelet::ConstLanelet ending_lanelet = wm_->getMap()->laneletLayer.get(target_lanelet_id);
+        lanelet::ConstLanelet current_lanelet = starting_lanelet;
+        bool shared_boundary_found = false;
+        
+        while(!shared_boundary_found)
+        {
+            //Assumption- Adjacent lanelets share lane boundary
+            if(current_lanelet.leftBound() == ending_lanelet.rightBound())
+            {   
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Lanelet " << std::to_string(current_lanelet.id()) << " shares left boundary with " << std::to_string(ending_lanelet.id()));
+                shared_boundary_found = true;
+            }
+            else if(current_lanelet.rightBound() == ending_lanelet.leftBound())
+            {
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Lanelet " << std::to_string(current_lanelet.id()) << " shares right boundary with " << std::to_string(ending_lanelet.id()));
+                shared_boundary_found = true;
+            }
+
+            else
+            {
+                //If there are no following lanelets on route, lanechange should be completing before reaching it
+                if(wm_->getMapRoutingGraph()->following(current_lanelet, false).empty())
+                {
+                    //In this case we have reached a lanelet which does not have a routable lanelet ahead + isn't adjacent to the lanelet where lane change ends
+                    return false;
+                }
+
+                current_lanelet = wm_->getMapRoutingGraph()->following(current_lanelet, false).front(); 
+                if(current_lanelet.id() == starting_lanelet.id()){
+                    //Looped back to starting lanelet
+                    return false;
+                }
+            }
+        }
+
+
         return true;
     }
 
