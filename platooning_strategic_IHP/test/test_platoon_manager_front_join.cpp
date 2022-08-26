@@ -35,6 +35,17 @@
 #include <carma_ros2_utils/timers/testing/TestTimerFactory.hpp>
 #include <string>
 #include <array>
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_io/Io.h>
+#include <lanelet2_io/io_handlers/Factory.h>
+#include <lanelet2_io/io_handlers/Writer.h>
+#include <lanelet2_core/geometry/LineString.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <lanelet2_extension/io/autoware_osm_parser.h>
+
+using carma_ros2_utils::timers::testing::TestTimer;
+using carma_ros2_utils::timers::testing::TestTimerFactory;
 
 namespace platoon_strategic_ihp
 {
@@ -208,7 +219,7 @@ TEST(PlatoonStrategicIHPPlugin, cutin_test_leader_2)
     EXPECT_EQ(resp, MobilityRequestResponse::ACK);
 }
 
-//UCLA: Cut-in front test for joining vehicle. Test the transition "leader --> prepare to join"
+// UCLA: Cut-in front test for joining vehicle. Test the transition "leader --> prepare to join"
 TEST(PlatoonStrategicIHPPlugin, cutin_test_join_1)
 {
     PlatoonPluginConfig config;
@@ -377,5 +388,42 @@ TEST(PlatoonManagerTestFrontJoin, test4_front)
 
     EXPECT_EQ(0, res);
 }
+
+TEST(PlatoonStrategicIHPPlugin, is_lanechange_possible)
+    {
+        std::string path = ament_index_cpp::get_package_share_directory("platoon_strategic_ihp");
+        std::string file = "/resource/map/town01_vector_map_lane_change.osm";
+        file = path.append(file);
+        int projector_type = 0;
+        std::string target_frame;
+        lanelet::ErrorMessages load_errors;
+        lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+        lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+        lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+        if (map->laneletLayer.size() == 0)
+        {
+            FAIL() << "Input map does not contain any lanelets";
+        }
+        std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
+        //Set Route
+        lanelet::Id start_id = 106;
+        lanelet::Id end_id = 110;
+        carma_wm::test::setRouteByIds({start_id, end_id}, cmw);
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
+
+        PlatoonPluginConfig config;
+        
+        PlatoonStrategicIHPPlugin plugin(cmw, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
+        std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
+        bool lanechange_possible = plugin.is_lanechange_possible(106, 111);
+
+        EXPECT_TRUE(lanechange_possible);
+
+        bool lanechange_possible2 = plugin.is_lanechange_possible(106, 146);
+        EXPECT_FALSE(lanechange_possible2);
+        
+
+    }
 
 } // Namespace required for FRIEND_TEST to allow access to private members
