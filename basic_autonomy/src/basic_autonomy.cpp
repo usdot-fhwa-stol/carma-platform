@@ -77,14 +77,11 @@ namespace basic_autonomy
 
             cav_msgs::LaneFollowingManeuver lane_following_maneuver = maneuver.lane_following_maneuver;
 
-            bool lanelets_defined = !maneuver.lane_following_maneuver.lane_ids.empty();
-
-            if (!lanelets_defined)
+            if (maneuver.lane_following_maneuver.lane_ids.empty())
             {
                 throw std::invalid_argument("No lanelets are defined for lanefollow maneuver");
             }
-            // auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack, true, true);
-            // std::cout<< "size(): " << lanelets.size() << std::endl;
+
             std::vector<lanelet::ConstLanelet> lanelets = { wm->getMap()->laneletLayer.get(stoi(lane_following_maneuver.lane_ids[0]))}; // Accept first lanelet reguardless
             for (size_t i = 1; i < lane_following_maneuver.lane_ids.size(); i++) // Iterate over remaining lanelets and check if they are followers of the previous lanelet
             {
@@ -112,6 +109,7 @@ namespace basic_autonomy
 
             }
 
+            // Add extra lanelet to ensure there are sufficient points for buffer
             auto extra_following_lanelets = wm->getMapRoutingGraph()->following(lanelets.back());
             if (!extra_following_lanelets.empty())
             {
@@ -195,7 +193,6 @@ namespace basic_autonomy
                     }
 
                     downsampled_centerline = carma_wm::geometry::concatenate_line_strings(downsampled_centerline, downsampled_points);
-                    std::cout<<"added llt: " << l.id() << std::endl;
                     visited_lanelets.insert(l.id());
                 }
             }

@@ -76,9 +76,7 @@ namespace basic_autonomy
 
             carma_planning_msgs::msg::LaneFollowingManeuver lane_following_maneuver = maneuver.lane_following_maneuver;
 
-            bool lanelets_defined = !maneuver.lane_following_maneuver.lane_ids.empty();
-
-            if (!lanelets_defined)
+            if (maneuver.lane_following_maneuver.lane_ids.empty())
             {
                 throw std::invalid_argument("No lanelets are defined for lanefollow maneuver");
             }
@@ -110,14 +108,13 @@ namespace basic_autonomy
 
             }
 
+            // Add extra lanelet to ensure there are sufficient points for buffer
             auto extra_following_lanelets = wm->getMapRoutingGraph()->following(lanelets.back());
             if (!extra_following_lanelets.empty())
             {
                 lanelets.push_back(extra_following_lanelets[0]);
             }
             
-            // auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack, true, true);
-
             if (lanelets.empty())
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Detected no lanelets between starting downtrack: "<< starting_downtrack << ", and lane_following_maneuver.end_dist: "<< lane_following_maneuver.end_dist);

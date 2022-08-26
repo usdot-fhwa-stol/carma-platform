@@ -779,7 +779,7 @@ namespace basic_autonomy
         std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, 
                                                                                     starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
 
-        EXPECT_EQ(visited_lanelets.size(), 2);
+        EXPECT_EQ(visited_lanelets.size(), 3);
 
         EXPECT_TRUE(visited_lanelets.find(id1) != visited_lanelets.end()); // the lanelet previously in the visited lanelet set
         EXPECT_TRUE(visited_lanelets.find(1200) != visited_lanelets.end()); // new lanelets added to the set with the new maneuver
