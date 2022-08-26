@@ -15,7 +15,7 @@
  */
 
 #include <yield_plugin/yield_plugin.hpp>
-#include <gtest/gtest.h>
+#include <yield_plugin/yield_plugin_node.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <carma_wm_ros2/CARMAWorldModel.hpp>
 #include <math.h>
@@ -45,7 +45,7 @@
 
 using namespace yield_plugin;
 
-/*
+
 TEST(YieldPluginTest, test_polynomial_calc)
 {
   YieldPluginConfig config;
@@ -641,7 +641,6 @@ TEST(YieldPluginTest, min_digital_gap)
     
 
 }
-*/
 
 // Run all the tests
 int main(int argc, char ** argv)

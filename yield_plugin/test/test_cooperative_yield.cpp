@@ -15,6 +15,7 @@
  */
 
 #include <yield_plugin/yield_plugin.hpp>
+#include <yield_plugin/yield_plugin_node.hpp>
 #include <gtest/gtest.h>
 #include <rclcpp/rclcpp.hpp>
 #include <carma_wm_ros2/CARMAWorldModel.hpp>
@@ -28,7 +29,7 @@ TEST(YieldPluginTest, compose_mobility_response)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-    auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
+  auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
 
   YieldPlugin plugin(nh,wm, config,[&](auto msg) {}, [&](auto msg) {});
   carma_v2x_msgs::msg::MobilityResponse resp = plugin.compose_mobility_response("recicpient_id", "plan_id", true);
@@ -147,7 +148,7 @@ TEST(YieldPluginTest, test_traj_cb)
 {
     YieldPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-      auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
+    auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
 
   YieldPlugin plugin(nh,wm, config,[&](auto msg) {}, [&](auto msg) {});
 
@@ -191,15 +192,15 @@ TEST(YieldPluginTest, test_traj_cb)
     
     original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
 
-    std::shared_pointer<carma_planning_msgs::srv::PlanTrajectory::Request> req = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
-    req.vehicle_state.x_pos_global = 1.5;
-    req.vehicle_state.y_pos_global = 5;
-    req.vehicle_state.orientation = 0;
-    req.vehicle_state.longitudinal_vel = 0.0;
+    std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request> req = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
+    req->vehicle_state.x_pos_global = 1.5;
+    req->vehicle_state.y_pos_global = 5;
+    req->vehicle_state.orientation = 0;
+    req->vehicle_state.longitudinal_vel = 0.0;
 
-    req.initial_trajectory_plan = original_tp;
+    req->initial_trajectory_plan = original_tp;
 
-    std::shared_pointer<carma_planning_msgs::srv::PlanTrajectory::Response> resp = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response>();
+    std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Response> resp = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response>();
 
     plugin.plan_trajectory_callback(req, resp);
 
