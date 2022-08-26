@@ -138,12 +138,6 @@
     <!-- Platooning Control IHP Plugin -->
     <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" />
 
-    <!-- Yield Plugin -->
-    <group>
-      <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
-      <include file = "$(find yield_plugin)/launch/yield_plugin.launch"/>
-    </group>
-
     <!-- Intersection Transit Maneuvering Plugin-->
     <group>
       <include file = "$(find intersection_transit_maneuvering)/launch/intersection_transit_maneuvering.launch"/>
