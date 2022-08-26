@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ struct StopControlledIntersectionTacticalPluginConfig
 {
     double trajectory_time_length = 6.0;     // Trajectory length in seconds
     double curve_resample_step_size = 1.0;   // Curve re-sampling step size in m
-    bool publish_debug = false;
     double centerline_sampling_spacing = 1.0;  // The gap in meters between points sampled from the lanelet centerlines for planning trajectory positions
     int curvature_moving_average_window_size = 9;  // Size of the window used in the moving average filter to smooth the curvature profile
                                            // computed curvature and output speeds
@@ -38,7 +37,7 @@ struct StopControlledIntersectionTacticalPluginConfig
         output <<"StopControlledIntersectionTacticalPluginConfig { " <<std::endl
                 << "trajectory_time_length: " << c.trajectory_time_length << std::endl
                 << "curve_resample_step_size: " << c.curve_resample_step_size << std::endl
-                << "cernterline_sampling_spacing: " << c.centerline_sampling_spacing << std::endl
+                << "centerline_sampling_spacing: " << c.centerline_sampling_spacing << std::endl
                 << "curvature_moving_average_window_size: " << c.curvature_moving_average_window_size << std::endl
                 << "lateral_accel_limit: " << c.lateral_accel_limit << std::endl
                 << "speed_moving_average_window_size: " << c.speed_moving_average_window_size << std::endl

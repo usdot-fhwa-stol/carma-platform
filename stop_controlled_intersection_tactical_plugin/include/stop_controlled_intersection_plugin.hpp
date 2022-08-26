@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,27 +17,26 @@
  */
 
 #include <vector>
-#include <cav_msgs/TrajectoryPlan.h>
-#include <cav_msgs/TrajectoryPlanPoint.h>
-#include <cav_msgs/Plugin.h>
+#include <carma_planning_msgs/msg/trajectory_plan.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
+#include <carma_planning_msgs/msg/plugin.hpp>
+#include <carma_guidance_plugins/tactical_plugin.hpp>
 #include <boost/shared_ptr.hpp>
-#include <carma_utils/CARMAUtils.h>
 #include <boost/geometry.hpp>
-#include <carma_wm/Geometry.h>
-#include <cav_srvs/PlanTrajectory.h>
-#include <carma_wm/WMListener.h>
-#include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_planning_msgs/srv/plan_trajectory.hpp>
+#include <carma_wm_ros2/WMListener.hpp>
 #include <functional>
-#include <stop_controlled_intersection_config.h>
+#include "stop_controlled_intersection_config.hpp"
 #include <unordered_set>
-#include <autoware_msgs/Lane.h>
-#include <ros/ros.h>
-#include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
-#include <cav_msgs/Maneuver.h>
-#include <basic_autonomy/basic_autonomy.h>
-#include <basic_autonomy/helper_functions.h>
-#include <basic_autonomy/log/log.h>
-
+#include <autoware_msgs/msg/lane.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <carma_planning_msgs/msg/maneuver.hpp>
+#include <basic_autonomy_ros2/basic_autonomy.hpp>
+#include <basic_autonomy_ros2/helper_functions.hpp>
+#include <basic_autonomy_ros2/log/log.hpp>
+#include <gtest/gtest_prod.h>
 
 /**
  * \brief Macro definition to enable easier access to fields shared across the maneuver types
@@ -46,15 +45,14 @@
  * \return Expands to an expression (in the form of chained ternary operators) that evalutes to the desired field
  */
 #define GET_MANEUVER_PROPERTY(mvr, property)\
-        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
-            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
-                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
-                        ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
+        (((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
+            ((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
+                ((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
+                        ((mvr).type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
                                 throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id " + std::to_string((mvr).type)))))))
 
-namespace stop_controlled_intersection_transit_plugin
+namespace stop_controlled_intersection_tactical_plugin
 {
-using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
 using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
 
 /**
@@ -62,30 +60,13 @@ using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
  * 
  */
 
-class StopControlledIntersectionTacticalPlugin
+class StopControlledIntersectionTacticalPlugin : public carma_guidance_plugins::TacticalPlugin
 {
 public:
-      /**
-   * \brief Constructor
-   * 
-   * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
-   * \param config The configuration to be used for this object
-   * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
-   * \param debug_publisher Callback which will publish a debug message. The callback defaults to no-op.
-   */
-  StopControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm,const StopControlledIntersectionTacticalPluginConfig& config,
-                         const PublishPluginDiscoveryCB &plugin_discovery_publisher);
 
-      /**
-   * \brief Service callback for trajectory planning
-   * 
-   * \param req The service request
-   * \param resp The service response
-   * 
-   * \return True if success. False otherwise
-   */ 
-  bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
- 
+  // brief Constructor
+  explicit StopControlledIntersectionTacticalPlugin(const rclcpp::NodeOptions &options);
+
  /**
    * \brief Converts a set of requested stop controlled intersection maneuvers to point speed limit pairs. 
    * 
@@ -96,9 +77,9 @@ public:
    * 
    * \return List of centerline points paired with target speeds
    */
-  std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
+  std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<carma_planning_msgs::msg::Maneuver>& maneuvers,
                                                              const carma_wm::WorldModelConstPtr& wm,
-                                                             const cav_msgs::VehicleState& state);
+                                                             const carma_planning_msgs::msg::VehicleState& state);
   
    /**
    * \brief Creates a speed profile according to case one of the stop controlled intersection, where the vehicle accelerates and then decelerates to a stop. 
@@ -112,8 +93,8 @@ public:
    * 
    * \return List of centerline points paired with target speeds
    */
-  std::vector<PointSpeedPair> create_case_one_speed_profile(const carma_wm::WorldModelConstPtr& wm, const cav_msgs::Maneuver& maneuver,
-                                                            std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed, const cav_msgs::VehicleState& states);
+  std::vector<PointSpeedPair> create_case_one_speed_profile(const carma_wm::WorldModelConstPtr& wm, const carma_planning_msgs::msg::Maneuver& maneuver,
+                                                            std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed, const carma_planning_msgs::msg::VehicleState& states);
   
      /**
    * \brief Creates a speed profile according to case two of the stop controlled intersection, 
@@ -128,7 +109,7 @@ public:
    * 
    * \return List of centerline points paired with speed limits
    */
-  std::vector<PointSpeedPair> create_case_two_speed_profile(const carma_wm::WorldModelConstPtr& wm, const cav_msgs::Maneuver& maneuver,
+  std::vector<PointSpeedPair> create_case_two_speed_profile(const carma_wm::WorldModelConstPtr& wm, const carma_planning_msgs::msg::Maneuver& maneuver,
                                                           std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed);
 
        /**
@@ -144,7 +125,7 @@ public:
    * 
    * \return List of centerline points paired with speed limits
    */
-  std::vector<PointSpeedPair> create_case_three_speed_profile(const carma_wm::WorldModelConstPtr& wm, const cav_msgs::Maneuver& maneuver,
+  std::vector<PointSpeedPair> create_case_three_speed_profile(const carma_wm::WorldModelConstPtr& wm, const carma_planning_msgs::msg::Maneuver& maneuver,
                                                           std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed);
 
    /**
@@ -157,30 +138,38 @@ public:
    * 
    * \return A list of trajectory points to send to the carma planning stack
    */ 
-  std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_centerline(
-    const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time); 
-  
-    
-    /**
-   * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
-   * 
-   * \return True if the node should continue running. False otherwise
-   */ 
-  bool onSpin();
+  std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> compose_trajectory_from_centerline(
+    const std::vector<PointSpeedPair>& points, const carma_planning_msgs::msg::VehicleState& state, const rclcpp::Time& state_time); 
+
+  // overrides
+  carma_ros2_utils::CallbackReturn on_configure_plugin() override;
+  bool get_availability();
+  std::string get_version_id();
+  rcl_interfaces::msg::SetParametersResult 
+  parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
+  void plan_trajectory_callback(
+    std::shared_ptr<rmw_request_id_t>, 
+    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+    carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp) override;
 
   private:
 
   carma_wm::WorldModelConstPtr wm_;
   StopControlledIntersectionTacticalPluginConfig config_;
-  PublishPluginDiscoveryCB plugin_discovery_publisher_;
- 
-  cav_msgs::Plugin plugin_discovery_msg_;
-  carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg_;
+
+  // Unit test helper functions
+  carma_wm::WorldModelConstPtr get_wm() { return wm_; }
+  void set_wm(carma_wm::WorldModelConstPtr new_wm) { wm_ = new_wm; }
 
   std::string stop_controlled_intersection_strategy_ = "Carma/stop_controlled_intersection";
 
   double epsilon_ = 0.001; //Small constant to compare (double) 0.0 with
-  
 
+  // Unit Test Accessors
+  FRIEND_TEST(StopControlledIntersectionTacticalPlugin, TestSCIPlanning_case_one);
+  FRIEND_TEST(StopControlledIntersectionTacticalPlugin, TestSCIPlanning_case_two);
+  FRIEND_TEST(StopControlledIntersectionTacticalPlugin, TestSCIPlanning_case_three);
 };
-};
+
+
+}; // stop_controlled_intersection_tactical_plugin

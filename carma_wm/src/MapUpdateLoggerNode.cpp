@@ -49,10 +49,10 @@
  * 
  * \param id_reg_pair The pair to convert
  * 
- * \return A corresponding carma_debug_msgs::LaneletIdRegulatoryElementPair
+ * \return A corresponding carma_debug_ros2_msgs::msg::LaneletIdRegulatoryElementPair
  */ 
-carma_debug_msgs::LaneletIdRegulatoryElementPair pairToDebugMessage(const std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>& id_reg_pair) {
-  carma_debug_msgs::LaneletIdRegulatoryElementPair pair;
+carma_debug_ros2_msgs::msg::LaneletIdRegulatoryElementPair pairToDebugMessage(const std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>& id_reg_pair) {
+  carma_debug_ros2_msgs::msg::LaneletIdRegulatoryElementPair pair;
   pair.lanelet_id = std::get<0>(id_reg_pair);
   auto element = std::get<1>(id_reg_pair);
   std::string rule_name = element->attribute(lanelet::AttributeName::Subtype).value();
@@ -109,14 +109,14 @@ carma_debug_msgs::LaneletIdRegulatoryElementPair pairToDebugMessage(const std::p
  * 
  * \return Returned converted message
  */ 
-carma_debug_msgs::MapUpdateReadable mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& update) {
+carma_debug_ros2_msgs::msg::MapUpdateReadable mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& update) {
   
   ROS_INFO_STREAM("Recieved map update ");
 
   auto control = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   carma_wm::fromBinMsg(*update, control);
 
-  carma_debug_msgs::MapUpdateReadable msg;
+  carma_debug_ros2_msgs::msg::MapUpdateReadable msg;
   msg.header = update->header;
   msg.format_version = update->format_version;
   msg.map_version = update->map_version;
@@ -155,7 +155,7 @@ int main(int argc, char** argv)
   ros::CARMANodeHandle nh;
   
   //Check Active Geofence Publisher
-  ros::Publisher readable_pub = nh.advertise<carma_debug_msgs::MapUpdateReadable>("map_update_debug", 100, true);
+  ros::Publisher readable_pub = nh.advertise<carma_debug_ros2_msgs::msg::MapUpdateReadable>("map_update_debug", 100, true);
   // Base Map Sub
   CallbackHolder ch;
   ch.pub_ = readable_pub;

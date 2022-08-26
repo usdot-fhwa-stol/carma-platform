@@ -62,3 +62,4 @@
       - /guidance/plugins/sci_strategic_plugin
       - /guidance/plugins/cooperative_lanechange
       - /guidance/plugins/platooning_tactical_plugin_node
+      - /guidance/plugins/yield_plugin

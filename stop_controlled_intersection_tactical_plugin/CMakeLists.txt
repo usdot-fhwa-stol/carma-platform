@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 LEIDOS.
+# Copyright (C) 2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -14,93 +14,64 @@
 # the License.
 #
 
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(stop_controlled_intersection_tactical_plugin)
 
 find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
+carma_check_ros_version(2)
 carma_package()
 
-set(CATKIN_DEPS
-  roscpp
-  std_msgs
-  cav_msgs
-  cav_srvs
-  carma_utils
-  trajectory_utils
-  autoware_msgs
-  carma_wm
-  tf
-  tf2
-  tf2_geometry_msgs
-  basic_autonomy
-  carma_debug_msgs
-)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
- ${CATKIN_DEPS}
-)
+# Name build targets
+set(node_exec stop_controlled_intersection_tactical_plugin_exec)
+set(node_lib stop_controlled_intersection_tactical_plugin_lib)
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost)
-find_package(Eigen3 REQUIRED)
-
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS ${CATKIN_DEPS}
-  DEPENDS Boost EIGEN3
-)
+find_package(Boost REQUIRED)
 
 ###########
 ## Build ##
 ###########
 
 include_directories(
-  include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIRS}
+  include
 )
 
-add_executable( ${PROJECT_NAME}
-  src/main.cpp)
-
-add_library(stop_controlled_intersection_tactical_library 
-            src/stop_controlled_intersection_tactical_plugin.cpp)
-
-add_dependencies(stop_controlled_intersection_tactical_library ${catkin_EXPORTED_TARGETS})
-target_link_libraries(stop_controlled_intersection_tactical_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} stop_controlled_intersection_tactical_library)
-
-#############
-## Install ##
-#############
-
-install(DIRECTORY include
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+# Build
+ament_auto_add_library(${node_lib} SHARED
+        src/stop_controlled_intersection_tactical_plugin.cpp
 )
 
-## Install C++
-install(TARGETS ${PROJECT_NAME} stop_controlled_intersection_tactical_library
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
 )
 
-## Install Other Resources
-install(DIRECTORY launch config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# Register component
+rclcpp_components_register_nodes(${node_lib} "stop_controlled_intersection_tactical_plugin::StopControlledIntersectionTacticalPlugin")
+
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_exec}
+        ${node_lib}
 )
 
-#############
-## Testing ##
-#############
-catkin_add_gmock(${PROJECT_NAME}-test 
- test/test_sci_tactical_plugin.cpp
- WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
-target_link_libraries(${PROJECT_NAME}-test stop_controlled_intersection_tactical_library ${catkin_LIBRARIES})
+# Testing
+if(BUILD_TESTING)  
+
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+
+  ament_add_gtest(test_sci_tactical_plugin test/test_sci_tactical_plugin.cpp)
+  ament_target_dependencies(test_sci_tactical_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+  target_link_libraries(test_sci_tactical_plugin ${node_lib})
+
+endif()
+
+# Install
+ament_auto_package(
+        INSTALL_TO_SHARE config launch
+)
