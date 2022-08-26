@@ -155,9 +155,6 @@
       <include file="$(find lci_strategic_plugin)/launch/lci_strategic_plugin.launch" />
     </group>
 
-    <!-- Light Controlled Intersection Tactical Plugin -->
-    <include file="$(find light_controlled_intersection_tactical_plugin)/launch/light_controlled_intersection_tactical_plugin.launch" />
-
   </group>
   
   <!-- Guidance Plugin Validator -->
