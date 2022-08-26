@@ -63,7 +63,6 @@ target_link_libraries(${node_lib}
         ${Boost_LIBRARIES}
         ${EIGEN3_LIBRARIES}
 )
-
 target_link_libraries(${node_exec}
         ${node_lib}
 )
@@ -75,14 +74,15 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
   ament_add_gtest(test_yield_plugin 
-  test/yield_plugin.test 
-  test/test_yield_plugin.cpp
-  )
+  #test/test_cooperative_yield.cpp TODO FIX
+  #test/test_yield_plugin.cpp FIXED
+  test/test_yield.cpp
+ )
 
   ament_target_dependencies(test_yield_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
-  target_link_libraries(test_yield_plugin 
-  ${ ${node_lib}})
+  target_link_libraries(test_yield_plugin ${node_lib})
+
 endif()
 
 # Install

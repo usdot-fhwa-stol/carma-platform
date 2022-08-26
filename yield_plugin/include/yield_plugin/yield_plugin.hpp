@@ -16,15 +16,6 @@
  * the License.
  */
 
-#include <carma_planning_msgs/msg/plugin.hpp>
-#include <carma_ros2_utils/carma_lifecycle_node.hpp>
-#include <carma_guidance_plugins/tactical_plugin.hpp>
-#include <carma_wm_ros2/WMListener.hpp>
-#include <carma_planning_msgs/srv/plan_trajectory.hpp>
-#include <carma_planning_msgs/msg/lane_change_status.hpp>
-#include <carma_v2x_msgs/msg/msg/mobility_response.hpp>
-#include <carma_v2x_msgs/msg/bsm.hpp>
-
 #include <vector>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
@@ -32,7 +23,7 @@
 #include <carma_v2x_msgs/msg/mobility_request.hpp>
 #include <carma_v2x_msgs/msg/mobility_response.hpp>
 #include <carma_v2x_msgs/msg/bsm.hpp>
-#include <carma_planning_msgs/msg/LaneChangeStatus.hpp>
+#include <carma_planning_msgs/msg/lane_change_status.hpp>
 #include <boost/shared_ptr.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <boost/geometry.hpp>
@@ -41,26 +32,26 @@
 #include "yield_config.hpp"
 #include <unordered_set>
 #include <carma_planning_msgs/srv/plan_trajectory.hpp>
-#include <std_msgs/String.h>
+#include <std_msgs/msg/string.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
-#include <trajectory_utils/quintic_coefficient_calculator.h>
+#include <trajectory_utils/quintic_coefficient_calculator.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <lanelet2_extension/projection/local_frame_projector.h>
-#include <carma_perception_msgs/msg/RoadwayObstacle.hpp>
-#include <carma_perception_msgs/msg/RoadwayObstacleList.hpp>
-#include <carma_v2x_msgs/msg/location_ECEF.hpp>
+#include <carma_perception_msgs/msg/roadway_obstacle.hpp>
+#include <carma_perception_msgs/msg/roadway_obstacle_list.hpp>
+#include <carma_v2x_msgs/msg/location_ecef.hpp>
 #include <carma_v2x_msgs/msg/trajectory.hpp>
 #include <carma_v2x_msgs/msg/plan_type.hpp>
+#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_wm_ros2/WorldModel.hpp>
+#include <carma_wm_ros2/collision_detection.hpp>
+#include <carma_wm_ros2/TrafficControl.hpp>
 
-#include <carma_wm/Geometry.h>
-#include <carma_wm/WorldModel.h>
-#include <carma_wm/collision_detection.h>
-#include <carma_wm/TrafficControl.h>
 
 namespace yield_plugin
 {
 using MobilityResponseCB = std::function<void(const carma_v2x_msgs::msg::MobilityResponse&)>;
-using LaneChangeStatusCB = std::function<void(const ccarma_planning_msgs::msg::LaneChangeStatus&)>;
+using LaneChangeStatusCB = std::function<void(const carma_planning_msgs::msg::LaneChangeStatus&)>;
 
 /**
  * \brief Convenience class for pairing 2d points with speeds
@@ -86,10 +77,9 @@ public:
    * \param mobility_response_publisher Callback which will publish the mobility response
    * \param lc_status_publisher Callback which will publish the cooperative lane change status
    */ 
-  YieldPlugin(carma_wm::WorldModelConstPtr wm, YieldPluginConfig config,
+  YieldPlugin(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, carma_wm::WorldModelConstPtr wm, YieldPluginConfig config,
                        MobilityResponseCB mobility_response_publisher,
                        LaneChangeStatusCB lc_status_publisher);
-
 
   /**
    * \brief Service callback for trajectory planning
@@ -144,13 +134,13 @@ public:
    * \brief callback for mobility request
    * \param msg mobility request message 
    */
-  void mobilityrequest_cb(const carma_v2x_msgs::msg::MobilityRequestConstPtr& msg);
+  void mobilityrequest_cb(const carma_v2x_msgs::msg::MobilityRequest::UniquePtr msg);
 
   /**
    * \brief callback for bsm message
    * \param msg mobility bsm message 
    */
-  void bsm_cb(const carma_v2x_msgs::msg::BSMConstPtr& msg);
+  void bsm_cb(const carma_v2x_msgs::msg::BSM::UniquePtr msg);
 
   /**
    * \brief convert a carma trajectory from ecef frame to map frame
@@ -231,7 +221,7 @@ public:
    * \brief Callback for map projection string to define lat/lon -> map conversion
    * \brief msg The proj string defining the projection.
    */ 
-  void georeferenceCallback(const std_msgs::StringConstPtr& msg);
+  void georeferenceCallback(const std_msgs::msg::String::UniquePtr msg);
 
 
 private:
@@ -240,7 +230,7 @@ private:
   YieldPluginConfig config_;
   MobilityResponseCB mobility_response_publisher_;
   LaneChangeStatusCB lc_status_publisher_;
-
+  std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
 
   // flag to show if it is possible for the vehicle to accept the cooperative request
   bool cooperative_request_acceptable_ = false;
@@ -256,7 +246,7 @@ private:
   // time between ecef trajectory points
   double ecef_traj_timestep_ = 0.1;
 
-  geometry_msgs::Vector3 host_vehicle_size;
+  geometry_msgs::msg::Vector3 host_vehicle_size;
   double current_speed_;
   // BSM Message
   std::string host_bsm_id_;
@@ -294,8 +284,7 @@ private:
     }
 
     for (int i = start_index; i<input.size(); i++) {
-      
-      
+            
       double total = 0;
       int sample_min = std::max(0, i - window_size / 2);
       int sample_max = std::min((int) input.size() - 1 , i + window_size / 2);

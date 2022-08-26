@@ -22,7 +22,7 @@
 #include <carma_wm_ros2/WMListener.hpp>
 #include <carma_planning_msgs/srv/plan_trajectory.hpp>
 #include <carma_planning_msgs/msg/lane_change_status.hpp>
-#include <carma_v2x_msgs/msg/msg/mobility_response.hpp>
+#include <carma_v2x_msgs/msg/mobility_response.hpp>
 #include <carma_v2x_msgs/msg/bsm.hpp>
 #include <functional>
 
@@ -59,18 +59,14 @@ public:
 
 private:
 
-    carma_wm::WMListener wml;
-    auto wm_ = wml.getWorldModel();
-
     // Config
     YieldPluginConfig config_;
-
-    std::string plugin_name_;
-    std::string version_id_;
     
     // Worker
     std::shared_ptr<YieldPlugin> worker_;
-
+    
+    std::string version_id_;
+    
     // Publishers
     carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityResponse> mob_resp_pub_;
     carma_ros2_utils::PubPtr<carma_planning_msgs::msg::LaneChangeStatus> lc_status_pub_;
@@ -78,11 +74,8 @@ private:
     // Subscribers
     carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityRequest> mob_request_sub_;
     carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::BSM> bsm_sub_;
-    carma_ros2_utils::SubPtr<std_msgs::String> georeference_sub_;
-    
-    // Service Clients
-    carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> trajectory_srv_;
-
+    carma_ros2_utils::SubPtr<std_msgs::msg::String> georeference_sub_;
+   
 };
 
 }  // namespace yield_plugin

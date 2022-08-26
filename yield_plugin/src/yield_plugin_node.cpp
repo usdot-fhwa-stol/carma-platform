@@ -21,8 +21,7 @@ namespace yield_plugin
   namespace std_ph = std::placeholders;
 
   YieldPluginNode::YieldPluginNode(const rclcpp::NodeOptions &options)
-      : carma_guidance_plugins::TacticalPlugin(options)
-        plugin_name_(get_plugin_name_and_ns()), 
+      : carma_guidance_plugins::TacticalPlugin(options),
         version_id_("v1.0"), 
         config_(YieldPluginConfig())
   {
@@ -30,6 +29,7 @@ namespace yield_plugin
     config_.acceleration_adjustment_factor = declare_parameter<double>("acceleration_adjustment_factor", config_.acceleration_adjustment_factor);
     config_.min_obstacle_speed = declare_parameter<double>("min_obstacle_speed", config_.min_obstacle_speed);
     config_.collision_horizon = declare_parameter<double>("collision_horizon", config_.collision_horizon);
+    config_.yield_max_deceleration = declare_parameter<double>("yield_max_deceleration", config_.yield_max_deceleration);
     config_.tpmin = declare_parameter<double>("tpmin", config_.tpmin);
     config_.x_gap = declare_parameter<double>("x_gap", config_.x_gap);
     config_.max_stop_speed= declare_parameter<double>("max_stop_speed", config_.max_stop_speed);
@@ -41,57 +41,53 @@ namespace yield_plugin
     config_.enable_adjustable_gap = declare_parameter<bool>("enable_adjustable_gap", config_.enable_adjustable_gap);
     config_.acceptable_urgency = declare_parameter<int>("acceptable_urgency", config_.acceptable_urgency);
     config_.speed_moving_average_window_size = declare_parameter<double>("speed_moving_average_window_size", config_.speed_moving_average_window_size);
-    config_.vehicle_length = declare_parameter<double>("/vehicle_length", config_.vehicle_length);
-    config_.vehicle_height = declare_parameter<double>("/vehicle_height", config_.vehicle_height);
-    config_.vehicle_width = declare_parameter<double>("/vehicle_width", config_.vehicle_width);
-    config_.vehicle_id = declare_parameter<std::string>("/vehicle_id", config_.vehicle_id);
+    config_.vehicle_length = declare_parameter<double>("vehicle_length", config_.vehicle_length);
+    config_.vehicle_height = declare_parameter<double>("vehicle_height", config_.vehicle_height);
+    config_.vehicle_width = declare_parameter<double>("vehicle_width", config_.vehicle_width);
+    config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
      
   }
 
   carma_ros2_utils::CallbackReturn YieldPluginNode::on_configure_plugin()
   {
-    // Publisher
-    mob_resp_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityResponse>("outgoing_mobility_response", 1);
-    lc_status_pub_ = create_publisher<carma_planning_msgs::msg::LaneChangeStatus>("cooperative_lane_change_status", 10);
-
-    // Subscriber
-    mob_request_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("incoming_mobility_request", 5,std::bind(&YieldPlugin::mobilityrequest_cb,&worker_,std_ph::_1));
-    bsm_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("bsm_outbound", 1,std::bind(&YieldPlugin::bsm_cb,&worker_,std_ph::_1));
-    georeference_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("georeference", 1,std::bind(&YieldPlugin::georeferenceCallback,&worker_,std_ph::_1));
-   
-    config_ = YieldPluginNode();
+    config_ = YieldPluginConfig();
 
     get_parameter<double>("acceleration_adjustment_factor", config_.acceleration_adjustment_factor);
     get_parameter<double>("min_obstacle_speed", config_.min_obstacle_speed);
     get_parameter<double>("collision_horizon", config_.collision_horizon);
+    get_parameter<double>("yield_max_deceleration", config_.yield_max_deceleration);
     get_parameter<double>("x_gap", config_.x_gap);
     get_parameter<double>("max_stop_speed", config_.max_stop_speed);
-    get_parameter<double>("enable_cooperative_behavior", config_.enable_cooperative_behavior);
-    get_parameter<double>("always_accept_mobility_request", config_.always_accept_mobility_request);
-    get_parameter<double>("acceptable_passed_timesteps", config_.acceptable_passed_timesteps);
+    get_parameter<bool>("enable_cooperative_behavior", config_.enable_cooperative_behavior);
+    get_parameter<bool>("always_accept_mobility_request", config_.always_accept_mobility_request);
+    get_parameter<int>("acceptable_passed_timesteps", config_.acceptable_passed_timesteps);
     get_parameter<double>("intervehicle_collision_distance", config_.intervehicle_collision_distance);
 
     get_parameter<double>("safety_collision_time_gap", config_.safety_collision_time_gap);
-    get_parameter<double>("enable_adjustable_gap", config_.enable_adjustable_gap);
-    get_parameter<double>("acceptable_urgency", config_.acceptable_urgency);
+    get_parameter<bool>("enable_adjustable_gap", config_.enable_adjustable_gap);
+    get_parameter<int>("acceptable_urgency", config_.acceptable_urgency);
     get_parameter<double>("speed_moving_average_window_size", config_.speed_moving_average_window_size);
     get_parameter<double>("tpmin", config_.tpmin);
-    get_parameter<double>("/vehicle_length", config_.vehicle_length);
-    get_parameter<double>("/vehicle_height", config_.vehicle_height);
-    get_parameter<double>("/vehicle_width", config_.vehicle_width);
-    get_parameter<double>("/vehicle_id", config_.vehicle_id);
+    get_parameter<double>("vehicle_length", config_.vehicle_length);
+    get_parameter<double>("vehicle_height", config_.vehicle_height);
+    get_parameter<double>("vehicle_width", config_.vehicle_width);
+    get_parameter<std::string>("vehicle_id", config_.vehicle_id);
 
     RCLCPP_INFO_STREAM(rclcpp::get_logger("yield_plugin"), "YieldPlugin Params" << config_);
 
     worker_ = std::make_shared<YieldPlugin>(shared_from_this(), get_world_model(), config_,
-                                                          [&mob_resp_pub_](auto msg) { mob_resp_pub_->publish(msg); },
-                                                          [&lc_status_pub_](auto msg) { lc_status_pub_->publish(msg); },
-                                                          plugin_name_,
-                                                          version_id_);
+                                                          [this](auto msg) { mob_resp_pub_->publish(msg); },
+                                                          [this](auto msg) { lc_status_pub_->publish(msg); });
+     // Publisher
+    mob_resp_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityResponse>("outgoing_mobility_response", 1);
+    lc_status_pub_ = create_publisher<carma_planning_msgs::msg::LaneChangeStatus>("cooperative_lane_change_status", 10);
 
-    trajectory_srv_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("yield_plugin/plan_trajectory");
+    // Subscriber
+    mob_request_sub_ = create_subscription<carma_v2x_msgs::msg::MobilityRequest>("incoming_mobility_request", 10, std::bind(&YieldPlugin::mobilityrequest_cb,worker_.get(),std_ph::_1));
+    bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("bsm_outbound", 1, std::bind(&YieldPlugin::bsm_cb,worker_.get(),std_ph::_1));
+    georeference_sub_ = create_subscription<std_msgs::msg::String>("georeference", 10, std::bind(&YieldPlugin::georeferenceCallback,worker_.get(),std_ph::_1));
 
-    // Return success if everthing initialized successfully
+    // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
   }
 

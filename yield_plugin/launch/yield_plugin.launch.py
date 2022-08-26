@@ -39,7 +39,6 @@ def generate_launch_description():
     param_file_path = os.path.join(
         get_package_share_directory('yield_plugin'), 'config/parameters.yaml')
 
-        
     # Launch node(s) in a carma container to allow logging to be configured
     container = ComposableNodeContainer(
         package='carma_ros2_utils',

@@ -64,6 +64,9 @@ def generate_launch_description():
     route_param_file = os.path.join(
         get_package_share_directory('route'), 'config/parameters.yaml')
 
+    trajectory_visualizer_param_file = os.path.join(
+        get_package_share_directory('trajectory_visualizer'), 'config/parameters.yaml')
+
     guidance_param_file = os.path.join(
         get_package_share_directory('guidance'), 'config/parameters.yaml')
     
