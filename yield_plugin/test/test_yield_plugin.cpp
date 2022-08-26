@@ -32,14 +32,14 @@ public:
       : carma_ros2_utils::CarmaLifecycleNode(options)
     {}
 
-    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &){ CallbackReturn::SUCCESS; }
+    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &){ return CallbackReturn::SUCCESS; }
 
-    void callback(carma_v2x_msgs::msg::MobilityResponse::UniquePtr msg)
+    void callback(const carma_v2x_msgs::msg::MobilityResponse::UniquePtr msg)
     {
       RCLCPP_INFO_STREAM(rclcpp::get_logger("yield_plugin"),"Test mob_resp callback..");
     }
 
-    void status_callback(carma_planning_msgs::msg::LaneChangeStatus::UniquePtr msg)
+    void status_callback(const carma_planning_msgs::msg::LaneChangeStatus::UniquePtr msg)
     {
       RCLCPP_INFO_STREAM(rclcpp::get_logger("yield_plugin"),"Test lc callback..");
     }
