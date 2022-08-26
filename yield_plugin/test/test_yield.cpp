@@ -114,7 +114,7 @@ TEST(YieldPluginTest, MaxTrajectorySpeed)
 
   std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_points;
 
-  ros::Time startTime(1.0);
+  rclcpp::Time startTime(1.0);
 
   carma_planning_msgs::msg::TrajectoryPlanPoint point_1;
   point_1.x = 0.0;
@@ -252,7 +252,7 @@ TEST(YieldPluginTest, test_update_traj)
   rwo_1.object.size.z = 1;
 
   carma_perception_msgs::msg::PredictedState ps_1;
-  ps_1.header.stamp.nsec = 1000;
+  ps_1.header.stamp.nanosec = 1000;
 
   ps_1.predicted_position.position.x = 10;
   ps_1.predicted_position.position.y = 10;
@@ -264,7 +264,7 @@ TEST(YieldPluginTest, test_update_traj)
   ps_1.predicted_position.orientation.w = tf_orientation.getW();
 
   carma_perception_msgs::msg::PredictedState ps_2;
-  ps_2.header.stamp.nsec = 2000;
+  ps_2.header.stamp.nanosec = 2000;
 
   ps_2.predicted_position.position.x = 10;
   ps_2.predicted_position.position.y = 20;
@@ -276,7 +276,7 @@ TEST(YieldPluginTest, test_update_traj)
   ps_2.predicted_position.orientation.w = tf_orientation.getW();
 
   carma_perception_msgs::msg::PredictedState ps_3;
-  ps_3.header.stamp.nsec = 3000;
+  ps_3.header.stamp.nanosec = 3000;
 
   ps_3.predicted_position.position.x = 10;
   ps_3.predicted_position.position.y = 30;
@@ -302,7 +302,7 @@ TEST(YieldPluginTest, test_update_traj)
   carma_planning_msgs::msg::TrajectoryPlan tp_new = plugin.update_traj_for_object(tp, 10.0);
 
   for (size_t i = 1; i < tp_new.trajectory_points.size(); i++) {
-    std::cout << tp_new.trajectory_points[i] << std::endl;
+   std::cout << tp_new.trajectory_points[i].x<< tp_new.trajectory_points[i].y << std::endl;
   }
 
   EXPECT_EQ(7, tp.trajectory_points.size());
@@ -460,6 +460,7 @@ TEST(YieldPluginTest, test_update_traj_stop)
   original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
 
 
+
   // When the lead vehicle is stopped
 
   double initial_pos = 0.0;
@@ -495,7 +496,7 @@ TEST(YieldPluginTest, test_update_traj_stop)
       
       if (dv >= 1.0)
         {
-          ROS_WARN_STREAM("target speed is positive");
+          RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"),"target speed is positive");
           if (dv >= current_speed_){
             dv = current_speed_;
           }
@@ -506,18 +507,20 @@ TEST(YieldPluginTest, test_update_traj_stop)
         }
         else
         {
-          ROS_WARN_STREAM("target speed is zero");
+          RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"),"target speed is zero");
           new_tpp = new_trajectory_points[i-1];
           new_tpp.target_time = rclcpp::Time(new_trajectory_points[0].target_time) + rclcpp::Duration(traj_target_time*1e9);
           new_trajectory_points.push_back(new_tpp);
         }
       new_speeds.push_back(dv);
   }
+
+  
   EXPECT_EQ(original_tp.trajectory_points.size(), new_trajectory_points.size());
   // Trajectory point location same as previous point
   EXPECT_EQ(new_trajectory_points[5].x, new_trajectory_points[4].x);
   // Trajectory point time is greater than previous point
-  EXPECT_TRUE(new_trajectory_points[5].target_time > new_trajectory_points[4].target_time);
+  EXPECT_TRUE(rclcpp::Time(new_trajectory_points[5].target_time) > rclcpp::Time(new_trajectory_points[4].target_time));
 }
 
 TEST(YieldPluginTest, jmt_traj)
@@ -583,7 +586,7 @@ TEST(YieldPluginTest, jmt_traj)
   carma_planning_msgs::msg::TrajectoryPlan jmt_traj = plugin.generate_JMT_trajectory(original_tp, initial_pos, goal_pos, initial_velocity, goal_velocity, tp);
 
   EXPECT_EQ(jmt_traj.trajectory_points.size(), original_tp.trajectory_points.size());
-  EXPECT_LE(jmt_traj.trajectory_points[2].target_time, original_tp.trajectory_points[2].target_time);
+  EXPECT_LE(rclcpp::Time(jmt_traj.trajectory_points[2].target_time), rclcpp::Time(original_tp.trajectory_points[2].target_time));
 
 }
 
@@ -639,25 +642,8 @@ TEST(YieldPluginTest, min_digital_gap)
 
   EXPECT_EQ(gap, min_gap);
     
-
 }
 
-// Run all the tests
-int main(int argc, char ** argv)
-{
-  ::testing::InitGoogleTest(&argc, argv);
-
-  //Initialize ROS
-  rclcpp::init(argc, argv);
-  auto ret = rcutils_logging_set_logger_level("yield_plugin", RCUTILS_LOG_SEVERITY_DEBUG);
-
-  bool success = RUN_ALL_TESTS();
-
-  //shutdown ROS
-  rclcpp::shutdown();
-
-  return success;
-} 
 
 
 

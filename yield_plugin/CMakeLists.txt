@@ -74,8 +74,8 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
   ament_add_gtest(test_yield_plugin 
-  #test/test_cooperative_yield.cpp 
-  #test/test_yield_plugin.cpp FIXED
+  test/test_cooperative_yield.cpp 
+  test/test_yield_plugin.cpp 
   test/test_yield.cpp
  )
 

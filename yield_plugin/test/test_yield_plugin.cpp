@@ -61,7 +61,7 @@ TEST(YieldPlugin, UnitTestYield)
 
     trajectory_point_1.x = 1.0;
     trajectory_point_1.y = 1.0;
-    trajectory_point_1.target_time = ros::Time(0);
+    trajectory_point_1.target_time = rclcpp::Time(0);
 
     trajectory_point_2.x = 5.0;
     trajectory_point_2.y = 1.0;
@@ -162,10 +162,20 @@ TEST(YieldPlugin, UnitTestYield)
     EXPECT_EQ(original_tp.trajectory_id, id);
 }
 
+// Run all the tests
+int main(int argc, char ** argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
 
-int main (int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-    ros::init(argc, argv, "test_yield_plugin");
-    auto res = RUN_ALL_TESTS();
-    return res;
-}
+  //Initialize ROS
+  rclcpp::init(argc, argv);
+  auto ret = rcutils_logging_set_logger_level("yield_plugin", RCUTILS_LOG_SEVERITY_DEBUG);
+
+  bool success = RUN_ALL_TESTS();
+
+  //shutdown ROS
+  rclcpp::shutdown();
+
+  return success;
+} 
+

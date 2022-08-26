@@ -140,8 +140,8 @@ TEST(YieldPluginTest, test_update_clc_trajectory)
 
     EXPECT_EQ(yield_plan.trajectory_points.size(), original_tp.trajectory_points.size());
     // slow down confirmed, since target time for trajectories has increaded.
-    EXPECT_TRUE(yield_plan.trajectory_points[2].target_time > original_tp.trajectory_points[2].target_time);
-    EXPECT_TRUE(yield_plan.trajectory_points[3].target_time > original_tp.trajectory_points[3].target_time);
+    EXPECT_TRUE(rclcpp::Time(yield_plan.trajectory_points[2].target_time) > rclcpp::Time(original_tp.trajectory_points[2].target_time));
+    EXPECT_TRUE(rclcpp::Time(yield_plan.trajectory_points[3].target_time) > rclcpp::Time(original_tp.trajectory_points[3].target_time));
 }
 
 TEST(YieldPluginTest, test_traj_cb)
