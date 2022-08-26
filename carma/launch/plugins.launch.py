@@ -51,7 +51,10 @@ def generate_launch_description():
         get_package_share_directory('route_following_plugin'), 'config/parameters.yaml')
 
     stop_and_wait_plugin_param_file = os.path.join(
-        get_package_share_directory('stop_and_wait_plugin'), 'config/parameters.yaml')
+        get_package_share_directory('stop_and_wait_plugin'), 'config/parameters.yaml')     
+
+    light_controlled_intersection_tactical_plugin_param_file = os.path.join(
+        get_package_share_directory('light_controlled_intersection_tactical_plugin'), 'config/parameters.yaml')          
 
     cooperative_lanechange_param_file = os.path.join(
         get_package_share_directory('cooperative_lanechange'), 'config/parameters.yaml')      
@@ -77,13 +80,13 @@ def generate_launch_description():
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
             ComposableNode(
-                    package='inlanecruising_plugin',
-                    plugin='inlanecruising_plugin::InLaneCruisingPluginNode',
-                    name='inlanecruising_plugin',
-                        extra_arguments=[
-                        {'use_intra_process_comms': True}, 
-                        {'--log-level' : GetLogLevel('inlanecruising_plugin', env_log_levels) }
-                    ],
+                package='inlanecruising_plugin',
+                plugin='inlanecruising_plugin::InLaneCruisingPluginNode',
+                name='inlanecruising_plugin',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('inlanecruising_plugin', env_log_levels) }
+                ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
@@ -98,13 +101,13 @@ def generate_launch_description():
                 ]
             ),
             ComposableNode(
-                    package='stop_and_wait_plugin',
-                    plugin='stop_and_wait_plugin::StopandWaitNode',
-                    name='stop_and_wait_plugin',
-                    extra_arguments=[
-                        {'use_intra_process_comms': True}, 
-                        {'--log-level' : GetLogLevel('stop_and_wait_plugin', env_log_levels) }
-                    ],
+                package='stop_and_wait_plugin',
+                plugin='stop_and_wait_plugin::StopandWaitNode',
+                name='stop_and_wait_plugin',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('stop_and_wait_plugin', env_log_levels) }
+                ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
@@ -119,13 +122,13 @@ def generate_launch_description():
                 ]
             ),
             ComposableNode(
-                    package='route_following_plugin',
-                    plugin='route_following_plugin::RouteFollowingPlugin',
-                    name='route_following_plugin',
-                    extra_arguments=[
-                        {'use_intra_process_comms': True}, 
-                        {'--log-level' : GetLogLevel('route_following_plugin', env_log_levels) }
-                    ],
+                package='route_following_plugin',
+                plugin='route_following_plugin::RouteFollowingPlugin',
+                name='route_following_plugin',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('route_following_plugin', env_log_levels) }
+                ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
@@ -173,7 +176,7 @@ def generate_launch_description():
                 plugin='cooperative_lanechange::CooperativeLaneChangePlugin',
                 name='cooperative_lanechange',
                 extra_arguments=[
-                    {'use_intra_process_comms': True},
+                    {'use_intra_process_comms': True}, 
                     {'--log-level' : GetLogLevel('cooperative_lanechange', env_log_levels) }
                 ],
                 remappings = [
@@ -222,6 +225,27 @@ def generate_launch_description():
                     yield_plugin_file_path,
                     vehicle_config_param_file
                 ]
+            ),
+            ComposableNode(
+                package='light_controlled_intersection_tactical_plugin',
+                plugin='light_controlled_intersection_tactical_plugin::LightControlledIntersectionTransitPluginNode',
+                name='light_controlled_intersection_tactical_plugin',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('light_controlled_intersection_tactical_plugin', env_log_levels) }
+                ],
+                remappings = [
+                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
+                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
+                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
+                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
+                    ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
+                    ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] )
+                ],
+                parameters=[
+                    vehicle_config_param_file,
+                    light_controlled_intersection_tactical_plugin_param_file
+                ]     
             )
         ]
     )
@@ -265,13 +289,13 @@ def generate_launch_description():
                 ]
             ),      
             ComposableNode(
-                    package='platooning_tactical_plugin',
-                    plugin='platooning_tactical_plugin::Node',
-                    name='platooning_tactical_plugin_node',
-                    extra_arguments=[
-                        {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('platooning_tactical_plugin', env_log_levels) }
-                    ],
+                package='platooning_tactical_plugin',
+                plugin='platooning_tactical_plugin::Node',
+                name='platooning_tactical_plugin_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('platooning_tactical_plugin', env_log_levels) }
+                ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
