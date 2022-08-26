@@ -76,9 +76,6 @@ def generate_launch_description():
     port_drayage_plugin_param_file = os.path.join(
         get_package_share_directory('port_drayage_plugin'), 'config/parameters.yaml')
     
-    inlanecruising_plugin_file_path = os.path.join(
-        get_package_share_directory('inlanecruising_plugin'), 'config/parameters.yaml')
-    
     trajectory_visualizer_param_file = os.path.join(
         get_package_share_directory('trajectory_visualizer'), 'config/parameters.yaml')
 
@@ -247,8 +244,7 @@ def generate_launch_description():
                 parameters=[
                     trajectory_visualizer_param_file
                 ]
-            ) 
-
+            )
         ]
     )
 
