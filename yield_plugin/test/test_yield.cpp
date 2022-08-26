@@ -175,9 +175,10 @@ TEST(YieldPluginTest, test_update_traj)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto map = carma_wm::test::buildGuidanceTestMap(100,100);
-
+  
   wm->setMap(map);
-
+  carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
+  
   YieldPluginConfig config;
   config.vehicle_length = 4;
   config.vehicle_width = 2;
