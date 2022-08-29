@@ -57,7 +57,7 @@ else() # ROS2
 
         
         ament_auto_package(
-                INSTALL_TO_SHARE config launch routes scripts rviz ui/config
+                INSTALL_TO_SHARE config launch routes scripts rviz
         )
 endif()
 

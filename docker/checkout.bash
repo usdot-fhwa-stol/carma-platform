@@ -44,14 +44,14 @@ if [[ "$BRANCH" = "develop" ]]; then
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch  $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch $BRANCH
-      #git clone --depth=1 https://github.com/usdot-fhwa-stol/autoware.ai --branch feature/uc3
-      #git clone --depth=1 https://github.com/usdot-fhwa-stol/autoware.auto --branch $BRANCH
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/autoware.ai --branch feature/uc3
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/autoware.auto --branch $BRANCH
 else
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch develop
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch develop
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
-      #git clone --depth=1 https://github.com/usdot-fhwa-stol/autoware.ai.git --branch feature/uc3
-      #git clone --depth=1 https://github.com/usdot-fhwa-stol/autoware.auto.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/autoware.ai.git --branch feature/uc3
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/autoware.auto.git --branch develop
 fi
 
 # Get humble branch of message filters which supports template Node arguments (foxy version supports rclcpp::Node only)

@@ -136,11 +136,6 @@
       <arg name="control_plugins_to_validate" value="$(arg control_plugins_to_validate)"/>
     </include>
   </group>
-
-   <!-- UI Stack -->
-  <group ns="$(env CARMA_UI_NS)">
-    <include file="$(find carma)/launch/ui.launch"/>
-  </group>
   
   <!-- Set up the rosbag record node that will exclude sensitive topics -->
   <group ns="carma_record">
