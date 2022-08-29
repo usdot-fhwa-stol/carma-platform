@@ -49,9 +49,6 @@ if(${ROS_VERSION} EQUAL 1) # ROS 1
                 scripts
                 rviz
                 DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-        install(DIRECTORY
-                ui/config
-                DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/ui)
 
 else() # ROS2
 

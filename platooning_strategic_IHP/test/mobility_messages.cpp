@@ -16,38 +16,38 @@
 
 ------------------------------------------------------------------------------*/
 
-#include <cav_msgs/MobilityRequest.h>
-#include <cav_msgs/MobilityResponse.h>
-#include <cav_msgs/MobilityOperation.h>
-#include <cav_msgs/MobilityHeader.h>
-#include <cav_msgs/PlanType.h>
-#include <cav_msgs/Trajectory.h>
-#include <cav_msgs/LocationOffsetECEF.h>
+#include <carma_v2x_msgs/msg/mobility_request.hpp>
+#include <carma_v2x_msgs/msg/mobility_response.hpp>
+#include <carma_v2x_msgs/msg/mobility_operation.hpp>
+#include <carma_v2x_msgs/msg/mobility_header.hpp>
+#include <carma_v2x_msgs/msg/plan_type.hpp>
+#include <carma_v2x_msgs/msg/trajectory.hpp>
+#include <carma_v2x_msgs/msg/location_offset_ecef.hpp>
 using namespace std;
 
 class MobilityMessages{
     
     private:
-        cav_msgs::MobilityRequest req1;
-        cav_msgs::MobilityRequest req2;
-        cav_msgs::MobilityRequest req3;
+        carma_v2x_msgs::msg::MobilityRequest req1;
+        carma_v2x_msgs::msg::MobilityRequest req2;
+        carma_v2x_msgs::msg::MobilityRequest req3;
         // UCLA add req4 to test added PlanType
-        cav_msgs::MobilityRequest req4;
-        cav_msgs::MobilityResponse res1;
-        cav_msgs::MobilityResponse res2;
-        cav_msgs::MobilityResponse res3;
-        cav_msgs::MobilityOperation op1;
-        cav_msgs::MobilityOperation op2;
-        cav_msgs::MobilityOperation op3;
+        carma_v2x_msgs::msg::MobilityRequest req4;
+        carma_v2x_msgs::msg::MobilityResponse res1;
+        carma_v2x_msgs::msg::MobilityResponse res2;
+        carma_v2x_msgs::msg::MobilityResponse res3;
+        carma_v2x_msgs::msg::MobilityOperation op1;
+        carma_v2x_msgs::msg::MobilityOperation op2;
+        carma_v2x_msgs::msg::MobilityOperation op3;
     
     public:   
         MobilityMessages(){
-            cav_msgs::MobilityHeader header;
-            cav_msgs::PlanType plan;
-            cav_msgs::LocationECEF location;
-            cav_msgs::LocationOffsetECEF offset;
-            cav_msgs::Trajectory traject;
-            vector<cav_msgs::LocationOffsetECEF> offsets;
+            carma_v2x_msgs::msg::MobilityHeader header;
+            carma_v2x_msgs::msg::PlanType plan;
+            carma_v2x_msgs::msg::LocationECEF location;
+            carma_v2x_msgs::msg::LocationOffsetECEF offset;
+            carma_v2x_msgs::msg::Trajectory traject;
+            vector<carma_v2x_msgs::msg::LocationOffsetECEF> offsets;
             //mobility request messages            
 
             //set up location
@@ -76,7 +76,7 @@ class MobilityMessages{
             header.timestamp = 55555555555555;
             
             //set up mobility request
-            req1.header = header;
+            req1.m_header = header;
             req1.strategy = "CARMA/platooning";
             req1.plan_type = plan;
             req1.urgency = 1000;
@@ -112,9 +112,9 @@ class MobilityMessages{
             header.timestamp = 555555555555;
             
             //set up mobility request
-            req2.header = header;
+            req2.m_header = header;
             req2.strategy = "CARMA/platooning";
-            req2.plan_type.type = cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
+            req2.plan_type.type = carma_v2x_msgs::msg::PlanType::PLATOON_FOLLOWER_JOIN;
             req2.urgency = 1000;
             req2.location = location;
             req2.strategy_params = "param1 param2 param3 param4";
@@ -148,7 +148,7 @@ class MobilityMessages{
             header.timestamp = 98745745;
             
             //set up mobility request
-            req3.header = header;
+            req3.m_header = header;
             req3.strategy = "CARMA/platooning3";
             req3.plan_type = plan;
             req3.urgency = 156;
@@ -185,9 +185,9 @@ class MobilityMessages{
             header.timestamp = 2222222222222;
             
             //set up mobility request
-            req4.header = header;
+            req4.m_header = header;
             req4.strategy = "CARMA/platooning";
-            req4.plan_type.type = cav_msgs::PlanType::PLATOON_FRONT_JOIN;
+            req4.plan_type.type = carma_v2x_msgs::msg::PlanType::PLATOON_FRONT_JOIN;
             req4.urgency = 1300;
             req4.location = location;
             req4.strategy_params = "param1 param2 param3 param4";
@@ -206,7 +206,7 @@ class MobilityMessages{
             header.timestamp = 66666666;
 
             //set up mobility response
-            res1.header = header;
+            res1.m_header = header;
             res1.is_accepted = true;
             res1.urgency = 1000;
 
@@ -218,7 +218,7 @@ class MobilityMessages{
             header.timestamp = 1772327;
 
             //set up mobility response
-            res2.header = header;
+            res2.m_header = header;
             res2.is_accepted = false;
             res2.urgency = 50;
 
@@ -230,7 +230,7 @@ class MobilityMessages{
             header.timestamp = 77777777;
 
             //set up mobility response
-            res3.header = header;
+            res3.m_header = header;
             res3.is_accepted = true;
             res3.urgency = 700;
 
@@ -246,7 +246,7 @@ class MobilityMessages{
             header.plan_id = "plan_id3";
             header.timestamp = 44444444;
 
-            op1.header = header;
+            op1.m_header = header;
             op1.strategy = "STATUS";
             op1.strategy_params = "CMDSPEED:1.0,DTD:1.0,SPEED:1.0";
 
@@ -257,7 +257,7 @@ class MobilityMessages{
             header.plan_id = "plan_id12";
             header.timestamp = 8989898;
 
-            op2.header = header;
+            op2.m_header = header;
             op2.strategy = "strategy3";
             op2.strategy_params = "param1 param2 param3 param4 param5";
 
@@ -269,46 +269,46 @@ class MobilityMessages{
             header.plan_id = "plan_id23";
             header.timestamp = 181818;
 
-            op3.header = header;
+            op3.m_header = header;
             op3.strategy = "strategy23";
             op3.strategy_params = "";
         
         }
 
-        cav_msgs::MobilityRequest getRequest1(){
+        carma_v2x_msgs::msg::MobilityRequest getRequest1(){
             return req1;
         }
 
-        cav_msgs::MobilityRequest getRequest2(){
+        carma_v2x_msgs::msg::MobilityRequest getRequest2(){
             return req2;
         }
         
-        cav_msgs::MobilityRequest getRequest3(){
+        carma_v2x_msgs::msg::MobilityRequest getRequest3(){
             return req3;
         }
 
         
-        cav_msgs::MobilityResponse getResponse1(){
+        carma_v2x_msgs::msg::MobilityResponse getResponse1(){
             return res1;
         }
 
-        cav_msgs::MobilityResponse getResponse2(){
+        carma_v2x_msgs::msg::MobilityResponse getResponse2(){
             return res2;
         }
 
-        cav_msgs::MobilityResponse getResponse3(){
+        carma_v2x_msgs::msg::MobilityResponse getResponse3(){
             return res3;
         }
 
-        cav_msgs::MobilityOperation getOperation1(){
+        carma_v2x_msgs::msg::MobilityOperation getOperation1(){
             return op1;
         }
 
-        cav_msgs::MobilityOperation getOperation2(){
+        carma_v2x_msgs::msg::MobilityOperation getOperation2(){
             return op2;
         }
 
-        cav_msgs::MobilityOperation getOperation3(){
+        carma_v2x_msgs::msg::MobilityOperation getOperation3(){
             return op3;
         }
 

@@ -21,7 +21,7 @@ namespace stop_and_wait_plugin
   namespace std_ph = std::placeholders;
 
   StopandWaitNode::StopandWaitNode(const rclcpp::NodeOptions &options)
-      : carma_guidance_plugins::TacticalPlugin(options),version_id_("v1.0"),plugin_name_(get_plugin_name_and_ns())
+      : carma_guidance_plugins::TacticalPlugin(options),version_id_("v4.0"),plugin_name_(get_plugin_name_and_ns())
   {
     // Create initial config
     config_ = StopandWaitConfig();
@@ -31,18 +31,50 @@ namespace stop_and_wait_plugin
     config_.stop_timestep = declare_parameter<double>("stop_timestep", config_.stop_timestep);
     config_.trajectory_step_size = declare_parameter<double>("trajectory_step_size", config_.trajectory_step_size);
     config_.accel_limit_multiplier = declare_parameter<double>("accel_limit_multiplier", config_.accel_limit_multiplier);
-    config_.accel_limit = declare_parameter<double>("/vehicle_acceleration_limit", config_.accel_limit);
+    config_.accel_limit = declare_parameter<double>("vehicle_acceleration_limit", config_.accel_limit);
     config_.crawl_speed = declare_parameter<double>("crawl_speed", config_.crawl_speed);
     config_.centerline_sampling_spacing = declare_parameter<double>("centerline_sampling_spacing", config_.centerline_sampling_spacing);
     config_.default_stopping_buffer = declare_parameter<double>("default_stopping_buffer", config_.default_stopping_buffer);
   }
 
+  rcl_interfaces::msg::SetParametersResult StopandWaitNode::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
+  {
+
+    auto error = update_params<double>({
+      {"minimal_trajectory_duration", config_.minimal_trajectory_duration},
+      {"stop_timestep", config_.stop_timestep},
+      {"trajectory_step_size", config_.trajectory_step_size},
+      {"accel_limit_multiplier", config_.accel_limit_multiplier},
+      {"crawl_speed", config_.crawl_speed},
+      {"centerline_sampling_spacing", config_.centerline_sampling_spacing},
+      {"default_stopping_buffer", config_.default_stopping_buffer}
+    }, parameters); // vehicle_acceleration_limit not updated as it's global param
+
+    rcl_interfaces::msg::SetParametersResult result;
+
+    result.successful = !error;
+
+    return result;
+  }
+
   carma_ros2_utils::CallbackReturn StopandWaitNode::on_configure_plugin()
   {
+
+    get_parameter<double>("minimal_trajectory_duration", config_.minimal_trajectory_duration);
+    get_parameter<double>("stop_timestep", config_.stop_timestep);
+    get_parameter<double>("trajectory_step_size", config_.trajectory_step_size);
+    get_parameter<double>("accel_limit_multiplier", config_.accel_limit_multiplier);
+    get_parameter<double>("vehicle_acceleration_limit", config_.accel_limit);
+    get_parameter<double>("crawl_speed", config_.crawl_speed);
+    get_parameter<double>("centerline_sampling_spacing", config_.centerline_sampling_spacing);
+    get_parameter<double>("default_stopping_buffer", config_.default_stopping_buffer);
+
+    // Register runtime parameter update callback
+    add_on_set_parameters_callback(std::bind(&StopandWaitNode::parameter_update_callback, this, std_ph::_1));
   
-    plugin_ = std::make_shared<StopandWait>(shared_from_this(), wm_, config_,plugin_name_,version_id_);
+    plugin_ = std::make_shared<StopandWait>(shared_from_this(), get_world_model(), config_,plugin_name_,version_id_);
                                         
-    // Return success if everthing initialized successfully
+    // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
   }
 
