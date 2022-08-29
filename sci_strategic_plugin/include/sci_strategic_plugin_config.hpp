@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -69,5 +69,29 @@ struct SCIStrategicPluginConfig
 
   //! License plate of the vehicle.
   std::string vehicle_id = "default_id";
+
+  // Stream operator for this config
+  friend std::ostream &operator<<(std::ostream &output, const SCIStrategicPluginConfig &c)
+  {
+    output << "SCIStrategicPluginConfig { " << std::endl
+          << "vehicle_decel_limit: " << c.vehicle_decel_limit << std::endl
+          << "vehicle_decel_limit_multiplier: " << c.vehicle_decel_limit_multiplier << std::endl
+          << "vehicle_accel_limit: " << c.vehicle_accel_limit << std::endl
+          << "vehicle_accel_limit_multiplier: " << c.vehicle_accel_limit_multiplier << std::endl
+          << "stop_line_buffer: " << c.stop_line_buffer << std::endl
+          << "min_maneuver_planning_period: " << c.min_maneuver_planning_period << std::endl
+          << "delta_t: " << c.delta_t << std::endl
+          << "min_gap: " << c.min_gap << std::endl
+          << "veh_length: " << c.veh_length << std::endl
+          << "reaction_time: " << c.reaction_time << std::endl
+          << "intersection_exit_zone_length: " << c.intersection_exit_zone_length << std::endl
+          << "strategic_plugin_name: " << c.strategic_plugin_name << std::endl
+          << "lane_following_plugin_name: " << c.lane_following_plugin_name << std::endl
+          << "stop_and_wait_plugin_name: " << c.stop_and_wait_plugin_name << std::endl
+          << "intersection_transit_plugin_name: " << c.intersection_transit_plugin_name << std::endl
+          << "vehicle_id: " << c.vehicle_id << std::endl
+          << "}" << std::endl;
+    return output;
+  }
 };
 }  // namespace localizer

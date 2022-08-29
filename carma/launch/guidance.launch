@@ -138,22 +138,9 @@
     <!-- Platooning Control IHP Plugin -->
     <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" />
 
-    <!-- Yield Plugin -->
-    <group>
-      <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
-      <include file = "$(find yield_plugin)/launch/yield_plugin.launch"/>
-    </group>
-
     <!-- Intersection Transit Maneuvering Plugin-->
     <group>
       <include file = "$(find intersection_transit_maneuvering)/launch/intersection_transit_maneuvering.launch"/>
-    </group>
-
-    <!-- Stop Controlled Intersection Strategic Plugin -->
-    <group>
-      <remap from="outgoing_mobility_operation" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_operation"/>
-      <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
-      <include file="$(find sci_strategic_plugin)/launch/sci_strategic_plugin.launch" />
     </group>
 
     <!-- Light Controlled Intersection Strategic Plugin -->
@@ -164,9 +151,6 @@
 
     <!-- Stop Controlled Intersection Tactical Plugin -->
     <include file="$(find stop_controlled_intersection_tactical_plugin)/launch/stop_controlled_intersection_tactical_plugin.launch" />
-
-    <!-- Light Controlled Intersection Tactical Plugin -->
-    <include file="$(find light_controlled_intersection_tactical_plugin)/launch/light_controlled_intersection_tactical_plugin.launch" />
 
   </group>
   
