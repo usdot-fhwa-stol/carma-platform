@@ -30,7 +30,7 @@ namespace route_following_plugin
     //Tactical plugin being used for planning lane change
     std::string lane_change_plugin_ =  "cooperative_lanechange";
     std::string stop_and_wait_plugin_ = "stop_and_wait_plugin";
-
+    std::string vehicle_id = "vehicle_id";
     std::string lanefollow_planning_tactical_plugin_ = "inlanecruising_plugin";
     double route_end_point_buffer_ = 10.0;
     double accel_limit_ = 2.0;
@@ -51,6 +51,7 @@ namespace route_following_plugin
            << "lateral_accel_limit_: " << c.lateral_accel_limit_ << std::endl
            << "stopping_accel_limit_multiplier_: " << c.stopping_accel_limit_multiplier_ << std::endl
            << "min_maneuver_length_: " << c.min_maneuver_length_ << std::endl
+           << "vehicle_id: " << c.vehicle_id << std::endl
            << "}" << std::endl;
       return output;
     }
