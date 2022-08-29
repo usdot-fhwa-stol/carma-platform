@@ -3282,7 +3282,7 @@ namespace platoon_strategic_ihp
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "in mvr  callback safeToLaneChange: " << safeToLaneChange_);
 
         // Note: Use current_lanlet list (which was determined based on vehicle pose) to find current lanelet ID. 
-        lanelet::Id current_lanelet_id = current_lanelets[0].second.id();
+        lanelet::Id current_lanelet_id = current_lanelet.id();
     
 
 
