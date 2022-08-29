@@ -416,11 +416,14 @@ TEST(PlatoonStrategicIHPPlugin, is_lanechange_possible)
         
         PlatoonStrategicIHPPlugin plugin(cmw, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
         std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
-        bool lanechange_possible = plugin.is_lanechange_possible(106, 111);
+        
+        lanelet::Id target_id1 = 111;
+        bool lanechange_possible = plugin.is_lanechange_possible(start_id, target_id1);
 
         EXPECT_TRUE(lanechange_possible);
-
-        bool lanechange_possible2 = plugin.is_lanechange_possible(106, 146);
+        
+        lanelet::Id target_id2 = 146;
+        bool lanechange_possible2 = plugin.is_lanechange_possible(start_id, target_id2);
         EXPECT_FALSE(lanechange_possible2);
         
 

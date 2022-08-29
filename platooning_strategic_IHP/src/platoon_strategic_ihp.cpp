@@ -2956,16 +2956,6 @@ namespace platoon_strategic_ihp
             prevHeartBeatTime_ = timer_factory_->now().nanoseconds() / 1000000;
         }
 
-        // // Task 3: plan time out
-        // if (pm_.current_plan.valid)
-        // {
-        //     bool isCurrentPlanTimeout = ((timer_factory_->now().nanoseconds() / 1000000 - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT);
-        //     if (isCurrentPlanTimeout)
-        //     {
-        //         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Give up waiting on plan with planId: " << pm_.current_plan.planId << "; stay in LEADWITHOPERATION");
-        //         pm_.current_plan.valid = false;
-        //     }
-        // }
 
         // Task 4: STATUS msgs
         bool hasFollower = pm_.getHostPlatoonSize() > 1  ||  config_.test_cutin_join;
@@ -3234,7 +3224,19 @@ namespace platoon_strategic_ihp
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
 
         // *** get the actually closest lanelets that relate to current location (n=10) ***//
-        auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 10);  
+        auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 10); 
+
+        lanelet::ConstLanelet current_lanelet; 
+
+        // To avoid overlapping lanelets, compare the nearest lanelets with the route
+        for (auto llt: current_lanelets)
+        {
+            if (wm_->getRoute()->contains(llt.second))
+            {
+                current_lanelet = llt.second;
+                break;
+            }
+        }
 
         // raise warn if no path was found
         if(current_lanelets.size() == 0)
@@ -3245,23 +3247,6 @@ namespace platoon_strategic_ihp
 
         // locate lanelet on shortest path
         auto shortest_path = wm_->getRoute()->shortestPath(); // find path amoung route
-
-        lanelet::ConstLanelet current_lanelet;
-        int last_lanelet_index = -1;
-        for (auto llt : current_lanelets)
-        {
-            if (boost::geometry::within(current_loc, llt.second.polygon2d())) 
-            {
-                int potential_index = findLaneletIndexFromPath(llt.second.id(), shortest_path); // usage: findLaneletIndexFromPath(target_id, lanelet2_path)
-                if (potential_index != -1)
-                {
-                    last_lanelet_index = potential_index;
-                    current_lanelet = shortest_path[last_lanelet_index]; // find lanelet2 from map that corresponse to the path
-                    break;
-                }
-            }
-        }
-
 
         // read status data
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
@@ -3288,7 +3273,6 @@ namespace platoon_strategic_ihp
             time_progress = req.prior_plan.planning_completion_time;
             int end_lanelet = 0;
             updateCurrentStatus(req.prior_plan.maneuvers.back(), speed_progress, current_progress, end_lanelet);
-            last_lanelet_index = findLaneletIndexFromPath(end_lanelet, shortest_path);
         }
         
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Starting Loop");
@@ -3298,7 +3282,10 @@ namespace platoon_strategic_ihp
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "in mvr  callback safeToLaneChange: " << safeToLaneChange_);
 
         // Note: Use current_lanlet list (which was determined based on vehicle pose) to find current lanelet ID. 
-        long current_lanelet_id = current_lanelets[0].second.id();
+        lanelet::Id current_lanelet_id = current_lanelets[0].second.id();
+    
+
+
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "current_lanelet_id: " << current_lanelet_id);
         // lane change maneuver 
         if (safeToLaneChange_)
@@ -3346,7 +3333,7 @@ namespace platoon_strategic_ihp
                         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The target cutin pose is not on a valid lanelet. So no lane change!");
                         break;
                     } 
-                    int target_lanelet_id = target_lanelets[0].second.id();
+                    lanelet::Id target_lanelet_id = target_lanelets[0].second.id();
                     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "target_lanelet_id: " << target_lanelet_id);
 
                     lanelet::ConstLanelet starting_lanelet = wm_->getMap()->laneletLayer.get(current_lanelet_id);
@@ -3375,12 +3362,11 @@ namespace platoon_strategic_ihp
                     // read lane change maneuver end time as time progress
                     time_progress = resp.new_plan.maneuvers.back().lane_change_maneuver.end_time;
                     speed_progress = target_speed;
-                    if(current_progress >= total_maneuver_length || last_lanelet_index == static_cast<int>(shortest_path.size()) - 1)
+                    if(current_progress >= total_maneuver_length)
                     {
                         break;
                     }
 
-                    ++last_lanelet_index;
                 }
             }
 
@@ -3411,11 +3397,10 @@ namespace platoon_strategic_ihp
                     current_progress += dist_diff;
                     time_progress = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
                     speed_progress = target_speed;
-                    if(current_progress >= total_maneuver_length || last_lanelet_index == static_cast<int>(shortest_path.size()) - 1)
+                    if(current_progress >= total_maneuver_length)
                     {
                         break;
                     }
-                    ++last_lanelet_index;
                 }
             }
         }
@@ -3447,11 +3432,10 @@ namespace platoon_strategic_ihp
                 current_progress += dist_diff;
                 time_progress = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
                 speed_progress = target_speed;
-                if(current_progress >= total_maneuver_length || last_lanelet_index == static_cast<int>(shortest_path.size()) - 1)
+                if(current_progress >= total_maneuver_length)
                 {
                     break;
                 }
-                ++last_lanelet_index;
             }
         }
 
@@ -3485,7 +3469,7 @@ namespace platoon_strategic_ihp
         return true;
     }
 
-    bool PlatoonStrategicIHPPlugin::is_lanechange_possible(int start_lanelet_id, int target_lanelet_id)
+    bool PlatoonStrategicIHPPlugin::is_lanechange_possible(lanelet::Id start_lanelet_id, lanelet::Id target_lanelet_id)
     {
         lanelet::ConstLanelet starting_lanelet = wm_->getMap()->laneletLayer.get(start_lanelet_id);
         lanelet::ConstLanelet ending_lanelet = wm_->getMap()->laneletLayer.get(target_lanelet_id);
@@ -3516,7 +3500,8 @@ namespace platoon_strategic_ihp
                 }
 
                 current_lanelet = wm_->getMapRoutingGraph()->following(current_lanelet, false).front(); 
-                if(current_lanelet.id() == starting_lanelet.id()){
+                if(current_lanelet.id() == starting_lanelet.id())
+                {
                     //Looped back to starting lanelet
                     return false;
                 }

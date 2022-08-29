@@ -764,8 +764,7 @@ namespace platoon_strategic_ihp
             *
             * \return true or false
             */
-            bool is_lanechange_possible(int start_lanelet_id, int target_lanelet_id);
-
+            bool is_lanechange_possible(lanelet::Id start_lanelet_id, lanelet::Id target_lanelet_id);
 
             // Pointer for map projector
             std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
