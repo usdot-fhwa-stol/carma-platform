@@ -75,9 +75,46 @@ namespace basic_autonomy
             std::vector<PointSpeedPair> points_and_target_speeds;
 
             carma_planning_msgs::msg::LaneFollowingManeuver lane_following_maneuver = maneuver.lane_following_maneuver;
-            
-            auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack, true, true);
 
+            if (maneuver.lane_following_maneuver.lane_ids.empty())
+            {
+                throw std::invalid_argument("No lanelets are defined for lanefollow maneuver");
+            }
+
+            std::vector<lanelet::ConstLanelet> lanelets = { wm->getMap()->laneletLayer.get(stoi(lane_following_maneuver.lane_ids[0]))}; // Accept first lanelet reguardless
+            for (size_t i = 1; i < lane_following_maneuver.lane_ids.size(); i++) // Iterate over remaining lanelets and check if they are followers of the previous lanelet
+            {
+                auto ll_id = lane_following_maneuver.lane_ids[i];
+                int cur_id = stoi(ll_id);
+                auto cur_ll = wm->getMap()->laneletLayer.get(cur_id);
+                auto following_lanelets = wm->getMapRoutingGraph()->following(lanelets.back());
+
+                bool is_follower = false;
+                for (auto follower_ll : following_lanelets )
+                {
+                    if (follower_ll.id() == cur_ll.id())
+                    {
+                        is_follower = true;
+                        break;
+                    }
+                }
+
+                if (!is_follower)
+                {
+                    throw std::invalid_argument("Invalid list of lanelets they are not followers");
+                }
+
+                lanelets.push_back(cur_ll); // Keep lanelet
+
+            }
+
+            // Add extra lanelet to ensure there are sufficient points for buffer
+            auto extra_following_lanelets = wm->getMapRoutingGraph()->following(lanelets.back());
+            if (!extra_following_lanelets.empty())
+            {
+                lanelets.push_back(extra_following_lanelets[0]);
+            }
+            
             if (lanelets.empty())
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Detected no lanelets between starting downtrack: "<< starting_downtrack << ", and lane_following_maneuver.end_dist: "<< lane_following_maneuver.end_dist);
