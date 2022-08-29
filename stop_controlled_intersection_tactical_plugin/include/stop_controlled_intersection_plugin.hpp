@@ -168,4 +168,4 @@ public:
 };
 
 
-}; // stop_controlled_intersection_tactical_plugin
+} // stop_controlled_intersection_tactical_plugin

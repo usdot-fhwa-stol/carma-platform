@@ -18,6 +18,8 @@
 
 #include <iostream>
 
+namespace stop_controlled_intersection_tactical_plugin
+{
 /**
  * \brief Stuct containing the algorithm configuration values for the StopControlledIntersectionTacticalPlugin
  */
@@ -46,3 +48,5 @@ struct StopControlledIntersectionTacticalPluginConfig
         return output;
     }
 };
+
+}
