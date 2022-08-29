@@ -49,4 +49,4 @@ struct StopControlledIntersectionTacticalPluginConfig
     }
 };
 
-}
+} //namespace stop_controlled_intersection_tactical_plugin
