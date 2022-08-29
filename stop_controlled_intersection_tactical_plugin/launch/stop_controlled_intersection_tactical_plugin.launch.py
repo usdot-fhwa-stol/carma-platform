@@ -49,7 +49,7 @@ def generate_launch_description():
             # Launch the core node(s)
             ComposableNode(
                 package='stop_controlled_intersection_tactical_plugin',
-                plugin='stop_controlled_intersection_tactical_plugin::SCIStrategicPlugin',
+                plugin='stop_controlled_intersection_tactical_plugin::StopControlledIntersectionTacticalPlugin',
                 name='stop_controlled_intersection_tactical_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},

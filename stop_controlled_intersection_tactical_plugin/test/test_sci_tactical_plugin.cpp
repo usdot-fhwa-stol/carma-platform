@@ -55,7 +55,7 @@ namespace stop_controlled_intersection_tactical_plugin
 
     carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, wm);
 
-    node->set_wm(wm);
+    node->wm_ = wm;
 
     //Create a request and maneuver that meets case 1 criteria
     //In order to be case 1 - estimated_stop_time > scheduled_stop_time and speed_before_stop < speed_limit
@@ -181,7 +181,8 @@ namespace stop_controlled_intersection_tactical_plugin
     */
 
     carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, wm);   
-    node->set_wm(wm);
+    node->wm_ = wm;
+    
     //Create a request and maneuver that meets case 2 criteria
     //speed_before_stop
      auto req  = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
@@ -291,7 +292,7 @@ namespace stop_controlled_intersection_tactical_plugin
     */
 
     carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, wm);   
-    node->set_wm(wm);
+    node->wm_ = wm;
     //Create a request and maneuver that meets case 3 criteria
     //In order to be case 2 - estimated_stop_time > scheduled_stop_time and speed_before_decel =  speed_limit
     //speed_before_stop

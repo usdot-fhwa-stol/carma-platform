@@ -157,10 +157,6 @@ public:
   carma_wm::WorldModelConstPtr wm_;
   StopControlledIntersectionTacticalPluginConfig config_;
 
-  // Unit test helper functions
-  carma_wm::WorldModelConstPtr get_wm() { return wm_; }
-  void set_wm(carma_wm::WorldModelConstPtr new_wm) { wm_ = new_wm; }
-
   std::string stop_controlled_intersection_strategy_ = "Carma/stop_controlled_intersection";
 
   double epsilon_ = 0.001; //Small constant to compare (double) 0.0 with
