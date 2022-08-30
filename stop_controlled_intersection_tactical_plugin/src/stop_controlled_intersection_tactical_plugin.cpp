@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,78 +14,122 @@
  * the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <algorithm>
 #include <memory>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <lanelet2_core/geometry/Point.h>
-#include <trajectory_utils/trajectory_utils.h>
-#include <trajectory_utils/conversions/conversions.h>
+#include <trajectory_utils/trajectory_utils.hpp>
+#include <trajectory_utils/conversions/conversions.hpp>
 #include <sstream>
-#include <carma_utils/containers/containers.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <Eigen/LU>
 #include <Eigen/SVD>
 #include <unordered_set>
 #include <vector>
-#include <cav_msgs/Trajectory.h>
-#include <cav_msgs/StopAndWaitManeuver.h>
+#include <carma_planning_msgs/msg/stop_and_wait_maneuver.hpp>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/geometry/LineString.h>
-#include <carma_wm/CARMAWorldModel.h>
-#include <carma_utils/containers/containers.h>
-#include <carma_wm/Geometry.h>
-#include <cav_msgs/TrajectoryPlanPoint.h>
-#include <cav_msgs/TrajectoryPlan.h>
+#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <math.h>
-#include <std_msgs/Float64.h>
-#include <math.h>
-#include <stop_controlled_intersection_plugin.h>
+#include <std_msgs/msg/float64.hpp>
+#include "stop_controlled_intersection_plugin.hpp"
 
 using oss = std::ostringstream;
 
-namespace stop_controlled_intersection_transit_plugin
+namespace stop_controlled_intersection_tactical_plugin
 {
-StopControlledIntersectionTacticalPlugin::StopControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm,const StopControlledIntersectionTacticalPluginConfig& config,
-                                    const PublishPluginDiscoveryCB& plugin_discovery_publisher)
-  : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
-  {
-    plugin_discovery_msg_.name = "stop_controlled_intersection_tactical_plugin";
-    plugin_discovery_msg_.version_id = "v1.0";
-    plugin_discovery_msg_.available = true;
-    plugin_discovery_msg_.activated = true;
-    plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
-    plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
-  }
 
-bool StopControlledIntersectionTacticalPlugin::onSpin()
+namespace std_ph = std::placeholders;
+
+StopControlledIntersectionTacticalPlugin::StopControlledIntersectionTacticalPlugin(const rclcpp::NodeOptions &options)
+  : carma_guidance_plugins::TacticalPlugin(options), config_(StopControlledIntersectionTacticalPluginConfig()) 
 {
-    plugin_discovery_publisher_(plugin_discovery_msg_);
-    return true;
+    // Declare parameters
+    config_.trajectory_time_length = declare_parameter<double>("trajectory_time_length",   config_.trajectory_time_length);
+    config_.curve_resample_step_size = declare_parameter<double>("curve_resample_step_size",   config_.curve_resample_step_size);
+    config_.centerline_sampling_spacing = declare_parameter<double>("centerline_sampling_spacing",   config_.centerline_sampling_spacing);
+    config_.curvature_moving_average_window_size = declare_parameter<int>("curvature_moving_average_window_size",   config_.curvature_moving_average_window_size);
+    config_.lateral_accel_limit = declare_parameter<double>("lateral_accel_limit",   config_.lateral_accel_limit);
+    config_.speed_moving_average_window_size = declare_parameter<int>("speed_moving_average_window_size",   config_.speed_moving_average_window_size);
+    config_.back_distance = declare_parameter<double>("back_distance",   config_.back_distance);
 }
 
-bool StopControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
+rcl_interfaces::msg::SetParametersResult StopControlledIntersectionTacticalPlugin::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
 {
-    ROS_DEBUG_STREAM("Starting stop controlled intersection trajectory planning");
+  auto error_double = update_params<double>({
+    {"trajectory_time_length", config_.trajectory_time_length},
+    {"curve_resample_step_size", config_.curve_resample_step_size},
+    {"centerline_sampling_spacing", config_.centerline_sampling_spacing},
+    {"lateral_accel_limit", config_.lateral_accel_limit},
+    {"back_distance", config_.back_distance}
+  }, parameters); 
+
+    auto error_int = update_params<int>({
+    {"curvature_moving_average_window_size", config_.curvature_moving_average_window_size},
+    {"speed_moving_average_window_size", config_.speed_moving_average_window_size}
+  }, parameters); 
+
+  rcl_interfaces::msg::SetParametersResult result;
+
+  result.successful = !error_double && !error_int;
+
+  return result;
+}
+
+carma_ros2_utils::CallbackReturn StopControlledIntersectionTacticalPlugin::on_configure_plugin()
+{
+    config_ = StopControlledIntersectionTacticalPluginConfig();
+
+     // Declare parameters
+    get_parameter<double>("trajectory_time_length",   config_.trajectory_time_length);
+    get_parameter<double>("curve_resample_step_size",   config_.curve_resample_step_size);
+    get_parameter<double>("centerline_sampling_spacing",   config_.centerline_sampling_spacing);
+    get_parameter<int>("curvature_moving_average_window_size",   config_.curvature_moving_average_window_size);
+    get_parameter<double>("lateral_accel_limit",   config_.lateral_accel_limit);
+    get_parameter<int>("speed_moving_average_window_size",   config_.speed_moving_average_window_size);
+    get_parameter<double>("back_distance",   config_.back_distance);
+
+    // Register runtime parameter update callback
+    add_on_set_parameters_callback(std::bind(&StopControlledIntersectionTacticalPlugin::parameter_update_callback, this, std_ph::_1));
+
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"),"Done loading parameters: " << config_);
+
+    // set world model pointer
+    wm_ = get_world_model();
+
+    // Return success if everything initialized successfully
+    return CallbackReturn::SUCCESS;
+}
+
+void StopControlledIntersectionTacticalPlugin::plan_trajectory_callback(
+    std::shared_ptr<rmw_request_id_t> srv_header, 
+    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+    carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
+{
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Starting stop controlled intersection trajectory planning");
     
-    if(req.maneuver_index_to_plan >= req.maneuver_plan.maneuvers.size())
+    if(req->maneuver_index_to_plan >= req->maneuver_plan.maneuvers.size())
     {
     throw std::invalid_argument(
-        "Stop Control Intersection Plugin asked to plan invalid maneuver index: " + std::to_string(req.maneuver_index_to_plan) + 
-        " for plan of size: " + std::to_string(req.maneuver_plan.maneuvers.size()));
+        "Stop Control Intersection Plugin asked to plan invalid maneuver index: " + std::to_string(req->maneuver_index_to_plan) + 
+        " for plan of size: " + std::to_string(req->maneuver_plan.maneuvers.size()));
     }
-    std::vector<cav_msgs::Maneuver> maneuver_plan;
-    for(size_t i = req.maneuver_index_to_plan; i < req.maneuver_plan.maneuvers.size(); i++){
+    std::vector<carma_planning_msgs::msg::Maneuver> maneuver_plan;
+    for(size_t i = req->maneuver_index_to_plan; i < req->maneuver_plan.maneuvers.size(); i++){
         
-        if((req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_FOLLOWING || req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT
-        || req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN || req.maneuver_plan.maneuvers[i].type ==cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN) 
-        && GET_MANEUVER_PROPERTY(req.maneuver_plan.maneuvers[i], parameters.string_valued_meta_data.front()) == stop_controlled_intersection_strategy_)
+        if((req->maneuver_plan.maneuvers[i].type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING || req->maneuver_plan.maneuvers[i].type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT
+        || req->maneuver_plan.maneuvers[i].type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN || req->maneuver_plan.maneuvers[i].type ==carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN) 
+        && GET_MANEUVER_PROPERTY(req->maneuver_plan.maneuvers[i], parameters.string_valued_meta_data.front()) == stop_controlled_intersection_strategy_)
         {
-            maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
-            resp.related_maneuvers.push_back(req.maneuver_plan.maneuvers[i].type);
+            maneuver_plan.push_back(req->maneuver_plan.maneuvers[i]);
+            resp->related_maneuvers.push_back(req->maneuver_plan.maneuvers[i].type);
         }
         else
         {
@@ -93,40 +137,38 @@ bool StopControlledIntersectionTacticalPlugin::plan_trajectory_cb(cav_srvs::Plan
         }
     }
 
-    lanelet::BasicPoint2d veh_pos(req.vehicle_state.x_pos_global, req.vehicle_state.y_pos_global);
-    ROS_DEBUG_STREAM("Planning state x:"<<req.vehicle_state.x_pos_global <<" , y: " << req.vehicle_state.y_pos_global);
+    lanelet::BasicPoint2d veh_pos(req->vehicle_state.x_pos_global, req->vehicle_state.y_pos_global);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Planning state x:"<<req->vehicle_state.x_pos_global <<" , y: " << req->vehicle_state.y_pos_global);
 
     double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
-    ROS_DEBUG_STREAM("Current_downtrack"<< current_downtrack);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Current_downtrack"<< current_downtrack);
 
-    std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points( maneuver_plan, wm_, req.vehicle_state);
-    ROS_DEBUG_STREAM("Maneuver to points size:"<< points_and_target_speeds.size());
-    // ROS_DEBUG_STREAM("Printing points: ");
+    std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points( maneuver_plan, wm_, req->vehicle_state);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Maneuver to points size:"<< points_and_target_speeds.size());
+    // RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Printing points: ");
     // TODO: add print logic
-    cav_msgs::TrajectoryPlan trajectory;
+    carma_planning_msgs::msg::TrajectoryPlan trajectory;
     trajectory.header.frame_id = "map";
-    trajectory.header.stamp = req.header.stamp;
+    trajectory.header.stamp = req->header.stamp;
     trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
     //Add compose trajectory from centerline
-    trajectory.trajectory_points = compose_trajectory_from_centerline(points_and_target_speeds, req.vehicle_state, req.header.stamp);
-    trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
+    trajectory.trajectory_points = compose_trajectory_from_centerline(points_and_target_speeds, req->vehicle_state, req->header.stamp);
+    trajectory.initial_longitudinal_velocity = req->vehicle_state.longitudinal_vel;
 
     // Set the planning plugin field name
     for (auto& p : trajectory.trajectory_points) {
-        p.planner_plugin_name = plugin_discovery_msg_.name;
+        p.planner_plugin_name = get_plugin_name();
         // p.controller_plugin_name = "PurePursuit";
     }
 
-    resp.trajectory_plan = trajectory;
+    resp->trajectory_plan = trajectory;
     
-    resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
-
-    return true;
+    resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 }
 
-std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
-                                                            const carma_wm::WorldModelConstPtr& wm, const cav_msgs::VehicleState& state)
+std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_to_points(const std::vector<carma_planning_msgs::msg::Maneuver>& maneuvers,
+                                                            const carma_wm::WorldModelConstPtr& wm, const carma_planning_msgs::msg::VehicleState& state)
 {
     std::vector<PointSpeedPair> points_and_target_speeds;
     std::unordered_set<lanelet::Id> visited_lanelets;
@@ -139,8 +181,8 @@ std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_
     double starting_downtrack;
     for (const auto& maneuver : maneuvers)
     {
-        if(maneuver.type != cav_msgs::Maneuver::LANE_FOLLOWING && maneuver.type != cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT && maneuver.type != cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN
-        && maneuver.type !=cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ){
+        if(maneuver.type != carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING && maneuver.type != carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT && maneuver.type != carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN
+        && maneuver.type !=carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ){
             throw std::invalid_argument("Stop Controlled Intersection Tactical Plugin does not support this maneuver type");
         }
     
@@ -162,7 +204,7 @@ std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_
             GET_MANEUVER_PROPERTY(maneuver, end_dist), config_.centerline_sampling_spacing);
         
         route_points.insert(route_points.begin(), veh_pos);
-        ROS_DEBUG_STREAM("Route geometery points size: "<<route_points.size());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Route geometery points size: "<<route_points.size());
         //get case num from maneuver parameters
         if(GET_MANEUVER_PROPERTY(maneuver,parameters.int_valued_meta_data).empty()){
             throw std::invalid_argument("No case number specified for stop controlled intersection maneuver");
@@ -182,35 +224,33 @@ std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::maneuvers_
         else{
             throw std::invalid_argument("The stop controlled intersection tactical plugin doesn't handle the case number requested");
         }
-        
-        
     }
 
     return points_and_target_speeds;
 }
 
 std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::create_case_one_speed_profile(const carma_wm::WorldModelConstPtr& wm,
-const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed, const cav_msgs::VehicleState& state){
+const carma_planning_msgs::msg::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed, const carma_planning_msgs::msg::VehicleState& state){
 
-    ROS_DEBUG_STREAM("Planning for Case One");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Planning for Case One");
     //Derive meta data values from maneuver message - Using order in sci_strategic_plugin
     double a_acc = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);
     double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[1]); //a_dec is a -ve value
     double t_acc = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[2]);
     double t_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[3]);
     double speed_before_decel = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[4]);
-    ROS_DEBUG_STREAM("a_acc received: "<< a_acc);
-    ROS_DEBUG_STREAM("a_dec received: "<< a_dec);
-    ROS_DEBUG_STREAM("t_acc received: "<< t_acc);
-    ROS_DEBUG_STREAM("t_dec received: "<< t_dec);
-    ROS_DEBUG_STREAM("speed before decel received: "<< speed_before_decel);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "a_acc received: "<< a_acc);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "a_dec received: "<< a_dec);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "t_acc received: "<< t_acc);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "t_dec received: "<< t_dec);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "speed before decel received: "<< speed_before_decel);
     
     //Derive start and end dist from maneuver
     double start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
     double end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
 
-    ROS_DEBUG_STREAM("Maneuver starting downtrack: "<< start_dist);
-    ROS_DEBUG_STREAM("Maneuver ending downtrack: "<< end_dist);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Maneuver starting downtrack: "<< start_dist);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Maneuver ending downtrack: "<< end_dist);
     //Checking state against start_dist and adjust profile
     lanelet::BasicPoint2d state_point(state.x_pos_global, state.y_pos_global);
     double route_starting_downtrack = wm->routeTrackPos(state_point).downtrack;  //Starting downtrack based on geometry points
@@ -219,12 +259,12 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     if(route_starting_downtrack < start_dist){
         //Update parameters
         //Keeping the deceleration part the same
-        ROS_DEBUG_STREAM("Starting distance is less than maneuver start, updating parameters");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Starting distance is less than maneuver start, updating parameters");
         double dist_decel = pow(speed_before_decel, 2)/(2*std::abs(a_dec));
 
         dist_acc = end_dist - dist_decel;
         a_acc = (pow(speed_before_decel, 2) - pow(starting_speed,2))/(2*dist_acc);
-        ROS_DEBUG_STREAM("Updated a_acc: "<< a_acc);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Updated a_acc: "<< a_acc);
     }
     else{
         //Use parameters from maneuver message
@@ -277,8 +317,8 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
 }
 
 std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::create_case_two_speed_profile(const carma_wm::WorldModelConstPtr& wm,
-const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed){
-    ROS_DEBUG_STREAM("Planning for Case Two");
+const carma_planning_msgs::msg::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed){
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Planning for Case Two");
     //Derive meta data values from maneuver message - Using order in sci_strategic_plugin
     double a_acc = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);
     double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[1]); //a_dec is a -ve value
@@ -290,8 +330,8 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     //Derive start and end dist from maneuver
     double start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
     double end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
-    ROS_DEBUG_STREAM("Maneuver starting downtrack: "<< start_dist);
-    ROS_DEBUG_STREAM("Maneuver ending downtrack: "<< end_dist);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Maneuver starting downtrack: "<< start_dist);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Maneuver ending downtrack: "<< end_dist);
 
     //Checking route geometry start against start_dist and adjust profile
     double route_starting_downtrack = wm->routeTrackPos(route_geometry_points[0]).downtrack;  //Starting downtrack based on geometry points
@@ -302,7 +342,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     if(route_starting_downtrack < start_dist){
         //update parameters
         //Keeping acceleration and deceleration part same as planned in strategic plugin
-        ROS_DEBUG_STREAM("Starting distance is less than maneuver start, updating parameters");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Starting distance is less than maneuver start, updating parameters");
         dist_acc = starting_speed*t_acc + 0.5 * a_acc * pow(t_acc,2);
         dist_decel = speed_before_decel*t_dec + 0.5 * a_dec * pow(t_dec,2);
         dist_cruise = end_dist - route_starting_downtrack - (dist_acc + dist_decel);
@@ -319,7 +359,7 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     if(total_distance_needed - (end_dist - start_dist) > epsilon_ ){
         //Requested maneuver needs to be modified to meet start and end dist req
         //Sacrifice on cruising and then acceleration if needed
-        ROS_DEBUG_STREAM("Updating maneuver to meet start and end dist req.");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Updating maneuver to meet start and end dist req.");
         double delta_total_dist = total_distance_needed - (end_dist - start_dist);
         dist_cruise -= delta_total_dist;
         if(dist_cruise < 0){
@@ -378,23 +418,23 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
 }
 
 std::vector<PointSpeedPair> StopControlledIntersectionTacticalPlugin::create_case_three_speed_profile(const carma_wm::WorldModelConstPtr& wm,
-const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed){
-    ROS_DEBUG_STREAM("Planning for Case three");
+const carma_planning_msgs::msg::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_geometry_points, double starting_speed){
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Planning for Case three");
     //Derive meta data values from maneuver message - Using order in sci_strategic_plugin
     double a_dec = GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data[0]);
 
     //Derive start and end dist from maneuver
     double start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
     double end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
-    ROS_DEBUG_STREAM("Maneuver starting downtrack: "<< start_dist);
-    ROS_DEBUG_STREAM("Maneuver ending downtrack: "<< end_dist);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Maneuver starting downtrack: "<< start_dist);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Maneuver ending downtrack: "<< end_dist);
 
     //Checking route geometry start against start_dist and adjust profile
     double route_starting_downtrack = wm->routeTrackPos(route_geometry_points[0]).downtrack;  //Starting downtrack based on geometry points
 
     if(route_starting_downtrack < start_dist){
         //update parameter
-        ROS_DEBUG_STREAM("Starting distance is less than maneuver start, updating parameters");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Starting distance is less than maneuver start, updating parameters");
         a_dec = pow(starting_speed, 2)/(2*(end_dist - route_starting_downtrack));
     }
 
@@ -434,24 +474,24 @@ const cav_msgs::Maneuver& maneuver, std::vector<lanelet::BasicPoint2d>& route_ge
     return points_and_target_speeds;
 }
 
-std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlugin::compose_trajectory_from_centerline(
-    const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time){
+std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlugin::compose_trajectory_from_centerline(
+    const std::vector<PointSpeedPair>& points, const carma_planning_msgs::msg::VehicleState& state, const rclcpp::Time& state_time){
     
-    std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;
-    ROS_DEBUG_STREAM("VehicleState: "
+    std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory;
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "VehicleState: "
                         << " x: " << state.x_pos_global << " y: " << state.y_pos_global << " yaw: " << state.orientation
                         << " speed: " << state.longitudinal_vel);
     
     int nearest_pt_index = basic_autonomy::waypoint_generation::get_nearest_point_index(points, state);
-    ROS_DEBUG_STREAM("Nearest pt index: "<<nearest_pt_index);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Nearest pt index: "<<nearest_pt_index);
     std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); //Points in front of current vehicle position
-    ROS_DEBUG_STREAM("Future points size: "<<future_points.size());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Future points size: "<<future_points.size());
     auto time_bound_points = basic_autonomy::waypoint_generation::constrain_to_time_boundary(future_points, config_.trajectory_time_length);
-    ROS_DEBUG_STREAM("Got time bound points with size:" << time_bound_points.size());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Got time bound points with size:" << time_bound_points.size());
 
     //Attach past points
     std::vector<PointSpeedPair> back_and_future = attach_past_points(points, time_bound_points, nearest_pt_index, config_.back_distance);
-    ROS_DEBUG_STREAM("Got back_and_future points with size: "<<back_and_future.size());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Got back_and_future points with size: "<<back_and_future.size());
 
     std::vector<double> speed_limits;
     std::vector<lanelet::BasicPoint2d> curve_points;
@@ -463,8 +503,8 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlu
         throw std::invalid_argument("Could not fit a spline curve along the trajectory!");
     }
 
-    ROS_DEBUG("Got fit");
-    ROS_DEBUG_STREAM("Speed_limits.size(): "<<speed_limits.size());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Got fit");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Speed_limits.size(): "<<speed_limits.size());
 
     std::vector<lanelet::BasicPoint2d> all_sampling_points;
     all_sampling_points.reserve(1 + curve_points.size() * 2);
@@ -502,7 +542,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlu
         scaled_steps_along_curve += 1.0 / total_step_along_curve;               //adding steps_along_curve_step_size
     }
 
-    ROS_DEBUG_STREAM("Got sampled points with size:" << all_sampling_points.size());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Got sampled points with size:" << all_sampling_points.size());
 
     std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(all_sampling_points);
 
@@ -511,12 +551,12 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlu
         trajectory_utils::constrained_speeds_for_curvatures(curvatures, config_.lateral_accel_limit);
 
     std::vector<double> constrained_speed_limits = basic_autonomy::waypoint_generation::apply_speed_limits(ideal_speeds, distributed_speed_limits); //Speed min(ideal, calculated)
-    ROS_DEBUG("Processed all points in computed fit");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "Processed all points in computed fit");
     std::vector<double> final_actual_speeds = constrained_speed_limits;
 
     if (all_sampling_points.empty())
     {
-        ROS_WARN_STREAM("No trajectory points could be generated");
+        RCLCPP_WARN_STREAM(rclcpp::get_logger("stop_controlled_intersection_tactical_plugin"), "No trajectory points could be generated");
         return {};
     }
 
@@ -553,11 +593,25 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopControlledIntersectionTacticalPlu
     trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
     // Build trajectory points
-    std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
+    std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> traj_points =
         basic_autonomy::waypoint_generation::trajectory_from_points_times_orientations(future_basic_points, times, future_yaw, state_time, "default");
 
     return traj_points;
 }
 
-
+bool StopControlledIntersectionTacticalPlugin::get_availability()
+{
+  return true;
 }
+
+std::string StopControlledIntersectionTacticalPlugin::get_version_id()
+{
+  return "v1.0";
+}
+
+}  // namespace SCI_strategic_plugin
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+// Register the component with class_loader
+RCLCPP_COMPONENTS_REGISTER_NODE(stop_controlled_intersection_tactical_plugin::StopControlledIntersectionTacticalPlugin)

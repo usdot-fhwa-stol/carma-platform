@@ -58,7 +58,7 @@ class MapUpdateLogger : public rclcpp::Node
      * 
      * \param id_reg_pair The pair to convert
      * 
-     * \return A corresponding carma_debug_msgs::LaneletIdRegulatoryElementPair
+     * \return A corresponding carma_debug_ros2_msgs::msg::LaneletIdRegulatoryElementPair
      */
     carma_debug_ros2_msgs::msg::LaneletIdRegulatoryElementPair pairToDebugMessage(const std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>& id_reg_pair);
     

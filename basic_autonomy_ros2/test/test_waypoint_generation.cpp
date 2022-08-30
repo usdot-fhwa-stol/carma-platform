@@ -778,10 +778,59 @@ TEST(BasicAutonomyTest, get_nearest_basic_point_index)
         std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, 
                                                                                     starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
 
-        EXPECT_EQ(visited_lanelets.size(), 5);
+        EXPECT_EQ(visited_lanelets.size(), 3);
 
         EXPECT_TRUE(visited_lanelets.find(id1) != visited_lanelets.end()); // the lanelet previously in the visited lanelet set
         EXPECT_TRUE(visited_lanelets.find(1200) != visited_lanelets.end()); // new lanelets added to the set with the new maneuver
+    }
+
+    TEST(BasicAutonomyTest, lanefollow_defined_lanelets)
+    {
+
+        double starting_downtrack = 0;
+        carma_planning_msgs::msg::VehicleState ending_state;
+        std::string trajectory_type = "lane_follow";
+        waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 0, 0);
+        waypoint_generation::DetailedTrajConfig detailed_config = waypoint_generation::compose_detailed_trajectory_config(0, 0, 0, 0, 0, 5, 0, 0, 20);
+
+        lanelet::Id id1 = 1100;
+        std::unordered_set<lanelet::Id> visited_lanelets;
+        visited_lanelets.insert(id1);
+        std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+        auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10);
+        wm->setMap(map);
+        carma_wm::test::setSpeedLimit(15_mph, wm);
+
+        carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
+
+        carma_planning_msgs::msg::Maneuver maneuver;
+        maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
+        maneuver.lane_following_maneuver.lane_ids = {};
+        maneuver.lane_following_maneuver.start_dist = 5.0;
+        maneuver.lane_following_maneuver.start_time = rclcpp::Time(0.0);
+        maneuver.lane_following_maneuver.start_speed = 0.0;
+
+        maneuver.lane_following_maneuver.end_dist = 14.98835712;
+        maneuver.lane_following_maneuver.end_speed = 6.7056;
+        maneuver.lane_following_maneuver.end_time = rclcpp::Time(4.4704*1e9); // 4.4704 seconds converted to nanoseconds
+
+        // No defined lanelet ids in the maneuver msg
+        EXPECT_THROW(basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, 
+                                                                                    starting_downtrack, wm, general_config, detailed_config, visited_lanelets), std::invalid_argument);
+        
+        // Defined lanelet ids in the maneuver msg                                                                            
+        maneuver.lane_following_maneuver.lane_ids.push_back(std::to_string(1200));
+        std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, 
+                                                                                    starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
+        EXPECT_EQ(visited_lanelets.size(), 3);
+        EXPECT_TRUE(visited_lanelets.find(id1) != visited_lanelets.end()); // the lanelet previously in the visited lanelet set
+        EXPECT_TRUE(visited_lanelets.find(1200) != visited_lanelets.end()); // new lanelets added to the set with the new maneuver
+
+        // Non-following lanelet id in the maneuver msg
+        maneuver.lane_following_maneuver.lane_ids.push_back(std::to_string(1202));
+        EXPECT_THROW(basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, 
+                                                                                    starting_downtrack, wm, general_config, 
+                                                                                    detailed_config, visited_lanelets), std::invalid_argument);
     }
 
 } // namespace basic_autonomy

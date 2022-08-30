@@ -756,6 +756,16 @@ namespace platoon_strategic_ihp
             void mob_resp_cb_preparetojoin(const carma_v2x_msgs::msg::MobilityResponse& msg);
 
 
+            /**
+            * \brief Function to check if lanechange is possible
+            *
+            * \param start_lanelet_id start lanelet id
+            * \param target_lanelet_id start lanelet id
+            *
+            * \return true or false
+            */
+            bool is_lanechange_possible(lanelet::Id start_lanelet_id, lanelet::Id target_lanelet_id);
+
             // Pointer for map projector
             std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
@@ -846,5 +856,6 @@ namespace platoon_strategic_ihp
 
             // Unit Test Accessors
             FRIEND_TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front);
+            FRIEND_TEST(PlatoonStrategicIHPPlugin, is_lanechange_possible);
     };
 }

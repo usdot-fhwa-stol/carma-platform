@@ -35,7 +35,7 @@ namespace arbitrator
 
         for (auto i = topics.begin(); i != topics.end(); i++) 
         {
-            auto sc = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>("plugins/" + *i);
+            auto sc = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(*i);
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << *i);
             
             std::shared_future<std::shared_ptr<MSrvRes>> resp = sc->async_send_request(msg);
