@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--  
- Copyright (C) 2018-2021 LEIDOS.
+ Copyright (C) 2022 LEIDOS.
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  use this file except in compliance with the License. You may obtain a copy of
@@ -18,24 +18,36 @@
 
 <package format="3">
   <name>stop_controlled_intersection_tactical_plugin</name>
-  <version>3.2.0</version>
+  <version>4.0.0</version>
   <description>Creates trajectory plan for stop controlled intersections</description>
   <maintainer email="CARMA@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
   <author email="CARMA@dot.gov">carma</author>
-  <buildtool_depend>catkin</buildtool_depend>
-  <depend>roscpp</depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <build_depend>carma_cmake_common</build_depend>
+  <build_depend>ament_auto_cmake</build_depend>
+
+  <depend>rclcpp</depend>
   <depend>std_msgs</depend>
-  <depend>cav_srvs</depend>
-  <depend>cav_msgs</depend>
-  <depend>carma_utils</depend>
+  <depend>carma_ros2_utils</depend>
+  <depend>rclcpp_components</depend>
+  <depend>carma_planning_msgs</depend>
+  <depend>carma_guidance_plugins</depend>
+  <depend>carma_v2x_msgs</depend>
   <depend>autoware_msgs</depend>
-  <depend>carma_wm</depend>
-  <depend>tf</depend>
+  <depend>carma_wm_ros2</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend> 
-  <depend>trajectory_utils</depend>   
-  <depend>carma_debug_msgs</depend>
-  <depend>basic_autonomy</depend>   
-  <build_depend>carma_cmake_common</build_depend>
+  <depend>trajectory_utils_ros2</depend>   
+  <depend>basic_autonomy_ros2</depend>   
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
