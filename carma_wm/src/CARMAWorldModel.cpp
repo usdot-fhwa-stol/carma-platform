@@ -1371,7 +1371,7 @@ namespace carma_wm
 
       for(auto mov_check:sim_.traffic_signal_states_[mov_id][mov_signal_group])
       {
-         if (lanelet::time::timeFromSec(ros::Time::now().toSec()) > mov_check.first)
+         if (lanelet::time::timeFromSec(ros::Time::now().toSec()) < mov_check.first)
          {
            temp_signal_states.push_back(std::make_pair(mov_check.first, mov_check.second ));
          }

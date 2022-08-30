@@ -1379,7 +1379,7 @@ namespace carma_wm
 
     for(auto mov_check:sim_.traffic_signal_states_[mov_id][mov_signal_group])
     {
-      if (lanelet::time::timeFromSec(std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count()) > mov_check.first) //todo use node's clock
+      if (lanelet::time::timeFromSec(std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count()) < mov_check.first) //todo use node's clock
       {
         temp_signal_states.push_back(std::make_pair(mov_check.first, mov_check.second ));
       }
