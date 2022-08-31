@@ -369,9 +369,6 @@ namespace light_controlled_intersection_tactical_plugin
                 throw std::invalid_argument("No time_to_schedule_entry is provided in float_valued_meta_data");
             }
 
-            //overwrite maneuver type to use lane follow library function
-            carma_planning_msgs::msg::Maneuver temp_maneuver = maneuver;
-            temp_maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Creating Lane Follow Geometry");
             std::vector<PointSpeedPair> lane_follow_points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
             points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());            

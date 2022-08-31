@@ -35,19 +35,22 @@ namespace arbitrator
 
         for (auto i = topics.begin(); i != topics.end(); i++) 
         {
-            auto sc = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(*i);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << *i);
+            auto topic = *i; //todo revert hardcode
+            if (topic == "lci_strategic_plugin/plan_maneuvers")
+                topic = "/guidance/plugins/lci_strategic_plugin/plan_maneuvers"
+            auto sc = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(topic);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << topic);
             
             std::shared_future<std::shared_ptr<MSrvRes>> resp = sc->async_send_request(msg);
 
             auto future_status = resp.wait_for(std::chrono::milliseconds(500));
             
             if (future_status == std::future_status::ready) {
-                responses.emplace(*i, resp.get());
+                responses.emplace(topic, resp.get());
             }
             else
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "failed...: " << *i);
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "failed...: " << topic);
             }
         }
         return responses;

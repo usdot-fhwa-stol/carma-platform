@@ -327,7 +327,7 @@ void LCIStrategicPlugin::handleFailureCase(const cav_srvs::PlanManeuversRequest&
 
   auto incomplete_traj_params = handleFailureCaseHelper(current_state_speed, intersection_speed_.get(), speed_limit, distance_remaining_to_traffic_light, remaining_time, traffic_light_down_track);
 
-  resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
+  resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, crossed_lanelets,
                                           current_state_speed, incomplete_traj_params.modified_departure_speed, current_state.stamp, current_state.stamp + ros::Duration(incomplete_traj_params.modified_remaining_time), incomplete_traj_params));
 
   double intersection_length = intersection_end_downtrack_.get() - traffic_light_down_track;
@@ -365,10 +365,14 @@ void LCIStrategicPlugin::handleCruisingUntilStop(const cav_srvs::PlanManeuversRe
   new_ts_params.v3_ = new_ts_params.v2_;
   new_ts_params.a3_ = new_ts_params.a2_;
 
-  resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
+  // Identify the lanelets which will be crossed by approach maneuvers stopping part
+  std::vector<lanelet::ConstLanelet> lane_follow_crossed_lanelets =
+      getLaneletsBetweenWithException(new_ts_params.x1_, new_ts_params.x2_, true, true);
+
+  resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, lane_follow_crossed_lanelets, 
                                           current_state_speed, new_ts_params.v2_, current_state.stamp, ros::Time(new_ts_params.t2_), new_ts_params));
 
-  // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
+  // Identify the lanelets which will be crossed by approach maneuvers stopping part
   std::vector<lanelet::ConstLanelet> case_8_crossed_lanelets =
       getLaneletsBetweenWithException(new_ts_params.x2_, traffic_light_down_track, true, true);
 
@@ -399,6 +403,10 @@ void LCIStrategicPlugin::handleGreenSignalScenario(const cav_srvs::PlanManeuvers
   ROS_DEBUG_STREAM("Algo initially successful: New light_arrival_time_by_algo: " << std::to_string(light_arrival_time_by_algo.toSec()) << ", with remaining_time: " << std::to_string(remaining_time));
   auto can_make_green_optional = canArriveAtGreenWithCertainty(light_arrival_time_by_algo, traffic_light);
 
+    // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
+  std::vector<lanelet::ConstLanelet> crossed_lanelets =
+        getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
+
   // no change for maneuver if invalid light states
   if (!can_make_green_optional) 
     return;
@@ -407,7 +415,7 @@ void LCIStrategicPlugin::handleGreenSignalScenario(const cav_srvs::PlanManeuvers
   {
     ROS_DEBUG_STREAM("HANDLE_SUCCESSFULL: Algorithm successful, and able to make it at green with certainty. Planning traj smooth and intersection transit maneuvers");
     
-    resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
+    resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, crossed_lanelets,
                                           current_state_speed, ts_params.v3_, current_state.stamp, light_arrival_time_by_algo, ts_params));
 
     double intersection_length = intersection_end_downtrack_.get() - traffic_light_down_track;
@@ -1058,7 +1066,7 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     return true;
   }
 
-  if(config_.enable_carma_streets_connection ==true)
+  if(config_.enable_carma_streets_connection ==true) //TODO member value revert
   {
   if (!approaching_light_controlled_interction_)
   {
@@ -1067,7 +1075,7 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     return true;
   }
 
-  bool is_empty_schedule_msg = (scheduled_enter_time_ == 0);
+  bool is_empty_schedule_msg  = false ;// = (scheduled_enter_time_ == 0); TODO
   if (is_empty_schedule_msg)
   {
     resp.new_plan.maneuvers = {};
@@ -1187,7 +1195,7 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   // We need to evaluate the events so the state transitions can be triggered
 }
 
-cav_msgs::Maneuver LCIStrategicPlugin::composeTrajectorySmoothingManeuverMessage(double start_dist, double end_dist, double start_speed,
+cav_msgs::Maneuver LCIStrategicPlugin::composeTrajectorySmoothingManeuverMessage(double start_dist, double end_dist, const std::vector<lanelet::ConstLanelet>& crossed_lanelets, double start_speed,
                                                        double target_speed, ros::Time start_time, ros::Time end_time,
                                                        const TrajectoryParams& tsp) const
 {
@@ -1225,6 +1233,10 @@ cav_msgs::Maneuver LCIStrategicPlugin::composeTrajectorySmoothingManeuverMessage
   maneuver_msg.lane_following_maneuver.parameters.int_valued_meta_data.push_back(static_cast<int>(tsp.case_num));
   maneuver_msg.lane_following_maneuver.parameters.int_valued_meta_data.push_back(static_cast<int>(tsp.is_algorithm_successful));
 
+  for (auto llt : crossed_lanelets)
+  {
+    maneuver_msg.lane_following_maneuver.lane_ids.push_back(std::to_string(llt.id()));
+  }
   // Start time and end time for maneuver are assigned in updateTimeProgress
 
   ROS_INFO_STREAM("Creating TrajectorySmoothingManeuver start dist: " << start_dist << " end dist: " << end_dist
