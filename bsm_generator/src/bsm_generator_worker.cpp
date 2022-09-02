@@ -15,10 +15,13 @@
  */
 
 #include "bsm_generator/bsm_generator_worker.hpp"
+#include <random>
 
 namespace bsm_generator
 {
-    BSMGeneratorWorker::BSMGeneratorWorker() {}
+    BSMGeneratorWorker::BSMGeneratorWorker() : random_id_(0) {}
+    
+    BSMGeneratorWorker::BSMGeneratorWorker(int first_id = 0) : random_id_(first_id) {}
     
     uint8_t BSMGeneratorWorker::getNextMsgCount()
     {
@@ -31,7 +34,7 @@ namespace bsm_generator
         return old_msg_count;
     }
 
-    std::vector<uint8_t> BSMGeneratorWorker::getMsgId(const rclcpp::Time now)
+    std::vector<uint8_t> BSMGeneratorWorker::getMsgId(const rclcpp::Time now, double secs)
     {
         if (first_msg_id_) {
             last_id_generation_time_ = now;
@@ -40,15 +43,16 @@ namespace bsm_generator
 
         std::vector<uint8_t> id(4);
         
-        // need to change ID every 5 mins
-        rclcpp::Duration id_timeout(60*5, 0);
+        // need to change ID every designated period
+        rclcpp::Duration id_timeout(secs * 1e9);
 
-        std::default_random_engine generator;
+        generator_.seed(std::random_device{}()); // guarantee randomness
         std::uniform_int_distribution<int> dis(0,INT_MAX);
 
         if(now - last_id_generation_time_ >= id_timeout)
         {
-            random_id_ = dis(generator);
+            random_id_ = dis(generator_);
+            std::cerr << ">>>>>>>>>> RANDOM : " << random_id_ << std::endl;
             last_id_generation_time_ = now;
         }
         for(int i = 0; i < id.size(); ++i)
